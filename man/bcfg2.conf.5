@@ -1,458 +1,395 @@
-.TH bcfg2.conf 5
-
-.SH NAME
-bcfg2.conf - configuration parameters for Bcfg2
-
-.SH DESCRIPTION
+.
+.TH "BCFG2\.CONF" "5" "June 2012" "" ""
+.
+.SH "NAME"
+\fBbcfg2\.conf\fR \- configuration parameters for Bcfg2
+.
+.SH "DESCRIPTION"
+\fBbcfg2\.conf\fR includes configuration parameters for the Bcfg2 server and client\.
+.
+.SH "FILE FORMAT"
+The file is INI\-style and consists of sections and options\. A section begins with the name of the sections in square brackets and continues until the next section begins\.
+.
+.P
+Options are specified in the form "name=value"\.
+.
+.P
+The file is line\-based each newline\-terminated line represents either a comment, a section name or an option\.
+.
+.P
+Any line beginning with a hash (#) is ignored, as are lines containing only whitespace\.
+.
+.SH "SERVER OPTIONS"
+These options are only necessary on the Bcfg2 server\. They are specified in the \fB[server]\fR section of the configuration file\.
+.
 .TP
-bcfg2.conf includes configuration parameters for the Bcfg2 server and
-client.
-
-.SH FILE FORMAT
-The file is INI-style and consists of sections and options. A section
-begins with the name of the sections in square brackets and continues
-until the next section begins.
-
-Options are specified in the form 'name = value'.
-
-The file is line-based each newline-terminated line represents either
-a comment, a section name or an option.
-
-Any line beginning with a hash (#) is ignored, as are lines containing
-only whitespace.
-
-
-.SH SERVER OPTIONS
-These options are only necessary on the Bcfg2 server. They are
-specified in the [server] section of the configuration file.
-
+\fBrepository\fR
+Specifies the path to the Bcfg2 repository containing all of the configuration specifications\. The repository should be created using the \fBbcfg2\-admin init\fR command\.
+.
 .TP
-.B repository
-Specifies the path to the Bcfg2 repository containing all of the
-configuration specifications. The repository should be created
-using the 'bcfg2-admin init' command.
-
+\fBfilemonitor\fR
+The file monitor used to watch for changes in the repository\. The default is the best available monitor\. The following values are valid:
+.
+.IP
+\fBinotify\fR, \fBgamin\fR, \fBfam\fR, \fBpseudo\fR
+.
 .TP
-.B filemonitor
-The file monitor used to watch for changes in the repository.
-Values of 'inotify', 'gamin', 'fam', or 'pseudo' are valid.  The
-default is the best available monitor.
-
+\fBignore_files\fR
+A comma\-separated list of globs that should be ignored by the file monitor\. Default values are:
+.
+.IP
+\fB*~\fR, \fB*#\fR, \fB\.#*\fR, \fB*\.swp\fR, \fB\.*\.swx\fR, \fBSCCS\fR, \fB\.svn\fR, \fB4913\fR, \fB\.gitignore\fR
+.
 .TP
-.B ignore_files
-A comma-separated list of globs that should be ignored by the file
-monitor.  Default: '*~,.#*,*#,*.swp,SCCS,.svn,4913,.gitignore'
-
+\fBlisten_all\fR
+This setting tells the server to listen on all available interfaces\. The default is to only listen on those interfaces specified by the bcfg2 setting in the components section of \fBbcfg2\.conf\fR\.
+.
 .TP
-.B listen_all
-This setting tells the server to listen on all available interfaces. The
-default is to only listen on those interfaces specified by the bcfg2
-setting in the components section of bcfg2.conf.
-
+\fBplugins\fR
+A comma\-delimited list of enabled server plugins\. Currently available plugins are:
+.
+.IP
+\fBAccount\fR, \fBActions\fR, \fBBB\fR, \fBBase\fR, \fBBundler\fR, \fBBzr\fR, \fBCfg\fR, \fBCvs\fR, \fBDarcs\fR, \fBDBStats\fR, \fBDecisions\fR, \fBDeps\fR, \fBEditor\fR, \fBFossil\fR, \fBGit\fR, \fBGroupPatterns\fR, \fBHg\fR, \fBHostbase\fR, \fBMetadata\fR, \fBNagiosGen\fR, \fBOhai\fR, \fBPackages\fR, \fBPkgmgr\fR, \fBProbes\fR, \fBProperties\fR, \fBRules\fR, \fBSGenshi\fR, \fBSnapshots\fR, \fBSSHbase\fR, \fBSvn\fR, \fBSvn2\fR, \fBTCheetah\fR, \fBTGenshi\fR, \fBTrigger\fR
+.
+.IP
+Descriptions of each plugin can be found in their respective sections below\.
+.
 .TP
-.B plugins
-A comma-delimited list of enabled server plugins. Currently available
-plugins are:
-
-\(bu
-.B Account
-The account plugin manages authentication data, including:
-
- * /etc/passwd
- * /etc/group
- * /etc/security/limits.conf
- * /etc/sudoers
- * /root/.ssh/authorized_keys
-
-\(bu
-.B Actions
-
-Action entries are commands that are executed either before bundle
-installation, after bundle installation or both. If exit status is
-observed, a failing pre-action will cause no modification of the
-enclosing bundle to be performed; all entries included in that bundle
-will not be modified. Failing actions are reported through Bcfg2's
-reporting system, so they can be centrally observed.
-
-\(bu
-.B BB
-The BB plugin maps users to machines and metadata to machines. 
-(experimental)
-
-\(bu
-.B Base
-A structure plugin that provides the ability to add lists of unrelated
-entries into client configuration entry inventories. Base works much
-like Bundler in its file format. This structure plugin is good for
-the pile of independent configs needed for most actual systems.
-
-\(bu
-.B Bundler
-Bundler is used to describe groups of inter-dependent configuration
-entries, such as the combination of packages, configuration files,
-and service activations that comprise typical Unix daemons. Bundles
-are used to add groups of configuration entries to the inventory of
-client configurations, as opposed to describing particular versions
-of those
-entries.
-
-\(bu
-.B Bzr
-The Bzr plugin allows you to track changes to your Bcfg2 repository
-using a GNU Bazaar version control backend. Currently, it enables
-you to get revision information out of your repository for reporting
-purposes.
-
-\(bu
-.B Cfg
-The Cfg plugin provides a repository to describe configuration file
-contents for clients. In its simplest form, the Cfg repository is
-just a directory tree modeled off of the directory tree on your client
-machines.
-
-\(bu
-.B Cvs
-The Cvs plugin allows you to track changes to your Bcfg2 repository
-using a Concurrent version control backend. Currently, it enables you
-to get revision information out of your repository for reporting
-purposes. (experimental)
-
-\(bu
-.B Darcs
-The Darcs plugin allows you to track changes to your Bcfg2 repository
-using a Darcs version control backend. Currently, it enables you to
-get revision information out of your repository for reporting purposes.
-(experimental)
-
-\(bu
-.B DBStats
-Direct to database statistics plugin. (0.9.6 and later)
-
-\(bu
-.B Decisions
-The Decisions plugin has support for a centralized set of per-entry
-installation decisions. This approach is needed when particular
-changes are deemed "high risk"; this gives the ability to centrally
-specify these changes, but only install them on clients when
-administrator supervision is available. (0.9.6 and later)
-
-\(bu
-.B Deps
-The Deps plugin allows you to make a series of assertions like
-"Package X requires Package Y (and optionally also Package Z etc.)"
-
-\(bu
-.B Editor
-The Editor plugin allows you to partially manage configuration for
-a file. Its use is not recommended and not well documented.
-
-\(bu
-.B Fossil
-The Fossil plugin allows you to track changes to your Bcfg2 repository
-using a Fossil SCM version control backend. Currently, it enables
-you to get revision information out of your repository for reporting
-purposes.
-
-\(bu
-.B Git
-The Git plugin allows you to track changes to your Bcfg2 repository
-using a Git version control backend. Currently, it enables you to
-get revision information out of your repository for reporting purposes.
-
-\(bu
-.B GroupPatterns
-The GroupPatterns plugin is a connector that can assign clients group
-membership based on patterns in client hostnames.
-
-\(bu
-.B Hg
-The Hg plugin allows you to track changes to your Bcfg2 repository
-using a Mercurial version control backend. Currently, it enables you
-to get revision information out of your repository for reporting
-purposes. (experimental)
-
-\(bu
-.B Hostbase
-The Hostbase plugin is an IP management system built on top of Bcfg2.
-
-\(bu
-.B Metadata
-The Metadata plugin is the primary method of specifying Bcfg2 server
-metadata.
-
-\(bu
-.B NagiosGen
-NagiosGen is a Bcfg2 plugin that dynamically generates Nagios
-configuration files based on Bcfg2 data.
-
-\(bu
-.B Ohai
-The Ohai plugin is used to detect information about the client
-operating system. The data is reported back to the server using
-JSON. (experimental)
-
-\(bu
-.B POSIXCompat
-The POSIXCompat plugin provides a compatibility layer which turns
-new-style (1.0) POSIX entries into old-style entries which are
-compatible with previous releases.
-
-\(bu
-.B Packages
-The Packages plugin is an alternative to Pkgmgr for specifying
-package entries for clients. Where Pkgmgr explicitly specifies
-package entry information, Packages delegates control of package
-version information to the underlying package manager, installing
-the latest version available from through those channels.
-
-\(bu
-.B Pkgmgr
-The Pkgmgr plugin resolves the Abstract Configuration Entity
-"Package" to a package specification that the client can use to
-detect, verify and install the specified package.
-
-\(bu
-.B Probes
-The Probes plugin gives you the ability to gather information from a
-client machine before you generate its configuration. This information
-can be used with the various templating systems to generate
-configuration based on the results.
-
-\(bu
-.B Properties
-The Properties plugin is a connector plugin that adds information
-from properties files into client metadata instances. (1.0 and later)
-
-\(bu
-.B Rules
-The Rules plugin resolves Abstract Configuration Entities to literal
-configuration entries suitable for the client drivers to consume.
-
-\(bu
-.B SGenshi (Deprecated)
-See Bundler.
-
-\(bu
-.B Snapshots
-The Snapshots plugin stores various aspects of a client's state when
-the client checks in to the server.
-
-\(bu
-.B SSHbase
-The SSHbase generator plugin manages ssh host keys (both v1 and v2)
-for hosts. It also manages the ssh_known_hosts file. It can integrate
-host keys from other management domains and similarly export its keys.
-
-\(bu
-.B Svn
-The Svn plugin allows you to track changes to your Bcfg2 repository
-using a Subversion backend. Currently, it enables you to get revision
-information out of your repository for reporting purposes.
-
-\(bu
-.B TCheetah
-The TCheetah plugin allows you to use the cheetah templating system
-to create files. It also allows you to include the results of probes
-executed on the client in the created files.
-
-\(bu
-.B TGenshi
-The TGenshi plugin allows you to use the Genshi templating system to
-create files. It also allows you to include the results of probes
-executed on the client in the created files.
-
-\(bu
-.B Trigger
-Trigger is a plugin that calls external scripts when clients are
-configured.
-
+\fBprefix\fR
+Specifies a prefix if the Bcfg2 installation isn’t placed in the default location (e\.g\. /usr/local)\.
+.
+.SS "Account Plugin"
+The account plugin manages authentication data, including the following\.
+.
+.IP "\(bu" 4
+\fB/etc/passwd\fR
+.
+.IP "\(bu" 4
+\fB/etc/group\fR
+.
+.IP "\(bu" 4
+\fB/etc/security/limits\.conf\fR
+.
+.IP "\(bu" 4
+\fB/etc/sudoers\fR
+.
+.IP "\(bu" 4
+\fB/root/\.ssh/authorized_keys\fR
+.
+.IP "" 0
+.
+.SS "BB Plugin"
+The BB plugin maps users to machines and metadata to machines\.
+.
+.SS "Base Plugin"
+A structure plugin that provides the ability to add lists of unrelated entries into client configuration entry inventories\. Base works much like Bundler in its file format\. This structure plugin is good for the pile of independent configs needed for most actual systems\.
+.
+.SS "Bundler Plugin"
+Bundler is used to describe groups of inter\-dependent configuration entries, such as the combination of packages, configuration files, and service activations that comprise typical Unix daemons\. Bundles are used to add groups of configuration entries to the inventory of client configurations, as opposed to describing particular versions of those entries\.
+.
+.SS "Bzr Plugin"
+The Bzr plugin allows you to track changes to your Bcfg2 repository using a GNU Bazaar version control backend\. Currently, it enables you to get revision information out of your repository for reporting purposes\.
+.
+.SS "Cfg Plugin"
+The Cfg plugin provides a repository to describe configuration file contents for clients\. In its simplest form, the Cfg repository is just a directory tree modeled off of the directory tree on your client machines\.
+.
+.SS "Cvs Plugin (experimental)"
+The Cvs plugin allows you to track changes to your Bcfg2 repository using a Concurrent version control backend\. Currently, it enables you to get revision information out of your repository for reporting purposes\.
+.
+.SS "Darcs Plugin (experimental)"
+The Darcs plugin allows you to track changes to your Bcfg2 repository using a Darcs version control backend\. Currently, it enables you to get revision information out of your repository for reporting purposes\.
+.
+.SS "DBStats Plugin"
+Direct to database statistics plugin\.
+.
+.SS "Decisions Plugin"
+The Decisions plugin has support for a centralized set of per\-entry installation decisions\. This approach is needed when particular changes are deemed "\fIhigh risk\fR"; this gives the ability to centrally specify these changes, but only install them on clients when administrator supervision is available\.
+.
+.SS "Deps Plugin"
+The Deps plugin allows you to make a series of assertions like "Package X requires Package Y (and optionally also Package Z etc\.)"
+.
+.SS "Editor Plugin"
+The Editor plugin attempts to allow you to partially manage configuration for a file\. Its use is not recommended and not well documented\.
+.
+.SS "Fossil Plugin"
+The Fossil plugin allows you to track changes to your Bcfg2 repository using a Fossil SCM version control backend\. Currently, it enables you to get revision information out of your repository for reporting purposes\.
+.
+.SS "Git Plugin"
+The Git plugin allows you to track changes to your Bcfg2 repository using a Git version control backend\. Currently, it enables you to get revision information out of your repository for reporting purposes\.
+.
+.SS "GroupPatterns Plugin"
+The GroupPatterns plugin is a connector that can assign clients group membership based on patterns in client hostnames\.
+.
+.SS "Hg Plugin (experimental)"
+The Hg plugin allows you to track changes to your Bcfg2 repository using a Mercurial version control backend\. Currently, it enables you to get revision information out of your repository for reporting purposes\.
+.
+.SS "Hostbase Plugin"
+The Hostbase plugin is an IP management system built on top of Bcfg2\.
+.
+.SS "Metadata Plugin"
+The Metadata plugin is the primary method of specifying Bcfg2 server metadata\.
+.
+.SS "NagiosGen Plugin"
+NagiosGen is a Bcfg2 plugin that dynamically generates Nagios configuration files based on Bcfg2 data\.
+.
+.SS "Ohai Plugin (experimental)"
+The Ohai plugin is used to detect information about the client operating system\. The data is reported back to the server using JSON\.
+.
+.SS "Packages Plugin"
+The Packages plugin is an alternative to Pkgmgr for specifying package entries for clients\. Where Pkgmgr explicitly specifies package entry information, Packages delegates control of package version information to the underlying package manager, installing the latest version available from through those channels\.
+.
+.SS "Pkgmgr Plugin"
+The Pkgmgr plugin resolves the Abstract Configuration Entity "Package" to a package specification that the client can use to detect, verify and install the specified package\.
+.
+.SS "Probes Plugin"
+The Probes plugin gives you the ability to gather information from a client machine before you generate its configuration\. This information can be used with the various templating systems to generate configuration based on the results\.
+.
+.SS "Properties Plugin"
+The Properties plugin is a connector plugin that adds information from properties files into client metadata instances\.
+.
+.SS "Rules Plugin"
+The Rules plugin provides literal configuration entries that resolve the abstract configuration entries normally found in the Bundler and Base plugins\. The literal entries in Rules are suitable for consumption by the appropriate client drivers\.
+.
+.SS "Snapshots Plugin"
+The Snapshots plugin stores various aspects of a client’s state when the client checks in to the server\.
+.
+.SS "SSHbase Plugin"
+The SSHbase generator plugin manages ssh host keys (both v1 and v2) for hosts\. It also manages the ssh_known_hosts file\. It can integrate host keys from other management domains and similarly export its keys\.
+.
+.SS "Svn Plugin"
+The Svn plugin allows you to track changes to your Bcfg2 repository using a Subversion backend\. Currently, it enables you to get revision information out of your repository for reporting purposes\.
+.
+.SS "Svn2 Plugin"
+The Svn2 plugin extends on the capabilities in the Svn plugin\. It provides Update and Commit methods which provide hooks for modifying subversion\-backed Bcfg2 repositories\.
+.
+.SS "TCheetah Plugin"
+The TCheetah plugin allows you to use the cheetah templating system to create files\. It also allows you to include the results of probes executed on the client in the created files\.
+.
+.SS "TGenshi Plugin"
+The TGenshi plugin allows you to use the Genshi templating system to create files\. It also allows you to include the results of probes executed on the client in the created files\.
+.
+.SS "Trigger Plugin"
+The Trigger plugin provides a method for calling external scripts when clients are configured\.
+.
+.SH "CLIENT OPTIONS"
+These options only affect client functionality, specified in the \fB[client]\fR section\.
+.
 .TP
-.B prefix
-Specifies a prefix if the Bcfg2 installation isn't placed in the
-default location (eg. /usr/local).
-
-.SH MDATA OPTIONS
-These options affect the default metadata settings for Paths with
-type='file'.
-
+\fBdecision\fR
+Specify the server decision list mode (whitelist or blacklist)\. (This settiing will be ignored if the client is called with the \-f option\.)
+.
 .TP
-.B owner
+\fBdrivers\fR
+Specify tool driver set to use\. This option can be used to explicitly specify the client tool drivers you want to use when the client is run\.
+.
+.TP
+\fBparanoid\fR
+Run the client in paranoid mode\.
+.
+.SH "COMMUNICATION OPTIONS"
+Specified in the \fB[communication]\fR section\. These options define settings used for client\-server communication\.
+.
+.TP
+\fBca\fR
+The path to a file containing the CA certificate\. This file is required on the server, and optional on clients\. However, if the cacert is not present on clients, the server cannot be verified\.
+.
+.TP
+\fBcertificate\fR
+The path to a file containing a PEM formatted certificate which signs the key with the ca certificate\. This setting is required on the server in all cases, and required on clients if using client certificates\.
+.
+.TP
+\fBkey\fR
+Specifies the path to a file containing the SSL Key\. This is required on the server in all cases, and required on clients if using client certificates\.
+.
+.TP
+\fBpassword\fR
+Required on both the server and clients\. On the server, sets the password clients need to use to communicate\. On a client, sets the password to use to connect to the server\.
+.
+.TP
+\fBprotocol\fR
+Communication protocol to use\. Defaults to xmlrpc/ssl\.
+.
+.TP
+\fBretries\fR
+A client\-only option\. Number of times to retry network communication\.
+.
+.TP
+\fBserverCommonNames\fR
+A client\-only option\. A colon\-separated list of Common Names the client will accept in the SSL certificate presented by the server\.
+.
+.TP
+\fBuser\fR
+A client\-only option\. The UUID of the client\.
+.
+.SH "COMPONENT OPTIONS"
+Specified in the \fB[components]\fR section\.
+.
+.TP
+\fBbcfg2\fR
+URL of the server\. On the server this specifies which interface and port the server listens on\. On the client, this specifies where the client will attempt to contact the server\.
+.
+.IP
+e\.g\. \fBbcfg2 = https://10\.3\.1\.6:6789\fR
+.
+.TP
+\fBencoding\fR
+Text encoding of configuration files\. Defaults to UTF\-8\.
+.
+.SH "LOGGING OPTIONS"
+Specified in the \fB[logging]\fR section\. These options control the server logging functionality\.
+.
+.TP
+\fBpath\fR
+Server log file path\.
+.
+.SH "MDATA OPTIONS"
+These options affect the default metadata settings for Paths with type=’file’\.
+.
+.TP
+\fBowner\fR
 Global owner for Paths (defaults to root)
-
+.
 .TP
-.B group
+\fBgroup\fR
 Global group for Paths (defaults to root)
-
+.
 .TP
-.B perms
+\fBperms\fR
 Global permissions for Paths (defaults to 644)
-
+.
 .TP
-.B paranoid
+\fBparanoid\fR
 Global paranoid settings for Paths (defaults to false)
-
+.
 .TP
-.B sensitive
+\fBsensitive\fR
 Global sensitive settings for Paths (defaults to false)
-
-
-.SH CLIENT OPTIONS
-These options only affect client functionality, specified in the
-[client] section.
-
+.
+.SH "PACKAGES OPTIONS"
+The following options are specified in the \fB[packages]\fR section of the configuration file\.
+.
 .TP
-.B decision
-Specify the server decision list mode (whitelist or blacklist). (This
-setting will be ignored if the client is called with the -f option.)
-
+\fBresolver\fR
+Enable dependency resolution\. Default is 1 (true)\.
+.
 .TP
-.B drivers
-Specify tool driver set to use. This option can be used to explicitly
-specify the client tool drivers you want to use when the client is run.
-
+\fBmetadata\fR
+Enable metadata processing\. Default is 1 (true)\. If metadata is disabled, it’s implied that resolver is also disabled\.
+.
 .TP
-.B paranoid
-Run the client in paranoid mode.
-
-
-.SH STATISTICS OPTIONS
-Server-only, specified in the [statistics] section. These options
-control the statistics collection functionality of the server.
-
+\fByum_config\fR
+The path at which to generate Yum configs\. No default\.
+.
 .TP
-.B database_engine
-The database engine used by the statistics module. One of either
-\[oq]postgresql\[cq], \[oq]mysql\[cq], \[oq]sqlite3\[cq], or
-\[oq]ado_mssql\[cq].
-
+\fBapt_config\fR
+The path at which to generate APT configs\. No default\.
+.
 .TP
-.B database_name
-The name of the database to use for statistics data. If
-\[oq]database_engine\[cq] is set to \[oq]sqlite3\[cq] this is a file
-path to sqlite file and defaults to $REPOSITORY_DIR/etc/brpt.sqlite
-
+\fBgpg_keypath\fR
+The path on the client where RPM GPG keys will be copied before they are imported on the client\. Default is \fB/etc/pki/rpm\-gpg\fR\.
+.
 .TP
-.B database_user
-User for database connections. Not used for sqlite3.
-
+\fBversion\fR
+Set the version attribute used when binding Packages\. Default is auto\.
+.
+.P
+The following options are specified in the \fB[packages:yum]\fR section of the configuration file\.
+.
 .TP
-.B database_password
-Password for database connections. Not used for sqlite3.
-
+\fBuse_yum_libraries\fR
+By default, Bcfg2 uses an internal implementation of Yum’s dependency resolution and other routines so that the Bcfg2 server can be run on a host that does not support Yum itself\. If you run the Bcfg2 server on a machine that does have Yum libraries, however, you can enable use of those native libraries in Bcfg2 by setting this to 1\.
+.
 .TP
-.B database_host
-Host for database connections. Not used for sqlite3.
-
+\fBhelper\fR
+Path to bcfg2\-yum\-helper\. By default, Bcfg2 looks first in $PATH and then in \fB/usr/sbin/bcfg2\-yum\-helper\fR for the helper\.
+.
+.P
+All other options in the \fB[packages:yum]\fR section will be passed along verbatim to the Yum configuration if you are using the native Yum library support\.
+.
+.P
+The following options are specified in the \fB[packages:pulp]\fR section of the configuration file\.
+.
 .TP
-.B database_port
-Port for database connections. Not used for sqlite3.
-
+\fBusername\fR
+The username of a Pulp user that will be used to register new clients and bind them to repositories\.
+.
 .TP
-.B time_zone
-Specify a time zone other than that used on the system. (Note that this
-will cause the bcfg2 server to log messages in this time zone as well).
-
-
-.SH COMMUNICATION OPTIONS
-Specified in the [communication] section. These options define
-settings used for client-server communication.
-
+\fBpassword\fR
+The password of a Pulp user that will be used to register new clients and bind them to repositories\.
+.
+.SH "PARANOID OPTIONS"
+These options allow for finer\-grained control of the paranoid mode on the Bcfg2 client\. They are specified in the \fB[paranoid]\fR section of the configuration file\.
+.
 .TP
-.B ca
-The path to a file containing the CA certificate. This file is
-required on the server, and optional on clients. However, if the
-cacert is not present on clients, the server cannot be verified. 
-
+\fBpath\fR
+Custom path for backups created in paranoid mode\. The default is in \fB/var/cache/bcfg2\fR\.
+.
 .TP
-.B certificate
-The path to a file containing a PEM formatted certificate which
-signs the key with the ca certificate. This setting is required on
-the server in all cases, and required on clients if using client
-certificates. 
-
+\fBmax_copies\fR
+Specify a maximum number of copies for the server to keep when running in paranoid mode\. Only the most recent versions of these copies will be kept\.
+.
+.SH "SNAPSHOTS OPTIONS"
+Specified in the \fB[snapshots]\fR section\. These options control the server snapshots functionality\.
+.
 .TP
-.B key
-Specifies the path to a file containing the SSL Key. This is required
-on the server in all cases, and required on clients if using client
-certificates. 
-
-.TP
-.B password
-Required on both the server and clients. On the server, sets the
-password clients need to use to communicate. On a client, sets the
-password to use to connect to the server.
-
-.TP
-.B protocol
-Communication protocol to use. Defaults to xmlrpc/ssl.
-
-.TP
-.B retries
-A client-only option. Number of times to retry network communication.
-
-.TP
-.B serverCommonNames
-A client-only option. A colon-separated list of Common Names the client
-will accept in the SSL certificate presented by the server.
-
-.TP
-.B user
-A client-only option. The UUID of the client.
-
-.SH PARANOID OPTIONS
-These options allow for finer-grained control of the paranoid mode
-on the Bcfg2 client. They are specified in the [paranoid] section
-of the configuration file.
-
-.TP
-.B path
-Custom path for backups created in paranoid mode. The default is in 
-/var/cache/bcfg2.
-
-.TP
-.B max_copies
-Specify a maximum number of copies for the server to keep when running
-in paranoid mode. Only the most recent versions of these copies will
-be kept.
-
-.SH COMPONENT OPTIONS
-Specified in the [components] section.
-
-.TP
-.B bcfg2
-URL of the server. On the server this specifies which interface and
-port the server listens on. On the client, this specifies where the
-client will attempt to contact the server.
-eg: bcfg2 = https://10.3.1.6:6789
-
-.TP
-.B encoding
-Text encoding of configuration files. Defaults to UTF-8.
-
-.SH LOGGING OPTIONS
-Specified in the [logging] section. These options control the server
-logging functionality.
-
-.B path
-Server log file path.
-
-.SH SNAPSHOTS OPTIONS
-Specified in the [snapshots] section. These options control the server
-snapshots functionality.
-
-.B driver
+\fBdriver\fR
 sqlite
-
-.B database
-The name of the database to use for statistics data.
-eg: $REPOSITORY_DIR/etc/bcfg2.sqlite
-
-.SH PLUGIN-SPECIFIC OPTIONS
-
-Many plugins specify their own options in bcfg2.conf; see the online
-documentation about each plugin for more information on these.
-
-.SH SEE ALSO
-.BR bcfg2(1),
-.BR bcfg2-server(8)
-
+.
+.TP
+\fBdatabase\fR
+The name of the database to use for statistics data\.
+.
+.IP
+eg: \fB$REPOSITORY_DIR/etc/bcfg2\.sqlite\fR
+.
+.SH "SSLCA OPTIONS"
+These options are necessary to configure the SSLCA plugin and can be found in the \fB[sslca_default]\fR section of the configuration file\.
+.
+.TP
+\fBconfig\fR
+Specifies the location of the openssl configuration file for your CA\.
+.
+.TP
+\fBpassphrase\fR
+Specifies the passphrase for the CA’s private key (if necessary)\. If no passphrase exists, it is assumed that the private key is stored unencrypted\.
+.
+.TP
+\fBchaincert\fR
+Specifies the location of your ssl chaining certificate\. This is used when pre\-existing certifcate hostfiles are found, so that they can be validated and only regenerated if they no longer meet the specification\. If you’re using a self signing CA this would be the CA cert that you generated\.
+.
+.SH "STATISTICS OPTIONS"
+Server\-only, specified in the \fB[statistics]\fR section\. These options control the statistics collection functionality of the server\.
+.
+.TP
+\fBdatabase_engine\fR
+The database engine used by the statistics module\. One of the following:
+.
+.IP
+\fBpostgresql\fR, \fBmysql\fR, \fBsqlite3\fR, \fBado_mssql\fR
+.
+.TP
+\fBdatabase_name\fR
+The name of the database to use for statistics data\. If ‘database_engine’ is set to ‘sqlite3’ this is a file path to sqlite file and defaults to \fB$REPOSITORY_DIR/etc/brpt\.sqlite\fR\.
+.
+.TP
+\fBdatabase_user\fR
+User for database connections\. Not used for sqlite3\.
+.
+.TP
+\fBdatabase_password\fR
+Password for database connections\. Not used for sqlite3\.
+.
+.TP
+\fBdatabase_host\fR
+Host for database connections\. Not used for sqlite3\.
+.
+.TP
+\fBdatabase_port\fR
+Port for database connections\. Not used for sqlite3\.
+.
+.TP
+\fBtime_zone\fR
+Specify a time zone other than that used on the system\. (Note that this will cause the Bcfg2 server to log messages in this time zone as well)\.
+.
+.SH "SEE ALSO"
+bcfg2(1), bcfg2\-server(8)

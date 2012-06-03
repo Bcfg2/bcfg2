@@ -1,0 +1,82 @@
+bcfg2-reports(8) -- Query reporting system for client status
+============================================================
+
+## SYNOPSIS
+
+`bcfg2-reports` [-a] [-b <NAME>] [-c] [-d] [-e <NAME>] [-h] [-m <NAME>]
+[-s <NAME>] [-x <NAME>] [--badentry=<KIND,NAME>]
+[--extraentry=<KIND,NAME>] [--fields=<ARG1,ARG2,...>]
+[--modifiedentry=<KIND,NAME>] [--sort=<ARG1,ARG2,...>] [--stale] [-v]
+
+## DESCRIPTION
+
+`bcfg2-reports` allows you to retrieve data from the database about
+clients, and the states of their current interactions. It also allows
+you to change the expired/unexpired states. The utility runs as a
+standalone application. It does, however, use the models from
+`/src/lib/Server/Reports/reports/models.py`.
+
+## OPTIONS
+
+  * `-a`:
+    Specify alternate bcfg2.conf location
+
+  * `-b` <hostname>:
+    Single host mode - shows bad entries from the current interaction of
+    *hostname*.
+
+  * `-c`:
+    Shows only clean hosts.
+
+  * `-d`:
+    Shows only dirty hosts.
+
+  * `-e` <hostname>:
+    Single host mode - shows extra entries from the current interaction
+    of *hostname*.
+
+  * `-h`:
+    Shows help and usage info about `bcfg2-reports`.
+
+  * `-m` <hostname>:
+    Single host mode - shows modified entries from the current
+    interaction of *hostname*.
+
+  * `-s` <hostname>:
+    Single host mode - shows bad, modified, and extra entries from the
+    current interaction of *hostname*.
+
+  * `-x` <hostname>:
+    Toggles expired/unexpired state of *hostname*.
+
+  * `--badentry=`<entry type, entry name>:
+    Shows only hosts whose current interaction has bad entries of type
+    *entry type* and name *entry name*. If a single argument ARG1 is
+    given, then *entry type*,*entry name* pairs will be read from a file
+    of name ARG1.
+
+  * `--extraentry=`<entry type, entry name>:
+    Shows only hosts whose current interaction has extra entries of type
+    *entry type* and name *entry name*. If a single argument ARG1 is
+    given, then *entry type*,*entry name* pairs will be read from a file
+    of name ARG1.
+
+  * `--fields=`<ARG1,ARG2,...>:
+    Only displays the fields *ARG1,ARG2,...* (name, time, state, total,
+    good, bad).
+
+  * `--modifiedentry=`<entry type, entry name>:
+    Shows only hosts whose current interaction has modified entries of
+    type *entry type* and name *entry name*. If a single argument ARG1
+    is given, then *entry type*,*entry name* pairs will be read from a
+    file of name ARG1.
+
+  * `--sort=`<ARG1,ARG2,...>:
+    Sorts output on ARG1,ARG2,... (name, time, state, total, good, bad).
+
+  * `--stale`:
+    Shows hosts which haven’t run in the last 24 hours.
+
+## SEE ALSO
+
+bcfg2(1), bcfg2-server(8)

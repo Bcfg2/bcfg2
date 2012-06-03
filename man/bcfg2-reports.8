@@ -1,94 +1,76 @@
-.TH "bcfg2-reports" 8
-.SH NAME
-bcfg2-reports \- Query reporting system for client status
-.SH SYNOPSIS
-.B bcfg2-reports
-.I [-v] 
-.SH DESCRIPTION
-.PP
-\fBbcfg2-reports\fR allows you to retrieve data from the database about
-clients, and the states of their current interactions. It also allows
-you to change the expired/unexpired states.
-The utility runs as a standalone application. It does, however, use
-the models from /src/lib/Server/Reports/reports/models.py.
-.SH OPTIONS
-.PP
-.B "\-a"
-.RS
-Shows all hosts, including expired hosts.
-.RE
-.B "\-b NAME"
-.RS
-Single-host mode \- shows bad entries from the current interaction of
-NAME. NAME is the name of the entry.
-.RE
-.B "-c\"
-.RS
-Shows only clean hosts.
-.RE
-.B "\-d"
-.RS
-Shows only dirty hosts.
-.RE
-.B "\-e NAME"
-.RS
-Single host mode \- shows extra entries from the current interaction
-of NAME. NAME is the name of the entry.
-.RE
-.B "\-h"
-.RS
-Shows help and usage info about bcfg2-reports.
-.RE
-.B "\-m NAME"
-.RS
-Single-host mode \- shows modified entries from the current interaction
-of NAME. NAME is the name of the entry.
-.RE
-.B "\-s NAME"
-.RS
-Single host mode \- shows bad, modified, and extra entries from the
-current interaction of NAME. NAME is the name of the entry.
-.RE
-.B "\-x NAME"
-.RS
-Toggles expired/unexpired state of NAME. NAME is the name of the entry.
-.RE
-.B "\-\-badentry=KIND,NAME"
-.RS
-Shows only hosts whose current interaction has bad entries in of KIND
-kind and NAME name; if a single argument ARG1 is given, then KIND,NAME
-pairs will be read from a file of name ARG1. KIND is the type of entry
-(Package, Path, Service, etc). NAME is the name of the entry. 
-.RE
-.B "\-\-extraentry=KIND,NAME"
-.RS
-Shows only hosts whose current interaction has extra entries in of KIND
-kind and NAME name; if a single argument ARG1 is given, then KIND,NAME
-pairs will be read from a file of name ARG1. KIND is the type of entry
-(Package, Path, Service, etc). NAME is the name of the entry. 
-.RE
-.B "\-\-fields=ARG1,ARG2,..."
-.RS
-Only displays the fields ARG1,ARG2,... (name, time, state, total, good,
-bad)
-.RE
-.B "\-\-modifiedentry=KIND,NAME"
-.RS
-Shows only hosts whose current interaction has modified entries in of
-KIND kind and NAME name; if a single argument ARG1 is given, then
-KIND,NAME pairs will be read from a file of name ARG1. KIND is the type
-of entry (Package, Path, Service, etc). NAME is the name of the entry.
-.RE
-.B "\-\-sort=ARG1,ARG2,..."
-.RS
-Sorts output on ARG1,ARG2,... (name, time, state, total, good, bad)
-.RE
-.B "\-\-stale"
-.RS
-Shows hosts which haven't run in the last 24 hours
-.RE
+.
+.TH "BCFG2\-REPORTS" "8" "June 2012" "" ""
+.
+.SH "NAME"
+\fBbcfg2\-reports\fR \- Query reporting system for client status
+.
+.SH "SYNOPSIS"
+\fBbcfg2\-reports\fR [\-a] [\-b \fINAME\fR] [\-c] [\-d] [\-e \fINAME\fR] [\-h] [\-m \fINAME\fR] [\-s \fINAME\fR] [\-x \fINAME\fR] [\-\-badentry=\fIKIND,NAME\fR] [\-\-extraentry=\fIKIND,NAME\fR] [\-\-fields=<ARG1,ARG2,\.\.\.>] [\-\-modifiedentry=\fIKIND,NAME\fR] [\-\-sort=<ARG1,ARG2,\.\.\.>] [\-\-stale] [\-v]
+.
+.SH "DESCRIPTION"
+\fBbcfg2\-reports\fR allows you to retrieve data from the database about clients, and the states of their current interactions\. It also allows you to change the expired/unexpired states\. The utility runs as a standalone application\. It does, however, use the models from \fB/src/lib/Server/Reports/reports/models\.py\fR\.
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-a\fR
+Specify alternate bcfg2\.conf location
+.
+.TP
+\fB\-b\fR \fIhostname\fR
+Single host mode \- shows bad entries from the current interaction of \fIhostname\fR\.
+.
+.TP
+\fB\-c\fR
+Shows only clean hosts\.
+.
+.TP
+\fB\-d\fR
+Shows only dirty hosts\.
+.
+.TP
+\fB\-e\fR \fIhostname\fR
+Single host mode \- shows extra entries from the current interaction of \fIhostname\fR\.
+.
+.TP
+\fB\-h\fR
+Shows help and usage info about \fBbcfg2\-reports\fR\.
+.
+.TP
+\fB\-m\fR \fIhostname\fR
+Single host mode \- shows modified entries from the current interaction of \fIhostname\fR\.
+.
+.TP
+\fB\-s\fR \fIhostname\fR
+Single host mode \- shows bad, modified, and extra entries from the current interaction of \fIhostname\fR\.
+.
+.TP
+\fB\-x\fR \fIhostname\fR
+Toggles expired/unexpired state of \fIhostname\fR\.
+.
+.TP
+\fB\-\-badentry=\fR\fIentry type, entry name\fR
+Shows only hosts whose current interaction has bad entries of type \fIentry type\fR and name \fIentry name\fR\. If a single argument ARG1 is given, then \fIentry type\fR,\fIentry name\fR pairs will be read from a file of name ARG1\.
+.
+.TP
+\fB\-\-extraentry=\fR\fIentry type, entry name\fR
+Shows only hosts whose current interaction has extra entries of type \fIentry type\fR and name \fIentry name\fR\. If a single argument ARG1 is given, then \fIentry type\fR,\fIentry name\fR pairs will be read from a file of name ARG1\.
+.
+.TP
+\fB\-\-fields=\fR<ARG1,ARG2,\.\.\.>
+Only displays the fields \fIARG1,ARG2,\.\.\.\fR (name, time, state, total, good, bad)\.
+.
+.TP
+\fB\-\-modifiedentry=\fR\fIentry type, entry name\fR
+Shows only hosts whose current interaction has modified entries of type \fIentry type\fR and name \fIentry name\fR\. If a single argument ARG1 is given, then \fIentry type\fR,\fIentry name\fR pairs will be read from a file of name ARG1\.
+.
+.TP
+\fB\-\-sort=\fR<ARG1,ARG2,\.\.\.>
+Sorts output on ARG1,ARG2,\.\.\. (name, time, state, total, good, bad)\.
+.
+.TP
+\fB\-\-stale\fR
+Shows hosts which haven’t run in the last 24 hours\.
+.
 .SH "SEE ALSO"
-.BR bcfg2(1),
-.BR bcfg2-server(8)
-.SH "BUGS"
-None currently known
+bcfg2(1), bcfg2\-server(8)

@@ -1,58 +1,48 @@
-.TH "bcfg2-server" 8
-.SH NAME
-bcfg2-server \- Server for client configuration specifications
-.SH SYNOPSIS
-.B bcfg2-server
-.I [-D <pidfile>] [-d] [-v] [-C <Client>]
-.SH DESCRIPTION
-.PP
-.B bcfg2-server
-This daemon serves configurations to clients based on the data in its 
-repository. 
-.SH OPTIONS
-.PP
-.B \-d 
-.RS
-Run bcfg2 in debug mode.
-.RE
-.B \-v
-.RS
-Run bcfg2 in verbose mode.
-.RE
-.B "\-C <ConfigFile Path>" 
-.RS
-Use an alternative path for bcfg2.conf. The default is /etc/bcfg2.conf
-.RE
-.B \-D 
-.RS
-Daemonize, placing the program pid in the specified pidfile.
-.RE
-.B \-o <LogFile Path>
-.RS
-Writes a log to the specified path.
-.RE
-.B \-E <encoding>
-.RS
-Unicode encoding of config files.
-.RE
-.B \-x <password>
-.RS
-Set server password.
-.RE
-.B \-S <server url>
-.RS
-Set server address.
-.RE
-.B \-Q <repo path>
-.RS
-Set repository path.
-.RE
-.B \-\-ssl\-key=<ssl key>
-.RS
-Set path to SSL key.
-.RE
+.
+.TH "BCFG2\-SERVER" "8" "June 2012" "" ""
+.
+.SH "NAME"
+\fBbcfg2\-server\fR \- Server for client configuration specifications
+.
+.SH "SYNOPSIS"
+\fBbcfg2\-server\fR [\-d] [\-v] [\-C \fIconfigfile\fR] [\-D \fIpidfile\fR] [\-E \fIencoding\fR] [\-Q \fIrepo path\fR] [\-S \fIserver url\fR] [\-o \fIlogfile\fR] [\-x \fIpassword\fR] [\-\-ssl\-key=\fIssl key\fR]
+.
+.SH "DESCRIPTION"
+\fBbcfg2\-server\fR is the daemon component of Bcfg2 which serves configurations to clients based on the data in its repository\.
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-C\fR \fIconfigfile\fR
+Specify alternate bcfg2\.conf location\.
+.
+.TP
+\fB\-D\fR \fIpidfile\fR
+Daemonize, placing the program pid in the specified pidfile\.
+.
+.TP
+\fB\-E\fR \fIencoding\fR
+Specify alternate encoding (default is UTF\-8)\.
+.
+.TP
+\fB\-Q\fR \fIrepo path\fR
+Set repository path\.
+.
+.TP
+\fB\-S\fR \fIserver url\fR
+Set server address\.
+.
+.TP
+\fB\-d\fR
+Run \fBbcfg2\-server\fR in debug mode\.
+.
+.TP
+\fB\-v\fR
+Run \fBbcfg2\-server\fR in verbose mode\.
+.
+.TP
+\fB\-\-ssl\-key=\fR\fIssl key\fR
+Set path to SSL key\.
+.
 .SH "SEE ALSO"
-.BR bcfg2(1),
-.BR bcfg2-lint(8)
-.SH "BUGS"
-None currently known
+bcfg2(1), bcfg2\-lint(8)

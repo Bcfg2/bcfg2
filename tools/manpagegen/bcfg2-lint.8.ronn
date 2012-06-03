@@ -1,0 +1,119 @@
+bcfg2-lint(8) -- Check Bcfg2 specification for validity, common mistakes, and style
+===================================================================================
+
+## SYNOPSIS
+
+`bcfg2-lint` [<options>] [<plugin> [<plugin>...]]
+
+## DESCRIPTION
+
+`bcfg2-lint` checks the Bcfg2 specification for schema validity, common
+mistakes, and other criteria. It can be quite helpful in finding typos
+or malformed data.
+
+`bcfg2-lint` exits with a return value of 2 if errors were found, and 3
+if warnings (but no errors) were found. Any other non-0 exit value
+denotes some failure in the script itself.
+
+`bcfg2-lint` is a rewrite of the older bcfg2-repo-validate tool.
+
+## OPTIONS
+
+  * `-C` <configfile>:
+    Specify alternate bcfg2.conf location.
+
+  * `-Q`:
+    Specify the server repository path.
+
+  * `-v`:
+    Be verbose.
+
+  * `--lint-config`:
+    Specify path to bcfg2-lint.conf (default `/etc/bcfg2-lint.conf`).
+
+  * `--stdin`:
+    Rather than operating on all files in the Bcfg2 specification, only
+    validate a list of files supplied on stdin. This mode is
+    particularly useful in pre-commit hooks.
+
+    This makes a few assumptions:
+
+      Metadata files will only be checked if a valid chain of XIncludes
+      can be followed all the way from clients.xml or groups.xml. Since
+      there are multiple formats of metadata stored in Metadata/ (i.e.,
+      clients and groups), there is no way to determine which sort of
+      data a file contains unless there is a valid chain of XIncludes.
+      It may be useful to always specify all metadata files should be
+      checked, even if not all of them have changed.
+
+      Property files will only be validated if both the property file
+      itself and its matching schema are included on stdin.
+
+  * `require-schema`:
+    Require property files to have matching schema files.
+
+## PLUGINS
+
+See `bcfg2-lint.conf`(5) for more information on the configuration of
+the plugins listed below.
+
+  * `Bundles`:
+    Check the specification for several issues with Bundler: bundles
+    referenced in metadata but not found in `Bundler/`; bundles whose
+    *name* attribute does not match the filename; and Genshi template
+    bundles that use the *<Group>* tag (which is not processed in
+    templated bundles).
+
+  * `Comments`:
+    Check the specification for VCS keywords and any comments that are
+    required. By default, this only checks that the *$Id$* keyword is
+    included and expanded in all files. You may specify VCS keywords to
+    check and comments to be required in the config file. (For instance,
+    you might require that every file have a "Maintainer" comment.)
+
+    In XML files, only comments are checked for the keywords and
+    comments required.
+
+  * `Duplicates`:
+    Check for several types of duplicates in the Metadata: duplicate
+    groups; duplicate clients; and multiple default groups.
+
+  * `InfoXML`:
+    Check that certain attributes are specified in `info.xml` files. By
+    default, requires that *owner*, *group*, and *perms* are specified.
+    Can also require that an `info.xml` exists for all Cfg files, and
+    that paranoid mode be enabled for all files.
+
+  * `MergeFiles`:
+    Suggest that similar probes and config files be merged into single
+    probes or TGenshi templates.
+
+  * `Pkgmgr`:
+    Check for duplicate packages specified in Pkgmgr.
+
+  * `RequiredAttrs`:
+    Check that all *Path* and *BoundPath* tags have the attributes that
+    are required by their type (e.g., a path of type symlink must have
+    name and to specified to be valid). This sort of validation is
+    beyond the scope of an XML schema.
+
+  * `Validate`:
+    Validate the Bcfg2 specification against the XML schemas.
+
+    Property files are freeform XML, but if a `.xsd` file with a
+    matching filename is provided, then schema validation will be
+    performed on property files individually as well. For instance, if
+    you have a property file named `ntp.xml` then by placing a schema
+    for that file in `ntp.xsd` schema validation will be performed on
+    `ntp.xml`.
+
+## BUGS
+
+`bcfg2-lint` may not handle some older plugins as well as it handles
+newer ones. For instance, there may be some places where it expects all
+of your configuration files to be handled by Cfg rather than by a mix of
+Cfg and TGenshi or TCheetah.
+
+## SEE ALSO
+
+bcfg2(1), bcfg2-server(8), bcfg2-lint.conf(5)

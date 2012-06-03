@@ -1,174 +1,99 @@
-.TH "bcfg2-lint" 8
-.SH NAME
-bcfg2-lint \- Check Bcfg2 specification for validity, common mistakes,
-and style
-
-.SH SYNOPSIS
-.B bcfg2-lint
-.I [OPTIONS]
-.I [<plugin> [<plugin>...]]
-
-.SH DESCRIPTION
-.PP
-.B bcfg2-lint
-This script checks the Bcfg2 specification for schema validity, common
-mistakes, and other criteria.  It can be quite helpful in finding
-typos or malformed data.
-
-.B bcfg2-lint
-exits with a return value of 2 if errors were found, and 3
-if warnings (but no errors) were found.  Any other non-0 exit value
-denotes some failure in the script itself.
-
-.B bcfg2-lint
-is a rewrite of the older
-.B bcfg2-repo-validate
-tool.
-
-.SH OPTIONS
-
-.TP
-.BR "-v" 
-Be verbose.
-
-.TP
-.BR "-C" 
-Specify path to bcfg2.conf (default /etc/bcfg2.conf)
-
-.TP
-.BR "--lint-config" 
-Specify path to bcfg2-lint.conf (default /etc/bcfg2-lint.conf)
-
-.TP
-.BR "-Q" 
-Specify path to Bcfg2 repository (default /var/lib/bcfg2)
-
-.TP
-.BR "--stdin" 
-Rather than operating on all files in the Bcfg2 specification, only
-validate a list of files supplied on stdin.  This mode is particularly
-useful in pre-commit hooks.
-
-This makes a few assumptions:
-
-Metadata files will only be checked if a valid chain of XIncludes can
-be followed all the way from clients.xml or groups.xml.  Since there
-are multiple formats of metadata stored in Metadata/ (i.e., clients
-and groups), there is no way to determine which sort of data a file
-contains unless there is a valid chain of XIncludes.  It may be useful
-to always specify all metadata files should be checked, even if not
-all of them have changed.
-
-Property files will only be validated if both the property file itself
-and its matching schema are included on stdin.
-
-.TP
-.BR "--require-schema" 
-Require property files to have matching schema files
-
-.RE
-
-.SH "PLUGINS"
-
-See
-.BR bcfg2-lint.conf(5)
-for more information on the configuration of the plugins listed below.
-
-.TP
-.BR Bundles
-Check the specification for several issues with Bundler: bundles
-referenced in metadata but not found in 
-.I Bundler/
-; bundles whose
-.I name
-attribute does not match the filename; and Genshi template bundles
-that use the
-.I <Group>
-tag (which is not processed in templated bundles).
-
-.TP
-.BR Comments
-Check the specification for VCS keywords and any comments that are
-required.  By default, this only checks that the
-.I $Id$
-keyword is included and expanded in all files.  You may specify VCS
-keywords to check and comments to be required in the config file.
-(For instance, you might require that every file have a "Maintainer"
-comment.)
-
-In XML files, only comments are checked for the keywords and comments
-required.
-
-.TP
-.BR Duplicates
-Check for several types of duplicates in the Metadata: duplicate
-groups; duplicate clients; and multiple default groups.
-
-.TP
-.BR InfoXML
-Check that certain attributes are specified in
-.I info.xml
-files.  By default, requires that
-.I owner
-,
-.I group
-, and
-.I perms
-are specified.  Can also require that an
-.I info.xml
-exists for all Cfg files, and that paranoid mode be enabled for all
-files.
-
-.TP
-.BR MergeFiles
-Suggest that similar probes and config files be merged into single
-probes or TGenshi templates.
-
-.TP
-.BR Pkgmgr
-Check for duplicate packages specified in Pkgmgr.
-
-.TP
-.BR RequiredAttrs
-Check that all
-.I <Path>
-and
-.I <BoundPath>
-tags have the attributes that are required by their type.  (E.g., a
-path of type
-.I "symlink"
-must have
-.I name
-and
-.I to
-specified to be valid.  This sort of validation is beyond the scope of
-an XML schema.
-
-.TP
-.BR Validate
-Validate the Bcfg2 specification against the XML schemas.
-
-Property files are freeform XML, but if a
-.I .xsd
-file with a matching filename is provided, then schema validation will
-be performed on property files individually as well.  For instance, if
-you have a property file named
-.I ntp.xml
-then by placing a schema for that file in
-.I ntp.xsd
-schema validation will be performed on
-.I ntp.xml
 .
-
-
-.SH "SEE ALSO"
-.BR bcfg2(1),
-.BR bcfg2-server(8),
-.BR bcfg2-lint.conf(5)
-
+.TH "BCFG2\-LINT" "8" "June 2012" "" ""
+.
+.SH "NAME"
+\fBbcfg2\-lint\fR \- Check Bcfg2 specification for validity, common mistakes, and style
+.
+.SH "SYNOPSIS"
+\fBbcfg2\-lint\fR [\fIoptions\fR] [\fIplugin\fR [\fIplugin\fR\.\.\.]]
+.
+.SH "DESCRIPTION"
+\fBbcfg2\-lint\fR checks the Bcfg2 specification for schema validity, common mistakes, and other criteria\. It can be quite helpful in finding typos or malformed data\.
+.
+.P
+\fBbcfg2\-lint\fR exits with a return value of 2 if errors were found, and 3 if warnings (but no errors) were found\. Any other non\-0 exit value denotes some failure in the script itself\.
+.
+.P
+\fBbcfg2\-lint\fR is a rewrite of the older bcfg2\-repo\-validate tool\.
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-C\fR \fIconfigfile\fR
+Specify alternate bcfg2\.conf location\.
+.
+.TP
+\fB\-Q\fR
+Specify the server repository path\.
+.
+.TP
+\fB\-v\fR
+Be verbose\.
+.
+.TP
+\fB\-\-lint\-config\fR
+Specify path to bcfg2\-lint\.conf (default \fB/etc/bcfg2\-lint\.conf\fR)\.
+.
+.TP
+\fB\-\-stdin\fR
+Rather than operating on all files in the Bcfg2 specification, only validate a list of files supplied on stdin\. This mode is particularly useful in pre\-commit hooks\.
+.
+.IP
+This makes a few assumptions:
+.
+.IP
+Metadata files will only be checked if a valid chain of XIncludes can be followed all the way from clients\.xml or groups\.xml\. Since there are multiple formats of metadata stored in Metadata/ (i\.e\., clients and groups), there is no way to determine which sort of data a file contains unless there is a valid chain of XIncludes\. It may be useful to always specify all metadata files should be checked, even if not all of them have changed\.
+.
+.IP
+Property files will only be validated if both the property file itself and its matching schema are included on stdin\.
+.
+.TP
+\fBrequire\-schema\fR
+Require property files to have matching schema files\.
+.
+.SH "PLUGINS"
+See \fBbcfg2\-lint\.conf\fR(5) for more information on the configuration of the plugins listed below\.
+.
+.TP
+\fBBundles\fR
+Check the specification for several issues with Bundler: bundles referenced in metadata but not found in \fBBundler/\fR; bundles whose \fIname\fR attribute does not match the filename; and Genshi template bundles that use the \fI\fIGroup\fR\fR tag (which is not processed in templated bundles)\.
+.
+.TP
+\fBComments\fR
+Check the specification for VCS keywords and any comments that are required\. By default, this only checks that the \fI$Id$\fR keyword is included and expanded in all files\. You may specify VCS keywords to check and comments to be required in the config file\. (For instance, you might require that every file have a "Maintainer" comment\.)
+.
+.IP
+In XML files, only comments are checked for the keywords and comments required\.
+.
+.TP
+\fBDuplicates\fR
+Check for several types of duplicates in the Metadata: duplicate groups; duplicate clients; and multiple default groups\.
+.
+.TP
+\fBInfoXML\fR
+Check that certain attributes are specified in \fBinfo\.xml\fR files\. By default, requires that \fIowner\fR, \fIgroup\fR, and \fIperms\fR are specified\. Can also require that an \fBinfo\.xml\fR exists for all Cfg files, and that paranoid mode be enabled for all files\.
+.
+.TP
+\fBMergeFiles\fR
+Suggest that similar probes and config files be merged into single probes or TGenshi templates\.
+.
+.TP
+\fBPkgmgr\fR
+Check for duplicate packages specified in Pkgmgr\.
+.
+.TP
+\fBRequiredAttrs\fR
+Check that all \fIPath\fR and \fIBoundPath\fR tags have the attributes that are required by their type (e\.g\., a path of type symlink must have name and to specified to be valid)\. This sort of validation is beyond the scope of an XML schema\.
+.
+.TP
+\fBValidate\fR
+Validate the Bcfg2 specification against the XML schemas\.
+.
+.IP
+Property files are freeform XML, but if a \fB\.xsd\fR file with a matching filename is provided, then schema validation will be performed on property files individually as well\. For instance, if you have a property file named \fBntp\.xml\fR then by placing a schema for that file in \fBntp\.xsd\fR schema validation will be performed on \fBntp\.xml\fR\.
+.
 .SH "BUGS"
-
-bcfg2-lint may not handle some older plugins as well as it handles
-newer ones.  For instance, there may be some places where it expects
-all of your configuration files to be handled by Cfg rather than by a
-mix of Cfg and TGenshi or TCheetah.
+\fBbcfg2\-lint\fR may not handle some older plugins as well as it handles newer ones\. For instance, there may be some places where it expects all of your configuration files to be handled by Cfg rather than by a mix of Cfg and TGenshi or TCheetah\.
+.
+.SH "SEE ALSO"
+bcfg2(1), bcfg2\-server(8), bcfg2\-lint\.conf(5)

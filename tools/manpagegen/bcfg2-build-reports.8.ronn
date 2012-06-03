@@ -1,0 +1,34 @@
+bcfg2-build-reports(8) -- Generate state reports for Bcfg2 clients
+==================================================================
+
+## SYNOPSIS
+
+`bcfg2-build-reports` [<-A>] [<-c>] [<-s>] [<-N>]
+
+## DESCRIPTION
+
+`bcfg2-build-reports` is used to build all client state reports. See the
+Bcfg2 manual for report setup information.
+
+## OPTIONS
+
+  * `-A`:
+    Displays all data.
+
+  * `-c` <configuration file>:
+    Specify an alternate report configuration path. The default is
+    repo/etc/reports-configuration.xml.
+
+  * `-h`:
+    Produce a help message.
+
+  * `-s` <statistics path>:
+    Use an alternative path for the statistics file. The default is
+    repo/etc/statistics.xml.
+
+  * `-N`:
+    No pinging.
+
+## SEE ALSO
+
+bcfg2(1), bcfg2-server(8)

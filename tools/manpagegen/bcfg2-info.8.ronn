@@ -1,0 +1,110 @@
+bcfg2-info(8) -- Creates a local version of the Bcfg2 server core for state observation
+=======================================================================================
+
+## SYNOPSIS
+
+`bcfg2-info` [<-C configfile>] [-E <encoding>] [-Q <repository path>]
+[-h] [-p] [-x <password>] [<mode>] [<mode args>] [<mode options>]
+
+## DESCRIPTION
+
+`bcfg2-info` instantiates an instance of the Bcfg2 core for data
+examination and debugging purposes.
+
+## OPTIONS
+
+  * `-C` <configfile>:
+    Specify alternate bcfg2.conf location
+
+  * `-E` <encoding>:
+    Specify the encoding of config files.
+
+  * `-Q` <repository path>:
+    Specify the server repository path.
+
+  * `-d`:
+    Run in debug mode.
+
+  * `-h`:
+    Give a bit of help about the command line arguments and options.
+    After this bcfg2-info exits.
+
+  * `-p`:
+    Specify a profile.
+
+  * `-x` <password>:
+    Set the communication password.
+
+## MODES
+
+
+  * `build` <hostname> <filename>:
+    Build config for hostname, writing to filename.
+
+  * `buildall` <directory>:
+    Build configs for all clients in directory.
+
+  * `buildallfile` <directory> <filename> [<hostnames>]:
+    Build config file for all clients in directory.
+
+  * `buildbundle` <filename> <hostname>:
+    Build bundle for hostname (not written to disk). If filename is a
+    bundle template, it is rendered.
+
+  * `builddir` <hostname> <dirname>:
+    Build config for hostname, writing separate files to dirname.
+
+  * `buildfile` [--altsrc=<altsrc>] <filename> <hostname>:
+    Build config file for hostname (not written to disk).
+
+  * `bundles`:
+    Print out group/bundle information.
+
+  * `clients`:
+    Print out client/profile information.
+
+  * `config`:
+    Print out the configuration of the Bcfg2 server.
+
+  * `debug`:
+    Shell out to native python interpreter.
+
+  * `event_debug`:
+    Display filesystem events as they are processed.
+
+  * `groups`:
+    List groups.
+
+  * `help`:
+    Print the list of available commands.
+
+  * `mappings` [<entry type>] [<entry name>]:
+    Print generator mappings for optional type and name.
+
+  * `packageresolve` <hostname> <package> [<package>...]:
+    Resolve the specified set of packages.
+
+  * `packagesources` <hostname>:
+    Show package sources.
+
+  * `profile` <command> <args>:
+    Profile a single bcfg2-info command.
+
+  * `quit`:
+    Exit bcfg2-info command line.
+
+  * `showentries` <hostname> <type>:
+    Show abstract configuration entries for a given host.
+
+  * `showclient` <client1> <client2>:
+    Show metadata for given hosts.
+
+  * `update`:
+    Process pending file events.
+
+  * `version`:
+    Print version of this tool.
+
+## SEE ALSO
+
+bcfg2(1), bcfg2-server(8)

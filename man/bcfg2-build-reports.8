@@ -1,40 +1,36 @@
-.TH "bcfg2-build-reports" 8
-.SH NAME
-bcfg2-build-reports \- Generate state reports for Bcfg2 clients
-.SH SYNOPSIS
-.B bcfg2-build-reports
-.I [-A] [-c] [-s] [-N]
-.SH DESCRIPTION
-.PP
-.B bcfg2-build-reports
-Build all client state reports. See the Bcfg2 manual for report setup
-information.
-.SH OPTIONS
-.PP
-.B "\-A"
-.RS
-Displays all data.
-.RE
-.B "\-c <configuration file>"
-.RS
-Specify an alternate report configuration path. The default is
-repo/etc/reports-configuration.xml.
-.RE
-.B "\-h"
-.RS
-Produce a help message.
-.RE
-.B "\-s <statistics Path>"
-.RS
-Use an alternative path for the statistics file. The default is
-repo/etc/statistics.xml
-.RE
-.B "\-N"
-.RS
-No pinging.
-.RE
+.
+.TH "BCFG2\-BUILD\-REPORTS" "8" "June 2012" "" ""
+.
+.SH "NAME"
+\fBbcfg2\-build\-reports\fR \- Generate state reports for Bcfg2 clients
+.
+.SH "SYNOPSIS"
+\fBbcfg2\-build\-reports\fR [\fI\-A\fR] [\fI\-c\fR] [\fI\-s\fR] [\fI\-N\fR]
+.
+.SH "DESCRIPTION"
+\fBbcfg2\-build\-reports\fR is used to build all client state reports\. See the Bcfg2 manual for report setup information\.
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-A\fR
+Displays all data\.
+.
+.TP
+\fB\-c\fR \fIconfiguration file\fR
+Specify an alternate report configuration path\. The default is repo/etc/reports\-configuration\.xml\.
+.
+.TP
+\fB\-h\fR
+Produce a help message\.
+.
+.TP
+\fB\-s\fR \fIstatistics path\fR
+Use an alternative path for the statistics file\. The default is repo/etc/statistics\.xml\.
+.
+.TP
+\fB\-N\fR
+No pinging\.
+.
 .SH "SEE ALSO"
-.BR bcfg(1),
-.BR bcfg2-server(8)
-.SH "BUGS"
-None currently known
+bcfg2(1), bcfg2\-server(8)

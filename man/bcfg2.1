@@ -1,180 +1,167 @@
-.TH "bcfg2" 1
-.SH NAME
-bcfg2 \- reconfigure machine based on settings in Bcfg2
-.SH SYNOPSIS
-.B bcfg2
-.I [\-d] [\-v] [\-p] [\-c cache file] [\-e] [\-f config file] [\-I] [\-q] [\-z] [\-b bundle] [\-r removal mode] [\-\-ca\-cert=file] [\-\-ssl\-cns=list] [\-\-ssl\-cert=file] [\-\-ssl\-key=file]
-.SH DESCRIPTION
+.
+.TH "BCFG2" "1" "June 2012" "" ""
+.
+.SH "NAME"
+\fBbcfg2\fR \- Bcfg2 client tool
+.
+.SH "SYNOPSIS"
+\fBbcfg2\fR [\fIoptions\fR][\fI\.\.\.\fR]
+.
+.SH "DESCRIPTION"
+\fBbcfg2\fR runs the Bcfg2 configuration process on the current host\. This process consists of the following steps\.
+.
+.IP "\(bu" 4
+Fetch and execute probes
+.
+.IP "\(bu" 4
+Upload probe results
+.
+.IP "\(bu" 4
+Fetch the client configuration
+.
+.IP "\(bu" 4
+Check the current client state
+.
+.IP "\(bu" 4
+Attempt to install the desired configuration
+.
+.IP "\(bu" 4
+Upload statistics about the Bcfg2 execution and client state
+.
+.IP "" 0
+.
+.SH "OPTIONS"
+.
 .TP
-.BR bcfg2
-Runs the Bcfg2 configuration process on the current host. This process
-consists of first fetching and executing probes, uploading probe
-results, fetching the client configuration, checking the current
-client state, attempting to install the desired configuration, and
-finally uploading statistics about the Bcfg2 execution and client
-state.
-
-.SH OPTIONS
+\fB\-C\fR \fIconfigfile\fR
+Specify alternate bcfg2\.conf location
+.
 .TP
-.BR "\-C <configfile>"
-Specify alternate bcfg2.conf location.
-
+\fB\-D\fR [\fIdriver1\fR,\fIdriver2\fR]
+Specify a set of Bcfg2 tool drivers\.
+.
+.IP
+\fINOTE: only drivers listed will be loaded\. (e\.g\., if you do not include POSIX, you will be unable to verify/install Path entries)\.\fR
+.
 .TP
-.BR "\-D <driver1>,<driver2>"
-Specify a set of Bcfg2 tool drivers. NOTE: only drivers listed will be
-loaded. (IE, if you don't include POSIX, you will be unable to
-verify/install ConfigFiles, etc).
-
+\fB\-E\fR \fIencoding\fR
+Specify the encoding of Cfg files\.
+.
 .TP
-.BR "\-E <encoding>"
-Specify the encoding of Cfg files.
-
+\fB\-I\fR
+Run bcfg2 in interactive mode\. The user will be prompted before each change\.
+.
 .TP
-.BR "\-I"
-Run bcfg2 in interactive mode. The user will be prompted before each 
-change.
-
+\fB\-O\fR
+Omit lock check
+.
 .TP
-.BR "\-O" 
-Omit lock check.
-
-.TP 
-.BR "\-P" 
-Run bcfg2 in paranoid mode. Diffs will be logged for
-configuration files marked as paranoid by the Bcfg2 server.
-
+\fB\-P\fR
+Run bcfg2 in paranoid mode\. Diffs will be logged for configuration files marked as paranoid by the Bcfg2 server\.
+.
 .TP
-.BR "\-R <retry count>"
-Specify the number of times that the client will attempt to retry
-network communication.
-
+\fB\-R\fR \fIretry count\fR
+Specify the number of times that the client will attempt to retry network communication\.
+.
 .TP
-.BR "\-S https://server:port"
-Manually specify the server location (as opposed to using the value in
-bcfg2.conf).
-
+\fB\-S\fR \fIhttps://server:port\fR
+Manually specify the server location (as opposed to using the value in bcfg2\.conf)\.
+.
 .TP
-.BR "\-b <bundle1>:<bundle2>"
-Run bcfg2 against one or multiple bundles in the configuration.
-
+\fB\-b\fR [\fIbundle1:bundle2\fR]
+Run bcfg2 against one or multiple bundles in the configuration\.
+.
 .TP
-.BR "\-c <cachefile>"
-Cache a copy of the configuration in cachefile.
-
+\fB\-c\fR \fIcachefile\fR
+Cache a copy of the configuration in cachefile\.
+.
 .TP
-.BR "\-\-ca\-cert=<ca cert>"
-Specifiy the path to the SSL CA certificate.
-
+\fB\-\-ca\-cert=\fR\fIca cert\fR
+Specifiy the path to the SSL CA certificate\.
+.
 .TP
-.BR "\-d" 
-Run bcfg2 in debug mode.
-
-.TP 
-.BR "\-e" 
-When in verbose mode, display extra entry information (temporary until
-verbosity rework).
-
+\fB\-d\fR
+Run bcfg2 in debug mode\.
+.
 .TP
-.BR "\-f <specification path>" 
-Configure from a file rather than querying the server.
-
-.TP 
-.BR "\-h" 
-Print Usage information.
-
-.TP 
-.BR "\-k" 
-Run in bulletproof mode. This currently only affects behavior in the
-debian toolset; it calls apt\-get update and clean and
-dpkg \-\-configure \-\-pending.
-
+\fB\-e\fR
+When in verbose mode, display extra entry information (temporary until verbosity rework)\.
+.
 .TP
-.BR "\-l <whitelist|blacklist|none>"
-Run the client in the server decision list mode (unless "none" is
-specified, which can be done in order to override the decision list mode
-specified in bcfg2.conf). This approach is needed when particular
-changes are deemed "high risk". It gives the ability to centrally
-specify these changes, but only install them on clients when
-administrator supervision is available. Because collaborative
-configuration is one of the remaining hard issues in configuration
-management, these issues typically crop up in environments with several
-administrators and much configuration variety. (This setting will be
-ignored if the -f option is also specified.)
-
+\fB\-f\fR \fIspecification path\fR
+Configure from a file rather than querying the server\.
+.
 .TP
-.BR "\-n"
-Run bcfg2 in dry\-run mode. No changes will be made to the
-system. 
-
+\fB\-h\fR
+Print Usage information\.
+.
 .TP
-.BR "\-o <LogFile Path>"
-Writes a log to the specified path.
-
+\fB\-k\fR
+Run in bulletproof mode\. This currently only affects behavior in the debian toolset; it calls apt\-get update and clean and dpkg \-\-configure \-\-pending\.
+.
 .TP
-.BR "\-p <profile>" 
-Assert a profile for the current client.
-
+\fB\-l\fR \fIwhitelist|blacklist|none\fR
+Run the client in the server decision list mode (unless "none" is specified, which can be done in order to override the decision list mode specified in bcfg2\.conf)\. This approach is needed when particular changes are deemed "high risk"\. It gives the ability to centrally specify these changes, but only install them on clients when administrator supervision is available\. Because collaborative configuration is one of the remaining hard issues in configuration management, these issues typically crop up in environments with several administrators and much configuration variety\. (This setting will be ignored if the \-f option is also specified)\.
+.
 .TP
-.BR "\-q"
-Run bcfg2 in quick mode. Package checksum verification won't be
-performed. This mode relaxes the constraints of correctness, and thus
-should only be used in safe conditions.
- 
+\fB\-n\fR
+Run bcfg2 in dry\-run mode\. No changes will be made to the system\.
+.
 .TP
-.BR "\-Q"
-Run bcfg2 in "bundle quick" mode, where only entries in a bundle are 
-verified or installed. This runs much faster than -q, but doesn't provide 
-statistics to the server at all. In order for this option to work, the
--b option must also be provided. This option is incompatible with -r. 
-
+\fB\-o\fR \fIlogfile path\fR
+Writes a log to the specified path\.
+.
 .TP
-.BR "\-r <mode>" 
-Cause bcfg2 to remove extra configuration elements it detects. Mode is
-one of all, Services, or Packages. All removes all entries. Likewise,
-Services and Packages remove only the extra configuration elements of
-the respective type.
-
+\fB\-p\fR \fIprofile\fR
+Assert a profile for the current client\.
+.
 .TP
-.BR "\-s <service mode>"
-Set bcfg2 interaction level for services. Default behavior is to
-modify all services affected by reconfiguration. build mode attempts
-to stop all services started. disabled suppresses all attempts to
-modify services.
-
+\fB\-q\fR
+Run bcfg2 in quick mode\. Package checksum verification won’t be performed\. This mode relaxes the constraints of correctness, and thus should only be used in safe conditions\.
+.
 .TP
-.BR "\-\-ssl\-cert=<ssl cert>"
-Specifiy the path to the SSL certificate.
-
+\fB\-Q\fR
+Run bcfg2 in "bundle quick" mode, where only entries in a bundle are verified or installed\. This runs much faster than \-q, but doesn’t provide statistics to the server at all\. In order for this option to work, the \-b option must also be provided\. This option is incompatible with \-r\.
+.
 .TP
-.BR "\-\-ssl\-cns=<CommonName1:CommonName2 ...>"
-List of acceptable SSL server Common Names.
-
+\fB\-r\fR \fImode\fR
+Cause bcfg2 to remove extra configuration elements it detects\. Mode is one of all, Services, or Packages\. All removes all entries\. Likewise, Services and Packages remove only the extra configuration elements of the respective type\.
+.
 .TP
-.BR "\-\-ssl\-key=<ssl key>"
-Specifiy the path to the SSL key.
-
+\fB\-s\fR \fIservice mode\fR
+Set bcfg2 interaction level for services\. Default behavior is to modify all services affected by reconfiguration\. build mode attempts to stop all services started\. disabled suppresses all attempts to modify services
+.
 .TP
-.BR "\-u <user>" 
-Attempt to authenticate as 'user'.
-
+\fB\-\-ssl\-cert=\fR\fIssl cert\fR
+Specifiy the path to the SSL certificate\.
+.
 .TP
-.BR "\-x <password>" 
-Use 'password' for client communication.
-
+\fB\-\-ssl\-cns=\fR[\fICN1:CN2\fR]
+List of acceptable SSL server Common Names\.
+.
 .TP
-.BR "\-t <timeout>" 
-Set the timeout (in seconds) for client communication.  Default is 90
-seconds.
-
+\fB\-\-ssl\-key=\fR\fIssl key\fR
+Specifiy the path to the SSL key\.
+.
 .TP
-.BR "\-v"
-Run bcfg2 in verbose mode.
-
+\fB\-u\fR \fIuser\fR
+Attempt to authenticate as ’user’\.
+.
 .TP
-.BR "\-z"
-Only configure independent entries, ignore bundles.
-.RE
+\fB\-x\fR \fIpassword\fR
+Use ’password’ for client communication\.
+.
+.TP
+\fB\-t\fR \fItimeout\fR
+Set the timeout (in seconds) for client communication\. Default is 90 seconds\.
+.
+.TP
+\fB\-v\fR
+Run bcfg2 in verbose mode\.
+.
+.TP
+\fB\-z\fR
+Only configure independent entries, ignore bundles\.
+.
 .SH "SEE ALSO"
-.BR bcfg2-server(8),
-.BR bcfg2-info(8)
-.SH "BUGS"
+bcfg2\-server(8), bcfg2\-info(8)

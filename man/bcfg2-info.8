@@ -1,131 +1,134 @@
-.TH "bcfg2-info" 8
-.SH NAME
-bcfg2-info \- Creates a local version of the bcfg2 server core for
-state observation
-.SH SYNOPSIS
-.B bcfg2-info
-.I [\-C <config file>] [\-E <encoding>] [\-Q <repository path>] [\-h] [\-p] [\-x <password>]
-.I <mode>
-.I <mode args>
-.I <mode options>
-.SH DESCRIPTION
-.PP
-.B bcfg2-info
-Instantiate an instance of the Bcfg2 core for data examination and
-debugging purposes.
-.SH OPTIONS
-.PP
-.B "\-C <config file>"
-.RS
-Specify the location of the configuration file (if it is not in
-/etc/bcfg2.conf).
-.RE
-.B "\-E <encoding>"
-.RS
-Specify the encoding of config files.
-.RE
-.B "\-Q <repository path>
-.RS
-Specify the server repository path.
-.RE
-.B "\-d"
-.RS
-Run in debug mode.
-.RE
-.B "\-h"
-.RS
-Give a bit of help about the command line arguments and
-options. After this bcfg2-info exits.
-.RE
-.B "\-p"
-.RS
-Specify a profile.
-.RE
-.B "\-x <password>"
-.RS
-Set the communication password.
-.RE
-.SH MODES
-.PP
-.B build <hostname> <filename>
-.RS
-Build config for hostname, writing to filename.
-.RE
-.B builddir <hostname> <dirname>
-.RS
-Build config for hostname, writing separate files to dirname.
-.RE
-.B buildall <directory>
-.RS
-Build configs for all clients in directory.
-.RE
-.B buildbundle <filename> <hostname>
-.RS
-Build bundle for hostname (not written to disk). If filename is a bundle
-template, it is rendered.
-.RE
-.B buildfile [--altsrc=<altsrc>] <filename> <hostname>
-.RS
-Build config file for hostname (not written to disk).
-.RE
-.B bundles
-.RS
-Print out group/bundle information.
-.RE
-.B clients
-.RS
-Print out client/profile information.
-.RE
-.B config
-.RS
-Print out the configuration of the Bcfg2 server.
-.RE
-.B debug
-.RS
-Shell out to native python interpreter.
-.RE
-.B event_debug
-.RS
-Display filesystem events as they are processed.
-.RE
-.B groups
-.RS
-List groups
-.RE
-.B help
-.RS
-Print the list of available commands.
-.RE
-.B mappings <type*> <name*>
-.RS
-Print generator mappings for optional type and name.
-.RE
-.B profile <command> <args>
-.RS
-Profile a single bcfg2-info command.
-.RE
-.B quit
-.RS
-Exit bcfg2-info command line.
-.RE
-.B showentries <hostname> <type>
-.RS
-Show abstract configuration entries for a given host.
-.RE
-.B showclient <client1> <client2>
-.RS
-Show metadata for given hosts.
-.RE
-.B update
-.RS
-Process pending file events.
-.RE
-.B version
-.RS
-Print version of this tool.
-.RE
+.
+.TH "BCFG2\-INFO" "8" "June 2012" "" ""
+.
+.SH "NAME"
+\fBbcfg2\-info\fR \- Creates a local version of the Bcfg2 server core for state observation
+.
+.SH "SYNOPSIS"
+\fBbcfg2\-info\fR [\fI\-C configfile\fR] [\-E \fIencoding\fR] [\-Q \fIrepository path\fR] [\-h] [\-p] [\-x \fIpassword\fR] [\fImode\fR] [\fImode args\fR] [\fImode options\fR]
+.
+.SH "DESCRIPTION"
+\fBbcfg2\-info\fR instantiates an instance of the Bcfg2 core for data examination and debugging purposes\.
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-C\fR \fIconfigfile\fR
+Specify alternate bcfg2\.conf location
+.
+.TP
+\fB\-E\fR \fIencoding\fR
+Specify the encoding of config files\.
+.
+.TP
+\fB\-Q\fR \fIrepository path\fR
+Specify the server repository path\.
+.
+.TP
+\fB\-d\fR
+Run in debug mode\.
+.
+.TP
+\fB\-h\fR
+Give a bit of help about the command line arguments and options\. After this bcfg2\-info exits\.
+.
+.TP
+\fB\-p\fR
+Specify a profile\.
+.
+.TP
+\fB\-x\fR \fIpassword\fR
+Set the communication password\.
+.
+.SH "MODES"
+.
+.TP
+\fBbuild\fR \fIhostname\fR \fIfilename\fR
+Build config for hostname, writing to filename\.
+.
+.TP
+\fBbuildall\fR \fIdirectory\fR
+Build configs for all clients in directory\.
+.
+.TP
+\fBbuildallfile\fR \fIdirectory\fR \fIfilename\fR [\fIhostnames\fR]
+Build config file for all clients in directory\.
+.
+.TP
+\fBbuildbundle\fR \fIfilename\fR \fIhostname\fR
+Build bundle for hostname (not written to disk)\. If filename is a bundle template, it is rendered\.
+.
+.TP
+\fBbuilddir\fR \fIhostname\fR \fIdirname\fR
+Build config for hostname, writing separate files to dirname\.
+.
+.TP
+\fBbuildfile\fR [\-\-altsrc=\fIaltsrc\fR] \fIfilename\fR \fIhostname\fR
+Build config file for hostname (not written to disk)\.
+.
+.TP
+\fBbundles\fR
+Print out group/bundle information\.
+.
+.TP
+\fBclients\fR
+Print out client/profile information\.
+.
+.TP
+\fBconfig\fR
+Print out the configuration of the Bcfg2 server\.
+.
+.TP
+\fBdebug\fR
+Shell out to native python interpreter\.
+.
+.TP
+\fBevent_debug\fR
+Display filesystem events as they are processed\.
+.
+.TP
+\fBgroups\fR
+List groups\.
+.
+.TP
+\fBhelp\fR
+Print the list of available commands\.
+.
+.TP
+\fBmappings\fR [\fIentry type\fR] [\fIentry name\fR]
+Print generator mappings for optional type and name\.
+.
+.TP
+\fBpackageresolve\fR \fIhostname\fR \fIpackage\fR [\fIpackage\fR\.\.\.]
+Resolve the specified set of packages\.
+.
+.TP
+\fBpackagesources\fR \fIhostname\fR
+Show package sources\.
+.
+.TP
+\fBprofile\fR \fIcommand\fR \fIargs\fR
+Profile a single bcfg2\-info command\.
+.
+.TP
+\fBquit\fR
+Exit bcfg2\-info command line\.
+.
+.TP
+\fBshowentries\fR \fIhostname\fR \fItype\fR
+Show abstract configuration entries for a given host\.
+.
+.TP
+\fBshowclient\fR \fIclient1\fR \fIclient2\fR
+Show metadata for given hosts\.
+.
+.TP
+\fBupdate\fR
+Process pending file events\.
+.
+.TP
+\fBversion\fR
+Print version of this tool\.
+.
 .SH "SEE ALSO"
-.BR bcfg2(1),
-.BR bcfg2-server(8)
-.SH "BUGS"
-None currently known
+bcfg2(1), bcfg2\-server(8)

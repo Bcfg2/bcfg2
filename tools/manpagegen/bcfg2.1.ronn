@@ -1,0 +1,152 @@
+bcfg2(1) -- Bcfg2 client tool
+=============================
+
+## SYNOPSIS
+
+`bcfg2` [_options_][_..._]
+
+## DESCRIPTION
+
+`bcfg2` runs the Bcfg2 configuration process on the current host. This
+process consists of the following steps.
+
+* Fetch and execute probes
+* Upload probe results
+* Fetch the client configuration
+* Check the current client state
+* Attempt to install the desired configuration
+* Upload statistics about the Bcfg2 execution and client state
+
+## OPTIONS
+
+  * `-C` <configfile>:
+    Specify alternate bcfg2.conf location
+
+  * `-D` [<driver1>,<driver2>]:
+    Specify a set of Bcfg2 tool drivers.
+  
+    *NOTE: only drivers listed will be loaded. (e.g., if you do not
+    include POSIX, you will be unable to verify/install Path entries).*
+
+  * `-E` <encoding>:
+    Specify the encoding of Cfg files.
+
+  * `-I`:
+    Run bcfg2 in interactive mode. The user will be prompted before
+    each change.
+
+  * `-O`:
+    Omit lock check
+
+  * `-P`:
+    Run bcfg2 in paranoid mode. Diffs will be logged for configuration
+    files marked as paranoid by the Bcfg2 server.
+
+  * `-R` <retry count>:
+    Specify the number of times that the client will attempt to retry
+    network communication.
+
+  * `-S` <https://server:port>:
+    Manually specify the server location (as opposed to using the value
+    in bcfg2.conf).
+
+  * `-b` [_bundle1:bundle2_]:
+    Run bcfg2 against one or multiple bundles in the configuration.
+
+  * `-c` <cachefile>:
+    Cache a copy of the configuration in cachefile.
+
+  * `--ca-cert=`<ca cert>:
+    Specifiy the path to the SSL CA certificate.
+
+  * `-d`:
+    Run bcfg2 in debug mode.
+
+  * `-e`:
+    When in verbose mode, display extra entry information (temporary
+    until verbosity rework).
+
+  * `-f` <specification path>:
+    Configure from a file rather than querying the server.
+
+  * `-h`:
+    Print Usage information.
+
+  * `-k`:
+    Run in bulletproof mode. This currently only affects behavior in
+    the debian toolset; it calls apt-get update and clean and dpkg
+    --configure --pending.
+
+  * `-l` <whitelist|blacklist|none>:
+    Run the client in the server decision list mode (unless "none"
+    is specified, which can be done in order to override the decision
+    list mode specified in bcfg2.conf). This approach is needed when
+    particular changes are deemed "high risk". It gives the ability to
+    centrally specify these changes, but only install them on clients
+    when administrator supervision is available. Because collaborative
+    configuration is one of the remaining hard issues in configuration
+    management, these issues typically crop up in environments with
+    several administrators and much configuration variety. (This setting
+    will be ignored if the -f option is also specified).
+
+  * `-n`:
+    Run bcfg2 in dry-run mode. No changes will be made to the system.
+
+  * `-o` <logfile path>:
+    Writes a log to the specified path.
+
+  * `-p` <profile>:
+    Assert a profile for the current client.
+
+  * `-q`:
+    Run bcfg2 in quick mode. Package checksum verification won’t be
+    performed. This mode relaxes the constraints of correctness, and
+    thus should only be used in safe conditions.
+
+  * `-Q`:
+    Run bcfg2 in "bundle quick" mode, where only entries in a bundle are
+    verified or installed. This runs much faster than -q, but doesn’t
+    provide statistics to the server at all. In order for this option to
+    work, the -b option must also be provided. This option is incompatible
+    with -r.
+
+  * `-r` <mode>:
+    Cause bcfg2 to remove extra configuration elements it detects. Mode is
+    one of all, Services, or Packages. All removes all entries. Likewise,
+    Services and Packages remove only the extra configuration elements
+    of the respective type.
+
+  * `-s` <service mode>:
+    Set bcfg2 interaction level for services. Default behavior is to
+    modify all services affected by reconfiguration. build mode attempts
+    to stop all services started. disabled suppresses all attempts to
+    modify services
+
+  * `--ssl-cert=`<ssl cert>:
+    Specifiy the path to the SSL certificate.
+
+  * `--ssl-cns=`[_CN1:CN2_]:
+    List of acceptable SSL server Common Names.
+
+  * `--ssl-key=`<ssl key>:
+    Specifiy the path to the SSL key.
+
+  * `-u` <user>:
+    Attempt to authenticate as ’user’.
+
+  * `-x` <password>:
+    Use ’password’ for client communication.
+
+  * `-t` <timeout>:
+    Set the timeout (in seconds) for client communication. Default is
+    90 seconds.
+
+  * `-v`:
+    Run bcfg2 in verbose mode.
+
+  * `-z`:
+    Only configure independent entries, ignore bundles.
+
+## SEE ALSO
+
+bcfg2-server(8), bcfg2-info(8)
