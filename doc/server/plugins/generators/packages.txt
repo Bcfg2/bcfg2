@@ -448,10 +448,10 @@ bcfg2-server process uses an external short-lived helper,
 library support.  By default, Bcfg2 looks for this helper in
 ``$PATH``, or, failing that, at ``/usr/sbin/bcfg2-yum-helper``.  If
 you have installed the helper elsewhere, you will need to configure
-that location with the ``helper`` option in the ``[yum]`` section,
-e.g.::
+that location with the ``helper`` option in the ``[packages:yum]``
+section, e.g.::
 
-    [yum]
+    [packages:yum]
     use_yum_libraries = 1
     helper = /usr/local/sbin/bcfg2-yum-helper
 

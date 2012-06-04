@@ -110,7 +110,7 @@ class YumCollection(Collection):
     @property
     def helper(self):
         try:
-            return self.config.get("yum", "helper")
+            return self.setup.cfp.get("packages:yum", "helper")
         except:
             pass
 
