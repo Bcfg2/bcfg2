@@ -1,4 +1,5 @@
 import logging
+import traceback
 from django.db.models.fields import NOT_PROVIDED
 from django.db import connection, DatabaseError, backend, models
 from django.core.management.color import no_style
@@ -230,6 +231,26 @@ class RemoveColumns(RebuildTable):
                     logger.debug("Failed to drop column %s from %s" % 
                         (column, self.model._meta.db_table))
                     raise UpdaterRoutineException
+
+
+class DropTable(UpdaterRoutine):
+    """
+    Drop a table
+    """
+    def __init__(self, table_name):
+        self.table_name = table_name
+
+    def __str__(self):
+        return "Drop table %s" % self.table_name
+
+    def run(self):
+        try:
+            cursor = connection.cursor()
+            cursor.execute('DROP TABLE %s' % _quote(self.table_name))
+        except DatabaseError:
+            logger.error("Failed to drop table: %s" % 
+                    traceback.format_exc().splitlines()[-1])
+            raise UpdaterRoutineException
 
 
 class UpdaterCallable(UpdaterRoutine):

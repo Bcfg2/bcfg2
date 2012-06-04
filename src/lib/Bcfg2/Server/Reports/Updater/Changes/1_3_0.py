@@ -6,7 +6,7 @@ The updates() method must be defined and it should return an Updater object
 """
 from Bcfg2.Server.Reports.Updater import Updater, UpdaterError
 from Bcfg2.Server.Reports.Updater.Routines import AddColumns, \
-        RemoveColumns, RebuildTable
+        RemoveColumns, RebuildTable, DropTable
 
 from Bcfg2.Server.Reports.reports.models import Reason, Interaction
 
@@ -21,6 +21,7 @@ def updates():
                'perms', 'current_perms',
                'status', 'current_status',
                'to', 'current_to']))
+    fixes.add(DropTable('reports_ping'))
 
     return fixes
 
