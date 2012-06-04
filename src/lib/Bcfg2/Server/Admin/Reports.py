@@ -41,7 +41,7 @@ from django.db import connection, transaction
 
 from Bcfg2.Server.Reports.reports.models import Client, Interaction, Entries, \
                                 Entries_interactions, Performance, \
-                                Reason, Ping
+                                Reason
 
 
 def printStats(fn):
@@ -55,7 +55,6 @@ def printStats(fn):
         start_i = Interaction.objects.count()
         start_ei = Entries_interactions.objects.count()
         start_perf = Performance.objects.count()
-        start_ping = Ping.objects.count()
 
         fn(self, *data)
 
@@ -67,8 +66,6 @@ def printStats(fn):
                       (start_ei - Entries_interactions.objects.count()))
         self.log.info("Metrics removed: %s" %
                       (start_perf - Performance.objects.count()))
-        self.log.info("Ping metrics removed: %s" %
-                      (start_ping - Ping.objects.count()))
 
     return print_stats
 
@@ -300,12 +297,6 @@ class Reports(Bcfg2.Server.Admin.Mode):
                 raise TypeError("maxdate is not a DateTime object")
             self.log.debug("Filtering by maxdate: %s" % maxdate)
             ipurge = ipurge.filter(timestamp__lt=maxdate)
-
-            # Handle ping data as well
-            ping = Ping.objects.filter(endtime__lt=maxdate)
-            if client:
-                ping = ping.filter(client=cobj)
-            ping.delete()
 
         if state:
             filtered = True
