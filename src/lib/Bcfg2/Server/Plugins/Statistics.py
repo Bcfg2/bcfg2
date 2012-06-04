@@ -7,6 +7,7 @@ import logging
 from lxml.etree import XML, SubElement, Element, XMLSyntaxError
 import lxml.etree
 import os
+import sys
 from time import asctime, localtime, time, strptime, mktime
 import threading
 
