@@ -254,9 +254,9 @@ def display_summary(request, timestamp=None):
     """
     Display a summary of the bcfg2 world
     """
-    query = Interaction.objects.interaction_per_client(timestamp).select_related()
-    node_count = query.count()
-    recent_data = query.all()
+    recent_data = Interaction.objects.interaction_per_client(timestamp) \
+        .select_related().all()
+    node_count = len(recent_data)
     if not timestamp:
         timestamp = datetime.now()
 
