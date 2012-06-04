@@ -18,13 +18,9 @@ Create the NagiosGen directory::
 
     $ mkdir /var/lib/bcfg2/NagiosGen
 
-Create an empty config.xml::
-
-    $ echo "<NagiosGen></NagiosGen>" >> /var/lib/bcfg2/NagiosGen/config.xml
-
 Create default host, and group specs in:
 
-* /var/lib/bcfg2/NagiosGen/default-host.cfg::
+``/var/lib/bcfg2/NagiosGen/default-host.cfg``::
 
     define host{
             name                            default
@@ -48,7 +44,7 @@ Create default host, and group specs in:
             retry_interval                  1
             }
 
-* /var/lib/bcfg2/NagiosGen/default-group.cfg::
+``/var/lib/bcfg2/NagiosGen/default-group.cfg``::
 
     define service{
             name                            default-service
@@ -77,7 +73,7 @@ Create default host, and group specs in:
 Create group configuration files (Named identical to Bcfg2 groups) and
 add services, and commands specific to the hostgroup (Bcfg2 group) in
 
-* /var/lib/bcfg2/NagiosGen/base-group.cfg::
+``/var/lib/bcfg2/NagiosGen/base-group.cfg``::
 
     define hostgroup{
             hostgroup_name  base
@@ -104,7 +100,7 @@ add services, and commands specific to the hostgroup (Bcfg2 group) in
             hostgroup_name                  base
             }
 
-* /var/lib/bcfg2/NagiosGen/web-server-group.cfg::
+``/var/lib/bcfg2/NagiosGen/web-server-group.cfg``::
 
     define hostgroup{
             hostgroup_name  web-server
