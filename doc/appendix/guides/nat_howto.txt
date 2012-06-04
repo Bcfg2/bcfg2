@@ -43,14 +43,14 @@ the Client entry in clients.xml will look something like this:
 
 .. code-block:: xml
 
-    <Client profile="desktop" name="test1" pingable="N"
+    <Client profile="desktop" name="test1"
      uuid='9001ec29-1531-4b16-8198-a71bea093d0a' location='floating'/>
 
 Alternatively, the Client entry can be setup like this:
 
 .. code-block:: xml
 
-    <Client profile="desktop" name="test1" pingable="N"
+    <Client profile="desktop" name="test1"
      uuid='9001ec29-1531-4b16-8198-a71bea093d0a' address='ip-address-of-NAT'/>
 
 The difference between these definitions is explained in detail in the

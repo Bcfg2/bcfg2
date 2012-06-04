@@ -37,11 +37,11 @@ describe one host. A sample file is below:
 .. code-block:: xml
 
     <Clients version="3.0">
-      <Client profile="backup-server" pingable="Y" pingtime="0" name="backup.example.com"/>
-      <Client profile="console-server" pingable="Y" pingtime="0" name="con.example.com"/>
-      <Client profile="kerberos-master" pingable="Y" pingtime="0" name="kdc.example.com"/>
-      <Client profile="mail-server" pingable="Y" pingtime="0" name="mail.example.com"/>
-      <Client name='foo' address='10.0.0.1' pingable='N' pingtime='-1'>
+      <Client profile="backup-server" name="backup.example.com"/>
+      <Client profile="console-server" name="con.example.com"/>
+      <Client profile="kerberos-master" name="kdc.example.com"/>
+      <Client profile="mail-server" name="mail.example.com"/>
+      <Client name='foo' address='10.0.0.1'>
           <Alias name='foo-mgmt' address='10.1.0.1'/>
       </Client>
     </Clients>
@@ -92,12 +92,6 @@ Additionally, the following properties can be specified:
 | password | Establishes a per-node password that   | String         |
 |          | can be used instead of the global      |                |
 |          | password.                              |                |
-+----------+----------------------------------------+----------------+
-| pingable | If the client is pingable (deprecated; | Y|N            |
-|          | for old reporting system)              |                |
-+----------+----------------------------------------+----------------+
-| pingtime | Last time the client was pingable      | String         |
-|          | (deprecated; for old reporting system) |                |
 +----------+----------------------------------------+----------------+
 | secure   | Requires the use of the per-client     | true|false     |
 |          | password for this client.              |                |
