@@ -264,18 +264,11 @@ def display_summary(request, timestamp=None):
                           bad=[],
                           modified=[],
                           extra=[],
-                          stale=[],
-                          pings=[])
+                          stale=[])
     for node in recent_data:
         if timestamp - node.timestamp > timedelta(hours=24):
             collected_data['stale'].append(node)
             # If stale check for uptime
-        try:
-            if node.client.pings.latest().status == 'N':
-                collected_data['pings'].append(node)
-        except Ping.DoesNotExist:
-            collected_data['pings'].append(node)
-            continue
         if node.bad_entry_count() > 0:
             collected_data['bad'].append(node)
         else:
@@ -305,9 +298,6 @@ def display_summary(request, timestamp=None):
     if len(collected_data['stale']) > 0:
         summary_data.append(get_dict('stale',
                                      'nodes did not run within the last 24 hours.'))
-    if len(collected_data['pings']) > 0:
-        summary_data.append(get_dict('pings',
-                                     'are down.'))
 
     return render_to_response('displays/summary.html',
         {'summary_data': summary_data, 'node_count': node_count,
