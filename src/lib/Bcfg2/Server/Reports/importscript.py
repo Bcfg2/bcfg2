@@ -92,20 +92,12 @@ def load_stats(cdata, sdata, encoding, vlevel, logger, quick=False, location='')
     [clients.__setitem__(c.name, c) \
         for c in Client.objects.all()]
 
-    pingability = {}
-    [pingability.__setitem__(n.get('name'), n.get('pingable', default='N')) \
-        for n in cdata.findall('Client')]
-
     for node in sdata.findall('Node'):
         name = node.get('name')
         c_inst, created = Client.objects.get_or_create(name=name)
         if vlevel > 0:
             logger.info("Client %s added to db" % name)
         clients[name] = c_inst
-        try:
-            pingability[name]
-        except KeyError:
-            pingability[name] = 'N'
         for statistics in node.findall('Statistics'):
             timestamp = datetime(*strptime(statistics.get('time'))[0:6])
             ilist = Interaction.objects.filter(client=c_inst,
@@ -190,24 +182,6 @@ def load_stats(cdata, sdata, encoding, vlevel, logger, quick=False, location='')
                         mperf.save()
                     mperfs.append(mperf)
             current_interaction.performance_items.add(*mperfs)
-
-    for key in list(pingability.keys()):
-        if key not in clients:
-            continue
-        try:
-            pmatch = Ping.objects.filter(client=clients[key]).order_by('-endtime')[0]
-            if pmatch.status == pingability[key]:
-                pmatch.endtime = datetime.now()
-                pmatch.save()
-                continue
-        except IndexError:
-            pass
-        Ping(client=clients[key], status=pingability[key],
-             starttime=datetime.now(),
-             endtime=datetime.now()).save()
-
-    if vlevel > 1:
-        logger.info("---------------PINGDATA SYNCED---------------------")
 
     #Clients are consistent
 
