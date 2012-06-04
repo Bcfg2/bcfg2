@@ -3,6 +3,7 @@ import difflib
 import logging
 import lxml.etree
 import platform
+import sys
 import time
 
 try:
