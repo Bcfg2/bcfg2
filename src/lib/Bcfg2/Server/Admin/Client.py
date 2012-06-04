@@ -59,6 +59,3 @@ class Client(Bcfg2.Server.Admin.MetadataCore):
             tree.xinclude()
             for node in tree.findall("//Client"):
                 print(node.attrib["name"])
-        else:
-            print("No command specified")
-            raise SystemExit(1)
