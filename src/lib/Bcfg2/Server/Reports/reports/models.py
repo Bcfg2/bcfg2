@@ -161,8 +161,8 @@ class InteractiveManager(models.Manager):
 
 class Interaction(models.Model):
     """Models each reconfiguration operation interaction between client and server."""
-    client = models.ForeignKey(Client, related_name="interactions",)
-    timestamp = models.DateTimeField()  # Timestamp for this record
+    client = models.ForeignKey(Client, related_name="interactions")
+    timestamp = models.DateTimeField(db_index=True)  # Timestamp for this record
     state = models.CharField(max_length=32)  # good/bad/modified/etc
     repo_rev_code = models.CharField(max_length=64)  # repo revision at time of interaction
     goodcount = models.IntegerField()  # of good config-items
