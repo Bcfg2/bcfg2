@@ -61,7 +61,7 @@ groups = '''<Groups version='3.0'>
 
 # Default contents of clients.xml
 clients = '''<Clients version="3.0">
-   <Client profile="basic" pingable="Y" pingtime="0" name="%s"/>
+   <Client profile="basic" name="%s"/>
 </Clients>
 '''
 

@@ -23,11 +23,6 @@ KIND_CHOICES = (
     ('Path', 'symlink'),
     ('Service', 'Service'),
 )
-PING_CHOICES = (
-    #These are possible ping states
-    ('Up (Y)', 'Y'),
-    ('Down (N)', 'N')
-)
 TYPE_BAD = 1
 TYPE_MODIFIED = 2
 TYPE_EXTRA = 3
@@ -85,17 +80,6 @@ class Client(models.Model):
 
     class Admin:
         pass
-
-
-class Ping(models.Model):
-    """Represents a ping of a client (sparsely)."""
-    client = models.ForeignKey(Client, related_name="pings")
-    starttime = models.DateTimeField()
-    endtime = models.DateTimeField()
-    status = models.CharField(max_length=4, choices=PING_CHOICES)  # up/down
-
-    class Meta:
-        get_latest_by = 'endtime'
 
 
 class InteractiveManager(models.Manager):
