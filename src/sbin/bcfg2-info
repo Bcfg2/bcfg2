@@ -260,10 +260,11 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
 
     def do_buildall(self, args):
         alist = args.split()
+        flags = []
         for arg in alist:
             if arg == '-f':
                 alist.remove('-f')
-                flags = [arg]
+                flags.append(arg)
         if len(alist) != 1:
             print("Usage: buildall [-f] <directory>")
             return
