@@ -364,7 +364,11 @@ def display_timing(request, timestamp=None):
         for inter in inters]
     for metric in Performance.objects.filter(interaction__in=list(mdict.keys())).all():
         for i in metric.interaction.all():
-            mdict[i][metric.metric] = metric.value
+            try:
+                mdict[i][metric.metric] = metric.value
+            except KeyError:
+                #In the unlikely event two interactions share a metric, ignore it
+                pass
     return render_to_response('displays/timing.html',
                               {'metrics': list(mdict.values()),
                                'timestamp': timestamp},
