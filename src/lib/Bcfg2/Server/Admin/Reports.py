@@ -81,7 +81,6 @@ class Reports(Bcfg2.Server.Admin.Mode):
                  "    init                 Initialize the database\n"
                  "    load_stats           Load statistics data\n"
                  "      -s|--stats         Path to statistics.xml file\n"
-                 "      -c|--clients-file  Path to clients.xml file\n"
                  "      -O3                Fast mode.  Duplicates data!\n"
                  "    purge                Purge records\n"
                  "      --client [n]       Client to operate on\n"
@@ -111,15 +110,12 @@ class Reports(Bcfg2.Server.Admin.Mode):
         elif args[0] in ['init', 'update']:
             try:
                 update_database()
-            #except SchemaTooOldError:
-            #    logger.error("Sc
             except UpdaterError:
                 print "Update failed"
                 raise SystemExit(-1)
         elif args[0] == 'load_stats':
             quick = '-O3' in args
             stats_file = None
-            clients_file = None
             i = 1
             while i < len(args):
                 if args[i] == '-s' or args[i] == '--stats':
@@ -127,11 +123,9 @@ class Reports(Bcfg2.Server.Admin.Mode):
                     if stats_file[0] == '-':
                         self.errExit("Invalid statistics file: %s" % stats_file)
                 elif args[i] == '-c' or args[i] == '--clients-file':
-                    clients_file = args[i + 1]
-                    if clients_file[0] == '-':
-                        self.errExit("Invalid clients file: %s" % clients_file)
+                    print "DeprecationWarning: %s is no longer used" % args[i]
                 i = i + 1
-            self.load_stats(stats_file, clients_file, self.log.getEffectiveLevel() > logging.WARNING, quick)
+            self.load_stats(stats_file, self.log.getEffectiveLevel() > logging.WARNING, quick)
         elif args[0] == 'purge':
             expired = False
             client = None
@@ -229,7 +223,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
         else:
             django.core.management.call_command(command)
 
-    def load_stats(self, stats_file=None, clientspath=None, verb=0, quick=False):
+    def load_stats(self, stats_file=None, verb=0, quick=False):
         '''Load statistics data into the database'''
         location = ''
 
@@ -248,20 +242,8 @@ class Reports(Bcfg2.Server.Admin.Mode):
         except:
             encoding = 'UTF-8'
 
-        if not clientspath:
-            try:
-                clientspath = "%s/Metadata/clients.xml" % \
-                          self.cfp.get('server', 'repository')
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-                self.errExit("Could not read bcfg2.conf; exiting")
         try:
-            clientsdata = XML(open(clientspath).read())
-        except (IOError, XMLSyntaxError):
-            self.errExit("StatReports: Failed to parse %s" % (clientspath))
-
-        try:
-            load_stats(clientsdata,
-                       statsdata,
+            load_stats(statsdata,
                        encoding,
                        verb,
                        self.log,

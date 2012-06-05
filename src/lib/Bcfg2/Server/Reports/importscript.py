@@ -87,7 +87,7 @@ def build_reason_kwargs(r_ent, encoding, logger):
                 unpruned=unpruned_entries)
 
 
-def load_stats(cdata, sdata, encoding, vlevel, logger, quick=False, location=''):
+def load_stats(sdata, encoding, vlevel, logger, quick=False, location=''):
     for node in sdata.findall('Node'):
         name = node.get('name')
         for statistics in node.findall('Statistics'):
@@ -203,18 +203,17 @@ if __name__ == '__main__':
     except GetoptError:
         mesg = sys.exc_info()[1]
         # print help information and exit:
-        print("%s\nUsage:\nimportscript.py [-h] [-v] [-u] [-d] [-S] [-C bcfg2 config file] [-c clients-file] [-s statistics-file]" % (mesg))
+        print("%s\nUsage:\nimportscript.py [-h] [-v] [-u] [-d] [-S] [-C bcfg2 config file] [-s statistics-file]" % (mesg))
         raise SystemExit(2)
 
     for o, a in opts:
         if o in ("-h", "--help"):
-            print("Usage:\nimportscript.py [-h] [-v] -c <clients-file> -s <statistics-file> \n")
+            print("Usage:\nimportscript.py [-h] [-v] -s <statistics-file> \n")
             print("h : help; this message")
             print("v : verbose; print messages on record insertion/skip")
             print("u : updates; print status messages as items inserted semi-verbose")
             print("d : debug; print most SQL used to manipulate database")
             print("C : path to bcfg2.conf config file.")
-            print("c : clients.xml file")
             print("s : statistics.xml file")
             print("S : syslog; output to syslog")
             raise SystemExit
@@ -228,7 +227,7 @@ if __name__ == '__main__':
         if o in ("-d", "--debug"):
             verb = 3
         if o in ("-c", "--clients"):
-            clientspath = a
+            print "DeprecationWarning: %s is no longer used" % o
 
         if o in ("-s", "--stats"):
             statpath = a
@@ -261,27 +260,13 @@ if __name__ == '__main__':
     except:
         encoding = 'UTF-8'
 
-    if not clientpath:
-        try:
-            clientspath = "%s/Metadata/clients.xml" % \
-                          cf.get('server', 'repository')
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            print("Could not read bcfg2.conf; exiting")
-            raise SystemExit(1)
-    try:
-        clientsdata = XML(open(clientspath).read())
-    except (IOError, XMLSyntaxError):
-        print("StatReports: Failed to parse %s" % (clientspath))
-        raise SystemExit(1)
-
     q = '-O3' in sys.argv
     # Be sure the database is ready for new schema
     try:
         update_database()
     except UpdaterError:
         raise SystemExit(1)
-    load_stats(clientsdata,
-               statsdata,
+    load_stats(statsdata,
                encoding,
                verb,
                logger,
