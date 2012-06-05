@@ -270,7 +270,8 @@ class Reports(Bcfg2.Server.Admin.Mode):
         except UpdaterError:
             self.errExit("StatReports: Database updater failed")
         except:
-            pass
+            self.errExit("failed to import stats: %s" 
+                % traceback.format_exc().splitlines()[-1])
 
     @printStats
     def purge(self, client=None, maxdate=None, state=None):
