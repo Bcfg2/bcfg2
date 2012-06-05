@@ -57,7 +57,7 @@ def _rebuild_sqlite_table(model):
         cursor.execute('DROP TABLE %s;' % tmp_tbl_name)
     except DatabaseError:
         logger.error("Failed to rebuild sqlite table %s" % table_name, exc_info=1)
-        raise UpdaterError
+        raise UpdaterRoutineException
 
 
 class UpdaterRoutineException(Exception):
