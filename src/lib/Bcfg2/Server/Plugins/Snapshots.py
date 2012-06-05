@@ -14,6 +14,7 @@ import threading
 
 # Compatibility import
 from Bcfg2.Bcfg2Py3k import Queue
+from Bcfg2.Bcfg2Py3k import u_str
 
 logger = logging.getLogger('Snapshots')
 
@@ -26,14 +27,6 @@ datafields = {
               'Directory': ['owner', 'group', 'perms'],
               'SymLink': ['to'],
              }
-
-
-# py3k compatibility
-def u_str(string):
-    if sys.hexversion >= 0x03000000:
-        return string
-    else:
-        return unicode(string)
 
 
 def build_snap_ent(entry):

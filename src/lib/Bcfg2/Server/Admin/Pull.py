@@ -2,6 +2,7 @@ import getopt
 import sys
 
 import Bcfg2.Server.Admin
+from Bcfg2.Bcfg2Py3k import input
 
 
 class Pull(Bcfg2.Server.Admin.MetadataCore):
@@ -109,11 +110,8 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                           (choice.group, choice.prio))
                 else:
                     print(" => host entry: %s" % (choice.hostname))
-                # py3k compatibility
-                try:
-                    ans = raw_input("Use this entry? [yN]: ") in ['y', 'Y']
-                except NameError:
-                    ans = input("Use this entry? [yN]: ") in ['y', 'Y']
+
+                ans = input("Use this entry? [yN]: ") in ['y', 'Y']
                 if ans:
                     return choice
             return False

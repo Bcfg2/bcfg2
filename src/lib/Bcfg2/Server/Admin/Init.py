@@ -6,9 +6,11 @@ import stat
 import string
 import sys
 import subprocess
+
 import Bcfg2.Server.Admin
 import Bcfg2.Server.Plugin
 import Bcfg2.Options
+from Bcfg2.Bcfg2Py3k import input
 
 # default config file
 config = '''
@@ -106,14 +108,6 @@ plugin_list = ['Account',
 default_plugins = Bcfg2.Options.SERVER_PLUGINS.default
 
 
-def get_input(prompt):
-    """py3k compatible function to get input"""
-    try:
-        return raw_input(prompt)
-    except NameError:
-        return input(prompt)
-
-
 def gen_password(length):
     """Generates a random alphanumeric password with length characters."""
     chars = string.letters + string.digits
@@ -147,8 +141,8 @@ def create_key(hostname, keypath, certpath, country, state, location):
 def create_conf(confpath, confdata, keypath):
     # Don't overwrite existing bcfg2.conf file
     if os.path.exists(confpath):
-        result = get_input("\nWarning: %s already exists. "
-                           "Overwrite? [y/N]: " % confpath)
+        result = input("\nWarning: %s already exists. "
+                       "Overwrite? [y/N]: " % confpath)
         if result not in ['Y', 'y']:
             print("Leaving %s unchanged" % confpath)
             return
@@ -206,8 +200,8 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_hostname(self):
         """Ask for the server hostname."""
-        data = get_input("What is the server's hostname [%s]: " %
-                            socket.getfqdn())
+        data = input("What is the server's hostname [%s]: " %
+                     socket.getfqdn())
         if data != '':
             self.shostname = data
         else:
@@ -215,21 +209,21 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_config(self):
         """Ask for the configuration file path."""
-        newconfig = get_input("Store Bcfg2 configuration in [%s]: " %
-                                self.configfile)
+        newconfig = input("Store Bcfg2 configuration in [%s]: " %
+                          self.configfile)
         if newconfig != '':
             self.configfile = os.path.abspath(newconfig)
 
     def _prompt_repopath(self):
         """Ask for the repository path."""
         while True:
-            newrepo = get_input("Location of Bcfg2 repository [%s]: " %
-                                    self.repopath)
+            newrepo = input("Location of Bcfg2 repository [%s]: " %
+                            self.repopath)
             if newrepo != '':
                 self.repopath = os.path.abspath(newrepo)
             if os.path.isdir(self.repopath):
-                response = get_input("Directory %s exists. Overwrite? [y/N]:" \
-                                        % self.repopath)
+                response = input("Directory %s exists. Overwrite? [y/N]:" \
+                                 % self.repopath)
                 if response.lower().strip() == 'y':
                     break
             else:
@@ -245,8 +239,8 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_server(self):
         """Ask for the server name."""
-        newserver = get_input("Input the server location [%s]: " %
-                                self.server_uri)
+        newserver = input("Input the server location [%s]: " %
+                          self.server_uri)
         if newserver != '':
             self.server_uri = newserver
 
@@ -258,19 +252,19 @@ class Init(Bcfg2.Server.Admin.Mode):
         prompt += ': '
         while True:
             try:
-                osidx = int(get_input(prompt))
+                osidx = int(input(prompt))
                 self.os_sel = os_list[osidx - 1][1]
                 break
             except ValueError:
                 continue
 
     def _prompt_plugins(self):
-        default = get_input("Use default plugins? (%s) [Y/n]: " %
-                            ''.join(default_plugins)).lower()
+        default = input("Use default plugins? (%s) [Y/n]: " %
+                        ''.join(default_plugins)).lower()
         if default != 'y' or default != '':
             while True:
                 plugins_are_valid = True
-                plug_str = get_input("Specify plugins: ")
+                plug_str = input("Specify plugins: ")
                 plugins = plug_str.split(',')
                 for plugin in plugins:
                     plugin = plugin.strip()
@@ -284,26 +278,26 @@ class Init(Bcfg2.Server.Admin.Mode):
         """Ask for the key details (country, state, and location)."""
         print("The following questions affect SSL certificate generation.")
         print("If no data is provided, the default values are used.")
-        newcountry = get_input("Country name (2 letter code) for certificate: ")
+        newcountry = input("Country name (2 letter code) for certificate: ")
         if newcountry != '':
             if len(newcountry) == 2:
                 self.country = newcountry
             else:
                 while len(newcountry) != 2:
-                    newcountry = get_input("2 letter country code (eg. US): ")
+                    newcountry = input("2 letter country code (eg. US): ")
                     if len(newcountry) == 2:
                         self.country = newcountry
                         break
         else:
             self.country = 'US'
 
-        newstate = get_input("State or Province Name (full name) for certificate: ")
+        newstate = input("State or Province Name (full name) for certificate: ")
         if newstate != '':
             self.state = newstate
         else:
             self.state = 'Illinois'
 
-        newlocation = get_input("Locality Name (eg, city) for certificate: ")
+        newlocation = input("Locality Name (eg, city) for certificate: ")
         if newlocation != '':
             self.location = newlocation
         else:

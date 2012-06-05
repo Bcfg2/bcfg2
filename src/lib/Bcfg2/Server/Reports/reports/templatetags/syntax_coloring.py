@@ -4,6 +4,8 @@ from django.utils.encoding import smart_unicode
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 
+from Bcfg2.Bcfg2Py3k import u_str
+
 register = template.Library()
 
 try:
@@ -14,14 +16,6 @@ try:
 
 except:
     colorize = False
-
-
-# py3k compatibility
-def u_str(string):
-    if sys.hexversion >= 0x03000000:
-        return string
-    else:
-        return unicode(string)
 
 
 @register.filter

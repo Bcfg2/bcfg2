@@ -75,6 +75,11 @@ def u_str(string, encoding=None):
         else:
             return unicode(string)
 
+try:
+    input = raw_input
+except:
+    input = input
+
 if sys.hexversion >= 0x03000000:
     from io import FileIO as file
 else:

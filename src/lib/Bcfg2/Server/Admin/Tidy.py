@@ -3,6 +3,7 @@ import re
 import socket
 
 import Bcfg2.Server.Admin
+from Bcfg2.Bcfg2Py3k import input
 
 
 class Tidy(Bcfg2.Server.Admin.Mode):
@@ -22,11 +23,7 @@ class Tidy(Bcfg2.Server.Admin.Mode):
         if '-f' in args or '-I' in args:
             if '-I' in args:
                 for name in badfiles[:]:
-                    # py3k compatibility
-                    try:
-                        answer = raw_input("Unlink file %s? [yN] " % name)
-                    except NameError:
-                        answer = input("Unlink file %s? [yN] " % name)
+                    answer = input("Unlink file %s? [yN] " % name)
                     if answer not in ['y', 'Y']:
                         badfiles.remove(name)
             for name in badfiles:

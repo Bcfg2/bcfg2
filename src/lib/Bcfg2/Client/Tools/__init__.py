@@ -6,6 +6,7 @@ from subprocess import Popen, PIPE
 import time
 
 import Bcfg2.Client.XML
+from Bcfg2.Bcfg2Py3k import input
 
 __all__ = [tool.split('.')[0] \
            for tool in os.listdir(os.path.dirname(__file__)) \
@@ -334,11 +335,7 @@ class SvcTool(Tool):
                     if self.setup['interactive']:
                         prompt = ('Restart service %s?: (y/N): ' %
                                   entry.get('name'))
-                        # py3k compatibility
-                        try:
-                            ans = raw_input(prompt)
-                        except NameError:
-                            ans = input(prompt)
+                        ans = input(prompt)
                         if ans not in ['y', 'Y']:
                             continue
                     rc = self.restart_service(entry)

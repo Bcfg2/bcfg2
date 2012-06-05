@@ -2,6 +2,7 @@
 
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Frame import matches_white_list, passes_black_list
+from Bcfg2.Bcfg2Py3k import input
 
 """
 <Action timing='pre|post|both'
@@ -44,11 +45,7 @@ class Action(Bcfg2.Client.Tools.Tool):
             if self.setup['interactive']:
                 prompt = ('Run Action %s, %s: (y/N): ' %
                           (entry.get('name'), entry.get('command')))
-                # py3k compatibility
-                try:
-                    ans = raw_input(prompt)
-                except NameError:
-                    ans = input(prompt)
+                ans = input(prompt)
                 if ans not in ['y', 'Y']:
                     return False
             if self.setup['servicemode'] == 'build':
