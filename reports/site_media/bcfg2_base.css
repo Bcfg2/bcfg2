@@ -264,3 +264,9 @@ span.nav_bar_current {
 	border: 1px solid #98DBCC;
 	padding: 1px;
 }
+#threshold_box {
+        border: 1px solid #98DBCC;
+        margin-top: 5px;
+        width: 640px;
+        padding: 5px;
+}

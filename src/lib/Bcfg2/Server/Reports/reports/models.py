@@ -275,6 +275,24 @@ class Reason(models.Model):
     def _str_(self):
         return "Reason"
 
+    def short_list(self):
+        rv = []
+        if self.current_owner or self.current_group or self.current_perms:
+            rv.append("File permissions")
+        if self.current_status:
+            rv.append("Incorrect status")
+        if self.current_to:
+            rv.append("Incorrect target")
+        if self.current_version or self.version == 'auto':
+            rv.append("Wrong version")
+        if not self.current_exists:
+            rv.append("Missing")
+        if self.current_diff or self.is_sensitive:
+            rv.append("Incorrect data")
+        if self.unpruned:
+            rv.append("Directory has extra files")
+        return rv
+
     @staticmethod
     @transaction.commit_on_success
     def prune_orphans():

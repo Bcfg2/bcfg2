@@ -47,7 +47,7 @@ def timeview(fn):
     """
     def _handle_timeview(request, **kwargs):
         """Send any posts back."""
-        if request.method == 'POST':
+        if request.method == 'POST' and request.POST.get('op', '') == 'timeview':
             cal_date = request.POST['cal_date']
             try:
                 fmt = "%Y/%m/%d"
@@ -151,6 +151,57 @@ def config_item_list(request, type, timestamp=None):
                               {'item_list_dict': item_list_dict,
                                'mod_or_bad': mod_or_bad,
                                'timestamp': timestamp},
+        context_instance=RequestContext(request))
+
+
+@timeview
+def common_problems(request, timestamp=None, threshold=None):
+    """Mine config entries"""
+
+    if request.method == 'POST':
+        try:
+            threshold = int(request.POST['threshold'])
+            view, args, kw = resolve(request.META['PATH_INFO'])
+            kw['threshold'] = threshold
+            return HttpResponseRedirect(reverse(view,
+                                                args=args,
+                                                kwargs=kw))
+        except:
+            pass
+
+    try:
+        threshold = int(threshold)
+    except:
+        threshold = 10
+
+    c_intr = Interaction.objects.get_interaction_per_client_ids(timestamp)
+    data_list = { 1: {}, 2: {}, 3: {}}
+    ldata = list(Entries_interactions.objects.filter(
+            interaction__in=c_intr).values())
+
+    entry_ids = set([x['entry_id'] for x in ldata])
+    reason_ids = set([x['reason_id'] for x in ldata])
+    for x in ldata:
+        type = x['type']
+        data_key = (x['entry_id'], x['reason_id'])
+        try:
+            data_list[type][data_key].append(x['id'])
+        except KeyError:
+            data_list[type][data_key] = [x['id']]
+    
+    entries = Entries.objects.in_bulk(entry_ids)
+    reasons = Reason.objects.in_bulk(reason_ids)
+
+    lists = []
+    for type, type_name in TYPE_CHOICES:
+        lists.append([type_name.lower(), [(entries[e[0][0]], reasons[e[0][1]], e[1])
+            for e in sorted(data_list[type].items(), key=lambda x: len(x[1]), reverse=True)
+            if len(e[1]) > threshold]])
+
+    return render_to_response('config_items/common.html',
+                              {'lists': lists,
+                               'timestamp': timestamp,
+                               'threshold': threshold},
         context_instance=RequestContext(request))
 
 

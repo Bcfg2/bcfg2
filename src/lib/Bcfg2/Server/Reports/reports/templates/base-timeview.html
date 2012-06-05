@@ -20,6 +20,9 @@ document.write(getCalendarStyles());
 {% if not timestamp %}Rendered at {% now "Y-m-d H:i" %} | {% else %}View as of {{ timestamp|date:"Y-m-d H:i" }} | {% endif %}{% spaceless %}
   <a id='cal_link' name='cal_link' href='#' onclick='showCalendar(); return false;'
       >[change]</a>
-  <form method='post' action='{{ path }}' id='cal_form' name='cal_form'><input id='cal_date' name='cal_date' type='hidden' value=''/></form>
+  <form method='post' action='{{ path }}' id='cal_form' name='cal_form'>
+    <input id='cal_date' name='cal_date' type='hidden' value=''/>
+    <input name='op' type='hidden' value='timeview'/>
+  </form>
 {% endspaceless %}
 {% endblock %}
