@@ -17,7 +17,7 @@ on the client in the created files.
 
 To begin, you will need to download and install the Genshi templating engine.
 
-To install on CentOS or RHEL 5, run::
+To install on CentOS or RHEL, run::
 
     sudo yum install python-genshi
 
