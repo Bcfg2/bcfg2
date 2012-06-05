@@ -42,18 +42,11 @@ class Systemd(Bcfg2.Client.Tools.SvcTool):
 
     def InstallService(self, entry):
         """Install Service entry."""
-        # don't take any actions for mode = 'manual'
-        if entry.get('mode', 'default') == 'manual':
-            self.logger.info("Service %s mode set to manual. Skipping "
-                             "installation." % (entry.get('name')))
-            return True
-
         if entry.get('status') == 'on':
-            pstatus = self.cmd.run(self.get_svc_command(entry, 'enable'))[0]
-            pstatus = self.cmd.run(self.get_svc_command(entry, 'start'))[0]
-
+            rv = self.cmd.run(self.get_svc_command(entry, 'enable'))[0] == 0
+            rv &= self.cmd.run(self.get_svc_command(entry, 'start'))[0] == 0
         else:
-            pstatus = self.cmd.run(self.get_svc_command(entry, 'stop'))[0]
-            pstatus = self.cmd.run(self.get_svc_command(entry, 'disable'))[0]
+            rv = self.cmd.run(self.get_svc_command(entry, 'stop'))[0] == 0
+            rv &= self.cmd.run(self.get_svc_command(entry, 'disable'))[0] == 0
 
-        return not pstatus
+        return rv

@@ -118,7 +118,14 @@ Service Tag
 +------------+-------------------------------+---------------------------------------------------------+
 | Name       | Description                   | Values                                                  |
 +============+===============================+=========================================================+
-| mode       | Per Service Mode (New in 1.0) | (manual | default | supervised | interactive_only )     |
+| restart    | Whether to restart the        | ( true | false | interactive )                          |
+|            | service when the bundle       |                                                         |
+|            | changes (new in 1.3; replaces |                                                         |
+|            | "mode" attribute)             |                                                         |
++------------+-------------------------------+---------------------------------------------------------+
+| install    | Whether to install the        | ( true | false )                                        |
+|            | service (new in 1.3; replaces |                                                         |
+|            | "mode" attribute)             |                                                         |
 +------------+-------------------------------+---------------------------------------------------------+
 | name       | Service name or regular       | String or regex                                         |
 |            | expression                    |                                                         |
@@ -139,29 +146,33 @@ Service Tag
 |            | (Upstart services only)       |                                                         |
 +------------+-------------------------------+---------------------------------------------------------+
 
-Service mode descriptions
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Service mode specification
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. versionadded:: 1.0.0
+.. versionadded:: 1.3.0
 
-* manual
+In the 1.3.0 release, the "mode" attribute has been replaced by a pair
+of attributes, "restart" and "install," which control how a service is
+handled more granularly than the old "mode" attribute.  The old "mode"
+attribute values are equivalent as follows:
 
-  * do not start/stop/restart this service
-  * service installation is not performed
++-----------------------------+------------------------------------------+
+| Mode attribute              | Equivalent                               |
++=============================+==========================================+
+| ``mode="default"``          | ``restart="true" install="true"``        |
++-----------------------------+------------------------------------------+
+| ``mode="interactive_only"`` | ``restart="interactive" install="true"`` |
++-----------------------------+------------------------------------------+
+| ``mode="supervised"``       | ``restart="true" install="true"``        |
++-----------------------------+------------------------------------------+
+| ``mode="manual"``           | ``restart="false" install="false"``      |
++-----------------------------+------------------------------------------+
 
-* interactive_only
+The default is ``restart="true" install="true"``
 
-  * only attempt to start/stop/restart this service if the client is run interactively
-  * service installation is performed
-
-* default
-
-  * perform appropriate service operations
-
-* supervised
-
-  * default and ensure service is running (or stopped) when verification is performed
-  * deprecates supervised='true'
+Previously, "supervised" could be used to start a service during the
+verification phase; this is no longer supported.  Services that have
+been stopped on a client will be started during the install phase.
 
 Service status descriptions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

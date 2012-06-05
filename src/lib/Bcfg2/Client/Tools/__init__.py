@@ -305,8 +305,7 @@ class SvcTool(Tool):
         return self.cmd.run(self.get_svc_command(service, restart_target))[0]
 
     def check_service(self, service):
-        # not supported for this driver
-        return 0
+        return self.cmd.run(self.get_svc_command(service, 'status'))[0] == 0
 
     def Remove(self, services):
         """ Dummy implementation of service removal method """
@@ -321,13 +320,12 @@ class SvcTool(Tool):
             return
 
         for entry in [ent for ent in bundle if self.handlesEntry(ent)]:
-            mode = entry.get('mode', 'default')
-            if (mode == 'manual' or
-                (mode == 'interactive_only' and
+            restart = entry.get("restart", "true")
+            if (restart.lower() == "false" or
+                (restart.lower == "interactive" and
                  not self.setup['interactive'])):
                 continue
-            # need to handle servicemode = (build|default)
-            # need to handle mode = (default|supervised)
+
             rc = None
             if entry.get('status') == 'on':
                 if self.setup['servicemode'] == 'build':
@@ -351,3 +349,19 @@ class SvcTool(Tool):
             if rc:
                 self.logger.error("Failed to manipulate service %s" %
                                   (entry.get('name')))
+
+    def Install(self, entries, states):
+        """Install all entries in sublist."""
+        for entry in entries:
+            if entry.get('install', 'true').lower() == 'false':
+                self.logger.info("Service %s installation is false. Skipping "
+                                 "installation." % (entry.get('name')))
+                continue
+            try:
+                func = getattr(self, "Install%s" % (entry.tag))
+                states[entry] = func(entry)
+                if states[entry]:
+                    self.modified.append(entry)
+            except:
+                self.logger.error("Unexpected failure of install method for entry type %s"
+                                  % (entry.tag), exc_info=1)

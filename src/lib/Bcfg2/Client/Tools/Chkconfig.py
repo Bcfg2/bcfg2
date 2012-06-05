@@ -45,29 +45,13 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         except IndexError:
             onlevels = []
 
+        pstatus = self.check_service(entry)
         if entry.get('status') == 'on':
-            status = (len(onlevels) > 0)
+            status = (len(onlevels) > 0 and pstatus)
             command = 'start'
         else:
-            status = (len(onlevels) == 0)
+            status = (len(onlevels) == 0 and not pstatus)
             command = 'stop'
-
-        if entry.get('mode', 'default') == 'supervised':
-            # turn on or off the service in supervised mode
-            pstatus = self.cmd.run('/sbin/service %s status' % \
-                                   entry.get('name'))[0]
-            needs_modification = ((command == 'start' and pstatus) or \
-                                  (command == 'stop' and not pstatus))
-            if (not self.setup.get('dryrun') and
-                self.setup['servicemode'] != 'disabled' and
-                needs_modification):
-                self.cmd.run(self.get_svc_command(entry, command))
-                # service was modified, so it failed
-                pstatus = False
-
-            # chkconfig/init.d service
-            if entry.get('status') == 'on':
-                status = status and not pstatus
 
         if not status:
             if entry.get('status') == 'on':
@@ -78,22 +62,22 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
 
     def InstallService(self, entry):
         """Install Service entry."""
-        # don't take any actions for mode='manual'
-        if entry.get('mode', 'default') == 'manual':
-            self.logger.info("Service %s mode set to manual. Skipping "
-                             "installation." % (entry.get('name')))
-            return False
         rcmd = "/sbin/chkconfig %s %s"
         self.cmd.run("/sbin/chkconfig --add %s" % (entry.attrib['name']))
         self.logger.info("Installing Service %s" % (entry.get('name')))
-        pass1 = True
+        rv = True
         if entry.get('status') == 'off':
-            rc = self.cmd.run(rcmd % (entry.get('name'),
-                                      entry.get('status')) + \
-                 " --level 0123456")[0]
-            pass1 = rc == 0
-        rc = self.cmd.run(rcmd % (entry.get('name'), entry.get('status')))[0]
-        return pass1 and rc == 0
+            rv &= self.cmd.run(rcmd + " --level 0123456" %
+                               (entry.get('name'),
+                                entry.get('status')))[0] == 0
+            if entry.get("current_status") == "on":
+                rv &= self.stop_service(entry)
+        else:
+            rv &= self.cmd.run(rcmd % (entry.get('name'),
+                                       entry.get('status')))[0] == 0
+            if entry.get("current_status") == "off":
+                rv &= self.start_service(entry)
+        return rv
 
     def FindExtra(self):
         """Locate extra chkconfig Services."""

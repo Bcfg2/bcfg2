@@ -12,6 +12,16 @@
   <xsd:import namespace="http://genshi.edgewall.org/"
               schemaLocation="genshi.xsd"/>
 
+  <xsd:simpleType name='RestartEnum'>
+    <xsd:restriction base='xsd:boolean'>
+      <xsd:enumeration value='true'/>
+      <xsd:enumeration value='false'/>
+      <xsd:enumeration value='1'/>
+      <xsd:enumeration value='0'/>
+      <xsd:enumeration value='interactive'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
   <xsd:complexType name="ServiceType">
     <xsd:choice minOccurs="0" maxOccurs="unbounded">
       <xsd:element name="User">
@@ -24,13 +34,13 @@
     </xsd:choice>
     <xsd:attribute name="name" type="xsd:string" use="required"/>
     <xsd:attribute name="status" type="StatusEnum"/>
+    <xsd:attribute name="restart" type="RestartEnum"/>
+    <xsd:attribute name="install" type="xsd:boolean"/>
     <xsd:attribute name="type" type="ServiceTypeEnum"/>
     <xsd:attribute name="port" type="xsd:string"/>
     <xsd:attribute name="protocol" type="xsd:string"/>
-    <xsd:attribute name="mode" type="xsd:string"/>
     <xsd:attribute name="custom" type="xsd:string"/>
     <xsd:attribute name="FMRI" type="xsd:string"/>
-    <xsd:attribute name="supervised" type="xsd:string"/>
     <xsd:attribute name="sequence" type="xsd:string"/>
     <xsd:attribute name="target" type="xsd:string"/>
     <xsd:attribute name="parameters" type="xsd:string"/>

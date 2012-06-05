@@ -23,22 +23,18 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
         rc = self.cmd.run(cmd % entry.get('name'))[0]
         is_enabled = (rc == 0)
 
-        if entry.get('mode', 'default') == 'supervised':
-            # check if init script exists
-            try:
-                os.stat('/etc/init.d/%s' % entry.get('name'))
-            except OSError:
-                self.logger.debug('Init script for service %s does not exist' %
-                                  entry.get('name'))
-                return False
+        # check if init script exists
+        try:
+            os.stat('/etc/init.d/%s' % entry.get('name'))
+        except OSError:
+            self.logger.debug('Init script for service %s does not exist' %
+                              entry.get('name'))
+            return False
 
-            # check if service is enabled
-            cmd = '/etc/init.d/%s status | grep started'
-            rc = self.cmd.run(cmd % entry.attrib['name'])[0]
-            is_running = (rc == 0)
-        else:
-            # we don't care
-            is_running = is_enabled
+        # check if service is enabled
+        cmd = '/etc/init.d/%s status | grep started'
+        rc = self.cmd.run(cmd % entry.attrib['name'])[0]
+        is_running = (rc == 0)
 
         if entry.get('status') == 'on' and not (is_enabled and is_running):
             entry.set('current_status', 'off')
@@ -53,19 +49,11 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
     def InstallService(self, entry):
         """
         Install Service entry
-        In supervised mode we also take care it's (not) running.
 
         """
-        # don't take any actions for mode='manual'
-        if entry.get('mode', 'default') == 'manual':
-            self.logger.info("Service %s mode set to manual. Skipping "
-                             "installation." % (entry.get('name')))
-            return False
         self.logger.info('Installing Service %s' % entry.get('name'))
         if entry.get('status') == 'on':
-            # make sure it's running if in supervised mode
-            if entry.get('mode', 'default') == 'supervised' \
-               and entry.get('current_status') == 'off':
+            if entry.get('current_status') == 'off':
                 self.start_service(entry)
             # make sure it's enabled
             cmd = '/sbin/rc-update add %s default'
@@ -73,9 +61,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
             return (rc == 0)
 
         elif entry.get('status') == 'off':
-            # make sure it's not running if in supervised mode
-            if entry.get('mode', 'default') == 'supervised' \
-               and entry.get('current_status') == 'on':
+            if entry.get('current_status') == 'on':
                 self.stop_service(entry)
             # make sure it's disabled
             cmd = '/sbin/rc-update del %s default'
