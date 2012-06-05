@@ -95,8 +95,8 @@ def load_stats(sdata, encoding, vlevel, logger, quick=False, location=''):
         
 def load_stat(client_name, statistics, encoding, vlevel, logger, quick, location):
     client, created = Client.objects.get_or_create(name=client_name)
-    if vlevel > 0:
-        logger.info("Client %s added to db" % name)
+    if created and vlevel > 0:
+        logger.info("Client %s added to db" % client_name)
 
     timestamp = datetime(*strptime(statistics.get('time'))[0:6])
     ilist = Interaction.objects.filter(client=client,
@@ -238,7 +238,7 @@ if __name__ == '__main__':
     logging.getLogger().setLevel(logging.INFO)
     Bcfg2.Logger.setup_logging('importscript.py',
                                True,
-                               syslog)
+                               syslog, level=logging.INFO)
 
     cf = ConfigParser.ConfigParser()
     cf.read([cpath])
