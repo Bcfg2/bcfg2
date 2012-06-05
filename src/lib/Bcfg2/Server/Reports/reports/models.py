@@ -85,16 +85,6 @@ class Client(models.Model):
 class InteractiveManager(models.Manager):
     """Manages interactions objects."""
 
-    def recent_interactions_dict(self, maxdate=None, active_only=True):
-        """
-        Return the most recent interactions for clients as of a date.
-
-        This method uses aggregated queries to return a ValuesQueryDict object.
-        Faster then raw sql since this is executed as a single query.
-        """
-
-        return list(self.values('client').annotate(max_timestamp=Max('timestamp')).values())
-
     def interaction_per_client(self, maxdate=None, active_only=True):
         """
         Returns the most recent interactions for clients as of a date
