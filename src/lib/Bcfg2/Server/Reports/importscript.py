@@ -88,102 +88,100 @@ def build_reason_kwargs(r_ent, encoding, logger):
 
 
 def load_stats(cdata, sdata, encoding, vlevel, logger, quick=False, location=''):
-    clients = {}
-    [clients.__setitem__(c.name, c) \
-        for c in Client.objects.all()]
-
     for node in sdata.findall('Node'):
         name = node.get('name')
-        c_inst, created = Client.objects.get_or_create(name=name)
-        if vlevel > 0:
-            logger.info("Client %s added to db" % name)
-        clients[name] = c_inst
         for statistics in node.findall('Statistics'):
-            timestamp = datetime(*strptime(statistics.get('time'))[0:6])
-            ilist = Interaction.objects.filter(client=c_inst,
-                                               timestamp=timestamp)
-            if ilist:
-                current_interaction = ilist[0]
-                if vlevel > 0:
-                    logger.info("Interaction for %s at %s with id %s already exists" % \
-                        (c_inst.id, timestamp, current_interaction.id))
-                continue
-            else:
-                newint = Interaction(client=c_inst,
-                                     timestamp=timestamp,
-                                     state=statistics.get('state',
+            load_stat(name, statistics, encoding, vlevel, logger, quick, location)
+        
+def load_stat(client_name, statistics, encoding, vlevel, logger, quick, location):
+    client, created = Client.objects.get_or_create(name=client_name)
+    if vlevel > 0:
+        logger.info("Client %s added to db" % name)
+
+    timestamp = datetime(*strptime(statistics.get('time'))[0:6])
+    ilist = Interaction.objects.filter(client=client,
+                                       timestamp=timestamp)
+    if ilist:
+        current_interaction = ilist[0]
+        if vlevel > 0:
+            logger.info("Interaction for %s at %s with id %s already exists" % \
+                (client.id, timestamp, current_interaction.id))
+        return
+    else:
+        newint = Interaction(client=client,
+                             timestamp=timestamp,
+                             state=statistics.get('state',
+                                                  default="unknown"),
+                             repo_rev_code=statistics.get('revision',
                                                           default="unknown"),
-                                     repo_rev_code=statistics.get('revision',
-                                                                  default="unknown"),
-                                     goodcount=statistics.get('good',
-                                                              default="0"),
-                                     totalcount=statistics.get('total',
-                                                               default="0"),
-                                     server=location)
-                newint.save()
-                current_interaction = newint
-                if vlevel > 0:
-                    logger.info("Interaction for %s at %s with id %s INSERTED in to db" % (c_inst.id,
-                        timestamp, current_interaction.id))
+                             goodcount=statistics.get('good',
+                                                      default="0"),
+                             totalcount=statistics.get('total',
+                                                       default="0"),
+                             server=location)
+        newint.save()
+        current_interaction = newint
+        if vlevel > 0:
+            logger.info("Interaction for %s at %s with id %s INSERTED in to db" % (client.id,
+                timestamp, current_interaction.id))
 
-            counter_fields = {TYPE_CHOICES[0]: 0,
-                              TYPE_CHOICES[1]: 0,
-                              TYPE_CHOICES[2]: 0}
-            pattern = [('Bad/*', TYPE_CHOICES[0]),
-                       ('Extra/*', TYPE_CHOICES[2]),
-                       ('Modified/*', TYPE_CHOICES[1])]
-            for (xpath, type) in pattern:
-                for x in statistics.findall(xpath):
-                    counter_fields[type] = counter_fields[type] + 1
-                    kargs = build_reason_kwargs(x, encoding, logger)
+    counter_fields = {TYPE_CHOICES[0]: 0,
+                      TYPE_CHOICES[1]: 0,
+                      TYPE_CHOICES[2]: 0}
+    pattern = [('Bad/*', TYPE_CHOICES[0]),
+               ('Extra/*', TYPE_CHOICES[2]),
+               ('Modified/*', TYPE_CHOICES[1])]
+    for (xpath, type) in pattern:
+        for x in statistics.findall(xpath):
+            counter_fields[type] = counter_fields[type] + 1
+            kargs = build_reason_kwargs(x, encoding, logger)
 
-                    try:
-                        rr = None
-                        try:
-                            rr = Reason.objects.filter(**kargs)[0]
-                        except IndexError:
-                            rr = Reason(**kargs)
-                            rr.save()
-                            if vlevel > 0:
-                                logger.info("Created reason: %s" % rr.id)
-                    except Exception:
-                        ex = sys.exc_info()[1]
-                        logger.error("Failed to create reason for %s: %s" % (x.get('name'), ex))
-                        rr = Reason(current_exists=x.get('current_exists',
-                                                         default="True").capitalize() == "True")
-                        rr.save()
-
-                    entry, created = Entries.objects.get_or_create(\
-                        name=x.get('name'), kind=x.tag)
-
-                    Entries_interactions(entry=entry, reason=rr,
-                                         interaction=current_interaction,
-                                         type=type[0]).save()
+            try:
+                rr = None
+                try:
+                    rr = Reason.objects.filter(**kargs)[0]
+                except IndexError:
+                    rr = Reason(**kargs)
+                    rr.save()
                     if vlevel > 0:
-                        logger.info("%s interaction created with reason id %s and entry %s" % (xpath, rr.id, entry.id))
+                        logger.info("Created reason: %s" % rr.id)
+            except Exception:
+                ex = sys.exc_info()[1]
+                logger.error("Failed to create reason for %s: %s" % (x.get('name'), ex))
+                rr = Reason(current_exists=x.get('current_exists',
+                                                 default="True").capitalize() == "True")
+                rr.save()
 
-            # Update interaction counters
-            current_interaction.bad_entries = counter_fields[TYPE_CHOICES[0]]
-            current_interaction.modified_entries = counter_fields[TYPE_CHOICES[1]]
-            current_interaction.extra_entries = counter_fields[TYPE_CHOICES[2]]
-            current_interaction.save()
+            entry, created = Entries.objects.get_or_create(\
+                name=x.get('name'), kind=x.tag)
 
-            mperfs = []
-            for times in statistics.findall('OpStamps'):
-                for metric, value in list(times.items()):
-                    mmatch = []
-                    if not quick:
-                        mmatch = Performance.objects.filter(metric=metric, value=value)
+            Entries_interactions(entry=entry, reason=rr,
+                                 interaction=current_interaction,
+                                 type=type[0]).save()
+            if vlevel > 0:
+                logger.info("%s interaction created with reason id %s and entry %s" % (xpath, rr.id, entry.id))
 
-                    if mmatch:
-                        mperf = mmatch[0]
-                    else:
-                        mperf = Performance(metric=metric, value=value)
-                        mperf.save()
-                    mperfs.append(mperf)
-            current_interaction.performance_items.add(*mperfs)
+    # Update interaction counters
+    current_interaction.bad_entries = counter_fields[TYPE_CHOICES[0]]
+    current_interaction.modified_entries = counter_fields[TYPE_CHOICES[1]]
+    current_interaction.extra_entries = counter_fields[TYPE_CHOICES[2]]
+    current_interaction.save()
 
-    #Clients are consistent
+    mperfs = []
+    for times in statistics.findall('OpStamps'):
+        for metric, value in list(times.items()):
+            mmatch = []
+            if not quick:
+                mmatch = Performance.objects.filter(metric=metric, value=value)
+
+            if mmatch:
+                mperf = mmatch[0]
+            else:
+                mperf = Performance(metric=metric, value=value)
+                mperf.save()
+            mperfs.append(mperf)
+    current_interaction.performance_items.add(*mperfs)
+
 
 if __name__ == '__main__':
     from sys import argv
