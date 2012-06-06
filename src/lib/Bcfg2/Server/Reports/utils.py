@@ -3,7 +3,7 @@ from django.conf.urls.defaults import *
 import re
 
 """List of filters provided by filteredUrls"""
-filter_list = ('server', 'state')
+filter_list = ('server', 'state', 'group')
 
 
 class BatchFetch(object):
@@ -97,6 +97,8 @@ def filteredUrls(pattern, view, kwargs=None, name=None):
         tail = mtail.group(1)
     pattern = pattern[:len(pattern) - len(tail)]
     for filter in ('/state/(?P<state>\w+)',
+                   '/group/(?P<group>[\w\-\.]+)',
+                   '/group/(?P<group>[\w\-\.]+)/(?P<state>[A-Za-z]+)',
                    '/server/(?P<server>[\w\-\.]+)',
                    '/server/(?P<server>[\w\-\.]+)/(?P<state>[A-Za-z]+)'):
         results += [(pattern + filter + tail, view, kwargs)]

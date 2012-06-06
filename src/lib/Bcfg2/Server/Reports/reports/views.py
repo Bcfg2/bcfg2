@@ -87,6 +87,30 @@ def timeview(fn):
     return _handle_timeview
 
 
+def _handle_filters(query, **kwargs):
+    """
+    Applies standard filters to a query object
+
+    Returns an updated query object
+
+    query - query object to filter
+
+    server -- Filter interactions by server
+    state -- Filter interactions by state
+    group -- Filter interactions by group
+
+    """
+    if 'state' in kwargs and kwargs['state']:
+        query = query.filter(state__exact=kwargs['state'])
+    if 'server' in kwargs and kwargs['server']:
+        query = query.filter(server__exact=kwargs['server'])
+
+    if 'group' in kwargs and kwargs['group']:
+        group = get_object_or_404(Group, name=kwargs['group'])
+        query = query.filter(metadata__groups__id=group.pk)
+    return query
+
+
 def config_item(request, pk, type="bad"):
     """
     Display a single entry.
@@ -393,6 +417,7 @@ def render_history_view(request, template='clients/history.html', **kwargs):
                 not found
     server -- Filter interactions by server
     state -- Filter interactions by state
+    group -- Filter interactions by group
     entry_max -- Most recent interaction to display
     orderby -- Sort results using this field
 
@@ -422,10 +447,7 @@ def render_history_view(request, template='clients/history.html', **kwargs):
     if 'sort' in kwargs:
         context['sort'] = kwargs['sort']
 
-    if 'state' in kwargs and kwargs['state']:
-        iquery = iquery.filter(state__exact=kwargs['state'])
-    if 'server' in kwargs and kwargs['server']:
-        iquery = iquery.filter(server__exact=kwargs['server'])
+    iquery = _handle_filters(iquery, **kwargs)
 
     if entry_max:
         iquery = iquery.filter(timestamp__lte=entry_max)
