@@ -1,0 +1,92 @@
+bcfg2-crypt(8) -- Bcfg2 encryption and decryption utility
+=========================================================
+
+## SYNOPSIS
+
+`bcfg2-crypt` [<-C configfile>] [--decrypt|--encrypt] [--cfg|--properties] [--remove] [--xpath <xpath>] [-p <passphrase-or-name>] [-v] <filename> [<filename>...]
+
+## DESCRIPTION
+
+`bcfg2-crypt` performs encryption and decryption of Cfg and Properties
+files.  It's often sufficient to run `bcfg2-crypt` with only the name
+of the file you wish to encrypt or decrypt; it can usually figure out
+what to do.
+
+## OPTIONS
+
+  * `-C` <configfile>:
+    Specify alternate bcfg2.conf location
+
+  * `--decrypt`, `--encrypt`:
+    Specify which operation you'd like to perform.  `bcfg2-crypt` can
+    usually determine which is necessary based on the contents of each
+    file.
+
+  * `--cfg`:
+    Tell `bcfg2-crypt` that an XML file should be encrypted in its
+    entirety rather than element-by-element.  This is only necessary
+    if the file is an XML file whose name ends with `.xml` and whose
+    top-level tag is `<Properties>`.  See [MODES] below for details.
+
+  * `--properties`:
+    Tell `bcfg2-crypt` to process a file as an XML Properties file,
+    and encrypt the text of each element separately.  This is
+    necessary if, for example, you've used a different top-level tag
+    than `<Properties>` in your Properties files.  See [MODES] below
+    for details.
+
+  * `--remove`:
+    Remove the plaintext file after it has been encrypted.  Only
+    meaningful for Cfg files.
+
+  * `--xpath <xpath>`:
+    Encrypt the character content of all elements that match the
+    specified XPath expression.  The default is `*[@encrypted="true"]`
+    or `*`; see [MODES] below for more details. Only meaningful for
+    Properties files.
+
+  * `-p <passphrase>`:
+    Specify the encryption/decryption passphrase.  This can either be
+    the literal passphrase, or the name of a passphrase specified in
+    the `[encryption]` section of `bcfg2.conf`.  If no passphrase is
+    specified, then a) when decrypting, all passphrases will be tried
+    sequentially; and b) when encrypting, you will be prompted for a
+    passphrase from `bcfg2.conf`.  It is never necessary to specify
+    `-p` if you only have a single passphrase in `bcfg2.conf`.
+
+  * `-v`:
+    Be verbose.
+
+  * `-h`:
+    Display help and exit.
+
+## MODES
+
+`bcfg2-crypt` can encrypt Cfg files or Properties files; they are
+handled very differently.
+
+  * Cfg:
+    When `bcfg2-crypt` is used on a Cfg file, the entire file is
+    encrypted.  This is the default behavior on files that are not
+    XML, or that are XML but whose top-level tag is not
+    `<Properties>`.  This can be enforced by use of the `--cfg`
+    option.
+
+  * Properties:
+    When `bcfg2-crypt` is used on a Properties file, it encrypts the
+    character content of elements matching the XPath expression given
+    by `--xpath`.  By default the expression is
+    `*[@encrypted="true"]`, which matches all elements with an
+    `encrypted` attribute set to `true`.  If you are encrypting a file
+    and that expression doesn't match any elements, then the default
+    is `*`, which matches everything.  When `bcfg2-crypt` encrypts the
+    character content of an element, it also adds the `encrypted`
+    attribute, but when it decrypts an element it does not remove it;
+    this lets you easily and efficiently run `bcfg2-crypt` against a
+    single Properties file to encrypt and decrypt it without needing
+    to specify a long list of options.  See the online Bcfg2 docs on
+    Properties files for more information on how this works.
+
+## SEE ALSO
+
+bcfg2-server(8)

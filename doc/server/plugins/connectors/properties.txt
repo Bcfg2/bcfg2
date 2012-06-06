@@ -33,6 +33,9 @@ be checked when running ``bcfg2-lint``.  For instance, given::
 
 ``dns-config.xml`` will be validated against ``dns-config.xsd``.
 
+Although Properties files are technically freeform XML, the top-level
+XML tag should be ``<Properties>``.
+
 Usage
 =====
 
@@ -82,6 +85,75 @@ directly in one of several ways:
   lxml.etree._Element objects representing the direct children of the
   top-level element.  (I.e., everything directly under the
   ``<Properties>`` tag.)
+
+.. _server-plugins-connectors-properties-encrypted:
+
+Encrypted Properties data
+=========================
+
+.. versionadded:: 1.3.0
+
+You can encrypt selected data in Properties files to protect that data
+from other people who need access to the repository.  See
+:ref:`server-plugins-generators-cfg-configuring-encryption` for
+details on configuring encryption passphrases.  The data is decrypted
+transparently on-the-fly by the server; you never need to decrypt the
+data in your templates.
+
+.. note::
+
+    This feature is *not* intended to secure the files against a
+    malicious attacker who has gained access to your Bcfg2 server, as
+    the encryption passphrases are held in plaintext in
+    ``bcfg2.conf``.  This is only intended to make it easier to use a
+    single Bcfg2 repository with multiple admins who should not
+    necessarily have access to each other's sensitive data.
+
+Properties files are encrypted on a per-element basis; that is, rather
+than encrypting the whole file, only the character content of
+individual elements is encrypted.  This makes it easier to track
+changes to the file in a VCS, and also lets unprivileged users work
+with the other data in the file.  Only character content of an element
+can be encrypted; attribute content and XML elements themselves cannot
+be encrypted.
+
+To encrypt a file, use ``bcfg2-crypt``, e.g.::
+
+    bcfg2-crypt foo.xml
+
+If the top-level tag of a Properties file is not ``<Properties>``,
+then you need to use the ``--properties`` flag to ``bcfg2-crypt``::
+
+    bcfg2-crypt --properties foo.xml
+
+The first time you run ``bcfg2-crypt`` on a Properties file, it will
+encrypt all character data of all elements.  Additionally, it will add
+``encrypted="true"`` to each element that has encrypted character
+data.  It also adds ``encryption="<key name>"`` to the top-level
+``<Properties>`` tag as a flag to the server that it should try to
+decrypt the data in that file.  (If you are using Properties schemas,
+you will need to make sure to add support for these attributes.)  On
+subsequent runs, only those elements flagged with ``encrypted="true"``
+are encrypted or decrypted.
+
+To decrypt a Properties file, simply re-run ``bcfg2-crypt``::
+
+    bcfg2-crypt foo.xml
+
+This decrypts the encrypted elements, but it does *not* remove the
+``encrypted="true"`` attribute; this way, you can decrypt a Properties
+file, modify the contents, and then simply re-run ``bcfg2-crypt`` to
+encrypt it again.  If you added elements that you also want to be
+encrypted, you can either add the ``encrypted="true"`` attribute to
+them manually, or run::
+
+    bcfg2-crypt --xpath '*' foo.xml
+
+You can also use the ``--xpath`` option to specify more restrictive
+XPath expressions to only encrypt a subset of elements.
+
+All encrypted elements in a single Properties file must be encrypted
+with the same passphrase.
 
 Accessing Properties contents from TGenshi
 ==========================================

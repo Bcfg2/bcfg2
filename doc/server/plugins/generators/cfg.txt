@@ -145,7 +145,10 @@ Encrypted Files
 .. versionadded:: 1.3.0
 
 Bcfg2 allows you to encrypt files stored in ``Cfg/`` to protect the
-data in them from other people who need access to the repository.
+data in them from other people who need access to the repository.  See
+also :ref:`server-plugins-connectors-properties-encrypted` for
+information on encrypting elements in Properties files, which is often
+more friendly for tracking changes in a VCS.
 
 .. note::
 
@@ -172,21 +175,33 @@ either order, e.g.::
     Cfg/etc/foo.conf/foo.conf.G10_foo.genshi.crypt
     Cfg/etc/foo.conf/foo.conf.H_bar.example.com.crypt.cheetah
 
-To encrypt a file, you can run::
+To encrypt a file, you can use ``bcfg2-crypt``, e.g.::
 
-    openssl enc -aes-256-cbc -k <passphrase> -in foo.conf -out foo.conf.crypt -a
+    bcfg2-crypt foo.conf
 
 Once you are satisfied that the file has been encrypted as you wish,
-you can remove the plaintext version.
+you can remove the plaintext version, or you can use the ``--remove``
+flag of ``bcfg2-crypt``.
 
-To decrypt a file, you can run::
+To decrypt a file, simply run ``bcfg2-crypt`` again::
 
+    bcfg2-crypt foo.conf
+
+See the ``bcfg2-crypt`` man page for more information.
+
+``bcfg2-crypt`` simply performs an AES256 encryption, and is
+more-or-less equivalent to the following commands (encryption and
+decryption, respectively::
+
+    openssl enc -aes-256-cbc -k <passphrase> -in foo.conf -out foo.conf.crypt -a
     openssl enc -d -aes-256-cbc -k <passphrase> -in foo.conf.crypt -out foo.conf -a
+
+.. _server-plugins-generators-cfg-configuring-encryption:
 
 Configuring Encryption
 ----------------------
 
-To configure encryption, add a ``[cfg:encryption]`` section to
+To configure encryption, add a ``[encryption]`` section to
 ``bcfg2.conf`` with any number of name-passphrase pairs.  When
 decrypting a file, _all_ passphrases will be tried; the passphrase
 name is currently purely cosmetic, but at some point in the future the
@@ -195,7 +210,7 @@ added.
 
 For instance::
 
-    [cfg:encryption]
+    [encryption]
     foo_team=P4ssphr4se
     bar_team=Pa55phra5e
 
@@ -210,8 +225,8 @@ encrypting data, presumably you don't want to include those plaintext
 passphrases in your Bcfg2 repository, so you'll want to encrypt
 ``bcfg2.conf``.  The best way to solve this is:
 
-#. On your Bcfg2 server, manually add the ``[cfg:encryption]`` section
-   to ``bcfg2.conf`` and restart the Bcfg2 server.
+#. On your Bcfg2 server, manually add the ``[encryption]`` section to
+   ``bcfg2.conf`` and restart the Bcfg2 server.
 #. Update ``bcfg2.conf`` in your Bcfg2 repository with the
    passphrases, and encrypt it.
 

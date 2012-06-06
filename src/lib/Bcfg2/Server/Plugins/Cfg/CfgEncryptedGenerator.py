@@ -10,7 +10,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 def passphrases():
-    section = "cfg:encryption"
+    section = "encryption"
     if SETUP.cfp.has_section(section):
         return dict([(o, SETUP.cfp.get(section, o))
                      for o in SETUP.cfp.options(section)])

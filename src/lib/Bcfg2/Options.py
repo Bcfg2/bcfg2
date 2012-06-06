@@ -730,6 +730,43 @@ CFG_VALIDATION = \
            long_arg=True,
            cook=get_bool)
 
+# bcfg2-crypt options
+ENCRYPT = \
+    Option('Encrypt the specified file',
+           default=False,
+           cmd='--encrypt',
+           long_arg=True)
+DECRYPT = \
+    Option('Decrypt the specified file',
+           default=False,
+           cmd='--decrypt',
+           long_arg=True)
+CRYPT_PASSPHRASE = \
+    Option('Encryption passphrase (name or passphrase)',
+           default=None,
+           cmd='-p',
+           odesc='<passphrase>')
+CRYPT_XPATH = \
+    Option('XPath expression to select elements to encrypt',
+           default=None,
+           cmd='--xpath',
+           odesc='<xpath>',
+           long_arg=True)
+CRYPT_PROPERTIES = \
+    Option('Encrypt the specified file as a Properties file',
+           default=False,
+           cmd="--properties",
+           long_arg=True)
+CRYPT_CFG = \
+    Option('Encrypt the specified file as a Cfg file',
+           default=False,
+           cmd="--cfg",
+           long_arg=True)
+CRYPT_REMOVE = \
+    Option('Remove the plaintext file after encrypting',
+           default=False,
+           cmd="--remove",
+           long_arg=True)
 
 # Option groups
 CLI_COMMON_OPTIONS = dict(configfile=CFILE,
@@ -753,6 +790,14 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
                              cert=SERVER_CERT,
                              ca=SERVER_CA,
                              protocol=SERVER_PROTOCOL)
+
+CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
+                     decrypt=DECRYPT,
+                     passphrase=CRYPT_PASSPHRASE,
+                     xpath=CRYPT_XPATH,
+                     properties=CRYPT_PROPERTIES,
+                     cfg=CRYPT_CFG,
+                     remove=CRYPT_REMOVE)
 
 DRIVER_OPTIONS = \
     dict(apt_install_path=CLIENT_APT_TOOLS_INSTALL_PATH,
