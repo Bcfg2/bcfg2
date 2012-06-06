@@ -345,3 +345,51 @@ class InternalDatabaseVersion(models.Model):
 
     class Meta:
         get_latest_by = "version"
+
+
+class Group(models.Model):
+    """
+    Groups extracted from interactions
+
+    name - The group name
+
+    TODO - Most of this is for future use
+    TODO - set a default group
+    """
+
+    name = models.CharField(max_length=255, unique=True)
+    profile = models.BooleanField(default=False)
+    public = models.BooleanField(default=False)
+    category = models.CharField(max_length=1024, blank=True)
+    comment = models.TextField(blank=True)
+
+    def __unicode__(self):
+        return self.name
+
+
+class Bundle(models.Model):
+    """
+    Bundles extracted from interactions
+
+    name - The bundle name
+    """
+
+    name = models.CharField(max_length=255, unique=True)
+
+    def __unicode__(self):
+        return self.name
+
+
+class InteractionMetadata(models.Model):
+    """
+    InteractionMetadata
+
+    Hold extra data associated with the client and interaction
+    """
+
+    interaction = models.OneToOneField(Interaction, primary_key=True, related_name='metadata')
+    profile = models.ForeignKey(Group, related_name="+")
+    groups = models.ManyToManyField(Group)
+    bundles = models.ManyToManyField(Bundle)
+
+

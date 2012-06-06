@@ -49,7 +49,7 @@ class DBStats(Bcfg2.Server.Plugin.Plugin,
         start = time.time()
         for i in [1, 2, 3]:
             try:
-                load_stat(metadata.hostname,
+                load_stat(metadata,
                           newstats,
                           self.core.encoding,
                           0,

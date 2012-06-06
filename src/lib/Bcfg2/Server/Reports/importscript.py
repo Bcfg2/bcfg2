@@ -7,6 +7,7 @@ new statistics engine
 import binascii
 import os
 import sys
+import traceback
 try:
     import Bcfg2.Server.Reports.settings
 except Exception:
@@ -28,6 +29,7 @@ from getopt import getopt, GetoptError
 from datetime import datetime
 from time import strptime
 from django.db import connection
+from Bcfg2.Server.Plugins.Metadata import ClientMetadata
 from Bcfg2.Server.Reports.Updater import update_database, UpdaterError
 import logging
 import Bcfg2.Logger
@@ -93,7 +95,11 @@ def load_stats(sdata, encoding, vlevel, logger, quick=False, location=''):
         for statistics in node.findall('Statistics'):
             load_stat(name, statistics, encoding, vlevel, logger, quick, location)
         
-def load_stat(client_name, statistics, encoding, vlevel, logger, quick, location):
+def load_stat(cobj, statistics, encoding, vlevel, logger, quick, location):
+    if isinstance(cobj, ClientMetadata):
+        client_name = cobj.hostname
+    else:
+        client_name = cobj
     client, created = Client.objects.get_or_create(name=client_name)
     if created and vlevel > 0:
         logger.info("Client %s added to db" % client_name)
@@ -124,6 +130,31 @@ def load_stat(client_name, statistics, encoding, vlevel, logger, quick, location
         if vlevel > 0:
             logger.info("Interaction for %s at %s with id %s INSERTED in to db" % (client.id,
                 timestamp, current_interaction.id))
+
+    if isinstance(cobj, ClientMetadata):
+        try:
+            imeta = InteractionMetadata(interaction=current_interaction)
+            profile, created = Group.objects.get_or_create(name=cobj.profile)
+            imeta.profile = profile
+            imeta.save() # save here for m2m
+
+            #FIXME - this should be more efficient
+            group_set = []
+            for group_name in cobj.groups:
+                group, created = Group.objects.get_or_create(name=group_name)
+                if created:
+                    logger.debug("Added group %s" % group)
+                imeta.groups.add(group)
+            for bundle_name in cobj.bundles:
+                bundle, created = Bundle.objects.get_or_create(name=bundle_name)
+                if created:
+                    logger.debug("Added bundle %s" % bundle)
+                imeta.bundles.add(bundle)
+            imeta.save()
+        except:
+            logger.error("Failed to save interaction metadata for %s: %s" %
+                (client_name, traceback.format_exc().splitlines()[-1]))
+
 
     counter_fields = {TYPE_CHOICES[0]: 0,
                       TYPE_CHOICES[1]: 0,
