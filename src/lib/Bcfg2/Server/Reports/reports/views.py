@@ -230,16 +230,16 @@ def common_problems(request, timestamp=None, threshold=None):
 
 
 @timeview
-def client_index(request, timestamp=None):
+def client_index(request, timestamp=None, **kwargs):
     """
     Render a grid view of active clients.
 
     Keyword parameters:
-      timestamp -- datetime objectto render from
+      timestamp -- datetime object to render from
 
     """
-    list = Interaction.objects.interaction_per_client(timestamp).select_related()\
-           .order_by("client__name").all()
+    list = _handle_filters(Interaction.objects.interaction_per_client(timestamp), **kwargs).\
+           select_related().order_by("client__name").all()
 
     return render_to_response('clients/index.html',
                               {'inter_list': list,
