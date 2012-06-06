@@ -190,14 +190,23 @@ class Frame:
                     self.whitelist = [x for x in self.whitelist if x not in b_to_rem]
 
         # take care of important entries first
-        if not self.dryrun and not self.setup['bundle']:
-            for cfile in [cfl for cfl in self.config.findall(".//Path") \
-                          if cfl.get('name') in self.__important__ and \
-                             cfl.get('type') == 'file']:
-                if cfile not in self.whitelist:
+        if not self.dryrun:
+            for cfile in self.config.findall(".//Path"):
+                if (cfile.get('name') not in self.__important__ or
+                    cfile.get('type') != 'file' or
+                    cfile not in self.whitelist):
                     continue
-                tl = [t for t in self.tools if t.handlesEntry(cfile) \
-                     and t.canVerify(cfile)]
+                parent = cfile.getparent()
+                if ((parent.tag == "Bundle" and
+                     ((self.setup['bundle'] and
+                       parent.get("name") not in self.setup['bundle']) or
+                      (self.setup['skipbundle'] and
+                       parent.get("name") in self.setup['skipbundle']))) or
+                    (parent.tag == "Independent" and
+                     (self.setup['bundle'] or self.setup['skipindep']))):
+                    continue
+                tl = [t for t in self.tools
+                      if t.handlesEntry(cfile) and t.canVerify(cfile)]
                 if tl:
                     if self.setup['interactive'] and not \
                            promptFilter("Install %s: %s? (y/N):", [cfile]):
@@ -262,22 +271,31 @@ class Frame:
             return
         # Here is where most of the work goes
         # first perform bundle filtering
+        all_bundle_names = [b.get('name')
+                            for b in self.config.findall('./Bundle')]
+        bundles = self.config.getchildren()
         if self.setup['bundle']:
-            all_bundle_names = [b.get('name') for b in
-                                self.config.findall('./Bundle')]
             # warn if non-existent bundle given
             for bundle in self.setup['bundle']:
                 if bundle not in all_bundle_names:
                     self.logger.info("Warning: Bundle %s not found" % bundle)
-            bundles = [b for b in self.config.findall('./Bundle')
-                       if b.get('name') in self.setup['bundle']]
-            self.whitelist = [e for e in self.whitelist
-                              if True in [e in b for b in bundles]]
+            bundles = filter(lambda b: b.get('name') in self.setup['bundle'],
+                             bundles)
         elif self.setup['indep']:
-            bundles = [nb for nb in self.config.getchildren()
-                       if nb.tag != 'Bundle']
-        else:
-            bundles = self.config.getchildren()
+            bundles = filter(lambda b: b.tag != 'Bundle', bundles)
+        if self.setup['skipbundle']:
+            # warn if non-existent bundle given
+            for bundle in self.setup['skipbundle']:
+                if bundle not in all_bundle_names:
+                    self.logger.info("Warning: Bundle %s not found" % bundle)
+            bundles = filter(lambda b: \
+                                 b.get('name') not in self.setup['skipbundle'],
+                             bundles)
+        if self.setup['skipindep']:
+            bundles = filter(lambda b: b.tag == 'Bundle', bundles)
+
+        self.whitelist = [e for e in self.whitelist
+                          if True in [e in b for b in bundles]]
 
         # first process prereq actions
         for bundle in bundles[:]:

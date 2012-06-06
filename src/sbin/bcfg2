@@ -43,8 +43,10 @@ class Client:
                  dryrun=Bcfg2.Options.CLIENT_DRYRUN,
                  paranoid=Bcfg2.Options.CLIENT_PARANOID,
                  bundle=Bcfg2.Options.CLIENT_BUNDLE,
+                 skipbundle=Bcfg2.Options.CLIENT_SKIPBUNDLE,
                  bundle_quick=Bcfg2.Options.CLIENT_BUNDLEQUICK,
                  indep=Bcfg2.Options.CLIENT_INDEP,
+                 skipindep=Bcfg2.Options.CLIENT_SKIPINDEP,
                  file=Bcfg2.Options.CLIENT_FILE,
                  interactive=Bcfg2.Options.INTERACTIVE,
                  cache=Bcfg2.Options.CLIENT_CACHE,
@@ -271,8 +273,10 @@ class Client:
 
         if self.setup['bundle_quick']:
             newconfig = Bcfg2.Client.XML.XML('<Configuration/>')
-            [newconfig.append(bundle) for bundle in self.config.getchildren() if \
-             bundle.tag == 'Bundle' and bundle.get('name') in self.setup['bundle']]
+            [newconfig.append(bundle)
+             for bundle in self.config.getchildren()
+             if (bundle.tag == 'Bundle' and
+                 bundle.get('name') in self.setup['bundle'])]
             self.config = newconfig
 
         self.tools = Bcfg2.Client.Frame.Frame(self.config,

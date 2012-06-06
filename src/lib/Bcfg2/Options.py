@@ -495,6 +495,12 @@ CLIENT_BUNDLE = \
            cmd='-b',
            odesc='<bundle:bundle>',
            cook=colon_split)
+CLIENT_SKIPBUNDLE = \
+    Option('Configure everything except the given bundle(s)',
+           default=[],
+           cmd='-B',
+           odesc='<bundle:bundle>',
+           cook=colon_split)
 CLIENT_BUNDLEQUICK = \
     Option('Only verify/configure the given bundle(s)',
            default=False,
@@ -503,6 +509,10 @@ CLIENT_INDEP = \
     Option('Only configure independent entries, ignore bundles',
            default=False,
            cmd='-z')
+CLIENT_SKIPINDEP = \
+    Option('Do not configure independent entries',
+           default=False,
+           cmd='-Z')
 CLIENT_KEVLAR = \
     Option('Run in kevlar (bulletproof) mode',
            default=False,
