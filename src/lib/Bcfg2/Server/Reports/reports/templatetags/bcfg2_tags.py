@@ -11,6 +11,7 @@ from django.utils.encoding import smart_unicode, smart_str
 from django.utils.safestring import mark_safe
 from datetime import datetime, timedelta
 from Bcfg2.Server.Reports.utils import filter_list
+from Bcfg2.Server.Reports.reports.models import Group
 
 register = template.Library()
 
@@ -120,13 +121,27 @@ def filter_navigator(context):
 
         filters = []
         for filter in filter_list:
+            if filter == 'group':
+                continue
             if filter in kwargs:
                 myargs = kwargs.copy()
                 del myargs[filter]
                 filters.append((filter,
                                 reverse(view, args=args, kwargs=myargs)))
         filters.sort(lambda x, y: cmp(x[0], y[0]))
-        return {'filters': filters}
+
+        myargs = kwargs.copy()
+        selected=True
+        if 'group' in myargs:
+            del myargs['group']
+            selected=False
+        groups = [('---', reverse(view, args=args, kwargs=myargs), selected)]
+        for group in Group.objects.values('name'):
+            myargs['group'] = group['name']
+            groups.append((group['name'], reverse(view, args=args, kwargs=myargs), 
+                group['name'] == kwargs.get('group', '')))
+            
+        return {'filters': filters, 'groups': groups}
     except (Resolver404, NoReverseMatch, ValueError, KeyError):
         pass
     return dict()

@@ -9,6 +9,7 @@
 {% block pagebanner %}Clients - Grid View{% endblock %}
 
 {% block content %}
+{% filter_navigator %}
 {% if inter_list %}
   <table class='grid-view' align='center'>
   {% for inter in inter_list %}
