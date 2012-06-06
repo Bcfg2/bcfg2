@@ -11,7 +11,11 @@ def main():
     setup = Bcfg2.Options.OptionParser(opts)
     setup.parse(sys.argv[1:])
 
-    for bfile in glob.glob(os.path.join(setup['repo'], "Bundler", "*")):
+    files = []
+    for plugin in ['Bundler', 'Rules', 'Default']:
+        files.extend(glob.glob(os.path.join(setup['repo'], plugin, "*")))
+
+    for bfile in files:
         bdata = lxml.etree.parse(bfile)
         changed = False
         for svc in bdata.xpath("//Service|//BoundService"):
