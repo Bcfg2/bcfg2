@@ -50,6 +50,9 @@ span.history_links a {
     {% if interaction.server %}
     <tr><td>Served by</td><td>{{interaction.server}}</td></tr>
     {% endif %}
+    {% if interaction.metadata %}
+    <tr><td>Profile</td><td>{{interaction.metadata.profile}}</td></tr>
+    {% endif %}
     {% if interaction.repo_rev_code %}
     <tr><td>Revision</td><td>{{interaction.repo_rev_code}}</td></tr>
     {% endif %}
@@ -59,6 +62,38 @@ span.history_links a {
     <tr><td>Deviation</td><td>{{interaction.percentbad|floatformat:"3"}}%</td></tr>
     {% endif %}
   </table>
+
+  {% if interaction.metadata.groups.count %}
+  <div class='entry_list'>
+    <div class='entry_list_head' onclick='javascript:toggleMe("groups_table");'>
+      <h3>Group membership</h3>
+      <div class='entry_expand_tab' id='plusminus_groups_table'>[+]</div>
+    </div>
+    <table id='groups_table' class='entry_list' style='display: none'>
+      {% for group in interaction.metadata.groups.all %}
+        <tr class='{% cycle listview,listview_alt %}'>
+          <td class='entry_list_type'>{{group}}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+
+  {% if interaction.metadata.bundles.count %}
+  <div class='entry_list'>
+    <div class='entry_list_head' onclick='javascript:toggleMe("bundles_table");'>
+      <h3>Bundle membership</h3>
+      <div class='entry_expand_tab' id='plusminus_bundless_table'>[+]</div>
+    </div>
+    <table id='bundles_table' class='entry_list' style='display: none'>
+      {% for bundle in interaction.metadata.bundles.all %}
+        <tr class='{% cycle listview,listview_alt %}'>
+          <td class='entry_list_type'>{{bundle}}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
 
   {% if interaction.bad_entry_count %}
   <div class='entry_list'>
