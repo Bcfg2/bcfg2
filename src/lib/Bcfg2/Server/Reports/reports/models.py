@@ -363,6 +363,9 @@ class Group(models.Model):
     category = models.CharField(max_length=1024, blank=True)
     comment = models.TextField(blank=True)
 
+    groups = models.ManyToManyField("self", symmetrical=False)
+    bundles = models.ManyToManyField("Bundle")
+
     def __unicode__(self):
         return self.name
 
