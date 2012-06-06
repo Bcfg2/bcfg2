@@ -6,8 +6,8 @@
 
 {% block content %}
 <div class='client_list_box'>
-{% if entry_list %}
   {% filter_navigator %}
+{% if entry_list %}
   <table cellpadding="3">
   <tr id='table_list_header' class='listview'>
     <td class='left_column'>{% sort_link 'client' 'Node' %}</td>
