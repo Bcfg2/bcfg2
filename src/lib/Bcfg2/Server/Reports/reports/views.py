@@ -286,13 +286,25 @@ def client_detail(request, hostname=None, pk=None):
     context = dict()
     client = get_object_or_404(Client, name=hostname)
     if(pk == None):
-        context['interaction'] = client.current_interaction
-        return render_history_view(request, 'clients/detail.html', page_limit=5,
-            client=client, context=context)
+        inter = client.current_interaction
+        maxdate = None
     else:
-        context['interaction'] = client.interactions.get(pk=pk)
-        return render_history_view(request, 'clients/detail.html', page_limit=5,
-            client=client, maxdate=context['interaction'].timestamp, context=context)
+        inter = client.interactions.get(pk=pk)
+        maxdate = inter.timestamp
+
+    ei = Entries_interactions.objects.filter(interaction=inter).select_related('entry').order_by('entry__kind', 'entry__name')
+    #ei = Entries_interactions.objects.filter(interaction=inter).select_related('entry')
+    #ei = sorted(Entries_interactions.objects.filter(interaction=inter).select_related('entry'),
+    #    key=lambda x: (x.entry.kind, x.entry.name))
+    context['ei_lists'] = (
+        ('bad', [x for x in ei if x.type == TYPE_BAD]),
+        ('modified', [x for x in ei if x.type == TYPE_MODIFIED]),
+        ('extra', [x for x in ei if x.type == TYPE_EXTRA])
+    )
+
+    context['interaction']=inter
+    return render_history_view(request, 'clients/detail.html', page_limit=5,
+        client=client, maxdate=maxdate, context=context)
 
 
 def client_manage(request):

@@ -262,19 +262,6 @@ def add_url_filter(parser, token):
     return AddUrlFilter(filter_name, filter_value)
 
 
-@register.filter
-def sortwell(value):
-    """
-    Sorts a list(or evaluates queryset to list) of bad, extra, or modified items in the best
-    way for presentation
-    """
-
-    configItems = list(value)
-    configItems.sort(lambda x, y: cmp(x.entry.name, y.entry.name))
-    configItems.sort(lambda x, y: cmp(x.entry.kind, y.entry.kind))
-    return configItems
-
-
 class MediaTag(template.Node):
     def __init__(self, filter_value):
         self.filter_value = filter_value

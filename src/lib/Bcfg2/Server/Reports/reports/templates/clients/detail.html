@@ -95,58 +95,25 @@ span.history_links a {
   </div>
   {% endif %}
 
-  {% if interaction.bad_entry_count %}
+  {% for type, ei_list in ei_lists %}
+  {% if ei_list %}
   <div class='entry_list'>
-    <div class='entry_list_head dirty-lineitem' onclick='javascript:toggleMe("bad_table");'>
-      <h3>Bad Entries &#8212; {{ interaction.bad_entry_count }}</h3>
-      <div class='entry_expand_tab' id='plusminus_bad_table'>[+]</div>
+    <div class='entry_list_head {{type}}-lineitem' onclick='javascript:toggleMe("{{type}}_table");'>
+      <h3>{{ type|capfirst }} Entries &#8212; {{ ei_list|length }}</h3>
+      <div class='entry_expand_tab' id='plusminus_{{type}}_table'>[+]</div>
     </div>
-    <table id='bad_table' class='entry_list'>
-      {% for e in interaction.bad|sortwell %}
+    <table id='{{type}}_table' class='entry_list'>
+      {% for ei in ei_list %}
         <tr class='{% cycle listview,listview_alt %}'>
-          <td class='entry_list_type'>{{e.entry.kind}}:</td>
-          <td><a href="{% url reports_item "bad",e.id %}">
-              {{e.entry.name}}</a></td>
+          <td class='entry_list_type'>{{ei.entry.kind}}:</td>
+          <td><a href="{% url reports_item type ei.id %}">
+              {{ei.entry.name}}</a></td>
         </tr>
       {% endfor %}
     </table>
   </div>
   {% endif %}
-
-  {% if interaction.modified_entry_count %}
-  <div class='entry_list'>
-    <div class='entry_list_head modified-lineitem' onclick='javascript:toggleMe("modified_table");'>
-      <h3>Modified Entries &#8212; {{ interaction.modified_entry_count }}</h3>
-      <div class='entry_expand_tab' id='plusminus_modified_table'>[+]</div>
-    </div>
-    <table id='modified_table' class='entry_list'>
-      {% for e in interaction.modified|sortwell %}
-        <tr class='{% cycle listview,listview_alt %}'>
-          <td class='entry_list_type'>{{e.entry.kind}}:</td>
-          <td><a href="{% url reports_item "modified",e.id %}">
-              {{e.entry.name}}</a></td>
-        </tr>
-      {% endfor %}
-    </table>
-  </div>
-  {% endif %}
-
-  {% if interaction.extra_entry_count %}
-  <div class='entry_list'>
-    <div class='entry_list_head extra-lineitem' onclick='javascript:toggleMe("extra_table");'>
-      <h3>Extra Entries &#8212; {{ interaction.extra_entry_count }}</h3>
-      <div class='entry_expand_tab' id='plusminus_extra_table'>[+]</div>
-    </div>
-    <table id='extra_table' class='entry_list'>
-      {% for e in interaction.extra|sortwell %}
-        <tr class='{% cycle listview,listview_alt %}'>
-          <td class='entry_list_type'>{{e.entry.kind}}:</td>
-          <td><a href="{% url reports_item "extra",e.id %}">{{e.entry.name}}</a></td>
-        </tr>
-    {% endfor %}
-    </table>
-  </div>
-  {% endif %}
+  {% endfor %}
 
   {% if entry_list %}
   <div class="entry_list recent_history_wrapper">

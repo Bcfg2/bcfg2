@@ -133,6 +133,16 @@ ul.menu-level2 {
         color: #10324b;
         text-decoration: none;
 }
+/*
+ * Convenience for templating..
+ */
+.bad-lineitem {
+        background: #FF7777;
+}
+.bad-lineitem a {
+        color: #10324b;
+        text-decoration: none;
+}
 .clean-lineitem {
         background: #AAFFBB;
 }
