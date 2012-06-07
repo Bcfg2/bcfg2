@@ -105,7 +105,7 @@ span.history_links a {
     <table id='{{type}}_table' class='entry_list'>
       {% for ei in ei_list %}
         <tr class='{% cycle listview,listview_alt %}'>
-          <td class='entry_list_type'>{{ei.entry.kind}}:</td>
+          <td class='entry_list_type'>{{ei.entry.kind}}</td>
           <td><a href="{% url reports_item type ei.id %}">
               {{ei.entry.name}}</a></td>
         </tr>
