@@ -10,6 +10,7 @@ import fnmatch
 import logging
 import tempfile
 import lxml.etree
+import traceback
 from code import InteractiveConsole
 
 try:
@@ -382,7 +383,8 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             print("Could not write to %s: %s" % (outfile, err))
             print(data)
         except Exception:
-            print("Failed to build entry %s for host %s" % (fname, client))
+            print("Failed to build entry %s for host %s: %s" % 
+                (fname, client, traceback.format_exc().splitlines()[-1]))
             raise
 
     def do_buildbundle(self, args):
