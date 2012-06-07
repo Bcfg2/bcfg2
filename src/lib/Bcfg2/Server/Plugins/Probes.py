@@ -217,9 +217,9 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
                                    pretty_print='true')
         try:
             datafile = open("%s/%s" % (self.data, 'probed.xml'), 'w')
+            datafile.write(data.decode('utf-8'))
         except IOError:
             self.logger.error("Failed to write probed.xml")
-        datafile.write(data.decode('utf-8'))
 
     def load_data(self):
         try:
