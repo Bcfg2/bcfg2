@@ -156,23 +156,32 @@ def config_item_list(request, type, timestamp=None):
         raise Http404
 
     current_clients = Interaction.objects.get_interaction_per_client_ids(timestamp)
-    item_list_dict = {}
-    seen = dict()
-    for x in Entries_interactions.objects.filter(interaction__in=current_clients,
-                                                 type=type).select_related():
-        if (x.entry, x.reason) in seen:
-            continue
-        seen[(x.entry, x.reason)] = 1
-        if item_list_dict.get(x.entry.kind, None):
-            item_list_dict[x.entry.kind].append(x)
-        else:
-            item_list_dict[x.entry.kind] = [x]
 
-    for kind in item_list_dict:
-        item_list_dict[kind].sort(lambda a, b: cmp(a.entry.name, b.entry.name))
+    ldata = list(Entries_interactions.objects.filter(
+            interaction__in=current_clients, type=type).values())
+    entry_ids = set([x['entry_id'] for x in ldata])
+    reason_ids = set([x['reason_id'] for x in ldata])
+
+    entries = Entries.objects.in_bulk(entry_ids)
+    reasons = Reason.objects.in_bulk(reason_ids)
+
+    kind_list = {}
+    [kind_list.__setitem__(kind, {}) for kind in set([e.kind for e in entries.values()])]
+    for x in ldata:
+        kind = entries[x['entry_id']].kind
+        data_key = (x['entry_id'], x['reason_id'])
+        try:
+            kind_list[kind][data_key].append(x['id'])
+        except KeyError:
+            kind_list[kind][data_key] = [x['id']]
+
+    lists = []
+    for kind in kind_list.keys():
+        lists.append((kind, [(entries[e[0][0]], reasons[e[0][1]], e[1])
+            for e in sorted(kind_list[kind].iteritems(), key=lambda x: entries[x[0][0]].name)]))
 
     return render_to_response('config_items/listing.html',
-                              {'item_list_dict': item_list_dict,
+                              {'item_list': lists,
                                'mod_or_bad': mod_or_bad,
                                'timestamp': timestamp},
         context_instance=RequestContext(request))

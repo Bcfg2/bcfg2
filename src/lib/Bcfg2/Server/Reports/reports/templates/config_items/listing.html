@@ -9,19 +9,20 @@
 {% block pagebanner %}{{mod_or_bad|capfirst}} Element Listing{% endblock %}
 
 {% block content %}
-{% if item_list_dict %}
-  {% for kind, entries in item_list_dict.items %}
-
+{% if item_list %}
+  {% for type_name, type_data in item_list %}
     <div class='entry_list'>
-      <div class='entry_list_head element_list_head' onclick='javascript:toggleMe("table_{{ kind }}");'>
-        <h3>{{ kind }} &#8212; {{ entries|length }}</h3>
-        <div class='entry_expand_tab' id='plusminus_table_{{ kind }}'>[&ndash;]</div>
+      <div class='entry_list_head element_list_head' onclick='javascript:toggleMe("table_{{ type_name }}");'>
+        <h3>{{ type_name }} &#8212; {{ type_data|length }}</h3>
+        <div class='entry_expand_tab' id='plusminus_table_{{ type_name }}'>[&ndash;]</div>
   </div>
-
-      <table id='table_{{ kind }}' class='entry_list'>
-        {% for e in entries %}
+      <table id='table_{{ type_name }}' class='entry_list'>
+          <tr style='text-align: left' ><th>Name</th><th>Count</th><th>Reason</th></tr>
+        {% for entry, reason, eis in type_data %}
           <tr class='{% cycle listview,listview_alt %}'>
-            <td><a href="{% url reports_item type=mod_or_bad,pk=e.id %}">{{e.entry.name}}</a></td>
+            <td><a href="{% url reports_item type=mod_or_bad,pk=eis.0 %}">{{entry.name}}</a></td>
+            <td>{{ eis|length }}</td>
+            <td>{{ reason.short_list|join:"," }}</td>
           </tr>
         {% endfor %}
       </table>
