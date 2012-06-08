@@ -9,6 +9,7 @@
 {% block pagebanner %}{{mod_or_bad|capfirst}} Element Listing{% endblock %}
 
 {% block content %}
+{% filter_navigator %}
 {% if item_list %}
   {% for type_name, type_data in item_list %}
     <div class='entry_list'>

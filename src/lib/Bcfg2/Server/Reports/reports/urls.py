@@ -23,7 +23,6 @@ urlpatterns += patterns('Bcfg2.Server.Reports.reports',
     *timeviewUrls(
         (r'^summary/?$', 'views.display_summary', None, 'reports_summary'),
         (r'^timing/?$', 'views.display_timing', None, 'reports_timing'),
-        (r'^elements/(?P<type>\w+)/?$', 'views.config_item_list', None, 'reports_item_list'),
         (r'^common/(?P<threshold>\d+)/?$', 'views.common_problems', None, 'reports_common_problems'),
         (r'^common/?$', 'views.common_problems', None, 'reports_common_problems'),
 ))
@@ -32,7 +31,8 @@ urlpatterns += patterns('Bcfg2.Server.Reports.reports',
     *filteredUrls(*timeviewUrls(
         (r'^grid/?$', 'views.client_index', None, 'reports_grid_view'),
         (r'^detailed/?$',
-            'views.client_detailed_list', None, 'reports_detailed_list')
+            'views.client_detailed_list', None, 'reports_detailed_list'),
+        (r'^elements/(?P<type>\w+)/?$', 'views.config_item_list', None, 'reports_item_list'),
 )))
 
 urlpatterns += patterns('Bcfg2.Server.Reports.reports',

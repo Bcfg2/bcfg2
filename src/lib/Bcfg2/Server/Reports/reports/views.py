@@ -14,6 +14,7 @@ from django.shortcuts import render_to_response, get_object_or_404
 from django.core.urlresolvers import \
         resolve, reverse, Resolver404, NoReverseMatch
 from django.db import connection
+from django.db.models import Q
 
 from Bcfg2.Server.Reports.reports.models import *
 
@@ -148,14 +149,15 @@ def config_item(request, pk, type="bad"):
 
 
 @timeview
-def config_item_list(request, type, timestamp=None):
+def config_item_list(request, type, timestamp=None, **kwargs):
     """Render a listing of affected elements"""
     mod_or_bad = type.lower()
     type = convert_entry_type_to_id(type)
     if type < 0:
         raise Http404
 
-    current_clients = Interaction.objects.get_interaction_per_client_ids(timestamp)
+    current_clients = Interaction.objects.interaction_per_client(timestamp)
+    current_clients = [q['id'] for q in _handle_filters(current_clients, **kwargs).values('id')]
 
     ldata = list(Entries_interactions.objects.filter(
             interaction__in=current_clients, type=type).values())
