@@ -1,0 +1,123 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-connectors-puppetenc:
+
+=========
+PuppetENC
+=========
+
+PuppetENC is a connector plugin that adds support for Puppet External
+Node Classifiers
+(`<http://docs.puppetlabs.com/guides/external_nodes.html>`_), or ENCs.
+
+Output Format
+=============
+
+The PuppetENC plugin implements the Puppet 2.6.5+ ENC output format
+with some modifications.  The basic output format is described `here
+<http://docs.puppetlabs.com/guides/external_nodes.html#puppet-265-and-higher>`_.
+The following modifications apply:
+
+* ``classes`` are considered to be Bcfg2 groups.  (This is basically
+  just a difference in terminology between Puppet and Bcfg2; Bcfg2
+  calls "groups" what Puppet calls "classes.")
+* As an alternative to the Puppet-specific ``classes`` value, you may
+  use ``groups`` if you are writing an ENC from scratch specifically
+  for Bcfg2.
+* Since Bcfg2 does not have the notion of parameterized classes, any
+  class parameters provided will be merged in with the ``parameters``
+  dict.
+* ``parameters`` are presented as connector data.  (See Usage
+  below.)
+* The ``environment`` value is not supported.  If present, PuppetENC
+  will issue a warning and skip it.
+
+The ``parameters`` from separate ENCs are all merged together,
+including parameters from any parameterized classes.  This is a
+shallow merge; in other words, only the top-level keys are
+considered.  For instance, assuming you had one ENC that produced::
+
+    parameters:
+        ntp_servers:
+            - 0.pool.ntp.org
+            - ntp1.example.com
+
+And another that produced::
+
+    parameters:
+        ntp_servers:
+            - ntp2.example.com
+
+This would result in connector data that included *either* the first
+value of ``ntp_servers`` *or* the second, but not both; this would
+depend on the order in which the ENCs were run, which is
+non-deterministic and should not be relied upon.  However, if you add
+one ENC that produced::
+
+    parameters:
+        ntp_servers:
+            - 0.pool.ntp.org
+            - ntp1.example.com
+
+And another that produced::
+
+    parameters:
+        mail_servers:
+            - mail.example.com
+
+Then the connector data would consist of::
+
+    {"ntp_servers": ["0.pool.ntp.org", "ntp1.example.com"],
+     "mail_servers": ["mail.example.com"]}
+
+Usage
+=====
+
+To use the PuppetENC plugin, first do ``mkdir
+/var/lib/bcfg2/PuppetENC``.  Add ``PuppetENC`` to your ``plugins``
+line in ``/etc/bcfg2.conf``.  Now you can place any ENCs you wish to
+run in ``/var/lib/bcfg2/PuppetENC``.  Note that ENCs are run each time
+client metadata is generated, so if you have a large number of ENCs or
+ENCs that are very time-consuming, they could have a significant
+impact on server performance.  In that case, it could be worthwhile to
+write a dedicated Connector plugin.
+
+PuppetENC parameters can be accessed in templates as
+``metadata.PuppetENC``, which is a dict of all parameter data merged
+together.  For instance, given the following ENC output::
+
+    ---
+    classes:
+        common:
+        puppet:
+        ntp:
+            ntpserver: 0.pool.ntp.org
+        aptsetup:
+            additional_apt_repos:
+                - deb localrepo.example.com/ubuntu lucid production
+                - deb localrepo.example.com/ubuntu lucid vendor
+    parameters: 
+        ntp_servers:
+            - 0.pool.ntp.org
+            - ntp.example.com
+        mail_server: mail.example.com
+        iburst: true
+    environment: production
+
+``metadata.PuppetENC`` would contain::
+
+    'additional_apt_repos': ['deb localrepo.example.com/ubuntu lucid production',
+     'deb localrepo.example.com/ubuntu lucid vendor'],
+    'iburst': True,
+    'mail_server': 'mail.example.com',
+    'ntp_servers': ['0.pool.ntp.org', 'ntp.example.com'],
+    'ntpserver': '0.pool.ntp.org'}
+
+(Note that the duplication of NTP server data doesn't make this an
+especially *good* example; it's just the official Puppet example.)
+    
+So, in a template you could do something like::
+
+    {% for repo in metadata.PuppetENC['additional_apt_repos'] %}\
+    ${repo}
+    {% end %}\
