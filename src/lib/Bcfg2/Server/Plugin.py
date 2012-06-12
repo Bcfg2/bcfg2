@@ -361,6 +361,15 @@ class Version(object):
         pass
 
 
+class ClientRunHooks(object):
+    """ Provides hooks to interact with client runs """
+    def start_client_run(self, metadata):
+        pass
+
+    def end_client_run(self, metadata):
+        pass
+
+
 # the rest of the file contains classes for coherent file caching
 
 class FileBacked(object):

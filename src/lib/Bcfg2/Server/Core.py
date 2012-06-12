@@ -211,6 +211,20 @@ class Core(Component):
             for plugin in list(self.plugins.values()):
                 plugin.shutdown()
 
+    def client_run_hook(self, hook, metadata):
+        """Checks the data structure."""
+        for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.ClientRunHooks):
+            try:
+                getattr(plugin, hook)(metadata)
+            except AttributeError:
+                err = sys.exc_info()[1]
+                logger.error("Unknown attribute: %s" % err)
+                raise
+            except:
+                err = sys.exc_info()[1]
+                logger.error("%s: Error invoking hook %s: %s" % (plugin, hook,
+                                                                 err))
+
     def validate_structures(self, metadata, data):
         """Checks the data structure."""
         for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.StructureValidator):
@@ -320,6 +334,8 @@ class Core(Component):
             logger.error("Metadata consistency error for client %s" % client)
             return lxml.etree.Element("error", type='metadata error')
 
+        self.client_run_hook("start_client_run", meta)
+
         try:
             structures = self.GetStructures(meta)
         except:
@@ -347,6 +363,8 @@ class Core(Component):
             except:
                 logger.error("error in BindStructure", exc_info=1)
         self.validate_goals(meta, config)
+
+        self.client_run_hook("end_client_run", meta)
 
         sort_xml(config, key=lambda e: e.get('name'))
 

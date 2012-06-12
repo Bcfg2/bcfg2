@@ -6,124 +6,41 @@
 Plugin Roles
 ============
 
-This documents available plugin roles.
+* Metadata
+  * Initial metadata construction
+  * Connector data accumulation
+  * ClientMetadata instance delivery
+  * Introspection interface (for bcfg2-info & co)
+* Connector
+  * Provide additional data for ClientMetadata instances
+* Probing
+  * send executable probes to clients and receive data responses
+* Structure
+  * Produce a list of configuration entries that should be included in
+    client configurations
+  * Each structure plugin is produces a list of structures
+  * Core verifies that each bundle listed has been constructed
+* StructureValidator
+  * Validate a client entry list's internal consistency, modifying if
+    needed
+* Generator
+* GoalValidator
+  * Validate client goals, modifying if needed
+* PullSource
+  * Plugin can provide entry information about clients
+* PullTarget
+  * Plugin can accept entry data and merge it into the specification
+* Version
+  * Plugin can read revision information from VCS of choice
+  * Will provide an interface for producing commits made by the bcfg2-server
+* Decision
+* ClientRunHooks
+  * Provides hooks executed at the start and end of each client run
 
-1. list of plugin roles
+Configuration of plugins
+========================
 
-   +---------------+--------------------+--------+
-   | Role          | Class              | Status |
-   +===============+====================+========+
-   | Metadata      | Metadata           | done   |
-   +---------------+--------------------+--------+
-   | Connector     | Connector          | done   |
-   +---------------+--------------------+--------+
-   | Probing       | Probing            | done   |
-   +---------------+--------------------+--------+
-   | Structure     | Structure          | done   |
-   +---------------+--------------------+--------+
-   | Structure Val | StructureValidator | done   |
-   +---------------+--------------------+--------+
-   | Generator     | Generator          | done   |
-   +---------------+--------------------+--------+
-   | Goals Val     | GoalValidator      | done   |
-   +---------------+--------------------+--------+
-   | Statistics    | Statistics         | done   |
-   +---------------+--------------------+--------+
-   | Pull Source   | PullSource         | done   |
-   +---------------+--------------------+--------+
-   | Pull Target   | PullTarget         | done   |
-   +---------------+--------------------+--------+
-   | Version       | Version            | done   |
-   +---------------+--------------------+--------+
-   | Decision      | Decision           | done   |
-   +---------------+--------------------+--------+
-   | Remote        | Remote             | none   |
-   +---------------+--------------------+--------+
-   | Syncing       | Syncing            | none   |
-   +---------------+--------------------+--------+
-
-2. Plugin Capabilities
-
-   * Metadata
-
-     * Initial metadata construction
-     * Connector data accumulation
-     * ClientMetadata instance delivery
-     * Introspection interface (for bcfg2-info & co)
-
-   * Connector
-
-     * Provide additional data for ClientMetadata instances
-
-   * Probing
-
-     * send executable probes to clients and receive data responses
-
-   * Structure
-
-     * Produce a list of configuration entries that should be included in client configurations
-     * Each structure plugin is produces a list of structures
-     * Core verifies that each bundle listed has been constructed
-
-   * Structure Validation
-
-     * Validate a client entry list's internal consistency, modifying if needed
-
-   * Generator
-   * Goals Validation
-
-     * Validate client goals, modifying if needed
-
-   * Pull Source
-
-     * Plugin can provide entry information about clients
-
-   * Pull Target
-
-     * Plugin can accept entry data and merge it into the specification
-
-   * Version
-
-     * Plugin can read revision information from VCS of choice
-     * Will provide an interface for producing commits made by the bcfg2-server
-
-   * Decision
-
-3. Configuration of plugins
-
-   Plugin configuration will be simplified substantially. Now, a single
-   list of plugins (including plugins of all capabilities) is specified
-   upon startup (either via bcfg2.conf or equivalent). This mechanism
-   replaces the current split configuration mechanism where generators,
-   structures, and other plugins are listed independently. Instead, all
-   plugins included in the startup list will be initialized, and each
-   will be enabled in all roles that it supports. This will remove a
-   current source of confusion and potential configuration errors,
-   wherein a plugin is enabled for an improper set of goals. (ie Cfg
-   enabled as a structure, etc) This does remove the possibility of
-   partially enabling a plugin for one of its roles without activating it
-   across the board, but I think this is a corner case, which will be
-   poorly supported by plugin implementers. If needed, this use case can
-   be explicitly supported by the plugin author, through use of a config
-   file directive.
-
-4. User Visible Changes
-
-   Connector data is added to ClientMetadata instances using the name of
-   the connector plugin. This means that the dictionary of key/val probe
-   pairs included with metadata is now available as metadata.Probes
-   (instead of metadata.probes). Once properties are available the same
-   way, they will likewise change names to metadata.Properties from their
-   current name.
-
-   Plugin configuration will change. A single field "plugins" in
-   bcfg2.conf will supercede the combination of the "generators" and
-   "structures" fields.
-
-   Default loading of needed plugins is now explicit; this means that
-   Statistics (if used) should be listed in the plugins line of
-   bcfg2.conf.
-
-5. Notes
-
-   * Need to ensure bundle accumulation occurs with connector groups
+A single list of plugins (including plugins of all capabilities) is
+specified upon startup (either via bcfg2.conf or equivalent). All
+plugins included in the startup list are initialized, and each is
+enabled in all roles that it supports.
