@@ -281,3 +281,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         persist only the duration of a client run"""
         if metadata.hostname in Collection.clients:
             del Collection.clients[metadata.hostname]
+
+    def end_statistics(self, metadata):
+        self.end_client_run(self, metadata)

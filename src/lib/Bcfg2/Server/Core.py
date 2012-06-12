@@ -413,6 +413,8 @@ class Core(Component):
 
         logger.info("Client %s reported state %s" % (client_name,
                                                      state.get('state')))
+        self.client_run_hook("end_statistics", meta)
+
     # XMLRPC handlers start here
 
     @exposed

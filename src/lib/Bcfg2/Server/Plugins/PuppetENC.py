@@ -115,3 +115,6 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
         separately; and b) when a single client's metadata is
         generated multiple times by separate templates """
         self.cache = dict()
+
+    def end_statistics(self, metadata):
+        self.end_client_run(self, metadata)

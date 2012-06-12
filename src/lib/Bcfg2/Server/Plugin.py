@@ -369,6 +369,8 @@ class ClientRunHooks(object):
     def end_client_run(self, metadata):
         pass
 
+    def end_statistics(self, metadata):
+        pass
 
 # the rest of the file contains classes for coherent file caching
 
