@@ -15,7 +15,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.StructureValidator,
                Bcfg2.Server.Plugin.Generator,
                Bcfg2.Server.Plugin.Connector,
-               Bcfg2.Server.Plugin.GoalValidator):
+               Bcfg2.Server.Plugin.ClientRunHooks):
     name = 'Packages'
     conflicts = ['Pkgmgr']
     experimental = True
@@ -26,7 +26,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.StructureValidator.__init__(self)
         Bcfg2.Server.Plugin.Generator.__init__(self)
         Bcfg2.Server.Plugin.Connector.__init__(self)
-        Bcfg2.Server.Plugin.Probing.__init__(self)
+        Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
 
         self.sentinels = set()
         self.cachepath = os.path.join(self.data, 'cache')
@@ -276,10 +276,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         collection = self._get_collection(metadata)
         return dict(sources=collection.get_additional_data())
 
-    def validate_goals(self, metadata, _):
-        """ we abuse the GoalValidator plugin since validate_goals()
-        is the very last thing called during a client config run.  so
-        we use this to clear the collection cache for this client,
-        which must persist only the duration of a client run """
+    def end_client_run(self, metadata):
+        """ clear the collection cache for this client, which must
+        persist only the duration of a client run"""
         if metadata.hostname in Collection.clients:
             del Collection.clients[metadata.hostname]
