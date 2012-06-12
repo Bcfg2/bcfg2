@@ -988,10 +988,6 @@ class EntrySet(Debuggable):
         pattern += '(G(?P<prio>\d+)_(?P<group>\S+))))?$'
         self.specific = re.compile(pattern)
 
-    def debug_log(self, message, flag=None):
-        if (flag is None and self.debug_flag) or flag:
-            logger.error(message)
-
     def sort_by_specific(self, one, other):
         return cmp(one.specific, other.specific)
 
@@ -1186,6 +1182,12 @@ class GroupSpool(Plugin, Generator):
             return self.handles[event.requestID] + event.filename
         else:
             return self.handles[event.requestID][:-1]
+
+    def toggle_debug(self):
+        for entry in self.entries.values():
+            if hasattr(entry, "toggle_debug"):
+                entry.toggle_debug()
+        return Plugin.toggle_debug()
 
     def HandleEvent(self, event):
         """Unified FAM event handler for GroupSpool."""
