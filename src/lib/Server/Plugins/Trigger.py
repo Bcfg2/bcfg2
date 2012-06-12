@@ -42,9 +42,7 @@ class Trigger(Bcfg2.Server.Plugin.Plugin,
     def process_statistics(self, metadata, _):
         args = [metadata.hostname, '-p', metadata.profile, '-g',
                 ':'.join([g for g in metadata.groups])]
-        self.debug_log("running triggers")
         for notifier in os.listdir(self.data):
-            self.debug_log("running %s" % notifier)
             if ((notifier[-1] == '~') or
                 (notifier[:2] == '.#') or
                 (notifier[-4:] == '.swp') or
