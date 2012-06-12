@@ -6,8 +6,8 @@
 Trigger
 =======
 
-Trigger is a plugin that calls external scripts (on the server) when
-clients are configured.
+Trigger is a plugin that calls external scripts (on the server) at the
+end of each client run.
 
 Setup
 =====
