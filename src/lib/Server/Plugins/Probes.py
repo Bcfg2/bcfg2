@@ -41,56 +41,22 @@ class ClientProbeDataSet(dict):
         dict.__init__(self, *args, **kwargs)
 
 
-class ProbeData(object):
+class ProbeData(str):
     """ a ProbeData object emulates a str object, but also has .xdata
     and .json properties to provide convenient ways to use ProbeData
     objects as XML or JSON data """
     def __init__(self, data):
-        self.data = data
+        str.__init__(self, data)
         self._xdata = None
         self._json = None
         self._yaml = None
 
-    def __str__(self):
-        return str(self.data)
-    
-    def __repr__(self):
-        return repr(self.data)
-    
-    def __getattr__(self, name):
-        """ make ProbeData act like a str object """
-        return getattr(self.data, name)
-
-    def __complex__(self):
-        return complex(self.data)
-
-    def __int__(self):
-        return int(self.data)
-
-    def __long__(self):
-        return long(self.data)
-
-    def __float__(self):
-        return float(self.data)
-
-    def __eq__(self, other):
-        return str(self) == str(other)
-
-    def __ne__(self, other):
-        return str(self) != str(other)
-
-    def __gt__(self, other):
-        return str(self) > str(other)
-
-    def __lt__(self, other):
-        return str(self) < str(other)
-
-    def __ge__(self, other):
-        return self > other or self == other
-
-    def __le__(self, other):
-        return self < other or self == other
-
+    @property
+    def data(self):
+        """ provide backwards compatibility with broken ProbeData
+        object in bcfg2 1.2.0 thru 1.2.2 """
+        return str(self)
+        
     @property
     def xdata(self):
         if self._xdata is None:
