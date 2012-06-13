@@ -1,3 +1,13 @@
 #!/bin/sh
-[ -x /usr/lib/bcfg2/bcfg2-cron ] || exit 0
-/usr/lib/bcfg2/bcfg2-cron --daily > /dev/null 2>&1 || true
+BCFG2CRON=
+if [[ -x /usr/libexec/bcfg2-cron ]]; then
+    BCFG2CRON=/usr/libexec/bcfg2-cron
+elif [[ -x /usr/lib/bcfg2/bcfg2-cron ]]; then
+    BCFG2CRON=/usr/lib/bcfg2/bcfg2-cron
+elif type bcfg2-cron >& /dev/null; then
+    BCFG2CRON=bcfg2-cron
+else
+    echo "No bcfg2-cron command found"
+    exit 1
+fi
+/usr/lib/bcfg2/bcfg2-cron --daily 2>&1 | logger -t bcfg2-cron -p daemon.info
