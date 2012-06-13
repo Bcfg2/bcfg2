@@ -33,7 +33,7 @@ must contain full (not relative) paths.
 #. Add SSLCA to the **plugins** line in ``/etc/bcfg2.conf`` and restart the
    server -- This enabled the SSLCA plugin on the Bcfg2 server.
 
-#. Add a section to your ``/etc/bcfg2.conf`` called sslca_foo, replacing foo
+#. Add a section to your ``/etc/bcfg2.conf`` called ``sslca_foo``, replacing foo
    with the name you wish to give your CA so you can reference it in certificate
    definitions.
 
@@ -50,6 +50,12 @@ must contain full (not relative) paths.
    that they can be validated and only regenerated if they no longer meet the
    specification. If you're using a self signing CA this would be the CA cert
    that you generated.
+
+#. Optionally, add ``verify_certs = false`` if you don't wish to
+   perform certificate verification on the certs SSLCA generates.
+   Verification includes ``openssl verify`` to verify the CA chain,
+   and ensuring that both the key file and certificate file contain
+   the same key.
 
 #. Once all this is done, you should have a section in your ``/etc/bcfg2.conf``
    that looks similar to the following::
