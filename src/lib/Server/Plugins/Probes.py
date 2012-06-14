@@ -45,6 +45,9 @@ class ProbeData(str):
     """ a ProbeData object emulates a str object, but also has .xdata
     and .json properties to provide convenient ways to use ProbeData
     objects as XML or JSON data """
+    def __new__(cls, data):
+        str.__new__(cls, data)
+    
     def __init__(self, data):
         str.__init__(self, data)
         self._xdata = None
