@@ -211,7 +211,7 @@ def main():
             if options.extra or options.show:
                 print_entries(client.current_interaction, "extra")
     else:
-        clients = Client.objects.all()
+        clients = Client.objects.exclude(current_interaction__isnull=True)
         result = list()
         edata = dict()
         fields = options.fields.split(',')
