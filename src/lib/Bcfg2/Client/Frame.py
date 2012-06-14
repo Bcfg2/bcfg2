@@ -446,7 +446,8 @@ class Frame:
                                             total=str(len(self.states)),
                                             version='2.0',
                                             revision=self.config.get('revision', '-1'))
-        good = len([key for key, val in list(self.states.items()) if val])
+        good_entries = [key for key, val in list(self.states.items()) if val]
+        good = len(good_entries)
         stats.set('good', str(good))
         if len([key for key, val in list(self.states.items()) if not val]) == 0:
             stats.set('state', 'clean')
@@ -455,6 +456,7 @@ class Frame:
 
         # List bad elements of the configuration
         for (data, ename) in [(self.modified, 'Modified'), (self.extra, "Extra"), \
+                              (good_entries, "Good"),
                               ([entry for entry in self.states if not \
                                 self.states[entry]], "Bad")]:
             container = Bcfg2.Client.XML.SubElement(stats, ename)
