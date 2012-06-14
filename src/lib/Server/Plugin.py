@@ -289,7 +289,7 @@ class ThreadedStatistics(Statistics,
     def run(self):
         if not self.load():
             return
-        while not self.terminate.isSet():
+        while not self.terminate.isSet() and self.work_queue != None:
             try:
                 (xdata, client) = self.work_queue.get(block=True, timeout=2)
             except Empty:
@@ -299,7 +299,7 @@ class ThreadedStatistics(Statistics,
                 self.logger.error("ThreadedStatistics: %s" % e)
                 continue
             self.handle_statistic(xdata, client)
-        if not self.work_queue.empty():
+        if self.work_queue != None and not self.work_queue.empty():
             self.save()
 
     def process_statistics(self, metadata, data):
