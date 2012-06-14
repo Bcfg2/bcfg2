@@ -23,11 +23,13 @@ KIND_CHOICES = (
     ('Path', 'symlink'),
     ('Service', 'Service'),
 )
+TYPE_GOOD = 0
 TYPE_BAD = 1
 TYPE_MODIFIED = 2
 TYPE_EXTRA = 3
 
 TYPE_CHOICES = (
+    (TYPE_GOOD, 'Good'),
     (TYPE_BAD, 'Bad'),
     (TYPE_MODIFIED, 'Modified'),
     (TYPE_EXTRA, 'Extra'),

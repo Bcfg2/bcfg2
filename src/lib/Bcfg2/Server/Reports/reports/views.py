@@ -231,9 +231,11 @@ def common_problems(request, timestamp=None, threshold=None):
         threshold = 10
 
     c_intr = Interaction.objects.get_interaction_per_client_ids(timestamp)
-    data_list = { 1: {}, 2: {}, 3: {}}
+    data_list = {}
+    [data_list.__setitem__(t_id, {}) \
+            for t_id, t_label in TYPE_CHOICES if t_id != TYPE_GOOD]
     ldata = list(Entries_interactions.objects.filter(
-            interaction__in=c_intr).values())
+            interaction__in=c_intr).exclude(type=TYPE_GOOD).values())
 
     entry_ids = set([x['entry_id'] for x in ldata])
     reason_ids = set([x['reason_id'] for x in ldata])
@@ -250,6 +252,8 @@ def common_problems(request, timestamp=None, threshold=None):
 
     lists = []
     for type, type_name in TYPE_CHOICES:
+        if type == TYPE_GOOD:
+            continue
         lists.append([type_name.lower(), [(entries[e[0][0]], reasons[e[0][1]], e[1])
             for e in sorted(data_list[type].items(), key=lambda x: len(x[1]), reverse=True)
             if len(e[1]) > threshold]])

@@ -88,6 +88,24 @@ def build_reason_kwargs(r_ent, encoding, logger):
                 is_sensitive=sensitive_file,
                 unpruned=unpruned_entries)
 
+def _fetch_reason(elem, kargs):
+    try:
+        rr = None
+        try:
+            rr = Reason.objects.filter(**kargs)[0]
+        except IndexError:
+            rr = Reason(**kargs)
+            rr.save()
+            if vlevel > 0:
+                logger.info("Created reason: %s" % rr.id)
+    except Exception:
+        ex = sys.exc_info()[1]
+        logger.error("Failed to create reason for %s: %s" % (elem.get('name'), ex))
+        rr = Reason(current_exists=elem.get('current_exists',
+            default="True").capitalize() == "True")
+        rr.save()
+    return rr
+
 
 def load_stats(sdata, encoding, vlevel, logger, quick=False, location=''):
     for node in sdata.findall('Node'):
@@ -156,46 +174,44 @@ def load_stat(cobj, statistics, encoding, vlevel, logger, quick, location):
                 (client_name, traceback.format_exc().splitlines()[-1]))
 
 
-    counter_fields = {TYPE_CHOICES[0]: 0,
-                      TYPE_CHOICES[1]: 0,
-                      TYPE_CHOICES[2]: 0}
-    pattern = [('Bad/*', TYPE_CHOICES[0]),
-               ('Extra/*', TYPE_CHOICES[2]),
-               ('Modified/*', TYPE_CHOICES[1])]
+    counter_fields = {TYPE_BAD: 0,
+                      TYPE_MODIFIED: 0,
+                      TYPE_EXTRA: 0}
+    pattern = [('Bad/*', TYPE_BAD),
+               ('Extra/*', TYPE_EXTRA),
+               ('Modified/*', TYPE_MODIFIED)]
     for (xpath, type) in pattern:
         for x in statistics.findall(xpath):
             counter_fields[type] = counter_fields[type] + 1
-            kargs = build_reason_kwargs(x, encoding, logger)
-
-            try:
-                rr = None
-                try:
-                    rr = Reason.objects.filter(**kargs)[0]
-                except IndexError:
-                    rr = Reason(**kargs)
-                    rr.save()
-                    if vlevel > 0:
-                        logger.info("Created reason: %s" % rr.id)
-            except Exception:
-                ex = sys.exc_info()[1]
-                logger.error("Failed to create reason for %s: %s" % (x.get('name'), ex))
-                rr = Reason(current_exists=x.get('current_exists',
-                                                 default="True").capitalize() == "True")
-                rr.save()
+            rr = _fetch_reason(x, build_reason_kwargs(x, encoding, logger))
 
             entry, created = Entries.objects.get_or_create(\
                 name=x.get('name'), kind=x.tag)
 
             Entries_interactions(entry=entry, reason=rr,
                                  interaction=current_interaction,
-                                 type=type[0]).save()
+                                 type=type).save()
             if vlevel > 0:
                 logger.info("%s interaction created with reason id %s and entry %s" % (xpath, rr.id, entry.id))
 
+    # add good entries
+    good_reason = None
+    for x in statistics.findall('Good/*'):
+        if good_reason == None:
+            # Do this once.  Really need to fix Reasons...
+            good_reason = _fetch_reason(x, build_reason_kwargs(x, encoding, logger))
+        entry, created = Entries.objects.get_or_create(\
+            name=x.get('name'), kind=x.tag)
+        Entries_interactions(entry=entry, reason=good_reason,
+                             interaction=current_interaction,
+                             type=TYPE_GOOD).save()
+        if vlevel > 0:
+            logger.info("%s interaction created with reason id %s and entry %s" % (xpath, good_reason.id, entry.id))
+
     # Update interaction counters
-    current_interaction.bad_entries = counter_fields[TYPE_CHOICES[0]]
-    current_interaction.modified_entries = counter_fields[TYPE_CHOICES[1]]
-    current_interaction.extra_entries = counter_fields[TYPE_CHOICES[2]]
+    current_interaction.bad_entries = counter_fields[TYPE_BAD]
+    current_interaction.modified_entries = counter_fields[TYPE_MODIFIED]
+    current_interaction.extra_entries = counter_fields[TYPE_EXTRA]
     current_interaction.save()
 
     mperfs = []
