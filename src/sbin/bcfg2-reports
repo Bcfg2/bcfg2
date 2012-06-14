@@ -272,11 +272,10 @@ def main():
                         edata[client] = \
                             {"entry state":dict(TYPE_CHOICES)[entry.type],
                              "reason":entry.reason}
+                        result.append(client)
                     except Entries_interactions.DoesNotExist:
-                        edata[client] = {"entry state":"Good",
-                                         "reason":""}
+                        pass
 
-                    result.append(client)
 
         if 'name' not in fields:
             fields.insert(0, "name")
