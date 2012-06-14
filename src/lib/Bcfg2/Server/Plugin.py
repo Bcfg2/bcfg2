@@ -212,7 +212,7 @@ class ThreadedStatistics(Statistics,
         self.terminate = core.terminate
         self.work_queue = Queue(100000)
         self.pending_file = "%s/etc/%s.pending" % (datastore, self.__class__.__name__)
-        self.daemon = True
+        self.daemon = False
         self.start()
 
     def save(self):
@@ -284,7 +284,7 @@ class ThreadedStatistics(Statistics,
     def run(self):
         if not self.load():
             return
-        while not self.terminate.isSet() and self.work_queue != None:
+        while not self.terminate.isSet():
             try:
                 (xdata, client) = self.work_queue.get(block=True, timeout=2)
             except Empty:
@@ -294,7 +294,7 @@ class ThreadedStatistics(Statistics,
                 self.logger.error("ThreadedStatistics: %s" % e)
                 continue
             self.handle_statistic(xdata, client)
-        if self.work_queue != None and not self.work_queue.empty():
+        if not self.work_queue.empty():
             self.save()
 
     def process_statistics(self, metadata, data):
