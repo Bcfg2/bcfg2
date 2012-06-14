@@ -13,7 +13,7 @@ from django.http import \
 from django.shortcuts import render_to_response, get_object_or_404
 from django.core.urlresolvers import \
         resolve, reverse, Resolver404, NoReverseMatch
-from django.db import connection
+from django.db import connection, DatabaseError
 from django.db.models import Q
 
 from Bcfg2.Server.Reports.reports.models import *
@@ -25,6 +25,27 @@ __SORT_FIELDS__ = ( 'client', 'state', 'good', 'bad', 'modified', 'extra', \
 class PaginationError(Exception):
     """This error is raised when pagination cannot be completed."""
     pass
+
+
+def _in_bulk(model, ids):
+    """
+    Short cut to fetch in bulk and trap database errors.  sqlite will raise
+    a "too many SQL variables" exception if this list is too long.  Try using
+    django and fetch manually if an error occurs
+
+    returns a dict of this form { id: <model instance> }
+    """
+
+    try:
+        return model.objects.in_bulk(ids)
+    except DatabaseError:
+        pass
+
+    # if objects.in_bulk fails so will obejcts.filter(pk__in=ids)
+    bulk_dict = {}
+    [bulk_dict.__setitem__(i.id, i) \
+        for i in model.objects.all() if i.id in ids]
+    return bulk_dict
 
 
 def server_error(request):
@@ -164,8 +185,8 @@ def config_item_list(request, type, timestamp=None, **kwargs):
     entry_ids = set([x['entry_id'] for x in ldata])
     reason_ids = set([x['reason_id'] for x in ldata])
 
-    entries = Entries.objects.in_bulk(entry_ids)
-    reasons = Reason.objects.in_bulk(reason_ids)
+    entries = _in_bulk(Entries, entry_ids)
+    reasons = _in_bulk(Reason, reason_ids)
 
     kind_list = {}
     [kind_list.__setitem__(kind, {}) for kind in set([e.kind for e in entries.values()])]
@@ -223,9 +244,9 @@ def common_problems(request, timestamp=None, threshold=None):
             data_list[type][data_key].append(x['id'])
         except KeyError:
             data_list[type][data_key] = [x['id']]
-    
-    entries = Entries.objects.in_bulk(entry_ids)
-    reasons = Reason.objects.in_bulk(reason_ids)
+
+    entries = _in_bulk(Entries, entry_ids)
+    reasons = _in_bulk(Reason, reason_ids)
 
     lists = []
     for type, type_name in TYPE_CHOICES:
