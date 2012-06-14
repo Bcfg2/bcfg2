@@ -16,10 +16,10 @@
           <tr style='text-align: left' ><th>Name</th><th>Timestamp</th><th>State</th><th>Reason</th></tr>
         {% for ei, inter, reason in item_data %}
           <tr class='{% cycle listview,listview_alt %}'>
-            <td>{{ inter.client.name }}</td>
-            <td style='white-space: nowrap'>{{ inter.timestamp|date:"Y-m-d\&\n\b\s\p\;H:i"|safe }}</td>
+            <td><a href='{% url Bcfg2.Server.Reports.reports.views.client_detail hostname=inter.client.name, pk=inter.id %}'>{{ inter.client.name }}</a></td>
+            <td style='white-space: nowrap'><a href='{% url Bcfg2.Server.Reports.reports.views.client_detail hostname=inter.client.name, pk=inter.id %}'>{{ inter.timestamp|date:"Y-m-d\&\n\b\s\p\;H:i"|safe }}</a></td>
             <td>{{ ei.get_type_display }}</td>
-            <td style='white-space: nowrap'>{{ reason.short_list|join:"," }}</td>
+            <td style='white-space: nowrap'><a href="{% url reports_item type=ei.get_type_display pk=ei.pk %}">{{ reason.short_list|join:"," }}</a></td>
           </tr>
         {% endfor %}
       </table>
