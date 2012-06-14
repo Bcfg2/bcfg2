@@ -211,6 +211,32 @@ def config_item_list(request, type, timestamp=None, **kwargs):
 
 
 @timeview
+def entry_status(request, eid, timestamp=None, **kwargs):
+    """Render a listing of affected elements"""
+    entry = get_object_or_404(Entries, pk=eid)
+
+    current_clients = Interaction.objects.interaction_per_client(timestamp)
+    inters = {}
+    [inters.__setitem__(i.id, i) \
+        for i in _handle_filters(current_clients, **kwargs).select_related('client')]
+
+    eis = Entries_interactions.objects.filter(
+            interaction__in=inters.keys(), entry=entry)
+
+    reasons = _in_bulk(Reason, set([x.reason_id for x in eis]))
+
+    item_data = []
+    for ei in eis:
+        item_data.append((ei, inters[ei.interaction_id], reasons[ei.reason_id]))
+
+    return render_to_response('config_items/entry_status.html',
+                              {'entry': entry,
+                               'item_data': item_data,
+                               'timestamp': timestamp},
+        context_instance=RequestContext(request))
+
+
+@timeview
 def common_problems(request, timestamp=None, threshold=None):
     """Mine config entries"""
 
