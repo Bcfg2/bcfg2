@@ -237,6 +237,7 @@ def main():
                 except IOError, err:
                     print("Cannot read entries from %s: %s" % (options.file,
                                                                err))
+                    return 2
             elif args:
                 entries = [a.split(":") for a in args]
             else:
