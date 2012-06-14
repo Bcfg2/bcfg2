@@ -28,7 +28,7 @@
       {% for entry, reason, interaction in type_list %}
         <tr class='{% cycle listview,listview_alt %}'>
           <td>{{ entry.kind }}</td>
-          <td><a href="{% url reports_item type=type_name pk=interaction.0 %}">{{ entry.name }}</a></td>
+          <td><a href="{% url reports_entry eid=entry.pk %}">{{ entry.name }}</a></td>
           <td>{{ interaction|length }}</td>
           <td><a href="{% url reports_item type=type_name pk=interaction.0 %}">{{ reason.short_list|join:"," }}</a></td>
         </tr>
