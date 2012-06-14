@@ -283,6 +283,8 @@ class Reason(models.Model):
             rv.append("Incorrect data")
         if self.unpruned:
             rv.append("Directory has extra files")
+        if len(rv) == 0:
+            rv.append("Exists")
         return rv
 
     @staticmethod

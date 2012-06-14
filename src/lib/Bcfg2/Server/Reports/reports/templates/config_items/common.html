@@ -30,7 +30,7 @@
           <td>{{ entry.kind }}</td>
           <td><a href="{% url reports_item type=type_name pk=interaction.0 %}">{{ entry.name }}</a></td>
           <td>{{ interaction|length }}</td>
-          <td>{{ reason.short_list|join:"," }}</td>
+          <td><a href="{% url reports_item type=type_name pk=interaction.0 %}">{{ reason.short_list|join:"," }}</a></td>
         </tr>
       {% endfor %}
       </table>
