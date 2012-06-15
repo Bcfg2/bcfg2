@@ -312,6 +312,9 @@ class Entries(models.Model):
         cursor.execute('delete from reports_entries where not exists (select rei.id from reports_entries_interactions rei where rei.entry_id = reports_entries.id)')
         transaction.set_dirty()
 
+    class Meta:
+        unique_together = ("name", "kind")
+
 
 class Entries_interactions(models.Model):
     """Define the relation between the reason, the interaction and the entry."""
