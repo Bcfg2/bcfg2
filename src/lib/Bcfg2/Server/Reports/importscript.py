@@ -178,6 +178,9 @@ def load_stat(cobj, statistics, encoding, vlevel, logger, quick, location):
                 (client_name, traceback.format_exc().splitlines()[-1]))
 
 
+    entries_cache = {}
+    [entries_cache.__setitem__((e.kind, e.name), e) \
+        for e in Entries.objects.all()]
     counter_fields = {TYPE_BAD: 0,
                       TYPE_MODIFIED: 0,
                       TYPE_EXTRA: 0}
@@ -189,8 +192,11 @@ def load_stat(cobj, statistics, encoding, vlevel, logger, quick, location):
             counter_fields[type] = counter_fields[type] + 1
             rr = _fetch_reason(x, build_reason_kwargs(x, encoding, logger), logger)
 
-            entry, created = Entries.objects.get_or_create(\
-                name=x.get('name'), kind=x.tag)
+            try:
+                entry = entries_cache[(x.tag, x.get('name'))]
+            except KeyError:
+                entry, created = Entries.objects.get_or_create(\
+                    name=x.get('name'), kind=x.tag)
 
             Entries_interactions(entry=entry, reason=rr,
                                  interaction=current_interaction,
@@ -204,8 +210,11 @@ def load_stat(cobj, statistics, encoding, vlevel, logger, quick, location):
         if good_reason == None:
             # Do this once.  Really need to fix Reasons...
             good_reason = _fetch_reason(x, build_reason_kwargs(x, encoding, logger), logger)
-        entry, created = Entries.objects.get_or_create(\
-            name=x.get('name'), kind=x.tag)
+        try:
+            entry = entries_cache[(x.tag, x.get('name'))]
+        except KeyError:
+            entry, created = Entries.objects.get_or_create(\
+                name=x.get('name'), kind=x.tag)
         Entries_interactions(entry=entry, reason=good_reason,
                              interaction=current_interaction,
                              type=TYPE_GOOD).save()
