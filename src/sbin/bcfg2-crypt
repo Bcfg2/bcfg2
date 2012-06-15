@@ -3,9 +3,7 @@
 
 import os
 import sys
-import copy
 import logging
-import getpass
 import lxml.etree
 import Bcfg2.Logger
 import Bcfg2.Options
@@ -45,137 +43,162 @@ class Encryptor(object):
     def get_plaintext_filename(self, encrypted_filename):
         return encrypted_filename
 
-    def encrypt(self, fname):
+    def chunk(self, data):
+        yield data
+
+    def unchunk(self, data, original):
+        return data[0]
+
+    def set_passphrase(self):
         if (not self.setup.cfp.has_section("encryption") or
             self.setup.cfp.options("encryption") == 0):
             self.logger.error("No passphrases available in %s" %
                               self.setup['configfile'])
             return False
 
+        if self.passphrase:
+            self.logger.debug("Using previously determined passphrase %s" %
+                              self.pname)
+            return True
+
+        if self.setup['passphrase']:
+            self.pname = self.setup['passphrase']
+                
+        if self.pname:
+            if self.setup.cfp.has_option("encryption", self.pname):
+                self.passphrase = self.setup.cfp.get("encryption",
+                                                     self.pname)
+                self.logger.debug("Using passphrase %s specified on command "
+                                  "line" % self.pname)
+                return True
+            else:
+                self.logger.error("Could not find passphrase %s in %s" %
+                                  (self.pname, self.setup['configfile']))
+                return False
+        else:
+            pnames = self.setup.cfp.options("encryption")
+            if len(pnames) == 1:
+                self.passphrase = self.setup.cfp.get(pnames[0])
+                self.pname = pnames[0]
+                self.logger.info("Using passphrase %s" % pnames[0])
+                return True
+        self.logger.info("No passphrase could be determined")
+        return False
+
+    def encrypt(self, fname):
         try:
             plaintext = open(fname).read()
         except IOError:
             err = sys.exc_info()[1]
-            self.logger.error("Error reading %s, skipping: %s" (fname, err))
+            self.logger.error("Error reading %s, skipping: %s" % (fname, err))
             return False
 
-        if not self.passphrase:
-            self.pname = self.get_passphrase(plaintext)
-            if self.setup['passphrase']:
-                if self.pname:
-                    self.logger.warning("Passphrase given on command line "
-                                        "differs from passphrase embedded in "
-                                        "file, using command-line option")
-                self.pname = self.setup['passphrase']
-                
-            if self.pname:
-                if self.setup.cfp.has_option("encryption", self.pname):
-                    self.passphrase = self.setup.cfp.get("encryption",
-                                                         self.pname)
-                else:
-                    self.logger.error("Could not find passphrase %s in %s" %
-                                      (self.pname, self.setup['configfile']))
-            else:
-                pnames = self.setup.cfp.options("encryption")
-                if len(pnames) == 1:
-                    self.passphrase = self.setup.cfp.get(pnames[0])
-                    self.pname = pnames[0]
-                    self.logger.info("Using passphrase %s" % pnames[0])
-                else:
-                    name = None
-                    while (not name or
-                           not self.setup.cfp.has_option("encryption", name)):
-                        print("Available passphrases: ")
-                        for pname in pnames:
-                            print(pname)
-                        name = raw_input("Passphrase: ")
-                    self.passphrase = self.setup.cfp.get("encryption", name)
-                    self.pname = name
+        self.set_passphrase()
 
-        crypted = self._encrypt(plaintext, self.passphrase, name=self.pname)
+        crypted = []
+        for chunk in self.chunk(plaintext):
+            try:
+                passphrase, pname = self.get_passphrase(chunk)
+            except TypeError:
+                return False
+
+            crypted.append(self._encrypt(chunk, passphrase, name=pname))
+
+        new_fname = self.get_encrypted_filename(fname)
         try:
-            open(self.get_encrypted_filename(fname), "wb").write(crypted)
-            self.logger.info("Wrote encrypted data to %s" % 
-                        self.get_encrypted_filename(fname))
+            open(new_fname, "wb").write(self.unchunk(crypted, plaintext))
+            self.logger.info("Wrote encrypted data to %s" % new_fname)
             return True
         except IOError:
             err = sys.exc_info()[1]
             self.logger.error("Error writing encrypted data from %s to %s: %s" %
-                         (fname, self.get_encrypted_filename(fname), err))
+                              (fname, new_fname, err))
             return False
 
     def _encrypt(self, plaintext, passphrase, name=None):
         return Bcfg2.Encryption.ssl_encrypt(plaintext, passphrase)
 
     def decrypt(self, fname):
-        if (not self.setup.cfp.has_section("encryption") or
-            self.setup.cfp.options("encryption") == 0):
-            self.logger.error("No passphrases available in %s" %
-                              self.setup['configfile'])
-            return False
-
         try:
             crypted = open(fname).read()
         except IOError:
             err = sys.exc_info()[1]
-            self.logger.error("Error reading %s, skipping: %s" (fname, err))
+            self.logger.error("Error reading %s, skipping: %s" % (fname, err))
             return False
 
-        plaintext = None
-        pname = self.get_passphrase(crypted)
-        if pname and self.setup['passphrase']:
-            self.logger.warning("Passphrase given on command line differs from "
-                                "passphrase embedded in file, using "
-                                "passphrase in file")
-            self.setup['passphrase'] = None
-        if self.setup['passphrase']:
-            pname = self.setup['passphrase']
-        if not pname:
-            for pname in self.setup.cfp.options('encryption'):
-                self.logger.debug("Trying passphrase %s" % pname)
-                passphrase = self.setup.cfp.get('encryption', pname)
+        self.set_passphrase()
+
+        plaintext = []
+        for chunk in self.chunk(crypted):
+            try:
+                passphrase, pname = self.get_passphrase(chunk)
                 try:
-                    plaintext = self._decrypt(crypted, passphrase)
-                    break
+                    plaintext.append(self._decrypt(chunk, passphrase))
                 except Bcfg2.Encryption.EVPError:
-                    pass
+                    self.logger.info("Could not decrypt %s with the specified "
+                                     "passphrase" % fname)
+                    return False
                 except:
                     err = sys.exc_info()[1]
                     self.logger.error("Error decrypting %s: %s" % (fname, err))
-            if not plaintext:
-                self.logger.error("Could not decrypt %s with any passphrase in "
-                                  "%s" % (fname, self.setup['configfile']))
-                return False
-        else:
-            if not self.setup.cfp.has_option("encryption", pname):
-                self.logger.error("Could not find passphrase %s in %s" %
-                                  (pname,
-                                   self.setup['configfile']))
-                return False
-            passphrase = self.setup.cfp.get("encryption", pname)
-            try:
-                plaintext = self._decrypt(crypted, passphrase)
-            except Bcfg2.Encryption.EVPError:
-                self.logger.error("Could not decrypt %s with the specified "
-                                  "passphrase" % fname)
-                return False
-            except:
-                err = sys.exc_info()[1]
-                self.logger.error("Error decrypting %s: %s" % (fname, err))
-                return False
+                    return False
+            except TypeError:
+                pchunk = None
+                for pname in self.setup.cfp.options('encryption'):
+                    self.logger.debug("Trying passphrase %s" % pname)
+                    passphrase = self.setup.cfp.get('encryption', pname)
+                    try:
+                        pchunk = self._decrypt(chunk, passphrase)
+                        break
+                    except Bcfg2.Encryption.EVPError:
+                        pass
+                    except:
+                        err = sys.exc_info()[1]
+                        self.logger.error("Error decrypting %s: %s" %
+                                          (fname, err))
+                if pchunk is not None:
+                    plaintext.append(pchunk)
+                else:
+                    self.logger.error("Could not decrypt %s with any "
+                                      "passphrase in %s" %
+                                      (fname, self.setup['configfile']))
+                    return False
                 
+        new_fname = self.get_plaintext_filename(fname)
         try:
-            open(self.get_plaintext_filename(fname), "wb").write(plaintext)
-            self.logger.info("Wrote decrypted data to %s" %
-                             self.get_plaintext_filename(fname))
+            open(new_fname, "wb").write(self.unchunk(plaintext, crypted))
+            self.logger.info("Wrote decrypted data to %s" % new_fname)
             return True
         except IOError:
             err = sys.exc_info()[1]
             self.logger.error("Error writing encrypted data from %s to %s: %s" %
-                              (fname, self.get_plaintext_filename(fname), err))
+                              (fname, new_fname, err))
             return False
 
-    def get_passphrase(self, crypted):
+    def get_passphrase(self, chunk):
+        pname = self._get_passphrase(chunk)
+        if not self.pname:
+            if not pname:
+                self.logger.info("No passphrase given on command line or "
+                                 "found in file")
+                return False
+            elif self.setup.cfp.has_option("encryption", pname):
+                passphrase = self.setup.cfp.get("encryption", pname)
+            else:
+                self.logger.error("Could not find passphrase %s in %s" %
+                                  (pname, self.setup['configfile']))
+                return False
+        else:
+            pname = self.pname
+            passphrase = self.passphrase
+            if self.pname != pname:
+                self.logger.warning("Passphrase given on command line (%s) "
+                                    "differs from passphrase embedded in "
+                                    "file (%s), using command-line option" %
+                                    (self.pname, pname))
+        return (passphrase, pname)
+
+    def _get_passphrase(self, chunk):
         return None
 
     def _decrypt(self, crypted, passphrase):
@@ -195,46 +218,53 @@ class CfgEncryptor(Encryptor):
 
 class PropertiesEncryptor(Encryptor):
     def _encrypt(self, plaintext, passphrase, name=None):
-        xdata = lxml.etree.XML(plaintext)
+        # plaintext is an lxml.etree._Element
+        if name is None:
+            name = "true"
+        if plaintext.text and plaintext.text.strip():
+            plaintext.text = Bcfg2.Encryption.ssl_encrypt(plaintext.text,
+                                                          passphrase)
+            plaintext.set("encrypted", name)
+        return plaintext
+
+    def chunk(self, data):
+        xdata = lxml.etree.XML(data)
         if self.setup['xpath']:
             elements = xdata.xpath(self.setup['xpath'])
         else:
-            elements = xdata.xpath('//*[@encrypted="true"]')
+            elements = xdata.xpath('//*[@encrypted]')
             if not elements:
                 elements = list(xdata.getiterator())
+        # this is not a good use of a generator, but we need to
+        # generate the full list of elements in order to ensure that
+        # some exist before we know what to return
+        for elt in elements:
+            yield elt
 
-        for el in elements:
-            if el.text and el.text.strip():
-                el.text = Bcfg2.Encryption.ssl_encrypt(el.text, passphrase)
-                el.set("encrypted", "true")
-        if name is None:
-            xdata.set("encryption", "true")
-        else:
-            xdata.set("encryption", name)
+    def unchunk(self, data, original):
+        # Properties elements are modified in-place, so we don't
+        # actually need to unchunk anything
+        xdata = data[0]
+        # find root element
+        while xdata.getparent() != None:
+            xdata = xdata.getparent()
+        xdata.set("encryption", "true")
         return lxml.etree.tostring(xdata)
 
-    def get_passphrase(self, crypted):
-        xdata = lxml.etree.XML(crypted)
-        pname = xdata.get("encryption")
+    def _get_passphrase(self, chunk):
+        pname = chunk.get("encrypted") or chunk.get("encryption")
         if pname and pname.lower() != "true":
             return pname
         return None
 
     def _decrypt(self, crypted, passphrase):
-        xdata = lxml.etree.XML(crypted)
-        if self.setup['xpath']:
-            elements = xdata.xpath(self.setup['xpath'])
-        else:
-            elements = xdata.xpath("//*[@encrypted='true']")
-        if not elements:
-            self.logger.info("No elements found to decrypt")
-            return False
-        for el in elements:
-            if not el.text.strip():
-                self.logger.warning("Skipping empty element %s" % el.tag)
-                continue
-            el.text = Bcfg2.Encryption.ssl_decrypt(el.text, passphrase)
-        return lxml.etree.tostring(xdata)
+        # crypted is in lxml.etree._Element
+        if not crypted.text or not crypted.text.strip():
+            self.logger.warning("Skipping empty element %s" % crypted.tag)
+            return crypted
+        rv = Bcfg2.Encryption.ssl_decrypt(crypted.text, passphrase)
+        crypted.text = rv
+        return crypted
 
 
 def main():
@@ -288,7 +318,7 @@ def main():
                     props = False
             except IOError:
                 err = sys.exc_info()[1]
-                logger.error("Error reading %s, skipping: %s" (fname, err))
+                logger.error("Error reading %s, skipping: %s" % (fname, err))
                 continue
             except lxml.etree.XMLSyntaxError:
                 props = False
@@ -302,23 +332,24 @@ def main():
 
         if setup['encrypt']:
             if not encryptor.encrypt(fname):
-                continue
+                print("Failed to encrypt %s, skipping" % fname)
         elif setup['decrypt']:
             if not encryptor.decrypt(fname):
-                continue
+                print("Failed to decrypt %s, skipping" % fname)
         else:
-            logger.info("Neither --encrypt nor --decrypt specified, determining mode")
+            logger.info("Neither --encrypt nor --decrypt specified, "
+                        "determining mode")
             if not encryptor.decrypt(fname):
                 logger.info("Failed to decrypt %s, trying encryption" % fname)
                 if not encryptor.encrypt(fname):
-                    continue
+                    print("Failed to encrypt %s, skipping" % fname)
 
         if setup['remove'] and encryptor.get_encrypted_filename(fname) != fname:
             try:
                 os.unlink(fname)
             except IOError:
                 err = sys.exc_info()[1]
-                logger.error("Error removing %s: %s" (fname, err))
+                logger.error("Error removing %s: %s" % (fname, err))
                 continue
 
 if __name__ == '__main__':

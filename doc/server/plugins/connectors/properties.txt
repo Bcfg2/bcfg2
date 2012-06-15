@@ -128,12 +128,12 @@ then you need to use the ``--properties`` flag to ``bcfg2-crypt``::
 
 The first time you run ``bcfg2-crypt`` on a Properties file, it will
 encrypt all character data of all elements.  Additionally, it will add
-``encrypted="true"`` to each element that has encrypted character
-data.  It also adds ``encryption="<key name>"`` to the top-level
+``encrypted="<key name>"`` to each element that has encrypted character
+data.  It also adds ``encryption="true"`` to the top-level
 ``<Properties>`` tag as a flag to the server that it should try to
 decrypt the data in that file.  (If you are using Properties schemas,
 you will need to make sure to add support for these attributes.)  On
-subsequent runs, only those elements flagged with ``encrypted="true"``
+subsequent runs, only those elements flagged with ``encrypted="*"``
 are encrypted or decrypted.
 
 To decrypt a Properties file, simply re-run ``bcfg2-crypt``::
@@ -141,19 +141,19 @@ To decrypt a Properties file, simply re-run ``bcfg2-crypt``::
     bcfg2-crypt foo.xml
 
 This decrypts the encrypted elements, but it does *not* remove the
-``encrypted="true"`` attribute; this way, you can decrypt a Properties
+``encrypted`` attribute; this way, you can decrypt a Properties
 file, modify the contents, and then simply re-run ``bcfg2-crypt`` to
 encrypt it again.  If you added elements that you also want to be
-encrypted, you can either add the ``encrypted="true"`` attribute to
+encrypted, you can either add the ``encrypted`` attribute to
 them manually, or run::
 
     bcfg2-crypt --xpath '*' foo.xml
 
 You can also use the ``--xpath`` option to specify more restrictive
-XPath expressions to only encrypt a subset of elements.
-
-All encrypted elements in a single Properties file must be encrypted
-with the same passphrase.
+XPath expressions to only encrypt a subset of elements, or to encrypt
+different elements with different passphrases.  Alternatively, you can
+manally set the ``encrypted`` attribute on various elements and
+``bcfg2-crypt`` will automatically do the right thing.
 
 Accessing Properties contents from TGenshi
 ==========================================

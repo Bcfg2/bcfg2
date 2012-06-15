@@ -41,18 +41,14 @@ what to do.
 
   * `--xpath <xpath>`:
     Encrypt the character content of all elements that match the
-    specified XPath expression.  The default is `*[@encrypted="true"]`
+    specified XPath expression.  The default is `*[@encrypted]`
     or `*`; see [MODES] below for more details. Only meaningful for
     Properties files.
 
   * `-p <passphrase>`:
-    Specify the encryption/decryption passphrase.  This can either be
-    the literal passphrase, or the name of a passphrase specified in
-    the `[encryption]` section of `bcfg2.conf`.  If no passphrase is
-    specified, then a) when decrypting, all passphrases will be tried
-    sequentially; and b) when encrypting, you will be prompted for a
-    passphrase from `bcfg2.conf`.  It is never necessary to specify
-    `-p` if you only have a single passphrase in `bcfg2.conf`.
+    Specify the name of a passphrase specified in the `[encryption]`
+    section of `bcfg2.conf`.  See [SELECTING PASSPHRASE] below for
+    more details.
 
   * `-v`:
     Be verbose.
@@ -75,17 +71,37 @@ handled very differently.
   * Properties:
     When `bcfg2-crypt` is used on a Properties file, it encrypts the
     character content of elements matching the XPath expression given
-    by `--xpath`.  By default the expression is
-    `*[@encrypted="true"]`, which matches all elements with an
-    `encrypted` attribute set to `true`.  If you are encrypting a file
-    and that expression doesn't match any elements, then the default
-    is `*`, which matches everything.  When `bcfg2-crypt` encrypts the
-    character content of an element, it also adds the `encrypted`
-    attribute, but when it decrypts an element it does not remove it;
-    this lets you easily and efficiently run `bcfg2-crypt` against a
-    single Properties file to encrypt and decrypt it without needing
-    to specify a long list of options.  See the online Bcfg2 docs on
+    by `--xpath`.  By default the expression is `*[@encrypted]`, which
+    matches all elements with an `encrypted` attribute.  If you are
+    encrypting a file and that expression doesn't match any elements,
+    then the default is `*`, which matches everything.  When
+    `bcfg2-crypt` encrypts the character content of an element, it
+    also adds the `encrypted` attribute, set to the name of the
+    passphrase used to encrypt that element.  When it decrypts an
+    element it does not remove `encrypted`, though; this lets you
+    easily and efficiently run `bcfg2-crypt` against a single
+    Properties file to encrypt and decrypt it without needing to
+    specify a long list of options.  See the online Bcfg2 docs on
     Properties files for more information on how this works.
+
+## SELECTING PASSPHRASE
+
+The passphrase used to encrypt or decrypt a file is discovered in the
+following order:
+
+  * First, the passphrase given on the command line using `-p` is
+    used.
+
+  * Next, if exactly one passphrase is specified in `bcfg2.conf`, it
+    will be used.
+
+  * Next, if operating in Properties mode, `bcfg2-crypt` will attempt
+    to read the name of the passphrase from the encrypted elements.
+
+  * Next, if decrypting, all passphrases will be tried sequentially.
+
+  * If no passphrase has been determined at this point, an error is
+    produced and the file being encrypted or decrypted is skipped.
 
 ## SEE ALSO
 

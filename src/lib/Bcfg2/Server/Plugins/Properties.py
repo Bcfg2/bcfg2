@@ -28,7 +28,6 @@ class PropertyFile(Bcfg2.Server.Plugin.StructFile):
     """Class for properties files."""
     def __init__(self, name):
         Bcfg2.Server.Plugin.StructFile.__init__(self, name)
-        self.passphrase = None
 
     def write(self):
         """ Write the data in this data structure back to the property
@@ -70,35 +69,35 @@ class PropertyFile(Bcfg2.Server.Plugin.StructFile):
     def Index(self):
         Bcfg2.Server.Plugin.StructFile.Index(self)
         if self.xdata.get("encryption", "false").lower() != "false":
-            logger.error("decrypting data in %s" % self.name)
             if not have_crypto:
                 msg = "Properties: M2Crypto is not available: %s" % self.name
                 logger.error(msg)
-                raise Bcxfg2.Server.Plugin.PluginExecutionError(msg)
-            for el in self.xdata.xpath("*[@encrypted='true']"):
-                logger.error("decrypting data in %s in %s" % (el.tag, self.name))
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            for el in self.xdata.xpath("*[@encrypted]"):
                 try:
-                    el.text = self._decrypt(el.text)
+                    el.text = self._decrypt(el)
                 except EVPError:
                     msg = "Failed to decrypt %s element in %s" % (el.tag,
                                                                   self.name)
                     logger.error(msg)
                     raise Bcfg2.Server.PluginExecutionError(msg)
 
-    def _decrypt(self, crypted):
-        if self.passphrase is None:
-            for passwd in passphrases().values():
-                try:
-                    rv = ssl_decrypt(crypted, passwd)
-                    self.passphrase = passwd
-                    return rv
-                except EVPError:
-                    pass
-        else:
+    def _decrypt(self, element):
+        passphrases = passphrases()
+        try:
+            passphrase = passphrases[element.get("encrypted")]
             try:
                 return ssl_decrypt(crypted, self.passphrase)
             except EVPError:
+                # error is raised below
                 pass
+        except KeyError:
+            for passwd in passphrases.values():
+                try:
+                    rv = ssl_decrypt(crypted, passwd)
+                    return rv
+                except EVPError:
+                    pass
         raise EVPError("Failed to decrypt")
 
 class PropDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):
