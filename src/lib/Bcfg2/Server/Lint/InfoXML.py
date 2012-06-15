@@ -6,8 +6,10 @@ from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
 class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
     """ ensure that all config files have an info.xml file"""
     def Run(self):
-        if 'Cfg' in self.core.plugins:
-            for filename, entryset in self.core.plugins['Cfg'].entries.items():
+        for plugin in ['Cfg', 'TCheetah', 'TGenshi']:
+            if plugin not in self.core.plugins:
+                continue
+            for filename, entryset in self.core.plugins[plugin].entries.items():
                 infoxml_fname = os.path.join(entryset.path, "info.xml")
                 if self.HandlesFile(infoxml_fname):
                     found = False

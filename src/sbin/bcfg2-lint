@@ -68,11 +68,28 @@ def load_server(setup):
     core.fam.handle_events_in_interval(4)
     return core
 
+def load_plugin(module, obj_name=None):
+    parts = module.split(".")
+    if obj_name is None:
+        obj_name = parts[-1]
+
+    try:
+        mod = __import__(module)
+    except ImportError:
+        err = sys.exc_info()[1]
+        logger.error("Failed to load plugin %s: %s" % (obj_name, err))
+        raise
+    
+    for p in parts[1:]:
+        mod = getattr(mod, p)
+    return getattr(mod, obj_name)
+
 if __name__ == '__main__':
     optinfo = dict(config=Bcfg2.Options.LINT_CONFIG,
                    showerrors=Bcfg2.Options.LINT_SHOW_ERRORS,
                    stdin=Bcfg2.Options.LINT_FILES_ON_STDIN,
-                   schema=Bcfg2.Options.SCHEMA_PATH)
+                   schema=Bcfg2.Options.SCHEMA_PATH,
+                   plugins=Bcfg2.Options.SERVER_PLUGINS)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
@@ -89,36 +106,36 @@ if __name__ == '__main__':
 
     # get list of plugins to run
     if setup['args']:
-        allplugins = setup['args']
+        plugin_list = setup['args']
     elif "bcfg2-repo-validate" in sys.argv[0]:
-        allplugins = 'Duplicates,RequiredAttrs,Validate'.split(',')
+        plugin_list = 'Duplicates,RequiredAttrs,Validate'.split(',')
     else:
         try:
-            allplugins = config.get('lint', 'plugins').split(',')
+            plugin_list = config.get('lint', 'plugins').split(',')
         except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            allplugins = Bcfg2.Server.Lint.__all__
+            plugin_list = Bcfg2.Server.Lint.__all__
 
     if setup['stdin']:
         files = [s.strip() for s in sys.stdin.readlines()]
     else:
         files = None
 
-    # load plugins
-    serverplugins = {}
-    serverlessplugins = {}
-    for plugin_name in allplugins:
+    # load plugins specified in the config first
+    allplugins = dict()
+    for plugin in plugin_list:
+        allplugins[plugin] = load_plugin("Bcfg2.Server.Lint." + plugin)
+
+    # load lint plugins bundled with bcfg2-server plugins
+    for plugin in setup['plugins']:
         try:
-            mod = getattr(__import__("Bcfg2.Server.Lint.%s" %
-                                     (plugin_name)).Server.Lint, plugin_name)
-        except ImportError:
-            try:
-                mod = __import__(plugin_name)
-            except Exception:
-                err = sys.exc_info()[1]
-                logger.error("Failed to load plugin %s: %s" % (plugin_name,
-                                                               err))
-                raise SystemExit(1)
-        plugin = getattr(mod, plugin_name)
+            allplugins[plugin] = load_plugin("Bcfg2.Server.Plugins." + plugin,
+                                             obj_name=plugin + "Lint")
+        except AttributeError:
+            pass
+
+    serverplugins = dict()
+    serverlessplugins = dict()
+    for plugin_name, plugin in allplugins.items():
         if [c for c in inspect.getmro(plugin)
             if c == Bcfg2.Server.Lint.ServerPlugin]:
             serverplugins[plugin_name] = plugin

@@ -11,6 +11,7 @@ import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
 from Bcfg2.Bcfg2Py3k import u_str
+import Bcfg2.Server.Lint
 
 logger = logging.getLogger(__name__)
 
@@ -412,3 +413,23 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
         return self.entries[new_entry.get('name')].write_update(specific,
                                                                 new_entry,
                                                                 log)
+
+class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
+    def Run(self):
+        # about usage of .cat and .diff files
+        self.check_deltas()
+
+    @classmethod
+    def Errors(cls):
+        return {"cat-file-used":"warning",
+                "diff-file-used":"warning"}
+
+    def check_entry(self, basename, entry):
+        cfg = self.core.plugins['Cfg']
+        for basename, entry in list(cfg.entries.items()):
+            for fname, processor in entry.entries.items():
+                if self.HandlesFile(fname) and isinstance(processor, CfgFilter):
+                    extension = fname.split(".")[-1]
+                    self.LintError("%s-file-used" % extension,
+                                   "%s file used on %s: %s" %
+                                   (extension, basename, fname))

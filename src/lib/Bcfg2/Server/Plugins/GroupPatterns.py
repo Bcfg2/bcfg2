@@ -1,6 +1,8 @@
 import re
+import sys
 import logging
 import lxml.etree
+import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 
 class PackedDigitRange(object):
@@ -122,3 +124,33 @@ class GroupPatterns(Bcfg2.Server.Plugin.Plugin,
 
     def get_additional_groups(self, metadata):
         return self.config.process_patterns(metadata.hostname)
+
+
+class GroupPatternsLint(Bcfg2.Server.Lint.ServerPlugin):
+    def Run(self):
+        """ run plugin """
+        cfg = self.core.plugins['GroupPatterns'].config
+        for entry in cfg.xdata.xpath('//GroupPattern'):
+            groups = [g.text for g in entry.findall('Group')]
+            self.check(entry, groups, ptype='NamePattern')
+            self.check(entry, groups, ptype='NameRange')
+
+    @classmethod
+    def Errors(cls):
+        return {"pattern-fails-to-initialize":"error"}
+
+    def check(self, entry, groups, ptype="NamePattern"):
+        if ptype == "NamePattern":
+            pmap = lambda p: PatternMap(p, None, groups)
+        else:
+            pmap = lambda p: PatternMap(None, p, groups)
+
+        for el in entry.findall(ptype):
+            pat = el.text
+            try:
+                pmap(pat)
+            except:
+                err = sys.exc_info()[1]
+                self.LintError("pattern-fails-to-initialize",
+                               "Failed to initialize %s %s for %s: %s" %
+                               (ptype, pat, entry.get('pattern'), err))
