@@ -96,8 +96,7 @@ def _fetch_reason(elem, kargs, logger):
         except IndexError:
             rr = Reason(**kargs)
             rr.save()
-            if vlevel > 0:
-                logger.info("Created reason: %s" % rr.id)
+            logger.info("Created reason: %s" % rr.id)
     except Exception:
         ex = sys.exc_info()[1]
         logger.error("Failed to create reason for %s: %s" % (elem.get('name'), ex))
