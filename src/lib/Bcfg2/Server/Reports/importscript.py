@@ -28,7 +28,7 @@ from lxml.etree import XML, XMLSyntaxError
 from getopt import getopt, GetoptError
 from datetime import datetime
 from time import strptime
-from django.db import connection
+from django.db import connection, transaction
 from Bcfg2.Server.Plugins.Metadata import ClientMetadata
 from Bcfg2.Server.Reports.Updater import update_database, UpdaterError
 import logging
@@ -88,7 +88,7 @@ def build_reason_kwargs(r_ent, encoding, logger):
                 is_sensitive=sensitive_file,
                 unpruned=unpruned_entries)
 
-def _fetch_reason(elem, kargs):
+def _fetch_reason(elem, kargs, logger):
     try:
         rr = None
         try:
@@ -111,8 +111,13 @@ def load_stats(sdata, encoding, vlevel, logger, quick=False, location=''):
     for node in sdata.findall('Node'):
         name = node.get('name')
         for statistics in node.findall('Statistics'):
-            load_stat(name, statistics, encoding, vlevel, logger, quick, location)
-        
+            try:
+                load_stat(name, statistics, encoding, vlevel, logger, quick, location)
+            except:
+                logger.error("Failed to create interaction for %s: %s" %
+                    (name, traceback.format_exc().splitlines()[-1]))
+
+@transaction.commit_on_success
 def load_stat(cobj, statistics, encoding, vlevel, logger, quick, location):
     if isinstance(cobj, ClientMetadata):
         client_name = cobj.hostname
@@ -183,7 +188,7 @@ def load_stat(cobj, statistics, encoding, vlevel, logger, quick, location):
     for (xpath, type) in pattern:
         for x in statistics.findall(xpath):
             counter_fields[type] = counter_fields[type] + 1
-            rr = _fetch_reason(x, build_reason_kwargs(x, encoding, logger))
+            rr = _fetch_reason(x, build_reason_kwargs(x, encoding, logger), logger)
 
             entry, created = Entries.objects.get_or_create(\
                 name=x.get('name'), kind=x.tag)
@@ -199,7 +204,7 @@ def load_stat(cobj, statistics, encoding, vlevel, logger, quick, location):
     for x in statistics.findall('Good/*'):
         if good_reason == None:
             # Do this once.  Really need to fix Reasons...
-            good_reason = _fetch_reason(x, build_reason_kwargs(x, encoding, logger))
+            good_reason = _fetch_reason(x, build_reason_kwargs(x, encoding, logger), logger)
         entry, created = Entries.objects.get_or_create(\
             name=x.get('name'), kind=x.tag)
         Entries_interactions(entry=entry, reason=good_reason,
