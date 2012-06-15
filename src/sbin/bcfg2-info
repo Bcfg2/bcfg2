@@ -631,8 +631,10 @@ if __name__ == '__main__':
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
-    setup.hm = "Usage:\n     %s\n%s" % (setup.buildHelpMessage(),
-                                        USAGE)
+    setup.hm = "\n".join(["     bcfg2-info [options] [command <command args>]",
+                          "Options:",
+                          setup.buildHelpMessage(),
+                          USAGE])
 
     setup.parse(sys.argv[1:])
     if setup['args'] and setup['args'][0] == 'help':

@@ -242,7 +242,7 @@ def main():
     optinfo.update(Bcfg2.Options.CRYPT_OPTIONS)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
-    setup.hm = "Usage: bcfg2-crypt [options] <filename>\nOptions:\n     %s" % \
+    setup.hm = "     bcfg2-crypt [options] <filename>\nOptions:\n%s" % \
         setup.buildHelpMessage()
     setup.parse(sys.argv[1:])
 

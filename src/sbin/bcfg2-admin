@@ -80,7 +80,6 @@ def main():
             mode.bcore.shutdown()
     else:
         log.error("Unknown mode %s" % setup['args'][0])
-        print("Usage:\n     %s" % setup.buildHelpMessage())
         print(create_description())
         raise SystemExit(1)
 

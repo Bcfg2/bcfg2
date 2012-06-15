@@ -81,21 +81,18 @@ class Option(object):
         self.cook = cook
 
     def buildHelpMessage(self):
-        msg = ''
-        if self.cmd:
-            if not self.long:
-                msg = self.cmd.ljust(3)
+        vals = []
+        if not self.cmd:
+            return ''
+        if self.odesc:
+            if self.long:
+                vals.append("%s=%s" % (self.cmd, self.odesc))
             else:
-                msg = self.cmd
-            if self.odesc:
-                if self.long:
-                    msg = "%-28s" % ("%s=%s" % (self.cmd, self.odesc))
-                else:
-                    msg += '%-25s' % (self.odesc)
-            else:
-                msg += '%-25s' % ('')
-            msg += "%s\n" % self.desc
-        return msg
+                vals.append("%s %s" % (self.cmd, self.odesc))
+        else:
+            vals.append(self.cmd)        
+        vals.append(self.desc)
+        return "     %-28s %s\n" % tuple(vals)
 
     def buildGetopt(self):
         gstr = ''
@@ -168,14 +165,15 @@ class OptionSet(dict):
         hlist = []  # list of _non-empty_ help messages
         for opt in list(self.values()):
             hm = opt.buildHelpMessage()
-            if hm != '':
+            if hm:
                 hlist.append(hm)
-        return '     '.join(hlist)
+        return ''.join(hlist)
 
     def helpExit(self, msg='', code=1):
         if msg:
             print(msg)
-        print("Usage:\n     %s" % self.buildHelpMessage())
+        print("Usage:")
+        print(self.buildHelpMessage())
         raise SystemExit(code)
 
     def parse(self, argv, do_getopt=True):
