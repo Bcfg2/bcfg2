@@ -49,7 +49,7 @@ class ProbeData(str):
         return str.__new__(cls, data)
     
     def __init__(self, data):
-        str.__init__(self, data)
+        str.__init__(self)
         self._xdata = None
         self._json = None
         self._yaml = None
