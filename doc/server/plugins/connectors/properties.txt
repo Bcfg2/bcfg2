@@ -56,7 +56,6 @@ raw data, the following access methods are defined:
                    for el in metadata.Properties['ntp.xml'].Match(metadata)
                    if el.tag == "Server"]
     %}
-
 * ``XMLMatch()`` parses the Group and Client tags in the file and
   returns an XML document containing only the data that applies to the
   client described by a set of metadata.  (The Group and Client tags
@@ -67,9 +66,6 @@ raw data, the following access methods are defined:
     ntp_servers = [el.text
                    for el in metadata.Properties['ntp.xml'].XMLMatch(metadata).findall("//Server")]
     %}
-
-See :ref:`server-plugins-structures-bundler-index` for more details on
-how Group and Client tags are parsed.
 
 As we formulate more common use cases, we will add them to the
 ``PropertyFile`` class as methods. This will simplify templates.
@@ -90,6 +86,8 @@ directly in one of several ways:
 
 Automatch
 =========
+
+.. versionadded:: 1.3.0
 
 You can enable ``XMLMatch()`` for all Property files by setting
 ``automatch`` to ``true`` in the ``[properties]`` section of
@@ -120,8 +118,10 @@ the attribute ``automatch="true"`` in the top-level ``<Property>`` tag.
 
 .. _server-plugins-connectors-properties-write-back:
 
-Properties Write-Back
-=====================
+Writing to Properties files
+===========================
+
+.. versionadded:: 1.2.0
 
 If you need to make persistent changes to properties data, you can use
 the ``write`` method of the ``PropertyFile`` class::
@@ -137,6 +137,14 @@ the ``write`` method of the ``PropertyFile`` class::
 
 The ``write`` method checks the data in the object against its schema
 before writing it; see `Data Structures`_ for details.
+
+Note that use of the ``write`` method can cause race conditions if you
+run more than one Bcfg2 server.  If you run more than one Bcfg2
+server, you can disable Properties write-back by setting the following
+in ``bcfg2.conf``::
+
+    [properties]
+    writes_enabled = false
 
 .. _server-plugins-connectors-properties-encrypted:
 
@@ -217,15 +225,17 @@ Access contents of ``Properties/auth.xml``::
 Configuration
 =============
 
-``bcfg2.conf`` contains several miscellaneous configuration options for the
-Properties plugin. Any booleans in the config file accept the values
-"1", "yes", "true", and "on" for True, and "0", "no", "false", and
-"off" for False.
+``bcfg2.conf`` contains several miscellaneous configuration options
+for the Properties plugin, which can be set in the ``[properties]``
+section. Any booleans in the config file accept the values "1", "yes",
+"true", and "on" for True, and "0", "no", "false", and "off" for
+False.
 
 It understands the following directives:
 
-[properties] section
---------------------
-
 * ``automatch``: Enable
-  :ref:`server-plugins-connectors-properties-automatch`
+  :ref:`server-plugins-connectors-properties-automatch`.  Default is
+  false.
+* ``writes_enabled``: Enable
+  :ref:`server-plugins-connectors-properties-write-back`.  Default is
+  true.
