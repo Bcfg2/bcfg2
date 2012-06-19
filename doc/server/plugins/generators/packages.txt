@@ -149,7 +149,7 @@ blacklisting the offending Package in your Sources. The blacklist
 element should immediately follow the Component section of your source
 and should look like the following:
 
-.. code-block::xml
+.. code-block:: xml
 
     <Blacklist>unwanted-packagename</Blacklist>
 
@@ -168,7 +168,7 @@ use the native yum resolver; if yum libraries are available, GPG
 signing keys can be handled automatically.) Simply specify the URL to
 the GPG key(s) for a repository in ``sources.xml``:
 
-.. code-block::xml
+.. code-block:: xml
 
     <Source type="yum"
             rawurl="http://mirror.example.com/centos6-x86_64/RPMS.os">
@@ -196,7 +196,9 @@ on the server side, if you are using the native yum libraries, and on
 the client side if you are using the ability of Packages to
 automatically generate your Yum config.  To do this, add an
 ``<Options>`` tag to a Source; all of its attributes will be added
-verbatim to the repository in the generated config.  For instance::
+verbatim to the repository in the generated config.  For instance:
+
+.. code-block:: xml
 
     <Source type="yum" rawurl="http://mirror.example.com/centos-6-os">
       <Arch>x86_64</Arch>
@@ -208,7 +210,9 @@ the Bcfg2 server, you can set the ``serveronly`` attribute to "true";
 or, if you need to set options only on the client, you can set the
 ``clientonly`` attribute to "true".  For instance, if your Bcfg2
 server needed to use a proxy to access a repo, and you wanted to
-expire metadata caches very quickly on the client, you could do::
+expire metadata caches very quickly on the client, you could do:
+
+.. code-block:: xml
 
     <Source type="yum" rawurl="http://mirror.example.com/centos-6-os">
       <Arch>x86_64</Arch>
@@ -224,7 +228,7 @@ Example usage
 Create a ``sources.xml`` file in the Packages directory that looks
 something like this:
 
-.. code-block::xml
+.. code-block:: xml
 
     <Sources>
       <Group name="ubuntu-intrepid">
@@ -268,7 +272,7 @@ something like this:
 
 Yum sources can be similarly specified:
 
-.. code-block::xml
+.. code-block:: xml
 
     <Sources>
       <Group name="centos-5.2">
@@ -289,9 +293,9 @@ For sources with a **URL** attribute, the **Version** attribute is
 also necessary.
 
 :ref:`Pulp sources <pulp-source-support>` are very simple to specify
-due to the amount of data that can be queried from Pulp itself::
+due to the amount of data that can be queried from Pulp itself:
 
-.. code-block::xml
+.. code-block:: xml
 
     <Sources>
       <Group name="centos-6-x86_64">
@@ -401,7 +405,7 @@ Package Checking and Verification
 In order to do disable per-package verification Pkgmgr style, you will
 need to use :ref:`BoundEntries <boundentries>`, e.g.:
 
-.. code-block::xml
+.. code-block:: xml
 
     <BoundPackage name="mem-agent" priority="1" version="auto"
                   type="yum" verify="false"/>
@@ -510,7 +514,7 @@ include a package group, use the ``group`` attribute of the
 ``Package`` tag. You can use either the short group ID or the long
 group name:
 
-.. code-block::xml
+.. code-block:: xml
 
     <Package group="SNMP Support"/>
     <Package group="system-management-snmp"/>
@@ -519,7 +523,7 @@ By default, only those packages considered the "default" packages in a
 group will be installed. You can change this behavior using the
 "type" attribute:
 
-.. code-block::xml
+.. code-block:: xml
 
     <Package group="development" type="optional"/>
     <Package group="Administration Tools" type="mandatory"/>
@@ -548,7 +552,7 @@ Bcfg2 contains explicit support for repositories managed by Pulp
 repository that can be retrieved directly from Pulp, the only thing
 necessary to configure a Pulp repo is the repo ID:
 
-.. code-block::xml
+.. code-block:: xml
 
     <Sources>
       <Group name="centos-6-x86_64">
