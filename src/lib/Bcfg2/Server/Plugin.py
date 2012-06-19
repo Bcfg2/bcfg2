@@ -677,41 +677,76 @@ class StructFile(XMLFileBacked):
     def __init__(self, name):
         XMLFileBacked.__init__(self, name)
 
-    def _match(self, item, metadata):
-        """ recursive helper for Match() """
-        if isinstance(item, lxml.etree._Comment):
-            return []
-        elif item.tag == 'Group':
-            rv = []
+    def _include_element(self, item, metadata):
+        """ determine if an XML element matches the metadata """
+        if item.tag == 'Group':
             if ((item.get('negate', 'false').lower() == 'true' and
                  item.get('name') not in metadata.groups) or
                 (item.get('negate', 'false').lower() == 'false' and
                  item.get('name') in metadata.groups)):
-                for child in item.iterchildren():
-                    rv.extend(self._match(child, metadata))
-            return rv
+                return True
+            else:
+                return False
         elif item.tag == 'Client':
-            rv = []
             if ((item.get('negate', 'false').lower() == 'true' and
                  item.get('name') != metadata.hostname) or
                 (item.get('negate', 'false').lower() == 'false' and
                  item.get('name') == metadata.hostname)):
+                return True
+            else:
+                return False
+        elif isinstance(item, lxml.etree._Comment):
+            return False
+        else:
+            return True
+
+    def _match(self, item, metadata):
+        """ recursive helper for Match() """
+        if self._include_element(item, metadata):
+            if item.tag == 'Group' or item.tag == 'Client':
+                rv = []
+                if self._include_element(item, metadata):
+                    for child in item.iterchildren():
+                        rv.extend(self._match(child, metadata))
+                return rv
+            else:
+                rv = copy.copy(item)
+                for child in rv.iterchildren():
+                    rv.remove(child)
                 for child in item.iterchildren():
                     rv.extend(self._match(child, metadata))
-            return rv
+                return [rv]
         else:
-            rv = copy.copy(item)
-            for child in rv.iterchildren():
-                rv.remove(child)
-            for child in item.iterchildren():
-                rv.extend(self._match(child, metadata))
-            return [rv]
+            return []
 
     def Match(self, metadata):
         """Return matching fragments of independent."""
         rv = []
         for child in self.entries:
             rv.extend(self._match(child, metadata))
+        return rv
+
+    def _xml_match(self, item, metadata):
+        """ recursive helper for XMLMatch """
+        if self._include_element(item, metadata):
+            if item.tag == 'Group' or item.tag == 'Client':
+                for child in item.iterchildren():
+                    item.remove(child)
+                    item.getparent().append(child)
+                    self._xml_match(child, metadata)
+                item.getparent().remove(item)
+            else:
+                for child in item.iterchildren():
+                    self._xml_match(child, metadata)
+        else:
+            item.getparent().remove(item)
+
+    def XMLMatch(self, metadata):
+        """ Return a rebuilt XML document that only contains the
+        matching portions """
+        rv = copy.deepcopy(self.xdata)
+        for child in rv.iterchildren():
+            self._xml_match(child, metadata)
         return rv
 
 
