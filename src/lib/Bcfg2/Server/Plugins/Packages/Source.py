@@ -1,7 +1,6 @@
 import os
 import re
 import sys
-import base64
 import Bcfg2.Server.Plugin
 from Bcfg2.Bcfg2Py3k import HTTPError, HTTPBasicAuthHandler, \
      HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, \
@@ -51,7 +50,18 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
         for key, tag in [('components', 'Component'), ('arches', 'Arch'),
                          ('blacklist', 'Blacklist'),
                          ('whitelist', 'Whitelist')]:
-            self.__dict__[key] = [item.text for item in xsource.findall(tag)]
+            setattr(self, key, [item.text for item in xsource.findall(tag)])
+        self.server_options = dict()
+        self.client_options = dict()
+        opts = xsource.findall("Options")
+        for el in opts:
+            repoopts = dict([(k, v)
+                             for k, v in el.attrib.items()
+                             if k != "clientonly" and k != "serveronly"])
+            if el.get("clientonly", "false").lower() == "false":
+                self.server_options.update(repoopts)
+            if el.get("serveronly", "false").lower() == "false":
+                self.client_options.update(repoopts)
 
         self.gpgkeys = [el.text for el in xsource.findall("GPGKey")]
 
@@ -149,12 +159,10 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                 if match:
                     name = match.group(1)
                     break
-            if name is None:
-                # couldn't figure out the name from the URL or URL map
-                # (which probably means its a screwy URL), so we just
-                # generate a random one
-                name = base64.b64encode(os.urandom(16))[:-2]
-            rname = "%s-%s" % (self.groups[0], name)
+            if name is not None:
+                rname = "%s-%s" % (self.groups[0], name)
+            else:
+                rname = self.groups[0]
         # see yum/__init__.py in the yum source, lines 441-449, for
         # the source of this regex.  yum doesn't like anything but
         # string.ascii_letters, string.digits, and [-_.:].  There
@@ -185,6 +193,10 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                                 if a in metadata.groups]
         vdict = dict()
         for agrp in agroups:
+            if agrp not in self.provides:
+                self.logger.warning("%s provides no packages for %s" %
+                                    (self, agrp))
+                continue
             for key, value in list(self.provides[agrp].items()):
                 if key not in vdict:
                     vdict[key] = set(value)

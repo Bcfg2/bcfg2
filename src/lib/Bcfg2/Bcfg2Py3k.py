@@ -14,6 +14,7 @@ try:
     from urllib2 import install_opener
     from urllib2 import urlopen
     from urllib2 import HTTPError
+    from urllib2 import URLError
 except ImportError:
     from urllib.parse import urljoin, urlparse
     from urllib.request import HTTPBasicAuthHandler
@@ -22,6 +23,7 @@ except ImportError:
     from urllib.request import install_opener
     from urllib.request import urlopen
     from urllib.error import HTTPError
+    from urllib.error import URLError
 
 try:
     from cStringIO import StringIO

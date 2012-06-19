@@ -597,6 +597,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             print("    %s" % "\n    ".join(unknown))
 
     def do_packagesources(self, args):
+        if not args:
+            print("Usage: packagesources <hostname>")
+            return
         try:
             metadata = self.build_metadata(args)
         except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:

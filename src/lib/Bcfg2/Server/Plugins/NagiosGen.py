@@ -65,7 +65,12 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
 
     def createhostconfig(self, entry, metadata):
         """Build host specific configuration file."""
-        host_address = socket.gethostbyname(metadata.hostname)
+        try:
+            host_address = socket.gethostbyname(metadata.hostname)
+        except socket.gaierror:
+            LOGGER.error("Failed to find IP address for %s" %
+                         metadata.hostname)
+            raise Bcfg2.Server.Plugin.PluginExecutionError
         host_groups = [grp for grp in metadata.groups
                        if os.path.isfile('%s/%s-group.cfg' % (self.data, grp))]
         host_config = ['define host {',

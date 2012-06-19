@@ -1,6 +1,6 @@
 #!/bin/sh
 cd build
-PP="./"`ls -1d lib/*`"/site-packages/"
+PP="./lib/python/site-packages/"
 
 #bcfg2
 echo "i pkginfo=./pkginfo.bcfg2" >  ../prototype.tmp

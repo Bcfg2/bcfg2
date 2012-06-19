@@ -9,9 +9,8 @@ import posixpath
 import re
 import sys
 import threading
+import Bcfg2.Server
 from Bcfg2.Bcfg2Py3k import ConfigParser
-
-from lxml.etree import XML, XMLSyntaxError
 
 import Bcfg2.Options
 
@@ -54,6 +53,19 @@ info_regex = re.compile( \
     'paranoid:(\s)*(?P<paranoid>\S+)|' +
     'perms:(\s)*(?P<perms>\w+)|' +
     'sensitive:(\s)*(?P<sensitive>\S+)|')
+
+def bind_info(entry, metadata, infoxml=None, default=default_file_metadata):
+    for attr, val in list(default.items()):
+        entry.set(attr, val)
+    if infoxml:
+        mdata = dict()
+        infoxml.pnode.Match(metadata, mdata, entry=entry)
+        if 'Info' not in mdata:
+            msg = "Failed to set metadata for file %s" % entry.get('name')
+            logger.error(msg)
+            raise PluginExecutionError(msg)
+        for attr, val in list(mdata['Info'][None].items()):
+            entry.set(attr, val)
 
 
 class PluginInitError(Exception):
@@ -265,7 +277,9 @@ class ThreadedStatistics(Statistics,
                     if self.terminate.isSet():
                         return False
 
-                self.work_queue.put_nowait((metadata, lxml.etree.fromstring(pdata)))
+                self.work_queue.put_nowait((metadata,
+                                            lxml.etree.XML(pdata,
+                                                           parser=Bcfg2.Server.XMLParser)))
             except Full:
                 self.logger.warning("Queue.Full: Failed to load queue data")
                 break
@@ -284,7 +298,7 @@ class ThreadedStatistics(Statistics,
     def run(self):
         if not self.load():
             return
-        while not self.terminate.isSet():
+        while not self.terminate.isSet() and self.work_queue != None:
             try:
                 (xdata, client) = self.work_queue.get(block=True, timeout=2)
             except Empty:
@@ -294,7 +308,7 @@ class ThreadedStatistics(Statistics,
                 self.logger.error("ThreadedStatistics: %s" % e)
                 continue
             self.handle_statistic(xdata, client)
-        if not self.work_queue.empty():
+        if self.work_queue != None and not self.work_queue.empty():
             self.save()
 
     def process_statistics(self, metadata, data):
@@ -583,8 +597,9 @@ class XMLFileBacked(FileBacked):
     def Index(self):
         """Build local data structures."""
         try:
-            self.xdata = XML(self.data)
-        except XMLSyntaxError:
+            self.xdata = lxml.etree.XML(self.data,
+                                        parser=Bcfg2.Server.XMLParser)
+        except lxml.etree.XMLSyntaxError:
             logger.error("Failed to parse %s" % (self.name))
             return
         self.entries = self.xdata.getchildren()
@@ -635,7 +650,8 @@ class SingleXMLFileBacked(XMLFileBacked):
     def Index(self):
         """Build local data structures."""
         try:
-            self.xdata = lxml.etree.XML(self.data, base_url=self.name)
+            self.xdata = lxml.etree.XML(self.data, base_url=self.name,
+                                        parser=Bcfg2.Server.XMLParser)
         except lxml.etree.XMLSyntaxError:
             err = sys.exc_info()[1]
             logger.error("Failed to parse %s: %s" % (self.name, err))
@@ -793,7 +809,7 @@ class XMLSrc(XMLFileBacked):
             return
         self.items = {}
         try:
-            xdata = lxml.etree.XML(data)
+            xdata = lxml.etree.XML(data, parser=Bcfg2.Server.XMLParser)
         except lxml.etree.XMLSyntaxError:
             logger.error("Failed to parse file %s" % (self.name))
             return
@@ -1118,18 +1134,7 @@ class EntrySet(Debuggable):
         return cmp(x.specific.prio, y.specific.prio)
 
     def bind_info_to_entry(self, entry, metadata):
-        # first set defaults from global metadata/:info
-        for key in self.metadata:
-            entry.set(key, self.metadata[key])
-        if self.infoxml:
-            mdata = {}
-            self.infoxml.pnode.Match(metadata, mdata, entry=entry)
-            if 'Info' not in mdata:
-                logger.error("Failed to set metadata for file %s" % \
-                             (entry.get('name')))
-                raise PluginExecutionError
-            [entry.attrib.__setitem__(key, value) \
-             for (key, value) in list(mdata['Info'][None].items())]
+        bind_info(entry, metadata, infoxml=self.infoxml, default=self.metadata)
 
     def bind_entry(self, entry, metadata):
         """Return the appropriate interpreted template from the set of available templates."""

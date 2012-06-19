@@ -182,9 +182,39 @@ With the keys specified thusly, Packages will include the keys in the
 generated yum config file, and will ensure that the keys are imported
 on the client.
 
-There is no need to specify ``<GPGKey>`` tags for :ref:``Pulp sources
-<pulp-source-support>``; that data is pulled directly from the Pulp
+There is no need to specify ``<GPGKey>`` tags for :ref:`Pulp sources
+<pulp-source-support>`; that data is pulled directly from the Pulp
 REST API.
+
+Arbitrary Repo Options
+----------------------
+
+.. versionadded:: 1.2.3
+
+You can specify arbitrary options to be added to the repository config
+on the server side, if you are using the native yum libraries, and on
+the client side if you are using the ability of Packages to
+automatically generate your Yum config.  To do this, add an
+``<Options>`` tag to a Source; all of its attributes will be added
+verbatim to the repository in the generated config.  For instance::
+
+    <Source type="yum" rawurl="http://mirror.example.com/centos-6-os">
+      <Arch>x86_64</Arch>
+      <Options proxy="http://proxy.example.com"/>
+    </Source>
+
+If you are using native yum libraries and need to set options only on
+the Bcfg2 server, you can set the ``serveronly`` attribute to "true";
+or, if you need to set options only on the client, you can set the
+``clientonly`` attribute to "true".  For instance, if your Bcfg2
+server needed to use a proxy to access a repo, and you wanted to
+expire metadata caches very quickly on the client, you could do::
+
+    <Source type="yum" rawurl="http://mirror.example.com/centos-6-os">
+      <Arch>x86_64</Arch>
+      <Options serveronly="true" proxy="http://proxy.example.com"/>
+      <Options clientonly="true" metadata_expire="0"/>
+    </Source>
 
 .. _packages-exampleusage:
 
@@ -258,8 +288,8 @@ Yum sources can be similarly specified:
 For sources with a **URL** attribute, the **Version** attribute is
 also necessary.
 
-:ref:``Pulp sources <pulp-source-support>`` are very simple to specify
-due to the amount of data that can be queried from Pulp itself:
+:ref:`Pulp sources <pulp-source-support>` are very simple to specify
+due to the amount of data that can be queried from Pulp itself::
 
 .. code-block::xml
 

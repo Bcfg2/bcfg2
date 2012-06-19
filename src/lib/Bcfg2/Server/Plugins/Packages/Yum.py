@@ -4,14 +4,13 @@ import time
 import copy
 import glob
 import socket
-import random
 import logging
 import threading
 import lxml.etree
 from UserDict import DictMixin
 from subprocess import Popen, PIPE, STDOUT
 import Bcfg2.Server.Plugin
-from Bcfg2.Bcfg2Py3k import StringIO, cPickle, HTTPError, ConfigParser, file
+from Bcfg2.Bcfg2Py3k import StringIO, cPickle, HTTPError, URLError, ConfigParser, file
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
      fetch_url
@@ -199,6 +198,13 @@ class YumCollection(Collection):
                     if len(source.whitelist):
                         config.set(reponame, "includepkgs",
                                    " ".join(source.whitelist))
+
+                    if raw:
+                        opts = source.server_options
+                    else:
+                        opts = source.client_options
+                    for opt, val in opts.items():
+                        config.set(reponame, opt, val)
 
         if raw:
             return config
@@ -559,6 +565,11 @@ class YumSource(Source):
             xdata = lxml.etree.XML(repomd)
         except ValueError:
             self.logger.error("Packages: Bad url string %s" % rmdurl)
+            return []
+        except URLError:
+            err = sys.exc_info()[1]
+            self.logger.error("Packages: Failed to fetch url %s. %s" %
+                              (rmdurl, err))
             return []
         except HTTPError:
             err = sys.exc_info()[1]

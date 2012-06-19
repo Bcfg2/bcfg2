@@ -92,8 +92,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if entry.tag == 'Package':
             collection = self._get_collection(metadata)
             entry.set('version', self.core.setup.cfp.get("packages",
-                                                 "version",
-                                                 default="auto"))
+                                                         "version",
+                                                         default="auto"))
             entry.set('type', collection.ptype)
         elif entry.tag == 'Path':
             if (entry.get("name") == self.core.setup.cfp.get("packages",
