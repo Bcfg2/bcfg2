@@ -39,37 +39,37 @@ XML tag should be ``<Properties>``.
 Usage
 =====
 
-Specific property files can be referred to in
-templates as ``metadata.Properties[<filename>]``. The
-``xdata`` attribute is an LXML element object. (Documented
-`here <http://codespeak.net/lxml/tutorial.html#the-element-class>`_)
+Specific property files can be referred to in templates as
+``metadata.Properties[<filename>]``. The ``xdata`` attribute is an
+lxml.etree._Element object. (Documented `here
+<http://codespeak.net/lxml/tutorial.html#the-element-class>`_)
 
-Currently, only one access method is defined for this data, ``Match``.
-``Match`` parses the Group and Client tags in the file and returns a
-list of elements that apply to the client described by a set of
-metadata.  (See :ref:`server-plugins-structures-bundler-index` for
-more details on how Group and Client tags are parsed.)  For instance::
+In addition to the ``xdata`` attribute that can be used to access the
+raw data, the following access methods are defined:
+
+* ``Match()`` parses the Group and Client tags in the file and returns
+  a list of elements that apply to the client described by a set of
+  metadata.  For instance::
 
     {% python
     ntp_servers = [el.text
-                   for el in metadata.Properties['ntp.xml'].Match(metadata):
+                   for el in metadata.Properties['ntp.xml'].Match(metadata)
                    if el.tag == "Server"]
     %}
 
-If you need to make persistent changes to properties data, you can use
-the ``write`` method of the ``PropertyFile`` class::
+* ``XMLMatch()`` parses the Group and Client tags in the file and
+  returns an XML document containing only the data that applies to the
+  client described by a set of metadata.  (The Group and Client tags
+  themselves are also removed, leaving only the tags and data
+  contained in them.)  For instance::
 
     {% python
-    import lxml.etree
-    from genshi.template import TemplateError
-    lxml.etree.SubElement(metadata.Properties['foo.xml'],
-                          "Client",
-                          name=metadata.hostname)
-    if not metadata.Properties['foo.xml'].write():
-        raise TemplateError("Failed to write changes back to foo.xml")
+    ntp_servers = [el.text
+                   for el in metadata.Properties['ntp.xml'].XMLMatch(metadata).findall("//Server")]
+    %}
 
-The ``write`` method checks the data in the object against its schema
-before writing it; see `Data Structures`_ for details.
+See :ref:`server-plugins-structures-bundler-index` for more details on
+how Group and Client tags are parsed.
 
 As we formulate more common use cases, we will add them to the
 ``PropertyFile`` class as methods. This will simplify templates.
@@ -85,6 +85,58 @@ directly in one of several ways:
   lxml.etree._Element objects representing the direct children of the
   top-level element.  (I.e., everything directly under the
   ``<Properties>`` tag.)
+
+.. _server-plugins-connectors-properties-automatch:
+
+Automatch
+=========
+
+You can enable ``XMLMatch()`` for all Property files by setting
+``automatch`` to ``true`` in the ``[properties]`` section of
+``bcfg2.conf``.  This makes ``metadata.Properties`` values
+lxml.etree._Element objects that contain only matching data.  (This
+makes it impossible to do
+:ref:`server-plugins-connectors-properties-write-back` as a
+side-effect.)
+
+In Python terms, setting ``automatch=true`` is the same as doing the
+following at the top of each template::
+
+    {% python
+    for prop in metadata.Properties.values():
+        prop = prop.XMLMatch(metadata)
+    %}
+
+The example above that describes ``XMLMatch()`` would then become
+simply::
+
+    {% python
+    ntp_servers = [el.text
+                   for el in metadata.Properties['ntp.xml'].findall("//Server")]
+    %}
+
+You can also enable automatch for individual Property files by setting
+the attribute ``automatch="true"`` in the top-level ``<Property>`` tag.
+
+.. _server-plugins-connectors-properties-write-back:
+
+Properties Write-Back
+=====================
+
+If you need to make persistent changes to properties data, you can use
+the ``write`` method of the ``PropertyFile`` class::
+
+    {% python
+    import lxml.etree
+    from genshi.template import TemplateError
+    lxml.etree.SubElement(metadata.Properties['foo.xml'],
+                          "Client",
+                          name=metadata.hostname)
+    if not metadata.Properties['foo.xml'].write():
+        raise TemplateError("Failed to write changes back to foo.xml")
+
+The ``write`` method checks the data in the object against its schema
+before writing it; see `Data Structures`_ for details.
 
 .. _server-plugins-connectors-properties-encrypted:
 
@@ -161,3 +213,19 @@ Accessing Properties contents from TGenshi
 Access contents of ``Properties/auth.xml``::
 
     ${metadata.Properties['auth.xml'].xdata.find('file').find('bcfg2.key').text}
+
+Configuration
+=============
+
+``bcfg2.conf`` contains several miscellaneous configuration options for the
+Properties plugin. Any booleans in the config file accept the values
+"1", "yes", "true", and "on" for True, and "0", "no", "false", and
+"off" for False.
+
+It understands the following directives:
+
+[properties] section
+--------------------
+
+* ``automatch``: Enable
+  :ref:`server-plugins-connectors-properties-automatch`
