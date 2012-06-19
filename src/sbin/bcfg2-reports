@@ -4,6 +4,7 @@ __revision__ = '$Revision$'
 
 import os
 import sys
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 try:
     import Bcfg2.Server.Reports.settings
