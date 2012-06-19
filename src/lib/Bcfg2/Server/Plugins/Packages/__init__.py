@@ -283,4 +283,4 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             del Collection.clients[metadata.hostname]
 
     def end_statistics(self, metadata):
-        self.end_client_run(self, metadata)
+        self.end_client_run(metadata)
