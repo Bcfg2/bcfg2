@@ -83,19 +83,20 @@ class PropertyFile(Bcfg2.Server.Plugin.StructFile):
                     raise Bcfg2.Server.PluginExecutionError(msg)
 
     def _decrypt(self, element):
-        passphrases = passphrases()
+        if not element.text.strip():
+            return
+        passes = passphrases()
         try:
-            passphrase = passphrases[element.get("encrypted")]
+            passphrase = passes[element.get("encrypted")]
             try:
-                return ssl_decrypt(crypted, self.passphrase)
+                return ssl_decrypt(element.text, passphrase)
             except EVPError:
                 # error is raised below
                 pass
         except KeyError:
-            for passwd in passphrases.values():
+            for passwd in passes.values():
                 try:
-                    rv = ssl_decrypt(crypted, passwd)
-                    return rv
+                    return ssl_decrypt(element.text, passwd)
                 except EVPError:
                     pass
         raise EVPError("Failed to decrypt")
