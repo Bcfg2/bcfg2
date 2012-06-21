@@ -198,6 +198,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                     return
         elif action == 'changed':
             self.entries[event.filename].handle_event(event)
+            return
         elif action == 'deleted':
             del self.entries[event.filename]
             return

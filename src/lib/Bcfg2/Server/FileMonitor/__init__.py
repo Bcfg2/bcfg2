@@ -42,7 +42,7 @@ class FileMonitor(object):
         return "%s: %s" % (__name__, self.__class__.__name__)
 
     def __repr__(self):
-        return "%s (%s events, fd %s)" % (str(self), len(events), self.fileno)
+        return "%s (%s events, fd %s)" % (str(self), len(self.events), self.fileno)
 
     def should_ignore(self, event):
         for pattern in self.ignore:
