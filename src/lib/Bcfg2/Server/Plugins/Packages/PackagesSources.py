@@ -4,17 +4,15 @@ import lxml.etree
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError
 
-class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
-                      Bcfg2.Server.Plugin.StructFile,
+class PackagesSources(Bcfg2.Server.Plugin.StructFile,
                       Bcfg2.Server.Plugin.Debuggable):
     __identifier__ = None
 
     def __init__(self, filename, cachepath, fam, packages, setup):
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
         try:
-            Bcfg2.Server.Plugin.SingleXMLFileBacked.__init__(self,
-                                                             filename,
-                                                             fam)
+            Bcfg2.Server.Plugin.StructFile.__init__(self, filename, fam=fam,
+                                                    should_monitor=True)
         except OSError:
             err = sys.exc_info()[1]
             msg = "Packages: Failed to read configuration file: %s" % err
@@ -22,7 +20,6 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
                 msg += " Have you created it?"
             self.logger.error(msg)
             raise Bcfg2.Server.Plugin.PluginInitError(msg)
-        Bcfg2.Server.Plugin.StructFile.__init__(self, filename)
         self.cachepath = cachepath
         self.setup = setup
         if not os.path.exists(self.cachepath):
@@ -42,7 +39,7 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
             source.toggle_debug()
 
     def HandleEvent(self, event=None):
-        Bcfg2.Server.Plugin.SingleXMLFileBacked.HandleEvent(self, event=event)
+        Bcfg2.Server.Plugin.XMLFileBacked.HandleEvent(self, event=event)
         if event and event.filename != self.name:
             for fname in self.extras:
                 fpath = None
@@ -65,7 +62,7 @@ class PackagesSources(Bcfg2.Server.Plugin.SingleXMLFileBacked,
         return sorted(list(self.parsed)) == sorted(self.extras)
 
     def Index(self):
-        Bcfg2.Server.Plugin.SingleXMLFileBacked.Index(self)
+        Bcfg2.Server.Plugin.XMLFileBacked.Index(self)
         self.entries = []
         for xsource in self.xdata.findall('.//Source'):
             source = self.source_from_xml(xsource)

@@ -26,9 +26,6 @@ def passphrases():
 
 class PropertyFile(Bcfg2.Server.Plugin.StructFile):
     """Class for properties files."""
-    def __init__(self, name):
-        Bcfg2.Server.Plugin.StructFile.__init__(self, name)
-
     def write(self):
         """ Write the data in this data structure back to the property
         file """

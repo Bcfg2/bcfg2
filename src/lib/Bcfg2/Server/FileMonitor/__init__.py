@@ -77,8 +77,8 @@ class FileMonitor(object):
             self.handles[event.requestID].HandleEvent(event)
         except:
             err = sys.exc_info()[1]
-            logger.error("Error in handling of event for %s: %s" %
-                         (event.filename, err))
+            logger.error("Error in handling of event %s for %s: %s" %
+                         (event.code2str(), event.filename, err))
 
     def handle_event_set(self, lock=None):
         count = 1

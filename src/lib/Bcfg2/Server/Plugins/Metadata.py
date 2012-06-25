@@ -35,17 +35,16 @@ class MetadataRuntimeError(Exception):
     pass
 
 
-class XMLMetadataConfig(Bcfg2.Server.Plugin.SingleXMLFileBacked):
+class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
     """Handles xml config files and all XInclude statements"""
     def __init__(self, metadata, watch_clients, basefile):
-        # we tell SingleXMLFileBacked _not_ to add a monitor for this
+        # we tell XMLFileBacked _not_ to add a monitor for this
         # file, because the main Metadata plugin has already added
         # one.  then we immediately set should_monitor to the proper
         # value, so that XIinclude'd files get properly watched
         fpath = os.path.join(metadata.data, basefile)
-        Bcfg2.Server.Plugin.SingleXMLFileBacked.__init__(self, fpath,
-                                                         metadata.core.fam,
-                                                         should_monitor=False)
+        Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, fpath,
+                                                   fam=metadata.core.fam)
         self.should_monitor = watch_clients
         self.metadata = metadata
         self.fam = metadata.core.fam

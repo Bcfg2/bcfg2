@@ -15,9 +15,6 @@ class PuppetENCFile(Bcfg2.Server.Plugin.FileBacked):
     def HandleEvent(self, event=None):
         return
 
-    def __str__(self):
-        return "%s: %s" % (self.__class__.__name__, self.name)
-
 
 class PuppetENC(Bcfg2.Server.Plugin.Plugin,
                 Bcfg2.Server.Plugin.Connector,

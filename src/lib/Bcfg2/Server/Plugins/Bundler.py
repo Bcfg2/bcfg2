@@ -19,7 +19,6 @@ except:
 
 
 class BundleFile(Bcfg2.Server.Plugin.StructFile):
-
     def get_xml_value(self, metadata):
         bundlename = os.path.splitext(os.path.basename(self.name))[0]
         bundle = lxml.etree.Element('Bundle', name=bundlename)
@@ -50,7 +49,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
             self.logger.error("Failed to load Bundle repository")
             raise Bcfg2.Server.Plugin.PluginInitError
 
-    def template_dispatch(self, name):
+    def template_dispatch(self, name, _):
         bundle = lxml.etree.parse(name,
                                   parser=Bcfg2.Server.XMLParser)
         nsmap = bundle.getroot().nsmap
@@ -63,7 +62,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
             else:
                 raise Bcfg2.Server.Plugin.PluginExecutionError("Genshi not available: %s" % name)
         else:
-            return BundleFile(name)
+            return BundleFile(name, self.fam)
 
     def BuildStructures(self, metadata):
         """Build all structures for client (metadata)."""

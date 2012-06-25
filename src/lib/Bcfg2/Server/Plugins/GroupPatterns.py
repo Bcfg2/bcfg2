@@ -73,16 +73,17 @@ class PatternMap(object):
         return ret
 
 
-class PatternFile(Bcfg2.Server.Plugin.SingleXMLFileBacked):
+class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
     __identifier__ = None
 
-    def __init__(self, filename, fam):
-        Bcfg2.Server.Plugin.SingleXMLFileBacked.__init__(self, filename, fam)
+    def __init__(self, filename, fam=None):
+        Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, filename, fam=fam,
+                                                   should_monitor=True)
         self.patterns = []
         self.logger = logging.getLogger(self.__class__.__name__)
 
     def Index(self):
-        Bcfg2.Server.Plugin.SingleXMLFileBacked.Index(self)
+        Bcfg2.Server.Plugin.XMLFileBacked.Index(self)
         self.patterns = []
         for entry in self.xdata.xpath('//GroupPattern'):
             try:
@@ -119,8 +120,8 @@ class GroupPatterns(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
-        self.config = PatternFile(self.data + '/config.xml',
-                                  core.fam)
+        self.config = PatternFile(os.path.join(self.data, 'config.xml'),
+                                  fam=core.fam)
 
     def get_additional_groups(self, metadata):
         return self.config.process_patterns(metadata.hostname)

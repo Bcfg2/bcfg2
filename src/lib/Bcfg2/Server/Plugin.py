@@ -395,10 +395,11 @@ class FileBacked(object):
     This object is meant to be used as a part of DirectoryBacked.
     """
 
-    def __init__(self, name):
+    def __init__(self, name, fam=None):
         object.__init__(self)
         self.data = ''
         self.name = name
+        self.fam = fam
 
     def HandleEvent(self, event=None):
         """Read file upon update."""
@@ -416,10 +417,7 @@ class FileBacked(object):
         pass
 
     def __repr__(self):
-        return "%s: %s" % (self.__class__.__name__, str(self))
-
-    def __str__(self):
-        return "%s: %s" % (self.name, self.data)
+        return "%s: %s" % (self.__class__.__name__, self.name)
 
 
 class DirectoryBacked(object):
@@ -487,7 +485,8 @@ class DirectoryBacked(object):
         added.
         """
         self.entries[relative] = self.__child__(os.path.join(self.data,
-                                                             relative))
+                                                             relative),
+                                                self.fam)
         self.entries[relative].HandleEvent(event)
 
     def HandleEvent(self, event):
@@ -589,43 +588,18 @@ class XMLFileBacked(FileBacked):
     """
     __identifier__ = 'name'
 
-    def __init__(self, filename):
-        self.label = "dummy"
-        self.entries = []
+    def __init__(self, filename, fam=None, should_monitor=False):
         FileBacked.__init__(self, filename)
-
-    def Index(self):
-        """Build local data structures."""
-        try:
-            self.xdata = lxml.etree.XML(self.data,
-                                        parser=Bcfg2.Server.XMLParser)
-        except lxml.etree.XMLSyntaxError:
-            logger.error("Failed to parse %s" % (self.name))
-            return
-        self.entries = self.xdata.getchildren()
-        if self.__identifier__ is not None:
-            self.label = self.xdata.attrib[self.__identifier__]
-
-    def __iter__(self):
-        return iter(self.entries)
-
-    def __str__(self):
-        return "%s at %s" % (self.__class__.__name__, self.name)
-
-
-class SingleXMLFileBacked(XMLFileBacked):
-    """This object is a coherent cache for an independent XML file."""
-    def __init__(self, filename, fam, should_monitor=True):
-        XMLFileBacked.__init__(self, filename)
+        self.label = ""
+        self.entries = []
         self.extras = []
         self.fam = fam
         self.should_monitor = should_monitor
-        if should_monitor:
+        if fam and should_monitor:
             self.fam.AddMonitor(filename, self)
 
     def _follow_xincludes(self, fname=None, xdata=None):
-        ''' follow xincludes, adding included files to fam and to
-        self.extras '''
+        ''' follow xincludes, adding included files to self.extras '''
         if xdata is None:
             if fname is None:
                 xdata = self.xdata.getroottree()
@@ -639,13 +613,8 @@ class SingleXMLFileBacked(XMLFileBacked):
                     fpath = name
                 else:
                     fpath = os.path.join(os.path.dirname(self.name), name)
-                self.add_monitor(fpath, name)
                 self._follow_xincludes(fname=fpath)
-
-    def add_monitor(self, fpath, fname):
-        if self.should_monitor:
-            self.fam.AddMonitor(fpath, self)
-            self.extras.append(fname)
+                self.add_monitor(fpath, name)
 
     def Index(self):
         """Build local data structures."""
@@ -669,13 +638,21 @@ class SingleXMLFileBacked(XMLFileBacked):
         if self.__identifier__ is not None:
             self.label = self.xdata.attrib[self.__identifier__]
 
+    def add_monitor(self, fpath, fname):
+        self.extras.append(fname)
+        if self.fam:
+            self.fam.AddMonitor(fpath, self)
+
+    def __iter__(self):
+        return iter(self.entries)
+
+    def __str__(self):
+        return "%s at %s" % (self.__class__.__name__, self.name)
+
 
 class StructFile(XMLFileBacked):
     """This file contains a set of structure file formatting logic."""
     __identifier__ = None
-
-    def __init__(self, name):
-        XMLFileBacked.__init__(self, name)
 
     def _include_element(self, item, metadata):
         """ determine if an XML element matches the metadata """
@@ -827,8 +804,8 @@ class XMLSrc(XMLFileBacked):
     __node__ = INode
     __cacheobj__ = dict
 
-    def __init__(self, filename, noprio=False):
-        XMLFileBacked.__init__(self, filename)
+    def __init__(self, filename, fam=None, should_monitor=False, noprio=False):
+        XMLFileBacked.__init__(self, filename, fam, should_monitor)
         self.items = {}
         self.cache = None
         self.pnode = None
@@ -880,6 +857,7 @@ class InfoXML(XMLSrc):
 class XMLDirectoryBacked(DirectoryBacked):
     """Directorybacked for *.xml."""
     patterns = re.compile('.*\.xml')
+    __child__ = XMLFileBacked
 
 
 class PrioDir(Plugin, Generator, XMLDirectoryBacked):

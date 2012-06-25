@@ -37,14 +37,6 @@ data.text = binascii.b2a_base64(open(path).read())
 print lxml.etree.tostring(data)
 """
 
-class FileProbesConfig(Bcfg2.Server.Plugin.SingleXMLFileBacked,
-                       Bcfg2.Server.Plugin.StructFile):
-    """ Config file handler for FileProbes """
-    def __init__(self, filename, fam):
-        Bcfg2.Server.Plugin.SingleXMLFileBacked.__init__(self, filename, fam)
-        Bcfg2.Server.Plugin.StructFile.__init__(self, filename)
-
-
 class FileProbes(Bcfg2.Server.Plugin.Plugin,
                  Bcfg2.Server.Plugin.Probing):
     """ This module allows you to probe a client for a file, which is then
@@ -60,8 +52,10 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Probing.__init__(self)
-        self.config = FileProbesConfig(os.path.join(self.data, 'config.xml'),
-                                       core.fam)
+        self.config = Bcfg2.Server.Plugin.StructFile(os.path.join(self.data,
+                                                                  'config.xml'),
+                                                     fam=core.fam,
+                                                     should_monitor=True)
         self.entries = dict()
         self.probes = dict()
 
