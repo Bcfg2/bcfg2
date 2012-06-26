@@ -442,8 +442,13 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             stat['verify_fail'] = False
             stat['pkg'] = entry
             stat['modlist'] = modlist
-            verify_flags = inst.get('verify_flags', self.verifyFlags)
-            verify_flags = verify_flags.lower().replace(' ', ',').split(',')
+            if inst.get('verify_flags'):
+                # this splits on either space or comma
+                verify_flags = \
+                    inst.get('verify_flags').lower().replace(' ',
+                                                             ',').split(',')
+            else:
+                verify_flags = self.verify_flags
 
             if 'arch' in nevra:
                 # If arch is specified use it to select the package
