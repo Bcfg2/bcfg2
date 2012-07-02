@@ -2,6 +2,7 @@
 __revision__ = '$Revision$'
 
 import binascii
+import codecs
 import logging
 import lxml
 import operator
@@ -12,7 +13,7 @@ import stat
 import sys
 import tempfile
 from subprocess import Popen, PIPE
-from Bcfg2.Bcfg2Py3k import u_str
+from Bcfg2.Bcfg2Py3k import u_str, unicode
 
 import Bcfg2.Server.Plugin
 
@@ -173,8 +174,10 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             try:
                 fname = entry.get('realname', entry.get('name'))
                 s = {'useStackFrames': False}
-                template = Cheetah.Template.Template(open(basefile.name).read(),
-                                                       compilerSettings=s)
+                template = Cheetah.Template.Template(
+                    codecs.open(basefile.name,
+                                encoding=self.encoding).read(),
+                                compilerSettings=s)
                 template.metadata = metadata
                 template.path = fname
                 template.source_path = basefile.name
@@ -194,7 +197,10 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             entry.text = binascii.b2a_base64(data)
         else:
             try:
-                entry.text = u_str(data, self.encoding)
+                if type(data) == unicode:
+                    entry.text = data
+                else:
+                    entry.text = u_str(data, self.encoding)
             except UnicodeDecodeError:
                 msg = "Failed to decode %s: %s" % (entry.get('name'),
                                                    sys.exc_info()[1])
