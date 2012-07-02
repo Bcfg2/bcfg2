@@ -64,6 +64,12 @@ try:
 except ImportError:
     import http.client as httplib
 
+# py3k compatibility
+if sys.hexversion >= 0x03000000:
+    unicode = str
+else:
+    unicode = unicode
+
 # print to file compatibility
 def u_str(string, encoding=None):
     if sys.hexversion >= 0x03000000:
