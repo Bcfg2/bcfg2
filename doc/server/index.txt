@@ -28,3 +28,4 @@ clients.
    info
    snapshots/index
    bcfg2-info
+   selinux

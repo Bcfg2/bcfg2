@@ -1,138 +1,13 @@
 .. -*- mode: rst -*-
 
-.. NOTE: these are relative links (change when directory structure
-..       changes)
-
-.. _Base: plugins/structures/base
-.. _Bundler: plugins/structures/bundler
-.. _Cfg: plugins/generators/cfg.html
-.. _TGenshi: plugins/generators/tgenshi
-.. _TCheetah: plugins/generators/tcheetah.html
-.. _Rules: plugins/generators/rules.html
-
 .. _server-configurationentries:
 
 =====================
 Configuration Entries
 =====================
 
-This page describes the names and semantics of each of the configuration
-entries used by Bcfg2.
-
-Non-POSIX entries
-=================
-
-+-------------+---------------------+--------------------------------------------+
-| TagName     | Description         | Attributes                                 |
-+=============+=====================+============================================+
-| Action      | Command             | name, command, when, timing, status, build |
-+-------------+---------------------+--------------------------------------------+
-| Package     | Software Packages   | name, type, version, url                   |
-+-------------+---------------------+--------------------------------------------+
-| PostInstall | PostInstall command | name                                       |
-+-------------+---------------------+--------------------------------------------+
-| Service     | System Services     | name, type, status, target                 |
-+-------------+---------------------+--------------------------------------------+
-
-.. note::
-
-    PostInstall entries are deprecated in favor of Action entries. In
-    fact, a PostInstall entry is simply a specific type of Action.
-    Basically, the following are equivalent:
-
-    .. code-block:: xml
-
-        <PostInstall name='foo'/>
-
-    and
-
-    .. code-block:: xml
-
-        <Action timing='post' when='modified' name='n' command='foo' status='ignore'/>
-
-POSIX entries
-=============
-
-.. versionadded:: 1.0.0
-
-The unified POSIX Path entries prevent inconsistent configuration
-specifications of multiple entries for a given path. The following table
-describes the various types available for new **Path** entries.
-
-The abstract specification of these entries (i.e. In `Bundler`_)
-will only contain a *name* attribute. The type will be added by the
-plugin that handles the entry in the case of `Cfg`_, `TGenshi`_, or
-`TCheetah`_. If the entry is handled by the `Rules`_ plugin (i.e. it is
-a device, directory, hardlink, symlink, etc), then you will specify both
-the *type* and any other necessary attributes in `Rules`_.
-
-Running ``bcfg2-lint`` will check your configuration specification for
-the presence of any mandatory attributes that are necessary for the
-Path type specified.
-
-.. note:: A tool for converting old POSIX entries is available in the
-          Bcfg2 source directory at tools/posixunified.py
-
-+-------------+----------------------+-----------------+--------------------------+
-| Type        | Replacement/New      | Description     | Attributes               |
-+=============+======================+=================+==========================+
-| device      | New                  | Create block,   | name, owner, group,      |
-|             |                      | character, and  | dev_type                 |
-|             |                      | fifo devices    | (block, char, fifo),     |
-|             |                      |                 | major/minor              |
-|             |                      |                 | (for block/char devices) |
-+-------------+----------------------+-----------------+--------------------------+
-| directory   | Replaces Directory   | Directories     | name, owner, group,      |
-|             | entries              |                 | perms, prune             |
-+-------------+----------------------+-----------------+--------------------------+
-| file        | Replaces ConfigFile  | Configuration   | name, owner, group,      |
-|             | entries              | File            | perms, encoding, empty   |
-|             |                      |                 |                          |
-|             |                      |                 | **Note:** see below      |
-+-------------+----------------------+-----------------+--------------------------+
-| hardlink    | New                  | Create          | name, to                 |
-|             |                      | hardlinks       |                          |
-+-------------+----------------------+-----------------+--------------------------+
-| symlink     | Replaces SymLink     | SymLinks        | name, to                 |
-|             | entries              |                 |                          |
-+-------------+----------------------+-----------------+--------------------------+
-| ignore      | New                  | Ignore files    | name                     |
-|             |                      | that cause      |                          |
-|             |                      | package         |                          |
-|             |                      | verification    |                          |
-|             |                      | failures        |                          |
-|             |                      | (currently      |                          |
-|             |                      | applies to only |                          |
-|             |                      | APT and YUMng)  |                          |
-+-------------+----------------------+-----------------+--------------------------+
-| nonexistent | New                  | Specify a path  | name, recursive          |
-|             |                      | that should not |                          |
-|             |                      | exist           |                          |
-+-------------+----------------------+-----------------+--------------------------+
-| permissions | Replaces Permissions | Permissions of  | name, owner, group,      |
-|             | entries              | POSIX entities  | perms, recursive         |
-|             |                      |                 |                          |
-+-------------+----------------------+-----------------+--------------------------+
-| vcs         | New                  | Create version  | vcstype (git),           |
-|             |                      | control         | sourceurl, revision      |
-|             |                      | checkout        |                          |
-+-------------+----------------------+-----------------+--------------------------+
-
-Keep in mind that permissions for files handled by Cfg/TGenshi/TCheetah
-are still handled via the traditional :ref:`server-info` mechanisms.
-
-Additional information
-----------------------
-
-This section describes some additional behavior relating to POSIX entry
-attributes.
-
-Recursive permissions
-^^^^^^^^^^^^^^^^^^^^^
-
-As per the request in ticket 871, Path type='permissions' entries allow you to
-set a recursive attribute which allows the owner/group to be set recursively
-for a directory.
+The full semantics of each configuration entry is documented with the
+:ref:`server-plugins-generators-rules` plugin.
 
 .. _boundentries:
 
@@ -178,13 +53,14 @@ Use Cases
 Examples
 --------
 
-* Consider the case of ``/etc/hosts`` on linux and ``/etc/inet/hosts`` on
-  solaris. These files contain the same data in the same format,
+* Consider the case of ``/etc/hosts`` on linux and ``/etc/inet/hosts``
+  on solaris. These files contain the same data in the same format,
   and should typically be synchronized, however, exist in different
   locations. Classically, one would need to create one entry for each
-  in `Cfg`_ or `TCheetah`_ and perform manual synchronization. Or,
-  you could use symlinks and pray. Altsrc is driven from the bundle
-  side. For example:
+  in :ref:`server-plugins-generators-cfg` or
+  :ref:`server-plugins-generators-tcheetah` and perform manual
+  synchronization. Or, you could use symlinks and pray. Altsrc is
+  driven from the bundle side. For example:
 
   .. code-block:: xml
 
@@ -220,10 +96,12 @@ Examples
   named "openssl" with different types.
 
 * Finally, consider the case where there exist complicated, but
-  completely independent specifications for the same configuration entry
-  but different groups of clients. The following bundle will allow the use
-  of two different `TCheetah`_ templates ``/etc/firewall-rules-external``
-  and ``/etc/firewall-rules-internal`` for different clients based on
+  completely independent specifications for the same configuration
+  entry but different groups of clients. The following bundle will
+  allow the use of two different
+  :ref:`server-plugins-generators-tcheetah` templates
+  ``/etc/firewall-rules-external`` and
+  ``/etc/firewall-rules-internal`` for different clients based on
   their group membership.
 
   .. code-block:: xml
@@ -239,11 +117,13 @@ Examples
       </Bundle>
 
 * Consider the case where a variety of files can be constructed by a
-  single template (`TCheetah`_ or `TGenshi`_). It would be possible to
-  copy this template into the proper location for each file, but that
-  requires proper synchronization upon modification and knowing up front
-  what the files will all be called. Instead, the following bundle allows
-  the use of a single template for all proper config file instances.
+  single template (:ref:`server-plugins-generators-tcheetah` or
+  :ref:`server-plugins-generators-tgenshi-index`). It would be
+  possible to copy this template into the proper location for each
+  file, but that requires proper synchronization upon modification and
+  knowing up front what the files will all be called. Instead, the
+  following bundle allows the use of a single template for all proper
+  config file instances.
 
   .. code-block:: xml
 
@@ -253,5 +133,6 @@ Examples
         <Path name='/etc/sysconfig/network-scripts/ifcfg-eth2' altsrc='/etc/ifcfg-template'/>
       </Bundle>
 
-  altsrc can be used as a parameter for any entry type, and can be used
-  in any structure, including `Bundler`_ and `Base`_.
+  altsrc can be used as a parameter for any entry type, and can be
+  used in any structure, including
+  :ref:`server-plugins-structures-bundler-index`.

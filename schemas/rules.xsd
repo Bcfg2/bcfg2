@@ -14,66 +14,91 @@
   <xsd:import namespace="http://genshi.edgewall.org/"
               schemaLocation="genshi.xsd"/>
 
-  <xsd:complexType name='ActionType'>
-    <xsd:attribute type='ActionTimingEnum' name='timing'/>
-    <xsd:attribute type='ActionWhenEnum' name='when'/>
-    <xsd:attribute type='ActionStatusEnum' name='status'/>
-    <xsd:attribute type="xsd:boolean" name="build"/>
-    <xsd:attribute type='xsd:string' name='name'/>
-    <xsd:attribute type='xsd:string' name='command'/>
-    <xsd:attributeGroup ref="py:genshiAttrs"/>
-  </xsd:complexType>
-
   <xsd:complexType name='PostInstallType'>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
 
-  <xsd:complexType name='PathType'>
-    <xsd:attribute type='PathTypeEnum' name='type' use='required'/>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='dev_type'/>
-    <xsd:attribute type='xsd:string' name='major'/>
-    <xsd:attribute type='xsd:string' name='minor'/>
-    <xsd:attribute type='xsd:string' name='mode'/>
-    <xsd:attribute type='xsd:string' name='perms'/>
-    <xsd:attribute type='xsd:string' name='owner'/>
-    <xsd:attribute type='xsd:string' name='group'/>
-    <xsd:attribute type='xsd:string' name='recursive'/>
-    <xsd:attribute type='xsd:string' name='prune'/>
-    <xsd:attribute type='xsd:string' name='to'/>
-    <xsd:attribute type='xsd:string' name='vcstype'/>
-    <xsd:attribute type='xsd:string' name='revision'/>
-    <xsd:attribute type='xsd:string' name='sourceurl'/>
-    <xsd:attributeGroup ref="py:genshiAttrs"/>
-  </xsd:complexType>
+  <xsd:group name="rulesElements">
+    <xsd:choice>
+      <xsd:group ref="py:genshiElements"/>
+      <xsd:element name='Package' type='PackageType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a software package to be managed.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Path' type='PathType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a filesystem path to be handled
+            by the POSIX driver.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Service' type='ServiceType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a system service to be managed.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Action' type='ActionType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a command to be run.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SELinux' type='SELinuxType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='PostInstall' type='PostInstallType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            PostInstall entries are deprecated in favor of Action
+            entries. Actions can do everything PostInstall entries can
+            do and more.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Group' type='RContainerType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Elements within Group tags only apply to clients that are
+            members of that group (or vice-versa; see #element_negate
+            below)
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Client' type='RContainerType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Elements within Client tags only apply to the named client
+            (or vice-versa; see #element_negate below)
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:choice>
+  </xsd:group>
 
   <xsd:complexType name='RContainerType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='Service' type='ServiceType'/>
-      <xsd:element name='Package' type='PackageType'/>
-      <xsd:element name='Path' type='PathType'/>
-      <xsd:element name='Action' type='ActionType'/>
-      <xsd:element name='Group' type='RContainerType'/>
-      <xsd:element name='Client' type='RContainerType'/>
-      <xsd:group ref="py:genshiElements"/>
+      <xsd:group ref="rulesElements"/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string'/>
     <xsd:attribute name='negate' type='xsd:boolean'/>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
-
   <xsd:element name='Rules'>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-        <xsd:element name='Service' type='ServiceType'/>
-        <xsd:element name='Package' type='PackageType'/>
-        <xsd:element name='Path' type='PathType'/>
-        <xsd:element name='Action' type='ActionType'/>
-        <xsd:element name='PostInstall' type='PostInstallType'/>
-        <xsd:element name='Group' type='RContainerType'/>
-        <xsd:element name='Client' type='RContainerType'/>
-        <xsd:group ref="py:genshiElements"/>
+        <xsd:group ref="rulesElements"/>
       </xsd:choice>
       <xsd:attribute name='priority' type='xsd:integer' use='required'/>
       <xsd:attributeGroup ref="py:genshiAttrs"/>

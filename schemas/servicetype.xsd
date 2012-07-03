@@ -13,7 +13,7 @@
               schemaLocation="genshi.xsd"/>
 
   <xsd:simpleType name='RestartEnum'>
-    <xsd:restriction base='xsd:boolean'>
+    <xsd:restriction base='xsd:string'>
       <xsd:enumeration value='true'/>
       <xsd:enumeration value='false'/>
       <xsd:enumeration value='1'/>

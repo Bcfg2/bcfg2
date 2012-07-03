@@ -46,6 +46,10 @@ Group membership may be negated.
 Tag Attributes in Rules
 =======================
 
+Running ``bcfg2-lint`` will check your configuration specification for
+the presence of any mandatory attributes that are necessary for the
+entry specified.
+
 Rules Tag
 ---------
 
@@ -217,6 +221,12 @@ The Path tag has different values depending on the *type* attribute of
 the path specified in your configuration. Below is a set of tables which
 describe the attributes available for various Path types.
 
+Note that ``secontext`` below expects a full context, not just the
+type.  For instance, "``system_u:object_r:etc_t:s0``", not just
+``etc_t``.  You can also specify "``__default__``", which will restore
+the context of the file to the default set by policy.  See
+:ref:`server-selinux` for more information.
+
 Attributes common to all Path tags:
 
 +----------+---------------------------------------------------+-----------------+
@@ -229,46 +239,58 @@ Attributes common to all Path tags:
 device
 ^^^^^^
 
-+----------+---------------------+-------------------+
-| Name     | Description         | Values            |
-+==========+=====================+===================+
-| dev_type | Type of device      | (block|char|fifo) |
-+----------+---------------------+-------------------+
-| owner    | Device owner        | String            |
-+----------+---------------------+-------------------+
-| group    | Device group        | String            |
-+----------+---------------------+-------------------+
-| major    | Major number (block | integer           |
-|          | or char devices)    |                   |
-+----------+---------------------+-------------------+
-| minor    | Minor number (block | integer           |
-|          | or char devices)    |                   |
-+----------+---------------------+-------------------+
++-----------+---------------------+-------------------+
+| Name      | Description         | Values            |
++===========+=====================+===================+
+| dev_type  | Type of device      | (block|char|fifo) |
++-----------+---------------------+-------------------+
+| owner     | Device owner        | String            |
++-----------+---------------------+-------------------+
+| group     | Device group        | String            |
++-----------+---------------------+-------------------+
+| secontext | SELinux context     | String            |
++-----------+---------------------+-------------------+
+| major     | Major number (block | integer           |
+|           | or char devices)    |                   |
++-----------+---------------------+-------------------+
+| minor     | Minor number (block | integer           |
+|           | or char devices)    |                   |
++-----------+---------------------+-------------------+
 
 directory
 ^^^^^^^^^
 
-+-------+------------------------------+------------+
-| Name  | Description                  | Values     |
-+=======+==============================+============+
-| perms | Permissions of the directory | String     |
-+-------+------------------------------+------------+
-| owner | Owner of the directory       | String     |
-+-------+------------------------------+------------+
-| group | Group Owner of the directory | String     |
-+-------+------------------------------+------------+
-| prune | prune unspecified entries    | true|false |
-|       | from the Directory           |            |
-+-------+------------------------------+------------+
++-----------+------------------------------+------------+
+| Name      | Description                  | Values     |
++===========+==============================+============+
+| perms     | Permissions of the directory | String     |
++-----------+------------------------------+------------+
+| owner     | Owner of the directory       | String     |
++-----------+------------------------------+------------+
+| group     | Group Owner of the directory | String     |
++-----------+------------------------------+------------+
+| secontext | SELinux context              | String     |
++-----------+------------------------------+------------+
+| prune     | prune unspecified entries    | true|false |
+|           | from the Directory           |            |
++-----------+------------------------------+------------+
 
 hardlink
 ^^^^^^^^
 
-+------+----------------------+--------+
-| Name | Description          | Values |
-+======+======================+========+
-| to   | File to link to      | String |
-+------+----------------------+--------+
++-----------+------------------------------+--------+
+| Name      | Description                  | Values |
++===========+==============================+========+
+| to        | File to link to              | String |
++-----------+------------------------------+--------+
+| perms     | Permissions of the directory | String |
++-----------+------------------------------+--------+
+| owner     | Owner of the directory       | String |
++-----------+------------------------------+--------+
+| group     | Group Owner of the directory | String |
++-----------+------------------------------+--------+
+| secontext | SELinux context              | String |
++-----------+------------------------------+--------+
 
 nonexistent
 ^^^^^^^^^^^
@@ -285,15 +307,17 @@ nonexistent
 permissions
 ^^^^^^^^^^^
 
-+-------+--------------------------+--------+
-| Name  | Description              | Values |
-+=======+==========================+========+
-| perms | Permissions of the file. | String |
-+-------+--------------------------+--------+
-| owner | Owner of the file.       | String |
-+-------+--------------------------+--------+
-| group | Group of the file.       | String |
-+-------+--------------------------+--------+
++-----------+--------------------------+--------+
+| Name      | Description              | Values |
++===========+==========================+========+
+| perms     | Permissions of the file. | String |
++-----------+--------------------------+--------+
+| owner     | Owner of the file.       | String |
++-----------+--------------------------+--------+
+| group     | Group of the file.       | String |
++-----------+--------------------------+--------+
+| secontext | SELinux context          | String |
++-----------+--------------------------+--------+
 
 symlink
 ^^^^^^^
@@ -303,6 +327,141 @@ symlink
 +======+======================+========+
 | to   | File to link to      | String |
 +------+----------------------+--------+
+
+SELinux Tag
+-----------
+
+The SELinux tag has different values depending on the *type* attribute
+of the SELinux entry specified in your configuration. Below is a set
+of tables which describe the attributes available for various SELinux
+types.  The types (except for ``module``) correspond to ``semanage``
+subcommands.
+
+Note that the ``selinuxtype`` attribute takes only an SELinux type,
+not a full context; e.g., "``etc_t``", not
+"``system_u:object_r:etc_t:s0``".
+
+As it can be very tedious to create a baseline of all existing SELinux
+entries, you can use ``selinux_baseline.py`` located in the ``tools/``
+directory to do that for you.
+
+In certain cases, it may be necessary to create multiple SELinux
+entries with the same name.  For instance, "root" is both an SELinux
+user and an SELinux login record; or a given fcontext may need two
+different SELinux types depending on whether it's a symlink or a plain
+file.  In these (few) cases, it is necessary to create BoundSELinux
+entries directly in Bundler rather than using abstract SELinux entries
+in Bundler and binding them with Rules.
+
+See :ref:`server-selinux` for more information.
+
+boolean
+^^^^^^^
+
++-------+----------------------+---------+----------+
+| Name  | Description          | Values  | Required |
++=======+======================+=========+==========+
+| name  | Name of the boolean  | String  | Yes      |
++-------+----------------------+---------+----------+
+| value | Value of the boolean | on|off  | Yes      |
++-------+----------------------+---------+----------+
+
+port
+^^^^
+
++-------------+------------------------+---------------------------+----------+
+| Name        | Description            | Values                    | Required |
++=============+========================+===========================+==========+
+| name        | Port number or range   | ``<port>/<proto>`` or     | Yes      |
+|             | and protocol (tcp|udp) | ``<start>-<end>/<proto>`` |          |
++-------------+------------------------+---------------------------+----------+
+| selinuxtype | SELinux type to apply  | String                    | Yes      |
+|             | to this port           |                           |          |
++-------------+------------------------+---------------------------+----------+
+
+fcontext
+^^^^^^^^
+
++-------------+-------------------------+---------------------+----------+
+| Name        | Description             | Values              | Required |
++=============+=========================+=====================+==========+
+| name        | File specification      | String              | Yes      |
++-------------+-------------------------+---------------------+----------+
+| selinuxtype | SELinux type to apply   | String              | Yes      |
+|             | to files matching this  |                     |          |
+|             | specification           |                     |          |
++-------------+-------------------------+---------------------+----------+
+| filetype    | File type to match.     | (regular|directory| | No       |
+|             | Default: all            |  symlink|pipe|all|  |          |
+|             |                         |  socket|block|char) |          |
++-------------+-------------------------+---------------------+----------+
+
+node
+^^^^
+
++-------------+------------------------------------+------------------+----------+
+| Name        | Description                        | Values           | Required |
++=============+====================================+==================+==========+
+| name        | IP address and netmask of node.    | <addr>/<netmask> | Yes      |
+|             | Netmask can be numeric (/16) or    |                  |          |
+|             | dotted-quad (/255.255.0.0)         |                  |          |
++-------------+------------------------------------+------------------+----------+
+| selinuxtype | SELinux type to apply to this node | String           | Yes      |
++-------------+------------------------------------+------------------+----------+
+| proto       | Protocol                           | (ipv4|ipv6)      | Yes      |
++-------------+------------------------------------+------------------+----------+
+| netmask     | Netmask                            | String           | Yes      |
++-------------+------------------------------------+------------------+----------+
+
+login
+^^^^^
+
++-------------+-------------------------------+-----------+----------+
+| Name        | Description                   | Values    | Required |
++=============+===============================+===========+==========+
+| name        | Unix username                 | String    | Yes      |
++-------------+-------------------------------+-----------+----------+
+| selinuxuser | SELinux username              | String    | Yes      |
++-------------+-------------------------------+-----------+----------+
+
+user
+^^^^
+
++-------------+-------------------------------+-----------+----------+
+| Name        | Description                   | Values    | Required |
++=============+===============================+===========+==========+
+| name        | SELinux username              | String    | Yes      |
++-------------+-------------------------------+-----------+----------+
+| roles       | Space-separated list of roles | String    | No       |
++-------------+-------------------------------+-----------+----------+
+| prefix      | Home directory context prefix | String    | No       |
++-------------+-------------------------------+-----------+----------+
+
+interface
+^^^^^^^^^
+
++-------------+-------------------------+-------------+----------+
+| Name        | Description             | Values      | Required |
++=============+=========================+=============+==========+
+| name        | Interface name          | String      | Yes      |
++-------------+-------------------------+-------------+----------+
+| selinuxtype | SELinux type to apply   | String      | Yes      |
+|             | to this interface       |             |          |
++-------------+-------------------------+-------------+----------+
+
+permissive
+^^^^^^^^^^
+
++-------------+------------------------------------+-------------+----------+
+| Name        | Description                        | Values      | Required |
++=============+====================================+=============+==========+
+| name        | SELinux type to make permissive    | String      | Yes      |
++-------------+------------------------------------+-------------+----------+
+
+module
+^^^^^^
+
+See :ref:`server-plugins-generators-semodules`
 
 Rules Directory
 ===============

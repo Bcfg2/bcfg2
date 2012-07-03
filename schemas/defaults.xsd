@@ -11,33 +11,6 @@
   <xsd:include schemaLocation="types.xsd"/>
   <xsd:include schemaLocation="pkgtype.xsd"/>
 
-  <xsd:complexType name="ActionType">
-    <xsd:attribute type="ActionTimingEnum" name="timing"/>
-    <xsd:attribute type="ActionWhenEnum" name="when"/>
-    <xsd:attribute type="ActionStatusEnum" name="status"/>
-    <xsd:attribute type="xsd:boolean" name="build"/>
-    <xsd:attribute type="xsd:string" name="name" use="required"/>
-    <xsd:attribute type="xsd:string" name="command"/>
-  </xsd:complexType>
-
-  <xsd:complexType name="PathType">
-    <xsd:attribute type="PathTypeEnum" name="type"/>
-    <xsd:attribute type="xsd:string" name="name" use="required"/>
-    <xsd:attribute type="xsd:string" name="dev_type"/>
-    <xsd:attribute type="xsd:string" name="major"/>
-    <xsd:attribute type="xsd:string" name="minor"/>
-    <xsd:attribute type="xsd:string" name="mode"/>
-    <xsd:attribute type="xsd:string" name="perms"/>
-    <xsd:attribute type="xsd:string" name="owner"/>
-    <xsd:attribute type="xsd:string" name="group"/>
-    <xsd:attribute type="xsd:string" name="recursive"/>
-    <xsd:attribute type="xsd:string" name="prune"/>
-    <xsd:attribute type="xsd:string" name="to"/>
-    <xsd:attribute type="xsd:string" name="vcstype"/>
-    <xsd:attribute type="xsd:string" name="revision"/>
-    <xsd:attribute type="xsd:string" name="sourceurl"/>
-  </xsd:complexType>
-
   <xsd:complexType name="DContainerType">
     <xsd:choice minOccurs="0" maxOccurs="unbounded">
       <xsd:element name="Service" type="ServiceType"/>

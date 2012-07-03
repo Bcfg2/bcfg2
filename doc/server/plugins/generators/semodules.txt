@@ -1,0 +1,66 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-generators-semodules:
+
+=========
+SEModules
+=========
+
+.. versionadded:: 1.3.0
+
+The SEModules plugin handles SELinux module entries.  It supports
+group- and host-specific module versions, and enabling/disabling
+modules.
+
+You can use ``selinux_baseline.py`` located in the tools/ directory to
+create a baseline of all of your installed modules.
+
+See :ref:`server-selinux` for more information.
+
+Usage
+=====
+
+To use the SEModules plugin, first do ``mkdir
+/var/lib/bcfg2/SEModules``.  Add ``SEModules`` to your ``plugins``
+line in ``/etc/bcfg2.conf`` and restart bcfg2-server.
+
+The SEModules directory contains modules in a layout similar to the
+Cfg plugin: at the top level, SEModules should contain directories
+named after the modules you want to install, and each of those
+directories can contain a global module, plus any number of group- and
+host-specific modules.  For instance:
+
+    $ ls -F SEModules
+    foo.pp/  bar.pp/
+    $ ls SEModules/foo.pp/
+    foo.pp
+    foo.pp.G50_server
+    foo.pp.H_baz.example.com
+
+For more information on this directory layout, see
+:ref:`server-plugins-generators-cfg`.
+
+Entries
+=======
+
+SEModules handles ``<SELinux>`` entries with the ``module`` type.  For
+instance:
+
+.. code-block:: xml
+
+    <Bundle name="foo">
+      <SELinux type="module" name="foo.pp"/>
+    </Bundle>
+
+The ``.pp`` extension is optional.
+
+.. note::
+
+    If you use a ``BoundSELinux`` tag, you must *not* include the
+    ``.pp`` extension.  This is not recommend, though.
+
+You can also install a disabled module:
+
+.. code-block:: xml
+
+    <SELinux type="module" name="foo" disabled="true"/>

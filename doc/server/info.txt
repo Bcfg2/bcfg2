@@ -1,8 +1,5 @@
 .. -*- mode: rst -*-
 
-.. NOTE: these are relative links (change when directory structure
-..       changes)
-
 .. _server-info:
 
 ====
@@ -26,24 +23,29 @@ possible fields in an info file are:
 +------------+-------------------+----------------------------------+---------+
 | Field      | Possible values   | Description                      | Default |
 +============+===================+==================================+=========+
-| encoding:  | ascii | base64    | Encoding of the file. Use        | ascii   |
+| encoding   | ascii | base64    | Encoding of the file. Use        | ascii   |
 |            |                   | base64 for binary files          |         |
 +------------+-------------------+----------------------------------+---------+
-| group:     | Any valid group   | Sets group of the file           | root    |
+| owner      | Any valid user    | Sets owner of the file           | root    |
 +------------+-------------------+----------------------------------+---------+
-| important: | true | false      | Important entries are            | false   |
+| group      | Any valid group   | Sets group of the file           | root    |
++------------+-------------------+----------------------------------+---------+
+| perms      | Numeric file mode | Sets the permissions of the file | 0644    |
+|            | | 'inherit'       | (or inherits from the files on   |         |
+|            |                   | disk if set to 'inherit')        |         |
++------------+-------------------+----------------------------------+---------+
+| secontext  | A valid SELinux   | Sets the SELinux context of the  | default |
+|            | context string or | file, or sets to the default     |         |
+|            | '__default__'     | context set by policy if set to  |         |
+|            |                   | '__default__'                    |         |
++------------+-------------------+----------------------------------+---------+
+| important  | true | false      | Important entries are            | false   |
 |            |                   | installed first during client    |         |
 |            |                   | execution                        |         |
 +------------+-------------------+----------------------------------+---------+
-| owner:     | Any valid user    | Sets owner of the file           | root    |
+| paranoid   | true | false      | Backup file before replacement?  | true    |
 +------------+-------------------+----------------------------------+---------+
-| paranoid:  | true | false      | Backup file before replacement?  | true    |
-+------------+-------------------+----------------------------------+---------+
-| perms:     | Numeric file mode | Sets the permissions of the file | 0644    |
-|            | | 'inherit'       | (or inherits from the files on   |         |
-|            |                   | disk if set to inherit)          |         |
-+------------+-------------------+----------------------------------+---------+
-| sensitive: | true | false      | The contents of sensitive        | false   |
+| sensitive  | true | false      | The contents of sensitive        | false   |
 |            |                   | entries aren't included in       |         |
 |            |                   | reports                          |         |
 +------------+-------------------+----------------------------------+---------+
@@ -54,14 +56,25 @@ A sample info file for CGI script on a web server might look like::
     group: www
     perms: 0755
 
+The equivalent ``info.xml`` file would be:
+
+.. code-block:: xml
+
+    <FileInfo>
+      <Info owner="www" group="www" perms="0755"/>
+    </FileInfo>
+
 Back to the fstab example again, our final ``Cfg/etc/fstab/`` directory
 might look like::
 
-    :info
+    info.xml
     fstab
     fstab.G50_server
     fstab.G99_fileserver
     fstab.H_host.example.com
+
+See :ref:`server-selinux` for more information on the ``secontext``
+attribute and managing SELinux in general.
 
 Important attribute
 ===================
@@ -76,7 +89,7 @@ specification.
 +------------+-------------------+----------------------------------+---------+
 | Field      | Possible values   | Description                      | Default |
 +============+===================+==================================+=========+
-| important: | true | false      | Important entries are            | root    |
+| important  | true | false      | Important entries are            | root    |
 |            |                   | installed first during client    |         |
 |            |                   | execution                        |         |
 +------------+-------------------+----------------------------------+---------+

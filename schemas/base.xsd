@@ -10,6 +10,7 @@
   <xsd:include schemaLocation="atom.xsd"/>
   <xsd:include schemaLocation="pathentry.xsd"/>
   <xsd:include schemaLocation="rules.xsd"/>
+  <xsd:include schemaLocation="types.xsd"/>
 
   <xsd:group name='BaseEntries'>
     <xsd:choice>
@@ -19,7 +20,7 @@
       <xsd:element name='Path' type='PathEntry'/>
       <xsd:element name='Service' type='StructureEntry'/>
       <xsd:element name='BoundPackage' type='PackageType'/>
-      <xsd:element name='BoundPath' type='BoundPathEntry'/>
+      <xsd:element name='BoundPath' type='PathType'/>
       <xsd:element name='BoundService' type='ServiceType'/>
     </xsd:choice>
   </xsd:group>

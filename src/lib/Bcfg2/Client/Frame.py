@@ -124,32 +124,46 @@ class Frame:
         self.logger.info([tool.name for tool in self.tools])
 
         # find entries not handled by any tools
-        problems = [entry for struct in config for \
-                    entry in struct if entry not in self.handled]
+        problems = [entry for struct in config
+                    for entry in struct
+                    if entry not in self.handled]
 
         if problems:
             self.logger.error("The following entries are not handled by any tool:")
-            self.logger.error(["%s:%s:%s" % (entry.tag, entry.get('type'), \
-                                             entry.get('name')) for entry in problems])
+            for entry in problems:
+                self.logger.error("%s:%s:%s" % (entry.tag, entry.get('type'),
+                                                entry.get('name')))
             self.logger.error("")
-        entries = [(entry.tag, entry.get('name'))
-                   for struct in config for entry in struct]
+
+        self.find_dups(config)
+
         pkgs = [(entry.get('name'), entry.get('origin'))
-                for struct in config for entry in struct if entry.tag == 'Package']
-        multi = []
-        for entry in entries[:]:
-            if entries.count(entry) > 1:
-                multi.append(entry)
-                entries.remove(entry)
-        if multi:
-            self.logger.debug("The following entries are included multiple times:")
-            self.logger.debug(["%s:%s" % entry for entry in multi])
-            self.logger.debug("")
+                for struct in config
+                for entry in struct
+                if entry.tag == 'Package']
         if pkgs:
             self.logger.debug("The following packages are specified in bcfg2:")
             self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == None])
             self.logger.debug("The following packages are prereqs added by Packages:")
             self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == 'Packages'])
+
+    def find_dups(self, config):
+        entries = dict()
+        for struct in config:
+            for entry in struct:
+                for tool in self.tools:
+                    if tool.handlesEntry(entry):
+                        pkey = tool.primarykey(entry)
+                        if pkey in entries:
+                            entries[pkey] += 1
+                        else:
+                            entries[pkey] = 1
+        multi = [e for e, c in entries.items() if c > 1]
+        if multi:
+            self.logger.debug("The following entries are included multiple times:")
+            for entry in multi:
+                self.logger.debug(entry)
+            self.logger.debug("")
 
     def __getattr__(self, name):
         if name in ['extra', 'handled', 'modified', '__important__']:
@@ -399,16 +413,32 @@ class Frame:
     def CondDisplayState(self, phase):
         """Conditionally print tracing information."""
         self.logger.info('\nPhase: %s' % phase)
-        self.logger.info('Correct entries:\t%d' % list(self.states.values()).count(True))
-        self.logger.info('Incorrect entries:\t%d' % list(self.states.values()).count(False))
+        self.logger.info('Correct entries:\t%d' %
+                         list(self.states.values()).count(True))
+        self.logger.info('Incorrect entries:\t%d' %
+                         list(self.states.values()).count(False))
         if phase == 'final' and list(self.states.values()).count(False):
-            self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) for \
-                              entry in self.states if not self.states[entry]])
-        self.logger.info('Total managed entries:\t%d' % len(list(self.states.values())))
+            for entry in self.states.keys():
+                if not self.states[entry]:
+                    etype = entry.get('type')
+                    if etype:
+                        self.logger.info(    "%s:%s:%s" % (entry.tag, etype,
+                                                           entry.get('name')))
+                    else:
+                        self.logger.info("    %s:%s" % (entry.tag,
+                                                        entry.get('name')))
+        self.logger.info('Total managed entries:\t%d' %
+                         len(list(self.states.values())))
         self.logger.info('Unmanaged entries:\t%d' % len(self.extra))
         if phase == 'final' and self.setup['extra']:
-            self.logger.info(["%s:%s" % (entry.tag, entry.get('name')) \
-                              for entry in self.extra])
+            for entry in self.extra:
+                etype = entry.get('type')
+                if etype:
+                    self.logger.info(    "%s:%s:%s" % (entry.tag, etype,
+                                                       entry.get('name')))
+                else:
+                    self.logger.info("    %s:%s" % (entry.tag,
+                                                    entry.get('name')))
 
         self.logger.info("")
 

@@ -1,0 +1,97 @@
+.. -*- mode: rst -*-
+
+.. _server-selinux:
+
+=======
+SELinux
+=======
+
+.. versionadded:: 1.3.0
+
+Bcfg2 has the ability to handle the majority of SELinux entries with
+the ``SELinux`` entry type, which handles modules (with the
+:ref:`server-plugins-generators-semodules` plugin), file contexts,
+users and user mappings, permissive domains, nodes, and interfaces.
+In addition, ``info.xml`` files and most types of the ``Path`` tag can
+accept an ``secontext`` attribute to set the context of that entry.
+The full semantics of each configuration entry is documented with the
+:ref:`server-plugins-generators-rules` plugin.
+
+.. note:: The ``secontext`` attribute takes a *full* context,
+          e.g., "``system_u:object_r:etc_t:s0``"; the ``selinuxtype``
+          attribute always takes *only* an SELinux type, e.g.,
+          "``etc_t``".  ``secontext`` (but not ``selinuxtype``) can
+          also accept the special value "``__default__``", which will
+          restore the context on the Path entry in question to the
+          default supplied by the SELinux policy.
+
+In its current version, the SELinux support in Bcfg2 is not sufficient
+to manage MCS/MLS policies.
+
+Extra Entries
+=============
+
+As it can be very tedious to create a baseline of all existing SELinux
+entries, you can use ``selinux_baseline.py`` located in the ``tools/``
+directory to do that for you.
+
+The actual definition of an "extra" entry actually depends on the
+version of SELinux available; the SELinux APIs have been extremely
+fluid, so many features available in newer versions are not available
+in older versions.  Newer SELinux versions (e.g., in recent versions
+of Fedora) can be queried for only entries that have been locally
+modified; on these versions of SELinux, only locally modified entries
+will be considered extra.  On older SELinux versions (e.g., on RHEL
+5), however, that functionality is missing, so *all* SELinux entries
+will be considered extra, making ``selinux_baseline.py`` quite
+necessary.
+
+``selinux_baseline.py`` writes a bundle to stdout that contains
+``BoundSELinux`` entries for the appropriate SELinux entities.  It
+does this rather than separate Bundle/Rules files because of the
+:ref:`server-selinux-duplicate-entries` problem.
+
+.. _server-selinux-duplicate-entries:
+
+Duplicate Entries
+=================
+
+In certain cases, it may be necessary to create multiple SELinux
+entries with the same name.  For instance, "root" is both an SELinux
+user and an SELinux login record, so to manage both, you would have
+the following in Bundler:
+
+.. code-block:: xml
+
+    <SELinux name="root"/>
+    <SELinux name="root"/>
+
+And in Rules:
+
+.. code-block:: xml
+
+    <SELinux type="login" selinuxuser="root" name="root"/>
+    <SELinux type="user" prefix="user" name="root"
+             roles="system_r sysadm_r user_r"/>
+
+But Rules has no way to tell which "root" is which, and you will get
+errors.  In these cases, it is necessary to use ``BoundSELinux`` tags
+directly in Bundler.  (See :ref:`boundentries` for more details on
+bound entries.)  For instance:
+
+.. code-block:: xml
+
+    <BoundSELinux type="login" selinuxuser="root" name="root"/>
+    <BoundSELinux type="user" prefix="user" name="root"
+                  roles="system_r sysadm_r user_r"/>
+
+It may also be necessary to use ``BoundSELinux`` tags if a single
+fcontext needs two different SELinux types depending on whether it's a
+symlink or a plain file.  For instance:
+
+.. code-block:: xml
+
+    <BoundSELinux type="fcontext" filetype="symlink"
+                  name="/etc/localtime" selinuxtype="etc_t"/>
+    <BoundSELinux type="fcontext" filetype="regular"
+                  name="/etc/localtime" selinuxtype="locale_t"/>

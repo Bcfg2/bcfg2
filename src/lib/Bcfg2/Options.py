@@ -330,6 +330,11 @@ MDATA_PERMS = \
            default='644',
            odesc='octal permissions',
            cf=('mdata', 'perms'))
+MDATA_SECONTEXT = \
+    Option('Default SELinux context',
+           default='__default__',
+           odesc='SELinux context',
+           cf=('mdata', 'secontext'))
 MDATA_PARANOID = \
     Option('Default Path paranoid setting',
            default='true',
@@ -835,6 +840,41 @@ DRIVER_OPTIONS = \
          yumng_version_fail_action=CLIENT_YUMNG_VERSION_FAIL_ACTION,
          yumng_verify_fail_action=CLIENT_YUMNG_VERIFY_FAIL_ACTION,
          yumng_verify_flags=CLIENT_YUMNG_VERIFY_FLAGS)
+
+CLIENT_COMMON_OPTIONS = \
+    dict(extra=CLIENT_EXTRA_DISPLAY,
+         quick=CLIENT_QUICK,
+         lockfile=LOCKFILE,
+         drivers=CLIENT_DRIVERS,
+         dryrun=CLIENT_DRYRUN,
+         paranoid=CLIENT_PARANOID,
+         bundle=CLIENT_BUNDLE,
+         skipbundle=CLIENT_SKIPBUNDLE,
+         bundle_quick=CLIENT_BUNDLEQUICK,
+         indep=CLIENT_INDEP,
+         skipindep=CLIENT_SKIPINDEP,
+         file=CLIENT_FILE,
+         interactive=INTERACTIVE,
+         cache=CLIENT_CACHE,
+         profile=CLIENT_PROFILE,
+         remove=CLIENT_REMOVE,
+         server=SERVER_LOCATION,
+         user=CLIENT_USER,
+         password=SERVER_PASSWORD,
+         retries=CLIENT_RETRIES,
+         kevlar=CLIENT_KEVLAR,
+         omit_lock_check=OMIT_LOCK_CHECK,
+         decision=CLIENT_DLIST,
+         servicemode=CLIENT_SERVICE_MODE,
+         key=CLIENT_KEY,
+         certificate=CLIENT_CERT,
+         ca=CLIENT_CA,
+         serverCN=CLIENT_SCNS,
+         timeout=CLIENT_TIMEOUT,
+         decision_list=CLIENT_DECISION_LIST)
+CLIENT_COMMON_OPTIONS.update(DRIVER_OPTIONS)
+CLIENT_COMMON_OPTIONS.update(CLI_COMMON_OPTIONS)
+
 
 class OptionParser(OptionSet):
     """

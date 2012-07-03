@@ -35,39 +35,7 @@ class Client:
         self.toolset = None
         self.config = None
         
-        optinfo = \
-            dict(extra=Bcfg2.Options.CLIENT_EXTRA_DISPLAY,
-                 quick=Bcfg2.Options.CLIENT_QUICK,
-                 lockfile=Bcfg2.Options.LOCKFILE,
-                 drivers=Bcfg2.Options.CLIENT_DRIVERS,
-                 dryrun=Bcfg2.Options.CLIENT_DRYRUN,
-                 paranoid=Bcfg2.Options.CLIENT_PARANOID,
-                 bundle=Bcfg2.Options.CLIENT_BUNDLE,
-                 skipbundle=Bcfg2.Options.CLIENT_SKIPBUNDLE,
-                 bundle_quick=Bcfg2.Options.CLIENT_BUNDLEQUICK,
-                 indep=Bcfg2.Options.CLIENT_INDEP,
-                 skipindep=Bcfg2.Options.CLIENT_SKIPINDEP,
-                 file=Bcfg2.Options.CLIENT_FILE,
-                 interactive=Bcfg2.Options.INTERACTIVE,
-                 cache=Bcfg2.Options.CLIENT_CACHE,
-                 profile=Bcfg2.Options.CLIENT_PROFILE,
-                 remove=Bcfg2.Options.CLIENT_REMOVE,
-                 server=Bcfg2.Options.SERVER_LOCATION,
-                 user=Bcfg2.Options.CLIENT_USER,
-                 password=Bcfg2.Options.SERVER_PASSWORD,
-                 retries=Bcfg2.Options.CLIENT_RETRIES,
-                 kevlar=Bcfg2.Options.CLIENT_KEVLAR,
-                 omit_lock_check=Bcfg2.Options.OMIT_LOCK_CHECK,
-                 decision=Bcfg2.Options.CLIENT_DLIST,
-                 servicemode=Bcfg2.Options.CLIENT_SERVICE_MODE,
-                 key=Bcfg2.Options.CLIENT_KEY,
-                 certificate=Bcfg2.Options.CLIENT_CERT,
-                 ca=Bcfg2.Options.CLIENT_CA,
-                 serverCN=Bcfg2.Options.CLIENT_SCNS,
-                 timeout=Bcfg2.Options.CLIENT_TIMEOUT,
-                 decision_list=Bcfg2.Options.CLIENT_DECISION_LIST)
-        optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
-        optinfo.update(Bcfg2.Options.DRIVER_OPTIONS)
+        optinfo = Bcfg2.Options.CLIENT_COMMON_OPTIONS
         self.setup = Bcfg2.Options.OptionParser(optinfo)
         self.setup.parse(sys.argv[1:])
 

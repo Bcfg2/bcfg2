@@ -1,11 +1,15 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
-  
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
+
   <xsd:annotation>
     <xsd:documentation>
       string enumeration definitions for bcfg2
       Narayan Desai, Argonne National Laboratory
     </xsd:documentation>
   </xsd:annotation>
+
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
 
   <xsd:simpleType name='PackageTypeEnum'>
     <xsd:restriction base='xsd:string'>
@@ -86,4 +90,109 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <xsd:complexType name='ActionType'>
+    <xsd:attribute type='ActionTimingEnum' name='timing'/>
+    <xsd:attribute type='ActionWhenEnum' name='when'/>
+    <xsd:attribute type='ActionStatusEnum' name='status'/>
+    <xsd:attribute type="xsd:boolean" name="build"/>
+    <xsd:attribute type='xsd:string' name='name'/>
+    <xsd:attribute type='xsd:string' name='command'/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="DeviceTypeEnum">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="block"/>
+      <xsd:enumeration value="char"/>
+      <xsd:enumeration value="fifo"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="PathType">
+    <xsd:attribute type="PathTypeEnum" name="type"/>
+    <xsd:attribute type="xsd:string" name="name" use="required"/>
+    <xsd:attribute type="DeviceTypeEnum" name="dev_type"/>
+    <xsd:attribute type="xsd:integer" name="major"/>
+    <xsd:attribute type="xsd:integer" name="minor"/>
+    <xsd:attribute type="xsd:string" name="mode"/>
+    <xsd:attribute type="xsd:string" name="perms"/>
+    <xsd:attribute type="xsd:string" name="owner"/>
+    <xsd:attribute type="xsd:string" name="group"/>
+    <xsd:attribute type="xsd:string" name="secontext"/>
+    <xsd:attribute type="xsd:string" name="recursive"/>
+    <xsd:attribute type="xsd:string" name="prune"/>
+    <xsd:attribute type="xsd:string" name="to"/>
+    <xsd:attribute type="xsd:string" name="vcstype"/>
+    <xsd:attribute type="xsd:string" name="revision"/>
+    <xsd:attribute type="xsd:string" name="sourceurl"/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name='SELinuxTypeEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='boolean'/>
+      <xsd:enumeration value='module'/>
+      <xsd:enumeration value='port'/>
+      <xsd:enumeration value='fcontext'/>
+      <xsd:enumeration value='node'/>
+      <xsd:enumeration value='login'/>
+      <xsd:enumeration value='user'/>
+      <xsd:enumeration value='interface'/>
+      <xsd:enumeration value='permissive'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name='SELinuxFileTypeEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='all'/>
+      <xsd:enumeration value='regular'/>
+      <xsd:enumeration value='directory'/>
+      <xsd:enumeration value='symlink'/>
+      <xsd:enumeration value='pipe'/>
+      <xsd:enumeration value='socket'/>
+      <xsd:enumeration value='block'/>
+      <xsd:enumeration value='char'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name='SELinuxBooleanValueEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='on'/>
+      <xsd:enumeration value='off'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name='SELinuxEntryTypeEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='boolean'/>
+      <xsd:enumeration value='module'/>
+      <xsd:enumeration value='port'/>
+      <xsd:enumeration value='fcontext'/>
+      <xsd:enumeration value='node'/>
+      <xsd:enumeration value='login'/>
+      <xsd:enumeration value='user'/>
+      <xsd:enumeration value='interface'/>
+      <xsd:enumeration value='permissive'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="SELinuxStructure">
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type="xsd:boolean" name="disabled"/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="SELinuxType">
+    <xsd:attribute type="xsd:string" name="name" use="required"/>
+    <xsd:attribute type="SELinuxEntryTypeEnum" name="type" use="required"/>
+    <xsd:attribute type="SELinuxBooleanValueEnum" name="value"/>
+    <xsd:attribute type="xsd:boolean" name="disabled"/>
+    <xsd:attribute type="xsd:string" name="selinuxtype"/>
+    <xsd:attribute type="SELinuxFileTypeEnum" name="filetype"/>
+    <xsd:attribute type="xsd:string" name="proto"/>
+    <xsd:attribute type="xsd:string" name="roles"/>
+    <xsd:attribute type="xsd:string" name="prefix"/>
+    <xsd:attribute type="xsd:string" name="selinuxuser"/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
 </xsd:schema>

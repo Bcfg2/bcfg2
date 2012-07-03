@@ -137,6 +137,18 @@ class Tool:
         """Default implementation of the information gathering routines."""
         pass
 
+    def missing_attrs(self, entry):
+        required = self.__req__[entry.tag]
+        if isinstance(required, dict):
+            required = ["type"]
+            try:
+                required.extend(self.__req__[entry.tag][entry.get("type")])
+            except KeyError:
+                pass
+                
+        return [attr for attr in required
+                if attr not in entry.attrib or not entry.attrib[attr]]
+
     def canVerify(self, entry):
         """Test if entry has enough information to be verified."""
         if not self.handlesEntry(entry):
@@ -149,8 +161,7 @@ class Tool:
                                entry.get('failure')))
             return False
 
-        missing = [attr for attr in self.__req__[entry.tag] \
-                   if attr not in entry.attrib]
+        missing = self.missing_attrs(entry)
         if missing:
             self.logger.error("Incomplete information for entry %s:%s; cannot verify" \
                               % (entry.tag, entry.get('name')))
@@ -168,6 +179,11 @@ class Tool:
         """Return a list of extra entries."""
         return []
 
+    def primarykey(self, entry):
+        """ return a string that should be unique amongst all entries
+        in the specification """
+        return "%s:%s" % (entry.tag, entry.get("name"))
+
     def canInstall(self, entry):
         """Test if entry has enough information to be installed."""
         if not self.handlesEntry(entry):
@@ -178,8 +194,7 @@ class Tool:
                               (entry.tag, entry.get('name')))
             return False
 
-        missing = [attr for attr in self.__ireq__[entry.tag] \
-                   if attr not in entry.attrib or not entry.attrib[attr]]
+        missing = self.missing_attrs(entry)
         if missing:
             self.logger.error("Incomplete information for entry %s:%s; cannot install" \
                               % (entry.tag, entry.get('name')))

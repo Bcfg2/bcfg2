@@ -32,8 +32,9 @@ encoding = encparse['encoding']
 # grab default metadata info from bcfg2.conf
 opts = {'owner': Bcfg2.Options.MDATA_OWNER,
         'group': Bcfg2.Options.MDATA_GROUP,
-        'important': Bcfg2.Options.MDATA_IMPORTANT,
         'perms': Bcfg2.Options.MDATA_PERMS,
+        'secontext': Bcfg2.Options.MDATA_SECONTEXT,
+        'important': Bcfg2.Options.MDATA_IMPORTANT,
         'paranoid': Bcfg2.Options.MDATA_PARANOID,
         'sensitive': Bcfg2.Options.MDATA_SENSITIVE}
 mdata_setup = Bcfg2.Options.OptionParser(opts)
@@ -52,6 +53,7 @@ info_regex = re.compile( \
     'owner:(\s)*(?P<owner>\S+)|' +
     'paranoid:(\s)*(?P<paranoid>\S+)|' +
     'perms:(\s)*(?P<perms>\w+)|' +
+    'secontext:(\s)*(?P<secontext>\S+)|' +
     'sensitive:(\s)*(?P<sensitive>\S+)|')
 
 def bind_info(entry, metadata, infoxml=None, default=default_file_metadata):
@@ -1162,13 +1164,14 @@ class GroupSpool(Plugin, Generator):
     filename_pattern = ""
     es_child_cls = object
     es_cls = EntrySet
+    entry_type = 'Path'
 
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
         Generator.__init__(self)
         if self.data[-1] == '/':
             self.data = self.data[:-1]
-        self.Entries['Path'] = {}
+        self.Entries[self.entry_type] = {}
         self.entries = {}
         self.handles = {}
         self.AddDirectoryMonitor('')
@@ -1185,7 +1188,8 @@ class GroupSpool(Plugin, Generator):
                                               dirpath,
                                               self.es_child_cls,
                                               self.encoding)
-            self.Entries['Path'][ident] = self.entries[ident].bind_entry
+            self.Entries[self.entry_type][ident] = \
+                self.entries[ident].bind_entry
         if not posixpath.isdir(epath):
             # do not pass through directory events
             self.entries[ident].handle_event(event)
@@ -1231,7 +1235,7 @@ class GroupSpool(Plugin, Generator):
             if fbase in self.entries:
                 # a directory was deleted
                 del self.entries[fbase]
-                del self.Entries['Path'][fbase]
+                del self.Entries[self.entry_type][fbase]
             elif ident in self.entries:
                 self.entries[ident].handle_event(event)
             elif ident not in self.entries:
