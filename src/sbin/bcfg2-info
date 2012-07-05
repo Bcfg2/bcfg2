@@ -137,6 +137,38 @@ def displayTrace(trace, num=80, sort=('time', 'calls')):
     stats.sort_stats('cumulative', 'calls', 'time')
     stats.print_stats(200)
 
+def load_interpreters():
+    interpreters = dict(python=lambda v: InteractiveConsole(v).interact())
+    best = "python"
+    try:
+        import bpython.cli
+        interpreters["bpython"] = lambda v: bpython.cli.main(args=[], locals_=v)
+        best = "bpython"
+    except ImportError:
+        pass
+            
+    try:
+        # whether ipython is actually better than bpython is
+        # up for debate, but this is the behavior that existed
+        # before --interpreter was added, so we call IPython
+        # better
+        import IPython
+        if hasattr(IPython, "Shell"):
+            interpreters["ipython"] = lambda v: \
+                IPython.Shell.IPShell(argv=[], user_ns=v).mainloop
+            best = "ipython"
+        elif hasattr(IPython, "embed"):
+            interpreters["ipython"] = lambda v: IPython.embed(user_ns=v)
+            best = "ipython"
+        else:
+            print("Unknown IPython API version")
+    except ImportError:
+        pass
+
+    interpreters['best'] = interpreters[best]
+    return interpreters
+
+
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     """Main class for bcfg2-info."""
     def __init__(self, repo, plgs, passwd, encoding, event_debug,
@@ -191,28 +223,21 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
                 spath = opt[1]
             elif opt[0] == '-n':
                 interactive = False
-        sh = InteractiveConsole(locals())
         if scriptmode:
+            sh = InteractiveConsole(locals())
             for command in [c.strip() for c in open(spath).readlines()]:
                 if command:
                     sh.push(command)
         if interactive:
-            print("Dropping to python interpreter; press ^D to resume")
-            try:
-                import IPython
-                if hasattr(IPython, "Shell"):
-                    shell = IPython.Shell.IPShell(argv=[], user_ns=locals())
-                    shell.mainloop()
-                elif hasattr(IPython, "embed"):
-                    IPython.embed(user_ns=locals())
-                else:
-                    raise ImportError
-            except ImportError:
-                try:
-                    import bpython.cli
-                    bpython.cli.main(locals_=locals())
-                except ImportError:
-                    sh.interact()
+            interpreters = load_interpreters()
+            if setup['interpreter'] in interpreters:
+                print("Dropping to %s interpreter; press ^D to resume" %
+                      setup['interpreter'])
+                interpreters[setup['interpreter']](locals())
+            else:
+                logger.error("Invalid interpreter %s" % setup['interpreter'])
+                logger.error("Valid interpreters are: %s" %
+                             ", ".join(interpeters.keys()))
 
     def do_quit(self, _):
         """
@@ -630,7 +655,8 @@ if __name__ == '__main__':
     Bcfg2.Logger.setup_logging('bcfg2-info', to_syslog=False)
     optinfo = dict(profile=Bcfg2.Options.CORE_PROFILE,
                    mconnect=Bcfg2.Options.SERVER_MCONNECT,
-                   interactive=Bcfg2.Options.INTERACTIVE)
+                   interactive=Bcfg2.Options.INTERACTIVE,
+                   interpreter=Bcfg2.Options.INTERPRETER)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)

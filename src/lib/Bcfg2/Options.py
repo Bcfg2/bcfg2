@@ -308,6 +308,13 @@ SCHEMA_PATH = \
            cmd='--schema',
            odesc='<schema path>',
            long_arg=True)
+INTERPRETER = \
+    Option("Python interpreter to use",
+           default='best',
+           cmd="--interpreter",
+           odesc='<python|bpython|ipython|best>',
+           cf=('bcfg2-info', 'interpreter'),
+           long_arg=True)
 
 # Metadata options (mdata section)
 MDATA_OWNER = \
