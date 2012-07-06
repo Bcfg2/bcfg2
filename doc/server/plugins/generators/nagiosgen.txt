@@ -182,7 +182,7 @@ options for hosts or groups.  E.g.:
     <NagiosGen>
        <Group name="datacenter-2">
           <Option name="parents">dc-2-switch</Option>
-       <Group>
+       </Group>
        <Group name="non-production">
           <Option name="notification_period">workhours</Option>
           <Option name="notification_options">d</Option>
