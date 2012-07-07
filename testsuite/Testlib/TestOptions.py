@@ -60,7 +60,7 @@ class TestOption(unittest.TestCase):
 
     def test_cook(self):
         # check that default value isn't cooked
-        o1 = Bcfg2.Options.Option('foo', 'test4', cook=Bcfg2.Options.bool_cook)
+        o1 = Bcfg2.Options.Option('foo', 'test4', cook=Bcfg2.Options.get_bool)
         o1.parse([], [])
         assert o1.value == 'test4'
         o2 = Bcfg2.Options.Option('foo', False, cmd='-F')
