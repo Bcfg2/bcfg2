@@ -1,14 +1,15 @@
-# Copyright 1999-2011 Gentoo Foundation
+# Copyright 1999-2012 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/app-admin/bcfg2/bcfg2-1.2.0.ebuild,v 1.1 2011/12/28 07:56:20 xmw Exp $
+# $Header: $
 
-EAPI="3"
+EAPI="4"
+
 PYTHON_DEPEND="2:2.6"
 SUPPORT_PYTHON_ABIS="1"
 # ssl module required.
 RESTRICT_PYTHON_ABIS="2.4 2.5 3.*"
 
-inherit distutils
+inherit distutils eutils
 
 DESCRIPTION="configuration management tool"
 HOMEPAGE="http://bcfg2.org"
@@ -17,13 +18,15 @@ SRC_URI="ftp://ftp.mcs.anl.gov/pub/bcfg/${P}.tar.gz"
 LICENSE="BSD"
 SLOT="0"
 KEYWORDS="~amd64 ~x86 ~amd64-linux ~x86-linux ~x64-solaris"
-IUSE="doc genshi server"
+IUSE="doc cheetah genshi server"
 
 DEPEND="dev-python/setuptools
 	doc? ( dev-python/sphinx )"
 RDEPEND="app-portage/gentoolkit
+	cheetah? ( dev-python/cheetah )
 	genshi? ( dev-python/genshi )
 	server? (
+		virtual/fam
 		dev-python/lxml
 		|| ( dev-python/pyinotify dev-libs/libgamin[python] ) )"
 
