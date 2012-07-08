@@ -98,14 +98,23 @@ class SSLServer (SocketServer.TCPServer, object):
         timeout -- timeout for non-blocking request handling
 
         """
-
+        # check whether or not we should listen on all interfaces
         if listen_all:
             listen_address = ('', server_address[1])
         else:
             listen_address = (server_address[0], server_address[1])
+
+        # check for IPv6 address
+        if ':' in server_address[0]:
+            self.address_family = socket.AF_INET6
+
         try:
             SocketServer.TCPServer.__init__(self, listen_address,
                                             RequestHandlerClass)
+        except socket.gaierror:
+            e = sys.exc_info()[1]
+            self.logger.error("Failed to bind to socket: %s" % e)
+            raise
         except socket.error:
             self.logger.error("Failed to bind to socket")
             raise

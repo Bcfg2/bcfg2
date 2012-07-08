@@ -192,7 +192,15 @@ class SSLHTTPConnection(httplib.HTTPConnection):
 
     def _connect_py26ssl(self):
         """Initiates a connection using the ssl module."""
-        rawsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # check for IPv6
+        hostip = socket.getaddrinfo(self.host,
+                                    self.port,
+                                    socket.AF_UNSPEC,
+                                    socket.SOCK_STREAM)[0][4][0]
+        if ':' in hostip:
+            rawsock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        else:
+            rawsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         if self.protocol == 'xmlrpc/ssl':
             ssl_protocol_ver = ssl.PROTOCOL_SSLv23
         elif self.protocol == 'xmlrpc/tlsv1':

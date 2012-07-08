@@ -6,6 +6,7 @@ import inspect
 import logging
 import os
 import pydoc
+import socket
 import sys
 import time
 import threading
@@ -59,12 +60,14 @@ def run_component(component_cls, listen_all, location, daemon, pidfile_name,
         pidfile.close()
 
     component = component_cls(cfile=cfile, **cls_kwargs)
-    up = urlparse(location)
-    port = tuple(up[1].split(':'))
-    port = (port[0], int(port[1]))
+    hostname, port = urlparse(location)[1].split(':')
+    server_address = socket.getaddrinfo(hostname,
+                                        port,
+                                        socket.AF_UNSPEC,
+                                        socket.SOCK_STREAM)[0][4]
     try:
         server = XMLRPCServer(listen_all,
-                              port,
+                              server_address,
                               keyfile=keyfile,
                               certfile=certfile,
                               register=register,
