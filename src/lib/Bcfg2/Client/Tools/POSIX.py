@@ -34,7 +34,7 @@ device_map = {'block': stat.S_IFBLK,
               'fifo': stat.S_IFIFO}
 
 
-def normGid(entry):
+def normGid(entry, logger=None):
     """
        This takes a group name or gid and
        returns the corresponding gid or False.

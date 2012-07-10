@@ -448,7 +448,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                     inst.get('verify_flags').lower().replace(' ',
                                                              ',').split(',')
             else:
-                verify_flags = self.verify_flags
+                verify_flags = self.verifyFlags
 
             if 'arch' in nevra:
                 # If arch is specified use it to select the package
