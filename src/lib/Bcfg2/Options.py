@@ -307,6 +307,7 @@ SCHEMA_PATH = \
            default='%s/share/bcfg2/schemas' % DEFAULT_INSTALL_PREFIX,
            cmd='--schema',
            odesc='<schema path>',
+           cf=('lint', 'schema'),
            long_arg=True)
 INTERPRETER = \
     Option("Python interpreter to use",
