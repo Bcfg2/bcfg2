@@ -123,15 +123,18 @@ if __name__ == '__main__':
     # load plugins specified in the config first
     allplugins = dict()
     for plugin in plugin_list:
-        allplugins[plugin] = load_plugin("Bcfg2.Server.Lint." + plugin)
+        try:
+            allplugins[plugin] = load_plugin("Bcfg2.Server.Lint." + plugin)
+        except ImportError:
+            pass
 
     # load lint plugins bundled with bcfg2-server plugins
     for plugin in setup['plugins']:
         try:
             allplugins[plugin] = load_plugin("Bcfg2.Server.Plugins." + plugin,
                                              obj_name=plugin + "Lint")
-        except AttributeError:
-            pass
+        except (ImportError, AttributeError):
+            pass        
 
     serverplugins = dict()
     serverlessplugins = dict()

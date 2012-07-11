@@ -1,3 +1,4 @@
+import sys
 import genshi.template
 import Bcfg2.Server.Lint
 

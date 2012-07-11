@@ -416,9 +416,12 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
                                                                 log)
 
 class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
+    """ warn about usage of .cat and .diff files """
+
     def Run(self):
-        # about usage of .cat and .diff files
-        self.check_deltas()
+        for basename, entry in list(self.core.plugins['Cfg'].entries.items()):
+            self.check_entry(basename, entry)
+
 
     @classmethod
     def Errors(cls):

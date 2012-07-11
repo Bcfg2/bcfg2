@@ -5,6 +5,9 @@ import Bcfg2.Server.Lint
 import Bcfg2.Client.Tools.POSIX
 import Bcfg2.Client.Tools.VCS
 from Bcfg2.Server.Plugins.Packages import Apt, Yum
+from Bcfg2.Server.Plugins.Bundler import have_genshi
+if have_genshi:
+    from Bcfg2.Server.Plugins.SGenshi import SGenshiTemplateFile
 
 # format verifying functions
 def is_filename(val):
@@ -89,17 +92,13 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             )
 
     def Run(self):
-        print "checking packages\n"
         self.check_packages()
         if "Defaults" in self.core.plugins:
             self.logger.info("Defaults plugin enabled; skipping required "
                              "attribute checks")
         else:
-            print "checking rules\n"
             self.check_rules()
-            print "checking bundles\n"
             self.check_bundles()
-        print 'done running RequiredAttrs'
 
     @classmethod
     def Errors(cls):
@@ -149,14 +148,17 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         """ check bundles for BoundPath entries with missing attrs """
         if 'Bundler' in self.core.plugins:
             for bundle in self.core.plugins['Bundler'].entries.values():
-                print "checking bundle %s" % bundle.name
-                try:
-                    xdata = lxml.etree.XML(bundle.data)
-                except (lxml.etree.XMLSyntaxError, AttributeError):
-                    xdata = lxml.etree.parse(bundle.template.filepath).getroot()
+                if (self.HandlesFile(bundle.name) and
+                    (not have_genshi or
+                     not isinstance(bundle, SGenshiTemplateFile))):
+                    try:
+                        xdata = lxml.etree.XML(bundle.data)
+                    except (lxml.etree.XMLSyntaxError, AttributeError):
+                        xdata = \
+                            lxml.etree.parse(bundle.template.filepath).getroot()
 
-                for path in xdata.xpath("//*[substring(name(), 1, 5) = 'Bound']"):
-                    self.check_entry(path, bundle.name)
+                    for path in xdata.xpath("//*[substring(name(), 1, 5) = 'Bound']"):
+                        self.check_entry(path, bundle.name)
 
     def check_entry(self, entry, filename):
         """ generic entry check """
@@ -206,7 +208,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                (tag, name, filename,
                                 ", ".join([attr
                                            for attr in
-                                           required_attrs.difference(attrs)]),
+                                           set(required_attrs.keys()).difference(attrs)]),
                                 self.RenderXML(entry)))
 
             for attr, fmt in required_attrs.items():

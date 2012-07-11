@@ -92,6 +92,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
                                   bundlename, exc_info=1)
         return bundleset
 
+
 class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
     """ Perform various bundle checks """
     def Run(self):
@@ -99,7 +100,8 @@ class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
         self.missing_bundles()
         for bundle in self.core.plugins['Bundler'].entries.values():
             if (self.HandlesFile(bundle.name) and
-                (not have_genshi or type(bundle) is not SGenshiTemplateFile)):
+                (not have_genshi or
+                 not isinstance(bundle, SGenshiTemplateFile))):
                     self.bundle_names(bundle)
 
     @classmethod
