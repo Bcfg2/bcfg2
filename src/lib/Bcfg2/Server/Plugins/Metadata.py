@@ -12,7 +12,7 @@ import time
 import Bcfg2.Server
 import Bcfg2.Server.FileMonitor
 import Bcfg2.Server.Plugin
-
+from Bcfg2.version import Bcfg2VersionInfo
 
 def locked(fd):
     """Aquire a lock on a file"""
@@ -171,8 +171,8 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
 
 class ClientMetadata(object):
     """This object contains client metadata."""
-    def __init__(self, client, profile, groups, bundles,
-                 aliases, addresses, categories, uuid, password, query):
+    def __init__(self, client, profile, groups, bundles, aliases, addresses,
+                 categories, uuid, password, version, query):
         self.hostname = client
         self.profile = profile
         self.bundles = bundles
@@ -183,6 +183,11 @@ class ClientMetadata(object):
         self.uuid = uuid
         self.password = password
         self.connectors = []
+        self.version = version
+        try:
+            self.version_info = Bcfg2VersionInfo(version)
+        except:
+            self.version_info = None
         self.query = query
 
     def inGroup(self, group):
@@ -248,6 +253,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         self.aliases = {}
         self.groups = {}
         self.cgroups = {}
+        self.versions = {}
         self.public = []
         self.private = []
         self.profiles = []
@@ -412,6 +418,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 self.floating.append(clname)
             if 'password' in client.attrib:
                 self.passwords[clname] = client.get('password')
+            if 'version' in client.attrib:
+                self.versions[clname] = client.get('version')
 
             self.raliases[clname] = set()
             for alias in client.findall('Alias'):
@@ -537,6 +545,20 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         self.clients[client] = profile
         self.clients_xml.write()
 
+    def set_version(self, client, version):
+        """Set group parameter for provided client."""
+        self.logger.info("Asserting client %s version to %s" % (client, version))
+        if client in self.clients:
+            self.logger.info("Setting version on client %s to %s" %
+                             (client, version))
+            self.update_client(client, dict(version=version))
+        else:
+            msg = "Cannot set version on non-existent client %s" % client
+            self.logger.error(msg)
+            raise MetadataConsistencyError(msg)
+        self.versions[client] = version
+        self.clients_xml.write()
+
     def resolve_client(self, addresspair, cleanup_cache=False):
         """Lookup address locally or in DNS to get a hostname."""
         if addresspair in self.session_cache:
@@ -575,9 +597,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                 return self.aliases[cname]
             return cname
         except socket.herror:
-            warning = "address resolution error for %s" % (address)
+            warning = "address resolution error for %s" % address
             self.logger.warning(warning)
-            raise MetadataConsistencyError
+            raise MetadataConsistencyError(warning)
 
     def get_initial_metadata(self, client):
         """Return the metadata for a given client."""
@@ -599,6 +621,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             [bundles, groups, categories] = self.groups[self.default]
         aliases = self.raliases.get(client, set())
         addresses = self.raddresses.get(client, set())
+        version = self.versions.get(client, None)
         newgroups = set(groups)
         newbundles = set(bundles)
         newcategories = {}
@@ -622,7 +645,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             [newgroups.add(g) for g in ngroups if g not in newgroups]
             newcategories.update(ncategories)
         return ClientMetadata(client, profile, newgroups, newbundles, aliases,
-                              addresses, newcategories, uuid, password,
+                              addresses, newcategories, uuid, password, version,
                               self.query)
 
     def get_all_group_names(self):

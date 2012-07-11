@@ -8,6 +8,8 @@ import os
 import os.path
 import sys
 
+execfile('src/lib/Bcfg2/version.py')
+
 # we only need m2crypto on < python2.6
 need_m2crypto = False
 version = sys.version_info[:2]
@@ -122,7 +124,6 @@ if need_m2crypto:
 
 setup(cmdclass=cmdclass,
       name="Bcfg2",
-      version="1.2.2",
       description="Bcfg2 Server",
       author="Narayan Desai",
       author_email="desai@mcs.anl.gov",
