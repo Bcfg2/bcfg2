@@ -46,20 +46,10 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             if filelist:
                 # avoid loading schemas for empty file lists
                 schemafile = schemaname % schemadir
-                try:
-                    schema = lxml.etree.XMLSchema(lxml.etree.parse(schemafile))
-                except IOError:
-                    e = sys.exc_info()[1]
-                    self.LintError("input-output-error", str(e))
-                    continue
-                except lxml.etree.XMLSchemaParseError:
-                    e = sys.exc_info()[1]
-                    self.LintError("schema-failed-to-parse",
-                                   "Failed to process schema %s: %s" %
-                                   (schemafile, e))
-                    continue
-                for filename in filelist:
-                    self.validate(filename, schemafile, schema=schema)
+                schema = self._load_schema(schemafile)
+                if schema:
+                    for filename in filelist:
+                        self.validate(filename, schemafile, schema=schema)
 
         self.check_properties()
 
@@ -88,11 +78,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         return True on success, False on failure """
         if schema is None:
             # if no schema object was provided, instantiate one
-            try:
-                schema = lxml.etree.XMLSchema(lxml.etree.parse(schemafile))
-            except:
-                self.LintError("schema-failed-to-parse",
-                               "Failed to process schema %s" % schemafile)
+            schema = self._load_schema(schemafile)
+            if not schema:
                 return False
 
         try:
@@ -208,3 +195,15 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
 
         return rv
 
+    def _load_schema(self, filename):
+        try:
+            return lxml.etree.XMLSchema(lxml.etree.parse(filename))
+        except IOError:
+            e = sys.exc_info()[1]
+            self.LintError("input-output-error", str(e))
+        except lxml.etree.XMLSchemaParseError:
+            e = sys.exc_info()[1]
+            self.LintError("schema-failed-to-parse",
+                           "Failed to process schema %s: %s" %
+                           (filename, e))
+        return None
