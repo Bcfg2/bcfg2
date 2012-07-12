@@ -103,7 +103,6 @@ def main(args):
     item.setAttribute('name', gkey)
     (gid,extra) = gval.split(':')
     item.setAttribute('gid', gid)
-    item.setAttribute('extra_groups', extra)
 
   output_file = "accounts.xml"
   doc.writexml(open(output_file, 'w'), addindent='    ', newl='\n') # Write file
