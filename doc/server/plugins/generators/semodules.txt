@@ -28,7 +28,7 @@ The SEModules directory contains modules in a layout similar to the
 Cfg plugin: at the top level, SEModules should contain directories
 named after the modules you want to install, and each of those
 directories can contain a global module, plus any number of group- and
-host-specific modules.  For instance:
+host-specific modules.  For instance::
 
     $ ls -F SEModules
     foo.pp/  bar.pp/
