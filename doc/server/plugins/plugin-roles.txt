@@ -7,34 +7,55 @@ Plugin Roles
 ============
 
 * Metadata
+
   * Initial metadata construction
   * Connector data accumulation
   * ClientMetadata instance delivery
   * Introspection interface (for bcfg2-info & co)
+
 * Connector
+
   * Provide additional data for ClientMetadata instances
+
 * Probing
+
   * send executable probes to clients and receive data responses
+
 * Structure
+
   * Produce a list of configuration entries that should be included in
     client configurations
   * Each structure plugin is produces a list of structures
   * Core verifies that each bundle listed has been constructed
+
 * StructureValidator
+
   * Validate a client entry list's internal consistency, modifying if
     needed
+
 * Generator
+
 * GoalValidator
+
   * Validate client goals, modifying if needed
+
 * PullSource
+
   * Plugin can provide entry information about clients
+
 * PullTarget
+
   * Plugin can accept entry data and merge it into the specification
+
 * Version
+
   * Plugin can read revision information from VCS of choice
   * Will provide an interface for producing commits made by the bcfg2-server
+
 * Decision
+
 * ClientRunHooks
+
   * Provides hooks executed at the start and end of each client run
 
 Configuration of plugins
