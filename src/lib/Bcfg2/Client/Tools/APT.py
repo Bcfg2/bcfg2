@@ -34,7 +34,6 @@ class APT(Bcfg2.Client.Tools.Tool):
             if reqdir not in path_entries:
                 os.environ['PATH'] = os.environ['PATH'] + ':' + reqdir
         self.pkgcmd = '%s ' % self.aptget + \
-                      '-o DPkg::Options::=--force-overwrite ' + \
                       '-o DPkg::Options::=--force-confold ' + \
                       '-o DPkg::Options::=--force-confmiss ' + \
                       '--reinstall ' + \
