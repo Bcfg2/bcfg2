@@ -5,6 +5,7 @@ import socket
 import unittest
 import lxml.etree
 from mock import Mock, patch
+import Bcfg2.Server
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Metadata import *
 
@@ -240,7 +241,7 @@ class TestXMLMetadataConfig(unittest.TestCase):
 class TestClientMetadata(unittest.TestCase):
     def test_inGroup(self):
         cm = ClientMetadata("client1", "group1", ["group1", "group2"],
-                            ["bundle1"], [], [], [], None, None, None)
+                            ["bundle1"], [], [], [], None, None, None, None)
         self.assertTrue(cm.inGroup("group1"))
         self.assertFalse(cm.inGroup("group3"))
 
@@ -298,7 +299,8 @@ class TestMetadata(unittest.TestCase):
         mock_parse.return_value = groups_test_tree
         groups = metadata.get_groups()
         mock_parse.assert_called_with(os.path.join(datastore, "Metadata",
-                                                   "groups.xml"))
+                                                   "groups.xml"),
+                                      parser=Bcfg2.Server.XMLParser)
         self.assertIsInstance(groups, lxml.etree._Element)
 
     def test_search_xdata_name(self):
