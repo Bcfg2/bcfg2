@@ -139,7 +139,7 @@ class LdapConnection(object):
                 result = self.conn.search_s(
                     query.base,
                     SCOPE_MAP[query.scope],
-                    query.filter,
+                    query.filter.replace("\\", "\\\\"),
                     query.attrs,
                 )
                 break
