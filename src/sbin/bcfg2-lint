@@ -73,13 +73,7 @@ def load_plugin(module, obj_name=None):
     if obj_name is None:
         obj_name = parts[-1]
 
-    try:
-        mod = __import__(module)
-    except ImportError:
-        err = sys.exc_info()[1]
-        logger.error("Failed to load plugin %s: %s" % (obj_name, err))
-        raise
-    
+    mod = __import__(module)
     for p in parts[1:]:
         mod = getattr(mod, p)
     return getattr(mod, obj_name)
@@ -120,22 +114,22 @@ if __name__ == '__main__':
     else:
         files = None
 
-    # load plugins specified in the config first
     allplugins = dict()
     for plugin in plugin_list:
         try:
             allplugins[plugin] = load_plugin("Bcfg2.Server.Lint." + plugin)
         except ImportError:
-            pass
-
-    # load lint plugins bundled with bcfg2-server plugins
-    for plugin in setup['plugins']:
-        try:
-            allplugins[plugin] = load_plugin("Bcfg2.Server.Plugins." + plugin,
-                                             obj_name=plugin + "Lint")
-        except (ImportError, AttributeError):
-            pass        
-
+            try:
+                allplugins[plugin] = \
+                    load_plugin("Bcfg2.Server.Plugins." + plugin,
+                                obj_name=plugin + "Lint")
+            except (ImportError, AttributeError):
+                 err = sys.exc_info()[1]
+                 logger.error("Failed to load plugin %s: %s" % (obj_name, err))
+        except AttributeError:
+            err = sys.exc_info()[1]
+            logger.error("Failed to load plugin %s: %s" % (obj_name, err))
+            
     serverplugins = dict()
     serverlessplugins = dict()
     for plugin_name, plugin in allplugins.items():
