@@ -44,12 +44,15 @@ class FileMonitor(object):
     def __repr__(self):
         return "%s (%s events, fd %s)" % (str(self), len(self.events), self.fileno)
 
+    def debug_log(self, msg):
+        if self.debug:
+            logger.info(msg)
+
     def should_ignore(self, event):
         for pattern in self.ignore:
             if (fnmatch.fnmatch(event.filename, pattern) or 
                 fnmatch.fnmatch(os.path.split(event.filename)[-1], pattern)):
-                if self.debug:
-                    logger.info("Ignoring %s" % event)
+                self.debug_log("Ignoring %s" % event)
                 return True
         return False
 
@@ -69,10 +72,9 @@ class FileMonitor(object):
             logger.info("Got event for unexpected id %s, file %s" %
                         (event.requestID, event.filename))
             return
-        if self.debug:
-            logger.info("Dispatching event %s %s to obj %s" %
-                        (event.code2str(), event.filename,
-                         self.handles[event.requestID]))
+        self.debug_log("Dispatching event %s %s to obj %s" %
+                       (event.code2str(), event.filename,
+                        self.handles[event.requestID]))
         try:
             self.handles[event.requestID].HandleEvent(event)
         except:

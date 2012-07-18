@@ -1,7 +1,6 @@
 """ Pseudo provides static monitor support for file alteration events """
 
 import os
-import stat
 import logging
 from Bcfg2.Server.FileMonitor import FileMonitor, Event
 
@@ -14,9 +13,8 @@ class Pseudo(FileMonitor):
         """add a monitor to path, installing a callback to obj.HandleEvent"""
         if handleID is None:
             handleID = len(list(self.handles.keys()))
-        mode = os.stat(path)[stat.ST_MODE]
         self.events.append(Event(handleID, path, 'exists'))
-        if stat.S_ISDIR(mode):
+        if os.path.isdir(path):
             dirList = os.listdir(path)
             for includedFile in dirList:
                 self.events.append(Event(handleID, includedFile, 'exists'))

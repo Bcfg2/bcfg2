@@ -44,10 +44,10 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
         # value, so that XIinclude'd files get properly watched
         fpath = os.path.join(metadata.data, basefile)
         Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, fpath,
-                                                   fam=metadata.core.fam)
+                                                   fam=metadata.core.fam,
+                                                   should_monitor=False)
         self.should_monitor = watch_clients
         self.metadata = metadata
-        self.fam = metadata.core.fam
         self.basefile = basefile
         self.data = None
         self.basedata = None
@@ -157,7 +157,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
 
     def HandleEvent(self, event):
         """Handle fam events"""
-        filename = event.filename.split('/')[-1]
+        filename = os.path.basename(event.filename)
         if filename in self.extras:
             if event.code2str() == 'exists':
                 return False
@@ -233,20 +233,20 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Metadata.__init__(self)
         Bcfg2.Server.Plugin.Statistics.__init__(self)
+        self.states = dict()
         if watch_clients:
-            try:
-                core.fam.AddMonitor(os.path.join(self.data, "groups.xml"), self)
-                core.fam.AddMonitor(os.path.join(self.data, "clients.xml"), self)
-            except:
-                print("Unable to add file monitor for groups.xml or clients.xml")
-                raise Bcfg2.Server.Plugin.PluginInitError
+            for fname in ["groups.xml", "clients.xml"]:
+                self.states[fname] = False
+                try:
+                    core.fam.AddMonitor(os.path.join(self.data, fname), self)
+                except:
+                    err = sys.exc_info()[1]
+                    msg = "Unable to add file monitor for %s: %s" % (fname, err)
+                    print(msg)
+                    raise Bcfg2.Server.Plugin.PluginInitError(msg)
 
         self.clients_xml = XMLMetadataConfig(self, watch_clients, 'clients.xml')
         self.groups_xml = XMLMetadataConfig(self, watch_clients, 'groups.xml')
-        self.states = {}
-        if watch_clients:
-            self.states = {"groups.xml": False,
-                           "clients.xml": False}
         self.addresses = {}
         self.auth = dict()
         self.clients = {}
