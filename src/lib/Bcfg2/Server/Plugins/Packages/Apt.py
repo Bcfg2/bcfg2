@@ -4,10 +4,13 @@ from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
 from Bcfg2.Bcfg2Py3k import cPickle, file
 
+
 class AptCollection(Collection):
     def get_group(self, group):
-        self.logger.warning("Packages: Package groups are not supported by APT")
+        self.logger.warning("Packages: Package groups are not "
+                            "supported by APT")
         return []
+
 
 class AptSource(Source):
     basegroups = ['apt', 'debian', 'ubuntu', 'nexenta']
@@ -23,13 +26,14 @@ class AptSource(Source):
 
     def save_state(self):
         cache = file(self.cachefile, 'wb')
-        cPickle.dump((self.pkgnames, self.deps, self.provides),
-                     cache, 2)
+        cPickle.dump((self.pkgnames, self.deps, self.provides,
+                      self.essentialpkgs), cache, 2)
         cache.close()
 
     def load_state(self):
         data = file(self.cachefile)
-        self.pkgnames, self.deps, self.provides = cPickle.load(data)
+        (self.pkgnames, self.deps, self.provides,
+         self.essentialpkgs) = cPickle.load(data)
 
     def filter_unknown(self, unknown):
         filtered = set([u for u in unknown if u.startswith('choice')])
