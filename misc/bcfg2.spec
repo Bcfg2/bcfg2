@@ -30,13 +30,14 @@ BuildArch:        noarch
 BuildRequires:    python-devel
 BuildRequires:    python-lxml
 %if 0%{?mandriva_version}
-# mandriva seems to behave differently than other distros and needs this explicitly.
+# mandriva seems to behave differently than other distros and needs
+# this explicitly.
 BuildRequires:    python-setuptools
 %endif
 %if 0%{?mandriva_version} == 201100
-# mandriva 2011 has multiple providers for libsane, so (at least when building on OBS)
-# one must be chosen explicitly:
-# "have choice for libsane.so.1 needed by python-imaging: libsane1 sane-backends-iscan"
+# mandriva 2011 has multiple providers for libsane, so (at least when
+# building on OBS) one must be chosen explicitly: "have choice for
+# libsane.so.1 needed by python-imaging: libsane1 sane-backends-iscan"
 BuildRequires:    libsane1
 %endif
 
@@ -49,6 +50,12 @@ BuildRequires:    python-sphinx10
 %define pythonpath %(find %{python_sitelib} -name Sphinx*.egg)
 %else
 BuildRequires:    python-sphinx >= 0.6
+%endif
+
+%if 0%{?fedora} >= 16
+# we require a sufficiently new cherrypy that it's really only
+# available in Fedora for now
+Requires:         python-cherrypy >= 3.2.2
 %endif
 
 Requires:         python-lxml >= 0.9

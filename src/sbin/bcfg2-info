@@ -169,20 +169,18 @@ def load_interpreters():
     return interpreters
 
 
-class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
+class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
     """Main class for bcfg2-info."""
     def __init__(self, repo, plgs, passwd, encoding, event_debug,
                  filemonitor='default', setup=None):
         cmd.Cmd.__init__(self)
         try:
-            Bcfg2.Server.Core.Core.__init__(self, repo, plgs, passwd,
-                                            encoding, filemonitor=filemonitor,
-                                            setup=setup)
+            Bcfg2.Server.Core.BaseCore.__init__(self, setup=setup)
             if event_debug:
                 self.fam.debug = True
         except Bcfg2.Server.Core.CoreInitError:
             msg = sys.exc_info()[1]
-            print("Core load failed because %s" % msg)
+            print("Core load failed: %s" % msg)
             raise SystemExit(1)
         self.prompt = '> '
         self.cont = True

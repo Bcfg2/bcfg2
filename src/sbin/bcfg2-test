@@ -75,14 +75,7 @@ def main():
     if setup['verbose']:
         Bcfg2.Logger.setup_logging("bcfg2-test", to_syslog=False)
 
-    core = Bcfg2.Server.Core.Core(
-        setup['repo'],
-        setup['plugins'],
-        setup['password'],
-        setup['encoding'],
-        filemonitor=setup['filemonitor'],
-        setup=setup
-        )
+    core = Bcfg2.Server.Core.Core(setup)
 
     ignore = dict()
     for entry in setup['test_ignore']:

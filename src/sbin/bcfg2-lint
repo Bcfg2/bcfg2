@@ -61,10 +61,7 @@ def get_errorhandler(config):
 
 def load_server(setup):
     """ load server """
-    core = Bcfg2.Server.Core.Core(setup['repo'], setup['plugins'],
-                                  setup['password'], setup['encoding'],
-                                  filemonitor=setup['filemonitor'],
-                                  setup=setup)
+    core = Bcfg2.Server.Core.Core(setup)
     core.fam.handle_events_in_interval(4)
     return core
 

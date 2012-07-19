@@ -1,0 +1,44 @@
+.. -*- mode: rst -*-
+
+.. _server-backends:
+
+========
+Backends
+========
+
+.. versionadded:: 1.3.0
+
+Bcfg2 supports two different server backends: a builtin server
+based on the Python SimpleXMLRPCServer object, and a server that uses
+CherryPy (http://www.cherrypy.org).  Each one has advantages and
+disadvantages.
+
+The builtin server:
+
+* Is very stable and mature;
+* Supports certificate authentication;
+* Works on Python 2.4;
+* Is slow with larger numbers of clients.
+
+The CherryPy server:
+
+* Is very new and potentially buggy;
+* Does not support certificate authentication, only password
+  authentication;
+* Requires CherryPy 3.2, which requires Python 2.5;
+* Is faster with large numbers of clients.
+
+Basically, the builtin server should be used unless you have a
+particular need for performance, and can sacrifice certificate
+authentication.
+
+To select which backend to use, set the ``backend`` option in the
+``[server]`` section of ``/etc/bcfg2.conf``.  Options are:
+
+* ``cherrypy``
+* ``builtin``
+* ``best`` (the default; currently the same as ``builtin``)
+
+If the certificate authentication issues (a limitation in CherryPy
+itself) can be resolved and the CherryPy server proves to be stable,
+it will likely become the default (and ``best``) in a future release.

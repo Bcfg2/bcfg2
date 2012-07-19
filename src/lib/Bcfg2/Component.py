@@ -85,23 +85,6 @@ def run_component(component_cls, listen_all, location, daemon, pidfile_name,
         server.server_close()
     component.shutdown()
 
-def exposed(func):
-    """Mark a method to be exposed publically.
-
-    Examples:
-    class MyComponent (Component):
-        @expose
-        def my_method (self, param1, param2):
-            do_stuff()
-
-    class MyComponent (Component):
-        def my_method (self, param1, param2):
-            do_stuff()
-        my_method = expose(my_method)
-
-    """
-    func.exposed = True
-    return func
 
 def automatic(func, period=10):
     """Mark a method to be run periodically."""
@@ -152,6 +135,11 @@ class Component (object):
         self.logger = logging.getLogger("%s %s" % (self.implementation, self.name))
         self.lock = threading.Lock()
         self.instance_statistics = Statistics()
+
+    def critical_error(self, operation):
+        """Log and err, traceback and return an xmlrpc fault to client."""
+        logger.error(operation, exc_info=1)
+        raise xmlrpclib.Fault(xmlrpclib.APPLICATION_ERROR, "Critical unexpected failure: %s" % (operation))
 
     def do_tasks(self):
         """Perform automatic tasks for the component.
@@ -250,14 +238,7 @@ class Component (object):
             raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
         return result
 
-    def listMethods(self):
-        """Custom XML-RPC introspective method list."""
-        return [
-            name for name, func in inspect.getmembers(self, callable)
-            if getattr(func, "exposed", False)
-        ]
-    listMethods = exposed(listMethods)
-
+    @exposed
     def methodHelp(self, method_name):
         """Custom XML-RPC introspective method help.
 
@@ -270,19 +251,18 @@ class Component (object):
         except NoExposedMethod:
             return ""
         return pydoc.getdoc(func)
-    methodHelp = exposed(methodHelp)
 
+    @exposed
     def get_name(self):
         """The name of the component."""
         return self.name
-    get_name = exposed(get_name)
 
+    @exposed
     def get_implementation(self):
         """The implementation of the component."""
         return self.implementation
-    get_implementation = exposed(get_implementation)
 
+    @exposed
     def get_statistics(self, _):
         """Get current statistics about component execution"""
         return self.instance_statistics.display()
-    get_statistics = exposed(get_statistics)

@@ -29,3 +29,4 @@ clients.
    snapshots/index
    bcfg2-info
    selinux
+   backends

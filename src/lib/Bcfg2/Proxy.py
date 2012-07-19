@@ -1,13 +1,3 @@
-"""RPC client access to cobalt components.
-
-Classes:
-ComponentProxy -- an RPC client proxy to Cobalt components
-
-Functions:
-load_config -- read configuration files
-
-"""
-
 import logging
 import re
 import socket
@@ -34,7 +24,6 @@ import time
 from Bcfg2.Bcfg2Py3k import httplib, xmlrpclib, urlparse
 
 version = sys.version_info[:2]
-has_py23 = version >= (2, 3)
 has_py26 = version >= (2, 6)
 
 __all__ = ["ComponentProxy",
@@ -220,8 +209,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             self.logger.warning("SSL key specfied, but no cert. Cannot authenticate this client with SSL.")
             self.key = None
 
-        if has_py23:
-            rawsock.settimeout(self.timeout)
+        rawsock.settimeout(self.timeout)
         self.sock = ssl.SSLSocket(rawsock, cert_reqs=other_side_required,
                                   ca_certs=self.ca, suppress_ragged_eofs=True,
                                   keyfile=self.key, certfile=self.cert,

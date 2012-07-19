@@ -2,13 +2,11 @@
 
 """The XML-RPC Bcfg2 server."""
 
-import logging
-import os.path
+import os
 import sys
-
+import logging
 import Bcfg2.Logger
 import Bcfg2.Options
-import Bcfg2.Component
 import Bcfg2.Server.Plugins.Metadata
 from Bcfg2.Server.Core import CoreInitError
 
@@ -21,36 +19,30 @@ if __name__ == '__main__':
     optinfo.update(Bcfg2.Options.DAEMON_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
+    # check whether the specified bcfg2.conf exists
+    if not os.path.exists(setup['configfile']):
+        print("Could not read %s" % setup['configfile'])
+        sys.exit(1)
+    
+    if setup['backend'] not in ['best', 'cherrypy', 'builtin']:
+        print("Unknown server backend %s, using 'best'" % setup['backend'])
+        setup['backend'] = 'best'
+    if setup['backend'] == 'cherrypy':
+        try:
+            from Bcfg2.Server.CherryPyCore import Core
+        except ImportError:
+            err = sys.exc_info()[1]
+            print("Unable to import CherryPy server core: %s" % err)
+            raise
+    elif setup['backend'] == 'builtin' or setup['backend'] == 'best':
+        from Bcfg2.Server.BuiltinCore import Core
+
     try:
-        # check whether the specified bcfg2.conf exists
-        if not os.path.exists(setup['configfile']):
-            print("Could not read %s" % setup['configfile'])
-            sys.exit(1)
-        Bcfg2.Component.run_component(Bcfg2.Server.Core.Core,
-                                      listen_all=setup['listen_all'],
-                                      location=setup['location'],
-                                      daemon=setup['daemon'],
-                                      pidfile_name=setup['daemon'],
-                                      protocol=setup['protocol'],
-                                      to_file=setup['logging'],
-                                      cfile=setup['configfile'],
-                                      register=False,
-                                      cls_kwargs={'repo':setup['repo'],
-                                                  'plugins':setup['plugins'],
-                                                  'password':setup['password'],
-                                                  'encoding':setup['encoding'],
-                                                  'ca':setup['ca'],
-                                                  'filemonitor':setup['filemonitor'],
-                                                  'start_fam_thread':True,
-                                                  'setup':setup},
-                                      keyfile=setup['key'],
-                                      certfile=setup['cert'],
-                                      ca=setup['ca']
-                                      )
+        core = Core(setup, start_fam_thread=True)
+        core.run()
     except CoreInitError:
         msg = sys.exc_info()[1]
         logger.error(msg)
-        logger.error("exiting")
         sys.exit(1)
     except KeyboardInterrupt:
         sys.exit(1)
