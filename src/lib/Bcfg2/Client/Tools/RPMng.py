@@ -480,7 +480,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         self.extra = self.FindExtraPackages()
 
     def FixInstance(self, instance, inst_status):
-        """"
+        """
            Control if a reinstall of a package happens or not based on the
            results from RPMng.VerifyPackage().
 
