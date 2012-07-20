@@ -214,7 +214,7 @@ class TestXMLMetadataConfig(unittest.TestCase):
 
         config.extras = ["foo.xml", "bar.xml", "clients.xml"]
 
-        def parse_side_effect(fname):
+        def parse_side_effect(fname, parser=Bcfg2.Server.XMLParser):
             if fname == os.path.join(self.metadata.data, "clients.xml"):
                 return clients_test_tree
             else:
