@@ -299,9 +299,11 @@ class Frame:
             bundles = filter(lambda b: b.tag != 'Bundle', bundles)
         if self.setup['skipbundle']:
             # warn if non-existent bundle given
-            for bundle in self.setup['skipbundle']:
-                if bundle not in all_bundle_names:
-                    self.logger.info("Warning: Bundle %s not found" % bundle)
+            if not self.setup['bundle_quick']:
+                for bundle in self.setup['skipbundle']:
+                    if bundle not in all_bundle_names:
+                        self.logger.info("Warning: Bundle %s not found" %
+                                         bundle)
             bundles = filter(lambda b: \
                                  b.get('name') not in self.setup['skipbundle'],
                              bundles)

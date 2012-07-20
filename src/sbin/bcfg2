@@ -57,8 +57,8 @@ class Client:
         self.logger = logging.getLogger('bcfg2')
         self.logger.debug(self.setup)
         if self.setup['bundle_quick']:
-            if self.setup['bundle'] == []:
-                self.logger.error("-Q option requires -b")
+            if not self.setup['bundle'] and not self.setup['skipbundle']:
+                self.logger.error("-Q option requires -b or -B")
                 raise SystemExit(1)
             elif self.setup['remove']:
                 self.logger.error("-Q option incompatible with -r")
@@ -264,7 +264,10 @@ class Client:
             [newconfig.append(bundle)
              for bundle in self.config.getchildren()
              if (bundle.tag == 'Bundle' and
-                 bundle.get('name') in self.setup['bundle'])]
+                 ((self.setup['bundle'] and
+                   bundle.get('name') in self.setup['bundle']) or
+                  (self.setup['skipbundle'] and
+                   bundle.get('name') not in self.setup['skipbundle'])))]
             self.config = newconfig
 
         self.tools = Bcfg2.Client.Frame.Frame(self.config,
