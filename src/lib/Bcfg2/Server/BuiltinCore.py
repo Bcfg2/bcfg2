@@ -7,6 +7,7 @@ import socket
 import logging
 from Bcfg2.Server.Core import BaseCore
 from Bcfg2.Bcfg2Py3k import xmlrpclib, urlparse
+from Bcfg2.SSLServer import XMLRPCServer
 
 logger = logging.getLogger()
 
@@ -84,7 +85,7 @@ class Core(BaseCore):
                                   protocol=self.setup['protocol'])
         except:
             err = sys.exc_info()[1]
-            self.logger.error("Server startup failed")
+            self.logger.error("Server startup failed: %s" % err)
             os._exit(1)
         server.register_instance(self)
 
