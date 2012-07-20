@@ -158,6 +158,11 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
                     self.logger.error('Failed to parse %s' % (included))
         return {}
 
+    def add_monitor(self, fpath, fname):
+        self.extras.append(fname)
+        if self.fam and self.should_monitor:
+            self.fam.AddMonitor(fpath, self.metadata)
+
     def HandleEvent(self, event):
         """Handle fam events"""
         filename = os.path.basename(event.filename)
