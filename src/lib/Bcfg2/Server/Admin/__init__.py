@@ -117,7 +117,7 @@ class MetadataCore(Mode):
                                 if p not in self.__plugin_blacklist__]
 
         try:
-            self.bcore = Bcfg2.Server.Core.Core(setup)
+            self.bcore = Bcfg2.Server.Core.BaseCore(setup)
         except Bcfg2.Server.Core.CoreInitError:
             msg = sys.exc_info()[1]
             self.errExit("Core load failed: %s" % msg)
