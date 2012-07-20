@@ -72,6 +72,8 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
             self.events.append(evt)
 
     def AddMonitor(self, path, obj):
+        # strip trailing slashes
+        path = path.rstrip("/")
         if not os.path.isdir(path):
             # inotify is a little wonky about watching files.  for
             # instance, if you watch /tmp/foo, and then do 'mv
