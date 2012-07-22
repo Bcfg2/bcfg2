@@ -75,7 +75,7 @@ def main():
     if setup['verbose']:
         Bcfg2.Logger.setup_logging("bcfg2-test", to_syslog=False)
 
-    core = Bcfg2.Server.Core.Core(setup)
+    core = Bcfg2.Server.Core.BaseCore(setup)
 
     ignore = dict()
     for entry in setup['test_ignore']:

@@ -61,7 +61,7 @@ def get_errorhandler(config):
 
 def load_server(setup):
     """ load server """
-    core = Bcfg2.Server.Core.Core(setup)
+    core = Bcfg2.Server.Core.BaseCore(setup)
     core.fam.handle_events_in_interval(4)
     return core
 
@@ -122,7 +122,8 @@ if __name__ == '__main__':
                                 obj_name=plugin + "Lint")
             except (ImportError, AttributeError):
                  err = sys.exc_info()[1]
-                 logger.error("Failed to load plugin %s: %s" % (obj_name, err))
+                 logger.error("Failed to load plugin %s: %s" % (plugin + "Lint",
+                                                                err))
         except AttributeError:
             err = sys.exc_info()[1]
             logger.error("Failed to load plugin %s: %s" % (obj_name, err))
