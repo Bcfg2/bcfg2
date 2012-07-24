@@ -609,6 +609,32 @@ class SingleXMLFileBacked(XMLFileBacked):
         self.fam = fam
         self.fam.AddMonitor(filename, self)
 
+    def _follow_xincludes(self, fname=None, xdata=None):
+        ''' follow xincludes, adding included files to self.extras '''
+        if xdata is None:
+            if fname is None:
+                xdata = self.xdata.getroottree()
+            else:
+                xdata = lxml.etree.parse(fname)
+        included = [el for el in xdata.findall('//%sinclude' %
+                                               Bcfg2.Server.XI_NAMESPACE)]
+        for el in included:
+            name = el.get("href")
+            if name not in self.extras:
+                if name.startswith("/"):
+                    fpath = name
+                else:
+                    fpath = os.path.join(os.path.dirname(self.name), name)
+                if os.path.exists(fpath):
+                    self._follow_xincludes(fname=fpath)
+                    self.add_monitor(fpath, name)
+                else:
+                    msg = "%s: %s does not exist, skipping" % (self.name, name)
+                    if el.findall('./%sfallback' % Bcfg2.Server.XI_NAMESPACE):
+                        self.logger.debug(msg)
+                    else:
+                        self.logger.warning(msg)
+
     def Index(self):
         """Build local data structures."""
         try:
