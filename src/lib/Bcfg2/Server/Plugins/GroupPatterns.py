@@ -61,7 +61,7 @@ class PatternMap(object):
         return self.groups
 
     def process_re(self, name):
-        match = self.re.match(name)
+        match = self.re.search(name)
         if not match:
             return None
         ret = list()
@@ -72,6 +72,10 @@ class PatternMap(object):
                 newg = newg.replace('$%s' % (idx + 1), sub[idx])
             ret.append(newg)
         return ret
+
+    def __str__(self):
+        return "%s: %s %s" % (self.__class__.__name__, self.pattern,
+                              self.groups)
 
 
 class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
@@ -116,7 +120,6 @@ class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
 class GroupPatterns(Bcfg2.Server.Plugin.Plugin,
                     Bcfg2.Server.Plugin.Connector):
     name = "GroupPatterns"
-    experimental = True
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
