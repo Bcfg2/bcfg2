@@ -7,8 +7,8 @@ import Bcfg2.Server.Admin
 class Query(Bcfg2.Server.Admin.MetadataCore):
     __shorthelp__ = "Query clients"
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin query [-n] [-c] "
-                                    "[-f filename] g=group p=profile")
-    __usage__ = ("bcfg2-admin query [options] <g=group> <p=profile>\n\n"
+                                    "[-f filename] g=group p=profile b=bundle")
+    __usage__ = ("bcfg2-admin query [options] <g=group> <p=profile> <b=bundle>\n\n"
                  "     %-25s%s\n"
                  "     %-25s%s\n"
                  "     %-25s%s\n" %
@@ -55,8 +55,10 @@ class Query(Bcfg2.Server.Admin.MetadataCore):
                             for g in glist:
                                 if g in v.split(','):
                                     nc.append(c)
+            elif k == 'b':
+                nc = self.metadata.get_client_names_by_bundles(v.split(','))
             else:
-                print("One of g= or p= must be specified")
+                print("One of g=, p= or b= must be specified")
                 raise SystemExit(1)
             clients = [c for c in clients if c in nc]
         if '-n' in args:
