@@ -281,6 +281,10 @@ class Reports(Bcfg2.Server.Admin.Mode):
             self.log.debug("Filtering by maxdate: %s" % maxdate)
             ipurge = ipurge.filter(timestamp__lt=maxdate)
 
+        if Bcfg2.Server.Reports.settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+            grp_limit = 100
+        else:
+            grp_limit = 1000
         if state:
             filtered = True
             if state not in ('dirty', 'clean', 'modified'):
@@ -293,7 +297,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
         rnum = 0
         try:
             while rnum < count:
-                grp = list(ipurge[:1000].values("id"))
+                grp = list(ipurge[:grp_limit].values("id"))
                 # just in case...
                 if not grp:
                     break
