@@ -1,10 +1,10 @@
-import fnmatch
-import glob
-import lxml.etree
 import os
-from subprocess import Popen, PIPE, STDOUT
 import sys
-
+import glob
+import fnmatch
+import lxml.etree
+from subprocess import Popen, PIPE, STDOUT
+from Bcfg2.Server import XI, XI_NAMESPACE
 import Bcfg2.Server.Lint
 
 class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
@@ -174,23 +174,29 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
     def follow_xinclude(self, xfile):
         """ follow xincludes in the given file """
         xdata = lxml.etree.parse(xfile)
-        included = set([ent.get('href') for ent in
-                        xdata.findall('./{http://www.w3.org/2001/XInclude}include')])
+        included = set([el
+                        for el in xdata.findall('./%sinclude' % XI_NAMESPACE)])
         rv = []
 
         while included:
             try:
-                filename = included.pop()
+                el = included.pop()
             except KeyError:
                 continue
+            filename = el.get("href")
 
             path = os.path.join(os.path.dirname(xfile), filename)
-            if self.HandlesFile(path):
+            if not os.path.exists(path):
+                if not el.findall('./%sfallback' % XI_NAMESPACE):
+                    self.LintError("broken-xinclude-chain",
+                                   "XInclude %s does not exist in %s: %s" %
+                                   (filename, xfile, self.RenderXML(el)))
+            elif self.HandlesFile(path):
                 rv.append(path)
                 groupdata = lxml.etree.parse(path)
                 [included.add(el.get('href'))
                  for el in
-                 groupdata.findall('./{http://www.w3.org/2001/XInclude}include')]
+                 groupdata.findall('./%sinclude' % XI_NAMESPACE)]
                 included.discard(filename)
 
         return rv

@@ -1,6 +1,7 @@
-import os.path
+import os
 import lxml.etree
 import Bcfg2.Server.Lint
+from Bcfg2.Server import XI, XI_NAMESPACE
 from Bcfg2.Server.Plugins.Cfg.CfgPlaintextGenerator import CfgPlaintextGenerator
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
 from Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator import CfgCheetahGenerator
@@ -186,7 +187,7 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
             path = os.path.join(self.metadata.data, mfile)
             if path in self.files:
                 xdata = lxml.etree.parse(path)
-                for el in xdata.findall('./{http://www.w3.org/2001/XInclude}include'):
+                for el in xdata.findall('./%sinclude' % XI_NAMESPACE):
                     if not self.has_all_xincludes(el.get('href')):
                         self.LintError("broken-xinclude-chain",
                                        "Broken XInclude chain: could not include %s" % path)
