@@ -682,6 +682,11 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                  for client in list(self.clients.keys())]
         return [md.hostname for md in mdata if md.groups.issuperset(groups)]
 
+    def get_client_names_by_bundles(self, bundles):
+        mdata = [self.core.build_metadata(client)
+                 for client in list(self.clients.keys())]
+        return [md.hostname for md in mdata if md.bundles.issuperset(bundles)]
+
     def merge_additional_groups(self, imd, groups):
         for group in groups:
             if (group in self.categories and
