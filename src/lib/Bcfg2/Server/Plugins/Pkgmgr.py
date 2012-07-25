@@ -1,5 +1,6 @@
 '''This module implements a package management scheme for all images'''
 
+import os
 import re
 import glob
 import logging
