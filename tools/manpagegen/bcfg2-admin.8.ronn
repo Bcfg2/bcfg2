@@ -85,6 +85,9 @@ bcfg2-admin(8) -- Perform repository administration tasks
 
 ### QUERY OPTIONS
 
+  * `b=bundle`:
+    Specify a bundle to search for within client metadata.
+
   * `g=group`:
     Specify a group to search within.
 

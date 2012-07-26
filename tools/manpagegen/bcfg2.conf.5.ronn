@@ -12,7 +12,7 @@ The file is INI-style and consists of sections and options. A section
 begins with the name of the sections in square brackets and continues
 until the next section begins.
 
-Options are specified in the form ’name = value’.
+Options are specified in the form "name=value".
 
 The file is line-based each newline-terminated line represents either a
 comment, a section name or an option.
