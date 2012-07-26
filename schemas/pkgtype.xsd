@@ -42,7 +42,9 @@
     </xsd:choice>
     <xsd:attribute type="xsd:string" name="name"/>
     <xsd:attribute type="xsd:string" name="group"/>
+    <xsd:attribute type="xsd:string" name="arch"/>
     <xsd:attribute type="xsd:string" name="version"/>
+    <xsd:attribute type="xsd:string" name="release"/>
     <xsd:attribute type="xsd:string" name="file"/>
     <xsd:attribute type="xsd:boolean" name="verify"/>
     <xsd:attribute type="xsd:string" name="simplefile"/>
