@@ -82,6 +82,12 @@ try:
 except:
     input = input
 
+try:
+    reduce = reduce
+except NameError:
+    import functools
+    reduce = functools.reduce
+
 if sys.hexversion >= 0x03000000:
     from io import FileIO as file
 else:
