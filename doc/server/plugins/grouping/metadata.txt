@@ -241,7 +241,6 @@ The Group Tag has the following possible attributes:
 |          | group in any one category. This provides the |              |
 |          | basis for representing groups which are      |              |
 |          | conjugates of one another in a rigorous way. |              |
-|          | way.                                         |
 +----------+----------------------------------------------+--------------+
 | default  | Set as the profile to use for clients that   | True|False   |
 |          | are not associated with a profile in         |              |

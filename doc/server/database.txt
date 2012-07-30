@@ -43,3 +43,11 @@ of ``/etc/bcfg2.conf``.
 +-------------+------------------------------------------------------------+-------------------------------+
 | port        | The port to connect to                                     | None                          |
 +-------------+------------------------------------------------------------+-------------------------------+
+
+Database Schema Sync
+====================
+
+After making changes to the configuration options or adding a plugin
+that uses the global database, you should run ``bcfg2-admin syncdb``
+to resync the database schema.
+

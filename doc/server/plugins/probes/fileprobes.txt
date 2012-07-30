@@ -1,0 +1,56 @@
+.. _server-plugins-probes-fileprobes:
+
+FileProbes
+==========
+
+The FileProbes plugin allows you to probe a client for a file,
+which is then added to the :ref:`server-plugins-generators-cfg`
+specification.  If the file changes on the client, FileProbes can
+either update it in the specification or allow Cfg to replace it.
+
+FileProbes will not probe a file if there's already a file in Cfg that
+will apply to the client.  So if, for instance, you have a generic
+file in ``Cfg/etc/foo.conf/foo.conf`` that applies to all hosts,
+FileProbes will not retrieve ``/etc/foo.conf`` from the client (unless
+``update`` is enabled; see Configuration_ below).
+
+When a new config file is first probed, an ``info.xml`` file is also
+written to enforce the permissions from that client.  Subsequent
+probes from other clients will not modify or overwrite the data in
+``info.xml``.  (This ensures that any manual changes you make to
+``info.xml`` for that file are not circumvented.)
+
+Configuration
+-------------
+
+FileProbes is configured in ``FileProbes/config.xml``, which might
+look something like:
+
+.. code-block:: xml
+
+    <FileProbes>
+      <FileProbe name="/etc/foo.conf"/>
+      <Group name="blah-servers">
+        <FileProbe name="/etc/blah.conf" update="true"/>
+      </Group>
+      <Client name="bar.example.com">
+        <FileProbe name="/var/lib/bar.gz" encoding="base64"/>
+      </Client>
+    </FileProbes>
+
+This will result in ``/etc/foo.conf`` being retrieved from all
+clients; if it changes on a client, it will be overwritten by the
+version that was retrieved initially.
+
+Clients in the ``blah-servers`` group will be probed for
+``/etc/blah.conf``; if it changes on a client, those changes will be
+written into the Bcfg2 specification.  If the file is deleted from a
+client, it will be rewritten from Bcfg2.
+
+``bar.example.com`` will be probed for ``/var/lib/bar.gz``, which
+contains non-ASCII characters and so needs to use base64 encoding when
+transferring the file.
+
+The paths probed by FileProbes must also be included as Path entries
+in your bundles in order to be handled properly by Cfg.  Permissions
+are handled as usual, with ``info.xml`` files in Cfg.

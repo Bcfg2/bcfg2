@@ -155,6 +155,39 @@ the client-specific one will be used.
 If you want to to detect information about the client operating system,
 the :ref:`server-plugins-probes-ohai` plugin can help.
 
+Data Storage
+============
+
+.. versionadded:: 1.3.0
+
+The Probes plugin stores the output of client probes locally on the
+Bcfg2 server in order to ensure that probe data and groups are
+available on server startup (rather than having to wait until all
+probes have run every time the server is restarted) and to
+:ref:`bcfg2-info <server-bcfg2-info>` and related tools.  There are
+two options for storing this data: ``Probes/probed.xml``, a plain XML
+file stored in the Bcfg2 specification; or in a database.
+
+Advantages and disadvantages of using the database:
+
+* The database is easier to query from other machines, for instance if
+  you run ``bcfg2-info`` or ``bcfg2-test`` on a machine that is not
+  your Bcfg2 server.
+* The database allows multiple Bcfg2 servers to share probe data.
+* The database is likely to handle probe data writes (which happen on
+  every client run) more quickly, since it can only write the probes
+  whose data has changed.
+* The database is likely to handle probe data reads (which happen only
+  on server startup) more slowly, since it must query a database
+  rather than the local filesystem.  Once the data has been read in
+  initially (from XML file or from the database) it is kept in memory.
+
+To use the database-backed storage model, set ``use_database`` in the
+``[probes]`` section of ``bcfg2.conf`` to ``true``.  You will also
+need to configure the :ref:`server-database`.
+
+The file-based storage model is the default, although that is likely
+to change in future versions of Bcfg2.
 
 Other examples
 ==============
@@ -170,64 +203,10 @@ Other examples
    producttype
    serial-console-speed
 
+Other Probing plugins
+=====================
+
 .. toctree::
-   :hidden:
 
    ohai
-
-.. _server-plugins-probes-fileprobes:
-
-FileProbes
-==========
-
-The FileProbes plugin allows you to probe a client for a file,
-which is then added to the :ref:`server-plugins-generators-cfg`
-specification.  If the file changes on the client, FileProbes can
-either update it in the specification or allow Cfg to replace it.
-
-FileProbes will not probe a file if there's already a file in Cfg that
-will apply to the client.  So if, for instance, you have a generic
-file in ``Cfg/etc/foo.conf/foo.conf`` that applies to all hosts,
-FileProbes will not retrieve ``/etc/foo.conf`` from the client (unless
-``update`` is enabled; see Configuration_ below).
-
-When a new config file is first probed, an ``info.xml`` file is also
-written to enforce the permissions from that client.  Subsequent
-probes from other clients will not modify or overwrite the data in
-``info.xml``.  (This ensures that any manual changes you make to
-``info.xml`` for that file are not circumvented.)
-
-Configuration
--------------
-
-FileProbes is configured in ``FileProbes/config.xml``, which might
-look something like:
-
-.. code-block:: xml
-
-    <FileProbes>
-      <FileProbe name="/etc/foo.conf"/>
-      <Group name="blah-servers">
-        <FileProbe name="/etc/blah.conf" update="true"/>
-      </Group>
-      <Client name="bar.example.com">
-        <FileProbe name="/var/lib/bar.gz" encoding="base64"/>
-      </Client>
-    </FileProbes>
-
-This will result in ``/etc/foo.conf`` being retrieved from all
-clients; if it changes on a client, it will be overwritten by the
-version that was retrieved initially.
-
-Clients in the ``blah-servers`` group will be probed for
-``/etc/blah.conf``; if it changes on a client, those changes will be
-written into the Bcfg2 specification.  If the file is deleted from a
-client, it will be rewritten from Bcfg2.
-
-``bar.example.com`` will be probed for ``/var/lib/bar.gz``, which
-contains non-ASCII characters and so needs to use base64 encoding when
-transferring the file.
-
-The paths probed by FileProbes must also be included as Path entries
-in your bundles in order to be handled properly by Cfg.  Permissions
-are handled as usual, with ``info.xml`` files in Cfg.
+   fileprobes
