@@ -31,10 +31,18 @@ clients_test_tree = lxml.etree.XML('''
   <Client name="client8" profile="group1" auth="cert+password"
           address="1.2.3.5"/>
   <Client name="client9" profile="group2" secure="true" password="password3"/>
+  <Client name="client10" profile="group1" floating="true"/>
 </Clients>''').getroottree()
 
 groups_test_tree = lxml.etree.XML('''
 <Groups xmlns:xi="http://www.w3.org/2001/XInclude">
+  <Client name="client8">
+    <Group name="group8"/>
+  </Client>
+  <Client name="client9">
+    <Group name="group8"/>
+  </Client>
+
   <Group name="group1" default="true" profile="true" public="true"
          category="category1"/>
   <Group name="group2" profile="true" public="true" category="category1">
@@ -54,6 +62,13 @@ groups_test_tree = lxml.etree.XML('''
   </Group>
   <Group name="group8">
     <Group name="group9"/>
+    <Client name="client9">
+      <Group name="group11"/>
+      <Group name="group9" negate="true"/>
+    </Client>
+    <Group name="group1">
+      <Group name="group10"/>
+    </Group>
   </Group>
 </Groups>''').getroottree()
 
@@ -63,11 +78,13 @@ def get_metadata_object(core=None, watch_clients=False):
     if core is None:
         core = Mock()
     metadata = Metadata(core, datastore, watch_clients=watch_clients)
-    #metadata.logger = Mock()
     return metadata
 
 
 class TestXMLMetadataConfig(unittest.TestCase):
+    groups_test_tree = groups_test_tree
+    clients_test_tree = clients_test_tree
+
     def get_config_object(self, basefile="clients.xml", core=None,
                           watch_clients=False):
         self.metadata = get_metadata_object(core=core,
@@ -79,8 +96,9 @@ class TestXMLMetadataConfig(unittest.TestCase):
         # we can't use assertRaises here because xdata is a property
         try:
             config.xdata
+            assert False
         except MetadataRuntimeError:
-            pass
+            assert True
         except:
             assert False
         config.data = "<test/>"
@@ -91,8 +109,9 @@ class TestXMLMetadataConfig(unittest.TestCase):
         # we can't use assertRaises here because base_xdata is a property
         try:
             config.base_xdata
+            assert False
         except MetadataRuntimeError:
-            pass
+            assert True
         except:
             assert False
         config.basedata = "<test/>"
@@ -103,16 +122,16 @@ class TestXMLMetadataConfig(unittest.TestCase):
         config = self.get_config_object(core=core)
 
         fname = "test.xml"
-        fpath = os.path.join(self.metadata.data, "test.xml")
+        fpath = os.path.join(self.metadata.data, fname)
 
         config.extras = []
         config.add_monitor(fpath, fname)
         self.assertFalse(core.fam.AddMonitor.called)
-        self.assertEqual(config.extras, [])
+        self.assertEqual(config.extras, [fname])
 
         config = self.get_config_object(core=core, watch_clients=True)
         config.add_monitor(fpath, fname)
-        core.fam.AddMonitor.assert_called_with(fpath, self.metadata)
+        core.fam.AddMonitor.assert_called_with(fpath, config.metadata)
         self.assertItemsEqual(config.extras, [fname])
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.add_monitor")
@@ -174,7 +193,7 @@ class TestXMLMetadataConfig(unittest.TestCase):
 
         mock_islink.return_value = False
 
-        config.write_xml(fpath, clients_test_tree)
+        config.write_xml(fpath, self.clients_test_tree)
         mock_open.assert_called_with(tmpfile, "w")
         self.assertTrue(mock_open.return_value.write.called)
         mock_islink.assert_called_with(fpath)
@@ -182,33 +201,33 @@ class TestXMLMetadataConfig(unittest.TestCase):
 
         mock_islink.return_value = True
         mock_readlink.return_value = linkdest
-        config.write_xml(fpath, clients_test_tree)
+        config.write_xml(fpath, self.clients_test_tree)
         mock_rename.assert_called_with(tmpfile, linkdest)
 
         mock_rename.side_effect = OSError
         self.assertRaises(MetadataRuntimeError,
-                          config.write_xml, fpath, clients_test_tree)
+                          config.write_xml, fpath, self.clients_test_tree)
 
         mock_open.return_value.write.side_effect = IOError
         self.assertRaises(MetadataRuntimeError,
-                          config.write_xml, fpath, clients_test_tree)
+                          config.write_xml, fpath, self.clients_test_tree)
         mock_unlink.assert_called_with(tmpfile)
 
         mock_open.side_effect = IOError
         self.assertRaises(MetadataRuntimeError,
-                          config.write_xml, fpath, clients_test_tree)
+                          config.write_xml, fpath, self.clients_test_tree)
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     @patch('lxml.etree.parse')
     def test_find_xml_for_xpath(self, mock_parse):
         config = self.get_config_object("groups.xml")
-        config.basedata = groups_test_tree
+        config.basedata = self.groups_test_tree
         xpath = "//Group[@name='group1']"
         self.assertItemsEqual(config.find_xml_for_xpath(xpath),
                               dict(filename=os.path.join(self.metadata.data,
                                                          "groups.xml"),
-                                   xmltree=groups_test_tree,
-                                   xquery=groups_test_tree.xpath(xpath)))
+                                   xmltree=self.groups_test_tree,
+                                   xquery=self.groups_test_tree.xpath(xpath)))
 
         self.assertEqual(config.find_xml_for_xpath("//boguselement"), dict())
 
@@ -216,7 +235,7 @@ class TestXMLMetadataConfig(unittest.TestCase):
 
         def parse_side_effect(fname, parser=Bcfg2.Server.XMLParser):
             if fname == os.path.join(self.metadata.data, "clients.xml"):
-                return clients_test_tree
+                return self.clients_test_tree
             else:
                 return lxml.etree.XML("<null/>").getroottree()
 
@@ -225,8 +244,8 @@ class TestXMLMetadataConfig(unittest.TestCase):
         self.assertItemsEqual(config.find_xml_for_xpath(xpath),
                               dict(filename=os.path.join(self.metadata.data,
                                                          "clients.xml"),
-                                   xmltree=clients_test_tree,
-                                   xquery=clients_test_tree.xpath(xpath)))
+                                   xmltree=self.clients_test_tree,
+                                   xquery=self.clients_test_tree.xpath(xpath)))
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml")
     def test_HandleEvent(self, mock_load_xml):
@@ -247,18 +266,37 @@ class TestClientMetadata(unittest.TestCase):
 
 
 class TestMetadata(unittest.TestCase):
-    def test__init_no_fam(self):
+    groups_test_tree = groups_test_tree
+    clients_test_tree = clients_test_tree
+
+    def get_metadata_object(self, core=None, watch_clients=False):
+        return get_metadata_object(core=core, watch_clients=watch_clients)
+
+    def get_nonexistent_client(self, metadata, prefix="client"):
+        if metadata is None:
+            metadata = self.load_clients_data()
+        i = 0
+        client_name = "%s%s" % (prefix, i)
+        while client_name in metadata.clients:
+            i += 1
+            client_name = "%s%s" % (prefix, i)
+        return client_name
+
+    def test__init(self):
         # test with watch_clients=False
         core = Mock()
-        metadata = get_metadata_object(core=core)
-        self.check_metadata_object(metadata)
+        metadata = self.get_metadata_object(core=core)
+        self.assertIsInstance(metadata, Bcfg2.Server.Plugin.Plugin)
+        self.assertIsInstance(metadata, Bcfg2.Server.Plugin.Metadata)
+        self.assertIsInstance(metadata, Bcfg2.Server.Plugin.Statistics)
+        self.assertIsInstance(metadata.clients_xml, XMLMetadataConfig)
+        self.assertIsInstance(metadata.groups_xml, XMLMetadataConfig)
+        self.assertIsInstance(metadata.query, MetadataQuery)
         self.assertEqual(metadata.states, dict())
 
-    def test__init_with_fam(self):
         # test with watch_clients=True
-        core = Mock()
         core.fam = Mock()
-        metadata = get_metadata_object(core=core, watch_clients=True)
+        metadata = self.get_metadata_object(core=core, watch_clients=True)
         self.assertEqual(len(metadata.states), 2)
         core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
                                                          "groups.xml"),
@@ -270,64 +308,44 @@ class TestMetadata(unittest.TestCase):
         core.fam.reset_mock()
         core.fam.AddMonitor = Mock(side_effect=IOError)
         self.assertRaises(Bcfg2.Server.Plugin.PluginInitError,
-                          get_metadata_object,
+                          self.get_metadata_object,
                           core=core, watch_clients=True)
-
-    def check_metadata_object(self, metadata):
-        self.assertIsInstance(metadata, Bcfg2.Server.Plugin.Plugin)
-        self.assertIsInstance(metadata, Bcfg2.Server.Plugin.Metadata)
-        self.assertIsInstance(metadata, Bcfg2.Server.Plugin.Statistics)
-        self.assertIsInstance(metadata.clients_xml, XMLMetadataConfig)
-        self.assertIsInstance(metadata.groups_xml, XMLMetadataConfig)
-        self.assertIsInstance(metadata.query, MetadataQuery)
 
     @patch('os.makedirs', Mock())
     @patch('__builtin__.open')
     def test_init_repo(self, mock_open):
-        groups = "groups %s"
-        os_selection = "os"
-        clients = "clients %s"
-        Metadata.init_repo(datastore, groups, os_selection, clients)
+        Metadata.init_repo(datastore,
+                           groups_xml="groups", clients_xml="clients")
         mock_open.assert_any_call(os.path.join(datastore, "Metadata",
                                                "groups.xml"), "w")
         mock_open.assert_any_call(os.path.join(datastore, "Metadata",
                                                "clients.xml"), "w")
 
-    @patch('lxml.etree.parse')
-    def test_get_groups(self, mock_parse):
-        metadata = get_metadata_object()
-        mock_parse.return_value = groups_test_tree
-        groups = metadata.get_groups()
-        mock_parse.assert_called_with(os.path.join(datastore, "Metadata",
-                                                   "groups.xml"),
-                                      parser=Bcfg2.Server.XMLParser)
-        self.assertIsInstance(groups, lxml.etree._Element)
-
-    def test_search_xdata_name(self):
+    def test_search_xdata(self):
         # test finding a node with the proper name
-        metadata = get_metadata_object()
-        tree = groups_test_tree
+        metadata = self.get_metadata_object()
+        tree = self.groups_test_tree
         res = metadata._search_xdata("Group", "group1", tree)
         self.assertIsInstance(res, lxml.etree._Element)
         self.assertEqual(res.get("name"), "group1")
 
-    def test_search_xdata_alias(self):
         # test finding a node with the wrong name but correct alias
-        metadata = get_metadata_object()
-        tree = clients_test_tree
+        metadata = self.get_metadata_object()
+        tree = self.clients_test_tree
         res = metadata._search_xdata("Client", "alias3", tree, alias=True)
         self.assertIsInstance(res, lxml.etree._Element)
         self.assertNotEqual(res.get("name"), "alias3")
 
-    def test_search_xdata_not_found(self):
         # test failure finding a node
-        metadata = get_metadata_object()
-        tree = clients_test_tree
-        res = metadata._search_xdata("Client", "bogus_client", tree, alias=True)
+        metadata = self.get_metadata_object()
+        tree = self.clients_test_tree
+        res = metadata._search_xdata("Client",
+                                     self.get_nonexistent_client(metadata),
+                                     tree, alias=True)
         self.assertIsNone(res)
 
     def search_xdata(self, tag, name, tree, alias=False):
-        metadata = get_metadata_object()
+        metadata = self.get_metadata_object()
         res = metadata._search_xdata(tag, name, tree, alias=alias)
         self.assertIsInstance(res, lxml.etree._Element)
         if not alias:
@@ -335,22 +353,22 @@ class TestMetadata(unittest.TestCase):
 
     def test_search_group(self):
         # test finding a group with the proper name
-        tree = groups_test_tree
+        tree = self.groups_test_tree
         self.search_xdata("Group", "group1", tree)
 
     def test_search_bundle(self):
         # test finding a bundle with the proper name
-        tree = groups_test_tree
+        tree = self.groups_test_tree
         self.search_xdata("Bundle", "bundle1", tree)
 
     def test_search_client(self):
         # test finding a client with the proper name
-        tree = clients_test_tree
+        tree = self.clients_test_tree
         self.search_xdata("Client", "client1", tree, alias=True)
         self.search_xdata("Client", "alias1", tree, alias=True)
 
     def test_add_group(self):
-        metadata = get_metadata_object()
+        metadata = self.get_metadata_object()
         metadata.groups_xml.write = Mock()
         metadata.groups_xml.data = lxml.etree.XML('<Groups/>').getroottree()
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
@@ -382,9 +400,9 @@ class TestMetadata(unittest.TestCase):
         self.assertFalse(metadata.groups_xml.write.called)
 
     def test_update_group(self):
-        metadata = get_metadata_object()
+        metadata = self.get_metadata_object()
         metadata.groups_xml.write_xml = Mock()
-        metadata.groups_xml.data = copy.deepcopy(groups_test_tree)
+        metadata.groups_xml.data = copy.deepcopy(self.groups_test_tree)
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
         metadata.update_group("group1", dict(foo="bar"))
@@ -399,9 +417,9 @@ class TestMetadata(unittest.TestCase):
                           "bogus_group", dict())
 
     def test_remove_group(self):
-        metadata = get_metadata_object()
+        metadata = self.get_metadata_object()
         metadata.groups_xml.write_xml = Mock()
-        metadata.groups_xml.data = copy.deepcopy(groups_test_tree)
+        metadata.groups_xml.data = copy.deepcopy(self.groups_test_tree)
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
         metadata.remove_group("group5")
@@ -414,7 +432,7 @@ class TestMetadata(unittest.TestCase):
                           "bogus_group")
 
     def test_add_bundle(self):
-        metadata = get_metadata_object()
+        metadata = self.get_metadata_object()
         metadata.groups_xml.write = Mock()
         metadata.groups_xml.data = lxml.etree.XML('<Groups/>').getroottree()
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
@@ -437,9 +455,9 @@ class TestMetadata(unittest.TestCase):
         self.assertFalse(metadata.groups_xml.write.called)
 
     def test_remove_bundle(self):
-        metadata = get_metadata_object()
+        metadata = self.get_metadata_object()
         metadata.groups_xml.write_xml = Mock()
-        metadata.groups_xml.data = copy.deepcopy(groups_test_tree)
+        metadata.groups_xml.data = copy.deepcopy(self.groups_test_tree)
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
         metadata.remove_bundle("bundle1")
@@ -452,26 +470,29 @@ class TestMetadata(unittest.TestCase):
                           "bogus_bundle")
 
     def test_add_client(self):
-        metadata = get_metadata_object()
+        metadata = self.get_metadata_object()
         metadata.clients_xml.write = Mock()
         metadata.clients_xml.data = lxml.etree.XML('<Clients/>').getroottree()
         metadata.clients_xml.basedata = copy.copy(metadata.clients_xml.data)
 
-        metadata.add_client("test1", dict())
+        new1 = self.get_nonexistent_client(metadata)
+        metadata.add_client(new1, dict())
         metadata.clients_xml.write.assert_any_call()
-        grp = metadata.search_client("test1", metadata.clients_xml.base_xdata)
+        grp = metadata.search_client(new1, metadata.clients_xml.base_xdata)
         self.assertIsNotNone(grp)
-        self.assertEqual(grp.attrib, dict(name='test1'))
+        self.assertEqual(grp.attrib, dict(name=new1))
 
         # have to call this explicitly -- usually load_xml does this
         # on FAM events
         metadata.clients_xml.basedata = copy.copy(metadata.clients_xml.data)
+        metadata._handle_clients_xml_event(Mock())
 
-        metadata.add_client("test2", dict(foo='bar'))
+        new2 = self.get_nonexistent_client(metadata)
+        metadata.add_client(new2, dict(foo='bar'))
         metadata.clients_xml.write.assert_any_call()
-        grp = metadata.search_client("test2", metadata.clients_xml.base_xdata)
+        grp = metadata.search_client(new2, metadata.clients_xml.base_xdata)
         self.assertIsNotNone(grp)
-        self.assertEqual(grp.attrib, dict(name='test2', foo='bar'))
+        self.assertEqual(grp.attrib, dict(name=new2, foo='bar'))
 
         # have to call this explicitly -- usually load_xml does this
         # on FAM events
@@ -480,13 +501,13 @@ class TestMetadata(unittest.TestCase):
         metadata.clients_xml.write.reset_mock()
         self.assertRaises(MetadataConsistencyError,
                           metadata.add_client,
-                          "test1", dict())
+                          new1, dict())
         self.assertFalse(metadata.clients_xml.write.called)
 
     def test_update_client(self):
-        metadata = get_metadata_object()
+        metadata = self.get_metadata_object()
         metadata.clients_xml.write_xml = Mock()
-        metadata.clients_xml.data = copy.deepcopy(clients_test_tree)
+        metadata.clients_xml.data = copy.deepcopy(self.clients_test_tree)
         metadata.clients_xml.basedata = copy.copy(metadata.clients_xml.data)
 
         metadata.update_client("client1", dict(foo="bar"))
@@ -496,14 +517,15 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(grp.get("foo"), "bar")
         self.assertTrue(metadata.clients_xml.write_xml.called)
 
+        new = self.get_nonexistent_client(metadata)
         self.assertRaises(MetadataConsistencyError,
                           metadata.update_client,
-                          "bogus_client", dict())
+                          new, dict())
 
     def load_clients_data(self, metadata=None, xdata=None):
         if metadata is None:
-            metadata = get_metadata_object()
-        metadata.clients_xml.data = xdata or copy.deepcopy(clients_test_tree)
+            metadata = self.get_metadata_object()
+        metadata.clients_xml.data = xdata or copy.deepcopy(self.clients_test_tree)
         metadata.clients_xml.basedata = copy.copy(metadata.clients_xml.data)
         evt = Mock()
         evt.filename = os.path.join(datastore, "Metadata", "clients.xml")
@@ -513,39 +535,38 @@ class TestMetadata(unittest.TestCase):
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml")
     def test_clients_xml_event(self, mock_load_xml):
-        metadata = get_metadata_object()
+        metadata = self.get_metadata_object()
         metadata.profiles = ["group1", "group2"]
         self.load_clients_data(metadata=metadata)
         mock_load_xml.assert_any_call()
         self.assertItemsEqual(metadata.clients,
                               dict([(c.get("name"), c.get("profile"))
-                                    for c in clients_test_tree.findall("//Client")]))
+                                    for c in self.clients_test_tree.findall("//Client")]))
         aliases = dict([(a.get("name"), a.getparent().get("name"))
-                        for a in clients_test_tree.findall("//Alias")])
+                        for a in self.clients_test_tree.findall("//Alias")])
         self.assertItemsEqual(metadata.aliases, aliases)
 
         raliases = dict([(c.get("name"), set())
-                         for c in clients_test_tree.findall("//Client")])
-        for alias in clients_test_tree.findall("//Alias"):
+                         for c in self.clients_test_tree.findall("//Client")])
+        for alias in self.clients_test_tree.findall("//Alias"):
             raliases[alias.getparent().get("name")].add(alias.get("name"))
         self.assertItemsEqual(metadata.raliases, raliases)
 
-        self.assertEqual(metadata.bad_clients, dict())
         self.assertEqual(metadata.secure,
                          [c.get("name")
-                          for c in clients_test_tree.findall("//Client[@secure='true']")])
-        self.assertEqual(metadata.floating, ["client1"])
+                          for c in self.clients_test_tree.findall("//Client[@secure='true']")])
+        self.assertEqual(metadata.floating, ["client1", "client10"])
 
         addresses = dict([(c.get("address"), [])
-                           for c in clients_test_tree.findall("//*[@address]")])
+                           for c in self.clients_test_tree.findall("//*[@address]")])
         raddresses = dict()
-        for client in clients_test_tree.findall("//Client[@address]"):
+        for client in self.clients_test_tree.findall("//Client[@address]"):
             addresses[client.get("address")].append(client.get("name"))
             try:
                 raddresses[client.get("name")].append(client.get("address"))
             except KeyError:
                 raddresses[client.get("name")] = [client.get("address")]
-        for alias in clients_test_tree.findall("//Alias[@address]"):
+        for alias in self.clients_test_tree.findall("//Alias[@address]"):
             addresses[alias.get("address")].append(alias.getparent().get("name"))
             try:
                 raddresses[alias.getparent().get("name")].append(alias.get("address"))
@@ -556,25 +577,10 @@ class TestMetadata(unittest.TestCase):
         self.assertItemsEqual(metadata.raddresses, raddresses)
         self.assertTrue(metadata.states['clients.xml'])
 
-    @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
-    def test_clients_xml_event_bad_clients(self):
-        metadata = get_metadata_object()
-        metadata.profiles = ["group2"]
-        self.load_clients_data(metadata=metadata)
-        clients = dict()
-        badclients = dict()
-        for client in clients_test_tree.findall("//Client"):
-            if client.get("profile") in metadata.profiles:
-                clients[client.get("name")] = client.get("profile")
-            else:
-                badclients[client.get("name")] = client.get("profile")
-        self.assertItemsEqual(metadata.clients, clients)
-        self.assertItemsEqual(metadata.bad_clients, badclients)
-
     def load_groups_data(self, metadata=None, xdata=None):
         if metadata is None:
-            metadata = get_metadata_object()
-        metadata.groups_xml.data = xdata or copy.deepcopy(groups_test_tree)
+            metadata = self.get_metadata_object()
+        metadata.groups_xml.data = xdata or copy.deepcopy(self.groups_test_tree)
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
         evt = Mock()
         evt.filename = os.path.join(datastore, "Metadata", "groups.xml")
@@ -584,34 +590,60 @@ class TestMetadata(unittest.TestCase):
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml")
     def test_groups_xml_event(self, mock_load_xml):
-        dup_data = copy.deepcopy(groups_test_tree)
+        dup_data = copy.deepcopy(self.groups_test_tree)
         lxml.etree.SubElement(dup_data.getroot(),
                               "Group", name="group1")
         metadata = self.load_groups_data(xdata=dup_data)
         mock_load_xml.assert_any_call()
-        self.assertEqual(metadata.public, ["group1", "group2"])
-        self.assertEqual(metadata.private, ["group3"])
-        self.assertEqual(metadata.profiles, ["group1", "group2"])
-        self.assertItemsEqual(metadata.groups.keys(),
-                              [g.get("name")
-                               for g in groups_test_tree.findall("/Group")])
-        self.assertEqual(metadata.categories,
-                         dict(group1="category1",
-                              group2="category1",
-                              group3="category2",
-                              group4="category1"))
-        self.assertEqual(metadata.default, "group1")
         self.assertTrue(metadata.states['groups.xml'])
+        self.assertTrue(metadata.groups['group1'].is_public)
+        self.assertTrue(metadata.groups['group2'].is_public)
+        self.assertFalse(metadata.groups['group3'].is_public)
+        self.assertFalse(metadata.groups['group1'].is_private)
+        self.assertFalse(metadata.groups['group2'].is_private)
+        self.assertTrue(metadata.groups['group3'].is_private)
+        self.assertTrue(metadata.groups['group1'].is_profile)
+        self.assertTrue(metadata.groups['group2'].is_profile)
+        self.assertFalse(metadata.groups['group3'].is_profile)
+        self.assertItemsEqual(metadata.groups.keys(),
+                              set(g.get("name")
+                                  for g in self.groups_test_tree.findall("//Group")))
+        self.assertEqual(metadata.groups['group1'].category, 'category1')
+        self.assertEqual(metadata.groups['group2'].category, 'category1')
+        self.assertEqual(metadata.groups['group3'].category, 'category2')
+        self.assertEqual(metadata.groups['group4'].category, 'category1')
+        self.assertEqual(metadata.default, "group1")
 
+        all_groups = []
+        negated_groups = []
+        for group in dup_data.xpath("//Groups/Client//*") + \
+                dup_data.xpath("//Groups/Group//*"):
+            if group.tag == 'Group' and not group.getchildren():
+                if group.get("negate", "false").lower() == 'true':
+                    negated_groups.append(group.get("name"))
+                else:
+                    all_groups.append(group.get("name"))
+        self.assertItemsEqual([g.name
+                               for g in metadata.group_membership.values()],
+                              all_groups)
+        self.assertItemsEqual([g.name
+                               for g in metadata.negated_groups.values()],
+                              negated_groups)
+        
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
-    @patch("Bcfg2.Server.Plugins.Metadata.Metadata.add_client")
-    @patch("Bcfg2.Server.Plugins.Metadata.Metadata.update_client")
-    def test_set_profile(self, mock_update_client, mock_add_client):
-        metadata = get_metadata_object()
-        metadata.states['clients.xml'] = False
-        self.assertRaises(MetadataRuntimeError,
-                          metadata.set_profile,
-                          None, None, None)
+    @patch("Bcfg2.Server.Plugins.Metadata.Metadata._set_profile")
+    def test_set_profile(self, mock_set_profile, inherited_set_profile=None):
+        if inherited_set_profile:
+            # allow a subclass of TestMetadata to patch a different
+            # _set_profile object and pass it in.  this probably isn't
+            # the best way to accomplish that, but it seems to work.
+            mock_set_profile = inherited_set_profile
+        metadata = self.get_metadata_object()
+        if 'clients.xml' in metadata.states:
+            metadata.states['clients.xml'] = False
+            self.assertRaises(MetadataRuntimeError,
+                              metadata.set_profile,
+                              None, None, None)
 
         self.load_groups_data(metadata=metadata)
         self.load_clients_data(metadata=metadata)
@@ -620,27 +652,47 @@ class TestMetadata(unittest.TestCase):
                           metadata.set_profile,
                           "client1", "group5", None)
 
+        self.assertRaises(MetadataConsistencyError,
+                          metadata.set_profile,
+                          "client1", "group3", None)
+
+        metadata.set_profile("client1", "group5", None, force=True)
+        mock_set_profile.assert_called_with("client1", "group5", None)
+
+        metadata.set_profile("client1", "group3", None, force=True)
+        mock_set_profile.assert_called_with("client1", "group3", None)
+
+    @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
+    @patch("Bcfg2.Server.Plugins.Metadata.Metadata.add_client")
+    @patch("Bcfg2.Server.Plugins.Metadata.Metadata.update_client")
+    def test__set_profile(self, mock_update_client, mock_add_client):
+        metadata = self.get_metadata_object()
+        self.load_groups_data(metadata=metadata)
+        self.load_clients_data(metadata=metadata)
+
         metadata.clients_xml.write = Mock()
-        metadata.set_profile("client1", "group2", None)
+        metadata._set_profile("client1", "group2", None)
         mock_update_client.assert_called_with("client1", dict(profile="group2"))
         metadata.clients_xml.write.assert_any_call()
-        self.assertEqual(metadata.clients["client1"], "group2")
+        self.assertEqual(metadata.clientgroups["client1"], ["group2"])
 
         metadata.clients_xml.write.reset_mock()
-        metadata.set_profile("client_new", "group1", None)
-        mock_add_client.assert_called_with("client_new", dict(profile="group1"))
+        new1 = self.get_nonexistent_client(metadata)
+        metadata._set_profile(new1, "group1", None)
+        mock_add_client.assert_called_with(new1, dict(profile="group1"))
         metadata.clients_xml.write.assert_any_call()
-        self.assertEqual(metadata.clients["client_new"], "group1")
+        self.assertEqual(metadata.clientgroups[new1], ["group1"])
 
-        metadata.session_cache[('1.2.3.6', None)] = (None, 'client_new2')
         metadata.clients_xml.write.reset_mock()
-        metadata.set_profile("uuid_new", "group1", ('1.2.3.6', None))
-        mock_add_client.assert_called_with("client_new2",
+        new2 = self.get_nonexistent_client(metadata)
+        metadata.session_cache[('1.2.3.6', None)] = (None, new2)
+        metadata._set_profile("uuid_new", "group1", ('1.2.3.6', None))
+        mock_add_client.assert_called_with(new2,
                                            dict(uuid='uuid_new',
                                                 profile="group1",
                                                 address='1.2.3.6'))
         metadata.clients_xml.write.assert_any_call()
-        self.assertEqual(metadata.clients["uuid_new"], "group1")
+        self.assertEqual(metadata.clientgroups["uuid_new"], ["group1"])
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     @patch("socket.gethostbyaddr")
@@ -682,63 +734,102 @@ class TestMetadata(unittest.TestCase):
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.write_xml", Mock())
     @patch("Bcfg2.Server.Plugins.Metadata.ClientMetadata")
     def test_get_initial_metadata(self, mock_clientmetadata):
-        metadata = get_metadata_object()
-        metadata.states['clients.xml'] = False
-        self.assertRaises(MetadataRuntimeError,
-                          metadata.get_initial_metadata, None)
+        metadata = self.get_metadata_object()
+        if 'clients.xml' in metadata.states:
+            metadata.states['clients.xml'] = False
+            self.assertRaises(MetadataRuntimeError,
+                              metadata.get_initial_metadata, None)
 
         self.load_groups_data(metadata=metadata)
         self.load_clients_data(metadata=metadata)
 
+        # test address, password
         metadata.get_initial_metadata("client1")
         self.assertEqual(mock_clientmetadata.call_args[0][:9],
                          ("client1", "group1", set(["group1"]), set(), set(),
-                          set(["1.2.3.1"]), dict(), None, 'password2'))
+                          set(["1.2.3.1"]), dict(category1='group1'), None,
+                          'password2'))
 
+        # test address, bundles, category suppression
         metadata.get_initial_metadata("client2")
         self.assertEqual(mock_clientmetadata.call_args[0][:9],
-                         ("client2", "group2", set(["group1", "group2"]),
+                         ("client2", "group2", set(["group2"]),
                           set(["bundle1", "bundle2"]), set(),
-                          set(["1.2.3.2"]), dict(category1="group1"),
+                          set(["1.2.3.2"]), dict(category1="group2"),
                           None, None))
 
+        # test aliases, address, uuid, password
         imd = metadata.get_initial_metadata("alias1")
         self.assertEqual(mock_clientmetadata.call_args[0][:9],
                          ("client3", "group1", set(["group1"]), set(),
-                          set(['alias1']), set(["1.2.3.3"]), dict(), 'uuid1',
-                          'password2'))
+                          set(['alias1']), set(["1.2.3.3"]),
+                          dict(category1="group1"), 'uuid1', 'password2'))
 
-        imd = metadata.get_initial_metadata("client_new")
+        # test new client creation
+        new1 = self.get_nonexistent_client(metadata)
+        imd = metadata.get_initial_metadata(new1)
         self.assertEqual(mock_clientmetadata.call_args[0][:9],
-                         ("client_new", "group1", set(["group1"]), set(),
-                          set(), set(), dict(), None, None))
+                         (new1, "group1", set(["group1"]), set(),
+                          set(), set(), dict(category1="group1"), None, None))
 
+        # test nested groups, address, per-client groups
+        imd = metadata.get_initial_metadata("client8")
+        self.assertEqual(mock_clientmetadata.call_args[0][:9],
+                         ("client8", "group1",
+                          set(["group1", "group8", "group9", "group10"]), set(),
+                          set(), set(["1.2.3.5"]), dict(category1="group1"),
+                          None, None))
+
+        # test setting per-client groups, group negation, nested groups
+        imd = metadata.get_initial_metadata("client9")
+        self.assertEqual(mock_clientmetadata.call_args[0][:9],
+                         ("client9", "group2",
+                          set(["group2", "group8", "group11"]),
+                          set(["bundle1", "bundle2"]), set(), set(),
+                          dict(category1="group2"), None, "password3"))
+
+        # test new client with no default profile
         metadata.default = None
+        new2 = self.get_nonexistent_client(metadata)
         self.assertRaises(MetadataConsistencyError,
-                          metadata.get_initial_metadata,
-                          "client_new2")
+                          metadata.get_initial_metadata, new2)
 
+    @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
+    def test_merge_groups(self):
+        metadata = self.get_metadata_object()        
+        self.load_groups_data(metadata=metadata)
+        self.load_clients_data(metadata=metadata)
+
+        imd = metadata.get_initial_metadata("client1")
+        self.assertEqual(metadata._merge_groups(imd, imd.groups,
+                                                categories=imd.categories),
+                         (imd.groups, imd.categories))
+
+        imd = metadata.get_initial_metadata("client8")
+        self.assertEqual(metadata._merge_groups(imd, imd.groups,
+                                                categories=imd.categories),
+                         (imd.groups.union(['group10']), imd.categories))
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     def test_get_all_group_names(self):
         metadata = self.load_groups_data()
         self.assertItemsEqual(metadata.get_all_group_names(),
                               set([g.get("name")
-                                   for g in groups_test_tree.findall("//Group")]))
+                                   for g in self.groups_test_tree.findall("//Group")]))
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     def test_get_all_groups_in_category(self):
         metadata = self.load_groups_data()
         self.assertItemsEqual(metadata.get_all_groups_in_category("category1"),
                               set([g.get("name")
-                                   for g in groups_test_tree.findall("//Group[@category='category1']")]))
+                                   for g in self.groups_test_tree.findall("//Group[@category='category1']")]))
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     def test_get_client_names_by_profiles(self):
         metadata = self.load_clients_data(metadata=self.load_groups_data())
-        self.assertItemsEqual(metadata.get_client_names_by_profiles("group2"),
+        self.assertItemsEqual(metadata.get_client_names_by_profiles(["group2"]),
                               [c.get("name")
-                               for c in clients_test_tree.findall("//Client[@profile='group2']")])
+                               for c in self.clients_test_tree.findall("//Client[@profile='group2']")])
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     def test_get_client_names_by_groups(self):
@@ -753,7 +844,7 @@ class TestMetadata(unittest.TestCase):
             lambda c: metadata.get_initial_metadata(c)
         self.assertItemsEqual(metadata.get_client_names_by_groups(["group2"]),
                               [c.get("name")
-                               for c in clients_test_tree.findall("//Client[@profile='group2']")])
+                               for c in self.clients_test_tree.findall("//Client[@profile='group2']")])
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     def test_merge_additional_groups(self):

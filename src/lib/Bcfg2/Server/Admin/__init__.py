@@ -11,6 +11,7 @@ __all__ = [
         'Query',
         'Reports',
         'Snapshots',
+        'Syncdb',
         'Tidy',
         'Viz',
         'Xcmd'

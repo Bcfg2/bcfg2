@@ -1,5 +1,6 @@
 """Bcfg2.Server.Core provides the runtime support for Bcfg2 modules."""
 
+import os
 import atexit
 import logging
 import select
@@ -9,6 +10,11 @@ import time
 import inspect
 import lxml.etree
 from traceback import format_exc
+
+# this must be set before we import the Metadata plugin
+os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
+
+import Bcfg2.settings
 import Bcfg2.Server
 import Bcfg2.Logger
 import Bcfg2.Server.FileMonitor
@@ -94,6 +100,10 @@ class BaseCore(object):
         atexit.register(self.shutdown)
         # Create an event to signal worker threads to shutdown
         self.terminate = threading.Event()
+
+        # generate Django ORM settings.  this must be done _before_ we
+        # load plugins
+        Bcfg2.settings.read_config(cfile=self.cfile, repo=self.datastore)
 
         if '' in setup['plugins']:
             setup['plugins'].remove('')
@@ -195,8 +205,7 @@ class BaseCore(object):
         try:
             self.plugins[plugin] = plug(self, self.datastore)
         except PluginInitError:
-            self.logger.error("Failed to instantiate plugin %s" % plugin,
-                              exc_info=1)
+            logger.error("Failed to instantiate plugin %s" % plugin, exc_info=1)
         except:
             self.logger.error("Unexpected instantiation failure for plugin %s" %
                               plugin, exc_info=1)
@@ -526,8 +535,6 @@ class BaseCore(object):
     def RecvProbeData(self, address, probedata):
         """Receive probe data from clients."""
         client, metadata = self.resolve_client(address)
-        # clear dynamic groups
-        self.metadata.cgroups[metadata.hostname] = []
         try:
             xpdata = lxml.etree.XML(probedata.encode('utf-8'),
                                     parser=Bcfg2.Server.XMLParser)

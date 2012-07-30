@@ -65,7 +65,7 @@ Possible improvements:
                name="${name}"
                uuid="${name}"
                password="${metadata.Properties['passwords.xml'].xdata.find('password').find('bcfg2-client').find(name).text}"
-               location="floating"
+               floating="true"
                secure="true"
            />\
        {% end %}\

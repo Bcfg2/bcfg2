@@ -102,7 +102,7 @@ def getClientList(hostglobs):
     """ given a host glob, get a list of clients that match it """
     # special cases to speed things up:
     if '*' in hostglobs:
-        return list(self.metadata.clients.keys())
+        return self.metadata.clients
     has_wildcards = False
     for glob in hostglobs:
         # check if any wildcard characters are in the string
@@ -113,7 +113,7 @@ def getClientList(hostglobs):
         return hostglobs
 
     rv = set()
-    clist = set(self.metadata.clients.keys())
+    clist = set(self.metadata.clients)
     for glob in hostglobs:
         for client in clist:
             if fnmatch.fnmatch(client, glob):
@@ -328,7 +328,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
         if len(alist) > 1:
             clients = getClientList(alist[1:])
         else:
-            clients = list(self.metadata.clients.keys())
+            clients = self.metadata.clients
         for client in clients:
             self.do_build("%s %s" % (client, os.path.join(destdir,
                                                           client + ".xml")))
@@ -360,7 +360,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
         if len(args) > 2:
             clients = getClientList(args[1:])
         else:
-            clients = list(self.metadata.clients.keys())
+            clients = self.metadata.clients
         if altsrc:
             args = "--altsrc %s -f %%s %%s %%s" % altsrc
         else:
@@ -448,10 +448,11 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
     def do_clients(self, _):
         """Print out client info."""
         data = [('Client', 'Profile')]
-        clist = list(self.metadata.clients.keys())
+        clist = self.metadata.clients
         clist.sort()
         for client in clist:
-            data.append((client, self.metadata.clients[client]))
+            imd = self.metadata.get_initial_metadata(client)
+            data.append((client, imd.profile))
         printTabular(data)
 
     def do_config(self, _):

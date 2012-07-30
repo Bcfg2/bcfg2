@@ -375,15 +375,7 @@ def factory(metadata, sources, basepath, debug=False):
                        ",".join([s.__name__ for s in sclasses]))
         cclass = Collection
     elif len(sclasses) == 0:
-        # you'd think this should be a warning, but it happens all the
-        # freaking time if you have a) machines in your clients.xml
-        # that do not have the proper groups set up yet (e.g., if you
-        # have multiple Bcfg2 servers and Packages-relevant groups set
-        # by probes); and b) templates that query all or multiple
-        # machines (e.g., with metadata.query.all_clients())
-        if debug:
-            logger.error("Packages: No sources found for %s" %
-                         metadata.hostname)
+        logger.error("Packages: No sources found for %s" % metadata.hostname)
         cclass = Collection
     else:
         cclass = get_collection_class(sclasses.pop().__name__.replace("Source",
@@ -398,4 +390,3 @@ def factory(metadata, sources, basepath, debug=False):
     clients[metadata.hostname] = ckey
     collections[ckey] = collection
     return collection
-

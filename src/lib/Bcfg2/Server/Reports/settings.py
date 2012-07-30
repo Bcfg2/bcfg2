@@ -43,7 +43,7 @@ try:
     db_engine = c.get('statistics', 'database_engine')
 except ConfigParser.NoSectionError:
     e = sys.exc_info()[1]
-    raise ImportError("Failed to determine database engine: %s" % e)
+    raise ImportError("Failed to determine database engine for reports: %s" % e)
 db_name = ''
 if c.has_option('statistics', 'database_name'):
     db_name = c.get('statistics', 'database_name')

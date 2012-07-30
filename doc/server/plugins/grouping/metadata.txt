@@ -6,11 +6,11 @@
 Metadata
 ========
 
-The metadata mechanism has two types of information, client metadata and
-group metadata. The client metadata describes which top level group a
-client is associated with.The group metadata describes groups in terms
-of what bundles and other groups they include. Each aspect grouping
-and clients' memberships are reflected in the ``Metadata/groups.xml`` and
+The metadata mechanism has two types of information, client metadata
+and group metadata. The client metadata describes which top level
+group a client is associated with.The group metadata describes groups
+in terms of what bundles and other groups they include. Group data and
+clients' memberships are reflected in the ``Metadata/groups.xml`` and
 ``Metadata/clients.xml`` files, respectively.
 
 Usage of Groups in Metadata
@@ -85,9 +85,9 @@ Additionally, the following properties can be specified:
 | address  | Establishes an extra IP address that   | ip address     |
 |          | resolves to this client.               |                |
 +----------+----------------------------------------+----------------+
-| location | Requires requests to come from an IP   | fixed|floating |
-|          | address that matches the client        |                |
-|          | record.                                |                |
+| floating | Allows requests to come from any IP,   | true|false     |
+|          | rather than requiring requests to come |                |
+|          | from an IP associated with the client  |                |
 +----------+----------------------------------------+----------------+
 | password | Establishes a per-node password that   | String         |
 |          | can be used instead of the global      |                |
@@ -101,6 +101,9 @@ Additionally, the following properties can be specified:
 |          | resolution.                            |                |
 +----------+----------------------------------------+----------------+
 
+Floating can also be configured by setting ``location="floating"``,
+but that is deprecated.
+
 For detailed information on client authentication see
 :ref:`appendix-guides-authentication`
 
@@ -112,31 +115,88 @@ definitions. Here's a simple ``Metadata/groups.xml`` file:
 
 .. code-block:: xml
 
-    <Groups version='3.0'>
+    <Groups>
       <Group name='mail-server' profile='true'
-                                public='false'
                                 comment='Top level mail server group' >
         <Bundle name='mail-server'/>
         <Bundle name='mailman-server'/>
         <Group name='apache-server'/>
-        <Group name='rhel-as-5-x86'/>
         <Group name='nfs-client'/>
         <Group name='server'/>
+        <Group name='rhel5'>
+          <Group name='sendmail-server'/>
+        </Group>
+        <Group name='rhel6'>
+          <Group name='postfix-server'/>
+        </Group>
       </Group>
-      <Group name='rhel-as-5-x86'>
-         <Group name='rhel'/>
+      <Group name='rhel'>
+        <Group name='selinux-enabled'/>
       </Group>
-      <Group name='apache-server'/>
-      <Group name='nfs-client'/>
-      <Group name='server'/>
-      <Group name='rhel'/>
+      <Group name='oracle-server'>
+        <Group name='selinux-enabled' negate='true'/>
+      </Group>
+      <Client name='foo.eample.com'>
+        <Group name='oracle-server'/>
+        <Group name='apache-server'/>
+      </Client>
     </Groups>
 
+A Group or Client tag that does not contain any child tags is a
+declaration of membership; a Group or Client tag that does contain
+children is a conditional.  So the example above does not assign
+either the ``rhel5`` or ``rhel6`` groups to machines in the
+``mail-server`` group, but conditionally assigns the
+``sendmail-server`` or ``postfix-server`` groups depending on the OS
+of the client.  (Presumably in this example the OS groups are set by a
+probe.)
 
-Nested/chained groups definitions are conjunctive (logical and). For
-instance, in the above example, a client associated with the Profile
-Group ``mail-server`` is also a member of the ``apache-server``,
-``rhel-as-5-x86``, ``nfs-client``, ``server``, and ``rhel`` groups.
+Consequently, a client that is RHEL 5 and a member of the
+``mail-server`` profile group would also be a member of the
+``apache-server``, ``nfs-client``, ``server``, and ``sendmail-server``
+groups; a RHEL 6 client that is a member of the ``mail-server``
+profile group would be a member of the ``apache-server``,
+``nfs-client``, ``server``, and ``postfix-server`` groups.
+
+Client tags in ``groups.xml`` allow you to supplement the profile
+group declarations in ``clients.xml`` and/or client group assignments
+with the :ref:`server-plugins-grouping-grouppatterns` plugin.  They
+should be used sparingly.  (They are more useful with the
+:ref:`server-plugins-grouping-dbmetadata` plugin.)
+
+You can also declare that a group should be negated; this allows you
+to set defaults and override them efficiently.  Negation is applied
+after other group memberships are calculated, so it doesn't matter how
+many times a client is assigned to a group or how many times it is
+negated; a single group negation is sufficient to remove a client from
+that group.  For instance, in the following example,
+``foo.example.com`` is **not** a member of ``selinux-enabled``, even
+though it is a member of the ``foo-server`` and ``every-server``
+groups:
+
+.. code-block:: xml
+
+    <Groups>
+      <Group name="foo-server">
+        <Group name="apache-server"/>
+        <Group name="selinux-enabled"/>
+      </Group>
+      <Group name="apache-server">
+        <Group name="selinux-enabled"/>
+      </Group>
+      <Group name="every-server">
+        <Group name="selinux-enabled"/>
+      </Group>
+      <Client name="foo.example.com">
+        <Group name="selinux-enabled" negate="true"/>
+      </Client>
+
+.. note::
+
+    Nested Group conditionals, Client tags, and negated Group tags are
+    all new in 1.3.0.
+
+Order of ``groups.xml`` does not matter.
 
 Groups describe clients in terms for abstract, disjoint aspects. Groups
 can be combined to form complex descriptions of clients that use
@@ -165,33 +225,63 @@ Metadata Group Tag
 
 The Group Tag has the following possible attributes:
 
-+----------+------------------------------------------+--------------+
-| Name     | Description                              | Values       |
-+==========+==========================================+==============+
-| name     | Name of the group                        | String       |
-+----------+------------------------------------------+--------------+
-| profile  | If a client can be directly associated   | True|False   |
-|          | with this group                          |              |
-+----------+------------------------------------------+--------------+
-| public   | If a client can freely associate itself  | True|False   |
-|          | with this group. For use with the        |              |
-|          | *bcfg2 -p* option on the client.         |              |
-+----------+------------------------------------------+--------------+
-| category | A group can only contain one instance of | String       |
-|          | a group in any one category. This        |              |
-|          | provides the basis for representing      |              |
-|          | groups which are conjugates of one       |              |
-|          | another in a rigorous way. It also       |              |
-|          | provides the basis for negation.         |              |
-+----------+------------------------------------------+--------------+
-| default  | Set as the profile to use for clients    | True|False   |
-|          | that are not associated with a profile   |              |
-|          | in ``clients.xml``                       |              |
-+----------+------------------------------------------+--------------+
-| comment  | English text description of group        | String       |
-+----------+------------------------------------------+--------------+
++----------+----------------------------------------------+--------------+
+| Name     | Description                                  | Values       |
++==========+==============================================+==============+
+| name     | Name of the group                            | String       |
++----------+----------------------------------------------+--------------+
+| profile  | If a client can be directly associated with  | True|False   |
+|          | this group                                   |              |
++----------+----------------------------------------------+--------------+
+| public   | If a client can freely associate itself with | True|False   |
+|          | this group. For use with the ``bcfg2 -p``    |              |
+|          | option on the client.                        |              |
++----------+----------------------------------------------+--------------+
+| category | A group can only contain one instance of a   | String       |
+|          | group in any one category. This provides the |              |
+|          | basis for representing groups which are      |              |
+|          | conjugates of one another in a rigorous way. |              |
+|          | way.                                         |
++----------+----------------------------------------------+--------------+
+| default  | Set as the profile to use for clients that   | True|False   |
+|          | are not associated with a profile in         |              |
+|          | ``clients.xml``                              |              |
++----------+----------------------------------------------+--------------+
+| comment  | English text description of group            | String       |
++----------+----------------------------------------------+--------------+
+| negate   | When used as a conditional, only apply the   | True|False   |
+|          | children if the named group does not match.  |              |
+|          | When used as a declaration, do not apply     |              |
+|          | the named group to matching clients.         |              |
++----------+----------------------------------------------+--------------+
 
-Groups can also contain other groups and bundles.
+The ``profile``, ``public``, ``category``, ``default``, and
+``comment`` attributes are only parsed if a Group tag either a) is the
+direct child of a Groups tag (i.e., at the top level of an XML file);
+or b) has no children.  This matches legacy behavior in Bcfg2 1.2 and
+earlier.
+
+Groups can also contain other groups, clients, and bundles.
+
+.. _metadata-client-tag:
+
+Metadata Client Tag
+-------------------
+
+The Client Tag has the following possible attributes:
+
++----------+-----------------------------------------------+--------------+
+| Name     | Description                                   | Values       |
++==========+===============================================+==============+
+| name     | Name of the client                            | String       |
++----------+-----------------------------------------------+--------------+
+| negate   | Only apply the child tags if the named client | True|False   |
+|          | does not match.                               |              |
++----------+-----------------------------------------------+--------------+
+
+Clients can also contain groups, other clients (although that's likely
+nonsensical), and bundles.
+
 
 Use of XInclude
 ===============

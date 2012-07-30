@@ -1,0 +1,39 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-grouping-dbmetadata:
+
+==========
+DBMetadata
+==========
+
+.. versionadded:: 1.3.0
+
+The DBMetadata plugin is an alternative to the
+:ref:`server-plugins-grouping-metadata` plugin that stores client
+records in a database rather than writing back to ``clients.xml``.
+This provides several advantages:
+
+* ``clients.xml`` will never be written by the server, removing an
+  area of contention between the user and server.
+* ``clients.xml`` can be removed entirely for many sites.
+* The Bcfg2 client list can be queried by other machines without
+  obtaining and parsing ``clients.xml``.
+* A single client list can be shared amongst multiple Bcfg2 servers.
+
+In general, DBMetadata works almost the same as Metadata.
+``groups.xml`` is parsed identically.  If ``clients.xml`` is present,
+it is parsed, but ``<Client>`` tags in ``clients.xml`` *do not* assert
+client existence; they are only used to set client options *if* the
+client exists (in the database).  That is, the two purposes of
+``clients.xml`` -- to track which clients exist, and to set client
+options -- have been separated.
+
+With the improvements in ``groups.xml`` parsing in 1.3, client groups
+can now be set directly in ``groups.xml`` with ``<Client>`` tags. (See
+:ref:`metadata-client-tag` for more details.)  As a result,
+``clients.xml`` is only necessary with DBMetadata if you need to set
+options (e.g., aliases, floating clients, per-client passwords, etc.)
+on clients.
+
+DBMetadata uses the :ref:`Global Server Database Settings
+<server-database>` to connect to its database.

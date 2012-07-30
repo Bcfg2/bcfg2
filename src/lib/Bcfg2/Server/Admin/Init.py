@@ -308,9 +308,8 @@ class Init(Bcfg2.Server.Admin.Mode):
         for plugin in self.plugins:
             if plugin == 'Metadata':
                 Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(self.repopath,
-                                                                 groups,
-                                                                 self.os_sel,
-                                                                 clients)
+                                                                 groups_xml=groups % self.os_sel,
+                                                                 clients_xml=clients)
             else:
                 try:
                     module = __import__("Bcfg2.Server.Plugins.%s" % plugin, '',

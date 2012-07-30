@@ -2,9 +2,9 @@
 
 .. _server-backends:
 
-========
-Backends
-========
+===============
+Server Backends
+===============
 
 .. versionadded:: 1.3.0
 

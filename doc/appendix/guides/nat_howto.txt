@@ -44,7 +44,7 @@ the Client entry in clients.xml will look something like this:
 .. code-block:: xml
 
     <Client profile="desktop" name="test1"
-     uuid='9001ec29-1531-4b16-8198-a71bea093d0a' location='floating'/>
+     uuid='9001ec29-1531-4b16-8198-a71bea093d0a' floating='true'/>
 
 Alternatively, the Client entry can be setup like this:
 

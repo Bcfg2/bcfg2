@@ -30,3 +30,4 @@ clients.
    bcfg2-info
    selinux
    backends
+   database

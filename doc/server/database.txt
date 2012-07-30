@@ -1,0 +1,45 @@
+.. -*- mode: rst -*-
+
+.. _server-database:
+
+========================
+Global Database Settings
+========================
+
+.. versionadded:: 1.3.0
+
+Several Bcfg2 plugins, including
+:ref:`server-plugins-grouping-dbmetadata` and
+:ref:`server-plugins-probes-index`, can connect use a relational
+database to store data.  They use the global database settings in
+``bcfg2.conf``, described in this document, to connect.
+
+.. note::
+
+    The :ref:`server-plugins-statistics-dbstats` plugin and the
+    :ref:`reports-dynamic` do *not* currently use the global database
+    settings.  They use their own separate database configuration.
+
+Configuration Options
+=====================
+
+All of the following options should go in the ``[database]`` section
+of ``/etc/bcfg2.conf``.
+
++-------------+------------------------------------------------------------+-------------------------------+
+| Option name | Description                                                | Default                       |
++=============+============================================================+===============================+
+| engine      | The full name of the Django database backend to use. See   | "django.db.backends.sqlite3"  |
+|             | https://docs.djangoproject.com/en/dev/ref/settings/#engine |                               |
+|             | for available options                                      |                               |
++-------------+------------------------------------------------------------+-------------------------------+
+| name        | The name of the database                                   | "/var/lib/bcfg2/bcfg2.sqlite" |
++-------------+------------------------------------------------------------+-------------------------------+
+| user        | The user to connect to the database as                     | None                          |
++-------------+------------------------------------------------------------+-------------------------------+
+| password    | The password to connect to the database with               | None                          |
++-------------+------------------------------------------------------------+-------------------------------+
+| host        | The host to connect to                                     | "localhost"                   |
++-------------+------------------------------------------------------------+-------------------------------+
+| port        | The port to connect to                                     | None                          |
++-------------+------------------------------------------------------------+-------------------------------+

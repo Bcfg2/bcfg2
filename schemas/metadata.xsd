@@ -1,6 +1,6 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:xi="http://www.w3.org/2001/XInclude" xml:lang="en">
-  
+
   <xsd:annotation>
     <xsd:documentation>
       metadata schema for bcfg2
@@ -13,38 +13,51 @@
   <xsd:import namespace="http://www.w3.org/2001/XInclude"
               schemaLocation="xinclude.xsd"/>
 
+  <xsd:complexType name='bundleDeclaration'>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+  </xsd:complexType>
+
   <xsd:complexType name='groupType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='Bundle'>
-        <xsd:complexType>
-          <xsd:attribute type='xsd:string' name='name' use='required'/>
-        </xsd:complexType>
-      </xsd:element>
-      <xsd:element name='Group' >
-        <xsd:complexType>
-          <xsd:attribute name='name' use='required'/>
-        </xsd:complexType>
-      </xsd:element>
+      <xsd:element name='Bundle' type='bundleDeclaration'/>
+      <xsd:element name='Group' type='groupType'/>
+      <xsd:element name='Client' type='clientType'/>
+      <xsd:element name='Groups' type='groupsType'/>
+      <xsd:element name='Options' type='optionsType'/>
     </xsd:choice>
-    <xsd:attribute type='xsd:boolean' name='profile' use='optional'/>
-    <xsd:attribute type='xsd:boolean' name='public' use='optional'/>
-    <xsd:attribute type='xsd:boolean' name='default' use='optional'/>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='auth' use='optional'/>
-    <xsd:attribute type='xsd:string' name='category' use='optional'/>
-    <xsd:attribute type='xsd:string' name='comment' use='optional'/>
+    <xsd:attribute type='xsd:boolean' name='profile'/>
+    <xsd:attribute type='xsd:boolean' name='public'/>
+    <xsd:attribute type='xsd:boolean' name='default'/>
+    <xsd:attribute type='xsd:string' name='auth'/>
+    <xsd:attribute type='xsd:string' name='category'/>
+    <xsd:attribute type='xsd:string' name='comment'/>
+    <xsd:attribute type='xsd:string' name='negate'/>
+  </xsd:complexType>
+
+  <xsd:complexType name='clientType'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='Bundle' type='bundleDeclaration'/>
+      <xsd:element name='Group' type='groupType'/>
+      <xsd:element name='Client' type='clientType'/>
+      <xsd:element name='Groups' type='groupsType'/>
+      <xsd:element name='Options' type='optionsType'/>
+    </xsd:choice>
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type='xsd:string' name='negate'/>
   </xsd:complexType>
 
   <xsd:complexType name='groupsType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Group' type='groupType'/>
+      <xsd:element name='Client' type='clientType'/>
       <xsd:element name='Groups' type='groupsType'/>
       <xsd:element ref="xi:include"/>
     </xsd:choice>
     <xsd:attribute name='version' type='xsd:string'/>
-    <xsd:attribute name='origin' type='xsd:string'/>   
-    <xsd:attribute name='revision' type='xsd:string'/>  
-    <xsd:attribute ref='xml:base'/>  
+    <xsd:attribute name='origin' type='xsd:string'/>
+    <xsd:attribute name='revision' type='xsd:string'/>
+    <xsd:attribute ref='xml:base'/>
   </xsd:complexType>
 
   <xsd:element name='Groups' type='groupsType'/>

@@ -102,6 +102,16 @@ class Debuggable(object):
             self.logger.error(message)
 
 
+class DatabaseBacked(object):
+    def __init__(self):
+        pass
+
+
+class PluginDatabaseModel(object):
+    class Meta:
+        app_label = "Server"
+
+
 class Plugin(Debuggable):
     """This is the base class for all Bcfg2 Server plugins.
     Several attributes must be defined in the subclass:
@@ -139,8 +149,7 @@ class Plugin(Debuggable):
 
     @classmethod
     def init_repo(cls, repo):
-        path = "%s/%s" % (repo, cls.name)
-        os.makedirs(path)
+        os.makedirs(os.path.join(repo, cls.name))
 
     def shutdown(self):
         self.running = False
@@ -169,7 +178,7 @@ class Structure(object):
 
 class Metadata(object):
     """Signal metadata capabilities for this plugin"""
-    def add_client(self, client_name, attribs):
+    def add_client(self, client_name):
         """Add client."""
         pass
 
@@ -179,6 +188,9 @@ class Metadata(object):
 
     def viz(self, hosts, bundles, key, colors):
         """Create viz str for viz admin mode."""
+        pass
+
+    def _handle_default_event(self, event):
         pass
 
     def get_initial_metadata(self, client_name):
@@ -650,7 +662,7 @@ class XMLFileBacked(FileBacked):
 
     def add_monitor(self, fpath, fname):
         self.extras.append(fname)
-        if self.fam:
+        if self.fam and self.should_monitor:
             self.fam.AddMonitor(fpath, self)
 
     def __iter__(self):
@@ -666,22 +678,13 @@ class StructFile(XMLFileBacked):
 
     def _include_element(self, item, metadata):
         """ determine if an XML element matches the metadata """
+        negate = item.get('negate', 'false').lower() == 'true'
         if item.tag == 'Group':
-            if ((item.get('negate', 'false').lower() == 'true' and
-                 item.get('name') not in metadata.groups) or
-                (item.get('negate', 'false').lower() == 'false' and
-                 item.get('name') in metadata.groups)):
-                return True
-            else:
-                return False
+            return ((negate and item.get('name') not in metadata.groups) or
+                    (not negate and item.get('name') in metadata.groups))
         elif item.tag == 'Client':
-            if ((item.get('negate', 'false').lower() == 'true' and
-                 item.get('name') != metadata.hostname) or
-                (item.get('negate', 'false').lower() == 'false' and
-                 item.get('name') == metadata.hostname)):
-                return True
-            else:
-                return False
+            return ((negate and item.get('name') != metadata.hostname) or
+                    (not negate and item.get('name') == metadata.hostname))
         elif isinstance(item, lxml.etree._Comment):
             return False
         else:

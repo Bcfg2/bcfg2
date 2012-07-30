@@ -26,7 +26,8 @@
     <xsd:attribute type='xsd:string' name='uuid'/>
     <xsd:attribute type='xsd:string' name='password'/>
     <xsd:attribute type='xsd:string' name='location'/>
-    <xsd:attribute type='xsd:string' name='secure'/>
+    <xsd:attribute type='xsd:boolean' name='floating'/>
+    <xsd:attribute type='xsd:boolean' name='secure'/>
     <xsd:attribute type='xsd:string' name='pingtime' use='optional'/>
     <xsd:attribute type='xsd:string' name='address'/>
     <xsd:attribute type='xsd:string' name='version'/>

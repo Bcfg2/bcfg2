@@ -62,7 +62,7 @@ How Authentication Works
 
 #. Next, the ip address is verified against the client record. If the
    address doesn't match, then the client must be set to
-   location=floating
+   floating='true'
 
 #. Finally, the password is verified. If the client is set to secure
    mode, the only its per-client password is accepted. If it is not set

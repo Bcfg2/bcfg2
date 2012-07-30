@@ -8,12 +8,11 @@ from Bcfg2.Server.Plugins.Metadata import MetadataConsistencyError
 
 
 class Bundle(Bcfg2.Server.Admin.MetadataCore):
-    __shorthelp__ = "Create or delete bundle entries"
-    # TODO: add/del functions
+    __shorthelp__ = "List and view bundle entries"
     __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin bundle list-xml"
                                     "\nbcfg2-admin bundle list-genshi"
                                     "\nbcfg2-admin bundle show\n")
-    __usage__ = ("bcfg2-admin bundle [options] [add|del] [group]")
+    __usage__ = ("bcfg2-admin bundle [options] [list-xml|list-genshi|show]")
 
     def __call__(self, args):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
@@ -28,18 +27,6 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
         if len(args) == 0:
             self.errExit("No argument specified.\n"
                          "Please see bcfg2-admin bundle help for usage.")
-#        if args[0] == 'add':
-#            try:
-#                self.metadata.add_bundle(args[1])
-#            except MetadataConsistencyError:
-#                print("Error in adding bundle.")
-#                raise SystemExit(1)
-#        elif args[0] in ['delete', 'remove', 'del', 'rm']:
-#            try:
-#                self.metadata.remove_bundle(args[1])
-#            except MetadataConsistencyError:
-#                print("Error in deleting bundle.")
-#                raise SystemExit(1)
         # Lists all available xml bundles
         elif args[0] in ['list-xml', 'ls-xml']:
             bundle_name = []
