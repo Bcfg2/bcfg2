@@ -36,7 +36,7 @@ class TestOption(unittest.TestCase):
     @patch('Bcfg2.Options.DefaultConfigParser')
     def test_parse(self, mock_cfp):
         cf = ('communication', 'password')
-        o = Bcfg2.Options.Option('foo', 'test4', cmd='-F', env='TEST2',
+        o = Bcfg2.Options.Option('foo', default='test4', cmd='-F', env='TEST2',
                                  odesc='bar', cf=cf)
         o.parse([], ['-F', 'test'])
         self.assertEqual(o.value, 'test')
@@ -50,9 +50,9 @@ class TestOption(unittest.TestCase):
 
         mock_cfp.get = Mock()
         mock_cfp.get.return_value = 'test5'
-        o.parse([], [])
-        self.assertEqual(o.value, 'test5')
+        o.parse([], [], configparser=mock_cfp)
         mock_cfp.get.assert_any_call(*cf)
+        self.assertEqual(o.value, 'test5')
 
         o.cf = False
         o.parse([], [])
