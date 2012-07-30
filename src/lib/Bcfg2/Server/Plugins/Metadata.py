@@ -858,10 +858,10 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     def merge_additional_groups(self, imd, groups):
         for group in groups:
-            if group in imd.groups or group not in self.groups:
+            if group in imd.groups:
                 continue
-            category = self.groups[group].category
-            if category:
+            if group in self.groups and self.groups[group].category:
+                category = self.groups[group].category
                 if self.groups[group].category in imd.categories:
                     self.logger.warning("%s: Group %s suppressed by category "
                                         "%s; %s already a member of %s" %

@@ -875,6 +875,14 @@ class TestMetadata(unittest.TestCase):
         self.assertItemsEqual(imd.groups,
                               oldgroups.union(["group6", "group8", "group9"]))
 
+        # test adding a group that is not defined in groups.xml
+        imd = metadata.get_initial_metadata("client2")
+        oldgroups = imd.groups
+        metadata.merge_additional_groups(imd, ["group6", "newgroup"])
+        self.assertItemsEqual(imd.groups,
+                              oldgroups.union(["group6", "newgroup"]))
+        
+
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     def test_merge_additional_data(self):
         metadata = self.load_clients_data(metadata=self.load_groups_data())
