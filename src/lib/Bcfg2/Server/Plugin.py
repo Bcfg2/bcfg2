@@ -678,6 +678,8 @@ class StructFile(XMLFileBacked):
 
     def _include_element(self, item, metadata):
         """ determine if an XML element matches the metadata """
+        if isinstance(item, lxml.etree._Comment):
+            return False
         negate = item.get('negate', 'false').lower() == 'true'
         if item.tag == 'Group':
             return ((negate and item.get('name') not in metadata.groups) or
@@ -685,8 +687,6 @@ class StructFile(XMLFileBacked):
         elif item.tag == 'Client':
             return ((negate and item.get('name') != metadata.hostname) or
                     (not negate and item.get('name') == metadata.hostname))
-        elif isinstance(item, lxml.etree._Comment):
-            return False
         else:
             return True
 
