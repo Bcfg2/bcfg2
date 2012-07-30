@@ -159,10 +159,15 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                 if match:
                     name = match.group(1)
                     break
-            if name is not None:
+            if name and self.groups:
                 rname = "%s-%s" % (self.groups[0], name)
-            else:
+            elif self.groups:
                 rname = self.groups[0]
+            else:
+                # a global source with no reasonable name.  just use
+                # the full url and let the regex below make it even
+                # uglier.
+                rname = url_map['url']
         # see yum/__init__.py in the yum source, lines 441-449, for
         # the source of this regex.  yum doesn't like anything but
         # string.ascii_letters, string.digits, and [-_.:].  There
