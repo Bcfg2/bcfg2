@@ -394,8 +394,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         if entry.get('version', False) == 'auto':
             self._fixAutoVersion(entry)
 
-        self.logger.debug("Verifying package instances for %s" \
-                % entry.get('name'))
+        self.logger.debug("Verifying package instances for %s" %
+                          entry.get('name'))
 
         self.verifyCache = {}            # Used for checking multilib packages
         self.modlists[entry] = modlist
@@ -419,8 +419,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
             POs = self.yb.rpmdb.searchProvides(entry.get('name'))
             if len(POs) > 0:
                 virtPkg = True
-                self.logger.info("%s appears to be provided by:" \
-                                 % entry.get('name'))
+                self.logger.info("%s appears to be provided by:" %
+                                 entry.get('name'))
                 for p in POs:
                     self.logger.info("  %s" % p)
 
@@ -469,8 +469,23 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
             # Check EVR
             if virtPkg:
-                self.logger.debug("  Not checking version for virtual package")
-                _POs = [po for po in POs]  # Make a copy
+                # we need to make sure that the version of the symbol
+                # provided matches the one required in the
+                # configuration
+                vlist = []
+                for attr in ["epoch", "version", "release"]:
+                    vlist.append(nevra.get(attr))
+                if tuple(vlist) == (None, None, None):
+                    # we just require the package name, no particular
+                    # version, so just make a copy of POs since every
+                    # package that provides this symbol satisfies the
+                    # requirement
+                    _POs = [po for po in POs]
+                else:
+                    _POs = [po for po in POs
+                            if po.checkPrco('provides',
+                                            (nevra["name"], 'EQ',
+                                             tuple(vlist)))]
             elif entry.get('name') == 'gpg-pubkey':
                 if 'version' not in nevra:
                     m = "Skipping verify: gpg-pubkey without an RPM version."
@@ -488,16 +503,33 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 package_fail = True
                 stat['version_fail'] = True
                 # Just chose the first pkg for the error message
-                entry.set('current_version', "%s-%s.%s" % (POs[0].version,
-                                                           POs[0].release,
-                                                           POs[0].arch))
-                entry.set('version', "%s-%s.%s" % (nevra['version'],
-                                                   nevra['release'],
-                                                   nevra['arch']))
-                self.logger.info("  %s: Wrong version installed.  "
-                                 "Want %s, but have %s" % (entry.get("name"),
-                                                           nevraString(nevra),
-                                                           nevraString(POs[0])))
+                if virtPkg:
+                    provTuple = \
+                        [p for p in POs[0].provides
+                         if p[0] == entry.get("name")][0]
+                    entry.set('current_version', "%s:%s-%s" % provTuple[2])
+                    self.logger.info("  %s: Wrong version installed.  "
+                                     "Want %s, but %s provides %s" %
+                                     (entry.get("name"),
+                                      nevraString(nevra),
+                                      nevraString(POs[0]),
+                                      yum.misc.prco_tuple_to_string(provTuple)))
+                else:
+                    entry.set('current_version', "%s:%s-%s.%s" %
+                              (POs[0].epoch,
+                               POs[0].version,
+                               POs[0].release,
+                               POs[0].arch))
+                    self.logger.info("  %s: Wrong version installed.  "
+                                     "Want %s, but have %s" %
+                                     (entry.get("name"),
+                                      nevraString(nevra),
+                                      nevraString(POs[0])))
+                entry.set('version', "%s:%s-%s.%s" %
+                          (nevra.get('epoch', 'any'),
+                           nevra.get('version', 'any'),
+                           nevra.get('release', 'any'),
+                           nevra.get('arch', 'any')))
                 qtext_versions.append("U(%s)" % str(POs[0]))
                 continue
 
@@ -528,7 +560,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 package_fail = True
                 continue
 
-            # Now take out the Yum specific objects / modlists / unproblmes
+            # Now take out the Yum specific objects / modlists / unproblems
             ignores = [ig.get('name') for ig in entry.findall('Ignore')] + \
                       [ig.get('name') for ig in inst.findall('Ignore')] + \
                       self.ignores
