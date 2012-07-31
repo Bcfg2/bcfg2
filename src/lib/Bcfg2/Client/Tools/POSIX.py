@@ -123,7 +123,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         # chown fails, the chmod can succeed -- get as close to the
         # desired state as we can
         try:
-            os.chown(path, self.self._norm_uid(entry), self._norm_gid(entry))
+            os.chown(path, self._norm_entry_uid(entry),
+                     self._norm_entry_gid(entry))
         except KeyError:
             self.logger.error('Failed to change ownership of %s' % path)
             rv = False
@@ -141,18 +142,104 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             self.logger.error('Failed to change permissions mode of %s' % path)
             rv = False
 
-        if has_selinux:
-            rv &= self._set_secontext(entry, path=path)
+        return (self._set_secontext(entry, path=path) and
+                self._set_acls(entry, path=path) and
+                rv)
+
+    def _set_acls(self, entry, path=None):
+        """ set POSIX ACLs on the file on disk according to the config """
+        if not has_acls:
+            if entry.findall("ACL"):
+                self.logger.debug("ACLs listed for %s but no pylibacl library "
+                                  "installed" % entry.get('name'))
+            return True
+
+        if path is None:
+            path = entry.get("name")
+
+        acl = posix1e.ACL(file=path)
+        # clear ACLs out so we start fresh -- way easier than trying
+        # to add/remove/modify ACLs
+        for aclentry in acl:
+            if aclentry.tag_type in [posix1e.ACL_USER, posix1e.ACL_GROUP]:
+                acl.delete_entry(aclentry)
+        if os.path.isdir(path):
+            defacl = posix1e.ACL(filedef=path)
+            if not defacl.valid():
+                # when a default ACL is queried on a directory that
+                # has no default ACL entries at all, you get an empty
+                # ACL, which is not valid.  in this circumstance, we
+                # just copy the access ACL to get a base valid ACL
+                # that we can add things to.
+                defacl = posix1e.ACL(acl=acl)
+            else:
+                for aclentry in defacl:
+                    if aclentry.tag_type in [posix1e.ACL_USER,
+                                             posix1e.ACL_GROUP]:
+                        defacl.delete_entry(aclentry)
+        else:
+            defacl = None
+
+        for aclkey, perms in self._list_entry_acls(entry).items():
+            atype, scope, qualifier = aclkey
+            if atype == "default":
+                if defacl is None:
+                    self.logger.warning("Cannot set default ACLs on "
+                                        "non-directory %s" % path)
+                    continue
+                entry = posix1e.Entry(defacl)
+            else:
+                entry = posix1e.Entry(acl)
+            for perm in acl_map.values():
+                if perm & perms:
+                    entry.permset.add(perm)
+            entry.tag_type = scope
+            try:
+                if scope == posix1e.ACL_USER:
+                    scopename = "user"
+                    entry.qualifier = self._norm_uid(qualifier)
+                elif scope == posix1e.ACL_GROUP:
+                    scopename = "group"
+                    entry.qualifier = self._norm_gid(qualifier)
+            except (OSError, KeyError):
+                err = sys.exc_info()[1]
+                self.logger.error("Could not resolve %s %s: %s" %
+                                  (scopename, qualifier, err))
+                continue
+        acl.calc_mask()
+
+        def _apply_acl(acl, atype=posix1e.ACL_TYPE_ACCESS):
+            if atype == posix1e.ACL_TYPE_ACCESS:
+                atype_str = "access"
+            else:
+                atype_str = "default"
+            if acl.valid():
+                self.logger.debug("Applying %s ACL to %s:" % (atype_str, path))
+                for line in str(acl).splitlines():
+                    self.logger.debug("  " + line)
+                acl.applyto(path, atype)
+                return True
+            else:
+                self.logger.warning("%s ACL created for %s was invalid:" % 
+                                    (atype_str.title(), path))
+                for line in str(acl).splitlines():
+                    self.logger.warning("  " + line)
+                return False
+
+        rv = _apply_acl(acl)
+        if defacl:
+            defacl.calc_mask()
+            rv &= _apply_acl(defacl, posix1e.ACL_TYPE_DEFAULT)
         return rv
 
-    def _set_secontext(self, entry, path=None, recursive=False):
+    def _set_secontext(self, entry, path=None):
         """ set the SELinux context of the file on disk according to the
         config"""
         if not has_selinux:
             return True
 
         if path is None:
-            path = entry.get("path")
+            path = entry.get("name")
         context = entry.get("secontext")
         if context is None:
             # no context listed
@@ -213,32 +300,38 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         else:
             return False
 
-    def _norm_gid(self, entry):
+    def _norm_gid(self, gid):
         """ This takes a group name or gid and returns the
-        corresponding gid or False. """
+        corresponding gid. """
         try:
-            try:
-                return int(entry.get('group'))
-            except ValueError:
-                return int(grp.getgrnam(entry.get('group'))[2])
+            return int(gid)
+        except ValueError:
+            return int(grp.getgrnam(gid)[2])
+
+    def _norm_entry_gid(self, entry):
+        try:
+            return self._norm_gid(entry.get('group'))
         except (OSError, KeyError):
-            self.logger.error('GID normalization failed for %s. Does group %s '
-                              'exist?' %
-                              (entry.get('name'), entry.get('group')))
+            err = sys.exc_info()[1]
+            self.logger.error('GID normalization failed for %s on %s: %s' %
+                              (entry.get('group'), entry.get('name'), err))
             return False
 
-    def _norm_uid(self, entry):
-        """ This takes a user name or uid and returns the
-        corresponding uid or False. """
+    def _norm_uid(self, uid):
+        """ This takes a username or uid and returns the
+        corresponding uid. """
         try:
-            try:
-                return int(entry.get('owner'))
-            except:
-                return int(pwd.getpwnam(entry.get('owner'))[2])
+            return int(uid)
+        except ValueError:
+            return int(pwd.getpwnam(uid)[2])
+
+    def _norm_entry_uid(self, entry):
+        try:
+            return self._norm_uid(entry.get("owner"))
         except (OSError, KeyError):
-            self.logger.error('UID normalization failed for %s. Does user %s '
-                              'exist?' %
-                              (entry.get('name'), entry.get('owner')))
+            err = sys.exc_info()[1]
+            self.logger.error('UID normalization failed for %s on %s: %s' %
+                              (entry.get('owner'), entry.get('name'), err))
             return False
 
     def _norm_acl_perms(self, perms):
@@ -268,6 +361,18 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     rv |= acl_map[char]
             return rv
 
+    def _acl2string(self, aclkey, perms):
+        atype, scope, qualifier = aclkey
+        acl_str = []
+        if atype == 'default':
+            acl_str.append(atype)
+        if scope == posix1e.ACL_USER:
+            acl_str.append("user")
+        elif scope == posix1e.ACL_GROUP:
+            acl_str.append("group")
+        acl_str.append(qualifier)
+        acl_str.append(self._acl_perm2string(perms))
+        return ":".join(acl_str)
 
     def _acl_perm2string(self, perm):
         rv = []
@@ -690,16 +795,13 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     os.utime(entry.get('name'), (int(entry.get('mtime')),
                                                  int(entry.get('mtime'))))
                 except:
-                    logger.error("Failed to set mtime of %s" % path)
+                    self.logger.error("Failed to set mtime of %s" % path)
                     rv = False
             return rv
         except (OSError, IOError):
             err = sys.exc_info()[1]
-            if err.errno == errno.EACCES:
-                self.logger.info("Failed to open %s for writing" %
-                                 entry.get('name'))
-            else:
-                print(err)
+            self.logger.error("Failed to open %s for writing: %s" %
+                              (entry.get('name'), err))
             return False
 
     def Verifyhardlink(self, entry, _):
@@ -754,7 +856,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     def Installnonexistent(self, entry):
         '''Remove nonexistent entries'''
         ename = entry.get('name')
-        if entry.get('recursive') in ['True', 'true']:
+        if entry.get('recursive').lower() == 'true':
             # ensure that configuration spec is consistent first
             if [e for e in self.buildModlist() \
                 if e.startswith(ename) and e != ename]:
@@ -805,7 +907,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     def Installpermissions(self, entry):
         """Install POSIX permissions"""
         plist = [entry.get('name')]
-        if entry.get('recursive') in ['True', 'true']:
+        if entry.get('recursive', 'false').lower() == 'true':
             # verify ownership information recursively
             for root, dirs, files in os.walk(entry.get('name')):
                 for p in dirs + files:
@@ -924,8 +1026,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         else:
             mtime = '-1'
 
-        configOwner = str(self._norm_uid(entry))
-        configGroup = str(self._norm_gid(entry))
+        configOwner = str(self._norm_entry_uid(entry))
+        configGroup = str(self._norm_entry_gid(entry))
         configPerms = int(entry.get('perms'), 8)
         if entry.get('dev_type'):
             configPerms |= device_map[entry.get('dev_type')]
@@ -979,6 +1081,45 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         else:
             return seVerifies and aclVerifies
 
+    def _list_entry_acls(self, entry):
+        wanted = dict()
+        for acl in entry.findall("ACL"):
+            if acl.get("scope") == "user":
+                scope = posix1e.ACL_USER
+            elif acl.get("scope") == "group":
+                scope = posix1e.ACL_GROUP
+            else:
+                self.logger.error("Unknown ACL scope %s" % acl.get("scope"))
+                continue
+            wanted[(acl.get("type"), scope, acl.get(acl.get("scope")))] = \
+                self._norm_acl_perms(acl.get('perms'))
+        return wanted
+
+    def _list_file_acls(self, entry):
+        def _process_acl(acl, atype):
+            try:
+                if acl.tag_type == posix1e.ACL_USER:
+                    qual = pwd.getpwuid(acl.qualifier)[0]
+                elif acl.tag_type == posix1e.ACL_GROUP:
+                    qual = grp.getgrgid(acl.qualifier)[0]
+                else:
+                    return
+            except (OSError, KeyError):
+                err = sys.exc_info()[1]
+                self.logger.error("Lookup of %s %s failed: %s" %
+                                  (scope, acl.qualifier, err))
+                qual = acl.qualifier
+            existing[(atype, acl.tag_type, qual)] = \
+                self._norm_acl_perms(acl.permset)
+
+        existing = dict()
+        for acl in posix1e.ACL(file=entry.get("name")):
+            _process_acl(acl, "access")
+        if os.path.isdir(entry.get("name")):
+            for acl in posix1e.ACL(filedef=entry.get("name")):
+                _process_acl(acl, "default")
+        return existing
+
     def _verify_acls(self, entry):
         if not has_acls:
             if entry.findall("ACL"):
@@ -990,56 +1131,22 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         # and the ACLs we have.  this will make them easier to compare
         # than trying to mine that data out of the ACL objects and XML
         # objects and compare it at the same time.
-        wanted = dict(access=dict(), default=dict())
-        for acl in entry.findall("ACL"):
-            key = "%s:%s" % (acl.get("scope"), acl.get(acl.get("scope")))
-            wanted[acl.get("type")][key] = \
-                self._norm_acl_perms(acl.get('perms'))
-
-        def _process_acl(acl, atype):
-            try:
-                if acl.tag_type == posix1e.ACL_USER:
-                    scope = "user"
-                    qual = pwd.getpwuid(acl.qualifier)[0]
-                elif acl.tag_type == posix1e.ACL_GROUP:
-                    scope = "group"
-                    qual = grp.getgrgid(acl.qualifier)[0]
-                else:
-                    return
-            except (OSError, KeyError):
-                err = sys.exc_info()[1]
-                self.logger.error("Lookup of %s %s failed: %s" %
-                                  (scope, acl.qualifier, err))
-                qual = acl.qualifier
-            key = "%s:%s" % (scope, qual)
-            existing[atype][key] = self._norm_acl_perms(acl.permset)
-
-        existing = dict(access=dict(), default=dict(), mask=None)
-        for acl in posix1e.ACL(file=entry.get("name")):
-            _process_acl(acl, "access")
-        if os.path.isdir(entry.get("name")):
-            for acl in posix1e.ACL(filedef=entry.get("name")):
-                _process_acl(acl, "default")
+        wanted = self._list_entry_acls(entry)
+        existing = self._list_file_acls(entry)
 
         missing = []
         extra = []
         wrong = []
-        for atype in wanted.keys():
-            for akey, perms in wanted[atype].items():
-                acl_str = "%s:%s" % (akey, self._acl_perm2string(perms))
-                if atype == 'default':
-                    acl_str = "default:" + acl_str
-                if akey not in existing[atype]:
-                    missing.append(acl_str)
-                elif existing[atype][akey] != perms:
-                    wrong.append((acl_str, existing[atype][akey]))
+        for aclkey, perms in wanted.items():
+            acl_str = self._acl2string(aclkey, perms)
+            if aclkey not in existing:
+                missing.append(acl_str)
+            elif existing[aclkey] != perms:
+                wrong.append((acl_str, existing[aclkey]))
 
-            for akey, perms in existing[atype].items():
-                if akey not in wanted[atype]:
-                    acl_str = "%s:%s" % (akey, self._acl_perm2string(perms))
-                    if atype == 'default':
-                        acl_str = "default:" + acl_str
-                    extra.append(acl_str)
+        for aclkey, perms in existing.items():
+            if aclkey not in wanted:
+                extra.append(self._acl2string(aclkey, perms))
         
         msg = []
         if missing:
