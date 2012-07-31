@@ -9,7 +9,7 @@ Global Database Settings
 .. versionadded:: 1.3.0
 
 Several Bcfg2 plugins, including
-:ref:`server-plugins-grouping-dbmetadata` and
+:ref:`server-plugins-grouping-metadata` and
 :ref:`server-plugins-probes-index`, can connect use a relational
 database to store data.  They use the global database settings in
 ``bcfg2.conf``, described in this document, to connect.

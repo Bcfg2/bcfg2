@@ -4,14 +4,19 @@ import time
 import unittest
 import lxml.etree
 from mock import Mock, patch
-from django.core.management import setup_environ
 
-os.environ['DJANGO_SETTINGS_MODULE'] = "Bcfg2.settings"
+try:
+    from django.core.management import setup_environ
+    has_django = True
 
-import Bcfg2.settings
-Bcfg2.settings.DATABASE_NAME = \
-    os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.sqlite")
-Bcfg2.settings.DATABASES['default']['NAME'] = Bcfg2.settings.DATABASE_NAME
+    os.environ['DJANGO_SETTINGS_MODULE'] = "Bcfg2.settings"
+
+    import Bcfg2.settings
+    Bcfg2.settings.DATABASE_NAME = \
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.sqlite")
+    Bcfg2.settings.DATABASES['default']['NAME'] = Bcfg2.settings.DATABASE_NAME
+except ImportError:
+    has_django = False
 
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
@@ -23,6 +28,9 @@ datastore = "/"
 test_data = dict(a=1, b=[1, 2, 3], c="test")
 
 def test_syncdb():
+    if not has_django:
+        raise unittest.SkipTest("Django not found, skipping")
+
     # create the test database
     setup_environ(Bcfg2.settings)
     from django.core.management.commands import syncdb
@@ -216,16 +224,12 @@ text
                                     "group-with-dashes"],
                 "bar.example.com": []}
     
+    @patch("Bcfg2.Server.Plugins.Probes.Probes.load_data", Mock())
     def get_probes_object(self, use_db=False):
-        p = Probes(Mock(), datastore)
-        p.core.setup = Mock()
-        p.core.setup.cfp = Mock()
-        p.core.setup.cfp.getboolean = Mock()
-        if use_db:
-            p.core.setup.cfp.getboolean.return_value = True
-        else:
-            p.core.setup.cfp.getboolean.return_value = False
-        return p
+        core = Mock()
+        core.setup.cfp.getboolean = Mock()
+        core.setup.cfp.getboolean.return_value = use_db
+        return Probes(core, datastore)
         
     @patch("Bcfg2.Server.Plugins.Probes.Probes.load_data")
     def test__init(self, mock_load_data):
@@ -253,6 +257,8 @@ text
         probes._write_data_xml.assert_called_with("test")
         self.assertFalse(probes._write_data_db.called)
 
+        if not has_django:
+            self.skipTest("Django not found, skipping")
         probes = self.get_probes_object(use_db=True)
         probes._write_data_xml.reset_mock()
         probes._write_data_db.reset_mock()
@@ -317,6 +323,8 @@ text
             self.assertItemsEqual(test_data, json.loads(jdata.get("value")))
 
     def test__write_data_db(self):
+        if not has_django:
+            self.skipTest("Django not found, skipping")
         test_syncdb()
         probes = self.get_probes_object(use_db=True)
         probes.probedata = self.get_test_probedata()
@@ -331,7 +339,6 @@ text
             self.assertEqual(len(pdata), len(probes.probedata[cname]))
 
             for probe in pdata:
-                print "probe: %s" % probe.probe
                 self.assertEqual(probe.hostname, client.hostname)
                 self.assertIsNotNone(probe.data)
                 if probe.probe == "xml":
@@ -379,6 +386,9 @@ text
         probes._load_data_xml.assert_any_call()
         self.assertFalse(probes._load_data_db.called)
 
+        if not has_django:
+            self.skipTest("Django not found, skipping")
+
         probes = self.get_probes_object(use_db=True)
         probes._load_data_xml.reset_mock()
         probes._load_data_db.reset_mock()
@@ -398,6 +408,7 @@ text
         probes._write_data_xml(None)
         xdata = \
             lxml.etree.XML(str(mock_open.return_value.write.call_args[0][0]))
+        print "rv = %s" % lxml.etree.tostring(xdata)
         mock_parse.return_value = xdata.getroottree()
         probes.probedata = dict()
         probes.cgroups = dict()
@@ -410,6 +421,8 @@ text
         self.assertItemsEqual(probes.cgroups, self.get_test_cgroups())
 
     def test__load_data_db(self):
+        if not has_django:
+            self.skipTest("Django not found, skipping")
         test_syncdb()
         probes = self.get_probes_object(use_db=True)
         probes.probedata = self.get_test_probedata()

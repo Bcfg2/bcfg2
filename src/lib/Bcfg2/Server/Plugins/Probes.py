@@ -5,8 +5,13 @@ import time
 import operator
 import lxml.etree
 import Bcfg2.Server
-from django.db import models
 import Bcfg2.Server.Plugin
+
+try:
+    from django.db import models
+    has_django = True
+except ImportError:
+    has_django = False
 
 try:
     import json
@@ -32,18 +37,18 @@ except ImportError:
 
 import Bcfg2.Server.Plugin
 
-class ProbesDataModel(models.Model,
-                      Bcfg2.Server.Plugin.PluginDatabaseModel):
-    hostname = models.CharField(max_length=255)
-    probe = models.CharField(max_length=255)
-    timestamp = models.DateTimeField(auto_now=True)
-    data = models.TextField(null=True)
+if has_django:
+    class ProbesDataModel(models.Model,
+                          Bcfg2.Server.Plugin.PluginDatabaseModel):
+        hostname = models.CharField(max_length=255)
+        probe = models.CharField(max_length=255)
+        timestamp = models.DateTimeField(auto_now=True)
+        data = models.TextField(null=True)
 
-
-class ProbesGroupsModel(models.Model,
-                        Bcfg2.Server.Plugin.PluginDatabaseModel):
-    hostname = models.CharField(max_length=255)
-    group = models.CharField(max_length=255)
+    class ProbesGroupsModel(models.Model,
+                            Bcfg2.Server.Plugin.PluginDatabaseModel):
+        hostname = models.CharField(max_length=255)
+        group = models.CharField(max_length=255)
 
 
 class ClientProbeDataSet(dict):
@@ -171,11 +176,6 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
         self.probedata = dict()
         self.cgroups = dict()
         self.load_data()
-
-    @property
-    def _use_db(self):
-        return self.core.setup.cfp.getboolean("probes", "use_database",
-                                              default=False)
 
     def write_data(self, client):
         """Write probe data out for use with bcfg2-info."""

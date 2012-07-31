@@ -3,18 +3,26 @@ This file stores persistent metadata for the Bcfg2 Configuration Repository.
 """
 
 import re
-import copy
-import fcntl
-import lxml.etree
 import os
-import socket
 import sys
 import time
+import copy
+import fcntl
+import socket
+import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
+from UserDict import DictMixin
 from Bcfg2.version import Bcfg2VersionInfo
+
+try:
+    from django.db import models
+    has_django = True
+except ImportError:
+    has_django = False
+
 
 def locked(fd):
     """Aquire a lock on a file"""
@@ -23,6 +31,35 @@ def locked(fd):
     except IOError:
         return True
     return False
+
+
+if has_django:
+    class MetadataClientModel(models.Model,
+                              Bcfg2.Server.Plugin.PluginDatabaseModel):
+        hostname = models.CharField(max_length=255, primary_key=True)
+        version = models.CharField(max_length=31, null=True)
+
+    class ClientVersions(DictMixin):
+        def __getitem__(self, key):
+            try:
+                return MetadataClientModel.objects.get(hostname=key).version
+            except MetadataClientModel.DoesNotExist:
+                raise KeyError(key)
+
+        def __setitem__(self, key, value):
+            client = MetadataClientModel.objects.get_or_create(hostname=key)[0]
+            client.version = value
+            client.save()
+
+        def keys(self):
+            return [c.hostname for c in MetadataClientModel.objects.all()]
+
+        def __contains__(self, key):
+            try:
+                client = MetadataClientModel.objects.get(hostname=key)
+                return True
+            except MetadataClientModel.DoesNotExist:
+                return False
 
 
 class MetadataConsistencyError(Exception):
@@ -264,23 +301,30 @@ class MetadataGroup(tuple):
 
 class Metadata(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.Metadata,
-               Bcfg2.Server.Plugin.Statistics):
+               Bcfg2.Server.Plugin.Statistics,
+               Bcfg2.Server.Plugin.DatabaseBacked):
     """This class contains data for bcfg2 server metadata."""
     __author__ = 'bcfg-dev@mcs.anl.gov'
     name = "Metadata"
     sort_order = 500
-    __files__ = ["groups.xml", "clients.xml"]
 
     def __init__(self, core, datastore, watch_clients=True):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Metadata.__init__(self)
         Bcfg2.Server.Plugin.Statistics.__init__(self)
+        Bcfg2.Server.Plugin.DatabaseBacked.__init__(self)
         self.watch_clients = watch_clients
         self.states = dict()
         self.extra = dict()
         self.handlers = []
-        for fname in self.__files__:
-            self._handle_file(fname)
+        self._handle_file("groups.xml")
+        if (self._use_db and
+            os.path.exists(os.path.join(self.data, "clients.xml"))):
+            self.logger.warning("Metadata: database enabled but clients.xml"
+                                "found, parsing in compatibility mode")
+            self._handle_file("clients.xml")
+        elif not self._use_db:
+            self._handle_file("clients.xml")
 
         # mapping of clientname -> authtype
         self.auth = dict()
@@ -304,7 +348,10 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         self.group_membership = dict()
         self.negated_groups = dict()
         # mapping of hostname -> version string
-        self.versions = dict()
+        if self._use_db:
+            self.versions = ClientVersions()
+        else:
+            self.versions = dict()
         self.uuid = {}
         self.session_cache = {}
         self.default = None
@@ -322,7 +369,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         # must use super here; inheritance works funny with class methods
         super(Metadata, cls).init_repo(repo)
 
-        for fname in cls.__files__:
+        for fname in ["clients.xml", "groups.xml"]:
             aname = re.sub(r'[^A-z0-9_]', '_', fname)
             if aname in kwargs:
                 open(os.path.join(repo, cls.name, fname),
@@ -380,17 +427,36 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     def add_group(self, group_name, attribs):
         """Add group to groups.xml."""
-        return self._add_xdata(self.groups_xml, "Group", group_name,
-                               attribs=attribs)
+        if self._use_db:
+             msg = "Metadata does not support adding groups with use_database enabled"
+             self.logger.error(msg)
+             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+        else:
+            return self._add_xdata(self.groups_xml, "Group", group_name,
+                                   attribs=attribs)
 
     def add_bundle(self, bundle_name):
         """Add bundle to groups.xml."""
-        return self._add_xdata(self.groups_xml, "Bundle", bundle_name)
+        if self._use_db:
+             msg = "Metadata does not support adding bundles with use_database enabled"
+             self.logger.error(msg)
+             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+        else:
+            return self._add_xdata(self.groups_xml, "Bundle", bundle_name)
 
-    def add_client(self, client_name, attribs):
+    def add_client(self, client_name, attribs=None):
         """Add client to clients.xml."""
-        return self._add_xdata(self.clients_xml, "Client", client_name,
-                               attribs=attribs, alias=True)
+        print "add_client(%s, attribs=%s)" % (client_name, attribs)
+        if attribs is None:
+            attribs = dict()
+        if self._use_db:
+            client = MetadataClientModel(hostname=client_name)
+            client.save()
+            self.clients = self.list_clients()
+            return client
+        else:
+            return self._add_xdata(self.clients_xml, "Client", client_name,
+                                   attribs=attribs, alias=True)
 
     def _update_xdata(self, config, tag, name, attribs, alias=False):
         node = self._search_xdata(tag, name, config.xdata, alias=alias)
@@ -409,12 +475,30 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     def update_group(self, group_name, attribs):
         """Update a groups attributes."""
-        return self._update_xdata(self.groups_xml, "Group", group_name, attribs)
+        if self._use_db:
+             msg = "Metadata does not support updating groups with use_database enabled"
+             self.logger.error(msg)
+             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+        else:
+            return self._update_xdata(self.groups_xml, "Group", group_name,
+                                      attribs)
 
     def update_client(self, client_name, attribs):
         """Update a clients attributes."""
-        return self._update_xdata(self.clients_xml, "Client", client_name,
-                                  attribs, alias=True)
+        if self._use_db:
+             msg = "Metadata does not support updating clients with use_database enabled"
+             self.logger.error(msg)
+             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+        else:
+            return self._update_xdata(self.clients_xml, "Client", client_name,
+                                      attribs, alias=True)
+
+    def list_clients(self):
+        """ List all clients in client database """
+        if self._use_db:
+            return set([c.hostname for c in MetadataClientModel.objects.all()])
+        else:
+            return self.clients
 
     def _remove_xdata(self, config, tag, name, alias=False):
         node = self._search_xdata(tag, name, config.xdata)
@@ -432,15 +516,35 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     def remove_group(self, group_name):
         """Remove a group."""
-        return self._remove_xdata(self.groups_xml, "Group", group_name)
+        if self._use_db:
+             msg = "Metadata does not support removing groups with use_database enabled"
+             self.logger.error(msg)
+             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+        else:
+            return self._remove_xdata(self.groups_xml, "Group", group_name)
 
     def remove_bundle(self, bundle_name):
         """Remove a bundle."""
-        return self._remove_xdata(self.groups_xml, "Bundle", bundle_name)
+        if self._use_db:
+             msg = "Metadata does not support removing bundles with use_database enabled"
+             self.logger.error(msg)
+             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+        else:
+            return self._remove_xdata(self.groups_xml, "Bundle", bundle_name)
 
     def remove_client(self, client_name):
         """Remove a bundle."""
-        return self._remove_xdata(self.clients_xml, "Client", client_name)
+        if self._use_db:
+            try:
+                client = MetadataClientModel.objects.get(hostname=client_name)
+            except MetadataClientModel.DoesNotExist:
+                msg = "Client %s does not exist" % client_name
+                self.logger.warning(msg)
+                raise MetadataConsistencyError(msg)
+            client.delete()
+            self.clients = self.list_clients()
+        else:
+            return self._remove_xdata(self.clients_xml, "Client", client_name)
 
     def _handle_clients_xml_event(self, event):
         xdata = self.clients_xml.xdata
@@ -497,6 +601,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             except KeyError:
                 self.clientgroups[clname] = [client.get('profile')]
         self.states['clients.xml'] = True
+        if self._use_db:
+            self.clients = self.list_clients()
 
     def _handle_groups_xml_event(self, event):
         self.groups = {}
@@ -627,10 +733,13 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
             msg = "Cannot set client %s to private group %s" % (client, profile)
             self.logger.error(msg)
             raise MetadataConsistencyError(msg)
-        self._set_profile(client, profile, addresspair)
 
-    def _set_profile(self, client, profile, addresspair):
         if client in self.clients:
+            if self._use_db:
+                msg = "DBMetadata does not support asserting client profiles"
+                self.logger.error(msg)
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+
             profiles = [g for g in self.clientgroups[client]
                         if g in self.groups and self.groups[g].is_profile]
             self.logger.info("Changing %s profile from %s to %s" %
@@ -645,16 +754,20 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
         else:
             self.logger.info("Creating new client: %s, profile %s" %
                              (client, profile))
-            if addresspair in self.session_cache:
-                # we are working with a uuid'd client
-                self.add_client(self.session_cache[addresspair][1],
-                                dict(uuid=client, profile=profile,
-                                     address=addresspair[0]))
+            if self._use_db:
+                self.add_client(client)
             else:
-                self.add_client(client, dict(profile=profile))
-            self.clients.append(client)
-            self.clientgroups[client] = [profile]
-        self.clients_xml.write()
+                if addresspair in self.session_cache:
+                    # we are working with a uuid'd client
+                    self.add_client(self.session_cache[addresspair][1],
+                                    dict(uuid=client, profile=profile,
+                                         address=addresspair[0]))
+                else:
+                    self.add_client(client, dict(profile=profile))
+                self.clients.append(client)
+                self.clientgroups[client] = [profile]
+        if not self._use_db:
+            self.clients_xml.write()
 
     def set_version(self, client, version):
         """Set group parameter for provided client."""

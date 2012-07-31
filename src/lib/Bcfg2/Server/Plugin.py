@@ -11,8 +11,13 @@ import sys
 import threading
 import Bcfg2.Server
 from Bcfg2.Bcfg2Py3k import ConfigParser
-
 import Bcfg2.Options
+
+try:
+    import django
+    has_django = True
+except ImportError:
+    has_django = False
 
 # py3k compatibility
 if sys.hexversion >= 0x03000000:
@@ -105,6 +110,20 @@ class Debuggable(object):
 class DatabaseBacked(object):
     def __init__(self):
         pass
+
+    @property
+    def _use_db(self):
+        use_db = self.core.setup.cfp.getboolean(self.name.lower(),
+                                                "use_database",
+                                                default=False)
+        if use_db and has_django:
+            return True
+        elif not use_db:
+            return False
+        else:
+            self.logger.error("use_database is true but django not found")
+            return False
+
 
 
 class PluginDatabaseModel(object):

@@ -1,6 +1,11 @@
 import sys
-import django
 import Bcfg2.Options
+
+try:
+    import django
+    has_django = True
+except:
+    has_django = False
 
 DATABASES = dict()
 
@@ -39,7 +44,7 @@ def read_config(cfile='/etc/bcfg2.conf', repo=None, quiet=False):
              HOST=setup['db_host'],
              PORT=setup['db_port'])
 
-    if django.VERSION[0] == 1 and django.VERSION[1] < 2:
+    if has_django and django.VERSION[0] == 1 and django.VERSION[1] < 2:
         DATABASE_ENGINE = setup['db_engine']
         DATABASE_NAME = DATABASES['default']['NAME']
         DATABASE_USER = DATABASES['default']['USER']
@@ -51,7 +56,7 @@ def read_config(cfile='/etc/bcfg2.conf', repo=None, quiet=False):
 # this lets manage.py work in all cases
 read_config(quiet=True)
 
-if django.VERSION[0] == 1 and django.VERSION[1] > 2:
+if has_django and django.VERSION[0] == 1 and django.VERSION[1] > 2:
     TIME_ZONE = None
 
 DEBUG = False
