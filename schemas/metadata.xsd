@@ -23,7 +23,6 @@
       <xsd:element name='Group' type='groupType'/>
       <xsd:element name='Client' type='clientType'/>
       <xsd:element name='Groups' type='groupsType'/>
-      <xsd:element name='Options' type='optionsType'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:boolean' name='profile'/>
@@ -41,7 +40,6 @@
       <xsd:element name='Group' type='groupType'/>
       <xsd:element name='Client' type='clientType'/>
       <xsd:element name='Groups' type='groupsType'/>
-      <xsd:element name='Options' type='optionsType'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
     <xsd:attribute type='xsd:string' name='negate'/>
