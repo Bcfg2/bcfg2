@@ -797,11 +797,16 @@ class INode:
                 self.children.append(mytype(item, idict, self))
             else:
                 try:
-                    self.contents[item.tag][item.get('name')] = item.attrib
+                    self.contents[item.tag][item.get('name')] = \
+                        dict(item.attrib)
                 except KeyError:
-                    self.contents[item.tag] = {item.get('name'): item.attrib}
+                    self.contents[item.tag] = {item.get('name'): dict(item.attrib)}
                 if item.text:
-                    self.contents[item.tag]['__text__'] = item.text
+                    self.contents[item.tag][item.get('name')]['__text__'] = \
+                        item.text
+                if item.getchildren():
+                    self.contents[item.tag][item.get('name')]['__children__'] =\
+                        item.getchildren()
                 try:
                     idict[item.tag].append(item.get('name'))
                 except KeyError:
