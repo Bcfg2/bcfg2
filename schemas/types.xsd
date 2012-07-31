@@ -119,7 +119,6 @@
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="user"/>
       <xsd:enumeration value="group"/>
-      <xsd:enumeration value="other"/>
       <xsd:enumeration value="mask"/>
     </xsd:restriction>
   </xsd:simpleType>
