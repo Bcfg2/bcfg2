@@ -40,214 +40,10 @@ device_map = {'block': stat.S_IFBLK,
               'char': stat.S_IFCHR,
               'fifo': stat.S_IFIFO}
 
-
-def normGid(entry, logger=None):
-    """
-       This takes a group name or gid and
-       returns the corresponding gid or False.
-    """
-    if logger is None:
-        logger = log
-    try:
-        try:
-            return int(entry.get('group'))
-        except:
-            return int(grp.getgrnam(entry.get('group'))[2])
-    except (OSError, KeyError):
-        logger.error('GID normalization failed for %s. Does group %s exist?' %
-                     (entry.get('name'), entry.get('group')))
-        return False
-
-def normUid(entry, logger=None):
-    """
-       This takes a user name or uid and
-       returns the corresponding uid or False.
-    """
-    if logger is None:
-        logger = log
-    try:
-        try:
-            return int(entry.get('owner'))
-        except:
-            return int(pwd.getpwnam(entry.get('owner'))[2])
-    except (OSError, KeyError):
-        logger.error('UID normalization failed for %s. Does owner %s exist?' %
-                     (entry.get('name'), entry.get('owner')))
-        return False
-
-def normACLPerms(permstr, logger=None):
-    """ takes a representation of an ACL permset and returns a digit
-    representing the permissions entailed by it.  representations can
-    either be a single octal digit, or a string of up to three 'r',
-    'w', 'x', or '-' characters"""
-    if logger is None:
-        logger = log
-    str_mapping = dict(r=posix1e.ACL_READ, w=posix1e.ACL_WRITE,
-                       x=posix1e.ACL_EXECUTE)
-    try:
-        return int(permstr)
-    except ValueError:
-        # couldn't be converted to an int; process as a string
-        rv = 0
-        for char in permstr:
-            if char == '-':
-                continue
-            elif char not in str_mapping:
-                logger.error("Unknown permissions character in ACL: %s" % char)
-                return 0
-            else:
-                rv |= str_mapping[char]
-        return rv
-
-def normACLPermset(permset, logger=None):
-    """ takes a posix1e.Permset object and returns a list of
-    permissions identical to the one returned by normACLPerms() """
-    if logger is None:
-        logger = log
-
-    return sum([p
-                for p in [posix1e.ACL_READ, posix1e.ACL_WRITE,
-                          posix1e.ACL_EXECUTE]
-                if permset.test(p)])
-
-def ACLPerms2string(perm):
-    rv = []
-    if posix1e.ACL_READ & perm:
-        rv.append('r')
-    else:
-        rv.append('-')
-    if posix1e.ACL_WRITE & perm:
-        rv.append('w')
-    else:
-        rv.append('-')
-    if posix1e.ACL_EXECUTE & perm:
-        rv.append('x')
-    else:
-        rv.append('-')
-    return ''.join(rv)
-
-def isString(strng, encoding):
-    """
-       Returns true if the string contains no ASCII control characters
-       and can be decoded from the specified encoding.
-    """
-    for char in strng:
-        if ord(char) < 9 or ord(char) > 13 and ord(char) < 32:
-            return False
-    try:
-        strng.decode(encoding)
-        return True
-    except:
-        return False
-
-
-def secontextMatches(entry):
-    """ determine if the SELinux context of the file on disk matches
-    the desired context """
-    if not has_selinux:
-        # no selinux libraries
-        return True
-    
-    path = entry.get("path")
-    context = entry.get("secontext")
-    if context is None:
-        # no context listed
-        return True
-
-    if context == '__default__':
-        if selinux.getfilecon(entry.get('name'))[1] == \
-           selinux.matchpathcon(entry.get('name'), 0)[1]:
-            return True
-        else:
-            return False
-    elif selinux.getfilecon(entry.get('name'))[1] == context:
-        return True
-    else:
-        return False
-
-
-def setSEContext(entry, path=None, recursive=False):
-    """ set the SELinux context of the file on disk according to the
-    config"""
-    if not has_selinux:
-        return True
-
-    if path is None:
-        path = entry.get("path")
-    context = entry.get("secontext")
-    if context is None:
-        # no context listed
-        return True
-
-    rv = True
-    if context == '__default__':
-        try:
-            selinux.restorecon(path, recursive=recursive)
-        except:
-            err = sys.exc_info()[1]
-            log.error("Failed to restore SELinux context for %s: %s" %
-                      (path, err))
-            rv = False
-    else:
-        try:
-            rv &= selinux.lsetfilecon(path, context) == 0
-        except:
-            err = sys.exc_info()[1]
-            log.error("Failed to restore SELinux context for %s: %s" %
-                      (path, err))
-            rv = False
-
-        if recursive:
-            for root, dirs, files in os.walk(path):
-                for p in dirs + files:
-                    try:
-                        rv &= selinux.lsetfilecon(p, context) == 0
-                    except:
-                        err = sys.exc_info()[1]
-                        log.error("Failed to restore SELinux context for %s: %s"
-                                  % (path, err))
-                        rv = False
-    return rv
-
-
-def setPerms(entry, path=None):
-    if path is None:
-        path = entry.get("name")
-
-    if (entry.get('perms') == None or
-        entry.get('owner') == None or
-        entry.get('group') == None):
-        self.logger.error('Entry %s not completely specified. '
-                          'Try running bcfg2-lint.' % entry.get('name'))
-        return False
-
-    rv = True
-    # split this into multiple try...except blocks so that even if a
-    # chown fails, the chmod can succeed -- get as close to the
-    # desired state as we can
-    try:
-        os.chown(path, normUid(entry), normGid(entry))
-    except KeyError:
-        logger.error('Failed to change ownership of %s' % path)
-        rv = False
-        os.chown(path, 0, 0)
-    except OSError:
-        logger.error('Failed to change ownership of %s' % path)
-        rv = False
-
-    configPerms = int(entry.get('perms'), 8)
-    if entry.get('dev_type'):
-        configPerms |= device_map[entry.get('dev_type')]
-    try:
-        os.chmod(path, configPerms)
-    except (OSError, KeyError):
-        logger.error('Failed to change permissions mode of %s' % path)
-        rv = False
-
-    if has_selinux:
-        rv &= setSEContext(entry, path=path)
-    
-    return rv
+# map between permissions characters and numeric ACL constants
+acl_map = dict(r=posix1e.ACL_READ,
+               w=posix1e.ACL_WRITE,
+               x=posix1e.ACL_EXECUTE)
 
 
 class POSIX(Bcfg2.Client.Tools.Tool):
@@ -310,6 +106,189 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 except (OSError, KeyError):
                     pass
             entry.set('perms', str(oct(ondisk[stat.ST_MODE])[-4:]))
+
+    def _set_perms(self, entry, path=None):
+        if path is None:
+            path = entry.get("name")
+
+        if (entry.get('perms') == None or
+            entry.get('owner') == None or
+            entry.get('group') == None):
+            self.logger.error('Entry %s not completely specified. '
+                              'Try running bcfg2-lint.' % entry.get('name'))
+            return False
+
+        rv = True
+        # split this into multiple try...except blocks so that even if a
+        # chown fails, the chmod can succeed -- get as close to the
+        # desired state as we can
+        try:
+            os.chown(path, self.self._norm_uid(entry), self._norm_gid(entry))
+        except KeyError:
+            self.logger.error('Failed to change ownership of %s' % path)
+            rv = False
+            os.chown(path, 0, 0)
+        except OSError:
+            self.logger.error('Failed to change ownership of %s' % path)
+            rv = False
+
+        configPerms = int(entry.get('perms'), 8)
+        if entry.get('dev_type'):
+            configPerms |= device_map[entry.get('dev_type')]
+        try:
+            os.chmod(path, configPerms)
+        except (OSError, KeyError):
+            self.logger.error('Failed to change permissions mode of %s' % path)
+            rv = False
+
+        if has_selinux:
+            rv &= self._set_secontext(entry, path=path)
+        return rv
+
+    def _set_secontext(self, entry, path=None, recursive=False):
+        """ set the SELinux context of the file on disk according to the
+        config"""
+        if not has_selinux:
+            return True
+
+        if path is None:
+            path = entry.get("path")
+        context = entry.get("secontext")
+        if context is None:
+            # no context listed
+            return True
+
+        rv = True
+        if context == '__default__':
+            try:
+                selinux.restorecon(path, recursive=recursive)
+            except:
+                err = sys.exc_info()[1]
+                self.logger.error("Failed to restore SELinux context for %s: %s"
+                                  % (path, err))
+                rv = False
+        else:
+            try:
+                rv &= selinux.lsetfilecon(path, context) == 0
+            except:
+                err = sys.exc_info()[1]
+                self.logger.error("Failed to restore SELinux context for %s: %s"
+                                  % (path, err))
+                rv = False
+
+            if recursive:
+                for root, dirs, files in os.walk(path):
+                    for p in dirs + files:
+                        try:
+                            rv &= selinux.lsetfilecon(p, context) == 0
+                        except:
+                            err = sys.exc_info()[1]
+                            self.logger.error("Failed to restore SELinux "
+                                              "context for %s: %s" %
+                                              (path, err))
+                            rv = False
+        return rv
+
+    def _secontext_matches(self, entry):
+        """ determine if the SELinux context of the file on disk matches
+        the desired context """
+        if not has_selinux:
+            # no selinux libraries
+            return True
+
+        path = entry.get("path")
+        context = entry.get("secontext")
+        if context is None:
+            # no context listed
+            return True
+
+        if context == '__default__':
+            if selinux.getfilecon(entry.get('name'))[1] == \
+               selinux.matchpathcon(entry.get('name'), 0)[1]:
+                return True
+            else:
+                return False
+        elif selinux.getfilecon(entry.get('name'))[1] == context:
+            return True
+        else:
+            return False
+
+    def _norm_gid(self, entry):
+        """ This takes a group name or gid and returns the
+        corresponding gid or False. """
+        try:
+            try:
+                return int(entry.get('group'))
+            except ValueError:
+                return int(grp.getgrnam(entry.get('group'))[2])
+        except (OSError, KeyError):
+            self.logger.error('GID normalization failed for %s. Does group %s '
+                              'exist?' %
+                              (entry.get('name'), entry.get('group')))
+            return False
+
+    def _norm_uid(self, entry):
+        """ This takes a user name or uid and returns the
+        corresponding uid or False. """
+        try:
+            try:
+                return int(entry.get('owner'))
+            except:
+                return int(pwd.getpwnam(entry.get('owner'))[2])
+        except (OSError, KeyError):
+            self.logger.error('UID normalization failed for %s. Does user %s '
+                              'exist?' %
+                              (entry.get('name'), entry.get('owner')))
+            return False
+
+    def _norm_acl_perms(self, perms):
+        """ takes a representation of an ACL permset and returns a digit
+        representing the permissions entailed by it.  representations can
+        either be a single octal digit, a string of up to three 'r',
+        'w', 'x', or '-' characters, or a posix1e.Permset object"""
+        if hasattr(perms, 'test'):
+            # Permset object
+            return sum([p for p in acl_map.values()
+                        if perms.test(p)])
+
+        try:
+            # single octal digit
+            return int(perms)
+        except ValueError:
+            # couldn't be converted to an int; process as a string
+            rv = 0
+            for char in perms:
+                if char == '-':
+                    continue
+                elif char not in acl_map:
+                    self.logger.error("Unknown permissions character in ACL: %s"
+                                      % char)
+                    return 0
+                else:
+                    rv |= acl_map[char]
+            return rv
+
+
+    def _acl_perm2string(self, perm):
+        rv = []
+        for char in 'rwx':
+            if acl_map[char] & perm:
+                rv.append(char)
+            else:
+                rv.append('-')
+        return ''.join(rv)
+
+    def _is_string(self, strng, encoding):
+        """ Returns true if the string contains no ASCII control
+        characters and can be decoded from the specified encoding. """
+        for char in strng:
+            if ord(char) < 9 or ord(char) > 13 and ord(char) < 32:
+                return False
+        try:
+            strng.decode(encoding)
+            return True
+        except:
+            return False
 
     def Verifydevice(self, entry, _):
         """Verify device entry."""
@@ -390,7 +369,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     os.mknod(entry.get('name'), mode, device)
                 else:
                     os.mknod(entry.get('name'), mode)
-                return setPerms(entry)
+                return self._set_perms(entry)
             except KeyError:
                 self.logger.error('Failed to install %s' % entry.get('name'))
             except OSError:
@@ -572,7 +551,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                         self.logger.error("Failed to read %s: %s" %
                                           (err.filename, err))
                         return False
-                if tbin or not isString(content, self.setup['encoding']):
+                if tbin or not self._is_string(content, self.setup['encoding']):
                     # don't compute diffs if the file is binary
                     prompt.append('Binary file, no printable diff')
                 else:
@@ -605,7 +584,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                           (err.filename, err))
                         return False
 
-                if tbin or not isString(content, self.setup['encoding']):
+                if tbin or not self._is_string(content, self.setup['encoding']):
                     # don't compute diffs if the file is binary
                     entry.set('current_bfile', binascii.b2a_base64(content))
                 else:
@@ -614,7 +593,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     if diff:
                         entry.set("current_bdiff",
                                   binascii.b2a_base64("\n".join(diff)))
-                    elif not tbin and isString(content, self.setup['encoding']):
+                    elif not tbin and self._is_string(content,
+                                                      self.setup['encoding']):
                         entry.set('current_bfile', binascii.b2a_base64(content))
 
         return permissionStatus and not different
@@ -703,7 +683,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             newfile.write(filedata)
             newfile.close()
 
-            rv = setPerms(entry, newfile.name)
+            rv = self._set_perms(entry, newfile.name)
             os.rename(newfile.name, entry.get('name'))
             if entry.get('mtime'):
                 try:
@@ -762,7 +742,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                  (entry.get('name')))
         try:
             os.link(entry.get('to'), entry.get('name'))
-            return setPerms(entry)
+            return self._set_perms(entry)
         except OSError:
             return False
 
@@ -835,7 +815,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                         plist.append(path)
         rv = True
         for path in plist:
-            rv &= setPerms(entry, path)
+            rv &= self._set_perms(entry, path)
         return rv
 
     def Verifysymlink(self, entry, _):
@@ -891,7 +871,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                  (entry.get('name')))
         try:
             os.symlink(entry.get('to'), entry.get('name'))
-            return setSEContext(entry)
+            return self._set_setcontext(entry)
         except OSError:
             return False
 
@@ -944,8 +924,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         else:
             mtime = '-1'
 
-        configOwner = str(normUid(entry))
-        configGroup = str(normGid(entry))
+        configOwner = str(self._norm_uid(entry))
+        configGroup = str(self._norm_gid(entry))
         configPerms = int(entry.get('perms'), 8)
         if entry.get('dev_type'):
             configPerms |= device_map[entry.get('dev_type')]
@@ -1013,7 +993,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         wanted = dict(access=dict(), default=dict())
         for acl in entry.findall("ACL"):
             key = "%s:%s" % (acl.get("scope"), acl.get(acl.get("scope")))
-            wanted[acl.get("type")][key] = normACLPerms(acl.get('perms'))
+            wanted[acl.get("type")][key] = \
+                self._norm_acl_perms(acl.get('perms'))
 
         def _process_acl(acl, atype):
             try:
@@ -1031,7 +1012,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                   (scope, acl.qualifier, err))
                 qual = acl.qualifier
             key = "%s:%s" % (scope, qual)
-            existing[atype][key] = normACLPermset(acl.permset)
+            existing[atype][key] = self._norm_acl_perms(acl.permset)
 
         existing = dict(access=dict(), default=dict(), mask=None)
         for acl in posix1e.ACL(file=entry.get("name")):
@@ -1045,7 +1026,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         wrong = []
         for atype in wanted.keys():
             for akey, perms in wanted[atype].items():
-                acl_str = "%s:%s" % (akey, ACLPerms2string(perms))
+                acl_str = "%s:%s" % (akey, self._acl_perm2string(perms))
                 if atype == 'default':
                     acl_str = "default:" + acl_str
                 if akey not in existing[atype]:
@@ -1055,7 +1036,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
 
             for akey, perms in existing[atype].items():
                 if akey not in wanted[atype]:
-                    acl_str = "%s:%s" % (akey, ACLPerms2string(perms))
+                    acl_str = "%s:%s" % (akey, self._acl_perm2string(perms))
                     if atype == 'default':
                         acl_str = "default:" + acl_str
                     extra.append(acl_str)
@@ -1084,7 +1065,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         return True
 
     def _verify_secontext(self, entry):
-        if not secontextMatches(entry):
+        if not self._secontext_matches(entry):
             path = entry.get("name")
             if entry.get("secontext") == "__default__":
                 configContext = selinux.matchpathcon(path, 0)[1]
