@@ -28,6 +28,13 @@ try:
 except ImportError:
     has_selinux = False
 
+try:
+    import posix1e
+    has_acls = True
+except ImportError:
+    has_acls = False
+
+
 # map between dev_type attribute and stat constants
 device_map = {'block': stat.S_IFBLK,
               'char': stat.S_IFCHR,
@@ -51,7 +58,6 @@ def normGid(entry, logger=None):
                      (entry.get('name'), entry.get('group')))
         return False
 
-
 def normUid(entry, logger=None):
     """
        This takes a user name or uid and
@@ -69,6 +75,56 @@ def normUid(entry, logger=None):
                      (entry.get('name'), entry.get('owner')))
         return False
 
+def normACLPerms(permstr, logger=None):
+    """ takes a representation of an ACL permset and returns a digit
+    representing the permissions entailed by it.  representations can
+    either be a single octal digit, or a string of up to three 'r',
+    'w', 'x', or '-' characters"""
+    if logger is None:
+        logger = log
+    str_mapping = dict(r=posix1e.ACL_READ, w=posix1e.ACL_WRITE,
+                       x=posix1e.ACL_EXECUTE)
+    try:
+        return int(permstr)
+    except ValueError:
+        # couldn't be converted to an int; process as a string
+        rv = 0
+        for char in permstr:
+            if char == '-':
+                continue
+            elif char not in str_mapping:
+                logger.error("Unknown permissions character in ACL: %s" % char)
+                return 0
+            else:
+                rv |= str_mapping[char]
+        return rv
+
+def normACLPermset(permset, logger=None):
+    """ takes a posix1e.Permset object and returns a list of
+    permissions identical to the one returned by normACLPerms() """
+    if logger is None:
+        logger = log
+
+    return sum([p
+                for p in [posix1e.ACL_READ, posix1e.ACL_WRITE,
+                          posix1e.ACL_EXECUTE]
+                if permset.test(p)])
+
+def ACLPerms2string(perm):
+    rv = []
+    if posix1e.ACL_READ & perm:
+        rv.append('r')
+    else:
+        rv.append('-')
+    if posix1e.ACL_WRITE & perm:
+        rv.append('w')
+    else:
+        rv.append('-')
+    if posix1e.ACL_EXECUTE & perm:
+        rv.append('x')
+    else:
+        rv.append('-')
+    return ''.join(rv)
 
 def isString(strng, encoding):
     """
@@ -933,6 +989,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                           (path, mtime, entry.get('mtime')))
 
         seVerifies = self._verify_secontext(entry)
+        aclVerifies = self._verify_acls(entry)
 
         if errors:
             for error in errors:
@@ -940,7 +997,91 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             entry.set('qtext', "\n".join([entry.get('qtext', '')] + errors))
             return False
         else:
-            return seVerifies
+            return seVerifies and aclVerifies
+
+    def _verify_acls(self, entry):
+        if not has_acls:
+            if entry.findall("ACL"):
+                self.logger.debug("ACLs listed for %s but no pylibacl library "
+                                  "installed" % entry.get('name'))
+            return True
+
+        # create lists of normalized representations of the ACLs we want
+        # and the ACLs we have.  this will make them easier to compare
+        # than trying to mine that data out of the ACL objects and XML
+        # objects and compare it at the same time.
+        wanted = dict(access=dict(), default=dict())
+        for acl in entry.findall("ACL"):
+            key = "%s:%s" % (acl.get("scope"), acl.get(acl.get("scope")))
+            wanted[acl.get("type")][key] = normACLPerms(acl.get('perms'))
+
+        def _process_acl(acl, atype):
+            try:
+                if acl.tag_type == posix1e.ACL_USER:
+                    scope = "user"
+                    qual = pwd.getpwuid(acl.qualifier)[0]
+                elif acl.tag_type == posix1e.ACL_GROUP:
+                    scope = "group"
+                    qual = grp.getgrgid(acl.qualifier)[0]
+                else:
+                    return
+            except (OSError, KeyError):
+                err = sys.exc_info()[1]
+                self.logger.error("Lookup of %s %s failed: %s" %
+                                  (scope, acl.qualifier, err))
+                qual = acl.qualifier
+            key = "%s:%s" % (scope, qual)
+            existing[atype][key] = normACLPermset(acl.permset)
+
+        existing = dict(access=dict(), default=dict(), mask=None)
+        for acl in posix1e.ACL(file=entry.get("name")):
+            _process_acl(acl, "access")
+        if os.path.isdir(entry.get("name")):
+            for acl in posix1e.ACL(filedef=entry.get("name")):
+                _process_acl(acl, "default")
+
+        missing = []
+        extra = []
+        wrong = []
+        for atype in wanted.keys():
+            for akey, perms in wanted[atype].items():
+                acl_str = "%s:%s" % (akey, ACLPerms2string(perms))
+                if atype == 'default':
+                    acl_str = "default:" + acl_str
+                if akey not in existing[atype]:
+                    missing.append(acl_str)
+                elif existing[atype][akey] != perms:
+                    wrong.append((acl_str, existing[atype][akey]))
+
+            for akey, perms in existing[atype].items():
+                if akey not in wanted[atype]:
+                    acl_str = "%s:%s" % (akey, ACLPerms2string(perms))
+                    if atype == 'default':
+                        acl_str = "default:" + acl_str
+                    extra.append(acl_str)
+        
+        msg = []
+        if missing:
+            msg.append("%s ACLs are missing: %s" % (len(missing),
+                                                    ", ".join(missing)))
+        if wrong:
+            msg.append("%s ACLs are wrong: %s" %
+                       (len(wrong),
+                        "; ".join(["%s, should be %s" % (w, e)
+                                   for w, e in wrong])))
+        if extra:
+            msg.append("%s extra ACLs: %s" % (len(extra), ", ".join(extra)))
+
+        if msg:
+            msg.insert(0,
+                       "POSIX ACLs for path %s are incorrect." %
+                       entry.get("name"))
+            self.logger.debug(msg[0])
+            for line in msg[1:]:
+                self.logger.debug("  " + line)
+            entry.set('qtext', "\n".join([entry.get("qtext", '')] + msg))
+            return False
+        return True
 
     def _verify_secontext(self, entry):
         if not secontextMatches(entry):
@@ -954,7 +1095,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             msg = ("SELinux context for path %s is incorrect. "
                    "Current context is %s but should be %s" %
                    (path, pcontext, configContext))
-            self.logger.debug(msg)
+            self.logger.debug("POSIX: " + msg)
             entry.set('qtext', "\n".join([entry.get("qtext", ''), msg]))
             return False
         return True
