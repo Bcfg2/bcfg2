@@ -119,13 +119,12 @@
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="user"/>
       <xsd:enumeration value="group"/>
-      <xsd:enumeration value="mask"/>
     </xsd:restriction>
   </xsd:simpleType>
 
   <xsd:complexType name="ACLType">
     <xsd:attribute type="ACLTypeEnum" name="type" use="required"/>
-    <xsd:attribute type="ACLScopeEnum" name="scope" use="required"/>
+    <xsd:attribute type="ACLScopeEnum" name="scope"/>
     <xsd:attribute type="xsd:string" name="perms" use="required"/>
     <xsd:attribute type="xsd:string" name="user"/>
     <xsd:attribute type="xsd:string" name="group"/>

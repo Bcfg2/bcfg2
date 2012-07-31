@@ -70,6 +70,14 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                when=lambda v: v in ['modified', 'always'],
                                status=lambda v: v in ['ignore', 'check'],
                                command=None)},
+            ACL=dict(
+                default=dict(scope=lambda v: v in ['user', 'group'],
+                             perms=lambda v: re.match('^([0-7]|[rwx\-]{0,3}',
+                                                      v)),
+                access=dict(scope=lambda v: v in ['user', 'group'],
+                            perms=lambda v: re.match('^([0-7]|[rwx\-]{0,3}',
+                                                     v)),
+                mask=dict(perms=lambda v: re.match('^([0-7]|[rwx\-]{0,3}', v))),
             Package={None: dict(name=None)},
             SELinux=dict(
                 boolean=dict(name=None,
@@ -191,6 +199,9 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                     # check if major/minor are specified
                     required_attrs['major'] = is_device_mode
                     required_attrs['minor'] = is_device_mode
+
+            if tag == 'ACL' and 'scope' in required_attrs:
+                required_attrs[entry.get('scope')] = is_username
 
             if '__text__' in required_attrs:
                 del required_attrs['__text__']
