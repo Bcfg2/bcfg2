@@ -1068,7 +1068,7 @@ class EntrySet(Debuggable):
 
         gspec = [ent for ent in matching if ent.specific.group]
         if gspec:
-            gspec.sort(self.group_sortfunc)
+            gspec.sort()
             return gspec[-1]
 
         aspec = [ent for ent in matching if ent.specific.all]
@@ -1173,10 +1173,6 @@ class EntrySet(Debuggable):
             self.infoxml = None
         elif event.filename in [':info', 'info']:
             self.metadata = default_file_metadata.copy()
-
-    def group_sortfunc(self, x, y):
-        """sort groups by their priority"""
-        return cmp(x.specific.prio, y.specific.prio)
 
     def bind_info_to_entry(self, entry, metadata):
         bind_info(entry, metadata, infoxml=self.infoxml, default=self.metadata)
