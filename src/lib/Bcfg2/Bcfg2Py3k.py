@@ -92,3 +92,8 @@ if sys.hexversion >= 0x03000000:
     from io import FileIO as file
 else:
     file = file
+
+try:
+    from collections import MutableMapping
+except ImportError:
+    from UserDict import DictMixin as MutableMapping

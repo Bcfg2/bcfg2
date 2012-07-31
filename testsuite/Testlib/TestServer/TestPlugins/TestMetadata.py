@@ -179,6 +179,25 @@ class TestClientVersions(unittest.TestCase):
         except:
             assert False
 
+    def test__len(self):
+        v = ClientVersions()
+        self.assertEqual(len(v), MetadataClientModel.objects.count())
+
+    def test__iter(self):
+        v = ClientVersions()
+        self.assertItemsEqual([h for h in iter(v)], v.keys())
+
+    def test__delitem(self):
+        v = ClientVersions()
+
+        # test adding new client
+        new = "client__delitem"
+        v[new] = "1.3.0"
+
+        del v[new]
+        self.assertIn(new, v)
+        self.assertIsNone(v[new])
+
 
 class TestXMLMetadataConfig(unittest.TestCase):
     groups_test_tree = groups_test_tree

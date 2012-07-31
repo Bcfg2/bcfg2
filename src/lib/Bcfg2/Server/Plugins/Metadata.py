@@ -14,7 +14,7 @@ import Bcfg2.Server
 import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
-from UserDict import DictMixin
+from Bcfg2.Bcfg2Py3k import MutableMapping
 from Bcfg2.version import Bcfg2VersionInfo
 
 try:
@@ -39,7 +39,7 @@ if has_django:
         hostname = models.CharField(max_length=255, primary_key=True)
         version = models.CharField(max_length=31, null=True)
 
-    class ClientVersions(DictMixin):
+    class ClientVersions(MutableMapping):
         def __getitem__(self, key):
             try:
                 return MetadataClientModel.objects.get(hostname=key).version
@@ -50,6 +50,25 @@ if has_django:
             client = MetadataClientModel.objects.get_or_create(hostname=key)[0]
             client.version = value
             client.save()
+
+        def __delitem__(self, key):
+            # UserDict didn't require __delitem__, but MutableMapping
+            # does.  we don't want deleting a client version record to
+            # delete the client, so we just set the version to None,
+            # which is kinda like deleting it, but not really.
+            try:
+                client = MetadataClientModel.objects.get(hostname=key)
+            except MetadataClientModel.DoesNotExist:
+                raise KeyError(key)
+            client.version = None
+            client.save()
+
+        def __len__(self):
+            return MetadataClientModel.objects.count()
+
+        def __iter__(self):
+            for client in MetadataClientModel.objects.all():
+                yield client.hostname
 
         def keys(self):
             return [c.hostname for c in MetadataClientModel.objects.all()]
@@ -446,7 +465,6 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
     def add_client(self, client_name, attribs=None):
         """Add client to clients.xml."""
-        print "add_client(%s, attribs=%s)" % (client_name, attribs)
         if attribs is None:
             attribs = dict()
         if self._use_db:

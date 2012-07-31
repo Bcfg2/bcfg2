@@ -8,10 +8,10 @@ import socket
 import logging
 import threading
 import lxml.etree
-from UserDict import DictMixin
 from subprocess import Popen, PIPE, STDOUT
 import Bcfg2.Server.Plugin
-from Bcfg2.Bcfg2Py3k import StringIO, cPickle, HTTPError, URLError, ConfigParser, file
+from Bcfg2.Bcfg2Py3k import StringIO, cPickle, HTTPError, URLError, \
+    ConfigParser, file
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
      fetch_url
