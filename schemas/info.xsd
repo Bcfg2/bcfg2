@@ -1,5 +1,5 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
-  
+
   <xsd:annotation>
     <xsd:documentation>
       info.xml schema for bcfg2
@@ -7,8 +7,12 @@
   </xsd:annotation>
 
   <xsd:include schemaLocation="atom.xsd"/>
+  <xsd:include schemaLocation="types.xsd"/>
 
   <xsd:complexType name='InfoType'>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='ACL' type='ACLType'/>
+    </xsd:choice>
     <xsd:attribute name='encoding' type='xsd:string'/>
     <xsd:attribute name='group' type='xsd:string'/>
     <xsd:attribute name='important' type='xsd:string'/>
