@@ -108,7 +108,36 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <xsd:simpleType name="ACLTypeEnum">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="default"/>
+      <xsd:enumeration value="access"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="ACLScopeEnum">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="user"/>
+      <xsd:enumeration value="group"/>
+      <xsd:enumeration value="other"/>
+      <xsd:enumeration value="mask"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="ACLType">
+    <xsd:attribute type="ACLTypeEnum" name="type" use="required"/>
+    <xsd:attribute type="ACLScopeEnum" name="scope" use="required"/>
+    <xsd:attribute type="xsd:string" name="perms" use="required"/>
+    <xsd:attribute type="xsd:string" name="user"/>
+    <xsd:attribute type="xsd:string" name="group"/>
+    <xsd:attribute type="xsd:string" name="recursive"/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
   <xsd:complexType name="PathType">
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='ACL' type='ACLType'/>
+    </xsd:choice>
     <xsd:attribute type="PathTypeEnum" name="type"/>
     <xsd:attribute type="xsd:string" name="name" use="required"/>
     <xsd:attribute type="DeviceTypeEnum" name="dev_type"/>
