@@ -22,3 +22,9 @@ class CfgInfoXML(CfgInfo):
 
     def handle_event(self, event):
         self.infoxml.HandleEvent()
+
+    def _set_info(self, entry, info):
+        CfgInfo._set_info(self, entry, info)
+        if '__children__' in info:
+            for child in info['__children__']:
+                entry.append(child)

@@ -114,7 +114,8 @@ class CfgInfo(CfgBaseFileMatcher):
 
     def _set_info(self, entry, info):
         for key, value in list(info.items()):
-            entry.attrib.__setitem__(key, value)
+            if not key.startswith("__"):
+                entry.attrib.__setitem__(key, value)
 
 
 class CfgVerifier(CfgBaseFileMatcher):
