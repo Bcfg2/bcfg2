@@ -376,6 +376,22 @@ It is not currently possible to manually set an effective rights mask;
 the mask will be automatically calculated from the given ACLs when
 they are applied.
 
+Note that it is possible to set ACLs that demand different permissions
+on a file than those specified in the ``perms`` attribute on the
+``Path`` tag.  For instance:
+
+.. code-block:: xml
+
+    <Path name="/etc/foo" perms="0644" group="root" owner="root">
+      <ACL type="access" scope="user" user="foouser" perms="rwx"/>
+    </Path>
+
+In this case, we've specified permissions of ``0644``, but the
+effective rights mask will be "rwx," so setting the ACL will change
+the permissions to ``0674``.  When this happens, Bcfg2 will change the
+permissions and set the ACLs on every run and the entry will be
+eternally marked as bad.
+
 SELinux Tag
 -----------
 
