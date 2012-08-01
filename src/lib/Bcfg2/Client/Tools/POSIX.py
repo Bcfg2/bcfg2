@@ -1142,7 +1142,8 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             if aclkey not in existing:
                 missing.append(acl_str)
             elif existing[aclkey] != perms:
-                wrong.append((acl_str, existing[aclkey]))
+                wrong.append((acl_str,
+                              self._acl2string(aclkey, existing[aclkey])))
 
         for aclkey, perms in existing.items():
             if aclkey not in wanted:
@@ -1155,7 +1156,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         if wrong:
             msg.append("%s ACLs are wrong: %s" %
                        (len(wrong),
-                        "; ".join(["%s, should be %s" % (w, e)
+                        "; ".join(["%s should be %s" % (e, w)
                                    for w, e in wrong])))
         if extra:
             msg.append("%s extra ACLs: %s" % (len(extra), ", ".join(extra)))
