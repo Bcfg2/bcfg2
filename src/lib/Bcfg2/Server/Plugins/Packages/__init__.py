@@ -11,6 +11,9 @@ from Bcfg2.Bcfg2Py3k import ConfigParser, urlopen
 from Bcfg2.Server.Plugins.Packages import Collection
 from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
 
+yum_config_default = "/etc/yum.repos.d/bcfg2.repo"
+apt_config_default = "/etc/apt/sources.d/bcfg2"
+
 class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.StructureValidator,
                Bcfg2.Server.Plugin.Generator,
@@ -29,8 +32,12 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
 
         self.sentinels = set()
-        self.cachepath = os.path.join(self.data, 'cache')
-        self.keypath = os.path.join(self.data, 'keys')
+        self.cachepath = \
+            self.core.setup.cfp.get("packages", "cache",
+                                    default=os.path.join(self.data, 'cache'))
+        self.keypath = \
+            self.core.setup.cfp.get("packages", "keycache",
+                                    default=os.path.join(self.data, 'keys'))
         if not os.path.exists(self.keypath):
             # create key directory if needed
             os.makedirs(self.keypath)
@@ -96,12 +103,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                                                          default="auto"))
             entry.set('type', collection.ptype)
         elif entry.tag == 'Path':
-            if (entry.get("name") == self.core.setup.cfp.get("packages",
-                                                             "yum_config",
-                                                             default="") or
-                entry.get("name") == self.core.setup.cfp.get("packages",
-                                                             "apt_config",
-                                                             default="")):
+            if (entry.get("name") == \
+                    self.core.setup.cfp.get("packages",
+                                            "yum_config",
+                                            default=yum_config_default) or
+                entry.get("name") == \
+                    self.core.setup.cfp.get("packages",
+                                            "apt_config",
+                                            default=apt_config_default)):
                 self.create_config(entry, metadata)
 
     def HandlesEntry(self, entry, metadata):
@@ -115,12 +124,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 return True
         elif entry.tag == 'Path':
             # managed entries for yum/apt configs
-            if (entry.get("name") == self.core.setup.cfp.get("packages",
-                                                             "yum_config",
-                                                             default="") or
-                entry.get("name") == self.core.setup.cfp.get("packages",
-                                                             "apt_config",
-                                                             default="")):
+            if (entry.get("name") == \
+                    self.core.setup.cfp.get("packages",
+                                            "yum_config",
+                                            default=yum_config_default) or
+                entry.get("name") == \
+                    self.core.setup.cfp.get("packages",
+                                            "apt_config",
+                                            default=apt_config_default)):
                 return True
         return False
 

@@ -695,38 +695,52 @@ Configuration
 ``bcfg2.conf`` contains miscellaneous configuration options for the
 Packages plugin. Any booleans in the config file accept the values
 "1", "yes", "true", and "on" for True, and "0", "no", "false", and
-"off" for False.
+"off" for False.  For historical reasons, ``resolver`` and
+``metadata`` also accept "enabled" and "disabled".
 
 It understands the following directives:
 
 [packages] section
 ------------------
 
-* ``resolver``: Enable dependency resolution. Default is ``1``
-  (true). For historical reasons, this also accepts "enabled" and
-  "disabled".
-* ``metadata``: Enable metadata processing.  Default is ``1``
-  (true). If ``metadata`` is disabled, it's implied that ``resolver``
-  is also disabled.  For historical reasons, this also accepts
-  "enabled" and "disabled".
-* ``yum_config``: The path at which to generate Yum configs.  No
-  default.
-* ``apt_config``: The path at which to generate APT configs. No
-  default.
-* ``gpg_keypath``: The path on the client RPM GPG keys will be copied
-  to before they are imported on the client. Default is
-  "/etc/pki/rpm-gpg".
-* ``version``: Set the version attribute used when binding
-  Packages. Default is ``auto``.
++-------------+------------------------------------------------------+----------+-----------------------------+
+| Name        | Description                                          | Values   | Default                     |
++=============+======================================================+==========+=============================+
+| resolver    | Enable dependency resolution                         | Boolean  | True                        |
++-------------+------------------------------------------------------+----------+-----------------------------+
+| metadata    | Enable metadata processing. Disabling ``metadata``   | Boolean  | True                        |
+|             | implies disabling ``resolver`` as well.              |          |                             |
++-------------+------------------------------------------------------+----------+-----------------------------+
+| yum_config  | The path at which to generate Yum configs.           | String   | /etc/yum.repos.d/bcfg2.repo | 
++-------------+------------------------------------------------------+----------+-----------------------------+
+| apt_config  | The path at which to generate APT configs.           | String   | /etc/apt/sources.d/bcfg2    |
++-------------+------------------------------------------------------+----------+-----------------------------+
+| gpg_keypath | The path on the client RPM GPG keys will be copied   | String   | /etc/pki/rpm-gpg            |
+|             | to before they are imported on the client.           |          |                             |
++-------------+------------------------------------------------------+----------+-----------------------------+
+| version     | Set the version attribute used when binding Packages | any|auto | auto                        |
++-------------+------------------------------------------------------+----------+-----------------------------+
+| cache       | Path where Packages will store its cache             | String   | <repo>/Packages/cache       |
++-------------+------------------------------------------------------+----------+-----------------------------+
+| keycache    | Path where Packages will cache downloaded GPG keys   | String   | <repo>/Packages/keys        |
++-------------+------------------------------------------------------+----------+-----------------------------+
+
 
 [packages:yum] section
 ----------------------
 
-* ``use_yum_libraries``: Whether or not to use the :ref:`native yum
-  library support <native-yum-libraries>`. Default is ``0`` (false).
-* ``helper``: Path to ``bcfg2-yum-helper``.  By default, Bcfg2 looks
-  first in ``$PATH`` and then in ``/usr/sbin/bcfg2-yum-helper`` for
-  the helper.
++-------------------+----------------------------------------------------------+---------+-----------+
+| Name              | Description                                              | Values  | Default   |
++===================+==========================================================+=========+===========+
+| use_yum_libraries | Whether or not to use the                                | Boolean | False     |
+|                   | :ref:`native yum library support <native-yum-libraries>` |         |           |
++-------------------+----------------------------------------------------------+---------+-----------+
+| helper            | Path to ``bcfg2-yum-helper``                             | String  | See below |
++-------------------+----------------------------------------------------------+---------+-----------+
+
+To find ``bcfg2-yum-helper`` if none is specified, Bcfg2 looks first
+in ``$PATH`` and then in ``/usr/sbin/bcfg2-yum-helper`` for the
+helper.
 
 All other options in the ``[packages:yum]`` section will be passed
 along verbatim to the Yum configuration if you are using the native
@@ -735,7 +749,13 @@ Yum library support.
 [packages:pulp] section
 -----------------------
 
-* ``username`` and ``password``: The username and password of a Pulp
-  user that will be used to register new clients and bind them to
-  repositories. Membership in the default ``consumer-users`` role is
-  sufficient.
++----------+-----------------------------------------------------+--------+---------+
+| Name     | Description                                         | Values | Default |
++==========+=====================================================+========+=========+
+| username | The username of a Pulp user that will be used to    | String | None    |
+|          | register new clients and bind them to repositories. |        |         |
++----------+-----------------------------------------------------+--------+---------+
+| password | The password of the Pulp user                       | String | None    |
++----------+-----------------------------------------------------+--------+---------+
+
+The user should be a member of the default ``consumer-users`` role.
