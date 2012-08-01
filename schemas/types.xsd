@@ -128,7 +128,6 @@
     <xsd:attribute type="xsd:string" name="perms" use="required"/>
     <xsd:attribute type="xsd:string" name="user"/>
     <xsd:attribute type="xsd:string" name="group"/>
-    <xsd:attribute type="xsd:string" name="recursive"/>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 

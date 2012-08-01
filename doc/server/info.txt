@@ -13,12 +13,13 @@ Various file properties for entries served by the :ref:`Cfg
 <server-plugins-generators-sshbase>` plugins are controlled through
 the use of ``:info``, ``info``, or ``info.xml`` files.
 
-By default, these plugins are set to write files to the filesystem with
-owner **root**, group **root**, and mode **644** (read and write for
-owner, read only for group and other). These options, and a few others,
-can be overridden through use of ``:info`` or ``info`` files. Each config
-file directory can have a ``:info`` or ``info`` file if needed. The
-possible fields in an info file are:
+By default, these plugins are set to write files to the filesystem
+with owner **root**, group **root**, and mode **644** (read and write
+for owner, read only for group and other). These options, and a few
+others, can be overridden through use of ``info.xml``, ``:info``, or
+``info`` files. Each config file directory can have a ``info.xml``,
+``:info`` or ``info`` file if needed. The possible fields in an info
+file are:
 
 +------------+-------------------+----------------------------------+---------+
 | Field      | Possible values   | Description                      | Default |
@@ -76,24 +77,6 @@ might look like::
 See :ref:`server-selinux` for more information on the ``secontext``
 attribute and managing SELinux in general.
 
-Important attribute
-===================
-
-.. versionadded:: 1.1.0
-
-Having important entries hardcoded into the various client tools has
-worked relatively well so far. However, this method allows for a bit
-more flexibility as the entries can be controlled via the configuration
-specification.
-
-+------------+-------------------+----------------------------------+---------+
-| Field      | Possible values   | Description                      | Default |
-+============+===================+==================================+=========+
-| important  | true | false      | Important entries are            | root    |
-|            |                   | installed first during client    |         |
-|            |                   | execution                        |         |
-+------------+-------------------+----------------------------------+---------+
-
 .. _server-info-info-xml:
 
 info.xml files
@@ -133,3 +116,9 @@ of permissions depending on the path of the file::
         <Info owner="root" group="root" perms="0600"/>
       </Path>
     </FileInfo>
+
+.. versionadded:: 1.3.0
+
+You can also specify ACLs as children of ``<Info>`` tags in
+``info.xml``.  See :ref:`server-plugins-generators-rules-acls` for
+more information on the formatting of ACL tags.

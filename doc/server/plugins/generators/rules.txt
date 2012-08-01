@@ -328,6 +328,54 @@ symlink
 | to   | File to link to      | String |
 +------+----------------------+--------+
 
+.. _server-plugins-generators-rules-acls:
+
+ACLs
+^^^^
+
+.. versionadded:: 1.3.0
+
+ACLs on a Path entry are specified not by attributes on the tag but by
+child ``<ACL>`` tags.  For instance:
+
+.. code-block:: xml
+
+    <Path name="/etc/foo" type="directory" owner="root" group="root"
+          perms="0775">
+      <ACL type="default" scope="user" user="foouser" perms="rw"/>
+      <ACL type="default" scope="group" group="users" perms="rx"/>
+    </Path>
+
+The ACL tag has the following attributes:
+
++-------+---------------------------------------------------+----------------+
+| Name  | Description                                       | Values         |
++=======+===================================================+================+
+| type  | ACL type                                          | default|access |
++-------+---------------------------------------------------+----------------+
+| scope | ACL scope                                         | user|group     |
++-------+---------------------------------------------------+----------------+
+| user  | User the ACL applies to ``(with scope="user"``)   | String         |
++-------+---------------------------------------------------+----------------+
+| group | Group the ACL applies to ``(with scope="group"``) | String         |
++-------+---------------------------------------------------+----------------+
+| perms | Permissions for the ACL                           | See below      |
++-------+---------------------------------------------------+----------------+
+
+The ``perms`` attribute can either be a single octal digit (e.g.,
+``6`` would indicate read and write, but not execute), or a symbolic
+mode including 'r', 'w', and 'x'.  You can include '-' for operations
+that are not permitted, but it's not required.  I.e., all of the
+following are identical::
+
+    perms="5"
+    perms="rx"
+    perms="r-x"
+
+It is not currently possible to manually set an effective rights mask;
+the mask will be automatically calculated from the given ACLs when
+they are applied.
+
 SELinux Tag
 -----------
 
