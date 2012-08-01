@@ -367,6 +367,22 @@ class YumCollection(Collection):
             # for API completeness
             return self.call_helper("get_provides", package)
 
+    def get_groups(self, grouplist):
+        if not self.use_yum:
+            self.logger.warning("Packages: Package groups are not supported by "
+                                "Bcfg2's internal Yum dependency generator")
+            return []
+
+        gdicts = []
+        for group, ptype in grouplist:
+            if group.startswith("@"):
+                group = group[1:]
+            if not ptype:
+                ptype = "default"
+            gdicts.append(dict(group=group, type=ptype))
+
+        return self.call_helper("get_groups", gdicts)
+
     def get_group(self, group, ptype="default"):
         if not self.use_yum:
             self.logger.warning("Packages: Package groups are not supported by "
@@ -376,8 +392,7 @@ class YumCollection(Collection):
         if group.startswith("@"):
             group = group[1:]
 
-        pkgs = self.call_helper("get_group", dict(group=group, type=ptype))
-        return pkgs
+        return self.call_helper("get_group", dict(group=group, type=ptype))
 
     def complete(self, packagelist):
         if not self.use_yum:

@@ -167,26 +167,23 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         # essential pkgs are those marked as such by the distribution
         essential = collection.get_essential()
         to_remove = []
+        groups = []
         for struct in structures:
             for pkg in struct.xpath('//Package | //BoundPackage'):
                 if pkg.get("name"):
                     initial.add(pkg.get("name"))
                 elif pkg.get("group"):
-                    try:
-                        if pkg.get("type"):
-                            gpkgs = collection.get_group(pkg.get("group"),
-                                                         ptype=pkg.get("type"))
-                        else:
-                            gpkgs = collection.get_group(pkg.get("group"))
-                        base.update(gpkgs)
-                    except TypeError:
-                        raise
-                        self.logger.error("Could not resolve group %s" %
-                                          pkg.get("group"))
+                    groups.append((pkg.get("group"),
+                                   pkg.get("type")))
                     to_remove.append(pkg)
                 else:
                     self.logger.error("Packages: Malformed Package: %s" %
                                       lxml.etree.tostring(pkg))
+
+        gpkgs = collection.get_groups(groups)
+        for group, pkgs in gpkgs.items():
+            base.update(pkgs)
+
         base.update(initial | essential)
         for el in to_remove:
             el.getparent().remove(el)

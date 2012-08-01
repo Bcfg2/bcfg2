@@ -134,7 +134,7 @@ class DepSolver(object):
             if self.yumbase.comps.has_group(group):
                 group = self.yumbase.comps.return_group(group)
             else:
-                self.logger.warning("%s is not a valid group" % group)
+                self.logger.error("%s is not a valid group" % group)
                 return []
         except yum.Errors.GroupsError:
             err = sys.exc_info()[1]
@@ -365,6 +365,17 @@ def main():
         else:
             packages = depsolver.get_group(data['group'])
         print json.dumps(list(packages))
+    elif cmd == "get_groups":
+        data = json.loads(sys.stdin.read())
+        rv = dict()
+        for gdata in data:
+            if "type" in gdata:
+                packages = depsolver.get_group(gdata['group'],
+                                               ptype=gdata['type'])
+            else:
+                packages = depsolver.get_group(gdata['group'])
+            rv[gdata['group']] = list(packages)
+        print json.dumps(rv)
     elif cmd == "is_package":
         package = json.loads(sys.stdin.read())
         print json.dumps(getattr(depsolver, cmd)(package))

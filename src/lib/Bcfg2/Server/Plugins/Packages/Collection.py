@@ -104,6 +104,14 @@ class Collection(Bcfg2.Server.Plugin.Debuggable):
             cachefiles.add(source.cachefile)
         return list(cachefiles)
 
+    def get_groups(self, grouplist):
+        """ provided since some backends may be able to query multiple
+        groups at once faster than serially """
+        rv = dict()
+        for group, ptype in grouplist:
+            rv[group] = self.get_group(group, ptype)
+        return rv
+
     def get_group(self, group, ptype=None):
         for source in self.sources:
             pkgs = source.get_group(self.metadata, group, ptype=ptype)
