@@ -123,6 +123,10 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         # chown fails, the chmod can succeed -- get as close to the
         # desired state as we can
         try:
+            self.logger.debug("Setting ownership of %s to %s:%s" %
+                              (path,
+                               self._norm_entry_uid(entry),
+                               self._norm_entry_gid(entry)))
             os.chown(path, self._norm_entry_uid(entry),
                      self._norm_entry_gid(entry))
         except KeyError:
@@ -137,16 +141,19 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         if entry.get('dev_type'):
             configPerms |= device_map[entry.get('dev_type')]
         try:
+            self.logger.debug("Setting permissions on %s to %s" %
+                              (path, oct(configPerms)))
             os.chmod(path, configPerms)
         except (OSError, KeyError):
             self.logger.error('Failed to change permissions mode of %s' % path)
             rv = False
 
-        return (self._set_secontext(entry, path=path) and
-                self._set_acls(entry, path=path) and
+        recursive = entry.get("recursive", "false").lower() == "true"
+        return (self._set_secontext(entry, path=path, recursive=recursive) and
+                self._set_acls(entry, path=path, recursive=recursive) and
                 rv)
 
-    def _set_acls(self, entry, path=None):
+    def _set_acls(self, entry, path=None, recursive=True):
         """ set POSIX ACLs on the file on disk according to the config """
         if not has_acls:
             if entry.findall("ACL"):
@@ -208,7 +215,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 continue
         acl.calc_mask()
 
-        def _apply_acl(acl, atype=posix1e.ACL_TYPE_ACCESS):
+        def _apply_acl(acl, path, atype=posix1e.ACL_TYPE_ACCESS):
             if atype == posix1e.ACL_TYPE_ACCESS:
                 atype_str = "access"
             else:
@@ -217,8 +224,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                 self.logger.debug("Applying %s ACL to %s:" % (atype_str, path))
                 for line in str(acl).splitlines():
                     self.logger.debug("  " + line)
-                acl.applyto(path, atype)
-                return True
+                try:
+                    acl.applyto(path, atype)
+                    return True
+                except:
+                    err = sys.exc_info()[1]
+                    self.logger.error("Failed to set ACLs on %s: %s" %
+                                      (path, err))
+                    return False
             else:
                 self.logger.warning("%s ACL created for %s was invalid:" % 
                                     (atype_str.title(), path))
@@ -226,13 +239,19 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                     self.logger.warning("  " + line)
                 return False
 
-        rv = _apply_acl(acl)
+        rv = _apply_acl(acl, path)
         if defacl:
             defacl.calc_mask()
-            rv &= _apply_acl(defacl, posix1e.ACL_TYPE_DEFAULT)
+            rv &= _apply_acl(defacl, path, posix1e.ACL_TYPE_DEFAULT)
+        if recursive:
+            for root, dirs, files in os.walk(path):
+                for p in dirs + files:
+                    rv &= _apply_acl(acl, p)
+                    if defacl:
+                        rv &= _apply_acl(defacl, p, posix1e.ACL_TYPE_DEFAULT)
         return rv
 
-    def _set_secontext(self, entry, path=None):
+    def _set_secontext(self, entry, path=None, recursive=False):
         """ set the SELinux context of the file on disk according to the
         config"""
         if not has_selinux:
@@ -1033,7 +1052,13 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             configPerms |= device_map[entry.get('dev_type')]
         if has_selinux:
             if entry.get("secontext") == "__default__":
-                configContext = selinux.matchpathcon(path, 0)[1]
+                try:
+                    configContext = selinux.matchpathcon(path, 0)[1]
+                except OSError:
+                    self.logger.warning("Failed to get default SELinux context "
+                                        "for %s; missing fcontext rule?" %
+                                        path)
+                    return False
             else:
                 configContext = entry.get("secontext")
 
