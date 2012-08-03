@@ -3,7 +3,6 @@
 """This is systemd support."""
 
 import Bcfg2.Client.Tools
-import Bcfg2.Client.XML
 
 class Systemd(Bcfg2.Client.Tools.SvcTool):
     """Systemd support for Bcfg2."""

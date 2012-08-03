@@ -5,7 +5,7 @@ import sys
 from subprocess import Popen, PIPE
 import time
 
-import Bcfg2.Client.XML
+import lxml.etree
 from Bcfg2.Bcfg2Py3k import input
 
 __all__ = [tool.split('.')[0] \
@@ -290,9 +290,9 @@ class PkgTool(Tool):
         packages = [entry.get('name') for entry in self.getSupportedEntries()]
         extras = [data for data in list(self.installed.items()) \
                   if data[0] not in packages]
-        return [Bcfg2.Client.XML.Element('Package', name=name, \
-                                         type=self.pkgtype, version=version) \
-                                         for (name, version) in extras]
+        return [lxml.etree.Element('Package', name=name,
+                                   type=self.pkgtype, version=version)
+                for (name, version) in extras]
 
 
 class SvcTool(Tool):

@@ -7,7 +7,7 @@ import struct
 import socket
 import selinux
 import seobject
-import Bcfg2.Client.XML
+import lxml.etree
 import Bcfg2.Client.Tools
 import Bcfg2.Client.Tools.POSIX
 
@@ -227,7 +227,7 @@ class SELinuxEntryHandler(object):
     def key2entry(self, key):
         attrs = self._key2attrs(key)
         attrs["type"] = self.etype
-        return Bcfg2.Client.XML.Element("SELinux", **attrs)
+        return lxml.etree.Element("SELinux", **attrs)
 
     def _args(self, entry, method):
         if hasattr(self, "_%sargs" % method):

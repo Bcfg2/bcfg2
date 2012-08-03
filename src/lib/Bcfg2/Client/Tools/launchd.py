@@ -1,7 +1,7 @@
 """launchd support for Bcfg2."""
 
 import os
-
+import lxml.etree
 import Bcfg2.Client.Tools
 
 
@@ -114,10 +114,10 @@ class launchd(Bcfg2.Client.Tools.Tool):
 
         [allsrv.remove(svc) for svc in [entry.get("name") for entry
                                         in self.getSupportedEntries()] if svc in allsrv]
-        return [Bcfg2.Client.XML.Element("Service",
-                                         type='launchd',
-                                         name=name,
-                                         status='on') for name in allsrv]
+        return [lxml.etree.Element("Service",
+                                   type='launchd',
+                                   name=name,
+                                   status='on') for name in allsrv]
 
     def BundleUpdated(self, bundle, states):
         """Reload launchd plist."""

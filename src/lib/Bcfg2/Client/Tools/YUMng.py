@@ -10,7 +10,7 @@ import yum.callbacks
 import yum.Errors
 import yum.misc
 import rpmUtils.arch
-import Bcfg2.Client.XML
+import lxml.etree
 import Bcfg2.Client.Tools
 
 def build_yname(pkgname, inst):
@@ -239,10 +239,10 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 # installed but out of date
                 data.update(self.yum_avail[entry.get('name')])
             for (arch, (epoch, vers, rel)) in list(data.items()):
-                x = Bcfg2.Client.XML.SubElement(entry, "Instance",
-                                                name=entry.get('name'),
-                                                version=vers, arch=arch,
-                                                release=rel, epoch=epoch)
+                x = lxml.etree.SubElement(entry, "Instance",
+                                          name=entry.get('name'),
+                                          version=vers, arch=arch,
+                                          release=rel, epoch=epoch)
                 if 'verify_flags' in entry.attrib:
                     x.set('verify_flags', entry.get('verify_flags'))
                 if 'verify' in entry.attrib:
@@ -257,7 +257,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
         if instances == []:
             # We have an old style no Instance entry. Convert it to new style.
-            instance = Bcfg2.Client.XML.SubElement(entry, 'Package')
+            instance = lxml.etree.SubElement(entry, 'Package')
             for attrib in list(entry.attrib.keys()):
                 instance.attrib[attrib] = entry.attrib[attrib]
             instances = [instance]
@@ -626,8 +626,8 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         if len(POs) == 0:
             return None
         name = entry.get('name')
-        extra_entry = Bcfg2.Client.XML.Element('Package', name=name,
-                                               type=self.pkgtype)
+        extra_entry = lxml.etree.Element('Package', name=name,
+                                         type=self.pkgtype)
         instances = self._buildInstances(entry)
         _POs = [p for p in POs]  # Shallow copy
 
@@ -647,9 +647,9 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
         for p in _POs:
             self.logger.debug("  Extra Instance Found: %s" % str(p))
-            Bcfg2.Client.XML.SubElement(extra_entry, 'Instance',
-                    epoch=p.epoch, name=p.name, version=p.version,
-                    release=p.release, arch=p.arch)
+            lxml.etree.SubElement(extra_entry, 'Instance',
+                                  epoch=p.epoch, name=p.name, version=p.version,
+                                  release=p.release, arch=p.arch)
 
         if _POs == []:
             return None
@@ -663,15 +663,15 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
 
         for p in list(self.installed.keys()):
             if p not in packages:
-                entry = Bcfg2.Client.XML.Element('Package', name=p,
-                                                 type=self.pkgtype)
+                entry = lxml.etree.Element('Package', name=p,
+                                           type=self.pkgtype)
                 for i in self.installed[p]:
-                    inst = Bcfg2.Client.XML.SubElement(entry,
-                                                       'Instance',
-                                                       epoch=i['epoch'],
-                                                       version=i['version'],
-                                                       release=i['release'],
-                                                       arch=i['arch'])
+                    inst = lxml.etree.SubElement(entry,
+                                                 'Instance',
+                                                 epoch=i['epoch'],
+                                                 version=i['version'],
+                                                 release=i['release'],
+                                                 arch=i['arch'])
 
                 extras.append(entry)
 

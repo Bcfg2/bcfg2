@@ -2,7 +2,7 @@
 
 import glob
 import os
-
+import lxml.etree
 import Bcfg2.Client.Tools
 
 
@@ -128,5 +128,5 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
 
         [allsrv.remove(svc.get('FMRI')) for svc in self.getSupportedEntries() \
          if svc.get("FMRI") in allsrv]
-        return [Bcfg2.Client.XML.Element("Service", type='smf', name=name) \
+        return [lxml.etree.Element("Service", type='smf', name=name) \
                 for name in allsrv]

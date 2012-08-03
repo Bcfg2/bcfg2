@@ -3,7 +3,7 @@
 import tempfile
 
 import Bcfg2.Client.Tools
-import Bcfg2.Client.XML
+import lxml.etree
 
 
 noask = '''

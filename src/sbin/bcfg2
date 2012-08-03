@@ -11,8 +11,8 @@ import stat
 import sys
 import tempfile
 import time
+import lxml.etree
 import Bcfg2.Options
-import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
 # Compatibility imports
@@ -85,9 +85,9 @@ class Client:
         """Execute probe."""
         name = probe.get('name')
         self.logger.info("Running probe %s" % name)
-        ret = Bcfg2.Client.XML.Element("probe-data",
-                                       name=name,
-                                       source=probe.get('source'))
+        ret = lxml.etree.Element("probe-data",
+                                 name=name,
+                                 source=probe.get('source'))
         try:
             scripthandle, scriptname = tempfile.mkstemp()
             script = open(scriptname, 'w+')
@@ -185,8 +185,8 @@ class Client:
             times['probe_download'] = time.time()
 
             try:
-                probes = Bcfg2.Client.XML.XML(probe_data)
-            except Bcfg2.Client.XML.ParseError:
+                probes = lxml.etree.XML(probe_data)
+            except lxml.etree.ParseError:
                 syntax_error = sys.exc_info()[1]
                 self.fatal_error(
                     "Server returned invalid probe requests: %s" %
@@ -195,7 +195,7 @@ class Client:
 
             # execute probes
             try:
-                probedata = Bcfg2.Client.XML.Element("ProbeData")
+                probedata = lxml.etree.Element("ProbeData")
                 [probedata.append(self.run_probe(probe))
                  for probe in probes.findall(".//probe")]
             except:
@@ -205,9 +205,9 @@ class Client:
             if len(probes.findall(".//probe")) > 0:
                 try:
                     # upload probe responses
-                    proxy.RecvProbeData(Bcfg2.Client.XML.tostring(probedata,
-                                                                  encoding='UTF-8',
-                                                                  xml_declaration=True))
+                    proxy.RecvProbeData(lxml.etree.tostring(probedata,
+                                                            encoding='UTF-8',
+                                                            xml_declaration=True))
                 except Bcfg2.Proxy.ProxyError:
                     err = sys.exc_info()[1]
                     self.logger.error("Failed to upload probe data: %s" % err)
@@ -246,8 +246,8 @@ class Client:
             times['caching'] = time.time()
 
         try:
-            self.config = Bcfg2.Client.XML.XML(rawconfig)
-        except Bcfg2.Client.XML.ParseError:
+            self.config = lxml.etree.XML(rawconfig)
+        except lxml.etree.ParseError:
             syntax_error = sys.exc_info()[1]
             self.fatal_error("The configuration could not be parsed: %s" %
                              (syntax_error))
@@ -260,7 +260,7 @@ class Client:
             return(1)
 
         if self.setup['bundle_quick']:
-            newconfig = Bcfg2.Client.XML.XML('<Configuration/>')
+            newconfig = lxml.etree.XML('<Configuration/>')
             [newconfig.append(bundle)
              for bundle in self.config.getchildren()
              if (bundle.tag == 'Bundle' and
@@ -305,9 +305,9 @@ class Client:
             feedback = self.tools.GenerateStats()
 
             try:
-                proxy.RecvStats(Bcfg2.Client.XML.tostring(feedback,
-                                                          encoding='UTF-8',
-                                                          xml_declaration=True))
+                proxy.RecvStats(lxml.etree.tostring(feedback,
+                                                    encoding='UTF-8',
+                                                    xml_declaration=True))
             except Bcfg2.Proxy.ProxyError:
                 err = sys.exc_info()[1]
                 self.logger.error("Failed to upload configuration statistics: "

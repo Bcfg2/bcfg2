@@ -7,6 +7,7 @@ warnings.filterwarnings("ignore", "apt API not stable yet",
 import apt.cache
 import os
 import Bcfg2.Client.Tools
+import lxml.etree
 
 class APT(Bcfg2.Client.Tools.Tool):
     """The Debian toolset implements package and service operations and inherits
@@ -83,9 +84,9 @@ class APT(Bcfg2.Client.Tools.Tool):
         else:
             extras = [(p.name, p.installedVersion) for p in self.pkg_cache
                       if p.isInstalled and p.name not in packages]
-        return [Bcfg2.Client.XML.Element('Package', name=name, \
-                                         type='deb', version=version) \
-                                         for (name, version) in extras]
+        return [lxml.etree.Element('Package', name=name,
+                                   type='deb', version=version)
+                for (name, version) in extras]
 
     def VerifyDebsums(self, entry, modlist):
         output = self.cmd.run("%s -as %s" % (self.debsums,
