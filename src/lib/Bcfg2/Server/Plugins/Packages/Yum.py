@@ -96,11 +96,7 @@ class YumCollection(Collection):
             if not os.path.exists(self.cachefile):
                 os.mkdir(self.cachefile)
 
-            self.configdir = os.path.join(self.basepath, "yum")
-            if not os.path.exists(self.configdir):
-                os.mkdir(self.configdir)
-            self.cfgfile = os.path.join(self.configdir,
-                                        "%s-yum.conf" % self.cachekey)
+            self.cfgfile = os.path.join(self.cachefile, "yum.conf")
             self.write_config()
         if has_pulp and self.has_pulp_sources:
             _setup_pulp(self.setup)
