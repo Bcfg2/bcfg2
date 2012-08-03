@@ -424,16 +424,12 @@ class YumCollection(Collection):
         around that in long-running processes it to have a short-lived
         helper.  No, seriously -- check out the yum-updatesd code.
         It's pure madness. """
-        # it'd be nice if we could change this to be more verbose if
-        # -v was given to bcfg2-server, but Collection objects don't
-        # get the 'setup' variable, so we don't know how verbose
-        # bcfg2-server is.  It'd also be nice if we could tell yum to
-        # log to syslog.  So would a unicorn.
         cmd = [self.helper, "-c", self.cfgfile]
-        if self.debug_flag:
+        verbose = self.debug_flag or self.setup['verbose']
+        if verbose:
             cmd.append("-v")
         cmd.append(command)
-        self.debug_log("Packages: running %s" % " ".join(cmd))
+        self.debug_log("Packages: running %s" % " ".join(cmd), flag=verbose)
         try:
             helper = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         except OSError:
@@ -451,9 +447,9 @@ class YumCollection(Collection):
         if rv:
             self.logger.error("Packages: error running bcfg2-yum-helper "
                               "(returned %d): %s" % (rv, stderr))
-        elif self.debug_flag:
+        else:
             self.debug_log("Packages: debug info from bcfg2-yum-helper: %s" %
-                           stderr)
+                           stderr, flag=verbose)
         try:
             return json.loads(stdout)
         except ValueError:
