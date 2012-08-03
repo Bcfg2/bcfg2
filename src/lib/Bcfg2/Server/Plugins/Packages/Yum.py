@@ -466,6 +466,19 @@ class YumCollection(Collection):
                 attrs.update(pkgattrs)
                 lxml.etree.SubElement(entry, 'BoundPackage', **attrs)
 
+    def get_new_packages(self, initial, complete):
+        initial_names = []
+        for pkg in initial:
+            if isinstance(pkg, tuple):
+                initial_names.append(pkg[0])
+            else:
+                initial_names.append(pkg)
+        new = []
+        for pkg in complete:
+            if pkg[0] not in initial_names:
+                new.append(pkg)
+        return new
+
     def complete(self, packagelist):
         if not self.use_yum:
             return Collection.complete(self, packagelist)

@@ -200,6 +200,13 @@ class Collection(Bcfg2.Server.Plugin.Debuggable):
                                                              default="auto"),
                                   type=self.ptype, origin='Packages')
 
+    def get_new_packages(self, initial, complete):
+        """ compute the difference between the complete package list
+        and the initial package list.  this is necessary because the
+        format may be different between the two lists due to
+        packages_{to,from}_entry() """
+        return list(packages.difference(initial))
+
     def complete(self, packagelist):
         '''Build the transitive closure of all package dependencies
 

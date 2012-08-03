@@ -192,7 +192,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if unknown:
             self.logger.info("Packages: Got %d unknown entries" % len(unknown))
             self.logger.info("Packages: %s" % list(unknown))
-        newpkgs = list(packages.difference(initial))
+        newpkgs = collection.get_new_packages(initial, packages)
         self.debug_log("Packages: %d initial, %d complete, %d new" %
                        (len(initial), len(packages), len(newpkgs)))
         newpkgs.sort()
