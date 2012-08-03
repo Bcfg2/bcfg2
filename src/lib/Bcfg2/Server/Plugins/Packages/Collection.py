@@ -185,6 +185,21 @@ class Collection(Bcfg2.Server.Plugin.Debuggable):
         """ do any collection-level data setup tasks """
         pass
 
+    def packages_from_entry(self, entry):
+        """ given a Package or BoundPackage entry, get a list of the
+        package(s) described by it in a format appropriate for passing
+        to complete().  by default, that's just the name; only the Yum
+        backend supports getting versions"""
+        return [entry.get("name")]
+
+    def packages_to_entry(self, pkglist, entry):
+        for pkg in pkglist:
+            lxml.etree.SubElement(entry, 'BoundPackage', name=pkg,
+                                  version=self.setup.cfp.get("packages",
+                                                             "version",
+                                                             default="auto"),
+                                  type=self.ptype, origin='Packages')
+
     def complete(self, packagelist):
         '''Build the transitive closure of all package dependencies
 

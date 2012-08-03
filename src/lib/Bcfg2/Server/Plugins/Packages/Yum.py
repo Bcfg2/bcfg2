@@ -139,11 +139,21 @@ class YumCollection(Collection):
             yumconf = self.get_config(raw=True)
             yumconf.add_section("main")
 
-            mainopts = dict(cachedir=self.cachefile,
+            # we set installroot to the cache directory so
+            # bcfg2-yum-helper works with an empty rpmdb.  otherwise
+            # the rpmdb is so hopelessly intertwined with yum that we
+            # have to totally reinvent the dependency resolver.
+            mainopts = dict(cachedir='/',
+                            installroot=self.cachefile,
                             keepcache="0",
-                            sslverify="0",
                             debuglevel="0",
+                            sslverify="0",
                             reposdir="/dev/null")
+            if self.setup['debug']:
+                mainopts['debuglevel'] = "5"
+            elif self.setup['verbose']:
+                mainopts['debuglevel'] = "2"
+
             try:
                 for opt in self.setup.cfp.options("packages:yum"):
                     if opt not in self.option_blacklist:
@@ -369,6 +379,9 @@ class YumCollection(Collection):
                                 "Bcfg2's internal Yum dependency generator")
             return []
 
+        if not grouplist:
+            return dict()
+
         gdicts = []
         for group, ptype in grouplist:
             if group.startswith("@"):
@@ -390,29 +403,88 @@ class YumCollection(Collection):
 
         return self.call_helper("get_group", dict(group=group, type=ptype))
 
+    def packages_from_entry(self, entry):
+        rv = set()
+        name = entry.get("name")
+
+        def _tag_to_pkg(tag):
+            rv = (name, tag.get("arch"), tag.get("epoch"),
+                  tag.get("version"), tag.get("release"))
+            # if a package requires no specific version, we just use
+            # the name, not the tuple.  this limits the amount of JSON
+            # encoding/decoding that has to be done to pass the
+            # package list to bcfg2-yum-helper.
+            if rv[1:] == (None, None, None, None):
+                return name
+            else:
+                return rv
+
+        for inst in entry.getchildren():
+            if inst.tag != "Instance":
+                continue
+            rv.add(_tag_to_pkg(inst))
+        if not rv:
+            rv.add(_tag_to_pkg(entry))
+        return list(rv)
+
+    def packages_to_entry(self, pkglist, entry):
+        def _get_entry_attrs(pkgtup):
+            attrs = dict(arch=pkgtup[1],
+                         epoch=pkgtup[2],
+                         version=pkgtup[3],
+                         release=pkgtup[4])
+            if attrs['version'] is None:
+                attrs['version'] = self.setup.cfp.get("packages",
+                                                      "version",
+                                                      default="auto"),
+            for k in attrs.keys()[:]:
+                if attrs[k] is None:
+                    del attrs[k]
+            return attrs
+
+        packages = dict()
+        for pkg in pkglist:
+            try:
+                packages[pkg[0]].append(pkg)
+            except KeyError:
+                packages[pkg[0]] = [pkg]
+        for name, instances in packages.items():
+            pkgattrs = dict(type=self.ptype,
+                            origin='Packages',
+                            name=name)
+            if len(instances) > 1:
+                pkg_el = lxml.etree.SubElement(entry, 'BoundPackage',
+                                               **pkgattrs)
+                for inst in instances:
+                    lxml.etree.SubElement(pkg_el, "Instance",
+                                          _get_entry_attrs(inst))
+            else:
+                attrs = _get_entry_attrs(instances[0])
+                attrs.update(pkgattrs)
+                lxml.etree.SubElement(entry, 'BoundPackage', **attrs)
+
     def complete(self, packagelist):
         if not self.use_yum:
             return Collection.complete(self, packagelist)
 
-        packages = set()
-        unknown = set(packagelist)
-
-        if unknown:
+        if packagelist:
             result = \
                 self.call_helper("complete",
-                                 dict(packages=list(unknown),
+                                 dict(packages=list(packagelist),
                                       groups=list(self.get_relevant_groups())))
-            if result and "packages" in result and "unknown" in result:
-                # we stringify every package because it gets returned
-                # in unicode; set.update() doesn't work if some
-                # elements are unicode and other are strings.  (I.e.,
-                # u'foo' and 'foo' get treated as unique elements.)
-                packages.update([str(p) for p in result['packages']])
-                unknown = set([str(p) for p in result['unknown']])
-
+            if not result:
+                # some sort of error, reported by call_helper()
+                return set(), packagelist
+            # json doesn't understand sets or tuples, so we get back a
+            # lists of lists (packages) and a list of unicode strings
+            # (unknown).  turn those into a set of tuples and a set of
+            # strings, respectively.
+            unknown = set([str(u) for u in result['unknown']])
+            packages = set([tuple(p) for p in result['packages']])
             self.filter_unknown(unknown)
-
-        return packages, unknown
+            return packages, unknown
+        else:
+            return set(), set()
 
     def call_helper(self, command, input=None):
         """ Make a call to bcfg2-yum-helper.  The yum libs have

@@ -9,8 +9,7 @@ import os
 import sys
 import yum
 import logging
-import Bcfg2.Logger
-from optparse import OptionParser, OptionError
+from optparse import OptionParser
 
 try:
     import json
@@ -36,6 +35,24 @@ def get_logger(verbose=0):
         syslog.setFormatter(logging.Formatter("%(name)s: %(message)s"))
         LOGGER.addHandler(syslog)
     return LOGGER
+
+def pkg_to_tuple(package):
+    """ json doesn't distinguish between tuples and lists, but yum
+    does, so we convert a package in list format to one in tuple
+    format """
+    if isinstance(package, list):
+        return tuple(package)
+    else:
+        return package
+
+def pkgtup_to_string(package):
+    rv = [package[0], "-"]
+    if package[2]:
+        rv.extend([package[2], ':'])
+    rv.extend([package[3], '-', package[4]])
+    if package[1]:
+        rv.extend(['.', package[1]])
+    return ''.join(str(e) for e in rv)
 
 
 class DepSolver(object):
@@ -64,27 +81,28 @@ class DepSolver(object):
     def is_package(self, package):
         if isinstance(package, tuple):
             if package[1] is None and package[2] == (None, None, None):
-                package = package[0]
-            else:
-                return None
-
-        return bool(self.get_package_object(package, silent=True))
+                pkgtup = (package[0], None, None, None, None)
+            elif len(package) == 5:
+                pkgtup = package
+        else:
+            pkgtup = (package, None, None, None, None)
+        return bool(self.get_package_object(pkgtup, silent=True))
 
     def is_virtual_package(self, package):
         return bool(self.get_provides(package, silent=True))
 
-    def get_package_object(self, package, silent=False):
+    def get_package_object(self, pkgtup, silent=False):
         try:
-            matches = self.yumbase.pkgSack.returnNewestByName(name=package)
+            matches = yum.packageSack.packagesNewestByName(self.yumbase.pkgSack.searchPkgTuple(pkgtup))
         except yum.Errors.PackageSackError:
             if not silent:
                 self.logger.warning("Package '%s' not found" %
-                                    self.get_package_name(package))
+                                    self.get_package_name(pkgtup))
             matches = []
         except yum.Errors.RepoError:
             err = sys.exc_info()[1]
             self.logger.error("Temporary failure loading metadata for %s: %s" %
-                              (self.get_package_name(package), err))
+                              (self.get_package_name(pkgtup), err))
             matches = []
 
         pkgs = self._filter_arch(matches)
@@ -100,7 +118,7 @@ class DepSolver(object):
             deps = set(pkg.requires)
             # filter out things the package itself provides
             deps.difference_update([dep for dep in deps
-                                        if pkg.checkPrco('provides', dep)])
+                                    if pkg.checkPrco('provides', dep)])
         else:
             self.logger.error("No package available: %s" %
                               self.get_package_name(package))
@@ -120,7 +138,7 @@ class DepSolver(object):
             return []
 
         if prov and not all:
-            prov = self._filter_provides(required, prov)
+            prov = self._filter_provides(prov)
         elif not prov and not silent:
             self.logger.error("No package provides %s" %
                               self.get_package_name(required))
@@ -155,7 +173,7 @@ class DepSolver(object):
             self.logger.warning("Unknown group package type '%s'" % ptype)
             return []
 
-    def _filter_provides(self, package, providers):
+    def _filter_provides(self, providers):
         providers = [pkg for pkg in self._filter_arch(providers)]
         if len(providers) > 1:
             # go through each provider and make sure it's the newest
@@ -174,7 +192,7 @@ class DepSolver(object):
             # provider of perl(lib).
             rv = []
             for pkg in providers:
-                found = self.get_package_object(pkg.name)
+                found = self.get_package_object(pkg.pkgtup)
                 if found == pkg or found.pkgtup == pkg.pkgtup:
                     rv.append(pkg)
                 else:
@@ -182,7 +200,7 @@ class DepSolver(object):
                                       (pkg, found))
         else:
             rv = providers
-        return [p.name for p in rv]
+        return rv
 
     def _filter_arch(self, packages):
         matching = []
@@ -204,115 +222,38 @@ class DepSolver(object):
         """ get the name of a package or virtual package from the
         internal representation used by this Collection class """
         if isinstance(package, tuple):
-            return yum.misc.prco_tuple_to_string(package)
+            if len(package) == 3:
+                return yum.misc.prco_tuple_to_string(package)
+            else:
+                return pkgtup_to_string(package)
         else:
             return str(package)
 
     def complete(self, packagelist):
         packages = set()
-        pkgs = set(packagelist)
-        requires = set()
-        satisfied = set()
         unknown = set()
-        final_pass = False
+        for pkg in packagelist:
+            if isinstance(pkg, tuple):
+                pkgtup = pkg
+            else:
+                pkgtup = (pkg, None, None, None, None)
+            po = self.get_package_object(pkgtup)
+            if not po:
+                self.logger.debug("Unknown package %s" %
+                                  self.get_package_name(pkg))
+                unknown.add(pkg)
+            else:
+                if self.yumbase.tsInfo.exists(pkgtup=po.pkgtup):
+                    self.logger.debug("%s added to transaction multiple times" %
+                                      po)
+                else:
+                    self.logger.debug("Adding %s to transaction" % po)
+                    self.yumbase.tsInfo.addInstall(po)
+        self.yumbase.resolveDeps()
 
-        while requires or pkgs:
-            # infinite loop protection
-            start_reqs = len(requires)
-            
-            while pkgs:
-                package = pkgs.pop()
-                if package in packages:
-                    continue
-                
-                if not self.is_package(package):
-                    # try this package out as a requirement
-                    self.logger.debug("Adding requirement %s" % package)
-                    requires.add((package, None, (None, None, None)))
-                    continue
-
-                packages.add(package)
-                reqs = set(self.get_deps(package)).difference(satisfied)
-                if reqs:
-                    self.logger.debug("Adding requirements for %s: %s" %
-                                      (package,
-                                       ",".join([self.get_package_name(r)
-                                                 for r in reqs])))
-                    requires.update(reqs)
-
-            reqs_satisfied = set()
-            for req in requires:
-                if req in satisfied:
-                    reqs_satisfied.add(req)
-                    continue
-
-                if req[1] is None and self.is_package(req[0]):
-                    if req[0] not in packages:
-                        pkgs.add(req[0])
-                    reqs_satisfied.add(req)
-                    continue
-                    
-                self.logger.debug("Handling requirement '%s'" %
-                                  self.get_package_name(req))
-                providers = list(set(self.get_provides(req)))
-                if len(providers) > 1:
-                    # hopefully one of the providing packages is already
-                    # included
-                    best = [p for p in providers if p in packages]
-                    if best:
-                        providers = best
-                    else:
-                        # pick a provider whose name matches the requirement
-                        best = [p for p in providers if p == req[0]]
-                        if len(best) == 1:
-                            providers = best
-                        elif not final_pass:
-                            self.logger.debug("%s has multiple providers: %s" %
-                                              (self.get_package_name(req),
-                                               providers))
-                            self.logger.debug("No provider is obviously the "
-                                              "best; deferring")
-                            providers = None
-                        else:
-                            # found no "best" package, but it's the
-                            # final pass, so include them all
-                            self.logger.debug("Found multiple providers for %s,"
-                                              "including all" %
-                                              self.get_package_name(req))
-                
-                if providers:
-                    self.logger.debug("Requirement '%s' satisfied by %s" %
-                                      (self.get_package_name(req),
-                                       ",".join([self.get_package_name(p)
-                                                 for p in providers])))
-                    newpkgs = set(providers).difference(packages)
-                    if newpkgs:
-                        for package in newpkgs:
-                            if self.is_package(package):
-                                pkgs.add(package)
-                            else:
-                                unknown.add(package)
-                    reqs_satisfied.add(req)
-                elif providers is not None:
-                    # nothing provided this requirement at all
-                    self.logger.debug("Nothing provides %s" %
-                                      self.get_package_name(req))
-                    unknown.add(req)
-                    reqs_satisfied.add(req)
-                # else, defer
-            requires.difference_update(reqs_satisfied)
-
-            # infinite loop protection
-            if len(requires) == start_reqs and len(pkgs) == 0:
-                final_pass = True
-
-            if final_pass and requires:
-                unknown.update(requires)
-                requires = set()
-
-        unknown = [self.get_package_name(p) for p in unknown]
-
-        return packages, unknown
+        for txmbr in self.yumbase.tsInfo:
+            packages.add(txmbr.pkgtup)
+        return list(packages), list(unknown)
 
     def clean_cache(self):
         for mdtype in ["Headers", "Packages", "Sqlite", "Metadata",
@@ -349,15 +290,16 @@ def main():
     elif cmd == "complete":
         data = json.loads(sys.stdin.read())
         depsolver.groups = data['groups']
-        (packages, unknown) = depsolver.complete(data['packages'])
+        (packages, unknown) = depsolver.complete([pkg_to_tuple(p)
+                                                  for p in data['packages']])
         print json.dumps(dict(packages=list(packages),
                               unknown=list(unknown)))
     elif cmd == "is_virtual_package":
-        package = json.loads(sys.stdin.read())
+        package = pkg_to_tuple(json.loads(sys.stdin.read()))
         print json.dumps(bool(depsolver.get_provides(package, silent=True)))
     elif cmd == "get_deps" or cmd == "get_provides":
-        package = json.loads(sys.stdin.read())
-        print json.dumps(list(getattr(depsolver, cmd)(package)))
+        package = pkg_to_tuple(json.loads(sys.stdin.read()))
+        print json.dumps([p.name for p in getattr(depsolver, cmd)(package)])
     elif cmd == "get_group":
         data = json.loads(sys.stdin.read())
         if "type" in data:
@@ -377,7 +319,7 @@ def main():
             rv[gdata['group']] = list(packages)
         print json.dumps(rv)
     elif cmd == "is_package":
-        package = json.loads(sys.stdin.read())
+        package = pkg_to_tuple(json.loads(sys.stdin.read()))
         print json.dumps(getattr(depsolver, cmd)(package))
         
         

@@ -171,7 +171,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         for struct in structures:
             for pkg in struct.xpath('//Package | //BoundPackage'):
                 if pkg.get("name"):
-                    initial.add(pkg.get("name"))
+                    initial.update(collection.packages_from_entry(pkg))
                 elif pkg.get("group"):
                     groups.append((pkg.get("group"),
                                    pkg.get("type")))
@@ -196,12 +196,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self.debug_log("Packages: %d initial, %d complete, %d new" %
                        (len(initial), len(packages), len(newpkgs)))
         newpkgs.sort()
-        for pkg in newpkgs:
-            lxml.etree.SubElement(independent, 'BoundPackage', name=pkg,
-                                  version=self.core.setup.cfp.get("packages",
-                                                                  "version",
-                                                                  default="auto"),
-                                  type=collection.ptype, origin='Packages')
+        collection.packages_to_entry(newpkgs, independent)
 
     def Refresh(self):
         '''Packages.Refresh() => True|False\nReload configuration
