@@ -429,17 +429,20 @@ class YumCollection(Collection):
 
     def packages_to_entry(self, pkglist, entry):
         def _get_entry_attrs(pkgtup):
-            attrs = dict(arch=pkgtup[1],
-                         epoch=pkgtup[2],
-                         version=pkgtup[3],
-                         release=pkgtup[4])
-            if attrs['version'] is None:
-                attrs['version'] = self.setup.cfp.get("packages",
-                                                      "version",
-                                                      default="auto"),
-            for k in attrs.keys()[:]:
-                if attrs[k] is None:
-                    del attrs[k]
+            attrs = dict(version=self.setup.cfp.get("packages",
+                                                    "version",
+                                                    default="auto"))
+            if attrs['version'] == 'any':
+                return attrs
+                
+            if pkgtup[1]:
+                attrs['arch'] = pkgtup[1]
+            if pkgtup[2]:
+                attrs['epoch'] = pkgtup[2]
+            if pkgtup[3]:
+                attrs['version'] = pkgtup[3]
+            if pkgtup[4]:
+                attrs['release'] = pkgtup[4]
             return attrs
 
         packages = dict()
