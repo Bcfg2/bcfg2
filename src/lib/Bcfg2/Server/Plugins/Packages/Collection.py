@@ -205,7 +205,7 @@ class Collection(Bcfg2.Server.Plugin.Debuggable):
         and the initial package list.  this is necessary because the
         format may be different between the two lists due to
         packages_{to,from}_entry() """
-        return list(packages.difference(initial))
+        return list(complete.difference(initial))
 
     def complete(self, packagelist):
         '''Build the transitive closure of all package dependencies
