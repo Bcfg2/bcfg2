@@ -39,7 +39,7 @@ class SEModules(Bcfg2.Server.Plugin.GroupSpool):
 
     def HandleEntry(self, entry, metadata):
         entry.set("name", self._get_module_name(entry))
-        return self.Entries[entry.tag][name](entry, metadata)
+        return self.Entries[entry.tag][entry.get("name")](entry, metadata)
 
     def add_entry(self, event):
         self.filename_pattern = os.path.basename(event.filename)
