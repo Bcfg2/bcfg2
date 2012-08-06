@@ -1,6 +1,7 @@
 import sys
 import copy
 import logging
+import lxml
 import Bcfg2.Server.Plugin
 
 logger = logging.getLogger(__name__)
