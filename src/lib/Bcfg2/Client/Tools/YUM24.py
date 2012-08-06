@@ -4,7 +4,7 @@ import copy
 import os.path
 import sys
 import yum
-import lxml.etree
+import Bcfg2.Client.XML
 import Bcfg2.Client.Tools.RPMng
 
 if not hasattr(Bcfg2.Client.Tools.RPMng, 'RPMng'):
@@ -113,10 +113,10 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                     # installed but out of date
                     data.update(self.yum_avail[entry.get('name')])
                 for (arch, (epoch, vers, rel)) in list(data.items()):
-                    x = lxml.etree.SubElement(entry, "Instance",
-                                              name=entry.get('name'),
-                                              version=vers, arch=arch,
-                                              release=rel, epoch=epoch)
+                    x = Bcfg2.Client.XML.SubElement(entry, "Instance",
+                                                    name=entry.get('name'),
+                                                    version=vers, arch=arch,
+                                                    release=rel, epoch=epoch)
                     if 'verify_flags' in entry.attrib:
                         x.set('verify_flags', entry.get('verify_flags'))
                     if 'verify' in entry.attrib:

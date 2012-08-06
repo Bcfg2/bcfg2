@@ -1,9 +1,8 @@
 """Bcfg2 Support for RPMS"""
 
-import os
+import os.path
 import rpm
 import rpmtools
-import lxml.etree
 import Bcfg2.Client.Tools
 
 class RPMng(Bcfg2.Client.Tools.PkgTool):
@@ -149,7 +148,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
         instances = [inst for inst in entry if inst.tag == 'Instance' or inst.tag == 'Package']
         if instances == []:
             # We have an old style no Instance entry. Convert it to new style.
-            instance = lxml.etree.SubElement(entry, 'Package')
+            instance = Bcfg2.Client.XML.SubElement(entry, 'Package')
             for attrib in list(entry.attrib.keys()):
                 instance.attrib[attrib] = entry.attrib[attrib]
             if (self.pkg_checks and
@@ -850,14 +849,14 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
         for (name, instances) in list(self.installed.items()):
             if name not in packages:
-                extra_entry = lxml.etree.Element('Package', name=name, type=self.pkgtype)
+                extra_entry = Bcfg2.Client.XML.Element('Package', name=name, type=self.pkgtype)
                 for installed_inst in instances:
                     if self.setup['extra']:
                         self.logger.info("Extra Package %s %s." % \
                                          (name, self.str_evra(installed_inst)))
-                    tmp_entry = lxml.etree.SubElement(extra_entry, 'Instance',
-                                                      version = installed_inst.get('version'),
-                                                      release = installed_inst.get('release'))
+                    tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance', \
+                                     version = installed_inst.get('version'), \
+                                     release = installed_inst.get('release'))
                     if installed_inst.get('epoch', None) != None:
                         tmp_entry.set('epoch', str(installed_inst.get('epoch')))
                     if installed_inst.get('arch', None) != None:
@@ -874,7 +873,7 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
 
         """
         name = pkg_entry.get('name')
-        extra_entry = lxml.etree.Element('Package', name=name, type=self.pkgtype)
+        extra_entry = Bcfg2.Client.XML.Element('Package', name=name, type=self.pkgtype)
         instances = [inst for inst in pkg_entry if inst.tag == 'Instance' or inst.tag == 'Package']
         if name in self.installOnlyPkgs:
             for installed_inst in installed_entry:
@@ -888,9 +887,9 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                     # Extra package.
                     self.logger.info("Extra InstallOnlyPackage %s %s." % \
                                      (name, self.str_evra(installed_inst)))
-                    tmp_entry = lxml.etree.SubElement(extra_entry, 'Instance',
-                                                      version = installed_inst.get('version'),
-                                                      release = installed_inst.get('release'))
+                    tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance', \
+                                     version = installed_inst.get('version'), \
+                                     release = installed_inst.get('release'))
                     if installed_inst.get('epoch', None) != None:
                         tmp_entry.set('epoch', str(installed_inst.get('epoch')))
                     if installed_inst.get('arch', None) != None:
@@ -907,9 +906,9 @@ class RPMng(Bcfg2.Client.Tools.PkgTool):
                 if not_found:
                     self.logger.info("Extra Normal Package Instance %s %s" % \
                                      (name, self.str_evra(installed_inst)))
-                    tmp_entry = lxml.etree.SubElement(extra_entry, 'Instance',
-                                                      version = installed_inst.get('version'),
-                                                      release = installed_inst.get('release'))
+                    tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance', \
+                                     version = installed_inst.get('version'), \
+                                     release = installed_inst.get('release'))
                     if installed_inst.get('epoch', None) != None:
                         tmp_entry.set('epoch', str(installed_inst.get('epoch')))
                     if installed_inst.get('arch', None) != None:

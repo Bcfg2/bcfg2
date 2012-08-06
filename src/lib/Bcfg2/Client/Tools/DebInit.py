@@ -3,7 +3,6 @@
 import glob
 import os
 import re
-import lxml.etree
 import Bcfg2.Client.Tools
 
 # Debian squeeze and beyond uses a dependecy based boot sequence
@@ -108,7 +107,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                       if self.svcre.match(fname).group('name') not in specified]:
             if name not in extra:
                 extra.append(name)
-        return [lxml.etree.Element('Service', name=name, type='deb') for name \
+        return [Bcfg2.Client.XML.Element('Service', name=name, type='deb') for name \
                 in extra]
 
     def Remove(self, _):

@@ -12,13 +12,13 @@ import shutil
 import stat
 import sys
 import time
-import lxml.etree
 # py3k compatibility
 if sys.hexversion >= 0x03000000:
     unicode = str
 
 import Bcfg2.Client.Tools
 import Bcfg2.Options
+from Bcfg2.Client import XML
 
 log = logging.getLogger(__name__)
 
@@ -521,7 +521,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                               entry.get('name')
                     nqtext += ":".join(ex_ents)
                     entry.set('qtext', nqtext)
-                    [entry.append(lxml.etree.Element('Prune', path=x))
+                    [entry.append(XML.Element('Prune', path=x))
                      for x in ex_ents]
             except OSError:
                 ex_ents = []

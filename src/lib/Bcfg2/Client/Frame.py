@@ -472,12 +472,12 @@ class Frame:
 
     def GenerateStats(self):
         """Generate XML summary of execution statistics."""
-        feedback = lxml.etree.Element("upload-statistics")
-        stats = lxml.etree.SubElement(feedback,
-                                      'Statistics',
-                                      total=str(len(self.states)),
-                                      version='2.0',
-                                      revision=self.config.get('revision', '-1'))
+        feedback = Bcfg2.Client.XML.Element("upload-statistics")
+        stats = Bcfg2.Client.XML.SubElement(feedback,
+                                            'Statistics',
+                                            total=str(len(self.states)),
+                                            version='2.0',
+                                            revision=self.config.get('revision', '-1'))
         good_entries = [key for key, val in list(self.states.items()) if val]
         good = len(good_entries)
         stats.set('good', str(good))
@@ -491,13 +491,13 @@ class Frame:
                               (good_entries, "Good"),
                               ([entry for entry in self.states if not \
                                 self.states[entry]], "Bad")]:
-            container = lxml.etree.SubElement(stats, ename)
+            container = Bcfg2.Client.XML.SubElement(stats, ename)
             for item in data:
                 item.set('qtext', '')
                 container.append(item)
                 item.text = None
 
-        timeinfo = lxml.etree.Element("OpStamps")
+        timeinfo = Bcfg2.Client.XML.Element("OpStamps")
         feedback.append(stats)
         for (event, timestamp) in list(self.times.items()):
             timeinfo.set(event, str(timestamp))

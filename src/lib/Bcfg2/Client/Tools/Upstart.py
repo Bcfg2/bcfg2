@@ -4,7 +4,7 @@ import glob
 import re
 
 import Bcfg2.Client.Tools
-import lxml.etree
+import Bcfg2.Client.XML
 
 
 class Upstart(Bcfg2.Client.Tools.SvcTool):
@@ -84,5 +84,5 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
                      glob.glob("/etc/init/*.conf") \
                      if self.svcre.match(fname).group('name') not in specified]:
             extra.append(name)
-        return [lxml.etree.Element('Service', type='upstart', name=name) \
+        return [Bcfg2.Client.XML.Element('Service', type='upstart', name=name) \
                 for name in extra]

@@ -5,7 +5,7 @@
 import os
 
 import Bcfg2.Client.Tools
-import lxml.etree
+import Bcfg2.Client.XML
 
 
 class Chkconfig(Bcfg2.Client.Tools.SvcTool):
@@ -86,7 +86,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         self.logger.debug('Found active services:')
         self.logger.debug(allsrv)
         specified = [srv.get('name') for srv in self.getSupportedEntries()]
-        return [lxml.etree.Element('Service',
-                                   type='chkconfig',
-                                   name=name)
+        return [Bcfg2.Client.XML.Element('Service',
+                                         type='chkconfig',
+                                         name=name) \
                 for name in allsrv if name not in specified]
