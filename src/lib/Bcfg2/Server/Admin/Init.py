@@ -20,18 +20,22 @@ plugins = %s
 
 [statistics]
 sendmailpath = %s
-database_engine = sqlite3
+#web_debug = False
+#time_zone = 
+
+[database]
+engine = sqlite3
 # 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
-database_name =
+name =
 # Or path to database file if using sqlite3.
 #<repository>/etc/brpt.sqlite is default path if left empty
-database_user =
+user =
 # Not used with sqlite3.
-database_password =
+password =
 # Not used with sqlite3.
-database_host =
+host =
 # Not used with sqlite3.
-database_port =
+port =
 
 [communication]
 protocol = %s
