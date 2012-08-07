@@ -120,19 +120,19 @@ Notes on Alternative Databases
 ------------------------------
 
 If you choose to use a different database, you'll need to edit
-``/etc/bcfg2.conf``. These fields should be updated in the [statistics]
+``/etc/bcfg2.conf``. These fields should be updated in the [database]
 section:
 
-* database_engine
+* engine
 
-  * ex: database_engine = mysql
-  * ex: database_engine = postgresql_psycopg2
+  * ex: engine = mysql
+  * ex: engine = postgresql_psycopg2
 
-* database_name
-* database_user
-* database_password
-* database_host
-* database_port (optional)
+* name
+* user
+* password
+* host
+* port (optional)
 
 Summary and Features
 ====================

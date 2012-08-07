@@ -52,18 +52,18 @@ then have something like this::
 
     [statistics]
     sendmailpath = /usr/lib/sendmail
-    database_engine = sqlite3
+
+    [database]
+    engine = sqlite3
     # 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
-    database_name =
-    # Or path to database file if using sqlite3.
-    #<repository>/etc/brpt.sqlite is default path if left empty
-    database_user =
+    name =
+    user =
     # Not used with sqlite3.
-    database_password =
+    password =
     # Not used with sqlite3.
-    database_host =
+    host =
     # Not used with sqlite3.
-    database_port =
+    port =
 
 Restart apache and point a browser to your Bcfg2 server.
 
