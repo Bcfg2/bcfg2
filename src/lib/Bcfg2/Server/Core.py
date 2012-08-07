@@ -108,13 +108,14 @@ class BaseCore(object):
         # verify our database schema
         try:
             from Bcfg2.Server.SchemaUpdater import update_database, UpdaterError
-            update_database()
+            try:
+                update_database()
+            except UpdaterError:
+                self.logger.error("Failed to update database schema")
+                raise CoreInitError
         except ImportError:
             # assume django is not installed
             pass
-        except UpdaterError:
-            self.logger.error("Failed to update database schema")
-            raise CoreInitError
         except Exception:
             inst = sys.exc_info()[1]
             self.logger.error("Failed to update database schema")
