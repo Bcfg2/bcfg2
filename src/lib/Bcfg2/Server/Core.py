@@ -205,7 +205,8 @@ class BaseCore(object):
         try:
             self.plugins[plugin] = plug(self, self.datastore)
         except PluginInitError:
-            logger.error("Failed to instantiate plugin %s" % plugin, exc_info=1)
+            self.logger.error("Failed to instantiate plugin %s" % plugin,
+                              exc_info=1)
         except:
             self.logger.error("Unexpected instantiation failure for plugin %s" %
                               plugin, exc_info=1)
