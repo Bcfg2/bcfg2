@@ -7,7 +7,6 @@ import sys
 import logging
 import Bcfg2.Logger
 import Bcfg2.Options
-import Bcfg2.Server.Plugins.Metadata
 from Bcfg2.Server.Core import CoreInitError
 
 logger = logging.getLogger('bcfg2-server')
