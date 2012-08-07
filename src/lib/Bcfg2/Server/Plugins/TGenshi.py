@@ -18,7 +18,7 @@ try:
                                 TextTemplate, MarkupTemplate, TemplateError
 except ImportError:
     logger.error("TGenshi: Failed to import Genshi. Is it installed?")
-    raise Bcfg2.Server.Plugin.PluginInitError
+    raise
 try:
     from genshi.template import NewTextTemplate
     have_ntt = True
