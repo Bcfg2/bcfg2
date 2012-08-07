@@ -105,6 +105,23 @@ class BaseCore(object):
         # load plugins
         Bcfg2.settings.read_config(cfile=self.cfile, repo=self.datastore)
 
+        # verify our database schema
+        try:
+            from Bcfg2.Server.SchemaUpdater import update_database, UpdaterError
+            update_database()
+        except ImportError:
+            # assume django is not installed
+            pass
+        except UpdaterError:
+            self.logger.error("Failed to update database schema")
+            raise CoreInitError
+        except Exception:
+            inst = sys.exc_info()[1]
+            self.logger.error("Failed to update database schema")
+            self.logger.error(str(inst))
+            self.logger.error(str(type(inst)))
+            raise CoreInitError
+
         if '' in setup['plugins']:
             setup['plugins'].remove('')
 

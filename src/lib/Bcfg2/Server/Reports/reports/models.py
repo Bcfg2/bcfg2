@@ -342,18 +342,6 @@ class Performance(models.Model):
         transaction.set_dirty()
 
 
-class InternalDatabaseVersion(models.Model):
-    """Object that tell us to witch version is the database."""
-    version = models.IntegerField()
-    updated = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return "version %d updated the %s" % (self.version, self.updated.isoformat())
-
-    class Meta:
-        get_latest_by = "version"
-
-
 class Group(models.Model):
     """
     Groups extracted from interactions

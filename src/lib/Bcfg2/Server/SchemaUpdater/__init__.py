@@ -6,10 +6,10 @@ import re
 import sys
 import traceback
 
-from Bcfg2.Server.Reports.reports.models import InternalDatabaseVersion
-from Bcfg2.Server.Reports.Updater.Routines import UpdaterRoutineException, \
+from Bcfg2.Server.models import InternalDatabaseVersion
+from Bcfg2.Server.SchemaUpdater.Routines import UpdaterRoutineException, \
                 UpdaterRoutine
-from Bcfg2.Server.Reports.Updater import Changes
+from Bcfg2.Server.SchemaUpdater import Changes
 
 logger = logging.getLogger(__name__)
 

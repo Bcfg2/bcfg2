@@ -451,6 +451,22 @@ DB_PORT = \
            default='',
            cf=('database', 'port'),)
 
+# Django options
+DJANGO_TIME_ZONE = \
+    Option('Django timezone',
+           default=None,
+           cf=('statistics', 'time_zone'),)
+DJANGO_DEBUG = \
+    Option('Django debug',
+           default=None,
+           cf=('statistics', 'debug'),)
+# Django options
+DJANGO_WEB_PREFIX = \
+    Option('Web prefix',
+           default=None,
+           cf=('statistics', 'web_prefix'),)
+
+
 # Client options
 CLIENT_KEY = \
     Option('Path to SSL key',

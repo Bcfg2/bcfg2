@@ -19,17 +19,15 @@ if sys.version_info >= (2, 5):
 else:
     from md5 import md5
 
-# Prereq issues can be signaled with ImportError, so no try needed
-# FIXME - settings file uses a hardcoded path for /etc/bcfg2.conf
-import Bcfg2.Server.Reports.settings
+import Bcfg2.settings
 
 # Load django and reports stuff _after_ we know we can load settings
 import django.core.management
 from Bcfg2.Server.Reports.importscript import load_stats
-from Bcfg2.Server.Reports.Updater import update_database, UpdaterError
+from Bcfg2.Server.SchemaUpdater import update_database, UpdaterError
 from Bcfg2.Server.Reports.utils import *
 
-project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
+project_directory = os.path.dirname(Bcfg2.settings.__file__)
 project_name = os.path.basename(project_directory)
 sys.path.append(os.path.join(project_directory, '..'))
 project_module = __import__(project_name, '', '', [''])
@@ -281,7 +279,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
             self.log.debug("Filtering by maxdate: %s" % maxdate)
             ipurge = ipurge.filter(timestamp__lt=maxdate)
 
-        if Bcfg2.Server.Reports.settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+        if Bcfg2.settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
             grp_limit = 100
         else:
             grp_limit = 1000

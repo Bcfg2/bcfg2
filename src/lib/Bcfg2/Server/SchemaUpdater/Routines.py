@@ -6,7 +6,7 @@ from django.core.management.color import no_style
 from django.core.management.sql import sql_create
 import django.core.management
 
-import Bcfg2.Server.Reports.settings
+import Bcfg2.settings
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ class AddColumns(UpdaterRoutine):
             sql = "ALTER TABLE %s ADD %s %s NOT NULL DEFAULT " % (
                     _quote(self.model._meta.db_table),
                     _quote(field.column), field.db_type(), )
-            db_engine = Bcfg2.Server.Reports.settings.DATABASES['default']['ENGINE']
+            db_engine = Bcfg2.settings.DATABASES['default']['ENGINE']
             if db_engine == 'django.db.backends.sqlite3':
                 sql += _quote(field.default)
                 sql_values = ()
@@ -159,7 +159,7 @@ class RebuildTable(UpdaterRoutine):
             logger.error("Failed to connect to the db")
             raise UpdaterRoutineException
 
-        db_engine = Bcfg2.Server.Reports.settings.DATABASES['default']['ENGINE']
+        db_engine = Bcfg2.settings.DATABASES['default']['ENGINE']
         if db_engine == 'django.db.backends.sqlite3':
             """ Sqlite is a special case.  Altering columns is not supported. """
             _rebuild_sqlite_table(self.model)
@@ -219,7 +219,7 @@ class RemoveColumns(RebuildTable):
 
             logger.debug("Dropping column %s" % column)
 
-            db_engine = Bcfg2.Server.Reports.settings.DATABASES['default']['ENGINE']
+            db_engine = Bcfg2.DATABASES['default']['ENGINE']
             if db_engine == 'django.db.backends.sqlite3':
                 _rebuild_sqlite_table(self.model)
             else:

@@ -4,12 +4,12 @@
 This file should contain updates relevant to the 1.1.x branches ONLY.
 The updates() method must be defined and it should return an Updater object
 """
-from Bcfg2.Server.Reports.Updater import Updater
-from Bcfg2.Server.Reports.Updater.Routines import updatercallable
+from Bcfg2.Server.SchemaUpdater import Updater
+from Bcfg2.Server.SchemaUpdater.Routines import updatercallable
 
 from django.db import connection
 import sys
-import Bcfg2.Server.Reports.settings
+import Bcfg2.settings
 from Bcfg2.Server.Reports.reports.models import \
                 TYPE_BAD, TYPE_MODIFIED, TYPE_EXTRA
 

@@ -9,13 +9,13 @@ import os
 import sys
 import traceback
 try:
-    import Bcfg2.Server.Reports.settings
+    import Bcfg2.settings
 except Exception:
     e = sys.exc_info()[1]
     sys.stderr.write("Failed to load configuration settings. %s\n" % e)
     sys.exit(1)
 
-project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
+project_directory = os.path.dirname(Bcfg2.settings.__file__)
 project_name = os.path.basename(project_directory)
 sys.path.append(os.path.join(project_directory, '..'))
 project_module = __import__(project_name, '', '', [''])
@@ -30,7 +30,6 @@ from datetime import datetime
 from time import strptime
 from django.db import connection, transaction
 from Bcfg2.Server.Plugins.Metadata import ClientMetadata
-from Bcfg2.Server.Reports.Updater import update_database, UpdaterError
 import logging
 import Bcfg2.Logger
 import platform
@@ -321,6 +320,9 @@ if __name__ == '__main__':
         encoding = 'UTF-8'
 
     q = '-O3' in sys.argv
+
+    # don't load this at the top.  causes a circular import error
+    from Bcfg2.Server.SchemaUpdater import update_database, UpdaterError
     # Be sure the database is ready for new schema
     try:
         update_database()

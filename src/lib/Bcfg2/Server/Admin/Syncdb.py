@@ -1,6 +1,7 @@
 import Bcfg2.settings
 import Bcfg2.Options
 import Bcfg2.Server.Admin
+from Bcfg2.Server.SchemaUpdater import update_database, UpdaterError
 from django.core.management import setup_environ
 
 class Syncdb(Bcfg2.Server.Admin.Mode):
@@ -10,7 +11,11 @@ class Syncdb(Bcfg2.Server.Admin.Mode):
     options = {'configfile': Bcfg2.Options.CFILE,
                'repo': Bcfg2.Options.SERVER_REPOSITORY}
 
+    def __init__(self, setup):
+        Bcfg2.Server.Admin.Mode.__init__(self, setup)
+
     def __call__(self, args):
+        import Bcfg2.Server.Admin
         Bcfg2.Server.Admin.Mode.__call__(self, args)
 
         # Parse options
@@ -27,7 +32,8 @@ class Syncdb(Bcfg2.Server.Admin.Mode):
         import Bcfg2.Server.models
         Bcfg2.Server.models.load_models(cfile=self.opts['configfile'])
 
-        from django.core.management.commands import syncdb
-
-        cmd = syncdb.Command()
-        cmd.handle_noargs(interactive=False)
+        try:
+            update_database()
+        except UpdaterError:
+            print "Update failed"
+            raise SystemExit(-1)

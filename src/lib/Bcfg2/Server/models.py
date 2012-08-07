@@ -60,3 +60,17 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
 # basic invocation to ensure that a default set of models is loaded,
 # and thus that this module will always work.
 load_models(quiet=True)
+
+# Monitor our internal db version
+class InternalDatabaseVersion(models.Model):
+    """Object that tell us to witch version is the database."""
+    version = models.IntegerField()
+    updated = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return "version %d updated the %s" % (self.version, self.updated.isoformat())
+
+    class Meta:
+        app_label = "reports"
+        get_latest_by = "version"
+

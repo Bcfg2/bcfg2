@@ -4,8 +4,8 @@
 This file should contain updates relevant to the 1.3.x branches ONLY.
 The updates() method must be defined and it should return an Updater object
 """
-from Bcfg2.Server.Reports.Updater import Updater, UpdaterError
-from Bcfg2.Server.Reports.Updater.Routines import AddColumns, \
+from Bcfg2.Server.SchemaUpdater import Updater, UpdaterError
+from Bcfg2.Server.SchemaUpdater.Routines import AddColumns, \
         RemoveColumns, RebuildTable, DropTable
 
 from Bcfg2.Server.Reports.reports.models import Reason, Interaction
