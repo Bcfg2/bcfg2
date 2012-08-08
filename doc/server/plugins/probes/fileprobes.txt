@@ -1,5 +1,6 @@
 .. _server-plugins-probes-fileprobes:
 
+==========
 FileProbes
 ==========
 
@@ -21,7 +22,7 @@ probes from other clients will not modify or overwrite the data in
 ``info.xml`` for that file are not circumvented.)
 
 Configuration
--------------
+=============
 
 FileProbes is configured in ``FileProbes/config.xml``, which might
 look something like:
