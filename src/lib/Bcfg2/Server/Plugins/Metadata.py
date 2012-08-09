@@ -328,7 +328,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
     def __init__(self, core, datastore, watch_clients=True):
         Bcfg2.Server.Plugin.Metadata.__init__(self)
-        Bcfg2.Server.Plugin.Statistics.__init__(self)
+        Bcfg2.Server.Plugin.Statistics.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
         self.watch_clients = watch_clients
         self.states = dict()

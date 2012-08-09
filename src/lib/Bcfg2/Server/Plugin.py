@@ -229,22 +229,22 @@ class Probing(object):
         pass
 
 
-class Statistics(object):
+class Statistics(Plugin):
     """Signal statistics handling capability."""
     def process_statistics(self, client, xdata):
         pass
 
 
-class ThreadedStatistics(Statistics,
-                         threading.Thread):
+class ThreadedStatistics(Statistics, threading.Thread):
     """Threaded statistics handling capability."""
     def __init__(self, core, datastore):
-        Statistics.__init__(self)
+        Statistics.__init__(self, core, datastore)
         threading.Thread.__init__(self)
         # Event from the core signaling an exit
         self.terminate = core.terminate
         self.work_queue = Queue(100000)
-        self.pending_file = "%s/etc/%s.pending" % (datastore, self.__class__.__name__)
+        self.pending_file = os.path.join(datastore, "etc",
+                                         "%s.pending" % self.name)
         self.daemon = False
         self.start()
 
@@ -265,7 +265,7 @@ class ThreadedStatistics(Statistics,
             savefile = open(self.pending_file, 'w')
             pickle.dump(pending_data, savefile)
             savefile.close()
-            self.logger.info("Saved pending %s data" % self.__class__.__name__)
+            self.logger.info("Saved pending %s data" % self.name)
         except:
             self.logger.warning("Failed to save pending data")
 
@@ -312,8 +312,9 @@ class ThreadedStatistics(Statistics,
         try:
             os.unlink(self.pending_file)
         except:
-            self.logger.error("Failed to unlink save file: %s" % self.pending_file)
-        self.logger.info("Loaded pending %s data" % self.__class__.__name__)
+            self.logger.error("Failed to unlink save file: %s" %
+                              self.pending_file)
+        self.logger.info("Loaded pending %s data" % self.name)
         return True
 
     def run(self):
@@ -333,14 +334,11 @@ class ThreadedStatistics(Statistics,
             self.save()
 
     def process_statistics(self, metadata, data):
-        warned = False
         try:
             self.work_queue.put_nowait((metadata, copy.copy(data)))
-            warned = False
         except Full:
-            if not warned:
-                self.logger.warning("%s: Queue is full.  Dropping interactions." % self.__class__.__name__)
-            warned = True
+            self.logger.warning("%s: Queue is full.  Dropping interactions." %
+                                self.name)
 
     def handle_statistics(self, metadata, data):
         """Handle stats here."""
