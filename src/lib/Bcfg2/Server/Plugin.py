@@ -168,14 +168,14 @@ class Generator(object):
 
     def HandleEntry(self, entry, metadata):
         """This is the slow-path handler for configuration entry binding."""
-        raise PluginExecutionError
+        raise NotImplementedError
 
 
 class Structure(object):
     """Structure Plugins contribute to abstract client configurations."""
     def BuildStructures(self, metadata):
         """Return a list of abstract goal structures for client."""
-        raise PluginExecutionError
+        raise NotImplementedError
 
 
 class Metadata(object):
@@ -196,7 +196,7 @@ class Metadata(object):
         pass
 
     def get_initial_metadata(self, client_name):
-        raise PluginExecutionError
+        raise NotImplementedError
 
     def merge_additional_data(self, imd, source, groups, data):
         raise PluginExecutionError
@@ -345,17 +345,17 @@ class PullSource(object):
         return []
 
     def GetCurrentEntry(self, client, e_type, e_name):
-        raise PluginExecutionError
+        raise NotImplementedError
 
 
 class PullTarget(object):
     def AcceptChoices(self, entry, metadata):
-        raise PluginExecutionError
+        raise NotImplementedError
 
     def AcceptPullData(self, specific, new_entry, verbose):
         """This is the null per-plugin implementation
         of bcfg2-admin pull."""
-        raise PluginExecutionError
+        raise NotImplementedError
 
 
 class Decision(object):
@@ -371,13 +371,13 @@ class ValidationError(Exception):
 class StructureValidator(object):
     """Validate/modify goal structures."""
     def validate_structures(self, metadata, structures):
-        raise ValidationError("not implemented")
+        raise NotImplementedError
 
 
 class GoalValidator(object):
     """Validate/modify configuration goals."""
     def validate_goals(self, metadata, goals):
-        raise ValidationError("not implemented")
+        raise NotImplementedError
 
 
 class Version(object):
