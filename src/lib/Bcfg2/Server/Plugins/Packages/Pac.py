@@ -1,6 +1,6 @@
 import gzip
 import tarfile
-from Bcfg2.Bcfg2Py3k import cPickle, file
+from Bcfg2.Bcfg2Py3k import cPickle
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
 
@@ -8,6 +8,7 @@ class PacCollection(Collection):
     def get_group(self, group):
         self.logger.warning("Packages: Package groups are not supported by Pacman")
         return []
+
 
 class PacSource(Source):
     basegroups = ['arch', 'parabola']
@@ -22,13 +23,13 @@ class PacSource(Source):
                          'components': self.components, 'arches': self.arches}]
 
     def save_state(self):
-        cache = file(self.cachefile, 'wb')
+        cache = open(self.cachefile, 'wb')
         cPickle.dump((self.pkgnames, self.deps, self.provides),
                      cache, 2)
         cache.close()
 
     def load_state(self):
-        data = file(self.cachefile)
+        data = open(self.cachefile)
         self.pkgnames, self.deps, self.provides = cPickle.load(data)
 
     def filter_unknown(self, unknown):
