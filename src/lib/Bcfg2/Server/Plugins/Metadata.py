@@ -318,8 +318,7 @@ class MetadataGroup(tuple):
     def __hash__(self):
         return hash(self.name)
 
-class Metadata(Bcfg2.Server.Plugin.Plugin,
-               Bcfg2.Server.Plugin.Metadata,
+class Metadata(Bcfg2.Server.Plugin.Metadata,
                Bcfg2.Server.Plugin.Statistics,
                Bcfg2.Server.Plugin.DatabaseBacked):
     """This class contains data for bcfg2 server metadata."""
@@ -328,10 +327,9 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
     sort_order = 500
 
     def __init__(self, core, datastore, watch_clients=True):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Metadata.__init__(self)
         Bcfg2.Server.Plugin.Statistics.__init__(self)
-        Bcfg2.Server.Plugin.DatabaseBacked.__init__(self)
+        Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
         self.watch_clients = watch_clients
         self.states = dict()
         self.extra = dict()

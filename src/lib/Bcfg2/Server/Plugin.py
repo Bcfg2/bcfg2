@@ -99,30 +99,6 @@ class Debuggable(object):
             self.logger.error(message)
 
 
-class DatabaseBacked(object):
-    def __init__(self):
-        pass
-
-    @property
-    def _use_db(self):
-        use_db = self.core.setup.cfp.getboolean(self.name.lower(),
-                                                "use_database",
-                                                default=False)
-        if use_db and has_django:
-            return True
-        elif not use_db:
-            return False
-        else:
-            self.logger.error("use_database is true but django not found")
-            return False
-
-
-
-class PluginDatabaseModel(object):
-    class Meta:
-        app_label = "Server"
-
-
 class Plugin(Debuggable):
     """This is the base class for all Bcfg2 Server plugins.
     Several attributes must be defined in the subclass:
@@ -167,6 +143,26 @@ class Plugin(Debuggable):
 
     def __str__(self):
         return "%s Plugin" % self.__class__.__name__
+
+
+class DatabaseBacked(Plugin):
+    @property
+    def _use_db(self):
+        use_db = self.core.setup.cfp.getboolean(self.name.lower(),
+                                                "use_database",
+                                                default=False)
+        if use_db and has_django:
+            return True
+        elif not use_db:
+            return False
+        else:
+            self.logger.error("use_database is true but django not found")
+            return False
+
+
+class PluginDatabaseModel(object):
+    class Meta:
+        app_label = "Server"
 
 
 class Generator(object):
