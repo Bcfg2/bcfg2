@@ -445,3 +445,191 @@ class TestFileBacked(unittest.TestCase):
         self.assertFalse(mock_open.called)
         self.assertFalse(mock_Index.called)
 
+
+class TestDirectoryBacked(unittest.TestCase):
+    testpaths = {1: '',
+                 2: '/foo',
+                 3: '/foo/bar',
+                 4: '/foo/bar/baz',
+                 5: 'quux',
+                 6: 'xyzzy/',
+                 7: 'xyzzy/plugh/'}
+
+    @patch("Bcfg2.Server.Plugin.DirectoryBacked.add_directory_monitor", Mock())
+    def get_obj(self, fam=None):
+        if fam is None:
+            fam = Mock()
+        return DirectoryBacked(datastore, fam)
+
+    @patch("Bcfg2.Server.Plugin.DirectoryBacked.add_directory_monitor")
+    def test__init(self, mock_add_monitor):
+        db = DirectoryBacked(datastore, Mock())
+        mock_add_monitor.assert_called_with('')
+
+    def test__getitem(self):
+        db = self.get_obj()
+        db.entries.update(dict(a=1, b=2, c=3))
+        self.assertEqual(db['a'], 1)
+        self.assertEqual(db['b'], 2)
+        with self.assertRaises(KeyError):
+            db['d']
+
+    def test__iter(self):
+        db = self.get_obj()
+        db.entries.update(dict(a=1, b=2, c=3))
+        self.assertEqual([i for i in db],
+                         [i for i in db.entries.items()])
+
+    @patch("os.path.isdir")
+    def test_add_directory_monitor(self, mock_isdir):
+        fam = Mock()
+        fam.rv = 0
+        db = self.get_obj(fam=fam)
+        
+        def reset():
+            fam.rv += 1
+            fam.AddMonitor.return_value = fam.rv
+            fam.reset_mock()
+            mock_isdir.reset_mock()
+
+        mock_isdir.return_value = True
+        for path in self.testpaths.values():
+            reset()
+            db.add_directory_monitor(path)
+            fam.AddMonitor.assert_called_with(os.path.join(datastore,
+                                                           path),
+                                              db)
+            self.assertIn(fam.rv, db.handles)
+            self.assertEqual(db.handles[fam.rv], path)
+
+        reset()
+        # test duplicate adds
+        for path in self.testpaths.values():
+            reset()
+            db.add_directory_monitor(path)
+            self.assertFalse(fam.AddMonitor.called)
+
+        reset()
+        mock_isdir.return_value = False
+        db.add_directory_monitor('bogus')
+        self.assertFalse(fam.AddMonitor.called)
+        self.assertNotIn(fam.rv, db.handles)
+
+    def test_add_entry(self):
+        fam = Mock()
+        db = self.get_obj(fam=fam)
+        class MockChild(Mock):
+            def __init__(self, path, fam, **kwargs):
+                Mock.__init__(self, **kwargs)
+                self.path = path
+                self.fam = fam
+                self.HandleEvent = Mock()
+        db.__child__ = MockChild
+
+        for path in self.testpaths.values():
+            event = Mock()
+            db.add_entry(path, event)
+            self.assertIn(path, db.entries)
+            self.assertEqual(db.entries[path].path,
+                             os.path.join(datastore, path))
+            self.assertEqual(db.entries[path].fam, fam)
+            db.entries[path].HandleEvent.assert_called_with(event)
+
+    @patch("os.path.isdir")
+    @patch("Bcfg2.Server.Plugin.DirectoryBacked.add_entry")
+    @patch("Bcfg2.Server.Plugin.DirectoryBacked.add_directory_monitor")
+    def test_HandleEvent(self, mock_add_monitor, mock_add_entry, mock_isdir):
+        fam = Mock()
+        db = self.get_obj(fam=fam)
+        # a path with a leading / should never get into
+        # DirectoryBacked.handles, so strip that test case
+        for rid, path in self.testpaths.items():
+            path = path.lstrip('/')
+            db.handles[rid] = path
+
+        def reset():
+            fam.reset_mock()
+            mock_isdir.reset_mock()
+            mock_add_entry.reset_mock()
+            mock_add_monitor.reset_mock()
+
+        def get_event(filename, action, requestID):
+            event = Mock()
+            event.code2str.return_value = action
+            event.filename = filename
+            event.requestID = requestID
+            return event
+
+        # test that events on paths that aren't handled fail properly
+        reset()
+        event = get_event('/foo', 'created', max(self.testpaths.keys()) + 1)
+        db.HandleEvent(event)
+        self.assertFalse(mock_add_monitor.called)
+        self.assertFalse(mock_add_entry.called)
+
+        for req_id, path in self.testpaths.items():
+            # a path with a leading / should never get into
+            # DirectoryBacked.handles, so strip that test case
+            path = path.lstrip('/')
+            basepath = os.path.join(datastore, path)
+            for fname in ['foo', 'bar/baz.txt', 'plugh.py']:
+                relpath = os.path.join(path, fname)
+                abspath = os.path.join(basepath, fname)
+
+                # test endExist does nothing
+                reset()
+                event = get_event(fname, 'endExist', req_id)
+                db.HandleEvent(event)
+                self.assertFalse(mock_add_monitor.called)
+                self.assertFalse(mock_add_entry.called)
+
+                mock_isdir.return_value = True
+                for evt in ["created", "exists", "changed"]:
+                    # test that creating or changing a directory works
+                    reset()
+                    event = get_event(fname, evt, req_id)
+                    db.HandleEvent(event)
+                    mock_add_monitor.assert_called_with(relpath)
+                    self.assertFalse(mock_add_entry.called)
+
+                mock_isdir.return_value = False
+                for evt in ["created", "exists"]:
+                    # test that creating a file works
+                    reset()
+                    event = get_event(fname, evt, req_id)
+                    db.HandleEvent(event)
+                    mock_add_entry.assert_called_with(relpath, event)
+                    self.assertFalse(mock_add_monitor.called)
+                    db.entries[relpath] = Mock()
+
+                # test that changing a file that already exists works
+                reset()
+                event = get_event(fname, "changed", req_id)
+                db.HandleEvent(event)
+                db.entries[relpath].HandleEvent.assert_called_with(event)
+                self.assertFalse(mock_add_monitor.called)
+                self.assertFalse(mock_add_entry.called)
+
+                # test that deleting an entry works
+                reset()
+                event = get_event(fname, "deleted", req_id)
+                db.HandleEvent(event)
+                self.assertNotIn(relpath, db.entries)
+                
+                # test that changing a file that doesn't exist works
+                reset()
+                event = get_event(fname, "changed", req_id)
+                db.HandleEvent(event)
+                mock_add_entry.assert_called_with(relpath, event)
+                self.assertFalse(mock_add_monitor.called)
+                db.entries[relpath] = Mock()
+            
+        # test that deleting a directory works. this is a little
+        # strange because the _parent_ directory has to handle the
+        # deletion
+        reset()
+        event = get_event('quux', "deleted", 1)
+        db.HandleEvent(event)
+        for key in db.entries.keys():
+            self.assertFalse(key.startswith('quux'))
+                

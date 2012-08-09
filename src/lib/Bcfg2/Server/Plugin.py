@@ -538,11 +538,6 @@ class DirectoryBacked(object):
         """
         action = event.code2str()
 
-        # Clean up the absolute path names passed in
-        event.filename = os.path.normpath(event.filename)
-        if event.filename.startswith(self.data):
-            event.filename = event.filename[len(self.data)+1:]
-
         # Exclude events for actions we don't care about
         if action == 'endExist':
             return
@@ -552,10 +547,14 @@ class DirectoryBacked(object):
                         (action, event.requestID, event.filename))
             return
 
+        # Clean up path names
+        event.filename = os.path.normpath(event.filename.lstrip('/'))
+
         # Calculate the absolute and relative paths this event refers to
         abspath = os.path.join(self.data, self.handles[event.requestID],
                                event.filename)
-        relpath = os.path.join(self.handles[event.requestID], event.filename)
+        relpath = os.path.join(self.handles[event.requestID],
+                               event.filename).lstrip('/')
 
         if action == 'deleted':
             for key in self.entries.keys():
