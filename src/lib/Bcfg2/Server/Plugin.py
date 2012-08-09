@@ -253,9 +253,12 @@ class ThreadedStatistics(Statistics, threading.Thread):
             while not self.work_queue.empty():
                 (metadata, data) = self.work_queue.get_nowait()
                 try:
-                    pending_data.append((metadata.hostname, lxml.etree.tostring(data)))
+                    pending_data.append((metadata.hostname,
+                                         lxml.etree.tostring(data)))
                 except:
-                    self.logger.warning("Dropping interaction for %s" % metadata.hostname)
+                    err = sys.exc_info()[1]
+                    self.logger.warning("Dropping interaction for %s: %s" %
+                                        (metadata.hostname, err))
         except Empty:
             pass
 
@@ -265,10 +268,11 @@ class ThreadedStatistics(Statistics, threading.Thread):
             savefile.close()
             self.logger.info("Saved pending %s data" % self.name)
         except:
-            self.logger.warning("Failed to save pending data")
+            err = sys.exc_info()[1]
+            self.logger.warning("Failed to save pending data: %s" % err)
 
     def load(self):
-        """Load any pending data to a file."""
+        """Load any pending data from a file."""
         if not os.path.exists(self.pending_file):
             return True
         pending_data = []
@@ -279,6 +283,7 @@ class ThreadedStatistics(Statistics, threading.Thread):
         except Exception:
             e = sys.exc_info()[1]
             self.logger.warning("Failed to load pending data: %s" % e)
+            return False
         for (pmetadata, pdata) in pending_data:
             # check that shutdown wasnt called early
             if self.terminate.isSet():
@@ -304,9 +309,11 @@ class ThreadedStatistics(Statistics, threading.Thread):
                 break
             except lxml.etree.LxmlError:
                 lxml_error = sys.exc_info()[1]
-                self.logger.error("Unable to load save interaction: %s" % lxml_error)
+                self.logger.error("Unable to load saved interaction: %s" %
+                                  lxml_error)
             except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
-                self.logger.error("Unable to load metadata for save interaction: %s" % pmetadata)
+                self.logger.error("Unable to load metadata for save "
+                                  "interaction: %s" % pmetadata)
         try:
             os.unlink(self.pending_file)
         except:
@@ -320,14 +327,14 @@ class ThreadedStatistics(Statistics, threading.Thread):
             return
         while not self.terminate.isSet() and self.work_queue != None:
             try:
-                (xdata, client) = self.work_queue.get(block=True, timeout=2)
+                (client, xdata) = self.work_queue.get(block=True, timeout=2)
             except Empty:
                 continue
             except Exception:
                 e = sys.exc_info()[1]
                 self.logger.error("ThreadedStatistics: %s" % e)
                 continue
-            self.handle_statistic(xdata, client)
+            self.handle_statistic(client, xdata)
         if self.work_queue != None and not self.work_queue.empty():
             self.save()
 
@@ -338,7 +345,7 @@ class ThreadedStatistics(Statistics, threading.Thread):
             self.logger.warning("%s: Queue is full.  Dropping interactions." %
                                 self.name)
 
-    def handle_statistics(self, metadata, data):
+    def handle_statistic(self, metadata, data):
         """Handle stats here."""
         pass
 
