@@ -61,7 +61,8 @@ class Option(object):
             return value
 
     def __init__(self, desc, default, cmd=False, odesc=False,
-                 env=False, cf=False, cook=False, long_arg=False):
+                 env=False, cf=False, cook=False, long_arg=False,
+                 deprecated_cf=None):
         self.desc = desc
         self.default = default
         self.cmd = cmd
@@ -75,6 +76,7 @@ class Option(object):
         self.odesc = odesc
         self.env = env
         self.cf = cf
+        self.deprecated_cf = deprecated_cf
         self.boolean = False
         if not odesc and not cook and isinstance(self.default, bool):
             self.boolean = True
@@ -134,6 +136,15 @@ class Option(object):
                 return
             except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
                 pass
+            if self.deprecated_cf:
+                try:
+                    self.value = self.get_cooked_value(configparser.get(*self.deprecated_cf))
+                    print "Warning: [%s] %s is deprecated, use [%s] %s instead" % \
+                        (self.cf[0], self.cf[1], self.deprecated_cf[0], self.deprecated_cf[1])
+                    return
+                except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+                    pass
+                    
         # Default value not cooked
         self.value = self.default
 
@@ -429,27 +440,33 @@ SERVER_BACKEND = \
 DB_ENGINE = \
     Option('Database engine',
            default='django.db.backends.sqlite3',
-           cf=('database', 'engine'))
+           cf=('database', 'engine'),
+           deprecated_cf=('statistics', 'database_engine'))
 DB_NAME = \
     Option('Database name',
            default=os.path.join(SERVER_REPOSITORY.default, "bcfg2.sqlite"),
-           cf=('database', 'name'))
+           cf=('database', 'name'),
+           deprecated_cf=('statistics', 'database_name'))
 DB_USER = \
     Option('Database username',
            default=None,
-           cf=('database', 'user'))
+           cf=('database', 'user'),
+           deprecated_cf=('statistics', 'database_user'))
 DB_PASSWORD = \
     Option('Database password',
            default=None,
-           cf=('database', 'password'))
+           cf=('database', 'password'),
+           deprecated_cf=('statistics', 'database_password'))
 DB_HOST = \
     Option('Database host',
            default='localhost',
-           cf=('database', 'host'))
+           cf=('database', 'host'),
+           deprecated_cf=('statistics', 'database_host'))
 DB_PORT = \
     Option('Database port',
            default='',
-           cf=('database', 'port'),)
+           cf=('database', 'port'),
+           deprecated_cf=('statistics', 'database_port'))
 
 # Django options
 DJANGO_TIME_ZONE = \
