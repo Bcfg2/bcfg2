@@ -41,16 +41,9 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
     def HandleEvent(self, event=None):
         Bcfg2.Server.Plugin.XMLFileBacked.HandleEvent(self, event=event)
         if event and event.filename != self.name:
-            for fname in self.extras:
-                fpath = None
-                if fname.startswith("/"):
-                    fpath = os.path.abspath(fname)
-                else:
-                    fpath = \
-                        os.path.abspath(os.path.join(os.path.dirname(self.name),
-                                                                     fname))
+            for fpath in self.extras:
                 if fpath == os.path.abspath(event.filename):
-                    self.parsed.add(fname)
+                    self.parsed.add(fpath)
                     break
 
         if self.loaded:

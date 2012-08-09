@@ -15,6 +15,9 @@ def call(*args, **kwargs):
     calls """
     return (args, kwargs)
 
+class FakeElementTree(lxml.etree._ElementTree):
+    xinclude = Mock()
+
 
 class TestFunctions(unittest.TestCase):
     def test_bind_info(self):
@@ -633,3 +636,189 @@ class TestDirectoryBacked(unittest.TestCase):
         for key in db.entries.keys():
             self.assertFalse(key.startswith('quux'))
                 
+
+class TestXMLFileBacked(unittest.TestCase):
+    def test__init(self):
+        fam = Mock()
+        fname = "/test"
+        xfb = XMLFileBacked(fname)
+        self.assertIsNone(xfb.fam)
+
+        xfb = XMLFileBacked(fname, fam=fam)
+        self.assertFalse(fam.AddMonitor.called)
+
+        fam.reset_mock()
+        xfb = XMLFileBacked(fname, fam=fam, should_monitor=True)
+        fam.AddMonitor.assert_called_with(fname, xfb)
+
+    @patch("os.path.exists")
+    @patch("lxml.etree.parse")
+    @patch("Bcfg2.Server.Plugin.XMLFileBacked.add_monitor")
+    def test_follow_xincludes(self, mock_add_monitor, mock_parse, mock_exists):
+        fname = "/test/test1.xml"
+        xfb = XMLFileBacked(fname)
+        
+        def reset():
+            mock_add_monitor.reset_mock()
+            mock_parse.reset_mock()
+            mock_exists.reset_mock()
+            xfb.extras = []
+
+        mock_exists.return_value = True
+        xdata = dict()
+        mock_parse.side_effect = lambda p: xdata[p]
+
+        # basic functionality
+        xdata['/test/test2.xml'] = lxml.etree.Element("Test").getroottree()
+        xfb._follow_xincludes(xdata=xdata['/test/test2.xml'])
+        self.assertFalse(mock_add_monitor.called)
+
+        reset()
+        xfb.xdata = xdata['/test/test2.xml'].getroot()
+        xfb._follow_xincludes()
+        self.assertFalse(mock_add_monitor.called)
+        xfb.xdata = None
+
+        reset()
+        xfb._follow_xincludes(fname="/test/test2.xml")
+        self.assertFalse(mock_add_monitor.called)
+
+        # test one level of xinclude
+        xdata[fname] = lxml.etree.Element("Test").getroottree()
+        lxml.etree.SubElement(xdata[fname].getroot(),
+                              Bcfg2.Server.XI_NAMESPACE + "include",
+                              href="/test/test2.xml")
+        reset()
+        xfb._follow_xincludes(fname=fname)
+        mock_add_monitor.assert_called_with("/test/test2.xml")
+        self.assertItemsEqual(mock_parse.call_args_list,
+                              [call(f) for f in xdata.keys()])
+        mock_exists.assert_called_with("/test/test2.xml")
+
+        reset()
+        xfb._follow_xincludes(xdata=xdata[fname])
+        mock_add_monitor.assert_called_with("/test/test2.xml")
+        self.assertItemsEqual(mock_parse.call_args_list,
+                              [call(f) for f in xdata.keys()
+                               if f != fname])
+        mock_exists.assert_called_with("/test/test2.xml")
+
+        # test two-deep level of xinclude, with some files in another
+        # directory
+        xdata["/test/test3.xml"] = \
+            lxml.etree.Element("Test").getroottree()
+        lxml.etree.SubElement(xdata["/test/test3.xml"].getroot(),
+                              Bcfg2.Server.XI_NAMESPACE + "include",
+                              href="/test/test_dir/test4.xml")
+        xdata["/test/test_dir/test4.xml"] = \
+            lxml.etree.Element("Test").getroottree()
+        lxml.etree.SubElement(xdata["/test/test_dir/test4.xml"].getroot(),
+                              Bcfg2.Server.XI_NAMESPACE + "include",
+                              href="/test/test_dir/test5.xml")
+        xdata['/test/test_dir/test5.xml'] = \
+            lxml.etree.Element("Test").getroottree()
+        xdata['/test/test_dir/test6.xml'] = \
+            lxml.etree.Element("Test").getroottree()
+        # relative includes
+        lxml.etree.SubElement(xdata[fname].getroot(),
+                              Bcfg2.Server.XI_NAMESPACE + "include",
+                              href="test3.xml")
+        lxml.etree.SubElement(xdata["/test/test3.xml"].getroot(),
+                              Bcfg2.Server.XI_NAMESPACE + "include",
+                              href="test_dir/test6.xml")
+
+        reset()
+        xfb._follow_xincludes(fname=fname)
+        self.assertItemsEqual(mock_add_monitor.call_args_list,
+                              [call(f) for f in xdata.keys() if f != fname])
+        self.assertItemsEqual(mock_parse.call_args_list,
+                              [call(f) for f in xdata.keys()])
+        self.assertItemsEqual(mock_exists.call_args_list,
+                              [call(f) for f in xdata.keys() if f != fname])
+
+        reset()
+        xfb._follow_xincludes(xdata=xdata[fname])
+        self.assertItemsEqual(mock_add_monitor.call_args_list,
+                              [call(f) for f in xdata.keys() if f != fname])
+        self.assertItemsEqual(mock_parse.call_args_list,
+                              [call(f) for f in xdata.keys() if f != fname])
+        self.assertItemsEqual(mock_exists.call_args_list,
+                              [call(f) for f in xdata.keys() if f != fname])
+
+    @patch("lxml.etree._ElementTree", FakeElementTree)
+    @patch("Bcfg2.Server.Plugin.XMLFileBacked._follow_xincludes")
+    def test_Index(self, mock_follow):
+        fname = "/test/test1.xml"
+        xfb = XMLFileBacked(fname)
+        
+        def reset():
+            mock_follow.reset_mock()
+            FakeElementTree.xinclude.reset_mock()
+            xfb.extras = []
+            xfb.xdata = None
+
+        # syntax error
+        xfb.data = "<"
+        self.assertRaises(PluginInitError, xfb.Index)
+
+        # no xinclude
+        reset()
+        xdata = lxml.etree.Element("Test", name="test")
+        children = [lxml.etree.SubElement(xdata, "Foo"),
+                    lxml.etree.SubElement(xdata, "Bar", name="bar")]
+        xfb.data = lxml.etree.tostring(xdata)
+        xfb.Index()
+        mock_follow.assert_any_call()
+        self.assertEqual(xfb.xdata.base, fname)
+        self.assertItemsEqual([lxml.etree.tostring(e) for e in xfb.entries],
+                              [lxml.etree.tostring(e) for e in children])
+
+        # with xincludes
+        reset()
+        mock_follow.side_effect = \
+            lambda: xfb.extras.extend(["/test/test2.xml",
+                                       "/test/test_dir/test3.xml"])
+        children.extend([
+                lxml.etree.SubElement(xdata,
+                                      Bcfg2.Server.XI_NAMESPACE + "include",
+                                      href="/test/test2.xml"),
+                lxml.etree.SubElement(xdata,
+                                      Bcfg2.Server.XI_NAMESPACE + "include",
+                                      href="/test/test_dir/test3.xml")])
+        test2 = lxml.etree.Element("Test", name="test2")
+        lxml.etree.SubElement(test2, "Baz")
+        test3 = lxml.etree.Element("Test", name="test3")
+        replacements = {"/test/test2.xml": test2,
+                        "/test/test_dir/test3.xml": test3}
+        def xinclude():
+            for el in xfb.xdata.findall('//%sinclude' %
+                                        Bcfg2.Server.XI_NAMESPACE):
+                xfb.xdata.replace(el, replacements[el.get("href")])
+        FakeElementTree.xinclude.side_effect = xinclude
+
+        xfb.data = lxml.etree.tostring(xdata)
+        xfb.Index()
+        mock_follow.assert_any_call()
+        FakeElementTree.xinclude.assert_any_call
+        self.assertEqual(xfb.xdata.base, fname)
+        self.assertItemsEqual([lxml.etree.tostring(e) for e in xfb.entries],
+                              [lxml.etree.tostring(e) for e in children])
+
+    def test_add_monitor(self):
+        fname = "/test/test1.xml"
+        xfb = XMLFileBacked(fname)
+        xfb.add_monitor("/test/test2.xml")
+        self.assertIn("/test/test2.xml", xfb.extras)
+
+        fam = Mock()
+        xfb = XMLFileBacked(fname, fam=fam)
+        fam.reset_mock()
+        xfb.add_monitor("/test/test3.xml")
+        self.assertFalse(fam.AddMonitor.called)
+        self.assertIn("/test/test3.xml", xfb.extras)
+
+        fam.reset_mock()
+        xfb = XMLFileBacked(fname, fam=fam, should_monitor=True)
+        xfb.add_monitor("/test/test4.xml")
+        fam.AddMonitor.assert_called_with("/test/test4.xml", xfb)
+        self.assertIn("/test/test4.xml", xfb.extras)

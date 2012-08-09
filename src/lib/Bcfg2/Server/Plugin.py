@@ -643,14 +643,18 @@ class XMLFileBacked(FileBacked):
                                                Bcfg2.Server.XI_NAMESPACE)]
         for el in included:
             name = el.get("href")
-            if name not in self.extras:
-                if name.startswith("/"):
-                    fpath = name
+            if name.startswith("/"):
+                fpath = name
+            else:
+                if fname:
+                    rel = fname
                 else:
-                    fpath = os.path.join(os.path.dirname(self.name), name)
+                    rel = self.name
+                fpath = os.path.join(os.path.dirname(rel), name)
+            if fpath not in self.extras:
                 if os.path.exists(fpath):
                     self._follow_xincludes(fname=fpath)
-                    self.add_monitor(fpath, name)
+                    self.add_monitor(fpath)
                 else:
                     msg = "%s: %s does not exist, skipping" % (self.name, name)
                     if el.findall('./%sfallback' % Bcfg2.Server.XI_NAMESPACE):
@@ -664,9 +668,9 @@ class XMLFileBacked(FileBacked):
             self.xdata = lxml.etree.XML(self.data, base_url=self.name,
                                         parser=Bcfg2.Server.XMLParser)
         except lxml.etree.XMLSyntaxError:
-            err = sys.exc_info()[1]
-            logger.error("Failed to parse %s: %s" % (self.name, err))
-            raise Bcfg2.Server.Plugin.PluginInitError
+            msg = "Failed to parse %s: %s" % (self.name, sys.exc_info()[1])
+            logger.error(msg)
+            raise PluginInitError(msg)
 
         self._follow_xincludes()
         if self.extras:
@@ -680,8 +684,8 @@ class XMLFileBacked(FileBacked):
         if self.__identifier__ is not None:
             self.label = self.xdata.attrib[self.__identifier__]
 
-    def add_monitor(self, fpath, fname):
-        self.extras.append(fname)
+    def add_monitor(self, fpath):
+        self.extras.append(fpath)
         if self.fam and self.should_monitor:
             self.fam.AddMonitor(fpath, self)
 

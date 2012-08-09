@@ -193,28 +193,26 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
             """Try to find the data in included files"""
             for included in self.extras:
                 try:
-                    xdata = lxml.etree.parse(os.path.join(self.basedir,
-                                                          included),
+                    xdata = lxml.etree.parse(included,
                                              parser=Bcfg2.Server.XMLParser)
                     cli = xdata.xpath(xpath)
                     if len(cli) > 0:
-                        return {'filename': os.path.join(self.basedir,
-                                                         included),
+                        return {'filename': included,
                                 'xmltree': xdata,
                                 'xquery': cli}
                 except lxml.etree.XMLSyntaxError:
-                    self.logger.error('Failed to parse %s' % (included))
+                    self.logger.error('Failed to parse %s' % included)
         return {}
 
-    def add_monitor(self, fpath, fname):
-        self.extras.append(fname)
+    def add_monitor(self, fpath):
+        self.extras.append(fpath)
         if self.fam and self.should_monitor:
             self.fam.AddMonitor(fpath, self.metadata)
 
     def HandleEvent(self, event):
         """Handle fam events"""
         filename = os.path.basename(event.filename)
-        if filename in self.extras:
+        if event.filename in self.extras:
             if event.code2str() == 'exists':
                 return False
         elif filename != self.basefile:
