@@ -459,7 +459,8 @@ DJANGO_TIME_ZONE = \
 DJANGO_DEBUG = \
     Option('Django debug',
            default=None,
-           cf=('statistics', 'debug'),)
+           cf=('statistics', 'web_debug'),
+           cook=get_bool,)
 # Django options
 DJANGO_WEB_PREFIX = \
     Option('Web prefix',
