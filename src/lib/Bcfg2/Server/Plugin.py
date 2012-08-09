@@ -4,7 +4,6 @@ import copy
 import logging
 import lxml.etree
 import os
-import pickle
 import posixpath
 import re
 import sys
@@ -22,9 +21,7 @@ except ImportError:
 # py3k compatibility
 if sys.hexversion >= 0x03000000:
     from functools import reduce
-from Bcfg2.Bcfg2Py3k import Queue
-from Bcfg2.Bcfg2Py3k import Empty
-from Bcfg2.Bcfg2Py3k import Full
+from Bcfg2.Bcfg2Py3k import Queue, Empty, Full, cPickle
 
 # grab default metadata info from bcfg2.conf
 opts = {'owner': Bcfg2.Options.MDATA_OWNER,
@@ -263,7 +260,7 @@ class ThreadedStatistics(Statistics, threading.Thread):
 
         try:
             savefile = open(self.pending_file, 'w')
-            pickle.dump(pending_data, savefile)
+            cPickle.dump(pending_data, savefile)
             savefile.close()
             self.logger.info("Saved pending %s data" % self.name)
         except:
@@ -276,7 +273,7 @@ class ThreadedStatistics(Statistics, threading.Thread):
         pending_data = []
         try:
             savefile = open(self.pending_file, 'r')
-            pending_data = pickle.load(savefile)
+            pending_data = cPickle.load(savefile)
             savefile.close()
         except Exception:
             e = sys.exc_info()[1]
