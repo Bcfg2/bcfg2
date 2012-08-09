@@ -4,7 +4,6 @@ import copy
 import logging
 import lxml.etree
 import os
-import posixpath
 import re
 import sys
 import threading
@@ -506,8 +505,8 @@ class DirectoryBacked(object):
         """
         dirpathname = os.path.join(self.data, relative)
         if relative not in self.handles.values():
-            if not posixpath.isdir(dirpathname):
-                logger.error("Failed to open directory %s" % (dirpathname))
+            if not os.path.isdir(dirpathname):
+                logger.error("%s is not a directory" % dirpathname)
                 return
             reqid = self.fam.AddMonitor(dirpathname, self)
             self.handles[reqid] = relative
@@ -567,7 +566,7 @@ class DirectoryBacked(object):
             # watching a directory just because it gets deleted. If it
             # is recreated, we will start getting notifications for it
             # again without having to add a new monitor.
-        elif posixpath.isdir(abspath):
+        elif os.path.isdir(abspath):
             # Deal with events for directories
             if action in ['exists', 'created']:
                 self.add_directory_monitor(relpath)
@@ -1214,9 +1213,9 @@ class GroupSpool(Plugin, Generator):
     def add_entry(self, event):
         epath = self.event_path(event)
         ident = self.event_id(event)
-        if posixpath.isdir(epath):
+        if os.path.isdir(epath):
             self.AddDirectoryMonitor(epath[len(self.data):])
-        if ident not in self.entries and posixpath.isfile(epath):
+        if ident not in self.entries and os.path.isfile(epath):
             dirpath = "".join([self.data, ident])
             self.entries[ident] = self.es_cls(self.filename_pattern,
                                               dirpath,
@@ -1224,7 +1223,7 @@ class GroupSpool(Plugin, Generator):
                                               self.encoding)
             self.Entries[self.entry_type][ident] = \
                 self.entries[ident].bind_entry
-        if not posixpath.isdir(epath):
+        if not os.path.isdir(epath):
             # do not pass through directory events
             self.entries[ident].handle_event(event)
 
@@ -1234,7 +1233,7 @@ class GroupSpool(Plugin, Generator):
 
     def event_id(self, event):
         epath = self.event_path(event)
-        if posixpath.isdir(epath):
+        if os.path.isdir(epath):
             return self.handles[event.requestID] + event.filename
         else:
             return self.handles[event.requestID][:-1]
@@ -1282,7 +1281,7 @@ class GroupSpool(Plugin, Generator):
             relative += '/'
         name = self.data + relative
         if relative not in list(self.handles.values()):
-            if not posixpath.isdir(name):
+            if not os.path.isdir(name):
                 self.logger.error("Failed to open directory %s" % name)
                 return
             reqid = self.core.fam.AddMonitor(name, self)
