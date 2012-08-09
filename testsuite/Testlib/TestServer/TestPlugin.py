@@ -6,7 +6,6 @@ import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugin import *
 import Bcfg2.Server
-import Bcfg2.Server.Plugins.Metadata
 
 datastore = '/'
 

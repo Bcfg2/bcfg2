@@ -81,18 +81,6 @@ if has_django:
                 return False
 
 
-class MetadataConsistencyError(Exception):
-    """This error gets raised when metadata is internally inconsistent."""
-    pass
-
-
-class MetadataRuntimeError(Exception):
-    """This error is raised when the metadata engine
-    is called prior to reading enough data.
-    """
-    pass
-
-
 class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
     """Handles xml config files and all XInclude statements"""
     def __init__(self, metadata, watch_clients, basefile):
@@ -117,13 +105,15 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
     @property
     def xdata(self):
         if not self.data:
-            raise MetadataRuntimeError("%s has no data" % self.basefile)
+            raise Bcfg2.Server.Plugin.MetadataRuntimeError("%s has no data" %
+                                                           self.basefile)
         return self.data
 
     @property
     def base_xdata(self):
         if not self.basedata:
-            raise MetadataRuntimeError("%s has no data" % self.basefile)
+            raise Bcfg2.Server.Plugin.MetadataRuntimeError("%s has no data" %
+                                                           self.basefile)
         return self.basedata
 
     def load_xml(self):
@@ -158,7 +148,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
         except IOError:
             msg = "Failed to write %s: %s" % (tmpfile, sys.exc_info()[1])
             self.logger.error(msg)
-            raise MetadataRuntimeError(msg)
+            raise Bcfg2.Server.Plugin.MetadataRuntimeError(msg)
         # prep data
         dataroot = xmltree.getroot()
         newcontents = lxml.etree.tostring(dataroot, pretty_print=True)
@@ -174,7 +164,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
                 (tmpfile, sys.exc_info()[1])
             self.logger.error(msg, exc_info=1)
             os.unlink(tmpfile)
-            raise MetadataRuntimeError(msg)
+            raise Bcfg2.Server.Plugin.MetadataRuntimeError(msg)
         datafile.close()
         # check if clients.xml is a symlink
         if os.path.islink(fname):
@@ -187,7 +177,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
             msg = "Metadata: Failed to rename %s: %s" % (tmpfile,
                                                          sys.exc_info()[1])
             self.logger.error(msg)
-            raise MetadataRuntimeError(msg)
+            raise Bcfg2.Server.Plugin.MetadataRuntimeError(msg)
 
     def find_xml_for_xpath(self, xpath):
         """Find and load xml file containing the xpath query"""
@@ -434,7 +424,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         node = self._search_xdata(tag, name, config.xdata, alias=alias)
         if node != None:
             self.logger.error("%s \"%s\" already exists" % (tag, name))
-            raise MetadataConsistencyError
+            raise Bcfg2.Server.Plugin.MetadataConsistencyError
         element = lxml.etree.SubElement(config.base_xdata.getroot(),
                                         tag, name=name)
         if attribs:
@@ -478,13 +468,13 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         node = self._search_xdata(tag, name, config.xdata, alias=alias)
         if node == None:
             self.logger.error("%s \"%s\" does not exist" % (tag, name))
-            raise MetadataConsistencyError
+            raise Bcfg2.Server.Plugin.MetadataConsistencyError
         xdict = config.find_xml_for_xpath('.//%s[@name="%s"]' %
                                           (tag, node.get('name')))
         if not xdict:
             self.logger.error("Unexpected error finding %s \"%s\"" %
                               (tag, name))
-            raise MetadataConsistencyError
+            raise Bcfg2.Server.Plugin.MetadataConsistencyError
         for key, val in list(attribs.items()):
             xdict['xquery'][0].set(key, val)
         config.write_xml(xdict['filename'], xdict['xmltree'])
@@ -520,13 +510,13 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         node = self._search_xdata(tag, name, config.xdata)
         if node == None:
             self.logger.error("%s \"%s\" does not exist" % (tag, name))
-            raise MetadataConsistencyError
+            raise Bcfg2.Server.Plugin.MetadataConsistencyError
         xdict = config.find_xml_for_xpath('.//%s[@name="%s"]' %
                                           (tag, node.get('name')))
         if not xdict:
             self.logger.error("Unexpected error finding %s \"%s\"" %
                               (tag, name))
-            raise MetadataConsistencyError
+            raise Bcfg2.Server.Plugin.MetadataConsistencyError
         xdict['xquery'][0].getparent().remove(xdict['xquery'][0])
         config.write_xml(xdict['filename'], xdict['xmltree'])
 
@@ -556,7 +546,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             except MetadataClientModel.DoesNotExist:
                 msg = "Client %s does not exist" % client_name
                 self.logger.warning(msg)
-                raise MetadataConsistencyError(msg)
+                raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
             client.delete()
             self.clients = self.list_clients()
         else:
@@ -739,16 +729,16 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.logger.info("Asserting client %s profile to %s" %
                          (client, profile))
         if False in list(self.states.values()):
-            raise MetadataRuntimeError
+            raise Bcfg2.Server.Plugin.MetadataRuntimeError("Metadata has not been read yet")
         if not force and profile not in self.groups:
             msg = "Profile group %s does not exist" % profile
             self.logger.error(msg)
-            raise MetadataConsistencyError(msg)
+            raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
         group = self.groups[profile]
         if not force and not group.is_public:
             msg = "Cannot set client %s to private group %s" % (client, profile)
             self.logger.error(msg)
-            raise MetadataConsistencyError(msg)
+            raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
 
         if client in self.clients:
             if self._use_db:
@@ -795,7 +785,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         else:
             msg = "Cannot set version on non-existent client %s" % client
             self.logger.error(msg)
-            raise MetadataConsistencyError(msg)
+            raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
         self.versions[client] = version
         self.clients_xml.write()
 
@@ -829,7 +819,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             if len(self.addresses[address]) != 1:
                 err = "Address %s has multiple reverse assignments; a uuid must be used" % address
                 self.logger.error(err)
-                raise MetadataConsistencyError(err)
+                raise Bcfg2.Server.Plugin.MetadataConsistencyError(err)
             return self.addresses[address][0]
         try:
             cname = socket.gethostbyaddr(address)[0].lower()
@@ -839,7 +829,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         except socket.herror:
             warning = "address resolution error for %s" % address
             self.logger.warning(warning)
-            raise MetadataConsistencyError(warning)
+            raise Bcfg2.Server.Plugin.MetadataConsistencyError(warning)
 
     def _merge_groups(self, client, groups, categories=None):
         """ set group membership based on the contents of groups.xml
@@ -869,7 +859,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def get_initial_metadata(self, client):
         """Return the metadata for a given client."""
         if False in list(self.states.values()):
-            raise MetadataRuntimeError("Metadata has not been read yet")
+            raise Bcfg2.Server.Plugin.MetadataRuntimeError("Metadata has not been read yet")
         client = client.lower()
         if client in self.aliases:
             client = self.aliases[client]
@@ -896,7 +886,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             else:
                 msg = "Cannot add new client %s; no default group set" % client
                 self.logger.error(msg)
-                raise MetadataConsistencyError(msg)
+                raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
 
         if client in self.clientgroups:
             for cgroup in self.clientgroups[client]:
@@ -1050,9 +1040,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             id_method = 'address'
             try:
                 client = self.resolve_client(address)
-            except MetadataConsistencyError:
-                self.logger.error("Client %s failed to resolve; metadata problem"
-                                  % address[0])
+            except Bcfg2.Server.Plugin.MetadataConsistencyError:
+                err = sys.exc_info()[1]
+                self.logger.error("Client %s failed to resolve: %s" %
+                                  (address[0], err))
                 return False
         else:
             id_method = 'uuid'

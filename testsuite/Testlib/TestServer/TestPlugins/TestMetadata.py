@@ -20,6 +20,7 @@ try:
 except ImportError:
     has_django = False
 
+
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Metadata import *
@@ -169,15 +170,9 @@ class TestClientVersions(unittest.TestCase):
         self.assertEqual(v['client2'], "1.2.2")
         self.assertIsNone(v['client5'])
 
-        # test exception on nonexistent client. can't use assertRaises
-        # for this because assertRaises requires a callable
-        try:
+        # test exception on nonexistent client
+        with self.assertRaises(KeyError):
             v['clients__getitem']
-            assert False
-        except KeyError:
-            assert True
-        except:
-            assert False
 
     def test__len(self):
         v = ClientVersions()
@@ -211,27 +206,16 @@ class TestXMLMetadataConfig(unittest.TestCase):
 
     def test_xdata(self):
         config = self.get_config_object()
-        # we can't use assertRaises here because xdata is a property
-        try:
+        with self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError):
             config.xdata
-            assert False
-        except MetadataRuntimeError:
-            assert True
-        except:
-            assert False
         config.data = "<test/>"
         self.assertEqual(config.xdata, "<test/>")
 
     def test_base_xdata(self):
         config = self.get_config_object()
         # we can't use assertRaises here because base_xdata is a property
-        try:
+        with self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError):
             config.base_xdata
-            assert False
-        except MetadataRuntimeError:
-            assert True
-        except:
-            assert False
         config.basedata = "<test/>"
         self.assertEqual(config.base_xdata, "<test/>")
 
@@ -323,16 +307,16 @@ class TestXMLMetadataConfig(unittest.TestCase):
         mock_rename.assert_called_with(tmpfile, linkdest)
 
         mock_rename.side_effect = OSError
-        self.assertRaises(MetadataRuntimeError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError,
                           config.write_xml, fpath, self.clients_test_tree)
 
         mock_open.return_value.write.side_effect = IOError
-        self.assertRaises(MetadataRuntimeError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError,
                           config.write_xml, fpath, self.clients_test_tree)
         mock_unlink.assert_called_with(tmpfile)
 
         mock_open.side_effect = IOError
-        self.assertRaises(MetadataRuntimeError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError,
                           config.write_xml, fpath, self.clients_test_tree)
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
@@ -514,7 +498,7 @@ class TestMetadata(unittest.TestCase):
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
         metadata.groups_xml.write.reset_mock()
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.add_group,
                           "test1", dict())
         self.assertFalse(metadata.groups_xml.write.called)
@@ -532,7 +516,7 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(grp.get("foo"), "bar")
         self.assertTrue(metadata.groups_xml.write_xml.called)
 
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.update_group,
                           "bogus_group", dict())
 
@@ -547,7 +531,7 @@ class TestMetadata(unittest.TestCase):
         self.assertIsNone(grp)
         self.assertTrue(metadata.groups_xml.write_xml.called)
 
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.remove_group,
                           "bogus_group")
 
@@ -569,7 +553,7 @@ class TestMetadata(unittest.TestCase):
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
         metadata.groups_xml.write.reset_mock()
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.add_bundle,
                           "bundle1")
         self.assertFalse(metadata.groups_xml.write.called)
@@ -585,7 +569,7 @@ class TestMetadata(unittest.TestCase):
         self.assertIsNone(grp)
         self.assertTrue(metadata.groups_xml.write_xml.called)
 
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.remove_bundle,
                           "bogus_bundle")
 
@@ -619,7 +603,7 @@ class TestMetadata(unittest.TestCase):
         metadata.clients_xml.basedata = copy.copy(metadata.clients_xml.data)
 
         metadata.clients_xml.write.reset_mock()
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.add_client,
                           new1, dict())
         self.assertFalse(metadata.clients_xml.write.called)
@@ -638,7 +622,7 @@ class TestMetadata(unittest.TestCase):
         self.assertTrue(metadata.clients_xml.write_xml.called)
 
         new = self.get_nonexistent_client(metadata)
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.update_client,
                           new, dict())
 
@@ -755,18 +739,18 @@ class TestMetadata(unittest.TestCase):
         metadata = self.get_metadata_object()
         if 'clients.xml' in metadata.states:
             metadata.states['clients.xml'] = False
-            self.assertRaises(MetadataRuntimeError,
+            self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError,
                               metadata.set_profile,
                               None, None, None)
 
         self.load_groups_data(metadata=metadata)
         self.load_clients_data(metadata=metadata)
 
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.set_profile,
                           "client1", "group5", None)
 
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.set_profile,
                           "client1", "group3", None)
 
@@ -820,7 +804,7 @@ class TestMetadata(unittest.TestCase):
         metadata.session_cache[('1.2.3.3', None)] = (time.time(), 'client3')
         self.assertEqual(metadata.resolve_client(('1.2.3.3', None)), 'client3')
 
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.resolve_client,
                           ('1.2.3.2', None))
         self.assertEqual(metadata.resolve_client(('1.2.3.1', None)), 'client1')
@@ -844,7 +828,7 @@ class TestMetadata(unittest.TestCase):
         mock_gethostbyaddr.reset_mock()
         mock_gethostbyaddr.return_value = None
         mock_gethostbyaddr.side_effect = socket.herror
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.resolve_client,
                           ('1.2.3.8', None))
         mock_gethostbyaddr.assert_called_with('1.2.3.8')
@@ -856,7 +840,7 @@ class TestMetadata(unittest.TestCase):
         metadata = self.get_metadata_object()
         if 'clients.xml' in metadata.states:
             metadata.states['clients.xml'] = False
-            self.assertRaises(MetadataRuntimeError,
+            self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError,
                               metadata.get_initial_metadata, None)
 
         self.load_groups_data(metadata=metadata)
@@ -910,7 +894,7 @@ class TestMetadata(unittest.TestCase):
         # test new client with no default profile
         metadata.default = None
         new2 = self.get_nonexistent_client(metadata)
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.get_initial_metadata, new2)
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
@@ -1076,7 +1060,8 @@ class TestMetadata(unittest.TestCase):
         self.assertTrue(metadata.AuthenticateConnection(None, "root",
                                                         "password1", "1.2.3.8"))
 
-        mock_resolve_client.side_effect = MetadataConsistencyError
+        mock_resolve_client.side_effect = \
+            Bcfg2.Server.Plugin.MetadataConsistencyError
         self.assertFalse(metadata.AuthenticateConnection(None, "root",
                                                          "password1",
                                                          "1.2.3.8"))
@@ -1219,7 +1204,7 @@ class TestMetadataBase(TestMetadata):
         metadata = self.get_metadata_object()
         client_name = self.get_nonexistent_client(metadata)
 
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.remove_client,
                           client_name)
 
@@ -1256,7 +1241,7 @@ class TestMetadata_NoClientsXML(TestMetadataBase):
         metadata = self.get_metadata_object()
         if 'clients.xml' in metadata.states:
             metadata.states['clients.xml'] = False
-            self.assertRaises(MetadataRuntimeError,
+            self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError,
                               metadata.get_initial_metadata, None)
 
         self.load_groups_data(metadata=metadata)
@@ -1300,7 +1285,7 @@ class TestMetadata_NoClientsXML(TestMetadataBase):
         # test exception on new client with no default profile
         metadata.default = None
         new2 = self.get_nonexistent_client(metadata)
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.get_initial_metadata,
                           new2)
 
@@ -1342,7 +1327,8 @@ class TestMetadata_NoClientsXML(TestMetadataBase):
         self.assertTrue(metadata.AuthenticateConnection(None, "root",
                                                         "password1", "1.2.3.8"))
 
-        mock_resolve_client.side_effect = MetadataConsistencyError
+        mock_resolve_client.side_effect = \
+            Bcfg2.Server.Plugin.MetadataConsistencyError
         self.assertFalse(metadata.AuthenticateConnection(None, "root",
                                                          "password1",
                                                          "1.2.3.8"))
@@ -1368,7 +1354,7 @@ class TestMetadata_NoClientsXML(TestMetadataBase):
         mock_gethostbyaddr.reset_mock()
         mock_gethostbyaddr.return_value = None
         mock_gethostbyaddr.side_effect = socket.herror
-        self.assertRaises(MetadataConsistencyError,
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.resolve_client,
                           ('1.2.3.8', None))
         mock_gethostbyaddr.assert_called_with('1.2.3.8')

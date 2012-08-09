@@ -72,6 +72,18 @@ class PluginExecutionError(Exception):
     pass
 
 
+class MetadataConsistencyError(Exception):
+    """This error gets raised when metadata is internally inconsistent."""
+    pass
+
+
+class MetadataRuntimeError(Exception):
+    """This error is raised when the metadata engine
+    is called prior to reading enough data.
+    """
+    pass
+
+
 class Debuggable(object):
     __rmi__ = ['toggle_debug']
 
@@ -294,7 +306,7 @@ class ThreadedStatistics(Statistics, threading.Thread):
                     try:
                         metadata = self.core.build_metadata(pmetadata)
                         break
-                    except Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError:
+                    except MetadataRuntimeError:
                         pass
 
                     self.terminate.wait(5)
@@ -311,7 +323,7 @@ class ThreadedStatistics(Statistics, threading.Thread):
                 lxml_error = sys.exc_info()[1]
                 self.logger.error("Unable to load saved interaction: %s" %
                                   lxml_error)
-            except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
+            except MetadataConsistencyError:
                 self.logger.error("Unable to load metadata for save "
                                   "interaction: %s" % pmetadata)
         try:

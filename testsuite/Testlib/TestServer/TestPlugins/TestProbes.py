@@ -408,7 +408,6 @@ text
         probes._write_data_xml(None)
         xdata = \
             lxml.etree.XML(str(mock_open.return_value.write.call_args[0][0]))
-        print "rv = %s" % lxml.etree.tostring(xdata)
         mock_parse.return_value = xdata.getroottree()
         probes.probedata = dict()
         probes.cgroups = dict()
