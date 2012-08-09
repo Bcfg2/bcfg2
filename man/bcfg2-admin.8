@@ -1,5 +1,5 @@
 .
-.TH "BCFG2\-ADMIN" "8" "July 2012" "" ""
+.TH "BCFG2\-ADMIN" "8" "August 2012" "" ""
 .
 .SH "NAME"
 \fBbcfg2\-admin\fR \- Perform repository administration tasks
@@ -14,13 +14,45 @@
 .
 .TP
 \fB\-C\fR \fIconfigfile\fR
-Specify alternate bcfg2\.conf location
-.
-.SH "MODES"
+Specify alternate bcfg2\.conf location\.
 .
 .TP
-\fBinit\fR
-Initialize a new repository (interactive)\.
+\fB\-E\fR \fIencoding\fR
+Specify the encoding of Cfg files\.
+.
+.TP
+\fB\-Q\fR \fIrepository path\fR
+Specify the path to the server repository\.
+.
+.TP
+\fB\-S\fR \fIhttps://server:port\fR
+Manually specify the server location (as opposed to using the value in bcfg2\.conf)\.
+.
+.TP
+\fB\-d\fR
+Enable debugging output\.
+.
+.TP
+\fB\-h\fR
+Print Usage information\.
+.
+.TP
+\fB\-o\fR \fIlogfile path\fR
+Writes a log to the specified path\.
+.
+.TP
+\fB\-v\fR
+Enable verbose output\.
+.
+.TP
+\fB\-x\fR \fIpassword\fR
+Use ’password’ for client communication\.
+.
+.TP
+\fB\-\-ssl\-key=\fR\fIssl key\fR
+Specifiy the path to the SSL key\.
+.
+.SH "MODES"
 .
 .TP
 \fBbackup\fR
@@ -35,20 +67,28 @@ Display details about the available bundles (See \fI\fBBUNDLE OPTIONS\fR\fR belo
 Add, edit, or remove clients entries in metadata (See \fI\fBCLIENT OPTIONS\fR\fR below)\.
 .
 .TP
-\fBquery\fR [g=group] [p=profile] [\-f output\-file] [\-n] [\-c]
-Search for clients based on group or profile (See \fI\fBQUERY OPTIONS\fR\fR below)\.
-.
-.TP
 \fBcompare\fR \fIold\fR \fInew\fR
 Compare two client configurations\. Can be used to verify consistent behavior between releases\. Determine differences between files or directories (See \fI\fBCOMPARE OPTIONS\fR\fR below)\.
+.
+.TP
+\fBinit\fR
+Initialize a new repository (interactive)\.
 .
 .TP
 \fBminestruct\fR \fIclient\fR [\-f xml\-file] [\-g groups]
 Build structure entries based on client statistics extra entries (See \fI\fBMINESTRUCT OPTIONS\fR\fR below)\.
 .
 .TP
+\fBperf\fR
+Query server for performance data\.
+.
+.TP
 \fBpull\fR \fIclient\fR \fIentry\-type\fR \fIentry\-name\fR
 Install configuration information into repo based on client bad entries (See \fI\fBPULL OPTIONS\fR\fR below)\.
+.
+.TP
+\fBquery\fR [g=group] [p=profile] [\-f output\-file] [\-n] [\-c]
+Search for clients based on group or profile (See \fI\fBQUERY OPTIONS\fR\fR below)\.
 .
 .TP
 \fBreports\fR [init|load_stats|purge|scrub|update]
@@ -59,12 +99,20 @@ Interact with the dynamic reporting system (See \fI\fBREPORTS OPTIONS\fR\fR belo
 Interact with the Snapshots database (See \fI\fBSNAPSHOTS OPTIONS\fR\fR below)\.
 .
 .TP
+\fBsyncdb\fR
+Sync the Django ORM with the configured database\.
+.
+.TP
 \fBtidy\fR
 Remove unused files from repository\.
 .
 .TP
 \fBviz\fR [\-H] [\-b] [\-k] [\-o png\-file]
 Create a graphviz diagram of client, group and bundle information (See \fI\fBVIZ OPTIONS\fR\fR below)\.
+.
+.TP
+\fBxcmd\fR
+Provides a XML\-RPC Command Interface to the bcfg2\-server\.
 .
 .SS "BUNDLE OPTIONS"
 .
