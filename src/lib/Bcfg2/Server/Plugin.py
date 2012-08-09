@@ -31,13 +31,11 @@ opts = {'owner': Bcfg2.Options.MDATA_OWNER,
         'important': Bcfg2.Options.MDATA_IMPORTANT,
         'paranoid': Bcfg2.Options.MDATA_PARANOID,
         'sensitive': Bcfg2.Options.MDATA_SENSITIVE}
-mdata_setup = Bcfg2.Options.OptionParser(opts)
-mdata_setup.parse([])
-del mdata_setup['args']
+default_file_metadata = Bcfg2.Options.OptionParser(opts)
+default_file_metadata.parse([])
+del default_file_metadata['args']
 
 logger = logging.getLogger('Bcfg2.Server.Plugin')
-
-default_file_metadata = mdata_setup
 
 info_regex = re.compile( \
     'encoding:(\s)*(?P<encoding>\w+)|' +
