@@ -198,8 +198,11 @@ class Metadata(object):
     def get_initial_metadata(self, client_name):
         raise NotImplementedError
 
-    def merge_additional_data(self, imd, source, groups, data):
-        raise PluginExecutionError
+    def merge_additional_data(self, imd, source, data):
+        raise NotImplementedError
+
+    def merge_additional_groups(self, imd, groups):
+        raise NotImplementedError
 
 
 class Connector(object):
