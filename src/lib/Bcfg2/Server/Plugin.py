@@ -706,11 +706,9 @@ class StructFile(XMLFileBacked):
             return False
         negate = item.get('negate', 'false').lower() == 'true'
         if item.tag == 'Group':
-            return ((negate and item.get('name') not in metadata.groups) or
-                    (not negate and item.get('name') in metadata.groups))
+            return negate == (item.get('name') not in metadata.groups)
         elif item.tag == 'Client':
-            return ((negate and item.get('name') != metadata.hostname) or
-                    (not negate and item.get('name') == metadata.hostname))
+            return negate == (item.get('name') != metadata.hostname)
         else:
             return True
 
@@ -724,7 +722,7 @@ class StructFile(XMLFileBacked):
                         rv.extend(self._match(child, metadata))
                 return rv
             else:
-                rv = copy.copy(item)
+                rv = copy.deepcopy(item)
                 for child in rv.iterchildren():
                     rv.remove(child)
                 for child in item.iterchildren():

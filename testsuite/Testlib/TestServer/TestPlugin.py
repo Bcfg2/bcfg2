@@ -111,7 +111,7 @@ class TestDebuggable(unittest.TestCase):
         self.assertTrue(d.logger.error.called)
 
 
-class TestPlugin(unittest.TestCase):
+class TestPlugin(TestDebuggable):
     def test__init(self):
         core = Mock()
         p = Plugin(core, datastore)
@@ -125,7 +125,7 @@ class TestPlugin(unittest.TestCase):
         mock_makedirs.assert_called_with(os.path.join(datastore, Plugin.name))
 
 
-class TestDatabaseBacked(unittest.TestCase):
+class TestDatabaseBacked(TestPlugin):
     @unittest.skipUnless(has_django, "Django not found")
     def test__use_db(self):
         core = Mock()
@@ -196,12 +196,12 @@ class TestProbing(unittest.TestCase):
     pass
 
 
-class TestStatistics(unittest.TestCase):
+class TestStatistics(TestPlugin):
     """ placeholder """
     pass
 
 
-class TestThreadedStatistics(unittest.TestCase):
+class TestThreadedStatistics(TestStatistics):
     data = [("foo.example.com", "<foo/>"),
             ("bar.example.com", "<bar/>")]
 
@@ -637,7 +637,7 @@ class TestDirectoryBacked(unittest.TestCase):
             self.assertFalse(key.startswith('quux'))
                 
 
-class TestXMLFileBacked(unittest.TestCase):
+class TestXMLFileBacked(TestFileBacked):
     def test__init(self):
         fam = Mock()
         fname = "/test"
@@ -822,3 +822,224 @@ class TestXMLFileBacked(unittest.TestCase):
         xfb.add_monitor("/test/test4.xml")
         fam.AddMonitor.assert_called_with("/test/test4.xml", xfb)
         self.assertIn("/test/test4.xml", xfb.extras)
+
+class TestStructFile(TestXMLFileBacked):
+    def _get_test_data(self):
+        """ build a very complex set of test data """
+        # top-level group and client elements 
+        groups = dict()
+        # group and client elements that are descendents of other group or
+        # client elements
+        subgroups = dict()
+        # children of elements in `groups' that should be included in
+        # match results
+        children = dict()
+        # children of elements in `subgroups' that should be included in
+        # match results
+        subchildren = dict()
+        # top-level tags that are not group elements
+        standalone = []
+        xdata = lxml.etree.Element("Test", name="test")
+        groups[0] = lxml.etree.SubElement(xdata, "Group", name="group1",
+                                          include="true")
+        children[0] = [lxml.etree.SubElement(groups[0], "Child", name="c1"),
+                       lxml.etree.SubElement(groups[0], "Child", name="c2")]
+        subgroups[0] = [lxml.etree.SubElement(groups[0], "Group",
+                                              name="subgroup1", include="true"),
+                        lxml.etree.SubElement(groups[0],
+                                              "Client", name="client1",
+                                              include="false")]
+        subchildren[0] = \
+            [lxml.etree.SubElement(subgroups[0][0], "Child", name="sc1"),
+             lxml.etree.SubElement(subgroups[0][0], "Child", name="sc2",
+                                   attr="some attr"),
+             lxml.etree.SubElement(subgroups[0][0], "Child", name="sc3")]
+        lxml.etree.SubElement(subchildren[0][-1], "SubChild", name="subchild")
+        lxml.etree.SubElement(subgroups[0][1], "Child", name="sc4")
+
+        groups[1] = lxml.etree.SubElement(xdata, "Group", name="group2",
+                                          include="false")
+        children[1] = []
+        subgroups[1] = []
+        subchildren[1] = []
+        lxml.etree.SubElement(groups[1], "Child", name="c3")
+        lxml.etree.SubElement(groups[1], "Child", name="c4")
+
+        standalone.append(lxml.etree.SubElement(xdata, "Standalone", name="s1"))
+
+        groups[2] = lxml.etree.SubElement(xdata, "Client", name="client2",
+                                          include="false")
+        children[2] = []
+        subgroups[2] = []
+        subchildren[2] = []
+        lxml.etree.SubElement(groups[2], "Child", name="c5")
+        lxml.etree.SubElement(groups[2], "Child", name="c6")
+
+        standalone.append(lxml.etree.SubElement(xdata, "Standalone", name="s2",
+                                                attr="some attr"))
+
+        groups[3] = lxml.etree.SubElement(xdata, "Client", name="client3",
+                                          include="true")
+        children[3] = [lxml.etree.SubElement(groups[3], "Child", name="c7",
+                                             attr="some_attr"),
+                       lxml.etree.SubElement(groups[3], "Child", name="c8")]
+        subgroups[3] = []
+        subchildren[3] = []
+        lxml.etree.SubElement(children[3][-1], "SubChild", name="subchild")
+
+        standalone.append(lxml.etree.SubElement(xdata, "Standalone", name="s3"))
+        lxml.etree.SubElement(standalone[-1], "SubStandalone", name="sub1")
+
+        children[4] = standalone
+        return (xdata, groups, subgroups, children, subchildren, standalone)
+
+    def assertXMLEqual(self, el1, el2, msg=None):
+        self.assertEqual(el1.tag, el2.tag, msg=msg)
+        self.assertEqual(el1.text, el2.text, msg=msg)
+        self.assertItemsEqual(el1.attrib, el2.attrib, msg=msg)
+        self.assertEqual(len(el1.getchildren()),
+                         len(el2.getchildren()))
+        for child1 in el1.getchildren():
+            cname = child1.get("name")
+            self.assertIsNotNone(cname,
+                                 msg="Element %s has no 'name' attribute" %
+                                 child1.tag)
+            children2 = el2.xpath("*[@name='%s']" % cname)
+            self.assertEqual(len(children2), 1,
+                             msg="More than one element named %s" % cname)
+            self.assertXMLEqual(child1, children2[0], msg=msg)        
+
+    def test_include_element(self):
+        sf = StructFile("/test/test.xml")
+        metadata = Mock()
+        metadata.groups = ["group1", "group2"]
+        metadata.hostname = "foo.example.com"
+
+        inc = lambda tag, **attrs: \
+            sf._include_element(lxml.etree.Element(tag, **attrs), metadata)
+
+        self.assertFalse(sf._include_element(lxml.etree.Comment("test"),
+                                             metadata))
+
+        self.assertFalse(inc("Group", name="group3"))
+        self.assertFalse(inc("Group", name="group2", negate="true"))
+        self.assertFalse(inc("Group", name="group2", negate="tRuE"))
+        self.assertTrue(inc("Group", name="group2"))
+        self.assertTrue(inc("Group", name="group2", negate="false"))
+        self.assertTrue(inc("Group", name="group2", negate="faLSe"))
+        self.assertTrue(inc("Group", name="group3", negate="true"))
+        self.assertTrue(inc("Group", name="group3", negate="tRUe"))
+
+        self.assertFalse(inc("Client", name="bogus.example.com"))
+        self.assertFalse(inc("Client", name="foo.example.com", negate="true"))
+        self.assertFalse(inc("Client", name="foo.example.com", negate="tRuE"))
+        self.assertTrue(inc("Client", name="foo.example.com"))
+        self.assertTrue(inc("Client", name="foo.example.com", negate="false"))
+        self.assertTrue(inc("Client", name="foo.example.com", negate="faLSe"))
+        self.assertTrue(inc("Client", name="bogus.example.com", negate="true"))
+        self.assertTrue(inc("Client", name="bogus.example.com", negate="tRUe"))
+
+        self.assertTrue(inc("Other"))
+
+    @patch("Bcfg2.Server.Plugin.StructFile._include_element")
+    def test__match(self, mock_include):
+        sf = StructFile("/test/test.xml")
+        metadata = Mock()
+        
+        (xdata, groups, subgroups, children, subchildren, standalone) = \
+            self._get_test_data()
+
+        mock_include.side_effect = \
+            lambda x, _: (x.tag not in ['Client', 'Group'] or
+                          x.get("include") == "true")
+
+        for i, group in groups.items():
+            actual = sf._match(group, metadata)
+            expected = children[i] + subchildren[i]
+            self.assertEqual(len(actual), len(expected))
+            # easiest way to compare the values is actually to make
+            # them into an XML document and let assertXMLEqual compare
+            # them
+            xactual = lxml.etree.Element("Container")
+            xactual.extend(actual)
+            xexpected = lxml.etree.Element("Container")
+            xexpected.extend(expected)
+            self.assertXMLEqual(xactual, xexpected)
+
+        for el in standalone:
+            self.assertXMLEqual(el, sf._match(el, metadata)[0])
+
+    @patch("Bcfg2.Server.Plugin.StructFile._match")
+    def test_Match(self, mock_match):
+        sf = StructFile("/test/test.xml")
+        metadata = Mock()
+
+        (xdata, groups, subgroups, children, subchildren, standalone) = \
+            self._get_test_data()
+        sf.entries.extend(copy.deepcopy(xdata).getchildren())
+
+        def match_rv(el, _):
+            if el.tag not in ['Client', 'Group']:
+                return [el]
+            elif x.get("include") == "true":
+                return el.getchildren()
+            else:
+                return []
+        mock_match.side_effect = match_rv
+        actual = sf.Match(metadata)
+        expected = reduce(lambda x, y: x + y,
+                          children.values() + subgroups.values())
+        self.assertEqual(len(actual), len(expected))
+        # easiest way to compare the values is actually to make
+        # them into an XML document and let assertXMLEqual compare
+        # them
+        xactual = lxml.etree.Element("Container")
+        xactual.extend(actual)
+        xexpected = lxml.etree.Element("Container")
+        xexpected.extend(expected)
+        self.assertXMLEqual(xactual, xexpected)
+
+    @patch("Bcfg2.Server.Plugin.StructFile._include_element")
+    def test__xml_match(self, mock_include):
+        sf = StructFile("/test/test.xml")
+        metadata = Mock()
+        
+        (xdata, groups, subgroups, children, subchildren, standalone) = \
+            self._get_test_data()
+
+        mock_include.side_effect = \
+            lambda x, _: (x.tag not in ['Client', 'Group'] or
+                          x.get("include") == "true")
+
+        actual = copy.deepcopy(xdata)
+        for el in actual.getchildren():
+            sf._xml_match(el, metadata)
+        expected = lxml.etree.Element(xdata.tag, **xdata.attrib)
+        expected.text = xdata.text
+        expected.extend(reduce(lambda x, y: x + y,
+                               children.values() + subchildren.values()))
+        expected.extend(standalone)
+        self.assertXMLEqual(actual, expected)
+
+    @patch("Bcfg2.Server.Plugin.StructFile._xml_match")
+    def test_Match(self, mock_xml_match):
+        sf = StructFile("/test/test.xml")
+        metadata = Mock()
+
+        (sf.xdata, groups, subgroups, children, subchildren, standalone) = \
+            self._get_test_data()
+
+        sf.XMLMatch(metadata)
+        actual = []
+        for call in mock_xml_match.call_args_list:
+            actual.append(call[0][0])
+            self.assertEqual(call[0][1], metadata)
+        expected = groups.values() + standalone
+        # easiest way to compare the values is actually to make
+        # them into an XML document and let assertXMLEqual compare
+        # them
+        xactual = lxml.etree.Element("Container")
+        xactual.extend(actual)
+        xexpected = lxml.etree.Element("Container")
+        xexpected.extend(expected)
+        self.assertXMLEqual(xactual, xexpected)
