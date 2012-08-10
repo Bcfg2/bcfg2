@@ -21,6 +21,8 @@ except ImportError:
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Probes import *
+from ..TestPlugin import TestEntrySet, TestProbing, TestConnector, \
+    TestDatabaseBacked
 
 datastore = "/"
 
@@ -100,7 +102,7 @@ class TestProbeData(unittest.TestCase):
         self.assertItemsEqual(test_data, data.yaml)
         
 
-class TestProbeSet(unittest.TestCase):
+class TestProbeSet(TestEntrySet):
     def get_probeset_object(self, fam=None):
         if fam is None:
             fam = Mock()
@@ -196,7 +198,7 @@ group-specific"""
                 assert False, "Strange probe found in get_probe_data() return"
 
 
-class TestProbes(unittest.TestCase):
+class TestProbes(TestProbing, TestConnector, TestDatabaseBacked):
     def get_test_probedata(self):
         test_xdata = lxml.etree.Element("test")
         lxml.etree.SubElement(test_xdata, "test", foo="foo")

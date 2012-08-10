@@ -20,10 +20,11 @@ try:
 except ImportError:
     has_django = False
 
-
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Metadata import *
+from ..TestPlugin import TestXMLFileBacked, TestMetadata, TestStatistics, \
+    TestDatabaseBacked
 
 XI_NAMESPACE = "http://www.w3.org/2001/XInclude"
 XI = "{%s}" % XI_NAMESPACE
@@ -194,7 +195,7 @@ class TestClientVersions(unittest.TestCase):
         self.assertIsNone(v[new])
 
 
-class TestXMLMetadataConfig(unittest.TestCase):
+class TestXMLMetadataConfig(TestXMLFileBacked):
     groups_test_tree = groups_test_tree
     clients_test_tree = clients_test_tree
 
@@ -227,14 +228,14 @@ class TestXMLMetadataConfig(unittest.TestCase):
         fpath = os.path.join(self.metadata.data, fname)
 
         config.extras = []
-        config.add_monitor(fpath, fname)
+        config.add_monitor(fpath)
         self.assertFalse(core.fam.AddMonitor.called)
-        self.assertEqual(config.extras, [fname])
+        self.assertEqual(config.extras, [fpath])
 
         config = self.get_config_object(core=core, watch_clients=True)
-        config.add_monitor(fpath, fname)
+        config.add_monitor(fpath)
         core.fam.AddMonitor.assert_called_with(fpath, config.metadata)
-        self.assertItemsEqual(config.extras, [fname])
+        self.assertItemsEqual(config.extras, [fpath])
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.add_monitor")
     @patch("lxml.etree.parse")
@@ -333,7 +334,8 @@ class TestXMLMetadataConfig(unittest.TestCase):
 
         self.assertEqual(config.find_xml_for_xpath("//boguselement"), dict())
 
-        config.extras = ["foo.xml", "bar.xml", "clients.xml"]
+        config.extras = [os.path.join(self.metadata.data, p)
+                         for p in ["foo.xml", "bar.xml", "clients.xml"]]
 
         def parse_side_effect(fname, parser=Bcfg2.Server.XMLParser):
             if fname == os.path.join(self.metadata.data, "clients.xml"):
@@ -367,7 +369,7 @@ class TestClientMetadata(unittest.TestCase):
         self.assertFalse(cm.inGroup("group3"))
 
 
-class TestMetadata(unittest.TestCase):
+class TestMetadata(TestMetadata, TestStatistics, TestDatabaseBacked):
     groups_test_tree = groups_test_tree
     clients_test_tree = clients_test_tree
     use_db = False

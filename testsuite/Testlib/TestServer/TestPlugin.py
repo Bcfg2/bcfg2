@@ -1043,3 +1043,8 @@ class TestStructFile(TestXMLFileBacked):
         xexpected = lxml.etree.Element("Container")
         xexpected.extend(expected)
         self.assertXMLEqual(xactual, xexpected)
+
+
+
+class TestEntrySet(unittest.TestCase):
+    pass
