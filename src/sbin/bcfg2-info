@@ -155,7 +155,7 @@ def load_interpreters():
         import IPython
         if hasattr(IPython, "Shell"):
             interpreters["ipython"] = lambda v: \
-                IPython.Shell.IPShell(argv=[], user_ns=v).mainloop
+                IPython.Shell.IPShell(argv=[], user_ns=v).mainloop()
             best = "ipython"
         elif hasattr(IPython, "embed"):
             interpreters["ipython"] = lambda v: IPython.embed(user_ns=v)
