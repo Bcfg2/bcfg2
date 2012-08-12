@@ -1,11 +1,12 @@
 """Option parsing library for utilities."""
 
-import re
-import os
-import sys
 import copy
-import shlex
 import getopt
+import inspect
+import os
+import re
+import shlex
+import sys
 import Bcfg2.Client.Tools
 # Compatibility imports
 from Bcfg2.Bcfg2Py3k import ConfigParser
@@ -160,8 +161,14 @@ class OptionSet(dict):
         self.cfp = DefaultConfigParser()
         if (len(self.cfp.read(self.cfile)) == 0 and
             ('quiet' not in kwargs or not kwargs['quiet'])):
-            print("Warning! Unable to read specified configuration file: %s" %
-                  self.cfile)
+            # suppress warnings if called from bcfg2-admin init
+            caller = inspect.stack()[-1][1].split('/')[-1]
+            if caller == 'bcfg2-admin' and len(sys.argv) > 1:
+                if sys.argv[1] == 'init':
+                    return
+            else:
+                print("Warning! Unable to read specified configuration file: %s" %
+                      self.cfile)
 
     def buildGetopt(self):
         return ''.join([opt.buildGetopt() for opt in list(self.values())])
