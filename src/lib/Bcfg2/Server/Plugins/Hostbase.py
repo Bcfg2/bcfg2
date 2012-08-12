@@ -3,18 +3,23 @@ This file provides the Hostbase plugin.
 It manages dns/dhcp/nis host information
 """
 
-import os
-os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.Server.Hostbase.settings'
 from lxml.etree import Element, SubElement
+import os
+import re
+from time import strftime
+os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.Server.Hostbase.settings'
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugin import PluginExecutionError, PluginInitError
-from time import strftime
-from sets import Set
 from django.template import Context, loader
 from django.db import connection
-import re
 # Compatibility imports
 from Bcfg2.Bcfg2Py3k import StringIO
+
+try:
+    set
+except NameError:
+    # deprecated since python 2.6
+    from sets import Set as set
 
 
 class Hostbase(Bcfg2.Server.Plugin.Plugin,
@@ -383,7 +388,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
         """)
         hostbase = cursor.fetchall()
         domains = [host[0].split(".", 1)[1] for host in hostbase]
-        domains_set = Set(domains)
+        domains_set = set(domains)
         domain_data = [(domain, domains.count(domain)) for domain in domains_set]
         domain_data.sort()
 
@@ -393,7 +398,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
         ips = cursor.fetchall()
         three_octets = [ip[0].rstrip('0123456789').rstrip('.') \
                         for ip in ips]
-        three_octets_set = Set(three_octets)
+        three_octets_set = set(three_octets)
         three_octets_data = [(octet, three_octets.count(octet)) \
                              for octet in three_octets_set]
         three_octets_data.sort()
@@ -412,7 +417,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
             append_data.append((three_octet, tuple(tosort)))
 
         two_octets = [ip.rstrip('0123456789').rstrip('.') for ip in three_octets]
-        two_octets_set = Set(two_octets)
+        two_octets_set = set(two_octets)
         two_octets_data = [(octet, two_octets.count(octet))
                            for octet in two_octets_set]
         two_octets_data.sort()
@@ -446,7 +451,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                 else:
                     if appenddata[0] == ip[0]:
                         simple = False
-                    ips.append((appenddata[2], appenddata[0], Set(namelist),
+                    ips.append((appenddata[2], appenddata[0], set(namelist),
                                 cnamelist, simple, appenddata[1]))
                     appenddata = ip
                     simple = True
@@ -455,7 +460,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                     if ip[4]:
                         cnamelist.append(ip[4].split('.', 1)[0])
                         simple = False
-            ips.append((appenddata[2], appenddata[0], Set(namelist),
+            ips.append((appenddata[2], appenddata[0], set(namelist),
                         cnamelist, simple, appenddata[1]))
             context = Context({
                 'subnet': subnet[0],

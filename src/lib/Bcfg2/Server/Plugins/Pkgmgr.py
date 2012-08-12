@@ -11,6 +11,7 @@ import Bcfg2.Server.Lint
 try:
     set
 except NameError:
+    # deprecated since python 2.6
     from sets import Set as set
 
 logger = logging.getLogger('Bcfg2.Plugins.Pkgmgr')
