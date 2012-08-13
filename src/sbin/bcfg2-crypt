@@ -7,7 +7,13 @@ import logging
 import lxml.etree
 import Bcfg2.Logger
 import Bcfg2.Options
-import Bcfg2.Encryption
+try:
+    import Bcfg2.Encryption
+except ImportError:
+    err = sys.exc_info()[1]
+    print("Import failed '%s'. Is M2Crypto installed?" %
+          err)
+    raise SystemExit(1)
 
 LOGGER = None
 
