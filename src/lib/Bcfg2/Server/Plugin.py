@@ -762,26 +762,28 @@ class StructFile(XMLFileBacked):
         return rv
 
 
-class INode:
+class INode(object):
     """
     LNodes provide lists of things available at a particular
     group intersection.
     """
-    raw = {'Client': "lambda m, e:'%(name)s' == m.hostname and predicate(m, e)",
-           'Group': "lambda m, e:'%(name)s' in m.groups and predicate(m, e)"}
-    nraw = {'Client': "lambda m, e:'%(name)s' != m.hostname and predicate(m, e)",
-            'Group': "lambda m, e:'%(name)s' not in m.groups and predicate(m, e)"}
+    raw = dict(
+        Client="lambda m, e:'%(name)s' == m.hostname and predicate(m, e)",
+        Group="lambda m, e:'%(name)s' in m.groups and predicate(m, e)")
+    nraw = dict(
+        Client="lambda m, e:'%(name)s' != m.hostname and predicate(m, e)",
+        Group="lambda m, e:'%(name)s' not in m.groups and predicate(m, e)")
     containers = ['Group', 'Client']
     ignore = []
 
     def __init__(self, data, idict, parent=None):
         self.data = data
         self.contents = {}
-        if parent == None:
-            self.predicate = lambda m, d: True
+        if parent is None:
+            self.predicate = lambda m, e: True
         else:
             predicate = parent.predicate
-            if data.get('negate', 'false') in ['true', 'True']:
+            if data.get('negate', 'false').lower() == 'true':
                 psrc = self.nraw
             else:
                 psrc = self.raw
@@ -790,20 +792,23 @@ class INode:
                                       {'name': data.get('name')},
                                       {'predicate': predicate})
             else:
-                raise Exception
-        mytype = self.__class__
+                raise PluginExecutionError("Unknown tag: %s" % data.tag)
         self.children = []
+        self._load_children(data, idict)
+
+    def _load_children(self, data, idict):
         for item in data.getchildren():
             if item.tag in self.ignore:
                 continue
             elif item.tag in self.containers:
-                self.children.append(mytype(item, idict, self))
+                self.children.append(self.__class__(item, idict, self))
             else:
                 try:
                     self.contents[item.tag][item.get('name')] = \
                         dict(item.attrib)
                 except KeyError:
-                    self.contents[item.tag] = {item.get('name'): dict(item.attrib)}
+                    self.contents[item.tag] = \
+                        {item.get('name'): dict(item.attrib)}
                 if item.text:
                     self.contents[item.tag][item.get('name')]['__text__'] = \
                         item.text
@@ -984,7 +989,6 @@ class SpecificityError(Exception):
 
 
 class Specificity:
-
     def __init__(self, all=False, group=False, hostname=False, prio=0, delta=False):
         self.hostname = hostname
         self.all = all
