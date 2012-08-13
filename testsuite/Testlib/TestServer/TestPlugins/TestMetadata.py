@@ -6,28 +6,12 @@ import socket
 import unittest
 import lxml.etree
 from mock import Mock, patch
-
-try:
-    from django.core.management import setup_environ
-    has_django = True
-
-    os.environ['DJANGO_SETTINGS_MODULE'] = "Bcfg2.settings"
-
-    import Bcfg2.settings
-    Bcfg2.settings.DATABASE_NAME = \
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.sqlite")
-    Bcfg2.settings.DATABASES['default']['NAME'] = Bcfg2.settings.DATABASE_NAME
-except ImportError:
-    has_django = False
-
+from ....common import *
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Metadata import *
 from ..TestPlugin import TestXMLFileBacked, TestMetadata, TestStatistics, \
     TestDatabaseBacked
-
-XI_NAMESPACE = "http://www.w3.org/2001/XInclude"
-XI = "{%s}" % XI_NAMESPACE
 
 clients_test_tree = lxml.etree.XML('''
 <Clients>
@@ -89,23 +73,6 @@ groups_test_tree = lxml.etree.XML('''
   </Group>
 </Groups>''').getroottree()
 
-datastore = "/"
-
-def test_syncdb():
-    if not has_django:
-        raise unittest.SkipTest("Django not found, skipping")
-
-    # create the test database
-    setup_environ(Bcfg2.settings)
-    from django.core.management.commands import syncdb
-    cmd = syncdb.Command()
-    cmd.handle_noargs(interactive=False)
-    assert os.path.exists(Bcfg2.settings.DATABASE_NAME)
-
-    # ensure that we a) can connect to the database; b) start with a
-    # clean database
-    MetadataClientModel.objects.all().delete()
-    assert list(MetadataClientModel.objects.all()) == []
 
 def get_metadata_object(core=None, watch_clients=False, use_db=False):
     if core is None:
@@ -115,7 +82,11 @@ def get_metadata_object(core=None, watch_clients=False, use_db=False):
     return Metadata(core, datastore, watch_clients=watch_clients)
 
 
-class TestClientVersions(unittest.TestCase):
+class TestMetadataDB(DBModelTestCase):
+    models = [MetadataClientModel]
+
+
+class TestClientVersions(Bcfg2TestCase):
     test_clients = dict(client1="1.2.0",
                         client2="1.2.2",
                         client3="1.3.0pre1",
@@ -124,7 +95,7 @@ class TestClientVersions(unittest.TestCase):
                         client6=None)
 
     def setUp(self):
-        test_syncdb()
+        syncdb(TestMetadataDB)
         for client, version in self.test_clients.items():
             MetadataClientModel(hostname=client, version=version).save()
 
@@ -361,7 +332,7 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
         mock_load_xml.assert_called_with()
 
 
-class TestClientMetadata(unittest.TestCase):
+class TestClientMetadata(Bcfg2TestCase):
     def test_inGroup(self):
         cm = ClientMetadata("client1", "group1", ["group1", "group2"],
                             ["bundle1"], [], [], [], None, None, None, None)
@@ -631,7 +602,8 @@ class TestMetadata(TestMetadata, TestStatistics, TestDatabaseBacked):
     def load_clients_data(self, metadata=None, xdata=None):
         if metadata is None:
             metadata = self.get_metadata_object()
-        metadata.clients_xml.data = xdata or copy.deepcopy(self.clients_test_tree)
+        metadata.clients_xml.data = \
+            xdata or copy.deepcopy(self.clients_test_tree)
         metadata.clients_xml.basedata = copy.copy(metadata.clients_xml.data)
         evt = Mock()
         evt.filename = os.path.join(datastore, "Metadata", "clients.xml")
@@ -850,48 +822,61 @@ class TestMetadata(TestMetadata, TestStatistics, TestDatabaseBacked):
 
         # test address, password
         metadata.get_initial_metadata("client1")
-        self.assertEqual(mock_clientmetadata.call_args[0][:9],
-                         ("client1", "group1", set(["group1"]), set(), set(),
-                          set(["1.2.3.1"]), dict(category1='group1'), None,
-                          'password2'))
+        mock_clientmetadata.assert_called_with("client1", "group1",
+                                               set(["group1"]), set(), set(),
+                                               set(["1.2.3.1"]),
+                                               dict(category1='group1'), None,
+                                               'password2', None,
+                                               metadata.query)
 
         # test address, bundles, category suppression
         metadata.get_initial_metadata("client2")
-        self.assertEqual(mock_clientmetadata.call_args[0][:9],
-                         ("client2", "group2", set(["group2"]),
-                          set(["bundle1", "bundle2"]), set(),
-                          set(["1.2.3.2"]), dict(category1="group2"),
-                          None, None))
+        mock_clientmetadata.assert_called_with("client2", "group2",
+                                               set(["group2"]),
+                                               set(["bundle1", "bundle2"]),
+                                               set(), set(["1.2.3.2"]),
+                                               dict(category1="group2"),
+                                               None, None, None,
+                                               metadata.query)
 
         # test aliases, address, uuid, password
         imd = metadata.get_initial_metadata("alias1")
-        self.assertEqual(mock_clientmetadata.call_args[0][:9],
-                         ("client3", "group1", set(["group1"]), set(),
-                          set(['alias1']), set(["1.2.3.3"]),
-                          dict(category1="group1"), 'uuid1', 'password2'))
+        mock_clientmetadata.assert_called_with("client3", "group1",
+                                               set(["group1"]), set(),
+                                               set(['alias1']),
+                                               set(["1.2.3.3"]),
+                                               dict(category1="group1"),
+                                               'uuid1', 'password2', None,
+                                               metadata.query)
 
         # test new client creation
         new1 = self.get_nonexistent_client(metadata)
         imd = metadata.get_initial_metadata(new1)
-        self.assertEqual(mock_clientmetadata.call_args[0][:9],
-                         (new1, "group1", set(["group1"]), set(),
-                          set(), set(), dict(category1="group1"), None, None))
+        mock_clientmetadata.assert_called_with(new1, "group1", set(["group1"]),
+                                               set(), set(), set(),
+                                               dict(category1="group1"), None,
+                                               None, None, metadata.query)
 
         # test nested groups, address, per-client groups
         imd = metadata.get_initial_metadata("client8")
-        self.assertEqual(mock_clientmetadata.call_args[0][:9],
-                         ("client8", "group1",
-                          set(["group1", "group8", "group9", "group10"]), set(),
-                          set(), set(["1.2.3.5"]), dict(category1="group1"),
-                          None, None))
+        mock_clientmetadata.assert_called_with("client8", "group1",
+                                               set(["group1", "group8",
+                                                    "group9", "group10"]),
+                                               set(),
+                                               set(), set(["1.2.3.5"]),
+                                               dict(category1="group1"),
+                                               None, None, None, metadata.query)
 
         # test setting per-client groups, group negation, nested groups
         imd = metadata.get_initial_metadata("client9")
-        self.assertEqual(mock_clientmetadata.call_args[0][:9],
-                         ("client9", "group2",
-                          set(["group2", "group8", "group11"]),
-                          set(["bundle1", "bundle2"]), set(), set(),
-                          dict(category1="group2"), None, "password3"))
+        mock_clientmetadata.assert_called_with("client9", "group2",
+                                               set(["group2", "group8",
+                                                    "group11"]),
+                                               set(["bundle1", "bundle2"]),
+                                               set(), set(),
+                                               dict(category1="group2"), None,
+                                               "password3", None,
+                                               metadata.query)
 
         # test new client with no default profile
         metadata.default = None
@@ -1120,7 +1105,7 @@ class TestMetadataBase(TestMetadata):
 
     def __init__(self, *args, **kwargs):
         TestMetadata.__init__(self, *args, **kwargs)
-        test_syncdb()
+        syncdb(TestMetadataDB)
 
     def setUp(self):
         if not has_django:
@@ -1251,38 +1236,46 @@ class TestMetadata_NoClientsXML(TestMetadataBase):
 
         # test basic client metadata
         metadata.get_initial_metadata("client1")
-        self.assertEqual(mock_clientmetadata.call_args[0][:9],
-                         ("client1", "group1", set(["group1"]), set(), set(),
-                          set(), dict(category1='group1'), None, None))
+        mock_clientmetadata.assert_called_with("client1", "group1",
+                                               set(["group1"]), set(), set(),
+                                               set(), dict(category1='group1'),
+                                               None, None, None, metadata.query)
 
         # test bundles, category suppression
         metadata.get_initial_metadata("client2")
-        self.assertEqual(mock_clientmetadata.call_args[0][:9],
-                         ("client2", "group2", set(["group2"]),
-                          set(["bundle1", "bundle2"]), set(), set(),
-                          dict(category1="group2"), None, None))
+        mock_clientmetadata.assert_called_with("client2", "group2",
+                                               set(["group2"]),
+                                               set(["bundle1", "bundle2"]),
+                                               set(), set(),
+                                               dict(category1="group2"), None,
+                                               None, None, metadata.query)
 
         # test new client creation
         new1 = self.get_nonexistent_client(metadata)
         imd = metadata.get_initial_metadata(new1)
-        self.assertEqual(mock_clientmetadata.call_args[0][:9],
-                         (new1, "group1", set(["group1"]), set(), set(), set(),
-                          dict(category1="group1"), None, None))
+        mock_clientmetadata.assert_called_with(new1, "group1", set(["group1"]),
+                                               set(), set(), set(),
+                                               dict(category1="group1"), None,
+                                               None, None, metadata.query)
 
         # test nested groups, per-client groups
         imd = metadata.get_initial_metadata("client8")
-        self.assertEqual(mock_clientmetadata.call_args[0][:9],
-                         ("client8", "group1",
-                          set(["group1", "group8", "group9", "group10"]), set(),
-                          set(), set(), dict(category1="group1"), None, None))
+        mock_clientmetadata.assert_called_with("client8", "group1",
+                                               set(["group1", "group8",
+                                                    "group9", "group10"]),
+                                               set(), set(), set(),
+                                               dict(category1="group1"), None,
+                                               None, None, metadata.query)
 
         # test per-client groups, group negation, nested groups
         imd = metadata.get_initial_metadata("client9")
-        self.assertEqual(mock_clientmetadata.call_args[0][:9],
-                         ("client9", "group2",
-                          set(["group2", "group8", "group11"]),
-                          set(["bundle1", "bundle2"]), set(), set(),
-                          dict(category1="group2"), None, None))
+        mock_clientmetadata.assert_called_with("client9", "group2",
+                                               set(["group2", "group8",
+                                                    "group11"]),
+                                               set(["bundle1", "bundle2"]),
+                                               set(), set(),
+                                               dict(category1="group2"), None,
+                                               None, None, metadata.query)
 
         # test exception on new client with no default profile
         metadata.default = None

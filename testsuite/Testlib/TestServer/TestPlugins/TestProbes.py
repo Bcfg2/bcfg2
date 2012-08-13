@@ -4,54 +4,25 @@ import time
 import unittest
 import lxml.etree
 from mock import Mock, patch
-
-try:
-    from django.core.management import setup_environ
-    has_django = True
-
-    os.environ['DJANGO_SETTINGS_MODULE'] = "Bcfg2.settings"
-
-    import Bcfg2.settings
-    Bcfg2.settings.DATABASE_NAME = \
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.sqlite")
-    Bcfg2.settings.DATABASES['default']['NAME'] = Bcfg2.settings.DATABASE_NAME
-except ImportError:
-    has_django = False
-
+from ....common import *
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Probes import *
 from ..TestPlugin import TestEntrySet, TestProbing, TestConnector, \
     TestDatabaseBacked
 
-datastore = "/"
-
 # test data for JSON and YAML tests
 test_data = dict(a=1, b=[1, 2, 3], c="test")
-
-def test_syncdb():
-    if not has_django:
-        raise unittest.SkipTest("Django not found, skipping")
-
-    # create the test database
-    setup_environ(Bcfg2.settings)
-    from django.core.management.commands import syncdb
-    cmd = syncdb.Command()
-    cmd.handle_noargs(interactive=False)
-    assert os.path.exists(Bcfg2.settings.DATABASE_NAME)
-
-    # ensure that we a) can connect to the database; b) start with a
-    # clean database
-    ProbesDataModel.objects.all().delete()
-    ProbesGroupsModel.objects.all().delete()
-    assert list(ProbesDataModel.objects.all()) == []
-
 
 class FakeList(list):
     sort = Mock()
 
 
-class TestClientProbeDataSet(unittest.TestCase):
+class TestProbesDB(DBModelTestCase):
+    models = [ProbesGroupsModel, ProbesDataModel]
+    
+
+class TestClientProbeDataSet(Bcfg2TestCase):
     def test__init(self):
         ds = ClientProbeDataSet()
         self.assertLessEqual(ds.timestamp, time.time())
@@ -62,7 +33,7 @@ class TestClientProbeDataSet(unittest.TestCase):
         self.assertEqual(ds.timestamp, 123)
         self.assertNotIn("timestamp", ds)
 
-class TestProbeData(unittest.TestCase):
+class TestProbeData(Bcfg2TestCase):
     def test_str(self):
         # a value that is not valid XML, JSON, or YAML
         val = "'test"
@@ -251,19 +222,20 @@ text
                                                             "use_database",
                                                             default=False)
 
+    @unittest.skipUnless(has_django, "Django not found, skipping")
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_xml", Mock())
-    def test_write_data(self):
+    def test_write_data_xml(self):
         probes = self.get_probes_object(use_db=False)
         probes.write_data("test")
         probes._write_data_xml.assert_called_with("test")
         self.assertFalse(probes._write_data_db.called)
 
-        if not has_django:
-            self.skipTest("Django not found, skipping")
+    @unittest.skipUnless(has_django, "Django not found, skipping")
+    @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_db", Mock())
+    @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_xml", Mock())
+    def test_write_data_db(self):
         probes = self.get_probes_object(use_db=True)
-        probes._write_data_xml.reset_mock()
-        probes._write_data_db.reset_mock()
         probes.write_data("test")
         probes._write_data_db.assert_called_with("test")
         self.assertFalse(probes._write_data_xml.called)
@@ -324,10 +296,9 @@ text
             self.assertIsNotNone(jdata.get("value"))
             self.assertItemsEqual(test_data, json.loads(jdata.get("value")))
 
+    @unittest.skipUnless(has_django, "Django not found, skipping")
     def test__write_data_db(self):
-        if not has_django:
-            self.skipTest("Django not found, skipping")
-        test_syncdb()
+        syncdb(TestProbesDB)
         probes = self.get_probes_object(use_db=True)
         probes.probedata = self.get_test_probedata()
         probes.cgroups = self.get_test_cgroups()
@@ -377,23 +348,20 @@ text
         pgroups = ProbesGroupsModel.objects.filter(hostname=cname).all()
         self.assertEqual(len(pgroups), len(probes.cgroups[cname]))
 
+    @unittest.skipUnless(has_django, "Django not found, skipping")
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_xml", Mock())
-    def test_load_data(self):
+    def test_load_data_xml(self):
         probes = self.get_probes_object(use_db=False)
-        probes._load_data_xml.reset_mock()
-        probes._load_data_db.reset_mock()
-        
         probes.load_data()
         probes._load_data_xml.assert_any_call()
         self.assertFalse(probes._load_data_db.called)
 
-        if not has_django:
-            self.skipTest("Django not found, skipping")
-
+    @unittest.skipUnless(has_django, "Django not found, skipping")
+    @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_db", Mock())
+    @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_xml", Mock())
+    def test_load_data_db(self):
         probes = self.get_probes_object(use_db=True)
-        probes._load_data_xml.reset_mock()
-        probes._load_data_db.reset_mock()
         probes.load_data()
         probes._load_data_db.assert_any_call()
         self.assertFalse(probes._load_data_xml.called)
@@ -421,10 +389,9 @@ text
         self.assertItemsEqual(probes.probedata, self.get_test_probedata())
         self.assertItemsEqual(probes.cgroups, self.get_test_cgroups())
 
+    @unittest.skipUnless(has_django, "Django not found, skipping")
     def test__load_data_db(self):
-        if not has_django:
-            self.skipTest("Django not found, skipping")
-        test_syncdb()
+        syncdb(TestProbesDB)
         probes = self.get_probes_object(use_db=True)
         probes.probedata = self.get_test_probedata()
         probes.cgroups = self.get_test_cgroups()
@@ -468,8 +435,8 @@ text
         probes.ReceiveData(client, datalist)
         
         self.assertItemsEqual(mock_ReceiveDataItem.call_args_list,
-                              [((client, "a"), {}), ((client, "b"), {}),
-                               ((client, "c"), {})])
+                              [call(client, "a"), call(client, "b"),
+                               call(client, "c")])
         mock_write_data.assert_called_with(client)
 
     def test_ReceiveDataItem(self):

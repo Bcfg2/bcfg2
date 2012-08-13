@@ -6,32 +6,7 @@ import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugin import *
 import Bcfg2.Server
-
-datastore = '/'
-
-def call(*args, **kwargs):
-    """ the Mock call object is a fairly recent addition, but it's
-    very very useful, so we create our own function to create Mock
-    calls """
-    return (args, kwargs)
-
-class Bcfg2TestCase(unittest.TestCase):
-    def assertXMLEqual(self, el1, el2, msg=None):
-        self.assertEqual(el1.tag, el2.tag, msg=msg)
-        self.assertEqual(el1.text, el2.text, msg=msg)
-        self.assertItemsEqual(el1.attrib, el2.attrib, msg=msg)
-        self.assertEqual(len(el1.getchildren()),
-                         len(el2.getchildren()))
-        for child1 in el1.getchildren():
-            cname = child1.get("name")
-            self.assertIsNotNone(cname,
-                                 msg="Element %s has no 'name' attribute" %
-                                 child1.tag)
-            children2 = el2.xpath("*[@name='%s']" % cname)
-            self.assertEqual(len(children2), 1,
-                             msg="More than one element named %s" % cname)
-            self.assertXMLEqual(child1, children2[0], msg=msg)        
-
+from ...common import *
 
 class FakeElementTree(lxml.etree._ElementTree):
     xinclude = Mock()
