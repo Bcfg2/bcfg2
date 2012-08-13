@@ -19,8 +19,11 @@ process consists of the following steps.
 
 ## OPTIONS
 
+  * `-B`:
+    Configure everything except the given bundle(s).
+
   * `-C` <configfile>:
-    Specify alternate bcfg2.conf location
+    Specify alternate bcfg2.conf location.
 
   * `-D` [<driver1>,<driver2>]:
     Specify a set of Bcfg2 tool drivers.
@@ -36,7 +39,7 @@ process consists of the following steps.
     each change.
 
   * `-O`:
-    Omit lock check
+    Omit lock check.
 
   * `-P`:
     Run bcfg2 in paranoid mode. Diffs will be logged for configuration
@@ -49,6 +52,9 @@ process consists of the following steps.
   * `-S` <https://server:port>:
     Manually specify the server location (as opposed to using the value
     in bcfg2.conf).
+
+  * `-Z`:
+    Do not configure independent entries.
 
   * `-b` [_bundle1:bundle2_]:
     Run bcfg2 against one or multiple bundles in the configuration.
@@ -120,7 +126,7 @@ process consists of the following steps.
     Set bcfg2 interaction level for services. Default behavior is to
     modify all services affected by reconfiguration. build mode attempts
     to stop all services started. disabled suppresses all attempts to
-    modify services
+    modify services.
 
   * `--ssl-cert=`<ssl cert>:
     Specifiy the path to the SSL certificate.

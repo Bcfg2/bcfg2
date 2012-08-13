@@ -1,5 +1,5 @@
 .
-.TH "BCFG2" "1" "June 2012" "" ""
+.TH "BCFG2" "1" "August 2012" "" ""
 .
 .SH "NAME"
 \fBbcfg2\fR \- Bcfg2 client tool
@@ -33,8 +33,12 @@ Upload statistics about the Bcfg2 execution and client state
 .SH "OPTIONS"
 .
 .TP
+\fB\-B\fR
+Configure everything except the given bundle(s)\.
+.
+.TP
 \fB\-C\fR \fIconfigfile\fR
-Specify alternate bcfg2\.conf location
+Specify alternate bcfg2\.conf location\.
 .
 .TP
 \fB\-D\fR [\fIdriver1\fR,\fIdriver2\fR]
@@ -53,7 +57,7 @@ Run bcfg2 in interactive mode\. The user will be prompted before each change\.
 .
 .TP
 \fB\-O\fR
-Omit lock check
+Omit lock check\.
 .
 .TP
 \fB\-P\fR
@@ -66,6 +70,10 @@ Specify the number of times that the client will attempt to retry network commun
 .TP
 \fB\-S\fR \fIhttps://server:port\fR
 Manually specify the server location (as opposed to using the value in bcfg2\.conf)\.
+.
+.TP
+\fB\-Z\fR
+Do not configure independent entries\.
 .
 .TP
 \fB\-b\fR [\fIbundle1:bundle2\fR]
@@ -129,7 +137,7 @@ Cause bcfg2 to remove extra configuration elements it detects\. Mode is one of a
 .
 .TP
 \fB\-s\fR \fIservice mode\fR
-Set bcfg2 interaction level for services\. Default behavior is to modify all services affected by reconfiguration\. build mode attempts to stop all services started\. disabled suppresses all attempts to modify services
+Set bcfg2 interaction level for services\. Default behavior is to modify all services affected by reconfiguration\. build mode attempts to stop all services started\. disabled suppresses all attempts to modify services\.
 .
 .TP
 \fB\-\-ssl\-cert=\fR\fIssl cert\fR
