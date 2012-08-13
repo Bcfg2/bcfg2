@@ -1,0 +1,83 @@
+.
+.TH "BCFG2\-CRYPT" "8" "August 2012" "" ""
+.
+.SH "NAME"
+\fBbcfg2\-crypt\fR \- Bcfg2 encryption and decryption utility
+.
+.SH "SYNOPSIS"
+\fBbcfg2\-crypt\fR [\fI\-C configfile\fR] [\-\-decrypt|\-\-encrypt] [\-\-cfg|\-\-properties] [\-\-remove] [\-\-xpath \fIxpath\fR] [\-p \fIpassphrase\-or\-name\fR] [\-v] \fIfilename\fR [\fIfilename\fR\.\.\.]
+.
+.SH "DESCRIPTION"
+\fBbcfg2\-crypt\fR performs encryption and decryption of Cfg and Properties files\. It\'s often sufficient to run \fBbcfg2\-crypt\fR with only the name of the file you wish to encrypt or decrypt; it can usually figure out what to do\.
+.
+.SH "OPTIONS"
+.
+.TP
+\fB\-C\fR \fIconfigfile\fR
+Specify alternate bcfg2\.conf location
+.
+.TP
+\fB\-\-decrypt\fR, \fB\-\-encrypt\fR
+Specify which operation you\'d like to perform\. \fBbcfg2\-crypt\fR can usually determine which is necessary based on the contents of each file\.
+.
+.TP
+\fB\-\-cfg\fR
+Tell \fBbcfg2\-crypt\fR that an XML file should be encrypted in its entirety rather than element\-by\-element\. This is only necessary if the file is an XML file whose name ends with \fB\.xml\fR and whose top\-level tag is \fB<Properties>\fR\. See \fIMODES\fR below for details\.
+.
+.TP
+\fB\-\-properties\fR
+Tell \fBbcfg2\-crypt\fR to process a file as an XML Properties file, and encrypt the text of each element separately\. This is necessary if, for example, you\'ve used a different top\-level tag than \fB<Properties>\fR in your Properties files\. See \fIMODES\fR below for details\.
+.
+.TP
+\fB\-\-remove\fR
+Remove the plaintext file after it has been encrypted\. Only meaningful for Cfg files\.
+.
+.TP
+\fB\-\-xpath <xpath>\fR
+Encrypt the character content of all elements that match the specified XPath expression\. The default is \fB*[@encrypted]\fR or \fB*\fR; see \fIMODES\fR below for more details\. Only meaningful for Properties files\.
+.
+.TP
+\fB\-p <passphrase>\fR
+Specify the name of a passphrase specified in the \fB[encryption]\fR section of \fBbcfg2\.conf\fR\. See \fISELECTING PASSPHRASE\fR below for more details\.
+.
+.TP
+\fB\-v\fR
+Be verbose\.
+.
+.TP
+\fB\-h\fR
+Display help and exit\.
+.
+.SH "MODES"
+\fBbcfg2\-crypt\fR can encrypt Cfg files or Properties files; they are handled very differently\.
+.
+.TP
+Cfg
+When \fBbcfg2\-crypt\fR is used on a Cfg file, the entire file is encrypted\. This is the default behavior on files that are not XML, or that are XML but whose top\-level tag is not \fB<Properties>\fR\. This can be enforced by use of the \fB\-\-cfg\fR option\.
+.
+.TP
+Properties
+When \fBbcfg2\-crypt\fR is used on a Properties file, it encrypts the character content of elements matching the XPath expression given by \fB\-\-xpath\fR\. By default the expression is \fB*[@encrypted]\fR, which matches all elements with an \fBencrypted\fR attribute\. If you are encrypting a file and that expression doesn\'t match any elements, then the default is \fB*\fR, which matches everything\. When \fBbcfg2\-crypt\fR encrypts the character content of an element, it also adds the \fBencrypted\fR attribute, set to the name of the passphrase used to encrypt that element\. When it decrypts an element it does not remove \fBencrypted\fR, though; this lets you easily and efficiently run \fBbcfg2\-crypt\fR against a single Properties file to encrypt and decrypt it without needing to specify a long list of options\. See the online Bcfg2 docs on Properties files for more information on how this works\.
+.
+.SH "SELECTING PASSPHRASE"
+The passphrase used to encrypt or decrypt a file is discovered in the following order:
+.
+.IP "\(bu" 4
+First, the passphrase given on the command line using \fB\-p\fR is used\.
+.
+.IP "\(bu" 4
+Next, if exactly one passphrase is specified in \fBbcfg2\.conf\fR, it will be used\.
+.
+.IP "\(bu" 4
+Next, if operating in Properties mode, \fBbcfg2\-crypt\fR will attempt to read the name of the passphrase from the encrypted elements\.
+.
+.IP "\(bu" 4
+Next, if decrypting, all passphrases will be tried sequentially\.
+.
+.IP "\(bu" 4
+If no passphrase has been determined at this point, an error is produced and the file being encrypted or decrypted is skipped\.
+.
+.IP "" 0
+.
+.SH "SEE ALSO"
+bcfg2\-server(8)
