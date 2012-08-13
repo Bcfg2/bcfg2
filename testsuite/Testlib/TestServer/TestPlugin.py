@@ -443,6 +443,7 @@ class TestFileBacked(Bcfg2TestCase):
 
 
 class TestDirectoryBacked(Bcfg2TestCase):
+    test_obj = DirectoryBacked
     testpaths = {1: '',
                  2: '/foo',
                  3: '/foo/bar',
@@ -451,15 +452,20 @@ class TestDirectoryBacked(Bcfg2TestCase):
                  6: 'xyzzy/',
                  7: 'xyzzy/plugh/'}
 
-    @patch("Bcfg2.Server.Plugin.DirectoryBacked.add_directory_monitor", Mock())
+    def test_child_interface(self):
+        # ensure that the child object has the correct interface
+        self.assertTrue(hasattr(self.test_obj.__child__, "HandleEvent"))
+
+    @patch("Bcfg2.Server.Plugin.%s.add_directory_monitor" % test_obj.__name__,
+           Mock())
     def get_obj(self, fam=None):
         if fam is None:
             fam = Mock()
-        return DirectoryBacked(datastore, fam)
+        return self.test_obj(datastore, fam)
 
-    @patch("Bcfg2.Server.Plugin.DirectoryBacked.add_directory_monitor")
+    @patch("Bcfg2.Server.Plugin.%s.add_directory_monitor" % test_obj.__name__)
     def test__init(self, mock_add_monitor):
-        db = DirectoryBacked(datastore, Mock())
+        db = self.test_obj(datastore, Mock())
         mock_add_monitor.assert_called_with('')
 
     def test__getitem(self):
@@ -532,8 +538,8 @@ class TestDirectoryBacked(Bcfg2TestCase):
             db.entries[path].HandleEvent.assert_called_with(event)
 
     @patch("os.path.isdir")
-    @patch("Bcfg2.Server.Plugin.DirectoryBacked.add_entry")
-    @patch("Bcfg2.Server.Plugin.DirectoryBacked.add_directory_monitor")
+    @patch("Bcfg2.Server.Plugin.%s.add_entry" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.%s.add_directory_monitor" % test_obj.__name__)
     def test_HandleEvent(self, mock_add_monitor, mock_add_entry, mock_isdir):
         fam = Mock()
         db = self.get_obj(fam=fam)
@@ -1288,7 +1294,97 @@ class TestInfoNode(TestINode):
         pred = eval(InfoNode.nraw['Path'] % dict(name="/tmp/bogus"),
                     dict(predicate=parent_predicate))
         self.assertFalse(pred(metadata, entry))
-        
 
-class TestEntrySet(Bcfg2TestCase):
+
+class TestXMLSrc(TestXMLFileBacked):
+    test_obj = XMLSrc
+
+    def test_node_interface(self):
+        # ensure that the node object has the necessary interface
+        self.assertTrue(hasattr(self.test_obj.__node__, "Match"))
+
+    @patch("__builtin__.open")
+    def test_HandleEvent(self, mock_open):
+        xdata = lxml.etree.Element("Test")
+        lxml.etree.SubElement(xdata, "Path", name="path", attr="whatever")
+
+        xsrc = self.test_obj("/test/foo.xml")
+        xsrc.__node__ = Mock()
+        mock_open.return_value.read.return_value = lxml.etree.tostring(xdata)
+
+        self.assertRaises(PluginExecutionError,
+                           xsrc.HandleEvent, Mock())
+
+        xdata.set("priority", "cow")
+        mock_open.return_value.read.return_value = lxml.etree.tostring(xdata)
+        self.assertRaises(PluginExecutionError,
+                           xsrc.HandleEvent, Mock())
+
+        xdata.set("priority", "10")
+        mock_open.return_value.read.return_value = lxml.etree.tostring(xdata)
+
+        mock_open.reset_mock()
+        xsrc = self.test_obj("/test/foo.xml")
+        xsrc.__node__ = Mock()        
+        xsrc.HandleEvent(Mock())
+        mock_open.assert_called_with("/test/foo.xml")
+        mock_open.return_value.read.assert_any_call()
+        self.assertXMLEqual(xsrc.__node__.call_args[0][0], xdata)
+        self.assertEqual(xsrc.__node__.call_args[0][1], dict())
+        self.assertEqual(xsrc.pnode, xsrc.__node__.return_value)
+        self.assertEqual(xsrc.cache, None)
+        
+    @patch("Bcfg2.Server.Plugin.XMLSrc.HandleEvent")
+    def test_Cache(self, mock_HandleEvent):
+        xsrc = self.test_obj("/test/foo.xml")
+        metadata = Mock()
+        xsrc.Cache(metadata)
+        mock_HandleEvent.assert_any_call()
+        
+        xsrc.pnode = Mock()
+        xsrc.Cache(metadata)
+        xsrc.pnode.Match.assert_called_with(metadata, xsrc.__cacheobj__())
+        self.assertEqual(xsrc.cache[0], metadata)
+
+        xsrc.pnode.reset_mock()
+        xsrc.Cache(metadata)
+        self.assertFalse(xsrc.pnode.Mock.called)
+        self.assertEqual(xsrc.cache[0], metadata)
+
+        xsrc.cache = ("bogus")
+        xsrc.Cache(metadata)
+        xsrc.pnode.Match.assert_called_with(metadata, xsrc.__cacheobj__())
+        self.assertEqual(xsrc.cache[0], metadata)
+
+
+class TestInfoXML(TestXMLSrc):
+    test_obj = InfoXML
+
+
+class TestXMLDirectoryBacked(TestDirectoryBacked):
+    test_obj = XMLDirectoryBacked
+
+
+class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
+    pass
+
+
+class SpecificityError(Bcfg2TestCase):
+    """ placeholder for future tests """
+    pass
+
+
+class Specificity(Bcfg2TestCase):
+    pass
+
+
+class SpecificData(Bcfg2TestCase):
+    pass
+
+
+class TestEntrySet(TestDebuggable):
+    pass
+
+
+class GroupSpool(TestPlugin, TestGenerator):
     pass

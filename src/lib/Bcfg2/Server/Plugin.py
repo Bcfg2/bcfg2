@@ -862,29 +862,34 @@ class XMLSrc(XMLFileBacked):
         try:
             data = open(self.name).read()
         except IOError:
-            logger.error("Failed to read file %s" % (self.name))
-            return
+            msg = "Failed to read file %s: %s" % (self.name, sys.exc_info()[1])
+            logger.error(msg)
+            raise PluginExecutionError(msg)
         self.items = {}
         try:
             xdata = lxml.etree.XML(data, parser=Bcfg2.Server.XMLParser)
         except lxml.etree.XMLSyntaxError:
-            logger.error("Failed to parse file %s" % (self.name))
-            return
+            msg = "Failed to parse file %s" % (self.name, sys.exc_info()[1])
+            logger.error(msg)
+            raise PluginExecutionError(msg)
         self.pnode = self.__node__(xdata, self.items)
         self.cache = None
         try:
             self.priority = int(xdata.get('priority'))
         except (ValueError, TypeError):
             if not self.noprio:
-                logger.error("Got bogus priority %s for file %s" %
-                             (xdata.get('priority'), self.name))
+                msg = "Got bogus priority %s for file %s" % \
+                    (xdata.get('priority'), self.name)
+                logger.error(msg)
+                raise PluginExecutionError(msg)
+
         del xdata, data
 
     def Cache(self, metadata):
         """Build a package dict for a given host."""
-        if self.cache == None or self.cache[0] != metadata:
+        if self.cache is None or self.cache[0] != metadata:
             cache = (metadata, self.__cacheobj__())
-            if self.pnode == None:
+            if self.pnode is None:
                 logger.error("Cache method called early for %s; forcing data load" % (self.name))
                 self.HandleEvent()
                 return
@@ -988,8 +993,9 @@ class SpecificityError(Exception):
     pass
 
 
-class Specificity:
-    def __init__(self, all=False, group=False, hostname=False, prio=0, delta=False):
+class Specificity(object):
+    def __init__(self, all=False, group=False, hostname=False, prio=0,
+                 delta=False):
         self.hostname = hostname
         self.all = all
         self.group = group
