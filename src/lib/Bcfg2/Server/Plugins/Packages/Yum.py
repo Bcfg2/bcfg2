@@ -1,14 +1,11 @@
 import os
 import re
 import sys
-import time
 import copy
-import glob
 import socket
 import logging
-import threading
 import lxml.etree
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 from Bcfg2.Bcfg2Py3k import StringIO, cPickle, HTTPError, URLError, \
     ConfigParser, file
@@ -434,7 +431,7 @@ class YumCollection(Collection):
                                                     default="auto"))
             if attrs['version'] == 'any':
                 return attrs
-                
+
             if pkgtup[1]:
                 attrs['arch'] = pkgtup[1]
             if pkgtup[2]:
@@ -621,7 +618,6 @@ class YumSource(Source):
                           self.filemap, self.url_map), cache, 2)
             cache.close()
 
-
     def load_state(self):
         if not self.use_yum:
             data = file(self.cachefile)
@@ -636,7 +632,7 @@ class YumSource(Source):
                 usettings = [{'version':self.version, 'component':comp,
                               'arch':arch}
                              for comp in self.components]
-            else: # rawurl given
+            else:  # rawurl given
                 usettings = [{'version':self.version, 'component':None,
                               'arch':arch}]
 
