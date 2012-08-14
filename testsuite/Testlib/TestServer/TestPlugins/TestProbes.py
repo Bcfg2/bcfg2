@@ -3,7 +3,7 @@ import sys
 import time
 import unittest
 import lxml.etree
-from mock import Mock, patch
+from mock import Mock, MagicMock, patch
 from ....common import *
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
@@ -75,18 +75,27 @@ class TestProbeData(Bcfg2TestCase):
 
 class TestProbeSet(TestEntrySet):
     test_obj = ProbeSet
+    basenames = ["test", "_test", "test-test"]
+    ignore = ["foo~", ".#foo", ".foo.swp", ".foo.swx", "probed.xml"]
+    bogus_names = ["test.py"]
 
     def get_obj(self, path=datastore, fam=None, encoding=None,
-                plugin_name="Probes"):
+                plugin_name="Probes", basename=None):
+        # get_obj() accepts the basename argument, accepted by the
+        # parent get_obj() method, and just throws it away, since
+        # ProbeSet uses a regex for the "basename"
         if fam is None:
             fam = Mock()
-        return self.test_obj(path, fam, encoding, plugin_name)
+        rv = self.test_obj(path, fam, encoding, plugin_name)
+        rv.entry_type = MagicMock()
+        return rv
 
     def test__init(self):
         fam = Mock()
         ps = self.get_obj(fam=fam)
         self.assertEqual(ps.plugin_name, "Probes")
         fam.AddMonitor.assert_called_with(datastore, ps)
+        TestEntrySet.test__init(self)
 
     def test_HandleEvent(self):
         ps = self.get_obj()

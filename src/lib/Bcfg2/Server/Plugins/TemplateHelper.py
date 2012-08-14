@@ -50,12 +50,13 @@ class HelperModule(Bcfg2.Server.Plugin.SpecificData):
 
 class HelperSet(Bcfg2.Server.Plugin.EntrySet):
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\.py[co])$")
+    fpattern = '[0-9A-Za-z_\-]+\.py'
 
     def __init__(self, path, fam, encoding, plugin_name):
-        fpattern = '[0-9A-Za-z_\-]+\.py'
         self.plugin_name = plugin_name
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path,
-                                              HelperModule, encoding)
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, self.fpattern, path,
+                                              HelperModule, encoding,
+                                              is_regex=True)
         fam.AddMonitor(path, self)
 
     def HandleEvent(self, event):

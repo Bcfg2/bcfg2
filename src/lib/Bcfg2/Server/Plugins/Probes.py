@@ -115,11 +115,10 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     bangline = re.compile('^#!\s*(?P<interpreter>.*)$')
 
     def __init__(self, path, fam, encoding, plugin_name):
-        fpattern = '[0-9A-Za-z_\-]+'
         self.plugin_name = plugin_name
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path,
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, '[0-9A-Za-z_\-]+', path,
                                               Bcfg2.Server.Plugin.SpecificData,
-                                              encoding)
+                                              encoding, is_regex=True)
         fam.AddMonitor(path, self)
 
     def HandleEvent(self, event):

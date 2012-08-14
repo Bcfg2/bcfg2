@@ -36,16 +36,15 @@ del default_file_metadata['args']
 
 logger = logging.getLogger('Bcfg2.Server.Plugin')
 
-info_regex = re.compile( \
-    'encoding:(\s)*(?P<encoding>\w+)|' +
-    'group:(\s)*(?P<group>\S+)|' +
-    'important:(\s)*(?P<important>\S+)|' +
-    'mtime:(\s)*(?P<mtime>\w+)|' +
-    'owner:(\s)*(?P<owner>\S+)|' +
-    'paranoid:(\s)*(?P<paranoid>\S+)|' +
-    'perms:(\s)*(?P<perms>\w+)|' +
-    'secontext:(\s)*(?P<secontext>\S+)|' +
-    'sensitive:(\s)*(?P<sensitive>\S+)|')
+info_regex = re.compile('owner:(\s)*(?P<owner>\S+)|' +
+                        'group:(\s)*(?P<group>\S+)|' +
+                        'perms:(\s)*(?P<perms>\w+)|' +
+                        'secontext:(\s)*(?P<secontext>\S+)|' +
+                        'paranoid:(\s)*(?P<paranoid>\S+)|' +
+                        'sensitive:(\s)*(?P<sensitive>\S+)|' +
+                        'encoding:(\s)*(?P<encoding>\w+)|' +
+                        'important:(\s)*(?P<important>\S+)|' +
+                        'mtime:(\s)*(?P<mtime>\w+)|')
 
 def bind_info(entry, metadata, infoxml=None, default=default_file_metadata):
     for attr, val in list(default.items()):
@@ -654,7 +653,6 @@ class XMLFileBacked(FileBacked):
             if fpath not in self.extras:
                 if os.path.exists(fpath):
                     self._follow_xincludes(fname=fpath)
-                    print "adding monitor to %s" % fpath
                     self.add_monitor(fpath)
                 else:
                     msg = "%s: %s does not exist, skipping" % (self.name, name)
@@ -1068,7 +1066,7 @@ class EntrySet(Debuggable):
     """Entry sets deal with the host- and group-specific entries."""
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\\.genshi_include)$")
 
-    def __init__(self, basename, path, entry_type, encoding):
+    def __init__(self, basename, path, entry_type, encoding, is_regex=False):
         Debuggable.__init__(self, name=basename)
         self.path = path
         self.entry_type = entry_type
@@ -1076,7 +1074,12 @@ class EntrySet(Debuggable):
         self.metadata = default_file_metadata.copy()
         self.infoxml = None
         self.encoding = encoding
-        pattern = '(.*/)?%s(\.((H_(?P<hostname>\S+))|' % basename
+        
+        if is_regex:
+            base_pat = basename
+        else:
+            base_pat = re.escape(basename)
+        pattern = '(.*/)?%s(\.((H_(?P<hostname>\S+))|' % base_pat
         pattern += '(G(?P<prio>\d+)_(?P<group>\S+))))?$'
         self.specific = re.compile(pattern)
 
@@ -1093,20 +1096,13 @@ class EntrySet(Debuggable):
         if matching is None:
             matching = self.get_matching(metadata)
 
-        hspec = [ent for ent in matching if ent.specific.hostname]
-        if hspec:
-            return hspec[0]
-
-        gspec = [ent for ent in matching if ent.specific.group]
-        if gspec:
-            gspec.sort()
-            return gspec[-1]
-
-        aspec = [ent for ent in matching if ent.specific.all]
-        if aspec:
-            return aspec[0]
-
-        raise PluginExecutionError
+        if matching:
+            matching.sort()
+            return matching[0]
+        else:
+            raise PluginExecutionError("No matching entries available for %s "
+                                       "for %s" % (self.path,
+                                                   metadata.hostname))
 
     def handle_event(self, event):
         """Handle FAM events for the TemplateSet."""
@@ -1195,8 +1191,7 @@ class EntrySet(Debuggable):
                         if value:
                             self.metadata[key] = value
                     if len(self.metadata['perms']) == 3:
-                        self.metadata['perms'] = "0%s" % \
-                                                 (self.metadata['perms'])
+                        self.metadata['perms'] = "0%s" % self.metadata['perms']
 
     def reset_metadata(self, event):
         """Reset metadata to defaults if info or info.xml removed."""
@@ -1209,7 +1204,8 @@ class EntrySet(Debuggable):
         bind_info(entry, metadata, infoxml=self.infoxml, default=self.metadata)
 
     def bind_entry(self, entry, metadata):
-        """Return the appropriate interpreted template from the set of available templates."""
+        """Return the appropriate interpreted template from the set of
+        available templates."""
         self.bind_info_to_entry(entry, metadata)
         return self.best_matching(metadata).bind_entry(entry, metadata)
 
