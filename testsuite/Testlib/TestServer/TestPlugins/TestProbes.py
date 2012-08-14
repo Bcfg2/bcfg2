@@ -74,19 +74,22 @@ class TestProbeData(Bcfg2TestCase):
         
 
 class TestProbeSet(TestEntrySet):
-    def get_probeset_object(self, fam=None):
+    test_obj = ProbeSet
+
+    def get_obj(self, path=datastore, fam=None, encoding=None,
+                plugin_name="Probes"):
         if fam is None:
             fam = Mock()
-        return ProbeSet(datastore, fam, None, "Probes")
+        return self.test_obj(path, fam, encoding, plugin_name)
 
     def test__init(self):
         fam = Mock()
-        ps = self.get_probeset_object(fam)
+        ps = self.get_obj(fam=fam)
         self.assertEqual(ps.plugin_name, "Probes")
         fam.AddMonitor.assert_called_with(datastore, ps)
 
     def test_HandleEvent(self):
-        ps = self.get_probeset_object()
+        ps = self.get_obj()
         ps.handle_event = Mock()
 
         # test that events on the data store itself are skipped
@@ -109,7 +112,7 @@ class TestProbeSet(TestEntrySet):
 
     @patch("__builtin__.list", FakeList)
     def test_get_probe_data(self):
-        ps = self.get_probeset_object()
+        ps = self.get_obj()
         
         # build some fairly complex test data for this.  in the end,
         # we want the probe data to include only the most specific
@@ -170,6 +173,8 @@ group-specific"""
 
 
 class TestProbes(TestProbing, TestConnector, TestDatabaseBacked):
+    test_obj = Probes
+
     def get_test_probedata(self):
         test_xdata = lxml.etree.Element("test")
         lxml.etree.SubElement(test_xdata, "test", foo="foo")

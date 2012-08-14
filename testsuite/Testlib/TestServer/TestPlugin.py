@@ -66,14 +66,19 @@ class TestPluginExecutionError(Bcfg2TestCase):
 
 
 class TestDebuggable(Bcfg2TestCase):
+    test_obj = Debuggable
+
+    def get_obj(self):
+        return self.test_obj()
+
     def test__init(self):
-        d = Debuggable()
+        d = self.get_obj()
         self.assertIsInstance(d.logger, logging.Logger)
         self.assertFalse(d.debug_flag)
 
-    @patch("Bcfg2.Server.Plugin.Debuggable.debug_log")
+    @patch("Bcfg2.Server.Plugin.%s.debug_log" % test_obj.__name__)
     def test_toggle_debug(self, mock_debug):
-        d = Debuggable()
+        d = self.get_obj()
         orig = d.debug_flag
         d.toggle_debug()
         self.assertNotEqual(orig, d.debug_flag)
@@ -88,7 +93,7 @@ class TestDebuggable(Bcfg2TestCase):
         self.assertTrue(mock_debug.called)
 
     def test_debug_log(self):
-        d = Debuggable()
+        d = self.get_obj()
         d.logger = Mock()
         d.debug_flag = False
         d.debug_log("test")
@@ -105,40 +110,50 @@ class TestDebuggable(Bcfg2TestCase):
 
 
 class TestPlugin(TestDebuggable):
+    test_obj = Plugin
+
+    def get_obj(self, core=None):
+        if core is None:
+            core = Mock()
+        return self.test_obj(core, datastore)
+
     def test__init(self):
         core = Mock()
-        p = Plugin(core, datastore)
+        p = self.get_obj(core=core)
         self.assertEqual(p.data, os.path.join(datastore, p.name))
         self.assertEqual(p.core, core)
         self.assertIsInstance(p, Debuggable)
 
     @patch("os.makedirs")
     def test_init_repo(self, mock_makedirs):
-        Plugin.init_repo(datastore)
-        mock_makedirs.assert_called_with(os.path.join(datastore, Plugin.name))
+        self.test_obj.init_repo(datastore)
+        mock_makedirs.assert_called_with(os.path.join(datastore,
+                                                      self.test_obj.name))
 
 
 class TestDatabaseBacked(TestPlugin):
+    test_obj = DatabaseBacked
+
     @unittest.skipUnless(has_django, "Django not found")
     def test__use_db(self):
         core = Mock()
         core.setup.cfp.getboolean.return_value = True
-        db = DatabaseBacked(core, datastore)
+        db = self.get_obj(core)
         self.assertTrue(db._use_db)
 
         core = Mock()
         core.setup.cfp.getboolean.return_value = False
-        db = DatabaseBacked(core, datastore)
+        db = self.get_obj(core)
         self.assertFalse(db._use_db)
         
         Bcfg2.Server.Plugin.has_django = False
         core = Mock()
-        db = DatabaseBacked(core, datastore)
+        db = self.get_obj(core)
         self.assertFalse(db._use_db)
 
         core = Mock()
         core.setup.cfp.getboolean.return_value = True
-        db = DatabaseBacked(core, datastore)
+        db = self.get_obj(core)
         self.assertFalse(db._use_db)
         Bcfg2.Server.Plugin.has_django = True
 
@@ -190,25 +205,25 @@ class TestProbing(Bcfg2TestCase):
 
 
 class TestStatistics(TestPlugin):
-    """ placeholder """
-    pass
+    test_obj = Statistics
 
 
 class TestThreadedStatistics(TestStatistics):
+    test_obj = ThreadedStatistics
     data = [("foo.example.com", "<foo/>"),
             ("bar.example.com", "<bar/>")]
 
     @patch("threading.Thread.start")
     def test__init(self, mock_start):
         core = Mock()
-        ts = ThreadedStatistics(core, datastore)
+        ts = self.get_obj(core)
         mock_start.assert_any_call()
 
     @patch("__builtin__.open")
     @patch("Bcfg2.Server.Plugin.ThreadedStatistics.run", Mock())
     def test_save(self, mock_open):
         core = Mock()
-        ts = ThreadedStatistics(core, datastore)
+        ts = self.get_obj(core)
         queue = Mock()
         queue.empty = Mock(side_effect=Empty)
         ts.work_queue = queue
@@ -253,7 +268,7 @@ class TestThreadedStatistics(TestStatistics):
     def test_load(self, mock_XML, mock_open, mock_exists, mock_unlink):
         core = Mock()
         core.terminate.isSet.return_value = False
-        ts = ThreadedStatistics(core, datastore)
+        ts = self.get_obj(core)
         
         with patch("%s.load" % cPickle.__name__) as mock_load:
             ts.work_queue = Mock()
@@ -311,7 +326,7 @@ class TestThreadedStatistics(TestStatistics):
     @patch("Bcfg2.Server.Plugin.ThreadedStatistics.handle_statistic")
     def test_run(self, mock_handle, mock_save, mock_load):
         core = Mock()
-        ts = ThreadedStatistics(core, datastore)
+        ts = self.get_obj(core)
         mock_load.return_value = True
         ts.work_queue = Mock()
 
@@ -350,7 +365,7 @@ class TestThreadedStatistics(TestStatistics):
     @patch("Bcfg2.Server.Plugin.ThreadedStatistics.run", Mock())
     def test_process_statistics(self):
         core = Mock()
-        ts = ThreadedStatistics(core, datastore)
+        ts = self.get_obj(core)
         ts.work_queue = Mock()
         ts.process_statistics(*self.data[0])
         ts.work_queue.put_nowait.assert_called_with(self.data[0])
@@ -415,14 +430,19 @@ class TestClientRunHooks(Bcfg2TestCase):
 
 
 class TestFileBacked(Bcfg2TestCase):
+    test_obj = FileBacked
+
+    def get_obj(self, path=datastore, fam=None):
+        return self.test_obj(path, fam=fam)
+
     @patch("__builtin__.open")
-    @patch("Bcfg2.Server.Plugin.FileBacked.Index")
-    def test_HandleEvent(self, mock_Index, mock_open):
+    def test_HandleEvent(self, mock_open):
         path = "/test"
-        fb = FileBacked(path)
+        fb = self.get_obj(path)
+        fb.Index = Mock()
 
         def reset():
-            mock_Index.reset_mock()
+            fb.Index.reset_mock()
             mock_open.reset_mock()
 
         for evt in ["exists", "changed", "created"]:
@@ -432,14 +452,14 @@ class TestFileBacked(Bcfg2TestCase):
             fb.HandleEvent(event)
             mock_open.assert_called_with(path)
             mock_open.return_value.read.assert_any_call()
-            mock_Index.assert_any_call()
+            fb.Index.assert_any_call()
 
         reset()
         event = Mock()
         event.code2str.return_value = "endExist"
         fb.HandleEvent(event)
         self.assertFalse(mock_open.called)
-        self.assertFalse(mock_Index.called)
+        self.assertFalse(fb.Index.called)
 
 
 class TestDirectoryBacked(Bcfg2TestCase):
@@ -637,28 +657,33 @@ class TestDirectoryBacked(Bcfg2TestCase):
                 
 
 class TestXMLFileBacked(TestFileBacked):
+    test_obj = XMLFileBacked
+
+    def get_obj(self, path=datastore, fam=None, should_monitor=False):
+        return self.test_obj(path, fam=fam, should_monitor=should_monitor)
+
     def test__init(self):
         fam = Mock()
         fname = "/test"
-        xfb = XMLFileBacked(fname)
+        xfb = self.get_obj(fname)
         self.assertIsNone(xfb.fam)
 
-        xfb = XMLFileBacked(fname, fam=fam)
+        xfb = self.get_obj(fname, fam=fam)
         self.assertFalse(fam.AddMonitor.called)
 
         fam.reset_mock()
-        xfb = XMLFileBacked(fname, fam=fam, should_monitor=True)
+        xfb = self.get_obj(fname, fam=fam, should_monitor=True)
         fam.AddMonitor.assert_called_with(fname, xfb)
 
     @patch("os.path.exists")
     @patch("lxml.etree.parse")
-    @patch("Bcfg2.Server.Plugin.XMLFileBacked.add_monitor")
-    def test_follow_xincludes(self, mock_add_monitor, mock_parse, mock_exists):
+    def test_follow_xincludes(self, mock_parse, mock_exists):
         fname = "/test/test1.xml"
-        xfb = XMLFileBacked(fname)
+        xfb = self.get_obj(fname)
+        xfb.add_monitor = Mock()
         
         def reset():
-            mock_add_monitor.reset_mock()
+            xfb.add_monitor.reset_mock()
             mock_parse.reset_mock()
             mock_exists.reset_mock()
             xfb.extras = []
@@ -670,17 +695,21 @@ class TestXMLFileBacked(TestFileBacked):
         # basic functionality
         xdata['/test/test2.xml'] = lxml.etree.Element("Test").getroottree()
         xfb._follow_xincludes(xdata=xdata['/test/test2.xml'])
-        self.assertFalse(mock_add_monitor.called)
+        self.assertFalse(xfb.add_monitor.called)
 
-        reset()
-        xfb.xdata = xdata['/test/test2.xml'].getroot()
-        xfb._follow_xincludes()
-        self.assertFalse(mock_add_monitor.called)
-        xfb.xdata = None
+        if (not hasattr(self.test_obj, "xdata") or
+            not isinstance(self.test_obj.xdata, property)):
+            # if xdata is settable, test that method of getting data
+            # to _follow_xincludes
+            reset()
+            xfb.xdata = xdata['/test/test2.xml'].getroot()
+            xfb._follow_xincludes()
+            self.assertFalse(xfb.add_monitor.called)
+            xfb.xdata = None
 
         reset()
         xfb._follow_xincludes(fname="/test/test2.xml")
-        self.assertFalse(mock_add_monitor.called)
+        self.assertFalse(xfb.add_monitor.called)
 
         # test one level of xinclude
         xdata[fname] = lxml.etree.Element("Test").getroottree()
@@ -689,14 +718,14 @@ class TestXMLFileBacked(TestFileBacked):
                               href="/test/test2.xml")
         reset()
         xfb._follow_xincludes(fname=fname)
-        mock_add_monitor.assert_called_with("/test/test2.xml")
+        xfb.add_monitor.assert_called_with("/test/test2.xml")
         self.assertItemsEqual(mock_parse.call_args_list,
                               [call(f) for f in xdata.keys()])
         mock_exists.assert_called_with("/test/test2.xml")
 
         reset()
         xfb._follow_xincludes(xdata=xdata[fname])
-        mock_add_monitor.assert_called_with("/test/test2.xml")
+        xfb.add_monitor.assert_called_with("/test/test2.xml")
         self.assertItemsEqual(mock_parse.call_args_list,
                               [call(f) for f in xdata.keys()
                                if f != fname])
@@ -728,7 +757,7 @@ class TestXMLFileBacked(TestFileBacked):
 
         reset()
         xfb._follow_xincludes(fname=fname)
-        self.assertItemsEqual(mock_add_monitor.call_args_list,
+        self.assertItemsEqual(xfb.add_monitor.call_args_list,
                               [call(f) for f in xdata.keys() if f != fname])
         self.assertItemsEqual(mock_parse.call_args_list,
                               [call(f) for f in xdata.keys()])
@@ -737,7 +766,7 @@ class TestXMLFileBacked(TestFileBacked):
 
         reset()
         xfb._follow_xincludes(xdata=xdata[fname])
-        self.assertItemsEqual(mock_add_monitor.call_args_list,
+        self.assertItemsEqual(xfb.add_monitor.call_args_list,
                               [call(f) for f in xdata.keys() if f != fname])
         self.assertItemsEqual(mock_parse.call_args_list,
                               [call(f) for f in xdata.keys() if f != fname])
@@ -745,10 +774,10 @@ class TestXMLFileBacked(TestFileBacked):
                               [call(f) for f in xdata.keys() if f != fname])
 
     @patch("lxml.etree._ElementTree", FakeElementTree)
-    @patch("Bcfg2.Server.Plugin.XMLFileBacked._follow_xincludes")
+    @patch("Bcfg2.Server.Plugin.%s._follow_xincludes" % test_obj.__name__)
     def test_Index(self, mock_follow):
         fname = "/test/test1.xml"
-        xfb = XMLFileBacked(fname)
+        xfb = self.get_obj(fname)
         
         def reset():
             mock_follow.reset_mock()
@@ -805,25 +834,27 @@ class TestXMLFileBacked(TestFileBacked):
 
     def test_add_monitor(self):
         fname = "/test/test1.xml"
-        xfb = XMLFileBacked(fname)
+        xfb = self.get_obj(fname)
         xfb.add_monitor("/test/test2.xml")
         self.assertIn("/test/test2.xml", xfb.extras)
 
         fam = Mock()
-        xfb = XMLFileBacked(fname, fam=fam)
+        xfb = self.get_obj(fname, fam=fam)
         fam.reset_mock()
         xfb.add_monitor("/test/test3.xml")
         self.assertFalse(fam.AddMonitor.called)
         self.assertIn("/test/test3.xml", xfb.extras)
 
         fam.reset_mock()
-        xfb = XMLFileBacked(fname, fam=fam, should_monitor=True)
+        xfb = self.get_obj(fname, fam=fam, should_monitor=True)
         xfb.add_monitor("/test/test4.xml")
         fam.AddMonitor.assert_called_with("/test/test4.xml", xfb)
         self.assertIn("/test/test4.xml", xfb.extras)
 
 
 class TestStructFile(TestXMLFileBacked):
+    test_obj = StructFile
+
     def _get_test_data(self):
         """ build a very complex set of test data """
         # top-level group and client elements 
@@ -894,7 +925,7 @@ class TestStructFile(TestXMLFileBacked):
         return (xdata, groups, subgroups, children, subchildren, standalone)
 
     def test_include_element(self):
-        sf = StructFile("/test/test.xml")
+        sf = self.get_obj("/test/test.xml")
         metadata = Mock()
         metadata.groups = ["group1", "group2"]
         metadata.hostname = "foo.example.com"
@@ -925,9 +956,9 @@ class TestStructFile(TestXMLFileBacked):
 
         self.assertTrue(inc("Other"))
 
-    @patch("Bcfg2.Server.Plugin.StructFile._include_element")
+    @patch("Bcfg2.Server.Plugin.%s._include_element" % test_obj.__name__)
     def test__match(self, mock_include):
-        sf = StructFile("/test/test.xml")
+        sf = self.get_obj("/test/test.xml")
         metadata = Mock()
         
         (xdata, groups, subgroups, children, subchildren, standalone) = \
@@ -953,9 +984,9 @@ class TestStructFile(TestXMLFileBacked):
         for el in standalone:
             self.assertXMLEqual(el, sf._match(el, metadata)[0])
 
-    @patch("Bcfg2.Server.Plugin.StructFile._match")
+    @patch("Bcfg2.Server.Plugin.%s._match" % test_obj.__name__)
     def test_Match(self, mock_match):
-        sf = StructFile("/test/test.xml")
+        sf = self.get_obj("/test/test.xml")
         metadata = Mock()
 
         (xdata, groups, subgroups, children, subchildren, standalone) = \
@@ -983,9 +1014,9 @@ class TestStructFile(TestXMLFileBacked):
         xexpected.extend(expected)
         self.assertXMLEqual(xactual, xexpected)
 
-    @patch("Bcfg2.Server.Plugin.StructFile._include_element")
+    @patch("Bcfg2.Server.Plugin.%s._include_element" % test_obj.__name__)
     def test__xml_match(self, mock_include):
-        sf = StructFile("/test/test.xml")
+        sf = self.get_obj("/test/test.xml")
         metadata = Mock()
         
         (xdata, groups, subgroups, children, subchildren, standalone) = \
@@ -1005,9 +1036,9 @@ class TestStructFile(TestXMLFileBacked):
         expected.extend(standalone)
         self.assertXMLEqual(actual, expected)
 
-    @patch("Bcfg2.Server.Plugin.StructFile._xml_match")
+    @patch("Bcfg2.Server.Plugin.%s._xml_match" % test_obj.__name__)
     def test_Match(self, mock_xml_match):
-        sf = StructFile("/test/test.xml")
+        sf = self.get_obj("/test/test.xml")
         metadata = Mock()
 
         (sf.xdata, groups, subgroups, children, subchildren, standalone) = \
@@ -1308,7 +1339,7 @@ class TestXMLSrc(TestXMLFileBacked):
         xdata = lxml.etree.Element("Test")
         lxml.etree.SubElement(xdata, "Path", name="path", attr="whatever")
 
-        xsrc = self.test_obj("/test/foo.xml")
+        xsrc = self.get_obj("/test/foo.xml")
         xsrc.__node__ = Mock()
         mock_open.return_value.read.return_value = lxml.etree.tostring(xdata)
 
@@ -1324,7 +1355,7 @@ class TestXMLSrc(TestXMLFileBacked):
         mock_open.return_value.read.return_value = lxml.etree.tostring(xdata)
 
         mock_open.reset_mock()
-        xsrc = self.test_obj("/test/foo.xml")
+        xsrc = self.get_obj("/test/foo.xml")
         xsrc.__node__ = Mock()        
         xsrc.HandleEvent(Mock())
         mock_open.assert_called_with("/test/foo.xml")
@@ -1336,7 +1367,7 @@ class TestXMLSrc(TestXMLFileBacked):
         
     @patch("Bcfg2.Server.Plugin.XMLSrc.HandleEvent")
     def test_Cache(self, mock_HandleEvent):
-        xsrc = self.test_obj("/test/foo.xml")
+        xsrc = self.get_obj("/test/foo.xml")
         metadata = Mock()
         xsrc.Cache(metadata)
         mock_HandleEvent.assert_any_call()
@@ -1366,8 +1397,28 @@ class TestXMLDirectoryBacked(TestDirectoryBacked):
 
 
 class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
-    pass
+    test_obj = PrioDir
 
+    def get_obj(self, core=None):
+        if core is None:
+            core = Mock()
+        return self.test_obj(core, datastore)
+
+    def test_HandleEvent(self):
+        pass
+
+    def test__iter(self):
+        pass
+
+    def test__getitem(self):
+        pass
+
+    def test_add_entry(self):
+        pass
+
+    def test_add_directory_monitor(self):
+        pass
+        
 
 class SpecificityError(Bcfg2TestCase):
     """ placeholder for future tests """
@@ -1383,8 +1434,13 @@ class SpecificData(Bcfg2TestCase):
 
 
 class TestEntrySet(TestDebuggable):
-    pass
+    test_obj = EntrySet
+
+    def get_obj(self, basename="test", path=datastore, entry_type=SpecificData,
+                encoding=None):
+        return self.test_obj(basename, path, entry_type, encoding)
 
 
 class GroupSpool(TestPlugin, TestGenerator):
+    test_obj = GroupSpool
     pass

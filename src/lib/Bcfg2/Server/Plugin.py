@@ -654,6 +654,7 @@ class XMLFileBacked(FileBacked):
             if fpath not in self.extras:
                 if os.path.exists(fpath):
                     self._follow_xincludes(fname=fpath)
+                    print "adding monitor to %s" % fpath
                     self.add_monitor(fpath)
                 else:
                     msg = "%s: %s does not exist, skipping" % (self.name, name)
@@ -918,11 +919,7 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
         Generator.__init__(self)
-        try:
-            XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
-        except OSError:
-            self.logger.error("Failed to load %s indices" % (self.name))
-            raise PluginInitError
+        XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
 
     def HandleEvent(self, event):
         """Handle events and update dispatch table."""
@@ -1253,7 +1250,7 @@ class GroupSpool(Plugin, Generator):
         for entry in self.entries.values():
             if hasattr(entry, "toggle_debug"):
                 entry.toggle_debug()
-        return Plugin.toggle_debug()
+        return Plugin.toggle_debug(self)
 
     def HandleEvent(self, event):
         """Unified FAM event handler for GroupSpool."""
