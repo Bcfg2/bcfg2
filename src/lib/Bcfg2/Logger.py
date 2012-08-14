@@ -57,9 +57,11 @@ class TermiosFormatter(logging.Formatter):
             lines = int(math.ceil(float(len(record.msg)) / columns))
             for lineNumber in range(lines):
                 indices = [idx for idx in [(colNum * lines) + lineNumber
-                                           for colNum in range(columns)] if idx < len(record.msg)]
-                format = (len(indices) * (" %%-%ds " % columnWidth))
-                returns.append(format % tuple([record.msg[idx] for idx in indices]))
+                                           for colNum in range(columns)]
+                           if idx < len(record.msg)]
+                retformat = (len(indices) * (" %%-%ds " % columnWidth))
+                returns.append(retformat % tuple([record.msg[idx]
+                                                  for idx in indices]))
         else:
             returns.append(str(record.msg))
         if record.exc_info:
@@ -86,6 +88,8 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
             error = record.exc_info
             record.exc_info = None
             msgdata = record.msg
+            if len(msgdata) == 0:
+                return
             while msgdata:
                 newrec = copy.copy(record)
                 newrec.msg = msgdata[:250]
