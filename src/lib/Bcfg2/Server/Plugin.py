@@ -1002,6 +1002,12 @@ class Specificity(object):
     def __lt__(self, other):
         return self.__cmp__(other) < 0
 
+    def __gt__(self, other):
+        return self.__cmp__(other) > 0
+
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+
     def matches(self, metadata):
         return self.all or \
                self.hostname == metadata.hostname or \
@@ -1010,26 +1016,36 @@ class Specificity(object):
     def __cmp__(self, other):
         """Sort most to least specific."""
         if self.all:
-            return 1
-        if self.group:
+            if other.all:
+                return 0
+            else:
+                return 1
+        elif other.all:
+            return -1
+        elif self.group:
             if other.hostname:
                 return 1
             if other.group and other.prio > self.prio:
                 return 1
             if other.group and other.prio == self.prio:
                 return 0
+        elif other.group:
+            return -1
+        elif self.hostname and other.hostname:
+            return 0
         return -1
 
-    def more_specific(self, other):
-        """Test if self is more specific than other."""
+    def __str__(self):
+        rv = [self.__class__.__name__, ': ']
         if self.all:
-            True
+            rv.append("all")
         elif self.group:
-            if other.hostname:
-                return True
-            elif other.group and other.prio > self.prio:
-                return True
-        return False
+            rv.append("Group %s, priority %s" % (self.group, self.prio))
+        elif self.hostname:
+            rv.append("Host %s" % self.hostname)
+        if self.delta:
+            rv.append(", delta=%s" % self.delta)
+        return "".join(rv)
 
 
 class SpecificData(object):

@@ -1517,11 +1517,93 @@ class SpecificityError(Bcfg2TestCase):
 
 
 class Specificity(Bcfg2TestCase):
-    pass
+    test_obj = Specificity
+
+    def get_obj(self, **kwargs):
+        return self.test_obj(**kwargs)
+
+    def test_matches(self):
+        metadata = Mock()
+        metadata.hostname = "foo.example.com"
+        metadata.groups = ["group1", "group2"]
+        self.assertTrue(self.get_obj(all=True).matches(metadata))
+        self.assertTrue(self.get_obj(group="group1").matches(metadata))
+        self.assertTrue(self.get_obj(hostname="foo.example.com").matches(metadata))
+        self.assertFalse(self.get_obj().matches(metadata))
+        self.assertFalse(self.get_obj(group="group3").matches(metadata))
+        self.assertFalse(self.get_obj(hostname="bar.example.com").matches(metadata))
+
+    def test__cmp(self):
+        specs = [self.get_obj(all=True),
+                 self.get_obj(group="group1", prio=10),
+                 self.get_obj(group="group1", prio=20),
+                 self.get_obj(hostname="foo.example.com")]
+
+        for i in range(len(specs)):
+            for j in range(len(specs)):
+                if i == j:
+                    self.assertEqual(0, specs[i].__cmp__(specs[j]))
+                    self.assertEqual(0, specs[j].__cmp__(specs[i]))
+                elif i > j:
+                    self.assertEqual(-1, specs[i].__cmp__(specs[j]))
+                    self.assertEqual(1, specs[j].__cmp__(specs[i]))
+                elif i < j:
+                    self.assertEqual(1, specs[i].__cmp__(specs[j]))
+                    self.assertEqual(-1, specs[j].__cmp__(specs[i]))
+    
+    def test_cmp(self):
+        """ test __lt__/__gt__/__eq__ """
+        specs = [self.get_obj(all=True),
+                 self.get_obj(group="group1", prio=10),
+                 self.get_obj(group="group1", prio=20),
+                 self.get_obj(hostname="foo.example.com")]
+
+        for i in range(len(specs)):
+            for j in range(len(specs)):
+                print "i=%s, j=%s" % (i, j)
+                if i < j:
+                    self.assertGreater(specs[i], specs[j])
+                    self.assertLess(specs[j], specs[i])
+                    self.assertGreaterEqual(specs[i], specs[j])
+                    self.assertLessEqual(specs[j], specs[i])
+                elif i == j:
+                    self.assertEqual(specs[i], specs[j])
+                    self.assertEqual(specs[j], specs[i])
+                    self.assertLessEqual(specs[i], specs[j])
+                    self.assertGreaterEqual(specs[j], specs[i])
+                elif i > j:
+                    self.assertLess(specs[i], specs[j])
+                    self.assertGreater(specs[j], specs[i])
+                    self.assertLessEqual(specs[i], specs[j])
+                    self.assertGreaterEqual(specs[j], specs[i])
 
 
 class SpecificData(Bcfg2TestCase):
-    pass
+    test_obj = SpecificData
+
+    def get_obj(self, name="/test.txt", specific=None, encoding=None):
+        if specific is None:
+            specific = Mock()
+        return self.test_obj(name, specific, encoding)
+    
+    @patch("__builtin__.open")
+    def test_handle_event(self, mock_open):
+        event = Mock()
+        event.code2str.return_value = 'deleted'
+        sd = self.get_obj()
+        sd.handle_event(event)
+        self.assertFalse(mock_open.called)
+        if hasattr(sd, 'data'):
+            self.assertIsNone(sd.data)
+        else:
+            self.assertFalse(hasattr(sd, 'data'))
+        
+        event = Mock()
+        mock_open.return_value.read.return_value = "test"
+        sd.handle_event(event)
+        mock_open.assert_called_with("/test.txt")
+        mock_open.return_value.read.assert_any_call()
+        self.assertEqual(sd.data, "test")
 
 
 class TestEntrySet(TestDebuggable):
