@@ -504,42 +504,41 @@ class TestDirectoryBacked(Bcfg2TestCase):
 
     @patch("os.path.isdir")
     def test_add_directory_monitor(self, mock_isdir):
-        fam = Mock()
-        fam.rv = 0
-        db = self.get_obj(fam=fam)
+        db = self.get_obj()
+        db.fam = Mock()
+        db.fam.rv = 0
         
         def reset():
-            fam.rv += 1
-            fam.AddMonitor.return_value = fam.rv
-            fam.reset_mock()
+            db.fam.rv += 1
+            db.fam.AddMonitor.return_value = db.fam.rv
+            db.fam.reset_mock()
             mock_isdir.reset_mock()
 
         mock_isdir.return_value = True
         for path in self.testpaths.values():
             reset()
             db.add_directory_monitor(path)
-            fam.AddMonitor.assert_called_with(os.path.join(datastore,
-                                                           path),
-                                              db)
-            self.assertIn(fam.rv, db.handles)
-            self.assertEqual(db.handles[fam.rv], path)
+            db.fam.AddMonitor.assert_called_with(os.path.join(db.data, path),
+                                                 db)
+            self.assertIn(db.fam.rv, db.handles)
+            self.assertEqual(db.handles[db.fam.rv], path)
 
         reset()
         # test duplicate adds
         for path in self.testpaths.values():
             reset()
             db.add_directory_monitor(path)
-            self.assertFalse(fam.AddMonitor.called)
+            self.assertFalse(db.fam.AddMonitor.called)
 
         reset()
         mock_isdir.return_value = False
         db.add_directory_monitor('bogus')
-        self.assertFalse(fam.AddMonitor.called)
-        self.assertNotIn(fam.rv, db.handles)
+        self.assertFalse(db.fam.AddMonitor.called)
+        self.assertNotIn(db.fam.rv, db.handles)
 
     def test_add_entry(self):
-        fam = Mock()
-        db = self.get_obj(fam=fam)
+        db = self.get_obj()
+        db.fam = Mock()
         class MockChild(Mock):
             def __init__(self, path, fam, **kwargs):
                 Mock.__init__(self, **kwargs)
@@ -553,16 +552,15 @@ class TestDirectoryBacked(Bcfg2TestCase):
             db.add_entry(path, event)
             self.assertIn(path, db.entries)
             self.assertEqual(db.entries[path].path,
-                             os.path.join(datastore, path))
-            self.assertEqual(db.entries[path].fam, fam)
+                             os.path.join(db.data, path))
+            self.assertEqual(db.entries[path].fam, db.fam)
             db.entries[path].HandleEvent.assert_called_with(event)
 
     @patch("os.path.isdir")
     @patch("Bcfg2.Server.Plugin.%s.add_entry" % test_obj.__name__)
     @patch("Bcfg2.Server.Plugin.%s.add_directory_monitor" % test_obj.__name__)
     def test_HandleEvent(self, mock_add_monitor, mock_add_entry, mock_isdir):
-        fam = Mock()
-        db = self.get_obj(fam=fam)
+        db = self.get_obj()
         # a path with a leading / should never get into
         # DirectoryBacked.handles, so strip that test case
         for rid, path in self.testpaths.items():
@@ -570,7 +568,6 @@ class TestDirectoryBacked(Bcfg2TestCase):
             db.handles[rid] = path
 
         def reset():
-            fam.reset_mock()
             mock_isdir.reset_mock()
             mock_add_entry.reset_mock()
             mock_add_monitor.reset_mock()
@@ -622,7 +619,7 @@ class TestDirectoryBacked(Bcfg2TestCase):
                     db.HandleEvent(event)
                     mock_add_entry.assert_called_with(relpath, event)
                     self.assertFalse(mock_add_monitor.called)
-                    db.entries[relpath] = Mock()
+                    db.entries[relpath] = MagicMock()
 
                 # test that changing a file that already exists works
                 reset()
@@ -644,7 +641,7 @@ class TestDirectoryBacked(Bcfg2TestCase):
                 db.HandleEvent(event)
                 mock_add_entry.assert_called_with(relpath, event)
                 self.assertFalse(mock_add_monitor.called)
-                db.entries[relpath] = Mock()
+                db.entries[relpath] = MagicMock()
             
         # test that deleting a directory works. this is a little
         # strange because the _parent_ directory has to handle the
@@ -1399,25 +1396,119 @@ class TestXMLDirectoryBacked(TestDirectoryBacked):
 class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
     test_obj = PrioDir
 
+    @patch("Bcfg2.Server.Plugin.%s.add_directory_monitor" % test_obj.__name__,
+           Mock())
     def get_obj(self, core=None):
         if core is None:
             core = Mock()
         return self.test_obj(core, datastore)
 
     def test_HandleEvent(self):
-        pass
+        TestXMLDirectoryBacked.test_HandleEvent(self)
+        with patch("Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent"):
+            pd = self.get_obj()
+            test1 = Mock()
+            test1.items = dict(Path=["/etc/foo.conf", "/etc/bar.conf"])
+            test2 = Mock()
+            test2.items = dict(Path=["/etc/baz.conf"],
+                               Package=["quux", "xyzzy"])
+            pd.entries = {"/test1.xml": test1,
+                          "/test2.xml": test2}
+            pd.HandleEvent(Mock())
+            self.assertItemsEqual(pd.Entries,
+                                  dict(Path={"/etc/foo.conf": pd.BindEntry,
+                                             "/etc/bar.conf": pd.BindEntry,
+                                             "/etc/baz.conf": pd.BindEntry},
+                                       Package={"quux": pd.BindEntry,
+                                                "xyzzy": pd.BindEntry}))
 
-    def test__iter(self):
-        pass
+    def test__matches(self):
+        pd = self.get_obj()
+        self.assertTrue(pd._matches(lxml.etree.Element("Test",
+                                                       name="/etc/foo.conf"),
+                                    Mock(),
+                                    {"/etc/foo.conf": pd.BindEntry,
+                                     "/etc/bar.conf": pd.BindEntry}))
+        self.assertFalse(pd._matches(lxml.etree.Element("Test",
+                                                        name="/etc/baz.conf"),
+                                     Mock(),
+                                     {"/etc/foo.conf": pd.BindEntry,
+                                      "/etc/bar.conf": pd.BindEntry}))
 
-    def test__getitem(self):
-        pass
+    def test_BindEntry(self):
+        pd = self.get_obj()
+        pd.get_attrs = Mock(return_value=dict(test1="test1", test2="test2"))
+        entry = lxml.etree.Element("Path", name="/etc/foo.conf", test1="bogus")
+        metadata = Mock()
+        pd.BindEntry(entry, metadata)
+        pd.get_attrs.assert_called_with(entry, metadata)
+        self.assertItemsEqual(entry.attrib,
+                              dict(name="/etc/foo.conf",
+                                   test1="test1", test2="test2"))
+        
+    def test_get_attrs(self):
+        pd = self.get_obj()
+        entry = lxml.etree.Element("Path", name="/etc/foo.conf")
+        children = [lxml.etree.Element("Child")]
+        metadata = Mock()
+        pd.entries = dict()
 
-    def test_add_entry(self):
-        pass
+        def reset():
+            metadata.reset_mock()
+            for src in pd.entries.values():
+                src.reset_mock()
+                src.cache = None
 
-    def test_add_directory_monitor(self):
-        pass
+        # test with no matches
+        self.assertRaises(PluginExecutionError,
+                          pd.get_attrs, entry, metadata)
+
+        def add_entry(name, data, prio=10):
+            path = os.path.join(pd.data, name)
+            pd.entries[path] = Mock()
+            pd.entries[path].priority = prio
+            def do_Cache(metadata):
+                pd.entries[path].cache = (metadata, data)
+            pd.entries[path].Cache.side_effect = do_Cache
+
+        add_entry('test1.xml',
+                  dict(Path={'/etc/foo.conf': dict(attr="attr1",
+                                                   __children__=children),
+                             '/etc/bar.conf': dict()}))
+        add_entry('test2.xml',
+                  dict(Path={'/etc/bar.conf': dict(__text__="text",
+                                                   attr="attr1")},
+                       Package={'quux': dict(),
+                                'xyzzy': dict()}),
+                  prio=20)
+        add_entry('test3.xml',
+                  dict(Path={'/etc/baz.conf': dict()},
+                       Package={'xyzzy': dict()}),
+                  prio=20)
+
+        # test with exactly one match, __children__
+        reset()
+        self.assertItemsEqual(pd.get_attrs(entry, metadata),
+                              dict(attr="attr1"))
+        for src in pd.entries.values():
+            src.Cache.assert_called_with(metadata)
+        self.assertEqual(len(entry.getchildren()), 1)
+        self.assertXMLEqual(entry.getchildren()[0], children[0])
+
+        # test with multiple matches with different priorities, __text__
+        reset()
+        entry = lxml.etree.Element("Path", name="/etc/bar.conf")
+        self.assertItemsEqual(pd.get_attrs(entry, metadata),
+                              dict(attr="attr1"))
+        for src in pd.entries.values():
+            src.Cache.assert_called_with(metadata)
+        self.assertEqual(entry.text, "text")
+
+        # test with multiple matches with identical priorities
+        reset()
+        entry = lxml.etree.Element("Package", name="xyzzy")
+        self.assertRaises(PluginExecutionError,
+                          pd.get_attrs, entry, metadata)
         
 
 class SpecificityError(Bcfg2TestCase):
