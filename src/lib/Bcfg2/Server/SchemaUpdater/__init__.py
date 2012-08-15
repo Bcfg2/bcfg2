@@ -59,11 +59,12 @@ class Updater(object):
         try:
             self._base_version = _release_to_version(release)
         except:
-            raise UpdaterError
+            err = "Invalid release string: %s" % release
+            logger.error(err)
+            raise UpdaterError(err)
 
         self._fixes = []
         self._version = -1
-
 
     def __cmp__(self, other):
         return self._base_version - other._base_version
@@ -79,7 +80,7 @@ class Updater(object):
                 iv = InternalDatabaseVersion.objects.latest()
                 self._version = iv.version
             except InternalDatabaseVersion.DoesNotExist:
-                raise UpdaterError
+                raise UpdaterError("No database version stored internally")
         return self._version
 
     @property
@@ -111,13 +112,16 @@ class Updater(object):
 
     @staticmethod
     def get_current_version():
-        """Queries the db for the latest version.  Returns 0 for a fresh install"""
+        """Queries the db for the latest version.  Returns 0 for a
+        fresh install"""
 
         if "call_command" in dir(django.core.management):
-            django.core.management.call_command("syncdb", interactive=False, verbosity=0)
+            django.core.management.call_command("syncdb", interactive=False,
+                                                verbosity=0)
         else:
-            logger.warning("Unable to call syndb routine")
-            raise UpdaterError
+            msg = "Unable to call syndb routine"
+            logger.warning(msg)
+            raise UpdaterError(msg)
 
         try:
             iv = InternalDatabaseVersion.objects.latest()
@@ -171,9 +175,11 @@ class Updater(object):
                     (self.version, fix))
             logger.info("Applied schema changes for release %s" % self._release)
         except:
-            logger.error("Failed to perform db update %s (%s): %s" % \
-                (self._version + 1, fix, traceback.format_exc().splitlines()[-1]))
-            raise UpdaterError
+            msg = "Failed to perform db update %s (%s): %s" % \
+                (self._version + 1, fix,
+                 traceback.format_exc().splitlines()[-1])
+            logger.error(msg)
+            raise UpdaterError(msg)
 
 
 class UnsupportedUpdate(Updater):
@@ -215,17 +221,20 @@ def update_database():
             except ImportError:
                 logger.error("Failed to import %s" % submodule)
             except AttributeError:
-                logger.warning("Module %s does not have an updates function" % submodule)
+                logger.warning("Module %s does not have an updates function" %
+                               submodule)
             except:
-                logger.error("Failed to build updater for %s" % submodule, exc_info=1)
-                raise UpdaterError
+                msg = "Failed to build updater for %s" % submodule
+                logger.error(msg, exc_info=1)
+                raise UpdaterError(msg)
 
         current_version = Updater.get_current_version()
         logger.debug("Database version at %s" % current_version)
 
         if current_version > 0:
             [u.apply() for u in sorted(updaters)]
-            logger.debug("Database version at %s" % Updater.get_current_version())
+            logger.debug("Database version at %s" %
+                         Updater.get_current_version())
         else:
             target = updaters[-1].target_version
             InternalDatabaseVersion.objects.create(version=target)
@@ -234,7 +243,8 @@ def update_database():
     except UpdaterError:
         raise
     except ImproperlyConfigured:
-        logger.error("Django is not properly configured: %s" % traceback.format_exc().splitlines()[-1])
+        logger.error("Django is not properly configured: %s" %
+                     traceback.format_exc().splitlines()[-1])
         raise UpdaterError
     except:
         logger.error("Error while updating the database")

@@ -110,7 +110,8 @@ class BaseCore(object):
                 update_database()
                 self._database_available = True
             except UpdaterError:
-                self.logger.error("Failed to update database schema")
+                err = sys.exc_info()[1]
+                self.logger.error("Failed to update database schema: %s" % err)
         except ImportError:
             # assume django is not installed
             pass
