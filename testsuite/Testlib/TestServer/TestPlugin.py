@@ -489,7 +489,8 @@ class TestDirectoryBacked(Bcfg2TestCase):
     def get_obj(self, fam=None):
         if fam is None:
             fam = Mock()
-        return self.test_obj(datastore, fam)
+        return self.test_obj(os.path.join(datastore, self.test_obj.__name__),
+                             fam)
 
     @patch("Bcfg2.Server.Plugin.%s.add_directory_monitor" % test_obj.__name__)
     def test__init(self, mock_add_monitor):
@@ -587,8 +588,16 @@ class TestDirectoryBacked(Bcfg2TestCase):
             event.requestID = requestID
             return event
 
-        # test that events on paths that aren't handled fail properly
+        # test events on the data directory itself
         reset()
+        mock_isdir.return_value = True
+        event = get_event(db.data, "exists", 1)
+        db.HandleEvent(event)
+        mock_add_monitor.assert_called_with("")
+
+        # test events on paths that aren't handled
+        reset()
+        mock_isdir.return_value = False
         event = get_event('/foo', 'created', max(self.testpaths.keys()) + 1)
         db.HandleEvent(event)
         self.assertFalse(mock_add_monitor.called)

@@ -547,7 +547,10 @@ class DirectoryBacked(object):
             return
 
         # Clean up path names
-        event.filename = os.path.normpath(event.filename.lstrip('/'))
+        event.filename = os.path.normpath(event.filename)
+        if event.filename.startswith(self.data):
+            # the first event we get is on the data directory itself
+            event.filename = event.filename[len(self.data) + 1:]
 
         # Calculate the absolute and relative paths this event refers to
         abspath = os.path.join(self.data, self.handles[event.requestID],
