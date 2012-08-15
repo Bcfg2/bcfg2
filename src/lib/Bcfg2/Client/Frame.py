@@ -84,7 +84,7 @@ class Frame:
         self.whitelist = []
         self.blacklist = []
         self.removal = []
-        self.logger = logging.getLogger("Bcfg2.Client.Frame")
+        self.logger = logging.getLogger(__name__)
         for driver in drivers[:]:
             if driver not in Bcfg2.Client.Tools.drivers and \
                    isinstance(driver, str):

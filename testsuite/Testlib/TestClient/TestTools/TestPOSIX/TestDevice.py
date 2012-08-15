@@ -1,0 +1,139 @@
+import os
+import copy
+import unittest
+import lxml.etree
+from mock import Mock, MagicMock, patch
+from Bcfg2.Client.Tools.POSIX.Device import *
+from Test__init import get_posix_object
+
+def call(*args, **kwargs):
+    """ the Mock call object is a fairly recent addition, but it's
+    very very useful, so we create our own function to create Mock
+    calls """
+    return (args, kwargs)
+
+def get_device_object(posix=None):
+    if posix is None:
+        posix = get_posix_object()
+    return POSIXDevice(posix.logger, posix.setup, posix.config)
+
+class TestPOSIXDevice(unittest.TestCase):
+    def test_fully_specified(self):
+        ptool = get_device_object()
+        orig_entry = lxml.etree.Element("Path", name="/test", type="device",
+                                        dev_type="fifo")
+        self.assertTrue(ptool.fully_specified(orig_entry))
+        for dtype in ["block", "char"]:
+            for attr in ["major", "minor"]:
+                entry = copy.deepcopy(orig_entry)
+                entry.set("dev_type", dtype)
+                entry.set(attr, "0")
+                self.assertFalse(ptool.fully_specified(entry))
+            entry = copy.deepcopy(orig_entry)
+            entry.set("dev_type", dtype)
+            entry.set("major", "0")
+            entry.set("minor", "0")
+            self.assertTrue(ptool.fully_specified(entry))
+    
+    @patch("os.major")
+    @patch("os.minor")
+    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._exists")
+    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.verify")
+    def test_verify(self, mock_verify, mock_exists, mock_minor, mock_major):
+        entry = lxml.etree.Element("Path", name="/test", type="device",
+                                   perms='0644', owner='root', group='root',
+                                   dev_type="block", major="0", minor="10")
+        ptool = get_device_object()
+
+        def reset():
+            mock_exists.reset_mock()
+            mock_verify.reset_mock()
+            mock_minor.reset_mock()
+            mock_major.reset_mock()
+
+        mock_exists.return_value = False
+        self.assertFalse(ptool.verify(entry, []))
+        mock_exists.assert_called_with(entry)
+
+        reset()
+        mock_exists.return_value = MagicMock()
+        mock_major.return_value = 0
+        mock_minor.return_value = 10
+        mock_verify.return_value = True
+        self.assertTrue(ptool.verify(entry, []))
+        mock_verify.assert_called_with(ptool, entry, [])
+        mock_exists.assert_called_with(entry)
+        mock_major.assert_called_with(mock_exists.return_value.st_rdev)
+        mock_minor.assert_called_with(mock_exists.return_value.st_rdev)
+
+        reset()
+        mock_exists.return_value = MagicMock()
+        mock_major.return_value = 0
+        mock_minor.return_value = 10
+        mock_verify.return_value = False
+        self.assertFalse(ptool.verify(entry, []))
+        mock_verify.assert_called_with(ptool, entry, [])
+        mock_exists.assert_called_with(entry)
+        mock_major.assert_called_with(mock_exists.return_value.st_rdev)
+        mock_minor.assert_called_with(mock_exists.return_value.st_rdev)
+
+        reset()
+        mock_verify.return_value = True
+        entry = lxml.etree.Element("Path", name="/test", type="device",
+                                   perms='0644', owner='root', group='root',
+                                   dev_type="fifo")
+        self.assertTrue(ptool.verify(entry, []))
+        mock_exists.assert_called_with(entry)
+        mock_verify.assert_called_with(ptool, entry, [])
+        self.assertFalse(mock_major.called)
+        self.assertFalse(mock_minor.called)
+    
+    @patch("os.makedev")
+    @patch("os.mknod")
+    @patch("Bcfg2.Client.Tools.POSIX.Device.POSIXDevice._exists")
+    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.install")
+    def test_install(self, mock_install, mock_exists, mock_mknod, mock_makedev):
+        entry = lxml.etree.Element("Path", name="/test", type="device",
+                                   perms='0644', owner='root', group='root',
+                                   dev_type="block", major="0", minor="10")
+        ptool = get_device_object()
+
+        mock_exists.return_value = False
+        mock_makedev.return_value = Mock()
+        mock_install.return_value = True
+        self.assertTrue(ptool.install(entry))
+        mock_exists.assert_called_with(entry, remove=True)
+        mock_makedev.assert_called_with(0, 10)
+        mock_mknod.assert_called_with(entry.get("name"),
+                                      device_map[entry.get("dev_type")] | 0644,
+                                      mock_makedev.return_value)
+        mock_install.assert_called_with(ptool, entry)
+
+        mock_makedev.reset_mock()
+        mock_mknod.reset_mock()
+        mock_exists.reset_mock()
+        mock_install.reset_mock()
+        mock_makedev.side_effect = OSError
+        self.assertFalse(ptool.install(entry))
+
+        mock_makedev.reset_mock()
+        mock_mknod.reset_mock()
+        mock_exists.reset_mock()
+        mock_install.reset_mock()
+        mock_mknod.side_effect = OSError
+        self.assertFalse(ptool.install(entry))
+        
+        mock_makedev.reset_mock()
+        mock_mknod.reset_mock()
+        mock_exists.reset_mock()
+        mock_install.reset_mock()        
+        mock_mknod.side_effect = None
+        entry = lxml.etree.Element("Path", name="/test", type="device",
+                                   perms='0644', owner='root', group='root',
+                                   dev_type="fifo")
+        
+        self.assertTrue(ptool.install(entry))
+        mock_exists.assert_called_with(entry, remove=True)
+        mock_mknod.assert_called_with(entry.get("name"),
+                                      device_map[entry.get("dev_type")] | 0644)
+        mock_install.assert_called_with(ptool, entry)

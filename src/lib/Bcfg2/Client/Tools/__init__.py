@@ -1,17 +1,27 @@
 """This contains all Bcfg2 Tool modules"""
 import os
-import stat
 import sys
-from subprocess import Popen, PIPE
+import stat
 import time
+import pkgutil
+from subprocess import Popen, PIPE
 
 import Bcfg2.Client.XML
 from Bcfg2.Bcfg2Py3k import input
 
-__all__ = [tool.split('.')[0] \
-           for tool in os.listdir(os.path.dirname(__file__)) \
-           if tool.endswith(".py") and tool != "__init__.py"]
+if hasattr(pkgutil, 'walk_packages'):
+    submodules = pkgutil.walk_packages(path=__path__)
+else:
+    # python 2.4
+    import glob
+    submodules = []
+    for path in __path__:
+        for submodule in glob.glob(os.path.join(path, "*.py")):
+            mod = os.path.splitext(os.path.basename(submodule))[0]
+            if mod not in ['__init__']:
+                submodules.append((None, mod, True))
 
+__all__ = [m[1] for m in submodules]
 drivers = [item for item in __all__ if item not in ['rpmtools']]
 default = [item for item in drivers if item not in ['RPM', 'Yum']]
 
@@ -37,7 +47,7 @@ class executor:
         return (p.returncode, output.splitlines())
 
 
-class Tool:
+class Tool(object):
     """
     All tools subclass this. It defines all interfaces that need to be defined.
     """
@@ -48,10 +58,6 @@ class Tool:
     __important__ = []
 
     def __init__(self, logger, setup, config):
-        self.__important__ = [entry.get('name') \
-                              for struct in config for entry in struct \
-                              if entry.tag == 'Path' and \
-                              entry.get('important') in ['true', 'True']]
         self.setup = setup
         self.logger = logger
         if not hasattr(self, '__ireq__'):
@@ -60,8 +66,15 @@ class Tool:
         self.cmd = executor(logger)
         self.modified = []
         self.extra = []
-        self.handled = [entry for struct in self.config for entry in struct \
-                        if self.handlesEntry(entry)]
+        self.__important__ = []
+        self.handled = []
+        for struct in config:
+            for entry in struct:
+                if (entry.tag == 'Path' and
+                    entry.get('important', 'false').lower() == 'true'):
+                    self.__important__.append(entry.get('name'))
+                if self.handlesEntry(entry):
+                    self.handled.append(entry)
         for filename in self.__execs__:
             try:
                 mode = stat.S_IMODE(os.stat(filename)[stat.ST_MODE])
@@ -131,7 +144,7 @@ class Tool:
         '''Build a list of potentially modified POSIX paths for this entry'''
         return [entry.get('name') for struct in self.config.getchildren() \
                 for entry in struct.getchildren() \
-                if entry.tag in ['Ignore', 'Path']]
+                if entry.tag == 'Path']
 
     def gatherCurrentData(self, entry):
         """Default implementation of the information gathering routines."""
@@ -163,10 +176,10 @@ class Tool:
 
         missing = self.missing_attrs(entry)
         if missing:
-            self.logger.error("Incomplete information for entry %s:%s; cannot verify" \
-                              % (entry.tag, entry.get('name')))
-            self.logger.error("\t... due to absence of %s attribute(s)" % \
-                              (":".join(missing)))
+            self.logger.error("Cannot verify entry %s:%s due to missing "
+                              "required attribute(s): %s" %
+                              (entry.tag, entry.get('name'),
+                               ", ".join(missing)))
             try:
                 self.gatherCurrentData(entry)
             except:
