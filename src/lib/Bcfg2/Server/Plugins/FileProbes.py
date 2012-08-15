@@ -24,7 +24,7 @@ import lxml.etree
 path = "%s"
 
 if not os.path.exists(path):
-    print "%%s does not exist" %% path
+    print("%%s does not exist" %% path)
     raise SystemExit(1)
 
 stat = os.stat(path)
@@ -34,7 +34,7 @@ data = lxml.etree.Element("ProbedFileData",
                           group=grp.getgrgid(stat[5])[0],
                           perms=oct(stat[0] & 07777))
 data.text = binascii.b2a_base64(open(path).read())
-print lxml.etree.tostring(data)
+print(lxml.etree.tostring(data))
 """
 
 class FileProbes(Bcfg2.Server.Plugin.Plugin,

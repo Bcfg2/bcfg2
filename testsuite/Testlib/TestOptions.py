@@ -30,7 +30,6 @@ class TestOption(Bcfg2TestCase):
         c.get('foo', False, cmd='-f')
         mock_cp.assert_any_call()
         mock_open.assert_any_call(Bcfg2.Options.DEFAULT_CONFIG_LOCATION)
-        print(mock_cp.return_value.get.called)
         self.assertTrue(mock_cp.return_value.get.called)
 
     @patch('Bcfg2.Options.DefaultConfigParser')

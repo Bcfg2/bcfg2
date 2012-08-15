@@ -109,7 +109,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
             try:
                 update_database()
             except UpdaterError:
-                print "Update failed"
+                print("Update failed")
                 raise SystemExit(-1)
         elif args[0] == 'load_stats':
             quick = '-O3' in args
@@ -121,7 +121,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
                     if stats_file[0] == '-':
                         self.errExit("Invalid statistics file: %s" % stats_file)
                 elif args[i] == '-c' or args[i] == '--clients-file':
-                    print "DeprecationWarning: %s is no longer used" % args[i]
+                    print("DeprecationWarning: %s is no longer used" % args[i])
                 i = i + 1
             self.load_stats(stats_file, self.log.getEffectiveLevel() > logging.WARNING, quick)
         elif args[0] == 'purge':
