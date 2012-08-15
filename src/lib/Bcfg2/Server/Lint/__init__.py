@@ -81,13 +81,13 @@ class Plugin (object):
     def LintError(self, err, msg):
         self.errorhandler.dispatch(err, msg)
 
-    def RenderXML(self, element):
+    def RenderXML(self, element, keep_text=False):
         """render an XML element for error output -- line number
         prefixed, no children"""
         xml = None
         if len(element) or element.text:
             el = copy(element)
-            if el.text:
+            if el.text and not keep_text:
                 el.text = '...'
             [el.remove(c) for c in el.iterchildren()]
             xml = lxml.etree.tostring(el).strip()

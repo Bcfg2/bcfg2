@@ -1212,7 +1212,7 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                 "deprecated-clients-options": "warning"}
 
     def deprecated_options(self):
-        groupdata = self.metadata.clients_xml.xdata
+        clientdata = self.metadata.clients_xml.xdata
         for el in groupdata.xpath("//Client"):
             loc = el.get("location")
             if loc:
