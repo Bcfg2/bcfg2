@@ -42,7 +42,7 @@ info_regex = re.compile('owner:(\s)*(?P<owner>\S+)|' +
                         'secontext:(\s)*(?P<secontext>\S+)|' +
                         'paranoid:(\s)*(?P<paranoid>\S+)|' +
                         'sensitive:(\s)*(?P<sensitive>\S+)|' +
-                        'encoding:(\s)*(?P<encoding>\w+)|' +
+                        'encoding:(\s)*(?P<encoding>\S+)|' +
                         'important:(\s)*(?P<important>\S+)|' +
                         'mtime:(\s)*(?P<mtime>\w+)|')
 
