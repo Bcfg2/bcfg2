@@ -28,7 +28,7 @@ engine = sqlite3
 # 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
 name =
 # Or path to database file if using sqlite3.
-#<repository>/etc/brpt.sqlite is default path if left empty
+#<repository>/bcfg2.sqlite is default path if left empty
 user =
 # Not used with sqlite3.
 password =
