@@ -4,7 +4,7 @@ import sys
 import Bcfg2.Server.Plugin
 from Bcfg2.Bcfg2Py3k import HTTPError, HTTPBasicAuthHandler, \
      HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, \
-     urlopen, file, cPickle
+     urlopen, cPickle
 
 try:
     from hashlib import md5
@@ -233,7 +233,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
             fname = self.escape_url(url)
             try:
                 data = fetch_url(url)
-                file(fname, 'w').write(data)
+                open(fname, 'w').write(data)
             except ValueError:
                 self.logger.error("Packages: Bad url string %s" % url)
                 raise

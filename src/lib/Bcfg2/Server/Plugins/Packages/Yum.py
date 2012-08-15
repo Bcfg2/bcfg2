@@ -8,7 +8,7 @@ import lxml.etree
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 from Bcfg2.Bcfg2Py3k import StringIO, cPickle, HTTPError, URLError, \
-    ConfigParser, file
+    ConfigParser
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
      fetch_url
@@ -613,14 +613,14 @@ class YumSource(Source):
 
     def save_state(self):
         if not self.use_yum:
-            cache = file(self.cachefile, 'wb')
+            cache = open(self.cachefile, 'wb')
             cPickle.dump((self.packages, self.deps, self.provides,
                           self.filemap, self.url_map), cache, 2)
             cache.close()
 
     def load_state(self):
         if not self.use_yum:
-            data = file(self.cachefile)
+            data = open(self.cachefile)
             (self.packages, self.deps, self.provides,
              self.filemap, self.url_map) = cPickle.load(data)
 

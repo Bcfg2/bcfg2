@@ -41,7 +41,7 @@ class OhaiCache(object):
             # simply return if the client returned nothing
             return
         self.cache[item] = json.loads(value)
-        file("%s/%s.json" % (self.dirname, item), 'w').write(value)
+        open("%s/%s.json" % (self.dirname, item), 'w').write(value)
 
     def __getitem__(self, item):
         if item not in self.cache:
