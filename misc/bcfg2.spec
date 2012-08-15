@@ -322,6 +322,7 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %config(noreplace) %{_sysconfdir}/default/bcfg2-server
 %{_sbindir}/bcfg2-admin
 %{_sbindir}/bcfg2-build-reports
+%{_sbindir}/bcfg2-crypt
 %{_sbindir}/bcfg2-info
 %{_sbindir}/bcfg2-lint
 %{_sbindir}/bcfg2-repo-validate
