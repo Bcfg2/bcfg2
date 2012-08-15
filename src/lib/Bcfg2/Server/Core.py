@@ -10,15 +10,10 @@ import time
 import inspect
 import lxml.etree
 from traceback import format_exc
-
-# this must be set before we import the Metadata plugin
-os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
-
 import Bcfg2.settings
 import Bcfg2.Server
 import Bcfg2.Logger
 import Bcfg2.Server.FileMonitor
-import Bcfg2.Server.Plugins.Metadata
 from Bcfg2.Bcfg2Py3k import xmlrpclib
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 
@@ -30,6 +25,8 @@ try:
     psyco.full()
 except:
     pass
+
+os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
 
 def exposed(func):
     func.exposed = True
@@ -357,7 +354,7 @@ class BaseCore(object):
                                     revision=self.revision)
         try:
             meta = self.build_metadata(client)
-        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
+        except Bcfg2.Server.Plugin.MetadataConsistencyError:
             self.logger.error("Metadata consistency error for client %s" %
                               client)
             return lxml.etree.Element("error", type='metadata error')
@@ -448,7 +445,7 @@ class BaseCore(object):
         """Build the metadata structure."""
         if not hasattr(self, 'metadata'):
             # some threads start before metadata is even loaded
-            raise Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError
+            raise Bcfg2.Server.Plugin.MetadataRuntimeError
         imd = self.metadata.get_initial_metadata(client_name)
         for conn in self.connectors:
             grps = conn.get_additional_groups(imd)
@@ -484,11 +481,11 @@ class BaseCore(object):
                 meta = self.build_metadata(client)
             else:
                 meta = None
-        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
+        except Bcfg2.Server.Plugin.MetadataConsistencyError:
             err = sys.exc_info()[1]
             self.critical_error("Client metadata resolution error for %s: %s" %
                                 (address[0], err))
-        except Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError:
+        except Bcfg2.Server.Plugin.MetadataRuntimeError:
             err = sys.exc_info()[1]
             self.critical_error('Metadata system runtime failure for %s: %s' %
                                 (address[0], err))
@@ -527,8 +524,8 @@ class BaseCore(object):
         client, metadata = self.resolve_client(address)
         try:
             self.metadata.set_version(client, version)
-        except (Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError,
-                Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError):
+        except (Bcfg2.Server.Plugin.MetadataConsistencyError,
+                Bcfg2.Server.Plugin.MetadataRuntimeError):
             err = sys.exc_info()[1]
             self.critical_error("Unable to set version for %s: %s" %
                                 (client, err))
@@ -585,8 +582,8 @@ class BaseCore(object):
         client = self.resolve_client(address, metadata=False)[0]
         try:
             self.metadata.set_profile(client, profile, address)
-        except (Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError,
-                Bcfg2.Server.Plugins.Metadata.MetadataRuntimeError):
+        except (Bcfg2.Server.Plugin.MetadataConsistencyError,
+                Bcfg2.Server.Plugin.MetadataRuntimeError):
             err = sys.exc_info()[1]
             self.critical_error("Unable to assert profile for %s: %s" %
                            (client, err))
@@ -600,7 +597,7 @@ class BaseCore(object):
             config = self.BuildConfiguration(client)
             return lxml.etree.tostring(config, encoding='UTF-8',
                                        xml_declaration=True)
-        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
+        except Bcfg2.Server.Plugin.MetadataConsistencyError:
             self.critical_error("Metadata consistency failure for %s" % client)
 
     @exposed

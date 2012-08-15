@@ -115,11 +115,10 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     bangline = re.compile('^#!\s*(?P<interpreter>.*)$')
 
     def __init__(self, path, fam, encoding, plugin_name):
-        fpattern = '[0-9A-Za-z_\-]+'
         self.plugin_name = plugin_name
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, fpattern, path,
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, '[0-9A-Za-z_\-]+', path,
                                               Bcfg2.Server.Plugin.SpecificData,
-                                              encoding)
+                                              encoding, is_regex=True)
         fam.AddMonitor(path, self)
 
     def HandleEvent(self, event):
@@ -152,8 +151,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
         return ret
 
 
-class Probes(Bcfg2.Server.Plugin.Plugin,
-             Bcfg2.Server.Plugin.Probing,
+class Probes(Bcfg2.Server.Plugin.Probing,
              Bcfg2.Server.Plugin.Connector,
              Bcfg2.Server.Plugin.DatabaseBacked):
     """A plugin to gather information from a client machine."""
@@ -161,10 +159,9 @@ class Probes(Bcfg2.Server.Plugin.Plugin,
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         Bcfg2.Server.Plugin.Probing.__init__(self)
-        Bcfg2.Server.Plugin.DatabaseBacked.__init__(self)
+        Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
 
         try:
             self.probes = ProbeSet(self.data, core.fam, core.encoding,

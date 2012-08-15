@@ -3,53 +3,26 @@ import sys
 import time
 import unittest
 import lxml.etree
-from mock import Mock, patch
-
-try:
-    from django.core.management import setup_environ
-    has_django = True
-
-    os.environ['DJANGO_SETTINGS_MODULE'] = "Bcfg2.settings"
-
-    import Bcfg2.settings
-    Bcfg2.settings.DATABASE_NAME = \
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.sqlite")
-    Bcfg2.settings.DATABASES['default']['NAME'] = Bcfg2.settings.DATABASE_NAME
-except ImportError:
-    has_django = False
-
+from mock import Mock, MagicMock, patch
+from ....common import *
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Probes import *
-
-datastore = "/"
+from ..TestPlugin import TestEntrySet, TestProbing, TestConnector, \
+    TestDatabaseBacked
 
 # test data for JSON and YAML tests
 test_data = dict(a=1, b=[1, 2, 3], c="test")
-
-def test_syncdb():
-    if not has_django:
-        raise unittest.SkipTest("Django not found, skipping")
-
-    # create the test database
-    setup_environ(Bcfg2.settings)
-    from django.core.management.commands import syncdb
-    cmd = syncdb.Command()
-    cmd.handle_noargs(interactive=False)
-    assert os.path.exists(Bcfg2.settings.DATABASE_NAME)
-
-    # ensure that we a) can connect to the database; b) start with a
-    # clean database
-    ProbesDataModel.objects.all().delete()
-    ProbesGroupsModel.objects.all().delete()
-    assert list(ProbesDataModel.objects.all()) == []
-
 
 class FakeList(list):
     sort = Mock()
 
 
-class TestClientProbeDataSet(unittest.TestCase):
+class TestProbesDB(DBModelTestCase):
+    models = [ProbesGroupsModel, ProbesDataModel]
+    
+
+class TestClientProbeDataSet(Bcfg2TestCase):
     def test__init(self):
         ds = ClientProbeDataSet()
         self.assertLessEqual(ds.timestamp, time.time())
@@ -60,7 +33,7 @@ class TestClientProbeDataSet(unittest.TestCase):
         self.assertEqual(ds.timestamp, 123)
         self.assertNotIn("timestamp", ds)
 
-class TestProbeData(unittest.TestCase):
+class TestProbeData(Bcfg2TestCase):
     def test_str(self):
         # a value that is not valid XML, JSON, or YAML
         val = "'test"
@@ -100,20 +73,32 @@ class TestProbeData(unittest.TestCase):
         self.assertItemsEqual(test_data, data.yaml)
         
 
-class TestProbeSet(unittest.TestCase):
-    def get_probeset_object(self, fam=None):
+class TestProbeSet(TestEntrySet):
+    test_obj = ProbeSet
+    basenames = ["test", "_test", "test-test"]
+    ignore = ["foo~", ".#foo", ".foo.swp", ".foo.swx", "probed.xml"]
+    bogus_names = ["test.py"]
+
+    def get_obj(self, path=datastore, fam=None, encoding=None,
+                plugin_name="Probes", basename=None):
+        # get_obj() accepts the basename argument, accepted by the
+        # parent get_obj() method, and just throws it away, since
+        # ProbeSet uses a regex for the "basename"
         if fam is None:
             fam = Mock()
-        return ProbeSet(datastore, fam, None, "Probes")
+        rv = self.test_obj(path, fam, encoding, plugin_name)
+        rv.entry_type = MagicMock()
+        return rv
 
     def test__init(self):
         fam = Mock()
-        ps = self.get_probeset_object(fam)
+        ps = self.get_obj(fam=fam)
         self.assertEqual(ps.plugin_name, "Probes")
         fam.AddMonitor.assert_called_with(datastore, ps)
+        TestEntrySet.test__init(self)
 
     def test_HandleEvent(self):
-        ps = self.get_probeset_object()
+        ps = self.get_obj()
         ps.handle_event = Mock()
 
         # test that events on the data store itself are skipped
@@ -136,7 +121,7 @@ class TestProbeSet(unittest.TestCase):
 
     @patch("__builtin__.list", FakeList)
     def test_get_probe_data(self):
-        ps = self.get_probeset_object()
+        ps = self.get_obj()
         
         # build some fairly complex test data for this.  in the end,
         # we want the probe data to include only the most specific
@@ -196,7 +181,9 @@ group-specific"""
                 assert False, "Strange probe found in get_probe_data() return"
 
 
-class TestProbes(unittest.TestCase):
+class TestProbes(TestProbing, TestConnector, TestDatabaseBacked):
+    test_obj = Probes
+
     def get_test_probedata(self):
         test_xdata = lxml.etree.Element("test")
         lxml.etree.SubElement(test_xdata, "test", foo="foo")
@@ -249,19 +236,20 @@ text
                                                             "use_database",
                                                             default=False)
 
+    @unittest.skipUnless(has_django, "Django not found, skipping")
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_xml", Mock())
-    def test_write_data(self):
+    def test_write_data_xml(self):
         probes = self.get_probes_object(use_db=False)
         probes.write_data("test")
         probes._write_data_xml.assert_called_with("test")
         self.assertFalse(probes._write_data_db.called)
 
-        if not has_django:
-            self.skipTest("Django not found, skipping")
+    @unittest.skipUnless(has_django, "Django not found, skipping")
+    @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_db", Mock())
+    @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_xml", Mock())
+    def test_write_data_db(self):
         probes = self.get_probes_object(use_db=True)
-        probes._write_data_xml.reset_mock()
-        probes._write_data_db.reset_mock()
         probes.write_data("test")
         probes._write_data_db.assert_called_with("test")
         self.assertFalse(probes._write_data_xml.called)
@@ -322,10 +310,9 @@ text
             self.assertIsNotNone(jdata.get("value"))
             self.assertItemsEqual(test_data, json.loads(jdata.get("value")))
 
+    @unittest.skipUnless(has_django, "Django not found, skipping")
     def test__write_data_db(self):
-        if not has_django:
-            self.skipTest("Django not found, skipping")
-        test_syncdb()
+        syncdb(TestProbesDB)
         probes = self.get_probes_object(use_db=True)
         probes.probedata = self.get_test_probedata()
         probes.cgroups = self.get_test_cgroups()
@@ -375,23 +362,20 @@ text
         pgroups = ProbesGroupsModel.objects.filter(hostname=cname).all()
         self.assertEqual(len(pgroups), len(probes.cgroups[cname]))
 
+    @unittest.skipUnless(has_django, "Django not found, skipping")
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_xml", Mock())
-    def test_load_data(self):
+    def test_load_data_xml(self):
         probes = self.get_probes_object(use_db=False)
-        probes._load_data_xml.reset_mock()
-        probes._load_data_db.reset_mock()
-        
         probes.load_data()
         probes._load_data_xml.assert_any_call()
         self.assertFalse(probes._load_data_db.called)
 
-        if not has_django:
-            self.skipTest("Django not found, skipping")
-
+    @unittest.skipUnless(has_django, "Django not found, skipping")
+    @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_db", Mock())
+    @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_xml", Mock())
+    def test_load_data_db(self):
         probes = self.get_probes_object(use_db=True)
-        probes._load_data_xml.reset_mock()
-        probes._load_data_db.reset_mock()
         probes.load_data()
         probes._load_data_db.assert_any_call()
         self.assertFalse(probes._load_data_xml.called)
@@ -408,7 +392,6 @@ text
         probes._write_data_xml(None)
         xdata = \
             lxml.etree.XML(str(mock_open.return_value.write.call_args[0][0]))
-        print "rv = %s" % lxml.etree.tostring(xdata)
         mock_parse.return_value = xdata.getroottree()
         probes.probedata = dict()
         probes.cgroups = dict()
@@ -420,10 +403,9 @@ text
         self.assertItemsEqual(probes.probedata, self.get_test_probedata())
         self.assertItemsEqual(probes.cgroups, self.get_test_cgroups())
 
+    @unittest.skipUnless(has_django, "Django not found, skipping")
     def test__load_data_db(self):
-        if not has_django:
-            self.skipTest("Django not found, skipping")
-        test_syncdb()
+        syncdb(TestProbesDB)
         probes = self.get_probes_object(use_db=True)
         probes.probedata = self.get_test_probedata()
         probes.cgroups = self.get_test_cgroups()
@@ -467,8 +449,8 @@ text
         probes.ReceiveData(client, datalist)
         
         self.assertItemsEqual(mock_ReceiveDataItem.call_args_list,
-                              [((client, "a"), {}), ((client, "b"), {}),
-                               ((client, "c"), {})])
+                              [call(client, "a"), call(client, "b"),
+                               call(client, "c")])
         mock_write_data.assert_called_with(client)
 
     def test_ReceiveDataItem(self):

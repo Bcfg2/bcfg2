@@ -286,27 +286,27 @@ def main():
     depsolver = DepSolver(options.config, options.verbose)
     if cmd == "clean":
         depsolver.clean_cache()
-        print json.dumps(True)
+        print(json.dumps(True))
     elif cmd == "complete":
         data = json.loads(sys.stdin.read())
         depsolver.groups = data['groups']
         (packages, unknown) = depsolver.complete([pkg_to_tuple(p)
                                                   for p in data['packages']])
-        print json.dumps(dict(packages=list(packages),
-                              unknown=list(unknown)))
+        print(json.dumps(dict(packages=list(packages),
+                              unknown=list(unknown))))
     elif cmd == "is_virtual_package":
         package = pkg_to_tuple(json.loads(sys.stdin.read()))
-        print json.dumps(bool(depsolver.get_provides(package, silent=True)))
+        print(json.dumps(bool(depsolver.get_provides(package, silent=True))))
     elif cmd == "get_deps" or cmd == "get_provides":
         package = pkg_to_tuple(json.loads(sys.stdin.read()))
-        print json.dumps([p.name for p in getattr(depsolver, cmd)(package)])
+        print(json.dumps([p.name for p in getattr(depsolver, cmd)(package)]))
     elif cmd == "get_group":
         data = json.loads(sys.stdin.read())
         if "type" in data:
             packages = depsolver.get_group(data['group'], ptype=data['type'])
         else:
             packages = depsolver.get_group(data['group'])
-        print json.dumps(list(packages))
+        print(json.dumps(list(packages)))
     elif cmd == "get_groups":
         data = json.loads(sys.stdin.read())
         rv = dict()
@@ -317,10 +317,10 @@ def main():
             else:
                 packages = depsolver.get_group(gdata['group'])
             rv[gdata['group']] = list(packages)
-        print json.dumps(rv)
+        print(json.dumps(rv))
     elif cmd == "is_package":
         package = pkg_to_tuple(json.loads(sys.stdin.read()))
-        print json.dumps(getattr(depsolver, cmd)(package))
+        print(json.dumps(getattr(depsolver, cmd)(package)))
         
         
 if __name__ == '__main__':

@@ -62,14 +62,12 @@ def build_snap_ent(entry):
     return [desired, state]
 
 
-class Snapshots(Bcfg2.Server.Plugin.Statistics,
-                Bcfg2.Server.Plugin.Plugin):
+class Snapshots(Bcfg2.Server.Plugin.Statistics):
     name = 'Snapshots'
     experimental = True
 
     def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        Bcfg2.Server.Plugin.Statistics.__init__(self)
+        Bcfg2.Server.Plugin.Statistics.__init__(self, core, datastore)
         self.session = Bcfg2.Server.Snapshots.setup_session(core.cfile)
         self.work_queue = Queue()
         self.loader = threading.Thread(target=self.load_snapshot)

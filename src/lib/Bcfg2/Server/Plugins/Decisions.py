@@ -23,9 +23,9 @@ class DecisionSet(Bcfg2.Server.Plugin.EntrySet):
         - `encoding`: XML character encoding
 
         """
-        pattern = '(white|black)list'
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, pattern, path, \
-                                              DecisionFile, encoding)
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, '(white|black)list', path,
+                                              DecisionFile, encoding,
+                                              is_regex=True)
         try:
             fam.AddMonitor(path, self)
         except OSError:

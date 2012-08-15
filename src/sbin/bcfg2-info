@@ -643,7 +643,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             print("Unable to build metadata for host %s" % args)
             return
         collection = self.plugins['Packages']._get_collection(metadata)
-        print collection.sourcelist()
+        print(collection.sourcelist())
 
     def do_profile(self, arg):
         """."""

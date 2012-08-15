@@ -18,13 +18,11 @@ from Bcfg2.Server.Reports.reports.models import Client
 logger = logging.getLogger('Bcfg2.Plugins.DBStats')
 
 
-class DBStats(Bcfg2.Server.Plugin.Plugin,
-              Bcfg2.Server.Plugin.ThreadedStatistics,
+class DBStats(Bcfg2.Server.Plugin.ThreadedStatistics,
               Bcfg2.Server.Plugin.PullSource):
     name = 'DBStats'
 
     def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.ThreadedStatistics.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.PullSource.__init__(self)
         self.cpath = "%s/Metadata/clients.xml" % datastore

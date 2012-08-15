@@ -35,5 +35,5 @@ class Syncdb(Bcfg2.Server.Admin.Mode):
         try:
             update_database()
         except UpdaterError:
-            print "Update failed"
+            print("Update failed")
             raise SystemExit(-1)

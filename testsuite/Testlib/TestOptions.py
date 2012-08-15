@@ -3,9 +3,9 @@ import sys
 import unittest
 from mock import Mock, patch
 import Bcfg2.Options
+from ..common import *
 
-
-class TestOption(unittest.TestCase):
+class TestOption(Bcfg2TestCase):
     def test__init(self):
         self.assertRaises(Bcfg2.Options.OptionFailure,
                           Bcfg2.Options.Option,
@@ -30,7 +30,6 @@ class TestOption(unittest.TestCase):
         c.get('foo', False, cmd='-f')
         mock_cp.assert_any_call()
         mock_open.assert_any_call(Bcfg2.Options.DEFAULT_CONFIG_LOCATION)
-        print(mock_cp.return_value.get.called)
         self.assertTrue(mock_cp.return_value.get.called)
 
     @patch('Bcfg2.Options.DefaultConfigParser')
@@ -68,7 +67,7 @@ class TestOption(unittest.TestCase):
         assert o2.value == True
 
 
-class TestOptionSet(unittest.TestCase):
+class TestOptionSet(Bcfg2TestCase):
     def test_buildGetopt(self):
         opts = [('foo', Bcfg2.Options.Option('foo', 'test1', cmd='-G')),
                 ('bar', Bcfg2.Options.Option('foo', 'test2')),
@@ -108,7 +107,7 @@ class TestOptionSet(unittest.TestCase):
         self.assertTrue(oset3['foo'])
 
 
-class TestOptionParser(unittest.TestCase):
+class TestOptionParser(Bcfg2TestCase):
     def test__init(self):
         opts = [('foo', Bcfg2.Options.Option('foo', 'test1', cmd='-h')),
                 ('bar', Bcfg2.Options.Option('foo', 'test2')),
