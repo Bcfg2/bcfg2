@@ -209,11 +209,15 @@ class BaseCore(object):
                                 (plugin)).Server.Plugins, plugin)
         except ImportError:
             try:
-                mod = __import__(plugin)
+                mod = __import__(plugin, globals(), locals(), [plugin.split('.')[-1]])
             except:
                 self.logger.error("Failed to load plugin %s" % plugin)
                 return
-        plug = getattr(mod, plugin)
+        try:
+            plug = getattr(mod, plugin.split('.')[-1])
+        except AttributeError:
+            self.logger.error("Failed to load plugin %s (AttributeError)" % plugin)
+            return
         # Blacklist conflicting plugins
         cplugs = [conflict for conflict in plug.conflicts
                   if conflict in self.plugins]
