@@ -156,7 +156,7 @@ class DatabaseBacked(Plugin):
         use_db = self.core.setup.cfp.getboolean(self.name.lower(),
                                                 "use_database",
                                                 default=False)
-        if use_db and has_django:
+        if use_db and has_django and self.core.database_available:
             return True
         elif not use_db:
             return False

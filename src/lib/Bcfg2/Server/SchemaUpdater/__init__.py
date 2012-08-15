@@ -1,4 +1,5 @@
 from django.db import connection, DatabaseError
+from django.core.exceptions import ImproperlyConfigured
 import django.core.management
 import logging
 import pkgutil
@@ -232,6 +233,9 @@ def update_database():
 
     except UpdaterError:
         raise
+    except ImproperlyConfigured:
+        logger.error("Django is not properly configured: %s" % traceback.format_exc().splitlines()[-1])
+        raise UpdaterError
     except:
         logger.error("Error while updating the database")
         for x in traceback.format_exc().splitlines():

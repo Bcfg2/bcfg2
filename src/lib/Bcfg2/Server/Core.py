@@ -102,14 +102,15 @@ class BaseCore(object):
         # load plugins
         Bcfg2.settings.read_config(cfile=self.cfile, repo=self.datastore)
 
+        self._database_available = False
         # verify our database schema
         try:
             from Bcfg2.Server.SchemaUpdater import update_database, UpdaterError
             try:
                 update_database()
+                self._database_available = True
             except UpdaterError:
                 self.logger.error("Failed to update database schema")
-                raise CoreInitError
         except ImportError:
             # assume django is not installed
             pass
@@ -623,3 +624,9 @@ class BaseCore(object):
         """Get the data of the decision list."""
         client, metadata = self.resolve_client(address)
         return self.GetDecisions(metadata, mode)
+
+    @property
+    def database_available(self):
+        """Is the database configured and available"""
+        return self._database_available
+

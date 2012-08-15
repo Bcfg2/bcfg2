@@ -27,8 +27,8 @@ class DBStats(Bcfg2.Server.Plugin.ThreadedStatistics,
         Bcfg2.Server.Plugin.PullSource.__init__(self)
         self.cpath = "%s/Metadata/clients.xml" % datastore
         self.core = core
-        logger.debug("Searching for new models to "
-                     "add to the statistics database")
+        if not self.core.database_available:
+            raise Bcfg2.Server.Plugin.PluginInitError
 
     def handle_statistic(self, metadata, data):
         newstats = data.find("Statistics")
