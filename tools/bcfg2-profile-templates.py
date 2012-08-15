@@ -120,9 +120,9 @@ def main():
             continue
         if avg > 0.01 or templates:
             tmpltimes.append((tmpl, avg))
-    print "%-50s %s" % ("Template", "Average Render Time")
+    print("%-50s %s" % ("Template", "Average Render Time"))
     for tmpl, avg in reversed(sorted(tmpltimes, key=operator.itemgetter(1))):
-        print "%-50s %.02f" % (tmpl, avg)
+        print("%-50s %.02f" % (tmpl, avg))
 
     # TODO: complain about templates that on average were quick but
     # for which some clients were slow

@@ -19,7 +19,6 @@ def myListPkgs(self, lst, description, outputType):
         thingslisted = 0
         if len(lst) > 0:
             thingslisted = 1
-            #print '%s' % description
             from yum.misc import sortPkgObj
             lst.sort(sortPkgObj)
             for pkg in lst:

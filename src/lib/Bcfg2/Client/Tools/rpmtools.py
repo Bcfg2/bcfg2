@@ -43,7 +43,6 @@ try:
     isprelink_imported = True
 except ImportError:
     isprelink_imported = False
-    #print '*********************** isprelink not loaded ***********************'
 
 # If the prelink command is installed on the system then we need to do
 # prelink -y on files.
@@ -333,7 +332,6 @@ def prelink_size_check(filename):
                     fsize += len(data)
 
         elif whitelist_re.search(filename) and not blacklist_re.search(filename):
-        #    print "***** Warning isprelink extension failed to import ******"
             plf.close()
             cmd = '/usr/sbin/prelink -y %s 2> /dev/null' \
                                         % (re.escape(filename))
@@ -601,7 +599,6 @@ def rpm_verify_package(vp_ts, header, verify_options):
         omitmask |= VERIFY_RDEV
 
     omitmask = ((~omitmask & VERIFY_ATTRS) ^ VERIFY_ATTRS)
-    #print 'omitmask =', omitmask
 
     package_results = {}
 
@@ -754,58 +751,41 @@ class Rpmtscallback(object):
         """
         if   reason == rpm.RPMCALLBACK_INST_OPEN_FILE:
             pass
-            #print 'rpm.RPMCALLBACK_INST_OPEN_FILE'
         elif reason == rpm.RPMCALLBACK_INST_CLOSE_FILE:
             pass
-            #print 'rpm.RPMCALLBACK_INST_CLOSE_FILE'
         elif reason == rpm.RPMCALLBACK_INST_START:
             pass
-            #print 'rpm.RPMCALLBACK_INST_START'
         elif reason == rpm.RPMCALLBACK_TRANS_PROGRESS or \
              reason == rpm.RPMCALLBACK_INST_PROGRESS:
             pass
-            #print 'rpm.RPMCALLBACK_TRANS_PROGRESS or \
             #       rpm.RPMCALLBACK_INST_PROGRESS'
         elif reason == rpm.RPMCALLBACK_TRANS_START:
             pass
-            #print 'rpm.RPMCALLBACK_TRANS_START'
         elif reason == rpm.RPMCALLBACK_TRANS_STOP:
             pass
-            #print 'rpm.RPMCALLBACK_TRANS_STOP'
         elif reason == rpm.RPMCALLBACK_REPACKAGE_START:
             pass
-            #print 'rpm.RPMCALLBACK_REPACKAGE_START'
         elif reason == rpm.RPMCALLBACK_REPACKAGE_PROGRESS:
             pass
-            #print 'rpm.RPMCALLBACK_REPACKAGE_PROGRESS'
         elif reason == rpm.RPMCALLBACK_REPACKAGE_STOP:
             pass
-            #print 'rpm.RPMCALLBACK_REPACKAGE_STOP'
         elif reason == rpm.RPMCALLBACK_UNINST_PROGRESS:
             pass
-            #print 'rpm.RPMCALLBACK_UNINST_PROGRESS'
         elif reason == rpm.RPMCALLBACK_UNINST_START:
             pass
-            #print 'rpm.RPMCALLBACK_UNINST_START'
         elif reason == rpm.RPMCALLBACK_UNINST_STOP:
             pass
-            #print 'rpm.RPMCALLBACK_UNINST_STOP'
-            #print '***Package ', key, ' deleted ***'
             # How do we get at this?
             # RPM.modified += key
         elif reason == rpm.RPMCALLBACK_UNPACK_ERROR:
             pass
-            #print 'rpm.RPMCALLBACK_UNPACK_ERROR'
         elif reason == rpm.RPMCALLBACK_CPIO_ERROR:
             pass
-            #print 'rpm.RPMCALLBACK_CPIO_ERROR'
         elif reason == rpm.RPMCALLBACK_UNKNOWN:
             pass
-            #print 'rpm.RPMCALLBACK_UNKNOWN'
         else:
             print('ERROR - Fell through callBack')
 
-        #print reason, amount, total, key, client_data
 
 def rpm_erase(erase_pkgspecs, erase_flags):
     """
@@ -836,7 +816,6 @@ def rpm_erase(erase_pkgspecs, erase_flags):
                 erase_ts.addErase(idx)
 
     #for te in erase_ts:
-    #    print "%s %s:%s-%s.%s" % (te.N(), te.E(), te.V(), te.R(), te.A())
 
     erase_problems = []
     if 'nodeps' not in erase_flags:
@@ -847,8 +826,6 @@ def rpm_erase(erase_pkgspecs, erase_flags):
         erase_callback = Rpmtscallback()
         erase_ts.run(erase_callback.callback, 'Erase')
     #else:
-    #    print 'ERROR - Dependency failures on package erase'
-    #    print erase_problems
 
     erase_ts.closeDB()
     del erase_ts

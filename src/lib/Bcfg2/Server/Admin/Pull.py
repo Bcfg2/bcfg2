@@ -93,7 +93,6 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         for k, v in list(data.items()):
             if v:
                 new_entry[k] = v
-        #print new_entry
         return new_entry
 
     def Choose(self, choices):

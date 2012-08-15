@@ -39,7 +39,7 @@ def run(command):
 def find_and_replace(f, iftest, rline, startswith=False, dryrun=False):
     if dryrun:
         inplace = 0
-        print "*** dry-run: New '%s' will look like this:" % f
+        print("*** dry-run: New '%s' will look like this:" % f)
     else:
         inplace = 1
     for line in fileinput.input(f, inplace):
@@ -52,7 +52,7 @@ def find_and_replace(f, iftest, rline, startswith=False, dryrun=False):
                 line = line.replace(line, rline)
             sys.stdout.write(line)
     if dryrun:
-        print "*** End '%s'" % f
+        print("*** End '%s'" % f)
 
 
 def main():
@@ -87,8 +87,8 @@ def main():
     options = p.parse_args()[0]
 
     if options.debug:
-        print options
-        print "What should debug mode do?"
+        print(options)
+        print("What should debug mode do?")
 
     # py3k compatibility
     try:
@@ -113,9 +113,9 @@ def main():
                                         version_info['micro'])
 
         if options.debug:
-            print "version is %s" % version
-            print "version_info is %s" % version_info
-            print "version_release is %s" % version_release
+            print("version is %s" % version)
+            print("version_info is %s" % version_info)
+            print("version_release is %s" % version_release)
 
         if not version_info["major"].isdigit() \
            or not version_info["minor"].isdigit() \
@@ -126,11 +126,11 @@ def main():
                                'IFMinorVersion restrictions in '
                                'Mac OS X Packaging')
     except:
-        print """Version must be of the form Major.Minor.MicroBuild,
+        print("""Version must be of the form Major.Minor.MicroBuild,
 where Major and Minor are integers and
 Micro is a single digit optionally followed by Build (i.e. pre##)
 E.G. 1.2.0pre1 is a valid version.
-"""
+""")
         quit()
 
     tarname = '/tmp/%s-%s.tar.gz' % (pkgname, version)
@@ -160,8 +160,8 @@ E.G. 1.2.0pre1 is a valid version.
                 f.write(newchangelog + old)
             f.close()
         except:
-            print "Problem opening debian/changelog"
-            print help_message
+            print("Problem opening debian/changelog")
+            print(help_message)
             quit()
 
     # Update redhat directory versions
@@ -266,13 +266,13 @@ E.G. 1.2.0pre1 is a valid version.
 
     if options.dryrun:
         for cmd in commando_orders:
-            print "*** dry-run: %s" % commando[cmd]
+            print("*** dry-run: %s" % commando[cmd])
     else:
         for cmd in commando_orders:
             output = run(commando[cmd])[0].strip()
             if options.verbose:
-                print output
-                print "Ran '%s' with above output." % cmd
+                print(output)
+                print("Ran '%s' with above output." % cmd)
 
 if __name__ == '__main__':
     sys.exit(main())

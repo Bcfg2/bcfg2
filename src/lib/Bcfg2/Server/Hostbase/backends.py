@@ -18,21 +18,16 @@ from nisauth import *
 ##                 uid=l.badge_no
 ##                 )
 ##             #fixme: need to add this user session obj to session
-##             #print str(ldap_user)
 ##             user,created = User.objects.get_or_create(username=username)
-##             #print user
-##             #print "created " + str(created)
 ##             return user
 
 ##         except LDAPAUTHError,e:
-##             #print str(e)
 ##             return None
 
 ##     def get_user(self,user_id):
 ##         try:
 ##             return User.objects.get(pk=user_id)
 ##         except User.DoesNotExist, e:
-##             print str(e)
 ##             return None
 
 

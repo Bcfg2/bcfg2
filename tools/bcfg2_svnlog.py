@@ -468,7 +468,7 @@ def main():
         smtp.sendmail(msg['From'], [msg['To']], msg.as_string())
         smtp.quit()
     else:
-        print "\n".join(body)
+        print("\n".join(body))
  
 if __name__ == "__main__":
     sys.exit(main())

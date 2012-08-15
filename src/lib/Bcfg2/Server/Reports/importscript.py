@@ -286,7 +286,7 @@ if __name__ == '__main__':
         if o in ("-d", "--debug"):
             verb = 3
         if o in ("-c", "--clients"):
-            print "DeprecationWarning: %s is no longer used" % o
+            print("DeprecationWarning: %s is no longer used" % o)
 
         if o in ("-s", "--stats"):
             statpath = a

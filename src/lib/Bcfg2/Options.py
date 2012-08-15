@@ -140,8 +140,9 @@ class Option(object):
             if self.deprecated_cf:
                 try:
                     self.value = self.get_cooked_value(configparser.get(*self.deprecated_cf))
-                    print "Warning: [%s] %s is deprecated, use [%s] %s instead" % \
-                        (self.deprecated_cf[0], self.deprecated_cf[1], self.cf[0], self.cf[1])
+                    print("Warning: [%s] %s is deprecated, use [%s] %s instead"
+                          % (self.deprecated_cf[0], self.deprecated_cf[1],
+                             self.cf[0], self.cf[1]))
                     return
                 except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
                     pass

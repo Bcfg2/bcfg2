@@ -144,7 +144,6 @@ class ldapauth(object):
     def member_of(self):
         """See if this user is in our group that is allowed to login"""
         m = [g for g in self.memberOf if g == self.check_member_of]
-        #print m
         if len(m) == 1:
             return True
         else:

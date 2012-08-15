@@ -50,7 +50,6 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
             bundle_name = []
             bundle_list = xml_list + genshi_list
             for bundle_path in bundle_list:
-                print "matching %s" % bundle_path
                 bundle_name.append(rg.search(bundle_path).group(1))
             text = "Available bundles (Number of bundles: %s)" % \
                     (len(bundle_list))

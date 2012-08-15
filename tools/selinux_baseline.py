@@ -45,7 +45,7 @@ def main():
             entry.tag = "BoundSELinux"
         baseline.extend(extra)
 
-    print lxml.etree.tostring(baseline, pretty_print=True)
+    print(lxml.etree.tostring(baseline, pretty_print=True))
 
 if __name__ == "__main__":
     sys.exit(main())

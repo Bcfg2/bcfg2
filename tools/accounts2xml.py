@@ -71,7 +71,7 @@ def main(args):
     with file(filename, 'w') as modified: modified.write("name:pass:uid:gid:gecos:home:shell\n" + data); modified.close()
     safe_filename = "Properties"
   except IndexError:
-    print "ERROR: Please provide a filename.csv as the first argument"
+    print("ERROR: Please provide a filename.csv as the first argument")
     sys.exit()
     
   node_user = "UnixUser"
@@ -107,7 +107,7 @@ def main(args):
   output_file = "accounts.xml"
   doc.writexml(open(output_file, 'w'), addindent='    ', newl='\n') # Write file
   
-  print "Done: Created %s" % output_file
+  print("Done: Created %s" % output_file)
   os.remove(filename)
   
 def create_col_nodes(cols, item, doc, row): 
