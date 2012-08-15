@@ -1,30 +1,41 @@
-import os.path
+import os
 import Bcfg2.Options
 import Bcfg2.Server.Lint
 from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
+from Bcfg2.Server.Plugins.Cfg.CfgLegacyInfo import CfgLegacyInfo
 
 class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
     """ ensure that all config files have an info.xml file"""
     def Run(self):
-        for plugin in ['Cfg', 'TCheetah', 'TGenshi']:
-            if plugin not in self.core.plugins:
-                continue
-            for filename, entryset in self.core.plugins[plugin].entries.items():
-                infoxml_fname = os.path.join(entryset.path, "info.xml")
-                if self.HandlesFile(infoxml_fname):
-                    found = False
-                    for entry in entryset.entries.values():
-                        if isinstance(entry, CfgInfoXML):
-                            self.check_infoxml(infoxml_fname,
-                                               entry.infoxml.pnode.data)
-                            found = True
-                    if not found:
-                        self.LintError("no-infoxml",
-                                       "No info.xml found for %s" % filename)
+        if 'Cfg' not in self.core.plugins:
+            return
+
+        for filename, entryset in self.core.plugins['Cfg'].entries.items():
+            infoxml_fname = os.path.join(entryset.path, "info.xml")
+            if self.HandlesFile(infoxml_fname):
+                found = False
+                for entry in entryset.entries.values():
+                    if isinstance(entry, CfgInfoXML):
+                        self.check_infoxml(infoxml_fname,
+                                           entry.infoxml.pnode.data)
+                        found = True
+                if not found:
+                    self.LintError("no-infoxml",
+                                   "No info.xml found for %s" % filename)
+
+            for entry in entryset.entries.values():
+                if isinstance(entry, CfgLegacyInfo):
+                    if not self.HandlesFile(entry.path):
+                        continue
+                    self.LintError("deprecated-info-file",
+                                   "Deprecated %s file found at %s" %
+                                   (os.path.basename(entry.name),
+                                    entry.path))
 
     @classmethod
     def Errors(cls):
         return {"no-infoxml":"warning",
+                "deprecated-info-file":"warning",
                 "paranoid-false":"warning",
                 "broken-xinclude-chain":"warning",
                 "required-infoxml-attrs-missing":"error"}
