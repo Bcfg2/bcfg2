@@ -40,14 +40,16 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
                                      plugin).Server.Plugins, plugin)
         except ImportError:
             try:
+                err = sys.exc_info()[1]
                 mod = __import__(plugin)
             except:
                 if plugins != Bcfg2.Server.Plugins.__all__:
                     # only produce errors if the default plugin list
                     # was not used -- i.e., if the config file was set
                     # up.  don't produce errors when trying to load
-                    # all plugins, IOW
-                    err = sys.exc_info()[1]
+                    # all plugins, IOW.  the error from the first
+                    # attempt to import is probably more accurate than
+                    # the second attempt.
                     logger.error("Failed to load plugin %s: %s" % (plugin, err))
                     continue
         for sym in dir(mod):
