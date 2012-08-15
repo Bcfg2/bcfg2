@@ -52,7 +52,7 @@ def read_config(cfile='/etc/bcfg2.conf', repo=None, quiet=False):
         repo = setup['repo']
 
     DATABASES['default'] = \
-        dict(ENGINE=setup['db_engine'],
+        dict(ENGINE="django.db.backends.%s" % setup['db_engine'],
              NAME=setup['db_name'],
              USER=setup['db_user'],
              PASSWORD=setup['db_password'],
