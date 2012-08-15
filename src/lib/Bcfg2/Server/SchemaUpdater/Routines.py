@@ -219,7 +219,7 @@ class RemoveColumns(RebuildTable):
 
             logger.debug("Dropping column %s" % column)
 
-            db_engine = Bcfg2.DATABASES['default']['ENGINE']
+            db_engine = Bcfg2.settings.DATABASES['default']['ENGINE']
             if db_engine == 'django.db.backends.sqlite3':
                 _rebuild_sqlite_table(self.model)
             else:
