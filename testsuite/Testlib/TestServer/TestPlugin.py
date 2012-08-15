@@ -1987,4 +1987,197 @@ class TestEntrySet(TestDebuggable):
 
 class TestGroupSpool(TestPlugin, TestGenerator):
     test_obj = GroupSpool
-    pass
+    
+    @patch("Bcfg2.Server.Plugin.%s.AddDirectoryMonitor" % test_obj.__name__)
+    def get_obj(self, core=None):
+        return TestPlugin.get_obj(self, core=core)
+
+    @patch("Bcfg2.Server.Plugin.%s.AddDirectoryMonitor" % test_obj.__name__)
+    def test__init(self, mock_Add):
+        core = Mock()
+        gs = self.test_obj(core, datastore)
+        mock_Add.assert_called_with('')
+        self.assertItemsEqual(gs.Entries, {gs.entry_type: {}})
+    
+    @patch("os.path.isdir")
+    @patch("os.path.isfile")
+    @patch("Bcfg2.Server.Plugin.%s.event_id" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.%s.event_path" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.%s.AddDirectoryMonitor" % test_obj.__name__)
+    def test_add_entry(self, mock_Add, mock_event_path, mock_event_id,
+                       mock_isfile, mock_isdir):
+        gs = self.get_obj()
+        gs.es_cls = Mock()
+        gs.es_child_cls = Mock()
+        
+        def reset():
+            gs.es_cls.reset_mock()
+            gs.es_child_cls.reset_mock()
+            mock_Add.reset_mock()
+            mock_event_path.reset_mock()
+            mock_event_id.reset_mock()
+            mock_isfile.reset_mock()
+            mock_isdir.reset_mock()
+
+        # directory
+        event = Mock()
+        event.filename = "foo"
+        basedir = "test"
+        epath = os.path.join(gs.data, basedir, event.filename)
+        ident = os.path.join(basedir, event.filename)
+        mock_event_path.return_value = epath
+        mock_event_id.return_value = ident
+        mock_isdir.return_value = True
+        mock_isfile.return_value = False
+        gs.add_entry(event)
+        mock_Add.assert_called_with(os.path.join("/" + basedir, event.filename))
+        self.assertNotIn(ident, gs.entries)
+        mock_isdir.assert_called_with(epath)
+        
+        # file that is not in self.entries
+        reset()
+        event = Mock()
+        event.filename = "foo"
+        basedir = "test/foo/"
+        epath = os.path.join(gs.data, basedir, event.filename)
+        ident = basedir[:-1]
+        mock_event_path.return_value = epath
+        mock_event_id.return_value = ident
+        mock_isdir.return_value = False
+        mock_isfile.return_value = True
+        gs.add_entry(event)
+        self.assertFalse(mock_Add.called)
+        gs.es_cls.assert_called_with(gs.filename_pattern,
+                                     gs.data + ident,
+                                     gs.es_child_cls,
+                                     gs.encoding)
+        self.assertIn(ident, gs.entries)
+        self.assertEqual(gs.entries[ident], gs.es_cls.return_value)
+        self.assertIn(ident, gs.Entries[gs.entry_type])
+        self.assertEqual(gs.Entries[gs.entry_type][ident],
+                         gs.es_cls.return_value.bind_entry)
+        gs.entries[ident].handle_event.assert_called_with(event)
+        mock_isfile.assert_called_with(epath)
+        
+        # file that is in self.entries
+        reset()
+        gs.add_entry(event)
+        self.assertFalse(mock_Add.called)
+        self.assertFalse(gs.es_cls.called)
+        gs.entries[ident].handle_event.assert_called_with(event)
+
+    def test_event_path(self):
+        gs = self.get_obj()
+        gs.handles[1] = "/var/lib/foo/"
+        gs.handles[2] = "/etc/foo/"
+        gs.handles[3] = "/usr/share/foo/"
+        event = Mock()
+        event.filename = "foo"
+        for i in range(1, 4):
+            event.requestID = i
+            self.assertEqual(gs.event_path(event),                         
+                             os.path.join(datastore, gs.name,
+                                          gs.handles[event.requestID].lstrip('/'),
+                                          event.filename))
+
+    @patch("os.path.isdir")
+    @patch("Bcfg2.Server.Plugin.%s.event_path" % test_obj.__name__)
+    def test_event_id(self, mock_event_path, mock_isdir):
+        gs = self.get_obj()
+        
+        def reset():
+            mock_event_path.reset_mock()
+            mock_isdir.reset_mock()
+
+        gs.handles[1] = "/var/lib/foo/"
+        gs.handles[2] = "/etc/foo/"
+        gs.handles[3] = "/usr/share/foo/"
+        event = Mock()
+        event.filename = "foo"
+        for i in range(1, 4):
+            event.requestID = i
+            reset()
+            mock_isdir.return_value = True
+            self.assertEqual(gs.event_id(event),
+                             os.path.join(gs.handles[event.requestID].lstrip('/'),
+                                          event.filename))
+            mock_isdir.assert_called_with(mock_event_path.return_value)
+            
+            reset()
+            mock_isdir.return_value = False
+            self.assertEqual(gs.event_id(event),
+                             gs.handles[event.requestID].rstrip('/'))
+            mock_isdir.assert_called_with(mock_event_path.return_value)
+
+    def test_toggle_debug(self):
+        gs = self.get_obj()
+        gs.entries = {"/foo": Mock(),
+                      "/bar": Mock(),
+                      "/baz/quux": Mock()}
+        with patch("Bcfg2.Server.Plugin.Plugin.toggle_debug") as mock_debug:
+            gs.toggle_debug()
+            mock_debug.assert_called_with(gs)
+            for entry in gs.entries.values():
+                entry.toggle_debug.assert_any_call()
+        
+        TestPlugin.test_toggle_debug(self)
+
+    @patch("Bcfg2.Server.Plugin.%s.event_id" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.%s.add_entry" % test_obj.__name__)
+    def test_HandleEvent(self, mock_add_entry, mock_event_id):
+        gs = self.get_obj()
+        gs.entries = {"/foo": Mock(),
+                      "/bar": Mock(),
+                      "/baz": Mock(),
+                      "/baz/quux": Mock()}
+        for path in gs.entries.keys():
+            gs.Entries[gs.entry_type] = {path: Mock()}
+        gs.handles = {1: "/foo/",
+                      2: "/bar/",
+                      3: "/baz/",
+                      4: "/baz/quux"}
+
+        def reset():
+            mock_add_entry.reset_mock()
+            mock_event_id.reset_mock()
+            for entry in gs.entries.values():
+                entry.reset_mock()
+
+        # test event creation, changing entry that doesn't exist
+        for evt in ["exists", "created", "changed"]:
+            reset()
+            event = Mock()
+            event.filename = "foo"
+            event.code2str.return_value = evt
+            gs.HandleEvent(event)
+            mock_event_id.assert_called_with(event)
+            mock_add_entry.assert_called_with(event)
+            
+        # test deleting entry, changing entry that does exist
+        for evt in ["changed", "deleted"]:
+            reset()
+            event = Mock()
+            event.filename = "quux"
+            event.requestID = 4
+            event.code2str.return_value = evt
+            mock_event_id.return_value = "/baz/quux"
+            gs.HandleEvent(event)
+            mock_event_id.assert_called_with(event)
+            self.assertIn(mock_event_id.return_value, gs.entries)
+            gs.entries[mock_event_id.return_value].handle_event.assert_called_with(event)
+            self.assertFalse(mock_add_entry.called)
+
+        # test deleting directory
+        reset()
+        event = Mock()
+        event.filename = "quux"
+        event.requestID = 3
+        event.code2str.return_value = "deleted"
+        mock_event_id.return_value = "/baz/quux"
+        gs.HandleEvent(event)
+        mock_event_id.assert_called_with(event)
+        self.assertNotIn("/baz/quux", gs.entries)
+        self.assertNotIn("/baz/quux", gs.Entries[gs.entry_type])
+
+
+

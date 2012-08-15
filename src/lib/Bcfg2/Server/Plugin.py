@@ -178,7 +178,7 @@ class Generator(object):
 
     def HandleEntry(self, entry, metadata):
         """This is the slow-path handler for configuration entry binding."""
-        raise NotImplementedError
+        return entry
 
 
 class Structure(object):
@@ -1236,7 +1236,7 @@ class GroupSpool(Plugin, Generator):
         if os.path.isdir(epath):
             self.AddDirectoryMonitor(epath[len(self.data):])
         if ident not in self.entries and os.path.isfile(epath):
-            dirpath = "".join([self.data, ident])
+            dirpath = self.data + ident
             self.entries[ident] = self.es_cls(self.filename_pattern,
                                               dirpath,
                                               self.es_child_cls,
@@ -1248,15 +1248,17 @@ class GroupSpool(Plugin, Generator):
             self.entries[ident].handle_event(event)
 
     def event_path(self, event):
-        return "".join([self.data, self.handles[event.requestID],
-                        event.filename])
+        return os.path.join(self.data,
+                            self.handles[event.requestID].lstrip("/"),
+                            event.filename)
 
     def event_id(self, event):
         epath = self.event_path(event)
         if os.path.isdir(epath):
-            return self.handles[event.requestID] + event.filename
+            return os.path.join(self.handles[event.requestID].lstrip("/"),
+                                event.filename)
         else:
-            return self.handles[event.requestID][:-1]
+            return self.handles[event.requestID].rstrip("/")
 
     def toggle_debug(self):
         for entry in self.entries.values():
@@ -1273,7 +1275,7 @@ class GroupSpool(Plugin, Generator):
 
         if action in ['exists', 'created']:
             self.add_entry(event)
-        if action == 'changed':
+        elif action == 'changed':
             if ident in self.entries:
                 self.entries[ident].handle_event(event)
             else:
