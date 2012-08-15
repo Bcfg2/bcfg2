@@ -56,7 +56,7 @@ a client, a profile group, a list of packages, and an NTP bundle.
     </PackageList>
 
 (This can also be performed more elegantly with the
-:ref:`server-plugins-generators-pacakges` plugin.)
+:ref:`server-plugins-generators-packages` plugin.)
 
 Add service
 -----------

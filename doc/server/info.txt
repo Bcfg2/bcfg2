@@ -11,15 +11,16 @@ Various file properties for entries served by the :ref:`Cfg
 <server-plugins-generators-tgenshi-index>`, :ref:`TCheetah
 <server-plugins-generators-tcheetah>`, and :ref:`SSHbase
 <server-plugins-generators-sshbase>` plugins are controlled through
-the use of ``:info``, ``info``, or ``info.xml`` files.
+the use of ``info.xml`` files.
 
 By default, these plugins are set to write files to the filesystem
 with owner **root**, group **root**, and mode **644** (read and write
 for owner, read only for group and other). These options, and a few
-others, can be overridden through use of ``info.xml``, ``:info``, or
-``info`` files. Each config file directory can have a ``info.xml``,
-``:info`` or ``info`` file if needed. The possible fields in an info
-file are:
+others, can be overridden through use of ``info.xml`` files. Each
+config file directory can have a ``info.xml`` file if needed.
+
+An ``info.xml`` file consists of a ``<FileInfo>`` tag containing an
+``<Info>`` tag; the following attributes are allowed on the ``<Info>`` tag:
 
 +------------+-------------------+----------------------------------+---------+
 | Field      | Possible values   | Description                      | Default |
@@ -51,13 +52,7 @@ file are:
 |            |                   | reports                          |         |
 +------------+-------------------+----------------------------------+---------+
 
-A sample info file for CGI script on a web server might look like::
-
-    owner: www
-    group: www
-    perms: 0755
-
-The equivalent ``info.xml`` file would be:
+A sample info file for CGI script on a web server might look like:
 
 .. code-block:: xml
 
@@ -77,17 +72,13 @@ might look like::
 See :ref:`server-selinux` for more information on the ``secontext``
 attribute and managing SELinux in general.
 
-.. _server-info-info-xml:
-
-info.xml files
-==============
-
-``info.xml`` files add the ability to specify different sets of file
-metadata on a group by group or host by host basis, or by path (for
-files using :ref:`altsrc <server-plugins-structures-altsrc>`). These
-files are XML, and work similarly to those used by :ref:`Rules
-<server-plugins-generators-rules>` or :ref:`Pkgmgr
-<server-plugins-generators-pkgmgr>`.
+``info.xml`` files also have the ability to specify different sets of
+file metadata on a group by group or host by host basis, or by path
+(for files using :ref:`altsrc
+<server-plugins-structures-altsrc>`). These files are XML, and work
+similarly to those used by :ref:`Rules
+<server-plugins-generators-rules>` or :ref:`Bundler
+<server-plugins-structures-bundler-index>`.
 
 The following specifies a different global set of permissions
 (root/sys/0651) than on clients in group webserver or named
@@ -122,3 +113,28 @@ of permissions depending on the path of the file::
 You can also specify ACLs as children of ``<Info>`` tags in
 ``info.xml``.  See :ref:`server-plugins-generators-rules-acls` for
 more information on the formatting of ACL tags.
+
+:info and info files
+====================
+
+Historically, Bcfg2 also accepted the use of ``:info`` and ``info``
+files, which function the same as ``info.xml``, but are not XML.  They
+lack the ability to specify different permissions based on client,
+group, or path, and cannot be used to specify ACLs, either.
+
+.. note::
+
+    ``:info`` and ``info`` files are deprecated and will be removed in
+    a future release.
+
+An example ``:info`` or ``info`` file would look like::
+
+    owner: www
+    group: www
+    perms: 0755
+
+All attributes allowed on the ``<Info>`` tag of an ``info.xml`` file
+can be used in an ``:info`` or ``info`` file.
+
+You should not use more than one ``:info``, ``info``, or ``info.xml``
+file for a single entry.

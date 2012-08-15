@@ -125,8 +125,8 @@ Permissions and Metadata
 
 .. versionadded:: 1.2.0
 
-SSHbase supports use of an :ref:`info.xml <server-info-info-xml>` file
-to control the permissions and other metadata for the keys and
+SSHbase supports use of an :ref:`info.xml <server-info>` file to
+control the permissions and other metadata for the keys and
 ``ssh_known_hosts`` file.  You can use the ``<Path>`` directive in
 ``info.xml`` to change the metadata for different keys, e.g.::
 
