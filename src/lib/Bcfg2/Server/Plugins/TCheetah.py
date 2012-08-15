@@ -78,3 +78,4 @@ class TCheetah(Bcfg2.Server.Plugin.GroupSpool):
     __author__ = 'bcfg-dev@mcs.anl.gov'
     filename_pattern = 'template'
     es_child_cls = TemplateFile
+    deprecated = True
