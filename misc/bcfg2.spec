@@ -248,6 +248,7 @@ rm -rf %{buildroot}
 %{__install} -d %{buildroot}%{_sysconfdir}/cron.hourly
 %{__install} -d %{buildroot}%{_prefix}/lib/bcfg2
 mkdir -p %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
+mkdir -p %{buildroot}%{_defaultdocdir}/bcfg2-server-%{version}
 %if 0%{?suse_version}
 %{__install} -d %{buildroot}/var/adm/fillup-templates
 %endif
@@ -267,6 +268,7 @@ ln -s %{_initrddir}/bcfg2 %{buildroot}%{_sbindir}/rcbcfg2
 ln -s %{_initrddir}/bcfg2-server %{buildroot}%{_sbindir}/rcbcfg2-server
 %endif
 
+cp -r tools/* %{buildroot}%{_defaultdocdir}/bcfg2-server-%{version}
 cp -r build/sphinx/html/* %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
 cp -r build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 
@@ -321,7 +323,6 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %{_sbindir}/bcfg2-admin
 %{_sbindir}/bcfg2-build-reports
 %{_sbindir}/bcfg2-info
-%{_sbindir}/bcfg2-ping-sweep
 %{_sbindir}/bcfg2-lint
 %{_sbindir}/bcfg2-repo-validate
 %{_sbindir}/bcfg2-reports
@@ -337,6 +338,8 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %{_mandir}/man8/*.8*
 %dir %{_prefix}/lib/bcfg2
 %ghost %config(noreplace,missingok) %attr(0600,root,root) %{_sysconfdir}/bcfg2.conf
+
+%doc %{_defaultdocdir}/bcfg2-server-%{version}
 
 %files doc
 %defattr(-,root,root,-)
@@ -392,6 +395,9 @@ fi
 %endif
 
 %changelog
+* Wed Aug 15 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.2.3-0.1
+- Added tools/ as doc for bcfg2-server subpackage
+
 * Sat Feb 18 2012 Christopher 'm4z' Holm <686f6c6d@googlemail.com> 1.2.1
 - Added Fedora and Mandriva compatibilty (for Open Build Service).
 - Added missing dependency redhat-lsb.
@@ -400,7 +406,7 @@ fi
 - Added openSUSE compatibility.
 - Various changes to satisfy rpmlint.
 
-* Thu Jan 27 2011 Chris St. Pierre <stpierreca@ornl.gov> 1.2.0pre1-0.0
+* Thu Jan 27 2011 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.2.0pre1-0.0
 - Added -doc sub-package
 
 * Mon Jun 21 2010 Fabian Affolter <fabian@bernewireless.net> - 1.1.0rc3-0.1
