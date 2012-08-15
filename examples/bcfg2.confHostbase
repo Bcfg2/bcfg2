@@ -1,7 +1,6 @@
 [server]
 repository = /var/lib/bcfg2
-structures = Bundler,Base
-generators = SSHbase,Cfg,Pkgmgr,Svcmgr
+plugins = Bundler,Rules,Metadata,SSHbase,Cfg
 
 [statistics]
 sendmailpath = /usr/sbin/sendmail

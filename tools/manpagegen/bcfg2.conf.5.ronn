@@ -66,7 +66,6 @@ specified in the `[server]` section of the configuration file.
 
     `Account`,
     `Actions`,
-    `BB`,
     `Base`,
     `Bundler`,
     `Bzr`,
@@ -90,7 +89,6 @@ specified in the `[server]` section of the configuration file.
     `Probes`,
     `Properties`,
     `Rules`,
-    `SGenshi`,
     `Snapshots`,
     `SSHbase`,
     `Svn`,
@@ -115,10 +113,6 @@ The account plugin manages authentication data, including the following.
   * `/etc/security/limits.conf`
   * `/etc/sudoers`
   * `/root/.ssh/authorized_keys`
-
-### BB Plugin
-
-The BB plugin maps users to machines and metadata to machines.
 
 ### Base Plugin
 

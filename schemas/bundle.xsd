@@ -17,7 +17,7 @@
   <xsd:include schemaLocation="pathentry.xsd"/>
   <xsd:include schemaLocation="rules.xsd"/>
   <xsd:include schemaLocation="types.xsd"/>
-  <xsd:include schemaLocation="services.xsd"/>
+  <xsd:include schemaLocation="servicetype.xsd"/>
 
   <xsd:group name="bundleElements">
     <xsd:choice>

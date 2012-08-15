@@ -30,7 +30,7 @@ import Bcfg2.Server.Plugins.Metadata
 import Bcfg2.Server.Plugin
 
 try:
-    import Bcfg2.Server.Plugins.SGenshi
+    from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
     has_genshi = True
 except ImportError:
     has_genshi = False
@@ -420,7 +420,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                     bundle = self.plugins['Bundler'].entries[bname]
                     if (has_genshi and
                         isinstance(bundle,
-                                   Bcfg2.Server.Plugins.SGenshi.SGenshiTemplateFile)):
+                                   BundleTemplateFile)):
                         stream = bundle.template.generate(metadata=metadata)
                         print(stream.render("xml"))
                     else:

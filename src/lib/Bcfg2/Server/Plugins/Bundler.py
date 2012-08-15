@@ -12,7 +12,7 @@ import Bcfg2.Server.Lint
 
 try:
     import genshi.template.base
-    from Bcfg2.Server.Plugins.SGenshi import SGenshiTemplateFile
+    import Bcfg2.Server.Plugins.TGenshi
     have_genshi = True
 except:
     have_genshi = False
@@ -24,6 +24,57 @@ class BundleFile(Bcfg2.Server.Plugin.StructFile):
         bundle = lxml.etree.Element('Bundle', name=bundlename)
         [bundle.append(copy.copy(item)) for item in self.Match(metadata)]
         return bundle
+
+
+if have_genshi:
+    class BundleTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile,
+                             Bcfg2.Server.Plugin.StructFile):
+        def __init__(self, name, specific, encoding):
+            Bcfg2.Server.Plugins.TGenshi.TemplateFile.__init__(self, name,
+                                                               specific,
+                                                               encoding)
+            Bcfg2.Server.Plugin.StructFile.__init__(self, name)
+
+        def get_xml_value(self, metadata):
+            if not hasattr(self, 'template'):
+                logger.error("No parsed template information for %s" %
+                             self.name)
+                raise Bcfg2.Server.Plugin.PluginExecutionError
+            try:
+                stream = self.template.generate(metadata=metadata).filter(
+                    Bcfg2.Server.Plugins.TGenshi.removecomment)
+                data = lxml.etree.XML(stream.render('xml',
+                                                    strip_whitespace=False),
+                                      parser=Bcfg2.Server.XMLParser)
+                bundlename = os.path.splitext(os.path.basename(self.name))[0]
+                bundle = lxml.etree.Element('Bundle', name=bundlename)
+                for item in self.Match(metadata, data):
+                    bundle.append(copy.deepcopy(item))
+                return bundle
+            except LookupError:
+                lerror = sys.exc_info()[1]
+                logger.error('Genshi lookup error: %s' % lerror)
+            except genshi.template.TemplateError:
+                terror = sys.exc_info()[1]
+                logger.error('Genshi template error: %s' % terror)
+                raise
+            except genshi.input.ParseError:
+                perror = sys.exc_info()[1]
+                logger.error('Genshi parse error: %s' % perror)
+            raise
+
+        def Match(self, metadata, xdata):
+            """Return matching fragments of parsed template."""
+            rv = []
+            for child in xdata.getchildren():
+                rv.extend(self._match(child, metadata))
+            logger.debug("File %s got %d match(es)" % (self.name, len(rv)))
+            return rv
+
+
+    class SGenshiTemplateFile(BundleTemplateFile):
+        # provided for backwards compat
+        pass
 
 
 class Bundler(Bcfg2.Server.Plugin.Plugin,
@@ -58,7 +109,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
              nsmap['py'] == 'http://genshi.edgewall.org/')):
             if have_genshi:
                 spec = Bcfg2.Server.Plugin.Specificity()
-                return SGenshiTemplateFile(name, spec, self.encoding)
+                return BundleTemplateFile(name, spec, self.encoding)
             else:
                 raise Bcfg2.Server.Plugin.PluginExecutionError("Genshi not available: %s" % name)
         else:
@@ -101,7 +152,7 @@ class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
         for bundle in self.core.plugins['Bundler'].entries.values():
             if (self.HandlesFile(bundle.name) and
                 (not have_genshi or
-                 not isinstance(bundle, SGenshiTemplateFile))):
+                 not isinstance(bundle, BundleTemplateFile))):
                     self.bundle_names(bundle)
 
     @classmethod

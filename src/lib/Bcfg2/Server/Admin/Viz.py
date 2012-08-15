@@ -35,7 +35,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
     __plugin_blacklist__ = ['DBStats', 'Snapshots', 'Cfg', 'Pkgmgr', 'Packages',
                             'Rules', 'Account', 'Decisions', 'Deps', 'Git',
                             'Svn', 'Fossil', 'Bzr', 'Bundler', 'TGenshi',
-                            'SGenshi', 'Base']
+                            'Base']
 
     def __call__(self, args):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)

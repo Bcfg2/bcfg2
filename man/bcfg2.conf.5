@@ -1,5 +1,5 @@
 .
-.TH "BCFG2\.CONF" "5" "June 2012" "" ""
+.TH "BCFG2\.CONF" "5" "August 2012" "" ""
 .
 .SH "NAME"
 \fBbcfg2\.conf\fR \- configuration parameters for Bcfg2
@@ -49,7 +49,7 @@ This setting tells the server to listen on all available interfaces\. The defaul
 A comma\-delimited list of enabled server plugins\. Currently available plugins are:
 .
 .IP
-\fBAccount\fR, \fBActions\fR, \fBBB\fR, \fBBase\fR, \fBBundler\fR, \fBBzr\fR, \fBCfg\fR, \fBCvs\fR, \fBDarcs\fR, \fBDBStats\fR, \fBDecisions\fR, \fBDeps\fR, \fBEditor\fR, \fBFossil\fR, \fBGit\fR, \fBGroupPatterns\fR, \fBHg\fR, \fBHostbase\fR, \fBMetadata\fR, \fBNagiosGen\fR, \fBOhai\fR, \fBPackages\fR, \fBPkgmgr\fR, \fBProbes\fR, \fBProperties\fR, \fBRules\fR, \fBSGenshi\fR, \fBSnapshots\fR, \fBSSHbase\fR, \fBSvn\fR, \fBSvn2\fR, \fBTCheetah\fR, \fBTGenshi\fR, \fBTrigger\fR
+\fBAccount\fR, \fBActions\fR, \fBBase\fR, \fBBundler\fR, \fBBzr\fR, \fBCfg\fR, \fBCvs\fR, \fBDarcs\fR, \fBDBStats\fR, \fBDecisions\fR, \fBDeps\fR, \fBEditor\fR, \fBFossil\fR, \fBGit\fR, \fBGroupPatterns\fR, \fBHg\fR, \fBHostbase\fR, \fBMetadata\fR, \fBNagiosGen\fR, \fBOhai\fR, \fBPackages\fR, \fBPkgmgr\fR, \fBProbes\fR, \fBProperties\fR, \fBRules\fR, \fBSnapshots\fR, \fBSSHbase\fR, \fBSvn\fR, \fBSvn2\fR, \fBTCheetah\fR, \fBTGenshi\fR, \fBTrigger\fR
 .
 .IP
 Descriptions of each plugin can be found in their respective sections below\.
@@ -77,9 +77,6 @@ The account plugin manages authentication data, including the following\.
 \fB/root/\.ssh/authorized_keys\fR
 .
 .IP "" 0
-.
-.SS "BB Plugin"
-The BB plugin maps users to machines and metadata to machines\.
 .
 .SS "Base Plugin"
 A structure plugin that provides the ability to add lists of unrelated entries into client configuration entry inventories\. Base works much like Bundler in its file format\. This structure plugin is good for the pile of independent configs needed for most actual systems\.

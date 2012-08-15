@@ -27,7 +27,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                  "interactive",
                  "-s",
                  "stdin"))
-    allowed = ['Metadata', 'BB', "DBStats", "Statistics", "Cfg", "SSHbase"]
+    allowed = ['Metadata', "DBStats", "Statistics", "Cfg", "SSHbase"]
 
     def __init__(self, setup):
         Bcfg2.Server.Admin.MetadataCore.__init__(self, setup)

@@ -24,7 +24,6 @@ f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Probes.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Decisions.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Rules.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Packages.py 0644 bin bin
-f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/SGenshi.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/GroupPatterns.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/SSHbase.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Trigger.py 0644 bin bin
@@ -32,7 +31,6 @@ f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/__init__.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Snapshots.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/TCheetah.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Account.py 0644 bin bin
-f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/BB.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Cfg.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Statistics.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Metadata.py 0644 bin bin
@@ -41,7 +39,6 @@ f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Pkgmgr.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Ohai.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Properties.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Editor.py 0644 bin bin
-f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Svcmgr.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Bundler.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/NagiosGen.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Deps.py 0644 bin bin

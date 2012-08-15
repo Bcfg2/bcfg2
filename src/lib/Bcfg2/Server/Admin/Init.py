@@ -104,7 +104,6 @@ plugin_list = ['Account',
                'SSHbase',
                'SSLCA',
                'Statistics',
-               'Svcmgr',
                'TCheetah',
                'TGenshi']
 

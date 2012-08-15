@@ -1,9 +1,11 @@
 import os
 import re
 import Bcfg2.Server.Lint
-from Bcfg2.Server.Plugins.Bundler import have_genshi
-if have_genshi:
-    from Bcfg2.Server.Plugins.SGenshi import SGenshiTemplateFile
+try:
+    from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
+    has_genshi = True
+except ImportError:
+    has_genshi = False
 
 class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
     """ ensure that all named groups are valid group names """
@@ -37,8 +39,8 @@ class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
         """ check bundles for BoundPath entries with missing attrs """
         for bundle in self.core.plugins['Bundler'].entries.values():
             if (self.HandlesFile(bundle.name) and
-                (not have_genshi or
-                 not isinstance(bundle, SGenshiTemplateFile))):
+                (not has_genshi or
+                 not isinstance(bundle, BundleTemplateFile))):
                 self.check_entries(bundle.xdata.xpath("//Group"),
                                    bundle.name)
 

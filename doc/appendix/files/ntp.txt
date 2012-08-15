@@ -19,95 +19,92 @@ Package only
 ------------
 
 Our example starts with the bare minimum configuration setup. We have
-a client, a profile group, a list of packages, and a base configuration.
+a client, a profile group, a list of packages, and an NTP bundle.
 
 ``Metadata/clients.xml``:
 
 .. code-block:: xml
 
-    <Clients version='3.0'>
-    <Client profile='fedora' name='foo.bar.com'/>
+    <Clients>
+      <Client profile='server' name='foo.bar.com'/>
     </Clients>
 
 ``Metadata/groups.xml``:
 
 .. code-block:: xml
 
-    <Groups version='3.0'>
-    <Group profile='true' name='fedora' toolset='rh'/>
+    <Groups>
+      <Group profile='true' name='server'>
+        <Bundle name="ntp"/>
+      </Group>
     </Groups>
 
-``Base/base.xml``:
+``Bundler/ntp.xml``:
 
 .. code-block:: xml
 
-    <Base>
-    <Group name='fedora'>
-    <Package name='ntp'/>
-    </Group>
-    </Base>
+    <Bundle name="ntp">
+      <Package name='ntp'/>
+    </Bundle>
 
 ``Pkgmgr/packages.xml``:
 
 .. code-block:: xml
 
     <PackageList type='rpm' priority='0'>
-    <Package name='ntp' version='4.2.0.a.20050816-11.FC5'/>
+      <Package name='ntp' version='4.2.0.a.20050816-11.FC5'/>
     </PackageList>
+
+(This can also be performed more elegantly with the
+:ref:`server-plugins-generators-pacakges` plugin.)
 
 Add service
 -----------
 
-Configure the service, and add it to the base.
+Configure the service, and add it to Rules.
 
-``Svcmgr/services.xml``:
+``Rules/services.xml``:
 
 .. code-block:: xml
 
     <Services priority='0'>
-    <Service name='ntpd' status='on'/>
+      <Service name='ntpd' status='on'/>
     </Services>
 
-``Base/base.xml``:
+``Bundler/ntp.xml``:
 
 .. code-block:: xml
 
-    <Base>
-    <Group name='fedora'>
-    <Package name='ntp'/>
-    <Service name='ntpd'/>
-    </Group>
-    </Base>
+    <Bundle name="ntp">
+      <Package name='ntp'/>
+      <Service name='ntpd'/>
+    </Bundle>
 
 Add config file
 ---------------
 
-Setup an ``etc/`` directory structure, and add it to the base.::
+Setup an ``etc/`` directory structure, and add it to the base::
 
      # cat Cfg/etc/ntp.conf/ntp.conf 
      server ntp1.utexas.edu
 
 ``Base/base.xml``:
 
+``Bundler/ntp.xml``:
+
 .. code-block:: xml
 
-    <Base>
-     <Group name='fedora'>
-     <Package name='ntp'/>
-     <Service name='ntpd'/>
-     <Path name='/etc/ntp.conf'/>
-     </Group>
-    </Base>
+    <Bundle name="ntp">
+      <Package name='ntp'/>
+      <Service name='ntpd'/>
+       <Path name='/etc/ntp.conf'/>
+    </Bundle>
 
 Create a bundle
 ---------------
 
-The above configuration layout works fine for a single service, but
-that method of organization would quickly become a nightmare as you
-approach the number of packages, services, and config files required
-to represent a fully configured host. Bundles allow the grouping of
-related configuration entries that are used to provide a single
-service. This is done for several reasons:
+Bundles allow the grouping of related configuration entries that are
+used to provide a single service. This is done for several reasons:
 
 * Grouping related things in one place makes it easier to add those
   entries for multiple groups of clients
@@ -128,10 +125,10 @@ logically grouped together. We use a bundle to accomplish this.
 
 .. code-block:: xml
 
-    <Bundle name='ntp' version='2.0'>
-    <Package name='ntp'/>
-    <Service name='ntpd'/>
-    <Path name='/etc/ntp.conf'/>
+    <Bundle name='ntp'>
+      <Package name='ntp'/>
+      <Service name='ntpd'/>
+      <Path name='/etc/ntp.conf'/>
     </Bundle>
 
 After this bundle is created, it must be associated with a group
@@ -143,15 +140,15 @@ install this bundle.
 .. code-block:: xml
 
      <Groups>
-    ...
-     <Group name='fedora'>
-       <Bundle name='ntp'/>
-     </Group>
-    ...
+      ...
+      <Group profile='true' name='server'>
+        <Bundle name="ntp"/>
+      </Group>
+      ...
      </Groups>
 
-Once this bundle is created, a client reconfigure will install
-these entries. If any are modified, then the *ntpd* service will
-be restarted. If you only want ntp configurations to be updated (and
+Once this bundle is created, a client reconfigure will install these
+entries. If any are modified, then the *ntpd* service will be
+restarted. If you only want ntp configurations to be updated (and
 nothing else), the bcfg2 client can be run with a ``-b <bundle name>``
 option that will only update entries in the specified bundle.

@@ -22,7 +22,6 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                          "%s/Rules/*.xml":"%s/rules.xsd",
                          "%s/Defaults/*.xml":"%s/defaults.xsd",
                          "%s/etc/report-configuration.xml":"%s/report-configuration.xsd",
-                         "%s/Svcmgr/*.xml":"%s/services.xsd",
                          "%s/Deps/*.xml":"%s/deps.xsd",
                          "%s/Decisions/*.xml":"%s/decisions.xsd",
                          "%s/Packages/sources.xml":"%s/packages.xsd",

@@ -5,9 +5,11 @@ import Bcfg2.Server.Lint
 import Bcfg2.Client.Tools.POSIX
 import Bcfg2.Client.Tools.VCS
 from Bcfg2.Server.Plugins.Packages import Apt, Yum
-from Bcfg2.Server.Plugins.Bundler import have_genshi
-if have_genshi:
-    from Bcfg2.Server.Plugins.SGenshi import SGenshiTemplateFile
+try:
+    from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
+    has_genshi = True
+except ImportError:
+    has_genshi = False
 
 # format verifying functions
 def is_filename(val):
@@ -157,8 +159,8 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         if 'Bundler' in self.core.plugins:
             for bundle in self.core.plugins['Bundler'].entries.values():
                 if (self.HandlesFile(bundle.name) and
-                    (not have_genshi or
-                     not isinstance(bundle, SGenshiTemplateFile))):
+                    (not has_genshi or
+                     not isinstance(bundle, BundleTemplateFile))):
                     try:
                         xdata = lxml.etree.XML(bundle.data)
                     except (lxml.etree.XMLSyntaxError, AttributeError):

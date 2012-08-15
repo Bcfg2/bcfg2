@@ -25,10 +25,8 @@ __all__ = [
            'SSHbase',
            'Snapshots',
            'Statistics',
-           'Svcmgr',
            'Svn',
            'TCheetah',
            'Trigger',
-           'SGenshi',
            'TGenshi',
           ]
