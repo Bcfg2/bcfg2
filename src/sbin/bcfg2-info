@@ -677,7 +677,14 @@ if __name__ == '__main__':
                           USAGE])
 
     setup.parse(sys.argv[1:])
-    Bcfg2.Logger.setup_logging('bcfg2-info', to_syslog=setup['syslog'])
+    if setup['debug']:
+        level = logging.DEBUG
+    elif setup['verbose']:
+        level = logging.INFO
+    else:
+        level = logging.WARNING
+    Bcfg2.Logger.setup_logging('bcfg2-info', to_syslog=False,
+                               level=level)
     if setup['args'] and setup['args'][0] == 'help':
         print(setup.hm)
         sys.exit(0)

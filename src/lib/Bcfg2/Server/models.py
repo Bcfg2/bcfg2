@@ -55,7 +55,6 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
         for sym in dir(mod):
             obj = getattr(mod, sym)
             if hasattr(obj, "__bases__") and models.Model in obj.__bases__:
-                print("Adding %s to models" % sym)
                 setattr(sys.modules[__name__], sym, obj)
                 MODELS.append(sym)
 

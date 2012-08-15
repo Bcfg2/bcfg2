@@ -56,17 +56,18 @@ class BaseCore(object):
     def __init__(self, setup, start_fam_thread=False):
         self.datastore = setup['repo']
 
-        self.logger = logging.getLogger('bcfg2-server')
-        if 'debug' in setup and setup['debug']:
+        if setup['debug']:
             level = logging.DEBUG
-        else:
+        elif setup['verbose']:
             level = logging.INFO
-        self.logger.setLevel(level)
+        else:
+            level = logging.WARNING
         Bcfg2.Logger.setup_logging('bcfg2-server',
                                    to_console=True,
                                    to_syslog=setup['syslog'],
                                    to_file=setup['logging'],
                                    level=level)
+        self.logger = logging.getLogger('bcfg2-server')
 
         try:
             fm = Bcfg2.Server.FileMonitor.available[setup['filemonitor']]
