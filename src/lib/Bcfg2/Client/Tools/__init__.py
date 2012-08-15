@@ -209,10 +209,10 @@ class Tool(object):
 
         missing = self.missing_attrs(entry)
         if missing:
-            self.logger.error("Incomplete information for entry %s:%s; cannot install" \
-                              % (entry.tag, entry.get('name')))
-            self.logger.error("\t... due to absence of %s attribute" % \
-                              (":".join(missing)))
+            self.logger.error("Incomplete information for entry %s:%s; cannot "
+                              "install due to absence of attribute(s): %s" %
+                              (entry.tag, entry.get('name'),
+                               ", ".join(missing)))
             return False
         return True
 

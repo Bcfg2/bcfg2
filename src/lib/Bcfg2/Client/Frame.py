@@ -133,7 +133,6 @@ class Frame:
             for entry in problems:
                 self.logger.error("%s:%s:%s" % (entry.tag, entry.get('type'),
                                                 entry.get('name')))
-            self.logger.error("")
 
         self.find_dups(config)
 
@@ -163,7 +162,6 @@ class Frame:
             self.logger.debug("The following entries are included multiple times:")
             for entry in multi:
                 self.logger.debug(entry)
-            self.logger.debug("")
 
     def __getattr__(self, name):
         if name in ['extra', 'handled', 'modified', '__important__']:
@@ -371,7 +369,6 @@ class Frame:
             if mbundles:
                 self.logger.info("The Following Bundles have been modified:")
                 self.logger.info([mbun.get('name') for mbun in mbundles])
-                self.logger.info("")
             tbm = [(t, b) for t in self.tools for b in mbundles]
             for tool, bundle in tbm:
                 try:
@@ -414,10 +411,10 @@ class Frame:
 
     def CondDisplayState(self, phase):
         """Conditionally print tracing information."""
-        self.logger.info('\nPhase: %s' % phase)
-        self.logger.info('Correct entries:\t%d' %
+        self.logger.info('Phase: %s' % phase)
+        self.logger.info('Correct entries:        %d' %
                          list(self.states.values()).count(True))
-        self.logger.info('Incorrect entries:\t%d' %
+        self.logger.info('Incorrect entries:      %d' %
                          list(self.states.values()).count(False))
         if phase == 'final' and list(self.states.values()).count(False):
             for entry in self.states.keys():
@@ -429,9 +426,9 @@ class Frame:
                     else:
                         self.logger.info("    %s:%s" % (entry.tag,
                                                         entry.get('name')))
-        self.logger.info('Total managed entries:\t%d' %
+        self.logger.info('Total managed entries:  %d' %
                          len(list(self.states.values())))
-        self.logger.info('Unmanaged entries:\t%d' % len(self.extra))
+        self.logger.info('Unmanaged entries:      %d' % len(self.extra))
         if phase == 'final' and self.setup['extra']:
             for entry in self.extra:
                 etype = entry.get('type')
@@ -441,8 +438,6 @@ class Frame:
                 else:
                     self.logger.info("    %s:%s" % (entry.tag,
                                                     entry.get('name')))
-
-        self.logger.info("")
 
         if ((list(self.states.values()).count(False) == 0) and not self.extra):
             self.logger.info('All entries correct.')

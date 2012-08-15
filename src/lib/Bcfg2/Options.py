@@ -805,6 +805,11 @@ LOGGING_FILE_PATH = \
            cmd='-o',
            odesc='<path>',
            cf=('logging', 'path'))
+LOGGING_SYSLOG = \
+    Option('Log to syslog',
+           default=True,
+           cook=get_bool,
+           cf=('logging', 'syslog'))
 DEBUG = \
     Option("Enable debugging output",
            default=False,
@@ -871,7 +876,8 @@ CLI_COMMON_OPTIONS = dict(configfile=CFILE,
                           help=HELP,
                           verbose=VERBOSE,
                           encoding=ENCODING,
-                          logging=LOGGING_FILE_PATH)
+                          logging=LOGGING_FILE_PATH,
+                          syslog=LOGGING_SYSLOG)
 
 DAEMON_COMMON_OPTIONS = dict(daemon=DAEMON,
                              listen_all=SERVER_LISTEN_ALL)

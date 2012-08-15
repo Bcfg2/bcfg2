@@ -126,20 +126,15 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                     """
                     pass
 
-
-def add_console_handler(level):
+def add_console_handler(level=logging.DEBUG):
     """Add a logging handler that logs at a level to sys.stdout."""
     console = logging.StreamHandler(sys.stdout)
-    if level is True:
-        console.setLevel(logging.DEBUG)
-    else:
-        console.setLevel(level)
+    console.setLevel(level)
     # tell the handler to use this format
     console.setFormatter(TermiosFormatter())
     logging.root.addHandler(console)
 
-
-def add_syslog_handler(procname, syslog_facility):
+def add_syslog_handler(procname, syslog_facility, level=logging.DEBUG):
     """Add a logging handler that logs as procname to syslog_facility."""
     try:
         try:
@@ -150,7 +145,7 @@ def add_syslog_handler(procname, syslog_facility):
             syslog = FragmentingSysLogHandler(procname,
                                               ('localhost', 514),
                                               syslog_facility)
-        syslog.setLevel(logging.DEBUG)
+        syslog.setLevel(level)
         syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(message)s'))
         logging.root.addHandler(syslog)
     except socket.error:
@@ -158,14 +153,12 @@ def add_syslog_handler(procname, syslog_facility):
     except:
         print("Failed to activate syslogging")
 
-
-def add_file_handler(to_file):
+def add_file_handler(to_file, level=logging.DEBUG):
     """Add a logging handler that logs to to_file."""
     filelog = logging.FileHandler(to_file)
-    filelog.setLevel(logging.DEBUG)
+    filelog.setLevel(level)
     filelog.setFormatter(logging.Formatter('%(asctime)s %(name)s[%(process)d]: %(message)s'))
     logging.root.addHandler(filelog)
-
 
 def setup_logging(procname, to_console=True, to_syslog=True,
                   syslog_facility='daemon', level=0, to_file=None):
@@ -174,11 +167,16 @@ def setup_logging(procname, to_console=True, to_syslog=True,
         return
 
     if to_console:
-        add_console_handler(to_console)
+        if to_console == True:
+            clvl = min(logging.WARNING, level)
+        else:
+            clvl = min(to_console, level)
+        add_console_handler(clvl)
     if to_syslog:
-        add_syslog_handler(procname, syslog_facility)
+        slvl = min(level, logging.INFO)
+        add_syslog_handler(procname, syslog_facility, level=slvl)
     if to_file is not None:
-        add_file_handler(to_file)
+        add_file_handler(to_file, level=level)
 
-    logging.root.setLevel(level)
+    logging.root.setLevel(logging.DEBUG)
     logging.already_setup = True

@@ -24,8 +24,8 @@ class APK(Bcfg2.Client.Tools.PkgTool):
         for pkg in zip(names, nameversions):
             pkgname = pkg[0]
             version = pkg[1][len(pkgname) + 1:]
-            self.logger.debug(" pkgname: %s\n version: %s" %
-                              (pkgname, version))
+            self.logger.debug(" pkgname: %s" % pkgname)
+            self.logger.debug(" version: %s" % version)
             self.installed[pkgname] = version
 
     def VerifyPackage(self, entry, modlist):

@@ -51,7 +51,7 @@ class Client:
         if self.setup['debug']:
             level = 0
         Bcfg2.Logger.setup_logging('bcfg2',
-                                   to_syslog=False,
+                                   to_syslog=self.setup['syslog'],
                                    level=level,
                                    to_file=self.setup['logging'])
         self.logger = logging.getLogger('bcfg2')
@@ -97,11 +97,13 @@ class Client:
                 script.write(probe.text)
                 script.close()
                 os.close(scripthandle)
-                os.chmod(script.name, stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
-                                      stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH |
-                                      stat.S_IWUSR)  # 0755
+                os.chmod(script.name,
+                         stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
+                         stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH |
+                         stat.S_IWUSR)  # 0755
                 ret.text = os.popen(script.name).read().strip()
-                self.logger.info("Probe %s has result:\n%s" % (name, ret.text))
+                self.logger.info("Probe %s has result:" % name)
+                self.logger.info(ret.text)
             finally:
                 os.unlink(script.name)
         except:
@@ -120,6 +122,8 @@ class Client:
 
         # begin configuration
         times['start'] = time.time()
+
+        self.logger.info("Starting Bcfg2 client run at %s" % times['start'])
 
         if self.setup['file']:
             # read config from file
@@ -313,6 +317,8 @@ class Client:
                 self.logger.error("Failed to upload configuration statistics: "
                                   "%s" % err)
                 raise SystemExit(2)
+
+        self.logger.info("Finished Bcfg2 client run at %s" % time.time())
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, cb_sigint_handler)

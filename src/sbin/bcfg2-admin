@@ -50,7 +50,8 @@ def main():
         level = logging.INFO
     else:
         level = logging.WARNING
-    Bcfg2.Logger.setup_logging('bcfg2-admin', to_syslog=False, level=level)
+    Bcfg2.Logger.setup_logging('bcfg2-admin', to_syslog=setup['syslog'],
+                               level=level)
 
     # Provide help if requested or no args were specified
     if (not setup['args'] or len(setup['args']) < 1 or

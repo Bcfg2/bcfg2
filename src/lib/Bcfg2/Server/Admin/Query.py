@@ -22,7 +22,8 @@ class Query(Bcfg2.Server.Admin.MetadataCore):
     def __init__(self, setup):
         Bcfg2.Server.Admin.MetadataCore.__init__(self, setup)
         logging.root.setLevel(100)
-        Bcfg2.Logger.setup_logging(100, to_console=False, to_syslog=False)
+        Bcfg2.Logger.setup_logging(100, to_console=False,
+                                   to_syslog=setup['syslog'])
 
     def __call__(self, args):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)

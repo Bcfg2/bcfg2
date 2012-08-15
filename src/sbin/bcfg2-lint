@@ -86,7 +86,7 @@ if __name__ == '__main__':
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
 
-    log_args = dict(to_syslog=False, to_console=logging.WARNING)
+    log_args = dict(to_syslog=setup['syslog'], to_console=logging.WARNING)
     if setup['verbose']:
         log_args['to_console'] = logging.DEBUG
     Bcfg2.Logger.setup_logging('bcfg2-info', **log_args)

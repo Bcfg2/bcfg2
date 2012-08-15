@@ -73,7 +73,7 @@ def main():
     setup.parse(sys.argv[1:])
 
     if setup['verbose']:
-        Bcfg2.Logger.setup_logging("bcfg2-test", to_syslog=False)
+        Bcfg2.Logger.setup_logging("bcfg2-test", to_syslog=setup['syslog'])
 
     core = Bcfg2.Server.Core.BaseCore(setup)
 

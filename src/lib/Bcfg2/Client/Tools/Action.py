@@ -61,7 +61,7 @@ class Action(Bcfg2.Client.Tools.Tool):
             else:
                 return rc == 0
         else:
-            self.logger.debug("In dryrun mode: not running action:\n %s" %
+            self.logger.debug("In dryrun mode: not running action: %s" %
                               (entry.get('name')))
             return False
 

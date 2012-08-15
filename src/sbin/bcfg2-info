@@ -664,7 +664,6 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             self.do_loop()
 
 if __name__ == '__main__':
-    Bcfg2.Logger.setup_logging('bcfg2-info', to_syslog=False)
     optinfo = dict(profile=Bcfg2.Options.CORE_PROFILE,
                    mconnect=Bcfg2.Options.SERVER_MCONNECT,
                    interactive=Bcfg2.Options.INTERACTIVE,
@@ -678,6 +677,7 @@ if __name__ == '__main__':
                           USAGE])
 
     setup.parse(sys.argv[1:])
+    Bcfg2.Logger.setup_logging('bcfg2-info', to_syslog=setup['syslog'])
     if setup['args'] and setup['args'][0] == 'help':
         print(setup.hm)
         sys.exit(0)

@@ -64,7 +64,7 @@ class BaseCore(object):
         self.logger.setLevel(level)
         Bcfg2.Logger.setup_logging('bcfg2-server',
                                    to_console=True,
-                                   to_syslog=True,
+                                   to_syslog=setup['syslog'],
                                    to_file=setup['logging'],
                                    level=level)
 
