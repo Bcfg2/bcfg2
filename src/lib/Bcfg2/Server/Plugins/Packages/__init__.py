@@ -21,7 +21,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.ClientRunHooks):
     name = 'Packages'
     conflicts = ['Pkgmgr']
-    experimental = True
     __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Refresh', 'Reload']
 
     def __init__(self, core, datastore):
