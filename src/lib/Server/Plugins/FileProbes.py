@@ -56,7 +56,6 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
 
     name = 'FileProbes'
     experimental = True
-    __version__ = '$Id$'
     __author__ = 'chris.a.st.pierre@gmail.com'
 
     def __init__(self, core, datastore):
@@ -122,12 +121,13 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
         specific = "%s.H_%s" % (os.path.basename(filename), metadata.hostname)
         # we can't use os.path.join() for this because specific
         # already has a leading /, which confuses os.path.join()
-        fileloc = "%s%s" % (cfg.data, os.path.join(filename, specific))
+        fileloc = os.path.join(cfg.data,
+                               os.path.join(filename, specific).lstrip("/"))
 
         create = False
         try:
             cfg.entries[filename].bind_entry(entry, metadata)
-        except Bcfg2.Server.Plugin.PluginExecutionError:
+        except KeyError, Bcfg2.Server.Plugin.PluginExecutionError:
             create = True
 
         # get current entry data
@@ -140,7 +140,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             self.logger.info("Writing new probed file %s" % fileloc)
             self.write_file(fileloc, contents)
             self.verify_file(filename, contents, metadata)
-            infoxml = os.path.join("%s%s" % (cfg.data, filename), "info.xml")
+            infoxml = os.path.join(cfg.data, filename.lstrip("/"), "info.xml")
             self.write_infoxml(infoxml, entry, data)
         elif entrydata == contents:
             self.debug_log("Existing %s contents match probed contents" %
