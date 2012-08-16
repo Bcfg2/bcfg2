@@ -1,6 +1,4 @@
-# TODO
-# since were merging configs load and warn on deprecated fields
-
+import os
 import sys
 import Bcfg2.Options
 
@@ -27,26 +25,22 @@ TEMPLATE_DEBUG = DEBUG
 
 MEDIA_URL = '/site_media'
 
+# default config file is /etc/bcfg2-web.conf, UNLESS /etc/bcfg2.conf
+# exists AND /etc/bcfg2-web.conf does not exist.
+DEFAULT_CONFIG = Bcfg2.Options.WEB_CFILE.default
+if (not os.path.exists(Bcfg2.Options.WEB_CFILE.default) and 
+    os.path.exists(Bcfg2.Options.CFILE.default)):
+    DEFAULT_CONFIG = Bcfg2.Options.CFILE.default
 
-def read_config(cfile='/etc/bcfg2.conf', repo=None, quiet=False):
+def read_config(cfile=DEFAULT_CONFIG, repo=None, quiet=False):
     global DATABASE_ENGINE, DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, \
         DATABASE_HOST, DATABASE_PORT, DEBUG, TEMPLATE_DEBUG, TIME_ZONE, \
         MEDIA_URL
 
-    setup = \
-        Bcfg2.Options.OptionParser(dict(repo=Bcfg2.Options.SERVER_REPOSITORY,
-                                        configfile=Bcfg2.Options.CFILE,
-                                        db_engine=Bcfg2.Options.DB_ENGINE,
-                                        db_name=Bcfg2.Options.DB_NAME,
-                                        db_user=Bcfg2.Options.DB_USER,
-                                        db_password=Bcfg2.Options.DB_PASSWORD,
-                                        db_host=Bcfg2.Options.DB_HOST,
-                                        db_port=Bcfg2.Options.DB_PORT,
-                                        time_zone=Bcfg2.Options.DJANGO_TIME_ZONE,
-                                        django_debug=Bcfg2.Options.DJANGO_DEBUG,
-                                        web_prefix=Bcfg2.Options.DJANGO_WEB_PREFIX),
-                                   quiet=quiet)
-    setup.parse([Bcfg2.Options.CFILE.cmd, '/etc/bcfg2-web.conf', cfile])
+    optinfo = Bcfg2.Options.DATABASE_COMMON_OPTIONS
+    optinfo['repo'] = Bcfg2.Options.SERVER_REPOSITORY
+    setup = Bcfg2.Options.OptionParser(optinfo, quiet=quiet)
+    setup.parse([Bcfg2.Options.WEB_CFILE.cmd, cfile])
 
     if repo is None:
         repo = setup['repo']

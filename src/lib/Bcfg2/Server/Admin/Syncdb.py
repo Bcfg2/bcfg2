@@ -8,11 +8,8 @@ class Syncdb(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = ("Sync the Django ORM with the configured database")
     __longhelp__ = __shorthelp__ + "\n\nbcfg2-admin syncdb"
     __usage__ = "bcfg2-admin syncdb"
-    options = {'configfile': Bcfg2.Options.CFILE,
+    options = {'web_configfile': Bcfg2.Options.WEB_CFILE,
                'repo': Bcfg2.Options.SERVER_REPOSITORY}
-
-    def __init__(self, setup):
-        Bcfg2.Server.Admin.Mode.__init__(self, setup)
 
     def __call__(self, args):
         import Bcfg2.Server.Admin
@@ -26,7 +23,7 @@ class Syncdb(Bcfg2.Server.Admin.Mode):
         # the syncdb command, but we have to wait to set up the
         # environment until we've read the config, which has to wait
         # until we've parsed options.  it's a windy, twisting road.
-        Bcfg2.settings.read_config(cfile=self.opts['configfile'],
+        Bcfg2.settings.read_config(cfile=self.opts['web_configfile'],
                                    repo=self.opts['repo'])
         setup_environ(Bcfg2.settings)
         import Bcfg2.Server.models

@@ -106,7 +106,8 @@ class BaseCore(object):
 
         # generate Django ORM settings.  this must be done _before_ we
         # load plugins
-        Bcfg2.settings.read_config(cfile=self.cfile, repo=self.datastore)
+        Bcfg2.settings.read_config(cfile=self.setup['web_configfile'],
+                                   repo=self.datastore)
 
         self._database_available = False
         # verify our database schema

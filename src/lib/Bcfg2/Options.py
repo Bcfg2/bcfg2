@@ -477,6 +477,11 @@ DB_PORT = \
            deprecated_cf=('statistics', 'database_port'))
 
 # Django options
+WEB_CFILE = \
+    Option('Web interface configuration file',
+           default="/etc/bcfg2-web.conf",
+           cmd='-W',
+           cf=('statistics', 'config'),)
 DJANGO_TIME_ZONE = \
     Option('Django timezone',
            default=None,
@@ -894,6 +899,7 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
                              cert=SERVER_CERT,
                              ca=SERVER_CA,
                              protocol=SERVER_PROTOCOL,
+                             web_configfile=WEB_CFILE,
                              backend=SERVER_BACKEND)
 
 CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
@@ -968,6 +974,17 @@ CLIENT_COMMON_OPTIONS = \
          decision_list=CLIENT_DECISION_LIST)
 CLIENT_COMMON_OPTIONS.update(DRIVER_OPTIONS)
 CLIENT_COMMON_OPTIONS.update(CLI_COMMON_OPTIONS)
+
+DATABASE_COMMON_OPTIONS = dict(web_configfile=WEB_CFILE,
+                               db_engine=DB_ENGINE,
+                               db_name=DB_NAME,
+                               db_user=DB_USER,
+                               db_password=DB_PASSWORD,
+                               db_host=DB_HOST,
+                               db_port=DB_PORT,
+                               time_zone=DJANGO_TIME_ZONE,
+                               django_debug=DJANGO_DEBUG,
+                               web_prefix=DJANGO_WEB_PREFIX)
 
 
 class OptionParser(OptionSet):
