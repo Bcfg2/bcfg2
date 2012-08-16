@@ -115,16 +115,16 @@ class TemplateHelperLint(Bcfg2.Server.Lint.ServerlessPlugin):
             self.LintError("templatehelper-import-error",
                            "Failed to import %s: %s" %
                            (helper, err))
-            continue
+            return
 
         if not hasattr(module, "__export__"):
             self.LintError("templatehelper-no-export",
                            "%s has no __export__ list" % helper)
-            continue
+            return
         elif not isinstance(module.__export__, list):
             self.LintError("templatehelper-nonlist-export",
                            "__export__ is not a list in %s" % helper)
-            continue
+            return
 
         for sym in module.__export__:
             if not hasattr(module, sym):
