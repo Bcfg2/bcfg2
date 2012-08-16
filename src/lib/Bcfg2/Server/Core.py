@@ -551,7 +551,7 @@ class BaseCore(object):
                                        xml_declaration=True)
         except:
             err = sys.exc_info()[1]
-            self.critical_error("Error determining probes for %s" %
+            self.critical_error("Error determining probes for %s: %s" %
                                 (client, err))
 
     @exposed
