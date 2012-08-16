@@ -311,9 +311,7 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %dir %{python_sitelib}/Bcfg2
 %{python_sitelib}/Bcfg2/Server
 
-%if "%{pythonversion}" >= "2.5"
 %{python_sitelib}/*egg-info
-%endif
 
 %dir %{_datadir}/bcfg2
 %{_datadir}/bcfg2/Hostbase
