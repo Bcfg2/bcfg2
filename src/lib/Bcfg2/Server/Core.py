@@ -62,8 +62,13 @@ class BaseCore(object):
             level = logging.INFO
         else:
             level = logging.WARNING
+        # we set a higher log level for the console by default.  we
+        # assume that if someone is running bcfg2-server in such a way
+        # that it _can_ log to console, they want more output.  if
+        # level is set to DEBUG, that will get handled by
+        # setup_logging and the console will get DEBUG output.
         Bcfg2.Logger.setup_logging('bcfg2-server',
-                                   to_console=True,
+                                   to_console=logging.INFO,
                                    to_syslog=setup['syslog'],
                                    to_file=setup['logging'],
                                    level=level)
