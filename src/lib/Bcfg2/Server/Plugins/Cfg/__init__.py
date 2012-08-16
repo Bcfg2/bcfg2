@@ -407,6 +407,19 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
             SETUP.add_option('validate', Bcfg2.Options.CFG_VALIDATION)
             SETUP.reparse()
 
+    def has_generator(self, entry, metadata):
+        """ return True if the given entry can be generated for the
+        given metadata; False otherwise """
+        if entry.get('name') not in self.entries:
+            return False
+
+        for ent in self.entries[entry.get('name')].entries.values():
+            if ent.__specific__ and not ent.specific.matches(metadata):
+                continue
+            if isinstance(ent, CfgGenerator):
+                return True
+        return False
+
     def AcceptChoices(self, entry, metadata):
         return self.entries[entry.get('name')].list_accept_choices(entry,
                                                                    metadata)
