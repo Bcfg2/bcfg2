@@ -1,41 +1,152 @@
 import os
 import sys
 import unittest
-from mock import Mock, patch
-import Bcfg2.Options
+from mock import Mock, MagicMock, patch
+from Bcfg2.Options import *
 from ..common import *
+
+# Compatibility imports
+from Bcfg2.Bcfg2Py3k import ConfigParser
+
+class TestDefaultConfigParser(Bcfg2TestCase):
+    @patch("%s.ConfigParser.get" % ConfigParser.__name__)
+    def test_get(self, mock_get):
+        dcp = DefaultConfigParser()
+        mock_get.return_value = "foo"
+        self.assertEqual(dcp.get("section", "option"), "foo")
+        mock_get.assert_called_with(dcp, "section", "option")
+        
+        mock_get.reset_mock()
+        self.assertEqual(dcp.get("section", "option",
+                                 default="bar", other="test"), "foo")
+        mock_get.assert_called_with(dcp, "section", "option", other="test")
+
+        for etype, err in [(ConfigParser.NoOptionError,
+                            ConfigParser.NoOptionError(None, None)),
+                           (ConfigParser.NoSectionError,
+                            ConfigParser.NoSectionError(None))]:
+            mock_get.side_effect = err
+            mock_get.reset_mock()
+            self.assertEqual(dcp.get("section", "option", default="bar"), "bar")
+            mock_get.assert_called_with(dcp, "section", "option")
+
+            mock_get.reset_mock()
+            self.assertRaises(etype, dcp.get, "section", "option")
+            mock_get.assert_called_with(dcp, "section", "option")
+
+    @patch("%s.ConfigParser.getboolean" % ConfigParser.__name__)
+    def test_getboolean(self, mock_getboolean):
+        dcp = DefaultConfigParser()
+        mock_getboolean.return_value = True
+        self.assertEqual(dcp.getboolean("section", "option"), True)
+        mock_getboolean.assert_called_with(dcp, "section", "option")
+        
+        mock_getboolean.reset_mock()
+        self.assertEqual(dcp.getboolean("section", "option",
+                                 default=False, other="test"), True)
+        mock_getboolean.assert_called_with(dcp, "section", "option",
+                                           other="test")
+
+        for etype, err in [(ConfigParser.NoOptionError,
+                            ConfigParser.NoOptionError(None, None)),
+                           (ConfigParser.NoSectionError,
+                            ConfigParser.NoSectionError(None))]:
+            mock_getboolean.side_effect = err
+            mock_getboolean.reset_mock()
+            self.assertEqual(dcp.getboolean("section", "option", default=False),
+                             False)
+            mock_getboolean.assert_called_with(dcp, "section", "option")
+
+            mock_getboolean.reset_mock()
+            self.assertRaises(etype, dcp.getboolean, "section", "option")
+            mock_getboolean.assert_called_with(dcp, "section", "option")
+            
 
 class TestOption(Bcfg2TestCase):
     def test__init(self):
-        self.assertRaises(Bcfg2.Options.OptionFailure,
-                          Bcfg2.Options.Option,
+        self.assertRaises(OptionFailure,
+                          Option,
                           'foo', False, cmd='f')
-        self.assertRaises(Bcfg2.Options.OptionFailure,
-                          Bcfg2.Options.Option,
+        self.assertRaises(OptionFailure,
+                          Option,
                           'foo', False, cmd='--f')
-        self.assertRaises(Bcfg2.Options.OptionFailure,
-                          Bcfg2.Options.Option,
+        self.assertRaises(OptionFailure,
+                          Option,
                           'foo', False, cmd='-foo')
-        self.assertRaises(Bcfg2.Options.OptionFailure,
-                          Bcfg2.Options.Option,
+        self.assertRaises(OptionFailure,
+                          Option,
                           'foo', False, cmd='-foo', long_arg=True)
+        opt = Option('foo', False)
+        self.assertTrue(opt.boolean)
+        opt = Option('foo', False, odesc='<val>')
+        self.assertFalse(opt.boolean)
+        opt = Option('foo', False, cook=get_bool)
+        self.assertFalse(opt.boolean)
+        opt = Option('foo', "foo")
+        self.assertFalse(opt.boolean)
+        
+    def test_get_cooked_value(self):
+        opt = Option('foo', False)
+        opt.boolean = True
+        self.assertTrue(opt.get_cooked_value("anything"))
 
-    @patch('Bcfg2.Options.DefaultConfigParser')
-    @patch('__builtin__.open')
-    def test_get(self, mock_open, mock_cp):
-        mock_cp.return_value = Mock()
-        o = Bcfg2.Options.Option('foo', False, cmd='-f')
-        self.assertFalse(o.cf)
-        c = Bcfg2.Options.DefaultConfigParser()
-        c.get('foo', False, cmd='-f')
-        mock_cp.assert_any_call()
-        mock_open.assert_any_call(Bcfg2.Options.DEFAULT_CONFIG_LOCATION)
-        self.assertTrue(mock_cp.return_value.get.called)
+        opt = Option('foo', 'foo')
+        opt.boolean = False
+        opt.cook = False
+        self.assertEqual("foo", opt.get_cooked_value("foo"))
+        
+        opt = Option('foo', 'foo')
+        opt.boolean = False
+        opt.cook = Mock()
+        self.assertEqual(opt.cook.return_value, opt.get_cooked_value("foo"))
+        opt.cook.assert_called_with("foo")
 
-    @patch('Bcfg2.Options.DefaultConfigParser')
-    def test_parse(self, mock_cfp):
+    def test_buildHelpMessage(self):
+        opt = Option('foo', False)
+        self.assertEqual(opt.buildHelpMessage(), '')
+
+        opt = Option('foo', False, '-f')
+        self.assertEqual(opt.buildHelpMessage().split(),
+                         ["-f", "foo"])
+
+        opt = Option('foo', False, cmd="--foo", long_arg=True)
+        self.assertEqual(opt.buildHelpMessage().split(),
+                         ["--foo", "foo"])
+
+        opt = Option('foo', False, cmd="-f", odesc='<val>')
+        self.assertEqual(opt.buildHelpMessage().split(),
+                         ["-f", "<val>", "foo"])
+
+        opt = Option('foo', False, cmd="--foo", long_arg=True, odesc='<val>')
+        self.assertEqual(opt.buildHelpMessage().split(),
+                         ["--foo=<val>", "foo"])
+
+    def test_buildGetopt(self):
+        opt = Option('foo', False)
+        self.assertEqual(opt.buildGetopt(), '')
+
+        opt = Option('foo', False, '-f')
+        self.assertEqual(opt.buildGetopt(), "f")
+
+        opt = Option('foo', False, cmd="--foo", long_arg=True)
+        self.assertEqual(opt.buildGetopt(), '')
+
+        opt = Option('foo', False, cmd="-f", odesc='<val>')
+        self.assertEqual(opt.buildGetopt(), 'f:')
+
+        opt = Option('foo', False, cmd="--foo", long_arg=True, odesc='<val>')
+        self.assertEqual(opt.buildGetopt(), '')
+
+    def test_buildLongGetopt(self):
+        opt = Option('foo', False, cmd="--foo", long_arg=True)
+        self.assertEqual(opt.buildLongGetopt(), 'foo')
+
+        opt = Option('foo', False, cmd="--foo", long_arg=True, odesc='<val>')
+        self.assertEqual(opt.buildLongGetopt(), 'foo=')
+
+    def test_parse(self):
         cf = ('communication', 'password')
-        o = Bcfg2.Options.Option('foo', default='test4', cmd='-F', env='TEST2',
+        o = Option('foo', default='test4', cmd='-F', env='TEST2',
                                  odesc='bar', cf=cf)
         o.parse([], ['-F', 'test'])
         self.assertEqual(o.value, 'test')
@@ -47,80 +158,72 @@ class TestOption(Bcfg2TestCase):
         self.assertEqual(o.value, 'test3')
         del os.environ['TEST2']
 
-        mock_cfp.get = Mock()
-        mock_cfp.get.return_value = 'test5'
-        o.parse([], [], configparser=mock_cfp)
-        mock_cfp.get.assert_any_call(*cf)
+        cfp = DefaultConfigParser()
+        cfp.get = Mock()
+        cfp.get.return_value = 'test5'
+        o.parse([], [], configparser=cfp)
+        cfp.get.assert_any_call(*cf)
         self.assertEqual(o.value, 'test5')
 
         o.cf = False
         o.parse([], [])
         assert o.value == 'test4'
 
-    def test_cook(self):
-        # check that default value isn't cooked
-        o1 = Bcfg2.Options.Option('foo', 'test4', cook=Bcfg2.Options.get_bool)
-        o1.parse([], [])
-        assert o1.value == 'test4'
-        o2 = Bcfg2.Options.Option('foo', False, cmd='-F')
-        o2.parse([('-F', '')], [])
-        assert o2.value == True
-
 
 class TestOptionSet(Bcfg2TestCase):
     def test_buildGetopt(self):
-        opts = [('foo', Bcfg2.Options.Option('foo', 'test1', cmd='-G')),
-                ('bar', Bcfg2.Options.Option('foo', 'test2')),
-                ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='-H',
+        opts = [('foo', Option('foo', 'test1', cmd='-G')),
+                ('bar', Option('foo', 'test2')),
+                ('baz', Option('foo', 'test1', cmd='-H',
                                              odesc='1'))]
-        oset = Bcfg2.Options.OptionSet(opts)
+        oset = OptionSet(opts)
         res = oset.buildGetopt()
         self.assertIn('H:', res)
         self.assertIn('G', res)
         self.assertEqual(len(res), 3)
 
     def test_buildLongGetopt(self):
-        opts = [('foo', Bcfg2.Options.Option('foo', 'test1', cmd='-G')),
-                ('bar', Bcfg2.Options.Option('foo', 'test2')),
-                ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='--H',
+        opts = [('foo', Option('foo', 'test1', cmd='-G')),
+                ('bar', Option('foo', 'test2')),
+                ('baz', Option('foo', 'test1', cmd='--H',
                                              odesc='1', long_arg=True))]
-        oset = Bcfg2.Options.OptionSet(opts)
+        oset = OptionSet(opts)
         res = oset.buildLongGetopt()
         self.assertIn('H=', res)
         self.assertEqual(len(res), 1)
 
     def test_parse(self):
-        opts = [('foo', Bcfg2.Options.Option('foo', 'test1', cmd='-G')),
-                ('bar', Bcfg2.Options.Option('foo', 'test2')),
-                ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='-H',
+        opts = [('foo', Option('foo', 'test1', cmd='-G')),
+                ('bar', Option('foo', 'test2')),
+                ('baz', Option('foo', 'test1', cmd='-H',
                                              odesc='1'))]
-        oset = Bcfg2.Options.OptionSet(opts)
+        oset = OptionSet(opts)
         self.assertRaises(SystemExit,
                           oset.parse,
                           ['-G', '-H'])
-        oset2 = Bcfg2.Options.OptionSet(opts)
+        oset2 = OptionSet(opts)
         self.assertRaises(SystemExit,
                           oset2.parse,
                           ['-h'])
-        oset3 = Bcfg2.Options.OptionSet(opts)
+        oset3 = OptionSet(opts)
         oset3.parse(['-G'])
         self.assertTrue(oset3['foo'])
 
 
 class TestOptionParser(Bcfg2TestCase):
     def test__init(self):
-        opts = [('foo', Bcfg2.Options.Option('foo', 'test1', cmd='-h')),
-                ('bar', Bcfg2.Options.Option('foo', 'test2')),
-                ('baz', Bcfg2.Options.Option('foo', 'test1', cmd='-H',
+        opts = [('foo', Option('foo', 'test1', cmd='-h')),
+                ('bar', Option('foo', 'test2')),
+                ('baz', Option('foo', 'test1', cmd='-H',
                                              odesc='1'))]
-        oset1 = Bcfg2.Options.OptionParser(opts)
+        oset1 = OptionParser(opts)
         self.assertEqual(oset1.cfile,
-                         Bcfg2.Options.DEFAULT_CONFIG_LOCATION)
+                         DEFAULT_CONFIG_LOCATION)
         sys.argv = ['foo', '-C', '/usr/local/etc/bcfg2.conf']
-        oset2 = Bcfg2.Options.OptionParser(opts)
+        oset2 = OptionParser(opts)
         self.assertEqual(oset2.cfile,
                          '/usr/local/etc/bcfg2.conf')
         sys.argv = []
-        oset3 = Bcfg2.Options.OptionParser(opts)
+        oset3 = OptionParser(opts)
         self.assertEqual(oset3.cfile,
-                         Bcfg2.Options.DEFAULT_CONFIG_LOCATION)
+                         DEFAULT_CONFIG_LOCATION)

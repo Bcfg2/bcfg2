@@ -53,14 +53,6 @@ class DefaultConfigParser(ConfigParser.ConfigParser):
 
 
 class Option(object):
-    def get_cooked_value(self, value):
-        if self.boolean:
-            return True
-        if self.cook:
-            return self.cook(value)
-        else:
-            return value
-
     def __init__(self, desc, default, cmd=False, odesc=False,
                  env=False, cf=False, cook=False, long_arg=False,
                  deprecated_cf=None):
@@ -71,9 +63,8 @@ class Option(object):
         if not self.long:
             if cmd and (cmd[0] != '-' or len(cmd) != 2):
                 raise OptionFailure("Poorly formed command %s" % cmd)
-        else:
-            if cmd and (not cmd.startswith('--')):
-                raise OptionFailure("Poorly formed command %s" % cmd)
+        elif cmd and (not cmd.startswith('--')):
+            raise OptionFailure("Poorly formed command %s" % cmd)
         self.odesc = odesc
         self.env = env
         self.cf = cf
@@ -82,6 +73,14 @@ class Option(object):
         if not odesc and not cook and isinstance(self.default, bool):
             self.boolean = True
         self.cook = cook
+
+    def get_cooked_value(self, value):
+        if self.boolean:
+            return True
+        if self.cook:
+            return self.cook(value)
+        else:
+            return value
 
     def buildHelpMessage(self):
         vals = []
