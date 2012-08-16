@@ -362,6 +362,7 @@ class TestThreadedStatistics(TestStatistics):
             return ts.work_queue.get_calls > 3
         core.terminate.isSet.side_effect = terminate_isset
 
+        ts.work_queue.empty.return_value = False
         ts.run()
         mock_load.assert_any_call()
         self.assertGreaterEqual(ts.work_queue.get.call_count, len(self.data))
@@ -1720,7 +1721,7 @@ class TestEntrySet(TestDebuggable):
             spec.prio = prio
             spec.host = host
             if prio:
-                spec.__cmp__ = lambda o: cmp(spec.prio, o.prio)
+                spec.__cmp__ = lambda s, o: cmp(s.prio, o.prio)
             return spec
 
         self.assertRaises(PluginExecutionError,

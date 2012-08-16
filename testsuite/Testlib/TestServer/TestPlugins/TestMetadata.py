@@ -82,7 +82,8 @@ def get_metadata_object(core=None, watch_clients=False, use_db=False):
 
 
 class TestMetadataDB(DBModelTestCase):
-    models = [MetadataClientModel]
+    if has_django:
+        models = [MetadataClientModel]
 
 
 class TestClientVersions(Bcfg2TestCase):
@@ -216,38 +217,51 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
         # Index() isn't used on XMLMetadataConfig objects
         pass
 
-    @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.add_monitor")
     @patch("lxml.etree.parse")
-    def test_load_xml(self, mock_parse, mock_add_monitor):
+    @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig._follow_xincludes")
+    def test_load_xml(self, mock_follow, mock_parse):
         config = self.get_obj("clients.xml")
+
+        def reset():
+            mock_parse.reset_mock()
+            mock_follow.reset_mock()
+            config.data = None
+            config.basedata = None
+
+        reset()
+        config.load_xml()
+        mock_follow.assert_called_with(xdata=mock_parse.return_value)
+        mock_parse.assert_called_with(os.path.join(config.basedir,
+                                                   "clients.xml"),
+                                      parser=Bcfg2.Server.XMLParser)
+        self.assertFalse(mock_parse.return_value.xinclude.called)
+        self.assertEqual(config.data, mock_parse.return_value)
+        self.assertIsNotNone(config.basedata)
+
+        reset()
         mock_parse.side_effect = lxml.etree.XMLSyntaxError(None, None, None,
                                                            None)
         config.load_xml()
+        mock_parse.assert_called_with(os.path.join(config.basedir,
+                                                   "clients.xml"),
+                                      parser=Bcfg2.Server.XMLParser)
         self.assertIsNone(config.data)
         self.assertIsNone(config.basedata)
 
-        config.data = None
-        config.basedata = None
+        reset()
         mock_parse.side_effect = None
-        mock_parse.return_value.findall = Mock(return_value=[])
+        def follow_xincludes(xdata=None):
+            config.extras = [Mock(), Mock()]
+        mock_follow.side_effect = follow_xincludes
         config.load_xml()
-        self.assertIsNotNone(config.data)
+        mock_follow.assert_called_with(xdata=mock_parse.return_value)
+        mock_parse.assert_called_with(os.path.join(config.basedir,
+                                                   "clients.xml"),
+                                      parser=Bcfg2.Server.XMLParser)
+        mock_parse.return_value.xinclude.assert_any_call()
+        self.assertEqual(config.data, mock_parse.return_value)
         self.assertIsNotNone(config.basedata)
 
-        config.data = None
-        config.basedata = None
-
-        def side_effect(*args):
-            def second_call(*args):
-                return []
-            mock_parse.return_value.findall.side_effect = second_call
-            return [lxml.etree.Element(XI + "include", href="more.xml"),
-                    lxml.etree.Element(XI + "include", href="evenmore.xml")]
-
-        mock_parse.return_value.findall = Mock(side_effect=side_effect)
-        config.load_xml()
-        mock_add_monitor.assert_any_call("more.xml")
-        mock_add_monitor.assert_any_call("evenmore.xml")
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.write_xml")
     def test_write(self, mock_write_xml):

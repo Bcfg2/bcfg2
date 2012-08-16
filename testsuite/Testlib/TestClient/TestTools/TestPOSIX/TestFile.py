@@ -120,27 +120,24 @@ class TestPOSIXFile(TestPOSIXTool):
         mock_get_data.return_value = ("test", False)
         exists_rv.__getitem__.return_value = 4
         entry.set("sensitive", "true")
-        open_rv = Mock()
-        open_rv.read.return_value = "tart"
-        mock_open.return_value = open_rv
+        mock_open.return_value.read.return_value = "tart"
         self.assertFalse(ptool.verify(entry, []))
         mock_exists.assert_called_with(entry)
         mock_verify.assert_called_with(ptool, entry, [])
         mock_open.assert_called_with(entry.get("name"))
-        open_rv.assert_any_call()
+        mock_open.return_value.read.assert_called_with()
         mock_get_diffs.assert_called_with(entry, interactive=False,
                                           sensitive=True,
                                           is_binary=False,
                                           content="tart")
 
         reset()
-        open_rv.read.return_value = "test"
-        mock_open.return_value = open_rv
+        mock_open.return_value.read.return_value = "test"
         self.assertTrue(ptool.verify(entry, []))
         mock_exists.assert_called_with(entry)
         mock_verify.assert_called_with(ptool, entry, [])
         mock_open.assert_called_with(entry.get("name"))
-        open_rv.assert_any_call()
+        mock_open.return_value.read.assert_called_with()
         self.assertFalse(mock_get_diffs.called)
 
         reset()

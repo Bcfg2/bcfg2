@@ -15,11 +15,12 @@ from ..TestPlugin import TestEntrySet, TestProbing, TestConnector, \
 test_data = dict(a=1, b=[1, 2, 3], c="test")
 
 class FakeList(list):
-    sort = Mock()
+    pass
 
 
 class TestProbesDB(DBModelTestCase):
-    models = [ProbesGroupsModel, ProbesDataModel]
+    if has_django:
+        models = [ProbesGroupsModel, ProbesDataModel]
     
 
 class TestClientProbeDataSet(Bcfg2TestCase):
@@ -132,7 +133,8 @@ class TestProbeSet(TestEntrySet):
         # trust that Specificity is well-tested. Hah!)  We also test
         # to make sure the interpreter is determined correctly.
         ps.get_matching = Mock()
-        matching = []
+        matching = FakeList()
+        matching.sort = Mock()
 
         p1 = Mock()
         p1.specific = Bcfg2.Server.Plugin.Specificity(group=True, prio=10)
@@ -164,7 +166,10 @@ group-specific"""
         metadata = Mock()
         pdata = ps.get_probe_data(metadata)
         ps.get_matching.assert_called_with(metadata)
-        FakeList.sort.assert_any_call()
+        # we can't create a matching operator.attrgetter object, and I
+        # don't feel the need to mock that out -- this is a good
+        # enough check
+        self.assertTrue(matching.sort.called)
 
         self.assertEqual(len(pdata), 3,
                          "Found: %s" % [p.get("name") for p in pdata])
@@ -211,16 +216,27 @@ text
                                     "group-with-dashes"],
                 "bar.example.com": []}
     
-    @patch("Bcfg2.Server.Plugins.Probes.Probes.load_data", Mock())
-    def get_probes_object(self, use_db=False):
+    def get_probes_object(self, use_db=False, load_data=None):
         core = Mock()
         core.setup.cfp.getboolean = Mock()
         core.setup.cfp.getboolean.return_value = use_db
-        return Probes(core, datastore)
+        if load_data is None:
+            load_data = MagicMock()
+        # we have to patch load_data() in a funny way because
+        # different versions of Mock have different scopes for
+        # patching.  in some versions, a patch applied to
+        # get_probes_object() would only apply to that function, while
+        # in others it would also apply to the calling function (e.g.,
+        # test__init(), which relies on being able to check the calls
+        # of load_data(), and thus on load_data() being consistently
+        # mocked)
+        with patch("Bcfg2.Server.Plugins.Probes.Probes.load_data",
+                   new=load_data):
+            return Probes(core, datastore)
         
-    @patch("Bcfg2.Server.Plugins.Probes.Probes.load_data")
-    def test__init(self, mock_load_data):
-        probes = self.get_probes_object()
+    def test__init(self):
+        mock_load_data = Mock()
+        probes = self.get_probes_object(load_data=mock_load_data)
         probes.core.fam.AddMonitor.assert_called_with(os.path.join(datastore,
                                                                    probes.name),
                                                       probes.probes)
