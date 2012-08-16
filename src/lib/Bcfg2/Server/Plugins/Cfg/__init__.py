@@ -9,7 +9,7 @@ import logging
 import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
-from Bcfg2.Bcfg2Py3k import u_str, b64encode
+from Bcfg2.Bcfg2Py3k import u_str, unicode, b64encode
 import Bcfg2.Server.Lint
 
 logger = logging.getLogger(__name__)
@@ -292,7 +292,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             data = b64encode(data)
         else:
             try:
-                data = u_str(data, self.encoding)
+                if type(data) != unicode:
+                    data = u_str(data, self.encoding)
             except UnicodeDecodeError:
                 msg = "Failed to decode %s: %s" % (entry.get('name'),
                                                    sys.exc_info()[1])

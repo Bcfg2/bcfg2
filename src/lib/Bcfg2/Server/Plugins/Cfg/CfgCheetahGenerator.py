@@ -24,7 +24,8 @@ class CfgCheetahGenerator(CfgGenerator):
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
 
     def get_data(self, entry, metadata):
-        template = Template(self.data, compilerSettings=self.settings)
+        template = Template(self.data.decode(self.encoding),
+                            compilerSettings=self.settings)
         template.metadata = metadata
         template.path = entry.get('realname', entry.get('name'))
         template.source_path = self.name
