@@ -2,7 +2,6 @@ language: python
 python:
   - "2.7"
 install:
-  - pip install -e git+https://github.com/iustin/pylibacl\#egg=posix1e
   - pip install -r testsuite/requirements.txt --use-mirrors
   - pip install -e .
 script:
