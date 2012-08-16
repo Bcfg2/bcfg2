@@ -16,18 +16,20 @@ except ImportError:
 try:
     import posix1e
     has_acls = True
+
+    # map between permissions characters and numeric ACL constants
+    acl_map = dict(r=posix1e.ACL_READ,
+                   w=posix1e.ACL_WRITE,
+                   x=posix1e.ACL_EXECUTE)
 except ImportError:
     has_acls = False
+    acl_map = dict()
 
 # map between dev_type attribute and stat constants
 device_map = dict(block=stat.S_IFBLK,
                   char=stat.S_IFCHR,
                   fifo=stat.S_IFIFO)
 
-# map between permissions characters and numeric ACL constants
-acl_map = dict(r=posix1e.ACL_READ,
-               w=posix1e.ACL_WRITE,
-               x=posix1e.ACL_EXECUTE)
 
 class POSIXTool(Bcfg2.Client.Tools.Tool):
     def fully_specified(self, entry):
