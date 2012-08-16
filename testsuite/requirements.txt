@@ -1,0 +1,6 @@
+lxml
+nose
+genshi
+cheetah
+sphinx
+mock
