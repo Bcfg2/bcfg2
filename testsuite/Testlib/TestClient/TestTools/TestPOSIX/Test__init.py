@@ -4,12 +4,7 @@ import lxml.etree
 from mock import Mock, MagicMock, patch
 import Bcfg2.Client.Tools
 import Bcfg2.Client.Tools.POSIX
-
-def call(*args, **kwargs):
-    """ the Mock call object is a fairly recent addition, but it's
-    very very useful, so we create our own function to create Mock
-    calls """
-    return (args, kwargs)
+from .....common import *
 
 def get_config(entries):
     config = lxml.etree.Element("Configuration")
@@ -33,7 +28,7 @@ def get_posix_object(logger=None, setup=None, config=None):
     return Bcfg2.Client.Tools.POSIX.POSIX(logger, setup, config)
     
 
-class TestPOSIX(unittest.TestCase):
+class TestPOSIX(Bcfg2TestCase):
     def test__init(self):
         entries = [lxml.etree.Element("Path", name="test", type="file")]
         p = get_posix_object(config=get_config(entries))

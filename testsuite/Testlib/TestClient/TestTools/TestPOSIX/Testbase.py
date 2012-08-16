@@ -7,6 +7,7 @@ from mock import Mock, MagicMock, patch
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Tools.POSIX.base import *
 from Test__init import get_posix_object
+from .....common import *
 
 try:
     import selinux
@@ -20,28 +21,27 @@ try:
 except ImportError:
     has_acls = False
 
-def call(*args, **kwargs):
-    """ the Mock call object is a fairly recent addition, but it's
-    very very useful, so we create our own function to create Mock
-    calls """
-    return (args, kwargs)
-
 def get_posixtool_object(posix=None):
     if posix is None:
         posix = get_posix_object()
     return POSIXTool(posix.logger, posix.setup, posix.config)
 
-class TestPOSIXTool(unittest.TestCase):
+class TestPOSIXTool(Bcfg2TestCase):
+    test_obj = POSIXTool
+
+    def get_obj(self, posix=None):
+        return get_posixtool_object(posix)
+
     def test_fully_specified(self):
         # fully_specified should do no checking on the abstract
         # POSIXTool object
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         self.assertTrue(ptool.fully_specified(Mock()))
     
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._verify_metadata")
     def test_verify(self, mock_verify):
         entry = lxml.etree.Element("Path", name="/test", type="file")
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         with patch('os.stat') as mock_stat, patch('os.walk') as mock_walk:
             mock_stat.return_value = MagicMock()
             
@@ -71,7 +71,7 @@ class TestPOSIXTool(unittest.TestCase):
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._set_perms")
     def test_install(self, mock_set_perms):
         entry = lxml.etree.Element("Path", name="/test", type="file")
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         
         mock_set_perms.return_value = True
         self.assertTrue(ptool.install(entry))
@@ -115,7 +115,7 @@ class TestPOSIXTool(unittest.TestCase):
     @patch("shutil.rmtree")
     def test_exists(self, mock_rmtree, mock_unlink):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         with patch('os.lstat') as mock_lstat, \
                 patch("os.path.isdir") as mock_isdir:
             mock_lstat.side_effect = OSError
@@ -172,7 +172,7 @@ class TestPOSIXTool(unittest.TestCase):
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._set_secontext")
     def test_set_perms(self, mock_set_secontext, mock_set_acls, mock_norm_gid,
                        mock_norm_uid, mock_utime, mock_chmod, mock_chown):
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         
         def reset():
             mock_set_secontext.reset_mock()
@@ -290,7 +290,7 @@ class TestPOSIXTool(unittest.TestCase):
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._list_entry_acls")
     def test_set_acls(self, mock_list_entry_acls, mock_norm_gid, mock_norm_uid):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
 
         # disable acls for the initial test
         Bcfg2.Client.Tools.POSIX.base.has_acls = False
@@ -430,7 +430,7 @@ class TestPOSIXTool(unittest.TestCase):
     @unittest.skipUnless(has_selinux, "SELinux not found, skipping")
     def test_set_secontext(self):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
 
         # disable selinux for the initial test
         Bcfg2.Client.Tools.POSIX.base.has_selinux = False
@@ -468,7 +468,7 @@ class TestPOSIXTool(unittest.TestCase):
             
     @patch("grp.getgrnam")
     def test_norm_gid(self, mock_getgrnam):
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         self.assertEqual(5, ptool._norm_gid("5"))
         self.assertFalse(mock_getgrnam.called)
 
@@ -481,7 +481,7 @@ class TestPOSIXTool(unittest.TestCase):
     def test_norm_entry_gid(self, mock_norm_gid):
         entry = lxml.etree.Element("Path", name="/test", type="file",
                                    group="group", owner="user")
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         mock_norm_gid.return_value = 10
         self.assertEqual(10, ptool._norm_entry_gid(entry))
         mock_norm_gid.assert_called_with(entry.get("group"))
@@ -493,7 +493,7 @@ class TestPOSIXTool(unittest.TestCase):
 
     @patch("pwd.getpwnam")
     def test_norm_uid(self, mock_getpwnam):
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         self.assertEqual(5, ptool._norm_uid("5"))
         self.assertFalse(mock_getpwnam.called)
 
@@ -507,7 +507,7 @@ class TestPOSIXTool(unittest.TestCase):
     def test_norm_entry_uid(self, mock_norm_uid):
         entry = lxml.etree.Element("Path", name="/test", type="file",
                                    group="group", owner="user")
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         mock_norm_uid.return_value = 10
         self.assertEqual(10, ptool._norm_entry_uid(entry))
         mock_norm_uid.assert_called_with(entry.get("owner"))
@@ -518,12 +518,12 @@ class TestPOSIXTool(unittest.TestCase):
         mock_norm_uid.assert_called_with(entry.get("owner"))
 
     def test_norm_acl_perms(self):
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         # there's basically no reasonably way to test the Permset
         # object parsing feature without writing our own Mock object
         # that re-implements Permset.test(). silly pylibacl won't let
         # us create standalone Entry or Permset objects.
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         self.assertEqual(5, ptool._norm_acl_perms("5"))
         self.assertEqual(0, ptool._norm_acl_perms("55"))
         self.assertEqual(5, ptool._norm_acl_perms("rx"))
@@ -537,7 +537,7 @@ class TestPOSIXTool(unittest.TestCase):
 
     def test__gather_data(self):
         path = '/test'
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
 
         # have to use context manager version of patch here because
         # os.stat must be unpatched when we instantiate the object to
@@ -579,7 +579,7 @@ class TestPOSIXTool(unittest.TestCase):
     def test__gather_data_selinux(self):
         context = 'system_u:object_r:root_t:s0'
         path = '/test'
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         with patch("selinux.getfilecon") as mock_getfilecon, \
                 patch('os.stat') as mock_stat:
             mock_getfilecon.return_value = [len(context) + 1, context]
@@ -598,7 +598,7 @@ class TestPOSIXTool(unittest.TestCase):
                 ("access", posix1e.ACL_GROUP, "testgroup"): "rx"}
         mock_list_file_acls.return_value = acls
         path = '/test'
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         with patch('os.stat') as mock_stat:
             mock_stat.return_value = MagicMock()
             # disable selinux for this call and test it separately
@@ -621,7 +621,7 @@ class TestPOSIXTool(unittest.TestCase):
         # can start fresh every time
         orig_entry = copy.deepcopy(entry)
 
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
 
         def reset():
             mock_gather_data.reset_mock()
@@ -781,7 +781,7 @@ class TestPOSIXTool(unittest.TestCase):
                               user="user", perms="rwx")
         lxml.etree.SubElement(entry, "ACL", scope="group", type="access",
                               group="group", perms="5")
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         self.assertItemsEqual(ptool._list_entry_acls(entry),
                               {("default", posix1e.ACL_USER, "user"): 7,
                                ("access", posix1e.ACL_GROUP, "group"): 5})
@@ -791,7 +791,7 @@ class TestPOSIXTool(unittest.TestCase):
     @patch("grp.getgrgid")
     def test_list_file_acls(self, mock_getgrgid, mock_getpwuid):
         path = '/test'
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         with patch("posix1e.ACL") as mock_ACL, \
                 patch("os.path.isdir") as mock_isdir:
             # build a set of file ACLs to return from posix1e.ACL(file=...)
@@ -876,7 +876,7 @@ class TestPOSIXTool(unittest.TestCase):
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._list_entry_acls")
     def test_verify_acls(self, mock_list_entry_acls, mock_list_file_acls):
         entry = lxml.etree.Element("Path", name="/test", type="file")
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         # we can't test to make sure that errors get properly sorted
         # into (missing, extra, wrong) without refactoring the
         # _verify_acls code, and I don't feel like doing that, so eff
@@ -934,7 +934,7 @@ class TestPOSIXTool(unittest.TestCase):
             mock_set_perms.reset_mock()
             mock_makedirs.reset_mock()
 
-        ptool = get_posixtool_object()
+        ptool = self.get_obj()
         mock_set_perms.return_value = True
         def path_exists_rv(path):
             if path == "/test":

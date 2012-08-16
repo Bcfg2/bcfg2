@@ -5,19 +5,14 @@ import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.Nonexistent import *
 from Test__init import get_config, get_posix_object
-
-def call(*args, **kwargs):
-    """ the Mock call object is a fairly recent addition, but it's
-    very very useful, so we create our own function to create Mock
-    calls """
-    return (args, kwargs)
+from .....common import *
 
 def get_nonexistent_object(posix=None):
     if posix is None:
         posix = get_posix_object()
     return POSIXNonexistent(posix.logger, posix.setup, posix.config)
 
-class TestPOSIXNonexistent(unittest.TestCase):
+class TestPOSIXNonexistent(Bcfg2TestCase):
     @patch("os.path.lexists")
     def test_verify(self, mock_lexists):
         entry = lxml.etree.Element("Path", name="/test", type="nonexistent")

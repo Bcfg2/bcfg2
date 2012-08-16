@@ -5,19 +5,14 @@ import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.Device import *
 from Test__init import get_posix_object
-
-def call(*args, **kwargs):
-    """ the Mock call object is a fairly recent addition, but it's
-    very very useful, so we create our own function to create Mock
-    calls """
-    return (args, kwargs)
+from .....common import *
 
 def get_device_object(posix=None):
     if posix is None:
         posix = get_posix_object()
     return POSIXDevice(posix.logger, posix.setup, posix.config)
 
-class TestPOSIXDevice(unittest.TestCase):
+class TestPOSIXDevice(Bcfg2TestCase):
     def test_fully_specified(self):
         ptool = get_device_object()
         orig_entry = lxml.etree.Element("Path", name="/test", type="device",

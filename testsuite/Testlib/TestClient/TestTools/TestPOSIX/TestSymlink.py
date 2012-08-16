@@ -5,19 +5,14 @@ import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.Symlink import *
 from Test__init import get_posix_object
-
-def call(*args, **kwargs):
-    """ the Mock call object is a fairly recent addition, but it's
-    very very useful, so we create our own function to create Mock
-    calls """
-    return (args, kwargs)
+from .....common import *
 
 def get_symlink_object(posix=None):
     if posix is None:
         posix = get_posix_object()
     return POSIXSymlink(posix.logger, posix.setup, posix.config)
 
-class TestPOSIXSymlink(unittest.TestCase):
+class TestPOSIXSymlink(Bcfg2TestCase):
     @patch("os.readlink")
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.verify")
     def test_verify(self, mock_verify, mock_readlink):
