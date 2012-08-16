@@ -6,20 +6,18 @@ import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.Directory import *
 from Test__init import get_posix_object
+from Testbase import TestPOSIXTool
 from .....common import *
 
-def get_directory_object(posix=None):
-    if posix is None:
-        posix = get_posix_object()
-    return POSIXDirectory(posix.logger, posix.setup, posix.config)
+class TestPOSIXDirectory(TestPOSIXTool):
+    test_obj = POSIXDirectory
 
-class TestPOSIXDirectory(Bcfg2TestCase):
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.verify")
-    @patch("Bcfg2.Client.Tools.POSIX.Directory.POSIXDirectory._exists")
+    @patch("Bcfg2.Client.Tools.POSIX.Directory.%s._exists" % test_obj.__name__)
     def test_verify(self, mock_exists, mock_verify):
         entry = lxml.etree.Element("Path", name="/test", type="directory",
                                    perms='0644', owner='root', group='root')
-        ptool = get_directory_object()
+        ptool = self.get_obj()
 
         mock_exists.return_value = False
         self.assertFalse(ptool.verify(entry, []))
@@ -80,14 +78,15 @@ class TestPOSIXDirectory(Bcfg2TestCase):
     @patch("os.unlink")
     @patch("shutil.rmtree")
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.install")
-    @patch("Bcfg2.Client.Tools.POSIX.Directory.POSIXDirectory._exists")
-    @patch("Bcfg2.Client.Tools.POSIX.Directory.POSIXDirectory._makedirs")
+    @patch("Bcfg2.Client.Tools.POSIX.Directory.%s._exists" % test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.Directory.%s._makedirs" %
+           test_obj.__name__)
     def test_install(self, mock_makedirs, mock_exists, mock_install,
                      mock_rmtree, mock_unlink):
         entry = lxml.etree.Element("Path", name="/test/foo/bar",
                                    type="directory", perms='0644',
                                    owner='root', group='root')
-        ptool = get_directory_object()
+        ptool = self.get_obj()
         
         def reset():
             mock_exists.reset_mock()

@@ -5,18 +5,16 @@ import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.Nonexistent import *
 from Test__init import get_config, get_posix_object
+from Testbase import TestPOSIXTool
 from .....common import *
 
-def get_nonexistent_object(posix=None):
-    if posix is None:
-        posix = get_posix_object()
-    return POSIXNonexistent(posix.logger, posix.setup, posix.config)
+class TestPOSIXNonexistent(TestPOSIXTool):
+    test_obj = POSIXNonexistent
 
-class TestPOSIXNonexistent(Bcfg2TestCase):
     @patch("os.path.lexists")
     def test_verify(self, mock_lexists):
         entry = lxml.etree.Element("Path", name="/test", type="nonexistent")
-        ptool = get_nonexistent_object()
+        ptool = self.get_obj()
 
         for val in [True, False]:
             mock_lexists.reset_mock()
@@ -29,7 +27,7 @@ class TestPOSIXNonexistent(Bcfg2TestCase):
     @patch("shutil.rmtree")
     def test_install(self, mock_rmtree, mock_remove, mock_rmdir):
         entry = lxml.etree.Element("Path", name="/test", type="nonexistent")
-        ptool = get_nonexistent_object()
+        ptool = self.get_obj()
 
         with patch("os.path.isdir") as mock_isdir:
             def reset():
@@ -70,7 +68,7 @@ class TestPOSIXNonexistent(Bcfg2TestCase):
             reset()
             child_entry = lxml.etree.Element("Path", name="/test/foo",
                                              type="nonexistent")
-            ptool = get_nonexistent_object(posix=get_posix_object(config=get_config([child_entry])))
+            ptool = self.get_obj(posix=get_posix_object(config=get_config([child_entry])))
             mock_rmtree.side_effect = None
             self.assertTrue(ptool.install(entry))
             mock_rmtree.assert_called_with(entry.get("name"))
@@ -78,6 +76,6 @@ class TestPOSIXNonexistent(Bcfg2TestCase):
             reset()
             child_entry = lxml.etree.Element("Path", name="/test/foo",
                                              type="file")
-            ptool = get_nonexistent_object(posix=get_posix_object(config=get_config([child_entry])))
+            ptool = self.get_obj(posix=get_posix_object(config=get_config([child_entry])))
             mock_rmtree.side_effect = None
             self.assertFalse(ptool.install(entry))

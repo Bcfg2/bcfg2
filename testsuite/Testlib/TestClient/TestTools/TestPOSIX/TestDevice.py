@@ -5,16 +5,14 @@ import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.Device import *
 from Test__init import get_posix_object
+from Testbase import TestPOSIXTool
 from .....common import *
 
-def get_device_object(posix=None):
-    if posix is None:
-        posix = get_posix_object()
-    return POSIXDevice(posix.logger, posix.setup, posix.config)
+class TestPOSIXDevice(TestPOSIXTool):
+    test_obj = POSIXDevice
 
-class TestPOSIXDevice(Bcfg2TestCase):
     def test_fully_specified(self):
-        ptool = get_device_object()
+        ptool = self.get_obj()
         orig_entry = lxml.etree.Element("Path", name="/test", type="device",
                                         dev_type="fifo")
         self.assertTrue(ptool.fully_specified(orig_entry))
@@ -38,7 +36,7 @@ class TestPOSIXDevice(Bcfg2TestCase):
         entry = lxml.etree.Element("Path", name="/test", type="device",
                                    perms='0644', owner='root', group='root',
                                    dev_type="block", major="0", minor="10")
-        ptool = get_device_object()
+        ptool = self.get_obj()
 
         def reset():
             mock_exists.reset_mock()
@@ -85,13 +83,13 @@ class TestPOSIXDevice(Bcfg2TestCase):
     
     @patch("os.makedev")
     @patch("os.mknod")
-    @patch("Bcfg2.Client.Tools.POSIX.Device.POSIXDevice._exists")
+    @patch("Bcfg2.Client.Tools.POSIX.Device.%s._exists" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.install")
     def test_install(self, mock_install, mock_exists, mock_mknod, mock_makedev):
         entry = lxml.etree.Element("Path", name="/test", type="device",
                                    perms='0644', owner='root', group='root',
                                    dev_type="block", major="0", minor="10")
-        ptool = get_device_object()
+        ptool = self.get_obj()
 
         mock_exists.return_value = False
         mock_makedev.return_value = Mock()

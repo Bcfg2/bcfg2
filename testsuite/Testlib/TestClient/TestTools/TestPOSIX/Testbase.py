@@ -21,16 +21,13 @@ try:
 except ImportError:
     has_acls = False
 
-def get_posixtool_object(posix=None):
-    if posix is None:
-        posix = get_posix_object()
-    return POSIXTool(posix.logger, posix.setup, posix.config)
-
 class TestPOSIXTool(Bcfg2TestCase):
     test_obj = POSIXTool
 
     def get_obj(self, posix=None):
-        return get_posixtool_object(posix)
+        if posix is None:
+            posix = get_posix_object()
+        return self.test_obj(posix.logger, posix.setup, posix.config)
 
     def test_fully_specified(self):
         # fully_specified should do no checking on the abstract
@@ -38,7 +35,8 @@ class TestPOSIXTool(Bcfg2TestCase):
         ptool = self.get_obj()
         self.assertTrue(ptool.fully_specified(Mock()))
     
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._verify_metadata")
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._verify_metadata" %
+           test_obj.__name__)
     def test_verify(self, mock_verify):
         entry = lxml.etree.Element("Path", name="/test", type="file")
         ptool = self.get_obj()
@@ -68,7 +66,7 @@ class TestPOSIXTool(Bcfg2TestCase):
                                      for p in dirs + files])
             self.assertItemsEqual(mock_verify.call_args_list, all_verifies)
             
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._set_perms")
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._set_perms" % test_obj.__name__)
     def test_install(self, mock_set_perms):
         entry = lxml.etree.Element("Path", name="/test", type="file")
         ptool = self.get_obj()
@@ -166,10 +164,13 @@ class TestPOSIXTool(Bcfg2TestCase):
     @patch("os.chown")
     @patch("os.chmod")
     @patch("os.utime")
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._norm_entry_uid")
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._norm_entry_gid")
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._set_acls")
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._set_secontext")
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_entry_uid" %
+           test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_entry_gid" %
+           test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._set_acls" % test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._set_secontext" %
+           test_obj.__name__)
     def test_set_perms(self, mock_set_secontext, mock_set_acls, mock_norm_gid,
                        mock_norm_uid, mock_utime, mock_chmod, mock_chown):
         ptool = self.get_obj()
@@ -285,9 +286,10 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_set_acls.assert_called_with(entry, path=entry.get("name"))
 
     @unittest.skipUnless(has_acls, "ACLS not found, skipping")
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._norm_uid")
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._norm_gid")
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._list_entry_acls")
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_uid" % test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_gid" % test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._list_entry_acls" %
+           test_obj.__name__)
     def test_set_acls(self, mock_list_entry_acls, mock_norm_gid, mock_norm_uid):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
         ptool = self.get_obj()
@@ -477,7 +479,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         self.assertEqual(5, ptool._norm_gid("group"))
         mock_getgrnam.assert_called_with("group")
 
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._norm_gid")
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_gid" % test_obj.__name__)
     def test_norm_entry_gid(self, mock_norm_gid):
         entry = lxml.etree.Element("Path", name="/test", type="file",
                                    group="group", owner="user")
@@ -503,7 +505,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         self.assertEqual(5, ptool._norm_uid("user"))
         mock_getpwnam.assert_called_with("user")
 
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._norm_uid")
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_uid" % test_obj.__name__)
     def test_norm_entry_uid(self, mock_norm_uid):
         entry = lxml.etree.Element("Path", name="/test", type="file",
                                    group="group", owner="user")
@@ -591,7 +593,8 @@ class TestPOSIXTool(Bcfg2TestCase):
             Bcfg2.Client.Tools.POSIX.base.has_acls = state
             mock_getfilecon.assert_called_with(path)
 
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._list_file_acls")
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._list_file_acls" %
+           test_obj.__name__)
     @unittest.skipUnless(has_acls, "ACLS not found, skipping")
     def test__gather_data_acls(self, mock_list_file_acls):
         acls = {("default", posix1e.ACL_USER, "testuser"): "rwx",
@@ -608,10 +611,12 @@ class TestPOSIXTool(Bcfg2TestCase):
             Bcfg2.Client.Tools.POSIX.base.has_selinux = state
             mock_list_file_acls.assert_called_with(path)
 
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._verify_acls")
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._gather_data")
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._norm_entry_uid")
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._norm_entry_gid")
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._verify_acls" % test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._gather_data" % test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_entry_uid" %
+           test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_entry_gid" %
+           test_obj.__name__)
     def test_verify_metadata(self, mock_norm_gid, mock_norm_uid,
                              mock_gather_data, mock_verify_acls):
         entry = lxml.etree.Element("Path", name="/test", type="file",
@@ -872,8 +877,10 @@ class TestPOSIXTool(Bcfg2TestCase):
                                   [call(file=path), call(filedef=path)])
 
     @unittest.skipUnless(has_acls, "ACLS not found, skipping")
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._list_file_acls")
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._list_entry_acls")
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._list_file_acls" %
+           test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._list_entry_acls" %
+           test_obj.__name__)
     def test_verify_acls(self, mock_list_entry_acls, mock_list_file_acls):
         entry = lxml.etree.Element("Path", name="/test", type="file")
         ptool = self.get_obj()
@@ -924,7 +931,7 @@ class TestPOSIXTool(Bcfg2TestCase):
 
     @patch("os.makedirs")
     @patch("os.path.exists")
-    @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool._set_perms")
+    @patch("Bcfg2.Client.Tools.POSIX.base.%s._set_perms" % test_obj.__name__)
     def test_makedirs(self, mock_set_perms, mock_exists, mock_makedirs):
         entry = lxml.etree.Element("Path", name="/test/foo/bar",
                                    type="directory")

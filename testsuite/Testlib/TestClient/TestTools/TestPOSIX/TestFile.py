@@ -7,6 +7,7 @@ import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.File import *
 from Test__init import get_posix_object
+from Testbase import TestPOSIXTool
 from .....common import *
 
 def get_file_object(posix=None):
@@ -14,10 +15,12 @@ def get_file_object(posix=None):
         posix = get_posix_object()
     return POSIXFile(posix.logger, posix.setup, posix.config)
 
-class TestPOSIXFile(Bcfg2TestCase):
+class TestPOSIXFile(TestPOSIXTool):
+    test_obj = POSIXFile
+
     def test_fully_specified(self):
         entry = lxml.etree.Element("Path", name="/test", type="file")
-        ptool = get_file_object()
+        ptool = self.get_obj()
         self.assertFalse(ptool.fully_specified(entry))
 
         entry.set("empty", "true")
@@ -28,7 +31,7 @@ class TestPOSIXFile(Bcfg2TestCase):
         self.assertTrue(ptool.fully_specified(entry))
     
     def test_is_string(self):
-        ptool = get_file_object()
+        ptool = self.get_obj()
         for char in range(8) + range(14, 32):
             self.assertFalse(ptool._is_string("foo" + chr(char) + "bar",
                                               'utf_8'))
@@ -44,7 +47,7 @@ class TestPOSIXFile(Bcfg2TestCase):
     def test_get_data(self):
         orig_entry = lxml.etree.Element("Path", name="/test", type="file")
         setup = dict(encoding="ascii", ppath='/', max_copies=5)
-        ptool = get_file_object(posix=get_posix_object(setup=setup))
+        ptool = self.get_obj(posix=get_posix_object(setup=setup))
 
         entry = copy.deepcopy(orig_entry)
         entry.text = binascii.b2a_base64("test")
@@ -65,7 +68,7 @@ class TestPOSIXFile(Bcfg2TestCase):
         self.assertEqual(ptool._get_data(entry), (ustr, False))
 
         setup['encoding'] = "utf_8"
-        ptool = get_file_object(posix=get_posix_object(setup=setup))
+        ptool = self.get_obj(posix=get_posix_object(setup=setup))
         entry = copy.deepcopy(orig_entry)
         entry.text = ustr
         self.assertEqual(ptool._get_data(entry),
@@ -73,14 +76,14 @@ class TestPOSIXFile(Bcfg2TestCase):
 
     @patch("__builtin__.open")
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.verify")
-    @patch("Bcfg2.Client.Tools.POSIX.File.POSIXFile._exists")
-    @patch("Bcfg2.Client.Tools.POSIX.File.POSIXFile._get_data")
-    @patch("Bcfg2.Client.Tools.POSIX.File.POSIXFile._get_diffs")
+    @patch("Bcfg2.Client.Tools.POSIX.File.%s._exists" % test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.File.%s._get_data" % test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.File.%s._get_diffs" % test_obj.__name__)
     def test_verify(self, mock_get_diffs, mock_get_data, mock_exists,
                     mock_verify, mock_open):
         entry = lxml.etree.Element("Path", name="/test", type="file")
         setup = dict(interactive=False, ppath='/', max_copies=5)
-        ptool = get_file_object(posix=get_posix_object(setup=setup))
+        ptool = self.get_obj(posix=get_posix_object(setup=setup))
 
         def reset():
             mock_get_diffs.reset_mock()
@@ -148,11 +151,11 @@ class TestPOSIXFile(Bcfg2TestCase):
     
     @patch("os.fdopen")
     @patch("tempfile.mkstemp")
-    @patch("Bcfg2.Client.Tools.POSIX.File.POSIXFile._get_data")
+    @patch("Bcfg2.Client.Tools.POSIX.File.%s._get_data" % test_obj.__name__)
     def test_write_tmpfile(self, mock_get_data, mock_mkstemp, mock_fdopen):
         entry = lxml.etree.Element("Path", name="/test", type="file",
                                    perms='0644', owner='root', group='root')
-        ptool = get_file_object()
+        ptool = self.get_obj()
         newfile = "/foo/bar"
 
         def reset():
@@ -186,7 +189,7 @@ class TestPOSIXFile(Bcfg2TestCase):
     def test_rename_tmpfile(self, mock_unlink, mock_rename):
         entry = lxml.etree.Element("Path", name="/test", type="file",
                                    perms='0644', owner='root', group='root')
-        ptool = get_file_object()
+        ptool = self.get_obj()
         newfile = "/foo/bar"
 
         self.assertTrue(ptool._rename_tmpfile(newfile, entry))
@@ -208,8 +211,8 @@ class TestPOSIXFile(Bcfg2TestCase):
         mock_unlink.assert_called_with(newfile)
 
     @patch("__builtin__.open")
-    @patch("Bcfg2.Client.Tools.POSIX.File.POSIXFile._diff")
-    @patch("Bcfg2.Client.Tools.POSIX.File.POSIXFile._is_string")
+    @patch("Bcfg2.Client.Tools.POSIX.File.%s._diff" % test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.File.%s._is_string" % test_obj.__name__)
     def test__get_diffs(self, mock_is_string, mock_diff, mock_open):
         orig_entry = lxml.etree.Element("Path", name="/test", type="file",
                                         perms='0644', owner='root',
@@ -217,7 +220,7 @@ class TestPOSIXFile(Bcfg2TestCase):
         orig_entry.text = "test"
         ondisk = "test2"
         setup = dict(encoding="ascii", ppath='/', max_copies=5)
-        ptool = get_file_object(posix=get_posix_object(setup=setup))
+        ptool = self.get_obj(posix=get_posix_object(setup=setup))
 
         def reset():
             mock_is_string.reset_mock()
@@ -300,15 +303,17 @@ class TestPOSIXFile(Bcfg2TestCase):
 
     @patch("os.path.exists")
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.install")
-    @patch("Bcfg2.Client.Tools.POSIX.File.POSIXFile._makedirs")
-    @patch("Bcfg2.Client.Tools.POSIX.File.POSIXFile._set_perms")
-    @patch("Bcfg2.Client.Tools.POSIX.File.POSIXFile._write_tmpfile")
-    @patch("Bcfg2.Client.Tools.POSIX.File.POSIXFile._rename_tmpfile")
+    @patch("Bcfg2.Client.Tools.POSIX.File.%s._makedirs" % test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.File.%s._set_perms" % test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.File.%s._write_tmpfile" %
+           test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.File.%s._rename_tmpfile" %
+           test_obj.__name__)
     def test_install(self, mock_rename, mock_write, mock_set_perms,
                      mock_makedirs, mock_install, mock_exists):
         entry = lxml.etree.Element("Path", name="/test", type="file",
                                    perms='0644', owner='root', group='root')
-        ptool = get_file_object()
+        ptool = self.get_obj()
 
         def reset():
             mock_rename.reset_mock()
@@ -385,9 +390,8 @@ class TestPOSIXFile(Bcfg2TestCase):
         mock_rename.assert_called_with(newfile, entry)
         mock_install.assert_called_with(ptool, entry)
 
-    @unittest.skip
     def test_diff(self):
-        ptool = get_file_object()
+        ptool = self.get_obj()
         content1 = "line1\nline2"
         content2 = "line3"
         rv = ["line1", "line2", "line3"]
