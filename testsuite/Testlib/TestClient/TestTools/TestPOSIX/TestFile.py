@@ -1,24 +1,20 @@
 import os
 import copy
+import difflib
 import binascii
 import unittest
 import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.File import *
 from Test__init import get_posix_object
-
-def call(*args, **kwargs):
-    """ the Mock call object is a fairly recent addition, but it's
-    very very useful, so we create our own function to create Mock
-    calls """
-    return (args, kwargs)
+from .....common import *
 
 def get_file_object(posix=None):
     if posix is None:
         posix = get_posix_object()
     return POSIXFile(posix.logger, posix.setup, posix.config)
 
-class TestPOSIXFile(unittest.TestCase):
+class TestPOSIXFile(Bcfg2TestCase):
     def test_fully_specified(self):
         entry = lxml.etree.Element("Path", name="/test", type="file")
         ptool = get_file_object()
@@ -211,6 +207,97 @@ class TestPOSIXFile(unittest.TestCase):
         mock_rename.assert_called_with(newfile, entry.get("name"))
         mock_unlink.assert_called_with(newfile)
 
+    @patch("__builtin__.open")
+    @patch("Bcfg2.Client.Tools.POSIX.File.POSIXFile._diff")
+    @patch("Bcfg2.Client.Tools.POSIX.File.POSIXFile._is_string")
+    def test__get_diffs(self, mock_is_string, mock_diff, mock_open):
+        orig_entry = lxml.etree.Element("Path", name="/test", type="file",
+                                        perms='0644', owner='root',
+                                        group='root')
+        orig_entry.text = "test"
+        ondisk = "test2"
+        setup = dict(encoding="ascii", ppath='/', max_copies=5)
+        ptool = get_file_object(posix=get_posix_object(setup=setup))
+
+        def reset():
+            mock_is_string.reset_mock()
+            mock_diff.reset_mock()
+            mock_open.reset_mock()
+            return copy.deepcopy(orig_entry)
+        
+        mock_is_string.return_value = True
+        mock_open.return_value.read.return_value = ondisk
+        mock_diff.return_value = ["-test2", "+test"]
+
+        # binary data in the entry
+        entry = reset()
+        ptool._get_diffs(entry, is_binary=True)
+        mock_open.assert_called_with(entry.get("name"))
+        mock_open.return_value.read.assert_any_call()
+        self.assertFalse(mock_diff.called)
+        self.assertEqual(entry.get("current_bfile"),
+                         binascii.b2a_base64(ondisk))
+
+        # binary data on disk
+        entry = reset()
+        mock_is_string.return_value = False
+        ptool._get_diffs(entry, content=ondisk)
+        self.assertFalse(mock_open.called)
+        self.assertFalse(mock_diff.called)
+        self.assertEqual(entry.get("current_bfile"),
+                         binascii.b2a_base64(ondisk))
+
+        # sensitive, non-interactive -- do nothing
+        entry = reset()
+        mock_is_string.return_value = True
+        ptool._get_diffs(entry, sensitive=True, interactive=False)
+        self.assertFalse(mock_open.called)
+        self.assertFalse(mock_diff.called)
+        self.assertXMLEqual(entry, orig_entry)
+
+        # sensitive, interactive
+        entry = reset()
+        ptool._get_diffs(entry, sensitive=True, interactive=True)
+        mock_open.assert_called_with(entry.get("name"))
+        mock_open.return_value.read.assert_any_call()
+        mock_diff.assert_called_with(ondisk, entry.text, difflib.unified_diff,
+                                     filename=entry.get("name"))
+        self.assertIsNotNone(entry.get("qtext"))
+        del entry.attrib['qtext']
+        self.assertItemsEqual(orig_entry.attrib, entry.attrib)
+
+        # non-sensitive, non-interactive
+        entry = reset()
+        ptool._get_diffs(entry, content=ondisk)
+        self.assertFalse(mock_open.called)
+        mock_diff.assert_called_with(ondisk, entry.text, difflib.ndiff,
+                                     filename=entry.get("name"))
+        self.assertIsNone(entry.get("qtext"))
+        self.assertEqual(entry.get("current_bdiff"),
+                         binascii.b2a_base64("\n".join(mock_diff.return_value)))
+        del entry.attrib["current_bdiff"]
+        self.assertItemsEqual(orig_entry.attrib, entry.attrib)
+
+        # non-sensitive, interactive -- do everything. also test
+        # appending to qtext
+        entry = reset()
+        entry.set("qtext", "test")
+        ptool._get_diffs(entry, interactive=True)
+        mock_open.assert_called_with(entry.get("name"))
+        mock_open.return_value.read.assert_any_call()
+        self.assertItemsEqual(mock_diff.call_args_list,
+                              [call(ondisk, entry.text, difflib.unified_diff,
+                                    filename=entry.get("name")),
+                               call(ondisk, entry.text, difflib.ndiff,
+                                    filename=entry.get("name"))])
+        self.assertIsNotNone(entry.get("qtext"))
+        self.assertTrue(entry.get("qtext").startswith("test\n"))
+        self.assertEqual(entry.get("current_bdiff"),
+                         binascii.b2a_base64("\n".join(mock_diff.return_value)))
+        del entry.attrib['qtext']
+        del entry.attrib["current_bdiff"]
+        self.assertItemsEqual(orig_entry.attrib, entry.attrib)
+
     @patch("os.path.exists")
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.install")
     @patch("Bcfg2.Client.Tools.POSIX.File.POSIXFile._makedirs")
@@ -298,6 +385,7 @@ class TestPOSIXFile(unittest.TestCase):
         mock_rename.assert_called_with(newfile, entry)
         mock_install.assert_called_with(ptool, entry)
 
+    @unittest.skip
     def test_diff(self):
         ptool = get_file_object()
         content1 = "line1\nline2"

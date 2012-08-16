@@ -141,14 +141,14 @@ class POSIXFile(POSIXTool):
 
         return POSIXTool.install(self, entry) and rv
 
-    def _get_diffs(entry, interactive=False, sensitive=False, is_binary=False,
-                   content=None):
+    def _get_diffs(self, entry, interactive=False, sensitive=False,
+                   is_binary=False, content=None):
         if not interactive and sensitive:
             return
 
         prompt = [entry.get('qtext', '')]
         attrs = dict()
-        if not is_binary and content is None:
+        if content is None:
             # it's possible that we figured out the files are
             # different without reading in the local file.  if the
             # supplied version of the file is not binary, we now have
@@ -161,14 +161,15 @@ class POSIXFile(POSIXTool):
                 self.logger.error("POSIX: Failed to read %s: %s" %
                                   (entry.get("name"), sys.exc_info()[1]))
                 return False
-        is_binary &= self._is_string(content, self.setup['encoding'])
+        if not is_binary:
+            is_binary |= not self._is_string(content, self.setup['encoding'])
         if is_binary:
             # don't compute diffs if the file is binary
             prompt.append('Binary file, no printable diff')
             attrs['current_bfile'] = binascii.b2a_base64(content)
         else:
             if interactive:
-                diff = self._diff(content, tempdata,
+                diff = self._diff(content, entry.text,
                                   difflib.unified_diff,
                                   filename=entry.get("name"))
                 if diff:
@@ -181,17 +182,17 @@ class POSIXFile(POSIXTool):
                     prompt.append("Diff took too long to compute, no "
                                   "printable diff")
             if not sensitive:
-                diff = self._diff(content, tempdata, difflib.ndiff,
+                diff = self._diff(content, entry.text, difflib.ndiff,
                                   filename=entry.get("name"))
                 if diff:
-                    ndiff = binascii.b2a_base64("\n".join(diff))
-                    attrs["current_bdiff"] = ndiff
+                    attrs["current_bdiff"] = \
+                        binascii.b2a_base64("\n".join(diff))
                 else:
                     attrs['current_bfile'] = binascii.b2a_base64(content)
         if interactive:
             entry.set("qtext", "\n".join(prompt))
         if not sensitive:
-            for attr, val in attrs:
+            for attr, val in attrs.items():
                 entry.set(attr, val)
 
     def _diff(self, content1, content2, difffunc, filename=None):
