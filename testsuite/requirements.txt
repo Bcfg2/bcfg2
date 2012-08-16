@@ -4,3 +4,4 @@ genshi
 cheetah
 sphinx
 mock
+django
