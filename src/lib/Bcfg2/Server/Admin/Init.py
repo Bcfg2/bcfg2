@@ -310,9 +310,10 @@ class Init(Bcfg2.Server.Admin.Mode):
         """Initialize each plugin-specific portion of the repository."""
         for plugin in self.plugins:
             if plugin == 'Metadata':
-                Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(self.repopath,
-                                                                 groups_xml=groups % self.os_sel,
-                                                                 clients_xml=clients)
+                Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(
+                    self.repopath,
+                    groups_xml=groups % self.os_sel,
+                    clients_xml=clients % socket.getfqdn())
             else:
                 try:
                     module = __import__("Bcfg2.Server.Plugins.%s" % plugin, '',
