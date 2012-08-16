@@ -489,7 +489,8 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             entry.set('qtext', "\n".join([entry.get('qtext', '')] + errors))
         if path == entry.get("name"):
             for attr, val in attrib.items():
-                entry.set(attr, val)
+                if val is not None:
+                    entry.set(attr, str(val))
 
         aclVerifies = self._verify_acls(entry, path=path)
         return aclVerifies and len(errors) == 0

@@ -623,6 +623,14 @@ class TestPOSIXTool(unittest.TestCase):
 
         ptool = get_posixtool_object()
 
+        def reset():
+            mock_gather_data.reset_mock()
+            mock_norm_uid.reset_mock()
+            mock_norm_gid.reset_mock()
+            return copy.deepcopy(orig_entry)
+
+
+        # test nonexistent file
         mock_gather_data.return_value = (False, None, None, None, None, None)
         self.assertFalse(ptool._verify_metadata(entry))
         self.assertEqual(entry.get("current_exists", "").lower(), "false")
@@ -639,11 +647,8 @@ class TestPOSIXTool(unittest.TestCase):
         for attr, idx, val in expected:
             gather_data_rv[idx] = val
 
-        entry = copy.deepcopy(orig_entry)
-        mock_gather_data.reset_mock()
+        entry = reset()
         mock_gather_data.return_value = tuple(gather_data_rv)
-        mock_norm_uid.reset_mock()
-        mock_norm_gid.reset_mock()
         self.assertTrue(ptool._verify_metadata(entry))
         mock_gather_data.assert_called_with(entry.get("name"))
         mock_verify_acls.assert_called_with(entry, path=entry.get("name"))
@@ -651,12 +656,29 @@ class TestPOSIXTool(unittest.TestCase):
         for attr, idx, val in expected:
             self.assertEqual(entry.get(attr), val)
 
+        # test when secontext is None
+        entry = reset()
+        gather_data_rv[4] = None
+        sestate = Bcfg2.Client.Tools.POSIX.base.has_selinux
+        Bcfg2.Client.Tools.POSIX.base.has_selinux = False
+        mock_gather_data.return_value = tuple(gather_data_rv)
+        self.assertTrue(ptool._verify_metadata(entry))
+        mock_gather_data.assert_called_with(entry.get("name"))
+        mock_verify_acls.assert_called_with(entry, path=entry.get("name"))
+        self.assertEqual(entry.get("current_exists", 'true'), 'true')
+        for attr, idx, val in expected:
+            if attr != 'current_secontext':
+                self.assertEqual(entry.get(attr), val)
+        Bcfg2.Client.Tools.POSIX.base.has_selinux = sestate
+
+        gather_data_rv = [MagicMock(), None, None, None, None, []]
+        for attr, idx, val in expected:
+            gather_data_rv[idx] = val
+        mock_gather_data.return_value = tuple(gather_data_rv)
+
         mtime = 1344430414
-        entry = copy.deepcopy(orig_entry)
+        entry = reset()
         entry.set("mtime", str(mtime))
-        mock_gather_data.reset_mock()
-        mock_norm_uid.reset_mock()
-        mock_norm_gid.reset_mock()
         stat_rv = MagicMock()
         stat_rv.__getitem__.return_value = mtime
         gather_data_rv[0] = stat_rv
@@ -678,11 +700,8 @@ class TestPOSIXTool(unittest.TestCase):
             failures.append(('current_secontext', 4, 'root_t'))
         
         for fail_attr, fail_idx, fail_val in failures:
-            entry = copy.deepcopy(orig_entry)
+            entry = reset()
             entry.set("mtime", str(mtime))
-            mock_gather_data.reset_mock()
-            mock_norm_uid.reset_mock()
-            mock_norm_gid.reset_mock()
             gather_data_rv = [stat_rv, None, None, None, None, []]
             for attr, idx, val in expected:
                 gather_data_rv[idx] = val
@@ -700,11 +719,8 @@ class TestPOSIXTool(unittest.TestCase):
 
         # failure mode for mtime
         fail_mtime = 1344431162
-        entry = copy.deepcopy(orig_entry)
+        entry = reset()
         entry.set("mtime", str(mtime))
-        mock_gather_data.reset_mock()
-        mock_norm_uid.reset_mock()
-        mock_norm_gid.reset_mock()
         fail_stat_rv = MagicMock()
         fail_stat_rv.__getitem__.return_value = fail_mtime
         gather_data_rv = [fail_stat_rv, None, None, None, None, []]
@@ -721,12 +737,9 @@ class TestPOSIXTool(unittest.TestCase):
         
         if has_selinux:
             # test success and failure for __default__ secontext
-            entry = copy.deepcopy(orig_entry)
+            entry = reset()
             entry.set("mtime", str(mtime))
             entry.set("secontext", "__default__")
-            mock_gather_data.reset_mock()
-            mock_norm_uid.reset_mock()
-            mock_norm_gid.reset_mock()
             with patch("selinux.matchpathcon") as mock_matchpathcon:
                 context1 = "system_u:object_r:etc_t:s0"
                 context2 = "system_u:object_r:root_t:s0"
@@ -746,12 +759,9 @@ class TestPOSIXTool(unittest.TestCase):
                     self.assertEqual(entry.get(attr), val)
                 self.assertEqual(entry.get("current_mtime"), str(mtime))
 
-                entry = copy.deepcopy(orig_entry)
+                entry = reset()
                 entry.set("mtime", str(mtime))
                 entry.set("secontext", "__default__")
-                mock_gather_data.reset_mock()
-                mock_norm_uid.reset_mock()
-                mock_norm_gid.reset_mock()
                 mock_matchpathcon.return_value = [1 + len(context2),
                                                   context2]
                 self.assertFalse(ptool._verify_metadata(entry))
