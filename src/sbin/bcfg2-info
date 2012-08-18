@@ -646,6 +646,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
         if not have_profile:
             print("Profiling functionality not available.")
             return
+        if len(arg) == 0:
+            print("Usage: profile <command> <args>")
+            return
         tracefname = tempfile.mktemp()
         p = profile.Profile()
         p.runcall(self.onecmd, arg)
