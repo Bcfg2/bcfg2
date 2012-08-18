@@ -11,6 +11,7 @@ from Bcfg2.Bcfg2Py3k import StringIO
 
 log = logging.getLogger('bcfg2-admin')
 
+
 def mode_import(modename):
     """Load Bcfg2.Server.Admin.<mode>."""
     modname = modename.capitalize()
@@ -18,9 +19,11 @@ def mode_import(modename):
                              (modname)).Server.Admin, modname)
     return getattr(mod, modname)
 
+
 def get_modes():
     """Get all available modes, except for the base mode."""
     return [x.lower() for x in Bcfg2.Server.Admin.__all__ if x != 'mode']
+
 
 def create_description():
     """Create the description string from the list of modes."""
@@ -35,13 +38,15 @@ def create_description():
             pass
     return description.getvalue()
 
+
 def main():
     optinfo = dict()
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
     # override default help message to include description of all modes
-    setup.hm = "%s\n%s" % (setup.buildHelpMessage(), create_description())
+    setup.hm = "Usage:\n\n%s\n%s" % (setup.buildHelpMessage(),
+                                     create_description())
     setup.parse(sys.argv[1:])
 
     if setup['debug']:
@@ -80,7 +85,7 @@ def main():
         if hasattr(mode, 'bcore'):
             mode.bcore.shutdown()
     else:
-        log.error("Unknown mode %s" % setup['args'][0])
+        log.error("Error: Unknown mode '%s'\n" % setup['args'][0])
         print(create_description())
         raise SystemExit(1)
 
