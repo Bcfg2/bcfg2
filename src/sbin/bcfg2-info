@@ -502,22 +502,18 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
 
     def do_groups(self, _):
         """Print out group info."""
-        data = [("Groups", "Profile", "Category", "Contains")]
+        # FIXME: Contains doesn't work. Not sure what it was used for
+        #data = [("Groups", "Profile", "Category", "Contains")]
+        data = [("Groups", "Profile", "Category")]
         grouplist = list(self.metadata.groups.keys())
         grouplist.sort()
         for group in grouplist:
-            if group in self.metadata.profiles:
+            if self.metadata.groups[group].is_profile:
                 prof = 'yes'
             else:
                 prof = 'no'
-            if group in self.metadata.categories:
-                cat = self.metadata.categories[group]
-            else:
-                cat = ''
-            gdata = [grp for grp in self.metadata.groups[group][1]]
-            if group in gdata:
-                gdata.remove(group)
-            data.append((group, prof, cat, ','.join(gdata)))
+            cat = self.metadata.groups[group].category
+            data.append((group, prof, cat))
         printTabular(data)
 
     def do_showclient(self, args):
