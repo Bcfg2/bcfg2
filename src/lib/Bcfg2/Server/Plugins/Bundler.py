@@ -1,6 +1,7 @@
 """This provides bundle clauses with translation functionality."""
 
 import copy
+import logging
 import lxml.etree
 import os
 import os.path
@@ -34,10 +35,11 @@ if have_genshi:
                                                                specific,
                                                                encoding)
             Bcfg2.Server.Plugin.StructFile.__init__(self, name)
+            self.logger = logging.getLogger(name)
 
         def get_xml_value(self, metadata):
             if not hasattr(self, 'template'):
-                logger.error("No parsed template information for %s" %
+                self.logger.error("No parsed template information for %s" %
                              self.name)
                 raise Bcfg2.Server.Plugin.PluginExecutionError
             try:
@@ -53,14 +55,14 @@ if have_genshi:
                 return bundle
             except LookupError:
                 lerror = sys.exc_info()[1]
-                logger.error('Genshi lookup error: %s' % lerror)
+                self.logger.error('Genshi lookup error: %s' % lerror)
             except genshi.template.TemplateError:
                 terror = sys.exc_info()[1]
-                logger.error('Genshi template error: %s' % terror)
+                self.logger.error('Genshi template error: %s' % terror)
                 raise
             except genshi.input.ParseError:
                 perror = sys.exc_info()[1]
-                logger.error('Genshi parse error: %s' % perror)
+                self.logger.error('Genshi parse error: %s' % perror)
             raise
 
         def Match(self, metadata, xdata):
@@ -68,7 +70,7 @@ if have_genshi:
             rv = []
             for child in xdata.getchildren():
                 rv.extend(self._match(child, metadata))
-            logger.debug("File %s got %d match(es)" % (self.name, len(rv)))
+            self.logger.debug("File %s got %d match(es)" % (self.name, len(rv)))
             return rv
 
 
