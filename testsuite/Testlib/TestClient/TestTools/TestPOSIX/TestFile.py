@@ -41,7 +41,7 @@ class TestPOSIXFile(TestPOSIXTool):
                                              'utf_8'))
         self.assertFalse(ptool._is_string("foo" + chr(128) + "bar",
                                           'ascii'))
-        ustr = '\xef\xa3\x91 + \xef\xa3\x92'
+        ustr = 'é'
         self.assertTrue(ptool._is_string(ustr, 'utf_8'))
         self.assertFalse(ptool._is_string(ustr, 'ascii'))
 
@@ -63,7 +63,7 @@ class TestPOSIXFile(TestPOSIXTool):
         entry.text = "test"
         self.assertEqual(ptool._get_data(entry), ("test", False))
 
-        ustr = u'\uf8d1 + \uf8d2'
+        ustr = u'é'
         entry = copy.deepcopy(orig_entry)
         entry.text = ustr
         self.assertEqual(ptool._get_data(entry), (ustr, False))
@@ -72,8 +72,7 @@ class TestPOSIXFile(TestPOSIXTool):
         ptool = self.get_obj(posix=get_posix_object(setup=setup))
         entry = copy.deepcopy(orig_entry)
         entry.text = ustr
-        self.assertEqual(ptool._get_data(entry),
-                         ('\xef\xa3\x91 + \xef\xa3\x92', False))
+        self.assertEqual(ptool._get_data(entry), (ustr, False))
 
     @patch("__builtin__.open")
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.verify")
