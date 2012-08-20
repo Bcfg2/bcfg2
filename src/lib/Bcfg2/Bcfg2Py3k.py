@@ -78,6 +78,11 @@ def u_str(string, encoding=None):
             return unicode(string)
 
 try:
+    unicode = str
+except:
+    unicode = unicode
+
+try:
     input = raw_input
 except:
     input = input

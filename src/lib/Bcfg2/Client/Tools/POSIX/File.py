@@ -6,10 +6,7 @@ import difflib
 import binascii
 import tempfile
 from base import POSIXTool
-
-# py3k compatibility
-if sys.hexversion >= 0x03000000:
-    unicode = str
+from Bcfg2.Bcfg2Py3k import unicode
 
 class POSIXFile(POSIXTool):
     __req__ = ['name', 'perms', 'owner', 'group']
