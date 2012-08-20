@@ -639,8 +639,7 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         metadata.HandleEvent(evt)
         return metadata
 
-    @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml")
-    def test_handle_clients_xml_event(self, mock_load_xml):
+    def test_handle_clients_xml_event(self):
         metadata = self.get_obj()
         metadata.profiles = ["group1", "group2"]
 
@@ -648,9 +647,10 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         metadata.clients_xml.xdata = copy.deepcopy(get_clients_test_tree())
         metadata._handle_clients_xml_event(Mock())
 
-        self.assertItemsEqual(metadata.clients,
-                              dict([(c.get("name"), c.get("profile"))
-                                    for c in get_clients_test_tree().findall("//Client")]))
+        if not self.use_db:
+            self.assertItemsEqual(metadata.clients,
+                                  dict([(c.get("name"), c.get("profile"))
+                                        for c in get_clients_test_tree().findall("//Client")]))
         aliases = dict([(a.get("name"), a.getparent().get("name"))
                         for a in get_clients_test_tree().findall("//Alias")])
         self.assertItemsEqual(metadata.aliases, aliases)
@@ -698,14 +698,12 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         metadata.HandleEvent(evt)
         return metadata
 
-    @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml")
-    def test_handle_groups_xml_event(self, mock_load_xml):
+    def test_handle_groups_xml_event(self):
         metadata = self.get_obj()
         metadata.groups_xml = Mock()
         metadata.groups_xml.xdata = get_groups_test_tree()
         metadata._handle_groups_xml_event(Mock())
 
-        mock_load_xml.assert_any_call()
         self.assertTrue(metadata.states['groups.xml'])
         self.assertTrue(metadata.groups['group1'].is_public)
         self.assertTrue(metadata.groups['group2'].is_public)
@@ -1412,25 +1410,3 @@ class TestMetadata_ClientsXML(TestMetadataBase):
         return TestMetadataBase.load_clients_data(self, metadata=metadata,
                                                     xdata=xdata)
 
-    @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml")
-    @patch("Bcfg2.Server.Plugins.Metadata.Metadata._handle_clients_xml_event")
-    @patch("Bcfg2.Server.Plugins.Metadata.Metadata.list_clients")
-    def test_handle_clients_xml_event(self, mock_list_clients, mock_handle_event,
-                               mock_load_xml):
-        metadata = self.get_obj()
-        metadata.profiles = ["group1", "group2"]
-        evt = Mock()
-        evt.filename = os.path.join(datastore, "Metadata", "clients.xml")
-        evt.code2str = Mock(return_value="changed")
-        metadata.HandleEvent(evt)
-        self.assertFalse(mock_handle_event.called)
-        self.assertFalse(mock_load_xml.called)
-
-        mock_load_xml.reset_mock()
-        mock_handle_event.reset_mock()
-        mock_list_clients.reset_mock()
-        metadata._handle_file("clients.xml")
-        metadata.HandleEvent(evt)
-        mock_handle_event.assert_called_with(evt)
-        mock_list_clients.assert_any_call()
-        mock_load_xml.assert_any_call()
