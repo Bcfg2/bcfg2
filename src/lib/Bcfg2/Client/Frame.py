@@ -17,32 +17,6 @@ def cmpent(ent1, ent2):
         return cmp(ent1.get('name'), ent2.get('name'))
 
 
-def promptFilter(prompt, entries):
-    """Filter a supplied list based on user input."""
-    ret = []
-    entries.sort(cmpent)
-    for entry in entries[:]:
-        if 'qtext' in entry.attrib:
-            iprompt = entry.get('qtext')
-        else:
-            iprompt = prompt % (entry.tag, entry.get('name'))
-        try:
-            # py3k compatibility
-            try:
-                ans = raw_input(iprompt.encode(sys.stdout.encoding, 'replace'))
-            except NameError:
-                ans = input(iprompt)
-            if ans in ['y', 'Y']:
-                ret.append(entry)
-        except EOFError:
-            # python 2.4.3 on CentOS doesn't like ^C for some reason
-            break
-        except:
-            print("Error while reading input")
-            continue
-    return ret
-
-
 def matches_entry(entryspec, entry):
     # both are (tag, name)
     if entryspec == entry:
@@ -71,7 +45,7 @@ def passes_black_list(entry, blacklist):
                         for be in blacklist]
 
 
-class Frame:
+class Frame(object):
     """Frame is the container for all Tool objects and state information."""
     def __init__(self, config, setup, times, drivers, dryrun):
         self.config = config
@@ -124,13 +98,13 @@ class Frame:
         self.logger.info([tool.name for tool in self.tools])
 
         # find entries not handled by any tools
-        problems = [entry for struct in config
-                    for entry in struct
-                    if entry not in self.handled]
+        self.unhandled = [entry for struct in config
+                     for entry in struct
+                     if entry not in self.handled]
 
-        if problems:
+        if self.unhandled:
             self.logger.error("The following entries are not handled by any tool:")
-            for entry in problems:
+            for entry in self.unhandled:
                 self.logger.error("%s:%s:%s" % (entry.tag, entry.get('type'),
                                                 entry.get('name')))
 
@@ -162,6 +136,35 @@ class Frame:
             self.logger.debug("The following entries are included multiple times:")
             for entry in multi:
                 self.logger.debug(entry)
+
+    def promptFilter(self, prompt, entries):
+        """Filter a supplied list based on user input."""
+        ret = []
+        entries.sort(cmpent)
+        for entry in entries[:]:
+            if entry in self.unhandled:
+                # don't prompt for entries that can't be installed
+                continue
+            if 'qtext' in entry.attrib:
+                iprompt = entry.get('qtext')
+            else:
+                iprompt = prompt % (entry.tag, entry.get('name'))
+            try:
+                # py3k compatibility
+                try:
+                    ans = raw_input(iprompt.encode(sys.stdout.encoding,
+                                                   'replace'))
+                except NameError:
+                    ans = input(iprompt)
+                if ans in ['y', 'Y']:
+                    ret.append(entry)
+            except EOFError:
+                # python 2.4.3 on CentOS doesn't like ^C for some reason
+                break
+            except:
+                print("Error while reading input")
+                continue
+        return ret
 
     def __getattr__(self, name):
         if name in ['extra', 'handled', 'modified', '__important__']:
@@ -221,7 +224,7 @@ class Frame:
                       if t.handlesEntry(cfile) and t.canVerify(cfile)]
                 if tl:
                     if self.setup['interactive'] and not \
-                           promptFilter("Install %s: %s? (y/N):", [cfile]):
+                           self.promptFilter("Install %s: %s? (y/N):", [cfile]):
                         self.whitelist.remove(cfile)
                         continue
                     try:
@@ -321,7 +324,7 @@ class Frame:
                            (bmodified or a.get('when') == 'always'))]
             # now we process all "always actions"
             if self.setup['interactive']:
-                promptFilter(prompt, actions)
+                self.promptFilter(prompt, actions)
             self.DispatchInstallCalls(actions)
 
             # need to test to fail entries in whitelist
@@ -339,8 +342,8 @@ class Frame:
                     [self.whitelist.remove(ent) for ent in b_to_remv]
 
         if self.setup['interactive']:
-            self.whitelist = promptFilter(prompt, self.whitelist)
-            self.removal = promptFilter(rprompt, self.removal)
+            self.whitelist = self.promptFilter(prompt, self.whitelist)
+            self.removal = self.promptFilter(rprompt, self.removal)
 
         for entry in candidates:
             if entry not in self.whitelist:
