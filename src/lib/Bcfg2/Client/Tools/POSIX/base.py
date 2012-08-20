@@ -23,7 +23,7 @@ try:
                    x=posix1e.ACL_EXECUTE)
 except ImportError:
     has_acls = False
-    acl_map = dict()
+    acl_map = dict(r=4, w=2, x=1)
 
 # map between dev_type attribute and stat constants
 device_map = dict(block=stat.S_IFBLK,
