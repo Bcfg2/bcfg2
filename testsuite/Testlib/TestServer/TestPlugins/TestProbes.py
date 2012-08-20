@@ -57,17 +57,15 @@ class TestProbeData(Bcfg2TestCase):
         self.assertIsNotNone(data.xdata)
         self.assertIsNotNone(data.xdata.find("test2"))
 
+    @skipUnless(has_json, "JSON libraries not found, skipping JSON tests")
     def test_json(self):
-        if not has_json:
-            self.skipTest("JSON libraries not found, skipping JSON tests")
         jdata = json.dumps(test_data)
         data = ProbeData(jdata)
         self.assertIsNotNone(data.json)
         self.assertItemsEqual(test_data, data.json)
         
+    @skipUnless(has_yaml, "YAML libraries not found, skipping YAML tests")
     def test_yaml(self):
-        if not has_yaml:
-            self.skipTest("YAML libraries not found, skipping YAML tests")
         jdata = yaml.dump(test_data)
         data = ProbeData(jdata)
         self.assertIsNotNone(data.yaml)
@@ -252,7 +250,7 @@ text
                                                             "use_database",
                                                             default=False)
 
-    @unittest.skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(has_django, "Django not found, skipping")
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_xml", Mock())
     def test_write_data_xml(self):
@@ -261,7 +259,7 @@ text
         probes._write_data_xml.assert_called_with("test")
         self.assertFalse(probes._write_data_db.called)
 
-    @unittest.skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(has_django, "Django not found, skipping")
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_xml", Mock())
     def test_write_data_db(self):
@@ -326,7 +324,7 @@ text
             self.assertIsNotNone(jdata.get("value"))
             self.assertItemsEqual(test_data, json.loads(jdata.get("value")))
 
-    @unittest.skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(has_django, "Django not found, skipping")
     def test__write_data_db(self):
         syncdb(TestProbesDB)
         probes = self.get_probes_object(use_db=True)
@@ -378,7 +376,7 @@ text
         pgroups = ProbesGroupsModel.objects.filter(hostname=cname).all()
         self.assertEqual(len(pgroups), len(probes.cgroups[cname]))
 
-    @unittest.skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(has_django, "Django not found, skipping")
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_xml", Mock())
     def test_load_data_xml(self):
@@ -387,7 +385,7 @@ text
         probes._load_data_xml.assert_any_call()
         self.assertFalse(probes._load_data_db.called)
 
-    @unittest.skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(has_django, "Django not found, skipping")
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_xml", Mock())
     def test_load_data_db(self):
@@ -419,7 +417,7 @@ text
         self.assertItemsEqual(probes.probedata, self.get_test_probedata())
         self.assertItemsEqual(probes.cgroups, self.get_test_cgroups())
 
-    @unittest.skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(has_django, "Django not found, skipping")
     def test__load_data_db(self):
         syncdb(TestProbesDB)
         probes = self.get_probes_object(use_db=True)

@@ -370,7 +370,7 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         return get_metadata_object(core=core, watch_clients=watch_clients,
                                    use_db=self.use_db)
 
-    @unittest.skipUnless(has_django, "Django not found")
+    @skipUnless(has_django, "Django not found")
     def test__use_db(self):
         # with the way we've set up our metadata tests, it's unweildy
         # to test _use_db.  however, given the way get_obj works, if
@@ -1128,15 +1128,13 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         pass
 
 
-
 class TestMetadataBase(TestMetadata):
     """ base test object for testing Metadata with database enabled """
     __test__ = False
     use_db = True
 
+    @skipUnless(has_django, "Django not found")
     def setUp(self):
-        if not has_django:
-            self.skipTest("Django not found, skipping")
         syncdb(TestMetadataDB)
 
     def load_clients_data(self, metadata=None, xdata=None):
@@ -1238,7 +1236,12 @@ class TestMetadataBase(TestMetadata):
 class TestMetadata_NoClientsXML(TestMetadataBase):
     """ test Metadata without a clients.xml. we have to disable or
     override tests that rely on client options """
-    __test__ = True
+    # only run these tests if it's possible to skip tests or if we
+    # have django.  otherwise they'll all get run because our fake
+    # skipping decorators for python < 2.7 won't work when they
+    # decorate setUp()
+    if can_skip or has_django:
+        __test__ = True
 
     def load_groups_data(self, metadata=None, xdata=None):
         if metadata is None:
@@ -1398,7 +1401,12 @@ class TestMetadata_NoClientsXML(TestMetadataBase):
 
 class TestMetadata_ClientsXML(TestMetadataBase):
     """ test Metadata with a clients.xml.  """
-    __test__ = True
+    # only run these tests if it's possible to skip tests or if we
+    # have django.  otherwise they'll all get run because our fake
+    # skipping decorators for python < 2.7 won't work when they
+    # decorate setUp()
+    if can_skip or has_django:
+        __test__ = True
     
     def load_clients_data(self, metadata=None, xdata=None):
         if metadata is None:

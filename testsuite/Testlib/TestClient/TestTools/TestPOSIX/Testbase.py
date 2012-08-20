@@ -285,7 +285,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_set_secontext.assert_called_with(entry, path=entry.get("name"))
         mock_set_acls.assert_called_with(entry, path=entry.get("name"))
 
-    @unittest.skipUnless(has_acls, "ACLS not found, skipping")
+    @skipUnless(has_acls, "ACLS not found, skipping")
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_uid" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_gid" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._list_entry_acls" %
@@ -429,7 +429,7 @@ class TestPOSIXTool(Bcfg2TestCase):
             self.assertItemsEqual(added_acls,
                                   [(fileacl_rv, posix1e.ACL_GROUP, 100, 5)])
 
-    @unittest.skipUnless(has_selinux, "SELinux not found, skipping")
+    @skipUnless(has_selinux, "SELinux not found, skipping")
     def test_set_secontext(self):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
         ptool = self.get_obj()
@@ -577,7 +577,7 @@ class TestPOSIXTool(Bcfg2TestCase):
                 Bcfg2.Client.Tools.POSIX.base.has_acls = states
             mock_stat.assert_called_with(path)
 
-    @unittest.skipUnless(has_selinux, "SELinux not found, skipping")
+    @skipUnless(has_selinux, "SELinux not found, skipping")
     def test__gather_data_selinux(self):
         context = 'system_u:object_r:root_t:s0'
         path = '/test'
@@ -595,7 +595,7 @@ class TestPOSIXTool(Bcfg2TestCase):
 
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._list_file_acls" %
            test_obj.__name__)
-    @unittest.skipUnless(has_acls, "ACLS not found, skipping")
+    @skipUnless(has_acls, "ACLS not found, skipping")
     def test__gather_data_acls(self, mock_list_file_acls):
         acls = {("default", posix1e.ACL_USER, "testuser"): "rwx",
                 ("access", posix1e.ACL_GROUP, "testgroup"): "rx"}
@@ -779,7 +779,7 @@ class TestPOSIXTool(Bcfg2TestCase):
                     self.assertEqual(entry.get(attr), val)
                 self.assertEqual(entry.get("current_mtime"), str(mtime))
 
-    @unittest.skipUnless(has_acls, "ACLS not found, skipping")
+    @skipUnless(has_acls, "ACLS not found, skipping")
     def test_list_entry_acls(self):
         entry = lxml.etree.Element("Path", name="/test", type="file")
         lxml.etree.SubElement(entry, "ACL", scope="user", type="default",
@@ -791,7 +791,7 @@ class TestPOSIXTool(Bcfg2TestCase):
                               {("default", posix1e.ACL_USER, "user"): 7,
                                ("access", posix1e.ACL_GROUP, "group"): 5})
 
-    @unittest.skipUnless(has_acls, "ACLS not found, skipping")
+    @skipUnless(has_acls, "ACLS not found, skipping")
     @patch("pwd.getpwuid")
     @patch("grp.getgrgid")
     def test_list_file_acls(self, mock_getgrgid, mock_getpwuid):
@@ -876,7 +876,7 @@ class TestPOSIXTool(Bcfg2TestCase):
             self.assertItemsEqual(mock_ACL.call_args_list,
                                   [call(file=path), call(filedef=path)])
 
-    @unittest.skipUnless(has_acls, "ACLS not found, skipping")
+    @skipUnless(has_acls, "ACLS not found, skipping")
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._list_file_acls" %
            test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._list_entry_acls" %

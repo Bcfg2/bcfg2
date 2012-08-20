@@ -135,7 +135,7 @@ class TestPlugin(TestDebuggable):
 class TestDatabaseBacked(TestPlugin):
     test_obj = DatabaseBacked
 
-    @unittest.skipUnless(has_django, "Django not found")
+    @skipUnless(has_django, "Django not found")
     def test__use_db(self):
         core = Mock()
         core.setup.cfp.getboolean.return_value = True

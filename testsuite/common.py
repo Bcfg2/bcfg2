@@ -1,8 +1,6 @@
 import os
 import unittest
-
-__all__ = ['call', 'datastore', 'Bcfg2TestCase', 'DBModelTestCase', 'syncdb',
-           'XI', 'XI_NAMESPACE']
+from functools import wraps
 
 datastore = "/"
 
@@ -32,7 +30,84 @@ except ImportError:
         return (args, kwargs)
 
 
-class Bcfg2TestCase(unittest.TestCase):
+if hasattr(unittest.TestCase, "assertItemsEqual"):
+    TestCase = unittest.TestCase
+else:
+    def assertion(predicate, default_msg=None):
+        @wraps(predicate)
+        def inner(*args, **kwargs):
+            if 'msg' in kwargs:
+                msg = kwargs['msg']
+                del kwargs['msg']
+            else:
+                msg = default_msg % args
+            assert predicate(*args, **kwargs), msg
+        return inner
+
+    class TestCase(unittest.TestCase):
+        # versions of TestCase before python 2.7 lacked a lot of the
+        # really handy convenience methods, so we provide them -- at
+        # least the easy ones and the ones we use.
+        assertIs = assertion(lambda a, b: a is b, "%s is not %s")
+        assertIsNot = assertion(lambda a, b: a is not b, "%s is %s")
+        assertIsNone = assertion(lambda x: x is None, "%s is not None")
+        assertIsNotNone = assertion(lambda x: x is not None, "%s is None")
+        assertIn = assertion(lambda a, b: a in b, "%s is not in %s")
+        assertNotIn = assertion(lambda a, b: a not in b, "%s is in %s")
+        assertIsInstance = assertion(isinstance, "%s is not %s")
+        assertNotIsInstance = assertion(lambda a, b: not isinstance(a, b),
+                                        "%s is %s")
+        assertGreater = assertion(lambda a, b: a > b,
+                                  "%s is not greater than %s")
+        assertGreaterEqual = assertion(lambda a, b: a >= b,
+                                       "%s is not greater than or equal to %s")
+        assertLess = assertion(lambda a, b: a < b, "%s is not less than %s")
+        assertLessEqual = assertion(lambda a, b: a <= b,
+                                    "%s is not less than or equal to %s")
+        assertItemsEqual = assertion(lambda a, b: sorted(a) == sorted(b),
+                                     "Items do not match:\n%s\n%s")
+
+if hasattr(unittest, "skip"):
+    can_skip = True
+    skip = unittest.skip
+    skipIf = unittest.skipIf
+    skipUnless = unittest.skipUnless
+else:
+    # we can't actually skip tests, we just make them pass
+    can_skip = False
+
+    def skip(msg):
+        def decorator(func):
+            @wraps(func)
+            def inner(*args, **kwargs):
+                pass
+            return inner
+        return decorator
+
+    def skipIf(condition, msg):
+        def decorator(func):
+            if condition:
+                return func
+
+            @wraps(func)
+            def inner(*args, **kwargs):
+                pass
+            return inner
+        return decorator
+
+    def skipUnless(condition, msg):
+        def decorator(func):
+            if not condition:
+                return func
+
+            @wraps(func)
+            def inner(*args, **kwargs):
+                pass
+            return inner
+        return decorator
+
+
+class Bcfg2TestCase(TestCase):
     def assertXMLEqual(self, el1, el2, msg=None):
         self.assertEqual(el1.tag, el2.tag, msg=msg)
         self.assertEqual(el1.text, el2.text, msg=msg)
