@@ -10,6 +10,7 @@ import sys
 import Bcfg2.Client.Tools
 # Compatibility imports
 from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.version import __version__
 
 
 class OptionFailure(Exception):
@@ -123,7 +124,10 @@ class Option(object):
                     self.value = True
                 return
         if self.cmd and self.cmd in rawopts:
-            data = rawopts[rawopts.index(self.cmd) + 1]
+            if self.odesc:
+                data = rawopts[rawopts.index(self.cmd) + 1]
+            else:
+                data = True
             self.value = self.get_cooked_value(data)
             return
         # No command line option found
@@ -194,8 +198,17 @@ class OptionSet(dict):
         print(self.buildHelpMessage())
         raise SystemExit(code)
 
+    def versionExit(self, code=0):
+        print("%s %s on Python %s" %
+              (os.path.basename(sys.argv[0]),
+               __version__,
+               ".".join(str(v) for v in sys.version_info[0:3])))
+        raise SystemExit(code)
+
     def parse(self, argv, do_getopt=True):
         '''Parse options from command line.'''
+        if VERSION not in self.values():
+            self['__version__'] = VERSION
         if do_getopt:
             try:
                 opts, args = getopt.getopt(argv, self.buildGetopt(),
@@ -205,6 +218,8 @@ class OptionSet(dict):
                 self.helpExit(err)
             if '-h' in argv:
                 self.helpExit('', 0)
+            if '--version' in argv:
+                self.versionExit()
             self['args'] = args
         for key in list(self.keys()):
             if key == 'args':
@@ -217,6 +232,8 @@ class OptionSet(dict):
             if hasattr(option, 'value'):
                 val = option.value
                 self[key] = val
+        if "__version__" in self:
+            del self['__version__']
 
 
 def list_split(c_string):
@@ -271,6 +288,10 @@ HELP = \
     Option('Print this usage message',
            default=False,
            cmd='-h')
+VERSION = \
+    Option('Print the version and exit',
+           default=False,
+           cmd='--version', long_arg=True)
 DAEMON = \
     Option("Daemonize process, storing pid",
            default=None,
@@ -879,6 +900,7 @@ CRYPT_REMOVE = \
 CLI_COMMON_OPTIONS = dict(configfile=CFILE,
                           debug=DEBUG,
                           help=HELP,
+                          version=VERSION,
                           verbose=VERBOSE,
                           encoding=ENCODING,
                           logging=LOGGING_FILE_PATH,
