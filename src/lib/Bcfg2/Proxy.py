@@ -282,26 +282,21 @@ class XMLRPCTransport(xmlrpclib.Transport):
 
     def make_connection(self, host):
         host, self._extra_headers = self.get_host_info(host)[0:2]
-        http = SSLHTTPConnection(host,
+        return SSLHTTPConnection(host,
                                  key=self.key,
                                  cert=self.cert,
                                  ca=self.ca,
                                  scns=self.scns,
                                  timeout=self.timeout)
-        https = httplib.HTTP()
-        https._setup(http)
-        return https
 
     def request(self, host, handler, request_body, verbose=0):
         """Send request to server and return response."""
-        h = self.make_connection(host)
-
         try:
-            self.send_request(h, handler, request_body)
-            self.send_host(h, host)
-            self.send_user_agent(h)
-            self.send_content(h, request_body)
-            errcode, errmsg, headers = h.getreply()
+            conn = self.send_request(host, handler, request_body, False)
+            response = conn.getresponse()
+            errcode = response.status
+            errmsg = response.reason
+            headers = response.msg
         except (socket.error, SSL_ERROR):
             err = sys.exc_info()[1]
             raise ProxyError(xmlrpclib.ProtocolError(host + handler,
@@ -316,8 +311,17 @@ class XMLRPCTransport(xmlrpclib.Transport):
                                                      headers))
 
         self.verbose = verbose
-        msglen = int(headers.dict['content-length'])
-        return self._get_response(h.getfile(), msglen)
+        return self.parse_response(response)
+
+    if sys.hexversion < 0x03000000:
+        def send_request(self, host, handler, request_body, debug):
+            """ send_request() changed significantly in py3k."""
+            conn = self.make_connection(host)
+            xmlrpclib.Transport.send_request(self, conn, handler, request_body)
+            self.send_host(conn, host)
+            self.send_user_agent(conn)
+            self.send_content(conn, request_body)
+            return conn
 
     def _get_response(self, fd, length):
         # read response from input file/socket, and parse it
