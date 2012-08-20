@@ -92,3 +92,25 @@ try:
     from collections import MutableMapping
 except ImportError:
     from UserDict import DictMixin as MutableMapping
+
+
+# in py3k __cmp__ is no longer magical, so we define a mixin that can
+# be used to define the rich comparison operators from __cmp__
+class CmpMixin(object):
+    def __lt__(self, other):
+        return self.__cmp__(other) < 0
+    
+    def __gt__(self, other):
+        return self.__cmp__(other) > 0
+    
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+    
+    def __ne__(self, other):
+        return not self.__eq__(other)
+    
+    def __ge__(self, other):
+        return self.__gt__(other) or self.__eq__(other)
+    
+    def __le__(self, other):
+        return self.__lt__(other) or self.__eq__(other)

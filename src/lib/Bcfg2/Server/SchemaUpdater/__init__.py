@@ -7,6 +7,7 @@ import re
 import sys
 import traceback
 
+from Bcfg2.Py3k import CmpMixin
 from Bcfg2.Server.models import InternalDatabaseVersion
 from Bcfg2.Server.SchemaUpdater.Routines import UpdaterRoutineException, \
                 UpdaterRoutine
@@ -50,10 +51,12 @@ def _release_to_version(release):
     return int("%02d%02d00" % (int(m.group(1)), int(m.group(2))))
 
 
-class Updater(object):
+class Updater(CmpMixin):
     """Database updater to standardize updates"""
 
     def __init__(self, release):
+        CmpMixin.__init__(self)
+
         self._cursor = None
         self._release = release
         try:

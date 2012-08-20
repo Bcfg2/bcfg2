@@ -10,7 +10,7 @@ import threading
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Options
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.Bcfg2Py3k import ConfigParser, CmpMixin
 
 try:
     import django
@@ -992,9 +992,10 @@ class SpecificityError(Exception):
     pass
 
 
-class Specificity(object):
+class Specificity(CmpMixin):
     def __init__(self, all=False, group=False, hostname=False, prio=0,
                  delta=False):
+        CmpMixin.__init__(self)
         self.hostname = hostname
         self.all = all
         self.group = group
