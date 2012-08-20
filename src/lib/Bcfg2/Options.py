@@ -559,6 +559,12 @@ CLIENT_RETRIES = \
            cmd='-R',
            odesc='<retry count>',
            cf=('communication', 'retries'))
+CLIENT_RETRY_DELAY = \
+    Option('The time in seconds to wait between retries',
+           default='1',
+           cmd='-y',
+           odesc='<retry delay>',
+           cf=('communication', 'retry_delay'))
 CLIENT_DRYRUN = \
     Option('Do not actually change the system',
            default=False,
@@ -983,6 +989,7 @@ CLIENT_COMMON_OPTIONS = \
          user=CLIENT_USER,
          password=SERVER_PASSWORD,
          retries=CLIENT_RETRIES,
+         retry_delay=CLIENT_RETRY_DELAY,
          kevlar=CLIENT_KEVLAR,
          omit_lock_check=OMIT_LOCK_CHECK,
          decision=CLIENT_DLIST,

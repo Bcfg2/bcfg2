@@ -140,14 +140,17 @@ class Client:
                 return(1)
         else:
             # retrieve config from server
-            proxy = Bcfg2.Proxy.ComponentProxy(self.setup['server'],
-                                               self.setup['user'],
-                                               self.setup['password'],
-                                               key=self.setup['key'],
-                                               cert=self.setup['certificate'],
-                                               ca=self.setup['ca'],
-                                               allowedServerCNs=self.setup['serverCN'],
-                                               timeout=self.setup['timeout'])
+            proxy = \
+                Bcfg2.Proxy.ComponentProxy(self.setup['server'],
+                                           self.setup['user'],
+                                           self.setup['password'],
+                                           key=self.setup['key'],
+                                           cert=self.setup['certificate'],
+                                           ca=self.setup['ca'],
+                                           allowedServerCNs=self.setup['serverCN'],
+                                           timeout=self.setup['timeout'],
+                                           retries=int(self.setup['retries']),
+                                           delay=int(self.setup['retry_delay']))
 
             if self.setup['profile']:
                 try:

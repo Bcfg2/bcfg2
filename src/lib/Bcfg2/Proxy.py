@@ -59,50 +59,58 @@ class CertificateError(Exception):
         return ("Got unallowed commonName %s from server"
                 % self.commonName)
 
+_orig_Method = xmlrpclib._Method
 
 class RetryMethod(xmlrpclib._Method):
     """Method with error handling and retries built in."""
     log = logging.getLogger('xmlrpc')
-    max_retries = 4
+    max_retries = 3
+    retry_delay = 1
 
     def __call__(self, *args):
         for retry in range(self.max_retries):
+            if retry >= self.max_retries - 1:
+                final = True
+            else:
+                final = False
+            msg = None
             try:
-                return xmlrpclib._Method.__call__(self, *args)
+                return _orig_Method.__call__(self, *args)
             except xmlrpclib.ProtocolError:
                 err = sys.exc_info()[1]
-                self.log.error("Server failure: Protocol Error: %s %s" % \
-                              (err.errcode, err.errmsg))
-                raise xmlrpclib.Fault(20, "Server Failure")
+                msg = "Server failure: Protocol Error: %s %s" % \
+                    (err.errcode, err.errmsg)
             except xmlrpclib.Fault:
-                raise
+                msg = sys.exc_info()[1]
             except socket.error:
                 err = sys.exc_info()[1]
                 if hasattr(err, 'errno') and err.errno == 336265218:
-                    self.log.error("SSL Key error")
-                    break
-                if hasattr(err, 'errno') and err.errno == 185090050:
-                    self.log.error("SSL CA error")
-                    break
-                if retry == 3:
-                    self.log.error("Server failure: %s" % err)
-                    raise xmlrpclib.Fault(20, err)
+                    msg = "SSL Key error: %s" % err
+                elif hasattr(err, 'errno') and err.errno == 185090050:
+                    msg = "SSL CA error: %s" % err
+                elif final:
+                    msg = "Server failure: %s" % err
             except CertificateError:
-                ce = sys.exc_info()[1]
-                self.log.error("Got unallowed commonName %s from server" \
-                               % ce.commonName)
-                break
+                err = sys.exc_info()[1]
+                msg = "Got unallowed commonName %s from server" % err.commonName
             except KeyError:
-                self.log.error("Server disallowed connection")
-                break
+                err = sys.exc_info()[1]
+                msg = "Server disallowed connection: %s" % err
+            except ProxyError:
+                err = sys.exc_info()[1]
+                msg = err
             except:
-                self.log.error("Unknown failure", exc_info=1)
-                break
-            time.sleep(0.5)
-        raise xmlrpclib.Fault(20, "Server Failure")
+                err = sys.exc_info()[1]
+                msg = "Unknown failure: %s" % err
+            if msg:
+                if final:
+                    self.log.error(msg)
+                    raise ProxyError(msg)
+                else:
+                    self.log.info(msg)
+                    time.sleep(self.retry_delay)
 
-# sorry jon
-_Method = RetryMethod
+xmlrpclib._Method = RetryMethod
 
 
 class SSLHTTPConnection(httplib.HTTPConnection):
@@ -345,9 +353,8 @@ class XMLRPCTransport(xmlrpclib.Transport):
         return u.close()
 
 
-def ComponentProxy(url, user=None, password=None,
-                   key=None, cert=None, ca=None,
-                   allowedServerCNs=None, timeout=90):
+def ComponentProxy(url, user=None, password=None, key=None, cert=None, ca=None,
+                   allowedServerCNs=None, timeout=90, retries=3, delay=1):
 
     """Constructs proxies to components.
 
@@ -357,6 +364,8 @@ def ComponentProxy(url, user=None, password=None,
     Additional arguments are passed to the ServerProxy constructor.
 
     """
+    xmlrpclib._Method.max_retries = retries
+    xmlrpclib._Method.retry_delay = delay
 
     if user and password:
         method, path = urlparse(url)[:2]
