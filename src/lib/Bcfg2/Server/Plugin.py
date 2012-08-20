@@ -48,14 +48,11 @@ info_regex = re.compile('owner:(\s)*(?P<owner>\S+)|' +
                         'mtime:(\s)*(?P<mtime>\w+)|')
 
 def bind_info(entry, metadata, infoxml=None, default=default_file_metadata):
-    print 'default: %s' % default
     for attr, val in list(default.items()):
         entry.set(attr, val)
     if infoxml:
         mdata = dict()
-        print "calling Match on %s" % infoxml
         infoxml.pnode.Match(metadata, mdata, entry=entry)
-        print "mdata=%s" % mdata
         if 'Info' not in mdata:
             msg = "Failed to set metadata for file %s" % entry.get('name')
             logger.error(msg)
