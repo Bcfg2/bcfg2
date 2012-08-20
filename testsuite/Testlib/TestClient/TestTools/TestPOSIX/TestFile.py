@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import copy
 import difflib
@@ -209,23 +210,27 @@ class TestPOSIXFile(TestPOSIXTool):
 
     @patch("__builtin__.open")
     @patch("Bcfg2.Client.Tools.POSIX.File.%s._diff" % test_obj.__name__)
+    @patch("Bcfg2.Client.Tools.POSIX.File.%s._get_data" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.File.%s._is_string" % test_obj.__name__)
-    def test__get_diffs(self, mock_is_string, mock_diff, mock_open):
+    def test__get_diffs(self, mock_is_string, mock_get_data, mock_diff, 
+                        mock_open):
         orig_entry = lxml.etree.Element("Path", name="/test", type="file",
                                         perms='0644', owner='root',
                                         group='root')
         orig_entry.text = "test"
         ondisk = "test2"
-        setup = dict(encoding="ascii", ppath='/', max_copies=5)
+        setup = dict(encoding="utf-8", ppath='/', max_copies=5)
         ptool = self.get_obj(posix=get_posix_object(setup=setup))
 
         def reset():
             mock_is_string.reset_mock()
+            mock_get_data.reset_mock()
             mock_diff.reset_mock()
             mock_open.reset_mock()
             return copy.deepcopy(orig_entry)
         
         mock_is_string.return_value = True
+        mock_get_data.return_value = (orig_entry.text, False)
         mock_open.return_value.read.return_value = ondisk
         mock_diff.return_value = ["-test2", "+test"]
 
@@ -292,6 +297,26 @@ class TestPOSIXFile(TestPOSIXTool):
                                     filename=entry.get("name"))])
         self.assertIsNotNone(entry.get("qtext"))
         self.assertTrue(entry.get("qtext").startswith("test\n"))
+        self.assertEqual(entry.get("current_bdiff"),
+                         binascii.b2a_base64("\n".join(mock_diff.return_value)))
+        del entry.attrib['qtext']
+        del entry.attrib["current_bdiff"]
+        self.assertItemsEqual(orig_entry.attrib, entry.attrib)
+
+        # non-sensitive, interactive with unicode data
+        entry = reset()
+        entry.text = u"tëst"
+        encoded = entry.text.encode(setup['encoding'])
+        mock_get_data.return_value = (encoded, False)
+        ptool._get_diffs(entry, interactive=True)
+        mock_open.assert_called_with(entry.get("name"))
+        mock_open.return_value.read.assert_any_call()
+        self.assertItemsEqual(mock_diff.call_args_list,
+                              [call(ondisk, encoded, difflib.unified_diff,
+                                    filename=entry.get("name")),
+                               call(ondisk, encoded, difflib.ndiff,
+                                    filename=entry.get("name"))])
+        self.assertIsNotNone(entry.get("qtext"))
         self.assertEqual(entry.get("current_bdiff"),
                          binascii.b2a_base64("\n".join(mock_diff.return_value)))
         del entry.attrib['qtext']

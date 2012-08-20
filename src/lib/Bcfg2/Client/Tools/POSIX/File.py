@@ -169,7 +169,7 @@ class POSIXFile(POSIXTool):
             attrs['current_bfile'] = binascii.b2a_base64(content)
         else:
             if interactive:
-                diff = self._diff(content, entry.text,
+                diff = self._diff(content, self._get_data(entry)[0],
                                   difflib.unified_diff,
                                   filename=entry.get("name"))
                 if diff:
@@ -182,8 +182,8 @@ class POSIXFile(POSIXTool):
                     prompt.append("Diff took too long to compute, no "
                                   "printable diff")
             if not sensitive:
-                diff = self._diff(content, entry.text, difflib.ndiff,
-                                  filename=entry.get("name"))
+                diff = self._diff(content, self._get_data(entry)[0],
+                                  difflib.ndiff, filename=entry.get("name"))
                 if diff:
                     attrs["current_bdiff"] = \
                         binascii.b2a_base64("\n".join(diff))
