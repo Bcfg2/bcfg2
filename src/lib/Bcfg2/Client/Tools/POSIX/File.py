@@ -173,7 +173,7 @@ class POSIXFile(POSIXTool):
                                   difflib.unified_diff,
                                   filename=entry.get("name"))
                 if diff:
-                    udiff = '\n'.join(diff)
+                    udiff = ''.join(diff)
                     try:
                         prompt.append(udiff.decode(self.setup['encoding']))
                     except UnicodeEncodeError:
