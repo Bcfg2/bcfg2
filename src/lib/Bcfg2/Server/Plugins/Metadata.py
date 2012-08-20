@@ -683,7 +683,14 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
                     def in_cat(client, groups, categories):
                         if category in categories:
-                            self.logger.warning("%s: Group %s suppressed by "
+                            # this is debug, not warning, because it
+                            # gets called a _lot_ -- every time a
+                            # group in a category is processed for
+                            # every creation of client metadata.  this
+                            # message is produced in two other places,
+                            # so the user should get warned by one of
+                            # those.
+                            self.logger.debug("%s: Group %s suppressed by "
                                                 "category %s; %s already a "
                                                 "member of %s" %
                                                 (self.name, gname, category,
