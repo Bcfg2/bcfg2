@@ -1,15 +1,16 @@
 """This module provides the baseclass for Bcfg2 Server Plugins."""
 
-import copy
-import logging
-import lxml.etree
 import os
 import re
 import sys
+import copy
+import logging
+import operator
 import threading
+import lxml.etree
 import Bcfg2.Server
-from Bcfg2.Bcfg2Py3k import ConfigParser
 import Bcfg2.Options
+from Bcfg2.Bcfg2Py3k import ConfigParser
 
 try:
     import django
@@ -47,11 +48,14 @@ info_regex = re.compile('owner:(\s)*(?P<owner>\S+)|' +
                         'mtime:(\s)*(?P<mtime>\w+)|')
 
 def bind_info(entry, metadata, infoxml=None, default=default_file_metadata):
+    print 'default: %s' % default
     for attr, val in list(default.items()):
         entry.set(attr, val)
     if infoxml:
         mdata = dict()
+        print "calling Match on %s" % infoxml
         infoxml.pnode.Match(metadata, mdata, entry=entry)
+        print "mdata=%s" % mdata
         if 'Info' not in mdata:
             msg = "Failed to set metadata for file %s" % entry.get('name')
             logger.error(msg)
@@ -1000,15 +1004,6 @@ class Specificity(object):
         self.prio = prio
         self.delta = delta
 
-    def __lt__(self, other):
-        return self.__cmp__(other) < 0
-
-    def __gt__(self, other):
-        return self.__cmp__(other) > 0
-
-    def __eq__(self, other):
-        return self.__cmp__(other) == 0
-
     def matches(self, metadata):
         return self.all or \
                self.hostname == metadata.hostname or \
@@ -1091,7 +1086,7 @@ class EntrySet(Debuggable):
 
     def get_matching(self, metadata):
         return [item for item in list(self.entries.values())
-                if item.specific.matches(metadata)]
+                if item.__specific__ and item.specific.matches(metadata)]
 
     def best_matching(self, metadata, matching=None):
         """ Return the appropriate interpreted template from the set of
@@ -1100,7 +1095,7 @@ class EntrySet(Debuggable):
             matching = self.get_matching(metadata)
 
         if matching:
-            matching.sort()
+            matching.sort(key=operator.attrgetter("specific"))
             return matching[0]
         else:
             raise PluginExecutionError("No matching entries available for %s "

@@ -207,6 +207,11 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         logger.error("Could not process event %s for %s; ignoring" %
                      (action, event.filename))
 
+    def get_matching(self, metadata):
+        return [item for item in list(self.entries.values())
+                if (isinstance(item, CfgGenerator) and
+                    item.specific.matches(metadata))]
+
     def entry_init(self, event, proc):
         if proc.__specific__:
             Bcfg2.Server.Plugin.EntrySet.entry_init(

@@ -1694,6 +1694,8 @@ class TestEntrySet(TestDebuggable):
         items[3].specific.matches.return_value = False
         items[4].specific.matches.return_value = True
         items[5].specific.matches.return_value = True
+        for i in items.values():
+            i.__specific__ = True
         metadata = Mock()
         eset = self.get_obj()
         eset.entries = items
@@ -1714,14 +1716,10 @@ class TestEntrySet(TestDebuggable):
             for m in matching:
                 m.reset_mock()
 
-        def specific(all=False, group=False, prio=None, host=False):
-            spec = MagicMock()
-            spec.all = all
-            spec.group = group
-            spec.prio = prio
-            spec.host = host
-            if prio:
-                spec.__cmp__ = lambda s, o: cmp(s.prio, o.prio)
+        def specific(all=False, group=False, prio=None, hostname=False):
+            spec = Mock()
+            spec.specific = Specificity(all=all, group=group, prio=prio,
+                                        hostname=hostname)
             return spec
 
         self.assertRaises(PluginExecutionError,
@@ -1735,34 +1733,34 @@ class TestEntrySet(TestDebuggable):
 
         # test with a single file for all
         reset()
-        matching.insert(0, specific(all=True))
+        expected = specific(all=True)
+        matching.append(expected)
         mock_get_matching.return_value = matching
-        self.assertEqual(eset.best_matching(metadata),
-                         matching[0])
+        self.assertEqual(eset.best_matching(metadata), expected)
         mock_get_matching.assert_called_with(metadata)
 
         # test with a single group-specific file
         reset()
-        matching.insert(0, specific(group=True, prio=10))
+        expected = specific(group=True, prio=10)
+        matching.append(expected)
         mock_get_matching.return_value = matching
-        self.assertEqual(eset.best_matching(metadata),
-                         matching[0])
+        self.assertEqual(eset.best_matching(metadata), expected)
         mock_get_matching.assert_called_with(metadata)
 
         # test with multiple group-specific files
         reset()
-        matching.insert(0, specific(group=True, prio=20))
+        expected = specific(group=True, prio=20)
+        matching.append(expected)
         mock_get_matching.return_value = matching
-        self.assertEqual(eset.best_matching(metadata),
-                         matching[0])
+        self.assertEqual(eset.best_matching(metadata), expected)
         mock_get_matching.assert_called_with(metadata)
 
         # test with host-specific file
         reset()
-        matching.insert(0, specific(host=True))
+        expected = specific(hostname=True)
+        matching.append(expected)
         mock_get_matching.return_value = matching
-        self.assertEqual(eset.best_matching(metadata),
-                         matching[0])
+        self.assertEqual(eset.best_matching(metadata), expected)
         mock_get_matching.assert_called_with(metadata)
 
     @patch("Bcfg2.Server.Plugin.%s.entry_init" % test_obj.__name__)
