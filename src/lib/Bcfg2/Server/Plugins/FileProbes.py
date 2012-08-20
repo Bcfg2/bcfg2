@@ -115,7 +115,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
         create = False
         try:
             cfg.entries[filename].bind_entry(entry, metadata)
-        except KeyError, Bcfg2.Server.Plugin.PluginExecutionError:
+        except (KeyError, Bcfg2.Server.Plugin.PluginExecutionError):
             create = True
 
         # get current entry data
