@@ -142,7 +142,7 @@ TEMPLATE_DIRS = (
 )
 
 # TODO - sanitize this
-if django.VERSION[0] == 1 and django.VERSION[1] < 2:
+if has_django and django.VERSION[0] == 1 and django.VERSION[1] < 2:
     TEMPLATE_CONTEXT_PROCESSORS = (
         'django.core.context_processors.auth',
         'django.core.context_processors.debug',
