@@ -190,7 +190,7 @@ class Client:
             times['probe_download'] = time.time()
 
             try:
-                probes = Bcfg2.Client.XML.XML(probe_data)
+                probes = Bcfg2.Client.XML.XML(str(probe_data))
             except Bcfg2.Client.XML.ParseError:
                 syntax_error = sys.exc_info()[1]
                 self.fatal_error(
@@ -211,8 +211,7 @@ class Client:
                 try:
                     # upload probe responses
                     proxy.RecvProbeData(Bcfg2.Client.XML.tostring(probedata,
-                                                                  encoding='UTF-8',
-                                                                  xml_declaration=True))
+                                                                  encoding='unicode'))
                 except Bcfg2.Proxy.ProxyError:
                     err = sys.exc_info()[1]
                     self.logger.error("Failed to upload probe data: %s" % err)
@@ -311,8 +310,7 @@ class Client:
 
             try:
                 proxy.RecvStats(Bcfg2.Client.XML.tostring(feedback,
-                                                          encoding='UTF-8',
-                                                          xml_declaration=True))
+                                                          encoding='unicode'))
             except Bcfg2.Proxy.ProxyError:
                 err = sys.exc_info()[1]
                 self.logger.error("Failed to upload configuration statistics: "

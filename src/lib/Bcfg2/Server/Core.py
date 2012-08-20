@@ -554,7 +554,7 @@ class BaseCore(object):
                 for probe in plugin.GetProbes(metadata):
                     resp.append(probe)
             return lxml.etree.tostring(resp, encoding='UTF-8',
-                                       xml_declaration=True)
+                                       xml_declaration=False)
         except:
             err = sys.exc_info()[1]
             self.critical_error("Error determining probes for %s: %s" %
@@ -609,7 +609,7 @@ class BaseCore(object):
         try:
             config = self.BuildConfiguration(client)
             return lxml.etree.tostring(config, encoding='UTF-8',
-                                       xml_declaration=True)
+                                       xml_declaration=False)
         except Bcfg2.Server.Plugin.MetadataConsistencyError:
             self.critical_error("Metadata consistency failure for %s" % client)
 
