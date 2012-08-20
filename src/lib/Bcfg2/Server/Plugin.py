@@ -1086,7 +1086,7 @@ class EntrySet(Debuggable):
 
     def get_matching(self, metadata):
         return [item for item in list(self.entries.values())
-                if item.__specific__ and item.specific.matches(metadata)]
+                if item.specific.matches(metadata)]
 
     def best_matching(self, metadata, matching=None):
         """ Return the appropriate interpreted template from the set of

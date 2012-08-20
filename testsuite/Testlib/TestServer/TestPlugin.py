@@ -1694,8 +1694,6 @@ class TestEntrySet(TestDebuggable):
         items[3].specific.matches.return_value = False
         items[4].specific.matches.return_value = True
         items[5].specific.matches.return_value = True
-        for i in items.values():
-            i.__specific__ = True
         metadata = Mock()
         eset = self.get_obj()
         eset.entries = items
