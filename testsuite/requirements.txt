@@ -4,4 +4,4 @@ genshi
 cheetah
 sphinx
 mock
-django
+django<1.4
