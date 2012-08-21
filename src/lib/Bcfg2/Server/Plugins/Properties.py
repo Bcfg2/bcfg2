@@ -43,6 +43,7 @@ class PropertyFile(Bcfg2.Server.Plugin.StructFile):
 
         try:
             open(self.name, "wb").write(lxml.etree.tostring(self.xdata,
+                                                            encoding='unicode',
                                                             pretty_print=True))
             return True
         except IOError:

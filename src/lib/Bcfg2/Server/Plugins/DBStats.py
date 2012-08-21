@@ -1,4 +1,3 @@
-import binascii
 import difflib
 import logging
 import lxml.etree
@@ -14,6 +13,8 @@ except ImportError:
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Reports.importscript import load_stat
 from Bcfg2.Server.Reports.reports.models import Client
+from Bcfg2.Bcfg2Py3k import b64decode
+
 # for debugging output only
 logger = logging.getLogger('Bcfg2.Plugins.DBStats')
 
@@ -88,7 +89,7 @@ class DBStats(Bcfg2.Server.Plugin.ThreadedStatistics,
             ret.append('\n'.join(entry.reason.unpruned))
         elif entry.reason.current_diff != '':
             if entry.reason.is_binary:
-                ret.append(binascii.a2b_base64(entry.reason.current_diff))
+                ret.append(b64decode(entry.reason.current_diff))
             else:
                 ret.append('\n'.join(difflib.restore(\
                     entry.reason.current_diff.split('\n'), 1)))

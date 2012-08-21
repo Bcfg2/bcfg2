@@ -82,6 +82,11 @@ try:
 except:
     unicode = unicode
 
+# base64 compat
+from base64 import b64encode as _b64encode, b64decode as _b64decode
+b64encode = lambda s: _b64encode(s.encode('ascii')).decode('ascii')
+b64decode = lambda s: _b64decode(s.encode('ascii')).decode('ascii')
+
 try:
     input = raw_input
 except:

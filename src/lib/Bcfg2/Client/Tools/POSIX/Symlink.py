@@ -1,6 +1,6 @@
 import os
 import sys
-from base import POSIXTool
+from .base import POSIXTool
 
 class POSIXSymlink(POSIXTool):
     __req__ = ['name', 'to']

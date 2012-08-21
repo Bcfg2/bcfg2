@@ -1,13 +1,11 @@
 '''This module implements a templating generator based on Cheetah'''
 
-import binascii
 import logging
 import sys
 import traceback
 import Bcfg2.Server.Plugin
-# py3k compatibility
-if sys.hexversion >= 0x03000000:
-    unicode = str
+
+from Bcfg2.Bcfg2Py3k import unicode, b64encode
 
 logger = logging.getLogger('Bcfg2.Plugins.TCheetah')
 
@@ -60,7 +58,7 @@ class TemplateFile:
             else:
                 if entry.get('encoding') == 'base64':
                     # take care of case where file needs base64 encoding
-                    entry.text = binascii.b2a_base64(self.template)
+                    entry.text = b64encode(self.template)
                 else:
                     entry.text = unicode(str(self.template), self.encoding)
         except:

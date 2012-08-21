@@ -1,16 +1,14 @@
 '''This file manages the statistics collected by the BCFG2 Server'''
 
-import binascii
 import copy
 import difflib
 import logging
-from lxml.etree import XML, SubElement, Element, XMLSyntaxError
 import lxml.etree
 import os
 import sys
 from time import asctime, localtime, time, strptime, mktime
 import threading
-
+from Bcfg2.Bcfg2Py3k import b64decode
 import Bcfg2.Server.Plugin
 
 
@@ -20,7 +18,7 @@ class StatisticsStore(object):
 
     def __init__(self, filename):
         self.filename = filename
-        self.element = Element('Dummy')
+        self.element = lxml.etree.Element('Dummy')
         self.dirty = 0
         self.lastwrite = 0
         self.logger = logging.getLogger('Bcfg2.Server.Statistics')
@@ -36,7 +34,8 @@ class StatisticsStore(object):
                 ioerr = sys.exc_info()[1]
                 self.logger.error("Failed to open %s for writing: %s" % (self.filename + '.new', ioerr))
             else:
-                fout.write(lxml.etree.tostring(self.element, encoding='UTF-8', xml_declaration=True))
+                fout.write(lxml.etree.tostring(self.element,
+                                               encoding='unicode'))
                 fout.close()
                 os.rename(self.filename + '.new', self.filename)
                 self.dirty = 0
@@ -48,11 +47,11 @@ class StatisticsStore(object):
             fin = open(self.filename, 'r')
             data = fin.read()
             fin.close()
-            self.element = XML(data)
+            self.element = lxml.etree.XML(data)
             self.dirty = 0
-        except (IOError, XMLSyntaxError):
+        except (IOError, lxml.etree.XMLSyntaxError):
             self.logger.error("Creating new statistics file %s"%(self.filename))
-            self.element = Element('ConfigStatistics')
+            self.element = lxml.etree.Element('ConfigStatistics')
             self.WriteBack()
             self.dirty = 0
 
@@ -78,7 +77,7 @@ class StatisticsStore(object):
         nummatch = len(nodes)
         if nummatch == 0:
             # Create an entry for this node
-            node = SubElement(self.element, 'Node', name=client)
+            node = lxml.etree.SubElement(self.element, 'Node', name=client)
         elif nummatch == 1 and not node_dirty:
             # Delete old instance
             node = nodes[0]
@@ -150,9 +149,9 @@ class Statistics(Bcfg2.Server.Plugin.ThreadedStatistics,
         if cfentry.get('sensitive') in ['true', 'True']:
             raise Bcfg2.Server.Plugin.PluginExecutionError
         elif 'current_bfile' in cfentry.attrib:
-            contents = binascii.a2b_base64(cfentry.get('current_bfile'))
+            contents = b64decode(cfentry.get('current_bfile'))
         elif 'current_bdiff' in cfentry.attrib:
-            diff = binascii.a2b_base64(cfentry.get('current_bdiff'))
+            diff = b64decode(cfentry.get('current_bdiff'))
             contents = '\n'.join(difflib.restore(diff.split('\n'), 1))
         else:
             contents = None

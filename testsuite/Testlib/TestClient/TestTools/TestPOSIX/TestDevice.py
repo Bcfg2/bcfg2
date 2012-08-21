@@ -4,8 +4,8 @@ import unittest
 import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.Device import *
-from Test__init import get_posix_object
-from Testbase import TestPOSIXTool
+from .Test__init import get_posix_object
+from .Testbase import TestPOSIXTool
 from .....common import *
 
 class TestPOSIXDevice(TestPOSIXTool):
@@ -97,8 +97,8 @@ class TestPOSIXDevice(TestPOSIXTool):
         self.assertTrue(ptool.install(entry))
         mock_exists.assert_called_with(entry, remove=True)
         mock_makedev.assert_called_with(0, 10)
-        mock_mknod.assert_called_with(entry.get("name"),
-                                      device_map[entry.get("dev_type")] | 0644,
+        mock_mknod.assert_called_with(entry.get("name"),               # 0o644
+                                      device_map[entry.get("dev_type")] | 420,
                                       mock_makedev.return_value)
         mock_install.assert_called_with(ptool, entry)
 
@@ -127,6 +127,6 @@ class TestPOSIXDevice(TestPOSIXTool):
         
         self.assertTrue(ptool.install(entry))
         mock_exists.assert_called_with(entry, remove=True)
-        mock_mknod.assert_called_with(entry.get("name"),
-                                      device_map[entry.get("dev_type")] | 0644)
+        mock_mknod.assert_called_with(entry.get("name"),               # 0o644
+                                      device_map[entry.get("dev_type")] | 420)
         mock_install.assert_called_with(ptool, entry)

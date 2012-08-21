@@ -6,7 +6,7 @@ import lxml.etree
 from mock import Mock, MagicMock, patch
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Tools.POSIX.base import *
-from Test__init import get_posix_object
+from .Test__init import get_posix_object
 from .....common import *
 
 try:
@@ -240,13 +240,13 @@ class TestPOSIXTool(Bcfg2TestCase):
                 raise KeyError
         os.chown.side_effect = chown_rv
         entry.set("type", "device")
-        entry.set("dev_type", device_map.keys()[0])
+        entry.set("dev_type", list(device_map.keys())[0])
         self.assertFalse(ptool._set_perms(entry))
         mock_norm_uid.assert_called_with(entry)
         mock_norm_gid.assert_called_with(entry)
         mock_chown.assert_called_with(entry.get("name"), 0, 0)
         mock_chmod.assert_called_with(entry.get("name"),
-                                      int(entry.get("perms"), 8) | device_map.values()[0])
+                                      int(entry.get("perms"), 8) | list(device_map.values())[0])
         mock_utime.assert_called_with(entry.get("name"), (mtime, mtime))
         mock_set_secontext.assert_called_with(entry, path=entry.get("name"))
         mock_set_acls.assert_called_with(entry, path=entry.get("name"))

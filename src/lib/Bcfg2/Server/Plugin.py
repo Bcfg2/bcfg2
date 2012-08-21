@@ -265,7 +265,8 @@ class ThreadedStatistics(Statistics, threading.Thread):
                 (metadata, data) = self.work_queue.get_nowait()
                 try:
                     pending_data.append((metadata.hostname,
-                                         lxml.etree.tostring(data)))
+                                         lxml.etree.tostring(data,
+                                                             encoding='unicode')))
                 except:
                     err = sys.exc_info()[1]
                     self.logger.warning("Dropping interaction for %s: %s" %
@@ -560,7 +561,7 @@ class DirectoryBacked(object):
                                event.filename).lstrip('/')
 
         if action == 'deleted':
-            for key in self.entries.keys():
+            for key in list(self.entries.keys()):
                 if key.startswith(relpath):
                     del self.entries[key]
             # We remove values from self.entries, but not

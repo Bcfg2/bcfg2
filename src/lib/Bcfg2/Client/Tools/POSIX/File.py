@@ -3,10 +3,9 @@ import sys
 import stat
 import time
 import difflib
-import binascii
 import tempfile
-from base import POSIXTool
-from Bcfg2.Bcfg2Py3k import unicode
+from .base import POSIXTool
+from Bcfg2.Bcfg2Py3k import unicode, b64encode, b64decode
 
 class POSIXFile(POSIXTool):
     __req__ = ['name', 'perms', 'owner', 'group']
@@ -20,6 +19,9 @@ class POSIXFile(POSIXTool):
         for char in strng:
             if ord(char) < 9 or ord(char) > 13 and ord(char) < 32:
                 return False
+        if not hasattr(strng, "decode"):
+            # py3k
+            return True
         try:
             strng.decode(encoding)
             return True
@@ -29,13 +31,14 @@ class POSIXFile(POSIXTool):
     def _get_data(self, entry):
         is_binary = False
         if entry.get('encoding', 'ascii') == 'base64':
-            tempdata = binascii.a2b_base64(entry.text)
+            tempdata = b64decode(entry.text)
             is_binary = True
+            
         elif entry.get('empty', 'false') == 'true':
             tempdata = ''
         else:
             tempdata = entry.text
-            if isinstance(tempdata, unicode):
+            if isinstance(tempdata, unicode) and unicode != str:
                 try:
                     tempdata = tempdata.encode(self.setup['encoding'])
                 except UnicodeEncodeError:
@@ -163,7 +166,7 @@ class POSIXFile(POSIXTool):
         if is_binary:
             # don't compute diffs if the file is binary
             prompt.append('Binary file, no printable diff')
-            attrs['current_bfile'] = binascii.b2a_base64(content)
+            attrs['current_bfile'] = b64encode(content)
         else:
             if interactive:
                 diff = self._diff(content, self._get_data(entry)[0],
@@ -171,8 +174,10 @@ class POSIXFile(POSIXTool):
                                   filename=entry.get("name"))
                 if diff:
                     udiff = ''.join(diff)
+                    if hasattr(udiff, "decode"):
+                        udiff = udiff.decode(self.setup['encoding'])
                     try:
-                        prompt.append(udiff.decode(self.setup['encoding']))
+                        prompt.append(udiff)
                     except UnicodeEncodeError:
                         prompt.append("Could not encode diff")
                 else:
@@ -182,10 +187,9 @@ class POSIXFile(POSIXTool):
                 diff = self._diff(content, self._get_data(entry)[0],
                                   difflib.ndiff, filename=entry.get("name"))
                 if diff:
-                    attrs["current_bdiff"] = \
-                        binascii.b2a_base64("\n".join(diff))
+                    attrs["current_bdiff"] = b64encode("\n".join(diff))
                 else:
-                    attrs['current_bfile'] = binascii.b2a_base64(content)
+                    attrs['current_bfile'] = b64encode(content)
         if interactive:
             entry.set("qtext", "\n".join(prompt))
         if not sensitive:

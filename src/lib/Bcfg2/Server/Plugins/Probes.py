@@ -52,7 +52,8 @@ if has_django:
 
 
 class ClientProbeDataSet(dict):
-    """ dict of probe => [probe data] that records a for each host """
+    """ dict of probe => [probe data] that records a timestamp for
+    each host """
     def __init__(self, *args, **kwargs):
         if "timestamp" in kwargs and kwargs['timestamp'] is not None:
             self.timestamp = kwargs.pop("timestamp")
@@ -191,12 +192,10 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                                       value=str(self.probedata[client][probe]))
             for group in sorted(self.cgroups[client]):
                 lxml.etree.SubElement(cx, "Group", name=group)
-        data = lxml.etree.tostring(top, encoding='UTF-8',
-                                   xml_declaration=True,
-                                   pretty_print='true')
         try:
             datafile = open(os.path.join(self.data, 'probed.xml'), 'w')
-            datafile.write(data.decode('utf-8'))
+            datafile.write(lxml.etree.tostring(top, encoding='unicode',
+                                               pretty_print='true'))
         except IOError:
             err = sys.exc_info()[1]
             self.logger.error("Failed to write probed.xml: %s" % err)

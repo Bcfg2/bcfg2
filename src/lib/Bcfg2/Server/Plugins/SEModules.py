@@ -1,15 +1,14 @@
 import os
 import logging
-import binascii
-import posixpath
-
 import Bcfg2.Server.Plugin
+from Bcfg2.Bcfg2Py3k import b64encode
+
 logger = logging.getLogger(__name__)
 
 class SEModuleData(Bcfg2.Server.Plugin.SpecificData):
     def bind_entry(self, entry, _):
         entry.set('encoding', 'base64')
-        entry.text = binascii.b2a_base64(self.data)
+        entry.text = b64encode(self.data)
 
 
 class SEModules(Bcfg2.Server.Plugin.GroupSpool):

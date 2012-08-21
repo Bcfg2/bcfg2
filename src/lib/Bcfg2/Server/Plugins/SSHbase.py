@@ -1,20 +1,16 @@
 """This module manages ssh key files for bcfg2"""
 
-import binascii
 import re
 import os
+import sys
 import socket
 import shutil
-import sys
+import logging
 import tempfile
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
-from Bcfg2.Bcfg2Py3k import u_str
+from Bcfg2.Bcfg2Py3k import u_str, reduce, b64encode
 
-if sys.hexversion >= 0x03000000:
-    from functools import reduce
-
-import logging
 logger = logging.getLogger(__name__)
 
 class KeyData(Bcfg2.Server.Plugin.SpecificData):
@@ -31,7 +27,7 @@ class KeyData(Bcfg2.Server.Plugin.SpecificData):
     def bind_entry(self, entry, metadata):
         entry.set('type', 'file')
         if entry.get('encoding') == 'base64':
-            entry.text = binascii.b2a_base64(self.data)
+            entry.text = b64encode(self.data)
         else:
             try:
                 entry.text = u_str(self.data, self.encoding)

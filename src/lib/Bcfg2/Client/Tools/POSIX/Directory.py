@@ -3,7 +3,7 @@ import sys
 import stat
 import shutil
 import Bcfg2.Client.XML
-from base import POSIXTool
+from .base import POSIXTool
 
 class POSIXDirectory(POSIXTool):
     __req__ = ['name', 'perms', 'owner', 'group']

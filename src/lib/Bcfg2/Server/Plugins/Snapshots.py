@@ -1,9 +1,5 @@
-#import lxml.etree
 import logging
-import binascii
 import difflib
-#import sqlalchemy
-#import sqlalchemy.orm
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Snapshots
 import Bcfg2.Logger
@@ -13,8 +9,7 @@ import time
 import threading
 
 # Compatibility import
-from Bcfg2.Bcfg2Py3k import Queue
-from Bcfg2.Bcfg2Py3k import u_str
+from Bcfg2.Bcfg2Py3k import Queue, u_str, b64decode
 
 logger = logging.getLogger('Snapshots')
 
@@ -45,13 +40,12 @@ def build_snap_ent(entry):
             if entry.get('encoding', 'ascii') == 'ascii':
                 desired['contents'] = u_str(entry.text)
             else:
-                desired['contents'] = u_str(binascii.a2b_base64(entry.text))
+                desired['contents'] = u_str(b64decode(entry.text))
 
         if 'current_bfile' in entry.attrib:
-            state['contents'] = u_str(binascii.a2b_base64( \
-                entry.get('current_bfile')))
+            state['contents'] = u_str(b64decode(entry.get('current_bfile')))
         elif 'current_bdiff' in entry.attrib:
-            diff = binascii.a2b_base64(entry.get('current_bdiff'))
+            diff = b64decode(entry.get('current_bdiff'))
             state['contents'] = u_str( \
                 '\n'.join(difflib.restore(diff.split('\n'), 1)))
 

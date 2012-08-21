@@ -53,7 +53,7 @@ class TestProbeData(Bcfg2TestCase):
     def test_xdata(self):
         xdata = lxml.etree.Element("test")
         lxml.etree.SubElement(xdata, "test2")
-        data = ProbeData(lxml.etree.tostring(xdata))
+        data = ProbeData(lxml.etree.tostring(xdata, encoding='unicode'))
         self.assertIsNotNone(data.xdata)
         self.assertIsNotNone(data.xdata.find("test2"))
 
@@ -193,7 +193,7 @@ class TestProbes(TestProbing, TestConnector, TestDatabaseBacked):
         rv = dict()
         rv["foo.example.com"] = ClientProbeDataSet(timestamp=time.time())
         rv["foo.example.com"]["xml"] = \
-            ProbeData(lxml.etree.tostring(test_xdata))
+            ProbeData(lxml.etree.tostring(test_xdata, encoding='unicode'))
         rv["foo.example.com"]["text"] = ProbeData("freeform text")
         rv["foo.example.com"]["multiline"] = ProbeData("""multiple
 lines
@@ -277,7 +277,8 @@ text
         
         mock_open.assert_called_with(os.path.join(datastore, probes.name,
                                                   "probed.xml"), "w")
-        data = lxml.etree.XML(str(mock_open.return_value.write.call_args[0][0]))
+        print("data=%s" % mock_open.return_value.write.call_args[0][0])
+        data = lxml.etree.XML(mock_open.return_value.write.call_args[0][0])
         self.assertEqual(len(data.xpath("//Client")), 2)
 
         foodata = data.find("Client[@name='foo.example.com']")
@@ -290,6 +291,7 @@ text
         xml = foodata.find("Probe[@name='xml']")
         self.assertIsNotNone(xml)
         self.assertIsNotNone(xml.get("value"))
+        print("value=%s" % xml.get("value"))
         xdata = lxml.etree.XML(xml.get("value"))
         self.assertIsNotNone(xdata)
         self.assertIsNotNone(xdata.find("test"))

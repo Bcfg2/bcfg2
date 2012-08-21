@@ -4,7 +4,6 @@ Imports statistics.xml and clients.xml files in to database backend for
 new statistics engine
 """
 
-import binascii
 import os
 import sys
 import traceback
@@ -35,7 +34,7 @@ import Bcfg2.Logger
 import platform
 
 # Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.Bcfg2Py3k import ConfigParser, b64decode
 
 
 def build_reason_kwargs(r_ent, encoding, logger):
@@ -54,7 +53,7 @@ def build_reason_kwargs(r_ent, encoding, logger):
             # No point in flagging binary if we have no data
             binary_file = False
     elif r_ent.get('current_bdiff', False):
-        rc_diff = binascii.a2b_base64(r_ent.get('current_bdiff'))
+        rc_diff = b64decode(r_ent.get('current_bdiff'))
     elif r_ent.get('current_diff', False):
         rc_diff = r_ent.get('current_diff')
     else:

@@ -4,8 +4,8 @@ import unittest
 import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.Nonexistent import *
-from Test__init import get_config, get_posix_object
-from Testbase import TestPOSIXTool
+from .Test__init import get_config, get_posix_object
+from .Testbase import TestPOSIXTool
 from .....common import *
 
 class TestPOSIXNonexistent(TestPOSIXTool):

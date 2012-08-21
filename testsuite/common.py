@@ -37,45 +37,16 @@ except ImportError:
 
 if inPy3k:
     builtins = "builtins"
+
+    def u(x):
+        return x
 else:
     builtins = "__builtin__"
 
-if hasattr(unittest.TestCase, "assertItemsEqual"):
-    TestCase = unittest.TestCase
-else:
-    def assertion(predicate, default_msg=None):
-        @wraps(predicate)
-        def inner(*args, **kwargs):
-            if 'msg' in kwargs:
-                msg = kwargs['msg']
-                del kwargs['msg']
-            else:
-                msg = default_msg % args
-            assert predicate(*args, **kwargs), msg
-        return inner
+    import codecs
+    def u(x):
+        return codecs.unicode_escape_decode(x)[0]
 
-    class TestCase(unittest.TestCase):
-        # versions of TestCase before python 2.7 lacked a lot of the
-        # really handy convenience methods, so we provide them -- at
-        # least the easy ones and the ones we use.
-        assertIs = assertion(lambda a, b: a is b, "%s is not %s")
-        assertIsNot = assertion(lambda a, b: a is not b, "%s is %s")
-        assertIsNone = assertion(lambda x: x is None, "%s is not None")
-        assertIsNotNone = assertion(lambda x: x is not None, "%s is None")
-        assertIn = assertion(lambda a, b: a in b, "%s is not in %s")
-        assertNotIn = assertion(lambda a, b: a not in b, "%s is in %s")
-        assertIsInstance = assertion(isinstance, "%s is not %s")
-        assertNotIsInstance = assertion(lambda a, b: not isinstance(a, b),
-                                        "%s is %s")
-        assertGreater = assertion(lambda a, b: a > b,
-                                  "%s is not greater than %s")
-        assertGreaterEqual = assertion(lambda a, b: a >= b,
-                                       "%s is not greater than or equal to %s")
-        assertLess = assertion(lambda a, b: a < b, "%s is not less than %s")
-        assertLessEqual = assertion(lambda a, b: a <= b,
-                                    "%s is not less than or equal to %s")
-        assertItemsEqual = assertion(lambda a, b: sorted(a) == sorted(b),
-                                     "Items do not match:\n%s\n%s")
 
 if hasattr(unittest, "skip"):
     can_skip = True
@@ -117,7 +88,129 @@ else:
         return decorator
 
 
-class Bcfg2TestCase(TestCase):
+needs_assertItemsEqual = False
+needs_others = False
+if not hasattr(unittest.TestCase, "assertItemsEqual"):
+    # TestCase in Py3k lacks assertItemsEqual, but has the other
+    # convenience methods.  this code is cribbed from the py2.7
+    # unittest library
+    import collections
+    needs_assertItemsEqual = True
+
+    def _count_diff_all_purpose(actual, expected):
+        '''Returns list of (cnt_act, cnt_exp, elem) triples where the
+        counts differ'''
+        # elements need not be hashable
+        s, t = list(actual), list(expected)
+        m, n = len(s), len(t)
+        NULL = object()
+        result = []
+        for i, elem in enumerate(s):
+            if elem is NULL:
+                continue
+            cnt_s = cnt_t = 0
+            for j in range(i, m):
+                if s[j] == elem:
+                    cnt_s += 1
+                    s[j] = NULL
+            for j, other_elem in enumerate(t):
+                if other_elem == elem:
+                    cnt_t += 1
+                    t[j] = NULL
+            if cnt_s != cnt_t:
+                diff = _Mismatch(cnt_s, cnt_t, elem)
+                result.append(diff)
+
+        for i, elem in enumerate(t):
+            if elem is NULL:
+                continue
+            cnt_t = 0
+            for j in range(i, n):
+                if t[j] == elem:
+                    cnt_t += 1
+                    t[j] = NULL
+            diff = _Mismatch(0, cnt_t, elem)
+            result.append(diff)
+        return result
+
+    def _count_diff_hashable(actual, expected):
+        '''Returns list of (cnt_act, cnt_exp, elem) triples where the
+        counts differ'''
+        # elements must be hashable
+        s, t = _ordered_count(actual), _ordered_count(expected)
+        result = []
+        for elem, cnt_s in s.items():
+            cnt_t = t.get(elem, 0)
+            if cnt_s != cnt_t:
+                diff = _Mismatch(cnt_s, cnt_t, elem)
+                result.append(diff)
+        for elem, cnt_t in t.items():
+            if elem not in s:
+                diff = _Mismatch(0, cnt_t, elem)
+                result.append(diff)
+        return result
+
+if not hasattr(unittest.TestCase, "assertIn"):
+    # versions of TestCase before python 2.7 and python 3.1 lacked a
+    # lot of the really handy convenience methods, so we provide them
+    # -- at least the easy ones and the ones we use.
+    needs_others = True
+
+    def _assertion(predicate, default_msg=None):
+        @wraps(predicate)
+        def inner(self, *args, **kwargs):
+            if 'msg' in kwargs:
+                msg = kwargs['msg']
+                del kwargs['msg']
+            else:
+                msg = default_msg % args
+            assert predicate(*args, **kwargs), msg
+        return inner
+
+
+class Bcfg2TestCase(unittest.TestCase):
+    if needs_assertItemsEqual:
+        def assertItemsEqual(self, expected_seq, actual_seq, msg=None):
+            first_seq, second_seq = list(actual_seq), list(expected_seq)
+            try:
+                first = collections.Counter(first_seq)
+                second = collections.Counter(second_seq)
+            except TypeError:
+                # Handle case with unhashable elements
+                differences = _count_diff_all_purpose(first_seq, second_seq)
+            else:
+                if first == second:
+                    return
+                differences = _count_diff_hashable(first_seq, second_seq)
+
+            if differences:
+                standardMsg = 'Element counts were not equal:\n'
+                lines = ['First has %d, Second has %d:  %r' % diff
+                         for diff in differences]
+                diffMsg = '\n'.join(lines)
+                standardMsg = self._truncateMessage(standardMsg, diffMsg)
+                msg = self._formatMessage(msg, standardMsg)
+                self.fail(msg)
+
+    if needs_others:
+        assertIs = _assertion(lambda a, b: a is b, "%s is not %s")
+        assertIsNot = _assertion(lambda a, b: a is not b, "%s is %s")
+        assertIsNone = _assertion(lambda x: x is None, "%s is not None")
+        assertIsNotNone = _assertion(lambda x: x is not None, "%s is None")
+        assertIn = _assertion(lambda a, b: a in b, "%s is not in %s")
+        assertNotIn = _assertion(lambda a, b: a not in b, "%s is in %s")
+        assertIsInstance = _assertion(isinstance, "%s is not instance of %s")
+        assertNotIsInstance = _assertion(lambda a, b: not isinstance(a, b),
+                                         "%s is instance of %s")
+        assertGreater = _assertion(lambda a, b: a > b,
+                                   "%s is not greater than %s")
+        assertGreaterEqual = _assertion(lambda a, b: a >= b,
+                                        "%s is not greater than or equal to %s")
+        assertLess = _assertion(lambda a, b: a < b, "%s is not less than %s")
+        assertLessEqual = _assertion(lambda a, b: a <= b,
+                                     "%s is not less than or equal to %s")
+
+
     def assertXMLEqual(self, el1, el2, msg=None):
         self.assertEqual(el1.tag, el2.tag, msg=msg)
         self.assertEqual(el1.text, el2.text, msg=msg)

@@ -6,11 +6,10 @@ import sys
 import stat
 import pkgutil
 import logging
-import binascii
 import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
-from Bcfg2.Bcfg2Py3k import u_str
+from Bcfg2.Bcfg2Py3k import u_str, b64encode
 import Bcfg2.Server.Lint
 
 logger = logging.getLogger(__name__)
@@ -290,7 +289,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                     raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
                 
         if entry.get('encoding') == 'base64':
-            data = binascii.b2a_base64(data)
+            data = b64encode(data)
         else:
             try:
                 data = u_str(data, self.encoding)
@@ -371,26 +370,26 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                    if attr in new_entry]
         if badattr:
             # check for info files and inform user of their removal
-            if os.path.exists(self.path + "/:info"):
-                logger.info("Removing :info file and replacing with "
-                                 "info.xml")
-                os.remove(self.path + "/:info")
-            if os.path.exists(self.path + "/info"):
-                logger.info("Removing info file and replacing with "
-                                 "info.xml")
-                os.remove(self.path + "/info")
+            for ifile in ['info', ':info']:
+                info = os.path.join(self.path, ifile)
+                if os.path.exists(info):
+                    logger.info("Removing %s and replacing with info.xml" %
+                                info)
+                    os.remove(info)
             metadata_updates = {}
             metadata_updates.update(self.metadata)
             for attr in badattr:
                 metadata_updates[attr] = new_entry.get(attr)
             infoxml = lxml.etree.Element('FileInfo')
             infotag = lxml.etree.SubElement(infoxml, 'Info')
-            [infotag.attrib.__setitem__(attr, metadata_updates[attr]) \
-                for attr in metadata_updates]
+            [infotag.attrib.__setitem__(attr, metadata_updates[attr])
+             for attr in metadata_updates]
             ofile = open(self.path + "/info.xml", "w")
-            ofile.write(lxml.etree.tostring(infoxml, pretty_print=True))
+            ofile.write(lxml.etree.tostring(infoxml, encoding='unicode',
+                                            pretty_print=True))
             ofile.close()
-            self.debug_log("Wrote file %s" % (self.path + "/info.xml"),
+            self.debug_log("Wrote file %s" % os.path.join(self.path,
+                                                          "info.xml"),
                            flag=log)
 
 

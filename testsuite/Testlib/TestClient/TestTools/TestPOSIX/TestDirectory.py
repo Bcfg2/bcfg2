@@ -5,8 +5,8 @@ import unittest
 import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.Directory import *
-from Test__init import get_posix_object
-from Testbase import TestPOSIXTool
+from .Test__init import get_posix_object
+from .Testbase import TestPOSIXTool
 from .....common import *
 
 class TestPOSIXDirectory(TestPOSIXTool):
@@ -25,14 +25,14 @@ class TestPOSIXDirectory(TestPOSIXTool):
 
         mock_exists.reset_mock()
         exists_rv = MagicMock()
-        exists_rv.__getitem__.return_value = stat.S_IFREG | 0644
+        exists_rv.__getitem__.return_value = stat.S_IFREG | 420 # 0o644
         mock_exists.return_value = exists_rv
         self.assertFalse(ptool.verify(entry, []))
         mock_exists.assert_called_with(entry)
 
         mock_exists.reset_mock()
         mock_verify.return_value = False
-        exists_rv.__getitem__.return_value = stat.S_IFDIR | 0644
+        exists_rv.__getitem__.return_value = stat.S_IFDIR | 420 # 0o644
         self.assertFalse(ptool.verify(entry, []))
         mock_exists.assert_called_with(entry)
         mock_verify.assert_called_with(ptool, entry, [])
@@ -105,7 +105,7 @@ class TestPOSIXDirectory(TestPOSIXTool):
 
         reset()
         exists_rv = MagicMock()
-        exists_rv.__getitem__.return_value = stat.S_IFREG | 0644
+        exists_rv.__getitem__.return_value = stat.S_IFREG | 420 # 0o644
         mock_exists.return_value = exists_rv
         self.assertTrue(ptool.install(entry))
         mock_unlink.assert_called_with(entry.get("name"))
@@ -114,7 +114,7 @@ class TestPOSIXDirectory(TestPOSIXTool):
         mock_install.assert_called_with(ptool, entry)
 
         reset()
-        exists_rv.__getitem__.return_value = stat.S_IFDIR | 0644
+        exists_rv.__getitem__.return_value = stat.S_IFDIR | 420 # 0o644
         mock_install.return_value = True
         self.assertTrue(ptool.install(entry))
         mock_exists.assert_called_with(entry)

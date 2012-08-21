@@ -151,8 +151,8 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
             raise Bcfg2.Server.Plugin.MetadataRuntimeError(msg)
         # prep data
         dataroot = xmltree.getroot()
-        newcontents = str(lxml.etree.tostring(dataroot, pretty_print=True,
-                                              encoding='unicode'))
+        newcontents = lxml.etree.tostring(dataroot, pretty_print=True,
+                                          encoding='unicode')
 
         fd = datafile.fileno()
         while locked(fd) == True:
@@ -807,7 +807,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 # _any_ port numbers - perhaps a priority queue could
                 # be faster?
                 curtime = time.time()
-                for addrpair in self.session_cache.keys():
+                for addrpair in list(self.session_cache.keys()):
                      if addresspair[0] == addrpair[0]:
                          (stamp, _) = self.session_cache[addrpair]
                          if curtime - stamp > cache_ttl:
@@ -1104,7 +1104,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                                   "secure mode" % address[0])
                 return False
         # populate the session cache
-        if user.decode('utf-8') != 'root':
+        if user != 'root':
             self.session_cache[address] = (time.time(), client)
         return True
 

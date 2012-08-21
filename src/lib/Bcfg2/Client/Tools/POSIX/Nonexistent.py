@@ -1,7 +1,7 @@
 import os
 import sys
 import shutil
-from base import POSIXTool
+from .base import POSIXTool
 
 class POSIXNonexistent(POSIXTool):
     __req__ = ['name']

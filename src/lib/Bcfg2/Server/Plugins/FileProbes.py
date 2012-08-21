@@ -7,19 +7,19 @@ the client """
 import os
 import sys
 import errno
-import binascii
 import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
+from Bcfg2.Bcfg2Py3k import b64decode
 
 probecode = """#!/usr/bin/env python
 
 import os
 import pwd
 import grp
-import binascii
 import lxml.etree
+from Bcfg2.Bcfg2Py3k import b64encode
 
 path = "%s"
 
@@ -33,8 +33,8 @@ data = lxml.etree.Element("ProbedFileData",
                           owner=pwd.getpwuid(stat[4])[0],
                           group=grp.getgrgid(stat[5])[0],
                           perms=oct(stat[0] & 07777))
-data.text = binascii.b2a_base64(open(path).read())
-print(lxml.etree.tostring(data))
+data.text = b64encode(open(path).read())
+print(lxml.etree.tostring(data, encoding="unicode"))
 """
 
 class FileProbes(Bcfg2.Server.Plugin.Plugin,
@@ -103,7 +103,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
     def write_data(self, data, metadata):
         """Write the probed file data to the bcfg2 specification."""
         filename = data.get("name")
-        contents = binascii.a2b_base64(data.text)
+        contents = b64decode(data.text)
         entry = self.entries[metadata.hostname][filename]
         cfg = self.core.plugins['Cfg']
         specific = "%s.H_%s" % (os.path.basename(filename), metadata.hostname)
@@ -120,7 +120,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
 
         # get current entry data
         if entry.text and entry.get("encoding") == "base64":
-            entrydata = binascii.a2b_base64(entry.text)
+            entrydata = b64decode(entry.text)
         else:
             entrydata = entry.text
 
@@ -187,7 +187,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
 
             # get current entry data
             if entry.get("encoding") == "base64":
-                entrydata = binascii.a2b_base64(entry.text)
+                entrydata = b64decode(entry.text)
             else:
                 entrydata = entry.text
             if entrydata == contents:
@@ -199,8 +199,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
         if os.path.exists(infoxml):
             return
 
-        self.logger.info("Writing info.xml at %s for %s" %
-                         (infoxml, data.get("name")))
+        self.logger.info("Writing %s for %s" % (infoxml, data.get("name")))
         info = \
             lxml.etree.Element("Info",
                                owner=data.get("owner",
@@ -216,6 +215,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
         root.append(info)
         try:
             open(infoxml, "w").write(lxml.etree.tostring(root,
+                                                         encoding='unicode',
                                                          pretty_print=True))
         except IOError:
             err = sys.exc_info()[1]

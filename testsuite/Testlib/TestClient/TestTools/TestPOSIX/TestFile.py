@@ -5,10 +5,11 @@ import difflib
 import binascii
 import unittest
 import lxml.etree
+from Bcfg2.Bcfg2Py3k import b64encode, b64decode
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.File import *
-from Test__init import get_posix_object
-from Testbase import TestPOSIXTool
+from .Test__init import get_posix_object
+from .Testbase import TestPOSIXTool
 from .....common import *
 
 def get_file_object(posix=None):
@@ -33,17 +34,18 @@ class TestPOSIXFile(TestPOSIXTool):
     
     def test_is_string(self):
         ptool = self.get_obj()
-        for char in range(8) + range(14, 32):
+        for char in list(range(8)) + list(range(14, 32)):
             self.assertFalse(ptool._is_string("foo" + chr(char) + "bar",
-                                              'utf_8'))
-        for char in range(9, 14) + range(33, 128):
+                                              'UTF-8'))
+        for char in list(range(9, 14)) + list(range(33, 128)):
             self.assertTrue(ptool._is_string("foo" + chr(char) + "bar",
-                                             'utf_8'))
-        self.assertFalse(ptool._is_string("foo" + chr(128) + "bar",
-                                          'ascii'))
+                                             'UTF-8'))
         ustr = 'é'
-        self.assertTrue(ptool._is_string(ustr, 'utf_8'))
-        self.assertFalse(ptool._is_string(ustr, 'ascii'))
+        self.assertTrue(ptool._is_string(ustr, 'UTF-8'))
+        if not inPy3k:
+            self.assertFalse(ptool._is_string("foo" + chr(128) + "bar",
+                                              'ascii'))
+            self.assertFalse(ptool._is_string(ustr, 'ascii'))
 
     def test_get_data(self):
         orig_entry = lxml.etree.Element("Path", name="/test", type="file")
@@ -51,7 +53,7 @@ class TestPOSIXFile(TestPOSIXTool):
         ptool = self.get_obj(posix=get_posix_object(setup=setup))
 
         entry = copy.deepcopy(orig_entry)
-        entry.text = binascii.b2a_base64("test")
+        entry.text = b64encode("test")
         entry.set("encoding", "base64")
         self.assertEqual(ptool._get_data(entry), ("test", True))
 
@@ -63,7 +65,7 @@ class TestPOSIXFile(TestPOSIXTool):
         entry.text = "test"
         self.assertEqual(ptool._get_data(entry), ("test", False))
 
-        ustr = u'é'
+        ustr = u('é')
         entry = copy.deepcopy(orig_entry)
         entry.text = ustr
         self.assertEqual(ptool._get_data(entry), (ustr, False))
@@ -207,7 +209,7 @@ class TestPOSIXFile(TestPOSIXTool):
         mock_rename.assert_called_with(newfile, entry.get("name"))
         mock_unlink.assert_called_with(newfile)
 
-    @patch("%.open" % builtins)
+    @patch("%s.open" % builtins)
     @patch("Bcfg2.Client.Tools.POSIX.File.%s._diff" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.File.%s._get_data" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.File.%s._is_string" % test_obj.__name__)
@@ -239,8 +241,7 @@ class TestPOSIXFile(TestPOSIXTool):
         mock_open.assert_called_with(entry.get("name"))
         mock_open.return_value.read.assert_any_call()
         self.assertFalse(mock_diff.called)
-        self.assertEqual(entry.get("current_bfile"),
-                         binascii.b2a_base64(ondisk))
+        self.assertEqual(entry.get("current_bfile"), b64encode(ondisk))
 
         # binary data on disk
         entry = reset()
@@ -248,8 +249,7 @@ class TestPOSIXFile(TestPOSIXTool):
         ptool._get_diffs(entry, content=ondisk)
         self.assertFalse(mock_open.called)
         self.assertFalse(mock_diff.called)
-        self.assertEqual(entry.get("current_bfile"),
-                         binascii.b2a_base64(ondisk))
+        self.assertEqual(entry.get("current_bfile"), b64encode(ondisk))
 
         # sensitive, non-interactive -- do nothing
         entry = reset()
@@ -278,7 +278,7 @@ class TestPOSIXFile(TestPOSIXTool):
                                      filename=entry.get("name"))
         self.assertIsNone(entry.get("qtext"))
         self.assertEqual(entry.get("current_bdiff"),
-                         binascii.b2a_base64("\n".join(mock_diff.return_value)))
+                         b64encode("\n".join(mock_diff.return_value)))
         del entry.attrib["current_bdiff"]
         self.assertItemsEqual(orig_entry.attrib, entry.attrib)
 
@@ -297,14 +297,14 @@ class TestPOSIXFile(TestPOSIXTool):
         self.assertIsNotNone(entry.get("qtext"))
         self.assertTrue(entry.get("qtext").startswith("test\n"))
         self.assertEqual(entry.get("current_bdiff"),
-                         binascii.b2a_base64("\n".join(mock_diff.return_value)))
+                         b64encode("\n".join(mock_diff.return_value)))
         del entry.attrib['qtext']
         del entry.attrib["current_bdiff"]
         self.assertItemsEqual(orig_entry.attrib, entry.attrib)
 
         # non-sensitive, interactive with unicode data
         entry = reset()
-        entry.text = u"tëst"
+        entry.text = u("tëst")
         encoded = entry.text.encode(setup['encoding'])
         mock_get_data.return_value = (encoded, False)
         ptool._get_diffs(entry, interactive=True)
@@ -317,7 +317,7 @@ class TestPOSIXFile(TestPOSIXTool):
                                     filename=entry.get("name"))])
         self.assertIsNotNone(entry.get("qtext"))
         self.assertEqual(entry.get("current_bdiff"),
-                         binascii.b2a_base64("\n".join(mock_diff.return_value)))
+                         b64encode("\n".join(mock_diff.return_value)))
         del entry.attrib['qtext']
         del entry.attrib["current_bdiff"]
         self.assertItemsEqual(orig_entry.attrib, entry.attrib)

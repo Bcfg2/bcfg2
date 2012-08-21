@@ -4,9 +4,10 @@ import copy
 import logging
 import unittest
 import lxml.etree
+import Bcfg2.Server
+from Bcfg2.Bcfg2Py3k import reduce
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugin import *
-import Bcfg2.Server
 from ...common import *
 
 class FakeElementTree(lxml.etree._ElementTree):
@@ -228,8 +229,9 @@ class TestThreadedStatistics(TestStatistics):
         mock_start.assert_any_call()
 
     @patch("%s.open" % builtins)
+    @patch("%s.dump" % cPickle.__name__)
     @patch("Bcfg2.Server.Plugin.ThreadedStatistics.run", Mock())
-    def test_save(self, mock_open):
+    def test_save(self, mock_dump, mock_open):
         core = Mock()
         ts = self.get_obj(core)
         queue = Mock()
@@ -255,78 +257,76 @@ class TestThreadedStatistics(TestStatistics):
         queue.get_nowait = Mock(side_effect=lambda: queue.data.pop())
         mock_open.side_effect = None
 
-        # oh, the joy of working around different package names in
-        # py3k...
-        with patch("%s.dump" % cPickle.__name__) as mock_dump:
-            ts.save()
-            queue.empty.assert_any_call()
-            queue.get_nowait.assert_any_call()
-            mock_open.assert_called_with(ts.pending_file, 'w')
-            mock_open.return_value.close.assert_any_call()
-            # the order of the queue data gets changed, so we have to
-            # verify this call in an ugly way
-            self.assertItemsEqual(mock_dump.call_args[0][0], self.data)
-            self.assertEqual(mock_dump.call_args[0][1], mock_open.return_value)
+        ts.save()
+        queue.empty.assert_any_call()
+        queue.get_nowait.assert_any_call()
+        mock_open.assert_called_with(ts.pending_file, 'w')
+        mock_open.return_value.close.assert_any_call()
+        # the order of the queue data gets changed, so we have to
+        # verify this call in an ugly way
+        self.assertItemsEqual(mock_dump.call_args[0][0], self.data)
+        self.assertEqual(mock_dump.call_args[0][1], mock_open.return_value)
         
     @patch("os.unlink")
     @patch("os.path.exists")
     @patch("%s.open" % builtins)
     @patch("lxml.etree.XML")
+    @patch("%s.load" % cPickle.__name__)
     @patch("Bcfg2.Server.Plugin.ThreadedStatistics.run", Mock())
-    def test_load(self, mock_XML, mock_open, mock_exists, mock_unlink):
+    def test_load(self, mock_load, mock_XML, mock_open, mock_exists,
+                  mock_unlink):
         core = Mock()
         core.terminate.isSet.return_value = False
         ts = self.get_obj(core)
         
-        with patch("%s.load" % cPickle.__name__) as mock_load:
-            ts.work_queue = Mock()
+        ts.work_queue = Mock()
+        ts.work_queue.data = []
+        def reset():
+            core.reset_mock()
+            mock_open.reset_mock()
+            mock_exists.reset_mock()
+            mock_unlink.reset_mock()
+            mock_load.reset_mock()
+            mock_XML.reset_mock()
+            ts.work_queue.reset_mock()
             ts.work_queue.data = []
-            def reset():
-                core.reset_mock()
-                mock_open.reset_mock()
-                mock_exists.reset_mock()
-                mock_unlink.reset_mock()
-                mock_load.reset_mock()
-                mock_XML.reset_mock()
-                ts.work_queue.reset_mock()
-                ts.work_queue.data = []
 
-            mock_exists.return_value = False
-            self.assertTrue(ts.load())
-            mock_exists.assert_called_with(ts.pending_file)
+        mock_exists.return_value = False
+        self.assertTrue(ts.load())
+        mock_exists.assert_called_with(ts.pending_file)
 
-            reset()
-            mock_exists.return_value = True
-            mock_open.side_effect = OSError
-            self.assertFalse(ts.load())
-            mock_exists.assert_called_with(ts.pending_file)
-            mock_open.assert_called_with(ts.pending_file, 'r')
+        reset()
+        mock_exists.return_value = True
+        mock_open.side_effect = OSError
+        self.assertFalse(ts.load())
+        mock_exists.assert_called_with(ts.pending_file)
+        mock_open.assert_called_with(ts.pending_file, 'r')
 
-            reset()
-            mock_open.side_effect = None
-            mock_load.return_value = self.data
-            ts.work_queue.put_nowait.side_effect = Full
-            self.assertTrue(ts.load())
-            mock_exists.assert_called_with(ts.pending_file)
-            mock_open.assert_called_with(ts.pending_file, 'r')
-            mock_open.return_value.close.assert_any_call()
-            mock_load.assert_called_with(mock_open.return_value)
+        reset()
+        mock_open.side_effect = None
+        mock_load.return_value = self.data
+        ts.work_queue.put_nowait.side_effect = Full
+        self.assertTrue(ts.load())
+        mock_exists.assert_called_with(ts.pending_file)
+        mock_open.assert_called_with(ts.pending_file, 'r')
+        mock_open.return_value.close.assert_any_call()
+        mock_load.assert_called_with(mock_open.return_value)
 
-            reset()
-            core.build_metadata.side_effect = lambda x: x
-            mock_XML.side_effect = lambda x, parser=None: x
-            ts.work_queue.put_nowait.side_effect = None
-            self.assertTrue(ts.load())
-            mock_exists.assert_called_with(ts.pending_file)
-            mock_open.assert_called_with(ts.pending_file, 'r')
-            mock_open.return_value.close.assert_any_call()
-            mock_load.assert_called_with(mock_open.return_value)
-            self.assertItemsEqual(mock_XML.call_args_list,
-                                  [call(x, parser=Bcfg2.Server.XMLParser)
-                                   for h, x in self.data])
-            self.assertItemsEqual(ts.work_queue.put_nowait.call_args_list,
-                                  [call((h, x)) for h, x in self.data])
-            mock_unlink.assert_called_with(ts.pending_file)
+        reset()
+        core.build_metadata.side_effect = lambda x: x
+        mock_XML.side_effect = lambda x, parser=None: x
+        ts.work_queue.put_nowait.side_effect = None
+        self.assertTrue(ts.load())
+        mock_exists.assert_called_with(ts.pending_file)
+        mock_open.assert_called_with(ts.pending_file, 'r')
+        mock_open.return_value.close.assert_any_call()
+        mock_load.assert_called_with(mock_open.return_value)
+        self.assertItemsEqual(mock_XML.call_args_list,
+                              [call(x, parser=Bcfg2.Server.XMLParser)
+                               for h, x in self.data])
+        self.assertItemsEqual(ts.work_queue.put_nowait.call_args_list,
+                              [call((h, x)) for h, x in self.data])
+        mock_unlink.assert_called_with(ts.pending_file)
 
     @patch("threading.Thread.start", Mock())
     @patch("Bcfg2.Server.Plugin.ThreadedStatistics.load")
@@ -1018,7 +1018,7 @@ class TestStructFile(TestXMLFileBacked):
         mock_match.side_effect = match_rv
         actual = sf.Match(metadata)
         expected = reduce(lambda x, y: x + y,
-                          children.values() + subgroups.values())
+                          list(children.values()) + list(subgroups.values()))
         self.assertEqual(len(actual), len(expected))
         # easiest way to compare the values is actually to make
         # them into an XML document and let assertXMLEqual compare
@@ -1047,7 +1047,7 @@ class TestStructFile(TestXMLFileBacked):
         expected = lxml.etree.Element(xdata.tag, **xdata.attrib)
         expected.text = xdata.text
         expected.extend(reduce(lambda x, y: x + y,
-                               children.values() + subchildren.values()))
+                               list(children.values()) + list(subchildren.values())))
         expected.extend(standalone)
         self.assertXMLEqual(actual, expected)
 
@@ -1064,7 +1064,7 @@ class TestStructFile(TestXMLFileBacked):
         for call in mock_xml_match.call_args_list:
             actual.append(call[0][0])
             self.assertEqual(call[0][1], metadata)
-        expected = groups.values() + standalone
+        expected = list(groups.values()) + standalone
         # easiest way to compare the values is actually to make
         # them into an XML document and let assertXMLEqual compare
         # them
