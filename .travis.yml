@@ -2,8 +2,29 @@ language: python
 python:
   - "2.6"
   - "2.7"
+  - "3.2"
+env:
+  - WITH_OPTIONAL_DEPS=yes
+  - WITH_OPTIONAL_DEPS=no
+matrix:
+  exclude:
+    - python: 3.2
+      env: WITH_OPTIONAL_DEPS=yes
+before_install:
+  - testsuite/before_install.sh
 install:
-  - pip install -r testsuite/requirements.txt --use-mirrors
+  - testsuite/install.sh
   - pip install -e .
 script:
   - nosetests testsuite
+branches:
+  except:
+    - maint
+    - 1.1.0-stable
+    - py3k
+notifications:
+  email: chris.a.st.pierre@gmail.com
+  irc: 
+    channels:
+      - "irc.freenode.org#bcfg2"
+    use_notice: true

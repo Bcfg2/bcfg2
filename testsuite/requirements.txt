@@ -1,7 +1,4 @@
 lxml
 nose
-genshi
-cheetah
-sphinx
 mock
-django<1.4
+sphinx
