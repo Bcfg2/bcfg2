@@ -7,7 +7,7 @@ import re
 import sys
 import traceback
 
-from Bcfg2.Py3k import CmpMixin
+from Bcfg2.Bcfg2Py3k import CmpMixin
 from Bcfg2.Server.models import InternalDatabaseVersion
 from Bcfg2.Server.SchemaUpdater.Routines import UpdaterRoutineException, \
                 UpdaterRoutine

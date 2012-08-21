@@ -3,7 +3,6 @@ import sys
 import copy
 import time
 import socket
-import unittest
 import lxml.etree
 from mock import Mock, patch
 from ....common import *

@@ -1,6 +1,5 @@
 import os
 import copy
-import unittest
 import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.Symlink import *

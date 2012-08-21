@@ -3,7 +3,6 @@ import os
 import copy
 import difflib
 import binascii
-import unittest
 import lxml.etree
 from Bcfg2.Bcfg2Py3k import b64encode, b64decode
 from mock import Mock, MagicMock, patch
@@ -22,30 +21,28 @@ class TestPOSIXFile(TestPOSIXTool):
 
     def test_fully_specified(self):
         entry = lxml.etree.Element("Path", name="/test", type="file")
-        ptool = self.get_obj()
-        self.assertFalse(ptool.fully_specified(entry))
+        self.assertFalse(self.ptool.fully_specified(entry))
 
         entry.set("empty", "true")
-        self.assertTrue(ptool.fully_specified(entry))
+        self.assertTrue(self.ptool.fully_specified(entry))
 
         entry.set("empty", "false")
         entry.text = "text"
-        self.assertTrue(ptool.fully_specified(entry))
+        self.assertTrue(self.ptool.fully_specified(entry))
     
     def test_is_string(self):
-        ptool = self.get_obj()
         for char in list(range(8)) + list(range(14, 32)):
-            self.assertFalse(ptool._is_string("foo" + chr(char) + "bar",
+            self.assertFalse(self.ptool._is_string("foo" + chr(char) + "bar",
                                               'UTF-8'))
         for char in list(range(9, 14)) + list(range(33, 128)):
-            self.assertTrue(ptool._is_string("foo" + chr(char) + "bar",
+            self.assertTrue(self.ptool._is_string("foo" + chr(char) + "bar",
                                              'UTF-8'))
         ustr = 'é'
-        self.assertTrue(ptool._is_string(ustr, 'UTF-8'))
+        self.assertTrue(self.ptool._is_string(ustr, 'UTF-8'))
         if not inPy3k:
-            self.assertFalse(ptool._is_string("foo" + chr(128) + "bar",
+            self.assertFalse(self.ptool._is_string("foo" + chr(128) + "bar",
                                               'ascii'))
-            self.assertFalse(ptool._is_string(ustr, 'ascii'))
+            self.assertFalse(self.ptool._is_string(ustr, 'ascii'))
 
     def test_get_data(self):
         orig_entry = lxml.etree.Element("Path", name="/test", type="file")
@@ -154,7 +151,6 @@ class TestPOSIXFile(TestPOSIXTool):
     def test_write_tmpfile(self, mock_get_data, mock_mkstemp, mock_fdopen):
         entry = lxml.etree.Element("Path", name="/test", type="file",
                                    perms='0644', owner='root', group='root')
-        ptool = self.get_obj()
         newfile = "/foo/bar"
 
         def reset():
@@ -164,7 +160,7 @@ class TestPOSIXFile(TestPOSIXTool):
 
         mock_get_data.return_value = ("test", False)
         mock_mkstemp.return_value = (5, newfile)
-        self.assertEqual(ptool._write_tmpfile(entry), newfile)
+        self.assertEqual(self.ptool._write_tmpfile(entry), newfile)
         mock_get_data.assert_called_with(entry)
         mock_mkstemp.assert_called_with(prefix='test', dir='/')
         mock_fdopen.assert_called_with(5, 'w')
@@ -172,13 +168,13 @@ class TestPOSIXFile(TestPOSIXTool):
 
         reset()
         mock_mkstemp.side_effect = OSError
-        self.assertFalse(ptool._write_tmpfile(entry))
+        self.assertFalse(self.ptool._write_tmpfile(entry))
         mock_mkstemp.assert_called_with(prefix='test', dir='/')
 
         reset()
         mock_mkstemp.side_effect = None
         mock_fdopen.side_effect = OSError
-        self.assertFalse(ptool._write_tmpfile(entry))
+        self.assertFalse(self.ptool._write_tmpfile(entry))
         mock_mkstemp.assert_called_with(prefix='test', dir='/')
         mock_get_data.assert_called_with(entry)
         mock_fdopen.assert_called_with(5, 'w')
@@ -188,16 +184,15 @@ class TestPOSIXFile(TestPOSIXTool):
     def test_rename_tmpfile(self, mock_unlink, mock_rename):
         entry = lxml.etree.Element("Path", name="/test", type="file",
                                    perms='0644', owner='root', group='root')
-        ptool = self.get_obj()
         newfile = "/foo/bar"
 
-        self.assertTrue(ptool._rename_tmpfile(newfile, entry))
+        self.assertTrue(self.ptool._rename_tmpfile(newfile, entry))
         mock_rename.assert_called_with(newfile, entry.get("name"))
         
         mock_rename.reset_mock()
         mock_unlink.reset_mock()
         mock_rename.side_effect = OSError
-        self.assertFalse(ptool._rename_tmpfile(newfile, entry))
+        self.assertFalse(self.ptool._rename_tmpfile(newfile, entry))
         mock_rename.assert_called_with(newfile, entry.get("name"))
         mock_unlink.assert_called_with(newfile)
 
@@ -205,7 +200,7 @@ class TestPOSIXFile(TestPOSIXTool):
         mock_rename.reset_mock()
         mock_unlink.reset_mock()
         mock_unlink.side_effect = OSError
-        self.assertFalse(ptool._rename_tmpfile(newfile, entry))
+        self.assertFalse(self.ptool._rename_tmpfile(newfile, entry))
         mock_rename.assert_called_with(newfile, entry.get("name"))
         mock_unlink.assert_called_with(newfile)
 
@@ -334,7 +329,6 @@ class TestPOSIXFile(TestPOSIXTool):
                      mock_makedirs, mock_install, mock_exists):
         entry = lxml.etree.Element("Path", name="/test", type="file",
                                    perms='0644', owner='root', group='root')
-        ptool = self.get_obj()
 
         def reset():
             mock_rename.reset_mock()
@@ -346,14 +340,14 @@ class TestPOSIXFile(TestPOSIXTool):
 
         mock_exists.return_value = False
         mock_makedirs.return_value = False
-        self.assertFalse(ptool.install(entry))
+        self.assertFalse(self.ptool.install(entry))
         mock_exists.assert_called_with("/")
         mock_makedirs.assert_called_with(entry, path="/")
         
         reset()
         mock_makedirs.return_value = True
         mock_write.return_value = False
-        self.assertFalse(ptool.install(entry))
+        self.assertFalse(self.ptool.install(entry))
         mock_exists.assert_called_with("/")
         mock_makedirs.assert_called_with(entry, path="/")
         mock_write.assert_called_with(entry)
@@ -363,7 +357,7 @@ class TestPOSIXFile(TestPOSIXTool):
         mock_write.return_value = newfile
         mock_set_perms.return_value = False
         mock_rename.return_value = False
-        self.assertFalse(ptool.install(entry))
+        self.assertFalse(self.ptool.install(entry))
         mock_exists.assert_called_with("/")
         mock_makedirs.assert_called_with(entry, path="/")
         mock_write.assert_called_with(entry)
@@ -373,52 +367,51 @@ class TestPOSIXFile(TestPOSIXTool):
         reset()
         mock_rename.return_value = True
         mock_install.return_value = False
-        self.assertFalse(ptool.install(entry))
+        self.assertFalse(self.ptool.install(entry))
         mock_exists.assert_called_with("/")
         mock_makedirs.assert_called_with(entry, path="/")
         mock_write.assert_called_with(entry)
         mock_set_perms.assert_called_with(entry, path=newfile)
         mock_rename.assert_called_with(newfile, entry)
-        mock_install.assert_called_with(ptool, entry)
+        mock_install.assert_called_with(self.ptool, entry)
 
         reset()
         mock_install.return_value = True
-        self.assertFalse(ptool.install(entry))
+        self.assertFalse(self.ptool.install(entry))
         mock_exists.assert_called_with("/")
         mock_makedirs.assert_called_with(entry, path="/")
         mock_write.assert_called_with(entry)
         mock_set_perms.assert_called_with(entry, path=newfile)
         mock_rename.assert_called_with(newfile, entry)
-        mock_install.assert_called_with(ptool, entry)
+        mock_install.assert_called_with(self.ptool, entry)
 
         reset()
         mock_set_perms.return_value = True
-        self.assertTrue(ptool.install(entry))
+        self.assertTrue(self.ptool.install(entry))
         mock_exists.assert_called_with("/")
         mock_makedirs.assert_called_with(entry, path="/")
         mock_write.assert_called_with(entry)
         mock_set_perms.assert_called_with(entry, path=newfile)
         mock_rename.assert_called_with(newfile, entry)
-        mock_install.assert_called_with(ptool, entry)
+        mock_install.assert_called_with(self.ptool, entry)
 
         reset()
         mock_exists.return_value = True
-        self.assertTrue(ptool.install(entry))
+        self.assertTrue(self.ptool.install(entry))
         mock_exists.assert_called_with("/")
         self.assertFalse(mock_makedirs.called)
         mock_write.assert_called_with(entry)
         mock_set_perms.assert_called_with(entry, path=newfile)
         mock_rename.assert_called_with(newfile, entry)
-        mock_install.assert_called_with(ptool, entry)
+        mock_install.assert_called_with(self.ptool, entry)
 
     def test_diff(self):
-        ptool = self.get_obj()
         content1 = "line1\nline2"
         content2 = "line3"
         rv = ["line1", "line2", "line3"]
         func = Mock()
         func.return_value = rv
-        self.assertItemsEqual(ptool._diff(content1, content2, func), rv)
+        self.assertItemsEqual(self.ptool._diff(content1, content2, func), rv)
         func.assert_called_with(["line1", "line2"], ["line3"])
 
         func.reset_mock()
@@ -427,5 +420,5 @@ class TestPOSIXFile(TestPOSIXTool):
                 time.sleep(5)
                 yield "line%s" % i
         func.side_effect = slow_diff
-        self.assertFalse(ptool._diff(content1, content2, func), rv)
+        self.assertFalse(self.ptool._diff(content1, content2, func), rv)
         func.assert_called_with(["line1", "line2"], ["line3"])

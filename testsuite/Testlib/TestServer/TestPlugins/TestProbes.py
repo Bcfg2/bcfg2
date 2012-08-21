@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import unittest
 import lxml.etree
 from mock import Mock, MagicMock, patch
 from ....common import *
@@ -228,9 +227,11 @@ text
         # test__init(), which relies on being able to check the calls
         # of load_data(), and thus on load_data() being consistently
         # mocked)
-        with patch("Bcfg2.Server.Plugins.Probes.Probes.load_data",
-                   new=load_data):
+        @patch("Bcfg2.Server.Plugins.Probes.Probes.load_data", new=load_data)
+        def inner():
             return Probes(core, datastore)
+
+        return inner()
         
     def test__init(self):
         mock_load_data = Mock()

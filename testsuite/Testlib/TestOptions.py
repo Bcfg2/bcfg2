@@ -1,6 +1,5 @@
 import os
 import sys
-import unittest
 from mock import Mock, MagicMock, patch
 from Bcfg2.Options import *
 from ..common import *

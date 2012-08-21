@@ -231,7 +231,7 @@ class Bcfg2TestCase(unittest.TestCase):
 class DBModelTestCase(Bcfg2TestCase):
     models = []
 
-    @unittest.skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(has_django, "Django not found, skipping")
     def test_syncdb(self):
         # create the test database
         setup_environ(Bcfg2.settings)
@@ -240,7 +240,7 @@ class DBModelTestCase(Bcfg2TestCase):
         cmd.handle_noargs(interactive=False)
         self.assertTrue(os.path.exists(Bcfg2.settings.DATABASE_NAME))
 
-    @unittest.skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(has_django, "Django not found, skipping")
     def test_cleandb(self):
         """ ensure that we a) can connect to the database; b) start with a
         clean database """

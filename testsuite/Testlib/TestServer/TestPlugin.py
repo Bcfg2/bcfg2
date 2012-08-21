@@ -2,7 +2,6 @@ import os
 import re
 import copy
 import logging
-import unittest
 import lxml.etree
 import Bcfg2.Server
 from Bcfg2.Bcfg2Py3k import reduce
@@ -1075,42 +1074,21 @@ class TestStructFile(TestXMLFileBacked):
         self.assertXMLEqual(xactual, xexpected)
 
 
-# INode.__init__ and INode._load_children() call each other
-# recursively, which makes this class kind of a nightmare to test.  we
-# have to first patch INode._load_children so that we can create an
-# INode object with no children loaded, then we unpatch
-# INode._load_children and patch INode.__init__ so that child objects
-# aren't actually created.  but in order to test things atomically, we
-# do this umpteen times in order to test with different data.  we
-# write our own context manager to make this a little easier.  fun fun
-# fun.
-class patch_inode(object):
-    def __init__(self, test_obj, data, idict):
-        self.test_obj = test_obj
-        self.data = data
-        self.idict = idict
-        self.patch_init = None
-        self.inode = None
-
-    def __enter__(self):
-        with patch("Bcfg2.Server.Plugin.%s._load_children" %
-                   self.test_obj.__name__):
-            self.inode = self.test_obj(self.data, self.idict)
-        self.patch_init = patch("Bcfg2.Server.Plugin.%s.__init__" %
-                                self.inode.__class__.__name__,
-                                new=Mock(return_value=None))
-        self.patch_init.start()
-        self.inode._load_children(self.data, self.idict)
-        return (self.inode, self.patch_init.new)
-
-    def __exit__(self, type, value, traceback):
-        self.patch_init.stop()
-        del self.patch_init
-        del self.inode
-
-
 class TestINode(Bcfg2TestCase):
     test_obj = INode
+
+    # INode.__init__ and INode._load_children() call each other
+    # recursively, which makes this class kind of a nightmare to test.
+    # we have to first patch INode._load_children so that we can
+    # create an INode object with no children loaded, then we unpatch
+    # INode._load_children and patch INode.__init__ so that child
+    # objects aren't actually created.  but in order to test things
+    # atomically, we do this umpteen times in order to test with
+    # different data.  this convenience method makes this a little
+    # easier.  fun fun fun.
+    @patch("Bcfg2.Server.Plugin.%s._load_children" % test_obj.__name__, Mock())
+    def _get_inode(self, data, idict):
+        return self.test_obj(data, idict)
 
     def test_raw_predicates(self):
         metadata = Mock()
@@ -1224,12 +1202,20 @@ class TestINode(Bcfg2TestCase):
         child1 = lxml.etree.SubElement(data, "Client", name="foo.example.com")
         child2 = lxml.etree.SubElement(data, "Group", name="bar", negate="true")
         idict = dict()
-        with patch_inode(self.test_obj, data, idict) as (inode, mock_init):
+
+        inode = self._get_inode(data, idict)
+
+        @patch("Bcfg2.Server.Plugin.%s.__init__" % inode.__class__.__name__)
+        def inner(mock_init):
+            mock_init.return_value = None
+            inode._load_children(data, idict)
             self.assertItemsEqual(mock_init.call_args_list,
                                   [call(child1, idict, inode),
                                    call(child2, idict, inode)])
             self.assertEqual(idict, dict())
             self.assertItemsEqual(inode.contents, dict())
+
+        inner()
             
         data = lxml.etree.Element("Parent")
         child1 = lxml.etree.SubElement(data, "Data", name="child1",
@@ -1238,7 +1224,13 @@ class TestINode(Bcfg2TestCase):
         subchild1 = lxml.etree.SubElement(child1, "SubChild", name="subchild")
         child2 = lxml.etree.SubElement(data, "Group", name="bar", negate="true")
         idict = dict()
-        with patch_inode(self.test_obj, data, idict) as (inode, mock_init):
+
+        inode = self._get_inode(data, idict)
+
+        @patch("Bcfg2.Server.Plugin.%s.__init__" % inode.__class__.__name__)
+        def inner2(mock_init):
+            mock_init.return_value = None
+            inode._load_children(data, idict)
             mock_init.assert_called_with(child2, idict, inode)
             tag = child1.tag
             name = child1.get("name")
@@ -1250,16 +1242,26 @@ class TestINode(Bcfg2TestCase):
                                        attr=child1.get('attr'),
                                        __text__=child1.text,
                                        __children__=[subchild1]))
+
+        inner2()
         
         # test ignore.  no ignore is set on INode by default, so we
         # have to set one
         old_ignore = copy.copy(self.test_obj.ignore)
         self.test_obj.ignore.append("Data")
         idict = dict()
-        with patch_inode(self.test_obj, data, idict) as (inode, mock_init):
+
+        inode = self._get_inode(data, idict)
+
+        @patch("Bcfg2.Server.Plugin.%s.__init__" % inode.__class__.__name__)
+        def inner3(mock_init):
+            mock_init.return_value = None
+            inode._load_children(data, idict)
             mock_init.assert_called_with(child2, idict, inode)
             self.assertEqual(idict, dict())
             self.assertItemsEqual(inode.contents, dict())
+
+        inner3()
         self.test_obj.ignore = old_ignore
 
     def test_Match(self):
@@ -1423,7 +1425,9 @@ class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
 
     def test_HandleEvent(self):
         TestXMLDirectoryBacked.test_HandleEvent(self)
-        with patch("Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent"):
+
+        @patch("Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent", Mock())
+        def inner():
             pd = self.get_obj()
             test1 = Mock()
             test1.items = dict(Path=["/etc/foo.conf", "/etc/bar.conf"])
@@ -1439,6 +1443,8 @@ class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
                                              "/etc/baz.conf": pd.BindEntry},
                                        Package={"quux": pd.BindEntry,
                                                 "xyzzy": pd.BindEntry}))
+        
+        inner()
 
     def test__matches(self):
         pd = self.get_obj()
@@ -2120,11 +2126,15 @@ class TestGroupSpool(TestPlugin, TestGenerator):
         gs.entries = {"/foo": Mock(),
                       "/bar": Mock(),
                       "/baz/quux": Mock()}
-        with patch("Bcfg2.Server.Plugin.Plugin.toggle_debug") as mock_debug:
+
+        @patch("Bcfg2.Server.Plugin.Plugin.toggle_debug")
+        def inner(mock_debug):
             gs.toggle_debug()
             mock_debug.assert_called_with(gs)
             for entry in gs.entries.values():
                 entry.toggle_debug.assert_any_call()
+        
+        inner()
         
         TestPlugin.test_toggle_debug(self)
 
