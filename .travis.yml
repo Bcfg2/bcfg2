@@ -8,7 +8,7 @@ env:
   - WITH_OPTIONAL_DEPS=no
 matrix:
   exclude:
-    - python: 3.2
+    - python: "3.2"
       env: WITH_OPTIONAL_DEPS=yes
 before_install:
   - testsuite/before_install.sh
