@@ -274,7 +274,7 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
 
     @patch('Bcfg2.Server.Plugins.Metadata.locked', Mock(return_value=False))
     @patch('fcntl.lockf', Mock())
-    @patch('__builtin__.open')
+    @patch('%s.open' % builtins)
     @patch('os.unlink')
     @patch('os.rename')
     @patch('os.path.islink')
@@ -417,7 +417,7 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
                           self.get_obj, core=core, watch_clients=True)
 
     @patch('os.makedirs', Mock())
-    @patch('__builtin__.open')
+    @patch('%s.open' % builtins)
     def test_init_repo(self, mock_open):
         Metadata.init_repo(datastore,
                            groups_xml="groups", clients_xml="clients")

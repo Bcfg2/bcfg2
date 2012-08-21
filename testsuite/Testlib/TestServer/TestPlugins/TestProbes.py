@@ -118,7 +118,7 @@ class TestProbeSet(TestEntrySet):
         ps.HandleEvent(evt)
         ps.handle_event.assert_called_with(evt)
 
-    @patch("__builtin__.list", FakeList)
+    @patch("%s.list" % builtins, FakeList)
     def test_get_probe_data(self):
         ps = self.get_obj()
         
@@ -268,7 +268,7 @@ text
         probes._write_data_db.assert_called_with("test")
         self.assertFalse(probes._write_data_xml.called)
 
-    @patch("__builtin__.open")
+    @patch("%s.open" % builtins)
     def test__write_data_xml(self, mock_open):
         probes = self.get_probes_object(use_db=False)
         probes.probedata = self.get_test_probedata()
@@ -394,7 +394,7 @@ text
         probes._load_data_db.assert_any_call()
         self.assertFalse(probes._load_data_xml.called)
 
-    @patch("__builtin__.open")
+    @patch("%s.open" % builtins)
     @patch("lxml.etree.parse")
     def test__load_data_xml(self, mock_parse, mock_open):
         probes = self.get_probes_object(use_db=False)

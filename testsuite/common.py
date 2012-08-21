@@ -1,4 +1,5 @@
 import os
+import sys
 import unittest
 from functools import wraps
 
@@ -6,6 +7,11 @@ datastore = "/"
 
 XI_NAMESPACE = "http://www.w3.org/2001/XInclude"
 XI = "{%s}" % XI_NAMESPACE
+
+if sys.hexversion >= 0x03000000:
+    inPy3k = True
+else:
+    inPy3k = False
 
 try:
     from django.core.management import setup_environ
@@ -29,6 +35,10 @@ except ImportError:
         calls """
         return (args, kwargs)
 
+if inPy3k:
+    builtins = "builtins"
+else:
+    builtins = "__builtin__"
 
 if hasattr(unittest.TestCase, "assertItemsEqual"):
     TestCase = unittest.TestCase

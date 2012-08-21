@@ -74,7 +74,7 @@ class TestPOSIXFile(TestPOSIXTool):
         entry.text = ustr
         self.assertEqual(ptool._get_data(entry), (ustr, False))
 
-    @patch("__builtin__.open")
+    @patch("%s.open" % builtins)
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.verify")
     @patch("Bcfg2.Client.Tools.POSIX.File.%s._exists" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.File.%s._get_data" % test_obj.__name__)
@@ -207,7 +207,7 @@ class TestPOSIXFile(TestPOSIXTool):
         mock_rename.assert_called_with(newfile, entry.get("name"))
         mock_unlink.assert_called_with(newfile)
 
-    @patch("__builtin__.open")
+    @patch("%.open" % builtins)
     @patch("Bcfg2.Client.Tools.POSIX.File.%s._diff" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.File.%s._get_data" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.File.%s._is_string" % test_obj.__name__)

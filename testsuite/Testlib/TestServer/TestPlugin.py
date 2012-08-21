@@ -227,7 +227,7 @@ class TestThreadedStatistics(TestStatistics):
         ts = self.get_obj(core)
         mock_start.assert_any_call()
 
-    @patch("__builtin__.open")
+    @patch("%s.open" % builtins)
     @patch("Bcfg2.Server.Plugin.ThreadedStatistics.run", Mock())
     def test_save(self, mock_open):
         core = Mock()
@@ -270,7 +270,7 @@ class TestThreadedStatistics(TestStatistics):
         
     @patch("os.unlink")
     @patch("os.path.exists")
-    @patch("__builtin__.open")
+    @patch("%s.open" % builtins)
     @patch("lxml.etree.XML")
     @patch("Bcfg2.Server.Plugin.ThreadedStatistics.run", Mock())
     def test_load(self, mock_XML, mock_open, mock_exists, mock_unlink):
@@ -444,7 +444,7 @@ class TestFileBacked(Bcfg2TestCase):
     def get_obj(self, path=datastore, fam=None):
         return self.test_obj(path, fam=fam)
 
-    @patch("__builtin__.open")
+    @patch("%s.open" % builtins)
     def test_HandleEvent(self, mock_open):
         path = "/test"
         fb = self.get_obj(path)
@@ -1349,7 +1349,7 @@ class TestXMLSrc(TestXMLFileBacked):
         # ensure that the node object has the necessary interface
         self.assertTrue(hasattr(self.test_obj.__node__, "Match"))
 
-    @patch("__builtin__.open")
+    @patch("%s.open" % builtins)
     def test_HandleEvent(self, mock_open):
         xdata = lxml.etree.Element("Test")
         lxml.etree.SubElement(xdata, "Path", name="path", attr="whatever")
@@ -1603,7 +1603,7 @@ class TestSpecificData(Bcfg2TestCase):
             specific = Mock()
         return self.test_obj(name, specific, encoding)
     
-    @patch("__builtin__.open")
+    @patch("%s.open" % builtins)
     def test_handle_event(self, mock_open):
         event = Mock()
         event.code2str.return_value = 'deleted'
@@ -1912,7 +1912,7 @@ class TestEntrySet(TestDebuggable):
             fails(eset, ppath + ".G20_")
             fails(eset, ppath + ".H_")
 
-    @patch("__builtin__.open")
+    @patch("%s.open" % builtins)
     @patch("Bcfg2.Server.Plugin.InfoXML")
     def test_update_metadata(self, mock_InfoXML, mock_open):
         eset = self.get_obj()
