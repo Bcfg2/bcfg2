@@ -8,7 +8,13 @@ import os
 import os.path
 import sys
 
-execfile('src/lib/Bcfg2/version.py')
+vfile = 'src/lib/Bcfg2/version.py'
+try:
+    # python 2
+    execfile(vfile)
+except NameError:
+    # py3k
+    exec(compile(open(vfile).read(), vfile, 'exec'))
 
 # we only need m2crypto on < python2.6
 need_m2crypto = False
