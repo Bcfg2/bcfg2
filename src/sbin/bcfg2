@@ -214,7 +214,7 @@ class Client:
                 try:
                     # upload probe responses
                     proxy.RecvProbeData(Bcfg2.Client.XML.tostring(probedata,
-                                                                  encoding='unicode'))
+                                                                  xml_declaration=False).decode('UTF-8'))
                 except Bcfg2.Proxy.ProxyError:
                     err = sys.exc_info()[1]
                     self.logger.error("Failed to upload probe data: %s" % err)
@@ -313,7 +313,7 @@ class Client:
 
             try:
                 proxy.RecvStats(Bcfg2.Client.XML.tostring(feedback,
-                                                          encoding='unicode'))
+                                                          xml_declaration=False).decode('UTF-8'))
             except Bcfg2.Proxy.ProxyError:
                 err = sys.exc_info()[1]
                 self.logger.error("Failed to upload configuration statistics: "
