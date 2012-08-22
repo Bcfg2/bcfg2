@@ -1062,7 +1062,7 @@ class TestStructFile(TestXMLFileBacked):
         actual = copy.deepcopy(xdata)
         for el in actual.getchildren():
             sf._xml_match(el, metadata)
-        expected = lxml.etree.Element(xdata.tag, **xdata.attrib)
+        expected = lxml.etree.Element(xdata.tag, **dict(xdata.attrib))
         expected.text = xdata.text
         expected.extend(reduce(lambda x, y: x + y,
                                list(children.values()) + list(subchildren.values())))
