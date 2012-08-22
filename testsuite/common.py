@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+from mock import patch
 from functools import wraps
 
 datastore = "/"
@@ -253,3 +254,17 @@ def syncdb(modeltest):
     inst = modeltest(methodName='test_syncdb')
     inst.test_syncdb()
     inst.test_cleandb()
+
+
+def patchIf(condition, entity, **kwargs):
+    """ perform conditional patching.  this is necessary because some
+    libraries might not be installed (e.g., selinux, pylibacl), and
+    patching will barf on that.  Other workarounds are not available
+    to us; e.g., context managers aren't in python 2.4, and using
+    inner functions doesn't work because python 2.6 applies all
+    decorators at compile-time, not at run-time, so decorating inner
+    functions does not prevent the decorators from being run. """
+    if condition:
+        return patch(entity, **kwargs)
+    else:
+        return lambda f: f

@@ -286,13 +286,15 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_set_acls.assert_called_with(entry, path=entry.get("name"))
 
     @skipUnless(has_acls, "ACLS not found, skipping")
+    @patchIf(has_acls, "posix1e.ACL")
+    @patchIf(has_acls, "posix1e.Entry")
     @patch("os.path.isdir")
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_uid" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_gid" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._list_entry_acls" %
            test_obj.__name__)
     def test_set_acls(self, mock_list_entry_acls, mock_norm_gid, mock_norm_uid,
-                      mock_isdir):
+                      mock_isdir, mock_Entry, mock_ACL):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
 
         # disable acls for the initial test
@@ -324,116 +326,113 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_norm_uid.return_value = 10
         mock_norm_gid.return_value = 100
 
-        @patch("posix1e.ACL")
-        @patch("posix1e.Entry")
-        def inner(mock_Entry, mock_ACL):
-            # set up the unreasonably complex return value for
-            # posix1e.ACL(), which has three separate uses
-            fileacl_rv = MagicMock()
-            fileacl_rv.valid.return_value = True
-            fileacl_rv.__iter__.return_value = iter(file_acls)
-            filedef_rv = MagicMock()
-            filedef_rv.valid.return_value = True
-            filedef_rv.__iter__.return_value = iter(file_acls)
-            acl_rv = MagicMock()
-            def mock_acl_rv(file=None, filedef=None, acl=None):
-                if file:
-                    return fileacl_rv
-                elif filedef:
-                    return filedef_rv
-                elif acl:
-                    return acl_rv
+        # set up the unreasonably complex return value for
+        # posix1e.ACL(), which has three separate uses
+        fileacl_rv = MagicMock()
+        fileacl_rv.valid.return_value = True
+        fileacl_rv.__iter__.return_value = iter(file_acls)
+        filedef_rv = MagicMock()
+        filedef_rv.valid.return_value = True
+        filedef_rv.__iter__.return_value = iter(file_acls)
+        acl_rv = MagicMock()
+        def mock_acl_rv(file=None, filedef=None, acl=None):
+            if file:
+                return fileacl_rv
+            elif filedef:
+                return filedef_rv
+            elif acl:
+                return acl_rv
 
-            # set up the equally unreasonably complex return value for
-            # posix1e.Entry, which returns a new entry and adds it to
-            # an ACL, so we have to track the Mock objects it returns.
-            # why can't they just have an acl.add_entry() method?!?
-            acl_entries = []
-            def mock_entry_rv(acl):
-                rv = MagicMock()
-                rv.acl = acl
-                rv.permset = set()
-                acl_entries.append(rv)
-                return rv
-            mock_Entry.side_effect = mock_entry_rv
+        # set up the equally unreasonably complex return value for
+        # posix1e.Entry, which returns a new entry and adds it to
+        # an ACL, so we have to track the Mock objects it returns.
+        # why can't they just have an acl.add_entry() method?!?
+        acl_entries = []
+        def mock_entry_rv(acl):
+            rv = MagicMock()
+            rv.acl = acl
+            rv.permset = set()
+            acl_entries.append(rv)
+            return rv
+        mock_Entry.side_effect = mock_entry_rv
 
-            def reset():
-                mock_isdir.reset_mock()
-                mock_ACL.reset_mock()
-                mock_Entry.reset_mock()
-                fileacl_rv.reset_mock()
+        def reset():
+            mock_isdir.reset_mock()
+            mock_ACL.reset_mock()
+            mock_Entry.reset_mock()
+            fileacl_rv.reset_mock()
 
-            # test fs mounted noacl
-            mock_ACL.side_effect = IOError(95, "Operation not permitted")
-            self.assertFalse(self.ptool._set_acls(entry))
+        # test fs mounted noacl
+        mock_ACL.side_effect = IOError(95, "Operation not permitted")
+        self.assertFalse(self.ptool._set_acls(entry))
 
-            # test other error
-            reset()
-            mock_ACL.side_effect = IOError
-            self.assertFalse(self.ptool._set_acls(entry))
+        # test other error
+        reset()
+        mock_ACL.side_effect = IOError
+        self.assertFalse(self.ptool._set_acls(entry))
 
-            reset()
-            mock_ACL.side_effect = mock_acl_rv
-            mock_isdir.return_value = True
-            self.assertTrue(self.ptool._set_acls(entry))
-            self.assertItemsEqual(mock_ACL.call_args_list,
-                                  [call(file=entry.get("name")),
-                                   call(filedef=entry.get("name"))])
-            self.assertItemsEqual(fileacl_rv.delete_entry.call_args_list,
-                                  [call(a) for a in remove_acls])
-            self.assertItemsEqual(filedef_rv.delete_entry.call_args_list,
-                                  [call(a) for a in remove_acls])
-            mock_list_entry_acls.assert_called_with(entry)
-            mock_norm_uid.assert_called_with("user")
-            mock_norm_gid.assert_called_with("group")
-            fileacl_rv.calc_mask.assert_any_call()
-            fileacl_rv.applyto.assert_called_with(entry.get("name"),
-                                                  posix1e.ACL_TYPE_ACCESS)
-            filedef_rv.calc_mask.assert_any_call()
-            filedef_rv.applyto.assert_called_with(entry.get("name"),
-                                                  posix1e.ACL_TYPE_DEFAULT)
+        reset()
+        mock_ACL.side_effect = mock_acl_rv
+        mock_isdir.return_value = True
+        self.assertTrue(self.ptool._set_acls(entry))
+        self.assertItemsEqual(mock_ACL.call_args_list,
+                              [call(file=entry.get("name")),
+                               call(filedef=entry.get("name"))])
+        self.assertItemsEqual(fileacl_rv.delete_entry.call_args_list,
+                              [call(a) for a in remove_acls])
+        self.assertItemsEqual(filedef_rv.delete_entry.call_args_list,
+                              [call(a) for a in remove_acls])
+        mock_list_entry_acls.assert_called_with(entry)
+        mock_norm_uid.assert_called_with("user")
+        mock_norm_gid.assert_called_with("group")
+        fileacl_rv.calc_mask.assert_any_call()
+        fileacl_rv.applyto.assert_called_with(entry.get("name"),
+                                              posix1e.ACL_TYPE_ACCESS)
+        filedef_rv.calc_mask.assert_any_call()
+        filedef_rv.applyto.assert_called_with(entry.get("name"),
+                                              posix1e.ACL_TYPE_DEFAULT)
 
-            # build tuples of the Entry objects that were added to acl
-            # and defaacl so they're easier to compare for equality
-            added_acls = []
-            for acl in acl_entries:
-                added_acls.append((acl.acl, acl.tag_type, acl.qualifier,
-                                   sum(acl.permset)))
-            self.assertItemsEqual(added_acls,
-                                  [(filedef_rv, posix1e.ACL_USER, 10, 7),
-                                   (fileacl_rv, posix1e.ACL_GROUP, 100, 5)])
+        # build tuples of the Entry objects that were added to acl
+        # and defaacl so they're easier to compare for equality
+        added_acls = []
+        for acl in acl_entries:
+            added_acls.append((acl.acl, acl.tag_type, acl.qualifier,
+                               sum(acl.permset)))
+        self.assertItemsEqual(added_acls,
+                              [(filedef_rv, posix1e.ACL_USER, 10, 7),
+                               (fileacl_rv, posix1e.ACL_GROUP, 100, 5)])
 
-            reset()
-            # have to reassign these because they're iterators, and
-            # they've already been iterated over once
-            fileacl_rv.__iter__.return_value = iter(file_acls)
-            filedef_rv.__iter__.return_value = iter(file_acls)
-            mock_list_entry_acls.reset_mock()
-            mock_norm_uid.reset_mock()
-            mock_norm_gid.reset_mock()
-            mock_isdir.return_value = False
-            acl_entries = []
-            self.assertTrue(self.ptool._set_acls(entry, path="/bin/bar"))
-            mock_ACL.assert_called_with(file="/bin/bar")
-            self.assertItemsEqual(fileacl_rv.delete_entry.call_args_list,
-                                  [call(a) for a in remove_acls])
-            mock_list_entry_acls.assert_called_with(entry)
-            mock_norm_gid.assert_called_with("group")
-            fileacl_rv.calc_mask.assert_any_call()
-            fileacl_rv.applyto.assert_called_with("/bin/bar",
-                                                  posix1e.ACL_TYPE_ACCESS)
+        reset()
+        # have to reassign these because they're iterators, and
+        # they've already been iterated over once
+        fileacl_rv.__iter__.return_value = iter(file_acls)
+        filedef_rv.__iter__.return_value = iter(file_acls)
+        mock_list_entry_acls.reset_mock()
+        mock_norm_uid.reset_mock()
+        mock_norm_gid.reset_mock()
+        mock_isdir.return_value = False
+        acl_entries = []
+        self.assertTrue(self.ptool._set_acls(entry, path="/bin/bar"))
+        mock_ACL.assert_called_with(file="/bin/bar")
+        self.assertItemsEqual(fileacl_rv.delete_entry.call_args_list,
+                              [call(a) for a in remove_acls])
+        mock_list_entry_acls.assert_called_with(entry)
+        mock_norm_gid.assert_called_with("group")
+        fileacl_rv.calc_mask.assert_any_call()
+        fileacl_rv.applyto.assert_called_with("/bin/bar",
+                                              posix1e.ACL_TYPE_ACCESS)
 
-            added_acls = []
-            for acl in acl_entries:
-                added_acls.append((acl.acl, acl.tag_type, acl.qualifier,
-                                   sum(acl.permset)))
-            self.assertItemsEqual(added_acls,
-                                  [(fileacl_rv, posix1e.ACL_GROUP, 100, 5)])
-
-        inner()
+        added_acls = []
+        for acl in acl_entries:
+            added_acls.append((acl.acl, acl.tag_type, acl.qualifier,
+                               sum(acl.permset)))
+        self.assertItemsEqual(added_acls,
+                              [(fileacl_rv, posix1e.ACL_GROUP, 100, 5)])
 
     @skipUnless(has_selinux, "SELinux not found, skipping")
-    def test_set_secontext(self):
+    @patchIf(has_selinux, "selinux.restorecon")
+    @patchIf(has_selinux, "selinux.lsetfilecon")
+    def test_set_secontext(self, mock_lsetfilecon, mock_restorecon):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
 
         # disable selinux for the initial test
@@ -441,37 +440,32 @@ class TestPOSIXTool(Bcfg2TestCase):
         self.assertTrue(self.ptool._set_secontext(entry))
         Bcfg2.Client.Tools.POSIX.base.has_selinux = True
 
-        @patch("selinux.restorecon") 
-        @patch("selinux.lsetfilecon")
-        def inner(mock_lsetfilecon, mock_restorecon):
-            # no context given
-            self.assertTrue(self.ptool._set_secontext(entry))
-            self.assertFalse(mock_restorecon.called)
-            self.assertFalse(mock_lsetfilecon.called)
-            
-            mock_restorecon.reset_mock()
-            mock_lsetfilecon.reset_mock()
-            entry.set("secontext", "__default__")
-            self.assertTrue(self.ptool._set_secontext(entry))
-            mock_restorecon.assert_called_with(entry.get("name"))
-            self.assertFalse(mock_lsetfilecon.called)
+        # no context given
+        self.assertTrue(self.ptool._set_secontext(entry))
+        self.assertFalse(mock_restorecon.called)
+        self.assertFalse(mock_lsetfilecon.called)
 
-            mock_restorecon.reset_mock()
-            mock_lsetfilecon.reset_mock()
-            mock_lsetfilecon.return_value = 0
-            entry.set("secontext", "foo_t")
-            self.assertTrue(self.ptool._set_secontext(entry))
-            self.assertFalse(mock_restorecon.called)
-            mock_lsetfilecon.assert_called_with(entry.get("name"), "foo_t")
-            
-            mock_restorecon.reset_mock()
-            mock_lsetfilecon.reset_mock()
-            mock_lsetfilecon.return_value = 1
-            self.assertFalse(self.ptool._set_secontext(entry))
-            self.assertFalse(mock_restorecon.called)
-            mock_lsetfilecon.assert_called_with(entry.get("name"), "foo_t")
-            
-        inner()
+        mock_restorecon.reset_mock()
+        mock_lsetfilecon.reset_mock()
+        entry.set("secontext", "__default__")
+        self.assertTrue(self.ptool._set_secontext(entry))
+        mock_restorecon.assert_called_with(entry.get("name"))
+        self.assertFalse(mock_lsetfilecon.called)
+
+        mock_restorecon.reset_mock()
+        mock_lsetfilecon.reset_mock()
+        mock_lsetfilecon.return_value = 0
+        entry.set("secontext", "foo_t")
+        self.assertTrue(self.ptool._set_secontext(entry))
+        self.assertFalse(mock_restorecon.called)
+        mock_lsetfilecon.assert_called_with(entry.get("name"), "foo_t")
+
+        mock_restorecon.reset_mock()
+        mock_lsetfilecon.reset_mock()
+        mock_lsetfilecon.return_value = 1
+        self.assertFalse(self.ptool._set_secontext(entry))
+        self.assertFalse(mock_restorecon.called)
+        mock_lsetfilecon.assert_called_with(entry.get("name"), "foo_t")
 
     @patch("grp.getgrnam")
     def test_norm_gid(self, mock_getgrnam):
@@ -576,9 +570,9 @@ class TestPOSIXTool(Bcfg2TestCase):
         context = 'system_u:object_r:root_t:s0'
         path = '/test'
 
-        @patch("selinux.getfilecon")
         @patch('os.stat')
-        def inner(mock_stat, mock_getfilecon):
+        @patchIf(has_selinux, "selinux.getfilecon")
+        def inner(mock_getfilecon, mock_stat):
             mock_getfilecon.return_value = [len(context) + 1, context]
             mock_stat.return_value = MagicMock()
             # disable acls for this call and test them separately
@@ -587,7 +581,7 @@ class TestPOSIXTool(Bcfg2TestCase):
             self.assertEqual(self.ptool._gather_data(path)[4], 'root_t')
             Bcfg2.Client.Tools.POSIX.base.has_acls = state
             mock_getfilecon.assert_called_with(path)
-        
+
         inner()
 
     @skipUnless(has_acls, "ACLS not found, skipping")
@@ -607,6 +601,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         Bcfg2.Client.Tools.POSIX.base.has_selinux = state
         mock_list_file_acls.assert_called_with(path)
 
+    @patchIf(has_selinux, "selinux.matchpathcon")
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._verify_acls" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._gather_data" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_entry_uid" %
@@ -614,7 +609,8 @@ class TestPOSIXTool(Bcfg2TestCase):
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_entry_gid" %
            test_obj.__name__)
     def test_verify_metadata(self, mock_norm_gid, mock_norm_uid,
-                             mock_gather_data, mock_verify_acls):
+                             mock_gather_data, mock_verify_acls,
+                             mock_matchpathcon):
         entry = lxml.etree.Element("Path", name="/test", type="file",
                                    group="group", owner="user", perms="664",
                                    secontext='etc_t')
@@ -740,42 +736,38 @@ class TestPOSIXTool(Bcfg2TestCase):
             entry.set("mtime", str(mtime))
             entry.set("secontext", "__default__")
 
-            @patch("selinux.matchpathcon")
-            def inner(entry, mock_matchpathcon):
-                context1 = "system_u:object_r:etc_t:s0"
-                context2 = "system_u:object_r:root_t:s0"
-                mock_matchpathcon.return_value = [1 + len(context1),
-                                                  context1]
-                gather_data_rv = [stat_rv, None, None, None, None, []]
-                for attr, idx, val in expected:
-                    gather_data_rv[idx] = val
-                mock_gather_data.return_value = tuple(gather_data_rv)
-                self.assertTrue(self.ptool._verify_metadata(entry))
-                mock_gather_data.assert_called_with(entry.get("name"))
-                mock_verify_acls.assert_called_with(entry,
-                                                    path=entry.get("name"))
-                mock_matchpathcon.assert_called_with(entry.get("name"), 0)
-                self.assertEqual(entry.get("current_exists", 'true'), 'true')
-                for attr, idx, val in expected:
-                    self.assertEqual(entry.get(attr), val)
-                self.assertEqual(entry.get("current_mtime"), str(mtime))
+            context1 = "system_u:object_r:etc_t:s0"
+            context2 = "system_u:object_r:root_t:s0"
+            mock_matchpathcon.return_value = [1 + len(context1),
+                                              context1]
+            gather_data_rv = [stat_rv, None, None, None, None, []]
+            for attr, idx, val in expected:
+                gather_data_rv[idx] = val
+            mock_gather_data.return_value = tuple(gather_data_rv)
+            self.assertTrue(self.ptool._verify_metadata(entry))
+            mock_gather_data.assert_called_with(entry.get("name"))
+            mock_verify_acls.assert_called_with(entry,
+                                                path=entry.get("name"))
+            mock_matchpathcon.assert_called_with(entry.get("name"), 0)
+            self.assertEqual(entry.get("current_exists", 'true'), 'true')
+            for attr, idx, val in expected:
+                self.assertEqual(entry.get(attr), val)
+            self.assertEqual(entry.get("current_mtime"), str(mtime))
 
-                entry = reset()
-                entry.set("mtime", str(mtime))
-                entry.set("secontext", "__default__")
-                mock_matchpathcon.return_value = [1 + len(context2),
-                                                  context2]
-                self.assertFalse(self.ptool._verify_metadata(entry))
-                mock_gather_data.assert_called_with(entry.get("name"))
-                mock_verify_acls.assert_called_with(entry,
-                                                    path=entry.get("name"))
-                mock_matchpathcon.assert_called_with(entry.get("name"), 0)
-                self.assertEqual(entry.get("current_exists", 'true'), 'true')
-                for attr, idx, val in expected:
-                    self.assertEqual(entry.get(attr), val)
-                self.assertEqual(entry.get("current_mtime"), str(mtime))
-
-            inner(entry)
+            entry = reset()
+            entry.set("mtime", str(mtime))
+            entry.set("secontext", "__default__")
+            mock_matchpathcon.return_value = [1 + len(context2),
+                                              context2]
+            self.assertFalse(self.ptool._verify_metadata(entry))
+            mock_gather_data.assert_called_with(entry.get("name"))
+            mock_verify_acls.assert_called_with(entry,
+                                                path=entry.get("name"))
+            mock_matchpathcon.assert_called_with(entry.get("name"), 0)
+            self.assertEqual(entry.get("current_exists", 'true'), 'true')
+            for attr, idx, val in expected:
+                self.assertEqual(entry.get(attr), val)
+            self.assertEqual(entry.get("current_mtime"), str(mtime))
 
     @skipUnless(has_acls, "ACLS not found, skipping")
     def test_list_entry_acls(self):
@@ -792,89 +784,94 @@ class TestPOSIXTool(Bcfg2TestCase):
     @patch("pwd.getpwuid")
     @patch("grp.getgrgid")
     @patch("os.path.isdir")
-    def test_list_file_acls(self, mock_isdir, mock_getgrgid, mock_getpwuid):
+    def test_list_file_acls(self, mock_isdir, mock_getgrgid, mock_getpwuid,
+                            mock_ACL):
         path = '/test'
 
-        @patch("posix1e.ACL")
-        def inner(mock_ACL):
-            # build a set of file ACLs to return from posix1e.ACL(file=...)
-            file_acls = []
-            acl = Mock()
-            acl.tag_type = posix1e.ACL_USER
-            acl.qualifier = 10
-            # yes, this is a bogus permset.  thanks to _norm_acl_perms
-            # it works and is easier than many of the alternatives.
-            acl.permset = 'rwx'
-            file_acls.append(acl)
-            acl = Mock()
-            acl.tag_type = posix1e.ACL_GROUP
-            acl.qualifier = 100
-            acl.permset = 'rx'
-            file_acls.append(acl)
-            acl = Mock()
-            acl.tag_type = posix1e.ACL_MASK
-            file_acls.append(acl)
-            acls = {("access", posix1e.ACL_USER, "user"): 7,
-                    ("access", posix1e.ACL_GROUP, "group"): 5}
+        # build a set of file ACLs to return from posix1e.ACL(file=...)
+        file_acls = []
+        acl = Mock()
+        acl.tag_type = posix1e.ACL_USER
+        acl.qualifier = 10
+        # yes, this is a bogus permset.  thanks to _norm_acl_perms
+        # it works and is easier than many of the alternatives.
+        acl.permset = 'rwx'
+        file_acls.append(acl)
+        acl = Mock()
+        acl.tag_type = posix1e.ACL_GROUP
+        acl.qualifier = 100
+        acl.permset = 'rx'
+        file_acls.append(acl)
+        acl = Mock()
+        acl.tag_type = posix1e.ACL_MASK
+        file_acls.append(acl)
+        acls = {("access", posix1e.ACL_USER, "user"): 7,
+                ("access", posix1e.ACL_GROUP, "group"): 5}
 
-            # set up the unreasonably complex return value for
-            # posix1e.ACL(), which has two separate uses
-            fileacl_rv = MagicMock()
-            fileacl_rv.valid.return_value = True
-            fileacl_rv.__iter__.return_value = iter(file_acls)
-            filedef_rv = MagicMock()
-            filedef_rv.valid.return_value = True
-            filedef_rv.__iter__.return_value = iter(file_acls)
-            def mock_acl_rv(file=None, filedef=None):
-                if file:
-                    return fileacl_rv
-                elif filedef:
-                    return filedef_rv
-            # other return values
-            mock_isdir.return_value = False
-            mock_getgrgid.return_value = ("group", "x", 5, [])
-            mock_getpwuid.return_value = ("user", "x", 5, 5, "User",
-                                          "/home/user", "/bin/zsh")
+        # set up the unreasonably complex return value for
+        # posix1e.ACL(), which has two separate uses
+        fileacl_rv = MagicMock()
+        fileacl_rv.valid.return_value = True
+        fileacl_rv.__iter__.return_value = iter(file_acls)
+        filedef_rv = MagicMock()
+        filedef_rv.valid.return_value = True
+        filedef_rv.__iter__.return_value = iter(file_acls)
+        def mock_acl_rv(file=None, filedef=None):
+            if file:
+                return fileacl_rv
+            elif filedef:
+                return filedef_rv
+        # other return values
+        mock_isdir.return_value = False
+        mock_getgrgid.return_value = ("group", "x", 5, [])
+        mock_getpwuid.return_value = ("user", "x", 5, 5, "User",
+                                      "/home/user", "/bin/zsh")
 
-            def reset():
-                mock_isdir.reset_mock()
-                mock_getgrgid.reset_mock()
-                mock_getpwuid.reset_mock()
-                mock_ACL.reset_mock()
+        def reset():
+            mock_isdir.reset_mock()
+            mock_getgrgid.reset_mock()
+            mock_getpwuid.reset_mock()
+            mock_ACL.reset_mock()
 
-            mock_ACL.side_effect = IOError(95, "Operation not supported")
-            self.assertItemsEqual(self.ptool._list_file_acls(path), dict())
+        mock_ACL.side_effect = IOError(95, "Operation not supported")
+        self.assertItemsEqual(self.ptool._list_file_acls(path), dict())
 
-            reset()
-            mock_ACL.side_effect = IOError
-            self.assertItemsEqual(self.ptool._list_file_acls(path), dict())
+        reset()
+        mock_ACL.side_effect = IOError
+        self.assertItemsEqual(self.ptool._list_file_acls(path), dict())
 
-            reset()
-            mock_ACL.side_effect = mock_acl_rv
-            self.assertItemsEqual(self.ptool._list_file_acls(path), acls)
-            mock_isdir.assert_called_with(path)
-            mock_getgrgid.assert_called_with(100)
-            mock_getpwuid.assert_called_with(10)
-            mock_ACL.assert_called_with(file=path)
+        reset()
+        mock_ACL.side_effect = mock_acl_rv
+        self.assertItemsEqual(self.ptool._list_file_acls(path), acls)
+        mock_isdir.assert_called_with(path)
+        mock_getgrgid.assert_called_with(100)
+        mock_getpwuid.assert_called_with(10)
+        mock_ACL.assert_called_with(file=path)
 
-            reset()
-            mock_isdir.return_value = True
-            fileacl_rv.__iter__.return_value = iter(file_acls)
-            filedef_rv.__iter__.return_value = iter(file_acls)
+        reset()
+        mock_isdir.return_value = True
+        fileacl_rv.__iter__.return_value = iter(file_acls)
+        filedef_rv.__iter__.return_value = iter(file_acls)
 
-            defacls = acls
-            for akey, perms in acls.items():
-                defacls[('default', akey[1], akey[2])] = perms
-            self.assertItemsEqual(self.ptool._list_file_acls(path), defacls)
-            mock_isdir.assert_called_with(path)
-            self.assertItemsEqual(mock_getgrgid.call_args_list,
-                                  [call(100), call(100)])
-            self.assertItemsEqual(mock_getpwuid.call_args_list,
-                                  [call(10), call(10)])
-            self.assertItemsEqual(mock_ACL.call_args_list,
-                                  [call(file=path), call(filedef=path)])
+        defacls = acls
+        for akey, perms in acls.items():
+            defacls[('default', akey[1], akey[2])] = perms
+        self.assertItemsEqual(self.ptool._list_file_acls(path), defacls)
+        mock_isdir.assert_called_with(path)
+        self.assertItemsEqual(mock_getgrgid.call_args_list,
+                              [call(100), call(100)])
+        self.assertItemsEqual(mock_getpwuid.call_args_list,
+                              [call(10), call(10)])
+        self.assertItemsEqual(mock_ACL.call_args_list,
+                              [call(file=path), call(filedef=path)])
 
-        inner()
+    if has_acls:
+        # python 2.6 applies decorators at compile-time, not at
+        # run-time, so we can't do these as decorators because
+        # pylibacl might not be installed.  (If it's not, this test
+        # will be skipped, so as long as this is done at run-time
+        # we're safe.)
+        test_list_file_acls = patch("posix1e.ACL")(test_list_file_acls)
 
     @skipUnless(has_acls, "ACLS not found, skipping")
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._list_file_acls" %
