@@ -4,7 +4,7 @@ import copy
 import difflib
 import binascii
 import lxml.etree
-from Bcfg2.Bcfg2Py3k import b64encode, b64decode
+from Bcfg2.Bcfg2Py3k import b64encode, b64decode, u_str
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.File import *
 from .Test__init import get_posix_object
@@ -62,13 +62,7 @@ class TestPOSIXFile(TestPOSIXTool):
         entry.text = "test"
         self.assertEqual(ptool._get_data(entry), ("test", False))
 
-        ustr = u('é')
-        entry = copy.deepcopy(orig_entry)
-        entry.text = ustr
-        self.assertEqual(ptool._get_data(entry), (ustr, False))
-
-        setup['encoding'] = "utf_8"
-        ptool = self.get_obj(posix=get_posix_object(setup=setup))
+        ustr = u_str('é', 'UTF-8')
         entry = copy.deepcopy(orig_entry)
         entry.text = ustr
         self.assertEqual(ptool._get_data(entry), (ustr, False))
