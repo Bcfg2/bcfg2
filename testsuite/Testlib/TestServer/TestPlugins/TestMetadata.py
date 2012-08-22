@@ -144,8 +144,19 @@ class TestClientVersions(Bcfg2TestCase):
         self.assertIsNone(v['client5'])
 
         # test exception on nonexistent client
-        with self.assertRaises(KeyError):
+        expected = KeyError
+        try:
             v['clients__getitem']
+        except expected:
+            pass
+        except:
+            err = sys.exc_info()[1]
+            self.assertFalse(True, "%s raised instead of %s" %
+                             (err.__class__.__name__,
+                              expected.__class__.__name__))
+        else:
+            self.assertFalse(True,
+                             "%s not raised" % expected.__class__.__name__)
 
     def test__len(self):
         v = ClientVersions()
@@ -182,16 +193,42 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
 
     def test_xdata(self):
         config = self.get_obj()
-        with self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError):
+        expected = Bcfg2.Server.Plugin.MetadataRuntimeError
+        try:
             config.xdata
+        except expected:
+            pass
+        except:
+            err = sys.exc_info()[1]
+            self.assertFalse(True, "%s raised instead of %s" %
+                             (err.__class__.__name__,
+                              expected.__class__.__name__))
+        else:
+            self.assertFalse(True,
+                             "%s not raised" % expected.__class__.__name__)
+            pass
+
         config.data = "<test/>"
         self.assertEqual(config.xdata, "<test/>")
 
     def test_base_xdata(self):
         config = self.get_obj()
         # we can't use assertRaises here because base_xdata is a property
-        with self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError):
+        expected = Bcfg2.Server.Plugin.MetadataRuntimeError
+        try:
             config.base_xdata
+        except expected:
+            pass
+        except:
+            err = sys.exc_info()[1]
+            self.assertFalse(True, "%s raised instead of %s" %
+                             (err.__class__.__name__,
+                              expected.__class__.__name__))
+        else:
+            self.assertFalse(True,
+                             "%s not raised" % expected.__class__.__name__)
+            pass
+
         config.basedata = "<test/>"
         self.assertEqual(config.base_xdata, "<test/>")
 

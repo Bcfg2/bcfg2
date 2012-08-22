@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import copy
 import logging
 import lxml.etree
@@ -506,8 +507,19 @@ class TestDirectoryBacked(Bcfg2TestCase):
         db.entries.update(dict(a=1, b=2, c=3))
         self.assertEqual(db['a'], 1)
         self.assertEqual(db['b'], 2)
-        with self.assertRaises(KeyError):
+        expected = KeyError
+        try:
             db['d']
+        except expected:
+            pass
+        except:
+            err = sys.exc_info()[1]
+            self.assertFalse(True, "%s raised instead of %s" %
+                             (err.__class__.__name__,
+                              expected.__class__.__name__))
+        else:
+            self.assertFalse(True,
+                             "%s not raised" % expected.__class__.__name__)
 
     def test__iter(self):
         db = self.get_obj()
