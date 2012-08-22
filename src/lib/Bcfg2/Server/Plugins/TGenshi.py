@@ -31,7 +31,7 @@ def removecomment(stream):
         yield kind, data, pos
 
 
-class TemplateFile:
+class TemplateFile(object):
     """Template file creates Genshi template structures for the loaded file."""
 
     def __init__(self, name, specific, encoding):
@@ -121,6 +121,10 @@ class TemplateFile:
             raise Bcfg2.Server.Plugin.PluginExecutionError('Genshi template loading error: %s' % err)
 
 
+class TemplateEntrySet(Bcfg2.Server.Plugin.EntrySet):
+    basename_is_regex = True
+
+
 class TGenshi(Bcfg2.Server.Plugin.GroupSpool):
     """
     The TGenshi generator implements a templating
@@ -130,5 +134,6 @@ class TGenshi(Bcfg2.Server.Plugin.GroupSpool):
     name = 'TGenshi'
     __author__ = 'jeff@ocjtech.us'
     filename_pattern = 'template\.(txt|newtxt|xml)'
+    es_cls = TemplateEntrySet
     es_child_cls = TemplateFile
     deprecated = True

@@ -14,6 +14,8 @@ class DecisionFile(Bcfg2.Server.Plugin.SpecificData):
         return [(x.get('type'), x.get('name')) for x in self.contents.xpath('.//Decision')]
 
 class DecisionSet(Bcfg2.Server.Plugin.EntrySet):
+    basename_is_regex = True
+
     def __init__(self, path, fam, encoding):
         """Container for decision specification files.
 
@@ -24,8 +26,7 @@ class DecisionSet(Bcfg2.Server.Plugin.EntrySet):
 
         """
         Bcfg2.Server.Plugin.EntrySet.__init__(self, '(white|black)list', path,
-                                              DecisionFile, encoding,
-                                              is_regex=True)
+                                              DecisionFile, encoding)
         try:
             fam.AddMonitor(path, self)
         except OSError:

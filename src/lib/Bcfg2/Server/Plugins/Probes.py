@@ -114,12 +114,13 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|probed\\.xml)$")
     probename = re.compile("(.*/)?(?P<basename>\S+?)(\.(?P<mode>(?:G\d\d)|H)_\S+)?$")
     bangline = re.compile('^#!\s*(?P<interpreter>.*)$')
+    basename_is_regex = True
 
     def __init__(self, path, fam, encoding, plugin_name):
         self.plugin_name = plugin_name
         Bcfg2.Server.Plugin.EntrySet.__init__(self, '[0-9A-Za-z_\-]+', path,
                                               Bcfg2.Server.Plugin.SpecificData,
-                                              encoding, is_regex=True)
+                                              encoding)
         fam.AddMonitor(path, self)
 
     def HandleEvent(self, event):

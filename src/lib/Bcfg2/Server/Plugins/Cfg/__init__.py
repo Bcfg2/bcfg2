@@ -160,7 +160,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 import glob
                 submodules = []
                 for path in __path__:
-                    for submodule in glob.glob("%s/*.py" % path):
+                    for submodule in glob.glob(os.path.join(path, "*.py")):
                         mod = '.'.join(submodule.split("/")[-1].split('.')[:-1])
                         if mod != '__init__':
                             submodules.append((None, mod, True))

@@ -1063,8 +1063,9 @@ class SpecificData(object):
 class EntrySet(Debuggable):
     """Entry sets deal with the host- and group-specific entries."""
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\\.genshi_include)$")
+    basename_is_regex=False
 
-    def __init__(self, basename, path, entry_type, encoding, is_regex=False):
+    def __init__(self, basename, path, entry_type, encoding):
         Debuggable.__init__(self, name=basename)
         self.path = path
         self.entry_type = entry_type
@@ -1073,7 +1074,7 @@ class EntrySet(Debuggable):
         self.infoxml = None
         self.encoding = encoding
         
-        if is_regex:
+        if self.basename_is_regex:
             base_pat = basename
         else:
             base_pat = re.escape(basename)
