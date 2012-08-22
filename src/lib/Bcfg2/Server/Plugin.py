@@ -266,7 +266,7 @@ class ThreadedStatistics(Statistics, threading.Thread):
                 try:
                     pending_data.append((metadata.hostname,
                                          lxml.etree.tostring(data,
-                                                             encoding='unicode')))
+                                                             xml_declaration=False).decode("UTF-8")))
                 except:
                     err = sys.exc_info()[1]
                     self.logger.warning("Dropping interaction for %s: %s" %

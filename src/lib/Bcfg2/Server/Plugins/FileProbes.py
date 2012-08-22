@@ -34,7 +34,7 @@ data = lxml.etree.Element("ProbedFileData",
                           group=grp.getgrgid(stat[5])[0],
                           perms=oct(stat[0] & 07777))
 data.text = b64encode(open(path).read())
-print(lxml.etree.tostring(data, encoding="unicode"))
+print(lxml.etree.tostring(data, xml_declaration=False).decode('UTF-8'))
 """
 
 class FileProbes(Bcfg2.Server.Plugin.Plugin,
@@ -214,9 +214,10 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
         root = lxml.etree.Element("FileInfo")
         root.append(info)
         try:
-            open(infoxml, "w").write(lxml.etree.tostring(root,
-                                                         encoding='unicode',
-                                                         pretty_print=True))
+            open(infoxml,
+                 "w").write(lxml.etree.tostring(root,
+                                                xml_declaration=False,
+                                                pretty_print=True).decode('UTF-8'))
         except IOError:
             err = sys.exc_info()[1]
             self.logger.error("Could not write %s: %s" % (fileloc, err))

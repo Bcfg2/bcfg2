@@ -395,7 +395,8 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
         try:
             metadata = self.build_metadata(client)
             self.Bind(entry, metadata)
-            data = lxml.etree.tostring(entry, encoding="unicode")
+            data = lxml.etree.tostring(entry,
+                                       xml_declaration=False).decode('UTF-8')
             if outfile:
                 open(outfile, 'w').write(data)
             else:

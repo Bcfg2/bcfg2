@@ -386,8 +386,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             [infotag.attrib.__setitem__(attr, metadata_updates[attr])
              for attr in metadata_updates]
             ofile = open(self.path + "/info.xml", "w")
-            ofile.write(lxml.etree.tostring(infoxml, encoding='unicode',
-                                            pretty_print=True))
+            ofile.write(lxml.etree.tostring(infoxml, xml_declaration=False,
+                                            pretty_print=True).decode('UTF-8'))
             ofile.close()
             self.debug_log("Wrote file %s" % os.path.join(self.path,
                                                           "info.xml"),

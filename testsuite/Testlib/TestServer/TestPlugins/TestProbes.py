@@ -52,7 +52,8 @@ class TestProbeData(Bcfg2TestCase):
     def test_xdata(self):
         xdata = lxml.etree.Element("test")
         lxml.etree.SubElement(xdata, "test2")
-        data = ProbeData(lxml.etree.tostring(xdata, encoding='unicode'))
+        data = ProbeData(lxml.etree.tostring(xdata,
+                                             xml_declaration=False).decode('UTF-8'))
         self.assertIsNotNone(data.xdata)
         self.assertIsNotNone(data.xdata.find("test2"))
 
@@ -192,7 +193,8 @@ class TestProbes(TestProbing, TestConnector, TestDatabaseBacked):
         rv = dict()
         rv["foo.example.com"] = ClientProbeDataSet(timestamp=time.time())
         rv["foo.example.com"]["xml"] = \
-            ProbeData(lxml.etree.tostring(test_xdata, encoding='unicode'))
+            ProbeData(lxml.etree.tostring(test_xdata,
+                                          xml_declaration=False).decode('UTF-8'))
         rv["foo.example.com"]["text"] = ProbeData("freeform text")
         rv["foo.example.com"]["multiline"] = ProbeData("""multiple
 lines

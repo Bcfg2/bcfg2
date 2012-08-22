@@ -194,8 +194,8 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 lxml.etree.SubElement(cx, "Group", name=group)
         try:
             datafile = open(os.path.join(self.data, 'probed.xml'), 'w')
-            datafile.write(lxml.etree.tostring(top, encoding='unicode',
-                                               pretty_print='true'))
+            datafile.write(lxml.etree.tostring(top, xml_declaration=False,
+                                               pretty_print='true').decode('UTF-8'))
         except IOError:
             err = sys.exc_info()[1]
             self.logger.error("Failed to write probed.xml: %s" % err)

@@ -255,7 +255,7 @@ class PropertiesEncryptor(Encryptor):
         while xdata.getparent() != None:
             xdata = xdata.getparent()
         xdata.set("encryption", "true")
-        return lxml.etree.tostring(xdata, encoding='unicode')
+        return lxml.etree.tostring(xdata, xml_declaration=False).decode('UTF-8')
 
     def _get_passphrase(self, chunk):
         pname = chunk.get("encrypted") or chunk.get("encryption")

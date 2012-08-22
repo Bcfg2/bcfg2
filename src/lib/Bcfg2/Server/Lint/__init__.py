@@ -90,9 +90,11 @@ class Plugin (object):
             if el.text and not keep_text:
                 el.text = '...'
             [el.remove(c) for c in el.iterchildren()]
-            xml = lxml.etree.tostring(el, encoding='unicode').strip()
+            xml = lxml.etree.tostring(el,
+                                      xml_declaration=False).decode("UTF-8").strip()
         else:
-            xml = lxml.etree.tostring(element, encoding='unicode').strip()
+            xml = lxml.etree.tostring(element,
+                                      xml_declaration=False).decode("UTF-8").strip()
         return "   line %s: %s" % (element.sourceline, xml)
 
 

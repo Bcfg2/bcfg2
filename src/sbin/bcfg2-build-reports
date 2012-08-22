@@ -110,7 +110,7 @@ def rss(reportxml, delivery, report):
             for item in items:
                 channel.append(item)
 
-        tree = tostring(rssdata, encoding='unicode')
+        tree = tostring(rssdata, xml_declaration=False).decode('UTF-8')
         fil.write(tree)
         fil.close()
 
@@ -260,7 +260,7 @@ if __name__ == '__main__':
 
             # Apply XSLT, different ones based on report type, and options
             if deliverymechanism == 'null-operator': # Special Cases
-                fileout(tostring(ElementTree(procnodereport).getroot(), encoding='unicode'), deliv)
+                fileout(tostring(ElementTree(procnodereport).getroot(), xml_declaration=False).decode('UTF-8'), deliv)
                 break
             transform = delivtype + '-' + deliverymechanism + '.xsl'
 
@@ -312,7 +312,7 @@ if __name__ == '__main__':
                                            (toastring, socket.getfqdn(), outputstring)
                             mail(outputstring, c) #call function to send
             else:
-                outputstring = tostring(stylesheet.apply(ElementTree(procnodereport)).getroot(), encoding='unicode')
+                outputstring = tostring(stylesheet.apply(ElementTree(procnodereport)).getroot(), xml_declaration=False).decode('UTF-8')
                 if deliverymechanism == 'rss':
                     rss(outputstring, deliv, reprt)
                 else: # Must be deliverymechanism == 'www':

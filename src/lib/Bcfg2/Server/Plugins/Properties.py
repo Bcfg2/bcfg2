@@ -42,9 +42,10 @@ class PropertyFile(Bcfg2.Server.Plugin.StructFile):
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
 
         try:
-            open(self.name, "wb").write(lxml.etree.tostring(self.xdata,
-                                                            encoding='unicode',
-                                                            pretty_print=True))
+            open(self.name,
+                 "wb").write(lxml.etree.tostring(self.xdata,
+                                                 xml_declaration=False,
+                                                 pretty_print=True).decode('UTF-8'))
             return True
         except IOError:
             err = sys.exc_info()[1]

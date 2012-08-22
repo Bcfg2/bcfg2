@@ -9,6 +9,10 @@ from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugin import *
 from ...common import *
 
+def tostring(el):
+    return lxml.etree.tostring(el, xml_declaration=False).decode('UTF-8')
+
+
 class FakeElementTree(lxml.etree._ElementTree):
     xinclude = Mock()
 
@@ -808,12 +812,12 @@ class TestXMLFileBacked(TestFileBacked):
         xdata = lxml.etree.Element("Test", name="test")
         children = [lxml.etree.SubElement(xdata, "Foo"),
                     lxml.etree.SubElement(xdata, "Bar", name="bar")]
-        xfb.data = lxml.etree.tostring(xdata)
+        xfb.data = tostring(xdata)
         xfb.Index()
         mock_follow.assert_any_call()
         self.assertEqual(xfb.xdata.base, fname)
-        self.assertItemsEqual([lxml.etree.tostring(e) for e in xfb.entries],
-                              [lxml.etree.tostring(e) for e in children])
+        self.assertItemsEqual([tostring(e) for e in xfb.entries],
+                              [tostring(e) for e in children])
 
         # with xincludes
         reset()
@@ -838,13 +842,13 @@ class TestXMLFileBacked(TestFileBacked):
                 xfb.xdata.replace(el, replacements[el.get("href")])
         FakeElementTree.xinclude.side_effect = xinclude
 
-        xfb.data = lxml.etree.tostring(xdata)
+        xfb.data = tostring(xdata)
         xfb.Index()
         mock_follow.assert_any_call()
         FakeElementTree.xinclude.assert_any_call
         self.assertEqual(xfb.xdata.base, fname)
-        self.assertItemsEqual([lxml.etree.tostring(e) for e in xfb.entries],
-                              [lxml.etree.tostring(e) for e in children])
+        self.assertItemsEqual([tostring(e) for e in xfb.entries],
+                              [tostring(e) for e in children])
 
     def test_add_monitor(self):
         fname = "/test/test1.xml"
@@ -1358,18 +1362,18 @@ class TestXMLSrc(TestXMLFileBacked):
 
         xsrc = self.get_obj("/test/foo.xml")
         xsrc.__node__ = Mock()
-        mock_open.return_value.read.return_value = lxml.etree.tostring(xdata)
+        mock_open.return_value.read.return_value = tostring(xdata)
 
         self.assertRaises(PluginExecutionError,
                            xsrc.HandleEvent, Mock())
 
         xdata.set("priority", "cow")
-        mock_open.return_value.read.return_value = lxml.etree.tostring(xdata)
+        mock_open.return_value.read.return_value = tostring(xdata)
         self.assertRaises(PluginExecutionError,
                            xsrc.HandleEvent, Mock())
 
         xdata.set("priority", "10")
-        mock_open.return_value.read.return_value = lxml.etree.tostring(xdata)
+        mock_open.return_value.read.return_value = tostring(xdata)
 
         mock_open.reset_mock()
         xsrc = self.get_obj("/test/foo.xml")

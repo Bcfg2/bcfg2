@@ -35,7 +35,7 @@ class StatisticsStore(object):
                 self.logger.error("Failed to open %s for writing: %s" % (self.filename + '.new', ioerr))
             else:
                 fout.write(lxml.etree.tostring(self.element,
-                                               encoding='unicode'))
+                                               xml_declaration=False).decode('UTF-8'))
                 fout.close()
                 os.rename(self.filename + '.new', self.filename)
                 self.dirty = 0

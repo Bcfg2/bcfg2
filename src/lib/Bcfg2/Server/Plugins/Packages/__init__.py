@@ -178,7 +178,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 else:
                     self.logger.error("Packages: Malformed Package: %s" %
                                       lxml.etree.tostring(pkg,
-                                                          encoding='unicode'))
+                                                          xml_declaration=False).decode('UTF-8'))
 
         gpkgs = collection.get_groups(groups)
         for group, pkgs in gpkgs.items():

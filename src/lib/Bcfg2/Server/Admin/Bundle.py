@@ -71,8 +71,6 @@ class Bundle(Bcfg2.Server.Admin.MetadataCore):
                     print('Details for the "%s" bundle:' % \
                             (bundle_name[int(lineno)].split('.')[0]))
                     tree = lxml.etree.parse(bundle_list[int(lineno)])
-                    #Prints bundle content
-                    #print(lxml.etree.tostring(tree))
                     names = ['Action', 'Package', 'Path', 'Service']
                     for name in names:
                         for node in tree.findall("//" + name):

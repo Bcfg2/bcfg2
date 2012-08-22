@@ -151,8 +151,9 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
             raise Bcfg2.Server.Plugin.MetadataRuntimeError(msg)
         # prep data
         dataroot = xmltree.getroot()
-        newcontents = lxml.etree.tostring(dataroot, pretty_print=True,
-                                          encoding='unicode')
+        newcontents = lxml.etree.tostring(dataroot, xml_declaration=False,
+                                          pretty_print=True).decode('UTF-8')
+
 
         fd = datafile.fileno()
         while locked(fd) == True:
