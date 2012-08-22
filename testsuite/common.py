@@ -240,5 +240,15 @@ def patchIf(condition, entity, **kwargs):
     functions does not prevent the decorators from being run. """
     if condition:
         return patch(entity, **kwargs)
-    else:
+    elif "new" in kwargs:
+        # new object provided, so no argument is added to the function call
         return lambda f: f
+    else:
+        # need to add an argument to the function call
+        def decorator(func):
+            @wraps(func)
+            def inner(*args, **kwargs):
+                args.pop()
+                return func(*args, **kwargs)
+            return inner
+        return decorator
