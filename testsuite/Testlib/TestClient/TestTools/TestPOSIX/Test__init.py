@@ -3,7 +3,9 @@ import lxml.etree
 from mock import Mock, MagicMock, patch
 import Bcfg2.Client.Tools
 import Bcfg2.Client.Tools.POSIX
-from .....common import *
+# python 2.5 can't import * from relative imports
+from .....common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
+    skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, patchIf
 
 def get_config(entries):
     config = lxml.etree.Element("Configuration")

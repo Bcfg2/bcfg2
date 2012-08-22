@@ -6,7 +6,9 @@ from mock import Mock, MagicMock, patch
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Tools.POSIX.base import *
 from .Test__init import get_posix_object
-from .....common import *
+# python 2.5 can't import * from relative imports
+from .....common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
+    skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, patchIf
 
 try:
     import selinux

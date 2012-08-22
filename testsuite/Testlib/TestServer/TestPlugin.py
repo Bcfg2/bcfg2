@@ -8,7 +8,9 @@ import Bcfg2.Server
 from Bcfg2.Bcfg2Py3k import reduce
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugin import *
-from ...common import *
+# python 2.5 can't import * from relative imports
+from ...common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
+    skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, patchIf
 
 def tostring(el):
     return lxml.etree.tostring(el, xml_declaration=False).decode('UTF-8')

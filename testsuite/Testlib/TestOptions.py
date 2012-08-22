@@ -2,7 +2,9 @@ import os
 import sys
 from mock import Mock, MagicMock, patch
 from Bcfg2.Options import *
-from ..common import *
+# python 2.5 can't import * from relative imports
+from ..common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
+    skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, patchIf
 
 # Compatibility imports
 from Bcfg2.Bcfg2Py3k import ConfigParser
