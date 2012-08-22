@@ -1,7 +1,7 @@
 import os
 import sys
 import unittest
-from mock import patch
+from mock import patch, MagicMock, _patch, DEFAULT
 from functools import wraps
 
 datastore = "/"
@@ -204,8 +204,8 @@ class DBModelTestCase(Bcfg2TestCase):
 
     @skipUnless(has_django, "Django not found, skipping")
     def test_cleandb(self):
-        """ ensure that we a) can connect to the database; b) start with a
-        clean database """
+        # ensure that we a) can connect to the database; b) start with
+        # a clean database
         for model in self.models:
             model.objects.all().delete()
             self.assertItemsEqual(list(model.objects.all()), [])
@@ -217,7 +217,18 @@ def syncdb(modeltest):
     inst.test_cleandb()
 
 
-def patchIf(condition, entity, **kwargs):
+# in order for patchIf() to decorate a function in the same way as
+# patch(), we override the default behavior of __enter__ and __exit__
+# on the _patch() object to basically be noops.
+class _noop_patch(_patch):
+    def __enter__(self):
+        return MagicMock(name=self.attribute)
+
+    def __exit__(self, *args):
+        pass
+
+
+class patchIf(object):
     """ perform conditional patching.  this is necessary because some
     libraries might not be installed (e.g., selinux, pylibacl), and
     patching will barf on that.  Other workarounds are not available
@@ -225,17 +236,47 @@ def patchIf(condition, entity, **kwargs):
     inner functions doesn't work because python 2.6 applies all
     decorators at compile-time, not at run-time, so decorating inner
     functions does not prevent the decorators from being run. """
-    if condition:
-        return patch(entity, **kwargs)
-    elif "new" in kwargs:
-        # new object provided, so no argument is added to the function call
-        return lambda f: f
-    else:
-        # need to add an argument to the function call
-        def decorator(func):
-            @wraps(func)
-            def inner(*args, **kwargs):
-                args = list(args) + [None]
-                return func(*args, **kwargs)
-            return inner
-        return decorator
+    def __init__(self, condition, target, new=DEFAULT, spec=None, create=False,
+                 spec_set=None, autospec=None, new_callable=None, **kwargs):
+        self.condition = condition
+        self.target = target
+        self.patch_args = dict(new=new, spec=spec, create=create,
+                               spec_set=spec_set)
+        self.extra_patch_args = dict(autospec=autospec,
+                                     new_callable=new_callable)
+        self.kwargs = kwargs
+
+    def __call__(self, func):
+        if self.condition:
+            try:
+                # in newer versions of mock, patch() takes arbitrary
+                # keyword arguments
+                args = dict(**self.patch_args)
+                args.update(self.extra_patch_args)
+                args.update(self.kwargs)
+                return patch(self.target, **args)(func)
+            except TypeError:
+                # in older versions of mock, patch() doesn't take
+                # autospec, new_callable or arbitrary keyword
+                # arguments
+                return patch(self.target, **self.patch_args)(func)
+        else:
+            try:
+                args = [lambda: True,
+                        self.target.rsplit('.', 1)[-1],
+                        self.patch_args['new'], self.patch_args['spec'],
+                        self.patch_args['create'], None,
+                        self.patch_args['spec_set']]
+                # in older versions of mock _patch() takes 8 args
+                return _noop_patch(*args)(func)
+            except TypeError:
+                # in new versions of mock _patch() takes 10 args
+                args = [lambda: True,
+                        self.target.rsplit('.', 1)[-1],
+                        self.patch_args['new'], self.patch_args['spec'],
+                        self.patch_args['create'], self.patch_args['spec_set'],
+                        self.extra_patch_args['autospec'],
+                        self.extra_patch_args['new_callable'],
+                        self.kwargs]
+                return _noop_patch(*args)(func)
+                
