@@ -62,7 +62,10 @@ class TestPOSIXFile(TestPOSIXTool):
         entry.text = "test"
         self.assertEqual(ptool._get_data(entry), ("test", False))
 
-        ustr = u_str('é', 'UTF-8')
+        if inPy3k:
+            ustr = 'é'
+        else:
+            ustr = u_str('é', 'UTF-8')
         entry = copy.deepcopy(orig_entry)
         entry.text = ustr
         self.assertEqual(ptool._get_data(entry), (ustr, False))
