@@ -23,11 +23,11 @@ class SchemaTooOldError(UpdaterError):
     pass
 
 
-def _walk_packages(path):
+def _walk_packages(paths):
     """Python 2.4 lacks this routine"""
     import glob
     submodules = []
-    for path in __path__:
+    for path in paths:
         for submodule in glob.glob("%s/*.py" % path):
             mod = '.'.join(submodule.split("/")[-1].split('.')[:-1])
             if mod != '__init__':
