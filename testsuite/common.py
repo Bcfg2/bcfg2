@@ -93,9 +93,8 @@ needs_assertItemsEqual = False
 needs_others = False
 if not hasattr(unittest.TestCase, "assertItemsEqual"):
     # TestCase in Py3k lacks assertItemsEqual, but has the other
-    # convenience methods.  this code is cribbed from the py2.7
-    # unittest library
-    import collections
+    # convenience methods.  this code is (mostly) cribbed from the
+    # py2.7 unittest library
     needs_assertItemsEqual = True
 
     def _count_diff_all_purpose(actual, expected):
@@ -119,7 +118,7 @@ if not hasattr(unittest.TestCase, "assertItemsEqual"):
                     cnt_t += 1
                     t[j] = NULL
             if cnt_s != cnt_t:
-                diff = _Mismatch(cnt_s, cnt_t, elem)
+                diff = (cnt_s, cnt_t, elem)
                 result.append(diff)
 
         for i, elem in enumerate(t):
@@ -130,26 +129,10 @@ if not hasattr(unittest.TestCase, "assertItemsEqual"):
                 if t[j] == elem:
                     cnt_t += 1
                     t[j] = NULL
-            diff = _Mismatch(0, cnt_t, elem)
+            diff = (0, cnt_t, elem)
             result.append(diff)
         return result
 
-    def _count_diff_hashable(actual, expected):
-        '''Returns list of (cnt_act, cnt_exp, elem) triples where the
-        counts differ'''
-        # elements must be hashable
-        s, t = _ordered_count(actual), _ordered_count(expected)
-        result = []
-        for elem, cnt_s in s.items():
-            cnt_t = t.get(elem, 0)
-            if cnt_s != cnt_t:
-                diff = _Mismatch(cnt_s, cnt_t, elem)
-                result.append(diff)
-        for elem, cnt_t in t.items():
-            if elem not in s:
-                diff = _Mismatch(0, cnt_t, elem)
-                result.append(diff)
-        return result
 
 if not hasattr(unittest.TestCase, "assertIn"):
     # versions of TestCase before python 2.7 and python 3.1 lacked a
@@ -173,16 +156,7 @@ class Bcfg2TestCase(unittest.TestCase):
     if needs_assertItemsEqual:
         def assertItemsEqual(self, expected_seq, actual_seq, msg=None):
             first_seq, second_seq = list(actual_seq), list(expected_seq)
-            try:
-                first = collections.Counter(first_seq)
-                second = collections.Counter(second_seq)
-            except TypeError:
-                # Handle case with unhashable elements
-                differences = _count_diff_all_purpose(first_seq, second_seq)
-            else:
-                if first == second:
-                    return
-                differences = _count_diff_hashable(first_seq, second_seq)
+            differences = _count_diff_all_purpose(first_seq, second_seq)
 
             if differences:
                 standardMsg = 'Element counts were not equal:\n'
