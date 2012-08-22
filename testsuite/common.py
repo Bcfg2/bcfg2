@@ -60,33 +60,20 @@ else:
 
     def skip(msg):
         def decorator(func):
-            @wraps(func)
-            def inner(*args, **kwargs):
-                pass
-            return inner
+            return lambda *args, **kwargs: None
         return decorator
 
     def skipIf(condition, msg):
-        def decorator(func):
-            if condition:
-                return func
-
-            @wraps(func)
-            def inner(*args, **kwargs):
-                pass
-            return inner
-        return decorator
+        if not condition:
+            return lambda f: f
+        else:
+            return skip(msg)
 
     def skipUnless(condition, msg):
-        def decorator(func):
-            if not condition:
-                return func
-
-            @wraps(func)
-            def inner(*args, **kwargs):
-                pass
-            return inner
-        return decorator
+        if condition:
+            return lambda f: f
+        else:
+            return skip(msg)
 
 
 needs_assertItemsEqual = False
