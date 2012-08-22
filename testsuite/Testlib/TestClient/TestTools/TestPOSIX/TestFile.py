@@ -399,9 +399,17 @@ class TestPOSIXFile(TestPOSIXTool):
         mock_rename.assert_called_with(newfile, entry)
         mock_install.assert_called_with(self.ptool, entry)
 
-    def test_diff(self):
+    @patch("time.time")
+    def test_diff(self, mock_time):
         content1 = "line1\nline2"
         content2 = "line3"
+
+        self.now = 1345640723
+        def time_rv():
+            self.now += 1
+            return self.now
+        mock_time.side_effect = time_rv
+
         rv = ["line1", "line2", "line3"]
         func = Mock()
         func.return_value = rv
@@ -409,9 +417,14 @@ class TestPOSIXFile(TestPOSIXTool):
         func.assert_called_with(["line1", "line2"], ["line3"])
 
         func.reset_mock()
+        mock_time.reset_mock()
+        def time_rv():
+            self.now += 5
+            return self.now
+        mock_time.side_effect = time_rv
+
         def slow_diff(content1, content2):
             for i in range(1, 10):
-                time.sleep(5)
                 yield "line%s" % i
         func.side_effect = slow_diff
         self.assertFalse(self.ptool._diff(content1, content2, func), rv)
