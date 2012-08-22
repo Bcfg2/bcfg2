@@ -24,6 +24,19 @@ except ImportError:
     has_django = False
 
 
+try:
+    all
+except NameError:
+    # some of the crazy lexical closure stuff below works with all()
+    # but not with this loop inline.  i really don't understand
+    # lexical closures some^Wmost days
+    def all(iterable):
+        for element in iterable:
+            if not element:
+                return False
+        return True
+
+
 def locked(fd):
     """Aquire a lock on a file"""
     try:
