@@ -84,9 +84,9 @@ def u_str(string, encoding=None):
             return unicode(string)
 
 try:
-    unicode = str
-except:
     unicode = unicode
+except:
+    unicode = str
 
 # base64 compat
 from base64 import b64encode as _b64encode, b64decode as _b64decode
