@@ -248,7 +248,7 @@ def patchIf(condition, entity, **kwargs):
         def decorator(func):
             @wraps(func)
             def inner(*args, **kwargs):
-                args = args[:-1]
+                args = list(args) + [None]
                 return func(*args, **kwargs)
             return inner
         return decorator
