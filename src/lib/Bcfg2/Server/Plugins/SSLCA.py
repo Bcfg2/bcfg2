@@ -77,8 +77,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
                     self.CAs[ca] = dict(cp.items('sslca_' + ca))
                     self.Entries['Path'][ident] = self.get_cert
                 elif event.filename.endswith("info.xml"):
-                    self.infoxml[ident] = Bcfg2.Server.Plugin.InfoXML(epath,
-                                                                      noprio=True)
+                    self.infoxml[ident] = Bcfg2.Server.Plugin.InfoXML(epath)
                     self.infoxml[ident].HandleEvent(event)
             if action == 'deleted':
                 if ident in self.Entries['Path']:

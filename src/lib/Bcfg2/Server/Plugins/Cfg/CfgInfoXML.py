@@ -9,7 +9,7 @@ class CfgInfoXML(CfgInfo):
 
     def __init__(self, path):
         CfgInfo.__init__(self, path)
-        self.infoxml = Bcfg2.Server.Plugin.InfoXML(path, noprio=True)
+        self.infoxml = Bcfg2.Server.Plugin.InfoXML(path)
 
     def bind_info_to_entry(self, entry, metadata):
         mdata = dict()

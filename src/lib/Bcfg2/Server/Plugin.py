@@ -852,14 +852,14 @@ class XMLSrc(XMLFileBacked):
     """XMLSrc files contain a LNode hierarchy that returns matching entries."""
     __node__ = INode
     __cacheobj__ = dict
+    __priority_required__ = True
 
-    def __init__(self, filename, fam=None, should_monitor=False, noprio=False):
+    def __init__(self, filename, fam=None, should_monitor=False):
         XMLFileBacked.__init__(self, filename, fam, should_monitor)
         self.items = {}
         self.cache = None
         self.pnode = None
         self.priority = -1
-        self.noprio = noprio
 
     def HandleEvent(self, _=None):
         """Read file upon update."""
@@ -881,7 +881,7 @@ class XMLSrc(XMLFileBacked):
         try:
             self.priority = int(xdata.get('priority'))
         except (ValueError, TypeError):
-            if not self.noprio:
+            if self.__priority_required__:
                 msg = "Got bogus priority %s for file %s" % \
                     (xdata.get('priority'), self.name)
                 logger.error(msg)
@@ -906,6 +906,7 @@ class XMLSrc(XMLFileBacked):
 
 class InfoXML(XMLSrc):
     __node__ = InfoNode
+    __priority_required__ = False
 
 
 class XMLDirectoryBacked(DirectoryBacked):
@@ -1173,7 +1174,7 @@ class EntrySet(Debuggable):
         fpath = os.path.join(self.path, event.filename)
         if event.filename == 'info.xml':
             if not self.infoxml:
-                self.infoxml = InfoXML(fpath, True)
+                self.infoxml = InfoXML(fpath)
             self.infoxml.HandleEvent(event)
         elif event.filename in [':info', 'info']:
             for line in open(fpath).readlines():

@@ -1379,16 +1379,20 @@ class TestXMLSrc(TestXMLFileBacked):
         xsrc.__node__ = Mock()
         mock_open.return_value.read.return_value = tostring(xdata)
 
-        self.assertRaises(PluginExecutionError,
-                           xsrc.HandleEvent, Mock())
+        if xsrc.__priority_required__:
+            # test with no priority at all
+            self.assertRaises(PluginExecutionError,
+                              xsrc.HandleEvent, Mock())
 
-        xdata.set("priority", "cow")
-        mock_open.return_value.read.return_value = tostring(xdata)
-        self.assertRaises(PluginExecutionError,
-                           xsrc.HandleEvent, Mock())
+            # test with bogus priority
+            xdata.set("priority", "cow")
+            mock_open.return_value.read.return_value = tostring(xdata)
+            self.assertRaises(PluginExecutionError,
+                               xsrc.HandleEvent, Mock())
 
-        xdata.set("priority", "10")
-        mock_open.return_value.read.return_value = tostring(xdata)
+            # assign a priority to use in future tests
+            xdata.set("priority", "10")
+            mock_open.return_value.read.return_value = tostring(xdata)
 
         mock_open.reset_mock()
         xsrc = self.get_obj("/test/foo.xml")
@@ -1946,8 +1950,7 @@ class TestEntrySet(TestDebuggable):
         event = Mock()
         event.filename = "info.xml"
         eset.update_metadata(event)
-        mock_InfoXML.assert_called_with(os.path.join(eset.path, "info.xml"),
-                                        True)
+        mock_InfoXML.assert_called_with(os.path.join(eset.path, "info.xml"))
         mock_InfoXML.return_value.HandleEvent.assert_called_with(event)
         self.assertEqual(eset.infoxml, mock_InfoXML.return_value)
 
