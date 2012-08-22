@@ -87,95 +87,97 @@ class TestMetadataDB(DBModelTestCase):
         models = [MetadataClientModel]
 
 
-class TestClientVersions(Bcfg2TestCase):
-    test_clients = dict(client1="1.2.0",
-                        client2="1.2.2",
-                        client3="1.3.0pre1",
-                        client4="1.1.0",
-                        client5=None,
-                        client6=None)
+if has_django or can_skip:
+    class TestClientVersions(Bcfg2TestCase):
+        test_clients = dict(client1="1.2.0",
+                            client2="1.2.2",
+                            client3="1.3.0pre1",
+                            client4="1.1.0",
+                            client5=None,
+                            client6=None)
 
-    def setUp(self):
-        syncdb(TestMetadataDB)
-        for client, version in self.test_clients.items():
-            MetadataClientModel(hostname=client, version=version).save()
+        @skipUnless(has_django, "Django not found")
+        def setUp(self):
+            syncdb(TestMetadataDB)
+            for client, version in self.test_clients.items():
+                MetadataClientModel(hostname=client, version=version).save()
 
-    def test__contains(self):
-        v = ClientVersions()
-        self.assertIn("client1", v)
-        self.assertIn("client5", v)
-        self.assertNotIn("client__contains", v)
+        def test__contains(self):
+            v = ClientVersions()
+            self.assertIn("client1", v)
+            self.assertIn("client5", v)
+            self.assertNotIn("client__contains", v)
 
-    def test_keys(self):
-        v = ClientVersions()
-        self.assertItemsEqual(self.test_clients.keys(), v.keys())
+        def test_keys(self):
+            v = ClientVersions()
+            self.assertItemsEqual(self.test_clients.keys(), v.keys())
 
-    def test__setitem(self):
-        v = ClientVersions()
+        def test__setitem(self):
+            v = ClientVersions()
 
-        # test setting version of existing client
-        v["client1"] = "1.2.3"
-        self.assertIn("client1", v)
-        self.assertEqual(v['client1'], "1.2.3")
-        client = MetadataClientModel.objects.get(hostname="client1")
-        self.assertEqual(client.version, "1.2.3")
+            # test setting version of existing client
+            v["client1"] = "1.2.3"
+            self.assertIn("client1", v)
+            self.assertEqual(v['client1'], "1.2.3")
+            client = MetadataClientModel.objects.get(hostname="client1")
+            self.assertEqual(client.version, "1.2.3")
 
-        # test adding new client
-        new = "client__setitem"
-        v[new] = "1.3.0"
-        self.assertIn(new, v)
-        self.assertEqual(v[new], "1.3.0")
-        client = MetadataClientModel.objects.get(hostname=new)
-        self.assertEqual(client.version, "1.3.0")
+            # test adding new client
+            new = "client__setitem"
+            v[new] = "1.3.0"
+            self.assertIn(new, v)
+            self.assertEqual(v[new], "1.3.0")
+            client = MetadataClientModel.objects.get(hostname=new)
+            self.assertEqual(client.version, "1.3.0")
 
-        # test adding new client with no version
-        new2 = "client__setitem_2"
-        v[new2] = None
-        self.assertIn(new2, v)
-        self.assertEqual(v[new2], None)
-        client = MetadataClientModel.objects.get(hostname=new2)
-        self.assertEqual(client.version, None)
-        
-    def test__getitem(self):
-        v = ClientVersions()
-        
-        # test getting existing client
-        self.assertEqual(v['client2'], "1.2.2")
-        self.assertIsNone(v['client5'])
+            # test adding new client with no version
+            new2 = "client__setitem_2"
+            v[new2] = None
+            self.assertIn(new2, v)
+            self.assertEqual(v[new2], None)
+            client = MetadataClientModel.objects.get(hostname=new2)
+            self.assertEqual(client.version, None)
 
-        # test exception on nonexistent client
-        expected = KeyError
-        try:
-            v['clients__getitem']
-        except expected:
-            pass
-        except:
-            err = sys.exc_info()[1]
-            self.assertFalse(True, "%s raised instead of %s" %
-                             (err.__class__.__name__,
-                              expected.__class__.__name__))
-        else:
-            self.assertFalse(True,
-                             "%s not raised" % expected.__class__.__name__)
+        def test__getitem(self):
+            v = ClientVersions()
 
-    def test__len(self):
-        v = ClientVersions()
-        self.assertEqual(len(v), MetadataClientModel.objects.count())
+            # test getting existing client
+            self.assertEqual(v['client2'], "1.2.2")
+            self.assertIsNone(v['client5'])
 
-    def test__iter(self):
-        v = ClientVersions()
-        self.assertItemsEqual([h for h in iter(v)], v.keys())
+            # test exception on nonexistent client
+            expected = KeyError
+            try:
+                v['clients__getitem']
+            except expected:
+                pass
+            except:
+                err = sys.exc_info()[1]
+                self.assertFalse(True, "%s raised instead of %s" %
+                                 (err.__class__.__name__,
+                                  expected.__class__.__name__))
+            else:
+                self.assertFalse(True,
+                                 "%s not raised" % expected.__class__.__name__)
 
-    def test__delitem(self):
-        v = ClientVersions()
+        def test__len(self):
+            v = ClientVersions()
+            self.assertEqual(len(v), MetadataClientModel.objects.count())
 
-        # test adding new client
-        new = "client__delitem"
-        v[new] = "1.3.0"
+        def test__iter(self):
+            v = ClientVersions()
+            self.assertItemsEqual([h for h in iter(v)], v.keys())
 
-        del v[new]
-        self.assertIn(new, v)
-        self.assertIsNone(v[new])
+        def test__delitem(self):
+            v = ClientVersions()
+
+            # test adding new client
+            new = "client__delitem"
+            v[new] = "1.3.0"
+
+            del v[new]
+            self.assertIn(new, v)
+            self.assertIsNone(v[new])
 
 
 class TestXMLMetadataConfig(TestXMLFileBacked):
