@@ -11,7 +11,8 @@ from .Test__init import get_posix_object
 from .Testbase import TestPOSIXTool
 # python 2.5 can't import * from relative imports
 from .....common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
-    skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, patchIf
+    skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, \
+    patchIf, datastore
 
 def get_file_object(posix=None):
     if posix is None:
