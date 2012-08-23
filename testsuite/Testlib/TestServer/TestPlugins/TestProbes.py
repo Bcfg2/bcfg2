@@ -292,7 +292,6 @@ text
         
         mock_open.assert_called_with(os.path.join(datastore, probes.name,
                                                   "probed.xml"), "w")
-        print("data=%s" % mock_open.return_value.write.call_args[0][0])
         data = lxml.etree.XML(mock_open.return_value.write.call_args[0][0])
         self.assertEqual(len(data.xpath("//Client")), 2)
 
@@ -306,7 +305,6 @@ text
         xml = foodata.find("Probe[@name='xml']")
         self.assertIsNotNone(xml)
         self.assertIsNotNone(xml.get("value"))
-        print("value=%s" % xml.get("value"))
         xdata = lxml.etree.XML(xml.get("value"))
         self.assertIsNotNone(xdata)
         self.assertIsNotNone(xdata.find("test"))
