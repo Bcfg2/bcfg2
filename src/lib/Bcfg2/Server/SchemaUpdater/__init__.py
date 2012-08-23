@@ -234,8 +234,9 @@ def update_database():
         current_version = Updater.get_current_version()
         logger.debug("Database version at %s" % current_version)
 
+        updaters.sort()
         if current_version > 0:
-            [u.apply() for u in sorted(updaters)]
+            [u.apply() for u in updaters]
             logger.debug("Database version at %s" %
                          Updater.get_current_version())
         else:
