@@ -98,7 +98,7 @@ Group:            System/Management
 %else
 Group:            System Tools
 %endif
-Requires:         bcfg2
+Requires:         bcfg2 = %{version}
 %if "%{py_ver}" < "2.6"
 Requires:         python-ssl
 %endif
