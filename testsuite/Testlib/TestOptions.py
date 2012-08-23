@@ -2,13 +2,20 @@ import os
 import sys
 from mock import Mock, MagicMock, patch
 from Bcfg2.Options import *
-# python 2.5 can't import * from relative imports
-from ..common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
+from Bcfg2.Bcfg2Py3k import ConfigParser
+
+# add all parent testsuite directories to sys.path to allow (most)
+# relative imports in python 2.4
+path = os.path.dirname(__file__)
+while path != '/':
+    if os.path.basename(path).lower().startswith("test"):
+        sys.path.append(path)
+    if os.path.basename(path) == "testsuite":
+        break
+    path = os.path.dirname(path)
+from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
     skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, \
     patchIf, datastore
-
-# Compatibility imports
-from Bcfg2.Bcfg2Py3k import ConfigParser
 
 class TestDefaultConfigParser(Bcfg2TestCase):
     @patch("%s.ConfigParser.get" % ConfigParser.__name__)

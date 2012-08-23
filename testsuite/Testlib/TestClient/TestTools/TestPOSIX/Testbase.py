@@ -1,13 +1,23 @@
 import os
+import sys
 import copy
 import stat
 import lxml.etree
 from mock import Mock, MagicMock, patch
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Tools.POSIX.base import *
-from .Test__init import get_posix_object
-# python 2.5 can't import * from relative imports
-from .....common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
+
+# add all parent testsuite directories to sys.path to allow (most)
+# relative imports in python 2.4
+path = os.path.dirname(__file__)
+while path != "/":
+    if os.path.basename(path).lower().startswith("test"):
+        sys.path.append(path)
+    if os.path.basename(path) == "testsuite":
+        break
+    path = os.path.dirname(path)
+from Test__init import get_posix_object
+from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
     skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, \
     patchIf, datastore
 
