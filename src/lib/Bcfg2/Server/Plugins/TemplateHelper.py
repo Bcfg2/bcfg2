@@ -83,7 +83,7 @@ class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
 
     def get_additional_data(self, metadata):
         return dict([(h._module_name, h)
-                     for h in list(self.helpers.entries.values())])
+                     for h in self.helpers.get_matching(metadata)])
 
 
 class TemplateHelperLint(Bcfg2.Server.Lint.ServerlessPlugin):
