@@ -524,9 +524,9 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 entry.set('current_version', "%s-%s.%s" % (POs[0].version,
                                                            POs[0].release,
                                                            POs[0].arch))
-                entry.set('version', "%s-%s.%s" % (nevra['version'],
-                                                   nevra['release'],
-                                                   nevra['arch']))
+                entry.set('version', "%s-%s.%s" % (nevra.get('version', 'any'),
+                                                   nevra.get('release', 'any'),
+                                                   nevra.get('arch', 'any')))
                 self.logger.info("  %s: Wrong version installed.  "
                                  "Want %s, but have %s" % (entry.get("name"),
                                                            nevraString(nevra),
