@@ -10,18 +10,14 @@ import threading
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Options
-from Bcfg2.Bcfg2Py3k import ConfigParser, CmpMixin
+from Bcfg2.Bcfg2Py3k import ConfigParser, CmpMixin, reduce, Queue, Empty, \
+    Full, cPickle
 
 try:
     import django
     has_django = True
 except ImportError:
     has_django = False
-
-# py3k compatibility
-if sys.hexversion >= 0x03000000:
-    from functools import reduce
-from Bcfg2.Bcfg2Py3k import Queue, Empty, Full, cPickle
 
 # grab default metadata info from bcfg2.conf
 opts = {'owner': Bcfg2.Options.MDATA_OWNER,

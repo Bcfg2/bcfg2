@@ -3,10 +3,7 @@
 import copy
 import lxml.etree
 import sys
-# py3k compatibility
-if sys.hexversion >= 0x03000000:
-    from functools import reduce
-
+from Bcfg2.Bcfg2Py3k import reduce
 import Bcfg2.Server.Plugin
 
 

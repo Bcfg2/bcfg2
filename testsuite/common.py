@@ -2,7 +2,12 @@ import os
 import sys
 import unittest
 from mock import patch, MagicMock, _patch, DEFAULT
-from functools import wraps
+
+try:
+    from functools import wraps
+except ImportError:
+    def wraps(wrapped):
+        return lambda f: f
 
 datastore = "/"
 

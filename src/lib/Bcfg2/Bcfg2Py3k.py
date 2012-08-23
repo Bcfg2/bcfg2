@@ -101,8 +101,7 @@ except:
 try:
     reduce = reduce
 except NameError:
-    import functools
-    reduce = functools.reduce
+    from functools import reduce
 
 try:
     from collections import MutableMapping
