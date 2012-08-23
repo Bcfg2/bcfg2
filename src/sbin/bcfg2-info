@@ -497,6 +497,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             print("Usage: packageresolve <hostname> <package> [<package>...]")
             return
 
+        if 'Packages' not in self.plugins:
+            print("Packages plugin not enabled")
+            return
         hostname = arglist[0]
         initial = arglist[1:]
         metadata = self.build_metadata(hostname)
@@ -516,6 +519,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     def do_packagesources(self, args):
         if not args:
             print("Usage: packagesources <hostname>")
+            return
+        if 'Packages' not in self.plugins:
+            print("Packages plugin not enabled")
             return
         try:
             metadata = self.build_metadata(args)
