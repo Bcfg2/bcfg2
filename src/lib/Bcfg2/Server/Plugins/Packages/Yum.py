@@ -179,7 +179,7 @@ class YumCollection(Collection):
                             config.add_section(reponame)
                             added = True
                         except ConfigParser.DuplicateSectionError:
-                            match = re.match("-(\d)", reponame)
+                            match = re.search("-(\d+)", reponame)
                             if match:
                                 rid = int(match.group(1)) + 1
                             else:
