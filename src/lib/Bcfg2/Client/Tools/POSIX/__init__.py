@@ -7,7 +7,7 @@ import shutil
 import pkgutil
 from datetime import datetime
 import Bcfg2.Client.Tools
-from .base import POSIXTool
+from base import POSIXTool
 
 class POSIX(Bcfg2.Client.Tools.Tool):
     """POSIX File support code."""

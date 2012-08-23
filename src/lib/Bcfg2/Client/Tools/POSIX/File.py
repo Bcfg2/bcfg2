@@ -4,7 +4,7 @@ import stat
 import time
 import difflib
 import tempfile
-from .base import POSIXTool
+from base import POSIXTool
 from Bcfg2.Bcfg2Py3k import unicode, b64encode, b64decode
 
 class POSIXFile(POSIXTool):

@@ -1,6 +1,6 @@
 import os
 import sys
-from .base import POSIXTool, device_map
+from base import POSIXTool, device_map
 
 class POSIXDevice(POSIXTool):
     __req__ = ['name', 'dev_type', 'perms', 'owner', 'group']
