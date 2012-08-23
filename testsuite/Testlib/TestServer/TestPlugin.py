@@ -22,6 +22,12 @@ from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
     skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, \
     patchIf, datastore
 
+
+try:
+    re_type = re._pattern_type
+except AttributeError:
+    re_type = type(re.compile(""))
+
 def tostring(el):
     return lxml.etree.tostring(el, xml_declaration=False).decode('UTF-8')
 
@@ -1686,7 +1692,7 @@ class TestEntrySet(TestDebuggable):
     def test__init(self):
         for basename in self.basenames:
             eset = self.get_obj(basename=basename)
-            self.assertIsInstance(eset.specific, re._pattern_type)
+            self.assertIsInstance(eset.specific, re_type)
             self.assertTrue(eset.specific.match(os.path.join(datastore,
                                                              basename)))
             ppath = os.path.join(datastore, "Plugin", basename)
