@@ -4,6 +4,9 @@ import copy
 import time
 import socket
 import lxml.etree
+import Bcfg2.Server
+import Bcfg2.Server.Plugin
+from Bcfg2.Server.Plugins.Metadata import *
 from mock import Mock, patch
 
 # add all parent testsuite directories to sys.path to allow (most)
@@ -18,10 +21,7 @@ while path != "/":
 from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
     skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, \
     patchIf, datastore
-import Bcfg2.Server
-import Bcfg2.Server.Plugin
-from Bcfg2.Server.Plugins.Metadata import *
-from ..TestPlugin import TestXMLFileBacked, TestMetadata as _TestMetadata, \
+from TestPlugin import TestXMLFileBacked, TestMetadata as _TestMetadata, \
     TestStatistics, TestDatabaseBacked
 
 def get_clients_test_tree():

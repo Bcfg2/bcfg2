@@ -2,6 +2,8 @@ import os
 import sys
 import time
 import lxml.etree
+import Bcfg2.Server
+import Bcfg2.Server.Plugin
 from mock import Mock, MagicMock, patch
 
 # add all parent testsuite directories to sys.path to allow (most)
@@ -16,10 +18,8 @@ while path != "/":
 from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
     skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, \
     patchIf, datastore
-import Bcfg2.Server
-import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Probes import *
-from ..TestPlugin import TestEntrySet, TestProbing, TestConnector, \
+from TestPlugin import TestEntrySet, TestProbing, TestConnector, \
     TestDatabaseBacked
 
 # test data for JSON and YAML tests
