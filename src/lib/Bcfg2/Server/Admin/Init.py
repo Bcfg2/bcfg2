@@ -24,18 +24,18 @@ sendmailpath = %s
 #time_zone = 
 
 [database]
-engine = sqlite3
+#engine = sqlite3
 # 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
-name =
+#name =
 # Or path to database file if using sqlite3.
 #<repository>/bcfg2.sqlite is default path if left empty
-user =
+#user =
 # Not used with sqlite3.
-password =
+#password =
 # Not used with sqlite3.
-host =
+#host =
 # Not used with sqlite3.
-port =
+#port =
 
 [communication]
 protocol = %s
