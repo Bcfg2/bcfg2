@@ -67,6 +67,8 @@ class Collection(Bcfg2.Server.Plugin.Debuggable):
             # get_urls() loads url_map as a side-effect
             source.get_urls()
             for url_map in source.url_map:
+                if url_map['arch'] not in metadata.groups:
+                    continue
                 reponame = source.get_repo_name(url_map)
                 srcs.append("Name: %s" % reponame)
                 srcs.append("  Type: %s" % source.ptype)
