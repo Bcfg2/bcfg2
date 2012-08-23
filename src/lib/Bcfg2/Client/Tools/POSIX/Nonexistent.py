@@ -1,7 +1,11 @@
 import os
 import sys
 import shutil
-from base import POSIXTool
+try:
+    from base import POSIXTool
+except ImportError:
+    # py3k, incompatible syntax with py2.4
+    exec("from .base import POSIXTool")
 
 class POSIXNonexistent(POSIXTool):
     __req__ = ['name']

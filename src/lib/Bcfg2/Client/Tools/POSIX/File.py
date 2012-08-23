@@ -4,7 +4,11 @@ import stat
 import time
 import difflib
 import tempfile
-from base import POSIXTool
+try:
+    from base import POSIXTool
+except ImportError:
+    # py3k, incompatible syntax with py2.4
+    exec("from .base import POSIXTool")
 from Bcfg2.Bcfg2Py3k import unicode, b64encode, b64decode
 
 class POSIXFile(POSIXTool):

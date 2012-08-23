@@ -1,6 +1,10 @@
 import os
 import sys
-from base import POSIXTool, device_map
+try:
+    from base import POSIXTool, device_map
+except ImportError:
+    # py3k, incompatible syntax with py2.4
+    exec("from .base import POSIXTool, device_map")
 
 class POSIXDevice(POSIXTool):
     __req__ = ['name', 'dev_type', 'perms', 'owner', 'group']

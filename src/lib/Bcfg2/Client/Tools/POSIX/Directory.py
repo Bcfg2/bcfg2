@@ -3,7 +3,11 @@ import sys
 import stat
 import shutil
 import Bcfg2.Client.XML
-from base import POSIXTool
+try:
+    from base import POSIXTool
+except ImportError:
+    # py3k, incompatible syntax with py2.4
+    exec("from .base import POSIXTool")
 
 class POSIXDirectory(POSIXTool):
     __req__ = ['name', 'perms', 'owner', 'group']
