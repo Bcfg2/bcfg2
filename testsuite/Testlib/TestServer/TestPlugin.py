@@ -227,16 +227,27 @@ class TestMetadata(Bcfg2TestCase):
 
 class TestConnector(Bcfg2TestCase):
     """ placeholder """
-    pass
+    def test_get_additional_groups(self):
+        pass
+
+    def test_get_additional_data(self):
+        pass
 
 
 class TestProbing(Bcfg2TestCase):
     """ placeholder """
-    pass
+    def test_GetProbes(self):
+        pass
+
+    def test_ReceiveData(self):
+        pass
 
 
 class TestStatistics(TestPlugin):
     test_obj = Statistics
+
+    def test_process_statistics(self):
+        pass
 
 
 class TestThreadedStatistics(TestStatistics):
@@ -395,6 +406,8 @@ class TestThreadedStatistics(TestStatistics):
     @patch("copy.copy", Mock(side_effect=lambda x: x))
     @patch("Bcfg2.Server.Plugin.ThreadedStatistics.run", Mock())
     def test_process_statistics(self):
+        TestStatistics.test_process_statistics(self)
+
         core = Mock()
         ts = self.get_obj(core)
         ts.work_queue = Mock()

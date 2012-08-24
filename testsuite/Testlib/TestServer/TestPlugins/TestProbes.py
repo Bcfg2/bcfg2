@@ -460,6 +460,8 @@ text
 
     @patch("Bcfg2.Server.Plugins.Probes.ProbeSet.get_probe_data")
     def test_GetProbes(self, mock_get_probe_data):
+        TestProbing.test_GetProbes(self)
+
         probes = self.get_probes_object()
         metadata = Mock()
         probes.GetProbes(metadata)
@@ -468,6 +470,8 @@ text
     @patch("Bcfg2.Server.Plugins.Probes.Probes.write_data")
     @patch("Bcfg2.Server.Plugins.Probes.Probes.ReceiveDataItem")
     def test_ReceiveData(self, mock_ReceiveDataItem, mock_write_data):
+        TestProbing.test_ReceiveData(self)
+
         # we use a simple (read: bogus) datalist here to make this
         # easy to test
         datalist = ["a", "b", "c"]
@@ -509,6 +513,8 @@ text
                              self.get_test_cgroups()[cname])
 
     def test_get_additional_groups(self):
+        TestConnector.test_get_additional_groups(self)
+
         probes = self.get_probes_object()
         test_cgroups = self.get_test_cgroups()
         probes.cgroups = self.get_test_cgroups()
@@ -524,6 +530,8 @@ text
                          list())
 
     def test_get_additional_data(self):
+        TestConnector.test_get_additional_data(self)
+
         probes = self.get_probes_object()
         test_probedata = self.get_test_probedata()
         probes.probedata = self.get_test_probedata()
