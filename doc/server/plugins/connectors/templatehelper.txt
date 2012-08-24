@@ -23,9 +23,8 @@ will be read and added to matching client metadata objects.  See
 :ref:`writing-templatehelpers` below for more information on how to
 write TemplateHelper scripts.
 
-TemplateHelper supports group- and host-specific helpers, so you could
-create, e.g., ``foo.py.G80_test`` to create a helper that only applied
-to machines in the group ``test``.
+TemplateHelper does not support group- or host-specific helpers.  All
+helpers will be available to all clients.
 
 .. _writing-templatehelpers:
 
@@ -34,15 +33,14 @@ Writing Helpers
 
 A helper module is just a Python module with three special conditions:
 
-* The filename must end with ``.py`` (before any specificity
-  strings, e.g., ``.G80_foo`` or ``.H_blah.example.com``
+* The filename must end with ``.py``
 * The module must have an attribute, ``__export__``, that lists all of
   the classes, functions, variables, or other symbols you wish to
   export from the module.
-* ``data``, ``handle_event``, ``name``, and ``specific`` are reserved
-  names.  You should not include symbols with a reserved name in
-  ``__export__``.  Additionally, including symbols that start with an
-  underscore or double underscore is bad form, and may also produce
+* ``data``, ``name``, ``fam``, ``Index``, and ``HandleEvent`` are
+  reserved names.  You should not include symbols with a reserved name
+  in ``__export__``.  Additionally, including symbols that start with
+  an underscore or double underscore is bad form, and may also produce
   errors.
 
 See ``examples/TemplateHelper`` for examples of helper modules.
@@ -60,7 +58,7 @@ a HelperModule object will has, as attributes, all symbols listed in
   def hello(metadata):
       return "Hello, %s!" % metadata.hostname
 
-To use this in a TGenshi template, we could do::
+To use this in a Genshi template, we could do::
 
   ${metadata.TemplateHelper['hello'].hello(metadata)}
 

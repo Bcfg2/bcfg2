@@ -8,21 +8,16 @@ import Bcfg2.Server.Plugin
 
 logger = logging.getLogger(__name__)
 
-class HelperModule(Bcfg2.Server.Plugin.SpecificData):
-    _module_name_re = re.compile(r'([^/]+?)\.py')
+module_pattern = r'(?P<filename>(?P<module>[^\/]+)\.py)$'
+module_re = re.compile(module_pattern)
 
-    def __init__(self, name, specific, encoding):
-        Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific,
-                                                  encoding)
-        match = self._module_name_re.search(self.name)
-        if match:
-            self._module_name = match.group(1)
-        else:
-            self._module_name = name
+class HelperModule(Bcfg2.Server.Plugin.FileBacked):
+    def __init__(self, name, fam=None):
+        Bcfg2.Server.Plugin.FileBacked.__init__(self, name, fam=fam)
+        self._module_name = module_re.search(self.name).group('module')
         self._attrs = []
 
-    def handle_event(self, event):
-        Bcfg2.Server.Plugin.SpecificData.handle_event(self, event)
+    def Index(self):
         try:
             module = imp.load_source(self._module_name, self.name)
         except:
@@ -36,33 +31,29 @@ class HelperModule(Bcfg2.Server.Plugin.SpecificData):
                          self.name)
             return
 
+        newattrs = []
         for sym in module.__export__:
             if sym not in self._attrs and hasattr(self, sym):
                 logger.warning("TemplateHelper: %s: %s is a reserved keyword, "
                                "skipping export" % (self.name, sym))
-            setattr(self, sym, getattr(module, sym))
+                continue
+            try:
+                setattr(self, sym, getattr(module, sym))
+                newattrs.append(sym)
+            except AttributeError:
+                logger.warning("TemplateHelper: %s: %s exports %s, but has no "
+                               "such attribute" % (self.name, sym))
         # remove old exports
-        for sym in set(self._attrs) - set(module.__export__):
+        for sym in set(self._attrs) - set(newattrs):
             delattr(self, sym)
 
-        self._attrs = module.__export__
+        self._attrs = newattrs
 
 
-class HelperSet(Bcfg2.Server.Plugin.EntrySet):
+class HelperSet(Bcfg2.Server.Plugin.DirectoryBacked):
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\.py[co])$")
-    fpattern = '[0-9A-Za-z_\-]+\.py'
-    basename_is_regex = True
-
-    def __init__(self, path, fam, encoding, plugin_name):
-        self.plugin_name = plugin_name
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, self.fpattern, path,
-                                              HelperModule, encoding)
-        fam.AddMonitor(path, self)
-
-    def HandleEvent(self, event):
-        if (event.filename != self.path and
-            not self.ignore.match(event.filename)):
-            return self.handle_event(event)
+    patterns = module_re
+    __child__ = HelperModule
 
 
 class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
@@ -74,39 +65,31 @@ class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
+        self.helpers = HelperSet(self.data, core.fam)
 
-        try:
-            self.helpers = HelperSet(self.data, core.fam, core.encoding,
-                                     self.name)
-        except:
-            raise Bcfg2.Server.Plugin.PluginInitError
-
-    def get_additional_data(self, metadata):
+    def get_additional_data(self, _):
         return dict([(h._module_name, h)
-                     for h in self.helpers.get_matching(metadata)])
+                     for h in self.helpers.entries.values()])
 
 
 class TemplateHelperLint(Bcfg2.Server.Lint.ServerlessPlugin):
     """ find duplicate Pkgmgr entries with the same priority """
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerlessPlugin.__init__(self, *args, **kwargs)
-        hm = HelperModule("foo.py", None, None)
+        hm = HelperModule("foo.py")
         self.reserved_keywords = dir(hm)
 
     def Run(self):
-        for helper in glob.glob(os.path.join(self.config['repo'],
-                                             "TemplateHelper",
-                                             "*.py")):
-            if not self.HandlesFile(helper):
+        for fname in os.listdir(os.path.join(self.config['repo'],
+                                             "TemplateHelper")):
+            helper = os.path.join(self.config['repo'], "TemplateHelper",
+                                  fname)
+            if not module_re.search(helper) or not self.HandlesFile(helper):
                 continue
             self.check_helper(helper)
 
     def check_helper(self, helper):
-        match = HelperModule._module_name_re.search(helper)
-        if match:
-            module_name = match.group(1)
-        else:
-            module_name = helper
+        module_name = module_re.search(helper).group(1)
 
         try:
             module = imp.load_source(module_name, helper)
