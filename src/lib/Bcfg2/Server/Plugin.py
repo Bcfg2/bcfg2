@@ -456,6 +456,7 @@ class DirectoryBacked(object):
     """This object is a coherent cache for a filesystem hierarchy of files."""
     __child__ = FileBacked
     patterns = re.compile('.*')
+    ignore = None
 
     def __init__(self, data, fam):
         """Initialize the DirectoryBacked object.
@@ -549,6 +550,10 @@ class DirectoryBacked(object):
         if event.filename.startswith(self.data):
             # the first event we get is on the data directory itself
             event.filename = event.filename[len(self.data) + 1:]
+
+        if self.ignore and self.ignore.search(event.filename):
+            logger.debug("Ignoring event %s" % event.filename)
+            return
 
         # Calculate the absolute and relative paths this event refers to
         abspath = os.path.join(self.data, self.handles[event.requestID],

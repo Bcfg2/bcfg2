@@ -505,6 +505,7 @@ class TestDirectoryBacked(Bcfg2TestCase):
                  6: 'xyzzy/',
                  7: 'xyzzy/plugh/'}
     testfiles = ['foo', 'bar/baz.txt', 'plugh.py']
+    ignore = [] # ignore no events
     badevents = [] # DirectoryBacked handles all files, so there's no
                    # such thing as a bad event
 
@@ -716,6 +717,18 @@ class TestDirectoryBacked(Bcfg2TestCase):
             db.HandleEvent(event)
             self.assertFalse(mock_add_entry.called)
             self.assertFalse(mock_add_monitor.called)
+
+        # test ignored events
+        for fname in self.ignore:
+            reset()
+            event = get_event(fname, "created", 1)
+            db.HandleEvent(event)
+            self.assertFalse(mock_isdir.called,
+                             msg="Failed to ignore %s" % fname)
+            self.assertFalse(mock_add_entry.called,
+                             msg="Failed to ignore %s" % fname)
+            self.assertFalse(mock_add_monitor.called,
+                             msg="Failed to ignore %s" % fname)
                 
 
 class TestXMLFileBacked(TestFileBacked):
