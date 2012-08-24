@@ -595,7 +595,7 @@ class DirectoryBacked(object):
             else:
                 logger.warn("Got unknown dir event %s %s %s" %
                             (event.requestID, event.code2str(), abspath))
-        else:
+        elif self.patterns.search(event.filename):
             if action in ['exists', 'created']:
                 self.add_entry(relpath, event)
             elif action == 'changed':
@@ -613,6 +613,9 @@ class DirectoryBacked(object):
             else:
                 logger.warn("Got unknown file event %s %s %s" %
                             (event.requestID, event.code2str(), abspath))
+        else:
+            logger.warn("Could not process filename %s; ignoring" %
+                        event.filename)
 
 
 class XMLFileBacked(FileBacked):
@@ -907,7 +910,7 @@ class InfoXML(XMLSrc):
 
 class XMLDirectoryBacked(DirectoryBacked):
     """Directorybacked for *.xml."""
-    patterns = re.compile('.*\.xml')
+    patterns = re.compile('^.*\.xml$')
     __child__ = XMLFileBacked
 
 

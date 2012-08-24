@@ -462,14 +462,16 @@ class TestClientRunHooks(Bcfg2TestCase):
 
 class TestFileBacked(Bcfg2TestCase):
     test_obj = FileBacked
+    path = os.path.join(datastore, "test")
 
-    def get_obj(self, path=datastore, fam=None):
+    def get_obj(self, path=None, fam=None):
+        if path is None:
+            path = self.path
         return self.test_obj(path, fam=fam)
 
     @patch("%s.open" % builtins)
     def test_HandleEvent(self, mock_open):
-        path = "/test"
-        fb = self.get_obj(path)
+        fb = self.get_obj()
         fb.Index = Mock()
 
         def reset():
@@ -481,7 +483,7 @@ class TestFileBacked(Bcfg2TestCase):
             event = Mock()
             event.code2str.return_value = evt
             fb.HandleEvent(event)
-            mock_open.assert_called_with(path)
+            mock_open.assert_called_with(self.path)
             mock_open.return_value.read.assert_any_call()
             fb.Index.assert_any_call()
 
@@ -502,6 +504,9 @@ class TestDirectoryBacked(Bcfg2TestCase):
                  5: 'quux',
                  6: 'xyzzy/',
                  7: 'xyzzy/plugh/'}
+    testfiles = ['foo', 'bar/baz.txt', 'plugh.py']
+    badevents = [] # DirectoryBacked handles all files, so there's no
+                   # such thing as a bad event
 
     def test_child_interface(self):
         # ensure that the child object has the correct interface
@@ -632,7 +637,8 @@ class TestDirectoryBacked(Bcfg2TestCase):
         # test events on paths that aren't handled
         reset()
         mock_isdir.return_value = False
-        event = get_event('/foo', 'created', max(self.testpaths.keys()) + 1)
+        event = get_event('/' + self.testfiles[0], 'created',
+                          max(self.testpaths.keys()) + 1)
         db.HandleEvent(event)
         self.assertFalse(mock_add_monitor.called)
         self.assertFalse(mock_add_entry.called)
@@ -642,7 +648,7 @@ class TestDirectoryBacked(Bcfg2TestCase):
             # DirectoryBacked.handles, so strip that test case
             path = path.lstrip('/')
             basepath = os.path.join(datastore, path)
-            for fname in ['foo', 'bar/baz.txt', 'plugh.py']:
+            for fname in self.testfiles:
                 relpath = os.path.join(path, fname)
                 abspath = os.path.join(basepath, fname)
 
@@ -702,32 +708,41 @@ class TestDirectoryBacked(Bcfg2TestCase):
         db.HandleEvent(event)
         for key in db.entries.keys():
             self.assertFalse(key.startswith('quux'))
+
+        # test bad events
+        for fname in self.badevents:
+            reset()
+            event = get_event(fname, "created", 1)
+            db.HandleEvent(event)
+            self.assertFalse(mock_add_entry.called)
+            self.assertFalse(mock_add_monitor.called)
                 
 
 class TestXMLFileBacked(TestFileBacked):
     test_obj = XMLFileBacked
+    path = os.path.join(datastore, "test", "test1.xml")
 
-    def get_obj(self, path=datastore, fam=None, should_monitor=False):
+    def get_obj(self, path=None, fam=None, should_monitor=False):
+        if path is None:
+            path = self.path
         return self.test_obj(path, fam=fam, should_monitor=should_monitor)
 
     def test__init(self):
         fam = Mock()
-        fname = "/test"
-        xfb = self.get_obj(fname)
+        xfb = self.get_obj()
         self.assertIsNone(xfb.fam)
 
-        xfb = self.get_obj(fname, fam=fam)
+        xfb = self.get_obj(fam=fam)
         self.assertFalse(fam.AddMonitor.called)
 
         fam.reset_mock()
-        xfb = self.get_obj(fname, fam=fam, should_monitor=True)
-        fam.AddMonitor.assert_called_with(fname, xfb)
+        xfb = self.get_obj(fam=fam, should_monitor=True)
+        fam.AddMonitor.assert_called_with(self.path, xfb)
 
     @patch("os.path.exists")
     @patch("lxml.etree.parse")
     def test_follow_xincludes(self, mock_parse, mock_exists):
-        fname = "/test/test1.xml"
-        xfb = self.get_obj(fname)
+        xfb = self.get_obj()
         xfb.add_monitor = Mock()
         
         def reset():
@@ -760,23 +775,23 @@ class TestXMLFileBacked(TestFileBacked):
         self.assertFalse(xfb.add_monitor.called)
 
         # test one level of xinclude
-        xdata[fname] = lxml.etree.Element("Test").getroottree()
-        lxml.etree.SubElement(xdata[fname].getroot(),
+        xdata[self.path] = lxml.etree.Element("Test").getroottree()
+        lxml.etree.SubElement(xdata[self.path].getroot(),
                               Bcfg2.Server.XI_NAMESPACE + "include",
                               href="/test/test2.xml")
         reset()
-        xfb._follow_xincludes(fname=fname)
+        xfb._follow_xincludes(fname=self.path)
         xfb.add_monitor.assert_called_with("/test/test2.xml")
         self.assertItemsEqual(mock_parse.call_args_list,
                               [call(f) for f in xdata.keys()])
         mock_exists.assert_called_with("/test/test2.xml")
 
         reset()
-        xfb._follow_xincludes(xdata=xdata[fname])
+        xfb._follow_xincludes(fname=self.path, xdata=xdata[self.path])
         xfb.add_monitor.assert_called_with("/test/test2.xml")
         self.assertItemsEqual(mock_parse.call_args_list,
                               [call(f) for f in xdata.keys()
-                               if f != fname])
+                               if f != self.path])
         mock_exists.assert_called_with("/test/test2.xml")
 
         # test two-deep level of xinclude, with some files in another
@@ -796,7 +811,7 @@ class TestXMLFileBacked(TestFileBacked):
         xdata['/test/test_dir/test6.xml'] = \
             lxml.etree.Element("Test").getroottree()
         # relative includes
-        lxml.etree.SubElement(xdata[fname].getroot(),
+        lxml.etree.SubElement(xdata[self.path].getroot(),
                               Bcfg2.Server.XI_NAMESPACE + "include",
                               href="test3.xml")
         lxml.etree.SubElement(xdata["/test/test3.xml"].getroot(),
@@ -804,28 +819,27 @@ class TestXMLFileBacked(TestFileBacked):
                               href="test_dir/test6.xml")
 
         reset()
-        xfb._follow_xincludes(fname=fname)
+        xfb._follow_xincludes(fname=self.path)
         self.assertItemsEqual(xfb.add_monitor.call_args_list,
-                              [call(f) for f in xdata.keys() if f != fname])
+                              [call(f) for f in xdata.keys() if f != self.path])
         self.assertItemsEqual(mock_parse.call_args_list,
                               [call(f) for f in xdata.keys()])
         self.assertItemsEqual(mock_exists.call_args_list,
-                              [call(f) for f in xdata.keys() if f != fname])
+                              [call(f) for f in xdata.keys() if f != self.path])
 
         reset()
-        xfb._follow_xincludes(xdata=xdata[fname])
+        xfb._follow_xincludes(fname=self.path, xdata=xdata[self.path])
         self.assertItemsEqual(xfb.add_monitor.call_args_list,
-                              [call(f) for f in xdata.keys() if f != fname])
+                              [call(f) for f in xdata.keys() if f != self.path])
         self.assertItemsEqual(mock_parse.call_args_list,
-                              [call(f) for f in xdata.keys() if f != fname])
+                              [call(f) for f in xdata.keys() if f != self.path])
         self.assertItemsEqual(mock_exists.call_args_list,
-                              [call(f) for f in xdata.keys() if f != fname])
+                              [call(f) for f in xdata.keys() if f != self.path])
 
     @patch("lxml.etree._ElementTree", FakeElementTree)
     @patch("Bcfg2.Server.Plugin.%s._follow_xincludes" % test_obj.__name__)
     def test_Index(self, mock_follow):
-        fname = "/test/test1.xml"
-        xfb = self.get_obj(fname)
+        xfb = self.get_obj()
         
         def reset():
             mock_follow.reset_mock()
@@ -846,7 +860,7 @@ class TestXMLFileBacked(TestFileBacked):
         xfb.Index()
         mock_follow.assert_any_call()
         try:
-            self.assertEqual(xfb.xdata.base, fname)
+            self.assertEqual(xfb.xdata.base, self.path)
         except AttributeError:
             # python 2.4 and/or lxml 2.0 don't store the base_url in
             # .base -- no idea where it's stored.
@@ -882,27 +896,26 @@ class TestXMLFileBacked(TestFileBacked):
         mock_follow.assert_any_call()
         FakeElementTree.xinclude.assert_any_call
         try:
-            self.assertEqual(xfb.xdata.base, fname)
+            self.assertEqual(xfb.xdata.base, self.path)
         except AttributeError:
             pass
         self.assertItemsEqual([tostring(e) for e in xfb.entries],
                               [tostring(e) for e in children])
 
     def test_add_monitor(self):
-        fname = "/test/test1.xml"
-        xfb = self.get_obj(fname)
+        xfb = self.get_obj()
         xfb.add_monitor("/test/test2.xml")
         self.assertIn("/test/test2.xml", xfb.extras)
 
         fam = Mock()
-        xfb = self.get_obj(fname, fam=fam)
+        xfb = self.get_obj(fam=fam)
         fam.reset_mock()
         xfb.add_monitor("/test/test3.xml")
         self.assertFalse(fam.AddMonitor.called)
         self.assertIn("/test/test3.xml", xfb.extras)
 
         fam.reset_mock()
-        xfb = self.get_obj(fname, fam=fam, should_monitor=True)
+        xfb = self.get_obj(fam=fam, should_monitor=True)
         xfb.add_monitor("/test/test4.xml")
         fam.AddMonitor.assert_called_with("/test/test4.xml", xfb)
         self.assertIn("/test/test4.xml", xfb.extras)
@@ -981,7 +994,7 @@ class TestStructFile(TestXMLFileBacked):
         return (xdata, groups, subgroups, children, subchildren, standalone)
 
     def test_include_element(self):
-        sf = self.get_obj("/test/test.xml")
+        sf = self.get_obj()
         metadata = Mock()
         metadata.groups = ["group1", "group2"]
         metadata.hostname = "foo.example.com"
@@ -1014,7 +1027,7 @@ class TestStructFile(TestXMLFileBacked):
 
     @patch("Bcfg2.Server.Plugin.%s._include_element" % test_obj.__name__)
     def test__match(self, mock_include):
-        sf = self.get_obj("/test/test.xml")
+        sf = self.get_obj()
         metadata = Mock()
         
         (xdata, groups, subgroups, children, subchildren, standalone) = \
@@ -1042,7 +1055,7 @@ class TestStructFile(TestXMLFileBacked):
 
     @patch("Bcfg2.Server.Plugin.%s._match" % test_obj.__name__)
     def test_Match(self, mock_match):
-        sf = self.get_obj("/test/test.xml")
+        sf = self.get_obj()
         metadata = Mock()
 
         (xdata, groups, subgroups, children, subchildren, standalone) = \
@@ -1072,7 +1085,7 @@ class TestStructFile(TestXMLFileBacked):
 
     @patch("Bcfg2.Server.Plugin.%s._include_element" % test_obj.__name__)
     def test__xml_match(self, mock_include):
-        sf = self.get_obj("/test/test.xml")
+        sf = self.get_obj()
         metadata = Mock()
         
         (xdata, groups, subgroups, children, subchildren, standalone) = \
@@ -1094,7 +1107,7 @@ class TestStructFile(TestXMLFileBacked):
 
     @patch("Bcfg2.Server.Plugin.%s._xml_match" % test_obj.__name__)
     def test_Match(self, mock_xml_match):
-        sf = self.get_obj("/test/test.xml")
+        sf = self.get_obj()
         metadata = Mock()
 
         (sf.xdata, groups, subgroups, children, subchildren, standalone) = \
@@ -1457,6 +1470,8 @@ class TestInfoXML(TestXMLSrc):
 
 class TestXMLDirectoryBacked(TestDirectoryBacked):
     test_obj = XMLDirectoryBacked
+    testfiles = ['foo.xml', 'bar/baz.xml', 'plugh.plugh.xml']
+    badpaths = ["foo", "foo.txt", "foo.xsd", "xml"]
 
 
 class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
