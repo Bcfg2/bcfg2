@@ -190,6 +190,12 @@ class TestPluginDatabaseModel(Bcfg2TestCase):
 class TestGenerator(Bcfg2TestCase):
     test_obj = Generator
 
+    def test_HandlesEntry(self):
+        pass
+
+    def test_HandleEntry(self):
+        pass
+
 
 class TestStructure(Bcfg2TestCase):
     test_obj = Structure
@@ -1690,8 +1696,11 @@ class TestSpecificity(Bcfg2TestCase):
 
 class TestSpecificData(Bcfg2TestCase):
     test_obj = SpecificData
+    path = os.path.join(datastore, "test.txt")
 
-    def get_obj(self, name="/test.txt", specific=None, encoding=None):
+    def get_obj(self, name=None, specific=None, encoding=None):
+        if name is None:
+            name = self.path
         if specific is None:
             specific = Mock()
         return self.test_obj(name, specific, encoding)
@@ -1711,7 +1720,7 @@ class TestSpecificData(Bcfg2TestCase):
         event = Mock()
         mock_open.return_value.read.return_value = "test"
         sd.handle_event(event)
-        mock_open.assert_called_with("/test.txt")
+        mock_open.assert_called_with(self.path)
         mock_open.return_value.read.assert_any_call()
         self.assertEqual(sd.data, "test")
 
@@ -2224,9 +2233,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
         
         TestPlugin.test_toggle_debug(self)
 
-    @patch("Bcfg2.Server.Plugin.%s.event_id" % test_obj.__name__)
-    @patch("Bcfg2.Server.Plugin.%s.add_entry" % test_obj.__name__)
-    def test_HandleEvent(self, mock_add_entry, mock_event_id):
+    def test_HandleEvent(self):
         gs = self.get_obj()
         gs.entries = {"/foo": Mock(),
                       "/bar": Mock(),
@@ -2239,9 +2246,12 @@ class TestGroupSpool(TestPlugin, TestGenerator):
                       3: "/baz/",
                       4: "/baz/quux"}
 
+        gs.add_entry = Mock()
+        gs.event_id = Mock()
+
         def reset():
-            mock_add_entry.reset_mock()
-            mock_event_id.reset_mock()
+            gs.add_entry.reset_mock()
+            gs.event_id.reset_mock()
             for entry in gs.entries.values():
                 entry.reset_mock()
 
@@ -2250,11 +2260,12 @@ class TestGroupSpool(TestPlugin, TestGenerator):
             reset()
             event = Mock()
             event.filename = "foo"
+            event.requestID = 1
             event.code2str.return_value = evt
             gs.HandleEvent(event)
-            mock_event_id.assert_called_with(event)
-            mock_add_entry.assert_called_with(event)
-            
+            gs.event_id.assert_called_with(event)
+            gs.add_entry.assert_called_with(event)
+        
         # test deleting entry, changing entry that does exist
         for evt in ["changed", "deleted"]:
             reset()
@@ -2262,12 +2273,12 @@ class TestGroupSpool(TestPlugin, TestGenerator):
             event.filename = "quux"
             event.requestID = 4
             event.code2str.return_value = evt
-            mock_event_id.return_value = "/baz/quux"
+            gs.event_id.return_value = "/baz/quux"
             gs.HandleEvent(event)
-            mock_event_id.assert_called_with(event)
-            self.assertIn(mock_event_id.return_value, gs.entries)
-            gs.entries[mock_event_id.return_value].handle_event.assert_called_with(event)
-            self.assertFalse(mock_add_entry.called)
+            gs.event_id.assert_called_with(event)
+            self.assertIn(gs.event_id.return_value, gs.entries)
+            gs.entries[gs.event_id.return_value].handle_event.assert_called_with(event)
+            self.assertFalse(gs.add_entry.called)
 
         # test deleting directory
         reset()
@@ -2275,9 +2286,9 @@ class TestGroupSpool(TestPlugin, TestGenerator):
         event.filename = "quux"
         event.requestID = 3
         event.code2str.return_value = "deleted"
-        mock_event_id.return_value = "/baz/quux"
+        gs.event_id.return_value = "/baz/quux"
         gs.HandleEvent(event)
-        mock_event_id.assert_called_with(event)
+        gs.event_id.assert_called_with(event)
         self.assertNotIn("/baz/quux", gs.entries)
         self.assertNotIn("/baz/quux", gs.Entries[gs.entry_type])
 
