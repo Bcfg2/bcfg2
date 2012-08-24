@@ -15,7 +15,6 @@ class SEModules(Bcfg2.Server.Plugin.GroupSpool):
     """ Handle SELinux 'module' entries """
     name = 'SEModules'
     __author__ = 'chris.a.st.pierre@gmail.com'
-    es_cls = Bcfg2.Server.Plugin.EntrySet
     es_child_cls = SEModuleData
     entry_type = 'SELinux'
     experimental = True
@@ -41,5 +40,6 @@ class SEModules(Bcfg2.Server.Plugin.GroupSpool):
         return self.Entries[entry.tag][entry.get("name")](entry, metadata)
 
     def add_entry(self, event):
-        self.filename_pattern = os.path.basename(event.filename)
+        self.filename_pattern = \
+            os.path.basename(os.path.dirname(self.event_path(event)))
         Bcfg2.Server.Plugin.GroupSpool.add_entry(self, event)
