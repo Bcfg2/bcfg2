@@ -92,9 +92,10 @@ def main(args):
         item = doc.createElement(node_user)
         root_element.appendChild(item)
         extra_groups = os.popen("groups %s" % row[0]).readline()[:-1] 
+        p_group = os.popen("id -gn %s" % row[0]).readline()[:-1]
         extra_groups_str = extra_groups.split(' : ')[1]
         populate_groups(groups, extra_groups_str)
-        item.setAttribute('extra_groups', extra_groups_str)
+        item.setAttribute('extra_groups', get_extra_group_str(extra_groups_str, p_group))
         create_col_nodes(columns, item, doc, row)
     
   for gkey, gval in groups.items():
@@ -109,6 +110,12 @@ def main(args):
   
   print "Done: Created %s" % output_file
   os.remove(filename)
+
+def get_extra_group_str(group_str, p_group):
+    groups = group_str.split(' ')
+    groups = [x for x in groups  if p_group != x]
+    return ' '.join(groups)
+
   
 def create_col_nodes(cols, item, doc, row): 
   for col in cols:
