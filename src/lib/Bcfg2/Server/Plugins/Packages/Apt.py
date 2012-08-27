@@ -19,10 +19,6 @@ class AptSource(Source):
         Source.__init__(self, basepath, xsource, config)
         self.pkgnames = set()
 
-        self.url_map = [{'rawurl': self.rawurl, 'url': self.url,
-                         'version': self.version,
-                         'components': self.components, 'arches': self.arches}]
-
     def save_state(self):
         cache = open(self.cachefile, 'wb')
         cPickle.dump((self.pkgnames, self.deps, self.provides,
