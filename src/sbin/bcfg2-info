@@ -26,7 +26,6 @@ except:
 import Bcfg2.Logger
 import Bcfg2.Options
 import Bcfg2.Server.Core
-import Bcfg2.Server.Plugins.Metadata
 import Bcfg2.Server.Plugin
 
 try:
@@ -483,7 +482,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
         client = args.split()[0]
         try:
             meta = self.build_metadata(client)
-        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
+        except Bcfg2.Server.Plugin.MetadataConsistencyError:
             print("Unable to find metadata for host %s" % client)
             return
         structures = self.GetStructures(meta)
@@ -587,7 +586,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
     def do_cfgdebug(self, args):
         try:
             meta = self.build_metadata(args)
-        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
+        except Bcfg2.Server.Plugin.MetadataConsistencyError:
             print("Unable to find metadata for host %s" % args)
             return
         structures = self.GetStructures(meta)
@@ -641,7 +640,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             return
         try:
             metadata = self.build_metadata(args)
-        except Bcfg2.Server.Plugins.Metadata.MetadataConsistencyError:
+        except Bcfg2.Server.Plugin.MetadataConsistencyError:
             print("Unable to build metadata for host %s" % args)
             return
         collection = self.plugins['Packages']._get_collection(metadata)

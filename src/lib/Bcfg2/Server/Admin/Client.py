@@ -1,6 +1,6 @@
 import lxml.etree
 import Bcfg2.Server.Admin
-from Bcfg2.Server.Plugins.Metadata import MetadataConsistencyError
+from Bcfg2.Server.Plugin import MetadataConsistencyError
 
 
 class Client(Bcfg2.Server.Admin.MetadataCore):

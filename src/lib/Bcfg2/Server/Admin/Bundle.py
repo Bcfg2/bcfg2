@@ -4,7 +4,7 @@ import sys
 import re
 import Bcfg2.Server.Admin
 import Bcfg2.Options
-from Bcfg2.Server.Plugins.Metadata import MetadataConsistencyError
+from Bcfg2.Server.Plugin import MetadataConsistencyError
 
 
 class Bundle(Bcfg2.Server.Admin.MetadataCore):
