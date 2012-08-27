@@ -3,7 +3,7 @@
 import copy
 import lxml.etree
 import sys
-from Bcfg2.Bcfg2Py3k import reduce
+from Bcfg2.Compat import reduce
 import Bcfg2.Server.Plugin
 
 

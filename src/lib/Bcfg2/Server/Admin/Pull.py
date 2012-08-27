@@ -2,7 +2,7 @@ import getopt
 import sys
 
 import Bcfg2.Server.Admin
-from Bcfg2.Bcfg2Py3k import input
+from Bcfg2.Compat import input
 
 
 class Pull(Bcfg2.Server.Admin.MetadataCore):

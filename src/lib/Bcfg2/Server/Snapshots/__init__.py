@@ -3,7 +3,7 @@ __all__ = ['models', 'db_from_config', 'setup_session']
 import sqlalchemy
 import sqlalchemy.orm
 # Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.Compat import ConfigParser
 
 
 def db_from_config(cfile):

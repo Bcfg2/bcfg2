@@ -15,7 +15,7 @@ import ssl
 import threading
 import time
 # Compatibility imports
-from Bcfg2.Bcfg2Py3k import xmlrpclib, SimpleXMLRPCServer, SocketServer
+from Bcfg2.Compat import xmlrpclib, SimpleXMLRPCServer, SocketServer
 
 
 class ForkedChild(Exception):

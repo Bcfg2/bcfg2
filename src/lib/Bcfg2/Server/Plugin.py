@@ -10,7 +10,7 @@ import threading
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Options
-from Bcfg2.Bcfg2Py3k import ConfigParser, CmpMixin, reduce, Queue, Empty, \
+from Bcfg2.Compat import ConfigParser, CmpMixin, reduce, Queue, Empty, \
     Full, cPickle
 
 try:

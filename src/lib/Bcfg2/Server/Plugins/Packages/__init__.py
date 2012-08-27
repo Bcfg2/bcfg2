@@ -7,7 +7,7 @@ import shutil
 import lxml.etree
 import Bcfg2.Logger
 import Bcfg2.Server.Plugin
-from Bcfg2.Bcfg2Py3k import ConfigParser, urlopen
+from Bcfg2.Compat import ConfigParser, urlopen
 from Bcfg2.Server.Plugins.Packages import Collection
 from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
 

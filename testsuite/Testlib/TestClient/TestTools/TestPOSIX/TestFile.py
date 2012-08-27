@@ -5,7 +5,7 @@ import copy
 import difflib
 import binascii
 import lxml.etree
-from Bcfg2.Bcfg2Py3k import b64encode, b64decode, u_str
+from Bcfg2.Compat import b64encode, b64decode, u_str
 from mock import Mock, MagicMock, patch
 from Bcfg2.Client.Tools.POSIX.File import *
 

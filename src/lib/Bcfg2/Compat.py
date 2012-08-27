@@ -1,3 +1,6 @@
+""" Compatibility imports, mostly for Py3k support, but also for
+Python 2.4 and such-like """
+
 import sys
 
 try:

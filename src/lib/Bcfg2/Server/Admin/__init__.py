@@ -24,7 +24,7 @@ import sys
 import Bcfg2.Server.Core
 import Bcfg2.Options
 # Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.Compat import ConfigParser
 
 
 class ModeOperationError(Exception):

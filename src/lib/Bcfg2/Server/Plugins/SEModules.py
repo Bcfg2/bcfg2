@@ -1,7 +1,7 @@
 import os
 import logging
 import Bcfg2.Server.Plugin
-from Bcfg2.Bcfg2Py3k import b64encode
+from Bcfg2.Compat import b64encode
 
 logger = logging.getLogger(__name__)
 

@@ -5,7 +5,7 @@ import sys
 import traceback
 import Bcfg2.Server.Plugin
 
-from Bcfg2.Bcfg2Py3k import unicode, b64encode
+from Bcfg2.Compat import unicode, b64encode
 
 logger = logging.getLogger('Bcfg2.Plugins.TCheetah')
 

@@ -1,6 +1,6 @@
 import gzip
 import tarfile
-from Bcfg2.Bcfg2Py3k import cPickle
+from Bcfg2.Compat import cPickle
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
 

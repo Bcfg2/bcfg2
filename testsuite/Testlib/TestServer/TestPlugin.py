@@ -5,7 +5,7 @@ import copy
 import logging
 import lxml.etree
 import Bcfg2.Server
-from Bcfg2.Bcfg2Py3k import reduce
+from Bcfg2.Compat import reduce
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugin import *
 

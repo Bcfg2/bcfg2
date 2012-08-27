@@ -11,9 +11,9 @@ import re
 import sys
 
 # Compatibility imports
-from Bcfg2.Bcfg2Py3k import StringIO
-from Bcfg2.Bcfg2Py3k import ConfigParser
-from Bcfg2.Bcfg2Py3k import urlopen
+from Bcfg2.Compat import StringIO
+from Bcfg2.Compat import ConfigParser
+from Bcfg2.Compat import urlopen
 
 apt_pkg.init()
 

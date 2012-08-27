@@ -9,7 +9,7 @@ import logging
 import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
-from Bcfg2.Bcfg2Py3k import u_str, unicode, b64encode
+from Bcfg2.Compat import u_str, unicode, b64encode
 import Bcfg2.Server.Lint
 
 logger = logging.getLogger(__name__)

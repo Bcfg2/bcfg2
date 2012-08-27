@@ -7,7 +7,7 @@ import Bcfg2.Logger
 import Bcfg2.Options
 import Bcfg2.Server.Admin
 # Compatibility import
-from Bcfg2.Bcfg2Py3k import StringIO
+from Bcfg2.Compat import StringIO
 
 log = logging.getLogger('bcfg2-admin')
 

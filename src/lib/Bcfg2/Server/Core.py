@@ -14,7 +14,7 @@ import Bcfg2.settings
 import Bcfg2.Server
 import Bcfg2.Logger
 import Bcfg2.Server.FileMonitor
-from Bcfg2.Bcfg2Py3k import xmlrpclib, reduce
+from Bcfg2.Compat import xmlrpclib, reduce
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 
 try:

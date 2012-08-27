@@ -21,7 +21,7 @@ import sys
 import time
 
 # Compatibility imports
-from Bcfg2.Bcfg2Py3k import httplib, xmlrpclib, urlparse
+from Bcfg2.Compat import httplib, xmlrpclib, urlparse
 
 version = sys.version_info[:2]
 has_py26 = version >= (2, 6)

@@ -13,7 +13,7 @@ import sys
 from time import asctime, strptime
 from lxml.etree import XML, XSLT, parse, Element, ElementTree, SubElement, tostring, XMLSyntaxError
 # Compatibility imports
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.Compat import ConfigParser
 
 def generatereport(rspec, nrpt):
     """

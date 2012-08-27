@@ -10,7 +10,7 @@ import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Lint
 # Compatibility imports
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.Compat import ConfigParser
 
 logger = logging.getLogger('bcfg2-lint')
 

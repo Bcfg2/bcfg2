@@ -3,7 +3,7 @@
 import os
 import sys
 import lxml.etree
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.Compat import ConfigParser
 import Bcfg2.Options
 
 XI_NAMESPACE = "http://www.w3.org/2001/XInclude"

@@ -34,7 +34,7 @@ import Bcfg2.Logger
 import platform
 
 # Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser, b64decode
+from Bcfg2.Compat import ConfigParser, b64decode
 
 
 def build_reason_kwargs(r_ent, encoding, logger):

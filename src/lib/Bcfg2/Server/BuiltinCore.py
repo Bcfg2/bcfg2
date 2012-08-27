@@ -6,7 +6,7 @@ import time
 import socket
 import logging
 from Bcfg2.Server.Core import BaseCore
-from Bcfg2.Bcfg2Py3k import xmlrpclib, urlparse
+from Bcfg2.Compat import xmlrpclib, urlparse
 from Bcfg2.SSLServer import XMLRPCServer
 
 logger = logging.getLogger()

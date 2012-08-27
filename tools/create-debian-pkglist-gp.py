@@ -10,9 +10,9 @@ import sys
 import subprocess
 
 # Compatibility imports
-from Bcfg2.Bcfg2Py3k import StringIO
-from Bcfg2.Bcfg2Py3k import ConfigParser
-from Bcfg2.Bcfg2Py3k import urlopen
+from Bcfg2.Compat import StringIO
+from Bcfg2.Compat import ConfigParser
+from Bcfg2.Compat import urlopen
 
 def debug(msg):
     '''print debug messages'''

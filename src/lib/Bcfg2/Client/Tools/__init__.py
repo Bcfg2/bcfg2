@@ -7,7 +7,7 @@ import pkgutil
 from subprocess import Popen, PIPE
 
 import Bcfg2.Client.XML
-from Bcfg2.Bcfg2Py3k import input
+from Bcfg2.Compat import input
 
 if hasattr(pkgutil, 'walk_packages'):
     submodules = pkgutil.walk_packages(path=__path__)

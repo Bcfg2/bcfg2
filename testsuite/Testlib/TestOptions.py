@@ -2,7 +2,7 @@ import os
 import sys
 from mock import Mock, MagicMock, patch
 from Bcfg2.Options import *
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.Compat import ConfigParser
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4

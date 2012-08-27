@@ -16,7 +16,7 @@ import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
 # Compatibility imports
-from Bcfg2.Bcfg2Py3k import xmlrpclib
+from Bcfg2.Compat import xmlrpclib
 
 from Bcfg2.version import __version__
 

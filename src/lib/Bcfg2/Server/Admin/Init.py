@@ -10,7 +10,7 @@ import subprocess
 import Bcfg2.Server.Admin
 import Bcfg2.Server.Plugin
 import Bcfg2.Options
-from Bcfg2.Bcfg2Py3k import input
+from Bcfg2.Compat import input
 
 # default config file
 config = '''

@@ -1,5 +1,5 @@
 import logging
-from Bcfg2.Bcfg2Py3k import StringIO
+from Bcfg2.Compat import StringIO
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
 from Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator import decrypt, \
     CfgEncryptedGenerator

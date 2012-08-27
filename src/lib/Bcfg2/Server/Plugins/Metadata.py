@@ -14,7 +14,7 @@ import Bcfg2.Server
 import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
-from Bcfg2.Bcfg2Py3k import MutableMapping
+from Bcfg2.Compat import MutableMapping
 from Bcfg2.version import Bcfg2VersionInfo
 
 try:

@@ -9,7 +9,7 @@ import Bcfg2.Server.Snapshots.model
 from Bcfg2.Server.Snapshots.model import Snapshot, Client, Metadata, Base, \
      File, Group, Package, Service
 # Compatibility import
-from Bcfg2.Bcfg2Py3k import u_str
+from Bcfg2.Compat import u_str
 
 class Snapshots(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = "Interact with the Snapshots system"

@@ -4,7 +4,7 @@ import os
 import base64
 from M2Crypto import Rand
 from M2Crypto.EVP import Cipher, EVPError
-from Bcfg2.Bcfg2Py3k import StringIO
+from Bcfg2.Compat import StringIO
 
 try:
     from hashlib import md5

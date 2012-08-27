@@ -9,7 +9,7 @@ import shlex
 import sys
 import Bcfg2.Client.Tools
 # Compatibility imports
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.Compat import ConfigParser
 from Bcfg2.version import __version__
 
 

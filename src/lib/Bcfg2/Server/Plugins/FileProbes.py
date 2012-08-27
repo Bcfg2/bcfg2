@@ -11,7 +11,7 @@ import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
-from Bcfg2.Bcfg2Py3k import b64decode
+from Bcfg2.Compat import b64decode
 
 probecode = """#!/usr/bin/env python
 
@@ -19,7 +19,7 @@ import os
 import pwd
 import grp
 import lxml.etree
-from Bcfg2.Bcfg2Py3k import b64encode
+from Bcfg2.Compat import b64encode
 
 path = "%s"
 

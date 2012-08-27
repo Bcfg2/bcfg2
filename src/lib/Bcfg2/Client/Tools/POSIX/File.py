@@ -9,7 +9,7 @@ try:
 except ImportError:
     # py3k, incompatible syntax with py2.4
     exec("from .base import POSIXTool")
-from Bcfg2.Bcfg2Py3k import unicode, b64encode, b64decode
+from Bcfg2.Compat import unicode, b64encode, b64decode
 
 class POSIXFile(POSIXTool):
     __req__ = ['name', 'perms', 'owner', 'group']

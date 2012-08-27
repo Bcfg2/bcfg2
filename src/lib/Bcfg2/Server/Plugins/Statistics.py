@@ -8,7 +8,7 @@ import os
 import sys
 from time import asctime, localtime, time, strptime, mktime
 import threading
-from Bcfg2.Bcfg2Py3k import b64decode
+from Bcfg2.Compat import b64decode
 import Bcfg2.Server.Plugin
 
 

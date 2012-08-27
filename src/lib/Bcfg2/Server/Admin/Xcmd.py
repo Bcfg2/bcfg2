@@ -5,7 +5,7 @@ import Bcfg2.Proxy
 import Bcfg2.Server.Admin
 
 # Compatibility import
-from Bcfg2.Bcfg2Py3k import xmlrpclib
+from Bcfg2.Compat import xmlrpclib
 
 
 class Xcmd(Bcfg2.Server.Admin.Mode):

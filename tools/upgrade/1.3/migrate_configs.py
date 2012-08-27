@@ -2,7 +2,7 @@
 
 import os
 import sys
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.Compat import ConfigParser
 import Bcfg2.Options
 
 def copy_section(src_file, tgt_cfg, section, newsection=None):

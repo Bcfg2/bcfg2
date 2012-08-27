@@ -11,7 +11,7 @@ import traceback
 from lxml.etree import XML, XMLSyntaxError
 
 # Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.Compat import ConfigParser
 
 # FIXME: Remove when server python dep is 2.5 or greater
 if sys.version_info >= (2, 5):

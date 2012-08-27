@@ -2,7 +2,7 @@ import os
 import sys
 import lxml.etree
 import Bcfg2.Server.Plugin
-from Bcfg2.Bcfg2Py3k import b64encode
+from Bcfg2.Compat import b64encode
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugins.SEModules import *
 

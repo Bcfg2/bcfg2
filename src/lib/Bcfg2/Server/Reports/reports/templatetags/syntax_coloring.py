@@ -4,7 +4,7 @@ from django.utils.encoding import smart_unicode
 from django.utils.html import conditional_escape
 from django.utils.safestring import mark_safe
 
-from Bcfg2.Bcfg2Py3k import u_str
+from Bcfg2.Compat import u_str
 
 register = template.Library()
 

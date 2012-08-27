@@ -9,7 +9,7 @@ import time
 import threading
 
 # Compatibility import
-from Bcfg2.Bcfg2Py3k import Queue, u_str, b64decode
+from Bcfg2.Compat import Queue, u_str, b64decode
 
 logger = logging.getLogger('Snapshots')
 

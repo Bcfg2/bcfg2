@@ -3,7 +3,7 @@ import logging
 import Bcfg2.Options
 import Bcfg2.Server.Plugins
 from django.db import models
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.Compat import ConfigParser
 
 logger = logging.getLogger('Bcfg2.Server.models')
 

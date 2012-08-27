@@ -13,7 +13,7 @@ except ImportError:
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Reports.importscript import load_stat
 from Bcfg2.Server.Reports.reports.models import Client
-from Bcfg2.Bcfg2Py3k import b64decode
+from Bcfg2.Compat import b64decode
 
 # for debugging output only
 logger = logging.getLogger('Bcfg2.Plugins.DBStats')

@@ -5,7 +5,7 @@ import operator
 import os
 import pyinotify
 import sys
-from Bcfg2.Bcfg2Py3k import reduce
+from Bcfg2.Compat import reduce
 from Bcfg2.Server.FileMonitor import Event
 from Bcfg2.Server.FileMonitor.Pseudo import Pseudo
 

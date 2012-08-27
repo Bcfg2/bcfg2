@@ -6,7 +6,7 @@ import sqlalchemy.exceptions
 from sqlalchemy.orm import relation, backref
 from sqlalchemy.ext.declarative import declarative_base
 
-from Bcfg2.Bcfg2Py3k import u_str
+from Bcfg2.Compat import u_str
 
 
 class Uniquer(object):

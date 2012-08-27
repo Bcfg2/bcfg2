@@ -15,7 +15,7 @@ import Bcfg2.Logger
 from Bcfg2.Statistics import Statistics
 from Bcfg2.SSLServer import XMLRPCServer
 # Compatibility import
-from Bcfg2.Bcfg2Py3k import xmlrpclib, urlparse
+from Bcfg2.Compat import xmlrpclib, urlparse
 
 logger = logging.getLogger()
 

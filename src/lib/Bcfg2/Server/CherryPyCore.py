@@ -5,7 +5,7 @@ import base64
 import atexit
 import cherrypy
 import Bcfg2.Options
-from Bcfg2.Bcfg2Py3k import urlparse, xmlrpclib
+from Bcfg2.Compat import urlparse, xmlrpclib
 from Bcfg2.Server.Core import BaseCore
 from cherrypy.lib import xmlrpcutil
 from cherrypy._cptools import ErrorTool

@@ -2,7 +2,7 @@ import os
 import re
 import sys
 import Bcfg2.Server.Plugin
-from Bcfg2.Bcfg2Py3k import HTTPError, HTTPBasicAuthHandler, \
+from Bcfg2.Compat import HTTPError, HTTPBasicAuthHandler, \
      HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, \
      urlopen, cPickle
 

@@ -9,7 +9,7 @@ import logging
 import tempfile
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
-from Bcfg2.Bcfg2Py3k import u_str, reduce, b64encode
+from Bcfg2.Compat import u_str, reduce, b64encode
 
 logger = logging.getLogger(__name__)
 

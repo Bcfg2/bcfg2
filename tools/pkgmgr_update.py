@@ -22,7 +22,7 @@ import rpm
 import sys
 
 # Compatibility imports
-from Bcfg2.Bcfg2Py3k import urljoin
+from Bcfg2.Compat import urljoin
 
 try:
     from lxml.etree import parse, tostring

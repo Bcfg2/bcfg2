@@ -13,7 +13,7 @@ from Bcfg2.Server.Plugin import PluginExecutionError, PluginInitError
 from django.template import Context, loader
 from django.db import connection
 # Compatibility imports
-from Bcfg2.Bcfg2Py3k import StringIO
+from Bcfg2.Compat import StringIO
 
 try:
     set

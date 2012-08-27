@@ -2,7 +2,7 @@ import re
 import gzip
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
-from Bcfg2.Bcfg2Py3k import cPickle
+from Bcfg2.Compat import cPickle
 
 class AptCollection(Collection):
     def get_group(self, group):

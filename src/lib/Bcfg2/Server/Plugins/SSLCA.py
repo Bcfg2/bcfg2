@@ -6,7 +6,7 @@ import tempfile
 import os
 from subprocess import Popen, PIPE, STDOUT
 # Compatibility import
-from Bcfg2.Bcfg2Py3k import ConfigParser
+from Bcfg2.Compat import ConfigParser
 
 try:
     from hashlib import md5

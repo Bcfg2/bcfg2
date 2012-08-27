@@ -2,7 +2,7 @@
 
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Frame import matches_white_list, passes_black_list
-from Bcfg2.Bcfg2Py3k import input
+from Bcfg2.Compat import input
 
 """
 <Action timing='pre|post|both'
