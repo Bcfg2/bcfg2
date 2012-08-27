@@ -6,110 +6,146 @@
 SSLCA
 =====
 
-SSLCA is a generator plugin designed to handle creation of SSL private keys
-and certificates on request.
+SSLCA is a generator plugin designed to handle creation of SSL private
+keys and certificates on request.
 
-Borrowing ideas from the TGenshi and SSHbase plugins, SSLCA automates the
-generation of SSL certificates by allowing you to specify key and certificate
-definitions.  Then, when a client requests a Path that contains such a
-definition within the SSLCA repository, the matching key/cert is generated, and
-stored in a hostfile in the repo so that subsequent requests do not result in
-repeated key/cert recreation.  In the event that a new key or cert is needed,
-the offending hostfile can simply be removed from the repository, and the next
-time that host checks in, a new file will be created.  If that file happens to
-be the key, any dependent certificates will also be regenerated.
+Borrowing ideas from the TGenshi and SSHbase plugins, SSLCA automates
+the generation of SSL certificates by allowing you to specify key and
+certificate definitions.  Then, when a client requests a Path that
+contains such a definition within the SSLCA repository, the matching
+key/cert is generated, and stored in a hostfile in the repo so that
+subsequent requests do not result in repeated key/cert recreation.  In
+the event that a new key or cert is needed, the offending hostfile can
+simply be removed from the repository, and the next time that host
+checks in, a new file will be created.  If that file happens to be the
+key, any dependent certificates will also be regenerated.
+
+.. _getting-started:
 
 Getting started
 ===============
 
-In order to use SSLCA, you must first have at least one CA configured on 
-your system.  For details on setting up your own OpenSSL based CA, please
-see http://www.openssl.org/docs/apps/ca.html for details of the suggested
-directory layout and configuration directives.
+In order to use SSLCA, you must first have at least one CA configured
+on your system.  For details on setting up your own OpenSSL based CA,
+please see http://www.openssl.org/docs/apps/ca.html for details of the
+suggested directory layout and configuration directives.
 
-For SSLCA to work, the openssl.cnf (or other configuration file) for that CA
-must contain full (not relative) paths.
+For SSLCA to work, the openssl.cnf (or other configuration file) for
+that CA must contain full (not relative) paths.
 
-#. Add SSLCA to the **plugins** line in ``/etc/bcfg2.conf`` and restart the
-   server -- This enabled the SSLCA plugin on the Bcfg2 server.
+#. Add SSLCA to the **plugins** line in ``/etc/bcfg2.conf`` and
+   restart the server -- This enabled the SSLCA plugin on the Bcfg2
+   server.
 
-#. Add a section to your ``/etc/bcfg2.conf`` called ``sslca_foo``, replacing foo
-   with the name you wish to give your CA so you can reference it in certificate
-   definitions.
+#. Add a section to your ``/etc/bcfg2.conf`` called ``sslca_foo``,
+   replacing foo with the name you wish to give your CA so you can
+   reference it in certificate definitions.
 
-#. Under that section, add an entry for ``config`` that gives the location of
-   the openssl configuration file for your CA.
+#. Under that section, add an entry for ``config`` that gives the
+   location of the openssl configuration file for your CA.
 
-#. If necessary, add an entry for ``passphrase`` containing the passphrase for
-   the CA's private key.  We store this in ``/etc/bcfg2.conf`` as the permissions
-   on that file should have it only readable by the bcfg2 user.  If no passphrase
-   is entry exists, it is assumed that the private key is stored unencrypted.
+#. If necessary, add an entry for ``passphrase`` containing the
+   passphrase for the CA's private key.  We store this in
+   ``/etc/bcfg2.conf`` as the permissions on that file should have it
+   only readable by the bcfg2 user.  If no passphrase is entry exists,
+   it is assumed that the private key is stored unencrypted.
 
-#. Add an entry ``chaincert`` that points to the location of your ssl chaining
-   certificate.  This is used when preexisting certifcate hostfiles are found, so
-   that they can be validated and only regenerated if they no longer meet the
-   specification. If you're using a self signing CA this would be the CA cert
-   that you generated.
+#. Optionally, Add an entry ``chaincert`` that points to the location
+   of your ssl chaining certificate.  This is used when preexisting
+   certifcate hostfiles are found, so that they can be validated and
+   only regenerated if they no longer meet the specification. If
+   you're using a self signing CA this would be the CA cert that you
+   generated.  If the chain cert is a root CA cert (e.g., if it is a
+   self-signing CA), also add an entry ``root_ca = true``.  If
+   ``chaincert`` is omitted, certificate verification will not be
+   performed.
 
-#. Optionally, add ``verify_certs = false`` if you don't wish to
-   perform certificate verification on the certs SSLCA generates.
-   Verification includes ``openssl verify`` to verify the CA chain,
-   and ensuring that both the key file and certificate file contain
-   the same key.
-
-#. Once all this is done, you should have a section in your ``/etc/bcfg2.conf``
-   that looks similar to the following::
+#. Once all this is done, you should have a section in your
+   ``/etc/bcfg2.conf`` that looks similar to the following::
 
        [sslca_default]
        config = /etc/pki/CA/openssl.cnf
        passphrase = youReallyThinkIdShareThis?
        chaincert = /etc/pki/CA/chaincert.crt
+       root_ca = true
 
-#. You are now ready to create key and certificate definitions.  For this
-   example we'll assume you've added Path entries for the key,
+#. You are now ready to create key and certificate definitions.  For
+   this example we'll assume you've added Path entries for the key,
    ``/etc/pki/tls/private/localhost.key``, and the certificate,
    ``/etc/pki/tls/certs/localhost.crt`` to a bundle or base.
 
-#. Defining a key or certificate is similar to defining a TGenshi template.
-   Under your Bcfg2's SSLCA directory, create the directory structure to match the
-   path to your key. In this case this would be something like
+#. Defining a key or certificate is similar to defining a Cfg file.
+   Under your Bcfg2's ``SSLCA/`` directory, create the directory
+   structure to match the path to your key. In this case this would be
+   something like
    ``/var/lib/bcfg2/SSLCA/etc/pki/tls/private/localhost.key``.
 
-#. Within that directory, create a ``key.xml`` file containing the following:
+#. Within that directory, create a ``key.xml`` file containing the
+   following:
 
    .. code-block:: xml
 
        <KeyInfo>
-           <Key type="rsa" bits="2048" />
+         <Key type="rsa" bits="2048" />
        </KeyInfo>
 
-#. This will cause the generation of an 2048 bit RSA key when a client requests
-   that Path.  Alternatively you can specify ``dsa`` as the keytype, or a different
-   number of bits.
+#. This will cause the generation of an 2048 bit RSA key when a client
+   requests that Path.  Alternatively you can specify ``dsa`` as the
+   keytype, or a different number of bits.
 
-#. Similarly, create the matching directory structure for the certificate path,
-   and a ``cert.xml`` containinng the following:
+#. Similarly, create the matching directory structure for the
+   certificate path, and a ``cert.xml`` containinng the following:
 
    .. code-block:: xml
 
        <CertInfo>
-           <Cert format="pem" key="/etc/pki/tls/private/localhost.key" ca="default" days="365" c="US" l="New York" st="New York" o="Your Company Name" />
+         <Cert format="pem" key="/etc/pki/tls/private/localhost.key"
+               ca="default" days="365" c="US" l="New York" st="New York"
+               o="Your Company Name" />
        </CertInfo>
 
-#. When a client requests the cert path, a certificate will be generated using
-   the key hostfile at the specified key location, using the CA matching the ca
-   attribute. ie. ca="default" will match [sslca_default] in your
-   ``/etc/bcfg2.conf``
+#. When a client requests the cert path, a certificate will be
+   generated using the key hostfile at the specified key location,
+   using the CA matching the ca attribute. ie. ca="default" will match
+   [sslca_default] in your ``/etc/bcfg2.conf``
+
+Configuration
+=============
+
+``bcfg2.conf`` contains miscellaneous configuration options for the
+SSLCA plugin. These are described in some detail above in
+`getting-started`, but are also enumerated here as a reference.  Any
+booleans in the config file accept the values "1", "yes", "true", and
+"on" for True, and "0", "no", "false", and "off" for False.
+
+Each directive below should appear at most once in each
+``[sslca_<name>]`` section.  The following directives are understood:
+
++--------------+------------------------------------------+---------+---------+
+| Name         | Description                              | Values  | Default |
++==============+==========================================+=========+=========+
+| config       | Path to the openssl config for the CA    | String  | None    |
++--------------+------------------------------------------+---------+---------+
+| passphrase   | Passphrase for the CA private key        | String  | None    |
++--------------+------------------------------------------+---------+---------+
+| chaincert    | Path to the SSL chaining certificate for | String  | None    |
+|              | verification                             |         |         |
++--------------+------------------------------------------+---------+---------+
+| root_ca      | Whether or not ``<chaincert>`` is a root | Boolean | false   |
+|              | CA (as opposed to an intermediate cert)  |         |         |
++--------------+------------------------------------------+---------+---------+
+
+Only ``config`` is required.
 
 Automated Bcfg2 SSL Authentication
 ==================================
 
 This section describes one possible scenario for automating ssl
 certificate generation and distribution for bcfg2 client/server
-communication using SSLCA. The process involves configuring a certificate
-authority (CA), generating the CA cert and key pair, configuring the
-bcfg2 SSLCA plugin and a Bundle to use the SSLCA generated certs to
-authenticate the bcfg2 client and server.
+communication using SSLCA. The process involves configuring a
+certificate authority (CA), generating the CA cert and key pair,
+configuring the bcfg2 SSLCA plugin and a Bundle to use the SSLCA
+generated certs to authenticate the bcfg2 client and server.
 
 OpenSSL CA
 ----------
@@ -118,7 +154,7 @@ If you already have a SSL CA available you can skip this section,
 otherwise you can easily build one on the server using openssl. The
 paths should be adjusted to suite your preferences.
 
-#. Prepare the directories and files. ::
+#. Prepare the directories and files::
 
     mkdir -p /etc/pki/CA/newcerts
     mkdir /etc/pki/CA/crl
@@ -127,7 +163,7 @@ paths should be adjusted to suite your preferences.
     touch /etc/pki/CA/crlnumber
 
 #. Edit the ``openssl.cnf`` config file, and in the **[ CA_default ]**
-   section adjust the following parameters. ::
+   section adjust the following parameters::
 
     dir         = /etc/pki          # Where everything is kept
     certs       = /etc/pki/CA/certs     # Where the issued certs are kept
@@ -141,14 +177,18 @@ paths should be adjusted to suite your preferences.
     private_key = /etc/pki/CA/private/bcfg2ca.key # The private key
 
 #. Create the CA root certificate and key pair. You'll be asked to
-   supply a passphrase, and some organizational info. The most important
-   bit is **Common Name** which you should set to be the hostname of
-   your bcfg2 server that your clients will see when doing a reverse
-   DNS query on it's ip address. ::
+   supply a passphrase, and some organizational info. The most
+   important bit is **Common Name** which you should set to be the
+   hostname of your bcfg2 server that your clients will see when doing
+   a reverse DNS query on it's ip address.
 
-    openssl req -new -x509 -extensions v3_ca -keyout bcfg2ca.key -out bcfg2ca.crt -days 3650
+.. code-block::
 
-#. Move the generated cert and key to the locations specified in ``openssl.cnf``. ::
+    openssl req -new -x509 -extensions v3_ca -keyout bcfg2ca.key \
+        -out bcfg2ca.crt -days 3650
+
+#. Move the generated cert and key to the locations specified in
+ ``openssl.cnf``::
 
     mv bcfg2ca.key /etc/pki/CA/private/
     mv bcfg2ca.crt /etc/pki/CA/certs/
@@ -163,69 +203,74 @@ SSLCA
 
 The SSLCA plugin was not designed specifically to manage bcfg2
 client/server communication though it is certainly able to provide
-certificate generation and management services for that purpose. You'll
-need to configure the **SSLCA** plugin to serve the key, and certificate
-paths that we will define later in our client's ``bcfg2.conf`` file.
+certificate generation and management services for that
+purpose. You'll need to configure the **SSLCA** plugin to serve the
+key, and certificate paths that we will define later in our client's
+``bcfg2.conf`` file.
 
-The rest of these instructions will assume that you've
-configured the **SSLCA** plugin as described above and that the
-files ``SSLCA/etc/pki/tls/certs/bcfg2client.crt/cert.xml`` and
-``SSLCA/etc/pki/tls/private/bcfg2client.key/key.xml`` represent the cert
-and key paths you want generated for SSL auth.
+The rest of these instructions will assume that you've configured the
+**SSLCA** plugin as described above and that the files
+``SSLCA/etc/pki/tls/certs/bcfg2client.crt/cert.xml`` and
+``SSLCA/etc/pki/tls/private/bcfg2client.key/key.xml`` represent the
+cert and key paths you want generated for SSL auth.
 
 Client Bundle
 ^^^^^^^^^^^^^
 
 To automate the process of generating and distributing certs to the
 clients we need define at least the Cert and Key paths served by the
-SSLCA plugin, as well as the ca certificate path in a Bundle. For example:
+SSLCA plugin, as well as the ca certificate path in a Bundle. For
+example:
 
-    .. code-block:: xml
+.. code-block:: xml
 
-        <Path name='/etc/pki/tls/certs/bcfg2ca.crt'/>
-        <Path name='/etc/pki/tls/bcfg2client.crt'/>
-        <Path name='/etc/pki/tls/private/bcfg2client.key'/>
+    <Path name='/etc/pki/tls/certs/bcfg2ca.crt'/>
+    <Path name='/etc/pki/tls/bcfg2client.crt'/>
+    <Path name='/etc/pki/tls/private/bcfg2client.key'/>
 
 Here's a more complete example bcfg2-client bundle: 
 
-    .. code-block:: xml
+.. code-block:: xml
 
-        <Bundle name='bcfg2-client'>
-           <Path name='/etc/bcfg2.conf'/>
-           <Path name='/etc/cron.d/bcfg2-client'/>
-           <Package name='bcfg2'/>
-           <Service name='bcfg2'/>
-           <Group name='rpm'>
-               <Path name='/etc/sysconfig/bcfg2'/>
-               <Path name='/etc/pki/tls/certs/bcfg2ca.crt'/>
-               <Path name='/etc/pki/tls/certs/bcfg2client.crt'/>
-               <Path name='/etc/pki/tls/private/bcfg2client.key'/>
-           </Group>
-           <Group name='deb'>
-               <Path name='/etc/default/bcfg2' altsrc='/etc/sysconfig/bcfg2'/>
-               <Path name='/etc/ssl/certs/bcfg2ca.crt' altsrc='/etc/pki/tls/certs/bcfg2ca.crt'/>
-               <Path name='/etc/ssl/certs/bcfg2client.crt' altsrc='/etc/pki/tls/certs/bcfg2client.crt'/>
-               <Path name='/etc/ssl/private/bcfg2client.key' altsrc='/etc/pki/tls/private/bcfg2client.key'/>
-           </Group>
-        </Bundle>
+    <Bundle name='bcfg2-client'>
+      <Path name='/etc/bcfg2.conf'/>
+      <Path name='/etc/cron.d/bcfg2-client'/>
+      <Package name='bcfg2'/>
+      <Service name='bcfg2'/>
+      <Group name='rpm'>
+        <Path name='/etc/sysconfig/bcfg2'/>
+        <Path name='/etc/pki/tls/certs/bcfg2ca.crt'/>
+        <Path name='/etc/pki/tls/certs/bcfg2client.crt'/>
+        <Path name='/etc/pki/tls/private/bcfg2client.key'/>
+      </Group>
+      <Group name='deb'>
+        <Path name='/etc/default/bcfg2' altsrc='/etc/sysconfig/bcfg2'/>
+        <Path name='/etc/ssl/certs/bcfg2ca.crt' altsrc='/etc/pki/tls/certs/bcfg2ca.crt'/>
+        <Path name='/etc/ssl/certs/bcfg2client.crt' altsrc='/etc/pki/tls/certs/bcfg2client.crt'/>
+        <Path name='/etc/ssl/private/bcfg2client.key' altsrc='/etc/pki/tls/private/bcfg2client.key'/>
+      </Group>
+    </Bundle>
 
 In the above example we told Bcfg2 that it also needs to serve
 ``/etc/bcfg2.conf``. This is optional but convenient.
 
-The ``bcfg2.conf`` client config needs at least 5 parameters set for SSL auth. 
+The ``bcfg2.conf`` client config needs at least 5 parameters set for
+SSL auth.
 
 #. ``key`` : This is the host specific key that SSLCA will generate.
 #. ``certificate`` : This is the host specific cert that SSLCA will
    generate.
-#. ``ca`` : This is a copy of your CA certificate. Not generated by SSLCA.
-#. ``user`` : Usually set to fqdn of client. This *shouldn't* be required
-   but is as of 1.2rc2. see: http://trac.mcs.anl.gov/projects/bcfg2/ticket/1019
-#. ``password`` : Set to arbitrary string when using
-   certificate auth. This also *shouldn't* be required. see:
+#. ``ca`` : This is a copy of your CA certificate. Not generated by
+   SSLCA.
+#. ``user`` : Usually set to fqdn of client. This *shouldn't* be
+   required but is as of 1.3.0. See:
+   http://trac.mcs.anl.gov/projects/bcfg2/ticket/1019
+#. ``password`` : Set to arbitrary string when using certificate
+   auth. This also *shouldn't* be required. See:
    http://trac.mcs.anl.gov/projects/bcfg2/ticket/1019
 
-Here's what a functional **[communication]** section in a ``bcfg2.conf``
-genshi template for clients might look like.::
+Here's what a functional **[communication]** section in a
+``bcfg2.conf`` genshi template for clients might look like.::
 
    [communication]
    protocol = xmlrpc/ssl
@@ -252,7 +297,8 @@ first time we try to connect such a client to the server. We can do so
 using password based auth to boot strap the client manually specifying
 all the relevant auth parameters like so::
 
-   bcfg2 -qv -S https://fqdn.of.bcfg2-server:6789 -u fqdn.of.client -x SUPER_SECRET_PASSWORD
+    bcfg2 -qv -S https://fqdn.of.bcfg2-server:6789 -u fqdn.of.client \
+        -x SUPER_SECRET_PASSWORD
 
 If all goes well the client should recieve a freshly generated key and
 cert and you should be able to run ``bcfg2`` again without specifying
