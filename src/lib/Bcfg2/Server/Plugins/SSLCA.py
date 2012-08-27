@@ -173,7 +173,8 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             Bcfg2.Server.Plugin.bind_info(entry, metadata)
 
     def verify_cert(self, filename, key_filename, entry):
-        do_verify = self.CAs[self.cert_specs[entry.get('name')]['ca']].get('verify_certs', True)
+        ca = self.CAs[self.cert_specs[entry.get('name')]['ca']]
+        do_verify = ca.get('chaincert')
         if do_verify:
             return (self.verify_cert_against_ca(filename, entry) and
                     self.verify_cert_against_key(filename, key_filename))
