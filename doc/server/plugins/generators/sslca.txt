@@ -49,7 +49,8 @@ must contain full (not relative) paths.
    certificate.  This is used when preexisting certifcate hostfiles are found, so
    that they can be validated and only regenerated if they no longer meet the
    specification. If you're using a self signing CA this would be the CA cert
-   that you generated.
+   that you generated.  If the chain cert is a root CA cert (e.g., if it is a
+   self-signing CA), also add an entry ``root_ca = true``.
 
 #. Optionally, add ``verify_certs = false`` if you don't wish to
    perform certificate verification on the certs SSLCA generates.
@@ -64,6 +65,7 @@ must contain full (not relative) paths.
        config = /etc/pki/CA/openssl.cnf
        passphrase = youReallyThinkIdShareThis?
        chaincert = /etc/pki/CA/chaincert.crt
+       root_ca = true
 
 #. You are now ready to create key and certificate definitions.  For this
    example we'll assume you've added Path entries for the key,
