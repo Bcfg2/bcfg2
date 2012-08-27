@@ -186,12 +186,20 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         check that a certificate validates against the ca cert,
         and that it has not expired.
         """
-        chaincert = \
-            self.CAs[self.cert_specs[entry.get('name')]['ca']].get('chaincert')
+        ca = self.CAs[self.cert_specs[entry.get('name')]['ca']]
+        chaincert = ca.get('chaincert')
         cert = self.data + filename
-        res = Popen(["openssl", "verify", "-untrusted", chaincert, "-purpose",
-                     "sslserver", cert],
-                    stdout=PIPE, stderr=STDOUT).stdout.read()
+        cmd = ["openssl", "verify"]
+        is_root = ca.get('root_ca', "false").lower() == 'true'
+        if is_root:
+            cmd.append("-CAfile")
+        else:
+            # verifying based on an intermediate cert
+            cmd.extend(["-purpose", "sslserver", "-untrusted"])
+        cmd.extend([chaincert, cert])
+        self.debug_log("SSLCA: Verifying %s against CA: %s" %
+                       (entry.get("name"), " ".join(cmd)))
+        res = Popen(cmd, stdout=PIPE, stderr=STDOUT).stdout.read()
         if res == cert + ": OK\n":
             self.debug_log("SSLCA: %s verified successfully against CA" %
                            entry.get("name"))
