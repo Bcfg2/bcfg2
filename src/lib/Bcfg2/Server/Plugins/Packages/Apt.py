@@ -10,6 +10,21 @@ class AptCollection(Collection):
                             "supported by APT")
         return []
 
+    def get_config(self):
+        lines = ["# This config was generated automatically by the Bcfg2 " \
+                     "Packages plugin", '']
+
+        sources = dict()
+        for source in self.sources:
+            if source.rawurl:
+                self.logger.info("Packages: Skipping rawurl %s" % source.rawurl)
+            else:
+                lines.append("deb %s %s %s" % (source.url, source.version,
+                                               " ".join(source.components)))
+                lines.append("")
+
+        return "\n".join(lines)
+
 
 class AptSource(Source):
     basegroups = ['apt', 'debian', 'ubuntu', 'nexenta']

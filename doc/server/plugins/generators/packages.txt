@@ -416,30 +416,46 @@ need to use :ref:`BoundEntries <boundentries>`, e.g.:
 Generating Client APT/Yum Configurations
 ========================================
 
-.. versionadded:: 1.2.0
+The Packages plugin has native support for generating Yum and Apt
+configs.  Simply add entries like these to the appropriate bundles:
 
-The Packages plugin has native support for generating Yum configs.
-You must set ``yum_config`` in ``bcfg2.conf`` to the path to the yum
-config file you want to generate::
+.. code-block:: xml
+
+    <Path name="/etc/yum.repos.d/bcfg2.repo"/>
+    <Path name="/etc/apt/sources.d/bcfg2"/>
+
+If you want to change the path to either of those files, you can set
+``yum_config`` or ``apt_config`` in ``bcfg2.conf`` to the path to the
+config files you want to generate::
 
     [packages]
     yum_config=/etc/yum.repos.d/all.repo
+    apt_config=/etc/apt/sources.d/all
 
-Then add the corresponding Path entry to your Yum bundle.
+If you need to distribute a config to different places on different
+hosts, you can use the :ref:`server-plugins-structures-altsrc`
+attribute, e.g.:
 
-.. versionadded:: 1.1.0
+.. code-block:: xml
 
-APT repository information can be generated automatically from
-software sources using :doc:`./tgenshi/index` or :doc:`./tcheetah`. A
-list of source urls are exposed in the client's metadata as
-``metadata.Packages.sources``. E.g.::
+    <Bundle name="yum">
+      <Group name="sles">
+        <Path name="/etc/yum/yum.repos.d/bcfg2.repo"
+              altsrc="/etc/yum.repos.d/bcfg2.repo"/>
+      </Group>
+      <Group name="sles" negate="true">
+        <Path name="/etc/yum.repos.d/bcfg2.repo"/>
+      </Group>
+    </Bundle>
 
-    # bcfg2 maintained apt
+See :ref:`configuration` for more details on these options.
 
-    {% for s in metadata.Packages.sources %}\
-    deb ${s.url}${s.version} ${s.groups[0]} {% for comp in s.components %}$comp {% end %}
+.. note::
 
-    {% end %}\
+    Support for generating Yum configs was added in 1.2.0, and Apt
+    configs was added in 1.3.0.  Before that, you could use
+    :doc:`./tgenshi/index` or :doc:`./tcheetah` to generate your
+    configs.
 
 .. _native-yum-libraries:
 
@@ -688,6 +704,8 @@ multiple data sources need to be multiplexed.
 
 The APT source in ``src/lib/Server/Plugins/Packages.py`` provides a
 relatively simple implementation of a source.
+
+.. _configuration:
 
 Configuration
 =============
