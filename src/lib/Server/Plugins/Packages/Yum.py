@@ -168,49 +168,48 @@ class YumCollection(Collection):
     def get_config(self, raw=False):
         config = ConfigParser.SafeConfigParser()
         for source in self.sources:
-            # get_urls() loads url_map as a side-effect
-            source.get_urls()
             for url_map in source.url_map:
-                if url_map['arch'] in self.metadata.groups:
-                    basereponame = source.get_repo_name(url_map)
-                    reponame = basereponame
+                if url_map['arch'] not in self.metadata.groups:
+                    continue
+                basereponame = source.get_repo_name(url_map)
+                reponame = basereponame
 
-                    added = False
-                    while not added:
-                        try:
-                            config.add_section(reponame)
-                            added = True
-                        except ConfigParser.DuplicateSectionError:
-                            match = re.search("-(\d+)", reponame)
-                            if match:
-                                rid = int(match.group(1)) + 1
-                            else:
-                                rid = 1
-                            reponame = "%s-%d" % (basereponame, rid)
-                        
-                    config.set(reponame, "name", reponame)
-                    config.set(reponame, "baseurl", url_map['url'])
-                    config.set(reponame, "enabled", "1")
-                    if len(source.gpgkeys):
-                        config.set(reponame, "gpgcheck", "1")
-                        config.set(reponame, "gpgkey",
-                                   " ".join(source.gpgkeys))
-                    else:
-                        config.set(reponame, "gpgcheck", "0")
+                added = False
+                while not added:
+                    try:
+                        config.add_section(reponame)
+                        added = True
+                    except ConfigParser.DuplicateSectionError:
+                        match = re.search("-(\d+)", reponame)
+                        if match:
+                            rid = int(match.group(1)) + 1
+                        else:
+                            rid = 1
+                        reponame = "%s-%d" % (basereponame, rid)
 
-                    if len(source.blacklist):
-                        config.set(reponame, "exclude",
-                                   " ".join(source.blacklist))
-                    if len(source.whitelist):
-                        config.set(reponame, "includepkgs",
-                                   " ".join(source.whitelist))
+                config.set(reponame, "name", reponame)
+                config.set(reponame, "baseurl", url_map['url'])
+                config.set(reponame, "enabled", "1")
+                if len(source.gpgkeys):
+                    config.set(reponame, "gpgcheck", "1")
+                    config.set(reponame, "gpgkey",
+                               " ".join(source.gpgkeys))
+                else:
+                    config.set(reponame, "gpgcheck", "0")
 
-                    if raw:
-                        opts = source.server_options
-                    else:
-                        opts = source.client_options
-                    for opt, val in opts.items():
-                        config.set(reponame, opt, val)
+                if len(source.blacklist):
+                    config.set(reponame, "exclude",
+                               " ".join(source.blacklist))
+                if len(source.whitelist):
+                    config.set(reponame, "includepkgs",
+                               " ".join(source.whitelist))
+
+                if raw:
+                    opts = source.server_options
+                else:
+                    opts = source.client_options
+                for opt, val in opts.items():
+                    config.set(reponame, opt, val)
 
         if raw:
             return config
@@ -506,10 +505,6 @@ class YumSource(Source):
                                      self.repo['relative_path'])
             self.arches = [self.repo['arch']]
         
-        if not self.rawurl:
-            self.baseurl = self.url + "%(version)s/%(component)s/%(arch)s/"
-        else:
-            self.baseurl = self.rawurl
         self.packages = dict()
         self.deps = dict([('global', dict())])
         self.provides = dict([('global', dict())])
@@ -538,26 +533,8 @@ class YumSource(Source):
              self.filemap, self.url_map) = cPickle.load(data)
 
     def get_urls(self):
-        surls = list()
-        self.url_map = []
-        for arch in self.arches:
-            if self.url:
-                usettings = [{'version':self.version, 'component':comp,
-                              'arch':arch}
-                             for comp in self.components]
-            else: # rawurl given 
-                usettings = [{'version':self.version, 'component':None,
-                              'arch':arch}]
-
-            for setting in usettings:
-                setting['url'] = self.baseurl % setting
-                self.url_map.append(copy.deepcopy(setting))
-            surls.append((arch, [setting['url'] for setting in usettings]))
-        urls = []
-        for (sarch, surl_list) in surls:
-            for surl in surl_list:
-                urls.extend(self._get_urls_from_repodata(surl, sarch))
-        return urls
+        return [self._get_urls_from_repodata(m['url'], m['arch'])
+                for m in self.url_map]
     urls = property(get_urls)
 
     def _get_urls_from_repodata(self, url, arch):

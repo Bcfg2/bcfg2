@@ -44,7 +44,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
         try:
             self.version = xsource.find('Version').text
         except AttributeError:
-            pass
+            self.version = None
 
         for key, tag in [('components', 'Component'), ('arches', 'Arch'),
                          ('blacklist', 'Blacklist'),
@@ -100,7 +100,27 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
 
         self.cachefile = os.path.join(self.basepath,
                                       "cache-%s" % self.cachekey)
+        if not self.rawurl:
+            self.baseurl = self.url + "%(version)s/%(component)s/%(arch)s/"
+        else:
+            self.baseurl = self.rawurl
         self.url_map = []
+        for arch in self.arches:
+            if self.url:
+                usettings = [dict(version=self.version, component=comp,
+                                  arch=arch)
+                             for comp in self.components]
+            else:  # rawurl given
+                usettings = [dict(version=self.version, component=None,
+                                  arch=arch)]
+                
+            for setting in usettings:
+                if not self.rawurl:
+                    setting['baseurl'] = self.url
+                else:
+                    setting['baseurl'] = self.rawurl
+                setting['url'] = self.baseurl % setting
+            self.url_map.extend(usettings)
 
     @property
     def cachekey(self):
@@ -145,7 +165,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
 
     def get_repo_name(self, url_map):
         # try to find a sensible name for a repo
-        if 'component' in url_map and url_map['component']:
+        if url_map['component']:
             rname = url_map['component']
         else:
             name = None
