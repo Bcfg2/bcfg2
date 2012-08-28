@@ -9,7 +9,8 @@ import selinux
 import seobject
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
-import Bcfg2.Client.Tools.POSIX
+import Bcfg2.Client.Tools.POSIX.File
+from subprocess import Popen, PIPE
 
 def pack128(int_val):
     """ pack a 128-bit integer in big-endian format """
@@ -635,7 +636,9 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
 
     def __init__(self, tool, logger, setup, config):
         SELinuxEntryHandler.__init__(self, tool, logger, setup, config)
-        self.posixtool = Bcfg2.Client.Tools.POSIX.POSIX(logger, setup, config)
+        self.filetool = Bcfg2.Client.Tools.POSIX.File.POSIXFile(logger,
+                                                                 setup,
+                                                                 config)
         try:
             self.setype = selinux.selinux_getpolicytype()[1]
         except IndexError:
@@ -645,10 +648,50 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
     @property
     def all_records(self):
         if self._all is None:
-            # we get a list of tuples back; coerce it into a dict
-            self._all = dict([(m[0], (m[1], m[2]))
-                             for m in self.records.get_all()])
+            try:
+                # we get a list of tuples back; coerce it into a dict
+                self._all = dict([(m[0], (m[1], m[2]))
+                                  for m in self.records.get_all()])
+            except AttributeError:
+                # early versions of seobject don't have moduleRecords,
+                # so we parse the output of `semodule` >_<
+                self._all = dict()
+                self.logger.debug("SELinux: Getting modules from semodule")
+                try:
+                    proc = Popen(['semodule', '-l'], stdout=PIPE, stderr=PIPE)
+                    out, err = proc.communicate()
+                    rv = proc.wait()
+                except OSError:
+                    # semanage failed; probably not in $PATH.  try to
+                    # get the list of modules from the filesystem
+                    err = sys.exc_info()[1]
+                    self.logger.debug("SELinux: Failed to run semodule: %s" %
+                                      err)
+                    self._all.update(self._all_records_from_filesystem())
+                else:
+                    if rv:
+                        self.logger.error("SELinux: Failed to run semodule: %s"
+                                          % err)
+                        self._all.update(self._all_records_from_filesystem())
+                    else:
+                        # ran semodule successfully
+                        for line in out.splitlines():
+                            mod, version = line.split()
+                            self._all[mod] = (version, 1)
+
+                        # get other (disabled) modules from the filesystem
+                        for mod in self._all_records_from_filesystem().keys():
+                            if mod not in self._all:
+                                self._all[mod] = ('', 0)
         return self._all
+
+    def _all_records_from_filesystem(self):
+        self.logger.debug("SELinux: Getting modules from filesystem")
+        rv = dict()
+        for mod in glob.glob(os.path.join("/usr/share/selinux", self.setype,
+                                          "*.pp")):
+            rv[os.path.basename(mod)[:-3]] = ('', 1)
+        return rv
 
     def _key2attrs(self, key):
         rv = SELinuxEntryHandler._key2attrs(self, key)
@@ -676,41 +719,83 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
         if not entry.get("disabled"):
             entry.set("disabled", "false")
         return (SELinuxEntryHandler.Verify(self, entry) and
-                self.posixtool.Verifyfile(self._pathentry(entry), None))
+                self.filetool.verify(self._pathentry(entry), []))
 
     def canInstall(self, entry):
         return (entry.text and self.setype and
                 SELinuxEntryHandler.canInstall(self, entry))
 
     def Install(self, entry):
-        rv = self.posixtool.Installfile(self._pathentry(entry))
+        if not self.filetool.install(self._pathentry(entry)):
+            return False
         try:
-            rv = rv and SELinuxEntryHandler.Install(self, entry)
+            # if seobject has the moduleRecords attribute, install the
+            # module using the seobject library
+            self.records
+            return self._install_seobject(entry)
+        except AttributeError:
+            # seobject doesn't have the moduleRecords attribute, so
+            # install the module using `semodule`
+            self.logger.debug("Installing %s using semodule" %
+                              entry.get("name"))
+            self._all = None
+            return self._install_semodule(entry)
+
+    def _install_seobject(self, entry):
+        try:
+            if not SELinuxEntryHandler.Install(self, entry):
+                return false
         except NameError:
             # some versions of selinux have a bug in seobject that
             # makes modify() calls fail.  add() seems to have the same
             # effect as modify, but without the bug
             if self.exists(entry):
-                rv = rv and SELinuxEntryHandler.Install(self, entry,
-                                                        method="add")
+                if not SELinuxEntryHandler.Install(self, entry, method="add"):
+                    return False
 
         if entry.get("disabled", "false").lower() == "true":
             method = "disable"
         else:
             method = "enable"
-        return rv and SELinuxEntryHandler.Install(self, entry, method=method)
+        return SELinuxEntryHandler.Install(self, entry, method=method)
 
+    def _install_semodule(self, entry):
+        self.logger.debug("Install SELinux module %s with semodule -i %s" %
+                          (entry.get('name'), self._filepath(entry)))
+        try:
+            proc = Popen(['semodule', '-i', self._filepath(entry)],
+                         stdout=PIPE, stderr=PIPE)
+            out, err = proc.communicate()
+            rv = proc.wait()
+        except OSError:
+            err = sys.exc_info()[1]
+            self.logger.error("Failed to install SELinux module %s with "
+                              "semodule: %s" % (entry.get("name"), err))
+            return False
+        if rv:
+            self.logger.error("Failed to install SELinux module %s with "
+                              "semodule: %s" % (entry.get("name"), err))
+            return False
+        else:
+            if entry.get("disabled", "false").lower() == "true":
+                self.logger.warning("SELinux: Cannot disable modules with "
+                                    "semodule")
+                return False
+            else:
+                return True
+    
     def _addargs(self, entry):
         return (self._filepath(entry),)
-
+    
     def _defaultargs(self, entry):
         return (entry.get("name"),)
-
+    
     def FindExtra(self):
         specified = [self._key(e)
                      for e in self.tool.getSupportedEntries()
                      if e.get("type") == self.etype]
-        return [self.key2entry(os.path.basename(f)[:-3])
-                for f in glob.glob(os.path.join("/usr/share/selinux",
-                                                self.setype, "*.pp"))
-                if f not in specified]
+        rv = []
+        for module in self._all_records_from_filesystem().keys():
+            if module not in specified:
+                rv.append(self.key2entry(module))
+        return rv
