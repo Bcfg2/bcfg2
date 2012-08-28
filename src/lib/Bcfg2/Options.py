@@ -83,6 +83,29 @@ class Option(object):
         else:
             return value
 
+    def __str__(self):
+        rv = ["%s: " % self.__class__.__name__, self.desc]
+        if self.cmd or self.cf:
+            rv.append(" (")
+        if self.cmd:
+            if self.odesc:
+                if self.long:
+                    rv.append("%s=%s" % (self.cmd, self.odesc))
+                else:
+                    rv.append("%s %s" % (self.cmd, self.odesc))
+            else:
+                rv.append("%s" % self.cmd)
+        
+        if self.cf:
+            if self.cmd:
+                rv.append("; ")
+            rv.append("[%s].%s" % self.cf)
+        if self.cmd or self.cf:
+            rv.append(")")
+        if hasattr(self, "value"):
+            rv.append(": %s" % self.value)
+        return "".join(rv)
+
     def buildHelpMessage(self):
         vals = []
         if not self.cmd:
@@ -171,8 +194,8 @@ class OptionSet(dict):
                 if sys.argv[1] == 'init':
                     return
             else:
-                print("Warning! Unable to read specified configuration file: %s" %
-                      self.cfile)
+                print("Warning! Unable to read specified configuration file: %s"
+                      % self.cfile)
 
     def buildGetopt(self):
         return ''.join([opt.buildGetopt() for opt in list(self.values())])
