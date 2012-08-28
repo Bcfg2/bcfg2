@@ -213,3 +213,13 @@ except ImportError:
                                                       prefix=mname + '.',
                                                       onerror=onerror):
                                 yield item
+
+
+try:
+    all = all
+except NameError:
+    def all(iterable):
+        for element in iterable:
+            if not element:
+                return False
+        return True

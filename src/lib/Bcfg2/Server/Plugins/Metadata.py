@@ -15,7 +15,7 @@ import Bcfg2.Server
 import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
-from Bcfg2.Compat import MutableMapping
+from Bcfg2.Compat import MutableMapping, all
 from Bcfg2.version import Bcfg2VersionInfo
 
 try:
@@ -25,19 +25,6 @@ except ImportError:
     has_django = False
 
 logger = logging.getLogger(__name__)
-
-try:
-    all
-except NameError:
-    # some of the crazy lexical closure stuff below works with all()
-    # but not with this loop inline.  i really don't understand
-    # lexical closures some^Wmost days
-    def all(iterable):
-        for element in iterable:
-            if not element:
-                return False
-        return True
-
 
 def locked(fd):
     """Aquire a lock on a file"""
