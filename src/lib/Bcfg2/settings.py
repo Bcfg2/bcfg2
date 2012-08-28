@@ -27,20 +27,38 @@ MEDIA_URL = '/site_media'
 
 # default config file is /etc/bcfg2-web.conf, UNLESS /etc/bcfg2.conf
 # exists AND /etc/bcfg2-web.conf does not exist.
-DEFAULT_CONFIG = Bcfg2.Options.WEB_CFILE.default
-if (not os.path.exists(Bcfg2.Options.WEB_CFILE.default) and 
-    os.path.exists(Bcfg2.Options.CFILE.default)):
-    DEFAULT_CONFIG = Bcfg2.Options.CFILE.default
+def _default_config():
+    optinfo = dict(cfile=Bcfg2.Options.CFILE,
+                   web_cfile=Bcfg2.Options.WEB_CFILE)
+    setup = Bcfg2.Options.OptionParser(optinfo, quiet=True)
+    setup.parse(sys.argv[1:], do_getopt=False)
+    if (not os.path.exists(setup['web_cfile']) and
+        os.path.exists(setup['cfile'])):
+        return setup['cfile']
+    else:
+        return setup['web_cfile']
+
+DEFAULT_CONFIG = _default_config()
 
 def read_config(cfile=DEFAULT_CONFIG, repo=None, quiet=False):
     global DATABASE_ENGINE, DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, \
         DATABASE_HOST, DATABASE_PORT, DEBUG, TEMPLATE_DEBUG, TIME_ZONE, \
         MEDIA_URL
 
+    if not os.path.exists(cfile) and os.path.exists(DEFAULT_CONFIG):
+        print("%s does not exist, using %s for database configuration" % 
+              (cfile, DEFAULT_CONFIG))
+        cfile = DEFAULT_CONFIG
+        
     optinfo = Bcfg2.Options.DATABASE_COMMON_OPTIONS
     optinfo['repo'] = Bcfg2.Options.SERVER_REPOSITORY
-    setup = Bcfg2.Options.OptionParser(optinfo, quiet=quiet)
-    setup.parse([Bcfg2.Options.WEB_CFILE.cmd, cfile])
+    # when setting a different config file, it has to be set in either
+    # sys.argv or in the OptionSet() constructor AS WELL AS the argv
+    # that's passed to setup.parse()
+    argv = [Bcfg2.Options.CFILE.cmd, cfile,
+            Bcfg2.Options.WEB_CFILE.cmd, cfile]
+    setup = Bcfg2.Options.OptionParser(optinfo, argv=argv, quiet=quiet)
+    setup.parse(argv)
 
     if repo is None:
         repo = setup['repo']
@@ -76,8 +94,8 @@ def read_config(cfile=DEFAULT_CONFIG, repo=None, quiet=False):
         MEDIA_URL = '/site_media'
 
 
-# initialize settings from /etc/bcfg2.conf, or set up basic defaults.
-# this lets manage.py work in all cases
+# initialize settings from /etc/bcfg2-web.conf or /etc/bcfg2.conf, or
+# set up basic defaults.  this lets manage.py work in all cases
 read_config(quiet=True)
 
 ADMINS = (('Root', 'root'))
