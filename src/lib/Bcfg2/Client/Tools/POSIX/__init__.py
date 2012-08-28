@@ -4,9 +4,9 @@ import os
 import re
 import sys
 import shutil
-import pkgutil
 from datetime import datetime
 import Bcfg2.Client.Tools
+from Bcfg2.Compat import walk_packages
 try:
     from base import POSIXTool
 except ImportError:
@@ -45,26 +45,12 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         # this must be called at run-time, not at compile-time, or we
         # get wierd circular import issues.
         self._handlers = dict()
-        if hasattr(pkgutil, 'walk_packages'):
-            submodules = pkgutil.walk_packages(path=__path__)
-        else:
-            # python 2.4
-            import glob
-            submodules = []
-            for path in __path__:
-                for submodule in glob.glob(os.path.join(path, "*.py")):
-                    mod = os.path.splitext(os.path.basename(submodule))[0]
-                    if mod not in ['__init__']:
-                        submodules.append((None, mod, True))
-
-        for submodule in submodules:
-            if submodule[1] == 'base':
+        for submodule in walk_packages(path=__path__, prefix=__name__ + "."):
+            mname = submodule[1].rsplit('.', 1)[-1]
+            if mname == 'base':
                 continue
-            module = getattr(__import__("%s.%s" %
-                                        (__name__,
-                                         submodule[1])).Client.Tools.POSIX,
-                             submodule[1])
-            hdlr = getattr(module, "POSIX" + submodule[1])
+            module = getattr(__import__(submodule[1]).Client.Tools.POSIX, mname)
+            hdlr = getattr(module, "POSIX" + mname)
             if POSIXTool in hdlr.__mro__:
                 # figure out what entry type this handler handles
                 etype = hdlr.__name__[5:].lower()

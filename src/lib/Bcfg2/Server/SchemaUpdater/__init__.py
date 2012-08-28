@@ -2,12 +2,11 @@ from django.db import connection, DatabaseError
 from django.core.exceptions import ImproperlyConfigured
 import django.core.management
 import logging
-import pkgutil
 import re
 import sys
 import traceback
 
-from Bcfg2.Compat import CmpMixin
+from Bcfg2.Compat import CmpMixin, walk_packages
 from Bcfg2.Server.models import InternalDatabaseVersion
 from Bcfg2.Server.SchemaUpdater.Routines import UpdaterRoutineException, \
                 UpdaterRoutine
@@ -21,18 +20,6 @@ class UpdaterError(Exception):
 
 class SchemaTooOldError(UpdaterError):
     pass
-
-
-def _walk_packages(paths):
-    """Python 2.4 lacks this routine"""
-    import glob
-    submodules = []
-    for path in paths:
-        for submodule in glob.glob("%s/*.py" % path):
-            mod = '.'.join(submodule.split("/")[-1].split('.')[:-1])
-            if mod != '__init__':
-                submodules.append((None, mod, False))
-    return submodules
 
 
 def _release_to_version(release):
@@ -207,12 +194,7 @@ def update_database():
         logger.debug("Verifying database schema")
 
         updaters = []
-        if hasattr(pkgutil, 'walk_packages'):
-            submodules = pkgutil.walk_packages(path=Changes.__path__)
-        else:
-            #python 2.4
-            submodules = _walk_packages(Changes.__path__)
-        for loader, submodule, ispkg in submodules:
+        for loader, submodule, ispkg in walk_packages(path=Changes.__path__):
             if ispkg:
                 continue
             try:

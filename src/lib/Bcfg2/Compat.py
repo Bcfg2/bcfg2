@@ -132,3 +132,84 @@ class CmpMixin(object):
     
     def __le__(self, other):
         return self.__lt__(other) or self.__eq__(other)
+
+try:
+    from pkgutil import walk_packages
+except ImportError:
+    try:
+        from pkgutil import iter_modules
+        # iter_modules was added in python 2.5; use it to get an exact
+        # re-implementation of walk_packages if possible
+        def walk_packages(path=None, prefix='', onerror=None):
+            def seen(p, m={}):
+                if p in m:
+                    return True
+                m[p] = True
+
+            for importer, name, ispkg in iter_modules(path, prefix):
+                yield importer, name, ispkg
+
+                if ispkg:
+                    try:
+                        __import__(name)
+                    except ImportError:
+                        if onerror is not None:
+                            onerror(name)
+                    except Exception:
+                        if onerror is not None:
+                            onerror(name)
+                        else:
+                            raise
+                    else:
+                        path = getattr(sys.modules[name], '__path__', [])
+
+                        # don't traverse path items we've seen before
+                        path = [p for p in path if not seen(p)]
+
+                        for item in walk_packages(path, name + '.', onerror):
+                            yield item
+    except ImportError:
+        def walk_packages(path=None, prefix='', onerror=None):
+            """ imperfect, incomplete implementation of
+            walk_packages() for python 2.4. Differences:
+            
+            * requires a full path, not a path relative to something
+              in sys.path.  anywhere we care about that shouldn't be
+              an issue
+
+            * the first element of each tuple is None instead of an
+              importer object
+            """
+            def seen(p, m={}):
+                if p in m:
+                    return True
+                m[p] = True
+
+            if path is None:
+                path = sys.path
+            rv = []
+            for mpath in path:
+                for fname in os.listdir(mpath):
+                    fpath = os.path.join(mpath, fname)
+                    if (os.path.isfile(fpath) and fname.endswith(".py") and
+                        fname != '__init__.py'):
+                        yield None, prefix + fname[:-3], False
+                    elif os.path.isdir(fpath):
+                        mname = prefix + fname
+                        if os.path.exists(os.path.join(fpath, "__init__.py")):
+                            yield None, mname, True
+                        try:
+                            __import__(mname)
+                        except ImportError:
+                            if onerror is not None:
+                                onerror(mname)
+                        except Exception:
+                            if onerror is not None:
+                                onerror(mname)
+                            else:
+                                raise
+                        else:
+                            for item in walk_packages([fpath],
+                                                      prefix=mname + '.',
+                                                      onerror=onerror):
+                                yield item

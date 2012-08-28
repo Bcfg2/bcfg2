@@ -3,25 +3,11 @@ import os
 import sys
 import stat
 import time
-import pkgutil
 from subprocess import Popen, PIPE
-
 import Bcfg2.Client.XML
-from Bcfg2.Compat import input
+from Bcfg2.Compat import input, walk_packages
 
-if hasattr(pkgutil, 'walk_packages'):
-    submodules = pkgutil.walk_packages(path=__path__)
-else:
-    # python 2.4
-    import glob
-    submodules = []
-    for path in __path__:
-        for submodule in glob.glob(os.path.join(path, "*.py")):
-            mod = os.path.splitext(os.path.basename(submodule))[0]
-            if mod not in ['__init__']:
-                submodules.append((None, mod, True))
-
-__all__ = [m[1] for m in submodules]
+__all__ = [m[1] for m in walk_packages(path=__path__)]
 drivers = [item for item in __all__ if item not in ['rpmtools']]
 default = [item for item in drivers if item not in ['RPM', 'Yum']]
 
