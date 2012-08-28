@@ -9,6 +9,7 @@ import time
 import copy
 import fcntl
 import socket
+import logging
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Lint
@@ -23,6 +24,7 @@ try:
 except ImportError:
     has_django = False
 
+logger = logging.getLogger(__name__)
 
 try:
     all
@@ -275,16 +277,32 @@ class MetadataQuery(object):
                  all_groups, all_groups_in_category):
         # resolver is set later
         self.by_name = by_name
-        self.names_by_groups = by_groups
-        self.names_by_profiles = by_profiles
+        self.names_by_groups = self._warn_string(by_groups)
+        self.names_by_profiles = self._warn_string(by_profiles)
         self.all_clients = get_clients
         self.all_groups = all_groups
         self.all_groups_in_category = all_groups_in_category
 
+    def _warn_string(self, func):
+        # it's a common mistake to call by_groups, etc., in templates with
+        # a single string argument instead of a list.  that doesn't cause
+        # errors because strings are iterables.  this decorator warns
+        # about that usage.
+        def inner(arg):
+            if isinstance(arg, str):
+                logger.warning("%s: %s takes a list as argument, not a string" %
+                               (self.__class__.__name__, func.__name__))
+            return func(arg)
+        return inner
+
     def by_groups(self, groups):
+        # don't need to decorate this with _warn_string because
+        # names_by_groups is decorated
         return [self.by_name(name) for name in self.names_by_groups(groups)]
 
     def by_profiles(self, profiles):
+        # don't need to decorate this with _warn_string because
+        # names_by_profiles is decorated
         return [self.by_name(name) for name in self.names_by_profiles(profiles)]
 
     def all(self):
