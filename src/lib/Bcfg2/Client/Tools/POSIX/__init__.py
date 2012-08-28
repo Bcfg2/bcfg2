@@ -32,9 +32,14 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         # need to do it again after __handles__ has been populated. we
         # can't populate __handles__ when the class is created because
         # _load_handlers() _must_ be called at run-time, not at
-        # compile-time.
+        # compile-time.  This also has to _extend_ self.handled, not
+        # set it, because self.handled has some really crazy
+        # semi-global thing going that, frankly, scares the crap out
+        # of me.
         for struct in config:
-            self.handled = [e for e in struct if self.handlesEntry(e)]
+            self.handled.extend([e for e in struct
+                                 if (e not in self.handled and
+                                     self.handlesEntry(e))])
 
     def _load_handlers(self):
         # this must be called at run-time, not at compile-time, or we
