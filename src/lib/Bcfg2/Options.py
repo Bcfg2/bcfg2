@@ -185,9 +185,12 @@ class OptionSet(dict):
             self.cfile = kwargs['configfile']
         else:
             self.cfile = DEFAULT_CONFIG_LOCATION
+        if 'quiet' in kwargs:
+            self.quiet = kwargs['quiet']
+        else:
+            self.quiet = False
         self.cfp = DefaultConfigParser()
-        if (len(self.cfp.read(self.cfile)) == 0 and
-            ('quiet' not in kwargs or not kwargs['quiet'])):
+        if len(self.cfp.read(self.cfile)) == 0 and not self.quiet:
             # suppress warnings if called from bcfg2-admin init
             caller = inspect.stack()[-1][1].split('/')[-1]
             if caller == 'bcfg2-admin' and len(sys.argv) > 1:
@@ -524,6 +527,7 @@ WEB_CFILE = \
     Option('Web interface configuration file',
            default="/etc/bcfg2-web.conf",
            cmd='-W',
+           odesc='<conffile>',
            cf=('statistics', 'config'),)
 DJANGO_TIME_ZONE = \
     Option('Django timezone',
@@ -1027,6 +1031,7 @@ CLIENT_COMMON_OPTIONS.update(DRIVER_OPTIONS)
 CLIENT_COMMON_OPTIONS.update(CLI_COMMON_OPTIONS)
 
 DATABASE_COMMON_OPTIONS = dict(web_configfile=WEB_CFILE,
+                               configfile=CFILE,
                                db_engine=DB_ENGINE,
                                db_name=DB_NAME,
                                db_user=DB_USER,
