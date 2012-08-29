@@ -14,6 +14,7 @@ import Bcfg2.settings
 import Bcfg2.Server
 import Bcfg2.Logger
 import Bcfg2.Server.FileMonitor
+from Bcfg2.Statistics import Statistics
 from Bcfg2.Compat import xmlrpclib, reduce
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 
@@ -173,6 +174,8 @@ class BaseCore(object):
         if start_fam_thread:
             self.fam_thread.start()
             self.fam.AddMonitor(self.cfile, self.setup)
+
+        self.instance_statistics = Statistics()
 
     def plugins_by_type(self, base_cls):
         """Return a list of loaded plugins that match the passed type.
@@ -638,3 +641,7 @@ class BaseCore(object):
         """Is the database configured and available"""
         return self._database_available
 
+    @exposed
+    def get_statistics(self, _):
+        """Get current statistics about component execution"""
+        return self.instance_statistics.display()

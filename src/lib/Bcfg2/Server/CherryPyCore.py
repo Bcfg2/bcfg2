@@ -1,11 +1,11 @@
 """ the core of the CherryPy-powered server """
 
 import sys
-import base64
+import time
 import atexit
 import cherrypy
 import Bcfg2.Options
-from Bcfg2.Compat import urlparse, xmlrpclib
+from Bcfg2.Compat import urlparse, xmlrpclib, b64decode
 from Bcfg2.Server.Core import BaseCore
 from cherrypy.lib import xmlrpcutil
 from cherrypy._cptools import ErrorTool
@@ -44,19 +44,9 @@ class Core(BaseCore):
         except KeyError:
             self.critical_error("No authentication data presented")
         auth_type, auth_content = header.split()
+        auth_content = b64decode(auth_content)
         try:
-            # py3k compatibility
-            auth_content = base64.standard_b64decode(auth_content)
-        except TypeError:
-            auth_content = \
-                base64.standard_b64decode(bytes(auth_content.encode('ascii')))
-        try:
-            # py3k compatibility
-            try:
-                username, password = auth_content.split(":")
-            except TypeError:
-                username, pw = auth_content.split(bytes(":", encoding='utf-8'))
-                password = pw.decode('utf-8')
+            username, password = auth_content.split(":")
         except ValueError:
             username = auth_content
             password = ""
@@ -86,7 +76,12 @@ class Core(BaseCore):
             except:
                 raise Exception('method "%s" is not supported' % rpcmethod)
 
-        body = handler(*rpcparams, **params)
+        method_start = time.time()
+        try:
+            body = handler(*rpcparams, **params)
+        finally:
+            self.instance_statistics.add_value(rpcmethod,
+                                               time.time() - method_start)
         
         xmlrpcutil.respond(body, 'utf-8', True)
         return cherrypy.serving.response.body

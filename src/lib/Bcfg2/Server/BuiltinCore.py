@@ -55,7 +55,8 @@ class Core(BaseCore):
             try:
                 result = method_func(*args)
             finally:
-                method_done = time.time()
+                self.instance_statistics.add_value(method,
+                                                   time.time() - method_start)
         except xmlrpclib.Fault:
             raise
         except Exception:
