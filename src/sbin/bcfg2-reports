@@ -8,14 +8,14 @@ from optparse import OptionParser, OptionGroup, make_option
 from Bcfg2.Compat import ConfigParser
 
 try:
-    import Bcfg2.Server.Reports.settings
+    import Bcfg2.settings
 except ConfigParser.NoSectionError:
     print("Your bcfg2.conf is currently missing the statistics section which "
           "is necessary for the reporting interface. Please see bcfg2.conf(5) "
           "for more details.")
     sys.exit(1)
 
-project_directory = os.path.dirname(Bcfg2.Server.Reports.settings.__file__)
+project_directory = os.path.dirname(Bcfg2.settings.__file__)
 project_name = os.path.basename(project_directory)
 sys.path.append(os.path.join(project_directory, '..'))
 project_module = __import__(project_name, '', '', [''])
