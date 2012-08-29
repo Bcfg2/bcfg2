@@ -92,9 +92,12 @@ except:
     unicode = str
 
 # base64 compat
-from base64 import b64encode as _b64encode, b64decode as _b64decode
-b64encode = lambda s: _b64encode(s.encode('ascii')).decode('ascii')
-b64decode = lambda s: _b64decode(s.encode('ascii')).decode('ascii')
+if sys.hexversion >= 0x03000000:
+    from base64 import b64encode as _b64encode, b64decode as _b64decode
+    b64encode = lambda s: _b64encode(s.encode('UTF-8')).decode('UTF-8')
+    b64decode = lambda s: _b64decode(s.encode('UTF-8')).decode('UTF-8')
+else:
+    from base64 import b64encode, b64decode
 
 try:
     input = raw_input

@@ -311,6 +311,7 @@ class TestPOSIXFile(TestPOSIXTool):
         entry = reset()
         entry.text = u("tëst")
         encoded = entry.text.encode(setup['encoding'])
+        mock_diff.return_value = ["-test2", "+tëst"]
         mock_get_data.return_value = (encoded, False)
         ptool._get_diffs(entry, interactive=True)
         mock_open.assert_called_with(entry.get("name"))
