@@ -27,7 +27,7 @@ class Query(Bcfg2.Server.Admin.MetadataCore):
 
     def __call__(self, args):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
-        clients = list(self.metadata.clients.keys())
+        clients = self.metadata.clients
         filename_arg = False
         filename = None
         for arg in args:
