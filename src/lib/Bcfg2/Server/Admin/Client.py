@@ -14,7 +14,7 @@ class Client(Bcfg2.Server.Admin.MetadataCore):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
         if len(args) == 0:
             self.errExit("No argument specified.\n"
-                         "Usage: %s" % self.usage)
+                         "Usage: %s" % self.__usage__)
         if args[0] == 'add':
             try:
                 self.metadata.add_client(args[1])
