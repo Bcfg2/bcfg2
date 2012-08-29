@@ -62,8 +62,8 @@ class CfgGenshiGenerator(CfgGenerator):
             stack = traceback.extract_tb(sys.exc_info()[2])
             for quad in stack:
                 if quad[0] == self.name:
-                    logger.error("Cfg: Error rendering %s at %s: %s" %
-                                 (fname, quad[2], err))
+                    logger.error("Cfg: Error rendering %s at '%s': %s: %s" %
+                                 (fname, quad[2], err.__class__.__name__, err))
                     break
             raise
         except:
@@ -105,8 +105,9 @@ class CfgGenshiGenerator(CfgGenerator):
                 # single line break)
                 real_lineno = lineno - contents.code.co_firstlineno
                 src = re.sub(r'\n\n+', '\n', contents.source).splitlines()
-                logger.error("Cfg: Error rendering %s at %s: %s" %
-                             (fname, src[real_lineno], err))
+                logger.error("Cfg: Error rendering %s at '%s': %s: %s" %
+                             (fname, src[real_lineno], err.__class__.__name__,
+                              err))
             raise
 
     def handle_event(self, event):
