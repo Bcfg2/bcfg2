@@ -37,6 +37,7 @@ class Core(BaseCore):
                                                    self.do_authn)
 
         self.rmi = self._get_rmi()
+        cherrypy.engine.subscribe('stop', self.shutdown)
 
     def do_authn(self):
         try:
