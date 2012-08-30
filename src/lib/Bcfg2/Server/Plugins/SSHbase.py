@@ -143,7 +143,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 self.__skn = False
                 return self.__skn
 
-            skn = [s.data.decode().rstrip()
+            skn = [s.data.rstrip()
                    for s in list(self.static.values())]
 
             mquery = self.core.metadata.query
