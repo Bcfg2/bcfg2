@@ -1054,6 +1054,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
     def AuthenticateConnection(self, cert, user, password, address):
         """This function checks auth creds."""
+        if not isinstance(user, str):
+            user = user.decode('utf-8')
         if cert:
             id_method = 'cert'
             certinfo = dict([x[0] for x in cert['subject']])
