@@ -31,7 +31,8 @@ class Perf(Bcfg2.Server.Admin.Mode):
                                            ca=setup['ca'],
                                            timeout=setup['timeout'])
         data = proxy.get_statistics()
-        for key, value in list(data.items()):
-            data = tuple(["%.06f" % (item) for item in value[:-1]] + [value[-1]])
-            output.append((key, ) + data)
+        for key in sorted(data.keys()):
+            output.append((key, ) +
+                          tuple(["%.06f" % item
+                                 for item in data[key][:-1]] + [data[key][-1]]))
         self.print_table(output)
