@@ -30,6 +30,28 @@ def exposed(func):
     func.exposed = True
     return func
 
+class track_statistics(object):
+    """ decorator that tracks execution time for the given
+    function """
+
+    def __init__(self, name=None):
+        self.name = name
+
+    def __call__(self, func):
+        if self.name is None:
+            self.name = func.__name__
+
+        def inner(obj, *args, **kwargs):
+            name = "%s:%s" % (obj.__class__.__name__, self.name)
+
+            start = time.time()
+            try:
+                return func(obj, *args, **kwargs)
+            finally:
+                obj.stats.add_value(name, time.time() - start)
+
+        return inner
+
 def sort_xml(node, key=None):
     for child in node:
         sort_xml(child, key)
@@ -175,7 +197,7 @@ class BaseCore(object):
             self.fam_thread.start()
             self.fam.AddMonitor(self.cfile, self.setup)
 
-        self.instance_statistics = Statistics()
+        self.stats = Statistics()
 
     def plugins_by_type(self, base_cls):
         """Return a list of loaded plugins that match the passed type.
@@ -248,19 +270,26 @@ class BaseCore(object):
 
     def client_run_hook(self, hook, metadata):
         """Checks the data structure."""
-        for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.ClientRunHooks):
-            try:
-                getattr(plugin, hook)(metadata)
-            except AttributeError:
-                err = sys.exc_info()[1]
-                self.logger.error("Unknown attribute: %s" % err)
-                raise
-            except:
-                err = sys.exc_info()[1]
-                self.logger.error("%s: Error invoking hook %s: %s" % (plugin,
-                                                                      hook,
-                                                                      err))
+        start = time.time()
+        try:
+            for plugin in \
+                    self.plugins_by_type(Bcfg2.Server.Plugin.ClientRunHooks):
+                try:
+                    getattr(plugin, hook)(metadata)
+                except AttributeError:
+                    err = sys.exc_info()[1]
+                    self.logger.error("Unknown attribute: %s" % err)
+                    raise
+                except:
+                    err = sys.exc_info()[1]
+                    self.logger.error("%s: Error invoking hook %s: %s" %
+                                      (plugin, hook, err))
+        finally:
+            self.stats.add_value("%s:client_run_hook:%s" %
+                                 (self.__class__.__name__, hook),
+                                 time.time() - start)
 
+    @track_statistics()
     def validate_structures(self, metadata, data):
         """Checks the data structure."""
         for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.StructureValidator):
@@ -275,6 +304,7 @@ class BaseCore(object):
                 self.logger.error("Plugin %s: unexpected structure validation "
                                   "failure" % plugin.name, exc_info=1)
 
+    @track_statistics()
     def validate_goals(self, metadata, data):
         """Checks that the config matches the goals enforced by the plugins."""
         for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.GoalValidator):
@@ -289,6 +319,7 @@ class BaseCore(object):
                 self.logger.error("Plugin %s: unexpected goal validation "
                                   "failure" % plugin.name, exc_info=1)
 
+    @track_statistics()
     def GetStructures(self, metadata):
         """Get all structures for client specified by metadata."""
         structures = reduce(lambda x, y: x + y,
@@ -301,6 +332,16 @@ class BaseCore(object):
                               (metadata.hostname, ':'.join(missing)))
         return structures
 
+    @track_statistics()
+    def BindStructures(self, structures, metadata, config):
+        for astruct in structures:
+            try:
+                self.BindStructure(astruct, metadata)
+                config.append(astruct)
+            except:
+                self.logger.error("error in BindStructure", exc_info=1)
+
+    @track_statistics()
     def BindStructure(self, structure, metadata):
         """Bind a complete structure."""
         for entry in structure.getchildren():
@@ -324,6 +365,7 @@ class BaseCore(object):
 
     def Bind(self, entry, metadata):
         """Bind an entry using the appropriate generator."""
+        start = time.time()
         if 'altsrc' in entry.attrib:
             oldname = entry.get('name')
             entry.set('name', entry.get('altsrc'))
@@ -353,11 +395,16 @@ class BaseCore(object):
                               (entry.tag, entry.get('name'), generators))
         g2list = [gen for gen in self.generators if
                   gen.HandlesEntry(entry, metadata)]
-        if len(g2list) == 1:
-            return g2list[0].HandleEntry(entry, metadata)
-        entry.set('failure', 'no matching generator')
-        raise PluginExecutionError("No matching generator: %s:%s" %
-                                   (entry.tag, entry.get('name')))
+        try:
+            if len(g2list) == 1:
+                return g2list[0].HandleEntry(entry, metadata)
+            entry.set('failure', 'no matching generator')
+            raise PluginExecutionError("No matching generator: %s:%s" %
+                                       (entry.tag, entry.get('name')))
+        finally:
+            self.stats.add_value("%s:Bind:%s" % (self.__class__.__name__,
+                                                 entry.tag),
+                                 time.time() - start)
 
     def BuildConfiguration(self, client):
         """Build configuration for clients."""
@@ -394,12 +441,8 @@ class BaseCore(object):
                     esrcs[key] = entry.get('altsrc', None)
         del esrcs
 
-        for astruct in structures:
-            try:
-                self.BindStructure(astruct, meta)
-                config.append(astruct)
-            except:
-                self.logger.error("error in BindStructure", exc_info=1)
+        self.BindStructures(structures, meta, config)
+
         self.validate_goals(meta, config)
 
         self.client_run_hook("end_client_run", meta)
@@ -453,6 +496,7 @@ class BaseCore(object):
                                   % plugin.name, exc_info=1)
         return result
 
+    @track_statistics()
     def build_metadata(self, client_name):
         """Build the metadata structure."""
         if not hasattr(self, 'metadata'):
@@ -644,4 +688,4 @@ class BaseCore(object):
     @exposed
     def get_statistics(self, _):
         """Get current statistics about component execution"""
-        return self.instance_statistics.display()
+        return self.stats.display()

@@ -1,4 +1,3 @@
-
 class Statistic(object):
     def __init__(self, name, initial_value):
         self.name = name
@@ -8,15 +7,14 @@ class Statistic(object):
         self.count = 1
 
     def add_value(self, value):
-        if value < self.min:
-            self.min = value
-        if value > self.max:
-            self.max = value
-        self.count += 1
+        self.min = min(self.min, value)
+        self.max = max(self.max, value)
         self.ave = (((self.ave * (self.count - 1)) + value) / self.count)
+        self.count += 1
 
     def get_value(self):
         return (self.name, (self.min, self.max, self.ave, self.count))
+
 
 class Statistics(object):
     def __init__(self):

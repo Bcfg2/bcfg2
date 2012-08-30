@@ -80,8 +80,7 @@ class Core(BaseCore):
         try:
             body = handler(*rpcparams, **params)
         finally:
-            self.instance_statistics.add_value(rpcmethod,
-                                               time.time() - method_start)
+            self.stats.add_value(rpcmethod, time.time() - method_start)
         
         xmlrpcutil.respond(body, 'utf-8', True)
         return cherrypy.serving.response.body
