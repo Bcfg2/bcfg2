@@ -802,17 +802,17 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
     def set_version(self, client, version):
         """Set group parameter for provided client."""
-        self.logger.info("Setting client %s version to %s" % (client, version))
         if client in self.clients:
-            self.logger.info("Setting version on client %s to %s" %
-                             (client, version))
-            self.update_client(client, dict(version=version))
+            if client not in self.versions or version != self.versions[client]:
+                self.logger.info("Setting client %s version to %s" %
+                                 (client, version))
+                self.update_client(client, dict(version=version))
+                self.versions[client] = version
+                self.clients_xml.write()
         else:
             msg = "Cannot set version on non-existent client %s" % client
             self.logger.error(msg)
             raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
-        self.versions[client] = version
-        self.clients_xml.write()
 
     def resolve_client(self, addresspair, cleanup_cache=False):
         """Lookup address locally or in DNS to get a hostname."""
