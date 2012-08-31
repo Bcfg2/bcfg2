@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 class CfgCatFilter(CfgFilter):
     __extensions__ = ['cat']
+    deprecated = True
 
     def modify_data(self, entry, metadata, data):
         datalines = data.strip().split('\n')

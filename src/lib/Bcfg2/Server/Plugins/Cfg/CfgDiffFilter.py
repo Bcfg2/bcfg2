@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 class CfgDiffFilter(CfgFilter):
     __extensions__ = ['diff']
+    deprecated = True
 
     def modify_data(self, entry, metadata, data):
         basehandle, basename = tempfile.mkstemp()

@@ -6,6 +6,7 @@ logger = logging.getLogger(__name__)
 
 class CfgLegacyInfo(CfgInfo):
     __basenames__ = ['info', ':info']
+    deprecated = True
 
     def __init__(self, path):
         CfgInfo.__init__(self, path)

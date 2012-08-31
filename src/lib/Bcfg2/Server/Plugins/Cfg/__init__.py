@@ -21,6 +21,7 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
     __extensions__ = []
     __ignore__ = []
     __specific__ = True
+    deprecated = False
 
     def __init__(self, fname, spec, encoding):
         Bcfg2.Server.Plugin.SpecificData.__init__(self, fname, spec, encoding)
@@ -227,11 +228,18 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 filters.append(ent)
             elif isinstance(ent, CfgVerifier):
                 verifiers.append(ent)
+            if ent.deprecated:
+                if ent.__basenames__:
+                    fdesc = "/".join(ent.__basenames__)
+                elif ent.__extensions__:
+                    fdesc = "." + "/.".join(ent.__extensions__)
+                logger.warning("Cfg: %s: Use of %s files is deprecated" %
+                               (ent.name, fdesc))
 
         DEFAULT_INFO.bind_info_to_entry(entry, metadata)
         if len(info_handlers) > 1:
             logger.error("More than one info supplier found for %s: %s" %
-                         (self.name, info_handlers))
+                         (entry.get("name"), info_handlers))
         if len(info_handlers):
             info_handlers[0].bind_info_to_entry(entry, metadata)
         if entry.tag == 'Path':
