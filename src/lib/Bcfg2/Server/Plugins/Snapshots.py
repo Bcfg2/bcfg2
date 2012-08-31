@@ -58,7 +58,7 @@ def build_snap_ent(entry):
 
 class Snapshots(Bcfg2.Server.Plugin.Statistics):
     name = 'Snapshots'
-    experimental = True
+    deprecated = True
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Statistics.__init__(self, core, datastore)

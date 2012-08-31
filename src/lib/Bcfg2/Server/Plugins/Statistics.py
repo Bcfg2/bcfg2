@@ -115,6 +115,7 @@ class StatisticsStore(object):
 class Statistics(Bcfg2.Server.Plugin.ThreadedStatistics,
                  Bcfg2.Server.Plugin.PullSource):
     name = 'Statistics'
+    deprecated = True
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.ThreadedStatistics.__init__(self, core, datastore)
