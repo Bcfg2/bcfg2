@@ -11,6 +11,7 @@ from subprocess import Popen, PIPE
 import sys
 # This will need to be replaced with argsparse when we make a 2.7+/3.2+ version
 import optparse
+import datetime
 
 # py3k compatibility
 try:
@@ -164,6 +165,36 @@ E.G. 1.2.0pre1 is a valid version.
             print(help_message)
             quit()
 
+    rpmchangelog = ["* %s %s <%s> %s-0.0%s\n" %
+                    (datetime.datetime.now().strftime("%a %b %d %Y"),
+                     name, email,
+                     version_release, version_info['build']),
+                    "- New upstream release\n", "\n"]
+
+    # write out the new RPM changelog
+    specs = ["misc/bcfg2.spec", "redhat/bcfg2.spec.in"]
+    if options.dryrun:
+        print("*** Add the following to the top of the %changelog section in %s:\n%s\n"
+              % (rpmchangelog, " and ".join(specs)))
+    else:
+        for fname in specs:
+            try:
+                lines = open(fname).readlines()
+                for lineno in range(len(lines)):
+                    if lines[lineno].startswith("%changelog"):
+                        break
+                else:
+                    print("No %changelog section found in %s" % fname)
+                    continue
+                for line in reversed(rpmchangelog):
+                    lines.insert(lineno + 1, line)
+                open(fname, 'w').write("".join(lines))
+            except:
+                err = sys.exc_info()[1]
+                print("Could not write %s: %s" % (fname, err))
+                print(help_message)
+                quit()
+
     # Update redhat directory versions
     if options.dryrun:
         print("*** Replace redhat/VERIONS content with '%s'."
@@ -194,12 +225,20 @@ E.G. 1.2.0pre1 is a valid version.
     # set new version in setup.py
     find_and_replace('setup.py', 'version=', '      version="%s",\n' % version,
                      dryrun=options.dryrun)
+    # set new version in Bcfg2/version.py
+    find_and_replace('src/lib/Bcfg2/version.py',
+                     '__version__ =',
+                     '__version__ = "%s"\n' % version,
+                     dryrun=options.dryrun)
     # replace version in misc/bcfg2.spec
     find_and_replace('misc/bcfg2.spec', 'Version:',
-                     'Version:          %s\n' % version,
+                     'Version:          %s\n' % version_release,
+                     dryrun=options.dryrun)
+    find_and_replace('misc/bcfg2.spec', 'Release: ',
+                     'Release:          0.0%s\n' % version_info['build'],
                      dryrun=options.dryrun)
     # update the version in reports
-    find_and_replace('src/lib/Server/Reports/reports/templates/base.html',
+    find_and_replace('src/lib/Bcfg2/Server/Reports/reports/templates/base.html',
                      'Bcfg2 Version',
                      '    <span>Bcfg2 Version %s</span>\n' % version,
                      dryrun=options.dryrun)
@@ -225,6 +264,11 @@ E.G. 1.2.0pre1 is a valid version.
     find_and_replace('osx/Makefile', 'MINOR =',
                      'MINOR = %s%s\n' % (version_info['minor'],
                                          version_info['micro']),
+                     startswith=True,
+                     dryrun=options.dryrun)
+    # update osx Portfile
+    find_and_replace('osx/macports/Portfile', 'version ',
+                     'version             %s\n' % version,
                      startswith=True,
                      dryrun=options.dryrun)
 
