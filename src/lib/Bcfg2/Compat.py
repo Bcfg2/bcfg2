@@ -172,6 +172,8 @@ except ImportError:
                         for item in walk_packages(path, name + '.', onerror):
                             yield item
     except ImportError:
+        import os
+
         def walk_packages(path=None, prefix='', onerror=None):
             """ imperfect, incomplete implementation of
             walk_packages() for python 2.4. Differences:
