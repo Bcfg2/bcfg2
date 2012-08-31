@@ -180,15 +180,13 @@ paths should be adjusted to suite your preferences.
    supply a passphrase, and some organizational info. The most
    important bit is **Common Name** which you should set to be the
    hostname of your bcfg2 server that your clients will see when doing
-   a reverse DNS query on it's ip address.
-
-.. code-block::
+   a reverse DNS query on it's ip address.::
 
     openssl req -new -x509 -extensions v3_ca -keyout bcfg2ca.key \
         -out bcfg2ca.crt -days 3650
 
 #. Move the generated cert and key to the locations specified in
- ``openssl.cnf``::
+   ``openssl.cnf``::
 
     mv bcfg2ca.key /etc/pki/CA/private/
     mv bcfg2ca.crt /etc/pki/CA/certs/
