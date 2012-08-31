@@ -397,6 +397,9 @@ fi
 * Fri Aug 31 2012 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0pre1
 - New upstream release
 
+* Fri Aug 31 2012 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0pre1
+- New upstream release
+
 * Wed Aug 15 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.2.3-0.1
 - Added tools/ as doc for bcfg2-server subpackage
 
