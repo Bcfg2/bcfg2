@@ -16,6 +16,7 @@ class Account(Bcfg2.Server.Plugin.Plugin,
     """
     name = 'Account'
     __author__ = 'bcfg-dev@mcs.anl.gov'
+    deprecated = True
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)

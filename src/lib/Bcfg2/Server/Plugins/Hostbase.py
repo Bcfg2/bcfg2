@@ -29,6 +29,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
     name = 'Hostbase'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     filepath = '/my/adm/hostbase/files/bind'
+    deprecated = True
 
     def __init__(self, core, datastore):
 
