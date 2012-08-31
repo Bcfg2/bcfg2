@@ -6,8 +6,8 @@
 %{!?_initrddir: %define _initrddir %{_sysconfdir}/rc.d/init.d}
 
 Name:             bcfg2
-Version:          1.2.3
-Release:          %{release}
+Version:          1.3.0
+Release:          0.0pre1
 Summary:          Configuration management system
 
 %if 0%{?suse_version}
@@ -98,7 +98,7 @@ deployment strategies.
 This package includes the Bcfg2 client software.
 
 %package server
-Version:          1.2.3
+Version:          1.3.0
 Summary:          Bcfg2 Server
 %if 0%{?suse_version}
 Group:            System/Management
@@ -182,7 +182,7 @@ deployment strategies.
 This package includes the Bcfg2 documentation.
 
 %package web
-Version:          1.2.3
+Version:          1.3.0
 Summary:          Bcfg2 Web Reporting Interface
 %if 0%{?suse_version}
 Group:            System/Management
@@ -394,6 +394,9 @@ fi
 %endif
 
 %changelog
+* Fri Aug 31 2012 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0pre1
+- New upstream release
+
 * Wed Aug 15 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.2.3-0.1
 - Added tools/ as doc for bcfg2-server subpackage
 
