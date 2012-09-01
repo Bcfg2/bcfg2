@@ -1,4 +1,4 @@
-__all__ = ['Bundles',
+__all__ = ['Bundler',
            'Comments',
            'Duplicates',
            'InfoXML',
@@ -6,8 +6,7 @@ __all__ = ['Bundles',
            'Pkgmgr',
            'RequiredAttrs',
            'Validate',
-           'Genshi',
-           'Deltas']
+           'Genshi']
 
 import logging
 import os
