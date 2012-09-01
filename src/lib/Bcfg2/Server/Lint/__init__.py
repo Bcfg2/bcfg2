@@ -105,10 +105,10 @@ class ErrorHandler (object):
         self.logger = logging.getLogger('bcfg2-lint')
 
         termsize = get_termsize()
-        if termsize is not None:
+        if termsize is not None and termsize[0] > 0:
             twrap = textwrap.TextWrapper(initial_indent="  ",
-                                        subsequent_indent="  ",
-                                        width=termsize[0])
+                                         subsequent_indent="  ",
+                                         width=termsize[0])
             self._wrapper = twrap.wrap
         else:
             self._wrapper = lambda s: [s]
