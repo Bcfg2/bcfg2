@@ -15,6 +15,9 @@ except ImportError:
 def is_filename(val):
     return val.startswith("/") and len(val) > 1
 
+def is_relative_filename(val):
+    return len(val) > 1
+
 def is_selinux_type(val):
     return re.match(r'^[a-z_]+_t', val)
 
@@ -52,7 +55,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                           group=is_username, perms=is_octal_mode,
                           __text__=None),
                 hardlink=dict(name=is_filename, to=is_filename),
-                symlink=dict(name=is_filename, to=is_filename),
+                symlink=dict(name=is_filename, to=is_relative_filename),
                 ignore=dict(name=is_filename),
                 nonexistent=dict(name=is_filename),
                 permissions=dict(name=is_filename, owner=is_username,
