@@ -7,7 +7,7 @@ except ImportError:
     exec("from .base import POSIXTool, device_map")
 
 class POSIXDevice(POSIXTool):
-    __req__ = ['name', 'dev_type', 'perms', 'owner', 'group']
+    __req__ = ['name', 'dev_type', 'mode', 'owner', 'group']
 
     def fully_specified(self, entry):
         if entry.get('dev_type') in ['block', 'char']:
@@ -50,7 +50,7 @@ class POSIXDevice(POSIXTool):
         if not self._exists(entry, remove=True):
             try:
                 dev_type = entry.get('dev_type')
-                mode = device_map[dev_type] | int(entry.get('perms'), 8)
+                mode = device_map[dev_type] | int(entry.get('mode'), 8)
                 if dev_type in ['block', 'char']:
                     major = int(entry.get('major'))
                     minor = int(entry.get('minor'))

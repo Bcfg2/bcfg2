@@ -248,6 +248,8 @@ device
 +-----------+---------------------+-------------------+
 | group     | Device group        | String            |
 +-----------+---------------------+-------------------+
+| mode      | Mode for the device | String            |
++-----------+---------------------+-------------------+
 | secontext | SELinux context     | String            |
 +-----------+---------------------+-------------------+
 | major     | Major number (block | integer           |
