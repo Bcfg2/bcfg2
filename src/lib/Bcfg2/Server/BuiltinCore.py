@@ -67,7 +67,29 @@ class Core(BaseCore):
 
     def run(self):
         if self.setup['daemon']:
-            self._daemonize()
+            child_pid = os.fork()
+            if child_pid != 0:
+                return
+
+            os.setsid()
+
+            child_pid = os.fork()
+            if child_pid != 0:
+                os._exit(0)
+
+            redirect_file = open("/dev/null", "w+")
+            os.dup2(redirect_file.fileno(), sys.__stdin__.fileno())
+            os.dup2(redirect_file.fileno(), sys.__stdout__.fileno())
+            os.dup2(redirect_file.fileno(), sys.__stderr__.fileno())
+
+            os.chdir(os.sep)
+
+            pidfile = open(self.setup['daemon'] or "/dev/null", "w")
+            pidfile.write("%s\n" % os.getpid())
+            pidfile.close()
+
+        self.fam_thread.start()
+        self.fam.AddMonitor(self.cfile, self.setup)
 
         hostname, port = urlparse(self.setup['location'])[1].split(':')
         server_address = socket.getaddrinfo(hostname,

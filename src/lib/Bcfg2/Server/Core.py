@@ -457,30 +457,6 @@ class BaseCore(object):
         """ run the server core """
         raise NotImplementedError
 
-    def _daemonize(self):
-        child_pid = os.fork()
-        if child_pid != 0:
-            return
-
-        os.setsid()
-
-        child_pid = os.fork()
-        if child_pid != 0:
-            os._exit(0)
-            
-        redirect_file = open("/dev/null", "w+")
-        os.dup2(redirect_file.fileno(), sys.__stdin__.fileno())
-        os.dup2(redirect_file.fileno(), sys.__stdout__.fileno())
-        os.dup2(redirect_file.fileno(), sys.__stderr__.fileno())
-
-        os.chdir(os.sep)
-        
-        pidfile = open(self.setup['daemon'] or "/dev/null", "w")
-        pidfile.write("%s\n" % os.getpid())
-        pidfile.close()
-
-        return os.getpid()
-
     def critical_error(self, operation):
         """ this should be overridden by child classes """
         self.logger.fatal(operation, exc_info=1)

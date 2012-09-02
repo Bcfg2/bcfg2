@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 
 """The XML-RPC Bcfg2 server."""
 
@@ -37,7 +37,7 @@ if __name__ == '__main__':
         from Bcfg2.Server.BuiltinCore import Core
 
     try:
-        core = Core(setup, start_fam_thread=True)
+        core = Core(setup, start_fam_thread=(setup['backend'] == 'cherrypy'))
         core.run()
     except CoreInitError:
         msg = sys.exc_info()[1]
