@@ -1,10 +1,10 @@
 #!/bin/sh
 BCFG2CRON=
-if [[ -x /usr/libexec/bcfg2-cron ]]; then
+if [ -x /usr/libexec/bcfg2-cron ]; then
     BCFG2CRON=/usr/libexec/bcfg2-cron
-elif [[ -x /usr/lib/bcfg2/bcfg2-cron ]]; then
+elif [ -x /usr/lib/bcfg2/bcfg2-cron ]; then
     BCFG2CRON=/usr/lib/bcfg2/bcfg2-cron
-elif type bcfg2-cron >& /dev/null; then
+elif type bcfg2-cron 2>&1 >/dev/null; then
     BCFG2CRON=bcfg2-cron
 else
     echo "No bcfg2-cron command found"
