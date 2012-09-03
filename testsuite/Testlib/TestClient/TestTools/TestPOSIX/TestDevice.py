@@ -46,7 +46,7 @@ class TestPOSIXDevice(TestPOSIXTool):
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.verify")
     def test_verify(self, mock_verify, mock_exists, mock_minor, mock_major):
         entry = lxml.etree.Element("Path", name="/test", type="device",
-                                   perms='0644', owner='root', group='root',
+                                   mode='0644', owner='root', group='root',
                                    dev_type="block", major="0", minor="10")
         ptool = self.get_obj()
 
@@ -85,7 +85,7 @@ class TestPOSIXDevice(TestPOSIXTool):
         reset()
         mock_verify.return_value = True
         entry = lxml.etree.Element("Path", name="/test", type="device",
-                                   perms='0644', owner='root', group='root',
+                                   mode='0644', owner='root', group='root',
                                    dev_type="fifo")
         self.assertTrue(ptool.verify(entry, []))
         mock_exists.assert_called_with(entry)
@@ -99,7 +99,7 @@ class TestPOSIXDevice(TestPOSIXTool):
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.install")
     def test_install(self, mock_install, mock_exists, mock_mknod, mock_makedev):
         entry = lxml.etree.Element("Path", name="/test", type="device",
-                                   perms='0644', owner='root', group='root',
+                                   mode='0644', owner='root', group='root',
                                    dev_type="block", major="0", minor="10")
         ptool = self.get_obj()
 
@@ -134,7 +134,7 @@ class TestPOSIXDevice(TestPOSIXTool):
         mock_install.reset_mock()        
         mock_mknod.side_effect = None
         entry = lxml.etree.Element("Path", name="/test", type="device",
-                                   perms='0644', owner='root', group='root',
+                                   mode='0644', owner='root', group='root',
                                    dev_type="fifo")
         
         self.assertTrue(ptool.install(entry))

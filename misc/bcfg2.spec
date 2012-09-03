@@ -186,11 +186,12 @@ Version:          1.3.0
 Summary:          Bcfg2 Web Reporting Interface
 %if 0%{?suse_version}
 Group:            System/Management
+Requires:         httpd,python-django
 %else
 Group:            System Tools
+Requires:         httpd,Django
 %endif
 Requires:         bcfg2-server
-Requires:         httpd,Django
 %if "%{_vendor}" == "redhat"
 Requires:         mod_wsgi
 %define apache_conf %{_sysconfdir}/httpd
