@@ -9,16 +9,14 @@
 #              configuration.
 #
 
-# Set default options
-#    You can set script specific options with BCFG2_OPTIONS_INIT
-#    You can set agent-mode specific options with BCFG2_OPTIONS_AGENT
 DAEMON=/usr/sbin/bcfg2
 PIDFILE=/var/run/bcfg2-agent.pid
-PARAMS="-q"
 prog=$(basename $DAEMON)
-AGENT_EXTRA_OPTS="-A -i ${PIDFILE}"
 
-# Disabled per default
+# Set default options
+#    You can set script specific options with BCFG2_OPTIONS_INIT
+PARAMS="-q"
+#    Disabled per default
 BCFG2_ENABLED=0
 BCFG2_INIT=0
 BCFG2_AGENT=0
@@ -31,40 +29,25 @@ PATH=/sbin:/bin:/usr/bin:/usr/sbin
 # Include default startup configuration if exists
 test -f /etc/sysconfig/$prog && . /etc/sysconfig/$prog
 
-# bail out if bcfg2 not enabled
-test $BCFG2_ENABLED = 0 && exit 0
+[ "$BCFG2_ENABLED" -eq 0 ] && exit 0
+[ "$BCFG2_INIT" -eq 0 ] && exit 0
+
+if [ "$BCFG2_AGENT" != 0 ]; then
+    echo "Bcfg2 no longer supports agent mode, please update your configuration!"
+    exit 1
+fi
 
 RETVAL=0
 
 start () {
     test -x $DAEMON || exit 5
     echo -n $"Starting $prog: "
-    if test $BCFG2_AGENT = 1 ; then
-        daemon $DAEMON ${AGENT_EXTRA_OPTS} $PARAMS ${BCFG2_OPTIONS_AGENT}
-        RETVAL=$?
-        echo
-        if test $RETVAL = 0 ; then
-            test -d /var/lock/subsys && touch /var/lock/subsys/$prog
-        else
-            exit $RETVAL
-        fi
-    fi
-
     if test $BCFG2_INIT = 1 ; then
-        $DAEMON $PARAMS ${BCFG2_OPTIONS_INIT}
+        $DAEMON $PARAMS ${BCFG2_OPTIONS_INIT} && success || failure
         RETVAL=$?
         echo
     fi
 
-    return $RETVAL
-}
-
-stop () {
-    echo -n $"Stopping $prog: "
-    killproc -p $PIDFILE ${BINARY}
-    RETVAL=$?
-    echo
-    rm -f /var/lock/subsys/$prog
     return $RETVAL
 }
 
@@ -73,21 +56,13 @@ case "$1" in
         start
     ;;
     stop) 
-        stop
+        exit 0
     ;;
-    status)
-        status $prog
-        RETVAL=$?
-    ;;
-    restart|reload|force-reload)
-        if test $BCFG2_AGENT = 1 ; then
-            stop
-            sleep 5
-            start
-        fi
+    restart|force-reload)
+	start
     ;;
     *)
-        echo "Usage: $0 {start|stop|restart|reload|force-reload|status}"
+        echo "Usage: $0 {start|stop|restart|force-reload}"
         RETVAL=3
 esac
 

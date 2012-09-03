@@ -14,6 +14,10 @@ PARAMS="-D $PIDFILE"
 prog=$(basename $DAEMON)
 conf="/etc/bcfg2.conf"
 
+# Disabled per default
+BCFG2_SERVER_OPTIONS=""
+BCFG2_SERVER_ENABLED=0
+
 PATH=/sbin:/bin:/usr/bin:/usr/sbin
 
 # Source function library
@@ -22,13 +26,19 @@ PATH=/sbin:/bin:/usr/bin:/usr/sbin
 # Include default startup configuration if exists
 test -f /etc/sysconfig/$prog && . /etc/sysconfig/$prog
 
+if [ "$BCFG2_SERVER_ENABLED" -eq 0 ] ; then
+     failure $"bcfg2-server is disabled - see /etc/sysconfig/bcfg2-server"
+     echo
+     exit 0
+fi
+
 RETVAL=0
 
 start () {
     test -x $DAEMON || exit 5
     test -f $conf || exit 6
     echo -n $"Starting $prog: "
-    daemon $DAEMON ${PARAMS}
+    daemon $DAEMON ${PARAMS} ${BCFG2_SERVER_OPTIONS} && success || failure
     RETVAL=$?
     echo
     if test $RETVAL = 0 ; then
@@ -39,7 +49,7 @@ start () {
 
 stop () {
     echo -n $"Stopping $prog: "
-    killproc ${prog}
+    killproc ${prog} && success || failure
     RETVAL=$?
     echo
     rm -f /var/lock/subsys/$prog
