@@ -21,6 +21,11 @@ DEFAULT_INSTALL_PREFIX = '/usr'
 
 
 class DefaultConfigParser(ConfigParser.ConfigParser):
+    def __init__(self,*args,**kwargs):
+        """Make configuration options case sensitive"""
+        ConfigParser.ConfigParser.__init__(self,*args,**kwargs)
+        self.optionxform = str
+
     def get(self, section, option, **kwargs):
         """ convenience method for getting config items """
         default = None
