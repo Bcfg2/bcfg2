@@ -4,6 +4,7 @@ import os
 import sys
 import time
 import socket
+import daemon
 import logging
 from Bcfg2.Server.Core import BaseCore
 from Bcfg2.Compat import xmlrpclib, urlparse
@@ -17,6 +18,11 @@ class NoExposedMethod (Exception):
 
 class Core(BaseCore):
     name = 'bcfg2-server'
+    
+    def __init__(self, setup, start_fam_thread=False):
+        BaseCore.__init__(self, setup, start_fam_thread=start_fam_thread)
+        self.server = None
+        self.context = daemon.DaemonContext()
 
     def _resolve_exposed_method(self, method_name):
         """Resolve an exposed method.
@@ -65,34 +71,37 @@ class Core(BaseCore):
             raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
         return result
 
-    def run(self):
-        if self.setup['daemon']:
-            self._daemonize()
-
+    def _daemonize(self):
+        self.context.open()
+        self.logger.info("%s daemonized" % self.name)
+    
+    def _run(self):
         hostname, port = urlparse(self.setup['location'])[1].split(':')
         server_address = socket.getaddrinfo(hostname,
                                             port,
                                             socket.AF_UNSPEC,
                                             socket.SOCK_STREAM)[0][4]
         try:
-            server = XMLRPCServer(self.setup['listen_all'],
-                                  server_address,
-                                  keyfile=self.setup['key'],
-                                  certfile=self.setup['cert'],
-                                  register=False,
-                                  timeout=1,
-                                  ca=self.setup['ca'],
-                                  protocol=self.setup['protocol'])
+            self.server = XMLRPCServer(self.setup['listen_all'],
+                                       server_address,
+                                       keyfile=self.setup['key'],
+                                       certfile=self.setup['cert'],
+                                       register=False,
+                                       timeout=1,
+                                       ca=self.setup['ca'],
+                                       protocol=self.setup['protocol'])
         except:
             err = sys.exc_info()[1]
             self.logger.error("Server startup failed: %s" % err)
             os._exit(1)
-        server.register_instance(self)
+        self.server.register_instance(self)
 
+    def _block(self):
         try:
-            server.serve_forever()
+            self.server.serve_forever()
         finally:
-            server.server_close()
+            self.server.server_close()
+            self.context.close()
         self.shutdown()
 
     def methodHelp(self, method_name):

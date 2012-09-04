@@ -1,10 +1,10 @@
 """ Inotify driver for file alteration events """
 
+import os
+import sys
 import logging
 import operator
-import os
 import pyinotify
-import sys
 from Bcfg2.Compat import reduce
 from Bcfg2.Server.FileMonitor import Event
 from Bcfg2.Server.FileMonitor.Pseudo import Pseudo
@@ -22,11 +22,22 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
 
     def __init__(self, ignore=None, debug=False):
         Pseudo.__init__(self, ignore=ignore, debug=debug)
+        self.event_filter = dict()
+        self.watches_by_path = dict()
+        # these are created in start() after the server is done forking
+        self.notifier = None
+        self.wm = None
+        self.started = False
+        self.add_q = []
+
+    def start(self):
         self.wm = pyinotify.WatchManager()
         self.notifier = pyinotify.ThreadedNotifier(self.wm, self)
         self.notifier.start()
-        self.event_filter = dict()
-        self.watches_by_path = dict()
+        self.started = True
+        for monitor in self.add_q:
+            self.AddMonitor(*monitor)
+        self.add_q = []
 
     def fileno(self):
         return self.wm.get_fd()
@@ -75,6 +86,11 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
     def AddMonitor(self, path, obj):
         # strip trailing slashes
         path = path.rstrip("/")
+
+        if not self.started:
+            self.add_q.append((path, obj))
+            return path
+
         if not os.path.isdir(path):
             # inotify is a little wonky about watching files.  for
             # instance, if you watch /tmp/foo, and then do 'mv
@@ -123,4 +139,5 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
             return path
 
     def shutdown(self):
-        self.notifier.stop()
+        if self.started:
+            self.notifier.stop()

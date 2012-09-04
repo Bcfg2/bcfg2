@@ -192,10 +192,7 @@ class BaseCore(object):
             threading.Thread(name="%sFAMThread" % setup['filemonitor'],
                              target=self._file_monitor_thread)
         self.lock = threading.Lock()
-
-        if start_fam_thread:
-            self.fam_thread.start()
-            self.fam.AddMonitor(self.cfile, self.setup)
+        self.start_fam_thread = start_fam_thread
 
         self.stats = Statistics()
 
@@ -453,33 +450,34 @@ class BaseCore(object):
                          (client, time.time() - start))
         return config
 
-    def run(self, **kwargs):
-        """ run the server core """
-        raise NotImplementedError
+    def run(self):
+        """ run the server core. note that it is the responsibility of
+        the server core implementation to call shutdown() """
+        if self.setup['daemon']:
+            self._daemonize()
+            open(self.setup['daemon'], "w").write("%s\n" % os.getpid())
+
+        self._run()
+        
+        self.fam.start()
+        if self.start_fam_thread:
+            self.fam_thread.start()
+            self.fam.AddMonitor(self.cfile, self.setup)
+
+        self._block()
 
     def _daemonize(self):
-        child_pid = os.fork()
-        if child_pid != 0:
-            return
+        """ daemonize the server """
+        raise NotImplementedError        
 
-        os.setsid()
+    def _run(self):
+        """ start up the server; this method should return immediately """
+        raise NotImplementedError
 
-        child_pid = os.fork()
-        if child_pid != 0:
-            os._exit(0)
-            
-        redirect_file = open("/dev/null", "w+")
-        os.dup2(redirect_file.fileno(), sys.__stdin__.fileno())
-        os.dup2(redirect_file.fileno(), sys.__stdout__.fileno())
-        os.dup2(redirect_file.fileno(), sys.__stderr__.fileno())
-
-        os.chdir(os.sep)
-        
-        pidfile = open(self.setup['daemon'] or "/dev/null", "w")
-        pidfile.write("%s\n" % os.getpid())
-        pidfile.close()
-
-        return os.getpid()
+    def _block(self):
+        """ enter the infinite loop.  this method should not return
+        until the server is killed """
+        raise NotImplementedError
 
     def critical_error(self, operation):
         """ this should be overridden by child classes """

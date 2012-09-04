@@ -44,6 +44,11 @@ class FileMonitor(object):
     def __repr__(self):
         return "%s (%s events, fd %s)" % (str(self), len(self.events), self.fileno)
 
+    def start(self):
+        """ start threads or anything else that needs to be done after
+        the server forks and daemonizes """
+        pass
+
     def debug_log(self, msg):
         if self.debug:
             logger.info(msg)
