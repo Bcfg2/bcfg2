@@ -41,15 +41,15 @@ BuildRequires:    python-setuptools
 BuildRequires:    libsane1
 %endif
 
-# %{rhel} wasn't set before rhel 6.  so this checks for old RHEL
-# %systems (and potentially very old Fedora systems, too)
-%if "%{_vendor}" == "redhat" && 0%{?rhel} < 6 && 0%{?fedora} == 0
+# RHEL 5 and 6 ship with sphinx 0.6, but sphinx 1.0 is available with
+# a different package name in EPEL.
+%if "%{_vendor}" == "redhat" && 0%{?rhel} != 0
 BuildRequires:    python-sphinx10
 # the python-sphinx10 package doesn't set sys.path correctly, so we
 # have to do it for them
 %define pythonpath %(find %{python_sitelib} -name Sphinx*.egg)
 %else
-BuildRequires:    python-sphinx >= 0.6
+BuildRequires:    python-sphinx >= 1.0
 %endif
 
 %if 0%{?fedora} >= 16
