@@ -260,7 +260,7 @@ class Frame:
                 self.logger.info(["%s:%s" % (entry.tag, entry.get('name'))
                                   for entry in self.removal])
             self.removal = []
-            return
+
         # Here is where most of the work goes
         # first perform bundle filtering
         if self.setup['bundle']:
