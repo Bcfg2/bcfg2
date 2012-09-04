@@ -117,13 +117,17 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                     except socket.error:
                         continue
                 try:
-                    self.socket.send("Reconnected to syslog")
+                    reconn = copy.copy(record)
+                    reconn.msg = 'Reconnected to syslog'
+                    self.socket.send('<%d>%s\000' %
+                                     (self.encodePriority(self.facility,
+                                                          logging.WARNING),
+                                      self.format(reconn)))
                     self.socket.send(msg)
                 except:
-                    """
-                    If we still fail then drop it.  Running bcfg2-server as non-root can
-                    trigger permission denied exceptions.
-                    """
+                    # If we still fail then drop it.  Running
+                    # bcfg2-server as non-root can trigger permission
+                    # denied exceptions.
                     pass
 
 def add_console_handler(level=logging.DEBUG):
