@@ -314,6 +314,8 @@ class MetadataGroup(tuple):
         self.is_profile = is_profile
         self.is_public = is_public
         self.is_private = is_private
+        # record which clients we've warned about category suppression
+        self.warned = []
 
     def __str__(self):
         return repr(self)
@@ -325,6 +327,7 @@ class MetadataGroup(tuple):
 
     def __hash__(self):
         return hash(self.name)
+
 
 class Metadata(Bcfg2.Server.Plugin.Metadata,
                Bcfg2.Server.Plugin.Statistics,
@@ -631,9 +634,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def _handle_groups_xml_event(self, event):
         self.groups = {}
 
-        # get_condition and aggregate_conditions must be separate
-        # functions in order to ensure that the scope is right for the
-        # closures they return
+        # these three functions must be separate functions in order to
+        # ensure that the scope is right for the closures they return
         def get_condition(element):
             negate = element.get('negate', 'false').lower() == 'true'
             pname = element.get("name")
@@ -641,6 +643,22 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 return lambda c, g, _: negate != (pname in g)
             elif element.tag == 'Client':
                 return lambda c, g, _: negate != (pname == c)
+
+        def get_category_condition(category, gname):
+            def in_cat(client, groups, categories):
+                if category in categories:
+                    if (gname not in self.groups or
+                        client not in self.groups[gname].warned):
+                        self.logger.warning("%s: Group %s suppressed by "
+                                            "category %s; %s already a member "
+                                            "of %s" %
+                                            (self.name, gname, category, client,
+                                             categories[category]))
+                        if gname in self.groups:
+                            self.groups[gname].warned.append(client)
+                    return False
+                return True
+            return in_cat
 
         def aggregate_conditions(conditions):
             return lambda client, groups, cats: \
@@ -697,26 +715,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 self.negated_groups[aggregate_conditions(conditions)] = \
                     self.groups[gname]
             else:
-                if self.groups[gname].category and gname in self.groups:
-                    category = self.groups[gname].category
-
-                    def in_cat(client, groups, categories):
-                        if category in categories:
-                            # this is debug, not warning, because it
-                            # gets called a _lot_ -- every time a
-                            # group in a category is processed for
-                            # every creation of client metadata.  this
-                            # message is produced in two other places,
-                            # so the user should get warned by one of
-                            # those.
-                            self.logger.debug("%s: Group %s suppressed by "
-                                                "category %s; %s already a "
-                                                "member of %s" %
-                                                (self.name, gname, category,
-                                                 client, categories[category]))
-                            return False
-                        return True
-                    conditions.append(in_cat)
+                if self.groups[gname].category:
+                    conditions.append(
+                        get_category_condition(self.groups[gname].category,
+                                               gname))
 
                 self.group_membership[aggregate_conditions(conditions)] = \
                     self.groups[gname]
