@@ -126,7 +126,7 @@ if not hasattr(unittest.TestCase, "assertItemsEqual"):
         return result
 
 
-if not hasattr(unittest.TestCase, "assertIn"):
+if True or not hasattr(unittest.TestCase, "assertIn"):
     # versions of TestCase before python 2.7 and python 3.1 lacked a
     # lot of the really handy convenience methods, so we provide them
     # -- at least the easy ones and the ones we use.
@@ -142,6 +142,12 @@ if not hasattr(unittest.TestCase, "assertIn"):
                 msg = default_msg % args
             assert predicate(*args, **kwargs), msg
         return inner
+
+    def _regex_matches(val, regex):
+        if hasattr(regex, 'search'):
+            return regex.search(val)
+        else:
+            return re.search(regex, val)
 
 
 class Bcfg2TestCase(unittest.TestCase):
@@ -176,6 +182,11 @@ class Bcfg2TestCase(unittest.TestCase):
         assertLess = _assertion(lambda a, b: a < b, "%s is not less than %s")
         assertLessEqual = _assertion(lambda a, b: a <= b,
                                      "%s is not less than or equal to %s")
+        assertRegexpMatches = _assertion(lambda s, r: _regex_matches(s, r),
+                                         "%s does not contain /%s/")
+        assertNotRegexpMatches = \
+            _assertion(lambda s, r: not _regex_matches(s, r),
+                       "%s contains /%s/")
 
 
     def assertXMLEqual(self, el1, el2, msg=None):
