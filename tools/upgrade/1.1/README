@@ -1,0 +1,6 @@
+This directory contains scripts to help upgrading from Bcfg2 1.0 to 1.1.
+
+posixunified.py
+    - Change all ConfigFile, Directory, Directory, Permissions, and
+      Symlink entries in Base and Bundler to Path type="<type>"
+      entries in Rules.

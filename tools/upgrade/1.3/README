@@ -1,0 +1,14 @@
+This directory contains scripts to help with upgrading from Bcfg2 1.2
+to 1.3.
+
+migrate_info.py
+    - Convert info and :info files to info.xml files
+
+migrate_configs.py
+    - Migrate configuration in Rules/rules.conf and
+      Packages/packages.conf to bcfg2.conf; move database
+      configuration from [statistics] to [database]
+
+service_modes.py
+    - Convert Service tags from "mode" attribute to separate "restart"
+      and "install" attributes

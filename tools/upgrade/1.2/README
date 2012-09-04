@@ -1,0 +1,9 @@
+This directory contains scripts to help upgrading from Bcfg2 1.1 to 1.2.
+
+nagiosgen-convert.py
+    - Convert configuration from Properties/NagiosGen.xml to
+      NagiosGen/config.xml and NagiosGen/parents.xml
+
+packages-convert.py
+    - Convert configuration from Packages/config.xml to
+      Packages/packages.conf and Packages/sources.xml

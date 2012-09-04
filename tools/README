@@ -1,10 +1,14 @@
 This directory contains repository maintenance tools.
 
+accounts2xml.py
+    - Generate an XML description of accounts on a machine from
+      /etc/passwd
+
 basebuilder.py <image directory>
     - builds v2 base.xml from bcfg1 repo
 
 batchadd.py <filename>
-    - ???
+    - Add records to Hostbase
 
 bcfg2-completion.bash
     - Bash tab completion for bcfg2-admin
@@ -30,14 +34,11 @@ create-debian-pkglist-gp.py
     - Generate Pkgmgr XML files from etc/debian-pkglist.conf.  See
       http://trac.mcs.anl.gov/projects/bcfg2/wiki/Tools/DebianPkgmgrCreationScript
 
-create-debian-pkglist.pl
-    - ???
-
 create-debian-pkglist.py
     - Generate Pkgmgr XML files for Debian packages
 
 create-rpm-pkglist.py
-    - ???
+    - Generate list of installed RPM packages
 
 encap-util-count.sh
     - Produce a count of encap packages per directory
@@ -58,10 +59,10 @@ export.sh
     - Export a tagged version of the Bcfg2 source
 
 hostbasepush.py
-    - ???
+    - Call the Hostbase.rebuildState XML-RPC method
 
 hostbase.py {-l|-c} <hostname>
-    - ???
+    - Display or create host information for Hostbase
 
 hostinfo.py {-q <query>|--showfields}
     - Query the hostbase databse
@@ -75,14 +76,21 @@ pkgmgr_update.py
       RPMS
 
 rpmlisting.py
-    - ???
+    - Generate Pkgmgr XML files for RPM packages
+
+selinux_baseline.py
+    - Create a Bundle with all base SELinux entries on a client.  This
+      is useful because different versions of the SELinux libraries
+      have different capabilities, and some clients may have very,
+      very large baselines.  selinux_baseline.py can be used to ensure
+      that there are no 'extra' SELinux entries on such a client.
 
 upgrade
     - This directory contains scripts used to upgrade to the specified
       version.  E.g., upgrade/1.2 has scripts needed to upgrade to
       Bcfg2 1.2.x from bcfg2 1.1.x
 
-yum-listpkgs.xml.py
+yum-listpkgs-xml.py
     - Produces a list of all packages installed and available in a
       format suitable for use by Packages or Pkgmgr
 
