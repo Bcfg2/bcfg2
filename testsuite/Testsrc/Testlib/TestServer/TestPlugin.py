@@ -1313,6 +1313,7 @@ class TestINode(Bcfg2TestCase):
         idict = dict()
 
         inode = self._get_inode(data, idict)
+        inode.ignore = []
 
         @patch("Bcfg2.Server.Plugin.%s.__init__" % inode.__class__.__name__)
         def inner2(mock_init):
