@@ -50,6 +50,16 @@ class TestPOSIXSymlink(TestPOSIXTool):
         mock_readlink.assert_called_with(entry.get("name"))
         mock_verify.assert_called_with(ptool, entry, [])
         
+        # relative symlink
+        mock_readlink.reset_mock()
+        mock_verify.reset_mock()
+        entry = lxml.etree.Element("Path", name="/test", type="symlink",
+                                   to="dest")
+        mock_readlink.return_value = entry.get("to")
+        self.assertTrue(ptool.verify(entry, []))
+        mock_readlink.assert_called_with(entry.get("name"))
+        mock_verify.assert_called_with(ptool, entry, [])
+
         mock_readlink.reset_mock()
         mock_verify.reset_mock()
         mock_readlink.side_effect = OSError
@@ -66,6 +76,14 @@ class TestPOSIXSymlink(TestPOSIXTool):
 
         mock_exists.return_value = False
         mock_install.return_value = True
+        self.assertTrue(ptool.install(entry))
+        mock_exists.assert_called_with(entry, remove=True)
+        mock_symlink.assert_called_with(entry.get("to"), entry.get("name"))
+        mock_install.assert_called_with(ptool, entry)
+
+        # relative symlink
+        entry = lxml.etree.Element("Path", name="/test", type="symlink",
+                                   to="dest")
         self.assertTrue(ptool.install(entry))
         mock_exists.assert_called_with(entry, remove=True)
         mock_symlink.assert_called_with(entry.get("to"), entry.get("name"))
