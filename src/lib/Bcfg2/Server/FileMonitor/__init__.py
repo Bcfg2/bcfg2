@@ -42,7 +42,9 @@ class FileMonitor(object):
         return "%s: %s" % (__name__, self.__class__.__name__)
 
     def __repr__(self):
-        return "%s (%s events, fd %s)" % (str(self), len(self.events), self.fileno)
+        return "%s (%s events, fd %s)" % (self.__class__.__name__,
+                                          len(self.events),
+                                          self.fileno())
 
     def start(self):
         """ start threads or anything else that needs to be done after

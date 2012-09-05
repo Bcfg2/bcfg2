@@ -40,7 +40,10 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
         self.add_q = []
 
     def fileno(self):
-        return self.wm.get_fd()
+        if self.started:
+            return self.wm.get_fd()
+        else:
+            return None
 
     def process_default(self, ievent):
         action = ievent.maskname
