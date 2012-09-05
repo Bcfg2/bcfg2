@@ -113,6 +113,11 @@ Requires:         python-lxml >= 1.2.1
 %if "%{_vendor}" == "redhat"
 Requires:         gamin-python
 %endif
+%if 0%{?suse_version}
+Requires:         python-python-daemon
+%else
+Requires:         python-daemon
+%endif
 Requires:         /usr/sbin/sendmail
 Requires:         /usr/bin/openssl
 Requires:         python-nose

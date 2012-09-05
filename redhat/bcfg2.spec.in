@@ -87,6 +87,7 @@ Requires:         python-ssl
 Requires:         python-lxml >= 0.9
 Requires:         /usr/bin/openssl
 Requires:         gamin-python
+Requires:         python-daemon
 Requires(post):   /sbin/chkconfig
 Requires(preun):  /sbin/chkconfig
 Requires(preun):  /sbin/service
