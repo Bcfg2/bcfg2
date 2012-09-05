@@ -16,9 +16,6 @@ bcfg2-completion.bash
 bcfg2-cron
     - Script to run bcfg2 with cron
 
-bcfg2-export-config <client> <outputdir>
-    - Export the configuration for a specified client.
-
 bcfg2-import-config
     - Create tarball of changed files on a client for import into the
       specification
