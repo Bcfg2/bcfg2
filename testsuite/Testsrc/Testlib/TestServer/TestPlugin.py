@@ -215,6 +215,12 @@ class TestMetadata(Bcfg2TestCase):
     def get_obj(self):
         return self.test_obj()
 
+    def test_AuthenticateConnection(self):
+        m = self.get_obj()
+        self.assertRaises(NotImplementedError,
+                          m.AuthenticateConnection,
+                          None, None, None, (None, None))
+
     def test_get_initial_metadata(self):
         m = self.get_obj()
         self.assertRaises(NotImplementedError,
@@ -241,12 +247,20 @@ class TestConnector(Bcfg2TestCase):
 
 
 class TestProbing(Bcfg2TestCase):
-    """ placeholder """
+    test_obj = Probing
+
+    def get_obj(self):
+        return self.test_obj()
+
     def test_GetProbes(self):
-        pass
+        p = self.get_obj()
+        self.assertRaises(NotImplementedError,
+                          p.GetProbes, None)
 
     def test_ReceiveData(self):
-        pass
+        p = self.get_obj()
+        self.assertRaises(NotImplementedError,
+                          p.ReceiveData, None, None)
 
 
 class TestStatistics(TestPlugin):

@@ -10,7 +10,7 @@ Checking Out a Copy of the Code
 
 * Check out a copy of the code::
 
-      git clone git://git.mcs.anl.gov/bcfg2.git
+      git clone https://github.com/Bcfg2/bcfg2.git
 
 * Add :file:`bcfg2/src/sbin` to your :envvar:`PATH` environment variable
 * Add :file:`bcfg2/src/lib` to your :envvar:`PYTHONPATH` environment variable

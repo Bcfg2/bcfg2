@@ -299,6 +299,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
 
     def request(self, host, handler, request_body, verbose=0):
         """Send request to server and return response."""
+        print "len(request_body) = %s" % len(request_body)
         try:
             conn = self.send_request(host, handler, request_body, False)
             response = conn.getresponse()
@@ -330,27 +331,6 @@ class XMLRPCTransport(xmlrpclib.Transport):
             self.send_user_agent(conn)
             self.send_content(conn, request_body)
             return conn
-
-    def _get_response(self, fd, length):
-        # read response from input file/socket, and parse it
-        recvd = 0
-
-        p, u = self.getparser()
-
-        while recvd < length:
-            rlen = min(length - recvd, 1024)
-            response = fd.read(rlen)
-            recvd += len(response)
-            if not response:
-                break
-            if self.verbose:
-                print("body:", repr(response), len(response))
-            p.feed(response)
-
-        fd.close()
-        p.close()
-
-        return u.close()
 
 
 def ComponentProxy(url, user=None, password=None, key=None, cert=None, ca=None,

@@ -141,7 +141,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
 
         for (name, entry) in list(build.items()):
             probe = lxml.etree.Element('probe')
-            probe.set('name', name.split('/')[-1])
+            probe.set('name', os.path.basename(name))
             probe.set('source', self.plugin_name)
             probe.text = entry.data
             match = self.bangline.match(entry.data.split('\n')[0])

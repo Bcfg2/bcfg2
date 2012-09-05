@@ -10,20 +10,9 @@ There are many ways to get involved in Bcfg2 development. Here we will
 outline some things that can help you get familiar with the various
 areas of the Bcfg2 code.
 
-
-Send patches to the :ref:`help-mailinglist` or create a trac
-`ticket <https://trac.mcs.anl.gov/projects/bcfg2/newticket>`_
-with the patch included. In order to submit a ticket via the
-trac system, you will need to create a session by clicking on the
-`Preferences <https://trac.mcs.anl.gov/projects/bcfg2/prefs>`_ link and
-filling out/saving changes to the form. In order to be considered for
-mainline inclusion, patches need to be BSD licensed. The most convenient
-way to prepare patches is by using ``git diff`` inside of a source tree
-checked out of git.
-
-The source tree can be checked out by running::
-
-    git clone git://git.mcs.anl.gov/bcfg2.git
+The easiest way to submit a patch is to submit a pull request on
+Github.  You can fork and clone the source tree at
+https://github.com/bcfg2/Bcfg2
 
 Users wishing to contribute on a regular basis can apply for direct
 git access. Mail the :ref:`help-mailinglist` for details.

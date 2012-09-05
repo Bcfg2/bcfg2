@@ -23,53 +23,169 @@ core functionality of Bcfg2 is implemented by several plugins, however,
 they are not special in any way; new plugins could easily supplant one
 or all of them.
 
-The following table describes the various functions of bcfg2 plugins.
-
-+--------------------+---------------------------------------------+
-| Name               | Description                                 |
-+====================+=============================================+
-| Probes             | Plugins can issue commands to collect       |
-|                    | client-side state (like hardware inventory) |
-|                    | to include in client configurations         |
-+--------------------+---------------------------------------------+
-| ConfigurationEntry | Plugins can construct a list of per-client  |
-| List               | configuration entry lists to include in     |
-|                    | client configurations.                      |
-+--------------------+---------------------------------------------+
-| ConfigurationEntry | Literal values for configuration entries    |
-| contents           |                                             |
-+--------------------+---------------------------------------------+
-| XML-RPC functions  | Plugins can export function calls that      |
-|                    | expose internal functions.                  |
-+--------------------+---------------------------------------------+
-
 Server Plugin Types
 -------------------
+
+A plugin must implement at least one of the interfaces described
+below.  Each interface is available as a class in
+``Bcfg2.Server.Plugin``.  In most cases, a plugin must also inherit
+from ``Bcfg2.Server.Plugin.Plugin``, which is the base Plugin object
+(described below).  Some of the interfaces listed below are themselves
+Plugin objects, so your custom plugin would only need to inherit from
+the plugin type.
 
 Generator
 ^^^^^^^^^
 
-Generator plugins contribute to literal client configurations
+Generator plugins contribute to literal client configurations.  That
+is, they generate entry contents.  Examples are
+:ref:`server-plugins-generators-cfg` and
+:ref:`server-plugins-generators-sshbase`.
+
+An entry is generated in one of two ways:
+
+#.  First, the Bcfg2 core looks in the ``Entries`` dict attribute of
+ the plugin object.  ``Entries`` is expected to be a dict whose keys
+ are entry tags (e.g., ``"Path"``, ``"Service"``, etc.) and whose
+ values are dicts; those dicts should map the ``name`` attribute of an
+ entry to a callable that will be called to generate the content.  The
+ callable will receive two arguments: the abstract entry (as an
+ lxml.etree._Element object), and the client metadata object the entry
+ is being generated for.
+#.  Second, if the entry is not listed in ``Entries``, the Bcfg2 core
+ calls ``HandlesEntry(entry, metadata)``; if that returns True, then
+ it calls ``HandleEntry(entry, metadata)``.
+
+The Generator plugin should provide one or both methods to bind
+entries, but does not have to provide both.
+
+Both ``HandleEntry()`` and the callable objects in the ``Entries``
+dict should return an lxml.etree._Element object representing the
+fully-bound entry.  They should raise
+``Bcfg2.Server.Plugin.PluginExecutionError`` with a sensible error
+message on failure.
 
 Structure
 ^^^^^^^^^
 
-Structure Plugins contribute to abstract client configurations
+Structure Plugins contribute to abstract client configurations.  That
+is, they produce lists of entries that will be generated for a client.
+:ref:`server-plugins-structure-bundler-index` is a Structure plugin.
+
+Structure plugins must implement one method: ``BuildStructures()``,
+which is called with a single argument, a client metadata object
+structures should be built for.  It should return a list of
+lxml.etree._Element objects that will be added to the top-level
+``<Configuration>`` tag of the client configuration.  Consequently,
+each object in the list must consist of a container tag (e.g.,
+``<Bundle>`` or ``<Independent>``) which contains the entry tags.  It
+must not return a list of entry tags.
 
 Metadata
 ^^^^^^^^
 
-Signal metadata capabilities
+Metadata plugins provide client metadata.
+:ref:`server-plugins-grouping-metadata` is a Metadata plugin.
+
+Metadata plugins **must** implement the following methods:
+
+* ``AuthenticateConnection(cert, user, password, addresspair)``:
+  Authenticate the given client.  Arguments are:
+  * ``cert``: an x509 certificate dict;
+  * ``user``: The username of the user trying to authenticate;
+  * ``password``: The password supplied by the client;
+  * ``addresspair``: A tuple of ``(<ip address>, <hostname>)``
+  ``AuthenticateConnection()`` should return True if the authenticate
+  succeeds, False otherwise.  Failures should be logged at the error
+  level.
+* ``get_initial_metadata(client_name)``: Return a ClientMetadata
+  object that fully describes everything the Metadata plugin knows
+  about the named client.  See :file:``Metadata.py`` for a reference
+  implementation of the ClientMetadata object.
+* ``merge_additional_data(metadata, source, data)``: Add data from the
+  Connector plugin named by ``<source>`` (a string giving the name of
+  the Connector plugin) to the given metadata object.
+  ``merge_additional_data()`` should modify the ``metadata`` object in
+  place; it doesn't need to return anything.
+* ``merge_additional_groups(metadata, groups)``: Add groups from an
+  anonymous Connector plugin to the given metadata object.
+  ``merge_additional_groups()`` should modify the ``metadata`` object in
+  place; it doesn't need to return anything.
+
+Metadata plugins **may** implement the following methods:
+
+* ``viz(hosts, bundles, key, only_client, colors)``: Return a string
+  containing a graphviz document that maps out the Metadata.  The
+  first three options are boolean, and describe whether or not the
+  named item(s) should be included in the graphviz document.
+  ``only_client`` is the name of a client which, if included, will be
+  the only client whose metadata will be included on the map.
+  ``colors`` is a list of graphviz color names to use.  If
+  unimplemented, the empty string will be returned.
+* ``set_version(client, version)``: Set the version for the named
+  client to the specified version string.  If unimplemented, setting
+  the version of a client will fail silently.
+* ``set_profile(client, profile, addresspair)``: Set the profile for
+  the named client to the named profile group.  If unimplemented,
+  setting a client profile will fail silently.
+* ``resolve_client(addresspair, cleanup_cache=False)``: Given a tuple
+  of ``(<ip address>, <hostname>)``, resolve the canonical name of
+  this client.  If this method is not implemented, the hostname
+  claimed by the client is used.  (This may be a security risk; it's
+  highly recommended that you implement ``resolve_client`` if you are
+  writing a Metadata plugin.)
 
 Connector
 ^^^^^^^^^
 
-Connector Plugins augment client metadata instances
+Connector plugins augment client metadata instances with additional
+data, additional groups, or both.  Connector plugins include
+:ref:`server-plugins-grouping-grouppatterns`,
+:ref:`server-plugins-connectors-properties`, and
+:ref:`server-plugins-probes-index`.
+
+Connector plugins should implement one or all of the following
+methods:
+
+* ``get_additional_groups(metadata)``: Return a list of additional
+  groups for the given ClientMetadata object.  If unimplemented, the
+  empty list is returned.
+* ``get_additional_data(metadata)``: Return arbitrary additional data
+  for the given ClientMetadata object.  By convention this is usually
+  a dict object, but doesn't need to be.  If unimplemented, the empty
+  dict is returned.
 
 Probing
 ^^^^^^^
 
-Signal probe capability
+Probing plugins can collect data from clients and process it.
+Examples include :ref:`server-plugins-probes-index` and
+:ref:`server-plugins-probes-fileprobes`.
+
+Probing plugins must implement the following methods:
+
+* ``GetProbes(metadata)``: Return a list of probes for the given
+  ClientMetadata object.  Each probe should be an XML document,
+  described below.
+* ``ReceiveData(metadata, datalist)``: Process data returned from the
+  probes for the given ClientMetadata object.  ``datalist`` is a list
+  of lxml.etree._Element objects, each of which is a single tag; the
+  ``name`` attribute holds the unique name of the probe that was run,
+  and the text contents of the tag hold the results of the probe.
+
+``GetProbes()`` returns a list of probes, each of which is an
+``lxml.etree._Element`` object that adheres to the following
+specification.  Each probe must the following attributes:
+
+* ``name``: The unique name of the probe.
+* ``source``: The origin of the probe; probably the name of the plugin
+  that supplies the probe.
+* ``interpreter``: The command that will be run on the client to
+  interpret the probe script.  Compiled (i.e., non-interpreted) probes
+  are not supported.
+
+The text of the XML tag should be the contents of the probe, i.e., the
+code that will be run on the client.
 
 Statistics
 ^^^^^^^^^^

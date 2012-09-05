@@ -168,9 +168,12 @@ class PluginDatabaseModel(object):
 
 
 class Generator(object):
-    """Generator plugins contribute to literal client configurations."""
+    """Generator plugins contribute to literal client
+    configurations."""
+
     def HandlesEntry(self, entry, metadata):
-        """This is the slow path method for routing configuration binding requests."""
+        """This is the slow path method for routing configuration
+        binding requests."""
         return False
 
     def HandleEntry(self, entry, metadata):
@@ -187,20 +190,21 @@ class Structure(object):
 
 class Metadata(object):
     """Signal metadata capabilities for this plugin"""
-    def add_client(self, client_name):
-        """Add client."""
-        pass
-
-    def remove_client(self, client_name):
-        """Remove client."""
-        pass
-
-    def viz(self, hosts, bundles, key, colors):
+    def viz(self, hosts, bundles, key, only_client, colors):
         """Create viz str for viz admin mode."""
+        return ''
+
+    def set_version(self, client, version):
         pass
 
-    def _handle_default_event(self, event):
+    def set_profile(self, client, profile, address):
         pass
+
+    def resolve_client(self, address, cleanup_cache=False):
+        return address[1]
+
+    def AuthenticateConnection(self, cert, user, password, address):
+        raise NotImplementedError
 
     def get_initial_metadata(self, client_name):
         raise NotImplementedError
@@ -225,13 +229,13 @@ class Connector(object):
 
 class Probing(object):
     """Signal probe capability for this plugin."""
-    def GetProbes(self, _):
+    def GetProbes(self, metadata):
         """Return a set of probes for execution on client."""
-        return []
+        raise NotImplementedError
 
-    def ReceiveData(self, _, dummy):
+    def ReceiveData(self, metadata, datalist):
         """Receive probe results pertaining to client."""
-        pass
+        raise NotImplementedError
 
 
 class Statistics(Plugin):
