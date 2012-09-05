@@ -477,6 +477,7 @@ text
         datalist = ["a", "b", "c"]
         
         probes = self.get_probes_object()
+        probes.core.metadata_cache_mode = 'off'
         client = Mock()
         client.hostname = "foo.example.com"
         probes.ReceiveData(client, datalist)
@@ -485,6 +486,15 @@ text
                               [call(client, "a"), call(client, "b"),
                                call(client, "c")])
         mock_write_data.assert_called_with(client)
+        self.assertFalse(probes.core.metadata_cache.expire.called)
+
+        # change the datalist, ensure that the cache is cleared
+        probes.probedata[client.hostname] = ClientProbeDataSet(a=1, b=2, c=3)
+        probes.core.metadata_cache_mode = 'aggressive'
+        probes.ReceiveData(client, ['a', 'b', 'd'])
+        
+        mock_write_data.assert_called_with(client)
+        probes.core.metadata_cache.expire.assert_called_with(client.hostname)
 
     def test_ReceiveDataItem(self):
         probes = self.get_probes_object()

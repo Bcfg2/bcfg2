@@ -1064,18 +1064,6 @@ class OptionParser(OptionSet):
                            quiet=quiet)
         self.optinfo = copy.copy(args)
 
-    def HandleEvent(self, event):
-        if 'configfile' not in self or not isinstance(self['configfile'], str):
-            # we haven't parsed options yet, or CFILE wasn't included
-            # in the options
-            return
-        if event.filename != self['configfile']:
-            print("Got event for unknown file: %s" % event.filename)
-            return
-        if event.code2str() == 'deleted':
-            return
-        self.reparse()
-
     def reparse(self):
         for key, opt in self.optinfo.items():
             self[key] = opt

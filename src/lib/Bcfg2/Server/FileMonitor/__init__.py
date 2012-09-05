@@ -37,6 +37,7 @@ class FileMonitor(object):
         if ignore is None:
             ignore = []
         self.ignore = ignore
+        self.started = False
 
     def __str__(self):
         return "%s: %s" % (__name__, self.__class__.__name__)
@@ -49,7 +50,7 @@ class FileMonitor(object):
     def start(self):
         """ start threads or anything else that needs to be done after
         the server forks and daemonizes """
-        pass
+        self.started = True
 
     def debug_log(self, msg):
         if self.debug:
@@ -73,6 +74,8 @@ class FileMonitor(object):
         return 0
 
     def handle_one_event(self, event):
+        if not self.started:
+            self.start()
         if self.should_ignore(event):
             return
         if event.requestID not in self.handles:
@@ -90,6 +93,8 @@ class FileMonitor(object):
                          (event.code2str(), event.filename, err))
 
     def handle_event_set(self, lock=None):
+        if not self.started:
+            self.start()
         count = 1
         event = self.get_event()
         start = time()
@@ -108,6 +113,8 @@ class FileMonitor(object):
         logger.info("Handled %d events in %.03fs" % (count, (end - start)))
 
     def handle_events_in_interval(self, interval):
+        if not self.started:
+            self.start()
         end = time() + interval
         while time() < end:
             if self.pending():
@@ -117,7 +124,7 @@ class FileMonitor(object):
                 sleep(0.5)
 
     def shutdown(self):
-        pass
+        self.started = False
 
 
 available = dict()

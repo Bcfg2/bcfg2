@@ -7,7 +7,7 @@ import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Metadata import *
-from mock import Mock, patch
+from mock import Mock, MagicMock, patch
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4
@@ -90,6 +90,7 @@ def get_groups_test_tree():
 def get_metadata_object(core=None, watch_clients=False, use_db=False):
     if core is None:
         core = Mock()
+        core.metadata_cache = MagicMock()
     core.setup.cfp.getboolean = Mock(return_value=use_db)
     return Metadata(core, datastore, watch_clients=watch_clients)
 

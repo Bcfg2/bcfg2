@@ -14,6 +14,7 @@ import Bcfg2.settings
 import Bcfg2.Server
 import Bcfg2.Logger
 import Bcfg2.Server.FileMonitor
+from Bcfg2.Cache import Cache
 from Bcfg2.Statistics import Statistics
 from Bcfg2.Compat import xmlrpclib, reduce
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
@@ -194,6 +195,7 @@ class BaseCore(object):
         self.lock = threading.Lock()
 
         self.stats = Statistics()
+        self.metadata_cache = Cache()
 
     def plugins_by_type(self, base_cls):
         """Return a list of loaded plugins that match the passed type.
@@ -264,8 +266,19 @@ class BaseCore(object):
             for plugin in list(self.plugins.values()):
                 plugin.shutdown()
 
+    @property
+    def metadata_cache_mode(self):
+        """ get the client metadata cache mode.  options are off,
+        initial, cautious, aggressive, on (synonym for cautious) """
+        mode = self.setup.cfp.get("caching", "client_metadata",
+                                  default="off").lower()
+        if mode == "on":
+            return "cautious"
+        else:
+            return mode
+
     def client_run_hook(self, hook, metadata):
-        """Checks the data structure."""
+        """invoke client run hooks for a given stage."""
         start = time.time()
         try:
             for plugin in \
@@ -449,6 +462,16 @@ class BaseCore(object):
                          (client, time.time() - start))
         return config
 
+    def HandleEvent(self, event):
+        """ handle a change in the config file """
+        if event.filename != self.cfile:
+            print("Got event for unknown file: %s" % event.filename)
+            return
+        if event.code2str() == 'deleted':
+            return
+        self.setup.reparse()
+        self.metadata_cache.expire()
+
     def run(self):
         """ run the server core. note that it is the responsibility of
         the server core implementation to call shutdown() """
@@ -460,7 +483,7 @@ class BaseCore(object):
 
         self.fam.start()
         self.fam_thread.start()
-        self.fam.AddMonitor(self.cfile, self.setup)
+        self.fam.AddMonitor(self.cfile, self)
 
         self._block()
 
@@ -498,14 +521,23 @@ class BaseCore(object):
         if not hasattr(self, 'metadata'):
             # some threads start before metadata is even loaded
             raise Bcfg2.Server.Plugin.MetadataRuntimeError
-        imd = self.metadata.get_initial_metadata(client_name)
-        for conn in self.connectors:
-            grps = conn.get_additional_groups(imd)
-            self.metadata.merge_additional_groups(imd, grps)
-        for conn in self.connectors:
-            data = conn.get_additional_data(imd)
-            self.metadata.merge_additional_data(imd, conn.name, data)
-        imd.query.by_name = self.build_metadata
+        if self.metadata_cache_mode == 'initial':
+            # the Metadata plugin handles loading the cached data if
+            # we're only caching the initial metadata object
+            imd = None
+        else:
+            imd = self.metadata_cache.get(client_name, None)
+        if not imd:
+            imd = self.metadata.get_initial_metadata(client_name)
+            for conn in self.connectors:
+                grps = conn.get_additional_groups(imd)
+                self.metadata.merge_additional_groups(imd, grps)
+            for conn in self.connectors:
+                data = conn.get_additional_data(imd)
+                self.metadata.merge_additional_data(imd, conn.name, data)
+            imd.query.by_name = self.build_metadata
+            if self.metadata_cache_mode in ['cautious', 'aggressive']:
+                self.metadata_cache[client_name] = imd
         return imd
 
     def process_statistics(self, client_name, statistics):
@@ -603,6 +635,14 @@ class BaseCore(object):
     def RecvProbeData(self, address, probedata):
         """Receive probe data from clients."""
         client, metadata = self.resolve_client(address)
+        if self.metadata_cache_mode == 'cautious':
+            # clear the metadata cache right after building the
+            # metadata object; that way the cache is cleared for any
+            # new probe data that's received, but the metadata object
+            # that's created for RecvProbeData doesn't get cached.
+            # I.e., the next metadata object that's built, after probe
+            # data is processed, is cached.
+            self.metadata_cache.expire(client)
         try:
             xpdata = lxml.etree.XML(probedata.encode('utf-8'),
                                     parser=Bcfg2.Server.XMLParser)

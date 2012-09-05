@@ -27,14 +27,13 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
         # these are created in start() after the server is done forking
         self.notifier = None
         self.wm = None
-        self.started = False
         self.add_q = []
 
     def start(self):
+        Pseudo.start(self)
         self.wm = pyinotify.WatchManager()
         self.notifier = pyinotify.ThreadedNotifier(self.wm, self)
         self.notifier.start()
-        self.started = True
         for monitor in self.add_q:
             self.AddMonitor(*monitor)
         self.add_q = []
@@ -142,5 +141,7 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
             return path
 
     def shutdown(self):
-        if self.started:
+        Pseudo.shutdown(self)
+        if self.notifier:
             self.notifier.stop()
+

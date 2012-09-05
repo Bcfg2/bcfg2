@@ -2,10 +2,12 @@ import re
 import os
 import sys
 import time
+import copy
 import operator
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
+from Bcfg2.Compat import any
 
 try:
     from django.db import models
@@ -34,8 +36,6 @@ except ImportError:
         has_yaml = True
     except ImportError:
         has_yaml = False
-
-import Bcfg2.Server.Plugin
 
 if has_django:
     class ProbesDataModel(models.Model,
@@ -266,10 +266,22 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         return self.probes.get_probe_data(meta)
 
     def ReceiveData(self, client, datalist):
+        if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
+            if client.hostname in self.probedata:
+                olddata = copy.copy(self.probedata[client.hostname])
+            else:
+                olddata = ClientProbeDataSet()
+
         self.cgroups[client.hostname] = []
         self.probedata[client.hostname] = ClientProbeDataSet()
         for data in datalist:
             self.ReceiveDataItem(client, data)
+
+        if (self.core.metadata_cache_mode in ['cautious', 'aggressive'] and
+            (olddata.keys() != self.probedata[client.hostname].keys() or
+             any(olddata[p] != self.probedata[client.hostname][p]
+                 for p in olddata.keys()))):
+            self.core.metadata_cache.expire(client.hostname)
         self.write_data(client)
 
     def ReceiveDataItem(self, client, data):

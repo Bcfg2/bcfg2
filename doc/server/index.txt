@@ -31,3 +31,4 @@ clients.
    selinux
    backends
    database
+   caching

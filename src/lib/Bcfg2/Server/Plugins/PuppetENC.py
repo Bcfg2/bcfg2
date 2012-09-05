@@ -112,6 +112,16 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
         separately; and b) when a single client's metadata is
         generated multiple times by separate templates """
         self.cache = dict()
+        if self.core.metadata_cache_mode == 'aggressive':
+            # clear the metadata client cache if we're in aggressive
+            # mode, and produce a warning.  PuppetENC really isn't
+            # compatible with aggressive mode, since we don't know
+            # when the output from a given ENC has changed, and thus
+            # can't invalidate the cache sanely.
+            self.logger.warning("PuppetENC is incompatible with aggressive "
+                                "client metadata caching, try 'cautious' or "
+                                "'initial' instead")
+            self.core.cache.expire()
 
     def end_statistics(self, metadata):
         self.end_client_run(self, metadata)

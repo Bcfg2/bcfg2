@@ -729,6 +729,9 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         for hdlr in self.handlers:
             aname = re.sub(r'[^A-z0-9_]', '_', os.path.basename(event.filename))
             if hdlr(event):
+                # clear the entire cache when we get an event for any
+                # metadata file
+                self.core.metadata_cache.expire()
                 try:
                     proc = getattr(self, "_handle_%s_event" % aname)
                 except AttributeError:
@@ -749,7 +752,6 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                     if group not in self.groups:
                         self.debug_log("Group %s set as nonexistent group %s" %
                                        (gname, group))
-
 
     def set_profile(self, client, profile, addresspair, force=False):
         """Set group parameter for provided client."""
@@ -888,6 +890,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         if False in list(self.states.values()):
             raise Bcfg2.Server.Plugin.MetadataRuntimeError("Metadata has not been read yet")
         client = client.lower()
+
+        if client in self.core.metadata_cache:
+            return self.core.metadata_cache[client]
+
         if client in self.aliases:
             client = self.aliases[client]
         
@@ -967,9 +973,12 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             if len(profiles) >= 1:
                 profile = profiles[0]
 
-        return ClientMetadata(client, profile, groups, bundles, aliases,
-                              addresses, categories, uuid, password, version,
-                              self.query)
+        rv = ClientMetadata(client, profile, groups, bundles, aliases,
+                            addresses, categories, uuid, password, version,
+                            self.query)
+        if self.core.metadata_cache_mode == 'initial':
+            self.core.metadata_cache[client] = rv
+        return rv
 
     def get_all_group_names(self):
         all_groups = set()

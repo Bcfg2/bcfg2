@@ -1,4 +1,4 @@
-.. -*- mode: rst -*-
+].. -*- mode: rst -*-
 
 .. _server-plugins-grouping-metadata:
 
@@ -107,9 +107,8 @@ but that is deprecated.
 For detailed information on client authentication see
 :ref:`appendix-guides-authentication`
 
-================
 Clients Database
-================
+~~~~~~~~~~~~~~~~
 
 .. versionadded:: 1.3.0
 
@@ -350,7 +349,19 @@ Probes
 The metadata plugin includes client-side probing functionality. This
 is fully documented :ref:`here <server-plugins-probes-index>`.
 
+Metadata Caching
+================
+
+.. versionadded:: 1.3.0
+
+Client metadata can be cached in order to improve performance.  This
+is particularly important if you have lots of templates that use
+metadata from other clients (e.g., with the MetadataQuery interface
+described below.  See :ref:`server-caching` for a full description of
+the caching features available.
+
 .. _server-plugins-grouping-metadata-clientmetadata:
+
 
 ClientMetadata
 ==============
