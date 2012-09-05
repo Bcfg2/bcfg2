@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import unittest
 from mock import patch, MagicMock, _patch, DEFAULT
@@ -126,7 +127,7 @@ if not hasattr(unittest.TestCase, "assertItemsEqual"):
         return result
 
 
-if True or not hasattr(unittest.TestCase, "assertIn"):
+if not hasattr(unittest.TestCase, "assertIn"):
     # versions of TestCase before python 2.7 and python 3.1 lacked a
     # lot of the really handy convenience methods, so we provide them
     # -- at least the easy ones and the ones we use.
@@ -139,7 +140,12 @@ if True or not hasattr(unittest.TestCase, "assertIn"):
                 msg = kwargs['msg']
                 del kwargs['msg']
             else:
-                msg = default_msg % args
+                try:
+                    msg = default_msg % args
+                except TypeError:
+                    # message passed as final (non-keyword) argument?
+                    msg = args[-1]
+                    args = args[:-1]
             assert predicate(*args, **kwargs), msg
         return inner
 
