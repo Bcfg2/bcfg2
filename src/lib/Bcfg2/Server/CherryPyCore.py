@@ -2,27 +2,24 @@
 
 import sys
 import time
-import atexit
 import cherrypy
 import Bcfg2.Options
 from Bcfg2.Compat import urlparse, xmlrpclib, b64decode
 from Bcfg2.Server.Core import BaseCore
 from cherrypy.lib import xmlrpcutil
 from cherrypy._cptools import ErrorTool
+from cherrypy.process.plugins import Daemonizer
 
-if cherrypy.engine.state == 0:
-    cherrypy.engine.start(blocking=False)
-    atexit.register(cherrypy.engine.stop)
-
-# define our own error handler that handles xmlrpclib.Fault objects
-# and so allows for the possibility of returning proper error
-# codes. this obviates the need to use the builtin CherryPy xmlrpc
-# tool
 def on_error(*args, **kwargs):
+    """ define our own error handler that handles xmlrpclib.Fault
+    objects and so allows for the possibility of returning proper
+    error codes. this obviates the need to use the builtin CherryPy
+    xmlrpc tool """
     err = sys.exc_info()[1]
     if not isinstance(err, xmlrpclib.Fault):
         err = xmlrpclib.Fault(xmlrpclib.INTERNAL_ERROR, str(err))
     xmlrpcutil._set_response(xmlrpclib.dumps(err))
+
 cherrypy.tools.xmlrpc_error = ErrorTool(on_error)
 
 
@@ -30,8 +27,8 @@ class Core(BaseCore):
     _cp_config = {'tools.xmlrpc_error.on': True,
                   'tools.bcfg2_authn.on': True}
 
-    def __init__(self, *args, **kwargs):
-        BaseCore.__init__(self, *args, **kwargs)
+    def __init__(self, setup):
+        BaseCore.__init__(self, setup)
 
         cherrypy.tools.bcfg2_authn = cherrypy.Tool('on_start_resource',
                                                    self.do_authn)
@@ -64,18 +61,20 @@ class Core(BaseCore):
         # we just rewrote.  it clearly wasn't written with inheritance
         # in mind :(
         rpcparams, rpcmethod = xmlrpcutil.process_body()
-        if "." not in rpcmethod:
+        if rpcmethod == 'ERRORMETHOD':
+            raise Exception("Unknown error processing XML-RPC request body")
+        elif "." not in rpcmethod:
             address = (cherrypy.request.remote.ip, cherrypy.request.remote.name)
             rpcparams = (address, ) + rpcparams
 
-            handler = getattr(self, rpcmethod)
+            handler = getattr(self, rpcmethod, None)
             if not handler or not getattr(handler, "exposed", False):
-                raise Exception('method "%s" is not supported' % attr)
+                raise Exception('Method "%s" is not supported' % rpcmethod)
         else:
             try:
                 handler = self.rmi[rpcmethod]
-            except:
-                raise Exception('method "%s" is not supported' % rpcmethod)
+            except KeyError:
+                raise Exception('Method "%s" is not supported' % rpcmethod)
 
         method_start = time.time()
         try:
@@ -86,7 +85,10 @@ class Core(BaseCore):
         xmlrpcutil.respond(body, 'utf-8', True)
         return cherrypy.serving.response.body
 
-    def run(self):
+    def _daemonize(self):
+        Daemonizer(cherrypy.engine).subscribe()
+
+    def _run(self):
         hostname, port = urlparse(self.setup['location'])[1].split(':')
         if self.setup['listen_all']:
             hostname = '0.0.0.0'
@@ -100,8 +102,12 @@ class Core(BaseCore):
         if self.setup['debug']:
             config['log.screen'] = True
         cherrypy.config.update(config)
-        cherrypy.quickstart(self, config={'/': self.setup})
-                                                        
+        cherrypy.tree.mount(self, '/', {'/': self.setup})
+        cherrypy.engine.start()
+
+    def _block(self):
+        cherrypy.engine.block()
+
 
 def parse_opts(argv=None):
     if argv is None:
@@ -121,6 +127,6 @@ def application(environ, start_response):
     and related magic for that to happen, though. """
     cherrypy.config.update({'environment': 'embedded'})
     setup = parse_opts(argv=['-C', environ['config']])
-    root = Core(setup, start_fam_thread=True)
+    root = Core(setup)
     cherrypy.tree.mount(root)
     return cherrypy.tree(environ, start_response)
