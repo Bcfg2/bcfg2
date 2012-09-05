@@ -94,7 +94,8 @@ class Core(BaseCore):
             hostname = '0.0.0.0'
 
         config = {'engine.autoreload.on': False,
-                  'server.socket_port': int(port)}
+                  'server.socket_port': int(port),
+                  'server.socket_host': hostname}
         if self.setup['cert'] and self.setup['key']:
             config.update({'server.ssl_module': 'pyopenssl',
                            'server.ssl_certificate': self.setup['cert'],
