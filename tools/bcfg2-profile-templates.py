@@ -54,10 +54,7 @@ def main():
     setup.parse(sys.argv[1:])
     logger = get_logger(setup)
 
-    core = Bcfg2.Server.Core.Core(setup['repo'],
-                                  setup['plugins'],
-                                  setup['password'],
-                                  setup['encoding'])
+    core = Bcfg2.Server.Core.BaseCore(setup)
     logger.info("Bcfg2 server core loaded")
     core.fam.handle_events_in_interval(4)
     logger.debug("Repository events processed")

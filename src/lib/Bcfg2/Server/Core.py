@@ -73,7 +73,7 @@ class BaseCore(object):
     Bcfg2 Server logic and modules.
     """
 
-    def __init__(self, setup, start_fam_thread=False):
+    def __init__(self, setup):
         self.datastore = setup['repo']
 
         if setup['debug']:
@@ -192,7 +192,6 @@ class BaseCore(object):
             threading.Thread(name="%sFAMThread" % setup['filemonitor'],
                              target=self._file_monitor_thread)
         self.lock = threading.Lock()
-        self.start_fam_thread = start_fam_thread
 
         self.stats = Statistics()
 
@@ -458,11 +457,10 @@ class BaseCore(object):
             open(self.setup['daemon'], "w").write("%s\n" % os.getpid())
 
         self._run()
-        
+
         self.fam.start()
-        if self.start_fam_thread:
-            self.fam_thread.start()
-            self.fam.AddMonitor(self.cfile, self.setup)
+        self.fam_thread.start()
+        self.fam.AddMonitor(self.cfile, self.setup)
 
         self._block()
 

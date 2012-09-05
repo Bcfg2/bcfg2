@@ -19,8 +19,8 @@ class NoExposedMethod (Exception):
 class Core(BaseCore):
     name = 'bcfg2-server'
     
-    def __init__(self, setup, start_fam_thread=False):
-        BaseCore.__init__(self, setup, start_fam_thread=start_fam_thread)
+    def __init__(self, setup):
+        BaseCore.__init__(self, setup)
         self.server = None
         self.context = daemon.DaemonContext()
 

@@ -170,17 +170,9 @@ def load_interpreters():
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
     """Main class for bcfg2-info."""
-    def __init__(self, repo, plgs, passwd, encoding, event_debug,
-                 filemonitor='default', setup=None):
+    def __init__(self, setup):
         cmd.Cmd.__init__(self)
-        try:
-            Bcfg2.Server.Core.BaseCore.__init__(self, setup=setup)
-            if event_debug:
-                self.fam.debug = True
-        except Bcfg2.Server.Core.CoreInitError:
-            msg = sys.exc_info()[1]
-            print("Core load failed: %s" % msg)
-            raise SystemExit(1)
+        Bcfg2.Server.Core.BaseCore.__init__(self, setup=setup)
         self.prompt = '> '
         self.cont = True
         self.fam.handle_events_in_interval(4)
@@ -694,16 +686,11 @@ if __name__ == '__main__':
         sys.exit(0)
     elif setup['profile'] and have_profile:
         prof = profile.Profile()
-        loop = prof.runcall(infoCore, setup['repo'], setup['plugins'],
-                            setup['password'], setup['encoding'],
-                            setup['debug'], setup['filemonitor'],
-                            setup)
+        loop = prof.runcall(infoCore, setup)
         displayTrace(prof)
     else:
         if setup['profile']:
             print("Profiling functionality not available.")
-        loop = infoCore(setup['repo'], setup['plugins'], setup['password'],
-                        setup['encoding'], setup['debug'],
-                        setup['filemonitor'], setup)
+        loop = infoCore(setup)
 
     loop.Run(setup['args'])
