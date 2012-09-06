@@ -48,125 +48,10 @@ With the exceptions of :class:`Bcfg2.Server.Plugin.Statistics` and
 listed below do **not** inherit from Plugin; they simply provide
 interfaces that a given plugin may or must implement.
 
-Generator
-^^^^^^^^^
-
-.. autoclass:: Bcfg2.Server.Plugin.Generator
-
-Examples are :ref:`server-plugins-generators-cfg` and
-:ref:`server-plugins-generators-sshbase`.
-
-Structure
-^^^^^^^^^
-
-.. autoclass:: Bcfg2.Server.Plugin.Structure
-
-:ref:`server-plugins-structures-bundler-index` is a Structure plugin.
-
-Metadata
-^^^^^^^^
-
-.. autoclass:: Bcfg2.Server.Plugin.Metadata
-
-:ref:`server-plugins-grouping-metadata` is a Metadata plugin.
-
-Connector
-^^^^^^^^^
-
-.. autoclass:: Bcfg2.Server.Plugin.Connector
-
-Connector plugins include
-:ref:`server-plugins-grouping-grouppatterns`,
-:ref:`server-plugins-connectors-properties`, and
-:ref:`server-plugins-probes-index`.
-
-Probing
-^^^^^^^
-
-.. autoclass:: Bcfg2.Server.Plugin.Probing
-
-Examples include :ref:`server-plugins-probes-index` and
-:ref:`server-plugins-probes-fileprobes`.
-
-Statistics
+Interfaces
 ^^^^^^^^^^
 
-.. autoclass:: Bcfg2.Server.Plugin.Statistics
-
-The Statistics object is itself a :class:`Bcfg2.Server.Plugin.Plugin`
-object, so objects that inherit from Statistics do not have to also
-inherit from Plugin.
-
-ThreadedStatistics
-^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: Bcfg2.Server.Plugin.ThreadedStatistics
-
-:ref:`server-plugins-statistics-dbstats` is an example of a
-ThreadedStatistics plugin.
-
-The ThreadedStatistics object is itself a
-:class:`Bcfg2.Server.Plugin.Plugin` object, so objects that inherit
-from ThreadedStatistics do not have to also inherit from Plugin.
-
-PullSource
-^^^^^^^^^^
-
-.. autoclass:: Bcfg2.Server.Plugin.PullSource
-
-:ref:`server-plugins-statistics-dbstats` is an example of a plugin
-that implements the PullSource interface
-
-PullTarget
-^^^^^^^^^^
-
-.. autoclass:: Bcfg2.Server.Plugin.PullTarget
-
-:ref:`server-plugins-generators-sshbase` is an example of a plugin
-that implements the PullTarget interface
-
-Decision
-^^^^^^^^
-
-.. autoclass:: Bcfg2.Server.Plugin.Decision
-
-:ref:`server-plugins-generators-decisions` is an example of a Decision
-plugin, and has much more information about how decisions are used.
-
-StructureValidator
-^^^^^^^^^^^^^^^^^^
-
-.. autoclass:: Bcfg2.Server.Plugin.StructureValidator
-
-Examples are :ref:`server-plugins-structures-defaults` and
-:ref:`server-plugins-structures-deps`.
-
-GoalValidator
-^^^^^^^^^^^^^
-
-.. autoclass:: Bcfg2.Server.Plugin.GoalValidator
-
-An example of a GoalValidator plugin would be the ServiceCompat plugin
-that is used to provide old-style Service tag attributes to older
-clients from a Bcfg2 1.3.0 server.  As a final stage of configuration
-generation, it translates the new "restart" and "install" attributes
-into the older "mode" attribute.
-
-Version
-^^^^^^^
-
-.. autoclass:: Bcfg2.Server.Plugin.Version
-
-Examples include :ref:`server-plugins-version-git` and
-:ref:`server-plugins-version-svn2`.
-
-ClientRunHooks
-^^^^^^^^^^^^^^
-
-.. autoclass:: Bcfg2.Server.Plugin.ClientRunHooks
-
-Examples are :ref:`server-plugins-misc-trigger` and
-:ref:`server-plugins-connectors-puppetenc`.
+.. automodule:: Bcfg2.Server.Plugin.interfaces
 
 Exposing XML-RPC Functions
 --------------------------
@@ -210,13 +95,9 @@ functions, you could run::
 Plugin Helper Classes
 ---------------------
 
-.. autoclass:: Bcfg2.Server.Plugin.Debuggable
+.. automodule:: Bcfg2.Server.Plugin.helpers
 
 Plugin Exceptions
 -----------------
 
-.. autoexception:: Bcfg2.Server.Plugin.ValidationError
-.. autoexception:: Bcfg2.Server.Plugin.PluginInitError
-.. autoexception:: Bcfg2.Server.Plugin.PluginExecutionError
-.. autoexception:: Bcfg2.Server.Plugin.MetadataConsistencyError
-.. autoexception:: Bcfg2.Server.Plugin.MetadataRuntimeError
+.. automodule:: Bcfg2.Server.Plugin.exceptions

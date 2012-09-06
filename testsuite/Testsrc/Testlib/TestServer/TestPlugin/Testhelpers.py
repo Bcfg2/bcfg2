@@ -2,12 +2,11 @@ import os
 import re
 import sys
 import copy
-import logging
 import lxml.etree
 import Bcfg2.Server
 from Bcfg2.Compat import reduce
 from mock import Mock, MagicMock, patch
-from Bcfg2.Server.Plugin import *
+from Bcfg2.Server.Plugin.helpers import *
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4
@@ -18,10 +17,10 @@ while path != '/':
     if os.path.basename(path) == "testsuite":
         break
     path = os.path.dirname(path)
-from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
-    skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, \
-    patchIf, datastore
-
+from common import XI_NAMESPACE, XI, call, builtins, skip, skipIf, skipUnless, \
+    Bcfg2TestCase, DBModelTestCase, syncdb, patchIf, datastore
+from Testbase import TestPlugin, TestDebuggable
+from Testinterfaces import TestGenerator
 
 try:
     re_type = re._pattern_type
@@ -79,82 +78,6 @@ class TestFunctions(Bcfg2TestCase):
                                    name="/test"))
 
 
-class TestPluginInitError(Bcfg2TestCase):
-    """ placeholder for future tests """
-    pass
-
-
-class TestPluginExecutionError(Bcfg2TestCase):
-    """ placeholder for future tests """
-    pass
-
-
-class TestDebuggable(Bcfg2TestCase):
-    test_obj = Debuggable
-
-    def get_obj(self):
-        return self.test_obj()
-
-    def test__init(self):
-        d = self.get_obj()
-        self.assertIsInstance(d.logger, logging.Logger)
-        self.assertFalse(d.debug_flag)
-
-    @patch("Bcfg2.Server.Plugin.%s.debug_log" % test_obj.__name__)
-    def test_toggle_debug(self, mock_debug):
-        d = self.get_obj()
-        orig = d.debug_flag
-        d.toggle_debug()
-        self.assertNotEqual(orig, d.debug_flag)
-        self.assertTrue(mock_debug.called)
-
-        mock_debug.reset_mock()
-
-        changed = d.debug_flag
-        d.toggle_debug()
-        self.assertNotEqual(changed, d.debug_flag)
-        self.assertEqual(orig, d.debug_flag)
-        self.assertTrue(mock_debug.called)
-
-    def test_debug_log(self):
-        d = self.get_obj()
-        d.logger = Mock()
-        d.debug_flag = False
-        d.debug_log("test")
-        self.assertFalse(d.logger.error.called)
-        
-        d.logger.reset_mock()
-        d.debug_log("test", flag=True)
-        self.assertTrue(d.logger.error.called)
-
-        d.logger.reset_mock()
-        d.debug_flag = True
-        d.debug_log("test")
-        self.assertTrue(d.logger.error.called)
-
-
-class TestPlugin(TestDebuggable):
-    test_obj = Plugin
-
-    def get_obj(self, core=None):
-        if core is None:
-            core = Mock()
-        return self.test_obj(core, datastore)
-
-    def test__init(self):
-        core = Mock()
-        p = self.get_obj(core=core)
-        self.assertEqual(p.data, os.path.join(datastore, p.name))
-        self.assertEqual(p.core, core)
-        self.assertIsInstance(p, Debuggable)
-
-    @patch("os.makedirs")
-    def test_init_repo(self, mock_makedirs):
-        self.test_obj.init_repo(datastore)
-        mock_makedirs.assert_called_with(os.path.join(datastore,
-                                                      self.test_obj.name))
-
-
 class TestDatabaseBacked(TestPlugin):
     test_obj = DatabaseBacked
 
@@ -170,7 +93,7 @@ class TestDatabaseBacked(TestPlugin):
         db = self.get_obj(core)
         self.assertFalse(db._use_db)
         
-        Bcfg2.Server.Plugin.has_django = False
+        Bcfg2.Server.Plugin.helpers.has_django = False
         core = Mock()
         db = self.get_obj(core)
         self.assertFalse(db._use_db)
@@ -179,339 +102,10 @@ class TestDatabaseBacked(TestPlugin):
         core.setup.cfp.getboolean.return_value = True
         db = self.get_obj(core)
         self.assertFalse(db._use_db)
-        Bcfg2.Server.Plugin.has_django = True
+        Bcfg2.Server.Plugin.helpers.has_django = True
 
 
 class TestPluginDatabaseModel(Bcfg2TestCase):
-    """ placeholder for future tests """
-    pass
-
-
-class TestGenerator(Bcfg2TestCase):
-    test_obj = Generator
-
-    def test_HandlesEntry(self):
-        pass
-
-    def test_HandleEntry(self):
-        pass
-
-
-class TestStructure(Bcfg2TestCase):
-    test_obj = Structure
-
-    def get_obj(self):
-        return self.test_obj()
-
-    def test_BuildStructures(self):
-        s = self.get_obj()
-        self.assertRaises(NotImplementedError,
-                          s.BuildStructures, None)
-
-
-class TestMetadata(Bcfg2TestCase):
-    test_obj = Metadata
-
-    def get_obj(self):
-        return self.test_obj()
-
-    def test_AuthenticateConnection(self):
-        m = self.get_obj()
-        self.assertRaises(NotImplementedError,
-                          m.AuthenticateConnection,
-                          None, None, None, (None, None))
-
-    def test_get_initial_metadata(self):
-        m = self.get_obj()
-        self.assertRaises(NotImplementedError,
-                          m.get_initial_metadata, None)
-
-    def test_merge_additional_data(self):
-        m = self.get_obj()
-        self.assertRaises(NotImplementedError,
-                          m.merge_additional_data, None, None, None)
-
-    def test_merge_additional_groups(self):
-        m = self.get_obj()
-        self.assertRaises(NotImplementedError,
-                          m.merge_additional_groups, None, None)
-
-
-class TestConnector(Bcfg2TestCase):
-    """ placeholder """
-    def test_get_additional_groups(self):
-        pass
-
-    def test_get_additional_data(self):
-        pass
-
-
-class TestProbing(Bcfg2TestCase):
-    test_obj = Probing
-
-    def get_obj(self):
-        return self.test_obj()
-
-    def test_GetProbes(self):
-        p = self.get_obj()
-        self.assertRaises(NotImplementedError,
-                          p.GetProbes, None)
-
-    def test_ReceiveData(self):
-        p = self.get_obj()
-        self.assertRaises(NotImplementedError,
-                          p.ReceiveData, None, None)
-
-
-class TestStatistics(TestPlugin):
-    test_obj = Statistics
-
-    def get_obj(self, core=None):
-        if core is None:
-            core = Mock()
-        return self.test_obj(core, datastore)
-
-    def test_process_statistics(self):
-        s = self.get_obj()
-        self.assertRaises(NotImplementedError,
-                          s.process_statistics, None, None)
-
-
-class TestThreadedStatistics(TestStatistics):
-    test_obj = ThreadedStatistics
-    data = [("foo.example.com", "<foo/>"),
-            ("bar.example.com", "<bar/>")]
-
-    @patch("threading.Thread.start")
-    def test__init(self, mock_start):
-        core = Mock()
-        ts = self.get_obj(core)
-        mock_start.assert_any_call()
-
-    @patch("%s.open" % builtins)
-    @patch("%s.dump" % cPickle.__name__)
-    @patch("Bcfg2.Server.Plugin.ThreadedStatistics.run", Mock())
-    def test_save(self, mock_dump, mock_open):
-        core = Mock()
-        ts = self.get_obj(core)
-        queue = Mock()
-        queue.empty = Mock(side_effect=Empty)
-        ts.work_queue = queue
-
-        mock_open.side_effect = OSError
-        # test that save does _not_ raise an exception even when
-        # everything goes pear-shaped
-        ts._save()
-        queue.empty.assert_any_call()
-        mock_open.assert_called_with(ts.pending_file, 'w')
-
-        queue.reset_mock()
-        mock_open.reset_mock()
-
-        queue.data = []
-        for hostname, xml in self.data:
-            md = Mock()
-            md.hostname = hostname
-            queue.data.append((md, lxml.etree.XML(xml)))
-        queue.empty.side_effect = lambda: len(queue.data) == 0
-        queue.get_nowait = Mock(side_effect=lambda: queue.data.pop())
-        mock_open.side_effect = None
-
-        ts._save()
-        queue.empty.assert_any_call()
-        queue.get_nowait.assert_any_call()
-        mock_open.assert_called_with(ts.pending_file, 'w')
-        mock_open.return_value.close.assert_any_call()
-        # the order of the queue data gets changed, so we have to
-        # verify this call in an ugly way
-        self.assertItemsEqual(mock_dump.call_args[0][0], self.data)
-        self.assertEqual(mock_dump.call_args[0][1], mock_open.return_value)
-        
-    @patch("os.unlink")
-    @patch("os.path.exists")
-    @patch("%s.open" % builtins)
-    @patch("lxml.etree.XML")
-    @patch("%s.load" % cPickle.__name__)
-    @patch("Bcfg2.Server.Plugin.ThreadedStatistics.run", Mock())
-    def test_load(self, mock_load, mock_XML, mock_open, mock_exists,
-                  mock_unlink):
-        core = Mock()
-        core.terminate.isSet.return_value = False
-        ts = self.get_obj(core)
-        
-        ts.work_queue = Mock()
-        ts.work_queue.data = []
-        def reset():
-            core.reset_mock()
-            mock_open.reset_mock()
-            mock_exists.reset_mock()
-            mock_unlink.reset_mock()
-            mock_load.reset_mock()
-            mock_XML.reset_mock()
-            ts.work_queue.reset_mock()
-            ts.work_queue.data = []
-
-        mock_exists.return_value = False
-        self.assertTrue(ts._load())
-        mock_exists.assert_called_with(ts.pending_file)
-
-        reset()
-        mock_exists.return_value = True
-        mock_open.side_effect = OSError
-        self.assertFalse(ts._load())
-        mock_exists.assert_called_with(ts.pending_file)
-        mock_open.assert_called_with(ts.pending_file, 'r')
-
-        reset()
-        mock_open.side_effect = None
-        mock_load.return_value = self.data
-        ts.work_queue.put_nowait.side_effect = Full
-        self.assertTrue(ts._load())
-        mock_exists.assert_called_with(ts.pending_file)
-        mock_open.assert_called_with(ts.pending_file, 'r')
-        mock_open.return_value.close.assert_any_call()
-        mock_load.assert_called_with(mock_open.return_value)
-
-        reset()
-        core.build_metadata.side_effect = lambda x: x
-        mock_XML.side_effect = lambda x, parser=None: x
-        ts.work_queue.put_nowait.side_effect = None
-        self.assertTrue(ts._load())
-        mock_exists.assert_called_with(ts.pending_file)
-        mock_open.assert_called_with(ts.pending_file, 'r')
-        mock_open.return_value.close.assert_any_call()
-        mock_load.assert_called_with(mock_open.return_value)
-        self.assertItemsEqual(mock_XML.call_args_list,
-                              [call(x, parser=Bcfg2.Server.XMLParser)
-                               for h, x in self.data])
-        self.assertItemsEqual(ts.work_queue.put_nowait.call_args_list,
-                              [call((h, x)) for h, x in self.data])
-        mock_unlink.assert_called_with(ts.pending_file)
-
-    @patch("threading.Thread.start", Mock())
-    @patch("Bcfg2.Server.Plugin.ThreadedStatistics._load")
-    @patch("Bcfg2.Server.Plugin.ThreadedStatistics._save")
-    @patch("Bcfg2.Server.Plugin.ThreadedStatistics.handle_statistic")
-    def test_run(self, mock_handle, mock_save, mock_load):
-        core = Mock()
-        ts = self.get_obj(core)
-        mock_load.return_value = True
-        ts.work_queue = Mock()
-
-        def reset():
-            mock_handle.reset_mock()
-            mock_save.reset_mock()
-            mock_load.reset_mock()
-            core.reset_mock()
-            ts.work_queue.reset_mock()
-            ts.work_queue.data = self.data[:]
-            ts.work_queue.get_calls = 0
-
-        reset()
-
-        def get_rv(**kwargs):
-            ts.work_queue.get_calls += 1
-            try:
-                return ts.work_queue.data.pop()
-            except:
-                raise Empty
-        ts.work_queue.get.side_effect = get_rv
-        def terminate_isset():
-            # this lets the loop go on a few iterations with an empty
-            # queue to test that it doesn't error out
-            return ts.work_queue.get_calls > 3
-        core.terminate.isSet.side_effect = terminate_isset
-
-        ts.work_queue.empty.return_value = False
-        ts.run()
-        mock_load.assert_any_call()
-        self.assertGreaterEqual(ts.work_queue.get.call_count, len(self.data))
-        self.assertItemsEqual(mock_handle.call_args_list,
-                              [call(h, x) for h, x in self.data])
-        mock_save.assert_any_call()
-
-    @patch("copy.copy", Mock(side_effect=lambda x: x))
-    @patch("Bcfg2.Server.Plugin.ThreadedStatistics.run", Mock())
-    def test_process_statistics(self):
-        core = Mock()
-        ts = self.get_obj(core)
-        ts.work_queue = Mock()
-        ts.process_statistics(*self.data[0])
-        ts.work_queue.put_nowait.assert_called_with(self.data[0])
-
-        ts.work_queue.reset_mock()
-        ts.work_queue.put_nowait.side_effect = Full
-        # test that no exception is thrown
-        ts.process_statistics(*self.data[0])
-
-    def test_handle_statistic(self):
-        ts = self.get_obj()
-        self.assertRaises(NotImplementedError,
-                          ts.handle_statistic, None, None)
-        
-
-class TestPullSource(Bcfg2TestCase):
-    def test_GetCurrentEntry(self):
-        ps = PullSource()
-        self.assertRaises(NotImplementedError,
-                          ps.GetCurrentEntry, None, None, None)
-
-
-class TestPullTarget(Bcfg2TestCase):
-    def test_AcceptChoices(self):
-        pt = PullTarget()
-        self.assertRaises(NotImplementedError,
-                          pt.AcceptChoices, None, None)
-
-    def test_AcceptPullData(self):
-        pt = PullTarget()
-        self.assertRaises(NotImplementedError,
-                          pt.AcceptPullData, None, None, None)
-
-
-class TestDecision(Bcfg2TestCase):
-    test_obj = Decision
-    
-    def get_obj(self):
-        return self.test_obj()
-
-    def test_GetDecisions(self):
-        d = self.get_obj()
-        self.assertRaises(NotImplementedError,
-                          d.GetDecisions, None, None)
-
-
-class TestValidationError(Bcfg2TestCase):
-    """ placeholder for future tests """
-    pass
-
-
-class TestStructureValidator(Bcfg2TestCase):
-    def test_validate_structures(self):
-        sv = StructureValidator()
-        self.assertRaises(NotImplementedError,
-                          sv.validate_structures, None, None)
-
-
-class TestGoalValidator(Bcfg2TestCase):
-    def test_validate_goals(self):
-        gv = GoalValidator()
-        self.assertRaises(NotImplementedError,
-                          gv.validate_goals, None, None)
-
-
-class TestVersion(Bcfg2TestCase):
-    test_obj = Version
-    
-    def get_obj(self):
-        return self.test_obj()
-
-    def test_get_revision(self):
-        d = self.get_obj()
-        self.assertRaises(NotImplementedError, d.get_revision)
-
-
-class TestClientRunHooks(Bcfg2TestCase):
     """ placeholder for future tests """
     pass
 
@@ -569,15 +163,16 @@ class TestDirectoryBacked(Bcfg2TestCase):
         # ensure that the child object has the correct interface
         self.assertTrue(hasattr(self.test_obj.__child__, "HandleEvent"))
 
-    @patch("Bcfg2.Server.Plugin.%s.add_directory_monitor" % test_obj.__name__,
-           Mock())
+    @patch("Bcfg2.Server.Plugin.helpers.%s.add_directory_monitor" %
+           test_obj.__name__, Mock())
     def get_obj(self, fam=None):
         if fam is None:
             fam = Mock()
         return self.test_obj(os.path.join(datastore, self.test_obj.__name__),
                              fam)
 
-    @patch("Bcfg2.Server.Plugin.%s.add_directory_monitor" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.add_directory_monitor" %
+           test_obj.__name__)
     def test__init(self, mock_add_monitor):
         db = self.test_obj(datastore, Mock())
         mock_add_monitor.assert_called_with('')
@@ -662,8 +257,9 @@ class TestDirectoryBacked(Bcfg2TestCase):
             db.entries[path].HandleEvent.assert_called_with(event)
 
     @patch("os.path.isdir")
-    @patch("Bcfg2.Server.Plugin.%s.add_entry" % test_obj.__name__)
-    @patch("Bcfg2.Server.Plugin.%s.add_directory_monitor" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.add_entry" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.add_directory_monitor" %
+           test_obj.__name__)
     def test_HandleEvent(self, mock_add_monitor, mock_add_entry, mock_isdir):
         db = self.get_obj()
         # a path with a leading / should never get into
@@ -906,7 +502,8 @@ class TestXMLFileBacked(TestFileBacked):
                               [call(f) for f in xdata.keys() if f != self.path])
 
     @patch("lxml.etree._ElementTree", FakeElementTree)
-    @patch("Bcfg2.Server.Plugin.%s._follow_xincludes" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s._follow_xincludes" %
+           test_obj.__name__)
     def test_Index(self, mock_follow):
         xfb = self.get_obj()
         
@@ -1094,7 +691,8 @@ class TestStructFile(TestXMLFileBacked):
 
         self.assertTrue(inc("Other"))
 
-    @patch("Bcfg2.Server.Plugin.%s._include_element" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s._include_element" %
+           test_obj.__name__)
     def test__match(self, mock_include):
         sf = self.get_obj()
         metadata = Mock()
@@ -1122,7 +720,7 @@ class TestStructFile(TestXMLFileBacked):
         for el in standalone:
             self.assertXMLEqual(el, sf._match(el, metadata)[0])
 
-    @patch("Bcfg2.Server.Plugin.%s._match" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s._match" % test_obj.__name__)
     def test_Match(self, mock_match):
         sf = self.get_obj()
         metadata = Mock()
@@ -1152,7 +750,8 @@ class TestStructFile(TestXMLFileBacked):
         xexpected.extend(expected)
         self.assertXMLEqual(xactual, xexpected)
 
-    @patch("Bcfg2.Server.Plugin.%s._include_element" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s._include_element" %
+           test_obj.__name__)
     def test__xml_match(self, mock_include):
         sf = self.get_obj()
         metadata = Mock()
@@ -1174,7 +773,7 @@ class TestStructFile(TestXMLFileBacked):
         expected.extend(standalone)
         self.assertXMLEqual(actual, expected)
 
-    @patch("Bcfg2.Server.Plugin.%s._xml_match" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s._xml_match" % test_obj.__name__)
     def test_Match(self, mock_xml_match):
         sf = self.get_obj()
         metadata = Mock()
@@ -1210,7 +809,8 @@ class TestINode(Bcfg2TestCase):
     # atomically, we do this umpteen times in order to test with
     # different data.  this convenience method makes this a little
     # easier.  fun fun fun.
-    @patch("Bcfg2.Server.Plugin.%s._load_children" % test_obj.__name__, Mock())
+    @patch("Bcfg2.Server.Plugin.helpers.%s._load_children" %
+           test_obj.__name__, Mock())
     def _get_inode(self, data, idict):
         return self.test_obj(data, idict)
 
@@ -1268,7 +868,7 @@ class TestINode(Bcfg2TestCase):
         self.assertItemsEqual(self.test_obj.containers,
                               self.test_obj.nraw.keys())
 
-    @patch("Bcfg2.Server.Plugin.INode._load_children")
+    @patch("Bcfg2.Server.Plugin.helpers.INode._load_children")
     def test__init(self, mock_load_children):
         data = lxml.etree.Element("Bogus")
         # called with no parent, should not raise an exception; it's a
@@ -1329,7 +929,8 @@ class TestINode(Bcfg2TestCase):
 
         inode = self._get_inode(data, idict)
 
-        @patch("Bcfg2.Server.Plugin.%s.__init__" % inode.__class__.__name__)
+        @patch("Bcfg2.Server.Plugin.helpers.%s.__init__" %
+               inode.__class__.__name__)
         def inner(mock_init):
             mock_init.return_value = None
             inode._load_children(data, idict)
@@ -1352,7 +953,8 @@ class TestINode(Bcfg2TestCase):
         inode = self._get_inode(data, idict)
         inode.ignore = []
 
-        @patch("Bcfg2.Server.Plugin.%s.__init__" % inode.__class__.__name__)
+        @patch("Bcfg2.Server.Plugin.helpers.%s.__init__" %
+               inode.__class__.__name__)
         def inner2(mock_init):
             mock_init.return_value = None
             inode._load_children(data, idict)
@@ -1378,7 +980,8 @@ class TestINode(Bcfg2TestCase):
 
         inode = self._get_inode(data, idict)
 
-        @patch("Bcfg2.Server.Plugin.%s.__init__" % inode.__class__.__name__)
+        @patch("Bcfg2.Server.Plugin.helpers.%s.__init__" %
+               inode.__class__.__name__)
         def inner3(mock_init):
             mock_init.return_value = None
             inode._load_children(data, idict)
@@ -1511,7 +1114,7 @@ class TestXMLSrc(TestXMLFileBacked):
         self.assertEqual(xsrc.pnode, xsrc.__node__.return_value)
         self.assertEqual(xsrc.cache, None)
         
-    @patch("Bcfg2.Server.Plugin.XMLSrc.HandleEvent")
+    @patch("Bcfg2.Server.Plugin.helpers.XMLSrc.HandleEvent")
     def test_Cache(self, mock_HandleEvent):
         xsrc = self.get_obj("/test/foo.xml")
         metadata = Mock()
@@ -1547,7 +1150,8 @@ class TestXMLDirectoryBacked(TestDirectoryBacked):
 class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
     test_obj = PrioDir
 
-    @patch("Bcfg2.Server.Plugin.%s.add_directory_monitor" % test_obj.__name__,
+    @patch("Bcfg2.Server.Plugin.helpers.%s.add_directory_monitor" %
+           test_obj.__name__,
            Mock())
     def get_obj(self, core=None):
         if core is None:
@@ -1557,7 +1161,8 @@ class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
     def test_HandleEvent(self):
         TestXMLDirectoryBacked.test_HandleEvent(self)
 
-        @patch("Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent", Mock())
+        @patch("Bcfg2.Server.Plugin.helpers.XMLDirectoryBacked.HandleEvent",
+               Mock())
         def inner():
             pd = self.get_obj()
             test1 = Mock()
@@ -1665,11 +1270,6 @@ class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
         self.assertRaises(PluginExecutionError,
                           pd.get_attrs, entry, metadata)
         
-
-class TestSpecificityError(Bcfg2TestCase):
-    """ placeholder for future tests """
-    pass
-
 
 class TestSpecificity(Bcfg2TestCase):
     test_obj = Specificity
@@ -1842,7 +1442,7 @@ class TestEntrySet(TestDebuggable):
         for i in items.values():
             i.specific.matches.assert_called_with(metadata)
 
-    @patch("Bcfg2.Server.Plugin.%s.get_matching" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.get_matching" % test_obj.__name__)
     def test_best_matching(self, mock_get_matching):
         eset = self.get_obj()
         metadata = Mock()
@@ -1901,9 +1501,9 @@ class TestEntrySet(TestDebuggable):
         self.assertEqual(eset.best_matching(metadata), expected)
         mock_get_matching.assert_called_with(metadata)
 
-    @patch("Bcfg2.Server.Plugin.%s.entry_init" % test_obj.__name__)
-    @patch("Bcfg2.Server.Plugin.%s.reset_metadata" % test_obj.__name__)
-    @patch("Bcfg2.Server.Plugin.%s.update_metadata" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.entry_init" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.reset_metadata" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.update_metadata" % test_obj.__name__)
     def test_handle_event(self, mock_update_md, mock_reset_md, mock_init):
         def reset():
             mock_update_md.reset_mock()
@@ -1962,7 +1562,7 @@ class TestEntrySet(TestDebuggable):
         eset.handle_event(event)
         self.assertNotIn("test.txt", eset.entries)
 
-    @patch("Bcfg2.Server.Plugin.%s.specificity_from_filename" %
+    @patch("Bcfg2.Server.Plugin.helpers.%s.specificity_from_filename" %
            test_obj.__name__)
     def test_entry_init(self, mock_spec):
         eset = self.get_obj()
@@ -2010,7 +1610,7 @@ class TestEntrySet(TestDebuggable):
         mock_spec.assert_called_with("test3.txt", specific=None)
         self.assertFalse(eset.entry_type.called)
     
-    @patch("Bcfg2.Server.Plugin.Specificity")
+    @patch("Bcfg2.Server.Plugin.helpers.Specificity")
     def test_specificity_from_filename(self, mock_spec):
         def test(eset, fname, **kwargs):
             mock_spec.reset_mock()
@@ -2053,7 +1653,7 @@ class TestEntrySet(TestDebuggable):
             fails(eset, ppath + ".H_")
 
     @patch("%s.open" % builtins)
-    @patch("Bcfg2.Server.Plugin.InfoXML")
+    @patch("Bcfg2.Server.Plugin.helpers.InfoXML")
     def test_update_metadata(self, mock_InfoXML, mock_open):
         eset = self.get_obj()
         
@@ -2107,7 +1707,7 @@ class TestEntrySet(TestDebuggable):
             eset.reset_metadata(event)
             self.assertItemsEqual(eset.metadata, default_file_metadata)
 
-    @patch("Bcfg2.Server.Plugin.bind_info")
+    @patch("Bcfg2.Server.Plugin.helpers.bind_info")
     def test_bind_info_to_entry(self, mock_bind_info):
         eset = self.get_obj()
         entry = Mock()
@@ -2117,8 +1717,9 @@ class TestEntrySet(TestDebuggable):
                                           infoxml=eset.infoxml,
                                           default=eset.metadata)
 
-    @patch("Bcfg2.Server.Plugin.%s.best_matching" % test_obj.__name__)
-    @patch("Bcfg2.Server.Plugin.%s.bind_info_to_entry" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.best_matching" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.bind_info_to_entry" %
+           test_obj.__name__)
     def test_bind_entry(self, mock_bind_info, mock_best_matching):
         eset = self.get_obj()
         entry = Mock()
@@ -2133,11 +1734,13 @@ class TestEntrySet(TestDebuggable):
 class TestGroupSpool(TestPlugin, TestGenerator):
     test_obj = GroupSpool
     
-    @patch("Bcfg2.Server.Plugin.%s.AddDirectoryMonitor" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.AddDirectoryMonitor" %
+           test_obj.__name__)
     def get_obj(self, core=None):
         return TestPlugin.get_obj(self, core=core)
 
-    @patch("Bcfg2.Server.Plugin.%s.AddDirectoryMonitor" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.AddDirectoryMonitor" %
+           test_obj.__name__)
     def test__init(self, mock_Add):
         core = Mock()
         gs = self.test_obj(core, datastore)
@@ -2146,9 +1749,10 @@ class TestGroupSpool(TestPlugin, TestGenerator):
     
     @patch("os.path.isdir")
     @patch("os.path.isfile")
-    @patch("Bcfg2.Server.Plugin.%s.event_id" % test_obj.__name__)
-    @patch("Bcfg2.Server.Plugin.%s.event_path" % test_obj.__name__)
-    @patch("Bcfg2.Server.Plugin.%s.AddDirectoryMonitor" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.event_id" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.event_path" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.AddDirectoryMonitor" %
+           test_obj.__name__)
     def test_add_entry(self, mock_Add, mock_event_path, mock_event_id,
                        mock_isfile, mock_isdir):
         gs = self.get_obj()
@@ -2226,7 +1830,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
                                           event.filename))
 
     @patch("os.path.isdir")
-    @patch("Bcfg2.Server.Plugin.%s.event_path" % test_obj.__name__)
+    @patch("Bcfg2.Server.Plugin.helpers.%s.event_path" % test_obj.__name__)
     def test_event_id(self, mock_event_path, mock_isdir):
         gs = self.get_obj()
         
@@ -2260,7 +1864,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
                       "/bar": Mock(),
                       "/baz/quux": Mock()}
 
-        @patch("Bcfg2.Server.Plugin.Plugin.toggle_debug")
+        @patch("Bcfg2.Server.Plugin.base.Plugin.toggle_debug")
         def inner(mock_debug):
             gs.toggle_debug()
             mock_debug.assert_called_with(gs)
