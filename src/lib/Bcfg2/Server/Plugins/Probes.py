@@ -267,10 +267,10 @@ class Probes(Bcfg2.Server.Plugin.Probing,
 
     def ReceiveData(self, client, datalist):
         if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
-            if client.hostname in self.probedata:
-                olddata = copy.copy(self.probedata[client.hostname])
+            if client.hostname in self.cgroups:
+                olddata = copy.copy(self.cgroups[client.hostname])
             else:
-                olddata = ClientProbeDataSet()
+                olddata = []
 
         self.cgroups[client.hostname] = []
         self.probedata[client.hostname] = ClientProbeDataSet()
@@ -278,9 +278,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             self.ReceiveDataItem(client, data)
 
         if (self.core.metadata_cache_mode in ['cautious', 'aggressive'] and
-            (olddata.keys() != self.probedata[client.hostname].keys() or
-             any(olddata[p] != self.probedata[client.hostname][p]
-                 for p in olddata.keys()))):
+            olddata != self.cgroups[client.hostname]):
             self.core.metadata_cache.expire(client.hostname)
         self.write_data(client)
 
