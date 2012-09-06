@@ -490,7 +490,7 @@ text
         self.assertFalse(probes.core.metadata_cache.expire.called)
 
         # change the datalist, ensure that the cache is cleared
-        probes.probedata[client.hostname] = ClientProbeDataSet(a=1, b=2, c=3)
+        probes.cgroups[client.hostname] = datalist
         probes.core.metadata_cache_mode = 'aggressive'
         probes.ReceiveData(client, ['a', 'b', 'd'])
         
