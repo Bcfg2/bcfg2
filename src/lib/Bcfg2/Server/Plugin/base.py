@@ -42,11 +42,23 @@ class Debuggable(object):
             self.logger.error(message)
 
 
+class ClassName(object):
+    """ This very simple descriptor class exists only to get the name
+    of the owner class.  This is used because, for historical reasons,
+    we expect every plugin to have a ``name`` attribute that is in
+    almost all cases the same as the ``__class__.__name__`` attribute
+    of the plugin object.  This makes that more dynamic so that each
+    plugin isn't repeating its own name. """
+
+    def __get__(self, inst, owner):
+        return owner.__name__
+
+
 class Plugin(Debuggable):
     """ The base class for all Bcfg2 Server plugins. """
 
     #: The name of the plugin.
-    name = property(lambda s: s.__class__.__name__)
+    name = ClassName()
 
     #: The email address of the plugin author.
     __author__ = 'bcfg-dev@mcs.anl.gov'
