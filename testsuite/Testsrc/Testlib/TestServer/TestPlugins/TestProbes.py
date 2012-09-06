@@ -199,6 +199,11 @@ group-specific"""
 class TestProbes(TestProbing, TestConnector, TestDatabaseBacked):
     test_obj = Probes
 
+    def get_obj(self, core=None):
+        if core is None:
+            core = Mock()
+        return self.test_obj(core, datastore)
+
     def get_test_probedata(self):
         test_xdata = lxml.etree.Element("test")
         lxml.etree.SubElement(test_xdata, "test", foo="foo")
@@ -460,8 +465,6 @@ text
 
     @patch("Bcfg2.Server.Plugins.Probes.ProbeSet.get_probe_data")
     def test_GetProbes(self, mock_get_probe_data):
-        TestProbing.test_GetProbes(self)
-
         probes = self.get_probes_object()
         metadata = Mock()
         probes.GetProbes(metadata)
@@ -470,8 +473,6 @@ text
     @patch("Bcfg2.Server.Plugins.Probes.Probes.write_data")
     @patch("Bcfg2.Server.Plugins.Probes.Probes.ReceiveDataItem")
     def test_ReceiveData(self, mock_ReceiveDataItem, mock_write_data):
-        TestProbing.test_ReceiveData(self)
-
         # we use a simple (read: bogus) datalist here to make this
         # easy to test
         datalist = ["a", "b", "c"]

@@ -211,3 +211,5 @@ else:
 
 # If false, no module index is generated.
 latex_use_modindex = False
+
+autodoc_default_flags = ['members', 'show-inheritance']

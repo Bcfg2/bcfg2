@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _server-plugins-generators-deps:
+.. _server-plugins-structures-deps:
 
 ====
 Deps

@@ -266,8 +266,15 @@ class TestProbing(Bcfg2TestCase):
 class TestStatistics(TestPlugin):
     test_obj = Statistics
 
+    def get_obj(self, core=None):
+        if core is None:
+            core = Mock()
+        return self.test_obj(core, datastore)
+
     def test_process_statistics(self):
-        pass
+        s = self.get_obj()
+        self.assertRaises(NotImplementedError,
+                          s.process_statistics, None, None)
 
 
 class TestThreadedStatistics(TestStatistics):
@@ -294,7 +301,7 @@ class TestThreadedStatistics(TestStatistics):
         mock_open.side_effect = OSError
         # test that save does _not_ raise an exception even when
         # everything goes pear-shaped
-        ts.save()
+        ts._save()
         queue.empty.assert_any_call()
         mock_open.assert_called_with(ts.pending_file, 'w')
 
@@ -310,7 +317,7 @@ class TestThreadedStatistics(TestStatistics):
         queue.get_nowait = Mock(side_effect=lambda: queue.data.pop())
         mock_open.side_effect = None
 
-        ts.save()
+        ts._save()
         queue.empty.assert_any_call()
         queue.get_nowait.assert_any_call()
         mock_open.assert_called_with(ts.pending_file, 'w')
@@ -345,13 +352,13 @@ class TestThreadedStatistics(TestStatistics):
             ts.work_queue.data = []
 
         mock_exists.return_value = False
-        self.assertTrue(ts.load())
+        self.assertTrue(ts._load())
         mock_exists.assert_called_with(ts.pending_file)
 
         reset()
         mock_exists.return_value = True
         mock_open.side_effect = OSError
-        self.assertFalse(ts.load())
+        self.assertFalse(ts._load())
         mock_exists.assert_called_with(ts.pending_file)
         mock_open.assert_called_with(ts.pending_file, 'r')
 
@@ -359,7 +366,7 @@ class TestThreadedStatistics(TestStatistics):
         mock_open.side_effect = None
         mock_load.return_value = self.data
         ts.work_queue.put_nowait.side_effect = Full
-        self.assertTrue(ts.load())
+        self.assertTrue(ts._load())
         mock_exists.assert_called_with(ts.pending_file)
         mock_open.assert_called_with(ts.pending_file, 'r')
         mock_open.return_value.close.assert_any_call()
@@ -369,7 +376,7 @@ class TestThreadedStatistics(TestStatistics):
         core.build_metadata.side_effect = lambda x: x
         mock_XML.side_effect = lambda x, parser=None: x
         ts.work_queue.put_nowait.side_effect = None
-        self.assertTrue(ts.load())
+        self.assertTrue(ts._load())
         mock_exists.assert_called_with(ts.pending_file)
         mock_open.assert_called_with(ts.pending_file, 'r')
         mock_open.return_value.close.assert_any_call()
@@ -382,8 +389,8 @@ class TestThreadedStatistics(TestStatistics):
         mock_unlink.assert_called_with(ts.pending_file)
 
     @patch("threading.Thread.start", Mock())
-    @patch("Bcfg2.Server.Plugin.ThreadedStatistics.load")
-    @patch("Bcfg2.Server.Plugin.ThreadedStatistics.save")
+    @patch("Bcfg2.Server.Plugin.ThreadedStatistics._load")
+    @patch("Bcfg2.Server.Plugin.ThreadedStatistics._save")
     @patch("Bcfg2.Server.Plugin.ThreadedStatistics.handle_statistic")
     def test_run(self, mock_handle, mock_save, mock_load):
         core = Mock()
@@ -426,8 +433,6 @@ class TestThreadedStatistics(TestStatistics):
     @patch("copy.copy", Mock(side_effect=lambda x: x))
     @patch("Bcfg2.Server.Plugin.ThreadedStatistics.run", Mock())
     def test_process_statistics(self):
-        TestStatistics.test_process_statistics(self)
-
         core = Mock()
         ts = self.get_obj(core)
         ts.work_queue = Mock()
@@ -438,6 +443,11 @@ class TestThreadedStatistics(TestStatistics):
         ts.work_queue.put_nowait.side_effect = Full
         # test that no exception is thrown
         ts.process_statistics(*self.data[0])
+
+    def test_handle_statistic(self):
+        ts = self.get_obj()
+        self.assertRaises(NotImplementedError,
+                          ts.handle_statistic, None, None)
         
 
 class TestPullSource(Bcfg2TestCase):
@@ -460,8 +470,15 @@ class TestPullTarget(Bcfg2TestCase):
 
 
 class TestDecision(Bcfg2TestCase):
-    """ placeholder for future tests """
-    pass
+    test_obj = Decision
+    
+    def get_obj(self):
+        return self.test_obj()
+
+    def test_GetDecisions(self):
+        d = self.get_obj()
+        self.assertRaises(NotImplementedError,
+                          d.GetDecisions, None, None)
 
 
 class TestValidationError(Bcfg2TestCase):
@@ -484,8 +501,14 @@ class TestGoalValidator(Bcfg2TestCase):
 
 
 class TestVersion(Bcfg2TestCase):
-    """ placeholder for future tests """
-    pass
+    test_obj = Version
+    
+    def get_obj(self):
+        return self.test_obj()
+
+    def test_get_revision(self):
+        d = self.get_obj()
+        self.assertRaises(NotImplementedError, d.get_revision)
 
 
 class TestClientRunHooks(Bcfg2TestCase):
