@@ -392,7 +392,6 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
 class Cfg(Bcfg2.Server.Plugin.GroupSpool,
           Bcfg2.Server.Plugin.PullTarget):
     """This generator in the configuration file repository for Bcfg2."""
-    name = 'Cfg'
     __author__ = 'bcfg-dev@mcs.anl.gov'
     es_cls = CfgEntrySet
     es_child_cls = Bcfg2.Server.Plugin.SpecificData

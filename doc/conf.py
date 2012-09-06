@@ -12,6 +12,7 @@
 # serve to show the default.
 
 import os
+import re
 import sys
 import time
 
@@ -24,7 +25,8 @@ import time
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
-extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest']
+extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
+              'sphinx.ext.intersphinx']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -212,4 +214,33 @@ else:
 # If false, no module index is generated.
 latex_use_modindex = False
 
+# autodoc settings
 autodoc_default_flags = ['members', 'show-inheritance']
+autoclass_content = "both"
+
+private_re = re.compile(r'^\s*\.\.\s*private-include\s*$')
+
+def skip_member_from_docstring(app, what, name, obj, skip, options):
+    """ since sphinx 1.0 autodoc doesn't support the :private-members:
+    directive, this function allows you to specify
+    ``.. private-include`` in the docstring of a private method, etc.,
+    to ensure that it's included. This only works on things with
+    docstrings """
+    if (not skip or 
+        not hasattr(obj, '__doc__') or not obj.__doc__):
+        return skip
+
+    for line in obj.__doc__.splitlines():
+        if private_re.match(line):
+            return False
+    
+    return skip
+
+def setup(app):
+    app.connect('autodoc-skip-member', skip_member_from_docstring)
+
+# intersphinx settings
+intersphinx_mapping = dict(
+    py=('http://docs.python.org/%s' % '.'.join(str(v)
+                                               for v in sys.version_info[0:2]),
+        None))

@@ -26,9 +26,8 @@ class Generator(object):
        client metadata object the entry is being generated for.
 
     #. If the entry is not listed in ``Entries``, the Bcfg2 core calls
-       :func:`Bcfg2.Server.Plugin.Generator.HandlesEntry`; if that
-       returns True, then it calls
-       :func:`Bcfg2.Server.Plugin.Generator.HandleEntry`.
+       :func:`HandlesEntry`; if that returns True, then it calls
+       :func:`HandleEntry`.
     """
 
     def HandlesEntry(self, entry, metadata):
@@ -42,7 +41,7 @@ class Generator(object):
         :param metadata: The client metadata
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :return: bool - Whether or not this plugin can handle the entry
-        :raises: Bcfg2.Server.Plugin.PluginExecutionError
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
         """
         return False
 
@@ -50,7 +49,7 @@ class Generator(object):
         """ HandlesEntry is the slow path method for binding
         configuration binding requests.  It is called if the
         ``Entries`` dict does not contain a method for binding the
-        entry, and :func:`Bcfg2.Server.Plugin.Generator.HandlesEntry`
+        entry, and :func:`HandlesEntry`
         returns True.
 
         :param entry: The entry to bind
@@ -58,7 +57,7 @@ class Generator(object):
         :param metadata: The client metadata
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :return: lxml.etree._Element - The fully bound entry
-        :raises: Bcfg2.Server.Plugin.PluginExecutionError
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
         """
         return entry
 
@@ -112,8 +111,8 @@ class Metadata(object):
         :param profile: Client Bcfg2 version
         :type profile: string
         :return: None
-        :raises: Bcfg2.Server.Plugin.MetadataRuntimeError,
-                 Bcfg2.Server.Plugin.MetadataConsistencyError
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.MetadataRuntimeError`,
+                 :class:`Bcfg2.Server.Plugin.exceptions.MetadataConsistencyError`
         """
         pass
 
@@ -128,8 +127,8 @@ class Metadata(object):
         :param address: Address pair of ``(<ip address>, <hostname>)``
         :type address: tuple
         :return: None
-        :raises: Bcfg2.Server.Plugin.MetadataRuntimeError,
-                 Bcfg2.Server.Plugin.MetadataConsistencyError
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.MetadataRuntimeError`,
+                 :class:`Bcfg2.Server.Plugin.exceptions.MetadataConsistencyError`
         """
         pass
 
@@ -146,8 +145,8 @@ class Metadata(object):
                               entire client hostname resolution class
         :type cleanup_cache: bool
         :return: string - canonical client hostname
-        :raises: Bcfg2.Server.Plugin.MetadataRuntimeError,
-                 Bcfg2.Server.Plugin.MetadataConsistencyError
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.MetadataRuntimeError`,
+                 :class:`Bcfg2.Server.Plugin.exceptions.MetadataConsistencyError`
         """
         return address[1]
 
@@ -181,7 +180,7 @@ class Metadata(object):
 
     def merge_additional_data(self, imd, source, data):
         """ Add arbitrary data from a
-        :class:`Bcfg2.Server.Plugin.Connector` plugin to the given
+        :class:`Connector` plugin to the given
         metadata object.
 
         :param imd: An initial metadata object
@@ -196,7 +195,7 @@ class Metadata(object):
 
     def merge_additional_groups(self, imd, groups):
         """ Add groups from a
-        :class:`Bcfg2.Server.Plugin.Connector` plugin to the given
+        :class:`Connector` plugin to the given
         metadata object.
 
         :param imd: An initial metadata object
@@ -278,7 +277,7 @@ class Probing(object):
 class Statistics(Plugin):
     """ Statistics plugins handle statistics for clients.  In general,
     you should avoid using Statistics and use
-    :class:`Bcfg2.Server.Plugin.ThreadedStatistics` instead."""
+    :class:`ThreadedStatistics` instead."""
 
     def process_statistics(self, client, xdata):
         """ Process the given XML statistics data for the specified
@@ -411,9 +410,9 @@ class ThreadedStatistics(Statistics, threading.Thread):
     def handle_statistic(self, metadata, data):
         """ Process the given XML statistics data for the specified
         client object.  This differs from the
-        :func:`Bcfg2.Server.Plugin.Statistics.process_statistics`
-        method only in that ThreadedStatistics first adds the data to
-        a queue, and then processes them in a separate thread.
+        :func:`Statistics.process_statistics` method only in that
+        ThreadedStatistics first adds the data to a queue, and then
+        processes them in a separate thread.
 
         :param metadata: The client metadata
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
@@ -474,7 +473,7 @@ class StructureValidator(object):
                        describing the structures for this client
         :type config: list
         :returns: None
-        :raises: Bcfg2.Server.Plugin.ValidationError
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.ValidationError`
         """
         raise NotImplementedError
 
@@ -493,7 +492,7 @@ class GoalValidator(object):
         :param config: The full configuration for the client
         :type config: lxml.etree._Element
         :returns: None
-        :raises: Bcfg2.Server.Plugin.ValidationError
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions:ValidationError`
         """
         raise NotImplementedError
 
@@ -529,8 +528,8 @@ class ClientRunHooks(object):
 
     def end_client_run(self, metadata):
         """ Invoked at the end of a client run, immediately after
-        :class:`Bcfg2.Server.Plugin.GoalValidator` plugins have been run
-        and just before the configuration is returned to the client.
+        :class:`GoalValidator` plugins have been run and just before
+        the configuration is returned to the client.
 
         :param metadata: The client metadata object
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata

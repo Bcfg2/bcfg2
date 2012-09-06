@@ -5,7 +5,7 @@ import logging
 
 class Debuggable(object):
     """ Mixin to add a debugging interface to an object and expose it
-    via XML-RPC on :class:`Bcfg2.Server.Plugin.Plugin` objects """
+    via XML-RPC on :class:`Bcfg2.Server.Plugin.base.Plugin` objects """
 
     #: List of names of methods to be exposed as XML-RPC functions
     __rmi__ = ['toggle_debug']
@@ -18,7 +18,8 @@ class Debuggable(object):
         self.logger = logging.getLogger(name)
 
     def toggle_debug(self):
-        """ Turn debugging output on or off.
+        """ Turn debugging output on or off.  This method is exposed
+        via XML-RPC.
 
         :returns: bool - The new value of the debug flag
         """
@@ -45,7 +46,7 @@ class Plugin(Debuggable):
     """ The base class for all Bcfg2 Server plugins. """
 
     #: The name of the plugin.
-    name = 'Plugin'
+    name = property(lambda s: s.__class__.__name__)
 
     #: The email address of the plugin author.
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -68,6 +69,9 @@ class Plugin(Debuggable):
     #: alphabetically by their name.
     sort_order = 500
 
+    #: List of names of methods to be exposed as XML-RPC functions
+    __rmi__ = Debuggable.__rmi__
+
     def __init__(self, core, datastore):
         """ Initialize the plugin.
 
@@ -76,7 +80,10 @@ class Plugin(Debuggable):
         :param datastore: The path to the Bcfg2 repository on the
                           filesystem
         :type datastore: string
-        :raises: Bcfg2.Server.Plugin.PluginInitError
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginInitError`
+
+        .. autoattribute:: __author__
+        .. autoattribute:: __rmi__
         """
         object.__init__(self)
         self.Entries = {}

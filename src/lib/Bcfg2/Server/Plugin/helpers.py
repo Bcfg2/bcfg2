@@ -28,12 +28,15 @@ opts = {'owner': Bcfg2.Options.MDATA_OWNER,
         'important': Bcfg2.Options.MDATA_IMPORTANT,
         'paranoid': Bcfg2.Options.MDATA_PARANOID,
         'sensitive': Bcfg2.Options.MDATA_SENSITIVE}
+
+#: A dict containing default metadata for Path entries
 default_file_metadata = Bcfg2.Options.OptionParser(opts)
 default_file_metadata.parse([])
 del default_file_metadata['args']
 
 logger = logging.getLogger(__name__)
 
+#: a compiled regular expression for parsing info and :info files
 info_regex = re.compile('owner:(\s)*(?P<owner>\S+)|' +
                         'group:(\s)*(?P<group>\S+)|' +
                         'perms:(\s)*(?P<perms>\w+)|' +
@@ -45,6 +48,21 @@ info_regex = re.compile('owner:(\s)*(?P<owner>\S+)|' +
                         'mtime:(\s)*(?P<mtime>\w+)|')
 
 def bind_info(entry, metadata, infoxml=None, default=default_file_metadata):
+    """ Bind the file metadata in the given :class:`InfoXML` object to
+    the given entry.
+
+    :param entry: The abstract entry to bind the info to
+    :type entry: lxml.etree._Element
+    :param metadata: The client metadata to get info for
+    :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+    :param infoxml: The info.xml file to pull file metadata from
+    :type infoxml: Bcfg2.Server.Plugins.helpers.InfoXML
+    :param default: Default metadata to supply when the info.xml file
+                    does not include a particular attribute
+    :type default: dict
+    :returns: None
+    :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
+    """
     for attr, val in list(default.items()):
         entry.set(attr, val)
     if infoxml:
@@ -59,40 +77,75 @@ def bind_info(entry, metadata, infoxml=None, default=default_file_metadata):
 
 
 class DatabaseBacked(Plugin):
+    """ Provides capabilities for a plugin to read and write to a
+    database."""
+
+    #: The option to look up in :attr:`section` to determine whether or
+    #: not to use the database capabilities of this plugin.  The option
+    #: is retrieved with
+    #: :py:func:`ConfigParser.SafeConfigParser.getboolean`, and so must
+    #: conform to the possible values that function can handle.
+    option = "use_database"
+
+    def _section(self):
+        """ The section to look in for
+        :attr:`DatabaseBacked.option` """
+        return self.name.lower()
+    section = property(_section)
+
     @property
     def _use_db(self):
-        use_db = self.core.setup.cfp.getboolean(self.name.lower(),
-                                                "use_database",
+        """ Whether or not this plugin is configured to use the
+        database.
+
+        .. private-include"""
+        use_db = self.core.setup.cfp.getboolean(self.section,
+                                                self.option,
                                                 default=False)
         if use_db and has_django and self.core.database_available:
             return True
         elif not use_db:
             return False
         else:
-            self.logger.error("use_database is true but django not found")
+            self.logger.error("%s is true but django not found" % self.option)
             return False
 
 
 class PluginDatabaseModel(object):
+    """ A database model mixin that all database models used by
+    :class:`DatabaseBacked` plugins must inherit from.  This is just a
+    mixin; models must also inherit from django.db.models.Model to be
+    valid Django models."""
+
     class Meta:
         app_label = "Server"
 
 
 class FileBacked(object):
-    """This object caches file data in memory.
-    HandleEvent is called whenever fam registers an event.
-    Index can parse the data into member data as required.
-    This object is meant to be used as a part of DirectoryBacked.
-    """
+    """ This object caches file data in memory. FileBacked objects are
+    principally meant to be used as a part of
+    :class:`DirectoryBacked`. """
 
     def __init__(self, name, fam=None):
+        """
+        :param name: The full path to the file to cache and monitor
+        :type name: string
+        :param fam: The FAM object used to receive notifications of
+                    changes
+        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
+        """
         object.__init__(self)
         self.data = ''
         self.name = name
         self.fam = fam
 
     def HandleEvent(self, event=None):
-        """Read file upon update."""
+        """ HandleEvent is called whenever the FAM registers an event.
+        
+        :param event: The event object
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :returns: None
+        """
         if event and event.code2str() not in ['exists', 'changed', 'created']:
             return
         try:
@@ -103,7 +156,9 @@ class FileBacked(object):
             logger.error("Failed to read file %s: %s" % (self.name, err))
 
     def Index(self):
-        """Update local data structures based on current file state"""
+        """ Index() is called by :func:`HandleEvent` every time the
+        data changes, and can parse the data into usable data as
+        required."""
         pass
 
     def __repr__(self):
@@ -111,36 +166,54 @@ class FileBacked(object):
 
 
 class DirectoryBacked(object):
-    """This object is a coherent cache for a filesystem hierarchy of files."""
+    """ DirectoryBacked objects represent a directory that contains
+    files, represented by objects of the type listed in
+    :attr:`__child__`, and other directories recursively.  It monitors
+    for new files and directories to be added, and creates new objects
+    as required to track those."""
+
+    #: The type of child objects to create for files contained within
+    #: the directory that is tracked.  Default is
+    #: :class:`FileBacked`
     __child__ = FileBacked
+
+    #: Only track and include files whose names (not paths) match this
+    #: compiled regex.
     patterns = re.compile('.*')
+
+    #: Preemptively ignore files whose names (not paths) match this
+    #: compiled regex.  ``ignore`` can be set to ``None`` to ignore no
+    #: files.  If a file is encountered that does not match
+    #: :attr:`patterns` or ``ignore``, then a warning will be produced.
     ignore = None
 
     def __init__(self, data, fam):
-        """Initialize the DirectoryBacked object.
+        """
+        :param data: The path to the data directory that will be
+                     monitored
+        :type data: string
+        :param fam: The FAM object used to receive notifications of
+                    changes
+        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
 
-        :param self: the object being initialized.
-        :param data: the path to the data directory that will be
-        monitored.
-        :param fam: The FileMonitor object used to receive
-        notifications of changes.
+        .. autoattribute:: __child__
         """
         object.__init__(self)
 
         self.data = os.path.normpath(data)
         self.fam = fam
 
-        # self.entries contains information about the files monitored
-        # by this object.... The keys of the dict are the relative
-        # paths to the files. The values are the objects (of type
-        # __child__) that handle their contents.
+        #: self.entries contains information about the files monitored
+        #: by this object. The keys of the dict are the relative
+        #: paths to the files. The values are the objects (of type
+        #: :attr:`__child__`) that handle their contents.
         self.entries = {}
 
-        # self.handles contains information about the directories
-        # monitored by this object. The keys of the dict are the
-        # values returned by the initial fam.AddMonitor() call (which
-        # appear to be integers). The values are the relative paths of
-        # the directories.
+        #: self.handles contains information about the directories
+        #: monitored by this object. The keys of the dict are the
+        #: values returned by the initial fam.AddMonitor() call (which
+        #: appear to be integers). The values are the relative paths of
+        #: the directories.
         self.handles = {}
 
         # Monitor everything in the plugin's directory
@@ -153,11 +226,14 @@ class DirectoryBacked(object):
         return iter(list(self.entries.items()))
 
     def add_directory_monitor(self, relative):
-        """Add a new directory to FAM structures for monitoring.
+        """ Add a new directory to the FAM for monitoring.
 
         :param relative: Path name to monitor. This must be relative
-        to the plugin's directory. An empty string value ("") will
-        cause the plugin directory itself to be monitored.
+                         to the plugin's directory. An empty string
+                         value ("") will cause the plugin directory
+                         itself to be monitored.
+        :type relative: string
+        :returns: None
         """
         dirpathname = os.path.join(self.data, relative)
         if relative not in self.handles.values():
@@ -168,12 +244,15 @@ class DirectoryBacked(object):
             self.handles[reqid] = relative
 
     def add_entry(self, relative, event):
-        """Add a new file to our structures for monitoring.
+        """ Add a new file to our tracked entries, and to our FAM for
+        monitoring.
 
         :param relative: Path name to monitor. This must be relative
-        to the plugin's directory.
-        :param event: File Monitor event that caused this entry to be
-        added.
+                         to the plugin's directory.
+        :type relative: string:
+        :param event: FAM event that caused this entry to be added.
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :returns: None
         """
         self.entries[relative] = self.__child__(os.path.join(self.data,
                                                              relative),
@@ -181,16 +260,21 @@ class DirectoryBacked(object):
         self.entries[relative].HandleEvent(event)
 
     def HandleEvent(self, event):
-        """Handle FAM/Gamin events.
+        """ Handle FAM events.
 
-        This method is invoked by FAM/Gamin when it detects a change
-        to a filesystem object we have requsted to be monitored.
+        This method is invoked by the FAM when it detects a change to
+        a filesystem object we have requsted to be monitored.
 
         This method manages the lifecycle of events related to the
-        monitored objects, adding them to our indiciess and creating
-        objects of type __child__ that actually do the domain-specific
-        processing. When appropriate, it propogates events those
-        objects by invoking their HandleEvent in turn.
+        monitored objects, adding them to our list of entries and
+        creating objects of type :attr:`__child__` that actually do
+        the domain-specific processing. When appropriate, it
+        propogates events those objects by invoking their HandleEvent
+        method in turn.
+
+        :param event: FAM event that caused this entry to be added.
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :returns: None
         """
         action = event.code2str()
 
@@ -282,13 +366,31 @@ class DirectoryBacked(object):
 
 
 class XMLFileBacked(FileBacked):
+    """ This object is caches XML file data in memory.  It can be used
+    as a standalone object or as a part of :class:`XMLDirectoryBacked`
     """
-    This object is a coherent cache for an XML file to be used as a
-    part of DirectoryBacked.
-    """
+
+    #: If ``__identifier__`` is not None, then it must be the name of
+    #: an XML attribute that will be required on the top-level tag of
+    #: the file being cached
     __identifier__ = 'name'
 
     def __init__(self, filename, fam=None, should_monitor=False):
+        """
+        :param filename: The full path to the file to cache and monitor
+        :type filename: string
+        :param fam: The FAM object used to receive notifications of
+                    changes
+        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
+        :param should_monitor: Whether or not to monitor this file for
+                               changes. It may be useful to disable
+                               monitoring when, for instance, the file
+                               is monitored by another object (e.g.,
+                               an :class:`XMLDirectoryBacked` object).
+        :type should_monitor: bool
+
+        .. autoattribute:: __identifier__
+        """
         FileBacked.__init__(self, filename)
         self.label = ""
         self.entries = []
@@ -299,7 +401,7 @@ class XMLFileBacked(FileBacked):
             self.fam.AddMonitor(filename, self)
 
     def _follow_xincludes(self, fname=None, xdata=None):
-        ''' follow xincludes, adding included files to self.extras '''
+        """ follow xincludes, adding included files to self.extras """
         if xdata is None:
             if fname is None:
                 xdata = self.xdata.getroottree()
@@ -329,7 +431,6 @@ class XMLFileBacked(FileBacked):
                         self.logger.warning(msg)
 
     def Index(self):
-        """Build local data structures."""
         try:
             self.xdata = lxml.etree.XML(self.data, base_url=self.name,
                                         parser=Bcfg2.Server.XMLParser)
@@ -349,8 +450,17 @@ class XMLFileBacked(FileBacked):
         self.entries = self.xdata.getchildren()
         if self.__identifier__ is not None:
             self.label = self.xdata.attrib[self.__identifier__]
+    Index.__doc__ = FileBacked.Index.__doc__
 
     def add_monitor(self, fpath):
+        """ Add a FAM monitor to a file that has been XIncluded.  This
+        is only done if the constructor got both a ``fam`` object and
+        ``should_monitor`` set to True.
+
+        :param fpath: The full path to the file to monitor
+        :type fpath: string
+        :returns: None
+        """
         self.extras.append(fpath)
         if self.fam and self.should_monitor:
             self.fam.AddMonitor(fpath, self)
@@ -363,7 +473,13 @@ class XMLFileBacked(FileBacked):
 
 
 class StructFile(XMLFileBacked):
-    """This file contains a set of structure file formatting logic."""
+    """ StructFiles are XML files that contain a set of structure file
+    formatting logic for handling ``<Group>`` and ``<Client>``
+    tags. """
+
+    #: If ``__identifier__`` is not None, then it must be the name of
+    #: an XML attribute that will be required on the top-level tag of
+    #: the file being cached
     __identifier__ = None
 
     def _include_element(self, item, metadata):
@@ -398,7 +514,18 @@ class StructFile(XMLFileBacked):
             return []
 
     def Match(self, metadata):
-        """Return matching fragments of independent."""
+        """ Return matching fragments of the data in this file.  A tag
+        is considered to match if all ``<Group>`` and ``<Client>``
+        tags that are its ancestors match the metadata given.  Since
+        tags are included unmodified, it's possible for a tag to
+        itself match while containing non-matching children.
+        Consequently, only the tags contained in the list returned by
+        Match() (and *not* their descendents) should be considered to
+        match the metadata.
+
+        :param metadata: Client metadata to match against.
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: list of lxml.etree._Element objects """
         rv = []
         for child in self.entries:
             rv.extend(self._match(child, metadata))
@@ -421,7 +548,16 @@ class StructFile(XMLFileBacked):
 
     def XMLMatch(self, metadata):
         """ Return a rebuilt XML document that only contains the
-        matching portions """
+        matching portions of the original file.  A tag is considered
+        to match if all ``<Group>`` and ``<Client>`` tags that are its
+        ancestors match the metadata given.  Unlike :func:`Match`, the
+        document returned by XMLMatch will only contain matching data.
+        All ``<Group>`` and ``<Client>`` tags will have been stripped
+        out.
+
+        :param metadata: Client metadata to match against.
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: lxml.etree._Element """
         rv = copy.deepcopy(self.xdata)
         for child in rv.iterchildren():
             self._xml_match(child, metadata)
@@ -429,10 +565,10 @@ class StructFile(XMLFileBacked):
 
 
 class INode(object):
-    """
-    LNodes provide lists of things available at a particular
-    group intersection.
-    """
+    """ INodes provide lists of things available at a particular group
+    intersection.  INodes are deprecated; new plugins should use
+    :class:`StructFile` instead. """
+
     raw = dict(
         Client="lambda m, e:'%(name)s' == m.hostname and predicate(m, e)",
         Group="lambda m, e:'%(name)s' in m.groups and predicate(m, e)")
@@ -500,7 +636,9 @@ class INode(object):
 
 
 class InfoNode (INode):
-    """ INode implementation that includes <Path> tags """
+    """ :class:`INode` implementation that includes ``<Path>`` tags,
+    suitable for use with :file:`info.xml` files. """
+
     raw = {'Client': "lambda m, e:'%(name)s' == m.hostname and predicate(m, e)",
            'Group': "lambda m, e:'%(name)s' in m.groups and predicate(m, e)",
            'Path': "lambda m, e:('%(name)s' == e.get('name') or '%(name)s' == e.get('realname')) and predicate(m, e)"}
@@ -511,7 +649,9 @@ class InfoNode (INode):
 
 
 class XMLSrc(XMLFileBacked):
-    """XMLSrc files contain a LNode hierarchy that returns matching entries."""
+    """ XMLSrc files contain a :class:`INode` hierarchy that returns
+    matching entries. XMLSrc objects are deprecated and
+    :class:`StructFile` should be preferred where possible."""
     __node__ = INode
     __cacheobj__ = dict
     __priority_required__ = True
@@ -567,28 +707,43 @@ class XMLSrc(XMLFileBacked):
 
 
 class InfoXML(XMLSrc):
+    """ InfoXML files contain a :class:`InfoNode` hierarchy that
+    returns matching entries, suitable for use with :file:`info.xml`
+    files. """
     __node__ = InfoNode
     __priority_required__ = False
 
 
 class XMLDirectoryBacked(DirectoryBacked):
-    """Directorybacked for *.xml."""
+    """ :class:`DirectoryBacked` for XML files. """
+
+    #: Only track and include files whose names (not paths) match this
+    #: compiled regex.
     patterns = re.compile('^.*\.xml$')
+
+    #: The type of child objects to create for files contained within
+    #: the directory that is tracked.  Default is
+    #: :class:`XMLFileBacked`
     __child__ = XMLFileBacked
 
 
 class PrioDir(Plugin, Generator, XMLDirectoryBacked):
-    """This is a generator that handles package assignments."""
-    name = 'PrioDir'
+    """ PrioDir handles a directory of XML files where each file has a
+    set priority. """
+
+    #: The type of child objects to create for files contained within
+    #: the directory that is tracked.  Default is
+    #: :class:`XMLSrc`
     __child__ = XMLSrc
 
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
         Generator.__init__(self)
         XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
+    __init__.__doc__ = \
+        Plugin.__init__.__doc__ + "\n\n.. autoattribute:: __child__"
 
     def HandleEvent(self, event):
-        """Handle events and update dispatch table."""
         XMLDirectoryBacked.HandleEvent(self, event)
         self.Entries = {}
         for src in list(self.entries.values()):
@@ -598,17 +753,44 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
                         self.Entries[itype][child] = self.BindEntry
                     except KeyError:
                         self.Entries[itype] = {child: self.BindEntry}
+    HandleEvent.__doc__ = XMLDirectoryBacked.HandleEvent.__doc__
 
     def _matches(self, entry, metadata, rules):
         return entry.get('name') in rules
 
     def BindEntry(self, entry, metadata):
+        """ Bind the attributes that apply to an entry to it.  The
+        entry is modified in-place.
+
+        :param entry: The entry to add attributes to.
+        :type entry: lxml.etree._Element
+        :param metadata: The metadata to get attributes for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: None
+        """
         attrs = self.get_attrs(entry, metadata)
         for key, val in list(attrs.items()):
             entry.attrib[key] = val
 
     def get_attrs(self, entry, metadata):
-        """ get a list of attributes to add to the entry during the bind """
+        """ Get a list of attributes to add to the entry during the
+        bind.  This is a complex method, in that it both modifies the
+        entry, and returns attributes that need to be added to the
+        entry.  That seems sub-optimal, and should probably be changed
+        at some point.  Namely:
+
+        * The return value includes all XML attributes that need to be
+          added to the entry, but it does not add them.
+        * If text contents or child tags need to be added to the
+          entry, they are added to the entry in place.
+
+        :param entry: The entry to add attributes to.
+        :type entry: lxml.etree._Element
+        :param metadata: The metadata to get attributes for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: dict of <attr name>:<attr value>
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
+        """
         for src in self.entries.values():
             src.Cache(metadata)
 
@@ -651,8 +833,35 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
 
 
 class Specificity(CmpMixin):
+    """ Represent the specificity of an object; i.e., what client(s)
+    it applies to.  It can be group- or client-specific, or apply to
+    all clients.
+
+    Specificity objects are sortable; objects that are less specific
+    are considered less than objects that are more specific.  Objects
+    that apply to all clients are the least specific; objects that
+    apply to a single client are the most specific.  Objects that
+    apply to groups are sorted by priority. """
+
     def __init__(self, all=False, group=False, hostname=False, prio=0,
                  delta=False):
+        """
+        :param all: The object applies to all clients.
+        :type all: bool
+        :param group: The object applies only to the given group.
+        :type group: string or False
+        :param hostname: The object applies only to the named client.
+        :type hostname: string or False
+        :param prio: The object has the given priority relative to
+                     other objects that also apply to the same group.
+                     ``<group>`` must be specified with ``<prio>``.
+        :type prio: int
+        :param delta: The object is a delta (i.e., a .cat or .diff
+                      file, not a full file).  Deltas are deprecated.
+        :type delta: bool
+
+        Exactly one of {all|group|hostname} should be given.
+        """
         CmpMixin.__init__(self)
         self.hostname = hostname
         self.all = all
@@ -661,9 +870,18 @@ class Specificity(CmpMixin):
         self.delta = delta
 
     def matches(self, metadata):
-        return self.all or \
-               self.hostname == metadata.hostname or \
-               self.group in metadata.groups
+        """ Return True if the object described by this Specificity
+        object applies to the given client.  That is, if this
+        Specificity applies to all clients, or to a group the client
+        is a member of, or to the client individually.
+
+        :param metadata: The client metadata
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: bool
+        """
+        return (self.all or
+                self.hostname == metadata.hostname or
+                self.group in metadata.groups)
 
     def __cmp__(self, other):
         """Sort most to least specific."""
@@ -701,11 +919,32 @@ class Specificity(CmpMixin):
 
 
 class SpecificData(object):
+    """ A file that is specific to certain clients, groups, or all
+    clients. """
+
     def __init__(self, name, specific, encoding):
+        """
+        :param name: The full path to the file
+        :type name: string
+        :param specific: A :class:`Specificity` object describing what
+                         clients this file applies to.
+        :type specific: Bcfg2.Server.Plugins.helpers.Specificity
+        :param encoding: The encoding to use for data in this file
+        :type encoding: string
+        """
+
         self.name = name
         self.specific = specific
 
     def handle_event(self, event):
+        """ Handle a FAM event.  Note that the SpecificData object
+        itself has no FAM, so this must be produced by a parent object
+        (e.g., :class:`EntrySet`).
+
+        :param event: The event that applies to this file
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :returns: None
+        """
         if event.code2str() == 'deleted':
             return
         try:
@@ -717,11 +956,65 @@ class SpecificData(object):
 
 
 class EntrySet(Debuggable):
-    """Entry sets deal with the host- and group-specific entries."""
+    """ EntrySets deal with a collection of host- and group-specific
+    files (e.g., :class:`SpecificData` objects) in a single
+    directory. EntrySets are usually used as part of
+    :class:`GroupSpool` objects."""
+
+    #: Preemptively ignore files whose names (not paths) match this
+    #: compiled regex.  ``ignore`` cannot be set to ``None``.  If a
+    #: file is encountered that does not match the ``basename``
+    #: argument passed to the constructor or : ``ignore``, then a
+    #: warning will be produced.
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\\.genshi_include)$")
-    basename_is_regex=False
+
+    # The ``basename`` argument passed to the constructor will be
+    #: processed as a string that contains a regular expression (i.e.,
+    #: *not* a compiled regex object) if ``basename_is_regex`` is True,
+    #: and all files that match the regex will be cincluded in the
+    #: EntrySet.  If ``basename_is_regex`` is False, then it will be
+    #: considered a plain string and filenames must match exactly.
+    basename_is_regex = False
 
     def __init__(self, basename, path, entry_type, encoding):
+        """
+        :param basename: The filename or regular expression that files
+                         in this EntrySet must match.  See
+                         :attr:`basename_is_regex` for more details.
+        :type basename: string
+        :param path: The full path to the directory containing files
+                     for this EntrySet
+        :type path: string
+        :param entry_type: A callable that returns an object that
+                           represents files in this EntrySet.  This
+                           will usually be a class object, but it can
+                           be an object factory or similar callable.
+                           See below for the expected signature.
+        :type entry_type: callable
+        :param encoding: The encoding of all files in this entry set.
+        :type encoding: string
+
+        The ``entry_type`` callable must have the following signature::
+
+            entry_type(filepath, specificity, encoding)
+
+        Where the parameters are:
+
+        :param filepath: Full path to file
+        :type filepath: string
+        :param specific: A :class:`Specificity` object describing what
+                         clients this file applies to.
+        :type specific: Bcfg2.Server.Plugins.helpers.Specificity
+        :param encoding: The encoding to use for data in this file
+        :type encoding: string
+        
+        Additionally, the object returned by ``entry_type`` must have
+        a ``specific`` attribute that is sortable (e.g., a
+        :class:`Specificity` object).
+
+        See :class:`SpecificData` for an example of a class that can
+        be used as an ``entry_type``.
+        """
         Debuggable.__init__(self, name=basename)
         self.path = path
         self.entry_type = entry_type
@@ -736,18 +1029,48 @@ class EntrySet(Debuggable):
             base_pat = re.escape(basename)
         pattern = '(.*/)?%s(\.((H_(?P<hostname>\S+))|' % base_pat
         pattern += '(G(?P<prio>\d+)_(?P<group>\S+))))?$'
+
+        #: ``specific`` is a regular expression that is used to
+        #: determine the specificity of a file in this entry set.  It
+        #: must have three named groups: ``hostname``, ``prio`` (the
+        #: priority of a group-specific file), and ``group``.  The base
+        #: regex is constructed from the ``basename`` argument. It can
+        #: be overridden on a per-entry basis in :func:`entry_init`.
         self.specific = re.compile(pattern)
 
-    def sort_by_specific(self, one, other):
-        return cmp(one.specific, other.specific)
-
     def get_matching(self, metadata):
+        """ Get a list of all entries that apply to the given client.
+        This gets all matching entries; for example, there could be an
+        entry that applies to all clients, multiple group-specific
+        entries, and a client-specific entry, all of which would be
+        returned by get_matching().  You can use :func:`best_matching`
+        to get the single best matching entry.
+
+        :param metadata: The client metadata to get matching entries for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: list -- all matching ``entry_type`` objects (see the
+                  constructor docs for more details)
+        """
         return [item for item in list(self.entries.values())
                 if item.specific.matches(metadata)]
 
     def best_matching(self, metadata, matching=None):
-        """ Return the appropriate interpreted template from the set of
-        available templates. """
+        """ Return the single most specific matching entry from the
+        set of matching entries.  You can use :func:`get_matching` to
+        get all matching entries.
+
+        :param metadata: The client metadata to get matching entries for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :param matching: The set of matching entries to pick from.  If
+                         this is not provided, :func:`get_matching`
+                         will be called.
+        :type matching: list of ``entry_type`` objects (see the constructor
+                        docs for more details)
+        :returns: a single object from the list of matching
+                  ``entry_type`` objects
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
+                 if no matching entries are found
+        """
         if matching is None:
             matching = self.get_matching(metadata)
 
@@ -760,7 +1083,16 @@ class EntrySet(Debuggable):
                                                    metadata.hostname))
 
     def handle_event(self, event):
-        """Handle FAM events for the TemplateSet."""
+        """ Handle a FAM event.  This will probably be handled by a
+        call to :func:`update_metadata`, :func:`reset_metadata`,
+        :func:`entry_init`, or to the ``entry_type``
+        ``handle_event()`` function.
+
+        :param event: An event that applies to a file handled by this
+                      EntrySet
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :returns: None
+        """
         action = event.code2str()
 
         if event.filename in ['info', 'info.xml', ':info']:
@@ -787,7 +1119,26 @@ class EntrySet(Debuggable):
                 del self.entries[event.filename]
 
     def entry_init(self, event, entry_type=None, specific=None):
-        """Handle template and info file creation."""
+        """ Handle the creation of a file on the filesystem and the
+        creation of an object in this EntrySet to track it.
+
+        :param event: An event that applies to a file handled by this
+                      EntrySet
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :param entry_type: Override the default ``entry_type`` for
+                           this EntrySet object and create a different
+                           object for this entry.  See the constructor
+                           docs for more information on
+                           ``entry_type``.
+        :type entry_type: callable
+        :param specific: Override the default :attr:`specific` regular
+                         expression used by this object with a custom
+                         regular expression that will be used to
+                         determine the specificity of this entry.
+        :type specific: compiled regular expression object
+        :returns: None
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.SpecificityError`
+        """
         if entry_type is None:
             entry_type = self.entry_type
 
@@ -808,7 +1159,27 @@ class EntrySet(Debuggable):
         self.entries[event.filename].handle_event(event)
 
     def specificity_from_filename(self, fname, specific=None):
-        """Construct a specificity instance from a filename and regex."""
+        """ Construct a :class:`Specificity` object from a filename
+        and regex. See :attr:`specific` for details on the regex.
+
+        :param fname: The filename (not full path) of a file that is
+                      in this EntrySet's directory.  It is not
+                      necessary to determine first if the filename
+                      matches this EntrySet's basename; that can be
+                      done by catching
+                      :class:`Bcfg2.Server.Plugin.exceptions.SpecificityError`
+                      from this function.
+        :type fname: string
+        :param specific: Override the default :attr:`specific` regular
+                         expression used by this object with a custom
+                         regular expression that will be used to
+                         determine the specificity of this entry.
+        :type specific: compiled regular expression object
+        :returns: Object representing the specificity of the file
+        :rtype: :class:`Specificity`
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.SpecificityError`
+                 if the regex does not match the filename
+        """
         if specific is None:
             specific = self.specific
         data = specific.match(fname)
@@ -827,7 +1198,14 @@ class EntrySet(Debuggable):
         return Specificity(**kwargs)
 
     def update_metadata(self, event):
-        """Process info and info.xml files for the templates."""
+        """ Process changes to or creation of info, :info, and
+        info.xml files for the EntrySet.
+        
+        :param event: An event that applies to an info handled by this
+                      EntrySet
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :returns: None
+        """
         fpath = os.path.join(self.path, event.filename)
         if event.filename == 'info.xml':
             if not self.infoxml:
@@ -849,29 +1227,70 @@ class EntrySet(Debuggable):
                         self.metadata['perms'] = "0%s" % self.metadata['perms']
 
     def reset_metadata(self, event):
-        """Reset metadata to defaults if info or info.xml removed."""
+        """ Reset metadata to defaults if info. :info, or info.xml are
+        removed.
+
+        :param event: An event that applies to an info handled by this
+                      EntrySet
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :returns: None
+        """
         if event.filename == 'info.xml':
             self.infoxml = None
         elif event.filename in [':info', 'info']:
             self.metadata = default_file_metadata.copy()
 
     def bind_info_to_entry(self, entry, metadata):
+        """ Shortcut to call :func:`bind_info` with the base
+        info/info.xml for this EntrySet.
+
+        :param entry: The abstract entry to bind the info to
+        :type entry: lxml.etree._Element
+        :param metadata: The client metadata to get info for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: None
+        """
         bind_info(entry, metadata, infoxml=self.infoxml, default=self.metadata)
 
     def bind_entry(self, entry, metadata):
-        """Return the appropriate interpreted template from the set of
-        available templates."""
+        """ Return the single best fully-bound entry from the set of
+        available entries for the specified client.
+
+        :param entry: The abstract entry to bind the info to
+        :type entry: lxml.etree._Element
+        :param metadata: The client metadata to get info for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: lxml.etree._Element - the fully-bound entry
+        """
         self.bind_info_to_entry(entry, metadata)
         return self.best_matching(metadata).bind_entry(entry, metadata)
 
 
 class GroupSpool(Plugin, Generator):
-    """Unified interface for handling group-specific data (e.g. .G## files)."""
-    name = 'GroupSpool'
-    __author__ = 'bcfg-dev@mcs.anl.gov'
+    """ A GroupSpool is a collection of :class:`EntrySet` objects --
+    i.e., a directory tree, each directory in which may contain files
+    that are specific to groups/clients/etc. """
+
+    #: ``filename_pattern`` is used as the ``basename`` argument to the
+    #: :attr:`es_cls` callable.  It may or may not be a regex,
+    #: depending on the :attr:`EntrySet.basename_is_regex` setting.
     filename_pattern = ""
+
+    #: ``es_child_cls`` is a callable that will be used as the
+    #: ``entry_type`` argument to the :attr:`es_cls` callable.  It must
+    #: return objects that will represent individual files in the
+    #: GroupSpool.  For instance, :class:`SpecificData`.
     es_child_cls = object
+
+    #: ``es_cls`` is a callable that must return objects that will be
+    #: used to represent directories (i.e., sets of entries) within the
+    #: GroupSpool.  E.g., :class:`EntrySet`.  The returned object must
+    #: implement a callable called ``bind_entry`` that has the same
+    #: signature as :attr:`EntrySet.bind_entry`.
     es_cls = EntrySet
+
+    #: The entry type (i.e., the XML tag) handled by this GroupSpool
+    #: object.
     entry_type = 'Path'
 
     def __init__(self, core, datastore):
@@ -879,13 +1298,34 @@ class GroupSpool(Plugin, Generator):
         Generator.__init__(self)
         if self.data[-1] == '/':
             self.data = self.data[:-1]
+
+        #: See :class:`Bcfg2.Server.Plugins.interfaces.Generator` for
+        #: details on the Entries attribute.
         self.Entries[self.entry_type] = {}
+
+        #: ``entries`` is a dict whose keys are :func:`event_id` return
+        #: values and whose values are :attr:`es_cls` objects. It ties
+        #: the directories handled by this GroupSpools to the
+        #: :attr:`es_cls` objects that handle each directory.
         self.entries = {}
         self.handles = {}
         self.AddDirectoryMonitor('')
         self.encoding = core.encoding
+    __init__.__doc__ = Plugin.__init__.__doc__
 
     def add_entry(self, event):
+        """ This method handles two functions:
+
+        * Adding a new entry of type :attr:`es_cls` to track a new
+          directory.
+        * Passing off an event on a file to the correct entry object
+          to handle it.
+
+        :param event: An event that applies to a file or directory
+                      handled by this GroupSpool
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :returns: None
+        """
         epath = self.event_path(event)
         ident = self.event_id(event)
         if os.path.isdir(epath):
@@ -903,11 +1343,36 @@ class GroupSpool(Plugin, Generator):
             self.entries[ident].handle_event(event)
 
     def event_path(self, event):
+        """ Return the full path to the filename affected by an event.
+        :class:`Bcfg2.Server.FileMonitor.Event` objects just contain
+        the filename, not the full path, so this function reconstructs
+        the fill path based on the path to the :attr:`es_cls` object
+        that handles the event.
+
+        :param event: An event that applies to a file or directory
+                      handled by this GroupSpool
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :returns: string
+        """
         return os.path.join(self.data,
                             self.handles[event.requestID].lstrip("/"),
                             event.filename)
 
     def event_id(self, event):
+        """ Return a string that can be used to relate the event
+        unambiguously to a single :attr:`es_cls` object in the
+        :attr:`entries` dict.  In practice, this means:
+
+        * If the event is on a directory, ``event_id`` returns the
+          full path to the directory.
+        * If the event is on a file, ``event_id`` returns the full
+          path to the directory the file is in.
+
+        :param event: An event that applies to a file or directory
+                      handled by this GroupSpool
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :returns: string
+        """
         epath = self.event_path(event)
         if os.path.isdir(epath):
             return os.path.join(self.handles[event.requestID].lstrip("/"),
@@ -920,9 +1385,21 @@ class GroupSpool(Plugin, Generator):
             if hasattr(entry, "toggle_debug"):
                 entry.toggle_debug()
         return Plugin.toggle_debug(self)
+    toggle_debug.__doc__ = Plugin.toggle_debug.__doc__
 
     def HandleEvent(self, event):
-        """Unified FAM event handler for GroupSpool."""
+        """ HandleEvent is the event dispatcher for GroupSpool
+        objects.  It receives all events and dispatches them the
+        appropriate handling object (e.g., one of the :attr:`es_cls`
+        objects in :attr:`entries`), function (e.g.,
+        :func:`add_entry`), or behavior (e.g., deleting an entire
+        entry set).
+
+        :param event: An event that applies to a file or directory
+                      handled by this GroupSpool
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :returns: None
+        """
         action = event.code2str()
         if event.filename[0] == '/':
             return
@@ -953,7 +1430,14 @@ class GroupSpool(Plugin, Generator):
                                     ident)
 
     def AddDirectoryMonitor(self, relative):
-        """Add new directory to FAM structures."""
+        """ Add a FAM monitor to a new directory and set the
+        appropriate event handler.
+
+        :param relative: The path to the directory relative to the
+                         base data directory of the GroupSpool object.
+        :type relative: string
+        :returns: None
+        """
         if not relative.endswith('/'):
             relative += '/'
         name = self.data + relative

@@ -23,30 +23,32 @@ core functionality of Bcfg2 is implemented by several plugins, however,
 they are not special in any way; new plugins could easily supplant one
 or all of them.
 
+.. automodule:: Bcfg2.Server.Plugin
+   :no-members:
+
 Server Plugin Types
 -------------------
 
 A plugin must implement at least one of the interfaces described
 below.  Each interface is available as a class in
-:mod:``Bcfg2.Server.Plugin``.  In most cases, a plugin must also
-inherit from :class:`Bcfg2.Server.Plugin.Plugin`, which is the base
-Plugin object (described below).  Some of the interfaces listed below
-are themselves Plugin objects, so your custom plugin would only need
-to inherit from the plugin type.
+:mod:`Bcfg2.Server.Plugin`.  In most cases, a plugin must also
+inherit from :class:`Bcfg2.Server.Plugin.base.Plugin`, which is the
+base Plugin object (described below).  Some of the interfaces listed
+below are themselves Plugin objects, so your custom plugin would only
+need to inherit from the plugin type.
 
 Plugin
 ^^^^^^
 
-.. autoclass:: Bcfg2.Server.Plugin.Plugin
+.. autoclass:: Bcfg2.Server.Plugin.base.Plugin
    :inherited-members:
    :show-inheritance:
 
-   .. automethod:: Bcfg2.Server.Plugin.Plugin.__init__
-
-With the exceptions of :class:`Bcfg2.Server.Plugin.Statistics` and
-:class:`Bcfg2.Server.Plugin.ThreadedStatistics`, the plugin interfaces
-listed below do **not** inherit from Plugin; they simply provide
-interfaces that a given plugin may or must implement.
+With the exceptions of
+:class:`Bcfg2.Server.Plugin.interfaces.Statistics` and
+:class:`Bcfg2.Server.Plugin.interfaces.ThreadedStatistics`, the plugin
+interfaces listed below do **not** inherit from Plugin; they simply
+provide interfaces that a given plugin may or must implement.
 
 Interfaces
 ^^^^^^^^^^
@@ -96,6 +98,13 @@ Plugin Helper Classes
 ---------------------
 
 .. automodule:: Bcfg2.Server.Plugin.helpers
+   :inherited-members:
+
+.. Debuggable is in base to avoid circular imports, but it's a helper
+.. and should be listed here in the docs
+
+.. autoclass:: Bcfg2.Server.Plugin.base.Debuggable
+   :inherited-members:
 
 Plugin Exceptions
 -----------------
