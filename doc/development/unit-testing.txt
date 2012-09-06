@@ -23,3 +23,6 @@ You should see output something like the following::
     Ran 50 tests in 0.121s
 
     OK
+
+Unit tests are also run by Travis-CI, a free continuous integration
+service, at http://travis-ci.org/#!/Bcfg2/bcfg2/
