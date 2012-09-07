@@ -219,9 +219,9 @@ class DBModelTestCase(Bcfg2TestCase):
     def test_syncdb(self):
         # create the test database
         setup_environ(Bcfg2.settings)
-        from django.core.management.commands import syncdb
-        cmd = syncdb.Command()
-        cmd.handle_noargs(interactive=False)
+        import django.core.management
+        django.core.management.call_command("syncdb", interactive=False,
+                                            verbosity=0)
         self.assertTrue(os.path.exists(Bcfg2.settings.DATABASE_NAME))
 
     @skipUnless(has_django, "Django not found, skipping")
