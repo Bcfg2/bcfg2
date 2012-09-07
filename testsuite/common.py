@@ -164,6 +164,11 @@ class Bcfg2TestCase(unittest.TestCase):
         # assertRegexpMatches, but have the other convenience methods.
         assertRegexpMatches = _assertion(lambda s, r: _regex_matches(s, r),
                                          "%s does not contain /%s/")
+
+    if not hasattr(unittest.TestCase, "assertNotRegexpMatches"):
+        # Some versions of TestCase in Py3k seem to lack
+        # assertNotRegexpMatches even though they have
+        # assertRegexpMatches
         assertNotRegexpMatches = \
             _assertion(lambda s, r: not _regex_matches(s, r),
                        "%s contains /%s/")
