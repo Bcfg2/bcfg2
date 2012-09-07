@@ -82,82 +82,70 @@ else:
             return skip(msg)
 
 
-needs_assertItemsEqual = False
-needs_others = False
-if not hasattr(unittest.TestCase, "assertItemsEqual"):
-    # TestCase in Py3k lacks assertItemsEqual, but has the other
-    # convenience methods.  this code is (mostly) cribbed from the
-    # py2.7 unittest library
-    needs_assertItemsEqual = True
-
-    def _count_diff_all_purpose(actual, expected):
-        '''Returns list of (cnt_act, cnt_exp, elem) triples where the
-        counts differ'''
-        # elements need not be hashable
-        s, t = list(actual), list(expected)
-        m, n = len(s), len(t)
-        NULL = object()
-        result = []
-        for i, elem in enumerate(s):
-            if elem is NULL:
-                continue
-            cnt_s = cnt_t = 0
-            for j in range(i, m):
-                if s[j] == elem:
-                    cnt_s += 1
-                    s[j] = NULL
-            for j, other_elem in enumerate(t):
-                if other_elem == elem:
-                    cnt_t += 1
-                    t[j] = NULL
-            if cnt_s != cnt_t:
-                diff = (cnt_s, cnt_t, elem)
-                result.append(diff)
-
-        for i, elem in enumerate(t):
-            if elem is NULL:
-                continue
-            cnt_t = 0
-            for j in range(i, n):
-                if t[j] == elem:
-                    cnt_t += 1
-                    t[j] = NULL
-            diff = (0, cnt_t, elem)
+def _count_diff_all_purpose(actual, expected):
+    '''Returns list of (cnt_act, cnt_exp, elem) triples where the
+    counts differ'''
+    # elements need not be hashable
+    s, t = list(actual), list(expected)
+    m, n = len(s), len(t)
+    NULL = object()
+    result = []
+    for i, elem in enumerate(s):
+        if elem is NULL:
+            continue
+        cnt_s = cnt_t = 0
+        for j in range(i, m):
+            if s[j] == elem:
+                cnt_s += 1
+                s[j] = NULL
+        for j, other_elem in enumerate(t):
+            if other_elem == elem:
+                cnt_t += 1
+                t[j] = NULL
+        if cnt_s != cnt_t:
+            diff = (cnt_s, cnt_t, elem)
             result.append(diff)
-        return result
 
+    for i, elem in enumerate(t):
+        if elem is NULL:
+            continue
+        cnt_t = 0
+        for j in range(i, n):
+            if t[j] == elem:
+                cnt_t += 1
+                t[j] = NULL
+        diff = (0, cnt_t, elem)
+        result.append(diff)
+    return result
 
-if not hasattr(unittest.TestCase, "assertIn"):
-    # versions of TestCase before python 2.7 and python 3.1 lacked a
-    # lot of the really handy convenience methods, so we provide them
-    # -- at least the easy ones and the ones we use.
-    needs_others = True
-
-    def _assertion(predicate, default_msg=None):
-        @wraps(predicate)
-        def inner(self, *args, **kwargs):
-            if 'msg' in kwargs:
-                msg = kwargs['msg']
-                del kwargs['msg']
-            else:
-                try:
-                    msg = default_msg % args
-                except TypeError:
-                    # message passed as final (non-keyword) argument?
-                    msg = args[-1]
-                    args = args[:-1]
-            assert predicate(*args, **kwargs), msg
-        return inner
-
-    def _regex_matches(val, regex):
-        if hasattr(regex, 'search'):
-            return regex.search(val)
+def _assertion(predicate, default_msg=None):
+    @wraps(predicate)
+    def inner(self, *args, **kwargs):
+        if 'msg' in kwargs:
+            msg = kwargs['msg']
+            del kwargs['msg']
         else:
-            return re.search(regex, val)
+            try:
+                msg = default_msg % args
+            except TypeError:
+                # message passed as final (non-keyword) argument?
+                msg = args[-1]
+                args = args[:-1]
+        assert predicate(*args, **kwargs), msg
+    return inner
+
+def _regex_matches(val, regex):
+    if hasattr(regex, 'search'):
+        return regex.search(val)
+    else:
+        return re.search(regex, val)
 
 
 class Bcfg2TestCase(unittest.TestCase):
-    if needs_assertItemsEqual:
+    if not hasattr(unittest.TestCase, "assertItemsEqual"):
+        # TestCase in Py3k lacks assertItemsEqual, but has the other
+        # convenience methods.  this code is (mostly) cribbed from the
+        # py2.7 unittest library
         def assertItemsEqual(self, expected_seq, actual_seq, msg=None):
             first_seq, second_seq = list(actual_seq), list(expected_seq)
             differences = _count_diff_all_purpose(first_seq, second_seq)
@@ -171,7 +159,19 @@ class Bcfg2TestCase(unittest.TestCase):
                 msg = self._formatMessage(msg, standardMsg)
                 self.fail(msg)
 
-    if needs_others:
+    if not hasattr(unittest.TestCase, "assertRegexpMatches"):
+        # Some versions of TestCase in Py3k seem to lack
+        # assertRegexpMatches, but have the other convenience methods.
+        assertRegexpMatches = _assertion(lambda s, r: _regex_matches(s, r),
+                                         "%s does not contain /%s/")
+        assertNotRegexpMatches = \
+            _assertion(lambda s, r: not _regex_matches(s, r),
+                       "%s contains /%s/")
+
+    if not hasattr(unittest.TestCase, "assertIn"):
+        # versions of TestCase before python 2.7 and python 3.1 lacked
+        # a lot of the really handy convenience methods, so we provide
+        # them -- at least the easy ones and the ones we use.
         assertIs = _assertion(lambda a, b: a is b, "%s is not %s")
         assertIsNot = _assertion(lambda a, b: a is not b, "%s is %s")
         assertIsNone = _assertion(lambda x: x is None, "%s is not None")
@@ -188,12 +188,6 @@ class Bcfg2TestCase(unittest.TestCase):
         assertLess = _assertion(lambda a, b: a < b, "%s is not less than %s")
         assertLessEqual = _assertion(lambda a, b: a <= b,
                                      "%s is not less than or equal to %s")
-        assertRegexpMatches = _assertion(lambda s, r: _regex_matches(s, r),
-                                         "%s does not contain /%s/")
-        assertNotRegexpMatches = \
-            _assertion(lambda s, r: not _regex_matches(s, r),
-                       "%s contains /%s/")
-
 
     def assertXMLEqual(self, el1, el2, msg=None):
         self.assertEqual(el1.tag, el2.tag, msg=msg)
