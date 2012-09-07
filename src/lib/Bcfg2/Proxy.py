@@ -299,7 +299,6 @@ class XMLRPCTransport(xmlrpclib.Transport):
 
     def request(self, host, handler, request_body, verbose=0):
         """Send request to server and return response."""
-        print "len(request_body) = %s" % len(request_body)
         try:
             conn = self.send_request(host, handler, request_body, False)
             response = conn.getresponse()
