@@ -134,6 +134,8 @@ setup(cmdclass=cmdclass,
       description="Bcfg2 Server",
       author="Narayan Desai",
       author_email="desai@mcs.anl.gov",
+      # nosetests
+      test_suite = 'nose.collector',
       packages=["Bcfg2",
                 "Bcfg2.Client",
                 "Bcfg2.Client.Tools",
