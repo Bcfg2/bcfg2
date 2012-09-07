@@ -16,7 +16,7 @@ while path != '/':
     path = os.path.dirname(path)
 from common import call, builtins, skip, skipIf, skipUnless, Bcfg2TestCase, \
     patchIf, datastore
-from Testbase import TestPlugin
+from TestServer.TestPlugin.Testbase import TestPlugin
 
 class TestGenerator(Bcfg2TestCase):
     test_obj = Generator

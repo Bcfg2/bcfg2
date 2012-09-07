@@ -28,21 +28,21 @@ class TestDebuggable(Bcfg2TestCase):
         self.assertIsInstance(d.logger, logging.Logger)
         self.assertFalse(d.debug_flag)
 
-    @patch("Bcfg2.Server.Plugin.base.%s.debug_log" % test_obj.__name__)
-    def test_toggle_debug(self, mock_debug):
+    def test_toggle_debug(self):
         d = self.get_obj()
+        d.debug_log = Mock()
         orig = d.debug_flag
         d.toggle_debug()
         self.assertNotEqual(orig, d.debug_flag)
-        self.assertTrue(mock_debug.called)
+        self.assertTrue(d.debug_log.called)
 
-        mock_debug.reset_mock()
+        d.debug_log.reset_mock()
 
         changed = d.debug_flag
         d.toggle_debug()
         self.assertNotEqual(changed, d.debug_flag)
         self.assertEqual(orig, d.debug_flag)
-        self.assertTrue(mock_debug.called)
+        self.assertTrue(d.debug_log.called)
 
     def test_debug_log(self):
         d = self.get_obj()
@@ -74,7 +74,6 @@ class TestPlugin(TestDebuggable):
         p = self.get_obj(core=core)
         self.assertEqual(p.data, os.path.join(datastore, p.name))
         self.assertEqual(p.core, core)
-        self.assertIsInstance(p, Debuggable)
 
     @patch("os.makedirs")
     def test_init_repo(self, mock_makedirs):
