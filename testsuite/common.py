@@ -259,46 +259,33 @@ class patchIf(object):
     decorators at compile-time, not at run-time, so decorating inner
     functions does not prevent the decorators from being run. """
     def __init__(self, condition, target, new=DEFAULT, spec=None, create=False,
-                 spec_set=None, autospec=None, new_callable=None, **kwargs):
+                 spec_set=None):
         self.condition = condition
         self.target = target
+
         self.patch_args = dict(new=new, spec=spec, create=create,
                                spec_set=spec_set)
-        self.extra_patch_args = dict(autospec=autospec,
-                                     new_callable=new_callable)
-        self.kwargs = kwargs
 
     def __call__(self, func):
         if self.condition:
-            try:
-                # in newer versions of mock, patch() takes arbitrary
-                # keyword arguments
-                args = dict(**self.patch_args)
-                args.update(self.extra_patch_args)
-                args.update(self.kwargs)
-                return patch(self.target, **args)(func)
-            except TypeError:
-                # in older versions of mock, patch() doesn't take
-                # autospec, new_callable or arbitrary keyword
-                # arguments
-                return patch(self.target, **self.patch_args)(func)
+            return patch(self.target, **self.patch_args)(func)
         else:
+            args = [lambda: True,
+                    self.target.rsplit('.', 1)[-1],
+                    self.patch_args['new'], self.patch_args['spec'],
+                    self.patch_args['create'], None,
+                    self.patch_args['spec_set']]
             try:
-                args = [lambda: True,
-                        self.target.rsplit('.', 1)[-1],
-                        self.patch_args['new'], self.patch_args['spec'],
-                        self.patch_args['create'], None,
-                        self.patch_args['spec_set']]
-                # in older versions of mock _patch() takes 8 args
+                # in older versions of mock, _patch() takes 8 args
                 return _noop_patch(*args)(func)
             except TypeError:
-                # in new versions of mock _patch() takes 10 args
-                args = [lambda: True,
-                        self.target.rsplit('.', 1)[-1],
-                        self.patch_args['new'], self.patch_args['spec'],
-                        self.patch_args['create'], self.patch_args['spec_set'],
-                        self.extra_patch_args['autospec'],
-                        self.extra_patch_args['new_callable'],
-                        self.kwargs]
-                return _noop_patch(*args)(func)
-                
+                # in some intermediate versions of mock, _patch
+                # takes 11 args
+                args.extend([None, None, None])
+                try:
+                    return _noop_patch(*args)(func)
+                except TypeError:
+                    # in the latest versions of mock, _patch() takes
+                    # 10 args -- mocksignature has been removed
+                    args.pop(5)
+                    return _noop_patch(*args)(func)
