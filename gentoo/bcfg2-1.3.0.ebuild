@@ -28,6 +28,7 @@ RDEPEND="app-portage/gentoolkit
 	server? (
 		virtual/fam
 		dev-python/lxml
+		dev-python/python-daemon
 		|| ( dev-python/pyinotify dev-libs/libgamin[python] ) )"
 
 PYTHON_MODNAME="Bcfg2"
