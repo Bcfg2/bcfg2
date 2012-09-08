@@ -124,9 +124,9 @@ try:
 except ImportError:
     pass
 
-inst_reqs = ["lxml", "nose"]
+inst_reqs = ['lxml']
 if need_m2crypto:
-    inst_reqs.append("M2Crypto")
+    inst_reqs.append('M2Crypto')
 
 setup(cmdclass=cmdclass,
       name="Bcfg2",
@@ -135,7 +135,7 @@ setup(cmdclass=cmdclass,
       author="Narayan Desai",
       author_email="desai@mcs.anl.gov",
       # nosetests
-      test_suite = 'nose.collector',
+      test_suite='nose.collector',
       packages=["Bcfg2",
                 "Bcfg2.Client",
                 "Bcfg2.Client.Tools",
@@ -155,7 +155,7 @@ setup(cmdclass=cmdclass,
                 "Bcfg2.Server.Snapshots",
                 ],
       install_requires=inst_reqs,
-      tests_require=['mock'],
+      tests_require=['mock', 'nose', 'sqlalchemy'],
       package_dir={'': 'src/lib', },
       package_data={'Bcfg2.Server.Reports.reports': ['fixtures/*.xml',
                                                      'templates/*.html',
