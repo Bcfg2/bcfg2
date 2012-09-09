@@ -2,7 +2,7 @@
 #
 # bcfg2-server - bcfg2 configuration daemon
 #
-# chkconfig: 2345 19 81
+# chkconfig: 345 80 20
 # description: bcfg2 is a configuration management system that builds \
 #              and installs configuration files. \
 #              This is the server that provides the configurations \
