@@ -193,9 +193,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             elif self.HandlesFile(path):
                 rv.append(path)
                 groupdata = lxml.etree.parse(path)
-                [included.add(el.get('href'))
-                 for el in
-                 groupdata.findall('./%sinclude' % XI_NAMESPACE)]
+                included.update(el for el in groupdata.findall('./%sinclude' % 
+                                                               XI_NAMESPACE))
                 included.discard(filename)
 
         return rv
