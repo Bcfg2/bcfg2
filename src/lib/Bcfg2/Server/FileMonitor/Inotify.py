@@ -141,7 +141,5 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
             return path
 
     def shutdown(self):
-        Pseudo.shutdown(self)
         if self.notifier:
             self.notifier.stop()
-
