@@ -10,3 +10,7 @@ dist/
 src/Bcfg2
 *.egg
 *.egg-info
+
+# ctags
+tags
+TAGS

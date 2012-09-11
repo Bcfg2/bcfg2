@@ -37,6 +37,9 @@ create-debian-pkglist.py
 create-rpm-pkglist.py
     - Generate list of installed RPM packages
 
+ctags.sh
+    - Generate ctags (or etags) indexes for the Bcfg2 source
+
 encap-util-count.sh
     - Produce a count of encap packages per directory
 
