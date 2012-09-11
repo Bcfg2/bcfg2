@@ -177,7 +177,7 @@ class POSIXFile(POSIXTool):
                                   difflib.unified_diff,
                                   filename=entry.get("name"))
                 if diff:
-                    udiff = ''.join(diff)
+                    udiff = '\n'.join(l.rstrip('\n') for l in diff)
                     if hasattr(udiff, "decode"):
                         udiff = udiff.decode(self.setup['encoding'])
                     try:
