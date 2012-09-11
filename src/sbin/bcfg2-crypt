@@ -36,6 +36,10 @@ def get_logger(verbose=0):
     return LOGGER
 
 
+class EncryptionChunkingError(Exception):
+    pass
+
+
 class Encryptor(object):
     def __init__(self, setup):
         self.setup = setup
@@ -102,13 +106,19 @@ class Encryptor(object):
         self.set_passphrase()
 
         crypted = []
-        for chunk in self.chunk(plaintext):
-            try:
-                passphrase, pname = self.get_passphrase(chunk)
-            except TypeError:
-                return False
+        try:
+            for chunk in self.chunk(plaintext):
+                try:
+                    passphrase, pname = self.get_passphrase(chunk)
+                except TypeError:
+                    return False
 
-            crypted.append(self._encrypt(chunk, passphrase, name=pname))
+                crypted.append(self._encrypt(chunk, passphrase, name=pname))
+        except EncryptionChunkingError:
+            err = sys.exc_info()[1]
+            self.logger.error("Error getting data to encrypt from %s: %s" %
+                              (fname, err))
+            return False
 
         new_fname = self.get_encrypted_filename(fname)
         try:
@@ -119,6 +129,11 @@ class Encryptor(object):
             err = sys.exc_info()[1]
             self.logger.error("Error writing encrypted data from %s to %s: %s" %
                               (fname, new_fname, err))
+            return False
+        except EncryptionChunkingError:
+            err = sys.exc_info()[1]
+            self.logger.error("Error assembling encrypted data from %s: %s" %
+                              (fname, err))
             return False
 
     def _encrypt(self, plaintext, passphrase, name=None):
@@ -135,44 +150,62 @@ class Encryptor(object):
         self.set_passphrase()
 
         plaintext = []
-        for chunk in self.chunk(crypted):
-            try:
-                passphrase, pname = self.get_passphrase(chunk)
+        try:
+            for chunk in self.chunk(crypted):
                 try:
-                    plaintext.append(self._decrypt(chunk, passphrase))
-                except Bcfg2.Encryption.EVPError:
-                    self.logger.info("Could not decrypt %s with the specified "
-                                     "passphrase" % fname)
-                    return False
-                except:
-                    err = sys.exc_info()[1]
-                    self.logger.error("Error decrypting %s: %s" % (fname, err))
-                    return False
-            except TypeError:
-                pchunk = None
-                for pname in self.setup.cfp.options('encryption'):
-                    self.logger.debug("Trying passphrase %s" % pname)
-                    passphrase = self.setup.cfp.get('encryption', pname)
+                    passphrase, pname = self.get_passphrase(chunk)
                     try:
-                        pchunk = self._decrypt(chunk, passphrase)
-                        break
+                        plaintext.append(self._decrypt(chunk, passphrase))
                     except Bcfg2.Encryption.EVPError:
-                        pass
+                        self.logger.info("Could not decrypt %s with the "
+                                         "specified passphrase" % fname)
+                        return False
                     except:
                         err = sys.exc_info()[1]
                         self.logger.error("Error decrypting %s: %s" %
                                           (fname, err))
-                if pchunk is not None:
-                    plaintext.append(pchunk)
-                else:
-                    self.logger.error("Could not decrypt %s with any "
-                                      "passphrase in %s" %
-                                      (fname, self.setup['configfile']))
-                    return False
-                
+                        return False
+                except TypeError:
+                    pchunk = None
+                    for pname in self.setup.cfp.options('encryption'):
+                        self.logger.debug("Trying passphrase %s" % pname)
+                        passphrase = self.setup.cfp.get('encryption', pname)
+                        try:
+                            pchunk = self._decrypt(chunk, passphrase)
+                            break
+                        except Bcfg2.Encryption.EVPError:
+                            pass
+                        except:
+                            err = sys.exc_info()[1]
+                            self.logger.error("Error decrypting %s: %s" %
+                                              (fname, err))
+                    if pchunk is not None:
+                        plaintext.append(pchunk)
+                    else:
+                        self.logger.error("Could not decrypt %s with any "
+                                          "passphrase in %s" %
+                                          (fname, self.setup['configfile']))
+                        return False
+        except EncryptionChunkingError:
+            err = sys.exc_info()[1]
+            self.logger.error("Error getting encrypted data from %s: %s" %
+                              (fname, err))
+            return False
+        
+        try:
+            return self.unchunk(plaintext, crypted)
+        except EncryptionChunkingError:
+            err = sys.exc_info()[1]
+            self.logger.error("Error assembling plaintext data from %s: %s" %
+                              (fname, err))
+            return False
+
+    def write_decrypted(self, fname, data=None):
+        if data is None:
+            data = self.decrypt(fname)
         new_fname = self.get_plaintext_filename(fname)
         try:
-            open(new_fname, "wb").write(self.unchunk(plaintext, crypted))
+            open(new_fname, "wb").write(data)
             self.logger.info("Wrote decrypted data to %s" % new_fname)
             return True
         except IOError:
