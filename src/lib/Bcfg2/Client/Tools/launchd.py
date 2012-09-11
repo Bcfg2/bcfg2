@@ -59,6 +59,9 @@ class launchd(Bcfg2.Client.Tools.Tool):
 
     def VerifyService(self, entry, _):
         """Verify launchd service entry."""
+        if entry.get('status') == 'ignore':
+            return True
+
         try:
             services = self.cmd.run("/bin/launchctl list")[1]
         except IndexError:

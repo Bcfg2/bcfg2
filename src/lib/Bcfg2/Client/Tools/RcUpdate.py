@@ -18,6 +18,9 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
         Assumes we run in the "default" runlevel.
 
         """
+        if entry.get('status') == 'ignore':
+            return True
+
         # check if service is enabled
         cmd = '/sbin/rc-update show default | grep %s'
         rc = self.cmd.run(cmd % entry.get('name'))[0]

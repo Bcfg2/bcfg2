@@ -191,7 +191,7 @@ Service status descriptions
 
 * ignore
 
-  * don't check the status, leave it as-is (valid for deb and upstart services only)
+  * Don't perform service status checks.
 
 Client Tag
 ----------

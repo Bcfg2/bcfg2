@@ -21,6 +21,9 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
 
     def VerifyService(self, entry, _):
         """Verify Service status for entry."""
+        if entry.get('status') == 'ignore':
+            return True
+
         try:
             cmd = "/sbin/chkconfig --list %s " % (entry.get('name'))
             raw = self.cmd.run(cmd)[1]

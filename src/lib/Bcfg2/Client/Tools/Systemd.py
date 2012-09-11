@@ -17,6 +17,9 @@ class Systemd(Bcfg2.Client.Tools.SvcTool):
 
     def VerifyService(self, entry, _):
         """Verify Service status for entry."""
+        if entry.get('status') == 'ignore':
+            return True
+
         cmd = "/bin/systemctl status %s.service " % (entry.get('name'))
         raw = ''.join(self.cmd.run(cmd)[1])
 
