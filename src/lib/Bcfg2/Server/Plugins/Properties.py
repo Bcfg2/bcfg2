@@ -6,7 +6,8 @@ import logging
 import lxml.etree
 import Bcfg2.Server.Plugin
 try:
-    from Bcfg2.Encryption import ssl_decrypt, get_passphrases, EVPError
+    from Bcfg2.Encryption import ssl_decrypt, get_passphrases, \
+        bruteforce_decrypt, EVPError
     have_crypto = True
 except ImportError:
     have_crypto = False
@@ -70,7 +71,7 @@ class PropertyFile(Bcfg2.Server.Plugin.StructFile):
                 msg = "Properties: M2Crypto is not available: %s" % self.name
                 logger.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-            for el in self.xdata.xpath("*[@encrypted]"):
+            for el in self.xdata.xpath("//*[@encrypted]"):
                 try:
                     el.text = self._decrypt(el)
                 except EVPError:
@@ -91,11 +92,7 @@ class PropertyFile(Bcfg2.Server.Plugin.StructFile):
                 # error is raised below
                 pass
         except KeyError:
-            for passwd in passes.values():
-                try:
-                    return ssl_decrypt(element.text, passwd)
-                except EVPError:
-                    pass
+            return bruteforce_decrypt(element.text, passphrases=passes.values())
         raise EVPError("Failed to decrypt")
 
 class PropDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):
