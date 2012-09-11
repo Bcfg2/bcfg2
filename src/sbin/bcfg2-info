@@ -388,6 +388,11 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             self.Bind(entry, metadata)
             data = lxml.etree.tostring(entry,
                                        xml_declaration=False).decode('UTF-8')
+        except Exception:
+            print("Failed to build entry %s for host %s: %s" %
+                (fname, client, traceback.format_exc().splitlines()[-1]))
+            raise
+        try:
             if outfile:
                 open(outfile, 'w').write(data)
             else:
@@ -396,10 +401,6 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             err = sys.exc_info()[1]
             print("Could not write to %s: %s" % (outfile, err))
             print(data)
-        except Exception:
-            print("Failed to build entry %s for host %s: %s" % 
-                (fname, client, traceback.format_exc().splitlines()[-1]))
-            raise
 
     def do_buildbundle(self, args):
         """Render a bundle for client."""
