@@ -79,7 +79,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
             rv &= self.cmd.run(rcmd % (entry.get('name'),
                                        entry.get('status')))[0] == 0
             if entry.get("current_status") == "off":
-                rv &= self.start_service(entry)
+                rv &= (self.start_service(entry) == 0)
         return rv
 
     def FindExtra(self):
