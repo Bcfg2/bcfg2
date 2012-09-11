@@ -270,6 +270,9 @@ class PropertiesEncryptor(Encryptor):
         xdata = lxml.etree.XML(data)
         if self.setup['xpath']:
             elements = xdata.xpath(self.setup['xpath'])
+            if not elements:
+                raise EncryptionChunkingError("XPath expression %s matched no "
+                                              "elements" % self.setup['xpath'])
         else:
             elements = xdata.xpath('//*[@encrypted]')
             if not elements:
