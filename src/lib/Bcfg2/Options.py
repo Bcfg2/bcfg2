@@ -907,6 +907,11 @@ DECRYPT = \
            default=False,
            cmd='--decrypt',
            long_arg=True)
+DECRYPT_STDOUT = \
+    Option('Decrypt the specified file to stdout',
+           default=False,
+           cmd='--stdout',
+           long_arg=True)
 CRYPT_PASSPHRASE = \
     Option('Encryption passphrase (name or passphrase)',
            default=None,
@@ -963,6 +968,7 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
 
 CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
                      decrypt=DECRYPT,
+                     decrypt_stdout=DECRYPT_STDOUT,
                      passphrase=CRYPT_PASSPHRASE,
                      xpath=CRYPT_XPATH,
                      properties=CRYPT_PROPERTIES,

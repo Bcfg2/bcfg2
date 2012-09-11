@@ -321,8 +321,8 @@ def main():
     if not setup['args']:
         print(setup.hm)
         raise SystemExit(1)
-    elif setup['encrypt'] and setup['decrypt']:
-        print("You cannot specify both --encrypt) and --decrypt")
+    elif setup['encrypt'] and (setup['decrypt_stdout'] or setup['decrypt']):
+        print("You cannot specify both --encrypt and --decrypt or --stdout")
         raise SystemExit(1)
     elif setup['cfg'] and setup['properties']:
         print("You cannot specify both --cfg and --properties")
@@ -375,9 +375,19 @@ def main():
         if setup['encrypt']:
             if not encryptor.encrypt(fname):
                 print("Failed to encrypt %s, skipping" % fname)
-        elif setup['decrypt']:
-            if not encryptor.decrypt(fname):
+        elif setup['decrypt'] or setup['decrypt_stdout']:
+            data = encryptor.decrypt(fname)
+            if not data:
                 print("Failed to decrypt %s, skipping" % fname)
+                continue
+            if setup['decrypt_stdout']:
+                if len(setup['args']) > 1:
+                    print("----- %s -----" % fname)
+                print(data)
+                if len(setup['args']) > 1:
+                    print("")
+            else:
+                encryptor.write_decrypted(fname, data=data)
         else:
             logger.info("Neither --encrypt nor --decrypt specified, "
                         "determining mode")
