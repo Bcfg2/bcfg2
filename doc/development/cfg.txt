@@ -56,7 +56,7 @@ exceptions:
 Accessing Configuration Options
 ===============================
 
-.. autoattribute:: Bcfg2.Server.Plugins.Cfg.SETUP
+.. autodata:: Bcfg2.Server.Plugins.Cfg.SETUP
 
 Existing Cfg Handlers
 =====================
