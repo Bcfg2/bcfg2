@@ -13,29 +13,85 @@ import Bcfg2.Server.Lint
 
 logger = logging.getLogger(__name__)
 
-PROCESSORS = None
+#: SETUP contains a reference to the
+#: :class:`Bcfg2.Options.OptionParser` created by the Bcfg2 core for
+#: parsing command-line and config file options.
+#: :class:`Bcfg2.Server.Plugins.Cfg.Cfg` stores it in a module global
+#: so that the handler objects can access it, because there is no other
+#: facility for passing a setup object from a
+#: :class:`Bcfg2.Server.Plugin.helpers.GroupSpool` to its
+#: :class:`Bcfg2.Server.Plugin.helpers.EntrySet` objects and thence to
+#: the EntrySet children.
 SETUP = None
 
 class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
+    """ CfgBaseFileMatcher is the parent class for all Cfg handler
+    objects. """
+
+    #: The set of filenames handled by this handler.  If
+    #: ``__basenames__`` is the empty list, then the basename of each
+    #: :class:`Bcfg2.Server.Plugins.Cfg.CfgEntrySet` is used -- i.e.,
+    #: the name of the directory that contains the file is used for
+    #: the basename.
     __basenames__ = []
+
+    #: This handler only handles files with the listed extensions
+    #: (which come *after*
+    #: :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__specific__`
+    #: indicators).
     __extensions__ = []
+
+    #: This handler ignores files with the listed extensions.  A file
+    #: that is ignored by a handler will not be handled by any other
+    #: handlers; that is, a file is ignored if any handler ignores it.
+    #: Ignoring a file is not simply a means to defer handling of that
+    #: file to another handler.
     __ignore__ = []
+
+    #: Whether or not the files handled by this handler are permitted
+    #: to have specificity indicators in their filenames -- e.g.,
+    #: ``.H_client.example.com`` or ``.G10_foogroup``.
     __specific__ = True
+
+    #: Flag to indicate a deprecated handler.
     deprecated = False
 
-    def __init__(self, fname, spec, encoding):
-        Bcfg2.Server.Plugin.SpecificData.__init__(self, fname, spec, encoding)
+    def __init__(self, name, specific, encoding):
+        Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific,
+                                                  encoding)
         self.encoding = encoding
-        self.regex = self.__class__.get_regex(fname)
+        self.regex = self.__class__.get_regex(name)
+    __init__.__doc__ = Bcfg2.Server.Plugin.SpecificData.__init__.__doc__ + \
+"""
+.. -----
+.. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__basenames__
+.. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__extensions__
+.. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__ignore__
+.. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__specific__"""
 
     @classmethod
-    def get_regex(cls, fname=None, extensions=None):
+    def get_regex(cls, basename=None, extensions=None):
+        """ Get a compiled regular expression to match filenames (not
+        full paths) that this handler handles.
+
+        :param basename: The base filename to use if
+                         :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__basenames__`
+                         is not defined (i.e., the name of the
+                         directory that contains the files the regex
+                         will be applied to)
+        :type basename: string
+        :param extensions: Override the default list of
+                           :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__extensions__`
+                           to include in the regex.
+        :type extensions: list of strings
+        :returns: compiled regex
+        """
         if extensions is None:
             extensions = cls.__extensions__
         if cls.__basenames__:
-            fname = '|'.join(cls.__basenames__)
+            basename = '|'.join(cls.__basenames__)
 
-        components = ['^(?P<basename>%s)' % fname]
+        components = ['^(?P<basename>%s)' % basename]
         if cls.__specific__:
             components.append('(|\\.H_(?P<hostname>\S+?)|.G(?P<prio>\d+)_(?P<group>\S+?))')
         if extensions:
@@ -45,6 +101,22 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
     
     @classmethod
     def handles(cls, event, basename=None):
+        """ Return True if this handler handles the file described by
+        ``event``.  This is faster than just applying
+        :func:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.get_regex`
+        because it tries to do non-regex matching first.
+
+        :param event: The FAM event to check
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :param basename: The base filename to use if
+                         :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__basenames__`
+                         is not defined (i.e., the name of the
+                         directory that contains the files the regex
+                         will be applied to)
+        :type basename: string
+        :returns: bool - True if this handler handles the file listed
+                  in the event, False otherwise.
+        """
         if cls.__basenames__:
             basenames = cls.__basenames__
         else:
@@ -57,10 +129,26 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
                 match = True
                 break
         return (match and
-                cls.get_regex(fname=os.path.basename(basename)).match(event.filename))
+                cls.get_regex(basename=os.path.basename(basename)).match(event.filename))
 
     @classmethod
     def ignore(cls, event, basename=None):
+        """ Return True if this handler ignores the file described by
+        ``event``.  See
+        :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__ignore__`
+        for more information on how ignoring files works.
+
+        :param event: The FAM event to check
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :param basename: The base filename to use if
+                         :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__basenames__`
+                         is not defined (i.e., the name of the
+                         directory that contains the files the regex
+                         will be applied to)
+        :type basename: string
+        :returns: bool - True if this handler handles the file listed
+                  in the event, False otherwise.
+        """
         if not cls.__ignore__:
             return False
 
@@ -76,10 +164,9 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
                 match = True
                 break
         return (match and
-                cls.get_regex(fname=os.path.basename(basename),
+                cls.get_regex(basename=os.path.basename(basename),
                               extensions=cls.__ignore__).match(event.filename))
         
-
     def __str__(self):
         return "%s(%s)" % (self.__class__.__name__, self.name)
 
@@ -88,53 +175,170 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
 
 
 class CfgGenerator(CfgBaseFileMatcher):
-    """ CfgGenerators generate the initial content of a file """
+    """ CfgGenerators generate the initial content of a file. Every
+    valid :class:`Bcfg2.Server.Plugins.Cfg.CfgEntrySet` must have at
+    least one file handled by a CfgGenerator.  Moreover, each
+    CfgEntrySet must have one unambiguously best handler for each
+    client. See :class:`Bcfg2.Server.Plugin.helpers.EntrySet` for more
+    details on how the best handler is chosen."""
+
+    def __init__(self, name, specific, encoding):
+        # we define an __init__ that just calls the parent __init__,
+        # so that we can set the docstring on __init__ to something
+        # different from the parent __init__ -- namely, the parent
+        # __init__ docstring, minus everything after ``.. -----``,
+        # which we use to delineate the actual docs from the
+        # .. autoattribute hacks we have to do to get private
+        # attributes included in sphinx 1.0 """
+        CfgBaseFileMatcher.__init__(self, name, specific, encoding)
+    __init__.__doc__ = CfgBaseFileMatcher.__init__.__doc__.split(".. -----")[0]
+
     def get_data(self, entry, metadata):
+        """ get_data() returns the initial data of a file.
+
+        :param entry: The entry to generate data for. ``entry`` should
+                      not be modified in-place.
+        :type entry: lxml.etree._Element
+        :param metadata: The client metadata to generate data for.
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: string - the contents of the entry
+        :raises: any
+        """
         return self.data
 
 
 class CfgFilter(CfgBaseFileMatcher):
-    """ CfgFilters modify the initial content of a file after it's
-    been generated """
+    """ CfgFilters modify the initial content of a file after it has
+    been generated by a :class:`Bcfg2.Server.Plugins.Cfg.CfgGenerator`. """
+
+    def __init__(self, name, specific, encoding):
+        # see comment on CfgGenerator.__init__ above
+        CfgBaseFileMatcher.__init__(self, name, specific, encoding)
+    __init__.__doc__ = CfgBaseFileMatcher.__init__.__doc__.split(".. -----")[0]
+
     def modify_data(self, entry, metadata, data):
+        """ Return new data for the entry, based on the initial data
+        produced by the :class:`Bcfg2.Server.Plugins.Cfg.CfgGenerator`.
+
+        :param entry: The entry to filter data for. ``entry`` should
+                      not be modified in-place.
+        :type entry: lxml.etree._Element
+        :param metadata: The client metadata to filter data for.
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :param data: The initial contents of the entry produced by the
+                      CfgGenerator
+        :type data: string
+        :returns: string - the new contents of the entry
+        """
         raise NotImplementedError
 
 
 class CfgInfo(CfgBaseFileMatcher):
-    """ CfgInfos provide metadata (owner, group, paranoid, etc.) for a
-    file entry """
+    """ CfgInfo handlers provide metadata (owner, group, paranoid,
+    etc.) for a file entry.
+
+    .. private-include: _set_info
+    """
+
+    #: Whether or not the files handled by this handler are permitted
+    #: to have specificity indicators in their filenames -- e.g.,
+    #: ``.H_client.example.com`` or ``.G10_foogroup``.  By default
+    #: CfgInfo handlers do not allow specificities
     __specific__ = False
 
     def __init__(self, fname):
+        """
+        :param name: The full path to the file
+        :type name: string
+
+        .. -----
+        .. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgInfo.__specific__
+        """
         CfgBaseFileMatcher.__init__(self, fname, None, None)
 
     def bind_info_to_entry(self, entry, metadata):
+        """ Assign the appropriate attributes to the entry, modifying
+        it in place.
+
+        :param entry: The abstract entry to bind the info to
+        :type entry: lxml.etree._Element
+        :param metadata: The client metadata to get info for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: None
+        """
         raise NotImplementedError
 
     def _set_info(self, entry, info):
+        """ Helper function to assign a dict of info attributes to an
+        entry object.  ``entry`` is modified in-place.
+
+        :param entry: The abstract entry to bind the info to
+        :type entry: lxml.etree._Element
+        :param info: A dict of attribute: value pairs
+        :type info: dict
+        :returns: None
+        """
         for key, value in list(info.items()):
             if not key.startswith("__"):
                 entry.attrib.__setitem__(key, value)
 
 
 class CfgVerifier(CfgBaseFileMatcher):
-    """ Verifiers validate entries """
+    """ CfgVerifier handlers validate entry data once it has been
+    generated, filtered, and info applied.  Validation can be enabled
+    or disabled in the configuration.  Validation can apply to the
+    contents of an entry, the attributes on it (e.g., owner, group,
+    etc.), or both.
+    """
+
+    def __init__(self, name, specific, encoding):
+        # see comment on CfgGenerator.__init__ above
+        CfgBaseFileMatcher.__init__(self, name, specific, encoding)
+    __init__.__doc__ = CfgBaseFileMatcher.__init__.__doc__.split(".. -----")[0]
+
     def verify_entry(self, entry, metadata, data):
+        """ Perform entry contents. validation.
+
+        :param entry: The entry to validate data for. ``entry`` should
+                      not be modified in-place.  Info attributes have
+                      been bound to the entry, but the text data has
+                      not been set.
+        :type entry: lxml.etree._Element
+        :param metadata: The client metadata to validate data for.
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :param data: The contents of the entry
+        :type data: string
+        :returns: None
+        :raises: Bcfg2.Server.Plugins.Cfg.CfgVerificationError
+        """
         raise NotImplementedError
 
 
 class CfgVerificationError(Exception):
+    """ Raised by
+    :func:`Bcfg2.Server.Plugins.Cfg.CfgVerifier.verify_entry` when an
+    entry fails verification """
     pass
 
 
 class CfgDefaultInfo(CfgInfo):
+    """ :class:`Bcfg2.Server.Plugins.Cfg.Cfg` handler that supplies a
+    default set of file metadata """
+
     def __init__(self, defaults):
         CfgInfo.__init__(self, '')
         self.defaults = defaults
+    __init__.__doc__ = CfgInfo.__init__.__doc__.split(".. -----")[0]
 
     def bind_info_to_entry(self, entry, metadata):
         self._set_info(entry, self.defaults)
+    bind_info_to_entry.__doc__ = CfgInfo.bind_info_to_entry.__doc__
 
+#: A :class:`CfgDefaultInfo` object instantiated with
+#: :attr:`Bcfg2.Server.Plugin.helper.default_file_metadata` as its
+#: default metadata.  This is used to set a default file metadata set
+#: on an entry before a "real" :class:`CfgInfo` handler applies its
+#: metadata to the entry.
 DEFAULT_INFO = CfgDefaultInfo(Bcfg2.Server.Plugin.default_file_metadata)
 
 class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
@@ -142,28 +346,36 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path,
                                               entry_type, encoding)
         self.specific = None
-        self.load_processors()
+        self._handlers = None
+    __init__.__doc__ = Bcfg2.Server.Plugin.EntrySet.__doc__
 
-    def load_processors(self):
-        """ load Cfg file processors.  this must be done at run-time,
-        not at compile-time, or we get a circular import and things
-        don't work.  but finding the right way to do this at runtime
-        was ... problematic. so here it is, writing to a global
-        variable.  Sorry 'bout that. """
-        global PROCESSORS
-        if PROCESSORS is None:
-            PROCESSORS = []
+    @property
+    def handlers(self):
+        """ A list of Cfg handler classes. Loading the handlers must
+        be done at run-time, not at compile-time, or it causes a
+        circular import and Bad Things Happen."""
+        if self._handlers is None:
+            self._handlers = []
             for submodule in walk_packages(path=__path__,
                                            prefix=__name__ + "."):
                 mname = submodule[1].rsplit('.', 1)[-1]
                 module = getattr(__import__(submodule[1]).Server.Plugins.Cfg,
                                  mname)
-                proc = getattr(module, mname)
-                if set(proc.__mro__).intersection([CfgInfo, CfgFilter,
+                hdlr = getattr(module, mname)
+                if set(hdlr.__mro__).intersection([CfgInfo, CfgFilter,
                                                    CfgGenerator, CfgVerifier]):
-                    PROCESSORS.append(proc)
+                    self._handlers.append(hdlr)
+        return self._handlers
 
     def handle_event(self, event):
+        """ Dispatch a FAM event to :func:`entry_init` or the
+        appropriate child handler object.
+
+        :param event: An event that applies to a file handled by this
+                      CfgEntrySet
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :returns: None
+        """
         action = event.code2str()
         
         if event.filename not in self.entries:
@@ -171,18 +383,18 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 # process a bogus changed event like a created
                 return
                 
-            for proc in PROCESSORS:
-                if proc.handles(event, basename=self.path):
+            for hdlr in self.handlers:
+                if hdlr.handles(event, basename=self.path):
                     if action == 'changed':
                         # warn about a bogus 'changed' event, but
                         # handle it like a 'created'
                         logger.warning("Got %s event for unknown file %s" %
                                        (action, event.filename))
                     self.debug_log("%s handling %s event on %s" %
-                                   (proc.__name__, action, event.filename))
-                    self.entry_init(event, proc)
+                                   (hdlr.__name__, action, event.filename))
+                    self.entry_init(event, hdlr)
                     return
-                elif proc.ignore(event, basename=self.path):
+                elif hdlr.ignore(event, basename=self.path):
                     return
         elif action == 'changed':
             self.entries[event.filename].handle_event(event)
@@ -198,18 +410,32 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         return [item for item in list(self.entries.values())
                 if (isinstance(item, CfgGenerator) and
                     item.specific.matches(metadata))]
+    get_matching.__doc__ = Bcfg2.Server.Plugin.EntrySet.get_matching.__doc__
 
-    def entry_init(self, event, proc):
-        if proc.__specific__:
+    def entry_init(self, event, hdlr):
+        """ Handle the creation of a file on the filesystem and the
+        creation of a Cfg handler object in this CfgEntrySet to track
+        it.
+
+        :param event: An event that applies to a file handled by this
+                      CfgEntrySet
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :param hdlr: The Cfg handler class to be used to create an
+                     object for the file described by ``event``
+        :type hdlr: class
+        :returns: None
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.SpecificityError`
+        """
+        if hdlr.__specific__:
             Bcfg2.Server.Plugin.EntrySet.entry_init(
-                self, event, entry_type=proc,
-                specific=proc.get_regex(os.path.basename(self.path)))
+                self, event, entry_type=hdlr,
+                specific=hdlr.get_regex(os.path.basename(self.path)))
         else:
             if event.filename in self.entries:
                 logger.warn("Got duplicate add for %s" % event.filename)
             else:
                 fpath = os.path.join(self.path, event.filename)
-                self.entries[event.filename] = proc(fpath)
+                self.entries[event.filename] = hdlr(fpath)
             self.entries[event.filename].handle_event(event)
 
     def bind_entry(self, entry, metadata):
@@ -222,11 +448,11 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 continue
             if isinstance(ent, CfgInfo):
                 info_handlers.append(ent)
-            elif isinstance(ent, CfgGenerator):
+            if isinstance(ent, CfgGenerator):
                 generators.append(ent)
-            elif isinstance(ent, CfgFilter):
+            if isinstance(ent, CfgFilter):
                 filters.append(ent)
-            elif isinstance(ent, CfgVerifier):
+            if isinstance(ent, CfgVerifier):
                 verifiers.append(ent)
             if ent.deprecated:
                 if ent.__basenames__:
@@ -311,6 +537,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             entry.text = data
         else:
             entry.set('empty', 'true')
+        return entry
+    bind_entry.__doc__ = Bcfg2.Server.Plugin.EntrySet.bind_entry.__doc__
 
     def list_accept_choices(self, entry, metadata):
         '''return a list of candidate pull locations'''
@@ -391,7 +619,11 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
 
 class Cfg(Bcfg2.Server.Plugin.GroupSpool,
           Bcfg2.Server.Plugin.PullTarget):
-    """This generator in the configuration file repository for Bcfg2."""
+    """ The Cfg plugin provides a repository to describe configuration
+    file contents for clients. In its simplest form, the Cfg repository is
+    just a directory tree modeled off of the directory tree on your client
+    machines.
+    """
     __author__ = 'bcfg-dev@mcs.anl.gov'
     es_cls = CfgEntrySet
     es_child_cls = Bcfg2.Server.Plugin.SpecificData
@@ -405,10 +637,21 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
         if 'validate' not in SETUP:
             SETUP.add_option('validate', Bcfg2.Options.CFG_VALIDATION)
             SETUP.reparse()
+    __init__.__doc__ = Bcfg2.Server.Plugin.GroupSpool.__init__.__doc__
 
     def has_generator(self, entry, metadata):
-        """ return True if the given entry can be generated for the
-        given metadata; False otherwise """
+        """ Return True if the given entry can be generated for the
+        given metadata; False otherwise
+
+        :param entry: Determine if a
+                      :class:`Bcfg2.Server.Plugins.Cfg.CfgGenerator`
+                      object exists that handles this (abstract) entry
+        :type entry: lxml.etree._Element
+        :param metadata: Determine if a CfgGenerator has data that
+                         applies to this client metadata
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: bool
+        """
         if entry.get('name') not in self.entries:
             return False
 
@@ -422,11 +665,15 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
     def AcceptChoices(self, entry, metadata):
         return self.entries[entry.get('name')].list_accept_choices(entry,
                                                                    metadata)
+    AcceptChoices.__doc__ = Bcfg2.Server.Plugin.PullTarget.AcceptChoices.__doc__
 
     def AcceptPullData(self, specific, new_entry, log):
         return self.entries[new_entry.get('name')].write_update(specific,
                                                                 new_entry,
                                                                 log)
+    AcceptPullData.__doc__ = \
+        Bcfg2.Server.Plugin.PullTarget.AcceptPullData.__doc__
+
 
 class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
     """ warn about usage of .cat and .diff files """
@@ -444,8 +691,8 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
     def check_entry(self, basename, entry):
         cfg = self.core.plugins['Cfg']
         for basename, entry in list(cfg.entries.items()):
-            for fname, processor in entry.entries.items():
-                if self.HandlesFile(fname) and isinstance(processor, CfgFilter):
+            for fname, handler in entry.entries.items():
+                if self.HandlesFile(fname) and isinstance(handler, CfgFilter):
                     extension = fname.split(".")[-1]
                     self.LintError("%s-file-used" % extension,
                                    "%s file used on %s: %s" %

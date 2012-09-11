@@ -11,6 +11,18 @@ to implement configuration interfaces and representation tailored to
 problems encountered by a particular site. This chapter describes what
 plugins are good for, what they can do, and how to implement them.
 
+Several plugins themselves have pluggable backends, and for narrow
+cases you may want to develop a backend for an existing plugin rather
+than an entirely new plugin.  See the following pages for more
+information:
+
+.. toctree::
+   :maxdepth: 1
+
+   cfg
+   packages
+
+
 Bcfg2 Plugins
 -------------
 
@@ -41,6 +53,8 @@ Plugin
 ^^^^^^
 
 .. autoclass:: Bcfg2.Server.Plugin.base.Plugin
+   :members: name, __author__, experimental, deprecated, conflicts,
+             sort_order, __rmi__, init_repo, shutdown
    :inherited-members:
    :show-inheritance:
 

@@ -1,3 +1,5 @@
+""" Handle .diff files, which apply diffs to plaintext files """
+
 import os
 import logging
 import tempfile
@@ -8,7 +10,13 @@ from Bcfg2.Server.Plugins.Cfg import CfgFilter
 logger = logging.getLogger(__name__)
 
 class CfgDiffFilter(CfgFilter):
+    """ CfgDiffFilter applies diffs to plaintext
+    :ref:`server-plugins-generators-Cfg` files """
+
+    #: Handle .diff files
     __extensions__ = ['diff']
+
+    #: .diff files are deprecated
     deprecated = True
 
     def modify_data(self, entry, metadata, data):
@@ -26,3 +34,4 @@ class CfgDiffFilter(CfgFilter):
             logger.error("Error applying diff %s: %s" % (delta.name, stderr))
             raise Bcfg2.Server.Plugin.PluginExecutionError('delta', delta)
         return output
+    modify_data.__doc__ = CfgFilter.modify_data.__doc__

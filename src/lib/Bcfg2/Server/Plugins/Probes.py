@@ -28,7 +28,7 @@ except ImportError:
 try:
     import syck as yaml
     has_yaml = True
-    yaml_error = syck.error
+    yaml_error = yaml.error
 except ImportError:
     try:
         import yaml

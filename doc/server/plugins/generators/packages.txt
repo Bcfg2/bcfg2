@@ -656,55 +656,6 @@ TODO list
 * Portage support
 * Explicit version pinning (a la Pkgmgr)
 
-Developing for Packages
-=======================
-
-In order to support a given client package tool driver, that driver
-must support use of the auto value for the version attribute in Package
-entries. In this case, the tool driver views the current state of
-available packages, and uses the underlying package manager's choice of
-correct package version in lieu of an explicit, centrally-specified,
-version. This support enables Packages to provide a list of Package
-entries with version='auto'. Currently, the APT and YUMng drivers support
-this feature. Note that package management systems without any network
-support cannot operate in this fashion, so RPMng and SYSV will never be
-able to use Packages. Emerge, Zypper, IPS, and Blastwave all have the
-needed features to be supported by Packages, but support has not yet
-been written.
-
-Packages fills two major functions in configuration generation. The first
-is to provide entry level binding support for Package entries included
-in client configurations. This function is quite easy to implement;
-Packages determines (based on client group membership) if the package
-is available for the client system, and which type it has. Because
-version='auto' is used, no version determination needs to be done.
-
-The second major function is more complex. Packages ensures that client
-configurations include all package-level prerequisites for package entries
-explicitly included in the configuration. In order to support this,
-Packages needs to directly process network data for package management
-systems (the network sources for apt or yum, for examples), process
-these files, and build data structures describing prerequisites and the
-providers of those functions/paths. To simplify implementations of this,
-there is a generic base class (Bcfg2.Server.Plugins.Packages.Source)
-that provides a framework for fetching network data via HTTP, processing
-those sources (with subclass defined methods for processing the specific
-format provided by the tool), a generic dependency resolution method,
-and a caching mechanism that greatly speeds up server/bcfg2-info startup.
-
-Each source type must define:
-
-* a get_urls attribute (and associated urls property) that describes
-  the URLS where to get data from.
-* a read_files method that reads and processes the downloaded files
-
-Sources may define a get_provides method, if provides are complex. For
-example, provides in rpm can be either rpm names or file paths, so
-multiple data sources need to be multiplexed.
-
-The APT source in ``src/lib/Server/Plugins/Packages.py`` provides a
-relatively simple implementation of a source.
-
 .. _configuration:
 
 Configuration

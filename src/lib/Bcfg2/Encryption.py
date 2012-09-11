@@ -73,3 +73,44 @@ def ssl_encrypt(plaintext, passwd, algorithm=ALGORITHM, salt=None):
     
     crypted = str_encrypt(plaintext, key=key, salt=salt, iv=iv)
     return base64.b64encode("Salted__" + salt + crypted) + "\n"
+
+def get_passphrases(setup):
+    """ Get all candidate encryption passphrases from the config file.
+
+    :param setup: The Bcfg2 option set to extract passphrases from
+    :type setup: Bcfg2.Options.OptionParser
+    returns: dict - a dict of <passphrase name>: <passphrase>
+    """
+    section = "encryption"
+    if setup.cfp.has_section(section):
+        return dict([(o, setup.cfp.get(section, o))
+                     for o in setup.cfp.options(section)])
+    else:
+        return dict()
+
+def bruteforce_decrypt(crypted, passphrases=None, setup=None):
+    """ Convenience method to decrypt the given encrypted string by
+    trying the given passphrases or all passphrases (as returned by
+    :func:`Bcfg2.Encryption.passphrases`) sequentially until one is
+    found that works.
+
+    Either ``passphrases`` or ``setup`` must be provided.
+
+    :param crypted: The data to decrypt
+    :type crypted: string
+    :param passphrases: The passphrases to try.
+    :type passphrases: list
+    :param setup: A Bcfg2 option set to extract passphrases from
+    :type setup: Bcfg2.Options.OptionParser
+    :returns: string - The decrypted data
+    :raises: :class:`M2Crypto.EVP.EVPError`, if the data cannot be decrypted
+    """
+    if not passphrases:
+        passphrases = get_passphrases(setup).values()
+    for passwd in passphrases:
+        try:
+            return ssl_decrypt(crypted, passwd)
+        except EVPError:
+            pass
+    raise EVPError("Failed to decrypt")
+

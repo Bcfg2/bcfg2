@@ -1,11 +1,16 @@
-import logging
-import Bcfg2.Server.Plugin
+""" Handle .cat files, which append lines to and remove lines from
+plaintext files """
+
 from Bcfg2.Server.Plugins.Cfg import CfgFilter
 
-logger = logging.getLogger(__name__)
-
 class CfgCatFilter(CfgFilter):
+    """ CfgCatFilter appends lines to and remove lines from plaintext
+    :ref:`server-plugins-generators-Cfg` files"""
+
+    #: Handle .cat files
     __extensions__ = ['cat']
+
+    #: .cat files are deprecated
     deprecated = True
 
     def modify_data(self, entry, metadata, data):
@@ -19,3 +24,4 @@ class CfgCatFilter(CfgFilter):
                 if line[1:] in datalines:
                     datalines.remove(line[1:])
         return "\n".join(datalines) + "\n"
+    modify_data.__doc__ = CfgFilter.modify_data.__doc__

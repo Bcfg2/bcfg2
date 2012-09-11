@@ -1,0 +1,100 @@
+.. -*- mode: rst -*-
+
+.. _development-cfg:
+
+=========================
+ Cfg Handler Development
+=========================
+
+The :ref:`server-plugins-generators-cfg` plugin offers multiple
+handlers to handle different entries in different ways.  Writing a new
+Cfg handler is a relatively simple way to add significant new features
+to Cfg.
+
+Each new Cfg handler must be contained in its own module in
+``Bcfg2.Server.Plugins.Cfg``, and the module and class name must be
+identical.  The name should start with ``Cfg``, and should clearly
+indicate which of the handler types it is.  A handler class may
+implement more than one handler type.a
+
+Cfg Handler Types
+=================
+
+There are four different types of Cfg handlers.  A new handler must
+inherit either from one of these classes, or from an existing handler.
+
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgGenerator
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgFilter
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgInfo
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgVerifier
+
+Cfg Handler Base Class
+======================
+
+In addition to the interfaces defined above, all Cfg handlers inherit
+from CfgBaseFileMatcher.
+
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher
+
+
+Cfg Exceptions
+==============
+
+Cfg handlers may produce the following exceptions:
+
+.. autoexception:: Bcfg2.Server.Plugins.Cfg.CfgVerificationError
+
+In addition, Cfg handlers may produce the following base plugin
+exceptions:
+
+.. autoexception:: Bcfg2.Server.Plugin.exceptions.PluginExecutionError
+   :noindex:
+
+.. autoexception:: Bcfg2.Server.Plugin.exceptions.PluginInitError
+   :noindex:
+
+Accessing Configuration Options
+===============================
+
+.. autoattribute:: Bcfg2.Server.Plugins.Cfg.SETUP
+
+Existing Cfg Handlers
+=====================
+
+Generators
+----------
+
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgPlaintextGenerator.CfgPlaintextGenerator
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator.CfgGenshiGenerator
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator.CfgCheetahGenerator
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.CfgEncryptedGenerator
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenshiGenerator.CfgEncryptedGenshiGenerator
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEncryptedCheetahGenerator.CfgEncryptedCheetahGenerator
+
+Filters
+-------
+
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgCatFilter.CfgCatFilter
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgDiffFilter.CfgDiffFilter
+
+Info Handlers
+-------------
+
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgDefaultInfo
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgInfoXML.CfgInfoXML
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgLegacyInfo.CfgLegacyInfo
+
+Verifiers
+---------
+
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgExternalCommandVerifier.CfgExternalCommandVerifier
+
+Other Cfg Objects
+=================
+
+These other objects comprise the remainder of the Cfg plugin, and are
+included for completeness.
+
+.. autoattribute:: Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEntrySet
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.Cfg

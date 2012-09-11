@@ -85,17 +85,13 @@ class Plugin(Debuggable):
     __rmi__ = Debuggable.__rmi__
 
     def __init__(self, core, datastore):
-        """ Initialize the plugin.
-
+        """
         :param core: The Bcfg2.Server.Core initializing the plugin
         :type core: Bcfg2.Server.Core
         :param datastore: The path to the Bcfg2 repository on the
                           filesystem
         :type datastore: string
         :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginInitError`
-
-        .. autoattribute:: __author__
-        .. autoattribute:: __rmi__
         """
         object.__init__(self)
         self.Entries = {}

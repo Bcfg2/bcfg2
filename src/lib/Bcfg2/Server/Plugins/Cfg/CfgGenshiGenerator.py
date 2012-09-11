@@ -1,3 +1,7 @@
+""" The CfgGenshiGenerator allows you to use the `Genshi
+<http://genshi.edgewall.org>`_ templating system to generate
+:ref:`server-plugins-generators-cfg` files. """
+
 import re
 import sys
 import logging
@@ -16,9 +20,15 @@ except ImportError:
     TemplateLoader = None
     have_genshi = False
 
-# snipped from TGenshi
 def removecomment(stream):
-    """A genshi filter that removes comments from the stream."""
+    """ A Genshi filter that removes comments from the stream.  This
+    function is a generator.
+
+    :param stream: The Genshi stream to remove comments from
+    :type stream: genshi.core.Stream
+    :returns: tuple of ``(kind, data, pos)``, as when iterating
+              through a Genshi stream
+    """
     for kind, data, pos in stream:
         if kind is genshi.core.COMMENT:
             continue
@@ -26,8 +36,27 @@ def removecomment(stream):
 
 
 class CfgGenshiGenerator(CfgGenerator):
+    """ The CfgGenshiGenerator allows you to use the `Genshi
+    <http://genshi.edgewall.org>`_ templating system to generate
+    :ref:`server-plugins-generators-cfg` files. """
+
+    #: Handle .genshi files
     __extensions__ = ['genshi']
+    
+    #: ``__loader_cls__`` is the class that will be instantiated to
+    #: load the template files.  It must implement one public function,
+    #: ``load()``, as :class:`genshi.template.TemplateLoader`.
     __loader_cls__ = TemplateLoader
+
+    #: Ignore ``.genshi_include`` files so they can be used with the
+    #: Genshi ``{% include ... %}`` directive without raising warnings.
+    __ignore__ = ["genshi_include"]
+
+    #: Error-handling in Genshi is pretty obtuse.  This regex is used
+    #: to extract the first line of the code block that raised an
+    #: exception in a Genshi template so we can provide a decent error
+    #: message that actually tells the end user where an error
+    #: occurred.
     pyerror_re = re.compile('<\w+ u?[\'"](.*?)\s*\.\.\.[\'"]>')
 
     def __init__(self, fname, spec, encoding):
@@ -38,11 +67,7 @@ class CfgGenshiGenerator(CfgGenerator):
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         self.loader = self.__loader_cls__()
         self.template = None
-
-    @classmethod
-    def ignore(cls, event, basename=None):
-        return (event.filename.endswith(".genshi_include") or
-                CfgGenerator.ignore(event, basename=basename))
+    __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def get_data(self, entry, metadata):
         fname = entry.get('realname', entry.get('name'))
@@ -109,6 +134,7 @@ class CfgGenshiGenerator(CfgGenerator):
                              (fname, src[real_lineno], err.__class__.__name__,
                               err))
             raise
+    get_data.__doc__ = CfgGenerator.get_data.__doc__
 
     def handle_event(self, event):
         if event.code2str() == 'deleted':
@@ -122,4 +148,4 @@ class CfgGenshiGenerator(CfgGenerator):
                                                            sys.exc_info()[1])
             logger.error(msg)
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-            
+    handle_event.__doc__ = CfgGenerator.handle_event.__doc__

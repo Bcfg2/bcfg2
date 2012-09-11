@@ -1,3 +1,5 @@
+""" Invoke an external command to verify file contents """
+
 import os
 import shlex
 import logging
@@ -8,6 +10,10 @@ from Bcfg2.Server.Plugins.Cfg import CfgVerifier, CfgVerificationError
 logger = logging.getLogger(__name__)
 
 class CfgExternalCommandVerifier(CfgVerifier):
+    """ Invoke an external script to verify
+    :ref:`server-plugins-generators-cfg` file contents """
+
+    #: Handle :file:`:test` files
     __basenames__ = [':test']
 
     def verify_entry(self, entry, metadata, data):
@@ -16,6 +22,7 @@ class CfgExternalCommandVerifier(CfgVerifier):
         rv = proc.wait()
         if rv != 0:
             raise CfgVerificationError(err)
+    verify_entry.__doc__ = CfgVerifier.verify_entry.__doc__
 
     def handle_event(self, event):
         if event.code2str() == 'deleted':
@@ -30,4 +37,5 @@ class CfgExternalCommandVerifier(CfgVerifier):
                 logger.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         self.cmd.append(self.name)
+    handle_event.__doc__ = CfgVerifier.handle_event.__doc__
     

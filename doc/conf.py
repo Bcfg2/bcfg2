@@ -219,23 +219,37 @@ latex_use_modindex = False
 autodoc_default_flags = ['members', 'show-inheritance']
 autoclass_content = "both"
 
-private_re = re.compile(r'^\s*\.\.\s*private-include\s*$')
+private_re = re.compile(r'^\s*\.\.\s*private-include:\s*(.+)$')
+
+private_include = []
 
 def skip_member_from_docstring(app, what, name, obj, skip, options):
     """ since sphinx 1.0 autodoc doesn't support the :private-members:
     directive, this function allows you to specify
-    ``.. private-include`` in the docstring of a private method, etc.,
-    to ensure that it's included. This only works on things with
-    docstrings """
-    if (not skip or 
-        not hasattr(obj, '__doc__') or not obj.__doc__):
-        return skip
+    ``.. private-include: <name>[,<name,...]`` in the docstring of a
+    class containing a private method, etc., to ensure that it's
+    included. Due to a bug in Sphinx, this doesn't work for attributes
+    -- only things that actually have docstrings.  If you want to
+    include private attributes, you have to explicitly include them,
+    either with :members:, or by putting :autoattribute: in the
+    __init__ docstring for a class or module docstring."""
+    global private_include
+    if name == '__doc__':
+        private_include = []
+        if not obj:
+            return None
+        for line in obj.splitlines():
+            match = private_re.match(line)
+            if match:
+                private_include.extend(re.split(r',\s*', match.group(1)))
+        return None
+        
+    if not skip:
+        return None
 
-    for line in obj.__doc__.splitlines():
-        if private_re.match(line):
-            return False
-    
-    return skip
+    if name in private_include:
+        return False
+    return None
 
 def setup(app):
     app.connect('autodoc-skip-member', skip_member_from_docstring)

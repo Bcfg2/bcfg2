@@ -48,15 +48,16 @@ info_regex = re.compile('owner:(\s)*(?P<owner>\S+)|' +
                         'mtime:(\s)*(?P<mtime>\w+)|')
 
 def bind_info(entry, metadata, infoxml=None, default=default_file_metadata):
-    """ Bind the file metadata in the given :class:`InfoXML` object to
-    the given entry.
+    """ Bind the file metadata in the given
+    :class:`Bcfg2.Server.Plugin.helpers.InfoXML` object to the given
+    entry.
 
     :param entry: The abstract entry to bind the info to
     :type entry: lxml.etree._Element
     :param metadata: The client metadata to get info for
     :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
     :param infoxml: The info.xml file to pull file metadata from
-    :type infoxml: Bcfg2.Server.Plugins.helpers.InfoXML
+    :type infoxml: Bcfg2.Server.Plugin.helpers.InfoXML
     :param default: Default metadata to supply when the info.xml file
                     does not include a particular attribute
     :type default: dict
@@ -78,7 +79,10 @@ def bind_info(entry, metadata, infoxml=None, default=default_file_metadata):
 
 class DatabaseBacked(Plugin):
     """ Provides capabilities for a plugin to read and write to a
-    database."""
+    database.
+
+    .. private-include: _use_db
+    """
 
     #: The option to look up in :attr:`section` to determine whether or
     #: not to use the database capabilities of this plugin.  The option
@@ -96,9 +100,7 @@ class DatabaseBacked(Plugin):
     @property
     def _use_db(self):
         """ Whether or not this plugin is configured to use the
-        database.
-
-        .. private-include"""
+        database. """
         use_db = self.core.setup.cfp.getboolean(self.section,
                                                 self.option,
                                                 default=False)
@@ -113,9 +115,9 @@ class DatabaseBacked(Plugin):
 
 class PluginDatabaseModel(object):
     """ A database model mixin that all database models used by
-    :class:`DatabaseBacked` plugins must inherit from.  This is just a
-    mixin; models must also inherit from django.db.models.Model to be
-    valid Django models."""
+    :class:`Bcfg2.Server.Plugin.helpers.DatabaseBacked` plugins must
+    inherit from.  This is just a mixin; models must also inherit from
+    django.db.models.Model to be valid Django models."""
 
     class Meta:
         app_label = "Server"
@@ -124,7 +126,7 @@ class PluginDatabaseModel(object):
 class FileBacked(object):
     """ This object caches file data in memory. FileBacked objects are
     principally meant to be used as a part of
-    :class:`DirectoryBacked`. """
+    :class:`Bcfg2.Server.Plugin.helpers.DirectoryBacked`. """
 
     def __init__(self, name, fam=None):
         """
@@ -174,7 +176,7 @@ class DirectoryBacked(object):
 
     #: The type of child objects to create for files contained within
     #: the directory that is tracked.  Default is
-    #: :class:`FileBacked`
+    #: :class:`Bcfg2.Server.Plugin.helpers.FileBacked`
     __child__ = FileBacked
 
     #: Only track and include files whose names (not paths) match this
@@ -195,7 +197,8 @@ class DirectoryBacked(object):
         :param fam: The FAM object used to receive notifications of
                     changes
         :type fam: Bcfg2.Server.FileMonitor.FileMonitor
-
+        
+        .. -----
         .. autoattribute:: __child__
         """
         object.__init__(self)
@@ -367,7 +370,8 @@ class DirectoryBacked(object):
 
 class XMLFileBacked(FileBacked):
     """ This object is caches XML file data in memory.  It can be used
-    as a standalone object or as a part of :class:`XMLDirectoryBacked`
+    as a standalone object or as a part of
+    :class:`Bcfg2.Server.Plugin.helpers.XMLDirectoryBacked`
     """
 
     #: If ``__identifier__`` is not None, then it must be the name of
@@ -386,9 +390,12 @@ class XMLFileBacked(FileBacked):
                                changes. It may be useful to disable
                                monitoring when, for instance, the file
                                is monitored by another object (e.g.,
-                               an :class:`XMLDirectoryBacked` object).
+                               an
+                               :class:`Bcfg2.Server.Plugin.helpers.XMLDirectoryBacked`
+                               object).
         :type should_monitor: bool
 
+        .. -----
         .. autoattribute:: __identifier__
         """
         FileBacked.__init__(self, filename)
@@ -567,7 +574,7 @@ class StructFile(XMLFileBacked):
 class INode(object):
     """ INodes provide lists of things available at a particular group
     intersection.  INodes are deprecated; new plugins should use
-    :class:`StructFile` instead. """
+    :class:`Bcfg2.Server.Plugin.helpers.StructFile` instead. """
 
     raw = dict(
         Client="lambda m, e:'%(name)s' == m.hostname and predicate(m, e)",
@@ -636,8 +643,9 @@ class INode(object):
 
 
 class InfoNode (INode):
-    """ :class:`INode` implementation that includes ``<Path>`` tags,
-    suitable for use with :file:`info.xml` files. """
+    """ :class:`Bcfg2.Server.Plugin.helpers.INode` implementation that
+    includes ``<Path>`` tags, suitable for use with :file:`info.xml`
+    files."""
 
     raw = {'Client': "lambda m, e:'%(name)s' == m.hostname and predicate(m, e)",
            'Group': "lambda m, e:'%(name)s' in m.groups and predicate(m, e)",
@@ -649,9 +657,11 @@ class InfoNode (INode):
 
 
 class XMLSrc(XMLFileBacked):
-    """ XMLSrc files contain a :class:`INode` hierarchy that returns
+    """ XMLSrc files contain a
+    :class:`Bcfg2.Server.Plugin.helpers.INode` hierarchy that returns
     matching entries. XMLSrc objects are deprecated and
-    :class:`StructFile` should be preferred where possible."""
+    :class:`Bcfg2.Server.Plugin.helpers.StructFile` should be
+    preferred where possible."""
     __node__ = INode
     __cacheobj__ = dict
     __priority_required__ = True
@@ -707,15 +717,16 @@ class XMLSrc(XMLFileBacked):
 
 
 class InfoXML(XMLSrc):
-    """ InfoXML files contain a :class:`InfoNode` hierarchy that
+    """ InfoXML files contain a
+    :class:`Bcfg2.Server.Plugin.helpers.InfoNode` hierarchy that
     returns matching entries, suitable for use with :file:`info.xml`
-    files. """
+    files."""
     __node__ = InfoNode
     __priority_required__ = False
 
 
 class XMLDirectoryBacked(DirectoryBacked):
-    """ :class:`DirectoryBacked` for XML files. """
+    """ :class:`Bcfg2.Server.Plugin.helpers.DirectoryBacked` for XML files. """
 
     #: Only track and include files whose names (not paths) match this
     #: compiled regex.
@@ -723,25 +734,28 @@ class XMLDirectoryBacked(DirectoryBacked):
 
     #: The type of child objects to create for files contained within
     #: the directory that is tracked.  Default is
-    #: :class:`XMLFileBacked`
+    #: :class:`Bcfg2.Server.Plugin.helpers.XMLFileBacked`
     __child__ = XMLFileBacked
 
 
 class PrioDir(Plugin, Generator, XMLDirectoryBacked):
     """ PrioDir handles a directory of XML files where each file has a
-    set priority. """
+    set priority.
+
+    .. -----
+    .. autoattribute:: __child__
+    """
 
     #: The type of child objects to create for files contained within
     #: the directory that is tracked.  Default is
-    #: :class:`XMLSrc`
+    #: :class:`Bcfg2.Server.Plugin.helpers.XMLSrc`
     __child__ = XMLSrc
 
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
         Generator.__init__(self)
         XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
-    __init__.__doc__ = \
-        Plugin.__init__.__doc__ + "\n\n.. autoattribute:: __child__"
+    __init__.__doc__ = Plugin.__init__.__doc__
 
     def HandleEvent(self, event):
         XMLDirectoryBacked.HandleEvent(self, event)
@@ -926,9 +940,11 @@ class SpecificData(object):
         """
         :param name: The full path to the file
         :type name: string
-        :param specific: A :class:`Specificity` object describing what
-                         clients this file applies to.
-        :type specific: Bcfg2.Server.Plugins.helpers.Specificity
+        :param specific: A
+                         :class:`Bcfg2.Server.Plugin.helpers.Specificity`
+                         object describing what clients this file
+                         applies to.
+        :type specific: Bcfg2.Server.Plugin.helpers.Specificity
         :param encoding: The encoding to use for data in this file
         :type encoding: string
         """
@@ -939,11 +955,12 @@ class SpecificData(object):
     def handle_event(self, event):
         """ Handle a FAM event.  Note that the SpecificData object
         itself has no FAM, so this must be produced by a parent object
-        (e.g., :class:`EntrySet`).
+        (e.g., :class:`Bcfg2.Server.Plugin.helpers.EntrySet`).
 
         :param event: The event that applies to this file
         :type event: Bcfg2.Server.FileMonitor.Event
         :returns: None
+        :raises: Bcfg2.Server.Plugin.exceptions.PluginExecutionError
         """
         if event.code2str() == 'deleted':
             return
@@ -957,14 +974,14 @@ class SpecificData(object):
 
 class EntrySet(Debuggable):
     """ EntrySets deal with a collection of host- and group-specific
-    files (e.g., :class:`SpecificData` objects) in a single
-    directory. EntrySets are usually used as part of
-    :class:`GroupSpool` objects."""
+    files (e.g., :class:`Bcfg2.Server.Plugin.helpers.SpecificData`
+    objects) in a single directory. EntrySets are usually used as part
+    of :class:`Bcfg2.Server.Plugin.helpers.GroupSpool` objects."""
 
     #: Preemptively ignore files whose names (not paths) match this
     #: compiled regex.  ``ignore`` cannot be set to ``None``.  If a
     #: file is encountered that does not match the ``basename``
-    #: argument passed to the constructor or : ``ignore``, then a
+    #: argument passed to the constructor or ``ignore``, then a
     #: warning will be produced.
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\\.genshi_include)$")
 
@@ -1002,18 +1019,20 @@ class EntrySet(Debuggable):
 
         :param filepath: Full path to file
         :type filepath: string
-        :param specific: A :class:`Specificity` object describing what
-                         clients this file applies to.
-        :type specific: Bcfg2.Server.Plugins.helpers.Specificity
+        :param specific: A
+                         :class:`Bcfg2.Server.Plugin.helpers.Specificity`
+                         object describing what clients this file
+                         applies to.
+        :type specific: Bcfg2.Server.Plugin.helpers.Specificity
         :param encoding: The encoding to use for data in this file
         :type encoding: string
         
         Additionally, the object returned by ``entry_type`` must have
         a ``specific`` attribute that is sortable (e.g., a
-        :class:`Specificity` object).
+        :class:`Bcfg2.Server.Plugin.helpers.Specificity` object).
 
-        See :class:`SpecificData` for an example of a class that can
-        be used as an ``entry_type``.
+        See :class:`Bcfg2.Server.Plugin.helpers.SpecificData` for an
+        example of a class that can be used as an ``entry_type``.
         """
         Debuggable.__init__(self, name=basename)
         self.path = path
@@ -1083,7 +1102,8 @@ class EntrySet(Debuggable):
                                                    metadata.hostname))
 
     def handle_event(self, event):
-        """ Handle a FAM event.  This will probably be handled by a
+        """ Dispatch a FAM event to the appropriate function or child
+        ``entry_type`` object.  This will probably be handled by a
         call to :func:`update_metadata`, :func:`reset_metadata`,
         :func:`entry_init`, or to the ``entry_type``
         ``handle_event()`` function.
@@ -1159,8 +1179,10 @@ class EntrySet(Debuggable):
         self.entries[event.filename].handle_event(event)
 
     def specificity_from_filename(self, fname, specific=None):
-        """ Construct a :class:`Specificity` object from a filename
-        and regex. See :attr:`specific` for details on the regex.
+        """ Construct a
+        :class:`Bcfg2.Server.Plugin.helpers.Specificity` object from a
+        filename and regex. See :attr:`specific` for details on the
+        regex.
 
         :param fname: The filename (not full path) of a file that is
                       in this EntrySet's directory.  It is not
@@ -1176,7 +1198,7 @@ class EntrySet(Debuggable):
                          determine the specificity of this entry.
         :type specific: compiled regular expression object
         :returns: Object representing the specificity of the file
-        :rtype: :class:`Specificity`
+        :rtype: :class:`Bcfg2.Server.Plugin.helpers.Specificity`
         :raises: :class:`Bcfg2.Server.Plugin.exceptions.SpecificityError`
                  if the regex does not match the filename
         """
@@ -1267,9 +1289,10 @@ class EntrySet(Debuggable):
 
 
 class GroupSpool(Plugin, Generator):
-    """ A GroupSpool is a collection of :class:`EntrySet` objects --
-    i.e., a directory tree, each directory in which may contain files
-    that are specific to groups/clients/etc. """
+    """ A GroupSpool is a collection of
+    :class:`Bcfg2.Server.Plugin.helpers.EntrySet` objects -- i.e., a
+    directory tree, each directory in which may contain files that are
+    specific to groups/clients/etc. """
 
     #: ``filename_pattern`` is used as the ``basename`` argument to the
     #: :attr:`es_cls` callable.  It may or may not be a regex,
@@ -1279,14 +1302,16 @@ class GroupSpool(Plugin, Generator):
     #: ``es_child_cls`` is a callable that will be used as the
     #: ``entry_type`` argument to the :attr:`es_cls` callable.  It must
     #: return objects that will represent individual files in the
-    #: GroupSpool.  For instance, :class:`SpecificData`.
+    #: GroupSpool.  For instance,
+    #: :class:`Bcfg2.Server.Plugin.helpers.SpecificData`.
     es_child_cls = object
 
     #: ``es_cls`` is a callable that must return objects that will be
     #: used to represent directories (i.e., sets of entries) within the
-    #: GroupSpool.  E.g., :class:`EntrySet`.  The returned object must
-    #: implement a callable called ``bind_entry`` that has the same
-    #: signature as :attr:`EntrySet.bind_entry`.
+    #: GroupSpool.  E.g.,
+    #: :class:`Bcfg2.Server.Plugin.helpers.EntrySet`.  The returned
+    #: object must implement a callable called ``bind_entry`` that has
+    #: the same signature as :attr:`EntrySet.bind_entry`.
     es_cls = EntrySet
 
     #: The entry type (i.e., the XML tag) handled by this GroupSpool

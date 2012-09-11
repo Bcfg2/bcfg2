@@ -6,7 +6,7 @@ import logging
 import lxml.etree
 import Bcfg2.Server.Plugin
 try:
-    from Bcfg2.Encryption import ssl_decrypt, EVPError
+    from Bcfg2.Encryption import ssl_decrypt, get_passphrases, EVPError
     have_crypto = True
 except ImportError:
     have_crypto = False
@@ -14,15 +14,6 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 SETUP = None
-
-def passphrases():
-    section = "encryption"
-    if SETUP.cfp.has_section(section):
-        return dict([(o, SETUP.cfp.get(section, o))
-                     for o in SETUP.cfp.options(section)])
-    else:
-        return dict()
-
 
 class PropertyFile(Bcfg2.Server.Plugin.StructFile):
     """Class for properties files."""
@@ -91,7 +82,7 @@ class PropertyFile(Bcfg2.Server.Plugin.StructFile):
     def _decrypt(self, element):
         if not element.text.strip():
             return
-        passes = passphrases()
+        passes = get_passphrases(SETUP)
         try:
             passphrase = passes[element.get("encrypted")]
             try:
