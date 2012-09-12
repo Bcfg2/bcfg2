@@ -42,6 +42,7 @@ buildall <directory> [<hostnames*>] - Build configs for all clients in directory
 buildallfile <directory> <filename> [<hostnames*>] - Build config file for all clients in directory
 buildfile <filename> <hostname> - Build config file for hostname (not written to disk)
 buildbundle <bundle> <hostname> - Render a templated bundle for hostname (not written to disk)
+automatch <propertyfile> <hostname> - Perform automatch on a Properties file
 bundles - Print out group/bundle information
 clients - Print out client/profile information
 config - Print out the configuration of the Bcfg2 server
@@ -427,6 +428,43 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
         else:
             print('Usage: buildbundle filename hostname')
 
+    def do_automatch(self, args):
+        alist = args.split()
+        force = False
+        for arg in alist:
+            if arg == '-f':
+                alist.remove('-f')
+                force = True
+        if len(alist) != 2:
+            print("Usage: automatch [-f] <propertiesfile> <hostname>")
+            return
+
+        if 'Properties' not in self.plugins:
+            print("Properties plugin not enabled")
+            return
+
+        pname, client = alist
+        try:
+            automatch = self.core.setup.cfp.getboolean("properties",
+                                                       "automatch",
+                                                       default=False)
+
+            pfile = self.plugins['Properties'].store.entries[pname]
+            if (not force and
+                not automatch and
+                pfile.xdata.get("automatch", "false").lower() != "true"):
+                print("Automatch not enabled on %s" % pname)
+            else:
+                metadata = self.build_metadata(client)
+                print(lxml.etree.tostring(pfile.XMLMatch(metadata),
+                                          xml_declaration=False,
+                                          pretty_print=True).decode('UTF-8'))
+        except:
+            err = sys.exc_info()[1]
+            print("Failed to automatch %s for host %s: %s" % (pname,
+                                                              client,
+                                                              err))
+                
     def do_bundles(self, _):
         """Print out group/bundle info."""
         data = [('Group', 'Bundles')]

@@ -116,6 +116,17 @@ simply::
 You can also enable automatch for individual Property files by setting
 the attribute ``automatch="true"`` in the top-level ``<Property>`` tag.
 
+If you want to see what ``XMLMatch()``/automatch would produce for a
+given client on a given Properties file, you can use :ref:`bcfg2-info
+<server-bcfg2-info>`::
+
+    bcfg2-info automatch props.xml foo.example.com
+
+If automatch is not enabled, you can force ``bcfg2-info`` to perform
+it anyway with ``-f``::
+
+    bcfg2-info automatch -f props.xml foo.example.com
+
 .. _server-plugins-connectors-properties-write-back:
 
 Writing to Properties files

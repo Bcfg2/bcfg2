@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 SETUP = None
 
+
 class PropertyFile(Bcfg2.Server.Plugin.StructFile):
     """Class for properties files."""
     def write(self):
@@ -124,11 +125,11 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
         SETUP = core.setup
 
     def get_additional_data(self, metadata):
-        autowatch = self.core.setup.cfp.getboolean("properties", "automatch",
+        automatch = self.core.setup.cfp.getboolean("properties", "automatch",
                                                    default=False)
         rv = dict()
         for fname, pfile in self.store.entries.items():
-            if (autowatch or
+            if (automatch or
                 pfile.xdata.get("automatch", "false").lower() == "true"):
                 rv[fname] = pfile.XMLMatch(metadata)
             else:
