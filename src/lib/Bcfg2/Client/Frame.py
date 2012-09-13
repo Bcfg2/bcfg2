@@ -7,6 +7,7 @@ import logging
 import sys
 import time
 import Bcfg2.Client.Tools
+from Bcfg2.Compat import input
 
 
 def cmpent(ent1, ent2):
@@ -150,12 +151,7 @@ class Frame(object):
             else:
                 iprompt = prompt % (entry.tag, entry.get('name'))
             try:
-                # py3k compatibility
-                try:
-                    ans = raw_input(iprompt.encode(sys.stdout.encoding,
-                                                   'replace'))
-                except NameError:
-                    ans = input(iprompt)
+                ans = input(iprompt.encode(sys.stdout.encoding, 'replace'))
                 if ans in ['y', 'Y']:
                     ret.append(entry)
             except EOFError:

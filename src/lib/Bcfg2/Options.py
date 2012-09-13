@@ -21,9 +21,9 @@ DEFAULT_INSTALL_PREFIX = '/usr'
 
 
 class DefaultConfigParser(ConfigParser.ConfigParser):
-    def __init__(self,*args,**kwargs):
+    def __init__(self, *args, **kwargs):
         """Make configuration options case sensitive"""
-        ConfigParser.ConfigParser.__init__(self,*args,**kwargs)
+        ConfigParser.ConfigParser.__init__(self, *args, **kwargs)
         self.optionxform = str
 
     def get(self, section, option, **kwargs):
@@ -100,7 +100,7 @@ class Option(object):
                     rv.append("%s %s" % (self.cmd, self.odesc))
             else:
                 rv.append("%s" % self.cmd)
-        
+
         if self.cf:
             if self.cmd:
                 rv.append("; ")
@@ -175,9 +175,10 @@ class Option(object):
                           % (self.deprecated_cf[0], self.deprecated_cf[1],
                              self.cf[0], self.cf[1]))
                     return
-                except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+                except (ConfigParser.NoSectionError,
+                        ConfigParser.NoOptionError):
                     pass
-                    
+
         # Default value not cooked
         self.value = self.default
 
@@ -907,8 +908,8 @@ DECRYPT = \
            default=False,
            cmd='--decrypt',
            long_arg=True)
-DECRYPT_STDOUT = \
-    Option('Decrypt the specified file to stdout',
+CRYPT_STDOUT = \
+    Option('Decrypt or encrypt the specified file to stdout',
            default=False,
            cmd='--stdout',
            long_arg=True)
@@ -968,7 +969,7 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
 
 CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
                      decrypt=DECRYPT,
-                     decrypt_stdout=DECRYPT_STDOUT,
+                     crypt_stdout=CRYPT_STDOUT,
                      passphrase=CRYPT_PASSPHRASE,
                      xpath=CRYPT_XPATH,
                      properties=CRYPT_PROPERTIES,
