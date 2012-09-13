@@ -445,9 +445,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
 
         pname, client = alist
         try:
-            automatch = self.core.setup.cfp.getboolean("properties",
-                                                       "automatch",
-                                                       default=False)
+            automatch = self.setup.cfp.getboolean("properties",
+                                                  "automatch",
+                                                  default=False)
 
             pfile = self.plugins['Properties'].store.entries[pname]
             if (not force and

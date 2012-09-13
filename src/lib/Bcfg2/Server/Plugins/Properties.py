@@ -125,12 +125,15 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
         SETUP = core.setup
 
     def get_additional_data(self, metadata):
-        automatch = self.core.setup.cfp.getboolean("properties", "automatch",
-                                                   default=False)
+        if self.core.setup.cfp.getboolean("properties", "automatch",
+                                          default=False):
+            default_automatch = "true"
+        else:
+            default_automatch = "false"
         rv = dict()
         for fname, pfile in self.store.entries.items():
-            if (automatch or
-                pfile.xdata.get("automatch", "false").lower() == "true"):
+            if pfile.xdata.get("automatch",
+                               default_automatch).lower() == "true":
                 rv[fname] = pfile.XMLMatch(metadata)
             else:
                 rv[fname] = copy.copy(pfile)
