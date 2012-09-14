@@ -1,0 +1,14 @@
+/etc/rc\.d/init\.d/bcfg2-server --   gen_context(system_u:object_r:bcfg2_server_initrc_exec_t,s0)
+/etc/rc\.d/init\.d/bcfg2        --   gen_context(system_u:object_r:bcfg2_initrc_exec_t,s0)
+
+/usr/sbin/bcfg2-server          --   gen_context(system_u:object_r:bcfg2_server_exec_t,s0)
+/usr/sbin/bcfg2                 --   gen_context(system_u:object_r:bcfg2_exec_t,s0)
+/usr/lib/bcfg2/bcfg2-cron       --   gen_context(system_u:object_r:bcfg2_exec_t,s0)
+
+/var/lib/bcfg2(/.*)?                 gen_context(system_u:object_r:bcfg2_var_lib_t,s0)
+
+/var/run/bcfg2-server\.pid      --   gen_context(system_u:object_r:bcfg2_var_run_t,s0)
+
+/var/lock/bcfg2\.run            --   gen_context(system_u:object_r:bcfg2_lock_t,s0)
+
+/etc/bcfg2.*\.conf              --   gen_context(system_u:object_r:bcfg2_conf_t,s0)

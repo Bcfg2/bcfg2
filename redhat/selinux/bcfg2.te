@@ -1,0 +1,189 @@
+policy_module(bcfg2, 1.1.0)
+
+########################################
+#
+# Declarations
+#
+
+type bcfg2_t;
+type bcfg2_exec_t;
+init_daemon_domain(bcfg2_t, bcfg2_exec_t)
+
+type bcfg2_server_t;
+type bcfg2_server_exec_t;
+init_daemon_domain(bcfg2_server_t, bcfg2_server_exec_t)
+
+type bcfg2_initrc_exec_t;
+init_script_file(bcfg2_initrc_exec_t)
+
+type bcfg2_server_initrc_exec_t;
+init_script_file(bcfg2_server_initrc_exec_t)
+
+type bcfg2_var_lib_t;
+files_type(bcfg2_var_lib_t)
+
+type bcfg2_var_run_t;
+files_pid_file(bcfg2_var_run_t)
+
+type bcfg2_lock_t;
+files_lock_file(bcfg2_lock_t)
+
+type bcfg2_conf_t;
+files_config_file(bcfg2_conf_t)
+
+########################################
+#
+# bcfg2-server local policy
+#
+
+allow bcfg2_server_t self:fifo_file rw_fifo_file_perms;
+allow bcfg2_server_t self:tcp_socket create_stream_socket_perms;
+allow bcfg2_server_t self:unix_stream_socket { connectto create_stream_socket_perms };
+allow bcfg2_server_t self:process setrlimit;
+allow bcfg2_server_t self:capability { setgid setuid };
+
+manage_dirs_pattern(bcfg2_server_t, bcfg2_var_lib_t, bcfg2_var_lib_t)
+manage_files_pattern(bcfg2_server_t, bcfg2_var_lib_t, bcfg2_var_lib_t)
+files_var_lib_filetrans(bcfg2_server_t, bcfg2_var_lib_t, dir )
+
+manage_files_pattern(bcfg2_server_t, bcfg2_var_run_t, bcfg2_var_run_t)
+files_pid_filetrans(bcfg2_server_t, bcfg2_var_run_t, file )
+
+files_search_etc(bcfg2_server_t)
+read_files_pattern(bcfg2_server_t, bcfg2_conf_t, bcfg2_conf_t)
+read_lnk_files_pattern(bcfg2_server_t, bcfg2_conf_t, bcfg2_conf_t)
+
+files_manage_generic_tmp_files(bcfg2_server_t)
+
+kernel_read_system_state(bcfg2_server_t)
+
+corecmd_exec_bin(bcfg2_server_t)
+corecmd_exec_shell(bcfg2_server_t)
+
+dev_read_urand(bcfg2_server_t)
+
+fs_list_inotifyfs(bcfg2_server_t)
+
+domain_use_interactive_fds(bcfg2_server_t)
+
+files_read_usr_files(bcfg2_server_t)
+
+logging_send_syslog_msg(bcfg2_server_t)
+
+miscfiles_read_localization(bcfg2_server_t)
+miscfiles_read_certs(bcfg2_server_t)
+
+auth_use_nsswitch(bcfg2_server_t)
+
+libs_exec_ldconfig(bcfg2_server_t)
+
+# port 6789 was somehow already claimed by cyphesis, whatever that is
+corenet_tcp_bind_cyphesis_port(bcfg2_server_t)
+
+########################################
+#
+# bcfg2 (client) local policy
+#
+
+allow bcfg2_t self:capability { fowner fsetid setuid setgid dac_override sys_nice sys_ptrace sys_tty_config };
+allow bcfg2_t self:process { signal signull getsched setsched };
+allow bcfg2_t self:fifo_file rw_fifo_file_perms;
+allow bcfg2_t self:netlink_route_socket create_netlink_socket_perms;
+allow bcfg2_t self:tcp_socket create_stream_socket_perms;
+allow bcfg2_t self:udp_socket create_socket_perms;
+
+files_search_etc(bcfg2_t)
+read_files_pattern(bcfg2_t, bcfg2_conf_t, bcfg2_conf_t)
+read_lnk_files_pattern(bcfg2_t, bcfg2_conf_t, bcfg2_conf_t)
+
+allow bcfg2_t bcfg2_lock_t:file manage_file_perms;
+files_lock_filetrans(bcfg2_t, bcfg2_lock_t, file)
+
+kernel_dontaudit_search_sysctl(bcfg2_t)
+kernel_dontaudit_search_kernel_sysctl(bcfg2_t)
+kernel_read_system_state(bcfg2_t)
+kernel_read_crypto_sysctls(bcfg2_t)
+
+cron_system_entry(bcfg2_t, bcfg2_exec_t)
+
+corecmd_exec_bin(bcfg2_t)
+corecmd_exec_shell(bcfg2_t)
+
+corenet_all_recvfrom_netlabel(bcfg2_t)
+corenet_all_recvfrom_unlabeled(bcfg2_t)
+corenet_tcp_sendrecv_generic_if(bcfg2_t)
+corenet_tcp_sendrecv_generic_node(bcfg2_t)
+corenet_tcp_bind_generic_node(bcfg2_t)
+corenet_tcp_connect_cyphesis_port(bcfg2_t)
+corenet_sendrecv_cyphesis_client_packets(bcfg2_t)
+
+dev_read_rand(bcfg2_t)
+dev_read_sysfs(bcfg2_t)
+dev_read_urand(bcfg2_t)
+
+domain_read_all_domains_state(bcfg2_t)
+domain_interactive_fd(bcfg2_t)
+
+files_manage_config_files(bcfg2_t)
+files_manage_config_dirs(bcfg2_t)
+files_manage_etc_dirs(bcfg2_t)
+files_manage_etc_files(bcfg2_t)
+files_read_usr_symlinks(bcfg2_t)
+files_relabel_config_dirs(bcfg2_t)
+files_relabel_config_files(bcfg2_t)
+files_manage_generic_tmp_files(bcfg2_t)
+
+selinux_search_fs(bcfg2_t)
+selinux_set_all_booleans(bcfg2_t)
+selinux_set_generic_booleans(bcfg2_t)
+selinux_validate_context(bcfg2_t)
+
+term_dontaudit_getattr_unallocated_ttys(bcfg2_t)
+term_dontaudit_getattr_all_ttys(bcfg2_t)
+
+init_all_labeled_script_domtrans(bcfg2_t)
+init_domtrans_script(bcfg2_t)
+init_read_utmp(bcfg2_t)
+init_signull_script(bcfg2_t)
+
+logging_send_syslog_msg(bcfg2_t)
+
+miscfiles_read_hwdata(bcfg2_t)
+miscfiles_read_localization(bcfg2_t)
+
+mount_domtrans(bcfg2_t)
+
+auth_use_nsswitch(bcfg2_t)
+
+seutil_domtrans_setfiles(bcfg2_t)
+seutil_domtrans_semanage(bcfg2_t)
+seutil_run_semanage(bcfg2_t)
+
+sysnet_dns_name_resolve(bcfg2_t)
+sysnet_run_ifconfig(bcfg2_t, system_r)
+
+optional_policy(`
+        consoletype_domtrans(bcfg2_t)
+')
+
+optional_policy(`
+        hostname_exec(bcfg2_t)
+')
+
+optional_policy(`
+        files_rw_var_files(bcfg2_t)
+
+        rpm_domtrans(bcfg2_t)
+        rpm_domtrans_script(bcfg2_t)
+        rpm_manage_db(bcfg2_t)
+        rpm_manage_log(bcfg2_t)
+')
+
+optional_policy(`
+        unconfined_domain(bcfg2_t)
+')
+
+optional_policy(`
+        usermanage_domtrans_groupadd(bcfg2_t)
+        usermanage_domtrans_useradd(bcfg2_t)
+')
