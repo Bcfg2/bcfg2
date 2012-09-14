@@ -1,13 +1,16 @@
-%define release 0.1
-%define __python python
-%{!?py_ver: %define py_ver %(%{__python} -c 'import sys;print(sys.version[0:3])')}
-%define pythonversion %{py_ver}
-%{!?python_sitelib: %define python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
-%{!?_initrddir: %define _initrddir %{_sysconfdir}/rc.d/init.d}
+%global __python python
+%{!?py_ver: %global py_ver %(%{__python} -c 'import sys;print(sys.version[0:3])')}
+%global pythonversion %{py_ver}
+%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+%{!?_initrddir: %global _initrddir %{_sysconfdir}/rc.d/init.d}
+
+%global selinux_policyver %(%{__sed} -e 's,.*selinux-policy-\\([^/]*\\)/.*,\\1,' /usr/share/selinux/devel/policyhelp || echo 0.0.0)
+%global selinux_types %(%{__awk} '/^#[[:space:]]*SELINUXTYPE=/,/^[^#]/ { if ($3 == "-") printf "%s ", $2 }' /etc/selinux/config 2>/dev/null)
+%global selinux_variants %([ -z "%{selinux_types}" ] && echo mls strict targeted || echo %{selinux_types})
 
 Name:             bcfg2
 Version:          1.3.0
-Release:          0.0pre1
+Release:          0.1pre1
 Summary:          Configuration management system
 
 %if 0%{?suse_version}
@@ -29,6 +32,8 @@ BuildArch:        noarch
 
 BuildRequires:    python-devel
 BuildRequires:    python-lxml
+BuildRequires:    checkpolicy, selinux-policy-devel, hardlink
+BuildRequires:    /usr/share/selinux/devel/policyhelp
 %if 0%{?mandriva_version}
 # mandriva seems to behave differently than other distros and needs
 # this explicitly.
@@ -47,7 +52,7 @@ BuildRequires:    libsane1
 BuildRequires:    python-sphinx10
 # the python-sphinx10 package doesn't set sys.path correctly, so we
 # have to do it for them
-%define pythonpath %(find %{python_sitelib} -name Sphinx*.egg)
+%global pythonpath %(find %{python_sitelib} -name Sphinx*.egg)
 %else
 BuildRequires:    python-sphinx >= 1.0
 %endif
@@ -199,10 +204,10 @@ Requires:         httpd,Django
 Requires:         bcfg2-server
 %if "%{_vendor}" == "redhat"
 Requires:         mod_wsgi
-%define apache_conf %{_sysconfdir}/httpd
+%global apache_conf %{_sysconfdir}/httpd
 %else
 Requires:         apache2-mod_wsgi
-%define apache_conf %{_sysconfdir}/apache2
+%global apache_conf %{_sysconfdir}/apache2
 %endif
 
 %description web
@@ -233,6 +238,23 @@ deployment strategies.
 
 This package includes the Bcfg2 reports web frontend.
 
+%package selinux
+Version:          1.3.0
+Summary:          Bcfg2 Client and Server SELinux policy
+%if 0%{?suse_version}
+Group:            System/Management
+Conflicts:        selinux-policy = 2.20120725
+%else
+Group:            Applications/System
+# the selinux reference policy 2.20120725 (3.11.1 in RH versioning)
+# contains a bogus bcfg2 module
+Conflicts:        selinux-policy = 3.11.1
+%endif
+Requires:         selinux-policy >= %{selinux_policyver}
+Requires:         %{name} = %{version}-%{release}
+Requires(post):   /usr/sbin/semodule, /sbin/restorecon, /sbin/fixfiles, bcfg2
+Requires(postun): /usr/sbin/semodule, /sbin/restorecon, /sbin/fixfiles, bcfg2
+
 %prep
 %setup -q -n %{name}-%{version}
 
@@ -242,6 +264,14 @@ This package includes the Bcfg2 reports web frontend.
 
 %{?pythonpath: export PYTHONPATH="%{pythonpath}"}
 %{__python}%{pythonversion} setup.py build_sphinx
+
+cd %{buildroot}/redhat/selinux
+for selinuxvariant in %{selinux_variants}; do
+  make NAME=${selinuxvariant} -f /usr/share/selinux/devel/Makefile
+  mv %{name}.pp %{name}.pp.${selinuxvariant}
+  make NAME=${selinuxvariant} -f /usr/share/selinux/devel/Makefile clean
+done
+cd -
 
 %install
 rm -rf %{buildroot}
@@ -281,7 +311,15 @@ cp -r build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 %{__install} -d %{buildroot}%{apache_conf}/conf.d
 %{__install} -m 644 misc/apache/bcfg2.conf %{buildroot}%{apache_conf}/conf.d/wsgi_bcfg2.conf
 
-%{__mkdir_p} %{buildroot}%{_localstatedir}/cache/bcfg2
+%{__mkdir_p} %{buildroot}%{_localstatedir}/cache/%{name}
+%{__mkdir_p} %{buildroot}%{_localstatedir}/lib/%{name}
+
+for selinuxvariant in %{selinux_variants}; do
+  install -d %{buildroot}%{_datadir}/selinux/${selinuxvariant}
+  install -p -m 644 redhat/selinux/%{name}.pp.${selinuxvariant} \
+    %{buildroot}%{_datadir}/selinux/${selinuxvariant}/%{name}.pp
+done
+/usr/sbin/hardlink -cv %{buildroot}%{_datadir}/selinux
 
 # mandriva and RHEL 5 cannot handle %ghost without the file existing,
 # so let's touch a bunch of empty config files
@@ -304,7 +342,8 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %{_sysconfdir}/cron.hourly/bcfg2
 %{_sysconfdir}/cron.daily/bcfg2
 %{_prefix}/lib/bcfg2/bcfg2-cron
-%{_localstatedir}/cache/bcfg2
+%{_localstatedir}/cache/%{name}
+%{_localstatedir}/lib/%{name}
 %if 0%{?suse_version}
 %{_sbindir}/rcbcfg2
 %config(noreplace) /var/adm/fillup-templates/sysconfig.bcfg2
@@ -359,6 +398,11 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %config(noreplace) %{apache_conf}/conf.d/wsgi_bcfg2.conf
 %ghost %config(noreplace,missingok) %attr(0640,root,apache) %{_sysconfdir}/bcfg2-web.conf
 
+%files selinux
+%defattr(-,root,root,0755)
+%doc redhat/selinux/*
+%{_datadir}/selinux/*/%{name}.pp
+
 %post server
 # enable daemon on first install only (not on update).
 if [ $1 -eq 1 ]; then
@@ -399,7 +443,37 @@ if [ $1 -eq 0 ]; then
 fi
 %endif
 
+%post selinux
+for selinuxvariant in %{selinux_variants}; do
+  /usr/sbin/semodule -s ${selinuxvariant} -i \
+    %{_datadir}/selinux/${selinuxvariant}/%{name}.pp &> /dev/null || :
+done
+/sbin/fixfiles -R %{name} restore || :
+if rpm -q bcfg2-server >& /dev/null; then
+   /sbin/fixfiles -R bcfg2-server restore || :
+fi
+/sbin/restorecon -R %{_localstatedir}/cache/%{name} || :
+/sbin/restorecon -R %{_localstatedir}/lib/%{name} || :
+
+%postun selinux
+if [ $1 -eq 0 ] ; then
+  for selinuxvariant in %{selinux_variants}; do
+    /usr/sbin/semodule -s ${selinuxvariant} -r %{name} &> /dev/null || :
+  done
+  /sbin/fixfiles -R %{name} restore || :
+  if rpm -q bcfg2-server >& /dev/null; then
+      /sbin/fixfiles -R bcfg2-server restore || :
+  fi
+  [ -d %{_localstatedir}/cache/%{name} ] && \
+      /sbin/restorecon -R %{_localstatedir}/cache/%{name} || :
+  [ -d %{_localstatedir}/lib/%{name} ] && \
+      /sbin/restorecon -R %{_localstatedir}/lib/%{name} || :
+fi
+
 %changelog
+* Fri Sep 14 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.3.0-0.1pre1
+- Added -selinux subpackage
+
 * Fri Aug 31 2012 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0pre1
 - New upstream release
 
