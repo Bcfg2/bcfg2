@@ -25,9 +25,10 @@ class SEModules(Bcfg2.Server.Plugin.GroupSpool):
         to be able to specify module entries as name='foo' or
         name='foo.pp', so we put this abstraction in between """
         if entry.get("name").endswith(".pp"):
-            return entry.get("name")
+            name = entry.get("name")
         else:
-            return entry.get("name") + ".pp"
+            name = entry.get("name") + ".pp"
+        return name.lstrip("/")
 
     def HandlesEntry(self, entry, metadata):
         if entry.tag in self.Entries and entry.get('type') == 'module':

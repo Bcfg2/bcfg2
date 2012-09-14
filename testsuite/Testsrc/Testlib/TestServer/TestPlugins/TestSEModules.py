@@ -41,26 +41,27 @@ class TestSEModules(TestGroupSpool):
         modules = self.get_obj()
         for mname in ["foo", "foo.pp"]:
             entry = lxml.etree.Element("SELinux", type="module", name=mname)
-            self.assertEqual(modules._get_module_name(entry), "/foo.pp")
+            self.assertEqual(modules._get_module_name(entry), "foo.pp")
 
     @patch("Bcfg2.Server.Plugins.SEModules.SEModules._get_module_name")
     def test_HandlesEntry(self, mock_get_name):
         modules = self.get_obj()
         modules.Entries['SELinux']['/foo.pp'] = Mock()
         modules.Entries['SELinux']['/bar.pp'] = Mock()
-        for el in [lxml.etree.Element("Path", name="/foo.pp"),
+        for el in [lxml.etree.Element("Path", name="foo.pp"),
                    lxml.etree.Element("SELinux", type="fcontext",
-                                      name="/foo.pp"),
+                                      name="foo.pp"),
                    lxml.etree.Element("SELinux", type="module",
-                                      name="/baz.pp")]:
+                                      name="baz.pp")]:
             mock_get_name.return_value = el.get("name")
             self.assertFalse(modules.HandlesEntry(el, Mock()))
-            mock_get_name.assert_called_with(el)
+            if el.get("type") == "module":
+                mock_get_name.assert_called_with(el)
 
         for el in [lxml.etree.Element("SELinux", type="module",
-                                      name="/foo.pp"),
+                                      name="foo.pp"),
                    lxml.etree.Element("SELinux", type="module",
-                                      name="/bar.pp")]:
+                                      name="bar.pp")]:
             mock_get_name.return_value = el.get("name")
             self.assertTrue(modules.HandlesEntry(el, Mock()),
                             msg="SEModules fails to handle %s" % el.get("name"))
@@ -69,11 +70,11 @@ class TestSEModules(TestGroupSpool):
         TestGroupSpool.test_HandlesEntry(self)
 
     @patch("Bcfg2.Server.Plugins.SEModules.SEModules._get_module_name")
-    def test_HandlesEntry(self, mock_get_name):
+    def test_HandleEntry(self, mock_get_name):
         modules = self.get_obj()
         handler = Mock()
         modules.Entries['SELinux']['/foo.pp'] = handler
-        mock_get_name.return_value = "/foo.pp"
+        mock_get_name.return_value = "foo.pp"
         
         entry = lxml.etree.Element("SELinux", type="module", name="foo")
         metadata = Mock()
