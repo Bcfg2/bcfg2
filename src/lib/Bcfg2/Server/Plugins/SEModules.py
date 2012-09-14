@@ -5,6 +5,7 @@ from Bcfg2.Compat import b64encode
 
 logger = logging.getLogger(__name__)
 
+
 class SEModuleData(Bcfg2.Server.Plugin.SpecificData):
     def bind_entry(self, entry, _):
         entry.set('encoding', 'base64')
@@ -24,20 +25,19 @@ class SEModules(Bcfg2.Server.Plugin.GroupSpool):
         to be able to specify module entries as name='foo' or
         name='foo.pp', so we put this abstraction in between """
         if entry.get("name").endswith(".pp"):
-            name = entry.get("name")
+            return entry.get("name")
         else:
-            name = entry.get("name") + ".pp"
-        return "/" + name
+            return entry.get("name") + ".pp"
 
     def HandlesEntry(self, entry, metadata):
         if entry.tag in self.Entries and entry.get('type') == 'module':
-            return self._get_module_name(entry) in self.Entries[entry.tag]
+            return "/" + self._get_module_name(entry) in self.Entries[entry.tag]
         return Bcfg2.Server.Plugin.GroupSpool.HandlesEntry(self, entry,
                                                            metadata)
 
     def HandleEntry(self, entry, metadata):
         entry.set("name", self._get_module_name(entry))
-        return self.Entries[entry.tag][entry.get("name")](entry, metadata)
+        return self.Entries[entry.tag]["/" + entry.get("name")](entry, metadata)
 
     def add_entry(self, event):
         self.filename_pattern = \

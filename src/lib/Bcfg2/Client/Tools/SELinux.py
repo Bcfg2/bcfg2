@@ -703,8 +703,14 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
         return rv
 
     def _filepath(self, entry):
-        return os.path.join("/usr/share/selinux", self.setype,
-                            "%s.pp" % entry.get("name"))
+        path = os.path.join("/usr/share/selinux", self.setype,
+                            entry.get("name").lstrip("/"))
+        if not path.endswith(".pp"):
+            # the entry name we get from the SEModules plugin should
+            # always have .pp on the end, but we double check just to
+            # make absolutely certain
+            path = path + ".pp"
+        return path
 
     def _pathentry(self, entry):
         pathentry = copy.deepcopy(entry)
@@ -744,7 +750,7 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
     def _install_seobject(self, entry):
         try:
             if not SELinuxEntryHandler.Install(self, entry):
-                return false
+                return False
         except NameError:
             # some versions of selinux have a bug in seobject that
             # makes modify() calls fail.  add() seems to have the same
@@ -765,7 +771,7 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
         try:
             proc = Popen(['semodule', '-i', self._filepath(entry)],
                          stdout=PIPE, stderr=PIPE)
-            out, err = proc.communicate()
+            err = proc.communicate()[1]
             rv = proc.wait()
         except OSError:
             err = sys.exc_info()[1]
