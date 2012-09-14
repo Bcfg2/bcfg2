@@ -70,7 +70,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         self.logger.info("Installing Service %s" % (entry.get('name')))
         rv = True
         if entry.get('status') == 'off':
-            rv &= self.cmd.run(rcmd + " --level 0123456" %
+            rv &= self.cmd.run((rcmd + " --level 0123456") %
                                (entry.get('name'),
                                 entry.get('status')))[0] == 0
             if entry.get("current_status") == "on":
@@ -79,7 +79,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
             rv &= self.cmd.run(rcmd % (entry.get('name'),
                                        entry.get('status')))[0] == 0
             if entry.get("current_status") == "off":
-                rv &= self.start_service(entry)
+                rv &= (self.start_service(entry) == 0)
         return rv
 
     def FindExtra(self):
