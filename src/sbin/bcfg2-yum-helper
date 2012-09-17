@@ -46,6 +46,9 @@ def pkg_to_tuple(package):
         return package
 
 def pkgtup_to_string(package):
+    if package[3] in ['auto', 'any']:
+        return package[0]
+
     rv = [package[0], "-"]
     if package[2]:
         rv.extend([package[2], ':'])

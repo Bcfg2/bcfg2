@@ -363,11 +363,11 @@ class YumCollection(Collection):
 
     def get_provides(self, required, all=False, silent=False):
         if not self.use_yum:
-            return Collection.get_provides(self, package)
+            return Collection.get_provides(self, required)
         else:
             # this should really never get called; it's just provided
             # for API completeness
-            return self.call_helper("get_provides", package)
+            return self.call_helper("get_provides", required)
 
     def get_groups(self, grouplist):
         if not self.use_yum:
@@ -404,8 +404,10 @@ class YumCollection(Collection):
         name = entry.get("name")
 
         def _tag_to_pkg(tag):
-            rv = (name, tag.get("arch"), tag.get("epoch"),
-                  tag.get("version"), tag.get("release"))
+            rv = [name, tag.get("arch"), tag.get("epoch"),
+                  tag.get("version"), tag.get("release")]
+            if rv[3] in ['any', 'auto']:
+                rv = (rv[0], rv[1], rv[2], None, None)
             # if a package requires no specific version, we just use
             # the name, not the tuple.  this limits the amount of JSON
             # encoding/decoding that has to be done to pass the
