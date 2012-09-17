@@ -1,21 +1,16 @@
 import re
 import gzip
-from Bcfg2.Server.Plugins.Packages.Collection import Collection
+from Bcfg2.Server.Plugins.Packages.Collection import _Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
 from Bcfg2.Compat import cPickle
 
-class AptCollection(Collection):
-    def get_group(self, group):
-        self.logger.warning("Packages: Package groups are not "
-                            "supported by APT")
-        return []
 
+class AptCollection(_Collection):
     def get_config(self):
         lines = ["# This config was generated automatically by the Bcfg2 " \
                      "Packages plugin", '']
 
-        sources = dict()
-        for source in self.sources:
+        for source in self:
             if source.rawurl:
                 self.logger.info("Packages: Skipping rawurl %s" % source.rawurl)
             else:

@@ -1,13 +1,12 @@
 import gzip
 import tarfile
 from Bcfg2.Compat import cPickle
-from Bcfg2.Server.Plugins.Packages.Collection import Collection
+from Bcfg2.Server.Plugins.Packages.Collection import _Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
 
-class PacCollection(Collection):
-    def get_group(self, group):
-        self.logger.warning("Packages: Package groups are not supported by Pacman")
-        return []
+
+class PacCollection(_Collection):
+    pass
 
 
 class PacSource(Source):

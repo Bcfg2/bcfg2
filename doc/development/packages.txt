@@ -1,52 +1,48 @@
+.. -*- mode: rst -*-
+
+.. _development-cfg:
+
+=======================
 Developing for Packages
 =======================
 
-.. note::
-   
-   This data is old and incomplete, and needs badly to be rewritten.
+The :ref:`server-plugins-generators-packages` plugin offers multiple
+backends to support different types of software repositories.  New
+backends can be written to handle new types of software repositories.
 
-In order to support a given client package tool driver, that driver
-must support use of the auto value for the version attribute in Package
-entries. In this case, the tool driver views the current state of
-available packages, and uses the underlying package manager's choice of
-correct package version in lieu of an explicit, centrally-specified,
-version. This support enables Packages to provide a list of Package
-entries with version='auto'. Currently, the APT and YUMng drivers support
-this feature. Note that package management systems without any network
-support cannot operate in this fashion, so RPMng and SYSV will never be
-able to use Packages. Emerge, Zypper, IPS, and Blastwave all have the
-needed features to be supported by Packages, but support has not yet
-been written.
+Each new Packages backend must be contained in its own module in
+``Bcfg2.Server.Plugins.Packages``.  Each module must implement two
+classes: A
+:class:`Bcfg2.Server.Plugins.Packages.Collection.Collection` subclass
+called ``<module>Collection``, and a
+:class:`Bcfg2.Server.Plugins.Packages.Source.Source` subclass called
+``<module>Source``.  E.g., the
+:mod:`Bcfg2.Server.Plugins.Packages.Yum` backend has
+:class:`Bcfg2.Server.Plugins.Packages.Yum.YumCollection` and 
+:class:`Bcfg2.Server.Plugins.Packages.Yum.YumSource` objects.  These
+interfaces are explained in detail below.
 
-Packages fills two major functions in configuration generation. The first
-is to provide entry level binding support for Package entries included
-in client configurations. This function is quite easy to implement;
-Packages determines (based on client group membership) if the package
-is available for the client system, and which type it has. Because
-version='auto' is used, no version determination needs to be done.
+The Collection Object
+=====================
 
-The second major function is more complex. Packages ensures that client
-configurations include all package-level prerequisites for package entries
-explicitly included in the configuration. In order to support this,
-Packages needs to directly process network data for package management
-systems (the network sources for apt or yum, for examples), process
-these files, and build data structures describing prerequisites and the
-providers of those functions/paths. To simplify implementations of this,
-there is a generic base class (Bcfg2.Server.Plugins.Packages.Source)
-that provides a framework for fetching network data via HTTP, processing
-those sources (with subclass defined methods for processing the specific
-format provided by the tool), a generic dependency resolution method,
-and a caching mechanism that greatly speeds up server/bcfg2-info startup.
+.. automodule:: Bcfg2.Server.Plugins.Packages.Collection
+.. autoclass:: Bcfg2.Server.Plugins.Packages.Collection._Collection
 
-Each source type must define:
 
-* a get_urls attribute (and associated urls property) that describes
-  the URLS where to get data from.
-* a read_files method that reads and processes the downloaded files
+The Source Object
+=================
 
-Sources may define a get_provides method, if provides are complex. For
-example, provides in rpm can be either rpm names or file paths, so
-multiple data sources need to be multiplexed.
+.. automodule:: Bcfg2.Server.Plugins.Packages.Source
 
-The APT source in ``src/lib/Server/Plugins/Packages.py`` provides a
-relatively simple implementation of a source.
+The Packages Module and Configuration
+=====================================
+
+.. automodule:: Bcfg2.Server.Plugins.Packages
+.. automodule:: Bcfg2.Server.Plugins.Packages.PackagesSources
+
+Existing Packages Backends
+==========================
+
+.. automodule:: Bcfg2.Server.Plugins.Packages.Yum
+.. automodule:: Bcfg2.Server.Plugins.Packages.Apt
+.. automodule:: Bcfg2.Server.Plugins.Packages.Pac

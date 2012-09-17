@@ -8,8 +8,8 @@ import lxml.etree
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
-    ConfigParser
-from Bcfg2.Server.Plugins.Packages.Collection import Collection
+    ConfigParser, json
+from Bcfg2.Server.Plugins.Packages.Collection import _Collection
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
      fetch_url
 
@@ -31,11 +31,6 @@ except ImportError:
     has_yum = False
     logger.info("Packages: No yum libraries found; forcing use of internal "
                 "dependency resolver")
-
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 XP = '{http://linux.duke.edu/metadata/common}'
 RP = '{http://linux.duke.edu/metadata/rpm}'
@@ -78,13 +73,17 @@ def _setup_pulp(setup):
     return PULPSERVER
 
 
-class YumCollection(Collection):
-    # options that are included in the [yum] section but that should
-    # not be included in the temporary yum.conf we write out
+class YumCollection(_Collection):
+    #: YumCollections support package groups
+    __package_groups__ = True
+
+    #: Options that are included in the [packages:yum] section of the
+    #: config but that should not be included in the temporary
+    #: yum.conf we write out
     option_blacklist = ["use_yum_libraries", "helper"]
 
     def __init__(self, metadata, sources, basepath, debug=False):
-        Collection.__init__(self, metadata, sources, basepath, debug=debug)
+        _Collection.__init__(self, metadata, sources, basepath, debug=debug)
         self.keypath = os.path.join(self.basepath, "keys")
 
         if self.use_yum:
@@ -126,7 +125,7 @@ class YumCollection(Collection):
     @property
     def has_pulp_sources(self):
         """ see if there are any pulp sources to handle """
-        for source in self.sources:
+        for source in self:
             if source.pulp_id:
                 return True
         return False
@@ -165,7 +164,7 @@ class YumCollection(Collection):
 
     def get_config(self, raw=False):
         config = ConfigParser.SafeConfigParser()
-        for source in self.sources:
+        for source in self:
             for url_map in source.url_map:
                 if url_map['arch'] not in self.metadata.groups:
                     continue
@@ -223,7 +222,7 @@ class YumCollection(Collection):
         """ build list of gpg keys to be added to the specification by
         validate_structures() """
         needkeys = set()
-        for source in self.sources:
+        for source in self:
             for key in source.gpgkeys:
                 needkeys.add(key)
 
@@ -277,7 +276,7 @@ class YumCollection(Collection):
                                       when="always", status="check",
                                       command="pulp-consumer consumer update")
 
-            for source in self.sources:
+            for source in self:
                 # each pulp source can only have one arch, so we don't
                 # have to check the arch in url_map
                 if (source.pulp_id and
@@ -334,7 +333,7 @@ class YumCollection(Collection):
 
     def is_package(self, package):
         if not self.use_yum:
-            return Collection.is_package(self, package)
+            return _Collection.is_package(self, package)
         elif isinstance(package, tuple):
             if package[1] is None and package[2] == (None, None, None):
                 package = package[0]
@@ -347,7 +346,7 @@ class YumCollection(Collection):
 
     def is_virtual_package(self, package):
         if not self.use_yum:
-            return Collection.is_virtual_package(self, package)
+            return _Collection.is_virtual_package(self, package)
         else:
             # this should really never get called; it's just provided
             # for API completeness
@@ -355,7 +354,7 @@ class YumCollection(Collection):
 
     def get_deps(self, package):
         if not self.use_yum:
-            return Collection.get_deps(self, package)
+            return _Collection.get_deps(self, package)
         else:
             # this should really never get called; it's just provided
             # for API completeness
@@ -363,7 +362,7 @@ class YumCollection(Collection):
 
     def get_provides(self, required, all=False, silent=False):
         if not self.use_yum:
-            return Collection.get_provides(self, required)
+            return _Collection.get_provides(self, required)
         else:
             # this should really never get called; it's just provided
             # for API completeness
@@ -479,7 +478,7 @@ class YumCollection(Collection):
 
     def complete(self, packagelist):
         if not self.use_yum:
-            return Collection.complete(self, packagelist)
+            return _Collection.complete(self, packagelist)
 
         if packagelist:
             result = \
@@ -542,7 +541,7 @@ class YumCollection(Collection):
 
     def setup_data(self, force_update=False):
         if not self.use_yum:
-            return Collection.setup_data(self, force_update)
+            return _Collection.setup_data(self, force_update)
 
         if force_update:
             # we call this twice: one to clean up data from the old

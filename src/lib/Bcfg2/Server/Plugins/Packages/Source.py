@@ -4,12 +4,8 @@ import sys
 import Bcfg2.Server.Plugin
 from Bcfg2.Compat import HTTPError, HTTPBasicAuthHandler, \
      HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, \
-     urlopen, cPickle
+     urlopen, cPickle, md5
 
-try:
-    from hashlib import md5
-except ImportError:
-    from md5 import md5
 
 def fetch_url(url):
     if '@' in url:
@@ -66,7 +62,8 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
         self.gpgkeys = [el.text for el in xsource.findall("GPGKey")]
 
         self.essential = xsource.get('essential', 'true').lower() == 'true'
-        self.recommended = xsource.get('recommended', 'false').lower() == 'true'
+        self.recommended = xsource.get('recommended',
+                                       'false').lower() == 'true'
 
         self.rawurl = xsource.get('rawurl', '')
         if self.rawurl and not self.rawurl.endswith("/"):
@@ -79,7 +76,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
         # build the set of conditions to see if this source applies to
         # a given set of metadata
         self.conditions = []
-        self.groups = [] # provided for some limited backwards compat
+        self.groups = []  # provided for some limited backwards compat
         for el in xsource.iterancestors():
             if el.tag == "Group":
                 if el.get("negate", "false").lower() == "true":

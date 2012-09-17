@@ -1,7 +1,5 @@
 import os
 import sys
-import time
-import copy
 import glob
 import shutil
 import lxml.etree
@@ -13,6 +11,7 @@ from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
 
 yum_config_default = "/etc/yum.repos.d/bcfg2.repo"
 apt_config_default = "/etc/apt/sources.d/bcfg2"
+
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.StructureValidator,
@@ -176,9 +175,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                                    pkg.get("type")))
                     to_remove.append(pkg)
                 else:
-                    self.logger.error("Packages: Malformed Package: %s" %
-                                      lxml.etree.tostring(pkg,
-                                                          xml_declaration=False).decode('UTF-8'))
+                    self.logger.error(
+                        "Packages: Malformed Package: %s" %
+                        lxml.etree.tostring(
+                            pkg,
+                            xml_declaration=False).decode('UTF-8'))
 
         gpkgs = collection.get_groups(groups)
         for group, pkgs in gpkgs.items():
@@ -225,7 +226,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self.sentinels = set()
         cachefiles = set()
 
-        for collection in list(Collection.collections.values()):
+        for collection in list(Collection.COLLECTIONS.values()):
             cachefiles.update(collection.cachefiles)
             if not self.disableMetaData:
                 collection.setup_data(force_update)
@@ -262,7 +263,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                     keyfiles.append(localfile)
                 if ((force_update and key not in keys) or
                     not os.path.exists(localfile)):
-                    self.logger.info("Packages: Downloading and parsing %s" % key)
+                    self.logger.info("Packages: Downloading and parsing %s" %
+                                     key)
                     response = urlopen(key)
                     open(localfile, 'w').write(response.read())
                     keys.append(key)
@@ -272,8 +274,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 os.unlink(kfile)
 
     def _get_collection(self, metadata):
-        return Collection.factory(metadata, self.sources, self.data,
-                                  debug=self.debug_flag)
+        return Collection.Collection(metadata, self.sources, self.data,
+                                     debug=self.debug_flag)
 
     def get_additional_data(self, metadata):
         collection = self._get_collection(metadata)
@@ -282,8 +284,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     def end_client_run(self, metadata):
         """ clear the collection cache for this client, which must
         persist only the duration of a client run"""
-        if metadata.hostname in Collection.clients:
-            del Collection.clients[metadata.hostname]
+        if metadata.hostname in Collection.CLIENTS:
+            del Collection.CLIENTS[metadata.hostname]
 
     def end_statistics(self, metadata):
         self.end_client_run(metadata)
