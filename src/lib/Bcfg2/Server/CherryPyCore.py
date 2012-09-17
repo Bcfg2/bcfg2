@@ -85,10 +85,11 @@ class Core(BaseCore):
         xmlrpcutil.respond(body, 'utf-8', True)
         return cherrypy.serving.response.body
 
-    def _daemonize(self):
-        Daemonizer(cherrypy.engine).subscribe()
-
     def _run(self):
+        if setup['daemon']:
+            Daemonizer(cherrypy.engine).subscribe()
+            self.logger.info("%s daemonized" % self.name)
+
         hostname, port = urlparse(self.setup['location'])[1].split(':')
         if self.setup['listen_all']:
             hostname = '0.0.0.0'

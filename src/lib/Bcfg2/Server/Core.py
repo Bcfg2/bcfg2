@@ -475,9 +475,6 @@ class BaseCore(object):
     def run(self):
         """ run the server core. note that it is the responsibility of
         the server core implementation to call shutdown() """
-        if self.setup['daemon']:
-            self._daemonize()
-            open(self.setup['daemon'], "w").write("%s\n" % os.getpid())
 
         self._run()
 
