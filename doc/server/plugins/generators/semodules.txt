@@ -8,14 +8,8 @@ SEModules
 
 .. versionadded:: 1.3.0
 
-The SEModules plugin handles SELinux module entries.  It supports
-group- and host-specific module versions, and enabling/disabling
-modules.
-
-You can use ``selinux_baseline.py`` located in the tools/ directory to
-create a baseline of all of your installed modules.
-
-See :ref:`server-selinux` for more information.
+.. automodule:: Bcfg2.Server.Plugins.SEModules
+   :no-members:
 
 Usage
 =====
