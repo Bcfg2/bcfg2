@@ -2,9 +2,9 @@
 
 .. _development-cfg:
 
-=========================
- Cfg Handler Development
-=========================
+=======================
+Cfg Handler Development
+=======================
 
 The :ref:`server-plugins-generators-cfg` plugin offers multiple
 handlers to handle different entries in different ways.  Writing a new
@@ -15,7 +15,7 @@ Each new Cfg handler must be contained in its own module in
 ``Bcfg2.Server.Plugins.Cfg``, and the module and class name must be
 identical.  The name should start with ``Cfg``, and should clearly
 indicate which of the handler types it is.  A handler class may
-implement more than one handler type.a
+implement more than one handler type.
 
 Cfg Handler Types
 =================
