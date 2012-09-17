@@ -4,12 +4,7 @@ import os
 import base64
 from M2Crypto import Rand
 from M2Crypto.EVP import Cipher, EVPError
-from Bcfg2.Compat import StringIO
-
-try:
-    from hashlib import md5
-except ImportError:
-    from md5 import md5
+from Bcfg2.Compat import StringIO, md5
 
 ENCRYPT = 1
 DECRYPT = 0

@@ -10,14 +10,7 @@ import sys
 import traceback
 from lxml.etree import XML, XMLSyntaxError
 
-# Compatibility import
-from Bcfg2.Compat import ConfigParser
-
-# FIXME: Remove when server python dep is 2.5 or greater
-if sys.version_info >= (2, 5):
-    from hashlib import md5
-else:
-    from md5 import md5
+from Bcfg2.Compat import ConfigParser, md5
 
 import Bcfg2.settings
 

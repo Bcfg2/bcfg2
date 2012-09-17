@@ -235,3 +235,15 @@ except NameError:
             if element:
                 return True
         return False
+
+try:
+    from hashlib import md5
+except ImportError:
+    from md5 import md5
+
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
+

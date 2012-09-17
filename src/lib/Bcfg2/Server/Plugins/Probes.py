@@ -7,23 +7,13 @@ import operator
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import any
+from Bcfg2.Compat import any, json
 
 try:
     from django.db import models
     has_django = True
 except ImportError:
     has_django = False
-
-try:
-    import json
-    has_json = True
-except ImportError:
-    try:
-        import simplejson as json
-        has_json = True
-    except ImportError:
-        has_json = False
 
 try:
     import syck as yaml
@@ -93,7 +83,7 @@ class ProbeData(str):
 
     @property
     def json(self):
-        if self._json is None and has_json:
+        if self._json is None:
             try:
                 self._json = json.loads(self.data)
             except ValueError:

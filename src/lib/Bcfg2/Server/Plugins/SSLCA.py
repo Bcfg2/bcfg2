@@ -5,13 +5,8 @@ import posixpath
 import tempfile
 import os
 from subprocess import Popen, PIPE, STDOUT
-# Compatibility import
-from Bcfg2.Compat import ConfigParser
+from Bcfg2.Compat import ConfigParser, md5
 
-try:
-    from hashlib import md5
-except ImportError:
-    from md5 import md5
 
 class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
     """

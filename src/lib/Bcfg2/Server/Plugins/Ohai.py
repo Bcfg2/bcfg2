@@ -1,22 +1,10 @@
 import lxml.etree
 import os
-
 import logging
-logger = logging.getLogger('Bcfg2.Plugins.Ohai')
-
 import Bcfg2.Server.Plugin
+from Bcfg2.Compat import json
 
-try:
-    import json
-except:
-    # FIXME: can be removed when server prereq is >= python 2.6
-    # necessary for clients without the in-tree json module
-    try:
-        import simplejson as json
-    except:
-        logger.error("Unable to load any json modules. Make sure "
-                     "python-simplejson is installed.")
-        raise ImportError
+logger = logging.getLogger('Bcfg2.Plugins.Ohai')
 
 
 probecode = """#!/bin/sh
