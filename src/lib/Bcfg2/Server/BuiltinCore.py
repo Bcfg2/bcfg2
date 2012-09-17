@@ -20,9 +20,13 @@ class Core(BaseCore):
     name = 'bcfg2-server'
     
     def __init__(self, setup):
+        self.context = daemon.DaemonContext()
+        if setup['daemon']:
+            self.context.open()
+            open(setup['daemon'], "w").write("%s\n" % os.getpid())
+
         BaseCore.__init__(self, setup)
         self.server = None
-        self.context = daemon.DaemonContext()
 
     def _resolve_exposed_method(self, method_name):
         """Resolve an exposed method.
@@ -71,10 +75,6 @@ class Core(BaseCore):
             raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
         return result
 
-    def _daemonize(self):
-        self.context.open()
-        self.logger.info("%s daemonized" % self.name)
-    
     def _run(self):
         hostname, port = urlparse(self.setup['location'])[1].split(':')
         server_address = socket.getaddrinfo(hostname,
