@@ -761,6 +761,13 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
             rv[os.path.basename(mod)[:-3]] = ('', 1)
         return rv
 
+    def _key(self, entry):
+        name = entry.get("name").lstrip("/")
+        if name.endswith(".pp"):
+            return name[:-3]
+        else:
+            return name
+
     def _key2attrs(self, key):
         rv = SELinuxEntryHandler._key2attrs(self, key)
         status = self.all_records[key][1]
