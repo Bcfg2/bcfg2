@@ -373,7 +373,7 @@ class YumCollection(Collection):
         if not self.use_yum:
             self.logger.warning("Packages: Package groups are not supported by "
                                 "Bcfg2's internal Yum dependency generator")
-            return []
+            return dict()
 
         if not grouplist:
             return dict()
