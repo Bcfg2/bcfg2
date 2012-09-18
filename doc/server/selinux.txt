@@ -24,22 +24,25 @@ unconfined.)
 
 It defines the following booleans:
 
-+---------------------------+--------------------------------------------------+
-| Boolean Name              | Description                                      |
-+===========================+==================================================+
-| bcfg2_server_exec_scripts | Allow the Bcfg2 server to execute scripts in     |
-|                           | ``unconfined_t``. This ability is limited to     |
-|                           | scripts in the ``bcfg2_server_script_exec_t``    |
-|                           | context.  If this boolean is off, then external  |
-|                           | server-side scripts will be run in               |
-|                           | ``bcfg2_server_t``, which is a fairly limited    |
-|                           | context.  Consequently, this boolean should be   |
-|                           | on in order to meaningfully use the              |
-|                           | :ref:`server-plugins-misc-trigger` or            |
-|                           | :ref:`server-plugins-connectors-puppetenc`       |
-|                           | plugins, or Cfg                                  |
-|                           | :ref:`server-plugins-generators-cfg-validation`. |
-+---------------------------+--------------------------------------------------+
++-------------------------------------+-----------------------------------------+----------------------------------------------------------+---------+
+| Boolean Name                        | Description                             | Plugins Affected                                         | Default |
++=====================================+=========================================+==========================================================+=========+
+| bcfg2_server_exec_scripts           | Allow the Bcfg2 server to execute       | :ref:`server-plugins-misc-trigger` and                   | off     |
+|                                     | scripts in ``unconfined_t``. This       | :ref:`server-plugins-connectors-puppetenc`,              |         |
+|                                     | ability is limited to scripts in the    | and Cfg                                                  |         |
+|                                     | ``bcfg2_server_script_exec_t`` context. | :ref:`server-plugins-generators-cfg-validation`          |         |
+|                                     | If this boolean is off, then external   |                                                          |         |
+|                                     | server-side scripts will be run in      |                                                          |         |
+|                                     | ``bcfg2_server_t``, which is a fairly   |                                                          |         |
+|                                     | limited context.                        |                                                          |         |
++-------------------------------------+-----------------------------------------+----------------------------------------------------------+---------+
+| bcfg2_server_can_network_connect_db | Allow the Bcfg2 server to connect to    | :ref:`server-plugins-statistics-dbstats`, the            | off     |
+|                                     | databases (e.g., MySQL and PostgreSQL)  | :ref:`server-plugins-grouping-metadata-clients-database` |         |
+|                                     |                                         | feature of Metadata, and the database                    |         |
+|                                     |                                         | :ref:`server-plugins-probes-data-storage`                |         |
+|                                     |                                         | feature of Probes                                        |         |
++-------------------------------------+-----------------------------------------+----------------------------------------------------------+---------+
+
 
 It also defines the following SELinux types:
 
@@ -77,10 +80,14 @@ It also defines the following SELinux types:
 +----------------------------+-------------------------------------------------+
 | bcfg2_conf_t               | The context of bcfg2.conf                       |
 +----------------------------+-------------------------------------------------+
+| bcfg2_tmp_t                | The context of temp files created by the Bcfg2  |
+|                            | server                                          |
++----------------------------+-------------------------------------------------+
 
 If you do run your server in enforcing mode, it is highly recommend
 that you run ``restorecon -R /var/lib/bcfg2`` every time you update
-the content in that directory.
+the content in that directory, particularly if you are using plugins
+that execute arbitrary scripts.
 
 .. _server-selinux-entries:
 

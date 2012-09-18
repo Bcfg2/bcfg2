@@ -150,6 +150,8 @@ the client-specific one will be used.
 If you want to to detect information about the client operating system,
 the :ref:`server-plugins-probes-ohai` plugin can help.
 
+.. _server-plugins-probes-data-storage:
+
 Data Storage
 ============
 

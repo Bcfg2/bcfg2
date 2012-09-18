@@ -107,6 +107,8 @@ but that is deprecated.
 For detailed information on client authentication see
 :ref:`appendix-guides-authentication`
 
+.. _server-plugins-grouping-metadata-clients-database:
+
 Clients Database
 ~~~~~~~~~~~~~~~~
 
