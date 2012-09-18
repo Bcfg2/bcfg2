@@ -703,14 +703,8 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
         return rv
 
     def _filepath(self, entry):
-        path = os.path.join("/usr/share/selinux", self.setype,
-                            entry.get("name").lstrip("/"))
-        if not path.endswith(".pp"):
-            # the entry name we get from the SEModules plugin should
-            # always have .pp on the end, but we double check just to
-            # make absolutely certain
-            path = path + ".pp"
-        return path
+        return os.path.join("/usr/share/selinux", self.setype,
+                            entry.get("name") + '.pp')
 
     def _pathentry(self, entry):
         pathentry = copy.deepcopy(entry)
@@ -737,7 +731,7 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
         try:
             # if seobject has the moduleRecords attribute, install the
             # module using the seobject library
-            self.records
+            self.records  # pylint: disable=W0104
             return self._install_seobject(entry)
         except AttributeError:
             # seobject doesn't have the moduleRecords attribute, so
