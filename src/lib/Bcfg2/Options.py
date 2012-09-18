@@ -493,19 +493,19 @@ SERVER_LOCATION = \
            cf=('components', 'bcfg2'))
 SERVER_KEY = \
     Option('Path to SSL key',
-           default=None,
+           default="/etc/pki/tls/private/bcfg2.key",
            cmd='--ssl-key',
            odesc='<ssl key>',
            cf=('communication', 'key'),
            long_arg=True)
 SERVER_CERT = \
     Option('Path to SSL certificate',
-           default='/etc/bcfg2.key',
+           default="/etc/pki/tls/certs/bcfg2.crt",
            odesc='<ssl cert>',
            cf=('communication', 'certificate'))
 SERVER_CA = \
     Option('Path to SSL CA Cert',
-           default=None,
+           default="/etc/pki/tls/certs/bcfg2-ca.crt",
            odesc='<ca cert>',
            cf=('communication', 'ca'))
 SERVER_PASSWORD = \
