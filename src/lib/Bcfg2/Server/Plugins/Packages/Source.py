@@ -1,3 +1,49 @@
+""" ``Source`` objects represent a single <Source> tag in
+``sources.xml``.  Note that a single Source tag can itself describe
+multiple repositories (if it uses the "url" attribute instead of
+"rawurl"), and so can the ``Source`` object.  This can be the source
+(har har) of some confusion.  See
+:func:`Bcfg2.Server.Plugins.Packages.Collection._Collection.sourcelist`
+for the proper way to get all repos from a ``Source`` object.
+
+Source objects are aggregated into
+:class:`Bcfg2.Server.Plugins.Packages.Collection._Collection`
+objects, which are actually called by
+:class:`Bcfg2.Server.Plugins.Packages.Packages`.  This way a more
+advanced subclass can query repositories in aggregate rather than
+individually, which may give faster or more accurate results.
+
+The base ``Source`` object must be subclassed to handle each
+repository type.  How you subclass ``Source`` will depend on how you
+subclassed
+:class:`Bcfg2.Server.Plugins.Packages.Collection._Collection`; see
+:mod:`Bcfg2.Server.Plugins.Packages.Collection` for more details on
+different methods for doing that.
+
+If you are using the stock (or a near-stock)
+:class:`Bcfg2.Server.Plugins.Packages.Collection._Collection` object,
+then you will need to implement the following methods and attributes
+in your ``Source`` subclass:
+
+* :func:`Source.get_urls`
+* :func:`Source.read_files`
+* :attr:`Source.basegroups`
+* :attr:`Source.ptype`
+
+Additionally, you may want to consider overriding the following
+methods and attributes:
+
+* :func:`Source.is_virtual_package`
+* :func:`Source.get_group`
+* :attr:`Source.unknown_filter`
+* :attr:`Source.load_state`
+* :attr:`Source.save_state`
+
+If you are overriding the ``_Collection`` object in more depth, then
+you have more leeway in what you might want to override or implement
+in your ``Source`` subclass.
+"""
+
 import os
 import re
 import sys
@@ -8,6 +54,13 @@ from Bcfg2.Compat import HTTPError, HTTPBasicAuthHandler, \
 
 
 def fetch_url(url):
+    """ Return the content of the given URL.
+
+    :param url: The URL to fetch content from.
+    :type url: string
+    :raises: ValueError - Malformed URL
+    :raises: URLError - Failure fetching URL
+    :returns: string - the content of the page at the given URL """
     if '@' in url:
         mobj = re.match('(\w+://)([^:]+):([^@]+)@(.*)$', url)
         if not mobj:
@@ -22,6 +75,7 @@ def fetch_url(url):
 
 
 class SourceInitError(Exception):
+    """ Raised when a :class:`Source` object fails instantiation. """
     pass
 
 
@@ -30,6 +84,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
     pulprepo_re = re.compile(r'pulp/repos/([^/]+)')
     genericrepo_re = re.compile('https?://.*?/([^/]+)/?$')
     basegroups = []
+    unknown_filter = lambda p: p.startswith("choice")
 
     def __init__(self, basepath, xsource, setup):
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
@@ -37,16 +92,18 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
         self.xsource = xsource
         self.setup = setup
         self.essentialpkgs = set()
+        self.pkgnames = set()
 
         try:
             self.version = xsource.find('Version').text
         except AttributeError:
             self.version = None
 
-        for key, tag in [('components', 'Component'), ('arches', 'Arch'),
-                         ('blacklist', 'Blacklist'),
-                         ('whitelist', 'Whitelist')]:
-            setattr(self, key, [item.text for item in xsource.findall(tag)])
+        self.components = [item.text for item in xsource.findall('Component')]
+        self.arches = [item.text for item in xsource.findall('Arch')]
+        self.blacklist = [item.text for item in xsource.findall('Blacklist')]
+        self.whitelist = [item.text for item in xsource.findall('Whitelist')]
+
         self.server_options = dict()
         self.client_options = dict()
         opts = xsource.findall("Options")
@@ -112,7 +169,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
             else:  # rawurl given
                 usettings = [dict(version=self.version, component=None,
                                   arch=arch)]
-                
+
             for setting in usettings:
                 if not self.rawurl:
                     setting['baseurl'] = self.url
@@ -133,7 +190,15 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                                     g in self.arches)])))
 
     def load_state(self):
-        pass
+        data = open(self.cachefile)
+        (self.pkgnames, self.deps, self.provides,
+         self.essentialpkgs) = cPickle.load(data)
+
+    def save_state(self):
+        cache = open(self.cachefile, 'wb')
+        cPickle.dump((self.pkgnames, self.deps, self.provides,
+                      self.essentialpkgs), cache, 2)
+        cache.close()
 
     def setup_data(self, force_update=False):
         should_read = True
@@ -234,14 +299,45 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
     def escape_url(self, url):
         return os.path.join(self.basepath, url.replace('/', '@'))
 
-    def file_init(self):
-        pass
-
     def read_files(self):
         pass
 
+    def process_files(self, deps, prov):
+        self.deps['global'] = dict()
+        self.provides['global'] = dict()
+        for barch in deps:
+            self.deps[barch] = dict()
+            self.provides[barch] = dict()
+        for pkgname in self.pkgnames:
+            pset = set()
+            for barch in deps:
+                if pkgname not in deps[barch]:
+                    deps[barch][pkgname] = []
+                pset.add(tuple(deps[barch][pkgname]))
+            if len(pset) == 1:
+                self.deps['global'][pkgname] = pset.pop()
+            else:
+                for barch in deps:
+                    self.deps[barch][pkgname] = deps[barch][pkgname]
+        provided = set()
+        for bprovided in list(prov.values()):
+            provided.update(set(bprovided))
+        for prov in provided:
+            prset = set()
+            for barch in prov:
+                if prov not in prov[barch]:
+                    continue
+                prset.add(tuple(prov[barch].get(prov, ())))
+            if len(prset) == 1:
+                self.provides['global'][prov] = prset.pop()
+            else:
+                for barch in prov:
+                    self.provides[barch][prov] = prov[barch].get(prov, ())
+        self.save_state()
+
     def filter_unknown(self, unknown):
-        pass
+        unknown.difference_update(set([u for u in unknown
+                                       if self.unknown_filter(u)]))
 
     def update(self):
         for url in self.urls:
@@ -286,8 +382,10 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                 return self.provides[arch][required]
         return []
 
-    def is_package(self, metadata, _):
-        return False
+    def is_package(self, metadata, pkg):
+        return (pkg in self.pkgnames and
+                pkg not in self.blacklist and
+                (len(self.whitelist) == 0 or pkg in self.whitelist))
 
     def get_package(self, metadata, package):
         return package

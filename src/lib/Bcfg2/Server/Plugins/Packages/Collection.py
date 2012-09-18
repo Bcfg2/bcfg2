@@ -1,4 +1,4 @@
-"""``_Collection`` objects represent the set of
+""" ``_Collection`` objects represent the set of
 :class:`Bcfg2.Server.Plugins.Packages.Source.Source` objects that apply
 to a given client, and can be used to query all software repositories
 for a client in aggregate.  In some cases this can give faster or more
@@ -35,7 +35,7 @@ In either case, you may want to override
 :func:`_Collection.filter_unknown`, and
 :func:`_Collection.build_extra_structures`.
 
-.. _pkg-objects::
+.. _pkg-objects:
 
 Conversion Between Package Objects and XML Entries
 --------------------------------------------------
@@ -59,6 +59,9 @@ functions that take a package as an argument (e.g.,
 In the documentation below, the actual parameter return type (usually
 .``string``) used in this base implementation is noted, as well as this
 fact.
+
+The Collection Module
+---------------------
 """
 
 import sys
@@ -447,7 +450,7 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
         package(s) described by it in a format appropriate for passing
         to :func:`Bcfg2.Server.Plugins.Packages.Packages.complete`.
         By default, that's just the name; only the
-        :module:`Bcfg2.Server.Plugins.Packages.Yum` backend supports
+        :mod:`Bcfg2.Server.Plugins.Packages.Yum` backend supports
         versions or other extended data. See :ref:`pkg-objects` for
         more details.
 

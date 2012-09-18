@@ -25,6 +25,8 @@ git access. Mail the :ref:`help-mailinglist` for details.
    setup
    client-driver
    plugins
+   cfg
+   packages
    testing
    documentation
    docstyleguide

@@ -558,6 +558,7 @@ class YumCollection(_Collection):
 class YumSource(Source):
     basegroups = ['yum', 'redhat', 'centos', 'fedora']
     ptype = 'yum'
+    unknown_filter = lambda u: u.startswith("rpmlib")
 
     def __init__(self, basepath, xsource, setup):
         Source.__init__(self, basepath, xsource, setup)
@@ -632,20 +633,21 @@ class YumSource(Source):
         rmdurl = '%srepodata/repomd.xml' % url
         try:
             repomd = fetch_url(rmdurl)
-            xdata = lxml.etree.XML(repomd)
         except ValueError:
             self.logger.error("Packages: Bad url string %s" % rmdurl)
-            return []
-        except URLError:
-            err = sys.exc_info()[1]
-            self.logger.error("Packages: Failed to fetch url %s. %s" %
-                              (rmdurl, err))
             return []
         except HTTPError:
             err = sys.exc_info()[1]
             self.logger.error("Packages: Failed to fetch url %s. code=%s" %
                               (rmdurl, err.code))
             return []
+        except URLError:
+            err = sys.exc_info()[1]
+            self.logger.error("Packages: Failed to fetch url %s. %s" %
+                              (rmdurl, err))
+            return []
+        try:
+            xdata = lxml.etree.XML(repomd)
         except lxml.etree.XMLSyntaxError:
             err = sys.exc_info()[1]
             self.logger.error("Packages: Failed to process metadata at %s: %s" %
@@ -764,17 +766,17 @@ class YumSource(Source):
             filtered = set()
             for unk in unknown:
                 try:
-                    if unk.startswith('rpmlib'):
+                    if self.unknown_filter(unk):
                         filtered.update(unk)
                 except AttributeError:
                     try:
-                        if unk[0].startswith('rpmlib'):
+                        if self.unknown_filter(unk[0]):
                             filtered.update(unk)
                     except (IndexError, AttributeError):
                         pass
+            unknown.difference_update(filtered)
         else:
-            filtered = set([u for u in unknown if u.startswith('rpmlib')])
-        unknown.difference_update(filtered)
+            Source.filter_unknown(self, unknown)
 
     def setup_data(self, force_update=False):
         if not self.use_yum:

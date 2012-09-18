@@ -2,7 +2,6 @@ import re
 import gzip
 from Bcfg2.Server.Plugins.Packages.Collection import _Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
-from Bcfg2.Compat import cPickle
 
 
 class AptCollection(_Collection):
@@ -24,25 +23,6 @@ class AptCollection(_Collection):
 class AptSource(Source):
     basegroups = ['apt', 'debian', 'ubuntu', 'nexenta']
     ptype = 'deb'
-
-    def __init__(self, basepath, xsource, config):
-        Source.__init__(self, basepath, xsource, config)
-        self.pkgnames = set()
-
-    def save_state(self):
-        cache = open(self.cachefile, 'wb')
-        cPickle.dump((self.pkgnames, self.deps, self.provides,
-                      self.essentialpkgs), cache, 2)
-        cache.close()
-
-    def load_state(self):
-        data = open(self.cachefile)
-        (self.pkgnames, self.deps, self.provides,
-         self.essentialpkgs) = cPickle.load(data)
-
-    def filter_unknown(self, unknown):
-        filtered = set([u for u in unknown if u.startswith('choice')])
-        unknown.difference_update(filtered)
 
     def get_urls(self):
         if not self.rawurl:
@@ -110,40 +90,4 @@ class AptSource(Source):
                         if dname not in bprov[barch]:
                             bprov[barch][dname] = set()
                         bprov[barch][dname].add(pkgname)
-
-        self.deps['global'] = dict()
-        self.provides['global'] = dict()
-        for barch in bdeps:
-            self.deps[barch] = dict()
-            self.provides[barch] = dict()
-        for pkgname in self.pkgnames:
-            pset = set()
-            for barch in bdeps:
-                if pkgname not in bdeps[barch]:
-                    bdeps[barch][pkgname] = []
-                pset.add(tuple(bdeps[barch][pkgname]))
-            if len(pset) == 1:
-                self.deps['global'][pkgname] = pset.pop()
-            else:
-                for barch in bdeps:
-                    self.deps[barch][pkgname] = bdeps[barch][pkgname]
-        provided = set()
-        for bprovided in list(bprov.values()):
-            provided.update(set(bprovided))
-        for prov in provided:
-            prset = set()
-            for barch in bprov:
-                if prov not in bprov[barch]:
-                    continue
-                prset.add(tuple(bprov[barch].get(prov, ())))
-            if len(prset) == 1:
-                self.provides['global'][prov] = prset.pop()
-            else:
-                for barch in bprov:
-                    self.provides[barch][prov] = bprov[barch].get(prov, ())
-        self.save_state()
-
-    def is_package(self, _, pkg):
-        return (pkg in self.pkgnames and
-                pkg not in self.blacklist and
-                (len(self.whitelist) == 0 or pkg in self.whitelist))
+        self.process_files(bdeps, bprov)
