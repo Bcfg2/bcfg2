@@ -505,7 +505,7 @@ SERVER_CERT = \
            cf=('communication', 'certificate'))
 SERVER_CA = \
     Option('Path to SSL CA Cert',
-           default="/etc/pki/tls/certs/bcfg2-ca.crt",
+           default=None,
            odesc='<ca cert>',
            cf=('communication', 'ca'))
 SERVER_PASSWORD = \
