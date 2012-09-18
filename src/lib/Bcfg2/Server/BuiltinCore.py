@@ -12,13 +12,14 @@ from Bcfg2.SSLServer import XMLRPCServer
 
 logger = logging.getLogger()
 
+
 class NoExposedMethod (Exception):
     """There is no method exposed with the given name."""
 
 
 class Core(BaseCore):
     name = 'bcfg2-server'
-    
+
     def __init__(self, setup):
         BaseCore.__init__(self, setup)
         self.server = None

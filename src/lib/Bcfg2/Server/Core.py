@@ -27,9 +27,11 @@ except:
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
 
+
 def exposed(func):
     func.exposed = True
     return func
+
 
 class track_statistics(object):
     """ decorator that tracks execution time for the given
@@ -52,6 +54,7 @@ class track_statistics(object):
                 obj.stats.add_value(name, time.time() - start)
 
         return inner
+
 
 def sort_xml(node, key=None):
     for child in node:
@@ -99,7 +102,7 @@ class BaseCore(object):
             fm = Bcfg2.Server.FileMonitor.available[setup['filemonitor']]
         except KeyError:
             self.logger.error("File monitor driver %s not available; "
-                              "forcing to default" % filemonitor)
+                              "forcing to default" % setup['filemonitor'])
             fm = Bcfg2.Server.FileMonitor.available['default']
         famargs = dict(ignore=[], debug=False)
         if 'ignore' in setup:
@@ -489,7 +492,7 @@ class BaseCore(object):
 
     def _daemonize(self):
         """ daemonize the server """
-        raise NotImplementedError        
+        raise NotImplementedError
 
     def _run(self):
         """ start up the server; this method should return immediately """

@@ -3,13 +3,13 @@
 import os
 import sys
 import logging
-import operator
 import pyinotify
 from Bcfg2.Compat import reduce
 from Bcfg2.Server.FileMonitor import Event
 from Bcfg2.Server.FileMonitor.Pseudo import Pseudo
 
 logger = logging.getLogger(__name__)
+
 
 class Inotify(Pseudo, pyinotify.ProcessEvent):
     __priority__ = 1
@@ -22,6 +22,7 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
 
     def __init__(self, ignore=None, debug=False):
         Pseudo.__init__(self, ignore=ignore, debug=debug)
+        pyinotify.ProcessEvent(self)
         self.event_filter = dict()
         self.watches_by_path = dict()
         # these are created in start() after the server is done forking
@@ -53,7 +54,6 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
         try:
             watch = self.wm.watches[ievent.wd]
         except KeyError:
-            err = sys.exc_info()[1]
             logger.error("Error handling event for %s: Watch %s not found" %
                          (ievent.pathname, ievent.wd))
             return
