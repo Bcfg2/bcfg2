@@ -13,12 +13,12 @@ import Bcfg2.Server
 import Bcfg2.Server.Plugin
 from Bcfg2.Compat import b64decode
 
-probecode = """#!/usr/bin/env python
+PROBECODE = """#!/usr/bin/env python
 
 import os
 import pwd
 import grp
-import lxml.etree
+import Bcfg2.Client.XML
 from Bcfg2.Compat import b64encode
 
 path = "%s"
@@ -28,14 +28,15 @@ if not os.path.exists(path):
     raise SystemExit(1)
 
 stat = os.stat(path)
-data = lxml.etree.Element("ProbedFileData",
-                          name=path,
-                          owner=pwd.getpwuid(stat[4])[0],
-                          group=grp.getgrgid(stat[5])[0],
-                          perms=oct(stat[0] & 07777))
+data = Bcfg2.Client.XML.Element("ProbedFileData",
+                                name=path,
+                                owner=pwd.getpwuid(stat[4])[0],
+                                group=grp.getgrgid(stat[5])[0],
+                                perms=oct(stat[0] & 07777))
 data.text = b64encode(open(path).read())
-print(lxml.etree.tostring(data, xml_declaration=False).decode('UTF-8'))
+print(Bcfg2.Client.XML.tostring(data, xml_declaration=False).decode('UTF-8'))
 """
+
 
 class FileProbes(Bcfg2.Server.Plugin.Plugin,
                  Bcfg2.Server.Plugin.Probing):
@@ -76,7 +77,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
                 probe = lxml.etree.Element('probe', name=path,
                                            source=self.name,
                                            interpreter="/usr/bin/env python")
-                probe.text = probecode % path
+                probe.text = PROBECODE % path
                 self.probes[metadata.hostname].append(probe)
                 self.debug_log("Adding file probe for %s to %s" %
                                (path, metadata.hostname))
@@ -92,9 +93,10 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
                                   (data.get('name'), metadata.hostname))
             else:
                 try:
-                    self.write_data(lxml.etree.XML(data.text,
-                                                   parser=Bcfg2.Server.XMLParser),
-                                    metadata)
+                    self.write_data(
+                        lxml.etree.XML(data.text,
+                                       parser=Bcfg2.Server.XMLParser),
+                        metadata)
                 except lxml.etree.XMLSyntaxError:
                     # if we didn't get XML back from the probe, assume
                     # it's an error message
@@ -215,10 +217,11 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
         root.append(info)
         try:
             open(infoxml,
-                 "w").write(lxml.etree.tostring(root,
-                                                xml_declaration=False,
-                                                pretty_print=True).decode('UTF-8'))
+                 "w").write(
+                lxml.etree.tostring(root,
+                                    xml_declaration=False,
+                                    pretty_print=True).decode('UTF-8'))
         except IOError:
             err = sys.exc_info()[1]
-            self.logger.error("Could not write %s: %s" % (fileloc, err))
+            self.logger.error("Could not write %s: %s" % (infoxml, err))
             return
