@@ -4,10 +4,6 @@
 %{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
 %{!?_initrddir: %global _initrddir %{_sysconfdir}/rc.d/init.d}
 
-%global selinux_policyver %(%{__sed} -e 's,.*selinux-policy-\\([^/]*\\)/.*,\\1,' /usr/share/selinux/devel/policyhelp || echo 0.0.0)
-%global selinux_types %(%{__awk} '/^#[[:space:]]*SELINUXTYPE=/,/^[^#]/ { if ($3 == "-") printf "%s ", $2 }' /etc/selinux/config 2>/dev/null)
-%global selinux_variants %([ -z "%{selinux_types}" ] && echo mls strict targeted || echo %{selinux_types})
-
 Name:             bcfg2
 Version:          1.3.0
 Release:          0.1pre1
@@ -238,6 +234,10 @@ deployment strategies.
 
 This package includes the Bcfg2 reports web frontend.
 
+%global selinux_policyver %(%{__sed} -e 's,.*selinux-policy-\\([^/]*\\)/.*,\\1,' /usr/share/selinux/devel/policyhelp || echo 0.0.0)
+%global selinux_types %(%{__awk} '/^#[[:space:]]*SELINUXTYPE=/,/^[^#]/ { if ($3 == "-") printf "%s ", $2 }' /etc/selinux/config 2>/dev/null)
+%global selinux_variants %([ -z "%{selinux_types}" ] && echo mls strict targeted || echo %{selinux_types})
+
 %package selinux
 Version:          1.3.0
 Summary:          Bcfg2 Client and Server SELinux policy
@@ -255,6 +255,34 @@ Requires:         %{name} = %{version}-%{release}
 Requires(post):   /usr/sbin/semodule, /sbin/restorecon, /sbin/fixfiles, bcfg2
 Requires(postun): /usr/sbin/semodule, /sbin/restorecon, /sbin/fixfiles, bcfg2
 
+%description selinux
+Bcfg2 helps system administrators produce a consistent, reproducible,
+and verifiable description of their environment, and offers
+visualization and reporting tools to aid in day-to-day administrative
+tasks. It is the fifth generation of configuration management tools
+developed in the Mathematics and Computer Science Division of Argonne
+National Laboratory.
+
+It is based on an operational model in which the specification can be
+used to validate and optionally change the state of clients, but in a
+feature unique to bcfg2 the client's response to the specification can
+also be used to assess the completeness of the specification. Using
+this feature, bcfg2 provides an objective measure of how good a job an
+administrator has done in specifying the configuration of client
+systems. Bcfg2 is therefore built to help administrators construct an
+accurate, comprehensive specification.
+
+Bcfg2 has been designed from the ground up to support gentle
+reconciliation between the specification and current client states. It
+is designed to gracefully cope with manual system modifications.
+
+Finally, due to the rapid pace of updates on modern networks, client
+systems are constantly changing; if required in your environment,
+Bcfg2 can enable the construction of complex change management and
+deployment strategies.
+
+This package includes the Bcfg2 server and client SELinux policy.
+
 %prep
 %setup -q -n %{name}-%{version}
 
@@ -265,7 +293,7 @@ Requires(postun): /usr/sbin/semodule, /sbin/restorecon, /sbin/fixfiles, bcfg2
 %{?pythonpath: export PYTHONPATH="%{pythonpath}"}
 %{__python}%{pythonversion} setup.py build_sphinx
 
-cd %{buildroot}/redhat/selinux
+cd redhat/selinux
 for selinuxvariant in %{selinux_variants}; do
   make NAME=${selinuxvariant} -f /usr/share/selinux/devel/Makefile
   mv %{name}.pp %{name}.pp.${selinuxvariant}
