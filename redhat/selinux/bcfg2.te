@@ -5,7 +5,8 @@ policy_module(bcfg2, 1.1.0)
 # Declarations
 #
 
-gen_tunable(bcfg2_server_exec_scripts, true)
+gen_tunable(bcfg2_server_exec_scripts, false)
+gen_tunable(bcfg2_server_can_network_connect_db, false)
 
 type bcfg2_t;
 type bcfg2_exec_t;
@@ -41,6 +42,9 @@ files_lock_file(bcfg2_lock_t)
 type bcfg2_conf_t;
 files_config_file(bcfg2_conf_t)
 
+type bcfg2_tmp_t;
+files_tmp_file(bcfg2_tmp_t)
+
 ########################################
 #
 # bcfg2-server local policy
@@ -64,7 +68,9 @@ files_search_etc(bcfg2_server_t)
 read_files_pattern(bcfg2_server_t, bcfg2_conf_t, bcfg2_conf_t)
 read_lnk_files_pattern(bcfg2_server_t, bcfg2_conf_t, bcfg2_conf_t)
 
-files_manage_generic_tmp_files(bcfg2_server_t)
+manage_files_pattern(bcfg2_server_t, bcfg2_tmp_t, bcfg2_tmp_t)
+files_tmp_filetrans(bcfg2_server_t, bcfg2_tmp_t, file)
+can_exec(bcfg2_server_t, bcfg2_tmp_t)
 
 kernel_read_system_state(bcfg2_server_t)
 
@@ -97,22 +103,23 @@ corenet_tcp_connect_http_port(bcfg2_server_t)
 corenet_tcp_sendrecv_http_port(bcfg2_server_t)
 
 optional_policy(`
-        corenet_tcp_connect_postgresql_port(bcfg2_server_t)
-        corenet_sendrecv_postgresql_client_packets(bcfg2_server_t)
-
         postgresql_stream_connect(bcfg2_server_t)
+        postgresql_unpriv_client(bcfg2_server_t)
+        tunable_policy(`bcfg2_server_can_network_connect_db',`
+                postgresql_tcp_connect(bcfg2_server_t)
+        ')
 ')
 
 optional_policy(`
-        corenet_tcp_connect_mysqld_port(bcfg2_server_t)
-        corenet_sendrecv_mysqld_client_packets(bcfg2_server_t)
-
-        mysql_search_db(bcfg2_server_t)
         mysql_stream_connect(bcfg2_server_t)
+        mysql_rw_db_sockets(bcfg2_server_t)
+        tunable_policy(`bcfg2_server_can_network_connect_db',`
+                mysql_tcp_connect(bcfg2_server_t)
+        ')
 ')
 
 optional_policy(`
-                unconfined_domain(bcfg2_server_script_t)
+        unconfined_domain(bcfg2_server_script_t)
 ')
 
 tunable_policy(`bcfg2_server_exec_scripts', `
@@ -171,7 +178,6 @@ files_manage_etc_files(bcfg2_t)
 files_read_usr_symlinks(bcfg2_t)
 files_relabel_config_dirs(bcfg2_t)
 files_relabel_config_files(bcfg2_t)
-files_manage_generic_tmp_files(bcfg2_t)
 
 selinux_search_fs(bcfg2_t)
 selinux_set_all_booleans(bcfg2_t)
