@@ -6,6 +6,87 @@
 SELinux
 =======
 
+This document describes two related but somewhat disparate concepts:
+First, how to run Bcfg2 under SELinux; and secondly, how to use Bcfg2
+to manage SELinux.
+
+.. _server-selinux-policy:
+
+Running Bcfg2 under SELinux
+===========================
+
+.. versionadded:: 1.3.0
+
+Bcfg2 now ships with an SELinux policy that can be used to run both
+the client and server in enforcing mode.  (Most of the helper tools,
+like ``bcfg2-info`` and ``bcfg2-admin``, will still need to be run
+unconfined.)
+
+It defines the following booleans:
+
++---------------------------+--------------------------------------------------+
+| Boolean Name              | Description                                      |
++===========================+==================================================+
+| bcfg2_server_exec_scripts | Allow the Bcfg2 server to execute scripts in     |
+|                           | ``unconfined_t``. This ability is limited to     |
+|                           | scripts in the ``bcfg2_server_script_exec_t``    |
+|                           | context.  If this boolean is off, then external  |
+|                           | server-side scripts will be run in               |
+|                           | ``bcfg2_server_t``, which is a fairly limited    |
+|                           | context.  Consequently, this boolean should be   |
+|                           | on in order to meaningfully use the              |
+|                           | :ref:`server-plugins-misc-trigger` or            |
+|                           | :ref:`server-plugins-connectors-puppetenc`       |
+|                           | plugins, or Cfg                                  |
+|                           | :ref:`server-plugins-generators-cfg-validation`. |
++---------------------------+--------------------------------------------------+
+
+It also defines the following SELinux types:
+
++----------------------------+-------------------------------------------------+
+| Type Name                  | Description                                     |
++============================+=================================================+
+| bcfg2_t                    | The context the Bcfg2 client runs in            |
++----------------------------+-------------------------------------------------+
+| bcfg2_exec_t               | The context of the Bcfg2 client script itself   |
++----------------------------+-------------------------------------------------+
+| bcfg2_server_t             | The context the Bcfg2 server runs in            |
++----------------------------+-------------------------------------------------+
+| bcfg2_server_exec_t        | The context of the Bcfg2 server script itself   |
++----------------------------+-------------------------------------------------+
+| bcfg2_initrc_exec_t        | The context of the Bcfg2 client init script     |
++----------------------------+-------------------------------------------------+
+| bcfg2_server_initrc_exec_t | The context of the Bcfg2 server init script     |
++----------------------------+-------------------------------------------------+
+| bcfg2_var_lib_t            | The context of most Bcfg2 specification data,   |
+|                            | with the exception of the executable scripts in |
+|                            | ``bcfg2_server_script_exec_t``                  |
++----------------------------+-------------------------------------------------+
+| bcfg2_server_script_t      | The context server-side scripts run in. This    |
+|                            | type is unconfined if the                       |
+|                            | ``bcfg2_server_exec_scripts`` is on.            |
++----------------------------+-------------------------------------------------+
+| bcfg2_server_script_exec_t | The context of the server-side scripts in the   |
+|                            | Bcfg2 specification                             |
++----------------------------+-------------------------------------------------+
+| bcfg2_yum_helper_exec_t    | The context of the bcfg2-yum-helper script      |
++----------------------------+-------------------------------------------------+
+| bcfg2_var_run_t            | The context of the server pidfile               |
++----------------------------+-------------------------------------------------+
+| bcfg2_lock_t               | The context of the client lock file             |
++----------------------------+-------------------------------------------------+
+| bcfg2_conf_t               | The context of bcfg2.conf                       |
++----------------------------+-------------------------------------------------+
+
+If you do run your server in enforcing mode, it is highly recommend
+that you run ``restorecon -R /var/lib/bcfg2`` every time you update
+the content in that directory.
+
+.. _server-selinux-entries:
+
+Managing SELinux Entries
+========================
+
 .. versionadded:: 1.3.0
 
 Bcfg2 has the ability to handle the majority of SELinux entries with
@@ -29,7 +110,7 @@ In its current version, the SELinux support in Bcfg2 is not sufficient
 to manage MCS/MLS policies.
 
 Extra Entries
-=============
+-------------
 
 As it can be very tedious to create a baseline of all existing SELinux
 entries, you can use ``selinux_baseline.py`` located in the ``tools/``
@@ -54,7 +135,7 @@ does this rather than separate Bundle/Rules files because of the
 .. _server-selinux-duplicate-entries:
 
 Duplicate Entries
-=================
+-----------------
 
 In certain cases, it may be necessary to create multiple SELinux
 entries with the same name.  For instance, "root" is both an SELinux

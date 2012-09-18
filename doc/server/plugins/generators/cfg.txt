@@ -405,6 +405,8 @@ file. The reason the other deltas aren't applied to *foo.example.com*
 is because a **.H_** delta is more specific than a **.G##_** delta. Bcfg2
 applies all the deltas at the most specific level.
 
+.. _server-plugins-generators-cfg-validation:
+
 Content Validation
 ==================
 
