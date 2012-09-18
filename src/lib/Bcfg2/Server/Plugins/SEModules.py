@@ -42,10 +42,7 @@ class SEModules(Bcfg2.Server.Plugin.GroupSpool):
         return name.lstrip("/")
 
     def HandlesEntry(self, entry, metadata):
-        print "entry.tag = %s, self.Entries = %s" % (entry.tag, self.Entries.keys())
-        print "entry type = %s" % entry.get('type')
         if entry.tag in self.Entries and entry.get('type') == 'module':
-            print "  filename = %s, self.Entries[%s] = %s" % (self._get_module_filename(entry), entry.tag, self.Entries[entry.tag].keys())
             return self._get_module_filename(entry) in self.Entries[entry.tag]
         return Bcfg2.Server.Plugin.GroupSpool.HandlesEntry(self, entry,
                                                            metadata)
