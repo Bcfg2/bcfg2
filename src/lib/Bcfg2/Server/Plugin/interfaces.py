@@ -83,7 +83,10 @@ class Structure(object):
 
 
 class Metadata(object):
-    """Signal metadata capabilities for this plugin"""
+    """ Metadata plugins handle initial metadata construction,
+    accumulating data from :class:`Connector` plugins, and producing
+    :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata` objects. """
+
     def viz(self, hosts, bundles, key, only_client, colors):
         """ Return a string containing a graphviz document that maps
         out the Metadata for :ref:`bcfg2-admin viz <server-admin-viz>`
