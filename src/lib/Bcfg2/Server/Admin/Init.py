@@ -13,8 +13,7 @@ import Bcfg2.Options
 from Bcfg2.Compat import input
 
 # default config file
-config = '''
-[server]
+config = '''[server]
 repository = %s
 plugins = %s
 
