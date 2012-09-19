@@ -569,10 +569,12 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
         self.save_state()
 
     def filter_unknown(self, unknown):
-        """ After :func:`complete`, filter out packages that appear in
-        the list of unknown packages but should not be presented to
-        the user.  :attr:`unknown_filter` is called to assess whether
-        or not a package is expected to be unknown.
+        """ After
+        :func:`Bcfg2.Server.Plugins.Packages.Collection._Collection.complete`,
+        filter out packages that appear in the list of unknown
+        packages but should not be presented to the user.
+        :attr:`unknown_filter` is called to assess whether or not a
+        package is expected to be unknown.
 
         :param unknown: A set of unknown packages.  The set should be
                         modified in place.

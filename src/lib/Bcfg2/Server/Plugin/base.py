@@ -3,6 +3,7 @@
 import os
 import logging
 
+
 class Debuggable(object):
     """ Mixin to add a debugging interface to an object and expose it
     via XML-RPC on :class:`Bcfg2.Server.Plugin.base.Plugin` objects """
@@ -11,6 +12,14 @@ class Debuggable(object):
     __rmi__ = ['toggle_debug']
 
     def __init__(self, name=None):
+        """
+        :param name: The name of the logger object to get.  If none is
+                     supplied, the full name of the class (including
+                     module) will be used.
+        :type name: string
+
+        .. autoattribute:: __rmi__
+        """
         if name is None:
             name = "%s.%s" % (self.__class__.__module__,
                               self.__class__.__name__)
@@ -92,6 +101,8 @@ class Plugin(Debuggable):
                           filesystem
         :type datastore: string
         :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginInitError`
+
+        .. autoattribute:: __rmi__
         """
         object.__init__(self)
         self.Entries = {}

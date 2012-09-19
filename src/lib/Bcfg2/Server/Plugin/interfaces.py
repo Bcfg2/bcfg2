@@ -10,6 +10,7 @@ from Bcfg2.Compat import Queue, Empty, Full, cPickle
 from exceptions import *
 from base import Plugin
 
+
 class Generator(object):
     """ Generator plugins contribute to literal client configurations.
     That is, they generate entry contents.
@@ -46,7 +47,7 @@ class Generator(object):
         return False
 
     def HandleEntry(self, entry, metadata):
-        """ HandlesEntry is the slow path method for binding
+        """ HandleEntry is the slow path method for binding
         configuration binding requests.  It is called if the
         ``Entries`` dict does not contain a method for binding the
         entry, and :func:`HandlesEntry`
@@ -230,7 +231,7 @@ class Connector(object):
 
         :param metadata: The client metadata
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-        :return: list of strings
+        :return: dict
         """
         return dict()
 
@@ -473,8 +474,9 @@ class StructureValidator(object):
         :param metadata: The client metadata
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :param config: A list of lxml.etree._Element objects
-                       describing the structures for this client
-        :type config: list
+                       describing the structures (i.e., bundles) for
+                       this client.  This can be modified in place.
+        :type config: list of lxml.etree._Element
         :returns: None
         :raises: :class:`Bcfg2.Server.Plugin.exceptions.ValidationError`
         """

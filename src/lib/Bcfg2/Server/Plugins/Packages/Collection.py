@@ -428,7 +428,9 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
         pass
 
     def get_additional_data(self):
-        """ Get additional Connector data to be supplied to
+        """ Get additional
+        :class:`Bcfg2.Server.Plugin.interfaces.Connector` data to be
+        supplied to
         :func:`Bcfg2.Server.Plugins.Packages.Packages.get_additional_data`
         (and thence to client metadata objects).
 
@@ -462,9 +464,8 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
     def packages_from_entry(self, entry):
         """ Given a Package or BoundPackage entry, get a list of the
         package(s) described by it in a format appropriate for passing
-        to :func:`Bcfg2.Server.Plugins.Packages.Packages.complete`.
-        By default, that's just the name; only the
-        :mod:`Bcfg2.Server.Plugins.Packages.Yum` backend supports
+        to :func:`complete`.  By default, that's just the name; only
+        the :mod:`Bcfg2.Server.Plugins.Packages.Yum` backend supports
         versions or other extended data. See :ref:`pkg-objects` for
         more details.
 
@@ -476,14 +477,13 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
 
     def packages_to_entry(self, pkglist, entry):
         """ Given a list of package objects as returned by
-        :func:`packages_from_entry` or
-        :func:`Bcfg2.Server.Plugins.Packages.Packages.complete`,
-        return an XML tree describing the BoundPackage entries that
-        should be included in the client configuration. See
-        :ref:`pkg-objects` for more details.
+        :func:`packages_from_entry` or :func:`complete`, return an XML
+        tree describing the BoundPackage entries that should be
+        included in the client configuration. See :ref:`pkg-objects`
+        for more details.
 
         :param pkglist: A list of packages as returned by 
-                        :func:`Bcfg2.Server.Plugins.Packages.Packages.complete`
+                        :func:`complete`
         :type pkglist: list of strings, but see :ref:`pkg-objects`
         :param entry: The base XML entry to add all of the Package
                       entries to.  This should be modified in place.
@@ -498,13 +498,11 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
 
     def get_new_packages(self, initial, complete):
         """ Compute the difference between the complete package list
-        (as returned by
-        :func:`Bcfg2.Server.Plugins.Packages.Packages.complete`) and
-        the initial package list computed from the specification.
-        This is necessary because the format may be different between
-        the two lists due to :func:`packages_to_entry` and
-        :func:`packages_from_entry`. See :ref:`pkg-objects` for more
-        details.
+        (as returned by :func:`complete`) and the initial package list
+        computed from the specification.  This is necessary because
+        the format may be different between the two lists due to
+        :func:`packages_to_entry` and :func:`packages_from_entry`. See
+        :ref:`pkg-objects` for more details.
 
         :param initial: The initial package list
         :type initial: set of strings, but see :ref:`pkg-objects`
