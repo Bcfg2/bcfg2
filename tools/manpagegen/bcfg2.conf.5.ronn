@@ -311,6 +311,9 @@ These options only affect client functionality, specified in the
   * `paranoid`:
     Run the client in paranoid mode.
 
+  * `profile`:
+    Assert the given profile for the host.
+
 ## COMMUNICATION OPTIONS
 
 Specified in the `[communication]` section. These options define
