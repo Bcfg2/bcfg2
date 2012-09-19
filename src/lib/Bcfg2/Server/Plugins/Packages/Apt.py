@@ -24,7 +24,8 @@ class AptSource(Source):
     basegroups = ['apt', 'debian', 'ubuntu', 'nexenta']
     ptype = 'deb'
 
-    def get_urls(self):
+    @property
+    def urls(self):
         if not self.rawurl:
             rv = []
             for part in self.components:
@@ -34,7 +35,6 @@ class AptSource(Source):
             return rv
         else:
             return ["%sPackages.gz" % self.rawurl]
-    urls = property(get_urls)
 
     def read_files(self):
         bdeps = dict()

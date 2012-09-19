@@ -1,6 +1,6 @@
 .. -*- mode: rst -*-
 
-.. _development-cfg:
+.. _development-packages:
 
 =======================
 Developing for Packages
@@ -34,10 +34,14 @@ The Source Object
 
 .. automodule:: Bcfg2.Server.Plugins.Packages.Source
 
-The Packages Module and Configuration
-=====================================
+The Packages Module
+===================
 
 .. automodule:: Bcfg2.Server.Plugins.Packages
+
+Packages Source Description
+===========================
+
 .. automodule:: Bcfg2.Server.Plugins.Packages.PackagesSources
 
 Existing Packages Backends

@@ -621,10 +621,10 @@ class YumSource(Source):
             (self.packages, self.deps, self.provides,
              self.filemap, self.url_map) = cPickle.load(data)
 
-    def get_urls(self):
+    @property
+    def urls(self):
         return [self._get_urls_from_repodata(m['url'], m['arch'])
                 for m in self.url_map]
-    urls = property(get_urls)
 
     def _get_urls_from_repodata(self, url, arch):
         if self.use_yum:

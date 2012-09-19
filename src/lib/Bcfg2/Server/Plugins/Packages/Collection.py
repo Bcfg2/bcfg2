@@ -15,19 +15,27 @@ Overriding Methods
 As noted above, the ``_Collection`` object is written expressly so
 that you can subclass it and override no methods or attributes, and it
 will work by deferring all calls to the Source objects it contains.
-If you do choose to override methods, there are two approaches:
+There are thus three approaches to writing a ``_Collection`` subclass:
+
+#. Keep the superclass almost entirely intact and defer to the
+   ``Source`` objects inside it. For an example of this kind of
+   ``_Collection`` object, see
+   :mod:`Bcfg2.Server.Plugins.Packages.Apt`.
 
 #. Keep :func:`_Collection.complete` intact, and override the methods
    it calls: :func:`_Collection.is_package`,
    :func:`_Collection.is_virtual_package`,
    :func:`_Collection.get_deps`, :func:`_Collection.get_provides`,
    :func:`_Collection.get_vpkgs`, and :func:`_Collection.setup_data`.
+   There are no examples of this kind of ``_Collection`` subclass yet.
 
 #. Provide your own implementation of :func:`_Collection.complete`, in
    which case you do not have to override the above methods.  You may
    want to override :func:`_Collection.packages_from_entry`,
    :func:`_Collection.packages_to_entry`, and
-   :func:`_Collection.get_new_packages`.
+   :func:`_Collection.get_new_packages`.  For an example of this kind
+   of ``_Collection`` object, see
+   :mod:`Bcfg2.Server.Plugins.Packages.yum`.
 
 In either case, you may want to override
 :func:`_Collection.get_groups`, :func:`_Collection.get_group`,
@@ -70,6 +78,7 @@ import logging
 import lxml.etree
 import Bcfg2.Server.Plugin
 from Bcfg2.Compat import any, md5
+from Bcfg2.Server.Plugins.Packages.Source import Source
 
 LOGGER = logging.getLogger(__name__)
 
@@ -201,17 +210,15 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
         return "\n".join(srcs)
 
     def get_relevant_groups(self):
-        """ Get all groups that might be relevant to determining which
-        sources apply to this collection's client.
-
-        The base implementation simply aggregates the results of
-        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.get_relevant_groups`.
-
-        :return: list of strings - group names"""
         groups = []
         for source in self:
             groups.extend(source.get_relevant_groups(self.metadata))
         return sorted(list(set(groups)))
+    get_relevant_groups.__doc__ = Source.get_relevant_groups.__doc__ + """
+
+        The base implementation simply aggregates the results of
+        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.get_relevant_groups`.
+        """
 
     @property
     def basegroups(self):
@@ -228,11 +235,12 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
 
     @property
     def cachefiles(self):
-        """ Geta list of the full path to all cachefiles used by this
+        """ A list of the full path to all cachefiles used by this
         collection.
 
-        The base implementation simply aggregates the results of
-        :attr:`Bcfg2.Server.Plugins.Packages.Source.Source.cachefiles`."""
+        The base implementation simply aggregates
+        :attr:`Bcfg2.Server.Plugins.Packages.Source.Source.cachefile`
+        attributes."""
         cachefiles = set([self.cachepath])
         for source in self:
             cachefiles.add(source.cachefile)
@@ -245,7 +253,7 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
         once faster than serially.
 
         The base implementation simply aggregates the results of
-        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.get_groups`.
+        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.get_group`.
 
         :param grouplist: The list of groups to query
         :type grouplist: list of strings - group names
@@ -333,8 +341,9 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
     def get_essential(self):
         """ Get a list of packages that are essential to the repository.
 
-        The base implementation simply aggregates the results of
-        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.get_essential`.
+        The base implementation simply aggregates
+        :attr:`Bcfg2.Server.Plugins.Packages.Source.Source.essentialpkgs`
+        attributes
 
         :returns: list of strings, but see :ref:`pkg-objects`
         """
@@ -382,6 +391,9 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
         the list of unknown packages but should not be presented to
         the user.  E.g., packages that you expect to be unknown.
 
+        The base implementation filters out packages that are expected
+        to be unknown by any source in this collection.
+
         :param unknown: A set of unknown packages.  The set should be
                         modified in place.
         :type unknown: set of strings, but see :ref:`pkg-objects`
@@ -395,8 +407,9 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
         the magic groups for any of the sources contained in this
         Collection.
 
-        The base implementation simply aggregates the results of
-        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.magic_groups_match`.
+        The base implementation returns True if any source
+        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.magic_groups_match`
+        returns True.
 
         :returns: bool
         """
@@ -419,8 +432,9 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
         :func:`Bcfg2.Server.Plugins.Packages.Packages.get_additional_data`
         (and thence to client metadata objects).
 
-        The base implementation simply aggregates the results of
-        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.get_additional_data`
+        The base implementation simply aggregates
+        :attr:`Bcfg2.Server.Plugins.Packages.Source.Source.url_map`
+        attributes.
 
         :returns: list of additional Connector data
         """

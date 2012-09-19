@@ -9,8 +9,8 @@ from Bcfg2.Compat import ConfigParser, urlopen
 from Bcfg2.Server.Plugins.Packages import Collection
 from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
 
-yum_config_default = "/etc/yum.repos.d/bcfg2.repo"
-apt_config_default = "/etc/apt/sources.d/bcfg2"
+YUM_CONFIG_DEFAULT = "/etc/yum.repos.d/bcfg2.repo"
+APT_CONFIG_DEFAULT = "/etc/apt/sources.d/bcfg2"
 
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
@@ -104,11 +104,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             if (entry.get("name") == \
                     self.core.setup.cfp.get("packages",
                                             "yum_config",
-                                            default=yum_config_default) or
+                                            default=YUM_CONFIG_DEFAULT) or
                 entry.get("name") == \
                     self.core.setup.cfp.get("packages",
                                             "apt_config",
-                                            default=apt_config_default)):
+                                            default=APT_CONFIG_DEFAULT)):
                 self.create_config(entry, metadata)
 
     def HandlesEntry(self, entry, metadata):
@@ -125,11 +125,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             if (entry.get("name") == \
                     self.core.setup.cfp.get("packages",
                                             "yum_config",
-                                            default=yum_config_default) or
+                                            default=YUM_CONFIG_DEFAULT) or
                 entry.get("name") == \
                     self.core.setup.cfp.get("packages",
                                             "apt_config",
-                                            default=apt_config_default)):
+                                            default=APT_CONFIG_DEFAULT)):
                 return True
         return False
 

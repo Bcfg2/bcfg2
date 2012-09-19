@@ -11,7 +11,8 @@ class PacSource(Source):
     basegroups = ['arch', 'parabola']
     ptype = 'pacman'
 
-    def get_urls(self):
+    @property
+    def urls(self):
         if not self.rawurl:
             rv = []
             for part in self.components:
@@ -21,7 +22,6 @@ class PacSource(Source):
             return rv
         else:
             raise Exception("PacSource : RAWUrl not supported (yet)")
-    urls = property(get_urls)
 
     def read_files(self):
         bdeps = dict()
