@@ -585,7 +585,8 @@ CLIENT_PROFILE = \
     Option('Assert the given profile for the host',
            default=None,
            cmd='-p',
-           odesc='<profile>')
+           odesc='<profile>',
+           cf=('client', 'profile'))
 CLIENT_RETRIES = \
     Option('The number of times to retry network communication',
            default='3',
