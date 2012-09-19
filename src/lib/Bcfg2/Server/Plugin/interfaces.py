@@ -539,7 +539,7 @@ class ClientRunHooks(object):
         :param metadata: The client metadata object
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: None
-        """        
+        """
         pass
 
     def end_statistics(self, metadata):

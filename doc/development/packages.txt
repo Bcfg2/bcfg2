@@ -26,7 +26,6 @@ The Collection Object
 =====================
 
 .. automodule:: Bcfg2.Server.Plugins.Packages.Collection
-.. autoclass:: Bcfg2.Server.Plugins.Packages.Collection._Collection
 
 
 The Source Object

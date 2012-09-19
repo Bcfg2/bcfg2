@@ -143,7 +143,7 @@ class FileBacked(object):
 
     def HandleEvent(self, event=None):
         """ HandleEvent is called whenever the FAM registers an event.
-        
+
         :param event: The event object
         :type event: Bcfg2.Server.FileMonitor.Event
         :returns: None
@@ -159,7 +159,7 @@ class FileBacked(object):
 
     def Index(self):
         """ Index() is called by :func:`HandleEvent` every time the
-        data changes, and can parse the data into usable data as
+        data changes, and parses the data into usable data as
         required."""
         pass
 

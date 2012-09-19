@@ -3,11 +3,11 @@
 multiple repositories (if it uses the "url" attribute instead of
 "rawurl"), and so can the ``Source`` object.  This can be the source
 (har har) of some confusion.  See
-:func:`Bcfg2.Server.Plugins.Packages.Collection._Collection.sourcelist`
+:func:`Bcfg2.Server.Plugins.Packages.Collection.Collection.sourcelist`
 for the proper way to get all repos from a ``Source`` object.
 
 Source objects are aggregated into
-:class:`Bcfg2.Server.Plugins.Packages.Collection._Collection`
+:class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
 objects, which are actually called by
 :class:`Bcfg2.Server.Plugins.Packages.Packages`.  This way a more
 advanced subclass can query repositories in aggregate rather than
@@ -16,12 +16,12 @@ individually, which may give faster or more accurate results.
 The base ``Source`` object must be subclassed to handle each
 repository type.  How you subclass ``Source`` will depend on how you
 subclassed
-:class:`Bcfg2.Server.Plugins.Packages.Collection._Collection`; see
+:class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`; see
 :mod:`Bcfg2.Server.Plugins.Packages.Collection` for more details on
 different methods for doing that.
 
 If you are using the stock (or a near-stock)
-:class:`Bcfg2.Server.Plugins.Packages.Collection._Collection` object,
+:class:`Bcfg2.Server.Plugins.Packages.Collection.Collection` object,
 then you will need to implement the following methods and attributes
 in your ``Source`` subclass:
 
@@ -41,7 +41,7 @@ methods and attributes:
 For an example of this kind of ``Source`` object, see
 :mod:`Bcfg2.Server.Plugins.Packages.Apt`.
 
-If you are overriding the ``_Collection`` object in more depth, then
+If you are overriding the ``Collection`` object in more depth, then
 you have more leeway in what you might want to override or implement
 in your ``Source`` subclass.  For an example of this kind of
 ``Source`` object, see :mod:`Bcfg2.Server.Plugins.Packages.Yum`.
@@ -113,7 +113,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
 
     #: A predicate that is used by :func:`filter_unknown` to filter
     #: packages from the results of
-    #: :func:`Bcfg2.Server.Plugins.Packages.Collection._Collection.complete`
+    #: :func:`Bcfg2.Server.Plugins.Packages.Collection.Collection.complete`
     #: that should not be shown to the end user (i.e., that are not
     #: truly unknown, but are rather packaging system artifacts).  By
     #: default, excludes any package whose name starts with "choice"
@@ -240,19 +240,19 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
         #: A set of all package names in this source.  This will not
         #: necessarily be populated, particularly by backends that
         #: reimplement large portions of
-        #: :class:`Bcfg2.Server.Plugins.Packages.Collection._Collection`
+        #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
         self.pkgnames = set()
 
         #: A dict of ``<package name>`` -> ``<list of dependencies>``.
         #: This will not necessarily be populated, particularly by
         #: backends that reimplement large portions of
-        #: :class:`Bcfg2.Server.Plugins.Packages.Collection._Collection`
+        #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
         self.deps = dict()
 
         #: A dict of ``<package name>`` -> ``<list of provided
         #: symbols>``.  This will not necessarily be populated,
         #: particularly by backends that reimplement large portions of
-        #: :class:`Bcfg2.Server.Plugins.Packages.Collection._Collection`
+        #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
         self.provides = dict()
 
         #: The file (or directory) used for this source's cache data
@@ -570,7 +570,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
 
     def filter_unknown(self, unknown):
         """ After
-        :func:`Bcfg2.Server.Plugins.Packages.Collection._Collection.complete`,
+        :func:`Bcfg2.Server.Plugins.Packages.Collection.Collection.complete`,
         filter out packages that appear in the list of unknown
         packages but should not be presented to the user.
         :attr:`unknown_filter` is called to assess whether or not a

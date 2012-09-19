@@ -6,7 +6,8 @@ import lxml.etree
 import Bcfg2.Logger
 import Bcfg2.Server.Plugin
 from Bcfg2.Compat import ConfigParser, urlopen
-from Bcfg2.Server.Plugins.Packages import Collection
+from Bcfg2.Server.Plugins.Packages.Collection import Collection, \
+    get_collection_class
 from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
 
 #: The default path for generated yum configs
@@ -46,10 +47,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Connector.__init__(self)
         Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
 
-        self.sentinels = set()
+        #: Packages does a potentially tremendous amount of on-disk
+        #: caching.  ``cachepath`` holds the base directory to where
+        #: data should be cached.
         self.cachepath = \
             self.core.setup.cfp.get("packages", "cache",
                                     default=os.path.join(self.data, 'cache'))
+
+        #: Where Packages should store downloaded GPG key files
         self.keypath = \
             self.core.setup.cfp.get("packages", "keycache",
                                     default=os.path.join(self.data, 'keys'))
@@ -57,9 +62,43 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             # create key directory if needed
             os.makedirs(self.keypath)
 
+        #: The
+        #: :class:`Bcfg2.Server.Plugins.Packages.PackagesSources.PackagesSources`
+        #: object used to generate
+        #: :class:`Bcfg2.Server.Plugins.Packages.Source.Source` objects for
+        #: this plugin.
         self.sources = PackagesSources(os.path.join(self.data, "sources.xml"),
                                        self.cachepath, core.fam, self,
                                        self.core.setup)
+
+        #: We cache
+        #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
+        #: objects in ``collections`` so that calling :func:`Refresh`
+        #: or :func:`Reload` can tell the collection objects to clean
+        #: up their cache, but we don't actually use the cache to
+        #: return a ``Collection`` object when one is requested,
+        #: because that prevents new machines from working, since a
+        #: ``Collection`` object gets created by
+        #: :func:`get_additional_data`, which is called for all
+        #: clients at server startup and various other times.  (It
+        #: would also prevent machines that change groups from working
+        #: properly; e.g., if you reinstall a machine with a new OS,
+        #: then returning a cached ``Collection`` object would give
+        #: the wrong sources to that client.)  These are keyed by the
+        #: collection
+        #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`,
+        #: a unique key identifying the collection by its *config*,
+        #: which could be shared among multiple clients.
+        self.collections = dict()
+
+        #: clients is a cache mapping of hostname ->
+        #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`.
+        #: Unlike :attr:`collections`, this _is_ used to return a
+        #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
+        #: object when one is requested, so each entry is very
+        #: short-lived -- it's purged at the end of each client run.
+        self.clients = dict()
+
     __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
 
     def toggle_debug(self):
@@ -137,7 +176,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
         * All ``Package`` entries have their ``version`` and ``type``
           attributes set according to the appropriate
-          :class:`Bcfg2.Server.Plugins.Packages.Collection._Collection`
+          :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
           object for this client.
         * ``Path`` entries are delegated to :func:`create_config`
 
@@ -208,7 +247,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
            complete package list.
 
         #. Calls
-           :func:`Bcfg2.Server.Plugins.Packages.Collection._Collection.build_extra_structures`
+           :func:`Bcfg2.Server.Plugins.Packages.Collection.Collection.build_extra_structures`
            to add any other extra data required by the backend (e.g.,
            GPG keys)
 
@@ -251,7 +290,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :param collection: The collection of sources for this client.
                            If none is given, one will be created with
                            :func:`_get_collection`
-        :type collection: Bcfg2.Server.Plugins.Packages.Collection._Collection
+        :type collection: Bcfg2.Server.Plugins.Packages.Collection.Collection
         """
         if self.disableResolver:
             # Config requests no resolver
@@ -335,16 +374,16 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                              upstream repository.
         :type force_update: bool
         """
-        self.sentinels = set()
         cachefiles = set()
 
-        for collection in list(Collection.COLLECTIONS.values()):
+        for collection in list(self.collections.values()):
             cachefiles.update(collection.cachefiles)
             if not self.disableMetaData:
                 collection.setup_data(force_update)
-            self.sentinels.update(collection.basegroups)
 
-        Collection.clear_cache()
+        # clear Collection caches
+        self.clients = dict()
+        self.collections = dict()
 
         for source in self.sources:
             cachefiles.add(source.cachefile)
@@ -393,21 +432,61 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
     def _get_collection(self, metadata):
         """ Get a
-        :class:`Bcfg2.Server.Plugins.Packages.Collection._Collection`
+        :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
         object for this client.
 
         :param metadata: The client metadata to get a Collection for
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-        :returns: Bcfg2.Server.Plugins.Packages.Collection._Collection
+        :returns: An instance of the appropriate subclass of
+                :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
+                that contains all relevant sources that apply to the
+                given client
         """
-        return Collection.Collection(metadata, self.sources, self.data,
-                                     debug=self.debug_flag)
+
+        if not self.sources.loaded:
+            # if sources.xml has not received a FAM event yet, defer;
+            # instantiate a dummy Collection object
+            return Collection(metadata, [], self.data)
+
+        if metadata.hostname in self.clients:
+            return self.collections[self.clients[metadata.hostname]]
+
+        sclasses = set()
+        relevant = list()
+
+        for source in self.sources:
+            if source.applies(metadata):
+                relevant.append(source)
+                sclasses.update([source.__class__])
+
+        if len(sclasses) > 1:
+            self.logger.warning("Packages: Multiple source types found for %s: "
+                                "%s" % ",".join([s.__name__ for s in sclasses]))
+            cclass = Collection
+        elif len(sclasses) == 0:
+            self.logger.error("Packages: No sources found for %s" %
+                              metadata.hostname)
+            cclass = Collection
+        else:
+            cclass = get_collection_class(
+                sclasses.pop().__name__.replace("Source", ""))
+
+        if self.debug_flag:
+            self.logger.error("Packages: Using %s for Collection of sources "
+                              "for %s" % (cclass.__name__, metadata.hostname))
+
+        collection = cclass(metadata, relevant, self.data,
+                            debug=self.debug_flag)
+        ckey = collection.cachekey
+        self.clients[metadata.hostname] = ckey
+        self.collections[ckey] = collection
+        return collection
 
     def get_additional_data(self, metadata):
         """ Return additional data for the given client.  This will be
         a dict containing a single key, ``sources``, whose value is a
         list of data returned from
-        :func:`Bcfg2.Server.Plugins.Packages.Collection._Collection.get_additional_data`,
+        :func:`Bcfg2.Server.Plugins.Packages.Collection.Collection.get_additional_data`,
         namely, a list of
         :attr:`Bcfg2.Server.Plugins.Packages.Source.Source.url_map`
         data.
@@ -420,21 +499,20 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         return dict(sources=collection.get_additional_data())
 
     def end_client_run(self, metadata):
-        """ Hook to clear the cache for this client at
-        :attr:`Bcfg2.Server.Plugins.Packages.Collection.CLIENTS`,
-        which must persist only the duration of a client run.
+        """ Hook to clear the cache for this client in
+        :attr:`clients`, which must persist only the duration of a
+        client run.
 
         :param metadata: The client metadata
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         """
-        if metadata.hostname in Collection.CLIENTS:
-            del Collection.CLIENTS[metadata.hostname]
+        if metadata.hostname in self.clients:
+            del self.clients[metadata.hostname]
 
     def end_statistics(self, metadata):
-        """ Hook to clear the cache for this client at
-        :attr:`Bcfg2.Server.Plugins.Packages.Collection.CLIENTS` once
-        statistics are processed to ensure that a stray cached
-        :class:`Bcfg2.Server.Plugins.Packages.Collection._Collection`
+        """ Hook to clear the cache for this client in :attr:`clients`
+        once statistics are processed to ensure that a stray cached
+        :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
         object is not built during statistics and preserved until a
         subsequent client run.
 

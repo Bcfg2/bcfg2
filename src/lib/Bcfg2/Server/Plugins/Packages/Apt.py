@@ -1,17 +1,18 @@
 import re
 import gzip
-from Bcfg2.Server.Plugins.Packages.Collection import _Collection
+from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
 
 
-class AptCollection(_Collection):
+class AptCollection(Collection):
     def get_config(self):
         lines = ["# This config was generated automatically by the Bcfg2 " \
                      "Packages plugin", '']
 
         for source in self:
             if source.rawurl:
-                self.logger.info("Packages: Skipping rawurl %s" % source.rawurl)
+                self.logger.info("Packages: Skipping rawurl %s" % 
+                                 source.rawurl)
             else:
                 lines.append("deb %s %s %s" % (source.url, source.version,
                                                " ".join(source.components)))

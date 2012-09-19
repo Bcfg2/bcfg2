@@ -9,7 +9,7 @@ from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
     ConfigParser, json
-from Bcfg2.Server.Plugins.Packages.Collection import _Collection
+from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
      fetch_url
 
@@ -73,7 +73,7 @@ def _setup_pulp(setup):
     return PULPSERVER
 
 
-class YumCollection(_Collection):
+class YumCollection(Collection):
     #: YumCollections support package groups
     __package_groups__ = True
 
@@ -83,7 +83,7 @@ class YumCollection(_Collection):
     option_blacklist = ["use_yum_libraries", "helper"]
 
     def __init__(self, metadata, sources, basepath, debug=False):
-        _Collection.__init__(self, metadata, sources, basepath, debug=debug)
+        Collection.__init__(self, metadata, sources, basepath, debug=debug)
         self.keypath = os.path.join(self.basepath, "keys")
 
         if self.use_yum:
@@ -333,7 +333,7 @@ class YumCollection(_Collection):
 
     def is_package(self, package):
         if not self.use_yum:
-            return _Collection.is_package(self, package)
+            return Collection.is_package(self, package)
         elif isinstance(package, tuple):
             if package[1] is None and package[2] == (None, None, None):
                 package = package[0]
@@ -346,7 +346,7 @@ class YumCollection(_Collection):
 
     def is_virtual_package(self, package):
         if not self.use_yum:
-            return _Collection.is_virtual_package(self, package)
+            return Collection.is_virtual_package(self, package)
         else:
             # this should really never get called; it's just provided
             # for API completeness
@@ -354,7 +354,7 @@ class YumCollection(_Collection):
 
     def get_deps(self, package):
         if not self.use_yum:
-            return _Collection.get_deps(self, package)
+            return Collection.get_deps(self, package)
         else:
             # this should really never get called; it's just provided
             # for API completeness
@@ -362,7 +362,7 @@ class YumCollection(_Collection):
 
     def get_provides(self, required, all=False, silent=False):
         if not self.use_yum:
-            return _Collection.get_provides(self, required)
+            return Collection.get_provides(self, required)
         else:
             # this should really never get called; it's just provided
             # for API completeness
@@ -478,7 +478,7 @@ class YumCollection(_Collection):
 
     def complete(self, packagelist):
         if not self.use_yum:
-            return _Collection.complete(self, packagelist)
+            return Collection.complete(self, packagelist)
 
         if packagelist:
             result = \
@@ -541,7 +541,7 @@ class YumCollection(_Collection):
 
     def setup_data(self, force_update=False):
         if not self.use_yum:
-            return _Collection.setup_data(self, force_update)
+            return Collection.setup_data(self, force_update)
 
         if force_update:
             # we call this twice: one to clean up data from the old

@@ -1,72 +1,73 @@
-""" ``_Collection`` objects represent the set of
-:class:`Bcfg2.Server.Plugins.Packages.Source.Source` objects that apply
-to a given client, and can be used to query all software repositories
-for a client in aggregate.  In some cases this can give faster or more
-accurate results.
+""" ``Collection`` objects represent the set of
+:class:`Bcfg2.Server.Plugins.Packages.Source.Source` objects that
+apply to a given client, and can be used to query all software
+repositories for a client in aggregate.  In some cases this can give
+faster or more accurate results.
 
-In most cases, ``_Collection`` methods have been designed to defer the
-call to the Sources in the ``_Collection`` and aggregate the results
-as appropriate.  The simplest ``_Collection`` implemention is thus
-often a simple subclass that adds no additional functionality.
+In most cases, ``Collection`` methods have been designed to defer the
+call to the Sources in the ``Collection`` and aggregate the results as
+appropriate.  The simplest ``Collection`` implemention is thus often a
+simple subclass that adds no additional functionality.
 
 Overriding Methods
 ------------------
 
-As noted above, the ``_Collection`` object is written expressly so
-that you can subclass it and override no methods or attributes, and it
-will work by deferring all calls to the Source objects it contains.
-There are thus three approaches to writing a ``_Collection`` subclass:
+As noted above, the ``Collection`` object is written expressly so that
+you can subclass it and override no methods or attributes, and it will
+work by deferring all calls to the Source objects it contains.  There
+are thus three approaches to writing a ``Collection`` subclass:
 
 #. Keep the superclass almost entirely intact and defer to the
    ``Source`` objects inside it. For an example of this kind of
-   ``_Collection`` object, see
+   ``Collection`` object, see
    :mod:`Bcfg2.Server.Plugins.Packages.Apt`.
 
-#. Keep :func:`_Collection.complete` intact, and override the methods
-   it calls: :func:`_Collection.is_package`,
-   :func:`_Collection.is_virtual_package`,
-   :func:`_Collection.get_deps`, :func:`_Collection.get_provides`,
-   :func:`_Collection.get_vpkgs`, and :func:`_Collection.setup_data`.
-   There are no examples of this kind of ``_Collection`` subclass yet.
+#. Keep :func:`Collection.complete` intact, and override the methods
+   it calls: :func:`Collection.is_package`,
+   :func:`Collection.is_virtual_package`, :func:`Collection.get_deps`,
+   :func:`Collection.get_provides`, :func:`Collection.get_vpkgs`, and
+   :func:`Collection.setup_data`.  There are no examples of this kind
+   of ``Collection`` subclass yet.
 
-#. Provide your own implementation of :func:`_Collection.complete`, in
+#. Provide your own implementation of :func:`Collection.complete`, in
    which case you do not have to override the above methods.  You may
-   want to override :func:`_Collection.packages_from_entry`,
-   :func:`_Collection.packages_to_entry`, and
-   :func:`_Collection.get_new_packages`.  For an example of this kind
-   of ``_Collection`` object, see
+   want to override :func:`Collection.packages_from_entry`,
+   :func:`Collection.packages_to_entry`, and
+   :func:`Collection.get_new_packages`.  For an example of this kind
+   of ``Collection`` object, see
    :mod:`Bcfg2.Server.Plugins.Packages.yum`.
 
 In either case, you may want to override
-:func:`_Collection.get_groups`, :func:`_Collection.get_group`,
-:func:`_Collection.get_essential`, :func:`_Collection.get_config`,
-:func:`_Collection.filter_unknown`, and
-:func:`_Collection.build_extra_structures`.
+:func:`Collection.get_groups`, :func:`Collection.get_group`,
+:func:`Collection.get_essential`, :func:`Collection.get_config`,
+:func:`Collection.filter_unknown`, and
+:func:`Collection.build_extra_structures`.
 
 .. _pkg-objects:
 
 Conversion Between Package Objects and XML Entries
 --------------------------------------------------
 
-_Collection objects have to translate Bcfg2 entries,
+Collection objects have to translate Bcfg2 entries,
 :class:`lxml.etree._Element` objects, into objects suitable for use by
 the backend for resolving dependencies.  This is handled by two
 functions:
 
-* :func:`_Collection.packages_from_entry` is called to translate an
-  XML entry into a list of packages;
-* :func:`_Collection.packages_to_entry` is called to translate a list
+* :func:`Collection.packages_from_entry` is called to translate an XML
+  entry into a list of packages;
+
+* :func:`Collection.packages_to_entry` is called to translate a list
   of packages back into an XML entry.
 
 Because of this translation layer, the return type of any functions
-below that return packages (e.g., :func:`_Collection.get_group`) is
+below that return packages (e.g., :func:`Collection.get_group`) is
 actually indeterminate; they must return an object suitable for
-passing to :func:`_Collection.packages_to_entry`.  Similarly,
-functions that take a package as an argument (e.g.,
-:func:`_Collection.is_package`) take the appropriate package object.
+passing to :func:`Collection.packages_to_entry`.  Similarly, functions
+that take a package as an argument (e.g.,
+:func:`Collection.is_package`) take the appropriate package object.
 In the documentation below, the actual parameter return type (usually
-.``string``) used in this base implementation is noted, as well as this
-fact.
+.``string``) used in this base implementation is noted, as well as
+this fact.
 
 The Collection Module
 ---------------------
@@ -82,49 +83,19 @@ from Bcfg2.Server.Plugins.Packages.Source import Source
 
 LOGGER = logging.getLogger(__name__)
 
-#: We cache _Collection objects in ``COLLECTIONS`` so that calling
-#: :func:`Bcfg2.Server.Plugins.Packages.Packages.Refresh` or
-#: :func:`Bcfg2.Server.Plugins.Packages.Packages.Reload` can tell the
-#: collection objects to clean up their cache, but we don't actually
-#: use the cache to return a _Collection object when one is requested,
-#: because that prevents new machines from working, since a
-#: _Collection object gets created by
-#: :func:`Bcfg2.Server.Plugins.Packages.Packages.get_additional_data`,
-#: which is called for all clients at server startup.  (It would also
-#: prevent machines that change groups from working properly; e.g., if
-#: you reinstall a machine with a new OS, then returning a cached
-#: _Collection object would give the wrong sources to that client.)
-#: These are keyed by the collection :attr:`_Collection.cachekey`, a
-#: unique key identifying the collection by its *config*, which could
-#: be shared among multiple clients.
-COLLECTIONS = dict()
 
-#: CLIENTS is a cache mapping of hostname ->
-#: :attr:`_Collection.cachekey`.  This _is_ used to return a
-#: _Collection object when one is requested, so each entry is very
-#: short-lived -- it's purged at the end of each client run.
-CLIENTS = dict()
-
-
-class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
-    """ ``_Collection`` objects represent the set of
+class Collection(list, Bcfg2.Server.Plugin.Debuggable):
+    """ ``Collection`` objects represent the set of
     :class:`Bcfg2.Server.Plugins.Packages.Source` objects that apply
     to a given client, and can be used to query all software
     repositories for a client in aggregate.  In some cases this can
-    give faster or more accurate results.
-
-    Note that the name of this class starts with an underscore; the
-    factory function :func:`Collection` must be used to instantiate
-    the correct subclass of ``_Collection`` when creating an actual
-    collection object. """
+    give faster or more accurate results. """
 
     #: Whether or not this Packages backend supports package groups
     __package_groups__ = False
 
     def __init__(self, metadata, sources, basepath, debug=False):
-        """ Don't call ``__init__`` directly; use :func:`Collection`
-        to instantiate a new ``_Collection`` object.
-
+        """
         :param metadata: The client metadata for this collection
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :param sources: A list of all sources known to the server that
@@ -160,7 +131,7 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
     @property
     def cachekey(self):
         """ A unique identifier for the set of sources contained in
-        this ``_Collection`` object.  This is unique to a set of
+        this ``Collection`` object.  This is unique to a set of
         sources, **not** necessarily to the client, which lets clients
         with identical sources share cache data."""
         return md5(self.sourcelist().encode('UTF-8')).hexdigest()
@@ -628,8 +599,8 @@ class _Collection(list, Bcfg2.Server.Plugin.Debuggable):
         return packages, unknown
 
 
-def _get_collection_class(source_type):
-    """ Given a source type, determine the class of _Collection object
+def get_collection_class(source_type):
+    """ Given a source type, determine the class of Collection object
     that should be used to contain these sources.  Note that
     ``source_type`` is *not* a
     :class:`Bcfg2.Server.Plugins.Packages.Source.Source` subclass;
@@ -637,7 +608,7 @@ def _get_collection_class(source_type):
 
     :param source_type: The type of source, e.g., "yum" or "apt"
     :type source_type: string
-    :returns: type - the _Collection subclass that should be used to
+    :returns: type - the Collection subclass that should be used to
               instantiate an object to contain sources of the given type. """
     modname = "Bcfg2.Server.Plugins.Packages.%s" % source_type.title()
     try:
@@ -657,75 +628,3 @@ def _get_collection_class(source_type):
         LOGGER.error(msg)
         raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
     return cclass
-
-
-def clear_cache():
-    """ Clear the caches kept by this
-    module. (:attr:`Bcfg2.Server.Plugins.Packages.Collection.COLLECTIONS`
-    and:attr:`Bcfg2.Server.Plugins.Packages.Collection.CLIENTS`) """
-    global COLLECTIONS, CLIENTS  # pylint: disable=W0603
-    COLLECTIONS = dict()
-    CLIENTS = dict()
-
-
-def Collection(metadata, sources, basepath, debug=False):
-    """ Object factory for subclasses of
-    :class:`Bcfg2.Server.Plugins.Packages.Collection._Collection`.
-
-    :param metadata: The client metadata to create a _Collection
-                     object for
-    :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-    :param sources: A list of all sources known to the server that
-                    will be used to generate the list of sources that
-                    apply to this client
-    :type sources: list of
-                   :class:`Bcfg2.Server.Plugins.Packages.Source.Source`
-                   objects
-    :param basepath: The base filesystem path where cache and other
-                     temporary data will be stored
-    :type basepath: string
-    :param debug: Enable debugging output
-    :type debug: bool
-    :return: An instance of the appropriate subclass of
-             :class:`Bcfg2.Server.Plugins.Packages.Collection._Collection`
-             that contains all relevant sources that apply to the
-             given client
-    """
-    global COLLECTIONS  # pylint: disable=W0602
-
-    if not sources.loaded:
-        # if sources.xml has not received a FAM event yet, defer;
-        # instantiate a dummy _Collection object
-        return _Collection(metadata, [], basepath)
-
-    if metadata.hostname in CLIENTS:
-        return COLLECTIONS[CLIENTS[metadata.hostname]]
-
-    sclasses = set()
-    relevant = list()
-
-    for source in sources:
-        if source.applies(metadata):
-            relevant.append(source)
-            sclasses.update([source.__class__])
-
-    if len(sclasses) > 1:
-        LOGGER.warning("Packages: Multiple source types found for %s: %s" %
-                       ",".join([s.__name__ for s in sclasses]))
-        cclass = _Collection
-    elif len(sclasses) == 0:
-        LOGGER.error("Packages: No sources found for %s" % metadata.hostname)
-        cclass = _Collection
-    else:
-        cclass = _get_collection_class(sclasses.pop().__name__.replace("Source",
-                                                                       ""))
-
-    if debug:
-        LOGGER.error("Packages: Using %s for Collection of sources for %s" %
-                     (cclass.__name__, metadata.hostname))
-
-    collection = cclass(metadata, relevant, basepath, debug=debug)
-    ckey = collection.cachekey
-    CLIENTS[metadata.hostname] = ckey
-    COLLECTIONS[ckey] = collection
-    return collection
