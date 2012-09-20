@@ -111,14 +111,6 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
     #: make sources of this type available to clients.
     basegroups = []
 
-    #: A predicate that is used by :func:`filter_unknown` to filter
-    #: packages from the results of
-    #: :func:`Bcfg2.Server.Plugins.Packages.Collection.Collection.complete`
-    #: that should not be shown to the end user (i.e., that are not
-    #: truly unknown, but are rather packaging system artifacts).  By
-    #: default, excludes any package whose name starts with "choice"
-    unknown_filter = lambda p: p.startswith("choice")
-
     #: The Package type handled by this Source class.  The ``type``
     #: attribute of Package entries will be set to the value ``ptype``
     #: when they are handled by :mod:`Bcfg2.Server.Plugins.Packages`.
@@ -572,6 +564,21 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                 for barch in prov:
                     self.provides[barch][prov] = prov[barch].get(prov, ())
         self.save_state()
+
+    def unknown_filter(self, package):
+        """ A predicate that is used by :func:`filter_unknown` to
+        filter packages from the results of
+        :func:`Bcfg2.Server.Plugins.Packages.Collection.Collection.complete`
+        that should not be shown to the end user (i.e., that are not
+        truly unknown, but are rather packaging system artifacts).  By
+        default, excludes any package whose name starts with "choice"
+
+        :param package: The name of a package that was unknown to the
+                        backend
+        :type package: string
+        :returns: bool
+        """
+        return package.startswith("choice")
 
     def filter_unknown(self, unknown):
         """ After

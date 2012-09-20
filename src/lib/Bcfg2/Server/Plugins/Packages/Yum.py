@@ -778,16 +778,6 @@ class YumSource(Source):
     #: YumSource sets the ``type`` on Package entries to "yum"
     ptype = 'yum'
 
-    #: By default,
-    #: :class:`Bcfg2.Server.Plugins.Packages.Source.Source` filters
-    #: out unknown packages that start with "choice", but that doesn't
-    #: mean anything to Yum or RPM.  Instead, we filter out unknown
-    #: packages that start with "rpmlib", although this is likely
-    #: legacy behavior; that would seem to indicate that a package
-    #: required some RPM feature that isn't provided, which is a bad
-    #: thing.  This should probably go away at some point.
-    unknown_filter = lambda u: u.startswith("rpmlib")
-
     def __init__(self, basepath, xsource, setup):
         Source.__init__(self, basepath, xsource, setup)
         self.pulp_id = None
@@ -1021,6 +1011,23 @@ class YumSource(Source):
                 rv[filename] = pkgs
         return rv
     get_vpkgs.__doc__ = Source.get_vpkgs.__doc__
+
+    def unknown_filter(self, package):
+        """ By default,
+        :class:`Bcfg2.Server.Plugins.Packages.Source.Source` filters
+        out unknown packages that start with "choice", but that
+        doesn't mean anything to Yum or RPM.  Instead, we filter out
+        unknown packages that start with "rpmlib", although this is
+        likely legacy behavior; that would seem to indicate that a
+        package required some RPM feature that isn't provided, which
+        is a bad thing.  This should probably go away at some point.
+
+        :param package: The name of a package that was unknown to the
+                        backend
+        :type package: string
+        :returns: bool
+        """
+        return package.startswith("rpmlib")
 
     def filter_unknown(self, unknown):
         if self.use_yum:
