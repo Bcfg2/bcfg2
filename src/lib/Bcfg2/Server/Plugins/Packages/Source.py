@@ -119,6 +119,11 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
     #: default, excludes any package whose name starts with "choice"
     unknown_filter = lambda p: p.startswith("choice")
 
+    #: The Package type handled by this Source class.  The ``type``
+    #: attribute of Package entries will be set to the value ``ptype``
+    #: when they are handled by :mod:`Bcfg2.Server.Plugins.Packages`.
+    ptype = None
+
     def __init__(self, basepath, xsource, setup):
         """
         :param basepath: The base filesystem path under which cache
@@ -390,18 +395,15 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
 
         #. First, if the map contains a ``component`` key, use that as
            the name.
-
         #. If not, then try to match the repository URL against
            :attr:`Bcfg2.Server.Plugins.Packages.Source.REPO_RE`.  If
            that succeeds, use the first matched group; additionally,
            if the Source tag that describes this repo is contained in
            a ``<Group>`` tag, prepend that to the name.
-
         #. If :attr:`Bcfg2.Server.Plugins.Packages.Source.REPO_RE`
            does not match the repository, and the Source tag that
            describes this repo is contained in a ``<Group>`` tag, use
            the name of the group.
-
         #. Failing that, use the full URL to this repository, with the
            protocol and trailing slash stripped off if possible.
 
@@ -512,9 +514,12 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
         return os.path.join(self.basepath, url.replace('/', '@'))
 
     def read_files(self):
-        """ Read and parse locally downloaded metadata files.  This
-        function should call :func:`process_files` as its final
-        step. This should also populate :attr:`pkgnames`. """
+        """ Read and parse locally downloaded metadata files and
+        populates
+        :attr:`Bcfg2.Server.Plugins.Packages.Source.Source.pkgnames`. Should
+        call
+        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.process_files`
+        as its final step."""
         pass
 
     def process_files(self, deps, prov):
@@ -671,10 +676,6 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
 
     def is_package(self, metadata, package):  # pylint: disable=W0613
         """ Return True if a package is a package, False otherwise.
-
-        The base implementation returns True if any Source object's
-        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.is_package`
-        returns True.
 
         :param package: The name of the package
         :type package: string

@@ -1,3 +1,5 @@
+""" APT backend for :mod:`Bcfg2.Server.Plugins.Packages` """
+
 import re
 import gzip
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
@@ -5,7 +7,16 @@ from Bcfg2.Server.Plugins.Packages.Source import Source
 
 
 class AptCollection(Collection):
+    """ Handle collections of APT sources.  This is a no-op object
+    that simply inherits from
+    :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`,
+    overrides nothing, and defers all operations to :class:`PacSource`
+    """
+
     def get_config(self):
+        """ Get an APT configuration file (i.e., ``sources.list``).
+
+        :returns: string """
         lines = ["# This config was generated automatically by the Bcfg2 " \
                      "Packages plugin", '']
 
@@ -22,11 +33,19 @@ class AptCollection(Collection):
 
 
 class AptSource(Source):
+    """ Handle APT sources """
+
+    #: :ref:`server-plugins-generators-packages-magic-groups` for
+    #: ``AptSource`` are "apt", "debian", "ubuntu", and "nexenta"
     basegroups = ['apt', 'debian', 'ubuntu', 'nexenta']
+
+    #: AptSource sets the ``type`` on Package entries to "deb"
     ptype = 'deb'
 
     @property
     def urls(self):
+        """ A list of URLs to the base metadata file for each
+        repository described by this source. """
         if not self.rawurl:
             rv = []
             for part in self.components:
@@ -92,3 +111,4 @@ class AptSource(Source):
                             bprov[barch][dname] = set()
                         bprov[barch][dname].add(pkgname)
         self.process_files(bdeps, bprov)
+    read_files.__doc__ = Source.read_files.__doc__

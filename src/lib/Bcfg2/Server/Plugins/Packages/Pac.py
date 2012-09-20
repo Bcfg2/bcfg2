@@ -1,18 +1,33 @@
+""" Pacman backend for :mod:`Bcfg2.Server.Plugins.Packages` """
+
 import tarfile
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
 
 
 class PacCollection(Collection):
+    """ Handle collections of Pacman sources.  This is a no-op object
+    that simply inherits from
+    :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`,
+    overrides nothing, and defers all operations to :class:`PacSource`
+    """
     pass
 
 
 class PacSource(Source):
+    """ Handle Pacman sources """
+
+    #: :ref:`server-plugins-generators-packages-magic-groups` for
+    #: ``PacSource`` are "arch" and "parabola"
     basegroups = ['arch', 'parabola']
+
+    #: PacSource sets the ``type`` on Package entries to "pacman"
     ptype = 'pacman'
 
     @property
     def urls(self):
+        """ A list of URLs to the base metadata file for each
+        repository described by this source. """
         if not self.rawurl:
             rv = []
             for part in self.components:
@@ -56,3 +71,4 @@ class PacSource(Source):
                                    tarinfo.name.rsplit("-", 2)[0])
             tar.close()
         self.process_files(bdeps, bprov)
+    read_files.__doc__ = Source.read_files.__doc__

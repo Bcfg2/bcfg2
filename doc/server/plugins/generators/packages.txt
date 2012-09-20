@@ -691,8 +691,6 @@ It understands the following directives:
 +-------------+------------------------------------------------------+----------+-----------------------------+
 | cache       | Path where Packages will store its cache             | String   | <repo>/Packages/cache       |
 +-------------+------------------------------------------------------+----------+-----------------------------+
-| keycache    | Path where Packages will cache downloaded GPG keys   | String   | <repo>/Packages/keys        |
-+-------------+------------------------------------------------------+----------+-----------------------------+
 
 
 [packages:yum] section

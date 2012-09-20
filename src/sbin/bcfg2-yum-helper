@@ -14,6 +14,7 @@ from Bcfg2.Compat import json
 
 LOGGER = None
 
+
 def get_logger(verbose=0):
     """ set up logging according to the verbose level given on the
     command line """
@@ -32,6 +33,7 @@ def get_logger(verbose=0):
         LOGGER.addHandler(syslog)
     return LOGGER
 
+
 def pkg_to_tuple(package):
     """ json doesn't distinguish between tuples and lists, but yum
     does, so we convert a package in list format to one in tuple
@@ -40,6 +42,7 @@ def pkg_to_tuple(package):
         return tuple(package)
     else:
         return package
+
 
 def pkgtup_to_string(package):
     if package[3] in ['auto', 'any']:
@@ -77,22 +80,10 @@ class DepSolver(object):
 
     groups = property(get_groups, set_groups)
 
-    def is_package(self, package):
-        if isinstance(package, tuple):
-            if package[1] is None and package[2] == (None, None, None):
-                pkgtup = (package[0], None, None, None, None)
-            elif len(package) == 5:
-                pkgtup = package
-        else:
-            pkgtup = (package, None, None, None, None)
-        return bool(self.get_package_object(pkgtup, silent=True))
-
-    def is_virtual_package(self, package):
-        return bool(self.get_provides(package, silent=True))
-
     def get_package_object(self, pkgtup, silent=False):
         try:
-            matches = yum.packageSack.packagesNewestByName(self.yumbase.pkgSack.searchPkgTuple(pkgtup))
+            matches = yum.packageSack.packagesNewestByName(
+                self.yumbase.pkgSack.searchPkgTuple(pkgtup))
         except yum.Errors.PackageSackError:
             if not silent:
                 self.logger.warning("Package '%s' not found" %
@@ -109,39 +100,6 @@ class DepSolver(object):
             return pkgs[0]
         else:
             return None
-
-    def get_deps(self, package):
-        pkg = self.get_package_object(package)
-        deps = []
-        if pkg:
-            deps = set(pkg.requires)
-            # filter out things the package itself provides
-            deps.difference_update([dep for dep in deps
-                                    if pkg.checkPrco('provides', dep)])
-        else:
-            self.logger.error("No package available: %s" %
-                              self.get_package_name(package))
-        return deps
-
-    def get_provides(self, required, all=False, silent=False):
-        if not isinstance(required, tuple):
-            required = (required, None, (None, None, None))
-
-        try:
-            prov = \
-                self.yumbase.whatProvides(*required).returnNewestByNameArch()
-        except yum.Errors.NoMoreMirrorsRepoError:
-            err = sys.exc_info()[1]
-            self.logger.error("Temporary failure loading metadata for %s: %s" %
-                              (self.get_package_name(required), err))
-            return []
-
-        if prov and not all:
-            prov = self._filter_provides(prov)
-        elif not prov and not silent:
-            self.logger.error("No package provides %s" %
-                              self.get_package_name(required))
-        return prov
 
     def get_group(self, group, ptype="default"):
         if group.startswith("@"):
@@ -171,35 +129,6 @@ class DepSolver(object):
         else:
             self.logger.warning("Unknown group package type '%s'" % ptype)
             return []
-
-    def _filter_provides(self, providers):
-        providers = [pkg for pkg in self._filter_arch(providers)]
-        if len(providers) > 1:
-            # go through each provider and make sure it's the newest
-            # package of its name available.  If we have multiple
-            # providers, avoid installing old packages.
-            #
-            # For instance: on Fedora 14,
-            # perl-Sub-WrapPackages-2.0-2.fc14 erroneously provided
-            # perl(lib), which should not have been provided;
-            # perl(lib) is provided by the "perl" package.  The bogus
-            # provide was removed in perl-Sub-WrapPackages-2.0-4.fc14,
-            # but if we just queried to resolve the "perl(lib)"
-            # dependency, we'd get both packages.  By performing this
-            # check, we learn that there's a newer
-            # perl-Sub-WrapPackages available, so it can't be the best
-            # provider of perl(lib).
-            rv = []
-            for pkg in providers:
-                found = self.get_package_object(pkg.pkgtup)
-                if found == pkg or found.pkgtup == pkg.pkgtup:
-                    rv.append(pkg)
-                else:
-                    self.logger.debug("Skipping %s, not newest (%s)" %
-                                      (pkg, found))
-        else:
-            rv = providers
-        return rv
 
     def _filter_arch(self, packages):
         matching = []
@@ -243,8 +172,8 @@ class DepSolver(object):
                 unknown.add(pkg)
             else:
                 if self.yumbase.tsInfo.exists(pkgtup=po.pkgtup):
-                    self.logger.debug("%s added to transaction multiple times" %
-                                      po)
+                    self.logger.debug("%s added to transaction multiple times"
+                                      % po)
                 else:
                     self.logger.debug("Adding %s to transaction" % po)
                     self.yumbase.tsInfo.addInstall(po)
@@ -269,7 +198,8 @@ class DepSolver(object):
 def main():
     parser = OptionParser()
     parser.add_option("-c", "--config", help="Config file")
-    parser.add_option("-v", "--verbose", help="Verbosity level", action="count")
+    parser.add_option("-v", "--verbose", help="Verbosity level",
+                      action="count")
     (options, args) = parser.parse_args()
     logger = get_logger(options.verbose)
     try:
@@ -293,19 +223,6 @@ def main():
                                                   for p in data['packages']])
         print(json.dumps(dict(packages=list(packages),
                               unknown=list(unknown))))
-    elif cmd == "is_virtual_package":
-        package = pkg_to_tuple(json.loads(sys.stdin.read()))
-        print(json.dumps(bool(depsolver.get_provides(package, silent=True))))
-    elif cmd == "get_deps" or cmd == "get_provides":
-        package = pkg_to_tuple(json.loads(sys.stdin.read()))
-        print(json.dumps([p.name for p in getattr(depsolver, cmd)(package)]))
-    elif cmd == "get_group":
-        data = json.loads(sys.stdin.read())
-        if "type" in data:
-            packages = depsolver.get_group(data['group'], ptype=data['type'])
-        else:
-            packages = depsolver.get_group(data['group'])
-        print(json.dumps(list(packages)))
     elif cmd == "get_groups":
         data = json.loads(sys.stdin.read())
         rv = dict()
@@ -317,10 +234,7 @@ def main():
                 packages = depsolver.get_group(gdata['group'])
             rv[gdata['group']] = list(packages)
         print(json.dumps(rv))
-    elif cmd == "is_package":
-        package = pkg_to_tuple(json.loads(sys.stdin.read()))
-        print(json.dumps(getattr(depsolver, cmd)(package)))
-        
+
         
 if __name__ == '__main__':
     sys.exit(main())

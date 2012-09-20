@@ -55,9 +55,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                                     default=os.path.join(self.data, 'cache'))
 
         #: Where Packages should store downloaded GPG key files
-        self.keypath = \
-            self.core.setup.cfp.get("packages", "keycache",
-                                    default=os.path.join(self.data, 'keys'))
+        self.keypath = os.path.join(self.cachepath, 'keys')
         if not os.path.exists(self.keypath):
             # create key directory if needed
             os.makedirs(self.keypath)

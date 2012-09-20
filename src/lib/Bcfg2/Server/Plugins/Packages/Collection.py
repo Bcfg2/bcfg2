@@ -109,6 +109,8 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         :type basepath: string
         :param debug: Enable debugging output
         :type debug: bool
+
+        .. autoattribute:: __package_groups__
         """
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
         list.__init__(self, sources)
@@ -119,14 +121,10 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
 
         try:
             self.setup = sources[0].setup
-            self.cachepath = sources[0].basepath
             self.ptype = sources[0].ptype
         except IndexError:
             self.setup = None
-            self.cachepath = None
             self.ptype = "unknown"
-
-        self.cachefile = None
 
     @property
     def cachekey(self):
@@ -141,8 +139,9 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         source type.  This should be a config appropriate for use on
         either the server (to resolve dependencies) or the client.
 
-        Subclasses must override this method.  By default it logs an
-        error and returns the empty string.
+        Subclasses must override this method in order to be able to
+        generate configs.  By default it logs an error and returns the
+        empty string.
 
         :returns: string """
         self.logger.error("Packages: Cannot generate config for host %s with "
@@ -188,7 +187,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
     get_relevant_groups.__doc__ = Source.get_relevant_groups.__doc__ + """
 
         The base implementation simply aggregates the results of
-        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.get_relevant_groups`.
+        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.get_relevant_groups`
         """
 
     @property
@@ -212,7 +211,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         The base implementation simply aggregates
         :attr:`Bcfg2.Server.Plugins.Packages.Source.Source.cachefile`
         attributes."""
-        cachefiles = set([self.cachepath])
+        cachefiles = set()
         for source in self:
             cachefiles.add(source.cachefile)
         return list(cachefiles)
@@ -393,7 +392,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         handled for a complete client configuration.
 
         :param independent: The XML tag to add extra entries to.  This
-                            should be modified in place.
+                            is modified in place.
         :type independent: lxml.etree._Element
         """
         pass

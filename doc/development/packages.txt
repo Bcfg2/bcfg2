@@ -46,6 +46,17 @@ Packages Source Description
 Existing Packages Backends
 ==========================
 
+Yum
+---
+
 .. automodule:: Bcfg2.Server.Plugins.Packages.Yum
+
+APT
+---
+
 .. automodule:: Bcfg2.Server.Plugins.Packages.Apt
+
+Pacman
+------
+
 .. automodule:: Bcfg2.Server.Plugins.Packages.Pac
