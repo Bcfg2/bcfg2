@@ -853,8 +853,10 @@ class YumSource(Source):
     def urls(self):
         """ A list of URLs to the base metadata file for each
         repository described by this source. """
-        return [self._get_urls_from_repodata(m['url'], m['arch'])
-                for m in self.url_map]
+        rv = []
+        for umap in self.url_map:
+            rv.extend(self._get_urls_from_repodata(umap['url'], umap['arch']))
+        return rv
 
     def _get_urls_from_repodata(self, url, arch):
         """ When using the builtin yum parser, given the base URL of a
