@@ -69,7 +69,6 @@ class TestProbeData(Bcfg2TestCase):
         self.assertIsNotNone(data.xdata)
         self.assertIsNotNone(data.xdata.find("test2"))
 
-    @skipUnless(has_json, "JSON libraries not found, skipping JSON tests")
     def test_json(self):
         jdata = json.dumps(test_data)
         data = ProbeData(jdata)
@@ -221,10 +220,9 @@ text
 """)
         rv["bar.example.com"] = ClientProbeDataSet(timestamp=time.time())
         rv["bar.example.com"]["empty"] = ProbeData("")
+        rv["bar.example.com"]["json"] = ProbeData(json.dumps(test_data))
         if has_yaml:
             rv["bar.example.com"]["yaml"] = ProbeData(yaml.dump(test_data))
-        if has_json:
-            rv["bar.example.com"]["json"] = ProbeData(json.dumps(test_data))
         return rv
 
     def get_test_cgroups(self):
@@ -333,16 +331,15 @@ text
         self.assertIsNotNone(empty)
         self.assertIsNotNone(empty.get("value"))
         self.assertEqual(empty.get("value"), "")
+        jdata = bardata.find("Probe[@name='json']")
+        self.assertIsNotNone(jdata)
+        self.assertIsNotNone(jdata.get("value"))
+        self.assertItemsEqual(test_data, json.loads(jdata.get("value")))
         if has_yaml:
             ydata = bardata.find("Probe[@name='yaml']")
             self.assertIsNotNone(ydata)
             self.assertIsNotNone(ydata.get("value"))
             self.assertItemsEqual(test_data, yaml.load(ydata.get("value")))
-        if has_json:
-            jdata = bardata.find("Probe[@name='json']")
-            self.assertIsNotNone(jdata)
-            self.assertIsNotNone(jdata.get("value"))
-            self.assertItemsEqual(test_data, json.loads(jdata.get("value")))
 
     @skipUnless(has_django, "Django not found, skipping")
     def test__write_data_db(self):
