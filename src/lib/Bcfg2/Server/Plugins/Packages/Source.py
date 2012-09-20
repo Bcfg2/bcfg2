@@ -367,6 +367,8 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                                           err)
                         self.logger.error("Falling back to file download")
                         force_update = True
+            else:
+                force_update = True
 
         if force_update:
             try:

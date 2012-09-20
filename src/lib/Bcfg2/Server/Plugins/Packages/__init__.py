@@ -383,7 +383,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self.clients = dict()
         self.collections = dict()
 
-        for source in self.sources:
+        for source in self.sources.entries:
             cachefiles.add(source.cachefile)
             if not self.disableMetaData:
                 source.setup_data(force_update)
@@ -410,7 +410,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         """
         keyfiles = []
         keys = []
-        for source in self.sources:
+        for source in self.sources.entries:
             for key in source.gpgkeys:
                 localfile = os.path.join(self.keypath,
                                          os.path.basename(key.rstrip("/")))
@@ -436,9 +436,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :param metadata: The client metadata to get a Collection for
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: An instance of the appropriate subclass of
-                :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
-                that contains all relevant sources that apply to the
-                given client
+                  :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
+                  that contains all relevant sources that apply to the
+                  given client
         """
 
         if not self.sources.loaded:
@@ -452,14 +452,15 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         sclasses = set()
         relevant = list()
 
-        for source in self.sources:
+        for source in self.sources.entries:
             if source.applies(metadata):
                 relevant.append(source)
                 sclasses.update([source.__class__])
 
         if len(sclasses) > 1:
-            self.logger.warning("Packages: Multiple source types found for %s: "
-                                "%s" % ",".join([s.__name__ for s in sclasses]))
+            self.logger.warning("Packages: Multiple source types found for "
+                                "%s: %s" %
+                                ",".join([s.__name__ for s in sclasses]))
             cclass = Collection
         elif len(sclasses) == 0:
             self.logger.error("Packages: No sources found for %s" %
