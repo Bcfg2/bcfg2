@@ -543,8 +543,8 @@ class YumCollection(Collection):
         name = entry.get("name")
 
         def _tag_to_pkg(tag):
-            rv = [name, tag.get("arch"), tag.get("epoch"),
-                  tag.get("version"), tag.get("release")]
+            rv = (name, tag.get("arch"), tag.get("epoch"),
+                  tag.get("version"), tag.get("release"))
             if rv[3] in ['any', 'auto']:
                 rv = (rv[0], rv[1], rv[2], None, None)
             # if a package requires no specific version, we just use
