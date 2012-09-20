@@ -1,0 +1,209 @@
+.. -*- mode: rst -*-
+
+.. _server-encryption:
+
+=====================
+Bcfg2 Data Encryption
+=====================
+
+.. versionadded:: 1.3.0
+
+Bcfg2 supports encrypting some data on the disk, which can help
+protect sensitive data from other people who need access to the Bcfg2
+repository but are perhaps not authorized to see all data.  It
+supports multiple passphrases, which can be used to enforce
+separations between teams, environments, etc.
+
+.. note::
+
+    This feature is *not* intended to secure the files against a
+    malicious attacker who has gained access to your Bcfg2 server, as
+    the encryption passphrases are held in plaintext in
+    ``bcfg2.conf``.  This is only intended to make it easier to use a
+    single Bcfg2 repository with multiple admins who should not
+    necessarily have access to each other's sensitive data.
+
+Two types of data can be encrypted:
+
+* :ref:`server-plugins-generators-cfg` files can be encrypted
+  as whole files. See :ref:`server-plugins-generators-cfg-encryption`
+  for more details.
+* :ref:`server-plugins-connectors-properties` data can be encrypted on
+  a per-element basis.  See
+  :ref:`server-plugins-connectors-properties-encryption` for more
+  details.
+
+In general, Properties encryption is preferred for a few reasons:
+
+* It plays nicely with your VCS.  If you change an encrypted Cfg file,
+  then all you can see in your VCS log is that the file changed, no
+  details about how it changed.  With an encrypted Properties file,
+  you can see which element changed (although obviously not the
+  changed content).
+* It is faster when you have more than one passphrase.  When
+  decrypting a Cfg file, Bcfg2 simply brute-forces it with all known
+  passphrases; when decrypting a Properties element, the passphrase is
+  given by name so only one passphrase must be tried.
+* A Cfg file can only be encrypted with a single passphrase;
+  Properties files can use different passphrases for different
+  elements.  If you are using different passphrases to segregate data
+  amongst different teams, this lets teams collaborate more closely on
+  files and other data.
+
+.. _bcfg2-crypt:
+
+bcfg2-crypt
+===========
+
+Encrypting and decrypting :ref:`server-plugins-generators-cfg` and
+:ref:`server-plugins-connectors-properties` files can be done with the
+``bcfg2-crypt`` tool, which mostly tries to do the right thing.  I.e.,
+it encrypts plaintext files, decrypts encrypted files, and
+automatically discovers if a file is Cfg or Properties.  Its usage is
+thus generally very simple, e.g.::
+
+    bcfg2-crypt foo.conf
+    bcfg2-crypt foo.xml
+
+Since the behavior of ``bcfg2-crypt`` varies significantly depending
+on whether you are dealing with a Cfg or Properties files, these are
+documented separately below.  It's also well worthwhile to familiarize
+yourself with the man page for ``bcfg2-crypt``.
+
+Encrypting Cfg Files
+--------------------
+
+To encrypt a Cfg file, you can simply run::
+
+    bcfg2-crypt foo.conf
+
+This will write the encrypted data to ``foo.conf.crypt``.  Once you
+are satisfied that the file has been encrypted as you wish, you can
+remove the plaintext version, or you can use the ``--remove`` flag of
+``bcfg2-crypt``.
+
+To decrypt a file, simply run ``bcfg2-crypt`` again::
+
+    bcfg2-crypt foo.conf.crypt
+
+On Cfg files, ``bcfg2-crypt`` is more-or-less equivalent to the
+following commands (encryption and decryption, respectively)::
+
+    openssl enc -aes-256-cbc -k <passphrase> -in foo.conf \
+        -out foo.conf.crypt -a
+    openssl enc -d -aes-256-cbc -k <passphrase> -in foo.conf.crypt \
+        -out foo.conf -a
+
+Those commands can be used in lieu of ``bcfg2-crypt`` if you hate
+convenience.
+
+Encrypting Properties Files
+---------------------------
+
+To encrypt or decrypt a properties file, simply run::
+
+    bcfg2-crypt foo.xml
+
+If the top-level tag of a Properties file is not ``<Properties>``,
+then you need to use the ``--properties`` flag to ``bcfg2-crypt``::
+
+    bcfg2-crypt --properties foo.xml
+
+The first time you run ``bcfg2-crypt`` on a Properties file, it will
+encrypt all character data of all elements.  Additionally, it will add
+``encrypted="<key name>"`` to each element that has encrypted character
+data.  It also adds ``encryption="true"`` to the top-level
+``<Properties>`` tag as a flag to the server that it should try to
+decrypt the data in that file.  (If you are using Properties schemas,
+you will need to make sure to add support for these attributes.)  On
+subsequent runs, only those elements flagged with ``encrypted="*"``
+are encrypted or decrypted.
+
+To decrypt a Properties file, simply re-run ``bcfg2-crypt``::
+
+    bcfg2-crypt foo.xml
+
+This decrypts the encrypted elements, but it does *not* remove the
+``encrypted`` attribute; this way, you can decrypt a Properties
+file, modify the contents, and then simply re-run ``bcfg2-crypt`` to
+encrypt it again.  If you added elements that you also want to be
+encrypted, you can either add the ``encrypted`` attribute to
+them manually, or run::
+
+    bcfg2-crypt --xpath '*' foo.xml
+
+You can also use the ``--xpath`` option to specify more restrictive
+XPath expressions to only encrypt a subset of elements, or to encrypt
+different elements with different passphrases.  Alternatively, you can
+manally set the ``encrypted`` attribute on various elements and
+``bcfg2-crypt`` will automatically do the right thing.  You can also
+run bcfg2-crypt in interactive mode to interactively select which
+attributes should be encrypted::
+
+    bcfg2-crypt -I foo.xml
+
+If you want to use different passphrases within a single Properties
+file, you must manually set the ``encrypted`` attribute.
+
+.. _server-encryption-configuration:
+
+Configuring Encryption
+======================
+
+Passphrases
+-----------
+
+To configure encryption, add a ``[encryption]`` section to
+``bcfg2.conf`` with any number of name-passphrase pairs.
+
+For instance::
+
+    [encryption]
+    foo_team=P4ssphr4se
+    bar_team=Pa55phra5e
+
+.. note::
+
+    The name of a passphrase **cannot** be "algorithm"; that
+    configuration option is reserved for configuring the cipher
+    algorithm.
+
+This would define two separate encryption passphrases, presumably for
+use by two separate teams.  The passphrase names are completely
+arbitrary.
+
+Note that this does entail a chicken-and-egg problem.  In order for
+the Bcfg2 server to be able to decrypt encrypted files, the
+passphrases must exist in ``bcfg2.conf`` in plaintext; but, if you're
+encrypting data, presumably you don't want to include those plaintext
+passphrases in your Bcfg2 repository, so you'll want to encrypt
+``bcfg2.conf``.  The best way to solve this is:
+
+#. On your Bcfg2 server, manually add the ``[encryption]`` section to
+   ``bcfg2.conf`` and restart the Bcfg2 server.
+#. Update ``bcfg2.conf`` in your Bcfg2 repository with the
+   passphrases, and encrypt it.
+
+The first (manual) step breaks the mutual dependency.
+
+Algorithm
+---------
+
+By default, Bcfg2 uses the AES-256-CBC cipher algorithm.  If you wish
+to change this, you can set the ``algorithm`` option in the
+``[encryption]`` section of ``bcfg2.conf``::
+
+    [encryption]
+    algorithm = bf_cbc
+
+The value of ``algorithm`` must be a valid OpenSSL cipher algorithm
+according the naming model of the Python :mod:`M2Crypto` module.  To
+get a list of valid algorithms, you can run::
+
+    openssl list-cipher-algorithms | grep -v ' => ' | \
+        tr 'A-Z-' 'a-z_' | sort -u
+
+Encryption API
+==============
+
+.. automodule:: Bcfg2.Encryption

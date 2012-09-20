@@ -125,7 +125,9 @@ class Encryptor(object):
         return self.unchunk(crypted, plaintext)
 
     def _encrypt(self, plaintext, passphrase, name=None):
-        return Bcfg2.Encryption.ssl_encrypt(plaintext, passphrase)
+        return Bcfg2.Encryption.ssl_encrypt(
+            plaintext, passphrase,
+            Bcfg2.Encryption.get_algorithm(self.setup))
 
     def decrypt(self, fname):
         try:
@@ -198,8 +200,8 @@ class Encryptor(object):
             return True
         except IOError:
             err = sys.exc_info()[1]
-            self.logger.error("Error writing encrypted data from %s to %s: %s" %
-                              (fname, new_fname, err))
+            self.logger.error("Error writing encrypted data from %s to %s: %s"
+                              % (fname, new_fname, err))
             return False
         except EncryptionChunkingError:
             err = sys.exc_info()[1]
@@ -217,8 +219,8 @@ class Encryptor(object):
             return True
         except IOError:
             err = sys.exc_info()[1]
-            self.logger.error("Error writing encrypted data from %s to %s: %s" %
-                              (fname, new_fname, err))
+            self.logger.error("Error writing encrypted data from %s to %s: %s"
+                              % (fname, new_fname, err))
             return False
 
     def get_passphrase(self, chunk):
@@ -248,7 +250,9 @@ class Encryptor(object):
         return None
 
     def _decrypt(self, crypted, passphrase):
-        return Bcfg2.Encryption.ssl_decrypt(crypted, passphrase)
+        return Bcfg2.Encryption.ssl_decrypt(
+            crypted, passphrase,
+            Bcfg2.Encryption.get_algorithm(self.setup))
 
 
 class CfgEncryptor(Encryptor):
@@ -268,8 +272,10 @@ class PropertiesEncryptor(Encryptor):
         if name is None:
             name = "true"
         if plaintext.text and plaintext.text.strip():
-            plaintext.text = Bcfg2.Encryption.ssl_encrypt(plaintext.text,
-                                                          passphrase).strip()
+            plaintext.text = Bcfg2.Encryption.ssl_encrypt(
+                plaintext.text,
+                passphrase,
+                Bcfg2.Encryption.get_algorithm(self.setup)).strip()
             plaintext.set("encrypted", name)
         return plaintext
 
@@ -334,8 +340,10 @@ class PropertiesEncryptor(Encryptor):
         if not crypted.text or not crypted.text.strip():
             self.logger.warning("Skipping empty element %s" % crypted.tag)
             return crypted
-        crypted.text = Bcfg2.Encryption.ssl_decrypt(crypted.text,
-                                                    passphrase).strip()
+        crypted.text = Bcfg2.Encryption.ssl_decrypt(
+            crypted.text,
+            passphrase,
+            Bcfg2.Encryption.get_algorithm(self.setup)).strip()
         return crypted
 
 
@@ -419,8 +427,8 @@ def main():
                             "ignoring for this file" % fname)
         else:
             if setup['xpath']:
-                logger.info("Cannot use xpath with Cfg file %s, ignoring xpath "
-                            "for this file" % fname)
+                logger.info("Cannot use xpath with Cfg file %s, ignoring "
+                            "xpath for this file" % fname)
             if setup['interactive']:
                 logger.info("Cannot use interactive mode with Cfg file %s, "
                             "ignoring -I for this file" % fname)
@@ -449,6 +457,7 @@ def main():
             data = xform(fname)
         if not data:
             print("Failed to %s %s, skipping" % (xform.__name__, fname))
+            continue
         if setup['crypt_stdout']:
             if len(setup['args']) > 1:
                 print("----- %s -----" % fname)
@@ -458,7 +467,8 @@ def main():
         else:
             write(fname, data=data)
 
-        if setup['remove'] and encryptor.get_encrypted_filename(fname) != fname:
+        if (setup['remove'] and
+            encryptor.get_encrypted_filename(fname) != fname):
             try:
                 os.unlink(fname)
             except IOError:

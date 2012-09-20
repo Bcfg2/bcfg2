@@ -32,3 +32,4 @@ clients.
    backends
    database
    caching
+   encryption

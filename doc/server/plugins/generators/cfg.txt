@@ -139,6 +139,8 @@ using different host-specific or group-specific files.  For example:
     Cfg/etc/fstab/fstab.H_host.example.com.genshi
     Cfg/etc/fstab/fstab.G50_server.cheetah
 
+.. _server-plugins-generators-cfg-encryption:
+
 Encrypted Files
 ===============
 
@@ -146,7 +148,7 @@ Encrypted Files
 
 Bcfg2 allows you to encrypt files stored in ``Cfg/`` to protect the
 data in them from other people who need access to the repository.  See
-also :ref:`server-plugins-connectors-properties-encrypted` for
+also :ref:`server-plugins-connectors-properties-encryption` for
 information on encrypting elements in Properties files, which is often
 more friendly for tracking changes in a VCS.
 
@@ -158,6 +160,9 @@ more friendly for tracking changes in a VCS.
     ``bcfg2.conf``.  This is only intended to make it easier to use a
     single Bcfg2 repository with multiple admins who should not
     necessarily have access to each other's sensitive data.
+
+See :ref:`server-encryption` for more details on encryption in Bcfg2
+in general.
 
 Encrypting Files
 ----------------
@@ -175,62 +180,7 @@ either order, e.g.::
     Cfg/etc/foo.conf/foo.conf.G10_foo.genshi.crypt
     Cfg/etc/foo.conf/foo.conf.H_bar.example.com.crypt.cheetah
 
-To encrypt a file, you can use ``bcfg2-crypt``, e.g.::
-
-    bcfg2-crypt foo.conf
-
-Once you are satisfied that the file has been encrypted as you wish,
-you can remove the plaintext version, or you can use the ``--remove``
-flag of ``bcfg2-crypt``.
-
-To decrypt a file, simply run ``bcfg2-crypt`` again::
-
-    bcfg2-crypt foo.conf
-
-See the ``bcfg2-crypt`` man page for more information.
-
-``bcfg2-crypt`` simply performs an AES256 encryption, and is
-more-or-less equivalent to the following commands (encryption and
-decryption, respectively::
-
-    openssl enc -aes-256-cbc -k <passphrase> -in foo.conf -out foo.conf.crypt -a
-    openssl enc -d -aes-256-cbc -k <passphrase> -in foo.conf.crypt -out foo.conf -a
-
-.. _server-plugins-generators-cfg-configuring-encryption:
-
-Configuring Encryption
-----------------------
-
-To configure encryption, add a ``[encryption]`` section to
-``bcfg2.conf`` with any number of name-passphrase pairs.  When
-decrypting a file, _all_ passphrases will be tried; the passphrase
-name is currently purely cosmetic, but at some point in the future the
-ability to give Bcfg2 a "hint" about which passphrase to use will be
-added.
-
-For instance::
-
-    [encryption]
-    foo_team=P4ssphr4se
-    bar_team=Pa55phra5e
-
-This would define two separate encryption passphrases, presumably for
-use by two separate teams.  The passphrase names are completely
-arbitrary.
-
-Note that this does entail a chicken-and-egg problem.  In order for
-the Bcfg2 server to be able to decrypt encrypted files, the
-passphrases must exist in ``bcfg2.conf`` in plaintext; but, if you're
-encrypting data, presumably you don't want to include those plaintext
-passphrases in your Bcfg2 repository, so you'll want to encrypt
-``bcfg2.conf``.  The best way to solve this is:
-
-#. On your Bcfg2 server, manually add the ``[encryption]`` section to
-   ``bcfg2.conf`` and restart the Bcfg2 server.
-#. Update ``bcfg2.conf`` in your Bcfg2 repository with the
-   passphrases, and encrypt it.
-
-The first (manual) step breaks the mutual dependency.
+To encrypt or decrypt a file, use :ref:`bcfg2-crypt`.
 
 Deltas
 ======

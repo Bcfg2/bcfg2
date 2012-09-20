@@ -2,12 +2,14 @@
 .cheetah.crypt files)"""
 
 from Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator import CfgCheetahGenerator
-from Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator import CfgEncryptedGenerator
+from Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator \
+    import CfgEncryptedGenerator
+
 
 class CfgEncryptedCheetahGenerator(CfgCheetahGenerator, CfgEncryptedGenerator):
     """ CfgEncryptedCheetahGenerator lets you encrypt your Cheetah
     :ref:`server-plugins-generators-cfg` files on the server """
-    
+
     #: handle .crypt.cheetah or .cheetah.crypt files
     __extensions__ = ['cheetah.crypt', 'crypt.cheetah']
 
