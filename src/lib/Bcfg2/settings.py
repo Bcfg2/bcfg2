@@ -130,7 +130,7 @@ ADMIN_MEDIA_PREFIX = '/media/'
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'eb5+y%oy-qx*2+62vv=gtnnxg1yig_odu0se5$h0hh#pc*lmo7'
 
-if has_django and django.VERSION[0] == 1 and django.VERSION[1] < 3:
+if has_django and django.VERSION[0] == 1 and django.VERSION[1] < 2:
     TEMPLATE_LOADERS = (
         'django.template.loaders.filesystem.load_template_source',
         'django.template.loaders.app_directories.load_template_source',
