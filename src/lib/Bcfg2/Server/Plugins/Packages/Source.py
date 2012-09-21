@@ -727,7 +727,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
             return False
 
         if not self.setup.cfp.getboolean("packages", "magic_groups",
-                                         default=True):
+                                         default=False):
             return True
         else:
             for group in self.basegroups:

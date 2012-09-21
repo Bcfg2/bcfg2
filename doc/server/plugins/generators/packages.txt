@@ -15,52 +15,6 @@ information, Packages delegates control of package version information to
 the underlying package manager, installing the latest version available
 through those channels.
 
-.. _server-plugins-generators-packages-magic-groups:
-
-"Magic Groups"
-==============
-
-Packages is the only plugin that uses "magic groups". Most plugins
-operate based on client group memberships, without any concern for the
-particular names chosen for groups by the user. The Packages plugin is
-the sole exception to this rule. Packages needs to "know" two
-different sorts of facts about clients. The first is the basic
-OS/distro of the client, enabling classes of sources. The second is
-the architecture of the client, enabling sources for a given
-architecture. In addition to these magic groups, each source may also
-specify non-magic groups to limit the source's applicability to group
-member clients.
-
-+--------+----------+--------------+
-| Source | OS Group | Architecture |
-+========+==========+==============+
-| Apt    | debian   | i386         |
-+--------+----------+--------------+
-| Apt    | ubuntu   | amd64        |
-+--------+----------+--------------+
-| Apt    | nexenta  |              |
-+--------+----------+--------------+
-| Apt    | apt      |              |
-+--------+----------+--------------+
-| Yum    | redhat   | i386         |
-+--------+----------+--------------+
-| Yum    | centos   | x86_64       |
-+--------+----------+--------------+
-| Yum    | fedora   |              |
-+--------+----------+--------------+
-| Yum    | yum      |              |
-+--------+----------+--------------+
-
-.. note::
-
-   .. versionadded:: 1.2.0
-
-   Magic OS groups can be disabled in Bcfg2 1.2 and greater by setting
-   ``magic_groups`` to ``0`` in ``Packages/packages.conf``. This may
-   give you greater flexibility in determining which source types to
-   use for which OSes. Magic architecture groups cannot be disabled.
-
-
 Limiting sources to groups
 ==========================
 
@@ -82,10 +36,60 @@ source to which they apply (based on group memberships, as described
 above). Packages and dependencies are resolved from all applicable
 sources.
 
-.. note:: To recap, a client needs to be a member of the **OS Group**,
-          **Architecture** group, and any other groups defined in your
+.. note:: To recap, a client needs to be a member of the
+          **Architecture** group and any other groups defined in your
           ``Packages/sources.xml`` file in order for the client to be
-          associated to the proper sources.
+          associated to the proper sources.  If you are using
+          :ref:`server-plugins-generators-packages-magic-groups`, then
+          a client must also be a member of the appropriate OS group.
+
+.. _server-plugins-generators-packages-magic-groups:
+
+"Magic Groups"
+==============
+
+.. note:: Magic groups are deprecated in 1.3.0 and will be removed in
+          a future release.  They are disabled by default.
+
+Packages has the ability to use a feature known as "magic groups"; it
+is the only plugin to use that feature. Most plugins operate based on
+client group memberships, without any concern for the particular names
+chosen for groups by the user. The Packages plugin is the sole
+exception to this rule. Packages needs to "know" two different sorts
+of facts about clients. The first is the basic OS/distro of the
+client, enabling classes of sources. The second is the architecture of
+the client, enabling sources for a given architecture. In addition to
+these magic groups, each source may also specify non-magic groups to
+limit the source's applicability to group member clients.
+
++--------+----------+--------------+
+| Source | OS Group | Architecture |
++========+==========+==============+
+| Apt    | debian   | i386         |
++--------+----------+--------------+
+| Apt    | ubuntu   | amd64        |
++--------+----------+--------------+
+| Apt    | nexenta  |              |
++--------+----------+--------------+
+| Apt    | apt      |              |
++--------+----------+--------------+
+| Yum    | redhat   | i386         |
++--------+----------+--------------+
+| Yum    | centos   | x86_64       |
++--------+----------+--------------+
+| Yum    | fedora   |              |
++--------+----------+--------------+
+| Yum    | yum      |              |
++--------+----------+--------------+
+
+Magic OS groups are disabled by default in Bcfg2 1.3 and greater.  If
+you require magic groups, you can enable them by setting
+``magic_groups`` to ``1`` in the ``[packages]`` section of
+``bcfg2.conf``.
+
+Magic groups will be removed in a future release.
+
+Magic architecture groups cannot be disabled.
 
 Setup
 =====

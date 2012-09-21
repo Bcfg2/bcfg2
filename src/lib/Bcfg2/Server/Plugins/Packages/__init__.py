@@ -60,6 +60,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             # create key directory if needed
             os.makedirs(self.keypath)
 
+        # warn about deprecated magic groups
+        if self.core.setup.cfp.getboolean("packages", "magic_groups",
+                                          default=False):
+            self.logger.warning("Packages: Magic groups are deprecated and "
+                                "will be removed in a future release")
+            self.logger.warning("You can disable magic groups by setting "
+                                "magic_groups=0 in [packages] in bcfg2.conf")
+
         #: The
         #: :class:`Bcfg2.Server.Plugins.Packages.PackagesSources.PackagesSources`
         #: object used to generate
@@ -215,7 +223,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         """
         if entry.tag == 'Package':
             if self.core.setup.cfp.getboolean("packages", "magic_groups",
-                                              default=True):
+                                              default=False):
                 collection = self._get_collection(metadata)
                 if collection.magic_groups_match():
                     return True
