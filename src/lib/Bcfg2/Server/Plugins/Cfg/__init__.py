@@ -8,10 +8,12 @@ import logging
 import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages
 import Bcfg2.Server.Lint
+# pylint: disable=W0622
+from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages
+# pylint: enable=W0622
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 #: SETUP contains a reference to the
 #: :class:`Bcfg2.Options.OptionParser` created by the Bcfg2 core for
@@ -23,6 +25,7 @@ logger = logging.getLogger(__name__)
 #: :class:`Bcfg2.Server.Plugin.helpers.EntrySet` objects and thence to
 #: the EntrySet children.
 SETUP = None
+
 
 class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
     """ CfgBaseFileMatcher is the parent class for all Cfg handler
@@ -93,12 +96,13 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
 
         components = ['^(?P<basename>%s)' % basename]
         if cls.__specific__:
-            components.append('(|\\.H_(?P<hostname>\S+?)|.G(?P<prio>\d+)_(?P<group>\S+?))')
+            components.append('(|\\.H_(?P<hostname>\S+?)|' +
+                              '.G(?P<prio>\d+)_(?P<group>\S+?))')
         if extensions:
             components.append('\\.(?P<extension>%s)' % '|'.join(extensions))
         components.append('$')
         return re.compile("".join(components))
-    
+
     @classmethod
     def handles(cls, event, basename=None):
         """ Return True if this handler handles the file described by
@@ -129,7 +133,8 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
                 match = True
                 break
         return (match and
-                cls.get_regex(basename=os.path.basename(basename)).match(event.filename))
+                cls.get_regex(
+                    basename=os.path.basename(basename)).match(event.filename))
 
     @classmethod
     def ignore(cls, event, basename=None):
@@ -166,12 +171,9 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
         return (match and
                 cls.get_regex(basename=os.path.basename(basename),
                               extensions=cls.__ignore__).match(event.filename))
-        
+
     def __str__(self):
         return "%s(%s)" % (self.__class__.__name__, self.name)
-
-    def match(self, fname):
-        return self.regex.match(fname)
 
 
 class CfgGenerator(CfgBaseFileMatcher):
@@ -193,7 +195,7 @@ class CfgGenerator(CfgBaseFileMatcher):
         CfgBaseFileMatcher.__init__(self, name, specific, encoding)
     __init__.__doc__ = CfgBaseFileMatcher.__init__.__doc__.split(".. -----")[0]
 
-    def get_data(self, entry, metadata):
+    def get_data(self, entry, metadata):  # pylint: disable=W0613
         """ get_data() returns the initial data of a file.
 
         :param entry: The entry to generate data for. ``entry`` should
@@ -335,13 +337,17 @@ class CfgDefaultInfo(CfgInfo):
     bind_info_to_entry.__doc__ = CfgInfo.bind_info_to_entry.__doc__
 
 #: A :class:`CfgDefaultInfo` object instantiated with
-#: :attr:`Bcfg2.Server.Plugin.helper.default_file_metadata` as its
+#: :attr:`Bcfg2.Server.Plugin.helper.DEFAULT_FILE_METADATA` as its
 #: default metadata.  This is used to set a default file metadata set
 #: on an entry before a "real" :class:`CfgInfo` handler applies its
 #: metadata to the entry.
-DEFAULT_INFO = CfgDefaultInfo(Bcfg2.Server.Plugin.default_file_metadata)
+DEFAULT_INFO = CfgDefaultInfo(Bcfg2.Server.Plugin.DEFAULT_FILE_METADATA)
+
 
 class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
+    """ Handle a collection of host- and group-specific Cfg files with
+    multiple different Cfg handlers in a single directory. """
+
     def __init__(self, basename, path, entry_type, encoding):
         Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path,
                                               entry_type, encoding)
@@ -377,18 +383,18 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         :returns: None
         """
         action = event.code2str()
-        
+
         if event.filename not in self.entries:
             if action not in ['exists', 'created', 'changed']:
                 # process a bogus changed event like a created
                 return
-                
+
             for hdlr in self.handlers:
                 if hdlr.handles(event, basename=self.path):
                     if action == 'changed':
                         # warn about a bogus 'changed' event, but
                         # handle it like a 'created'
-                        logger.warning("Got %s event for unknown file %s" %
+                        LOGGER.warning("Got %s event for unknown file %s" %
                                        (action, event.filename))
                     self.debug_log("%s handling %s event on %s" %
                                    (hdlr.__name__, action, event.filename))
@@ -403,7 +409,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             del self.entries[event.filename]
             return
 
-        logger.error("Could not process event %s for %s; ignoring" %
+        LOGGER.error("Could not process event %s for %s; ignoring" %
                      (action, event.filename))
 
     def get_matching(self, metadata):
@@ -412,7 +418,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                     item.specific.matches(metadata))]
     get_matching.__doc__ = Bcfg2.Server.Plugin.EntrySet.get_matching.__doc__
 
-    def entry_init(self, event, hdlr):
+    def entry_init(self, event, hdlr):  # pylint: disable=W0221
         """ Handle the creation of a file on the filesystem and the
         creation of a Cfg handler object in this CfgEntrySet to track
         it.
@@ -432,13 +438,13 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 specific=hdlr.get_regex(os.path.basename(self.path)))
         else:
             if event.filename in self.entries:
-                logger.warn("Got duplicate add for %s" % event.filename)
+                LOGGER.warn("Got duplicate add for %s" % event.filename)
             else:
                 fpath = os.path.join(self.path, event.filename)
                 self.entries[event.filename] = hdlr(fpath)
             self.entries[event.filename].handle_event(event)
 
-    def bind_entry(self, entry, metadata):
+    def bind_entry(self, entry, metadata):  # pylint: disable=R0912,R0915
         info_handlers = []
         generators = []
         filters = []
@@ -459,12 +465,12 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                     fdesc = "/".join(ent.__basenames__)
                 elif ent.__extensions__:
                     fdesc = "." + "/.".join(ent.__extensions__)
-                logger.warning("Cfg: %s: Use of %s files is deprecated" %
+                LOGGER.warning("Cfg: %s: Use of %s files is deprecated" %
                                (ent.name, fdesc))
 
         DEFAULT_INFO.bind_info_to_entry(entry, metadata)
         if len(info_handlers) > 1:
-            logger.error("More than one info supplier found for %s: %s" %
+            LOGGER.error("More than one info supplier found for %s: %s" %
                          (entry.get("name"), info_handlers))
         if len(info_handlers):
             info_handlers[0].bind_info_to_entry(entry, metadata)
@@ -482,7 +488,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         except:
             msg = "Cfg: exception rendering %s with %s: %s" % \
                 (entry.get("name"), generator, sys.exc_info()[1])
-            logger.error(msg)
+            LOGGER.error(msg)
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
 
         for fltr in filters:
@@ -506,9 +512,9 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                     msg = "Data for %s for %s failed to verify: %s" % \
                         (entry.get('name'), metadata.hostname,
                          sys.exc_info()[1])
-                    logger.error(msg)
+                    LOGGER.error(msg)
                     raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-                
+
         if entry.get('encoding') == 'base64':
             data = b64encode(data)
         else:
@@ -518,14 +524,14 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             except UnicodeDecodeError:
                 msg = "Failed to decode %s: %s" % (entry.get('name'),
                                                    sys.exc_info()[1])
-                logger.error(msg)
-                logger.error("Please verify you are using the proper encoding.")
+                LOGGER.error(msg)
+                LOGGER.error("Please verify you are using the proper encoding")
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             except ValueError:
                 msg = "Error in specification for %s: %s" % (entry.get('name'),
                                                              sys.exc_info()[1])
-                logger.error(msg)
-                logger.error("You need to specify base64 encoding for %s." %
+                LOGGER.error(msg)
+                LOGGER.error("You need to specify base64 encoding for %s." %
                              entry.get('name'))
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             except TypeError:
@@ -547,21 +553,23 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                           ent.specific.matches(metadata))]
         if not generators:
             msg = "No base file found for %s" % entry.get('name')
-            logger.error(msg)
+            LOGGER.error(msg)
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-        
+
         rv = []
         try:
             best = self.best_matching(metadata, generators)
             rv.append(best.specific)
-        except:
+        except:  # pylint: disable=W0702
             pass
 
         if not rv or not rv[0].hostname:
-            rv.append(Bcfg2.Server.Plugin.Specificity(hostname=metadata.hostname))
+            rv.append(Bcfg2.Server.Plugin.Specificity(
+                    hostname=metadata.hostname))
         return rv
 
     def build_filename(self, specific):
+        """ Create a filename for pulled file data """
         bfname = self.path + '/' + self.path.split('/')[-1]
         if specific.all:
             return bfname
@@ -571,22 +579,23 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             return "%s.H_%s" % (bfname, specific.hostname)
 
     def write_update(self, specific, new_entry, log):
+        """ Write pulled data to the filesystem """
         if 'text' in new_entry:
             name = self.build_filename(specific)
             if os.path.exists("%s.genshi" % name):
                 msg = "Cfg: Unable to pull data for genshi types"
-                logger.error(msg)
+                LOGGER.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             elif os.path.exists("%s.cheetah" % name):
                 msg = "Cfg: Unable to pull data for cheetah types"
-                logger.error(msg)
+                LOGGER.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             try:
                 etext = new_entry['text'].encode(self.encoding)
             except:
-                msg = "Cfg: Cannot encode content of %s as %s" % (name,
-                                                                  self.encoding)
-                logger.error(msg)
+                msg = "Cfg: Cannot encode content of %s as %s" % \
+                    (name, self.encoding)
+                LOGGER.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             open(name, 'w').write(etext)
             self.debug_log("Wrote file %s" % name, flag=log)
@@ -597,7 +606,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             for ifile in ['info', ':info']:
                 info = os.path.join(self.path, ifile)
                 if os.path.exists(info):
-                    logger.info("Removing %s and replacing with info.xml" %
+                    LOGGER.info("Removing %s and replacing with info.xml" %
                                 info)
                     os.remove(info)
             metadata_updates = {}
@@ -606,8 +615,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 metadata_updates[attr] = new_entry.get(attr)
             infoxml = lxml.etree.Element('FileInfo')
             infotag = lxml.etree.SubElement(infoxml, 'Info')
-            [infotag.attrib.__setitem__(attr, metadata_updates[attr])
-             for attr in metadata_updates]
+            for attr in metadata_updates:
+                infotag.attrib.__setitem__(attr, metadata_updates[attr])
             ofile = open(self.path + "/info.xml", "w")
             ofile.write(lxml.etree.tostring(infoxml, xml_declaration=False,
                                             pretty_print=True).decode('UTF-8'))
@@ -629,10 +638,10 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
     es_child_cls = Bcfg2.Server.Plugin.SpecificData
 
     def __init__(self, core, datastore):
-        global SETUP
+        global SETUP  # pylint: disable=W0603
         Bcfg2.Server.Plugin.GroupSpool.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
-        
+
         SETUP = core.setup
         if 'validate' not in SETUP:
             SETUP.add_option('validate', Bcfg2.Options.CFG_VALIDATION)
@@ -665,7 +674,8 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
     def AcceptChoices(self, entry, metadata):
         return self.entries[entry.get('name')].list_accept_choices(entry,
                                                                    metadata)
-    AcceptChoices.__doc__ = Bcfg2.Server.Plugin.PullTarget.AcceptChoices.__doc__
+    AcceptChoices.__doc__ = \
+        Bcfg2.Server.Plugin.PullTarget.AcceptChoices.__doc__
 
     def AcceptPullData(self, specific, new_entry, log):
         return self.entries[new_entry.get('name')].write_update(specific,
@@ -689,6 +699,7 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
                 "diff-file-used":"warning"}
 
     def check_entry(self, basename, entry):
+        """ check that no .cat or .diff files are in use """
         cfg = self.core.plugins['Cfg']
         for basename, entry in list(cfg.entries.items()):
             for fname, handler in entry.entries.items():

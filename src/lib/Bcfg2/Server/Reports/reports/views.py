@@ -574,7 +574,7 @@ def prepare_paginated_list(request, context, paged_list, page=1, max_results=25)
             view, args, kwargs = resolve(request.META['PATH_INFO'])
             kwargs['page_number'] = total_pages
             raise PaginationError(HttpResponseRedirect(reverse(view,
-                                                               kwards=kwargs)))
+                                                               kwargs=kwargs)))
         except (Resolver404, NoReverseMatch, ValueError):
             raise "Accessing beyond last page.  Unable to resolve redirect."
 

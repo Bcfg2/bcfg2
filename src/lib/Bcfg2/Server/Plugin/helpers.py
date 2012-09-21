@@ -10,34 +10,33 @@ import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Options
 from Bcfg2.Compat import CmpMixin
-from base import *
-from interfaces import *
-from exceptions import *
+from Bcfg2.Server.Plugin.base import Debuggable, Plugin
+from Bcfg2.Server.Plugin.interfaces import Generator
+from Bcfg2.Server.Plugin.exceptions import SpecificityError, PluginInitError, \
+    PluginExecutionError
 
 try:
-    import django
-    has_django = True
+    import django  # pylint: disable=W0611
+    HAS_DJANGO = True
 except ImportError:
-    has_django = False
+    HAS_DJANGO = False
 
-# grab default metadata info from bcfg2.conf
-opts = {'owner': Bcfg2.Options.MDATA_OWNER,
-        'group': Bcfg2.Options.MDATA_GROUP,
-        'perms': Bcfg2.Options.MDATA_PERMS,
-        'secontext': Bcfg2.Options.MDATA_SECONTEXT,
-        'important': Bcfg2.Options.MDATA_IMPORTANT,
-        'paranoid': Bcfg2.Options.MDATA_PARANOID,
-        'sensitive': Bcfg2.Options.MDATA_SENSITIVE}
+#: A dict containing default metadata for Path entries from bcfg2.conf
+DEFAULT_FILE_METADATA = Bcfg2.Options.OptionParser(dict(
+        owner=Bcfg2.Options.MDATA_OWNER,
+        group=Bcfg2.Options.MDATA_GROUP,
+        perms=Bcfg2.Options.MDATA_PERMS,
+        secontext=Bcfg2.Options.MDATA_SECONTEXT,
+        important=Bcfg2.Options.MDATA_IMPORTANT,
+        paranoid=Bcfg2.Options.MDATA_PARANOID,
+        sensitive=Bcfg2.Options.MDATA_SENSITIVE))
+DEFAULT_FILE_METADATA.parse([])
+del DEFAULT_FILE_METADATA['args']
 
-#: A dict containing default metadata for Path entries
-default_file_metadata = Bcfg2.Options.OptionParser(opts)
-default_file_metadata.parse([])
-del default_file_metadata['args']
-
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 #: a compiled regular expression for parsing info and :info files
-info_regex = re.compile('owner:(\s)*(?P<owner>\S+)|' +
+INFO_REGEX = re.compile('owner:(\s)*(?P<owner>\S+)|' +
                         'group:(\s)*(?P<group>\S+)|' +
                         'perms:(\s)*(?P<perms>\w+)|' +
                         'secontext:(\s)*(?P<secontext>\S+)|' +
@@ -47,7 +46,8 @@ info_regex = re.compile('owner:(\s)*(?P<owner>\S+)|' +
                         'important:(\s)*(?P<important>\S+)|' +
                         'mtime:(\s)*(?P<mtime>\w+)|')
 
-def bind_info(entry, metadata, infoxml=None, default=default_file_metadata):
+
+def bind_info(entry, metadata, infoxml=None, default=DEFAULT_FILE_METADATA):
     """ Bind the file metadata in the given
     :class:`Bcfg2.Server.Plugin.helpers.InfoXML` object to the given
     entry.
@@ -71,7 +71,7 @@ def bind_info(entry, metadata, infoxml=None, default=default_file_metadata):
         infoxml.pnode.Match(metadata, mdata, entry=entry)
         if 'Info' not in mdata:
             msg = "Failed to set metadata for file %s" % entry.get('name')
-            logger.error(msg)
+            LOGGER.error(msg)
             raise PluginExecutionError(msg)
         for attr, val in list(mdata['Info'][None].items()):
             entry.set(attr, val)
@@ -104,7 +104,7 @@ class DatabaseBacked(Plugin):
         use_db = self.core.setup.cfp.getboolean(self.section,
                                                 self.option,
                                                 default=False)
-        if use_db and has_django and self.core.database_available:
+        if use_db and HAS_DJANGO and self.core.database_available:
             return True
         elif not use_db:
             return False
@@ -119,7 +119,7 @@ class PluginDatabaseModel(object):
     inherit from.  This is just a mixin; models must also inherit from
     django.db.models.Model to be valid Django models."""
 
-    class Meta:
+    class Meta:  # pylint: disable=C0111,W0232
         app_label = "Server"
 
 
@@ -155,7 +155,7 @@ class FileBacked(object):
             self.Index()
         except IOError:
             err = sys.exc_info()[1]
-            logger.error("Failed to read file %s: %s" % (self.name, err))
+            LOGGER.error("Failed to read file %s: %s" % (self.name, err))
 
     def Index(self):
         """ Index() is called by :func:`HandleEvent` every time the
@@ -197,7 +197,7 @@ class DirectoryBacked(object):
         :param fam: The FAM object used to receive notifications of
                     changes
         :type fam: Bcfg2.Server.FileMonitor.FileMonitor
-        
+
         .. -----
         .. autoattribute:: __child__
         """
@@ -241,7 +241,7 @@ class DirectoryBacked(object):
         dirpathname = os.path.join(self.data, relative)
         if relative not in self.handles.values():
             if not os.path.isdir(dirpathname):
-                logger.error("%s is not a directory" % dirpathname)
+                LOGGER.error("%s is not a directory" % dirpathname)
                 return
             reqid = self.fam.AddMonitor(dirpathname, self)
             self.handles[reqid] = relative
@@ -262,7 +262,7 @@ class DirectoryBacked(object):
                                                 self.fam)
         self.entries[relative].HandleEvent(event)
 
-    def HandleEvent(self, event):
+    def HandleEvent(self, event):  # pylint: disable=R0912
         """ Handle FAM events.
 
         This method is invoked by the FAM when it detects a change to
@@ -286,7 +286,7 @@ class DirectoryBacked(object):
             return
 
         if event.requestID not in self.handles:
-            logger.warn("Got %s event with unknown handle (%s) for %s" %
+            LOGGER.warn("Got %s event with unknown handle (%s) for %s" %
                         (action, event.requestID, event.filename))
             return
 
@@ -297,7 +297,7 @@ class DirectoryBacked(object):
             event.filename = event.filename[len(self.data) + 1:]
 
         if self.ignore and self.ignore.search(event.filename):
-            logger.debug("Ignoring event %s" % event.filename)
+            LOGGER.debug("Ignoring event %s" % event.filename)
             return
 
         # Calculate the absolute and relative paths this event refers to
@@ -332,18 +332,18 @@ class DirectoryBacked(object):
                     # class doesn't support canceling, so at least let
                     # the user know that a restart might be a good
                     # idea.
-                    logger.warn("Directory properties for %s changed, please " +
-                                " consider restarting the server" % (abspath))
+                    LOGGER.warn("Directory properties for %s changed, please "
+                                " consider restarting the server" % abspath)
                 else:
                     # Got a "changed" event for a directory that we
                     # didn't know about. Go ahead and treat it like a
                     # "created" event, but log a warning, because this
                     # is unexpected.
-                    logger.warn("Got %s event for unexpected dir %s" %
+                    LOGGER.warn("Got %s event for unexpected dir %s" %
                                 (action, abspath))
                     self.add_directory_monitor(relpath)
             else:
-                logger.warn("Got unknown dir event %s %s %s" %
+                LOGGER.warn("Got unknown dir event %s %s %s" %
                             (event.requestID, event.code2str(), abspath))
         elif self.patterns.search(event.filename):
             if action in ['exists', 'created']:
@@ -356,15 +356,15 @@ class DirectoryBacked(object):
                     # know about. Go ahead and treat it like a
                     # "created" event, but log a warning, because this
                     # is unexpected.
-                    logger.warn("Got %s event for unexpected file %s" %
+                    LOGGER.warn("Got %s event for unexpected file %s" %
                                 (action,
                                  abspath))
                     self.add_entry(relpath, event)
             else:
-                logger.warn("Got unknown file event %s %s %s" %
+                LOGGER.warn("Got unknown file event %s %s %s" %
                             (event.requestID, event.code2str(), abspath))
         else:
-            logger.warn("Could not process filename %s; ignoring" %
+            LOGGER.warn("Could not process filename %s; ignoring" %
                         event.filename)
 
 
@@ -399,6 +399,7 @@ class XMLFileBacked(FileBacked):
         .. autoattribute:: __identifier__
         """
         FileBacked.__init__(self, filename)
+        self.xdata = None
         self.label = ""
         self.entries = []
         self.extras = []
@@ -433,9 +434,9 @@ class XMLFileBacked(FileBacked):
                 else:
                     msg = "%s: %s does not exist, skipping" % (self.name, name)
                     if el.findall('./%sfallback' % Bcfg2.Server.XI_NAMESPACE):
-                        self.logger.debug(msg)
+                        LOGGER.debug(msg)
                     else:
-                        self.logger.warning(msg)
+                        LOGGER.warning(msg)
 
     def Index(self):
         try:
@@ -443,7 +444,7 @@ class XMLFileBacked(FileBacked):
                                         parser=Bcfg2.Server.XMLParser)
         except lxml.etree.XMLSyntaxError:
             msg = "Failed to parse %s: %s" % (self.name, sys.exc_info()[1])
-            logger.error(msg)
+            LOGGER.error(msg)
             raise PluginInitError(msg)
 
         self._follow_xincludes()
@@ -452,7 +453,7 @@ class XMLFileBacked(FileBacked):
                 self.xdata.getroottree().xinclude()
             except lxml.etree.XIncludeError:
                 err = sys.exc_info()[1]
-                logger.error("XInclude failed on %s: %s" % (self.name, err))
+                LOGGER.error("XInclude failed on %s: %s" % (self.name, err))
 
         self.entries = self.xdata.getchildren()
         if self.__identifier__ is not None:
@@ -491,7 +492,7 @@ class StructFile(XMLFileBacked):
 
     def _include_element(self, item, metadata):
         """ determine if an XML element matches the metadata """
-        if isinstance(item, lxml.etree._Comment):
+        if isinstance(item, lxml.etree._Comment):  # pylint: disable=W0212
             return False
         negate = item.get('negate', 'false').lower() == 'true'
         if item.tag == 'Group':
@@ -606,6 +607,7 @@ class INode(object):
         self._load_children(data, idict)
 
     def _load_children(self, data, idict):
+        """ load children """
         for item in data.getchildren():
             if item.tag in self.ignore:
                 continue
@@ -622,8 +624,8 @@ class INode(object):
                     self.contents[item.tag][item.get('name')]['__text__'] = \
                         item.text
                 if item.getchildren():
-                    self.contents[item.tag][item.get('name')]['__children__'] =\
-                        item.getchildren()
+                    self.contents[item.tag][item.get('name')]['__children__'] \
+                        = item.getchildren()
                 try:
                     idict[item.tag].append(item.get('name'))
                 except KeyError:
@@ -635,7 +637,7 @@ class INode(object):
             for key in self.contents:
                 try:
                     data[key].update(self.contents[key])
-                except:
+                except:  # pylint: disable=W0702
                     data[key] = {}
                     data[key].update(self.contents[key])
             for child in self.children:
@@ -647,12 +649,18 @@ class InfoNode (INode):
     includes ``<Path>`` tags, suitable for use with :file:`info.xml`
     files."""
 
-    raw = {'Client': "lambda m, e:'%(name)s' == m.hostname and predicate(m, e)",
-           'Group': "lambda m, e:'%(name)s' in m.groups and predicate(m, e)",
-           'Path': "lambda m, e:('%(name)s' == e.get('name') or '%(name)s' == e.get('realname')) and predicate(m, e)"}
-    nraw = {'Client': "lambda m, e:'%(name)s' != m.hostname and predicate(m, e)",
-            'Group': "lambda m, e:'%(name)s' not in m.groups and predicate(m, e)",
-            'Path': "lambda m, e:('%(name)s' != e.get('name') and '%(name)s' != e.get('realname')) and predicate(m, e)"}
+    raw = dict(
+        Client="lambda m, e: '%(name)s' == m.hostname and predicate(m, e)",
+        Group="lambda m, e: '%(name)s' in m.groups and predicate(m, e)",
+        Path="lambda m, e: ('%(name)s' == e.get('name') or " +
+                           "'%(name)s' == e.get('realname')) and " +
+                          "predicate(m, e)")
+    nraw = dict(
+        Client="lambda m, e: '%(name)s' != m.hostname and predicate(m, e)",
+        Group="lambda m, e: '%(name)s' not in m.groups and predicate(m, e)",
+        Path="lambda m, e: '%(name)s' != e.get('name') and " +
+                          "'%(name)s' != e.get('realname') and " +
+                          "predicate(m, e)")
     containers = ['Group', 'Client', 'Path']
 
 
@@ -679,14 +687,15 @@ class XMLSrc(XMLFileBacked):
             data = open(self.name).read()
         except IOError:
             msg = "Failed to read file %s: %s" % (self.name, sys.exc_info()[1])
-            logger.error(msg)
+            LOGGER.error(msg)
             raise PluginExecutionError(msg)
         self.items = {}
         try:
             xdata = lxml.etree.XML(data, parser=Bcfg2.Server.XMLParser)
         except lxml.etree.XMLSyntaxError:
-            msg = "Failed to parse file %s" % (self.name, sys.exc_info()[1])
-            logger.error(msg)
+            msg = "Failed to parse file %s: %s" % (self.name,
+                                                   sys.exc_info()[1])
+            LOGGER.error(msg)
             raise PluginExecutionError(msg)
         self.pnode = self.__node__(xdata, self.items)
         self.cache = None
@@ -696,7 +705,7 @@ class XMLSrc(XMLFileBacked):
             if self.__priority_required__:
                 msg = "Got bogus priority %s for file %s" % \
                     (xdata.get('priority'), self.name)
-                logger.error(msg)
+                LOGGER.error(msg)
                 raise PluginExecutionError(msg)
 
         del xdata, data
@@ -706,7 +715,8 @@ class XMLSrc(XMLFileBacked):
         if self.cache is None or self.cache[0] != metadata:
             cache = (metadata, self.__cacheobj__())
             if self.pnode is None:
-                logger.error("Cache method called early for %s; forcing data load" % (self.name))
+                LOGGER.error("Cache method called early for %s; "
+                             "forcing data load" % self.name)
                 self.HandleEvent()
                 return
             self.pnode.Match(metadata, cache[1])
@@ -769,7 +779,20 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
                         self.Entries[itype] = {child: self.BindEntry}
     HandleEvent.__doc__ = XMLDirectoryBacked.HandleEvent.__doc__
 
-    def _matches(self, entry, metadata, rules):
+    def _matches(self, entry, metadata, rules):  # pylint: disable=W0613
+        """ Whether or not a given entry has a matching entry in this
+        PrioDir.  By default this does strict matching (i.e., the
+        entry name is in ``rules.keys()``), but this can be overridden
+        to provide regex matching, etc.
+
+        :param entry: The entry to find a match for
+        :type entry: lxml.etree._Element
+        :param metadata: The metadata to get attributes for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :rules: A dict of rules to look in for a matching rule
+        :type rules: dict
+        :returns: bool
+        """
         return entry.get('name') in rules
 
     def BindEntry(self, entry, metadata):
@@ -814,7 +837,9 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
                         self._matches(entry, metadata,
                                       src.cache[1][entry.tag]))]
         if len(matching) == 0:
-            raise PluginExecutionError('No matching source for entry when retrieving attributes for %s(%s)' % (entry.tag, entry.attrib.get('name')))
+            raise PluginExecutionError("No matching source for entry when "
+                                       "retrieving attributes for %s(%s)" %
+                                       (entry.tag, entry.attrib.get('name')))
         elif len(matching) == 1:
             index = 0
         else:
@@ -839,7 +864,8 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
         if '__text__' in data:
             entry.text = data['__text__']
         if '__children__' in data:
-            [entry.append(copy.copy(item)) for item in data['__children__']]
+            for item in data['__children__']:
+                entry.append(copy.copy(item))
 
         return dict([(key, data[key])
                      for key in list(data.keys())
@@ -857,8 +883,8 @@ class Specificity(CmpMixin):
     apply to a single client are the most specific.  Objects that
     apply to groups are sorted by priority. """
 
-    def __init__(self, all=False, group=False, hostname=False, prio=0,
-                 delta=False):
+    def __init__(self, all=False, group=False,  # pylint: disable=W0622
+                 hostname=False, prio=0, delta=False):
         """
         :param all: The object applies to all clients.
         :type all: bool
@@ -897,7 +923,7 @@ class Specificity(CmpMixin):
                 self.hostname == metadata.hostname or
                 self.group in metadata.groups)
 
-    def __cmp__(self, other):
+    def __cmp__(self, other):  # pylint: disable=R0911
         """Sort most to least specific."""
         if self.all:
             if other.all:
@@ -936,7 +962,7 @@ class SpecificData(object):
     """ A file that is specific to certain clients, groups, or all
     clients. """
 
-    def __init__(self, name, specific, encoding):
+    def __init__(self, name, specific, encoding):  # pylint: disable=W0613
         """
         :param name: The full path to the file
         :type name: string
@@ -948,9 +974,9 @@ class SpecificData(object):
         :param encoding: The encoding to use for data in this file
         :type encoding: string
         """
-
         self.name = name
         self.specific = specific
+        self.data = None
 
     def handle_event(self, event):
         """ Handle a FAM event.  Note that the SpecificData object
@@ -968,8 +994,8 @@ class SpecificData(object):
             self.data = open(self.name).read()
         except UnicodeDecodeError:
             self.data = open(self.name, mode='rb').read()
-        except:
-            logger.error("Failed to read file %s" % self.name)
+        except:  # pylint: disable=W0201
+            LOGGER.error("Failed to read file %s" % self.name)
 
 
 class EntrySet(Debuggable):
@@ -1026,7 +1052,7 @@ class EntrySet(Debuggable):
         :type specific: Bcfg2.Server.Plugin.helpers.Specificity
         :param encoding: The encoding to use for data in this file
         :type encoding: string
-        
+
         Additionally, the object returned by ``entry_type`` must have
         a ``specific`` attribute that is sortable (e.g., a
         :class:`Bcfg2.Server.Plugin.helpers.Specificity` object).
@@ -1038,10 +1064,10 @@ class EntrySet(Debuggable):
         self.path = path
         self.entry_type = entry_type
         self.entries = {}
-        self.metadata = default_file_metadata.copy()
+        self.metadata = DEFAULT_FILE_METADATA.copy()
         self.infoxml = None
         self.encoding = encoding
-        
+
         if self.basename_is_regex:
             base_pat = basename
         else:
@@ -1126,7 +1152,7 @@ class EntrySet(Debuggable):
             self.entry_init(event)
         else:
             if event.filename not in self.entries:
-                logger.warning("Got %s event for unknown file %s" %
+                LOGGER.warning("Got %s event for unknown file %s" %
                                (action, event.filename))
                 if action == 'changed':
                     # received a bogus changed event; warn, but treat
@@ -1163,7 +1189,7 @@ class EntrySet(Debuggable):
             entry_type = self.entry_type
 
         if event.filename in self.entries:
-            logger.warn("Got duplicate add for %s" % event.filename)
+            LOGGER.warn("Got duplicate add for %s" % event.filename)
         else:
             fpath = os.path.join(self.path, event.filename)
             try:
@@ -1171,7 +1197,7 @@ class EntrySet(Debuggable):
                                                       specific=specific)
             except SpecificityError:
                 if not self.ignore.match(event.filename):
-                    logger.error("Could not process filename %s; ignoring" %
+                    LOGGER.error("Could not process filename %s; ignoring" %
                                  fpath)
                 return
             self.entries[event.filename] = entry_type(fpath, spec,
@@ -1222,7 +1248,7 @@ class EntrySet(Debuggable):
     def update_metadata(self, event):
         """ Process changes to or creation of info, :info, and
         info.xml files for the EntrySet.
-        
+
         :param event: An event that applies to an info handled by this
                       EntrySet
         :type event: Bcfg2.Server.FileMonitor.Event
@@ -1235,9 +1261,9 @@ class EntrySet(Debuggable):
             self.infoxml.HandleEvent(event)
         elif event.filename in [':info', 'info']:
             for line in open(fpath).readlines():
-                match = info_regex.match(line)
+                match = INFO_REGEX.match(line)
                 if not match:
-                    logger.warning("Failed to match line in %s: %s" % (fpath,
+                    LOGGER.warning("Failed to match line in %s: %s" % (fpath,
                                                                        line))
                     continue
                 else:
@@ -1260,7 +1286,7 @@ class EntrySet(Debuggable):
         if event.filename == 'info.xml':
             self.infoxml = None
         elif event.filename in [':info', 'info']:
-            self.metadata = default_file_metadata.copy()
+            self.metadata = DEFAULT_FILE_METADATA.copy()
 
     def bind_info_to_entry(self, entry, metadata):
         """ Shortcut to call :func:`bind_info` with the base

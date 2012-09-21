@@ -151,7 +151,7 @@ class SSLServer (SocketServer.TCPServer, object):
 
     def get_request(self):
         (sock, sockinfo) = self.socket.accept()
-        sock.settimeout(self.timeout)
+        sock.settimeout(self.timeout)  # pylint: disable=E1101
         sslsock = ssl.wrap_socket(sock,
                                   server_side=True,
                                   certfile=self.certfile,
@@ -366,8 +366,10 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
         XMLRPCDispatcher.__init__(self, allow_none, encoding)
 
         if not RequestHandlerClass:
+            # pylint: disable=E0102
             class RequestHandlerClass (XMLRPCRequestHandler):
                 """A subclassed request handler to prevent class-attribute conflicts."""
+            # pylint: enable=E0102
 
         SSLServer.__init__(self,
                            listen_all,

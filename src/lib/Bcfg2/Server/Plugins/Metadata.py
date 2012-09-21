@@ -105,7 +105,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
                                          Bcfg2.Server.FileMonitor.Pseudo)
 
     @property
-    def xdata(self):
+    def xdata(self):  # pylint: disable=E0202
         if not self.data:
             raise Bcfg2.Server.Plugin.MetadataRuntimeError("%s has no data" %
                                                            self.basefile)
@@ -334,7 +334,6 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                Bcfg2.Server.Plugin.DatabaseBacked):
     """This class contains data for bcfg2 server metadata."""
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    name = "Metadata"
     sort_order = 500
 
     def __init__(self, core, datastore, watch_clients=True):
@@ -345,14 +344,14 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.states = dict()
         self.extra = dict()
         self.handlers = []
-        self._handle_file("groups.xml")
+        self.groups_xml = self._handle_file("groups.xml")
         if (self._use_db and
             os.path.exists(os.path.join(self.data, "clients.xml"))):
             self.logger.warning("Metadata: database enabled but clients.xml"
                                 "found, parsing in compatibility mode")
-            self._handle_file("clients.xml")
+            self.clients_xml = self._handle_file("clients.xml")
         elif not self._use_db:
-            self._handle_file("clients.xml")
+            self.clients_xml = self._handle_file("clients.xml")
 
         # mapping of clientname -> authtype
         self.auth = dict()
@@ -415,9 +414,9 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             self.states[fname] = False
         aname = re.sub(r'[^A-z0-9_]', '_', fname)
         xmlcfg = XMLMetadataConfig(self, self.watch_clients, fname)
-        setattr(self, aname, xmlcfg)
         self.handlers.append(xmlcfg.HandleEvent)
         self.extra[fname] = []
+        return xmlcfg
 
     def _search_xdata(self, tag, name, tree, alias=False):
         for node in tree.findall("//%s" % tag):
@@ -456,9 +455,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def add_group(self, group_name, attribs):
         """Add group to groups.xml."""
         if self._use_db:
-             msg = "Metadata does not support adding groups with use_database enabled"
-             self.logger.error(msg)
-             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            msg = "Metadata does not support adding groups with " + \
+                "use_database enabled"
+            self.logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         else:
             return self._add_xdata(self.groups_xml, "Group", group_name,
                                    attribs=attribs)
@@ -466,9 +466,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def add_bundle(self, bundle_name):
         """Add bundle to groups.xml."""
         if self._use_db:
-             msg = "Metadata does not support adding bundles with use_database enabled"
-             self.logger.error(msg)
-             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            msg = "Metadata does not support adding bundles with " + \
+                "use_database enabled"
+            self.logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         else:
             return self._add_xdata(self.groups_xml, "Bundle", bundle_name)
 
@@ -503,9 +504,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def update_group(self, group_name, attribs):
         """Update a groups attributes."""
         if self._use_db:
-             msg = "Metadata does not support updating groups with use_database enabled"
-             self.logger.error(msg)
-             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            msg = "Metadata does not support updating groups with " + \
+            "use_database enabled"
+            self.logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         else:
             return self._update_xdata(self.groups_xml, "Group", group_name,
                                       attribs)
@@ -513,9 +515,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def update_client(self, client_name, attribs):
         """Update a clients attributes."""
         if self._use_db:
-             msg = "Metadata does not support updating clients with use_database enabled"
-             self.logger.error(msg)
-             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            msg = "Metadata does not support updating clients with " + \
+                "use_database enabled"
+            self.logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         else:
             return self._update_xdata(self.clients_xml, "Client", client_name,
                                       attribs, alias=True)
@@ -544,16 +547,18 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def remove_group(self, group_name):
         """Remove a group."""
         if self._use_db:
-             msg = "Metadata does not support removing groups with use_database enabled"
-             self.logger.error(msg)
-             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            msg = "Metadata does not support removing groups with " + \
+                "use_database enabled"
+            self.logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         else:
             return self._remove_xdata(self.groups_xml, "Group", group_name)
 
     def remove_bundle(self, bundle_name):
         """Remove a bundle."""
         if self._use_db:
-             msg = "Metadata does not support removing bundles with use_database enabled"
+             msg = "Metadata does not support removing bundles with " + \
+                 "use_database enabled"
              self.logger.error(msg)
              raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         else:
@@ -652,8 +657,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                         self.logger.warning("%s: Group %s suppressed by "
                                             "category %s; %s already a member "
                                             "of %s" %
-                                            (self.name, gname, category, client,
-                                             categories[category]))
+                                            (self.name, gname, category,
+                                             client, categories[category]))
                         if gname in self.groups:
                             self.groups[gname].warned.append(client)
                     return False
@@ -690,7 +695,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
         self.group_membership = dict()
         self.negated_groups = dict()
-        self.options = dict()
+
         # confusing loop condition; the XPath query asks for all
         # elements under a Group tag under a Groups tag; that is
         # infinitely recursive, so "all" elements really means _all_
@@ -727,7 +732,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def HandleEvent(self, event):
         """Handle update events for data files."""
         for hdlr in self.handlers:
-            aname = re.sub(r'[^A-z0-9_]', '_', os.path.basename(event.filename))
+            aname = re.sub(r'[^A-z0-9_]', '_',
+                           os.path.basename(event.filename))
             if hdlr(event):
                 # clear the entire cache when we get an event for any
                 # metadata file
@@ -735,7 +741,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 try:
                     proc = getattr(self, "_handle_%s_event" % aname)
                 except AttributeError:
-                    proc = self._handle_default_event
+                    proc = self._handle_default_event  # pylint: disable=E1101
                 proc(event)
 
         if False not in list(self.states.values()) and self.debug_flag:
@@ -745,8 +751,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             for client, groups in list(self.clientgroups.items()):
                 for group in groups:
                     if group not in self.groups:
-                        self.debug_log("Client %s set as nonexistent group %s" %
-                                       (client, group))
+                        self.debug_log("Client %s set as nonexistent group %s"
+                                       % (client, group))
             for gname, ginfo in list(self.groups.items()):
                 for group in ginfo.groups:
                     if group not in self.groups:
@@ -765,7 +771,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
         group = self.groups[profile]
         if not force and not group.is_public:
-            msg = "Cannot set client %s to private group %s" % (client, profile)
+            msg = "Cannot set client %s to private group %s" % (client,
+                                                                profile)
             self.logger.error(msg)
             raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
 
@@ -831,13 +838,13 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 # be faster?
                 curtime = time.time()
                 for addrpair in list(self.session_cache.keys()):
-                     if addresspair[0] == addrpair[0]:
-                         (stamp, _) = self.session_cache[addrpair]
-                         if curtime - stamp > cache_ttl:
-                             del self.session_cache[addrpair]
+                    if addresspair[0] == addrpair[0]:
+                        (stamp, _) = self.session_cache[addrpair]
+                        if curtime - stamp > cache_ttl:
+                            del self.session_cache[addrpair]
             # return the cached data
             try:
-                (stamp, uuid) = self.session_cache[addresspair]
+                stamp = self.session_cache[addresspair][0]
                 if time.time() - stamp < cache_ttl:
                     return self.session_cache[addresspair][1]
             except KeyError:
@@ -846,7 +853,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         address = addresspair[0]
         if address in self.addresses:
             if len(self.addresses[address]) != 1:
-                err = "Address %s has multiple reverse assignments; a uuid must be used" % address
+                err = "Address %s has multiple reverse assignments; a " + \
+                    "uuid must be used" % address
                 self.logger.error(err)
                 raise Bcfg2.Server.Plugin.MetadataConsistencyError(err)
             return self.addresses[address][0]
@@ -1165,8 +1173,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         try:
             groups_tree.xinclude()
         except lxml.etree.XIncludeError:
-            self.logger.error("Failed to process XInclude for file %s: %s" %
-                              (dest, sys.exc_info()[1]))
+            self.logger.error("Failed to process XInclude for groups.xml: %s" %
+                              sys.exc_info()[1])
         groups = groups_tree.getroot()
         categories = {'default': 'grey83'}
         viz_str = []
@@ -1253,7 +1261,7 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
 
     def deprecated_options(self):
         clientdata = self.metadata.clients_xml.xdata
-        for el in groupdata.xpath("//Client"):
+        for el in clientdata.xpath("//Client"):
             loc = el.get("location")
             if loc:
                 if loc == "floating":

@@ -1,3 +1,6 @@
+""" The properties plugin maps property files into client metadata
+instances. """
+
 import os
 import re
 import sys
@@ -89,6 +92,7 @@ class PropertyFile(Bcfg2.Server.Plugin.StructFile):
                     raise PluginExecutionError(msg)
 
     def _decrypt(self, element):
+        """ Decrypt a single encrypted properties file element """
         if not element.text.strip():
             return
         passes = get_passphrases(SETUP)
@@ -108,6 +112,7 @@ class PropertyFile(Bcfg2.Server.Plugin.StructFile):
 
 
 class PropDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):
+    """ A collection of properties files """
     __child__ = PropertyFile
     patterns = re.compile(r'.*\.xml$')
     ignore = re.compile(r'.*\.xsd$')
@@ -115,22 +120,20 @@ class PropDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):
 
 class Properties(Bcfg2.Server.Plugin.Plugin,
                  Bcfg2.Server.Plugin.Connector):
-    """
-       The properties plugin maps property
-       files into client metadata instances.
-    """
+    """ The properties plugin maps property files into client metadata
+    instances. """
     name = 'Properties'
 
     def __init__(self, core, datastore):
-        global SETUP
+        global SETUP  # pylint: disable=W0603
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         try:
             self.store = PropDirectoryBacked(self.data, core.fam)
         except OSError:
-            e = sys.exc_info()[1]
-            self.logger.error("Error while creating Properties store: %s %s" %
-                              (e.strerror, e.filename))
+            err = sys.exc_info()[1]
+            self.logger.error("Error while creating Properties store: %s" %
+                              err)
             raise Bcfg2.Server.Plugin.PluginInitError
 
         SETUP = core.setup

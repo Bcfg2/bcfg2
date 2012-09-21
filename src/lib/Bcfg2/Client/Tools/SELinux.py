@@ -235,7 +235,7 @@ class SELinuxEntryHandler(object):
             return getattr(self, "_%sargs" % method)(entry)
         elif hasattr(self, "_defaultargs"):
             # default args
-            return self._defaultargs(entry)
+            return self._defaultargs(entry)  # pylint: disable=E1101
         else:
             raise NotImplementedError
 

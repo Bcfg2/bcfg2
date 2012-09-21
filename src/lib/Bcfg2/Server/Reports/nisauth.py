@@ -1,8 +1,8 @@
+"""Checks with NIS to see if the current user is in the support group"""
+
 import crypt
 import nis
-from Bcfg2.Server.Reports.settings import AUTHORIZED_GROUP
-
-"""Checks with NIS to see if the current user is in the support group"""
+from Bcfg2.settings import AUTHORIZED_GROUP  # pylint: disable=E0611
 
 
 class NISAUTHError(Exception):

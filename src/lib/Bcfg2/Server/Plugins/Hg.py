@@ -1,45 +1,32 @@
-import os
+""" The Hg plugin provides a revision interface for Bcfg2 repos using
+mercurial. """
+
 from mercurial import ui, hg
 import Bcfg2.Server.Plugin
 
-# for debugging output only
-import logging
-logger = logging.getLogger('Bcfg2.Plugins.Mercurial')
 
 class Hg(Bcfg2.Server.Plugin.Plugin,
-             Bcfg2.Server.Plugin.Version):
-    """Mercurial is a version plugin for dealing with Bcfg2 repository."""
-    name = 'Mercurial'
+         Bcfg2.Server.Plugin.Version):
+    """ The Hg plugin provides a revision interface for Bcfg2 repos
+    using mercurial. """
+
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    experimental = True
+    __vcs_metadata_path__ = ".hg"
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        Bcfg2.Server.Plugin.Version.__init__(self)
-        self.core = core
-        self.datastore = datastore
-
-        # path to hg directory for Bcfg2 repo
-        hg_dir = "%s/.hg" % datastore
-
-        # Read changeset from bcfg2 repo
-        if os.path.isdir(hg_dir):
-            self.get_revision()
-        else:
-            logger.error("%s is not present." % hg_dir)
-            raise Bcfg2.Server.Plugin.PluginInitError
-
-        logger.debug("Initialized hg plugin with hg directory = %s" % hg_dir)
+        Bcfg2.Server.Plugin.Version.__init__(self, datastore)
+        self.logger.debug("Initialized hg plugin with hg directory %s" %
+                          self.vcs_path)
 
     def get_revision(self):
         """Read hg revision information for the Bcfg2 repository."""
         try:
-            repo_path = "%s/" % self.datastore
+            repo_path = self.datastore + "/"
             repo = hg.repository(ui.ui(), repo_path)
             tip = repo.changelog.tip()
-            revision = repo.changelog.rev(tip)
+            return repo.changelog.rev(tip)
         except:
-            logger.error("Failed to read hg repository; disabling mercurial support")
-            raise Bcfg2.Server.Plugin.PluginInitError
-        return revision
-
+            msg = "Failed to read hg repository"
+            self.logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)

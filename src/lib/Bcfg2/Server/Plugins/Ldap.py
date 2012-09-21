@@ -93,7 +93,7 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
             return data
         except Exception:
             if hasattr(query, "name"):
-                Bcfg2.Server.Plugin.logger.error("LdapPlugin error: " +
+                logger.error("LdapPlugin error: " +
                        "Exception during processing of query named '" +
                                                       str(query.name) +
                                      "', query results will be empty" +
@@ -101,7 +101,7 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
             for line in traceback.format_exception(sys.exc_info()[0],
                                                    sys.exc_info()[1],
                                                    sys.exc_info()[2]):
-                Bcfg2.Server.Plugin.logger.error("LdapPlugin error: " +
+                logger.error("LdapPlugin error: " +
                                                  line.replace("\n", ""))
             return {}
 
@@ -130,7 +130,7 @@ class LdapConnection(object):
         result = None
         for attempt in range(RETRY_COUNT + 1):
             if attempt >= 1:
-                Bcfg2.Server.Plugin.logger.error("LdapPlugin error: " +
+                logger.error("LdapPlugin error: " +
                     "LDAP server down (retry " + str(attempt) + "/" +
                     str(RETRY_COUNT) + ")")
             try:
@@ -207,7 +207,7 @@ class LdapQuery(object):
             self.result = self.process_result(metadata)
             return self.result
         else:
-            Bcfg2.Server.Plugin.logger.error("LdapPlugin error: " +
+            logger.error("LdapPlugin error: " +
               "No valid connection defined for query " + str(self))
             return None
 
@@ -240,6 +240,6 @@ class LdapSubQuery(LdapQuery):
             self.result = self.connection.run_query(self)
             return self.process_result(metadata, **kwargs)
         else:
-            Bcfg2.Server.Plugin.logger.error("LdapPlugin error: " +
+            logger.error("LdapPlugin error: " +
               "No valid connection defined for query " + str(self))
             return None

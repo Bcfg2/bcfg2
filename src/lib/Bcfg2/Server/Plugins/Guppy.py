@@ -26,8 +26,8 @@ Remote interactive console. To return to Annex, type '-'.
 
 
 """
-import re
 import Bcfg2.Server.Plugin
+
 
 class Guppy(Bcfg2.Server.Plugin.Plugin):
     """Guppy is a debugging plugin to help trace memory leaks"""
@@ -35,7 +35,7 @@ class Guppy(Bcfg2.Server.Plugin.Plugin):
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     experimental = True
-    __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Enable','Disable']
+    __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Enable', 'Disable']
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -59,4 +59,3 @@ class Guppy(Bcfg2.Server.Plugin.Plugin):
         except:
             self.logger.error("Failed to disable Heapy")
             raise Bcfg2.Server.Plugin.PluginInitError
-

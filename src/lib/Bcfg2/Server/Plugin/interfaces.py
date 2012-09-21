@@ -7,8 +7,9 @@ import threading
 import lxml.etree
 import Bcfg2.Server
 from Bcfg2.Compat import Queue, Empty, Full, cPickle
-from exceptions import *
-from base import Plugin
+from Bcfg2.Server.Plugin.base import Plugin
+from Bcfg2.Server.Plugin.exceptions import PluginInitError, \
+    MetadataRuntimeError, MetadataConsistencyError
 
 
 class Generator(object):
@@ -31,7 +32,7 @@ class Generator(object):
        :func:`HandleEntry`.
     """
 
-    def HandlesEntry(self, entry, metadata):
+    def HandlesEntry(self, entry, metadata):  # pylint: disable=W0613
         """ HandlesEntry is the slow path method for routing
         configuration binding requests.  It is called if the
         ``Entries`` dict does not contain a method for binding the
@@ -46,7 +47,7 @@ class Generator(object):
         """
         return False
 
-    def HandleEntry(self, entry, metadata):
+    def HandleEntry(self, entry, metadata):  # pylint: disable=W0613
         """ HandleEntry is the slow path method for binding
         configuration binding requests.  It is called if the
         ``Entries`` dict does not contain a method for binding the
@@ -104,7 +105,7 @@ class Metadata(object):
         :type colors: list of strings
         :return: string
         """
-        return ''
+        raise NotImplementedError
 
     def set_version(self, client, version):
         """ Set the version for the named client to the specified
@@ -136,6 +137,7 @@ class Metadata(object):
         """
         pass
 
+    # pylint: disable=W0613
     def resolve_client(self, address, cleanup_cache=False):
         """ Resolve the canonical name of this client.  If this method
         is not implemented, the hostname claimed by the client is
@@ -153,6 +155,7 @@ class Metadata(object):
                  :class:`Bcfg2.Server.Plugin.exceptions.MetadataConsistencyError`
         """
         return address[1]
+    # pylint: enable=W0613
 
     def AuthenticateConnection(self, cert, user, password, address):
         """ Authenticate the given client.
@@ -215,7 +218,7 @@ class Connector(object):
     """ Connector plugins augment client metadata instances with
     additional data, additional groups, or both. """
 
-    def get_additional_groups(self, metadata):
+    def get_additional_groups(self, metadata):  # pylint: disable=W0613
         """ Return a list of additional groups for the given client.
 
         :param metadata: The client metadata
@@ -224,7 +227,7 @@ class Connector(object):
         """
         return list()
 
-    def get_additional_data(self, metadata):
+    def get_additional_data(self, metadata):  # pylint: disable=W0613
         """ Return arbitrary additional data for the given
         ClientMetadata object.  By convention this is usually a dict
         object, but doesn't need to be.
@@ -318,10 +321,12 @@ class ThreadedStatistics(Statistics, threading.Thread):
             while not self.work_queue.empty():
                 (metadata, data) = self.work_queue.get_nowait()
                 try:
-                    pending_data.append((metadata.hostname,
-                                         lxml.etree.tostring(data,
-                                                             xml_declaration=False).decode("UTF-8")))
-                except:
+                    pending_data.append(
+                        (metadata.hostname,
+                         lxml.etree.tostring(
+                                data,
+                                xml_declaration=False).decode("UTF-8")))
+                except Full:
                     err = sys.exc_info()[1]
                     self.logger.warning("Dropping interaction for %s: %s" %
                                         (metadata.hostname, err))
@@ -333,7 +338,7 @@ class ThreadedStatistics(Statistics, threading.Thread):
             cPickle.dump(pending_data, savefile)
             savefile.close()
             self.logger.info("Saved pending %s data" % self.name)
-        except:
+        except (IOError, TypeError):
             err = sys.exc_info()[1]
             self.logger.warning("Failed to save pending data: %s" % err)
 
@@ -346,9 +351,9 @@ class ThreadedStatistics(Statistics, threading.Thread):
             savefile = open(self.pending_file, 'r')
             pending_data = cPickle.load(savefile)
             savefile.close()
-        except Exception:
-            e = sys.exc_info()[1]
-            self.logger.warning("Failed to load pending data: %s" % e)
+        except (IOError, cPickle.UnpicklingError):
+            err = sys.exc_info()[1]
+            self.logger.warning("Failed to load pending data: %s" % err)
             return False
         for (pmetadata, pdata) in pending_data:
             # check that shutdown wasnt called early
@@ -367,9 +372,9 @@ class ThreadedStatistics(Statistics, threading.Thread):
                     if self.terminate.isSet():
                         return False
 
-                self.work_queue.put_nowait((metadata,
-                                            lxml.etree.XML(pdata,
-                                                           parser=Bcfg2.Server.XMLParser)))
+                self.work_queue.put_nowait(
+                    (metadata,
+                     lxml.etree.XML(pdata, parser=Bcfg2.Server.XMLParser)))
             except Full:
                 self.logger.warning("Queue.Full: Failed to load queue data")
                 break
@@ -382,7 +387,7 @@ class ThreadedStatistics(Statistics, threading.Thread):
                                   "interaction: %s" % pmetadata)
         try:
             os.unlink(self.pending_file)
-        except:
+        except OSError:
             self.logger.error("Failed to unlink save file: %s" %
                               self.pending_file)
         self.logger.info("Loaded pending %s data" % self.name)
@@ -397,8 +402,8 @@ class ThreadedStatistics(Statistics, threading.Thread):
             except Empty:
                 continue
             except Exception:
-                e = sys.exc_info()[1]
-                self.logger.error("ThreadedStatistics: %s" % e)
+                err = sys.exc_info()[1]
+                self.logger.error("ThreadedStatistics: %s" % err)
                 continue
             self.handle_statistic(client, xdata)
         if self.work_queue != None and not self.work_queue.empty():
@@ -427,8 +432,11 @@ class ThreadedStatistics(Statistics, threading.Thread):
         raise NotImplementedError
 
 
+# pylint: disable=C0111
+# Someone who understands these interfaces better needs to write docs
+# for PullSource and PullTarget
 class PullSource(object):
-    def GetExtra(self, client):
+    def GetExtra(self, client):  # pylint: disable=W0613
         return []
 
     def GetCurrentEntry(self, client, e_type, e_name):
@@ -441,6 +449,7 @@ class PullTarget(object):
 
     def AcceptPullData(self, specific, new_entry, verbose):
         raise NotImplementedError
+# pylint: enable=C0111
 
 
 class Decision(object):
@@ -504,6 +513,32 @@ class GoalValidator(object):
 
 class Version(object):
     """ Version plugins interact with various version control systems. """
+
+    #: The path to the VCS metadata file or directory, relative to the
+    #: base of the Bcfg2 repository.  E.g., for Subversion this would
+    #: be ".svn"
+    __vcs_metadata_path__ = None
+
+    def __init__(self, datastore):
+        """
+        :param datastore: The path to the Bcfg2 repository on the
+                          filesystem
+        :type datastore: string
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginInitError`
+
+        .. autoattribute:: __vcs_metadata_path__
+        """
+
+        self.datastore = datastore
+        if self.__vcs_metadata_path__:
+            self.vcs_path = os.path.join(datastore, self.__vcs_metadata_path__)
+
+            if os.path.exists(self.vcs_path):
+                self.get_revision()
+            else:
+                raise PluginInitError("%s is not present" % self.vcs_path)
+        else:
+            self.vcs_path = None
 
     def get_revision(self):
         """ Return the current revision of the Bcfg2 specification.

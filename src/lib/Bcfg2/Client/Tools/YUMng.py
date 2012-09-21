@@ -185,12 +185,14 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         else:
             debuglevel = 0
 
+        # pylint: disable=E1121
         try:
             self.yb.preconf.debuglevel = debuglevel
             self.yb._getConfig()
         except AttributeError:
             self.yb._getConfig(self.yb.conf.config_file_path,
                                debuglevel=debuglevel)
+        # pylint: enable=E1121
 
         try:
             self.yb.doConfigSetup()
@@ -711,7 +713,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
         if result != 0:
             self.logger.debug("Unable to install %s-%s" % \
                         (self.instance_status[inst].get('pkg').get('name'),
-                         self.str_evra(inst)))
+                         nevraString(inst)))
             return False
         else:
             self.logger.debug("Installed %s-%s-%s" % \
@@ -817,7 +819,7 @@ class YUMng(Bcfg2.Client.Tools.PkgTool):
                 for pkg in self.extra_instances:
                     for inst in pkg:
                         self.logger.info("    %s %s" % \
-                                         ((pkg.get('name'), self.str_evra(inst))))
+                                         ((pkg.get('name'), nevraString(inst))))
 
         # Figure out which instances of the packages actually need something
         # doing to them and place in the appropriate work 'queue'.

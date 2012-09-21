@@ -1,35 +1,23 @@
-import os
+""" The Svn plugin provides a revision interface for Bcfg2 repos using
+svn. """
+
 import pipes
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 
-# for debugging output only
-import logging
-logger = logging.getLogger('Bcfg2.Plugins.Svn')
-
 
 class Svn(Bcfg2.Server.Plugin.Plugin,
           Bcfg2.Server.Plugin.Version):
-    """Svn is a version plugin for dealing with Bcfg2 repos."""
-    name = 'Svn'
+    """ The Svn plugin provides a revision interface for Bcfg2 repos
+    using svn. """
     __author__ = 'bcfg-dev@mcs.anl.gov'
+    __vcs_metadata_path__ = ".svn"
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        self.core = core
-        self.datastore = datastore
-
-        # path to svn directory for bcfg2 repo
-        svn_dir = "%s/.svn" % datastore
-
-        # Read revision from bcfg2 repo
-        if os.path.isdir(svn_dir):
-            self.get_revision()
-        else:
-            logger.error("%s is not a directory" % svn_dir)
-            raise Bcfg2.Server.Plugin.PluginInitError
-
-        logger.debug("Initialized svn plugin with svn directory = %s" % svn_dir)
+        Bcfg2.Server.Plugin.Version.__init__(self, datastore)
+        self.logger.debug("Initialized svn plugin with svn directory %s" %
+                          self.vcs_path)
 
     def get_revision(self):
         """Read svn revision information for the Bcfg2 repository."""
@@ -40,7 +28,7 @@ class Svn(Bcfg2.Server.Plugin.Plugin,
             return [line.split(': ')[1] for line in data \
                     if line[:9] == 'Revision:'][-1]
         except IndexError:
-            logger.error("Failed to read svn info; disabling svn support")
-            logger.error('''Ran command "svn info %s"''' % (self.datastore))
-            logger.error("Got output: %s" % data)
-            raise Bcfg2.Server.Plugin.PluginInitError
+            msg = "Failed to read svn info"
+            self.logger.error(msg)
+            self.logger.error('Ran command "svn info %s"' % self.datastore)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)

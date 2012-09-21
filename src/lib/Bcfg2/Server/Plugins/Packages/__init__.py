@@ -1,3 +1,7 @@
+""" Packages resolves Package entries on the Bcfg2 server in order to
+present a complete list of Package entries to the client in order to
+determine the completeness of the client configuration. """
+
 import os
 import sys
 import glob
@@ -68,6 +72,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             self.logger.warning("You can disable magic groups by setting "
                                 "magic_groups=0 in [packages] in bcfg2.conf")
 
+        # pylint: disable=C0301
         #: The
         #: :class:`Bcfg2.Server.Plugins.Packages.PackagesSources.PackagesSources`
         #: object used to generate
@@ -98,12 +103,13 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self.collections = dict()
 
         #: clients is a cache mapping of hostname ->
-        #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`.
+        #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`
         #: Unlike :attr:`collections`, this _is_ used to return a
         #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
         #: object when one is requested, so each entry is very
         #: short-lived -- it's purged at the end of each client run.
         self.clients = dict()
+        # pylint: enable=C0301
 
     __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
 

@@ -2,6 +2,8 @@
 
 # library will use lxml, then builtin xml.etree, then ElementTree
 
+# pylint: disable=F0401,E0611
+
 try:
     from lxml.etree import Element, SubElement, XML, tostring
     from lxml.etree import XMLSyntaxError as ParseError
@@ -19,7 +21,8 @@ except ImportError:
         driver = 'etree-py'
     except ImportError:
         try:
-            from elementtree.ElementTree import Element, SubElement, XML, tostring
+            from elementtree.ElementTree import Element, SubElement, XML, \
+                tostring
             driver = 'etree'
             import elementtree.ElementTree
             Element = elementtree.ElementTree.Element
@@ -32,5 +35,3 @@ except ImportError:
             print("Failed to load lxml, xml.etree and elementtree.ElementTree")
             print("Cannot continue")
             raise SystemExit(1)
-
-len([Element, SubElement, XML, tostring, ParseError])

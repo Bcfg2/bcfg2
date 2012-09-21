@@ -376,3 +376,6 @@ class SvcTool(Tool):
             except:
                 self.logger.error("Unexpected failure of install method for entry type %s"
                                   % (entry.tag), exc_info=1)
+
+    def InstallService(self, entry):
+        raise NotImplementedError

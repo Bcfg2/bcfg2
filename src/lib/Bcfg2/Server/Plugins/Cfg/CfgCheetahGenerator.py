@@ -2,18 +2,17 @@
 <http://www.cheetahtemplate.org/>`_ templating system to generate
 :ref:`server-plugins-generators-cfg` files. """
 
-import copy
 import logging
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 try:
     from Cheetah.Template import Template
-    have_cheetah = True
+    HAS_CHEETAH = True
 except ImportError:
-    have_cheetah = False
+    HAS_CHEETAH = False
 
 
 class CfgCheetahGenerator(CfgGenerator):
@@ -29,9 +28,9 @@ class CfgCheetahGenerator(CfgGenerator):
 
     def __init__(self, fname, spec, encoding):
         CfgGenerator.__init__(self, fname, spec, encoding)
-        if not have_cheetah:
-            msg = "Cfg: Cheetah is not available: %s" % entry.get("name")
-            logger.error(msg)
+        if not HAS_CHEETAH:
+            msg = "Cfg: Cheetah is not available: %s" % self.name
+            LOGGER.error(msg)
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
     __init__.__doc__ = CfgGenerator.__init__.__doc__
 

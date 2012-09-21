@@ -1,3 +1,5 @@
+""" A plugin to gather information from a client machine """
+
 import re
 import os
 import sys
@@ -7,29 +9,15 @@ import operator
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import any, json
+from Bcfg2.Compat import json
 
+# pylint: disable=F0401
 try:
     from django.db import models
-    has_django = True
-except ImportError:
-    has_django = False
 
-try:
-    import syck as yaml
-    has_yaml = True
-    yaml_error = yaml.error
-except ImportError:
-    try:
-        import yaml
-        yaml_error = yaml.YAMLError
-        has_yaml = True
-    except ImportError:
-        has_yaml = False
-
-if has_django:
     class ProbesDataModel(models.Model,
                           Bcfg2.Server.Plugin.PluginDatabaseModel):
+        """ The database model for storing probe data """
         hostname = models.CharField(max_length=255)
         probe = models.CharField(max_length=255)
         timestamp = models.DateTimeField(auto_now=True)
@@ -37,8 +25,24 @@ if has_django:
 
     class ProbesGroupsModel(models.Model,
                             Bcfg2.Server.Plugin.PluginDatabaseModel):
+        """ The database model for storing probe groups """
         hostname = models.CharField(max_length=255)
         group = models.CharField(max_length=255)
+except ImportError:
+    pass
+
+try:
+    import syck as yaml
+    import syck.error as YAMLError
+    HAS_YAML = True
+except ImportError:
+    try:
+        import yaml
+        from yaml import YAMLError
+        HAS_YAML = True
+    except ImportError:
+        HAS_YAML = False
+# pylint: enable=F0401
 
 
 class ClientProbeDataSet(dict):
@@ -58,8 +62,8 @@ class ProbeData(str):
     ProbeData objects as XML, JSON, or YAML data """
     def __new__(cls, data):
         return str.__new__(cls, data)
-    
-    def __init__(self, data):
+
+    def __init__(self):
         str.__init__(self)
         self._xdata = None
         self._json = None
@@ -70,9 +74,10 @@ class ProbeData(str):
         """ provide backwards compatibility with broken ProbeData
         object in bcfg2 1.2.0 thru 1.2.2 """
         return str(self)
-        
+
     @property
     def xdata(self):
+        """ The probe data as a lxml.etree._Element document """
         if self._xdata is None:
             try:
                 self._xdata = lxml.etree.XML(self.data,
@@ -83,6 +88,7 @@ class ProbeData(str):
 
     @property
     def json(self):
+        """ The probe data as a decoded JSON data structure """
         if self._json is None:
             try:
                 self._json = json.loads(self.data)
@@ -92,17 +98,20 @@ class ProbeData(str):
 
     @property
     def yaml(self):
-        if self._yaml is None and has_yaml:
+        """ The probe data as a decoded YAML data structure """
+        if self._yaml is None and HAS_YAML:
             try:
                 self._yaml = yaml.load(self.data)
-            except yaml_error:
+            except YAMLError:
                 pass
         return self._yaml
 
 
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
+    """ Handle universal and group- and host-specific probe files """
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|probed\\.xml)$")
-    probename = re.compile("(.*/)?(?P<basename>\S+?)(\.(?P<mode>(?:G\d\d)|H)_\S+)?$")
+    probename = \
+        re.compile("(.*/)?(?P<basename>\S+?)(\.(?P<mode>(?:G\d\d)|H)_\S+)?$")
     bangline = re.compile('^#!\s*(?P<interpreter>.*)$')
     basename_is_regex = True
 
@@ -113,12 +122,15 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
                                               encoding)
         fam.AddMonitor(path, self)
 
-    def HandleEvent(self, event):
-        if (event.filename != self.path and
-            not event.filename.endswith("probed.xml")):
-            return self.handle_event(event)
-
     def get_probe_data(self, metadata):
+        """ Get an XML description of all probes for a client suitable
+        for sending to that client.
+
+        :params metadata: The client metadata to get probes for.
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: list of lxml.etree._Element objects, each of which
+                  represents one probe.
+        """
         ret = []
         build = dict()
         candidates = self.get_matching(metadata)
@@ -146,8 +158,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
 class Probes(Bcfg2.Server.Plugin.Probing,
              Bcfg2.Server.Plugin.Connector,
              Bcfg2.Server.Plugin.DatabaseBacked):
-    """A plugin to gather information from a client machine."""
-    name = 'Probes'
+    """ A plugin to gather information from a client machine """
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
@@ -165,33 +176,37 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         self.probedata = dict()
         self.cgroups = dict()
         self.load_data()
+    __init__.__doc__ = Bcfg2.Server.Plugin.DatabaseBacked.__init__.__doc__
 
     def write_data(self, client):
-        """Write probe data out for use with bcfg2-info."""
+        """ Write probe data out for use with bcfg2-info """
         if self._use_db:
             return self._write_data_db(client)
         else:
             return self._write_data_xml(client)
 
     def _write_data_xml(self, _):
+        """ Write received probe data to probed.xml """
         top = lxml.etree.Element("Probed")
         for client, probed in sorted(self.probedata.items()):
-            cx = lxml.etree.SubElement(top, 'Client', name=client,
-                                       timestamp=str(int(probed.timestamp)))
+            ctag = lxml.etree.SubElement(top, 'Client', name=client,
+                                         timestamp=str(int(probed.timestamp)))
             for probe in sorted(probed):
-                lxml.etree.SubElement(cx, 'Probe', name=probe,
+                lxml.etree.SubElement(ctag, 'Probe', name=probe,
                                       value=str(self.probedata[client][probe]))
             for group in sorted(self.cgroups[client]):
-                lxml.etree.SubElement(cx, "Group", name=group)
+                lxml.etree.SubElement(ctag, "Group", name=group)
         try:
             datafile = open(os.path.join(self.data, 'probed.xml'), 'w')
-            datafile.write(lxml.etree.tostring(top, xml_declaration=False,
-                                               pretty_print='true').decode('UTF-8'))
+            datafile.write(lxml.etree.tostring(
+                    top, xml_declaration=False,
+                    pretty_print='true').decode('UTF-8'))
         except IOError:
             err = sys.exc_info()[1]
             self.logger.error("Failed to write probed.xml: %s" % err)
 
     def _write_data_db(self, client):
+        """ Write received probe data to the database """
         for probe, data in self.probedata[client.hostname].items():
             pdata = \
                 ProbesDataModel.objects.get_or_create(hostname=client.hostname,
@@ -199,7 +214,9 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             if pdata.data != data:
                 pdata.data = data
                 pdata.save()
-        ProbesDataModel.objects.filter(hostname=client.hostname).exclude(probe__in=self.probedata[client.hostname]).delete()
+        ProbesDataModel.objects.filter(
+            hostname=client.hostname).exclude(
+            probe__in=self.probedata[client.hostname]).delete()
 
         for group in self.cgroups[client.hostname]:
             try:
@@ -209,19 +226,24 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 grp = ProbesGroupsModel(hostname=client.hostname,
                                         group=group)
                 grp.save()
-        ProbesGroupsModel.objects.filter(hostname=client.hostname).exclude(group__in=self.cgroups[client.hostname]).delete()
+        ProbesGroupsModel.objects.filter(
+            hostname=client.hostname).exclude(
+            group__in=self.cgroups[client.hostname]).delete()
 
     def load_data(self):
+        """ Load probe data from the appropriate backend (probed.xml
+        or the database) """
         if self._use_db:
             return self._load_data_db()
         else:
             return self._load_data_xml()
-            
+
     def _load_data_xml(self):
+        """ Load probe data from probed.xml """
         try:
             data = lxml.etree.parse(os.path.join(self.data, 'probed.xml'),
                                     parser=Bcfg2.Server.XMLParser).getroot()
-        except:
+        except (IOError, lxml.etree.XMLSyntaxError):
             err = sys.exc_info()[1]
             self.logger.error("Failed to read file probed.xml: %s" % err)
             return
@@ -239,21 +261,22 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                     self.cgroups[client.get('name')].append(pdata.get('name'))
 
     def _load_data_db(self):
+        """ Load probe data from the database """
         self.probedata = {}
         self.cgroups = {}
         for pdata in ProbesDataModel.objects.all():
             if pdata.hostname not in self.probedata:
-                self.probedata[pdata.hostname] = \
-                    ClientProbeDataSet(timestamp=time.mktime(pdata.timestamp.timetuple()))
+                self.probedata[pdata.hostname] = ClientProbeDataSet(
+                    timestamp=time.mktime(pdata.timestamp.timetuple()))
             self.probedata[pdata.hostname][pdata.probe] = ProbeData(pdata.data)
         for pgroup in ProbesGroupsModel.objects.all():
             if pgroup.hostname not in self.cgroups:
                 self.cgroups[pgroup.hostname] = []
             self.cgroups[pgroup.hostname].append(pgroup.group)
 
-    def GetProbes(self, meta, force=False):
-        """Return a set of probes for execution on client."""
+    def GetProbes(self, meta):
         return self.probes.get_probe_data(meta)
+    GetProbes.__doc__ = Bcfg2.Server.Plugin.Probing.GetProbes.__doc__
 
     def ReceiveData(self, client, datalist):
         if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
@@ -271,6 +294,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             olddata != self.cgroups[client.hostname]):
             self.core.metadata_cache.expire(client.hostname)
         self.write_data(client)
+    ReceiveData.__doc__ = Bcfg2.Server.Plugin.Probing.ReceiveData.__doc__
 
     def ReceiveDataItem(self, client, data):
         """Receive probe results pertaining to client."""
@@ -299,6 +323,10 @@ class Probes(Bcfg2.Server.Plugin.Probing,
 
     def get_additional_groups(self, meta):
         return self.cgroups.get(meta.hostname, list())
+    get_additional_groups.__doc__ = \
+        Bcfg2.Server.Plugin.Connector.get_additional_groups.__doc__
 
     def get_additional_data(self, meta):
         return self.probedata.get(meta.hostname, ClientProbeDataSet())
+    get_additional_data.__doc__ = \
+        Bcfg2.Server.Plugin.Connector.get_additional_data.__doc__

@@ -1,3 +1,6 @@
+""" PackagesSources handles the
+:ref:`server-plugins-generators-packages` ``sources.xml`` file"""
+
 import os
 import sys
 import Bcfg2.Server.Plugin

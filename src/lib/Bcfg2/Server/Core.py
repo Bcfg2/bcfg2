@@ -16,13 +16,13 @@ import Bcfg2.Logger
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Cache import Cache
 from Bcfg2.Statistics import Statistics
-from Bcfg2.Compat import xmlrpclib, reduce
+from Bcfg2.Compat import xmlrpclib, reduce  # pylint: disable=W0622
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 
 try:
-    import psyco
+    import psyco  # pylint: disable=F0401
     psyco.full()
-except:
+except ImportError:
     pass
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
@@ -502,10 +502,6 @@ class BaseCore(object):
         """ enter the infinite loop.  this method should not return
         until the server is killed """
         raise NotImplementedError
-
-    def critical_error(self, operation):
-        """ this should be overridden by child classes """
-        self.logger.fatal(operation, exc_info=1)
 
     def GetDecisions(self, metadata, mode):
         """Get data for the decision list."""

@@ -80,7 +80,7 @@ class Action(Bcfg2.Client.Tools.Tool):
         return True
 
     def InstallPostInstall(self, entry):
-        return self.InstallAction(self, entry)
+        return self.InstallAction(entry)
 
     def BundleUpdated(self, bundle, states):
         """Run postinstalls when bundles have been updated."""

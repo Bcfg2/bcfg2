@@ -102,9 +102,8 @@ class Plugin(Debuggable):
         :type datastore: string
         :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginInitError`
 
-        .. autoattribute:: __rmi__
+        .. autoattribute:: Bcfg2.Server.Plugin.base.Debuggable.__rmi__
         """
-        object.__init__(self)
         self.Entries = {}
         self.core = core
         self.data = os.path.join(datastore, self.name)

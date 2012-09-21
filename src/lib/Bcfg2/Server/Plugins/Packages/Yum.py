@@ -59,15 +59,17 @@ import logging
 import lxml.etree
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
+# pylint: disable=W0622
 from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
     ConfigParser, json, any
+# pylint: enable=W0622
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
      fetch_url
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
-# pylint: disable=E0611
+# pylint: disable=E0611,F0401
 try:
     from pulp.client.consumer.config import ConsumerConfig
     from pulp.client.api.repository import RepositoryAPI
@@ -82,9 +84,9 @@ try:
     HAS_YUM = True
 except ImportError:
     HAS_YUM = False
-    logger.info("Packages: No yum libraries found; forcing use of internal "
+    LOGGER.info("Packages: No yum libraries found; forcing use of internal "
                 "dependency resolver")
-# pylint: enable=E0611
+# pylint: enable=E0611,F0401
 
 XP = '{http://linux.duke.edu/metadata/common}'
 RP = '{http://linux.duke.edu/metadata/rpm}'
@@ -108,7 +110,7 @@ def _setup_pulp(setup):
     if not HAS_PULP:
         msg = "Packages: Cannot create Pulp collection: Pulp libraries " + \
             "not found"
-        logger.error(msg)
+        LOGGER.error(msg)
         raise Bcfg2.Server.Plugin.PluginInitError(msg)
 
     if PULPSERVER is None:
@@ -117,12 +119,12 @@ def _setup_pulp(setup):
             password = setup.cfp.get("packages:pulp", "password")
         except ConfigParser.NoSectionError:
             msg = "Packages: No [pulp] section found in bcfg2.conf"
-            logger.error(msg)
+            LOGGER.error(msg)
             raise Bcfg2.Server.Plugin.PluginInitError(msg)
         except ConfigParser.NoOptionError:
             msg = "Packages: Required option not found in bcfg2.conf: %s" % \
                 sys.exc_info()[1]
-            logger.error(msg)
+            LOGGER.error(msg)
             raise Bcfg2.Server.Plugin.PluginInitError(msg)
 
         PULPCONFIG = ConsumerConfig()
@@ -265,7 +267,7 @@ class YumCollection(Collection):
 
             yumconf.write(open(self.cfgfile, 'w'))
 
-    def get_config(self, raw=False):
+    def get_config(self, raw=False):  # pylint: disable=W0221
         """ Get the yum configuration for this collection.
 
         :param raw: Return a :class:`ConfigParser.SafeConfigParser`
@@ -528,7 +530,7 @@ class YumCollection(Collection):
                 ptype = "default"
             gdicts.append(dict(group=group, type=ptype))
 
-        return self.call_helper("get_groups", gdicts)
+        return self.call_helper("get_groups", inputdata=gdicts)
 
     def packages_from_entry(self, entry):
         """ When using the Python yum libraries, convert a Package
@@ -543,6 +545,7 @@ class YumCollection(Collection):
         name = entry.get("name")
 
         def _tag_to_pkg(tag):
+            """ Convert a Package or Instance tag to a package tuple """
             rv = (name, tag.get("arch"), tag.get("epoch"),
                   tag.get("version"), tag.get("release"))
             if rv[3] in ['any', 'auto']:
@@ -584,6 +587,9 @@ class YumCollection(Collection):
         :returns: None
         """
         def _get_entry_attrs(pkgtup):
+            """ Given a package tuple, return a dict of attributes
+            suitable for applying to either a Package or an Instance
+            tag """
             attrs = dict(version=self.setup.cfp.get("packages",
                                                     "version",
                                                     default="auto"))
@@ -685,7 +691,7 @@ class YumCollection(Collection):
         else:
             return set(), set()
 
-    def call_helper(self, command, input=None):
+    def call_helper(self, command, inputdata=None):
         """ Make a call to :ref:`bcfg2-yum-helper`.  The yum libs have
         horrific memory leaks, so apparently the right way to get
         around that in long-running processes it to have a short-lived
@@ -694,10 +700,10 @@ class YumCollection(Collection):
 
         :param command: The :ref:`bcfg2-yum-helper` command to call.
         :type command: string
-        :param input: The input to pass to ``bcfg2-yum-helper`` on
-                      stdin.  If this is None, no input will be given
-                      at all.
-        :type input: Any JSON-encodable data structure.
+        :param inputdata: The input to pass to ``bcfg2-yum-helper`` on
+                          stdin.  If this is None, no input will be
+                          given at all.
+        :type inputdata: Any JSON-encodable data structure.
         :returns: Varies depending on the return value of the
                   ``bcfg2-yum-helper`` command.
         """
@@ -715,8 +721,8 @@ class YumCollection(Collection):
                               (" ".join(cmd), err))
             return None
 
-        if input:
-            idata = json.dumps(input)
+        if inputdata:
+            idata = json.dumps(inputdata)
             (stdout, stderr) = helper.communicate(idata)
         else:
             (stdout, stderr) = helper.communicate()
@@ -938,7 +944,7 @@ class YumSource(Source):
         try:
             self.packages['global'] = copy.deepcopy(sdata.pop())
         except IndexError:
-            logger.error("Packages: No packages in repo")
+            self.logger.error("Packages: No packages in repo")
         while sdata:
             self.packages['global'] = \
                 self.packages['global'].intersection(sdata.pop())
@@ -951,6 +957,7 @@ class YumSource(Source):
         self.save_state()
 
     def parse_filelist(self, data, arch):
+        """ parse filelists.xml.gz data """
         if arch not in self.filemap:
             self.filemap[arch] = dict()
         for pkg in data.findall(FL + 'package'):
@@ -963,6 +970,7 @@ class YumSource(Source):
                             set([pkg.get('name')])
 
     def parse_primary(self, data, arch):
+        """ parse primary.xml.gz data """
         if arch not in self.packages:
             self.packages[arch] = set()
         if arch not in self.deps:

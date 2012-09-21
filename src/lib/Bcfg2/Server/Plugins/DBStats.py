@@ -1,6 +1,6 @@
+""" DBstats provides a database-backed statistics handler """
+
 import difflib
-import logging
-import lxml.etree
 import platform
 import sys
 import time
@@ -15,13 +15,10 @@ from Bcfg2.Server.Reports.importscript import load_stat
 from Bcfg2.Server.Reports.reports.models import Client
 from Bcfg2.Compat import b64decode
 
-# for debugging output only
-logger = logging.getLogger('Bcfg2.Plugins.DBStats')
-
 
 class DBStats(Bcfg2.Server.Plugin.ThreadedStatistics,
               Bcfg2.Server.Plugin.PullSource):
-    name = 'DBStats'
+    """ DBstats provides a database-backed statistics handler """
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.ThreadedStatistics.__init__(self, core, datastore)
@@ -36,29 +33,29 @@ class DBStats(Bcfg2.Server.Plugin.ThreadedStatistics,
         newstats.set('time', time.asctime(time.localtime()))
 
         start = time.time()
-        for i in [1, 2, 3]:
+        for try_count in [1, 2, 3]:
             try:
                 load_stat(metadata,
                           newstats,
                           self.core.encoding,
                           0,
-                          logger,
+                          self.logger,
                           True,
                           platform.node())
-                logger.info("Imported data for %s in %s seconds" \
-                            % (metadata.hostname, time.time() - start))
+                self.logger.info("Imported data for %s in %s seconds" %
+                                 (metadata.hostname, time.time() - start))
                 return
             except MultipleObjectsReturned:
-                e = sys.exc_info()[1]
-                logger.error("DBStats: MultipleObjectsReturned while "
-                             "handling %s: %s" % (metadata.hostname, e))
-                logger.error("DBStats: Data is inconsistent")
+                err = sys.exc_info()[1]
+                self.logger.error("DBStats: MultipleObjectsReturned while "
+                                  "handling %s: %s" % (metadata.hostname, err))
+                self.logger.error("DBStats: Data is inconsistent")
                 break
             except:
-                logger.error("DBStats: Failed to write to db (lock); retrying",
-                             exc_info=1)
-        logger.error("DBStats: Retry limit failed for %s; aborting operation" \
-                    % metadata.hostname)
+                self.logger.error("DBStats: Failed to write to db (lock); "
+                                  "retrying (try %s)" % try_count, exc_info=1)
+        self.logger.error("DBStats: Retry limit failed for %s; "
+                          "aborting operation" % metadata.hostname)
 
     def GetExtra(self, client):
         c_inst = Client.objects.filter(name=client)[0]
@@ -78,11 +75,11 @@ class DBStats(Bcfg2.Server.Plugin.ThreadedStatistics,
         entry = result[0]
         ret = []
         data = ('owner', 'group', 'perms')
-        for t in data:
-            if getattr(entry.reason, "current_%s" % t) == '':
-                ret.append(getattr(entry.reason, t))
+        for dtype in data:
+            if getattr(entry.reason, "current_%s" % dtype) == '':
+                ret.append(getattr(entry.reason, dtype))
             else:
-                ret.append(getattr(entry.reason, "current_%s" % t))
+                ret.append(getattr(entry.reason, "current_%s" % dtype))
         if entry.reason.is_sensitive:
             raise Bcfg2.Server.Plugin.PluginExecutionError
         elif len(entry.reason.unpruned) != 0:

@@ -1,47 +1,51 @@
+""" A plugin to provide helper classes and functions to templates """
+
+import os
 import re
 import imp
 import sys
-import glob
 import logging
 import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
-module_pattern = r'(?P<filename>(?P<module>[^\/]+)\.py)$'
-module_re = re.compile(module_pattern)
+MODULE_RE = re.compile(r'(?P<filename>(?P<module>[^\/]+)\.py)$')
+
 
 class HelperModule(Bcfg2.Server.Plugin.FileBacked):
+    """ Representation of a TemplateHelper module """
+
     def __init__(self, name, fam=None):
         Bcfg2.Server.Plugin.FileBacked.__init__(self, name, fam=fam)
-        self._module_name = module_re.search(self.name).group('module')
+        self._module_name = MODULE_RE.search(self.name).group('module')
         self._attrs = []
 
     def Index(self):
         try:
             module = imp.load_source(self._module_name, self.name)
-        except:
+        except:  # pylint: disable=W0702
             err = sys.exc_info()[1]
-            logger.error("TemplateHelper: Failed to import %s: %s" %
+            LOGGER.error("TemplateHelper: Failed to import %s: %s" %
                          (self.name, err))
             return
 
         if not hasattr(module, "__export__"):
-            logger.error("TemplateHelper: %s has no __export__ list" %
+            LOGGER.error("TemplateHelper: %s has no __export__ list" %
                          self.name)
             return
 
         newattrs = []
         for sym in module.__export__:
             if sym not in self._attrs and hasattr(self, sym):
-                logger.warning("TemplateHelper: %s: %s is a reserved keyword, "
+                LOGGER.warning("TemplateHelper: %s: %s is a reserved keyword, "
                                "skipping export" % (self.name, sym))
                 continue
             try:
                 setattr(self, sym, getattr(module, sym))
                 newattrs.append(sym)
             except AttributeError:
-                logger.warning("TemplateHelper: %s: %s exports %s, but has no "
+                LOGGER.warning("TemplateHelper: %s exports %s, but has no "
                                "such attribute" % (self.name, sym))
         # remove old exports
         for sym in set(self._attrs) - set(newattrs):
@@ -51,8 +55,9 @@ class HelperModule(Bcfg2.Server.Plugin.FileBacked):
 
 
 class HelperSet(Bcfg2.Server.Plugin.DirectoryBacked):
+    """ A set of template helper modules """
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\.py[co])$")
-    patterns = module_re
+    patterns = MODULE_RE
     __child__ = HelperModule
 
 
@@ -68,7 +73,7 @@ class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
         self.helpers = HelperSet(self.data, core.fam)
 
     def get_additional_data(self, _):
-        return dict([(h._module_name, h)
+        return dict([(h._module_name, h)  # pylint: disable=W0212
                      for h in self.helpers.entries.values()])
 
 
@@ -76,24 +81,24 @@ class TemplateHelperLint(Bcfg2.Server.Lint.ServerlessPlugin):
     """ find duplicate Pkgmgr entries with the same priority """
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerlessPlugin.__init__(self, *args, **kwargs)
-        hm = HelperModule("foo.py")
-        self.reserved_keywords = dir(hm)
+        self.reserved_keywords = dir(HelperModule("foo.py"))
 
     def Run(self):
         for fname in os.listdir(os.path.join(self.config['repo'],
                                              "TemplateHelper")):
             helper = os.path.join(self.config['repo'], "TemplateHelper",
                                   fname)
-            if not module_re.search(helper) or not self.HandlesFile(helper):
+            if not MODULE_RE.search(helper) or not self.HandlesFile(helper):
                 continue
             self.check_helper(helper)
 
     def check_helper(self, helper):
-        module_name = module_re.search(helper).group(1)
+        """ check a helper module for export errors """
+        module_name = MODULE_RE.search(helper).group(1)
 
         try:
             module = imp.load_source(module_name, helper)
-        except:
+        except:  # pylint: disable=W0702
             err = sys.exc_info()[1]
             self.LintError("templatehelper-import-error",
                            "Failed to import %s: %s" %
@@ -120,8 +125,8 @@ class TemplateHelperLint(Bcfg2.Server.Lint.ServerlessPlugin):
                                (helper, sym))
             elif sym.startswith("_"):
                 self.LintError("templatehelper-underscore-export",
-                               "%s: exported symbol %s starts with underscore" %
-                               (helper, sym))
+                               "%s: exported symbol %s starts with underscore"
+                               % (helper, sym))
 
     @classmethod
     def Errors(cls):

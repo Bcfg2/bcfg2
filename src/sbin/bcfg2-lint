@@ -122,11 +122,11 @@ if __name__ == '__main__':
                                 obj_name=plugin + "Lint")
             except (ImportError, AttributeError):
                  err = sys.exc_info()[1]
-                 logger.error("Failed to load plugin %s: %s" % (plugin + "Lint",
-                                                                err))
+                 logger.error("Failed to load plugin %s: %s" %
+                              (plugin + "Lint", err))
         except AttributeError:
             err = sys.exc_info()[1]
-            logger.error("Failed to load plugin %s: %s" % (obj_name, err))
+            logger.error("Failed to load plugin %s: %s" % (plugin, err))
             
     serverplugins = dict()
     serverlessplugins = dict()

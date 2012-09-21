@@ -524,7 +524,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             except (OSError, KeyError):
                 err = sys.exc_info()[1]
                 self.logger.error("POSIX: Lookup of %s %s failed: %s" %
-                                  (scope, acl.qualifier, err))
+                                  (atype, acl.qualifier, err))
                 qual = acl.qualifier
             existing[(atype, acl.tag_type, qual)] = \
                 self._norm_acl_perms(acl.permset)

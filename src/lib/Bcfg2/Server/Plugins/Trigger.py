@@ -1,9 +1,14 @@
+""" Trigger is a plugin that calls external scripts (on the server) """
+
 import os
 import pipes
 import Bcfg2.Server.Plugin
 from subprocess import Popen, PIPE
 
+
 class TriggerFile(Bcfg2.Server.Plugin.FileBacked):
+    """ Representation of a trigger script file """
+
     def HandleEvent(self, event=None):
         return
 
@@ -25,6 +30,8 @@ class Trigger(Bcfg2.Server.Plugin.Plugin,
                                                      self.core.fam)
 
     def async_run(self, args):
+        """ Run the trigger script asynchronously in a forked process
+        """
         pid = os.fork()
         if pid:
             os.waitpid(pid, 0)
@@ -34,15 +41,14 @@ class Trigger(Bcfg2.Server.Plugin.Plugin,
                 self.debug_log("Running %s" % " ".join(pipes.quote(a)
                                                        for a in args))
                 proc = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-                (out, err) = proc.communicate()
+                err = proc.communicate()[1]
                 rv = proc.wait()
                 if rv != 0:
                     self.logger.error("Trigger: Error running %s (%s): %s" %
                                       (args[0], rv, err))
                 elif err:
                     self.debug_log("Trigger: Error: %s" % err)
-            os._exit(0)
-
+            os._exit(0)  # pylint: disable=W0212
 
     def end_client_run(self, metadata):
         args = [metadata.hostname, '-p', metadata.profile, '-g',

@@ -10,11 +10,8 @@ See :ref:`server-selinux` for more information.
 """
 
 import os
-import logging
 import Bcfg2.Server.Plugin
 from Bcfg2.Compat import b64encode
-
-logger = logging.getLogger(__name__)
 
 
 class SEModuleData(Bcfg2.Server.Plugin.SpecificData):

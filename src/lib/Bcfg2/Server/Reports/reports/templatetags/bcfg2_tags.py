@@ -330,7 +330,7 @@ def do_qs(parser, token):
     try:
         tag, name, value = token.split_contents()
     except ValueError:
-        raise TemplateSyntaxError, "%r tag requires exactly two arguments" \
+        raise template.TemplateSyntaxError, "%r tag requires exactly two arguments" \
             % token.contents.split()[0]
     return QsNode(name, value)
 
@@ -367,7 +367,7 @@ def sort_link(parser, token):
     try:
         tag, sort_key, text = token.split_contents()
     except ValueError:
-        raise TemplateSyntaxError("%r tag requires at least four arguments" \
+        raise template.TemplateSyntaxError("%r tag requires at least four arguments" \
             % token.split_contents()[0])
 
     return SortLinkNode(sort_key, text)

@@ -3,6 +3,7 @@
 import re
 import Bcfg2.Server.Plugin
 
+
 class Rules(Bcfg2.Server.Plugin.PrioDir):
     """This is a generator that handles service assignments."""
     name = 'Rules'
@@ -48,4 +49,5 @@ class Rules(Bcfg2.Server.Plugin.PrioDir):
         return False
 
     def _regex_enabled(self):
+        """ Return True if rules regexes are enabled, False otherwise """
         return self.core.setup.cfp.getboolean("rules", "regex", default=False)

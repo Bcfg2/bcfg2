@@ -1,8 +1,8 @@
 """This generator provides rule-based entry mappings."""
 
-import re
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Plugins.Rules
+
 
 class Defaults(Bcfg2.Server.Plugins.Rules.Rules,
                Bcfg2.Server.Plugin.StructureValidator):
@@ -21,7 +21,7 @@ class Defaults(Bcfg2.Server.Plugins.Rules.Rules,
         return False
 
     def HandleEntry(self, entry, metadata):
-        raise PluginExecutionError
+        raise Bcfg2.Server.Plugin.PluginExecutionError
 
     def HandleEvent(self, event):
         Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent(self, event)

@@ -7,7 +7,8 @@ import Bcfg2.Server.Plugin
 from subprocess import Popen, PIPE
 from Bcfg2.Server.Plugins.Cfg import CfgFilter
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+
 
 class CfgDiffFilter(CfgFilter):
     """ CfgDiffFilter applies diffs to plaintext
@@ -24,14 +25,15 @@ class CfgDiffFilter(CfgFilter):
         open(basename, 'w').write(data)
         os.close(basehandle)
 
-        cmd = ["patch", "-u", "-f", basefile.name]
+        cmd = ["patch", "-u", "-f", basename]
         patch = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         stderr = patch.communicate(input=self.data)[1]
         ret = patch.wait()
-        output = open(basefile.name, 'r').read()
-        os.unlink(basefile.name)
+        output = open(basename, 'r').read()
+        os.unlink(basename)
         if ret != 0:
-            logger.error("Error applying diff %s: %s" % (delta.name, stderr))
-            raise Bcfg2.Server.Plugin.PluginExecutionError('delta', delta)
+            msg = "Error applying diff %s: %s" % (self.name, stderr)
+            LOGGER.error(msg)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         return output
     modify_data.__doc__ = CfgFilter.modify_data.__doc__

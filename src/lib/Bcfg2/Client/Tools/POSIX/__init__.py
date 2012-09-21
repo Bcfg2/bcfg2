@@ -7,11 +7,8 @@ import shutil
 from datetime import datetime
 import Bcfg2.Client.Tools
 from Bcfg2.Compat import walk_packages
-try:
-    from base import POSIXTool
-except ImportError:
-    # py3k, incompatible syntax with py2.4
-    exec("from .base import POSIXTool")
+from Bcfg2.Client.Tools.POSIX.base import POSIXTool
+
 
 class POSIX(Bcfg2.Client.Tools.Tool):
     """POSIX File support code."""

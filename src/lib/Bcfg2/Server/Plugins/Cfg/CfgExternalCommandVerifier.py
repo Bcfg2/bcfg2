@@ -7,7 +7,8 @@ import Bcfg2.Server.Plugin
 from subprocess import Popen, PIPE
 from Bcfg2.Server.Plugins.Cfg import CfgVerifier, CfgVerificationError
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+
 
 class CfgExternalCommandVerifier(CfgVerifier):
     """ Invoke an external script to verify
@@ -15,6 +16,11 @@ class CfgExternalCommandVerifier(CfgVerifier):
 
     #: Handle :file:`:test` files
     __basenames__ = [':test']
+
+    def __init__(self, name, specific, encoding):
+        CfgVerifier.__init__(self, name, specific, encoding)
+        self.cmd = []
+    __init__.__doc__ = CfgVerifier.__init__.__doc__
 
     def verify_entry(self, entry, metadata, data):
         proc = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
@@ -34,8 +40,7 @@ class CfgExternalCommandVerifier(CfgVerifier):
                 self.cmd.extend(shlex.split(bangpath[2:].strip()))
             else:
                 msg = "Cannot execute %s" % self.name
-                logger.error(msg)
+                LOGGER.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         self.cmd.append(self.name)
     handle_event.__doc__ = CfgVerifier.handle_event.__doc__
-    

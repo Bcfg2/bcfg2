@@ -1,8 +1,12 @@
+""" A plugin to run Puppet external node classifiers """
+
 import os
+import sys
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 from subprocess import Popen, PIPE
 
+# pylint: disable=F0401
 try:
     from syck import load as yaml_load, error as yaml_error
 except ImportError:
@@ -10,8 +14,12 @@ except ImportError:
         from yaml import load as yaml_load, YAMLError as yaml_error
     except ImportError:
         raise ImportError("No yaml library could be found")
+# pylint: enable=F0401
+
 
 class PuppetENCFile(Bcfg2.Server.Plugin.FileBacked):
+    """ A representation of a Puppet external node classifier script """
+
     def HandleEvent(self, event=None):
         return
 
@@ -22,7 +30,6 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
                 Bcfg2.Server.Plugin.DirectoryBacked):
     """ A plugin to run Puppet external node classifiers
     (http://docs.puppetlabs.com/guides/external_nodes.html) """
-    name = 'PuppetENC'
     experimental = True
     __child__ = PuppetENCFile
 
@@ -35,6 +42,7 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
         self.cache = dict()
 
     def _run_encs(self, metadata):
+        """ Run all Puppet ENCs """
         cache = dict(groups=[], params=dict())
         for enc in self.entries.keys():
             epath = os.path.join(self.data, enc)
@@ -46,8 +54,8 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
             rv = proc.wait()
             if rv != 0:
                 msg = "PuppetENC: Error running ENC %s for %s (%s): %s" % \
-                    (enc, metadata.hostname, rv)
-                self.logger.error("%s: %s" % (msg, err))
+                    (enc, metadata.hostname, rv, err)
+                self.logger.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             if err:
                 self.debug_log("ENC Error: %s" % err)
@@ -62,8 +70,8 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
                     (enc, metadata.hostname, err)
                 self.logger.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-            
-            groups = []
+
+            groups = dict()
             if "classes" in yaml:
                 # stock Puppet ENC output format
                 groups = yaml['classes']
@@ -87,7 +95,7 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
             if "environment" in yaml:
                 self.logger.info("Ignoring unsupported environment section of "
                                  "ENC %s for %s" % (enc, metadata.hostname))
-            
+
         self.cache[metadata.hostname] = cache
 
     def get_additional_groups(self, metadata):

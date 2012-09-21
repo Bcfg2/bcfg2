@@ -38,6 +38,7 @@ def is_device_mode(val):
     except:
         return False
 
+
 class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
     """ verify attributes for configuration entries (as defined in
     doc/server/configurationentries) """
@@ -48,7 +49,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 device=dict(name=is_filename, owner=is_username,
                             group=is_username,
                             dev_type=lambda v: \
-                                v in Bcfg2.Client.Tools.POSIX.device_map),
+                                v in Bcfg2.Client.Tools.POSIX.base.device_map),
                 directory=dict(name=is_filename, owner=is_username,
                                group=is_username, perms=is_octal_mode),
                 file=dict(name=is_filename, owner=is_username,

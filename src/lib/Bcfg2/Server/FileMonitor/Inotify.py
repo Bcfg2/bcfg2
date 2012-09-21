@@ -3,7 +3,7 @@
 import os
 import sys
 import logging
-import pyinotify
+import pyinotify  # pylint: disable=F0401
 from Bcfg2.Compat import reduce
 from Bcfg2.Server.FileMonitor import Event
 from Bcfg2.Server.FileMonitor.Pseudo import Pseudo
@@ -13,11 +13,13 @@ logger = logging.getLogger(__name__)
 
 class Inotify(Pseudo, pyinotify.ProcessEvent):
     __priority__ = 1
+    # pylint: disable=E1101
     action_map = {pyinotify.IN_CREATE: 'created',
                   pyinotify.IN_DELETE: 'deleted',
                   pyinotify.IN_MODIFY: 'changed',
                   pyinotify.IN_MOVED_FROM: 'deleted',
                   pyinotify.IN_MOVED_TO: 'created'}
+    # pylint: enable=E1101
     mask = reduce(lambda x, y: x | y, action_map.keys())
 
     def __init__(self, ignore=None, debug=False):

@@ -1705,7 +1705,7 @@ class TestEntrySet(TestDebuggable):
                      "bogus: line"]
             mock_open.return_value.readlines.return_value = idata
             eset.update_metadata(event)
-            expected = default_file_metadata.copy()
+            expected = DEFAULT_FILE_METADATA.copy()
             expected['owner'] = 'owner'
             expected['group'] = 'GROUP'
             expected['perms'] = '0775'
@@ -1728,7 +1728,7 @@ class TestEntrySet(TestDebuggable):
             event.filename = fname
             eset.metadata = Mock()
             eset.reset_metadata(event)
-            self.assertItemsEqual(eset.metadata, default_file_metadata)
+            self.assertItemsEqual(eset.metadata, DEFAULT_FILE_METADATA)
 
     @patch("Bcfg2.Server.Plugin.helpers.bind_info")
     def test_bind_info_to_entry(self, mock_bind_info):

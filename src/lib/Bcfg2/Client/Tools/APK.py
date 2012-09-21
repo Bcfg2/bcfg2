@@ -42,10 +42,10 @@ class APK(Bcfg2.Client.Tools.PkgTool):
                 #FIXME: Does APK have any sort of verification mechanism?
                 return True
             else:
-                self.loggger.info(" pkg %s at version %s, not %s" %
-                                  (entry.attrib['name'],
-                                   self.installed[entry.attrib['name']],
-                                   entry.attrib['version']))
+                self.logger.info(" pkg %s at version %s, not %s" %
+                                 (entry.attrib['name'],
+                                  self.installed[entry.attrib['name']],
+                                  entry.attrib['version']))
                 entry.set('current_version', self.installed[entry.get('name')])
                 return False
         entry.set('current_exists', 'false')

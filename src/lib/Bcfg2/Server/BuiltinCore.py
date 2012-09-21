@@ -75,7 +75,7 @@ class Core(BaseCore):
     def _daemonize(self):
         self.context.open()
         self.logger.info("%s daemonized" % self.name)
-    
+
     def _run(self):
         hostname, port = urlparse(self.setup['location'])[1].split(':')
         server_address = socket.getaddrinfo(hostname,

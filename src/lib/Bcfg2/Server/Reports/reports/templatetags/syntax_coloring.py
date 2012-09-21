@@ -8,6 +8,7 @@ from Bcfg2.Compat import u_str
 
 register = template.Library()
 
+# pylint: disable=E0611,F0401
 try:
     from pygments import highlight
     from pygments.lexers import get_lexer_by_name
@@ -16,6 +17,7 @@ try:
 
 except:
     colorize = False
+# pylint: enable=E0611,F0401
 
 
 @register.filter

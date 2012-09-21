@@ -78,8 +78,7 @@ import copy
 import logging
 import lxml.etree
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import any, md5
-from Bcfg2.Server.Plugins.Packages.Source import Source
+from Bcfg2.Compat import any, md5  # pylint: disable=W0622
 
 LOGGER = logging.getLogger(__name__)
 
@@ -180,15 +179,18 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         return "\n".join(srcs)
 
     def get_relevant_groups(self):
+        """ Get all groups that might be relevant to determining which
+        sources apply to this collection's client.
+
+        The base implementation simply aggregates the results of
+        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.get_relevant_groups`
+
+        :return: list of strings - group names
+        """
         groups = []
         for source in self:
             groups.extend(source.get_relevant_groups(self.metadata))
         return sorted(list(set(groups)))
-    get_relevant_groups.__doc__ = Source.get_relevant_groups.__doc__ + """
-
-        The base implementation simply aggregates the results of
-        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.get_relevant_groups`
-        """
 
     @property
     def basegroups(self):
@@ -253,8 +255,8 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
                   :ref:`pkg-objects`
         """
         if not self.__package_groups__:
-            self.logger.error("Packages: Package groups are not supported by %s"
-                              % self.__class__.__name__)
+            self.logger.error("Packages: Package groups are not supported by "
+                              "%s" % self.__class__.__name__)
             return []
 
         for source in self:
@@ -484,7 +486,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         """
         return list(complete.difference(initial))
 
-    def complete(self, packagelist):
+    def complete(self, packagelist):  # pylint: disable=R0912,R0914
         """ Build a complete list of all packages and their dependencies.
 
         :param packagelist: Set of initial packages computed from the
@@ -562,7 +564,8 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
                 if len(vpkg_cache[current]) == 1:
                     self.debug_log("Packages: requirement %s satisfied by %s" %
                                    (current, vpkg_cache[current]))
-                    unclassified.update(vpkg_cache[current].difference(examined))
+                    unclassified.update(
+                        vpkg_cache[current].difference(examined))
                     satisfied_vpkgs.add(current)
                 else:
                     satisfiers = [item for item in vpkg_cache[current]
@@ -623,7 +626,8 @@ def get_collection_class(source_type):
     try:
         cclass = getattr(module, source_type.title() + "Collection")
     except AttributeError:
-        msg = "Packages: No collection class found for %s sources" % source_type
+        msg = "Packages: No collection class found for %s sources" % \
+            source_type
         LOGGER.error(msg)
         raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
     return cclass

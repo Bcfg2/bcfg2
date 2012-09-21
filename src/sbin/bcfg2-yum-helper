@@ -61,12 +61,14 @@ class DepSolver(object):
     def __init__(self, cfgfile, verbose=1):
         self.cfgfile = cfgfile
         self.yumbase = yum.YumBase()
+        # pylint: disable=E1121
         try:
             self.yumbase.preconf.debuglevel = verbose
             self.yumbase.preconf.fn = cfgfile
             self.yumbase._getConfig()
         except AttributeError:
             self.yumbase._getConfig(cfgfile, debuglevel=verbose)
+        # pylint: enable=E1121
         self.logger = get_logger(verbose)
 
     def get_groups(self):

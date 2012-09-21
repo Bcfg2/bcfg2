@@ -98,29 +98,6 @@ class FileNotBuilt(Exception):
         return repr(self.value)
 
 
-def getClientList(hostglobs):
-    """ given a host glob, get a list of clients that match it """
-    # special cases to speed things up:
-    if '*' in hostglobs:
-        return self.metadata.clients
-    has_wildcards = False
-    for glob in hostglobs:
-        # check if any wildcard characters are in the string
-        if set('*?[]') & set(glob):
-            has_wildcards = True
-            break
-    if not has_wildcards:
-        return hostglobs
-
-    rv = set()
-    clist = set(self.metadata.clients)
-    for glob in hostglobs:
-        for client in clist:
-            if fnmatch.fnmatch(client, glob):
-                rv.update(client)
-        clist.difference_update(rv)
-    return list(rv)
-
 def printTabular(rows):
     """Print data in tabular format."""
     cmax = tuple([max([len(str(row[index])) for row in rows]) + 1 \
@@ -153,6 +130,7 @@ def load_interpreters():
         # before --interpreter was added, so we call IPython
         # better
         import IPython
+        # pylint: disable=E1101
         if hasattr(IPython, "Shell"):
             interpreters["ipython"] = lambda v: \
                 IPython.Shell.IPShell(argv=[], user_ns=v).mainloop()
@@ -162,6 +140,7 @@ def load_interpreters():
             best = "ipython"
         else:
             print("Unknown IPython API version")
+        # pylint: enable=E1101
     except ImportError:
         pass
 
@@ -177,6 +156,29 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
         self.prompt = '> '
         self.cont = True
         self.fam.handle_events_in_interval(4)
+
+    def _get_client_list(self, hostglobs):
+        """ given a host glob, get a list of clients that match it """
+        # special cases to speed things up:
+        if '*' in hostglobs:
+            return self.metadata.clients
+        has_wildcards = False
+        for glob in hostglobs:
+            # check if any wildcard characters are in the string
+            if set('*?[]') & set(glob):
+                has_wildcards = True
+                break
+        if not has_wildcards:
+            return hostglobs
+
+        rv = set()
+        clist = set(self.metadata.clients)
+        for glob in hostglobs:
+            for client in clist:
+                if fnmatch.fnmatch(client, glob):
+                    rv.update(client)
+            clist.difference_update(rv)
+        return list(rv)
 
     def do_loop(self):
         """Looping."""
@@ -227,7 +229,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             else:
                 logger.error("Invalid interpreter %s" % setup['interpreter'])
                 logger.error("Valid interpreters are: %s" %
-                             ", ".join(interpeters.keys()))
+                             ", ".join(interpreters.keys()))
 
     def do_quit(self, _):
         """
@@ -318,7 +320,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             if err.errno != 17:
                 print("Could not create %s: %s" % (destdir, err))
         if len(alist) > 1:
-            clients = getClientList(alist[1:])
+            clients = self._get_client_list(alist[1:])
         else:
             clients = self.metadata.clients
         for client in clients:
@@ -350,7 +352,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             if err.errno != 17:
                 print("Could not create %s: %s" % (destdir, err))
         if len(args) > 2:
-            clients = getClientList(args[1:])
+            clients = self._get_client_list(args[1:])
         else:
             clients = self.metadata.clients
         if altsrc:

@@ -92,7 +92,7 @@ class SourceInitError(Exception):
 REPO_RE = re.compile(r'(?:pulp/repos/|/RPMS\.|/)([^/]+)/?$')
 
 
-class Source(Bcfg2.Server.Plugin.Debuggable):
+class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
     """ ``Source`` objects represent a single <Source> tag in
     ``sources.xml``.  Note that a single Source tag can itself
     describe multiple repositories (if it uses the "url" attribute
@@ -116,7 +116,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
     #: when they are handled by :mod:`Bcfg2.Server.Plugins.Packages`.
     ptype = None
 
-    def __init__(self, basepath, xsource, setup):
+    def __init__(self, basepath, xsource, setup):  # pylint: disable=R0912
         """
         :param basepath: The base filesystem path under which cache
                          data for this source should be stored
@@ -301,7 +301,8 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
         """ Get all groups that might be relevant to determining which
         sources apply to this collection's client.
 
-        :return: list of strings - group names"""
+        :return: list of strings - group names
+        """
         return sorted(list(set([g for g in metadata.groups
                                 if (g in self.basegroups or
                                     g in self.groups or
@@ -349,6 +350,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                              upstream repository.
         :type force_update: bool
         """
+        # pylint: disable=W0702
         if not force_update:
             if os.path.exists(self.cachefile):
                 try:
@@ -379,6 +381,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                 self.logger.error("Packages: Failed to load data for %s: %s" %
                                   (self, err))
                 self.logger.error("Some Packages will be missing")
+        # pylint: enable=W0702
 
     def get_repo_name(self, url_map):
         """ Try to find a sensible name for a repository. Since
@@ -485,7 +488,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):
                     vdict[key].update(value)
         return vdict
 
-    def is_virtual_package(self, metadata, package):
+    def is_virtual_package(self, metadata, package):  # pylint: disable=W0613
         """ Return True if a name is a virtual package (i.e., is a
         symbol provided by a real package), False otherwise.
 

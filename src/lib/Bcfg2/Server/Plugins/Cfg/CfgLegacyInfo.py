@@ -4,7 +4,8 @@ import logging
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Cfg import CfgInfo
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+
 
 class CfgLegacyInfo(CfgInfo):
     """ CfgLegacyInfo handles :file:`info` and :file:`:info` files for
@@ -20,6 +21,9 @@ class CfgLegacyInfo(CfgInfo):
     def __init__(self, path):
         CfgInfo.__init__(self, path)
         self.path = path
+
+        #: The set of info metadata stored in the file
+        self.metadata = None
     __init__.__doc__ = CfgInfo.__init__.__doc__
 
     def bind_info_to_entry(self, entry, metadata):
@@ -30,9 +34,10 @@ class CfgLegacyInfo(CfgInfo):
         if event.code2str() == 'deleted':
             return
         for line in open(self.path).readlines():
-            match = Bcfg2.Server.Plugin.info_regex.match(line)
+            match = Bcfg2.Server.Plugin.INFO_REGEX.match(line)
             if not match:
-                logger.warning("Failed to parse line in %s: %s" % (fpath, line))
+                LOGGER.warning("Failed to parse line in %s: %s" %
+                               (event.filename, line))
                 continue
             else:
                 self.metadata = \

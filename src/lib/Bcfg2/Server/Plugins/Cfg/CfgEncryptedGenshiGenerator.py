@@ -17,7 +17,7 @@ try:
     from genshi.template import TemplateLoader
 except ImportError:
     # CfgGenshiGenerator will raise errors if genshi doesn't exist
-    TemplateLoader = object
+    TemplateLoader = object  # pylint: disable=C0103
 
 LOGGER = logging.getLogger(__name__)
 

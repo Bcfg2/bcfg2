@@ -4,7 +4,8 @@ import logging
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Cfg import CfgInfo
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+
 
 class CfgInfoXML(CfgInfo):
     """ CfgInfoXML handles :file:`info.xml` files for
@@ -22,7 +23,7 @@ class CfgInfoXML(CfgInfo):
         mdata = dict()
         self.infoxml.pnode.Match(metadata, mdata, entry=entry)
         if 'Info' not in mdata:
-            logger.error("Failed to set metadata for file %s" %
+            LOGGER.error("Failed to set metadata for file %s" %
                          entry.get('name'))
             raise Bcfg2.Server.Plugin.PluginExecutionError
         self._set_info(entry, mdata['Info'][None])

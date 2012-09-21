@@ -1,5 +1,6 @@
 """This is the bcfg2 support for pacman"""
 
+import sys
 import Bcfg2.Client.Tools
 
 

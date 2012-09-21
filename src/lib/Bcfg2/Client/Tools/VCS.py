@@ -9,18 +9,21 @@ missing = []
 import os
 import shutil
 import sys
+
+# pylint: disable=F0401
 # python-dulwich git imports
 try:
     import dulwich
     import dulwich.index
     from dulwich.errors import NotGitRepository
-except:
+except ImportError:
     missing.append('git')
 # subversion import
 try:
     import pysvn
-except:
+except ImportError:
     missing.append('svn')
+# pylint: enable=F0401
 
 import Bcfg2.Client.Tools
 
@@ -123,13 +126,14 @@ class VCS(Bcfg2.Client.Tools.Tool):
 
     def Installsvn(self, entry):
         """Checkout contents from a svn repository"""
+        # pylint: disable=E1101
         try:
             client = pysvn.Client.update(entry.get('name'), recurse=True)
-        except:
+        except pysvn.ClientError:
             self.logger.error("Failed to update repository", exc_info=1)
             return False
-
         return True
+        # pylint: enable=E1101
 
     def VerifyPath(self, entry, _):
         vcs = entry.get('vcstype')

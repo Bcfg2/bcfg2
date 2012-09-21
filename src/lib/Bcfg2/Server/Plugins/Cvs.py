@@ -1,34 +1,22 @@
-import os
+""" The Cvs plugin provides a revision interface for Bcfg2 repos using
+cvs. """
+
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 
-# for debugging output only
-import logging
-logger = logging.getLogger('Bcfg2.Plugins.Cvs')
 
 class Cvs(Bcfg2.Server.Plugin.Plugin,
           Bcfg2.Server.Plugin.Version):
-    """CVS is a version plugin for dealing with Bcfg2 repository."""
-    name = 'Cvs'
+    """ The Cvs plugin provides a revision interface for Bcfg2 repos
+    using cvs."""
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    experimental = True
+    __vcs_metadata_path__ = "CVSROOT"
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        self.core = core
-        self.datastore = datastore
-
-        # path to cvs directory for Bcfg2 repo
-        cvs_dir = "%s/CVSROOT" % datastore
-
-        # Read revision from Bcfg2 repo
-        if os.path.isdir(cvs_dir):
-            self.get_revision()
-        else:
-            logger.error("%s is not a directory" % cvs_dir)
-            raise Bcfg2.Server.Plugin.PluginInitError
-
-        logger.debug("Initialized cvs plugin with cvs directory = %s" % cvs_dir)
+        Bcfg2.Server.Plugin.Version.__init__(self, datastore)
+        self.logger.debug("Initialized cvs plugin with cvs directory %s" %
+                          self.vcs_path)
 
     def get_revision(self):
         """Read cvs revision information for the Bcfg2 repository."""
@@ -37,10 +25,9 @@ class Cvs(Bcfg2.Server.Plugin.Plugin,
                         shell=True,
                         cwd=self.datastore,
                         stdout=PIPE).stdout.readlines()
-            revision = data[3].strip('\n')
+            return data[3].strip('\n')
         except IndexError:
-            logger.error("Failed to read cvs log; disabling cvs support")
-            logger.error('''Ran command "cvs log %s"''' % (self.datastore))
-            logger.error("Got output: %s" % data)
-            raise Bcfg2.Server.Plugin.PluginInitError
-
+            msg = "Failed to read cvs log"
+            self.logger.error(msg)
+            self.logger.error('Ran command "cvs log %s"' % self.datastore)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)

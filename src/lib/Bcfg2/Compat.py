@@ -3,6 +3,8 @@ Python 2.4 and such-like """
 
 import sys
 
+# pylint: disable=F0401,E0611
+
 try:
     from email.Utils import formatdate
 except ImportError:

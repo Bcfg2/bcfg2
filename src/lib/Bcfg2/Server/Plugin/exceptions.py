@@ -1,5 +1,6 @@
 """ Exceptions for Bcfg2 Server Plugins."""
 
+
 class PluginInitError(Exception):
     """Error raised in cases of
     :class:`Bcfg2.Server.Plugin.base.Plugin` initialization errors."""

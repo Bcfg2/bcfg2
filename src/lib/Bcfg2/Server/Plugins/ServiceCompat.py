@@ -1,4 +1,7 @@
+""" Use old-style service modes for older clients """
+
 import Bcfg2.Server.Plugin
+
 
 class ServiceCompat(Bcfg2.Server.Plugin.Plugin,
                     Bcfg2.Server.Plugin.GoalValidator):

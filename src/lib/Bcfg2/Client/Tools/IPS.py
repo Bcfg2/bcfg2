@@ -1,7 +1,9 @@
 """This is the Bcfg2 support for OpenSolaris packages."""
 
+# pylint: disable=F0401
 import pkg.client.image as image
 import pkg.client.progress as progress
+# pylint: enable=F0401
 
 import Bcfg2.Client.Tools
 

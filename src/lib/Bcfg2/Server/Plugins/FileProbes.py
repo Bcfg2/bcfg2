@@ -52,10 +52,11 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Probing.__init__(self)
-        self.config = Bcfg2.Server.Plugin.StructFile(os.path.join(self.data,
-                                                                  'config.xml'),
-                                                     fam=core.fam,
-                                                     should_monitor=True)
+        self.config = \
+            Bcfg2.Server.Plugin.StructFile(os.path.join(self.data,
+                                                        'config.xml'),
+                                           fam=core.fam,
+                                           should_monitor=True)
         self.entries = dict()
         self.probes = dict()
 
@@ -89,8 +90,8 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
 
         for data in datalist:
             if data.text is None:
-                self.logger.error("Got null response to %s file probe from %s" %
-                                  (data.get('name'), metadata.hostname))
+                self.logger.error("Got null response to %s file probe from %s" 
+                                  % (data.get('name'), metadata.hostname))
             else:
                 try:
                     self.write_data(
@@ -145,6 +146,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             return
 
     def write_file(self, fileloc, contents):
+        """ Write the probed file to disk """
         try:
             os.makedirs(os.path.dirname(fileloc))
         except OSError:
@@ -152,8 +154,8 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             if err.errno == errno.EEXIST:
                 pass
             else:
-                self.logger.error("Could not create parent directories for %s: "
-                                  "%s" % (fileloc, err))
+                self.logger.error("Could not create parent directories for "
+                                  "%s: %s" % (fileloc, err))
                 return
 
         try:
@@ -164,14 +166,14 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             return
 
     def verify_file(self, filename, contents, metadata):
-        # Service the FAM events queued up by the key generation so
-        # the data structure entries will be available for binding.
-        #
-        # NOTE: We wait for up to ten seconds. There is some potential
-        # for race condition, because if the file monitor doesn't get
-        # notified about the new key files in time, those entries
-        # won't be available for binding. In practice, this seems
-        # "good enough".
+        """ Service the FAM events queued up by the key generation so
+        the data structure entries will be available for binding.
+
+        NOTE: We wait for up to ten seconds. There is some potential
+        for race condition, because if the file monitor doesn't get
+        notified about the new key files in time, those entries won't
+        be available for binding. In practice, this seems "good
+        enough"."""
         entry = self.entries[metadata.hostname][filename]
         cfg = self.core.plugins['Cfg']
         tries = 0
@@ -202,16 +204,12 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             return
 
         self.logger.info("Writing %s for %s" % (infoxml, data.get("name")))
-        info = \
-            lxml.etree.Element("Info",
-                               owner=data.get("owner",
-                                              Bcfg2.Options.MDATA_OWNER.value),
-                               group=data.get("group",
-                                              Bcfg2.Options.MDATA_GROUP.value),
-                               perms=data.get("perms",
-                                              Bcfg2.Options.MDATA_PERMS.value),
-                               encoding=entry.get("encoding",
-                                                  Bcfg2.Options.ENCODING.value))
+        info = lxml.etree.Element(
+            "Info",
+            owner=data.get("owner", Bcfg2.Options.MDATA_OWNER.value),
+            group=data.get("group", Bcfg2.Options.MDATA_GROUP.value),
+            perms=data.get("perms", Bcfg2.Options.MDATA_PERMS.value),
+            encoding=entry.get("encoding", Bcfg2.Options.ENCODING.value))
 
         root = lxml.etree.Element("FileInfo")
         root.append(info)
