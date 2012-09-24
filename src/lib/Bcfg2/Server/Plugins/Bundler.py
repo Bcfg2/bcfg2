@@ -14,22 +14,27 @@ import Bcfg2.Server.Lint
 try:
     import genshi.template.base
     import Bcfg2.Server.Plugins.TGenshi
-    have_genshi = True
-except:
-    have_genshi = False
+    HAS_GENSHI = True
+except ImportError:
+    HAS_GENSHI = False
 
 
 class BundleFile(Bcfg2.Server.Plugin.StructFile):
+    """ Representation of a bundle XML file """
     def get_xml_value(self, metadata):
+        """ get the XML data that applies to the given client """
         bundlename = os.path.splitext(os.path.basename(self.name))[0]
         bundle = lxml.etree.Element('Bundle', name=bundlename)
-        [bundle.append(copy.copy(item)) for item in self.Match(metadata)]
+        for item in self.Match(metadata):
+            bundle.append(copy.copy(item))
         return bundle
 
 
-if have_genshi:
+if HAS_GENSHI:
     class BundleTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile,
                              Bcfg2.Server.Plugin.StructFile):
+        """ Representation of a Genshi-templated bundle XML file """
+
         def __init__(self, name, specific, encoding):
             Bcfg2.Server.Plugins.TGenshi.TemplateFile.__init__(self, name,
                                                                specific,
@@ -38,54 +43,43 @@ if have_genshi:
             self.logger = logging.getLogger(name)
 
         def get_xml_value(self, metadata):
+            """ get the rendered XML data that applies to the given
+            client """
             if not hasattr(self, 'template'):
                 self.logger.error("No parsed template information for %s" %
                              self.name)
                 raise Bcfg2.Server.Plugin.PluginExecutionError
-            try:
-                stream = self.template.generate(metadata=metadata).filter(
-                    Bcfg2.Server.Plugins.TGenshi.removecomment)
-                data = lxml.etree.XML(stream.render('xml',
-                                                    strip_whitespace=False),
-                                      parser=Bcfg2.Server.XMLParser)
-                bundlename = os.path.splitext(os.path.basename(self.name))[0]
-                bundle = lxml.etree.Element('Bundle', name=bundlename)
-                for item in self.Match(metadata, data):
-                    bundle.append(copy.deepcopy(item))
-                return bundle
-            except LookupError:
-                lerror = sys.exc_info()[1]
-                self.logger.error('Genshi lookup error: %s' % lerror)
-            except genshi.template.TemplateError:
-                terror = sys.exc_info()[1]
-                self.logger.error('Genshi template error: %s' % terror)
-                raise
-            except genshi.input.ParseError:
-                perror = sys.exc_info()[1]
-                self.logger.error('Genshi parse error: %s' % perror)
-            raise
+            stream = self.template.generate(metadata=metadata).filter(
+                Bcfg2.Server.Plugins.TGenshi.removecomment)
+            data = lxml.etree.XML(stream.render('xml',
+                                                strip_whitespace=False),
+                                  parser=Bcfg2.Server.XMLParser)
+            bundlename = os.path.splitext(os.path.basename(self.name))[0]
+            bundle = lxml.etree.Element('Bundle', name=bundlename)
+            for item in self.Match(metadata, data):
+                bundle.append(copy.deepcopy(item))
+            return bundle
 
-        def Match(self, metadata, xdata):
+        def Match(self, metadata, xdata):  # pylint: disable=W0221
             """Return matching fragments of parsed template."""
             rv = []
             for child in xdata.getchildren():
                 rv.extend(self._match(child, metadata))
-            self.logger.debug("File %s got %d match(es)" % (self.name, len(rv)))
+            self.logger.debug("File %s got %d match(es)" % (self.name,
+                                                            len(rv)))
             return rv
 
-
     class SGenshiTemplateFile(BundleTemplateFile):
-        # provided for backwards compat
+        """ provided for backwards compat with the deprecated SGenshi
+        plugin """
         pass
 
 
 class Bundler(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.Structure,
               Bcfg2.Server.Plugin.XMLDirectoryBacked):
-    """The bundler creates dependent clauses based on the
-       bundle/translation scheme from Bcfg1.
-    """
-    name = 'Bundler'
+    """ The bundler creates dependent clauses based on the
+    bundle/translation scheme from Bcfg1. """
     __author__ = 'bcfg-dev@mcs.anl.gov'
     patterns = re.compile('^(?P<name>.*)\.(xml|genshi)$')
 
@@ -103,17 +97,22 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
             raise Bcfg2.Server.Plugin.PluginInitError
 
     def template_dispatch(self, name, _):
+        """ Add the correct child entry type to Bundler depending on
+        whether the XML file in question is a plain XML file or a
+        templated bundle """
         bundle = lxml.etree.parse(name,
                                   parser=Bcfg2.Server.XMLParser)
         nsmap = bundle.getroot().nsmap
         if (name.endswith('.genshi') or
             ('py' in nsmap and
              nsmap['py'] == 'http://genshi.edgewall.org/')):
-            if have_genshi:
+            if HAS_GENSHI:
                 spec = Bcfg2.Server.Plugin.Specificity()
                 return BundleTemplateFile(name, spec, self.encoding)
             else:
-                raise Bcfg2.Server.Plugin.PluginExecutionError("Genshi not available: %s" % name)
+                raise Bcfg2.Server.Plugin.PluginExecutionError("Genshi not "
+                                                               "available: %s"
+                                                               % name)
         else:
             return BundleFile(name, self.fam)
 
@@ -123,8 +122,9 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
 
         bundle_entries = {}
         for key, item in self.entries.items():
-            bundle_entries.setdefault(self.patterns.match(os.path.basename(key)).group('name'),
-                                      []).append(item)
+            bundle_entries.setdefault(
+                self.patterns.match(os.path.basename(key)).group('name'),
+                []).append(item)
 
         for bundlename in metadata.bundles:
             try:
@@ -136,10 +136,9 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
             try:
                 bundleset.append(entries[0].get_xml_value(metadata))
             except genshi.template.base.TemplateError:
-                t = sys.exc_info()[1]
-                self.logger.error("Bundler: Failed to template genshi bundle %s"
-                                  % bundlename)
-                self.logger.error(t)
+                err = sys.exc_info()[1]
+                self.logger.error("Bundler: Failed to render templated bundle "
+                                  "%s: %s" % (bundlename, err))
             except:
                 self.logger.error("Bundler: Unexpected bundler error for %s" %
                                   bundlename, exc_info=1)
@@ -148,19 +147,20 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
 
 class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
     """ Perform various bundle checks """
+
     def Run(self):
         """ run plugin """
         self.missing_bundles()
         for bundle in self.core.plugins['Bundler'].entries.values():
             if (self.HandlesFile(bundle.name) and
-                (not have_genshi or
+                (not HAS_GENSHI or
                  not isinstance(bundle, BundleTemplateFile))):
-                    self.bundle_names(bundle)
+                self.bundle_names(bundle)
 
     @classmethod
     def Errors(cls):
-        return {"bundle-not-found":"error",
-                "inconsistent-bundle-name":"warning"}
+        return {"bundle-not-found": "error",
+                "inconsistent-bundle-name": "warning"}
 
     def missing_bundles(self):
         """ find bundles listed in Metadata but not implemented in Bundler """

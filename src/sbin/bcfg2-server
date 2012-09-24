@@ -9,9 +9,9 @@ import Bcfg2.Logger
 import Bcfg2.Options
 from Bcfg2.Server.Core import CoreInitError
 
-logger = logging.getLogger('bcfg2-server')
+LOGGER = logging.getLogger('bcfg2-server')
 
-if __name__ == '__main__':
+def main():
     optinfo = dict()
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
@@ -41,9 +41,12 @@ if __name__ == '__main__':
         core.run()
     except CoreInitError:
         msg = sys.exc_info()[1]
-        logger.error(msg)
+        LOGGER.error(msg)
         sys.exit(1)
     except KeyboardInterrupt:
         sys.exit(1)
     sys.exit(0)
 
+
+if __name__ == '__main__':
+    sys.exit(main())

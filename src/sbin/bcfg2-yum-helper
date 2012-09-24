@@ -48,6 +48,8 @@ def pkg_to_tuple(package):
 
 
 def pkgtup_to_string(package):
+    """ given a package tuple, return a human-readable string
+    describing the package """
     if package[3] in ['auto', 'any']:
         return package[0]
 
@@ -61,31 +63,37 @@ def pkgtup_to_string(package):
 
 
 class DepSolver(object):
+    """ Yum dependency solver """
+
     def __init__(self, cfgfile, verbose=1):
         self.cfgfile = cfgfile
         self.yumbase = yum.YumBase()
-        # pylint: disable=E1121
+        # pylint: disable=E1121,W0212
         try:
             self.yumbase.preconf.debuglevel = verbose
             self.yumbase.preconf.fn = cfgfile
             self.yumbase._getConfig()
         except AttributeError:
             self.yumbase._getConfig(cfgfile, debuglevel=verbose)
-        # pylint: enable=E1121
+        # pylint: enable=E1121,W0212
         self.logger = get_logger(verbose)
+        self._groups = None
 
     def get_groups(self):
-        try:
+        """ getter for the groups property """
+        if self._groups is not None:
             return self._groups
-        except AttributeError:
+        else:
             return ["noarch"]
 
     def set_groups(self, groups):
+        """ setter for the groups property """
         self._groups = set(groups).union(["noarch"])
 
     groups = property(get_groups, set_groups)
 
     def get_package_object(self, pkgtup, silent=False):
+        """ given a package tuple, get a yum package object """
         try:
             matches = yum.packageSack.packagesNewestByName(
                 self.yumbase.pkgSack.searchPkgTuple(pkgtup))
@@ -107,6 +115,7 @@ class DepSolver(object):
             return None
 
     def get_group(self, group, ptype="default"):
+        """ Resolve a package group name into a list of packages """
         if group.startswith("@"):
             group = group[1:]
 
@@ -136,6 +145,8 @@ class DepSolver(object):
             return []
 
     def _filter_arch(self, packages):
+        """ filter packages in the given list that do not have an
+        architecture in the list of groups for this client """
         matching = []
         for pkg in packages:
             if pkg.arch in self.groups:
@@ -163,6 +174,8 @@ class DepSolver(object):
             return str(package)
 
     def complete(self, packagelist):
+        """ resolve dependencies and generate a complete package list
+        from the given list of initial packages """
         packages = set()
         unknown = set()
         for pkg in packagelist:
@@ -170,18 +183,18 @@ class DepSolver(object):
                 pkgtup = pkg
             else:
                 pkgtup = (pkg, None, None, None, None)
-            po = self.get_package_object(pkgtup)
-            if not po:
+            pkgobj = self.get_package_object(pkgtup)
+            if not pkgobj:
                 self.logger.debug("Unknown package %s" %
                                   self.get_package_name(pkg))
                 unknown.add(pkg)
             else:
-                if self.yumbase.tsInfo.exists(pkgtup=po.pkgtup):
+                if self.yumbase.tsInfo.exists(pkgtup=pkgobj.pkgtup):
                     self.logger.debug("%s added to transaction multiple times"
-                                      % po)
+                                      % pkgobj)
                 else:
-                    self.logger.debug("Adding %s to transaction" % po)
-                    self.yumbase.tsInfo.addInstall(po)
+                    self.logger.debug("Adding %s to transaction" % pkgobj)
+                    self.yumbase.tsInfo.addInstall(pkgobj)
         self.yumbase.resolveDeps()
 
         for txmbr in self.yumbase.tsInfo:
@@ -189,6 +202,7 @@ class DepSolver(object):
         return list(packages), list(unknown)
 
     def clean_cache(self):
+        """ clean the yum cache """
         for mdtype in ["Headers", "Packages", "Sqlite", "Metadata",
                        "ExpireCache"]:
             # for reasons that are entirely obvious, all of the yum

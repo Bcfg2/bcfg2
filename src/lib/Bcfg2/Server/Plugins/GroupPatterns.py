@@ -1,12 +1,16 @@
+""" set group membership based on client hostnames """
+
 import os
 import re
 import sys
 import logging
-import lxml.etree
 import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 
+
 class PackedDigitRange(object):
+    """ Helper object for NameRange entries """
+
     def __init__(self, digit_range):
         self.sparse = list()
         self.ranges = list()
@@ -17,6 +21,7 @@ class PackedDigitRange(object):
                 self.sparse.append(int(item))
 
     def includes(self, other):
+        """ return True if other is included in this range """
         iother = int(other)
         if iother in self.sparse:
             return True
@@ -27,7 +32,7 @@ class PackedDigitRange(object):
 
 
 class PatternMap(object):
-    range_finder = r'\[\[[\d\-,]+\]\]'
+    """ Handler for a single pattern or range """
 
     def __init__(self, pattern, rangestr, groups):
         self.pattern = pattern
@@ -39,10 +44,11 @@ class PatternMap(object):
         elif rangestr != None:
             if '\\' in rangestr:
                 raise Exception("Backslashes are not allowed in NameRanges")
+            range_finder = r'\[\[[\d\-,]+\]\]'
             self.process = self.process_range
-            self.re = re.compile('^' + re.sub(self.range_finder, '(\d+)',
+            self.re = re.compile('^' + re.sub(range_finder, '(\d+)',
                                               rangestr))
-            dmatcher = re.compile(re.sub(self.range_finder,
+            dmatcher = re.compile(re.sub(range_finder,
                                          r'\[\[([\d\-,]+)\]\]',
                                          rangestr))
             self.dranges = [PackedDigitRange(x)
@@ -51,16 +57,18 @@ class PatternMap(object):
             raise Exception("No pattern or range given")
 
     def process_range(self, name):
+        """ match the given hostname against a range-based NameRange """
         match = self.re.match(name)
         if not match:
             return None
         digits = match.groups()
-        for i in range(len(digits)):
-            if not self.dranges[i].includes(digits[i]):
+        for grp in range(len(digits)):
+            if not self.dranges[grp].includes(digits[grp]):
                 return None
         return self.groups
 
     def process_re(self, name):
+        """ match the given hostname against a regex-based NamePattern """
         match = self.re.search(name)
         if not match:
             return None
@@ -79,6 +87,7 @@ class PatternMap(object):
 
 
 class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
+    """ representation of GroupPatterns config.xml """
     __identifier__ = None
 
     def __init__(self, filename, core=None):
@@ -107,27 +116,29 @@ class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
                 for range_ent in entry.findall('NameRange'):
                     rng = range_ent.text
                     self.patterns.append(PatternMap(None, rng, groups))
-            except:
-                self.logger.error("GroupPatterns: Failed to initialize pattern "
-                                  "%s" % entry.get('pattern'))
+            except:  # pylint: disable=W0702
+                self.logger.error("GroupPatterns: Failed to initialize "
+                                  "pattern %s" % entry.get('pattern'))
 
     def process_patterns(self, hostname):
+        """ return a list of groups that should be added to the given
+        client based on patterns that match the hostname """
         ret = []
         for pattern in self.patterns:
             try:
-                gn = pattern.process(hostname)
-                if gn is not None:
-                    ret.extend(gn)
-            except:
-                self.logger.error("GroupPatterns: Failed to process pattern %s "
-                                  "for %s" % (pattern.pattern, hostname),
+                grpname = pattern.process(hostname)
+                if grpname is not None:
+                    ret.extend(grpname)
+            except:  # pylint: disable=W0702
+                self.logger.error("GroupPatterns: Failed to process pattern "
+                                  "%s for %s" % (pattern.pattern, hostname),
                                   exc_info=1)
         return ret
 
 
 class GroupPatterns(Bcfg2.Server.Plugin.Plugin,
                     Bcfg2.Server.Plugin.Connector):
-    name = "GroupPatterns"
+    """ set group membership based on client hostnames """
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -140,8 +151,9 @@ class GroupPatterns(Bcfg2.Server.Plugin.Plugin,
 
 
 class GroupPatternsLint(Bcfg2.Server.Lint.ServerPlugin):
+    """ bcfg2-lint plugin for GroupPatterns """
+
     def Run(self):
-        """ run plugin """
         cfg = self.core.plugins['GroupPatterns'].config
         for entry in cfg.xdata.xpath('//GroupPattern'):
             groups = [g.text for g in entry.findall('Group')]
@@ -150,9 +162,10 @@ class GroupPatternsLint(Bcfg2.Server.Lint.ServerPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"pattern-fails-to-initialize":"error"}
+        return {"pattern-fails-to-initialize": "error"}
 
     def check(self, entry, groups, ptype="NamePattern"):
+        """ Check a single pattern for validity """
         if ptype == "NamePattern":
             pmap = lambda p: PatternMap(p, None, groups)
         else:
@@ -162,7 +175,7 @@ class GroupPatternsLint(Bcfg2.Server.Lint.ServerPlugin):
             pat = el.text
             try:
                 pmap(pat)
-            except:
+            except:  # pylint: disable=W0702
                 err = sys.exc_info()[1]
                 self.LintError("pattern-fails-to-initialize",
                                "Failed to initialize %s %s for %s: %s" %

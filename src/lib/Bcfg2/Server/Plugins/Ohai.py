@@ -1,6 +1,9 @@
+"""The Ohai plugin is used to detect information about the client
+operating system using ohai
+(http://wiki.opscode.com/display/chef/Ohai) """
+
 import lxml.etree
 import os
-import logging
 import Bcfg2.Server.Plugin
 
 # pylint: disable=F0401
@@ -10,10 +13,7 @@ except ImportError:
     import simplejson as json
 # pylint: enable=F0401
 
-logger = logging.getLogger('Bcfg2.Plugins.Ohai')
-
-
-probecode = """#!/bin/sh
+PROBECODE = """#!/bin/sh
 
 export PATH=$PATH:/sbin:/usr/sbin
 
@@ -27,6 +27,8 @@ fi
 
 
 class OhaiCache(object):
+    """ Storage for Ohai output on the local filesystem so that the
+    output can be used by bcfg2-info, etc. """
     def __init__(self, dirname):
         self.dirname = dirname
         self.cache = dict()
@@ -68,14 +70,14 @@ class Ohai(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Connector.__init__(self)
         self.probe = lxml.etree.Element('probe', name='Ohai', source='Ohai',
                                         interpreter='/bin/sh')
-        self.probe.text = probecode
+        self.probe.text = PROBECODE
         try:
             os.stat(self.data)
-        except:
+        except OSError:
             os.makedirs(self.data)
         self.cache = OhaiCache(self.data)
 
-    def GetProbes(self, meta, force=False):
+    def GetProbes(self, _):
         return [self.probe]
 
     def ReceiveData(self, meta, datalist):
