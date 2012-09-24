@@ -13,6 +13,7 @@ import Bcfg2.Server.Plugin
 # pylint: disable=F0401
 try:
     from django.db import models
+    HAS_DJANGO = True
 
     class ProbesDataModel(models.Model,
                           Bcfg2.Server.Plugin.PluginDatabaseModel):
@@ -28,7 +29,7 @@ try:
         hostname = models.CharField(max_length=255)
         group = models.CharField(max_length=255)
 except ImportError:
-    pass
+    HAS_DJANGO = False
 
 try:
     import json
@@ -72,8 +73,8 @@ class ProbeData(str):
     def __new__(cls, data):
         return str.__new__(cls, data)
 
-    def __init__(self):
-        str.__init__(self)
+    def __init__(self, data):
+        str.__init__(self, data)
         self._xdata = None
         self._json = None
         self._yaml = None

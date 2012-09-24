@@ -1,6 +1,5 @@
-"""
-This file stores persistent metadata for the Bcfg2 Configuration Repository.
-"""
+""" This file stores persistent metadata for the Bcfg2 Configuration
+Repository. """
 
 import re
 import os
@@ -15,7 +14,7 @@ import Bcfg2.Server
 import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
-from Bcfg2.Compat import MutableMapping, all
+from Bcfg2.Compat import MutableMapping, all  # pylint: disable=W0622
 from Bcfg2.version import Bcfg2VersionInfo
 
 try:
@@ -25,6 +24,7 @@ except ImportError:
     has_django = False
 
 logger = logging.getLogger(__name__)
+
 
 def locked(fd):
     """Aquire a lock on a file"""
@@ -104,12 +104,16 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
         self.pseudo_monitor = isinstance(metadata.core.fam,
                                          Bcfg2.Server.FileMonitor.Pseudo)
 
-    @property
-    def xdata(self):  # pylint: disable=E0202
+    def _get_xdata(self):
         if not self.data:
             raise Bcfg2.Server.Plugin.MetadataRuntimeError("%s has no data" %
                                                            self.basefile)
         return self.data
+
+    def _set_xdata(self, val):
+        self.data = val
+
+    xdata = property(_get_xdata, _set_xdata)
 
     @property
     def base_xdata(self):
@@ -738,11 +742,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 # clear the entire cache when we get an event for any
                 # metadata file
                 self.core.metadata_cache.expire()
-                try:
-                    proc = getattr(self, "_handle_%s_event" % aname)
-                except AttributeError:
-                    proc = self._handle_default_event  # pylint: disable=E1101
-                proc(event)
+                getattr(self, "_handle_%s_event" % aname)(event)
 
         if False not in list(self.states.values()) and self.debug_flag:
             # check that all groups are real and complete. this is
@@ -853,8 +853,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         address = addresspair[0]
         if address in self.addresses:
             if len(self.addresses[address]) != 1:
-                err = "Address %s has multiple reverse assignments; a " + \
-                    "uuid must be used" % address
+                err = ("Address %s has multiple reverse assignments; a "
+                       "uuid must be used" % address)
                 self.logger.error(err)
                 raise Bcfg2.Server.Plugin.MetadataConsistencyError(err)
             return self.addresses[address][0]

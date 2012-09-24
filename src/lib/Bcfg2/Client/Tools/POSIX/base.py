@@ -516,6 +516,8 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                 if val is not None:
                     entry.set(attr, str(val))
 
+        print "about to verify acls; errors=%s" % errors
+
         return self._verify_acls(entry, path=path) and len(errors) == 0
 
     def _list_entry_acls(self, entry):

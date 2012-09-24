@@ -81,7 +81,7 @@ class TestFunctions(Bcfg2TestCase):
 class TestDatabaseBacked(TestPlugin):
     test_obj = DatabaseBacked
 
-    @skipUnless(has_django, "Django not found")
+    @skipUnless(HAS_DJANGO, "Django not found")
     def test__use_db(self):
         core = Mock()
         core.setup.cfp.getboolean.return_value = True
@@ -93,7 +93,7 @@ class TestDatabaseBacked(TestPlugin):
         db = self.get_obj(core)
         self.assertFalse(db._use_db)
         
-        Bcfg2.Server.Plugin.helpers.has_django = False
+        Bcfg2.Server.Plugin.helpers.HAS_DJANGO = False
         core = Mock()
         db = self.get_obj(core)
         self.assertFalse(db._use_db)
@@ -102,7 +102,7 @@ class TestDatabaseBacked(TestPlugin):
         core.setup.cfp.getboolean.return_value = True
         db = self.get_obj(core)
         self.assertFalse(db._use_db)
-        Bcfg2.Server.Plugin.helpers.has_django = True
+        Bcfg2.Server.Plugin.helpers.HAS_DJANGO = True
 
 
 class TestPluginDatabaseModel(Bcfg2TestCase):

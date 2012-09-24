@@ -1458,14 +1458,13 @@ class TestMetadata_ClientsXML(TestMetadataBase):
     # decorate setUp()
     if can_skip or has_django:
         __test__ = True
-    
+
     def load_clients_data(self, metadata=None, xdata=None):
         if metadata is None:
             metadata = self.get_obj()
         metadata.core.fam = Mock()
-        metadata._handle_file("clients.xml")
+        metadata.clients_xml = metadata._handle_file("clients.xml")
         metadata = TestMetadata.load_clients_data(self, metadata=metadata,
                                                   xdata=xdata)
         return TestMetadataBase.load_clients_data(self, metadata=metadata,
                                                     xdata=xdata)
-

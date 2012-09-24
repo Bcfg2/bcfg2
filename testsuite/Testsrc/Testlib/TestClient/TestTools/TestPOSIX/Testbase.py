@@ -23,15 +23,15 @@ from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
 
 try:
     import selinux
-    has_selinux = True
+    HAS_SELINUX = True
 except ImportError:
-    has_selinux = False
+    HAS_SELINUX = False
 
 try:
     import posix1e
-    has_acls = True
+    HAS_ACLS = True
 except ImportError:
-    has_acls = False
+    HAS_ACLS = False
 
 class TestPOSIXTool(Bcfg2TestCase):
     test_obj = POSIXTool
@@ -298,9 +298,9 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_set_secontext.assert_called_with(entry, path=entry.get("name"))
         mock_set_acls.assert_called_with(entry, path=entry.get("name"))
 
-    @skipUnless(has_acls, "ACLS not found, skipping")
-    @patchIf(has_acls, "posix1e.ACL")
-    @patchIf(has_acls, "posix1e.Entry")
+    @skipUnless(HAS_ACLS, "ACLS not found, skipping")
+    @patchIf(HAS_ACLS, "posix1e.ACL")
+    @patchIf(HAS_ACLS, "posix1e.Entry")
     @patch("os.path.isdir")
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_uid" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_gid" % test_obj.__name__)
@@ -311,9 +311,9 @@ class TestPOSIXTool(Bcfg2TestCase):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
 
         # disable acls for the initial test
-        Bcfg2.Client.Tools.POSIX.base.has_acls = False
+        Bcfg2.Client.Tools.POSIX.base.HAS_ACLS = False
         self.assertTrue(self.ptool._set_acls(entry))
-        Bcfg2.Client.Tools.POSIX.base.has_acls = True
+        Bcfg2.Client.Tools.POSIX.base.HAS_ACLS = True
 
         # build a set of file ACLs to return from posix1e.ACL(file=...)
         file_acls = []
@@ -442,16 +442,16 @@ class TestPOSIXTool(Bcfg2TestCase):
         self.assertItemsEqual(added_acls,
                               [(fileacl_rv, posix1e.ACL_GROUP, 100, 5)])
 
-    @skipUnless(has_selinux, "SELinux not found, skipping")
-    @patchIf(has_selinux, "selinux.restorecon")
-    @patchIf(has_selinux, "selinux.lsetfilecon")
+    @skipUnless(HAS_SELINUX, "SELinux not found, skipping")
+    @patchIf(HAS_SELINUX, "selinux.restorecon")
+    @patchIf(HAS_SELINUX, "selinux.lsetfilecon")
     def test_set_secontext(self, mock_lsetfilecon, mock_restorecon):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
 
         # disable selinux for the initial test
-        Bcfg2.Client.Tools.POSIX.base.has_selinux = False
+        Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = False
         self.assertTrue(self.ptool._set_secontext(entry))
-        Bcfg2.Client.Tools.POSIX.base.has_selinux = True
+        Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = True
 
         # no context given
         self.assertTrue(self.ptool._set_secontext(entry))
@@ -568,36 +568,36 @@ class TestPOSIXTool(Bcfg2TestCase):
 
         # disable selinux and acls for this call -- we test them
         # separately so that we can skip those tests as appropriate
-        states = (Bcfg2.Client.Tools.POSIX.base.has_selinux,
-                  Bcfg2.Client.Tools.POSIX.base.has_acls)
-        Bcfg2.Client.Tools.POSIX.base.has_selinux = False
-        Bcfg2.Client.Tools.POSIX.base.has_acls = False
+        states = (Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX,
+                  Bcfg2.Client.Tools.POSIX.base.HAS_ACLS)
+        Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = False
+        Bcfg2.Client.Tools.POSIX.base.HAS_ACLS = False
         self.assertEqual(self.ptool._gather_data(path),
                          (stat_rv, '0', '10', '0660', None, None))
-        Bcfg2.Client.Tools.POSIX.base.has_selinux, \
-            Bcfg2.Client.Tools.POSIX.base.has_acls = states
+        Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX, \
+            Bcfg2.Client.Tools.POSIX.base.HAS_ACLS = states
         mock_stat.assert_called_with(path)
 
-    @skipUnless(has_selinux, "SELinux not found, skipping")
+    @skipUnless(HAS_SELINUX, "SELinux not found, skipping")
     def test__gather_data_selinux(self):
         context = 'system_u:object_r:root_t:s0'
         path = '/test'
 
         @patch('os.stat')
-        @patchIf(has_selinux, "selinux.getfilecon")
+        @patchIf(HAS_SELINUX, "selinux.getfilecon")
         def inner(mock_getfilecon, mock_stat):
             mock_getfilecon.return_value = [len(context) + 1, context]
             mock_stat.return_value = MagicMock()
             # disable acls for this call and test them separately
-            state = Bcfg2.Client.Tools.POSIX.base.has_acls
-            Bcfg2.Client.Tools.POSIX.base.has_acls = False
+            state = Bcfg2.Client.Tools.POSIX.base.HAS_ACLS
+            Bcfg2.Client.Tools.POSIX.base.HAS_ACLS = False
             self.assertEqual(self.ptool._gather_data(path)[4], 'root_t')
-            Bcfg2.Client.Tools.POSIX.base.has_acls = state
+            Bcfg2.Client.Tools.POSIX.base.HAS_ACLS = state
             mock_getfilecon.assert_called_with(path)
 
         inner()
 
-    @skipUnless(has_acls, "ACLS not found, skipping")
+    @skipUnless(HAS_ACLS, "ACLS not found, skipping")
     @patch('os.stat')
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._list_file_acls" %
            test_obj.__name__)
@@ -608,13 +608,13 @@ class TestPOSIXTool(Bcfg2TestCase):
         path = '/test'
         mock_stat.return_value = MagicMock()
         # disable selinux for this call and test it separately
-        state = Bcfg2.Client.Tools.POSIX.base.has_selinux
-        Bcfg2.Client.Tools.POSIX.base.has_selinux = False
+        state = Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX
+        Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = False
         self.assertItemsEqual(self.ptool._gather_data(path)[5], acls)
-        Bcfg2.Client.Tools.POSIX.base.has_selinux = state
+        Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = state
         mock_list_file_acls.assert_called_with(path)
 
-    @patchIf(has_selinux, "selinux.matchpathcon")
+    @patchIf(HAS_SELINUX, "selinux.matchpathcon")
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._verify_acls" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._gather_data" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._norm_entry_uid" %
@@ -667,8 +667,8 @@ class TestPOSIXTool(Bcfg2TestCase):
         # test when secontext is None
         entry = reset()
         gather_data_rv[4] = None
-        sestate = Bcfg2.Client.Tools.POSIX.base.has_selinux
-        Bcfg2.Client.Tools.POSIX.base.has_selinux = False
+        sestate = Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX
+        Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = False
         mock_gather_data.return_value = tuple(gather_data_rv)
         self.assertTrue(self.ptool._verify_metadata(entry))
         mock_gather_data.assert_called_with(entry.get("name"))
@@ -677,7 +677,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         for attr, idx, val in expected:
             if attr != 'current_secontext':
                 self.assertEqual(entry.get(attr), val)
-        Bcfg2.Client.Tools.POSIX.base.has_selinux = sestate
+        Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = sestate
 
         gather_data_rv = [MagicMock(), None, None, None, None, []]
         for attr, idx, val in expected:
@@ -704,7 +704,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         failures = [('current_owner', 1, '10'),
                     ('current_group', 2, '100'),
                     ('current_perms', 3, '0660')]
-        if has_selinux:
+        if HAS_SELINUX:
             failures.append(('current_secontext', 4, 'root_t'))
         
         for fail_attr, fail_idx, fail_val in failures:
@@ -743,7 +743,7 @@ class TestPOSIXTool(Bcfg2TestCase):
             self.assertEqual(entry.get(attr), val)
         self.assertEqual(entry.get("current_mtime"), str(fail_mtime))
         
-        if has_selinux:
+        if HAS_SELINUX:
             # test success and failure for __default__ secontext
             entry = reset()
             entry.set("mtime", str(mtime))
@@ -782,7 +782,7 @@ class TestPOSIXTool(Bcfg2TestCase):
                 self.assertEqual(entry.get(attr), val)
             self.assertEqual(entry.get("current_mtime"), str(mtime))
 
-    @skipUnless(has_acls, "ACLS not found, skipping")
+    @skipUnless(HAS_ACLS, "ACLS not found, skipping")
     def test_list_entry_acls(self):
         entry = lxml.etree.Element("Path", name="/test", type="file")
         lxml.etree.SubElement(entry, "ACL", scope="user", type="default",
@@ -793,7 +793,7 @@ class TestPOSIXTool(Bcfg2TestCase):
                               {("default", posix1e.ACL_USER, "user"): 7,
                                ("access", posix1e.ACL_GROUP, "group"): 5})
 
-    @skipUnless(has_acls, "ACLS not found, skipping")
+    @skipUnless(HAS_ACLS, "ACLS not found, skipping")
     @patch("pwd.getpwuid")
     @patch("grp.getgrgid")
     @patch("os.path.isdir")
@@ -878,7 +878,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         self.assertItemsEqual(mock_ACL.call_args_list,
                               [call(file=path), call(filedef=path)])
 
-    if has_acls:
+    if HAS_ACLS:
         # python 2.6 applies decorators at compile-time, not at
         # run-time, so we can't do these as decorators because
         # pylibacl might not be installed.  (If it's not, this test
@@ -886,7 +886,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         # we're safe.)
         test_list_file_acls = patch("posix1e.ACL")(test_list_file_acls)
 
-    @skipUnless(has_acls, "ACLS not found, skipping")
+    @skipUnless(HAS_ACLS, "ACLS not found, skipping")
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._list_file_acls" %
            test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._list_entry_acls" %

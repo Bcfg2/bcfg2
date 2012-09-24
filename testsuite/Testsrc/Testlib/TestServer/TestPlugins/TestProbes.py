@@ -30,7 +30,7 @@ class FakeList(list):
 
 
 class TestProbesDB(DBModelTestCase):
-    if has_django:
+    if HAS_DJANGO:
         models = [ProbesGroupsModel, ProbesDataModel]
     
 
@@ -69,13 +69,14 @@ class TestProbeData(Bcfg2TestCase):
         self.assertIsNotNone(data.xdata)
         self.assertIsNotNone(data.xdata.find("test2"))
 
+    @skipUnless(HAS_JSON, "JSON libraries not found, skipping JSON tests")
     def test_json(self):
         jdata = json.dumps(test_data)
         data = ProbeData(jdata)
         self.assertIsNotNone(data.json)
         self.assertItemsEqual(test_data, data.json)
         
-    @skipUnless(has_yaml, "YAML libraries not found, skipping YAML tests")
+    @skipUnless(HAS_YAML, "YAML libraries not found, skipping YAML tests")
     def test_yaml(self):
         jdata = yaml.dump(test_data)
         data = ProbeData(jdata)
@@ -107,32 +108,10 @@ class TestProbeSet(TestEntrySet):
         fam.AddMonitor.assert_called_with(datastore, ps)
         TestEntrySet.test__init(self)
 
-    def test_HandleEvent(self):
-        ps = self.get_obj()
-        ps.handle_event = Mock()
-
-        # test that events on the data store itself are skipped
-        evt = Mock()
-        evt.filename = datastore
-        ps.HandleEvent(evt)
-        self.assertFalse(ps.handle_event.called)
-
-        # test that events on probed.xml are skipped
-        evt.reset_mock()
-        evt.filename = "probed.xml"
-        ps.HandleEvent(evt)
-        self.assertFalse(ps.handle_event.called)
-        
-        # test that other events are processed appropriately
-        evt.reset_mock()
-        evt.filename = "fooprobe"
-        ps.HandleEvent(evt)
-        ps.handle_event.assert_called_with(evt)
-
     @patch("%s.list" % builtins, FakeList)
     def test_get_probe_data(self):
         ps = self.get_obj()
-        
+
         # build some fairly complex test data for this.  in the end,
         # we want the probe data to include only the most specific
         # version of a given probe, and by basename only, not full
@@ -220,8 +199,9 @@ text
 """)
         rv["bar.example.com"] = ClientProbeDataSet(timestamp=time.time())
         rv["bar.example.com"]["empty"] = ProbeData("")
-        rv["bar.example.com"]["json"] = ProbeData(json.dumps(test_data))
-        if has_yaml:
+        if HAS_JSON:
+            rv["bar.example.com"]["json"] = ProbeData(json.dumps(test_data))
+        if HAS_YAML:
             rv["bar.example.com"]["yaml"] = ProbeData(yaml.dump(test_data))
         return rv
 
@@ -268,7 +248,7 @@ text
                                                             "use_database",
                                                             default=False)
 
-    @skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(HAS_DJANGO, "Django not found, skipping")
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_xml", Mock())
     def test_write_data_xml(self):
@@ -277,7 +257,7 @@ text
         probes._write_data_xml.assert_called_with("test")
         self.assertFalse(probes._write_data_db.called)
 
-    @skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(HAS_DJANGO, "Django not found, skipping")
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_xml", Mock())
     def test_write_data_db(self):
@@ -331,17 +311,18 @@ text
         self.assertIsNotNone(empty)
         self.assertIsNotNone(empty.get("value"))
         self.assertEqual(empty.get("value"), "")
-        jdata = bardata.find("Probe[@name='json']")
-        self.assertIsNotNone(jdata)
-        self.assertIsNotNone(jdata.get("value"))
-        self.assertItemsEqual(test_data, json.loads(jdata.get("value")))
-        if has_yaml:
+        if HAS_JSON:
+            jdata = bardata.find("Probe[@name='json']")
+            self.assertIsNotNone(jdata)
+            self.assertIsNotNone(jdata.get("value"))
+            self.assertItemsEqual(test_data, json.loads(jdata.get("value")))
+        if HAS_YAML:
             ydata = bardata.find("Probe[@name='yaml']")
             self.assertIsNotNone(ydata)
             self.assertIsNotNone(ydata.get("value"))
             self.assertItemsEqual(test_data, yaml.load(ydata.get("value")))
 
-    @skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(HAS_DJANGO, "Django not found, skipping")
     def test__write_data_db(self):
         syncdb(TestProbesDB)
         probes = self.get_probes_object(use_db=True)
@@ -393,7 +374,7 @@ text
         pgroups = ProbesGroupsModel.objects.filter(hostname=cname).all()
         self.assertEqual(len(pgroups), len(probes.cgroups[cname]))
 
-    @skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(HAS_DJANGO, "Django not found, skipping")
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_xml", Mock())
     def test_load_data_xml(self):
@@ -402,7 +383,7 @@ text
         probes._load_data_xml.assert_any_call()
         self.assertFalse(probes._load_data_db.called)
 
-    @skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(HAS_DJANGO, "Django not found, skipping")
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_xml", Mock())
     def test_load_data_db(self):
@@ -434,7 +415,7 @@ text
         self.assertItemsEqual(probes.probedata, self.get_test_probedata())
         self.assertItemsEqual(probes.cgroups, self.get_test_cgroups())
 
-    @skipUnless(has_django, "Django not found, skipping")
+    @skipUnless(HAS_DJANGO, "Django not found, skipping")
     def test__load_data_db(self):
         syncdb(TestProbesDB)
         probes = self.get_probes_object(use_db=True)

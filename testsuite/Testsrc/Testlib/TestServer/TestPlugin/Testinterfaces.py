@@ -129,7 +129,7 @@ class TestThreadedStatistics(TestStatistics):
         queue.empty = Mock(side_effect=Empty)
         ts.work_queue = queue
 
-        mock_open.side_effect = OSError
+        mock_open.side_effect = IOError
         # test that save does _not_ raise an exception even when
         # everything goes pear-shaped
         ts._save()
@@ -188,7 +188,7 @@ class TestThreadedStatistics(TestStatistics):
 
         reset()
         mock_exists.return_value = True
-        mock_open.side_effect = OSError
+        mock_open.side_effect = IOError
         self.assertFalse(ts._load())
         mock_exists.assert_called_with(ts.pending_file)
         mock_open.assert_called_with(ts.pending_file, 'r')
@@ -330,7 +330,7 @@ class TestVersion(Bcfg2TestCase):
     test_obj = Version
     
     def get_obj(self):
-        return self.test_obj()
+        return self.test_obj(datastore)
 
     def test_get_revision(self):
         d = self.get_obj()
