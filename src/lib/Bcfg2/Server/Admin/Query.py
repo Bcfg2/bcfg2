@@ -19,6 +19,8 @@ class Query(Bcfg2.Server.Admin.MetadataCore):
                  "-f filename",
                  "write query to file"))
 
+    __plugin_blacklist__ = ['DBStats', 'Cfg', 'Pkgmgr', 'Packages' ]
+
     def __init__(self, setup):
         Bcfg2.Server.Admin.MetadataCore.__init__(self, setup)
         logging.root.setLevel(100)
