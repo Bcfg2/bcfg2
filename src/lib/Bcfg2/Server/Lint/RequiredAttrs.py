@@ -1,3 +1,6 @@
+""" verify attributes for configuration entries that cannot be
+verified with an XML schema alone"""
+
 import os
 import re
 import lxml.etree
@@ -7,41 +10,51 @@ import Bcfg2.Client.Tools.VCS
 from Bcfg2.Server.Plugins.Packages import Apt, Yum
 try:
     from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
-    has_genshi = True
+    HAS_GENSHI = True
 except ImportError:
-    has_genshi = False
+    HAS_GENSHI = False
+
 
 # format verifying functions
 def is_filename(val):
+    """ Return True if val is a string describing a valid full path
+    """
     return val.startswith("/") and len(val) > 1
 
-def is_relative_filename(val):
-    return len(val) > 1
 
 def is_selinux_type(val):
+    """ Return True if val is a string describing a valid (although
+    not necessarily existent) SELinux type """
     return re.match(r'^[a-z_]+_t', val)
 
+
 def is_selinux_user(val):
+    """ Return True if val is a string describing a valid (although
+    not necessarily existent) SELinux user """
     return re.match(r'^[a-z_]+_u', val)
 
+
 def is_octal_mode(val):
+    """ Return True if val is a string describing a valid octal
+    permissions mode """
     return re.match(r'[0-7]{3,4}', val)
 
+
 def is_username(val):
+    """ Return True if val is a string giving either a positive
+    integer uid, or a valid Unix username """
     return re.match(r'^([a-z]\w{0,30}|\d+)$', val)
 
+
 def is_device_mode(val):
-    try:
-        # checking upper bound seems like a good way to discover some
-        # obscure OS with >8-bit device numbers
-        return int(val) > 0
-    except:
-        return False
+    """ Return True if val is a string describing a positive integer
+    """
+    return re.match(r'^\d+$', val)
 
 
 class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
-    """ verify attributes for configuration entries (as defined in
-    doc/server/configurationentries) """
+    """ verify attributes for configuration entries that cannot be
+    verified with an XML schema alone """
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerPlugin.__init__(self, *args, **kwargs)
         self.required_attrs = dict(
@@ -56,7 +69,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                           group=is_username, perms=is_octal_mode,
                           __text__=None),
                 hardlink=dict(name=is_filename, to=is_filename),
-                symlink=dict(name=is_filename, to=is_relative_filename),
+                symlink=dict(name=is_filename),
                 ignore=dict(name=is_filename),
                 nonexistent=dict(name=is_filename),
                 permissions=dict(name=is_filename, owner=is_username,
@@ -83,7 +96,8 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 access=dict(scope=lambda v: v in ['user', 'group'],
                             perms=lambda v: re.match('^([0-7]|[rwx\-]{0,3}',
                                                      v)),
-                mask=dict(perms=lambda v: re.match('^([0-7]|[rwx\-]{0,3}', v))),
+                mask=dict(perms=lambda v: re.match('^([0-7]|[rwx\-]{0,3}',
+                                                   v))),
             Package={None: dict(name=None)},
             SELinux=dict(
                 boolean=dict(name=None,
@@ -163,15 +177,17 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         if 'Bundler' in self.core.plugins:
             for bundle in self.core.plugins['Bundler'].entries.values():
                 if (self.HandlesFile(bundle.name) and
-                    (not has_genshi or
+                    (not HAS_GENSHI or
                      not isinstance(bundle, BundleTemplateFile))):
                     try:
                         xdata = lxml.etree.XML(bundle.data)
                     except (lxml.etree.XMLSyntaxError, AttributeError):
-                        xdata = \
-                            lxml.etree.parse(bundle.template.filepath).getroot()
+                        xdata = lxml.etree.parse(
+                            bundle.template.filepath).getroot()
 
-                    for path in xdata.xpath("//*[substring(name(), 1, 5) = 'Bound']"):
+                    for path in xdata.xpath(
+                        "//*[substring(name(), 1, 5) = 'Bound']"
+                        ):
                         self.check_entry(path, bundle.name)
 
     def check_entry(self, entry, filename):
@@ -219,14 +235,15 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                     self.RenderXML(entry)))
 
             if not attrs.issuperset(required_attrs.keys()):
-                self.LintError("required-attrs-missing",
-                               "The following required attribute(s) are "
-                               "missing for %s %s in %s: %s\n%s" %
-                               (tag, name, filename,
-                                ", ".join([attr
-                                           for attr in
-                                           set(required_attrs.keys()).difference(attrs)]),
-                                self.RenderXML(entry)))
+                self.LintError(
+                    "required-attrs-missing",
+                    "The following required attribute(s) are missing for %s "
+                    "%s in %s: %s\n%s" %
+                    (tag, name, filename,
+                     ", ".join([attr
+                                for attr in
+                                set(required_attrs.keys()).difference(attrs)]),
+                     self.RenderXML(entry)))
 
             for attr, fmt in required_attrs.items():
                 if fmt and attr in attrs and not fmt(entry.attrib[attr]):
@@ -235,4 +252,3 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                    "malformed\n%s" %
                                    (attr, tag, name, filename,
                                     self.RenderXML(entry)))
-                    

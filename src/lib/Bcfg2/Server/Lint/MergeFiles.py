@@ -1,8 +1,12 @@
+""" find Probes or Cfg files with multiple similar files that might be
+merged into one """
+
 import os
 import copy
 from difflib import SequenceMatcher
 import Bcfg2.Server.Lint
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
+
 
 class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
     """ find Probes or Cfg files with multiple similar files that
@@ -15,11 +19,11 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"merge-cfg":"warning",
-                "merge-probes":"warning"}
-
+        return {"merge-cfg": "warning",
+                "merge-probes": "warning"}
 
     def check_cfg(self):
+        """ check Cfg for similar files """
         for filename, entryset in self.core.plugins['Cfg'].entries.items():
             candidates = dict([(f, e) for f, e in entryset.entries.items()
                                if isinstance(e, CfgGenerator)])
@@ -32,6 +36,7 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
                                           for p in mset]))
 
     def check_probes(self):
+        """ check Probes for similar files """
         probes = self.core.plugins['Probes'].probes.entries
         for mset in self.get_similar(probes):
             self.LintError("merge-probes",
@@ -40,6 +45,9 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
                            ", ".join([p for p in mset]))
 
     def get_similar(self, entries):
+        """ Get a list of similar files from the entry dict.  Return
+        value is a list of lists, each of which gives the filenames of
+        similar files """
         if "threshold" in self.config:
             # accept threshold either as a percent (e.g., "threshold=75") or
             # as a ratio (e.g., "threshold=.75")
@@ -61,17 +69,20 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
         return rv
 
     def _find_similar(self, ftuple, others, threshold):
+        """ Find files similar to the one described by ftupe in the
+        list of other files.  ftuple is a tuple of (filename, data);
+        others is a list of such tuples.  threshold is a float between
+        0 and 1 that describes how similar two files much be to rate
+        as 'similar' """
         fname, fdata = ftuple
         rv = [fname]
         while others:
             cname, cdata = others.pop(0)
-            sm = SequenceMatcher(None, fdata.data, cdata.data)
+            seqmatch = SequenceMatcher(None, fdata.data, cdata.data)
             # perform progressively more expensive comparisons
-            if (sm.real_quick_ratio() > threshold and
-                sm.quick_ratio() > threshold and
-                sm.ratio() > threshold):
+            if (seqmatch.real_quick_ratio() > threshold and
+                seqmatch.quick_ratio() > threshold and
+                seqmatch.ratio() > threshold):
                 rv.extend(self._find_similar((cname, cdata), copy.copy(others),
                                              threshold))
         return rv
-
-

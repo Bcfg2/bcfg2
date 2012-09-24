@@ -1,17 +1,17 @@
+""" Handle <Path type='file' ...> entries """
+
 import os
 import sys
 import stat
 import time
 import difflib
 import tempfile
-try:
-    from base import POSIXTool
-except ImportError:
-    # py3k, incompatible syntax with py2.4
-    exec("from .base import POSIXTool")
-from Bcfg2.Compat import unicode, b64encode, b64decode
+from Bcfg2.Client.Tools.POSIX.base import POSIXTool
+from Bcfg2.Compat import unicode, b64encode, b64decode  # pylint: disable=W0622
+
 
 class POSIXFile(POSIXTool):
+    """ Handle <Path type='file' ...> entries """
     __req__ = ['name', 'perms', 'owner', 'group']
 
     def fully_specified(self, entry):
@@ -29,15 +29,16 @@ class POSIXFile(POSIXTool):
         try:
             strng.decode(encoding)
             return True
-        except:
+        except:  # pylint: disable=W0702
             return False
 
     def _get_data(self, entry):
+        """ Get a tuple of (<file data>, <is binary>) for the given entry """
         is_binary = False
         if entry.get('encoding', 'ascii') == 'base64':
             tempdata = b64decode(entry.text)
             is_binary = True
-            
+
         elif entry.get('empty', 'false') == 'true':
             tempdata = ''
         else:
@@ -89,6 +90,7 @@ class POSIXFile(POSIXTool):
         return POSIXTool.verify(self, entry, modlist) and not different
 
     def _write_tmpfile(self, entry):
+        """ Write the file data to a temp file """
         filedata, _ = self._get_data(entry)
         # get a temp file to write to that is in the same directory as
         # the existing file in order to preserve any permissions
@@ -115,16 +117,17 @@ class POSIXFile(POSIXTool):
         return newfile
 
     def _rename_tmpfile(self, newfile, entry):
+        """ Rename the given file to the appropriate filename for entry """
         try:
             os.rename(newfile, entry.get('name'))
             return True
         except OSError:
             err = sys.exc_info()[1]
-            self.logger.error("POSIX: Failed to rename temp file %s to %s: %s" %
-                              (newfile, entry.get('name'), err))
+            self.logger.error("POSIX: Failed to rename temp file %s to %s: %s"
+                              % (newfile, entry.get('name'), err))
             try:
                 os.unlink(newfile)
-            except:
+            except OSError:
                 err = sys.exc_info()[1]
                 self.logger.error("POSIX: Could not remove temp file %s: %s" %
                                   (newfile, err))
@@ -147,6 +150,7 @@ class POSIXFile(POSIXTool):
 
     def _get_diffs(self, entry, interactive=False, sensitive=False,
                    is_binary=False, content=None):
+        """ generate the necessary diffs for entry """
         if not interactive and sensitive:
             return
 
@@ -201,6 +205,8 @@ class POSIXFile(POSIXTool):
                 entry.set(attr, val)
 
     def _diff(self, content1, content2, difffunc, filename=None):
+        """ Return a diff of the two strings, as produced by difffunc.
+        warns after 5 seconds and times out after 30 seconds. """
         rv = []
         start = time.time()
         longtime = False
@@ -217,8 +223,8 @@ class POSIXFile(POSIXTool):
                 longtime = True
             elif now - start > 30:
                 if filename:
-                    self.logger.error("POSIX: Diff of %s took too long; giving "
-                                      "up" % filename)
+                    self.logger.error("POSIX: Diff of %s took too long; "
+                                      "giving up" % filename)
                 else:
                     self.logger.error("POSIX: Diff took too long; giving up")
                 return False

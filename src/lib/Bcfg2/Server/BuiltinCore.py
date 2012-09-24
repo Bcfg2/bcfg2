@@ -1,44 +1,22 @@
 """ the core of the builtin bcfg2 server """
 
-import os
 import sys
 import time
 import socket
 import daemon
-import logging
-from Bcfg2.Server.Core import BaseCore
+from Bcfg2.Server.Core import BaseCore, NoExposedMethod
 from Bcfg2.Compat import xmlrpclib, urlparse
 from Bcfg2.SSLServer import XMLRPCServer
 
-logger = logging.getLogger()
-
-
-class NoExposedMethod (Exception):
-    """There is no method exposed with the given name."""
-
 
 class Core(BaseCore):
+    """ The built-in server core """
     name = 'bcfg2-server'
 
     def __init__(self, setup):
         BaseCore.__init__(self, setup)
         self.server = None
         self.context = daemon.DaemonContext()
-
-    def _resolve_exposed_method(self, method_name):
-        """Resolve an exposed method.
-
-        Arguments:
-        method_name -- name of the method to resolve
-
-        """
-        try:
-            func = getattr(self, method_name)
-        except AttributeError:
-            raise NoExposedMethod(method_name)
-        if not getattr(func, "exposed", False):
-            raise NoExposedMethod(method_name)
-        return func
 
     def _dispatch(self, method, args, dispatch_dict):
         """Custom XML-RPC dispatcher for components.
@@ -66,10 +44,10 @@ class Core(BaseCore):
         except xmlrpclib.Fault:
             raise
         except Exception:
-            e = sys.exc_info()[1]
-            if getattr(e, "log", True):
-                self.logger.error(e, exc_info=True)
-            raise xmlrpclib.Fault(getattr(e, "fault_code", 1), str(e))
+            err = sys.exc_info()[1]
+            if getattr(err, "log", True):
+                self.logger.error(err, exc_info=True)
+            raise xmlrpclib.Fault(getattr(err, "fault_code", 1), str(err))
         return result
 
     def _daemonize(self):
@@ -91,10 +69,10 @@ class Core(BaseCore):
                                        timeout=1,
                                        ca=self.setup['ca'],
                                        protocol=self.setup['protocol'])
-        except:
+        except:  # pylint: disable=W0702
             err = sys.exc_info()[1]
             self.logger.error("Server startup failed: %s" % err)
-            os._exit(1)
+            self.context.close()
         self.server.register_instance(self)
 
     def _block(self):
@@ -104,10 +82,3 @@ class Core(BaseCore):
             self.server.server_close()
             self.context.close()
         self.shutdown()
-
-    def methodHelp(self, method_name):
-        try:
-            func = self._resolve_exposed_method(method_name)
-        except NoExposedMethod:
-            return ""
-        return func.__doc__

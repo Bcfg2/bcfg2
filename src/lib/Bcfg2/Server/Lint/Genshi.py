@@ -1,9 +1,13 @@
+""" Check Genshi templates for syntax errors """
+
 import sys
 import genshi.template
 import Bcfg2.Server.Lint
 
+
 class Genshi(Bcfg2.Server.Lint.ServerPlugin):
     """ Check Genshi templates for syntax errors """
+
     def Run(self):
         """ run plugin """
         loader = genshi.template.TemplateLoader()
@@ -14,9 +18,11 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"genshi-syntax-error":"error"}
+        return {"genshi-syntax-error": "error"}
 
     def check_files(self, entries, loader=None):
+        """ Check genshi templates in a list of entries for syntax
+        errors """
         if loader is None:
             loader = genshi.template.TemplateLoader()
 

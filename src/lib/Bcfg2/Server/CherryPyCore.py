@@ -3,14 +3,14 @@
 import sys
 import time
 import cherrypy
-import Bcfg2.Options
 from Bcfg2.Compat import urlparse, xmlrpclib, b64decode
 from Bcfg2.Server.Core import BaseCore
 from cherrypy.lib import xmlrpcutil
 from cherrypy._cptools import ErrorTool
 from cherrypy.process.plugins import Daemonizer
 
-def on_error(*args, **kwargs):
+
+def on_error(*args, **kwargs):  # pylint: disable=W0613
     """ define our own error handler that handles xmlrpclib.Fault
     objects and so allows for the possibility of returning proper
     error codes. this obviates the need to use the builtin CherryPy
@@ -18,12 +18,14 @@ def on_error(*args, **kwargs):
     err = sys.exc_info()[1]
     if not isinstance(err, xmlrpclib.Fault):
         err = xmlrpclib.Fault(xmlrpclib.INTERNAL_ERROR, str(err))
-    xmlrpcutil._set_response(xmlrpclib.dumps(err))
+    xmlrpcutil._set_response(xmlrpclib.dumps(err))  # pylint: disable=W0212
 
 cherrypy.tools.xmlrpc_error = ErrorTool(on_error)
 
 
 class Core(BaseCore):
+    """ The CherryPy-based server core """
+
     _cp_config = {'tools.xmlrpc_error.on': True,
                   'tools.bcfg2_authn.on': True}
 
@@ -37,34 +39,36 @@ class Core(BaseCore):
         cherrypy.engine.subscribe('stop', self.shutdown)
 
     def do_authn(self):
+        """ perform authentication """
         try:
             header = cherrypy.request.headers['Authorization']
         except KeyError:
             self.critical_error("No authentication data presented")
-        auth_type, auth_content = header.split()
+        auth_content = header.split()[1]
         auth_content = b64decode(auth_content)
         try:
             username, password = auth_content.split(":")
         except ValueError:
             username = auth_content
             password = ""
-        
+
         # FIXME: Get client cert
         cert = None
         address = (cherrypy.request.remote.ip, cherrypy.request.remote.name)
         return self.authenticate(cert, username, password, address)
 
     @cherrypy.expose
-    def default(self, *vpath, **params):
-        # needed to make enough changes to the stock XMLRPCController
-        # to support plugin.__rmi__ and prepending client address that
-        # we just rewrote.  it clearly wasn't written with inheritance
-        # in mind :(
+    def default(self, *args, **params):  # pylint: disable=W0613
+        """ needed to make enough changes to the stock
+        XMLRPCController to support plugin.__rmi__ and prepending
+        client address that we just rewrote.  it clearly wasn't
+        written with inheritance in mind :( """
         rpcparams, rpcmethod = xmlrpcutil.process_body()
         if rpcmethod == 'ERRORMETHOD':
             raise Exception("Unknown error processing XML-RPC request body")
         elif "." not in rpcmethod:
-            address = (cherrypy.request.remote.ip, cherrypy.request.remote.name)
+            address = (cherrypy.request.remote.ip,
+                       cherrypy.request.remote.name)
             rpcparams = (address, ) + rpcparams
 
             handler = getattr(self, rpcmethod, None)
@@ -81,7 +85,7 @@ class Core(BaseCore):
             body = handler(*rpcparams, **params)
         finally:
             self.stats.add_value(rpcmethod, time.time() - method_start)
-        
+
         xmlrpcutil.respond(body, 'utf-8', True)
         return cherrypy.serving.response.body
 
@@ -108,26 +112,3 @@ class Core(BaseCore):
 
     def _block(self):
         cherrypy.engine.block()
-
-
-def parse_opts(argv=None):
-    if argv is None:
-        argv = sys.argv[1:]
-    optinfo = dict()
-    optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
-    optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
-    optinfo.update(Bcfg2.Options.DAEMON_COMMON_OPTIONS)
-    setup = Bcfg2.Options.OptionParser(optinfo, argv=argv)
-    setup.parse(argv)
-    return setup
-
-def application(environ, start_response):
-    """ running behind Apache as a WSGI app is not currently
-    supported, but I'm keeping this code here because I hope for it to
-    be supported some day.  we'll need to set up an AMQP task queue
-    and related magic for that to happen, though. """
-    cherrypy.config.update({'environment': 'embedded'})
-    setup = parse_opts(argv=['-C', environ['config']])
-    root = Core(setup)
-    cherrypy.tree.mount(root)
-    return cherrypy.tree(environ, start_response)

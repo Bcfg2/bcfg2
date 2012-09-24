@@ -1,11 +1,14 @@
+""" check files for various required comments """
+
 import os
 import lxml.etree
 import Bcfg2.Server.Lint
-from Bcfg2.Server import XI, XI_NAMESPACE
-from Bcfg2.Server.Plugins.Cfg.CfgPlaintextGenerator import CfgPlaintextGenerator
+from Bcfg2.Server.Plugins.Cfg.CfgPlaintextGenerator \
+    import CfgPlaintextGenerator
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
 from Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator import CfgCheetahGenerator
 from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
+
 
 class Comments(Bcfg2.Server.Lint.ServerPlugin):
     """ check files for various required headers """
@@ -22,10 +25,9 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"unexpanded-keywords":"warning",
-                "keywords-not-found":"warning",
-                "comments-not-found":"warning",
-                "broken-xinclude-chain":"warning"}
+        return {"unexpanded-keywords": "warning",
+                "keywords-not-found": "warning",
+                "comments-not-found": "warning"}
 
     def required_keywords(self, rtype):
         """ given a file type, fetch the list of required VCS keywords
@@ -69,7 +71,8 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                     xdata = lxml.etree.XML(bundle.data)
                     rtype = "bundler"
                 except (lxml.etree.XMLSyntaxError, AttributeError):
-                    xdata = lxml.etree.parse(bundle.template.filepath).getroot()
+                    xdata = \
+                        lxml.etree.parse(bundle.template.filepath).getroot()
                     rtype = "sgenshi"
 
                 self.check_xml(bundle.name, xdata, rtype)
@@ -153,7 +156,8 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                           if status is None]
             if unexpanded:
                 self.LintError("unexpanded-keywords",
-                               "%s: Required keywords(s) found but not expanded: %s" %
+                               "%s: Required keywords(s) found but not "
+                               "expanded: %s" %
                                (filename, ", ".join(unexpanded)))
             missing = [keyword for (keyword, status) in found.items()
                        if status is False]
@@ -177,21 +181,3 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                 self.LintError("comments-not-found",
                                "%s: Required comments(s) not found: %s" %
                                (filename, ", ".join(missing)))
-
-    def has_all_xincludes(self, mfile):
-        """ return true if self.files includes all XIncludes listed in
-        the specified metadata type, false otherwise"""
-        if self.files is None:
-            return True
-        else:
-            path = os.path.join(self.metadata.data, mfile)
-            if path in self.files:
-                xdata = lxml.etree.parse(path)
-                for el in xdata.findall('./%sinclude' % XI_NAMESPACE):
-                    if not self.has_all_xincludes(el.get('href')):
-                        self.LintError("broken-xinclude-chain",
-                                       "Broken XInclude chain: could not include %s" % path)
-                        return False
-
-                return True
-

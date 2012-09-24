@@ -38,7 +38,11 @@ class TestPylint(Bcfg2TestCase):
     # <directory> => <file globs within that directory>.  <directory>
     # is relative to src/
     whitelist = {
-        "lib/Bcfg2/Server": ["Plugin"],
+        "lib/Bcfg2/Server": ["Lint",
+                             "Plugin",
+                             "BuiltinCore.py",
+                             "CherryPyCore.py",
+                             "Core.py"],
         "lib/Bcfg2/Server/Plugins": ["PuppetENC.py",
                                      "Rules.py",
                                      "DBStats.py",
@@ -60,7 +64,8 @@ class TestPylint(Bcfg2TestCase):
                                      "Svn2.py",
                                      "Bzr.py",
                                      "Cfg",
-                                     "Packages"]
+                                     "Packages"],
+        "lib/Bcfg2/Client/Tools": ["POSIX"],
         }
 
     pylint_cmd = ["pylint", "--rcfile", rcfile]

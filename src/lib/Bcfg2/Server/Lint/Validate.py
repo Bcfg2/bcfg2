@@ -1,34 +1,38 @@
+""" Ensure that the repo validates """
+
 import os
 import sys
 import glob
 import fnmatch
 import lxml.etree
 from subprocess import Popen, PIPE, STDOUT
-from Bcfg2.Server import XI, XI_NAMESPACE
+from Bcfg2.Server import XI_NAMESPACE
 import Bcfg2.Server.Lint
+
 
 class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
     """ Ensure that the repo validates """
 
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerlessPlugin.__init__(self, *args, **kwargs)
-        self.filesets = {"metadata:groups":"%s/metadata.xsd",
-                         "metadata:clients":"%s/clients.xsd",
-                         "info":"%s/info.xsd",
-                         "%s/Bundler/*.xml":"%s/bundle.xsd",
-                         "%s/Bundler/*.genshi":"%s/bundle.xsd",
-                         "%s/Pkgmgr/*.xml":"%s/pkglist.xsd",
-                         "%s/Base/*.xml":"%s/base.xsd",
-                         "%s/Rules/*.xml":"%s/rules.xsd",
-                         "%s/Defaults/*.xml":"%s/defaults.xsd",
-                         "%s/etc/report-configuration.xml":"%s/report-configuration.xsd",
-                         "%s/Deps/*.xml":"%s/deps.xsd",
-                         "%s/Decisions/*.xml":"%s/decisions.xsd",
-                         "%s/Packages/sources.xml":"%s/packages.xsd",
-                         "%s/GroupPatterns/config.xml":"%s/grouppatterns.xsd",
-                         "%s/NagiosGen/config.xml":"%s/nagiosgen.xsd",
-                         "%s/FileProbes/config.xml":"%s/fileprobes.xsd",
-                         }
+        self.filesets = \
+            {"metadata:groups": "%s/metadata.xsd",
+             "metadata:clients": "%s/clients.xsd",
+             "info": "%s/info.xsd",
+             "%s/Bundler/*.xml": "%s/bundle.xsd",
+             "%s/Bundler/*.genshi": "%s/bundle.xsd",
+             "%s/Pkgmgr/*.xml": "%s/pkglist.xsd",
+             "%s/Base/*.xml": "%s/base.xsd",
+             "%s/Rules/*.xml": "%s/rules.xsd",
+             "%s/Defaults/*.xml": "%s/defaults.xsd",
+             "%s/etc/report-configuration.xml": "%s/report-configuration.xsd",
+             "%s/Deps/*.xml": "%s/deps.xsd",
+             "%s/Decisions/*.xml": "%s/decisions.xsd",
+             "%s/Packages/sources.xml": "%s/packages.xsd",
+             "%s/GroupPatterns/config.xml": "%s/grouppatterns.xsd",
+             "%s/NagiosGen/config.xml": "%s/nagiosgen.xsd",
+             "%s/FileProbes/config.xml": "%s/fileprobes.xsd",
+             }
 
         self.filelists = {}
         self.get_filelists()
@@ -54,13 +58,13 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"broken-xinclude-chain":"warning",
-                "schema-failed-to-parse":"warning",
-                "properties-schema-not-found":"warning",
-                "xml-failed-to-parse":"error",
-                "xml-failed-to-read":"error",
-                "xml-failed-to-verify":"error",
-                "input-output-error":"error"}
+        return {"broken-xinclude-chain": "warning",
+                "schema-failed-to-parse": "warning",
+                "properties-schema-not-found": "warning",
+                "xml-failed-to-parse": "error",
+                "xml-failed-to-read": "error",
+                "xml-failed-to-verify": "error",
+                "input-output-error": "error"}
 
     def check_properties(self):
         """ check Properties files against their schemas """
@@ -124,12 +128,13 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                     self.filelists[path] = \
                                          [f for f in self.files
                                           if os.path.basename(f) == 'info.xml']
-                else: # self.files is None
+                else:  # self.files is None
                     self.filelists[path] = []
-                    for infodir in ['Cfg', 'TGenshi', 'TCheetah']:
-                        for root, dirs, files in os.walk('%s/%s' %
-                                                         (self.config['repo'],
-                                                          infodir)):
+                    for infodir in ['Cfg', 'SSHbase', 'SSLCA', 'TGenshi',
+                                    'TCheetah']:
+                        for root, _, files in \
+                                os.walk(os.path.join(self.config['repo'],
+                                                     infodir)):
                             self.filelists[path].extend([os.path.join(root, f)
                                                          for f in files
                                                          if f == 'info.xml'])
@@ -146,7 +151,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             if (fname not in self.filelists['metadata:groups'] and
                 fname not in self.filelists['metadata:clients']):
                 self.LintError("broken-xinclude-chain",
-                               "Broken XInclude chain: Could not determine file type of %s" % fname)
+                               "Broken XInclude chain: Could not determine "
+                               "file type of %s" % fname)
 
     def get_metadata_list(self, mtype):
         """ get all metadata files for the specified type (clients or
@@ -163,11 +169,9 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             try:
                 rv.extend(self.follow_xinclude(rv[0]))
             except lxml.etree.XMLSyntaxError:
-                e = sys.exc_info()[1]
+                err = sys.exc_info()[1]
                 self.LintError("xml-failed-to-parse",
-                               "%s fails to parse:\n%s" % (rv[0], e))
-
-
+                               "%s fails to parse:\n%s" % (rv[0], err))
         return rv
 
     def follow_xinclude(self, xfile):
@@ -193,21 +197,22 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             elif self.HandlesFile(path):
                 rv.append(path)
                 groupdata = lxml.etree.parse(path)
-                included.update(el for el in groupdata.findall('./%sinclude' % 
+                included.update(el for el in groupdata.findall('./%sinclude' %
                                                                XI_NAMESPACE))
                 included.discard(filename)
 
         return rv
 
     def _load_schema(self, filename):
+        """ load an XML schema document, returning the Schema object """
         try:
             return lxml.etree.XMLSchema(lxml.etree.parse(filename))
         except IOError:
-            e = sys.exc_info()[1]
-            self.LintError("input-output-error", str(e))
+            err = sys.exc_info()[1]
+            self.LintError("input-output-error", str(err))
         except lxml.etree.XMLSchemaParseError:
-            e = sys.exc_info()[1]
+            err = sys.exc_info()[1]
             self.LintError("schema-failed-to-parse",
                            "Failed to process schema %s: %s" %
-                           (filename, e))
+                           (filename, err))
         return None

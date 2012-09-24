@@ -1,13 +1,13 @@
+""" Handle <Path type='nonexistent' ...> entries """
+
 import os
 import sys
 import shutil
-try:
-    from base import POSIXTool
-except ImportError:
-    # py3k, incompatible syntax with py2.4
-    exec("from .base import POSIXTool")
+from Bcfg2.Client.Tools.POSIX.base import POSIXTool
+
 
 class POSIXNonexistent(POSIXTool):
+    """ Handle <Path type='nonexistent' ...> entries """
     __req__ = ['name']
 
     def verify(self, entry, _):
@@ -16,7 +16,7 @@ class POSIXNonexistent(POSIXTool):
                               entry.get("name"))
             return False
         return True
-        
+
     def install(self, entry):
         ename = entry.get('name')
         if entry.get('recursive', '').lower() == 'true':
@@ -31,13 +31,13 @@ class POSIXNonexistent(POSIXTool):
                                           'specified in your configuration.' %
                                           ename)
                         return False
-            rm = shutil.rmtree
+            remove = shutil.rmtree
         elif os.path.isdir(ename):
-            rm = os.rmdir
+            remove = os.rmdir
         else:
-            rm = os.remove
+            remove = os.remove
         try:
-            rm(ename)
+            remove(ename)
             return True
         except OSError:
             err = sys.exc_info()[1]

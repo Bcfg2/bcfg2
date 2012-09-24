@@ -1,51 +1,47 @@
-__all__ = ['Bundler',
-           'Comments',
-           'Duplicates',
-           'InfoXML',
-           'MergeFiles',
-           'Pkgmgr',
-           'RequiredAttrs',
-           'Validate',
-           'Genshi']
+""" Base classes for Lint plugins and error handling """
 
-import logging
 import os
 import sys
+import logging
 from copy import copy
 import textwrap
 import lxml.etree
-import Bcfg2.Logger
 import fcntl
 import termios
 import struct
+from Bcfg2.Server import XI_NAMESPACE
 
-def _ioctl_GWINSZ(fd):
+
+def _ioctl_GWINSZ(fd):  # pylint: disable=C0103
+    """ get a tuple of (height, width) giving the size of the window
+    from the given file descriptor """
     try:
-        cr = struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
-    except:
+        return struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+    except:  # pylint: disable=W0702
         return None
-    return cr
+
 
 def get_termsize():
     """ get a tuple of (width, height) giving the size of the terminal """
     if not sys.stdout.isatty():
         return None
-    cr = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(1) or _ioctl_GWINSZ(2)
-    if not cr:
+    dims = _ioctl_GWINSZ(0) or _ioctl_GWINSZ(1) or _ioctl_GWINSZ(2)
+    if not dims:
         try:
             fd = os.open(os.ctermid(), os.O_RDONLY)
-            cr = _ioctl_GWINSZ(fd)
+            dims = _ioctl_GWINSZ(fd)
             os.close(fd)
-        except:
+        except:  # pylint: disable=W0702
             pass
-    if not cr:
+    if not dims:
         try:
-            cr = (os.environ['LINES'], os.environ['COLUMNS'])
+            dims = (os.environ['LINES'], os.environ['COLUMNS'])
         except KeyError:
             return None
-    return int(cr[1]), int(cr[0])
+    return int(dims[1]), int(dims[0])
 
-class Plugin (object):
+
+class Plugin(object):
     """ base class for ServerlessPlugin and ServerPlugin """
 
     def __init__(self, config, errorhandler=None, files=None):
@@ -78,6 +74,7 @@ class Plugin (object):
                                              fname)) in self.files)
 
     def LintError(self, err, msg):
+        """ record an error in the lint process """
         self.errorhandler.dispatch(err, msg)
 
     def RenderXML(self, element, keep_text=False):
@@ -88,16 +85,20 @@ class Plugin (object):
             el = copy(element)
             if el.text and not keep_text:
                 el.text = '...'
-            [el.remove(c) for c in el.iterchildren()]
-            xml = lxml.etree.tostring(el,
-                                      xml_declaration=False).decode("UTF-8").strip()
+            for child in el.iterchildren():
+                el.remove(child)
+            xml = lxml.etree.tostring(
+                el,
+                xml_declaration=False).decode("UTF-8").strip()
         else:
-            xml = lxml.etree.tostring(element,
-                                      xml_declaration=False).decode("UTF-8").strip()
+            xml = lxml.etree.tostring(
+                element,
+                xml_declaration=False).decode("UTF-8").strip()
         return "   line %s: %s" % (element.sourceline, xml)
 
 
 class ErrorHandler (object):
+    """ a class to handle errors for bcfg2-lint plugins """
     def __init__(self, config=None):
         self.errors = 0
         self.warnings = 0
@@ -124,6 +125,8 @@ class ErrorHandler (object):
                     self._handlers[err] = self.debug
 
     def RegisterErrors(self, errors):
+        """ Register a dict of errors (name: default level) that a
+        plugin may raise """
         for err, action in errors.items():
             if err not in self._handlers:
                 if "warn" in action:
@@ -132,8 +135,9 @@ class ErrorHandler (object):
                     self._handlers[err] = self.error
                 else:
                     self._handlers[err] = self.debug
-        
+
     def dispatch(self, err, msg):
+        """ Dispatch an error to the correct handler """
         if err in self._handlers:
             self._handlers[err](msg)
             self.logger.debug("    (%s)" % err)
@@ -157,6 +161,8 @@ class ErrorHandler (object):
         self._log(msg, self.logger.debug)
 
     def _log(self, msg, logfunc, prefix=""):
+        """ Generic log function that logs a message with the given
+        function after wrapping it for the terminal width """
         # a message may itself consist of multiple lines.  wrap() will
         # elide them all into a single paragraph, which we don't want.
         # so we split the message into its paragraphs and wrap each
@@ -186,8 +192,27 @@ class ServerlessPlugin (Plugin):
 class ServerPlugin (Plugin):
     """ base class for plugins that check things that require the
     running Bcfg2 server """
-    def __init__(self, lintCore, config, **kwargs):
+    def __init__(self, core, config, **kwargs):
         Plugin.__init__(self, config, **kwargs)
-        self.core = lintCore
+        self.core = core
         self.logger = self.core.logger
         self.metadata = self.core.metadata
+        self.errorhandler.RegisterErrors({"broken-xinclude-chain": "warning"})
+
+    def has_all_xincludes(self, mfile):
+        """ return true if self.files includes all XIncludes listed in
+        the specified metadata type, false otherwise"""
+        if self.files is None:
+            return True
+        else:
+            path = os.path.join(self.metadata.data, mfile)
+            if path in self.files:
+                xdata = lxml.etree.parse(path)
+                for el in xdata.findall('./%sinclude' % XI_NAMESPACE):
+                    if not self.has_all_xincludes(el.get('href')):
+                        self.LintError("broken-xinclude-chain",
+                                       "Broken XInclude chain: could not "
+                                       "include %s" % path)
+                        return False
+
+                return True

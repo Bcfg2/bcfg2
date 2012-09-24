@@ -1,11 +1,8 @@
-import os
-import sys
-try:
-    from base import POSIXTool
-except ImportError:
-    # py3k, incompatible syntax with py2.4
-    exec("from .base import POSIXTool")
+""" Handle <Path type='permissions' ...> entries """
+
+from Bcfg2.Client.Tools.POSIX.base import POSIXTool
+
 
 class POSIXPermissions(POSIXTool):
+    """ Handle <Path type='permissions' ...> entries """
     __req__ = ['name', 'perms', 'owner', 'group']
-    

@@ -18,7 +18,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
         self.ppath = setup['ppath']
         self.max_copies = setup['max_copies']
-        self._load_handlers()
+        self._handlers = self._load_handlers()
         self.logger.debug("POSIX: Handlers loaded: %s" %
                           (", ".join(self._handlers.keys())))
         self.__req__ = dict(Path=dict())
@@ -39,21 +39,22 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                      self.handlesEntry(e))])
 
     def _load_handlers(self):
-        # this must be called at run-time, not at compile-time, or we
-        # get wierd circular import issues.
-        self._handlers = dict()
+        """ load available POSIX tool handlers.  this must be called
+        at run-time, not at compile-time, or we get wierd circular
+        import issues. """
+        rv = dict()
         for submodule in walk_packages(path=__path__, prefix=__name__ + "."):
             mname = submodule[1].rsplit('.', 1)[-1]
             if mname == 'base':
                 continue
-            module = getattr(__import__(submodule[1]).Client.Tools.POSIX, mname)
+            module = getattr(__import__(submodule[1]).Client.Tools.POSIX,
+                             mname)
             hdlr = getattr(module, "POSIX" + mname)
             if POSIXTool in hdlr.__mro__:
                 # figure out what entry type this handler handles
                 etype = hdlr.__name__[5:].lower()
-                self._handlers[etype] = hdlr(self.logger,
-                                             self.setup,
-                                             self.config)
+                rv[etype] = hdlr(self.logger, self.setup, self.config)
+        return rv
 
     def canVerify(self, entry):
         if not Bcfg2.Client.Tools.Tool.canVerify(self, entry):
@@ -96,9 +97,10 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         return ret
 
     def _prune_old_backups(self, entry):
+        """ Remove old paranoid backup files """
         bkupnam = entry.get('name').replace('/', '_')
-        bkup_re = re.compile(bkupnam + \
-                                 r'_\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}$')
+        bkup_re = re.compile(
+            bkupnam + r'_\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}$')
         # current list of backups for this file
         try:
             bkuplist = [f for f in os.listdir(self.ppath) if
@@ -121,6 +123,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                   (os.path.join(self.ppath, oldest), err))
 
     def _paranoid_backup(self, entry):
+        """ Take a backup of the specified entry for paranoid mode """
         if (entry.get("paranoid", 'false').lower() == 'true' and
             self.setup.get("paranoid", False) and
             entry.get('current_exists', 'true') == 'true' and
@@ -135,5 +138,5 @@ class POSIX(Bcfg2.Client.Tools.Tool):
                                  (entry.get('name'), bfile))
             except IOError:
                 err = sys.exc_info()[1]
-                self.logger.error("POSIX: Failed to create backup file for %s: "
-                                  "%s" % (entry.get('name'), err))
+                self.logger.error("POSIX: Failed to create backup file for "
+                                  "%s: %s" % (entry.get('name'), err))

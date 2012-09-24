@@ -1,15 +1,15 @@
+""" Handle <Path type='directory' ...> entries """
+
 import os
 import sys
 import stat
 import shutil
 import Bcfg2.Client.XML
-try:
-    from base import POSIXTool
-except ImportError:
-    # py3k, incompatible syntax with py2.4
-    exec("from .base import POSIXTool")
+from Bcfg2.Client.Tools.POSIX.base import POSIXTool
+
 
 class POSIXDirectory(POSIXTool):
+    """ Handle <Path type='directory' ...> entries """
     __req__ = ['name', 'perms', 'owner', 'group']
 
     def verify(self, entry, modlist):
@@ -18,10 +18,11 @@ class POSIXDirectory(POSIXTool):
             return False
 
         if not stat.S_ISDIR(ondisk[stat.ST_MODE]):
-            self.logger.info("POSIX: %s is not a directory" % entry.get('name'))
+            self.logger.info("POSIX: %s is not a directory" %
+                             entry.get('name'))
             return False
-        
-        pruneTrue = True
+
+        prune = True
         if entry.get('prune', 'false').lower() == 'true':
             # check for any extra entries when prune='true' attribute is set
             try:
@@ -30,7 +31,7 @@ class POSIXDirectory(POSIXTool):
                           if os.path.join(entry.get('name'),
                                           ent) not in modlist]
                 if extras:
-                    pruneTrue = False
+                    prune = False
                     msg = "Directory %s contains extra entries: %s" % \
                         (entry.get('name'), "; ".join(extras))
                     self.logger.info("POSIX: " + msg)
@@ -38,9 +39,9 @@ class POSIXDirectory(POSIXTool):
                     for extra in extras:
                         Bcfg2.Client.XML.SubElement(entry, 'Prune', path=extra)
             except OSError:
-                pruneTrue = True
+                prune = True
 
-        return POSIXTool.verify(self, entry, modlist) and pruneTrue
+        return POSIXTool.verify(self, entry, modlist) and prune
 
     def install(self, entry):
         """Install device entries."""
@@ -60,7 +61,7 @@ class POSIXDirectory(POSIXTool):
         elif fmode:
             self.logger.debug("POSIX: Found a pre-existing directory at %s" %
                               entry.get('name'))
-        
+
         rv = True
         if not fmode:
             rv &= self._makedirs(entry)
@@ -71,12 +72,12 @@ class POSIXDirectory(POSIXTool):
                 pname = pent.get('path')
                 ulfailed = False
                 if os.path.isdir(pname):
-                    rm = shutil.rmtree
+                    remove = shutil.rmtree
                 else:
-                    rm = os.unlink
+                    remove = os.unlink
                 try:
                     self.logger.debug("POSIX: Removing %s" % pname)
-                    rm(pname)
+                    remove(pname)
                 except OSError:
                     err = sys.exc_info()[1]
                     self.logger.error("POSIX: Failed to unlink %s: %s" %

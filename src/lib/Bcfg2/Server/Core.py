@@ -16,7 +16,7 @@ import Bcfg2.Logger
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Cache import Cache
 from Bcfg2.Statistics import Statistics
-from Bcfg2.Compat import xmlrpclib, reduce  # pylint: disable=W0622
+from Bcfg2.Compat import xmlrpclib, reduce, wraps  # pylint: disable=W0622
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 
 try:
@@ -29,11 +29,13 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
 
 
 def exposed(func):
+    """ decorator that sets the 'exposed' attribute of a function to
+    expose it via XML-RPC """
     func.exposed = True
     return func
 
 
-class track_statistics(object):
+class track_statistics(object):  # pylint: disable=C0103
     """ decorator that tracks execution time for the given
     function """
 
@@ -44,7 +46,9 @@ class track_statistics(object):
         if self.name is None:
             self.name = func.__name__
 
+        @wraps(func)
         def inner(obj, *args, **kwargs):
+            """ The decorated function """
             name = "%s:%s" % (obj.__class__.__name__, self.name)
 
             start = time.time()
@@ -57,6 +61,7 @@ class track_statistics(object):
 
 
 def sort_xml(node, key=None):
+    """ sort XML in a deterministic fashion """
     for child in node:
         sort_xml(child, key)
 
@@ -72,12 +77,21 @@ class CoreInitError(Exception):
     pass
 
 
+class NoExposedMethod (Exception):
+    """There is no method exposed with the given name."""
+
+
+# pylint: disable=W0702
+# in core we frequently want to catch all exceptions, regardless of
+# type, so disable the pylint rule that catches that.
+
+
 class BaseCore(object):
     """The Core object is the container for all
     Bcfg2 Server logic and modules.
     """
 
-    def __init__(self, setup):
+    def __init__(self, setup):  # pylint: disable=R0912,R0915
         self.datastore = setup['repo']
 
         if setup['debug']:
@@ -99,18 +113,19 @@ class BaseCore(object):
         self.logger = logging.getLogger('bcfg2-server')
 
         try:
-            fm = Bcfg2.Server.FileMonitor.available[setup['filemonitor']]
+            filemonitor = \
+                Bcfg2.Server.FileMonitor.available[setup['filemonitor']]
         except KeyError:
             self.logger.error("File monitor driver %s not available; "
                               "forcing to default" % setup['filemonitor'])
-            fm = Bcfg2.Server.FileMonitor.available['default']
+            filemonitor = Bcfg2.Server.FileMonitor.available['default']
         famargs = dict(ignore=[], debug=False)
         if 'ignore' in setup:
             famargs['ignore'] = setup['ignore']
         if 'debug' in setup:
             famargs['debug'] = setup['debug']
         try:
-            self.fam = fm(**famargs)
+            self.fam = filemonitor(**famargs)
         except IOError:
             msg = "Failed to instantiate fam driver %s" % setup['filemonitor']
             self.logger.error(msg, exc_info=1)
@@ -135,7 +150,8 @@ class BaseCore(object):
         self._database_available = False
         # verify our database schema
         try:
-            from Bcfg2.Server.SchemaUpdater import update_database, UpdaterError
+            from Bcfg2.Server.SchemaUpdater import update_database, \
+                UpdaterError
             try:
                 update_database()
                 self._database_available = True
@@ -159,21 +175,21 @@ class BaseCore(object):
             if not plugin in self.plugins:
                 self.init_plugins(plugin)
         # Remove blacklisted plugins
-        for p, bl in list(self.plugin_blacklist.items()):
-            if len(bl) > 0:
+        for plugin, blacklist in list(self.plugin_blacklist.items()):
+            if len(blacklist) > 0:
                 self.logger.error("The following plugins conflict with %s;"
-                                  "Unloading %s" % (p, bl))
-            for plug in bl:
+                                  "Unloading %s" % (plugin, blacklist))
+            for plug in blacklist:
                 del self.plugins[plug]
         # This section logs the experimental plugins
-        expl = [plug for (name, plug) in list(self.plugins.items())
+        expl = [plug for plug in list(self.plugins.values())
                 if plug.experimental]
         if expl:
             self.logger.info("Loading experimental plugin(s): %s" %
                              (" ".join([x.name for x in expl])))
             self.logger.info("NOTE: Interfaces subject to change")
         # This section logs the deprecated plugins
-        depr = [plug for (name, plug) in list(self.plugins.items())
+        depr = [plug for plug in list(self.plugins.values())
                 if plug.deprecated]
         if depr:
             self.logger.info("Loading deprecated plugin(s): %s" %
@@ -187,7 +203,8 @@ class BaseCore(object):
                               "failed to instantiate Core")
             raise CoreInitError("No Metadata Plugin")
         self.statistics = self.plugins_by_type(Bcfg2.Server.Plugin.Statistics)
-        self.pull_sources = self.plugins_by_type(Bcfg2.Server.Plugin.PullSource)
+        self.pull_sources = \
+            self.plugins_by_type(Bcfg2.Server.Plugin.PullSource)
         self.generators = self.plugins_by_type(Bcfg2.Server.Plugin.Generator)
         self.structures = self.plugins_by_type(Bcfg2.Server.Plugin.Structure)
         self.connectors = self.plugins_by_type(Bcfg2.Server.Plugin.Connector)
@@ -239,14 +256,16 @@ class BaseCore(object):
                                 (plugin)).Server.Plugins, plugin)
         except ImportError:
             try:
-                mod = __import__(plugin, globals(), locals(), [plugin.split('.')[-1]])
+                mod = __import__(plugin, globals(), locals(),
+                                 [plugin.split('.')[-1]])
             except:
                 self.logger.error("Failed to load plugin %s" % plugin)
                 return
         try:
             plug = getattr(mod, plugin.split('.')[-1])
         except AttributeError:
-            self.logger.error("Failed to load plugin %s (AttributeError)" % plugin)
+            self.logger.error("Failed to load plugin %s (AttributeError)" %
+                              plugin)
             return
         # Blacklist conflicting plugins
         cplugs = [conflict for conflict in plug.conflicts
@@ -258,8 +277,8 @@ class BaseCore(object):
             self.logger.error("Failed to instantiate plugin %s" % plugin,
                               exc_info=1)
         except:
-            self.logger.error("Unexpected instantiation failure for plugin %s" %
-                              plugin, exc_info=1)
+            self.logger.error("Unexpected instantiation failure for plugin %s"
+                              % plugin, exc_info=1)
 
     def shutdown(self):
         """Shutting down the plugins."""
@@ -304,7 +323,8 @@ class BaseCore(object):
     @track_statistics()
     def validate_structures(self, metadata, data):
         """Checks the data structure."""
-        for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.StructureValidator):
+        for plugin in \
+                self.plugins_by_type(Bcfg2.Server.Plugin.StructureValidator):
             try:
                 plugin.validate_structures(metadata, data)
             except Bcfg2.Server.Plugin.ValidationError:
@@ -346,6 +366,8 @@ class BaseCore(object):
 
     @track_statistics()
     def BindStructures(self, structures, metadata, config):
+        """ Given a list of structures, bind all the entries in them
+        and add the structures to the config. """
         for astruct in structures:
             try:
                 self.BindStructure(astruct, metadata)
@@ -372,8 +394,8 @@ class BaseCore(object):
                 exc = sys.exc_info()[1]
                 if 'failure' not in entry.attrib:
                     entry.set('failure', 'bind error: %s' % format_exc())
-                self.logger.error("Unexpected failure in BindStructure: %s %s" %
-                                  (entry.tag, entry.get('name')), exc_info=1)
+                self.logger.error("Unexpected failure in BindStructure: %s %s"
+                                  % (entry.tag, entry.get('name')), exc_info=1)
 
     def Bind(self, entry, metadata):
         """Bind an entry using the appropriate generator."""
@@ -393,8 +415,8 @@ class BaseCore(object):
                 self.logger.error("Failed binding entry %s:%s with altsrc %s" %
                                   (entry.tag, entry.get('name'),
                                    entry.get('altsrc')))
-                self.logger.error("Falling back to %s:%s" % (entry.tag,
-                                                             entry.get('name')))
+                self.logger.error("Falling back to %s:%s" %
+                                  (entry.tag, entry.get('name')))
 
         glist = [gen for gen in self.generators if
                  entry.get('name') in gen.Entries.get(entry.tag, {})]
@@ -557,6 +579,8 @@ class BaseCore(object):
         self.client_run_hook("end_statistics", meta)
 
     def resolve_client(self, address, cleanup_cache=False, metadata=True):
+        """ given a client address, get the client hostname and
+        optionally metadata """
         try:
             client = self.metadata.resolve_client(address,
                                                   cleanup_cache=cleanup_cache)
@@ -581,6 +605,7 @@ class BaseCore(object):
                               "Critical failure: %s" % operation)
 
     def _get_rmi(self):
+        """ Get a list of RMI calls exposed by plugins """
         rmi = dict()
         if self.plugins:
             for pname, pinst in list(self.plugins.items()):
@@ -588,9 +613,26 @@ class BaseCore(object):
                     rmi["%s.%s" % (pname, mname)] = getattr(pinst, mname)
         return rmi
 
+    def _resolve_exposed_method(self, method_name):
+        """Resolve an exposed method.
+
+        Arguments:
+        method_name -- name of the method to resolve
+
+        """
+        try:
+            func = getattr(self, method_name)
+        except AttributeError:
+            raise NoExposedMethod(method_name)
+        if not getattr(func, "exposed", False):
+            raise NoExposedMethod(method_name)
+        return func
+
     # XMLRPC handlers start here
+
     @exposed
-    def listMethods(self, address):
+    def listMethods(self, address):  # pylint: disable=W0613
+        """ list all exposed methods, including plugin RMI """
         methods = [name
                    for name, func in inspect.getmembers(self, callable)
                    if getattr(func, "exposed", False)]
@@ -598,13 +640,18 @@ class BaseCore(object):
         return methods
 
     @exposed
-    def methodHelp(self, address, method_name):
-        raise NotImplementedError
+    def methodHelp(self, address, method_name):  # pylint: disable=W0613
+        """ get help on an exposed method """
+        try:
+            func = self._resolve_exposed_method(method_name)
+        except NoExposedMethod:
+            return ""
+        return func.__doc__
 
     @exposed
     def DeclareVersion(self, address, version):
         """ declare the client version """
-        client, metadata = self.resolve_client(address)
+        client = self.resolve_client(address, metadata=False)[0]
         try:
             self.metadata.set_version(client, version)
         except (Bcfg2.Server.Plugin.MetadataConsistencyError,
@@ -645,26 +692,27 @@ class BaseCore(object):
         try:
             xpdata = lxml.etree.XML(probedata.encode('utf-8'),
                                     parser=Bcfg2.Server.XMLParser)
-        except:
+        except lxml.etree.XMLSyntaxError:
             err = sys.exc_info()[1]
             self.critical_error("Failed to parse probe data from client %s: %s"
                                 % (client, err))
 
         sources = []
-        [sources.append(data.get('source')) for data in xpdata
-         if data.get('source') not in sources]
-        for source in sources:
-            if source not in self.plugins:
-                self.logger.warning("Failed to locate plugin %s" % source)
-                continue
-            dl = [data for data in xpdata if data.get('source') == source]
-            try:
-                self.plugins[source].ReceiveData(metadata, dl)
-            except:
-                err = sys.exc_info()[1]
-                self.critical_error("Failed to process probe data from client "
-                                    "%s: %s" %
-                                    (client, err))
+        for data in xpdata:
+            source = data.get('source')
+            if source not in sources:
+                if source not in self.plugins:
+                    self.logger.warning("Failed to locate plugin %s" % source)
+                    continue
+                datalist = [data for data in xpdata
+                            if data.get('source') == source]
+                try:
+                    self.plugins[source].ReceiveData(metadata, datalist)
+                except:
+                    err = sys.exc_info()[1]
+                    self.critical_error("Failed to process probe data from "
+                                        "client %s: %s" %
+                                        (client, err))
         return True
 
     @exposed
@@ -681,7 +729,7 @@ class BaseCore(object):
         return True
 
     @exposed
-    def GetConfig(self, address, checksum=False):
+    def GetConfig(self, address):
         """Build config for a client."""
         client = self.resolve_client(address)[0]
         try:
@@ -701,6 +749,7 @@ class BaseCore(object):
         return "<ok/>"
 
     def authenticate(self, cert, user, password, address):
+        """ Authenticate a client connection """
         if self.ca:
             acert = cert
         else:
@@ -712,7 +761,7 @@ class BaseCore(object):
     @exposed
     def GetDecisionList(self, address, mode):
         """Get the data of the decision list."""
-        client, metadata = self.resolve_client(address)
+        metadata = self.resolve_client(address)[1]
         return self.GetDecisions(metadata, mode)
 
     @property

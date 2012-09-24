@@ -1,12 +1,12 @@
+""" Handle <Path type='nonexistent' ...> entries """
+
 import os
 import sys
-try:
-    from base import POSIXTool, device_map
-except ImportError:
-    # py3k, incompatible syntax with py2.4
-    exec("from .base import POSIXTool, device_map")
+from Bcfg2.Client.Tools.POSIX.base import POSIXTool, device_map
+
 
 class POSIXDevice(POSIXTool):
+    """ Handle <Path type='nonexistent' ...> entries """
     __req__ = ['name', 'dev_type', 'mode', 'owner', 'group']
 
     def fully_specified(self, entry):
@@ -22,7 +22,7 @@ class POSIXDevice(POSIXTool):
         ondisk = self._exists(entry)
         if not ondisk:
             return False
-        
+
         # attempt to verify device properties as specified in config
         rv = True
         dev_type = entry.get('dev_type')

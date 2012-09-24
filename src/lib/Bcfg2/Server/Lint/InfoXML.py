@@ -1,8 +1,11 @@
+""" ensure that all config files have an info.xml file"""
+
 import os
 import Bcfg2.Options
 import Bcfg2.Server.Lint
 from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
 from Bcfg2.Server.Plugins.Cfg.CfgLegacyInfo import CfgLegacyInfo
+
 
 class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
     """ ensure that all config files have an info.xml file"""
@@ -34,13 +37,14 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"no-infoxml":"warning",
-                "deprecated-info-file":"warning",
-                "paranoid-false":"warning",
-                "broken-xinclude-chain":"warning",
-                "required-infoxml-attrs-missing":"error"}
+        return {"no-infoxml": "warning",
+                "deprecated-info-file": "warning",
+                "paranoid-false": "warning",
+                "broken-xinclude-chain": "warning",
+                "required-infoxml-attrs-missing": "error"}
 
     def check_infoxml(self, fname, xdata):
+        """ verify that info.xml contains everything it should """
         for info in xdata.getroottree().findall("//Info"):
             required = []
             if "required_attrs" in self.config:
@@ -50,7 +54,8 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
             if missing:
                 self.LintError("required-infoxml-attrs-missing",
                                "Required attribute(s) %s not found in %s:%s" %
-                               (",".join(missing), fname, self.RenderXML(info)))
+                               (",".join(missing), fname,
+                                self.RenderXML(info)))
 
             if ((Bcfg2.Options.MDATA_PARANOID.value and
                  info.get("paranoid") is not None and
@@ -61,4 +66,3 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
                 self.LintError("paranoid-false",
                                "Paranoid must be true in %s:%s" %
                                (fname, self.RenderXML(info)))
-

@@ -1,10 +1,11 @@
-import os
-import lxml.etree
+""" Find duplicate clients, groups, etc. """
+
 import Bcfg2.Server.Lint
-from Bcfg2.Server import XI, XI_NAMESPACE
+
 
 class Duplicates(Bcfg2.Server.Lint.ServerPlugin):
     """ Find duplicate clients, groups, etc. """
+
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerPlugin.__init__(self, *args, **kwargs)
         self.groups_xdata = None
@@ -25,11 +26,10 @@ class Duplicates(Bcfg2.Server.Lint.ServerPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"broken-xinclude-chain":"warning",
-                "duplicate-client":"error",
-                "duplicate-group":"error",
-                "duplicate-package":"error",
-                "multiple-default-groups":"error"}
+        return {"duplicate-client": "error",
+                "duplicate-group": "error",
+                "duplicate-package": "error",
+                "multiple-default-groups": "error"}
 
     def load_xdata(self):
         """ attempt to load XML data for groups and clients.  only
@@ -71,20 +71,3 @@ class Duplicates(Bcfg2.Server.Lint.ServerPlugin):
             self.LintError("multiple-default-groups",
                            "Multiple default groups defined: %s" %
                            ",".join(default_groups))
-
-    def has_all_xincludes(self, mfile):
-        """ return true if self.files includes all XIncludes listed in
-        the specified metadata type, false otherwise"""
-        if self.files is None:
-            return True
-        else:
-            path = os.path.join(self.metadata.data, mfile)
-            if path in self.files:
-                xdata = lxml.etree.parse(path)
-                for el in xdata.findall('./%sinclude' % XI_NAMESPACE):
-                    if not self.has_all_xincludes(el.get('href')):
-                        self.LintError("broken-xinclude-chain",
-                                       "Broken XInclude chain: could not include %s" % path)
-                        return False
-
-                return True
