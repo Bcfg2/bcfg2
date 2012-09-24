@@ -10,7 +10,10 @@ import sys
 import yum
 import logging
 from optparse import OptionParser
-from Bcfg2.Compat import json
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 LOGGER = None
 

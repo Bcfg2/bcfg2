@@ -61,7 +61,7 @@ from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 # pylint: disable=W0622
 from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
-    ConfigParser, json, any
+    ConfigParser, any
 # pylint: enable=W0622
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
@@ -81,11 +81,16 @@ except ImportError:
 
 try:
     import yum
+    try:
+        import json
+    except ImportError:
+        import simplejson as json
     HAS_YUM = True
 except ImportError:
     HAS_YUM = False
     LOGGER.info("Packages: No yum libraries found; forcing use of internal "
                 "dependency resolver")
+
 # pylint: enable=E0611,F0401
 
 XP = '{http://linux.duke.edu/metadata/common}'

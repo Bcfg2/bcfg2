@@ -9,7 +9,6 @@ import operator
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import json
 
 # pylint: disable=F0401
 try:
@@ -30,6 +29,16 @@ try:
         group = models.CharField(max_length=255)
 except ImportError:
     pass
+
+try:
+    import json
+    HAS_JSON = True
+except ImportError:
+    try:
+        import simplejson as json
+        HAS_JSON = True
+    except ImportError:
+        HAS_JSON = False
 
 try:
     import syck as yaml
@@ -89,7 +98,7 @@ class ProbeData(str):
     @property
     def json(self):
         """ The probe data as a decoded JSON data structure """
-        if self._json is None:
+        if self._json is None and HAS_JSON:
             try:
                 self._json = json.loads(self.data)
             except ValueError:

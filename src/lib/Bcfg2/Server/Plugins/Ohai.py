@@ -2,7 +2,13 @@ import lxml.etree
 import os
 import logging
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import json
+
+# pylint: disable=F0401
+try:
+    import json
+except ImportError:
+    import simplejson as json
+# pylint: enable=F0401
 
 logger = logging.getLogger('Bcfg2.Plugins.Ohai')
 
@@ -18,6 +24,7 @@ else
     echo '{}'
 fi
 """
+
 
 class OhaiCache(object):
     def __init__(self, dirname):

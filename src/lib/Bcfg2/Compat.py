@@ -245,12 +245,6 @@ except ImportError:
 
 
 try:
-    import json
-except ImportError:
-    import simplejson as json
-
-
-try:
     from functools import wraps
 except ImportError:
     def wraps(wrapped):
