@@ -117,12 +117,14 @@ class MetadataCore(Mode):
             setup['plugins'] = [p for p in setup['plugins']
                                 if p not in self.__plugin_blacklist__]
 
+        # admin modes con't need to watch for changes.  one shot is fine here.
+        setup['filemonitor'] = 'pseudo'
         try:
             self.bcore = Bcfg2.Server.Core.BaseCore(setup)
         except Bcfg2.Server.Core.CoreInitError:
             msg = sys.exc_info()[1]
             self.errExit("Core load failed: %s" % msg)
-        self.bcore.fam.handle_events_in_interval(5)
+        self.bcore.fam.handle_event_set()
         self.metadata = self.bcore.metadata
 
 
