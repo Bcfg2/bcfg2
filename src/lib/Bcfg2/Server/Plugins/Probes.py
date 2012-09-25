@@ -73,7 +73,7 @@ class ProbeData(str):
     def __new__(cls, data):
         return str.__new__(cls, data)
 
-    def __init__(self, data):
+    def __init__(self, data):  # pylint: disable=W0613
         str.__init__(self)
         self._xdata = None
         self._json = None

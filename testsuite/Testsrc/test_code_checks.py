@@ -24,6 +24,14 @@ except ImportError:
 # path to Bcfg2 src directory
 srcpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..",
                                        "src"))
+# we set this in the environment rather than with sys.path because we
+# call pylint, an external command, later, and it needs the modified
+# environment
+if 'PYTHONPATH' in os.environ:
+    os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + ":" + \
+        os.path.join(srcpath, "lib")
+else:
+    os.environ['PYTHONPATH'] = os.path.join(srcpath, "lib")
 
 # path to pylint rc file
 rcfile = os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
