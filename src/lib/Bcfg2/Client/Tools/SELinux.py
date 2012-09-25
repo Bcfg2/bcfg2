@@ -849,6 +849,7 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
             self.tool.post_txn_queue.append((self._install_semodule,
                                              (entry,),
                                              dict(fromqueue=True)))
+            return False
         self.logger.debug("Install SELinux module %s with semodule -i %s" %
                           (entry.get('name'), self._filepath(entry)))
         try:
