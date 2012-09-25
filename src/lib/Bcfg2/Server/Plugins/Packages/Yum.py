@@ -598,17 +598,20 @@ class YumCollection(Collection):
             attrs = dict(version=self.setup.cfp.get("packages",
                                                     "version",
                                                     default="auto"))
-            if attrs['version'] == 'any':
+            if attrs['version'] == 'any' or not isinstance(pkgtup, tuple):
                 return attrs
 
-            if pkgtup[1]:
-                attrs['arch'] = pkgtup[1]
-            if pkgtup[2]:
-                attrs['epoch'] = pkgtup[2]
-            if pkgtup[3]:
-                attrs['version'] = pkgtup[3]
-            if pkgtup[4]:
-                attrs['release'] = pkgtup[4]
+            try:
+                if pkgtup[1]:
+                    attrs['arch'] = pkgtup[1]
+                if pkgtup[2]:
+                    attrs['epoch'] = pkgtup[2]
+                if pkgtup[3]:
+                    attrs['version'] = pkgtup[3]
+                if pkgtup[4]:
+                    attrs['release'] = pkgtup[4]
+            except IndexError:
+                self.logger.warning("Malformed package tuple: %s" % pkgtup)
             return attrs
 
         packages = dict()

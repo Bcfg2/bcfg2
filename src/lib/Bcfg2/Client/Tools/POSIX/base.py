@@ -138,8 +138,15 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         rv &= self._set_acls(entry, path=path)
         return rv
 
-    def _apply_acl(self, acl, path, atype=posix1e.ACL_TYPE_ACCESS):
+    def _apply_acl(self, acl, path, atype=None):
         """ Apply the given ACL to the given path """
+        if atype is None:
+            # the default value for atype is set this way (rather than
+            # in the argument list) because posix1e libs may not be
+            # installed, and this code is executed at run-time (and
+            # thus will never be reached if ACLs aren't supported),
+            # but argument lists are parsed at compile-time
+            atype = posix1e.ACL_TYPE_ACCESS
         if atype == posix1e.ACL_TYPE_ACCESS:
             atype_str = "access"
         else:
@@ -515,8 +522,6 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             for attr, val in attrib.items():
                 if val is not None:
                     entry.set(attr, str(val))
-
-        print "about to verify acls; errors=%s" % errors
 
         return self._verify_acls(entry, path=path) and len(errors) == 0
 
