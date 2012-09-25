@@ -801,12 +801,12 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
     def Install(self, entry, _=None):
         if not self.filetool.install(self._pathentry(entry)):
             return False
-        try:
+        if hasattr(self, 'records'):
             # if seobject has the moduleRecords attribute, install the
             # module using the seobject library
             self.records  # pylint: disable=W0104
             return self._install_seobject(entry)
-        except AttributeError:
+        else:
             # seobject doesn't have the moduleRecords attribute, so
             # install the module using `semodule`
             self.logger.debug("Installing %s using semodule" %
