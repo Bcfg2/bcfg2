@@ -1,3 +1,5 @@
+""" Classes for SELinux entry support """
+
 import os
 import re
 import sys
@@ -9,24 +11,25 @@ import selinux
 import seobject
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
-import Bcfg2.Client.Tools.POSIX.File
+from Bcfg2.Client.Tools.POSIX.File import POSIXFile
 from subprocess import Popen, PIPE
+
 
 def pack128(int_val):
     """ pack a 128-bit integer in big-endian format """
-    max_int = 2 ** (128) - 1
     max_word_size = 2 ** 32 - 1
-    
+
     if int_val <= max_word_size:
         return struct.pack('>L', int_val)
-    
+
     words = []
-    for i in range(4):
+    for i in range(4):  # pylint: disable=W0612
         word = int_val & max_word_size
         words.append(int(word))
         int_val >>= 32
     words.reverse()
     return struct.pack('>4I', *words)
+
 
 def netmask_itoa(netmask, proto="ipv4"):
     """ convert an integer netmask (e.g., /16) to dotted-quad
@@ -34,26 +37,26 @@ def netmask_itoa(netmask, proto="ipv4"):
     if proto == "ipv4":
         size = 32
         family = socket.AF_INET
-    else: # ipv6
+    else:  # ipv6
         size = 128
         family = socket.AF_INET6
     try:
         int(netmask)
     except ValueError:
         return netmask
-    
+
     if netmask > size:
         raise ValueError("Netmask too large: %s" % netmask)
-    
+
     res = 0L
-    for n in range(netmask):
-        res |= 1 << (size - n - 1)
+    for i in range(netmask):
+        res |= 1 << (size - i - 1)
     netmask = socket.inet_ntop(family, pack128(res))
     return netmask
 
 
 class SELinux(Bcfg2.Client.Tools.Tool):
-    """ SELinux boolean and module support """
+    """ SELinux entry support """
     name = 'SELinux'
     __handles__ = [('SELinux', 'boolean'),
                    ('SELinux', 'port'),
@@ -82,6 +85,8 @@ class SELinux(Bcfg2.Client.Tools.Tool):
             self.handlers[etype] = \
                 globals()["SELinux%sHandler" % etype.title()](self, logger,
                                                               setup, config)
+        self.txn = False
+        self.post_txn_queue = []
 
     def BundleUpdated(self, _, states):
         for handler in self.handlers.values():
@@ -104,17 +109,21 @@ class SELinux(Bcfg2.Client.Tools.Tool):
 
     def Install(self, entries, states):
         # start a transaction
-        sr = seobject.semanageRecords("")
-        if hasattr(sr, "start"):
+        semanage = seobject.semanageRecords("")
+        if hasattr(semanage, "start"):
             self.logger.debug("Starting SELinux transaction")
-            sr.start()
+            semanage.start()
+            self.txn = True
         else:
             self.logger.debug("SELinux transactions not supported; this may "
                               "slow things down considerably")
         Bcfg2.Client.Tools.Tool.Install(self, entries, states)
-        if hasattr(sr, "finish"):
+        if hasattr(semanage, "finish"):
             self.logger.debug("Committing SELinux transaction")
-            sr.finish()
+            semanage.finish()
+            self.txn = False
+            for func, args, kwargs in self.post_txn_queue:
+                func(*args, **kwargs)
 
     def InstallSELinux(self, entry):
         """Dispatch install to the proper method according to type"""
@@ -140,21 +149,24 @@ class SELinux(Bcfg2.Client.Tools.Tool):
                 types.append(entry.get('type'))
 
         for etype in types:
-            self.handlers[entry.get('type')].Remove([e for e in entries
-                                                     if e.get('type') == etype])
+            self.handlers[etype].Remove([e for e in entries
+                                         if e.get('type') == etype])
 
-        
+
 class SELinuxEntryHandler(object):
+    """ Generic handler for all SELinux entries """
     etype = None
     key_format = ("name",)
     value_format = ()
     str_format = '%(name)s'
     custom_re = re.compile(' (?P<name>\S+)$')
     custom_format = None
-    
+
     def __init__(self, tool, logger, setup, config):
         self.tool = tool
         self.logger = logger
+        self.setup = setup
+        self.config = config
         self._records = None
         self._all = None
         if not self.custom_format:
@@ -162,18 +174,23 @@ class SELinuxEntryHandler(object):
 
     @property
     def records(self):
+        """ return the records object for this entry type """
         if self._records is None:
             self._records = getattr(seobject, "%sRecords" % self.etype)("")
         return self._records
 
     @property
     def all_records(self):
+        """ get a dict of all defined records for this entry type """
         if self._all is None:
             self._all = self.records.get_all()
         return self._all
 
     @property
     def custom_records(self):
+        """ try to get a dict of all customized records for this entry
+        type, if the records object supports the customized() method
+        """
         if hasattr(self.records, "customized") and self.custom_re:
             return dict([(k, self.all_records[k]) for k in self.custom_keys])
         else:
@@ -184,6 +201,8 @@ class SELinuxEntryHandler(object):
 
     @property
     def custom_keys(self):
+        """ get a list of keys for selinux records of this entry type
+        that have been customized """
         keys = []
         for cmd in self.records.customized():
             match = self.custom_re.search(cmd)
@@ -197,12 +216,17 @@ class SELinuxEntryHandler(object):
         return keys
 
     def tostring(self, entry):
+        """ transform an XML SELinux entry into a human-readable
+        string """
         return self.str_format % entry.attrib
 
     def keytostring(self, key):
+        """ transform a SELinux record key into a human-readable
+        string """
         return self.str_format % self._key2attrs(key)
 
     def _key(self, entry):
+        """ Generate an SELinux record key from an XML SELinux entry """
         if len(self.key_format) == 1 and self.key_format[0] == "name":
             return entry.get("name")
         else:
@@ -212,6 +236,7 @@ class SELinuxEntryHandler(object):
             return tuple(rv)
 
     def _key2attrs(self, key):
+        """ Generate an XML attribute dict from an SELinux record key """
         if isinstance(key, tuple):
             rv = dict((self.key_format[i], key[i])
                       for i in range(len(self.key_format))
@@ -226,11 +251,14 @@ class SELinuxEntryHandler(object):
         return rv
 
     def key2entry(self, key):
+        """ Generate an XML entry from an SELinux record key """
         attrs = self._key2attrs(key)
         attrs["type"] = self.etype
         return Bcfg2.Client.XML.Element("SELinux", **attrs)
 
     def _args(self, entry, method):
+        """ Get the argument list for invoking _modify or _add, or
+        _delete methods """
         if hasattr(self, "_%sargs" % method):
             return getattr(self, "_%sargs" % method)(entry)
         elif hasattr(self, "_defaultargs"):
@@ -240,15 +268,21 @@ class SELinuxEntryHandler(object):
             raise NotImplementedError
 
     def _deleteargs(self, entry):
+        """ Get the argument list for invoking delete methods """
         return (self._key(entry))
 
     def canInstall(self, entry):
+        """ return True if this entry is complete and can be installed """
         return bool(self._key(entry))
-    
+
     def primarykey(self, entry):
+        """ return a string that should be unique amongst all entries
+        in the specification.  some entry types are not universally
+        disambiguated by tag:type:name alone """
         return ":".join([entry.tag, entry.get("type"), entry.get("name")])
 
     def exists(self, entry):
+        """ return True if the entry already exists in the record list """
         if self._key(entry) not in self.all_records:
             self.logger.debug("SELinux %s %s does not exist" %
                               (self.etype, self.tostring(entry)))
@@ -256,6 +290,7 @@ class SELinuxEntryHandler(object):
         return True
 
     def Verify(self, entry):
+        """ verify that the entry is correct on the client system """
         if not self.exists(entry):
             entry.set('current_exists', 'false')
             return False
@@ -281,6 +316,7 @@ class SELinuxEntryHandler(object):
             return True
 
     def Install(self, entry, method=None):
+        """ install the entry on the client system """
         if not method:
             if self.exists(entry):
                 method = "modify"
@@ -300,6 +336,7 @@ class SELinuxEntryHandler(object):
             return False
 
     def Remove(self, entries):
+        """ remove the entry from the client system """
         for entry in entries:
             try:
                 self.records.delete(*self._args(entry, "delete"))
@@ -310,6 +347,7 @@ class SELinuxEntryHandler(object):
                                  (self.etype, self.tostring(entry), err))
 
     def FindExtra(self):
+        """ find extra entries of this entry type """
         specified = [self._key(e)
                      for e in self.tool.getSupportedEntries()
                      if e.get("type") == self.etype]
@@ -322,10 +360,13 @@ class SELinuxEntryHandler(object):
                 if key not in specified]
 
     def BundleUpdated(self, states):
+        """ perform any additional magic tasks that need to be run
+        when a bundle is updated """
         pass
 
 
 class SELinuxBooleanHandler(SELinuxEntryHandler):
+    """ handle SELinux boolean entries """
     etype = "boolean"
     value_format = ("value",)
 
@@ -353,6 +394,7 @@ class SELinuxBooleanHandler(SELinuxEntryHandler):
         return rv
 
     def _defaultargs(self, entry):
+        """ argument list for adding, modifying and deleting entries """
         # the only values recognized by both new and old versions of
         # selinux are the strings "0" and "1".  old selinux accepts
         # ints or bools as well, new selinux accepts "on"/"off"
@@ -370,12 +412,14 @@ class SELinuxBooleanHandler(SELinuxEntryHandler):
             return False
         return (self.exists(entry) and
                 SELinuxEntryHandler.canInstall(self, entry))
-    
+
 
 class SELinuxPortHandler(SELinuxEntryHandler):
+    """ handle SELinux port entries """
     etype = "port"
     value_format = ('selinuxtype', None)
-    custom_re = re.compile(r'-p (?P<proto>tcp|udp).*? (?P<start>\d+)(?:-(?P<end>\d+))?$')
+    custom_re = re.compile(r'-p (?P<proto>tcp|udp).*? '
+                           r'(?P<start>\d+)(?:-(?P<end>\d+))?$')
 
     @property
     def custom_keys(self):
@@ -415,8 +459,8 @@ class SELinuxPortHandler(SELinuxEntryHandler):
         try:
             (port, proto) = entry.get("name").split("/")
         except ValueError:
-            self.logger.error("Invalid SELinux node %s: no protocol specified" %
-                              entry.get("name"))
+            self.logger.error("Invalid SELinux node %s: no protocol specified"
+                              % entry.get("name"))
             return
         if "-" in port:
             start, end = port.split("-")
@@ -424,7 +468,7 @@ class SELinuxPortHandler(SELinuxEntryHandler):
             start = port
             end = port
         return (int(start), int(end), proto)
-    
+
     def _key2attrs(self, key):
         if key[0] == key[1]:
             port = str(key[0])
@@ -434,6 +478,7 @@ class SELinuxPortHandler(SELinuxEntryHandler):
         return dict(name="%s/%s" % (port, key[2]), selinuxtype=vals[0])
 
     def _defaultargs(self, entry):
+        """ argument list for adding and modifying entries """
         (port, proto) = entry.get("name").split("/")
         return (port, proto, '', entry.get("selinuxtype"))
 
@@ -442,6 +487,8 @@ class SELinuxPortHandler(SELinuxEntryHandler):
 
 
 class SELinuxFcontextHandler(SELinuxEntryHandler):
+    """ handle SELinux file context entries """
+
     etype = "fcontext"
     key_format = ("name", "filetype")
     value_format = (None, None, "selinuxtype", None)
@@ -503,6 +550,7 @@ class SELinuxFcontextHandler(SELinuxEntryHandler):
                 SELinuxEntryHandler.canInstall(self, entry))
 
     def _defaultargs(self, entry):
+        """ argument list for adding, modifying, and deleting entries """
         return (entry.get("name"), entry.get("selinuxtype"),
                 self.filetypeargs[entry.get("filetype", "all")],
                 '', '')
@@ -510,13 +558,16 @@ class SELinuxFcontextHandler(SELinuxEntryHandler):
     def primarykey(self, entry):
         return ":".join([entry.tag, entry.get("type"), entry.get("name"),
                          entry.get("filetype", "all")])
-        
+
 
 class SELinuxNodeHandler(SELinuxEntryHandler):
+    """ handle SELinux node entries """
+
     etype = "node"
     value_format = (None, None, "selinuxtype", None)
     str_format = '%(name)s (%(proto)s)'
-    custom_re = re.compile(r'-M (?P<netmask>\S+).*?-p (?P<proto>ipv\d).*? (?P<addr>\S+)$')
+    custom_re = re.compile(r'-M (?P<netmask>\S+).*?'
+                           r'-p (?P<proto>ipv\d).*? (?P<addr>\S+)$')
     custom_format = ('addr', 'netmask', 'proto')
 
     def _key(self, entry):
@@ -528,26 +579,33 @@ class SELinuxNodeHandler(SELinuxEntryHandler):
             return
         netmask = netmask_itoa(netmask, proto=entry.get("proto"))
         return (addr, netmask, entry.get("proto"))
-    
+
     def _key2attrs(self, key):
         vals = self.all_records[key]
         return dict(name="%s/%s" % (key[0], key[1]), proto=key[2],
                     selinuxtype=vals[2])
 
     def _defaultargs(self, entry):
+        """ argument list for adding, modifying, and deleting entries """
         (addr, netmask) = entry.get("name").split("/")
-        return (addr, netmask, entry.get("proto"), "", entry.get("selinuxtype"))
+        return (addr, netmask, entry.get("proto"), "",
+                entry.get("selinuxtype"))
 
 
 class SELinuxLoginHandler(SELinuxEntryHandler):
+    """ handle SELinux login entries """
+
     etype = "login"
     value_format = ("selinuxuser", None)
 
     def _defaultargs(self, entry):
+        """ argument list for adding, modifying, and deleting entries """
         return (entry.get("name"), entry.get("selinuxuser"), "")
 
 
 class SELinuxUserHandler(SELinuxEntryHandler):
+    """ handle SELinux user entries """
+
     etype = "user"
     value_format = ("prefix", None, None, "roles")
 
@@ -561,7 +619,7 @@ class SELinuxUserHandler(SELinuxEntryHandler):
             self._records = seobject.seluserRecords()
         return self._records
 
-    def Install(self, entry):
+    def Install(self, entry, method=None):
         # in older versions of selinux, modify() is broken if you
         # provide a prefix _at all_, so we try to avoid giving the
         # prefix.  however, in newer versions, prefix is _required_,
@@ -570,12 +628,13 @@ class SELinuxUserHandler(SELinuxEntryHandler):
         # is thrown by the bug in older versions of selinux); and c)
         # try with prefix.
         try:
-            SELinuxEntryHandler.Install(self, entry)
+            SELinuxEntryHandler.Install(self, entry, method=method)
         except TypeError:
             self.needs_prefix = True
-            SELinuxEntryHandler.Install(self, entry)
+            SELinuxEntryHandler.Install(self, entry, method=method)
 
     def _defaultargs(self, entry):
+        """ argument list for adding, modifying, and deleting entries """
         # in older versions of selinux, modify() is broken if you
         # provide a prefix _at all_, so we try to avoid giving the
         # prefix.  see the comment in Install() above for more
@@ -594,30 +653,35 @@ class SELinuxUserHandler(SELinuxEntryHandler):
 
 
 class SELinuxInterfaceHandler(SELinuxEntryHandler):
+    """ handle SELinux interface entries """
+
     etype = "interface"
     value_format = (None, None, "selinuxtype", None)
 
     def _defaultargs(self, entry):
+        """ argument list for adding, modifying, and deleting entries """
         return (entry.get("name"), '', entry.get("selinuxtype"))
 
 
 class SELinuxPermissiveHandler(SELinuxEntryHandler):
+    """ handle SELinux permissive domain entries """
+
     etype = "permissive"
-    
+
     @property
     def records(self):
         try:
             return SELinuxEntryHandler.records.fget(self)
         except AttributeError:
-            self.logger.info("Permissive domains not supported by this version "
-                             "of SELinux")
-            self._records = False
+            self.logger.info("Permissive domains not supported by this "
+                             "version of SELinux")
+            self._records = None
             return self._records
 
     @property
     def all_records(self):
         if self._all is None:
-            if self.records == False:
+            if self.records is None:
                 self._all = dict()
             else:
                 # permissiveRecords.get_all() returns a list, so we just
@@ -627,18 +691,19 @@ class SELinuxPermissiveHandler(SELinuxEntryHandler):
         return self._all
 
     def _defaultargs(self, entry):
+        """ argument list for adding, modifying, and deleting entries """
         return (entry.get("name"),)
 
 
 class SELinuxModuleHandler(SELinuxEntryHandler):
+    """ handle SELinux module entries """
+
     etype = "module"
     value_format = (None, "disabled")
 
     def __init__(self, tool, logger, setup, config):
         SELinuxEntryHandler.__init__(self, tool, logger, setup, config)
-        self.filetool = Bcfg2.Client.Tools.POSIX.File.POSIXFile(logger,
-                                                                 setup,
-                                                                 config)
+        self.filetool = POSIXFile(logger, setup, config)
         try:
             self.setype = selinux.selinux_getpolicytype()[1]
         except IndexError:
@@ -659,7 +724,7 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
                 self.logger.debug("SELinux: Getting modules from semodule")
                 try:
                     proc = Popen(['semodule', '-l'], stdout=PIPE, stderr=PIPE)
-                    out, err = proc.communicate()
+                    out = proc.communicate()[0]
                     rv = proc.wait()
                 except OSError:
                     # semanage failed; probably not in $PATH.  try to
@@ -686,6 +751,9 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
         return self._all
 
     def _all_records_from_filesystem(self):
+        """ the seobject API doesn't support modules and semodule is
+        broken or missing, so just list modules on the filesystem.
+        this is terrible. """
         self.logger.debug("SELinux: Getting modules from filesystem")
         rv = dict()
         for mod in glob.glob(os.path.join("/usr/share/selinux", self.setype,
@@ -703,10 +771,15 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
         return rv
 
     def _filepath(self, entry):
+        """ get the path to the .pp module file for this module entry
+        """
         return os.path.join("/usr/share/selinux", self.setype,
                             entry.get("name") + '.pp')
 
     def _pathentry(self, entry):
+        """ Get an XML Path entry based on this SELinux module entry,
+        suitable for installing the module .pp file itself to the
+        filesystem """
         pathentry = copy.deepcopy(entry)
         pathentry.set("name", self._filepath(pathentry))
         pathentry.set("perms", "0644")
@@ -725,7 +798,7 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
         return (entry.text and self.setype and
                 SELinuxEntryHandler.canInstall(self, entry))
 
-    def Install(self, entry):
+    def Install(self, entry, _=None):
         if not self.filetool.install(self._pathentry(entry)):
             return False
         try:
@@ -742,6 +815,7 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
             return self._install_semodule(entry)
 
     def _install_seobject(self, entry):
+        """ Install an SELinux module using the seobject library """
         try:
             if not SELinuxEntryHandler.Install(self, entry):
                 return False
@@ -759,7 +833,22 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
             method = "enable"
         return SELinuxEntryHandler.Install(self, entry, method=method)
 
-    def _install_semodule(self, entry):
+    def _install_semodule(self, entry, fromqueue=False):
+        """ Install an SELinux module using the semodule command """
+        if fromqueue:
+            self.logger.debug("Installing SELinux module %s from "
+                              "post-transaction queue" % entry.get("name"))
+        elif self.tool.txn:
+            # we've started a transaction, so if we run semodule -i
+            # then it'll fail with lock errors.  so we add this
+            # installation to a queue to be run after the transaction
+            # is closed.
+            self.logger.debug("Waiting to install SELinux module %s until "
+                              "SELinux transaction is finished" %
+                              entry.get('name'))
+            self.tool.post_txn_queue.append((self._install_semodule,
+                                             (entry,),
+                                             dict(fromqueue=True)))
         self.logger.debug("Install SELinux module %s with semodule -i %s" %
                           (entry.get('name'), self._filepath(entry)))
         try:
@@ -783,13 +872,15 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
                 return False
             else:
                 return True
-    
+
     def _addargs(self, entry):
+        """ argument list for adding entries """
         return (self._filepath(entry),)
-    
+
     def _defaultargs(self, entry):
+        """ argument list for modifying and deleting entries """
         return (entry.get("name"),)
-    
+
     def FindExtra(self):
         specified = [self._key(e)
                      for e in self.tool.getSupportedEntries()

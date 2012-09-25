@@ -46,7 +46,7 @@ full_checks = {
                          "*.py"],
     "lib/Bcfg2/Server/Plugins": ["Cfg", "Packages", "*.py"],
     "lib/Bcfg2/Client": ["*.py"],
-    "lib/Bcfg2/Client/Tools": ["POSIX"],
+    "lib/Bcfg2/Client/Tools": ["POSIX", "SELinux.py"],
     }
 
 # perform full code checks on the listed executables
@@ -87,6 +87,7 @@ no_checks = {
                                  "TCheetah.py",
                                  "TGenshi.py"],
     }
+
 
 def expand_path_dict(pathdict):
     """ given a path dict as above, return a list of all the paths """
