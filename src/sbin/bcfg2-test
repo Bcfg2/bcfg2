@@ -32,6 +32,8 @@ class ClientTest(TestCase):
             self.ignore = ignore
 
     def ignore_entry(self, tag, name):
+        """ return True if an error on a given entry should be ignored
+        """
         if tag in self.ignore:
             if name in self.ignore[tag]:
                 return True
@@ -43,6 +45,7 @@ class ClientTest(TestCase):
         return False
 
     def runTest(self):
+        """ run this individual test """
         config = self.bcfg2_core.BuildConfiguration(self.client)
 
         failures = []
@@ -86,6 +89,7 @@ def main():
             ignore[tag] = [name]
 
     def run_tests():
+        """ Run the test suite """
         core.fam.handle_events_in_interval(0.1)
 
         if setup['args']:

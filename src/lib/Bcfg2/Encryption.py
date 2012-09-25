@@ -33,6 +33,8 @@ Rand.rand_seed(os.urandom(1024))
 
 
 def _cipher_filter(cipher, instr):
+    """ M2Crypto reads and writes file-like objects, so this uses
+    StringIO to pass data through it """
     inbuf = StringIO(instr)
     outbuf = StringIO()
     while 1:
@@ -160,6 +162,7 @@ def get_algorithm(setup):
     """
     return setup.cfp.get("encryption", "algorithm",
                          default=ALGORITHM).lower().replace("-", "_")
+
 
 def get_passphrases(setup):
     """ Get all candidate encryption passphrases from the config file.

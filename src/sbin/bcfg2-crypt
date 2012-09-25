@@ -9,59 +9,48 @@ import lxml.etree
 import Bcfg2.Logger
 import Bcfg2.Options
 from Bcfg2.Server import XMLParser
-from Bcfg2.Compat import input
+from Bcfg2.Compat import input  # pylint: disable=W0622
 try:
     import Bcfg2.Encryption
 except ImportError:
-    err = sys.exc_info()[1]
-    print("Could not import %s. Is M2Crypto installed?" % err)
+    print("Could not import %s. Is M2Crypto installed?" % sys.exc_info()[1])
     raise SystemExit(1)
-
-LOGGER = None
-
-def get_logger(verbose=0):
-    """ set up logging according to the verbose level given on the
-    command line """
-    global LOGGER
-    if LOGGER is None:
-        LOGGER = logging.getLogger(sys.argv[0])
-        stderr = logging.StreamHandler()
-        if verbose:
-            level = logging.DEBUG
-        else:
-            level = logging.WARNING
-        LOGGER.setLevel(level)
-        LOGGER.addHandler(stderr)
-        syslog = logging.handlers.SysLogHandler("/dev/log")
-        syslog.setFormatter(logging.Formatter("%(name)s: %(message)s"))
-        LOGGER.addHandler(syslog)
-    return LOGGER
 
 
 class EncryptionChunkingError(Exception):
+    """ error raised when Encryptor cannot break a file up into chunks
+    to be encrypted, or cannot reassemble the chunks """
     pass
 
 
 class Encryptor(object):
+    """ Generic encryptor for all files """
+
     def __init__(self, setup):
         self.setup = setup
-        self.logger = get_logger()
         self.passphrase = None
         self.pname = None
+        self.logger = logging.getLogger(self.__class__.__name__)
         
     def get_encrypted_filename(self, plaintext_filename):
+        """ get the name of the file encrypted data should be written to """
         return plaintext_filename
 
     def get_plaintext_filename(self, encrypted_filename):
+        """ get the name of the file decrypted data should be written to """
         return encrypted_filename
 
     def chunk(self, data):
+        """ generator to break the file up into smaller chunks that
+        will each be individually encrypted or decrypted """
         yield data
 
-    def unchunk(self, data, original):
+    def unchunk(self, data, original):  # pylint: disable=W0613
+        """ given chunks of a file, reassemble then into the whole file """
         return data[0]
 
     def set_passphrase(self):
+        """ set the passphrase for the current file """
         if (not self.setup.cfp.has_section("encryption") or
             self.setup.cfp.options("encryption") == 0):
             self.logger.error("No passphrases available in %s" %
@@ -98,6 +87,7 @@ class Encryptor(object):
         return False
 
     def encrypt(self, fname):
+        """ encrypt the given file, returning the encrypted data """
         try:
             plaintext = open(fname).read()
         except IOError:
@@ -124,12 +114,16 @@ class Encryptor(object):
             return False
         return self.unchunk(crypted, plaintext)
 
+    #  pylint: disable=W0613
     def _encrypt(self, plaintext, passphrase, name=None):
+        """ encrypt a single chunk of a file """
         return Bcfg2.Encryption.ssl_encrypt(
             plaintext, passphrase,
             Bcfg2.Encryption.get_algorithm(self.setup))
+    #  pylint: enable=W0613
 
     def decrypt(self, fname):
+        """ decrypt the given file, returning the plaintext data """
         try:
             crypted = open(fname).read()
         except IOError:
@@ -149,12 +143,12 @@ class Encryptor(object):
                     except Bcfg2.Encryption.EVPError:
                         self.logger.info("Could not decrypt %s with the "
                                          "specified passphrase" % fname)
-                        return False
+                        continue
                     except:
                         err = sys.exc_info()[1]
                         self.logger.error("Error decrypting %s: %s" %
                                           (fname, err))
-                        return False
+                        continue
                 except TypeError:
                     pchunk = None
                     for pname in self.setup.cfp.options('encryption'):
@@ -175,7 +169,7 @@ class Encryptor(object):
                         self.logger.error("Could not decrypt %s with any "
                                           "passphrase in %s" %
                                           (fname, self.setup['configfile']))
-                        return False
+                        continue
         except EncryptionChunkingError:
             err = sys.exc_info()[1]
             self.logger.error("Error getting encrypted data from %s: %s" %
@@ -190,7 +184,14 @@ class Encryptor(object):
                               (fname, err))
             return False
 
+    def _decrypt(self, crypted, passphrase):
+        """ decrypt a single chunk """
+        return Bcfg2.Encryption.ssl_decrypt(
+            crypted, passphrase,
+            Bcfg2.Encryption.get_algorithm(self.setup))
+
     def write_encrypted(self, fname, data=None):
+        """ write encrypted data to disk """
         if data is None:
             data = self.decrypt(fname)
         new_fname = self.get_encrypted_filename(fname)
@@ -210,6 +211,7 @@ class Encryptor(object):
             return False
 
     def write_decrypted(self, fname, data=None):
+        """ write decrypted data to disk """
         if data is None:
             data = self.decrypt(fname)
         new_fname = self.get_plaintext_filename(fname)
@@ -224,6 +226,7 @@ class Encryptor(object):
             return False
 
     def get_passphrase(self, chunk):
+        """ get the passphrase for a chunk of a file """
         pname = self._get_passphrase(chunk)
         if not self.pname:
             if not pname:
@@ -246,16 +249,14 @@ class Encryptor(object):
                                     (self.pname, pname))
         return (passphrase, pname)
 
-    def _get_passphrase(self, chunk):
+    def _get_passphrase(self, chunk): #  pylint: disable=W0613
+        """ get the passphrase for a chunk of a file """
         return None
-
-    def _decrypt(self, crypted, passphrase):
-        return Bcfg2.Encryption.ssl_decrypt(
-            crypted, passphrase,
-            Bcfg2.Encryption.get_algorithm(self.setup))
 
 
 class CfgEncryptor(Encryptor):
+    """ encryptor class for Cfg files """
+
     def get_encrypted_filename(self, plaintext_filename):
         return plaintext_filename + ".crypt"
 
@@ -267,6 +268,8 @@ class CfgEncryptor(Encryptor):
 
 
 class PropertiesEncryptor(Encryptor):
+    """ encryptor class for Properties files """
+
     def _encrypt(self, plaintext, passphrase, name=None):
         # plaintext is an lxml.etree._Element
         if name is None:
@@ -347,7 +350,7 @@ class PropertiesEncryptor(Encryptor):
         return crypted
 
 
-def main():
+def main():  # pylint: disable=R0912,R0915
     optinfo = dict(interactive=Bcfg2.Options.INTERACTIVE)
     optinfo.update(Bcfg2.Options.CRYPT_OPTIONS)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
@@ -360,34 +363,39 @@ def main():
         print(setup.hm)
         raise SystemExit(1)
 
+    log_args = dict(to_syslog=setup['syslog'], to_console=logging.WARNING)
+    if setup['verbose']:
+        log_args['to_console'] = logging.DEBUG
+    Bcfg2.Logger.setup_logging('bcfg2-crypt', **log_args)
+    logger = logging.getLogger('bcfg2-crypt')
+
     if setup['decrypt']:
         if setup['encrypt']:
-            print("You cannot specify both --encrypt and --decrypt")
+            logger.error("You cannot specify both --encrypt and --decrypt")
             raise SystemExit(1)
         elif setup['remove']:
-            print("--remove cannot be used with --decrypt, ignoring")
+            logger.error("--remove cannot be used with --decrypt, ignoring")
             setup['remove'] = Bcfg2.Options.CRYPT_REMOVE.default
         elif setup['interactive']:
-            print("Cannot decrypt interactively")
+            logger.error("Cannot decrypt interactively")
             setup['interactive'] = False
     
     if setup['cfg']:
         if setup['properties']:
-            print("You cannot specify both --cfg and --properties")
+            logger.error("You cannot specify both --cfg and --properties")
             raise SystemExit(1)        
         if setup['xpath']:
-            print("Specifying --xpath with --cfg is nonsensical, ignoring "
-                  "--xpath")
+            logger.error("Specifying --xpath with --cfg is nonsensical, "
+                         "ignoring --xpath")
             setup['xpath'] = Bcfg2.Options.CRYPT_XPATH.default
         if setup['interactive']:
-            print("You cannot use interactive mode with --cfg, ignoring -I")
+            logger.error("You cannot use interactive mode with --cfg, "
+                         "ignoring -I")
             setup['interactive'] = False
     elif setup['properties']:
         if setup['remove']:
-            print("--remove cannot be used with --properties, ignoring")
+            logger.error("--remove cannot be used with --properties, ignoring")
             setup['remove'] = Bcfg2.Options.CRYPT_REMOVE.default
-
-    logger = get_logger(setup['verbose'])
 
     props_crypt = PropertiesEncryptor(setup)
     cfg_crypt = CfgEncryptor(setup)
@@ -456,7 +464,7 @@ def main():
         if data is None:
             data = xform(fname)
         if not data:
-            print("Failed to %s %s, skipping" % (xform.__name__, fname))
+            logger.error("Failed to %s %s, skipping" % (xform.__name__, fname))
             continue
         if setup['crypt_stdout']:
             if len(setup['args']) > 1:

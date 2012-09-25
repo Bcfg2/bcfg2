@@ -1,8 +1,14 @@
+""" bcfg2 version declaration and handling """
+
 import re
 
 __version__ = "1.3.0pre1"
 
+
 class Bcfg2VersionInfo(tuple):
+    """ object to make granular version operations (particularly
+    comparisons) easier """
+
     v_re = re.compile(r'(\d+)(\w+)(\d+)')
 
     def __new__(cls, vstr):
@@ -17,30 +23,31 @@ class Bcfg2VersionInfo(tuple):
         return tuple.__new__(cls, [int(major), int(minor), int(micro),
                                    releaselevel, int(serial)])
 
-    def __init__(self, vstr):
+    def __init__(self, vstr):  # pylint: disable=W0613
         tuple.__init__(self)
         self.major, self.minor, self.micro, self.releaselevel, self.serial = \
             tuple(self)
-    
+
     def __repr__(self):
         return "(major=%s, minor=%s, micro=%s, releaselevel=%s, serial=%s)" % \
             tuple(self)
 
-    def _release_cmp(self, r1, r2):
-        if r1 == r2:
+    def _release_cmp(self, rel1, rel2):  # pylint: disable=R0911
+        """ compare two release numbers """
+        if rel1 == rel2:
             return 0
-        elif r1 == "final":
+        elif rel1 == "final":
             return -1
-        elif r2 == "final":
+        elif rel2 == "final":
             return 1
-        elif r1 == "rc":
+        elif rel1 == "rc":
             return -1
-        elif r2 == "rc":
+        elif rel2 == "rc":
             return 1
             # should never get to anything past this point
-        elif r1 == "pre":
+        elif rel1 == "pre":
             return -1
-        elif r2 == "pre":
+        elif rel2 == "pre":
             return 1
         else:
             # wtf?
@@ -54,19 +61,12 @@ class Bcfg2VersionInfo(tuple):
             return True
         try:
             for i in range(3):
-                if self[i] > version[i]:
-                    return True
-                elif self[i] < version[i]:
-                    return False
+                if self[i] != version[i]:
+                    return self[i] > version[i]
             rel = self._release_cmp(self[3], version[3])
-            if rel < 0:
-                return True
-            elif rel > 0:
-                return False
-            if self[4] > version[4]:
-                return True
-            else:
-                return False
+            if rel != 0:
+                return rel < 0
+            return self[4] > version[4]
         except TypeError:
             return self > Bcfg2VersionInfo(version)
 
@@ -78,19 +78,12 @@ class Bcfg2VersionInfo(tuple):
             return False
         try:
             for i in range(3):
-                if self[i] < version[i]:
-                    return True
-                elif self[i] > version[i]:
-                    return False
+                if self[i] != version[i]:
+                    return self[i] < version[i]
             rel = self._release_cmp(self[3], version[3])
-            if rel > 0:
-                return True
-            elif rel < 0:
-                return False
-            if self[4] < version[4]:
-                return True
-            else:
-                return False
+            if rel != 0:
+                return rel > 0
+            return self[4] < version[4]
         except TypeError:
             return self < Bcfg2VersionInfo(version)
 

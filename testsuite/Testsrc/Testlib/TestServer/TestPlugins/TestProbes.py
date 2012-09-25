@@ -25,6 +25,7 @@ from TestPlugin import TestEntrySet, TestProbing, TestConnector, \
 # test data for JSON and YAML tests
 test_data = dict(a=1, b=[1, 2, 3], c="test")
 
+
 class FakeList(list):
     pass
 
@@ -32,7 +33,7 @@ class FakeList(list):
 class TestProbesDB(DBModelTestCase):
     if HAS_DJANGO:
         models = [ProbesGroupsModel, ProbesDataModel]
-    
+
 
 class TestClientProbeDataSet(Bcfg2TestCase):
     def test__init(self):
@@ -40,10 +41,11 @@ class TestClientProbeDataSet(Bcfg2TestCase):
         self.assertLessEqual(ds.timestamp, time.time())
         self.assertIsInstance(ds, dict)
         self.assertNotIn("timestamp", ds)
-        
+
         ds = ClientProbeDataSet(timestamp=123)
         self.assertEqual(ds.timestamp, 123)
         self.assertNotIn("timestamp", ds)
+
 
 class TestProbeData(Bcfg2TestCase):
     def test_str(self):
@@ -108,10 +110,32 @@ class TestProbeSet(TestEntrySet):
         fam.AddMonitor.assert_called_with(datastore, ps)
         TestEntrySet.test__init(self)
 
+    def test_HandleEvent(self):
+        ps = self.get_obj()
+        ps.handle_event = Mock()
+
+        # test that events on the data store itself are skipped
+        evt = Mock()
+        evt.filename = datastore
+        ps.HandleEvent(evt)
+        self.assertFalse(ps.handle_event.called)
+
+        # test that events on probed.xml are skipped
+        evt.reset_mock()
+        evt.filename = "probed.xml"
+        ps.HandleEvent(evt)
+        self.assertFalse(ps.handle_event.called)
+        
+        # test that other events are processed appropriately
+        evt.reset_mock()
+        evt.filename = "fooprobe"
+        ps.HandleEvent(evt)
+        ps.handle_event.assert_called_with(evt)
+
     @patch("%s.list" % builtins, FakeList)
     def test_get_probe_data(self):
         ps = self.get_obj()
-
+        
         # build some fairly complex test data for this.  in the end,
         # we want the probe data to include only the most specific
         # version of a given probe, and by basename only, not full
@@ -209,7 +233,7 @@ text
         return {"foo.example.com": ["group", "group with spaces",
                                     "group-with-dashes"],
                 "bar.example.com": []}
-    
+
     def get_probes_object(self, use_db=False, load_data=None):
         core = Mock()
         core.setup.cfp.getboolean = Mock()
@@ -229,7 +253,7 @@ text
             return Probes(core, datastore)
 
         return inner()
-        
+
     def test__init(self):
         mock_load_data = Mock()
         probes = self.get_probes_object(load_data=mock_load_data)
@@ -272,7 +296,7 @@ text
         probes.probedata = self.get_test_probedata()
         probes.cgroups = self.get_test_cgroups()
         probes._write_data_xml(None)
-        
+
         mock_open.assert_called_with(os.path.join(datastore, probes.name,
                                                   "probed.xml"), "w")
         data = lxml.etree.XML(mock_open.return_value.write.call_args[0][0])
@@ -333,7 +357,7 @@ text
             client = Mock()
             client.hostname = cname
             probes._write_data_db(client)
-        
+
             pdata = ProbesDataModel.objects.filter(hostname=cname).all()
             self.assertEqual(len(pdata), len(probes.probedata[cname]))
 

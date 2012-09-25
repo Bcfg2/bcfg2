@@ -39,43 +39,20 @@ except OSError:
 
 # perform a full range of code checks on the listed files.
 full_checks = {
+    "lib/Bcfg2": ["*.py"],
     "lib/Bcfg2/Server": ["Lint",
                          "Plugin",
-                         "BuiltinCore.py",
-                         "CherryPyCore.py",
-                         "Core.py"],
-    "lib/Bcfg2/Server/Plugins": ["Bundler.py",
-                                 "Bzr.py",
-                                 "Cfg",
-                                 "Cvs.py",
-                                 "DBStats.py",
-                                 "Darcs.py",
-                                 "Defaults.py",
-                                 "FileProbes.py",
-                                 "Fossil.py",
-                                 "Git.py",
-                                 "GroupPatterns.py",
-                                 "Guppy.py",
-                                 "Hg.py",
-                                 "Ohai.py",
-                                 "Packages",
-                                 "Probes.py",
-                                 "Properties.py",
-                                 "PuppetENC.py",
-                                 "Rules.py",
-                                 "SEModules.py",
-                                 "ServiceCompat.py",
-                                 "Svn.py",
-                                 "Svn2.py",
-                                 "TemplateHelper.py",
-                                 "Trigger.py",
-                                 ],
+                         "FileMonitor",
+                         "*.py"],
+    "lib/Bcfg2/Server/Plugins": ["Cfg", "Packages", "*.py"],
+    "lib/Bcfg2/Client": ["*.py"],
     "lib/Bcfg2/Client/Tools": ["POSIX"],
     }
 
 # perform full code checks on the listed executables
 sbin_checks = {
-    "sbin": ["bcfg2-server", "bcfg2-yum-helper"]
+    "sbin": ["bcfg2-server", "bcfg2-yum-helper", "bcfg2-crypt", "bcfg2-test",
+             "bcfg2-lint"]
     }
 
 # perform limited, django-safe checks on the listed files
@@ -83,11 +60,41 @@ django_checks = {
     "lib/Bcfg2/Server": ["Reports", "models.py"]
     }
 
+# perform only error checking on the listed files
+error_checks = {
+    "lib/Bcfg2": ["Proxy.py", "SSLServer.py"],
+    "lib/Bcfg2/Server/Plugins": ["Decisions.py",
+                                 "Deps.py",
+                                 "Ldap.py",
+                                 "NagiosGen.py",
+                                 "Pkgmgr.py",
+                                 "SSHbase.py",
+                                 "SSLCA.py"]
+    }
+
 # perform no checks at all on the listed files
 no_checks = {
     "lib/Bcfg2/Client/Tools": ["APT.py", "RPMng.py", "rpmtools.py"],
-    "lib/Bcfg2/Server": ["Snapshots", "Hostbase"]
+    "lib/Bcfg2/Server": ["Snapshots", "Hostbase"],
+    "lib/Bcfg2": ["manage.py"],
+    "lib/Bcfg2/Server/Reports": ["manage.py"],
+    "lib/Bcfg2/Server/Plugins": ["Account.py",
+                                 "Base.py",
+                                 "Editor.py",
+                                 "Hostbase.py",
+                                 "Snapshots.py",
+                                 "Statistics.py",
+                                 "TCheetah.py",
+                                 "TGenshi.py"],
     }
+
+def expand_path_dict(pathdict):
+    """ given a path dict as above, return a list of all the paths """
+    rv = []
+    for parent, modules in pathdict.items():
+        for mod in modules:
+            rv.extend(glob.glob(os.path.join(srcpath, parent, mod)))
+    return rv
 
 
 class TestPylint(Bcfg2TestCase):
@@ -97,21 +104,18 @@ class TestPylint(Bcfg2TestCase):
     error_re = re.compile(r':\d+:\s+\[[EF]\d{4}')
 
     # build the blacklist
-    blacklist = []
-    for parent, modules in no_checks.items():
-        blacklist.extend([os.path.join(srcpath, parent, m) for m in modules])
+    blacklist = expand_path_dict(no_checks)
 
-    def _get_paths(self, pathlist):
-        paths = []
-        for parent, modules in pathlist.items():
-            paths.extend([os.path.join(srcpath, parent, m) for m in modules])
-        return list(set(paths) - set(self.blacklist))
+    def _get_paths(self, pathdict):
+        return list(set(expand_path_dict(pathdict)) - set(self.blacklist))
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_lib_full(self):
-        self._pylint_full(self._get_paths(full_checks))
+        full_list = list(set(self._get_paths(full_checks)) -
+                         set(expand_path_dict(error_checks)))
+        self._pylint_full(full_list)
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
@@ -126,7 +130,6 @@ class TestPylint(Bcfg2TestCase):
         if extra_args is None:
             extra_args = []
         args = self.pylint_cmd + extra_args + \
-            ["-f", "parseable"] + \
             [os.path.join(srcpath, p) for p in paths]
         pylint = Popen(args, stdout=PIPE, stderr=STDOUT)
         print(pylint.communicate()[0])

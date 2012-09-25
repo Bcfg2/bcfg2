@@ -1,13 +1,12 @@
-"""
-Frame is the Client Framework that verifies and
-installs entries, and generates statistics.
-"""
+""" Frame is the Client Framework that verifies and installs entries,
+and generates statistics. """
 
-import logging
 import sys
 import time
+import fnmatch
+import logging
 import Bcfg2.Client.Tools
-from Bcfg2.Compat import input
+from Bcfg2.Compat import input, any, all  # pylint: disable=W0622
 
 
 def cmpent(ent1, ent2):
@@ -19,35 +18,36 @@ def cmpent(ent1, ent2):
 
 
 def matches_entry(entryspec, entry):
-    # both are (tag, name)
+    """ Determine if the Decisions-style entry specification matches
+    the entry.  Both are tuples of (tag, name).  The entryspec can
+    handle the wildcard * in either position. """
     if entryspec == entry:
         return True
-    else:
-        for i in [0, 1]:
-            if entryspec[i] == entry[i]:
-                continue
-            elif entryspec[i] == '*':
-                continue
-            elif '*' in entryspec[i]:
-                starpt = entryspec[i].index('*')
-                if entry[i].startswith(entryspec[i][:starpt]):
-                    continue
-            return False
-        return True
+    return all(fnmatch.fnmatch(entry[i], entryspec[i]) for i in [0, 1])
 
 
 def matches_white_list(entry, whitelist):
-    return True in [matches_entry(we, (entry.tag, entry.get('name')))
-                    for we in whitelist]
+    """ Return True if (<entry tag>, <entry name>) is in the given
+    whitelist. """
+    return any(matches_entry(we, (entry.tag, entry.get('name')))
+               for we in whitelist)
 
 
 def passes_black_list(entry, blacklist):
-    return True not in [matches_entry(be, (entry.tag, entry.get('name')))
-                        for be in blacklist]
+    """ Return True if (<entry tag>, <entry name>) is not in the given
+    blacklist. """
+    return not any(matches_entry(be, (entry.tag, entry.get('name')))
+                   for be in blacklist)
+
+
+# pylint: disable=W0702
+# in frame we frequently want to catch all exceptions, regardless of
+# type, so disable the pylint rule that catches that.
 
 
 class Frame(object):
     """Frame is the container for all Tool objects and state information."""
+
     def __init__(self, config, setup, times, drivers, dryrun):
         self.config = config
         self.times = times
@@ -92,8 +92,9 @@ class Frame(object):
 
         for tool in self.tools[:]:
             for conflict in getattr(tool, 'conflicts', []):
-                [self.tools.remove(item) for item in self.tools \
-                 if item.name == conflict]
+                for item in self.tools:
+                    if item.name == conflict:
+                        self.tools.remove(item)
 
         self.logger.info("Loaded tool drivers:")
         self.logger.info([tool.name for tool in self.tools])
@@ -104,7 +105,8 @@ class Frame(object):
                      if entry not in self.handled]
 
         if self.unhandled:
-            self.logger.error("The following entries are not handled by any tool:")
+            self.logger.error("The following entries are not handled by any "
+                              "tool:")
             for entry in self.unhandled:
                 self.logger.error("%s:%s:%s" % (entry.tag, entry.get('type'),
                                                 entry.get('name')))
@@ -118,10 +120,12 @@ class Frame(object):
         if pkgs:
             self.logger.debug("The following packages are specified in bcfg2:")
             self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == None])
-            self.logger.debug("The following packages are prereqs added by Packages:")
+            self.logger.debug("The following packages are prereqs added by "
+                              "Packages:")
             self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == 'Packages'])
 
     def find_dups(self, config):
+        """ Find duplicate entries and warn about them """
         entries = dict()
         for struct in config:
             for entry in struct:
@@ -134,7 +138,8 @@ class Frame(object):
                             entries[pkey] = 1
         multi = [e for e, c in entries.items() if c > 1]
         if multi:
-            self.logger.debug("The following entries are included multiple times:")
+            self.logger.debug("The following entries are included multiple "
+                              "times:")
             for entry in multi:
                 self.logger.debug(entry)
 
@@ -179,7 +184,8 @@ class Frame(object):
         non-whitelisted/blacklisted 'important' entries from being installed
         prior to determining the decision mode on the client.
         """
-        # Need to process decision stuff early so that dryrun mode works with it
+        # Need to process decision stuff early so that dryrun mode
+        # works with it
         self.whitelist = [entry for entry in self.states \
                           if not self.states[entry]]
         if not self.setup['file']:
@@ -188,17 +194,23 @@ class Frame(object):
                 w_to_rem = [e for e in self.whitelist \
                             if not matches_white_list(e, dwl)]
                 if w_to_rem:
-                    self.logger.info("In whitelist mode: suppressing installation of:")
-                    self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in w_to_rem])
+                    self.logger.info("In whitelist mode: "
+                                     "suppressing installation of:")
+                    self.logger.info(["%s:%s" % (e.tag, e.get('name'))
+                                      for e in w_to_rem])
                     self.whitelist = [x for x in self.whitelist \
                                       if x not in w_to_rem]
             elif self.setup['decision'] == 'blacklist':
-                b_to_rem = [e for e in self.whitelist \
-                            if not passes_black_list(e, self.setup['decision_list'])]
+                b_to_rem = \
+                    [e for e in self.whitelist
+                     if not passes_black_list(e, self.setup['decision_list'])]
                 if b_to_rem:
-                    self.logger.info("In blacklist mode: suppressing installation of:")
-                    self.logger.info(["%s:%s" % (e.tag, e.get('name')) for e in b_to_rem])
-                    self.whitelist = [x for x in self.whitelist if x not in b_to_rem]
+                    self.logger.info("In blacklist mode: "
+                                     "suppressing installation of:")
+                    self.logger.info(["%s:%s" % (e.tag, e.get('name'))
+                                      for e in b_to_rem])
+                    self.whitelist = [x for x in self.whitelist
+                                      if x not in b_to_rem]
 
         # take care of important entries first
         if not self.dryrun:
@@ -216,22 +228,22 @@ class Frame(object):
                     (parent.tag == "Independent" and
                      (self.setup['bundle'] or self.setup['skipindep']))):
                     continue
-                tl = [t for t in self.tools
-                      if t.handlesEntry(cfile) and t.canVerify(cfile)]
-                if tl:
-                    if self.setup['interactive'] and not \
-                           self.promptFilter("Install %s: %s? (y/N):", [cfile]):
+                tools = [t for t in self.tools
+                         if t.handlesEntry(cfile) and t.canVerify(cfile)]
+                if tools:
+                    if (self.setup['interactive'] and not
+                        self.promptFilter("Install %s: %s? (y/N):", [cfile])):
                         self.whitelist.remove(cfile)
                         continue
                     try:
-                        self.states[cfile] = tl[0].InstallPath(cfile)
+                        self.states[cfile] = tools[0].InstallPath(cfile)
                         if self.states[cfile]:
-                            tl[0].modified.append(cfile)
+                            tools[0].modified.append(cfile)
                     except:
                         self.logger.error("Unexpected tool failure",
                                           exc_info=1)
                     cfile.set('qtext', '')
-                    if tl[0].VerifyPath(cfile, []):
+                    if tools[0].VerifyPath(cfile, []):
                         self.whitelist.remove(cfile)
 
     def Inventory(self):
@@ -249,9 +261,10 @@ class Frame(object):
             try:
                 tool.Inventory(self.states)
             except:
-                self.logger.error("%s.Inventory() call failed:" % tool.name, exc_info=1)
+                self.logger.error("%s.Inventory() call failed:" % tool.name,
+                                  exc_info=1)
 
-    def Decide(self):
+    def Decide(self):  # pylint: disable=R0912
         """Set self.whitelist based on user interaction."""
         prompt = "Install %s: %s? (y/N): "
         rprompt = "Remove %s: %s? (y/N): "
@@ -270,12 +283,14 @@ class Frame(object):
 
         if self.dryrun:
             if self.whitelist:
-                self.logger.info("In dryrun mode: suppressing entry installation for:")
+                self.logger.info("In dryrun mode: "
+                                 "suppressing entry installation for:")
                 self.logger.info(["%s:%s" % (entry.tag, entry.get('name'))
                                   for entry in self.whitelist])
                 self.whitelist = []
             if self.removal:
-                self.logger.info("In dryrun mode: suppressing entry removal for:")
+                self.logger.info("In dryrun mode: "
+                                 "suppressing entry removal for:")
                 self.logger.info(["%s:%s" % (entry.tag, entry.get('name'))
                                   for entry in self.removal])
             self.removal = []
@@ -301,7 +316,7 @@ class Frame(object):
                     if bundle not in all_bundle_names:
                         self.logger.info("Warning: Bundle %s not found" %
                                          bundle)
-            bundles = filter(lambda b: \
+            bundles = filter(lambda b:
                                  b.get('name') not in self.setup['skipbundle'],
                              bundles)
         if self.setup['skipindep']:
@@ -314,7 +329,8 @@ class Frame(object):
         for bundle in bundles[:]:
             if bundle.tag != 'Bundle':
                 continue
-            bmodified = len([item for item in bundle if item in self.whitelist])
+            bmodified = len([item for item in bundle
+                             if item in self.whitelist])
             actions = [a for a in bundle.findall('./Action')
                        if (a.get('timing') != 'post' and
                            (bmodified or a.get('when') == 'always'))]
@@ -335,7 +351,8 @@ class Frame(object):
                                      (bundle.get('name')))
                     self.logger.info(["%s:%s" % (e.tag, e.get('name'))
                                       for e in b_to_remv])
-                    [self.whitelist.remove(ent) for ent in b_to_remv]
+                    for ent in b_to_remv:
+                        self.whitelist.remove(ent)
 
         if self.setup['interactive']:
             self.whitelist = self.promptFilter(prompt, self.whitelist)
@@ -354,7 +371,8 @@ class Frame(object):
             try:
                 tool.Install(handled, self.states)
             except:
-                self.logger.error("%s.Install() call failed:" % tool.name, exc_info=1)
+                self.logger.error("%s.Install() call failed:" % tool.name,
+                                  exc_info=1)
 
     def Install(self):
         """Install all entries."""
@@ -373,9 +391,12 @@ class Frame(object):
                 try:
                     tool.Inventory(self.states, [bundle])
                 except:
-                    self.logger.error("%s.Inventory() call failed:" % tool.name, exc_info=1)
+                    self.logger.error("%s.Inventory() call failed:" %
+                                      tool.name,
+                                      exc_info=1)
             clobbered = [entry for bundle in mbundles for entry in bundle \
-                         if not self.states[entry] and entry not in self.blacklist]
+                         if (not self.states[entry] and
+                             entry not in self.blacklist)]
             if clobbered:
                 self.logger.debug("Found clobbered entries:")
                 self.logger.debug(["%s:%s" % (entry.tag, entry.get('name')) \
@@ -395,18 +416,20 @@ class Frame(object):
                     else:
                         tool.BundleNotUpdated(bundle, self.states)
                 except:
-                    self.logger.error("%s.BundleNotUpdated() call failed:" % \
-                                      (tool.name), exc_info=1)
+                    self.logger.error("%s.BundleNotUpdated() call failed:" %
+                                      tool.name, exc_info=1)
 
     def Remove(self):
         """Remove extra entries."""
         for tool in self.tools:
-            extras = [entry for entry in self.removal if tool.handlesEntry(entry)]
+            extras = [entry for entry in self.removal
+                      if tool.handlesEntry(entry)]
             if extras:
                 try:
                     tool.Remove(extras)
                 except:
-                    self.logger.error("%s.Remove() failed" % tool.name, exc_info=1)
+                    self.logger.error("%s.Remove() failed" % tool.name,
+                                      exc_info=1)
 
     def CondDisplayState(self, phase):
         """Conditionally print tracing information."""
@@ -420,8 +443,8 @@ class Frame(object):
                 if not self.states[entry]:
                     etype = entry.get('type')
                     if etype:
-                        self.logger.info(    "%s:%s:%s" % (entry.tag, etype,
-                                                           entry.get('name')))
+                        self.logger.info("%s:%s:%s" % (entry.tag, etype,
+                                                       entry.get('name')))
                     else:
                         self.logger.info("    %s:%s" % (entry.tag,
                                                         entry.get('name')))
@@ -432,8 +455,8 @@ class Frame(object):
             for entry in self.extra:
                 etype = entry.get('type')
                 if etype:
-                    self.logger.info(    "%s:%s:%s" % (entry.tag, etype,
-                                                       entry.get('name')))
+                    self.logger.info("%s:%s:%s" % (entry.tag, etype,
+                                                   entry.get('name')))
                 else:
                     self.logger.info("    %s:%s" % (entry.tag,
                                                     entry.get('name')))
@@ -467,24 +490,26 @@ class Frame(object):
     def GenerateStats(self):
         """Generate XML summary of execution statistics."""
         feedback = Bcfg2.Client.XML.Element("upload-statistics")
-        stats = Bcfg2.Client.XML.SubElement(feedback,
-                                            'Statistics',
-                                            total=str(len(self.states)),
-                                            version='2.0',
-                                            revision=self.config.get('revision', '-1'))
+        stats = Bcfg2.Client.XML.SubElement(
+            feedback,
+            'Statistics',
+            total=str(len(self.states)),
+            version='2.0',
+            revision=self.config.get('revision', '-1'))
         good_entries = [key for key, val in list(self.states.items()) if val]
         good = len(good_entries)
         stats.set('good', str(good))
-        if len([key for key, val in list(self.states.items()) if not val]) == 0:
-            stats.set('state', 'clean')
-        else:
+        if any(not val for val in list(self.states.values())):
             stats.set('state', 'dirty')
+        else:
+            stats.set('state', 'clean')
 
         # List bad elements of the configuration
-        for (data, ename) in [(self.modified, 'Modified'), (self.extra, "Extra"), \
+        for (data, ename) in [(self.modified, 'Modified'),
+                              (self.extra, "Extra"),
                               (good_entries, "Good"),
-                              ([entry for entry in self.states if not \
-                                self.states[entry]], "Bad")]:
+                              ([entry for entry in self.states
+                                if not self.states[entry]], "Bad")]:
             container = Bcfg2.Client.XML.SubElement(stats, ename)
             for item in data:
                 item.set('qtext', '')

@@ -96,11 +96,11 @@ def get_metadata_object(core=None, watch_clients=False, use_db=False):
 
 
 class TestMetadataDB(DBModelTestCase):
-    if has_django:
+    if HAS_DJANGO:
         models = [MetadataClientModel]
 
 
-if has_django or can_skip:
+if HAS_DJANGO or can_skip:
     class TestClientVersions(Bcfg2TestCase):
         test_clients = dict(client1="1.2.0",
                             client2="1.2.2",
@@ -109,7 +109,7 @@ if has_django or can_skip:
                             client5=None,
                             client6=None)
 
-        @skipUnless(has_django, "Django not found")
+        @skipUnless(HAS_DJANGO, "Django not found")
         def setUp(self):
             syncdb(TestMetadataDB)
             for client, version in self.test_clients.items():
@@ -421,7 +421,7 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         return get_metadata_object(core=core, watch_clients=watch_clients,
                                    use_db=self.use_db)
 
-    @skipUnless(has_django, "Django not found")
+    @skipUnless(HAS_DJANGO, "Django not found")
     def test__use_db(self):
         # with the way we've set up our metadata tests, it's unweildy
         # to test _use_db.  however, given the way get_obj works, if
@@ -1184,7 +1184,7 @@ class TestMetadataBase(TestMetadata):
     __test__ = False
     use_db = True
 
-    @skipUnless(has_django, "Django not found")
+    @skipUnless(HAS_DJANGO, "Django not found")
     def setUp(self):
         syncdb(TestMetadataDB)
 
@@ -1291,7 +1291,7 @@ class TestMetadata_NoClientsXML(TestMetadataBase):
     # have django.  otherwise they'll all get run because our fake
     # skipping decorators for python < 2.7 won't work when they
     # decorate setUp()
-    if can_skip or has_django:
+    if can_skip or HAS_DJANGO:
         __test__ = True
 
     def load_groups_data(self, metadata=None, xdata=None):
@@ -1456,7 +1456,7 @@ class TestMetadata_ClientsXML(TestMetadataBase):
     # have django.  otherwise they'll all get run because our fake
     # skipping decorators for python < 2.7 won't work when they
     # decorate setUp()
-    if can_skip or has_django:
+    if can_skip or HAS_DJANGO:
         __test__ = True
 
     def load_clients_data(self, metadata=None, xdata=None):

@@ -7,21 +7,24 @@ import logging
 from time import time
 from Bcfg2.Server.FileMonitor import FileMonitor
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+
 
 class Fam(FileMonitor):
+    """ file monitor with support for FAM """
+
     __priority__ = 90
 
     def __init__(self, ignore=None, debug=False):
         FileMonitor.__init__(self, ignore=ignore, debug=debug)
-        self.fm = _fam.open()
+        self.filemonitor = _fam.open()
         self.users = {}
 
     def fileno(self):
         """Return fam file handle number."""
-        return self.fm.fileno()
+        return self.filemonitor.fileno()
 
-    def handle_event_set(self, _):
+    def handle_event_set(self, _=None):
         self.Service()
 
     def handle_events_in_interval(self, interval):
@@ -30,13 +33,13 @@ class Fam(FileMonitor):
             if self.Service():
                 now = time()
 
-    def AddMonitor(self, path, obj):
+    def AddMonitor(self, path, obj, _=None):
         """Add a monitor to path, installing a callback to obj.HandleEvent."""
         mode = os.stat(path)[stat.ST_MODE]
         if stat.S_ISDIR(mode):
-            handle = self.fm.monitorDirectory(path, None)
+            handle = self.filemonitor.monitorDirectory(path, None)
         else:
-            handle = self.fm.monitorFile(path, None)
+            handle = self.filemonitor.monitorFile(path, None)
         self.handles[handle.requestID()] = handle
         if obj != None:
             self.users[handle.requestID()] = obj
@@ -50,10 +53,10 @@ class Fam(FileMonitor):
         start = time()
         now = time()
         while (time() - now) < interval:
-            if self.fm.pending():
-                while self.fm.pending():
+            if self.filemonitor.pending():
+                while self.filemonitor.pending():
                     count += 1
-                    rawevents.append(self.fm.nextEvent())
+                    rawevents.append(self.filemonitor.nextEvent())
                 now = time()
         unique = []
         bookkeeping = []
@@ -73,10 +76,10 @@ class Fam(FileMonitor):
             if event.requestID in self.users:
                 try:
                     self.users[event.requestID].HandleEvent(event)
-                except:
-                    logger.error("Handling event for file %s" % event.filename,
+                except:  # pylint: disable=W0702
+                    LOGGER.error("Handling event for file %s" % event.filename,
                                  exc_info=1)
         end = time()
-        logger.info("Processed %s fam events in %03.03f seconds. %s coalesced" %
-                    (count, (end - start), collapsed))
+        LOGGER.info("Processed %s fam events in %03.03f seconds. "
+                    "%s coalesced" % (count, (end - start), collapsed))
         return count

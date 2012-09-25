@@ -1,12 +1,13 @@
 """ Pseudo provides static monitor support for file alteration events """
 
 import os
-import logging
 from Bcfg2.Server.FileMonitor import FileMonitor, Event
 
-logger = logging.getLogger(__name__)
 
 class Pseudo(FileMonitor):
+    """ file monitor that only produces events on server startup and
+    doesn't actually monitor at all """
+
     __priority__ = 99
 
     def AddMonitor(self, path, obj, handleID=None):
@@ -15,9 +16,9 @@ class Pseudo(FileMonitor):
             handleID = len(list(self.handles.keys()))
         self.events.append(Event(handleID, path, 'exists'))
         if os.path.isdir(path):
-            dirList = os.listdir(path)
-            for includedFile in dirList:
-                self.events.append(Event(handleID, includedFile, 'exists'))
+            dirlist = os.listdir(path)
+            for fname in dirlist:
+                self.events.append(Event(handleID, fname, 'exists'))
             self.events.append(Event(handleID, path, 'endExist'))
 
         if obj != None:

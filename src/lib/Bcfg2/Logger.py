@@ -29,7 +29,7 @@ class TermiosFormatter(logging.Formatter):
                                                        "\000" * 8))[1]
                 if self.width == 0:
                     self.width = 80
-            except:
+            except:  # pylint: disable=W0702
                 self.width = 80
         else:
             # output to a pipe
@@ -44,22 +44,24 @@ class TermiosFormatter(logging.Formatter):
                 if len(line) <= line_len:
                     returns.append(line)
                 else:
-                    inner_lines = int(math.floor(float(len(line)) / line_len)) + 1
-                    for i in range(inner_lines):
-                        returns.append("%s" % (line[i * line_len:(i + 1) * line_len]))
+                    inner_lines = \
+                        int(math.floor(float(len(line)) / line_len)) + 1
+                    for msgline in range(inner_lines):
+                        returns.append(
+                            line[msgline * line_len:(msgline + 1) * line_len])
         elif isinstance(record.msg, list):
             if not record.msg:
                 return ''
             record.msg.sort()
             msgwidth = self.width
-            columnWidth = max([len(item) for item in record.msg])
-            columns = int(math.floor(float(msgwidth) / (columnWidth + 2)))
+            col_width = max([len(item) for item in record.msg])
+            columns = int(math.floor(float(msgwidth) / (col_width + 2)))
             lines = int(math.ceil(float(len(record.msg)) / columns))
-            for lineNumber in range(lines):
-                indices = [idx for idx in [(colNum * lines) + lineNumber
+            for lineno in range(lines):
+                indices = [idx for idx in [(colNum * lines) + lineno
                                            for colNum in range(columns)]
                            if idx < len(record.msg)]
-                retformat = (len(indices) * (" %%-%ds " % columnWidth))
+                retformat = (len(indices) * (" %%-%ds " % col_width))
                 returns.append(retformat % tuple([record.msg[idx]
                                                   for idx in indices]))
         else:
@@ -99,13 +101,13 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
         else:
             msgs = [record]
         for newrec in msgs:
-            msg = '<%d>%s\000' % (self.encodePriority(self.facility,
-                                                      newrec.levelname.lower()),
-                                  self.format(newrec))
+            msg = '<%d>%s\000' % \
+                (self.encodePriority(self.facility, newrec.levelname.lower()),
+                 self.format(newrec))
             try:
                 self.socket.send(msg.encode('ascii'))
             except socket.error:
-                for i in range(10):
+                for i in range(10):  # pylint: disable=W0612
                     try:
                         if isinstance(self.address, tuple):
                             self.socket = socket.socket(socket.AF_INET,
@@ -124,11 +126,12 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                                                           logging.WARNING),
                                       self.format(reconn)))
                     self.socket.send(msg)
-                except:
+                except:  # pylint: disable=W0702
                     # If we still fail then drop it.  Running
                     # bcfg2-server as non-root can trigger permission
                     # denied exceptions.
                     pass
+
 
 def add_console_handler(level=logging.DEBUG):
     """Add a logging handler that logs at a level to sys.stdout."""
@@ -137,6 +140,7 @@ def add_console_handler(level=logging.DEBUG):
     # tell the handler to use this format
     console.setFormatter(TermiosFormatter())
     logging.root.addHandler(console)
+
 
 def add_syslog_handler(procname, syslog_facility, level=logging.DEBUG):
     """Add a logging handler that logs as procname to syslog_facility."""
@@ -150,19 +154,23 @@ def add_syslog_handler(procname, syslog_facility, level=logging.DEBUG):
                                               ('localhost', 514),
                                               syslog_facility)
         syslog.setLevel(level)
-        syslog.setFormatter(logging.Formatter('%(name)s[%(process)d]: %(message)s'))
+        syslog.setFormatter(
+            logging.Formatter('%(name)s[%(process)d]: %(message)s'))
         logging.root.addHandler(syslog)
     except socket.error:
         logging.root.error("failed to activate syslogging")
     except:
         print("Failed to activate syslogging")
 
+
 def add_file_handler(to_file, level=logging.DEBUG):
     """Add a logging handler that logs to to_file."""
     filelog = logging.FileHandler(to_file)
     filelog.setLevel(level)
-    filelog.setFormatter(logging.Formatter('%(asctime)s %(name)s[%(process)d]: %(message)s'))
+    filelog.setFormatter(
+        logging.Formatter('%(asctime)s %(name)s[%(process)d]: %(message)s'))
     logging.root.addHandler(filelog)
+
 
 def setup_logging(procname, to_console=True, to_syslog=True,
                   syslog_facility='daemon', level=0, to_file=None):

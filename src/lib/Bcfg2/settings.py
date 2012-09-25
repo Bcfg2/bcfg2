@@ -1,12 +1,14 @@
+""" Django settings for the Bcfg2 server """
+
 import os
 import sys
 import Bcfg2.Options
 
 try:
     import django
-    has_django = True
-except:
-    has_django = False
+    HAS_DJANGO = True
+except ImportError:
+    HAS_DJANGO = False
 
 DATABASES = dict()
 
@@ -25,9 +27,11 @@ TEMPLATE_DEBUG = DEBUG
 
 MEDIA_URL = '/site_media'
 
-# default config file is /etc/bcfg2-web.conf, UNLESS /etc/bcfg2.conf
-# exists AND /etc/bcfg2-web.conf does not exist.
+
 def _default_config():
+    """ get the default config file.  returns /etc/bcfg2-web.conf,
+    UNLESS /etc/bcfg2.conf exists AND /etc/bcfg2-web.conf does not
+    exist. """
     optinfo = dict(cfile=Bcfg2.Options.CFILE,
                    web_cfile=Bcfg2.Options.WEB_CFILE)
     setup = Bcfg2.Options.OptionParser(optinfo, quiet=True)
@@ -40,16 +44,20 @@ def _default_config():
 
 DEFAULT_CONFIG = _default_config()
 
+
 def read_config(cfile=DEFAULT_CONFIG, repo=None, quiet=False):
+    """ read the config file and set django settings based on it """
+    # pylint: disable=W0603
     global DATABASE_ENGINE, DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, \
         DATABASE_HOST, DATABASE_PORT, DEBUG, TEMPLATE_DEBUG, TIME_ZONE, \
         MEDIA_URL
+    # pylint: enable=W0603
 
     if not os.path.exists(cfile) and os.path.exists(DEFAULT_CONFIG):
-        print("%s does not exist, using %s for database configuration" % 
+        print("%s does not exist, using %s for database configuration" %
               (cfile, DEFAULT_CONFIG))
         cfile = DEFAULT_CONFIG
-        
+
     optinfo = Bcfg2.Options.DATABASE_COMMON_OPTIONS
     optinfo['repo'] = Bcfg2.Options.SERVER_REPOSITORY
     # when setting a different config file, it has to be set in either
@@ -71,7 +79,7 @@ def read_config(cfile=DEFAULT_CONFIG, repo=None, quiet=False):
              HOST=setup['db_host'],
              PORT=setup['db_port'])
 
-    if has_django and django.VERSION[0] == 1 and django.VERSION[1] < 2:
+    if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] < 2:
         DATABASE_ENGINE = setup['db_engine']
         DATABASE_NAME = DATABASES['default']['NAME']
         DATABASE_USER = DATABASES['default']['USER']
@@ -166,7 +174,7 @@ TEMPLATE_DIRS = (
 )
 
 # TODO - sanitize this
-if has_django and django.VERSION[0] == 1 and django.VERSION[1] < 2:
+if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] < 2:
     TEMPLATE_CONTEXT_PROCESSORS = (
         'django.core.context_processors.auth',
         'django.core.context_processors.debug',
@@ -182,4 +190,3 @@ else:
         'django.core.context_processors.media',
         'django.core.context_processors.request'
     )
-

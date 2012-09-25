@@ -1,15 +1,18 @@
+""" Django database models for all plugins """
+
 import sys
 import logging
 import Bcfg2.Options
 import Bcfg2.Server.Plugins
 from django.db import models
-from Bcfg2.Compat import ConfigParser
 
-logger = logging.getLogger('Bcfg2.Server.models')
+LOGGER = logging.getLogger('Bcfg2.Server.models')
 
 MODELS = []
 
+
 def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
+    """ load models from plugins specified in the config """
     global MODELS
 
     if plugins is None:
@@ -19,9 +22,10 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
         plugin_opt = Bcfg2.Options.SERVER_PLUGINS
         plugin_opt.default = Bcfg2.Server.Plugins.__all__
 
-        setup = Bcfg2.Options.OptionParser(dict(plugins=plugin_opt,
-                                                configfile=Bcfg2.Options.CFILE),
-                                           quiet=quiet)
+        setup = \
+            Bcfg2.Options.OptionParser(dict(plugins=plugin_opt,
+                                            configfile=Bcfg2.Options.CFILE),
+                                       quiet=quiet)
         setup.parse([Bcfg2.Options.CFILE.cmd, cfile])
         plugins = setup['plugins']
 
@@ -42,7 +46,7 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
             try:
                 err = sys.exc_info()[1]
                 mod = __import__(plugin)
-            except:
+            except:  # pylint: disable=W0702
                 if plugins != Bcfg2.Server.Plugins.__all__:
                     # only produce errors if the default plugin list
                     # was not used -- i.e., if the config file was set
@@ -50,7 +54,8 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
                     # all plugins, IOW.  the error from the first
                     # attempt to import is probably more accurate than
                     # the second attempt.
-                    logger.error("Failed to load plugin %s: %s" % (plugin, err))
+                    LOGGER.error("Failed to load plugin %s: %s" % (plugin,
+                                                                   err))
                     continue
         for sym in dir(mod):
             obj = getattr(mod, sym)
@@ -62,16 +67,16 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
 # and thus that this module will always work.
 load_models(quiet=True)
 
-# Monitor our internal db version
+
 class InternalDatabaseVersion(models.Model):
-    """Object that tell us to witch version is the database."""
+    """ Object that tell us to which version the database is """
     version = models.IntegerField()
     updated = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return "version %d updated the %s" % (self.version, self.updated.isoformat())
+        return "version %d updated the %s" % (self.version,
+                                              self.updated.isoformat())
 
-    class Meta:
+    class Meta:  # pylint: disable=C0111,W0232
         app_label = "reports"
         get_latest_by = "version"
-

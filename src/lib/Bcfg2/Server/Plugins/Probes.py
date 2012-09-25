@@ -132,6 +132,12 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
                                               encoding)
         fam.AddMonitor(path, self)
 
+    def HandleEvent(self, event):
+        """ handle events on everything but probed.xml """
+        if (event.filename != self.path and
+            not event.filename.endswith("probed.xml")):
+            return self.handle_event(event)
+
     def get_probe_data(self, metadata):
         """ Get an XML description of all probes for a client suitable
         for sending to that client.

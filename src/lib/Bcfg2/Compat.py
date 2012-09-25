@@ -3,7 +3,7 @@ Python 2.4 and such-like """
 
 import sys
 
-# pylint: disable=F0401,E0611
+# pylint: disable=F0401,E0611,W0611,W0622,C0103
 
 try:
     from email.Utils import formatdate
@@ -75,8 +75,9 @@ if sys.hexversion >= 0x03000000:
 else:
     unicode = unicode
 
-# print to file compatibility
+
 def u_str(string, encoding=None):
+    """ print to file compatibility """
     if sys.hexversion >= 0x03000000:
         if encoding is not None:
             return string.encode(encoding)
@@ -90,7 +91,7 @@ def u_str(string, encoding=None):
 
 try:
     unicode = unicode
-except:
+except NameError:
     unicode = str
 
 # base64 compat
@@ -103,7 +104,7 @@ else:
 
 try:
     input = raw_input
-except:
+except NameError:
     input = input
 
 try:
@@ -117,24 +118,25 @@ except ImportError:
     from UserDict import DictMixin as MutableMapping
 
 
-# in py3k __cmp__ is no longer magical, so we define a mixin that can
-# be used to define the rich comparison operators from __cmp__
 class CmpMixin(object):
+    """ in py3k __cmp__ is no longer magical, so this mixin can be
+    used to define the rich comparison operators from __cmp__ """
+
     def __lt__(self, other):
         return self.__cmp__(other) < 0
-    
+
     def __gt__(self, other):
         return self.__cmp__(other) > 0
-    
+
     def __eq__(self, other):
         return self.__cmp__(other) == 0
-    
+
     def __ne__(self, other):
         return not self.__eq__(other)
-    
+
     def __ge__(self, other):
         return self.__gt__(other) or self.__eq__(other)
-    
+
     def __le__(self, other):
         return self.__lt__(other) or self.__eq__(other)
 
@@ -145,11 +147,16 @@ except ImportError:
         from pkgutil import iter_modules
         # iter_modules was added in python 2.5; use it to get an exact
         # re-implementation of walk_packages if possible
+
         def walk_packages(path=None, prefix='', onerror=None):
-            def seen(p, m={}):
-                if p in m:
+            """ Implementation of walk_packages for python 2.5 """
+            def seen(path, seenpaths={}):  # pylint: disable=W0102
+                """ detect if a path has been 'seen' (i.e., considered
+                for inclusion in the generator).  tracks what has been
+                seen through the magic of python default arguments """
+                if path in seenpaths:
                     return True
-                m[p] = True
+                seenpaths[path] = True
 
             for importer, name, ispkg in iter_modules(path, prefix):
                 yield importer, name, ispkg
@@ -179,7 +186,7 @@ except ImportError:
         def walk_packages(path=None, prefix='', onerror=None):
             """ imperfect, incomplete implementation of
             walk_packages() for python 2.4. Differences:
-            
+
             * requires a full path, not a path relative to something
               in sys.path.  anywhere we care about that shouldn't be
               an issue
@@ -187,14 +194,8 @@ except ImportError:
             * the first element of each tuple is None instead of an
               importer object
             """
-            def seen(p, m={}):
-                if p in m:
-                    return True
-                m[p] = True
-
             if path is None:
                 path = sys.path
-            rv = []
             for mpath in path:
                 for fname in os.listdir(mpath):
                     fpath = os.path.join(mpath, fname)
@@ -227,12 +228,14 @@ try:
     any = any
 except NameError:
     def all(iterable):
+        """ implementation of builtin all() for python 2.4 """
         for element in iterable:
             if not element:
                 return False
         return True
 
     def any(iterable):
+        """ implementation of builtin any() for python 2.4 """
         for element in iterable:
             if element:
                 return True
@@ -247,5 +250,6 @@ except ImportError:
 try:
     from functools import wraps
 except ImportError:
-    def wraps(wrapped):
+    def wraps(wrapped):  # pylint: disable=W0613
+        """ implementation of functools.wraps() for python 2.4 """
         return lambda f: f

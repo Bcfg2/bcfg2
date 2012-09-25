@@ -1,17 +1,18 @@
 """ Inotify driver for file alteration events """
 
 import os
-import sys
 import logging
 import pyinotify  # pylint: disable=F0401
-from Bcfg2.Compat import reduce
+from Bcfg2.Compat import reduce  # pylint: disable=W0622
 from Bcfg2.Server.FileMonitor import Event
 from Bcfg2.Server.FileMonitor.Pseudo import Pseudo
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class Inotify(Pseudo, pyinotify.ProcessEvent):
+    """ file monitor with inotify support """
+
     __priority__ = 1
     # pylint: disable=E1101
     action_map = {pyinotify.IN_CREATE: 'created',
@@ -24,18 +25,18 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
 
     def __init__(self, ignore=None, debug=False):
         Pseudo.__init__(self, ignore=ignore, debug=debug)
-        pyinotify.ProcessEvent(self)
+        pyinotify.ProcessEvent.__init__(self)
         self.event_filter = dict()
         self.watches_by_path = dict()
         # these are created in start() after the server is done forking
         self.notifier = None
-        self.wm = None
+        self.watchmgr = None
         self.add_q = []
 
     def start(self):
         Pseudo.start(self)
-        self.wm = pyinotify.WatchManager()
-        self.notifier = pyinotify.ThreadedNotifier(self.wm, self)
+        self.watchmgr = pyinotify.WatchManager()
+        self.notifier = pyinotify.ThreadedNotifier(self.watchmgr, self)
         self.notifier.start()
         for monitor in self.add_q:
             self.AddMonitor(*monitor)
@@ -43,7 +44,7 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
 
     def fileno(self):
         if self.started:
-            return self.wm.get_fd()
+            return self.watchmgr.get_fd()
         else:
             return None
 
@@ -54,9 +55,9 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
                 action = aname
                 break
         try:
-            watch = self.wm.watches[ievent.wd]
+            watch = self.watchmgr.watches[ievent.wd]
         except KeyError:
-            logger.error("Error handling event for %s: Watch %s not found" %
+            LOGGER.error("Error handling event for %s: Watch %s not found" %
                          (ievent.pathname, ievent.wd))
             return
         # FAM-style file monitors return the full path to the parent
@@ -87,7 +88,7 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
             ievent.pathname in self.event_filter[ievent.wd]):
             self.events.append(evt)
 
-    def AddMonitor(self, path, obj):
+    def AddMonitor(self, path, obj, handleID=None):
         # strip trailing slashes
         path = path.rstrip("/")
 
@@ -116,18 +117,18 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
 
         # see if this path is already being watched
         try:
-            wd = self.watches_by_path[watch_path]
+            watchdir = self.watches_by_path[watch_path]
         except KeyError:
-            wd = self.wm.add_watch(watch_path, self.mask,
-                                   quiet=False)[watch_path]
-            self.watches_by_path[watch_path] = wd
+            watchdir = self.watchmgr.add_watch(watch_path, self.mask,
+                                               quiet=False)[watch_path]
+            self.watches_by_path[watch_path] = watchdir
 
         produce_exists = True
         if not is_dir:
-            if wd not in self.event_filter:
-                self.event_filter[wd] = [path]
-            elif path not in self.event_filter[wd]:
-                self.event_filter[wd].append(path)
+            if watchdir not in self.event_filter:
+                self.event_filter[watchdir] = [path]
+            elif path not in self.event_filter[watchdir]:
+                self.event_filter[watchdir].append(path)
             else:
                 # we've been asked to watch a file that we're already
                 # watching, so we don't need to produce 'exists'

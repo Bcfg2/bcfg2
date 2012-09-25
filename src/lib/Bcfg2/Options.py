@@ -8,12 +8,12 @@ import re
 import shlex
 import sys
 import Bcfg2.Client.Tools
-# Compatibility imports
 from Bcfg2.Compat import ConfigParser
 from Bcfg2.version import __version__
 
 
 class OptionFailure(Exception):
+    """ raised when malformed Option objects are instantiated """
     pass
 
 DEFAULT_CONFIG_LOCATION = '/etc/bcfg2.conf'
@@ -21,6 +21,9 @@ DEFAULT_INSTALL_PREFIX = '/usr'
 
 
 class DefaultConfigParser(ConfigParser.ConfigParser):
+    """ A config parser that can be used to query options with default
+    values in the event that the option is not found """
+
     def __init__(self, *args, **kwargs):
         """Make configuration options case sensitive"""
         ConfigParser.ConfigParser.__init__(self, *args, **kwargs)
@@ -59,7 +62,11 @@ class DefaultConfigParser(ConfigParser.ConfigParser):
 
 
 class Option(object):
-    def __init__(self, desc, default, cmd=False, odesc=False,
+    """ a single option, which might be read from the command line,
+    environment, or config file """
+
+    # pylint: disable=C0103,R0913
+    def __init__(self, desc, default, cmd=None, odesc=False,
                  env=False, cf=False, cook=False, long_arg=False,
                  deprecated_cf=None):
         self.desc = desc
@@ -69,7 +76,7 @@ class Option(object):
         if not self.long:
             if cmd and (cmd[0] != '-' or len(cmd) != 2):
                 raise OptionFailure("Poorly formed command %s" % cmd)
-        elif cmd and (not cmd.startswith('--')):
+        elif cmd and not cmd.startswith('--'):
             raise OptionFailure("Poorly formed command %s" % cmd)
         self.odesc = odesc
         self.env = env
@@ -79,8 +86,13 @@ class Option(object):
         if not odesc and not cook and isinstance(self.default, bool):
             self.boolean = True
         self.cook = cook
+        self.value = None
+    # pylint: enable=C0103,R0913
 
     def get_cooked_value(self, value):
+        """ get the value of this option after performing any option
+        munging specified in the 'cook' keyword argument to the
+        constructor """
         if self.boolean:
             return True
         if self.cook:
@@ -112,6 +124,7 @@ class Option(object):
         return "".join(rv)
 
     def buildHelpMessage(self):
+        """ build the help message for this option """
         vals = []
         if not self.cmd:
             return ''
@@ -121,11 +134,13 @@ class Option(object):
             else:
                 vals.append("%s %s" % (self.cmd, self.odesc))
         else:
-            vals.append(self.cmd)        
+            vals.append(self.cmd)
         vals.append(self.desc)
         return "     %-28s %s\n" % tuple(vals)
 
     def buildGetopt(self):
+        """ build a string suitable for describing this short option
+        to getopt """
         gstr = ''
         if self.long:
             return gstr
@@ -136,12 +151,18 @@ class Option(object):
         return gstr
 
     def buildLongGetopt(self):
+        """ build a string suitable for describing this long option to
+        getopt """
         if self.odesc:
             return self.cmd[2:] + '='
         else:
             return self.cmd[2:]
 
     def parse(self, opts, rawopts, configparser=None):
+        """ parse a single option. try parsing the data out of opts
+        (the results of getopt), rawopts (the raw option string), the
+        environment, and finally the config parser. either opts or
+        rawopts should be provided, but not both """
         if self.cmd and opts:
             # Processing getopted data
             optinfo = [opt[1] for opt in opts if opt[0] == self.cmd]
@@ -170,7 +191,8 @@ class Option(object):
                 pass
             if self.deprecated_cf:
                 try:
-                    self.value = self.get_cooked_value(configparser.get(*self.deprecated_cf))
+                    self.value = self.get_cooked_value(
+                        configparser.get(*self.deprecated_cf))
                     print("Warning: [%s] %s is deprecated, use [%s] %s instead"
                           % (self.deprecated_cf[0], self.deprecated_cf[1],
                              self.cf[0], self.cf[1]))
@@ -184,9 +206,13 @@ class Option(object):
 
 
 class OptionSet(dict):
+    """ a set of Option objects that interfaces with getopt and
+    DefaultConfigParser to populate a dict of <option name>:<value>
+    """
+
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args)
-        self.hm = self.buildHelpMessage()
+        self.hm = self.buildHelpMessage()  # pylint: disable=C0103
         if 'configfile' in kwargs:
             self.cfile = kwargs['configfile']
         else:
@@ -203,27 +229,34 @@ class OptionSet(dict):
                 if sys.argv[1] == 'init':
                     return
             else:
-                print("Warning! Unable to read specified configuration file: %s"
-                      % self.cfile)
+                print("Warning! Unable to read specified configuration file: "
+                      "%s" % self.cfile)
 
     def buildGetopt(self):
+        """ build a short option description string suitable for use
+        by getopt.getopt """
         return ''.join([opt.buildGetopt() for opt in list(self.values())])
 
     def buildLongGetopt(self):
+        """ build a list of long options suitable for use by
+        getopt.getopt """
         return [opt.buildLongGetopt() for opt in list(self.values())
                 if opt.long]
 
     def buildHelpMessage(self):
+        """ Build the help mesage for this option set, or use self.hm
+        if it is set """
         if hasattr(self, 'hm'):
             return self.hm
         hlist = []  # list of _non-empty_ help messages
         for opt in list(self.values()):
-            hm = opt.buildHelpMessage()
-            if hm:
-                hlist.append(hm)
+            helpmsg = opt.buildHelpMessage()
+            if helpmsg:
+                hlist.append(helpmsg)
         return ''.join(hlist)
 
     def helpExit(self, msg='', code=1):
+        """ print help and exit """
         if msg:
             print(msg)
         print("Usage:")
@@ -231,6 +264,7 @@ class OptionSet(dict):
         raise SystemExit(code)
 
     def versionExit(self, code=0):
+        """ print the version of bcfg2 and exit """
         print("%s %s on Python %s" %
               (os.path.basename(sys.argv[0]),
                __version__,
@@ -269,42 +303,43 @@ class OptionSet(dict):
 
 
 def list_split(c_string):
+    """ split an option string on commas, optionally surrounded by
+    whitespace, returning a list """
     if c_string:
         return re.split("\s*,\s*", c_string)
     return []
 
 
 def colon_split(c_string):
+    """ split an option string on colons, returning a list """
     if c_string:
         return c_string.split(':')
     return []
 
 
-def get_bool(s):
+def get_bool(val):
+    """ given a string value of a boolean configuration option, return
+    an actual bool (True or False) """
     # these values copied from ConfigParser.RawConfigParser.getboolean
     # with the addition of True and False
     truelist = ["1", "yes", "True", "true", "on"]
     falselist = ["0", "no", "False", "false", "off"]
-    if s in truelist:
+    if val in truelist:
         return True
-    elif s in falselist:
+    elif val in falselist:
         return False
     else:
         raise ValueError
-        
 
-"""
-Options:
 
-    Accepts keyword argument list with the following values:
+# Options accepts keyword argument list with the following values:
+#         default:    default value for the option
+#         cmd:        command line switch
+#         odesc:      option description
+#         cf:         tuple containing section/option
+#         cook:       method for parsing option
+#         long_arg:   (True|False) specifies whether cmd is a long argument
 
-        default:    default value for the option
-        cmd:        command line switch
-        odesc:      option description
-        cf:         tuple containing section/option
-        cook:       method for parsing option
-        long_arg:   (True|False) specifies whether cmd is a long argument
-"""
 # General options
 CFILE = \
     Option('Specify configuration file',
@@ -428,7 +463,8 @@ SERVER_REPOSITORY = \
 SERVER_PLUGINS = \
     Option('Server plugin list',
            # default server plugins
-           default=['Bundler', 'Cfg', 'Metadata', 'Pkgmgr', 'Rules', 'SSHbase'],
+           default=['Bundler', 'Cfg', 'Metadata', 'Pkgmgr', 'Rules',
+                    'SSHbase'],
            cf=('server', 'plugins'),
            cook=list_split)
 SERVER_MCONNECT = \
@@ -444,7 +480,7 @@ SERVER_FILEMONITOR = \
 SERVER_FAM_IGNORE = \
     Option('File globs to ignore',
            default=['*~', '*#', '.#*', '*.swp', '.*.swx', 'SCCS', '.svn',
-                    '4913', '.gitignore',],
+                    '4913', '.gitignore'],
            cf=('server', 'ignore_files'),
            cook=list_split)
 SERVER_LISTEN_ALL = \
@@ -1066,13 +1102,18 @@ class OptionParser(OptionSet):
             argv = sys.argv[1:]
         # the bootstrap is always quiet, since it's running with a
         # default config file and so might produce warnings otherwise
-        self.Bootstrap = OptionSet([('configfile', CFILE)], quiet=True)
-        self.Bootstrap.parse(argv, do_getopt=False)
-        OptionSet.__init__(self, args, configfile=self.Bootstrap['configfile'],
+        self.bootstrap = OptionSet([('configfile', CFILE)], quiet=True)
+        self.bootstrap.parse(argv, do_getopt=False)
+        OptionSet.__init__(self, args, configfile=self.bootstrap['configfile'],
                            quiet=quiet)
         self.optinfo = copy.copy(args)
+        # these will be set by parse() and then used by reparse()
+        self.argv = []
+        self.do_getopt = True
 
     def reparse(self):
+        """ parse the options again, taking any changes (e.g., to the
+        config file) into account """
         for key, opt in self.optinfo.items():
             self[key] = opt
         if "args" not in self.optinfo:
@@ -1085,6 +1126,7 @@ class OptionParser(OptionSet):
         OptionSet.parse(self, self.argv, do_getopt=self.do_getopt)
 
     def add_option(self, name, opt):
+        """ Add an option to the parser """
         self[name] = opt
         self.optinfo[name] = opt
 

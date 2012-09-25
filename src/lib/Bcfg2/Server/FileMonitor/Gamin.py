@@ -2,14 +2,11 @@
 
 import os
 import stat
-import logging
 # pylint: disable=F0401
 from gamin import WatchMonitor, GAMCreated, GAMExists, GAMEndExist, \
     GAMChanged, GAMDeleted
 # pylint: enable=F0401
 from Bcfg2.Server.FileMonitor import Event, FileMonitor
-
-logger = logging.getLogger(__name__)
 
 
 class GaminEvent(Event):
@@ -28,6 +25,7 @@ class GaminEvent(Event):
 
 
 class Gamin(FileMonitor):
+    """ file monitor with gamin support """
     __priority__ = 10
 
     def __init__(self, ignore=None, debug=False):

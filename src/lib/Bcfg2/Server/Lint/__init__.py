@@ -10,6 +10,9 @@ import fcntl
 import termios
 import struct
 from Bcfg2.Server import XI_NAMESPACE
+from Bcfg2.Compat import walk_packages
+
+__all__ = [m[1] for m in walk_packages(path=__path__)]
 
 
 def _ioctl_GWINSZ(fd):  # pylint: disable=C0103
@@ -99,6 +102,7 @@ class Plugin(object):
 
 class ErrorHandler (object):
     """ a class to handle errors for bcfg2-lint plugins """
+
     def __init__(self, config=None):
         self.errors = 0
         self.warnings = 0
@@ -114,32 +118,26 @@ class ErrorHandler (object):
         else:
             self._wrapper = lambda s: [s]
 
-        self._handlers = {}
+        self.errors = dict()
         if config is not None:
-            for err, action in config.items():
-                if "warn" in action:
-                    self._handlers[err] = self.warn
-                elif "err" in action:
-                    self._handlers[err] = self.error
-                else:
-                    self._handlers[err] = self.debug
+            self.RegisterErrors(config.items())
 
     def RegisterErrors(self, errors):
         """ Register a dict of errors (name: default level) that a
         plugin may raise """
         for err, action in errors.items():
-            if err not in self._handlers:
+            if err not in self.errors:
                 if "warn" in action:
-                    self._handlers[err] = self.warn
+                    self.errors[err] = self.warn
                 elif "err" in action:
-                    self._handlers[err] = self.error
+                    self.errors[err] = self.error
                 else:
-                    self._handlers[err] = self.debug
+                    self.errors[err] = self.debug
 
     def dispatch(self, err, msg):
         """ Dispatch an error to the correct handler """
-        if err in self._handlers:
-            self._handlers[err](msg)
+        if err in self.errors:
+            self.errors[err](msg)
             self.logger.debug("    (%s)" % err)
         else:
             # assume that it's an error, but complain
