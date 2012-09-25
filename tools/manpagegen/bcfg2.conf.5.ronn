@@ -104,6 +104,18 @@ specified in the `[server]` section of the configuration file.
     Specifies a prefix if the Bcfg2 installation isn’t placed in the
     default location (e.g. /usr/local).
 
+  * `backend`:
+    Specifies which server core backend to use.  Current available
+    options are:
+
+    `cherrypy`,
+    `builtin`,
+    `best`
+
+    The default is `best`, which is currently an alias for `builtin`.
+    More details on the backends can be found in the official
+    documentation.
+
 ### Account Plugin
 
 The account plugin manages authentication data, including the following.
@@ -345,11 +357,18 @@ settings used for client-server communication.
 
   * `retries`:
     A client-only option. Number of times to retry network
-    communication.
+    communication.  Default is 3 retries.
+
+  * `retry_delay`:
+    A client-only option. Number of seconds to wait in between
+    retrying network communication.  Default is 1 second.
 
   * `serverCommonNames`:
     A client-only option. A colon-separated list of Common Names the
     client will accept in the SSL certificate presented by the server.
+
+  * `timeout`:
+    A client-only option. The network communication timeout.
 
   * `user`:
     A client-only option. The UUID of the client.
@@ -368,18 +387,32 @@ Specified in the `[components]` section.
   * `encoding`:
     Text encoding of configuration files. Defaults to UTF-8.
 
+  * `lockfile`:
+    The path to the client lock file, which is used to ensure that
+    only one Bcfg2 client runs at a time on a single client.
+
 ## LOGGING OPTIONS
 
 Specified in the `[logging]` section. These options control the server
 logging functionality.
 
+  * `debug`:
+    Whether or not to enable debug-level log output.  Default is
+    false.
+
   * `path`:
     Server log file path.
 
+  * `syslog`:
+    Whether or not to send logging data to syslog.  Default is true.
+
+  * `verbose`:
+    Whether or not to enable verbose log output.  Default is false.
+
 ## MDATA OPTIONS
 
-These options affect the default metadata settings for Paths with
-type=’file’.
+Specified in the `[mdata]` section. These options affect the default
+metadata settings for Paths with type=’file’.
 
   * `owner`:
     Global owner for Paths (defaults to root)
@@ -390,11 +423,20 @@ type=’file’.
   * `perms`:
     Global permissions for Paths (defaults to 644)
 
+  * `secontext`:
+    Global SELinux context for Path entries (defaults to
+    `__default__`, which restores the expected context)
+
   * `paranoid`:
     Global paranoid settings for Paths (defaults to false)
 
   * `sensitive`:
     Global sensitive settings for Paths (defaults to false)
+   
+  * `important`:
+    Global important settings for Paths. Defaults to false, and
+    anything else is probably not a good idea.
+
 
 ## PACKAGES OPTIONS
 
@@ -501,12 +543,12 @@ found in the `[sslca_default]` section of the configuration file.
     specification. If you’re using a self signing CA this would be the
     CA cert that you generated.
 
-## STATISTICS OPTIONS
+## DATABASE OPTIONS
 
-Server-only, specified in the `[statistics]` section. These options
-control the statistics collection functionality of the server.
+Server-only, specified in the `[database]` section. These options
+control the database connection of the server.
 
-  * `database_engine`:
+  * `engine`:
     The database engine used by the statistics module. One of the
     following:
     
@@ -515,21 +557,21 @@ control the statistics collection functionality of the server.
     `sqlite3`,
     `ado_mssql`
 
-  * `database_name`:
+  * `name`:
     The name of the database to use for statistics data. If
     ‘database_engine’ is set to ‘sqlite3’ this is a file path to sqlite
     file and defaults to `$REPOSITORY_DIR/etc/brpt.sqlite`.
 
-  * `database_user`:
+  * `user`:
     User for database connections. Not used for sqlite3.
 
-  * `database_password`:
+  * `password`:
     Password for database connections. Not used for sqlite3.
 
-  * `database_host`:
+  * `host`:
     Host for database connections. Not used for sqlite3.
 
-  * `database_port`:
+  * `port`:
     Port for database connections. Not used for sqlite3.
 
   * `time_zone`:

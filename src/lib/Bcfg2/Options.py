@@ -467,11 +467,6 @@ SERVER_PLUGINS = \
                     'SSHbase'],
            cf=('server', 'plugins'),
            cook=list_split)
-SERVER_MCONNECT = \
-    Option('Server Metadata Connector list',
-           default=['Probes'],
-           cf=('server', 'connectors'),
-           cook=list_split)
 SERVER_FILEMONITOR = \
     Option('Server file monitor',
            default='default',
@@ -495,10 +490,6 @@ SERVER_LOCATION = \
            default='https://localhost:6789',
            cmd='-S',
            odesc='https://server:port',
-           cf=('components', 'bcfg2'))
-SERVER_STATIC = \
-    Option('Server runs on static port',
-           default=False,
            cf=('components', 'bcfg2'))
 SERVER_KEY = \
     Option('Path to SSL key',
@@ -996,7 +987,6 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
                              filemonitor=SERVER_FILEMONITOR,
                              ignore=SERVER_FAM_IGNORE,
                              location=SERVER_LOCATION,
-                             static=SERVER_STATIC,
                              key=SERVER_KEY,
                              cert=SERVER_CERT,
                              ca=SERVER_CA,

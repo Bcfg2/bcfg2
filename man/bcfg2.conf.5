@@ -58,6 +58,16 @@ Descriptions of each plugin can be found in their respective sections below\.
 \fBprefix\fR
 Specifies a prefix if the Bcfg2 installation isn’t placed in the default location (e\.g\. /usr/local)\.
 .
+.TP
+\fBbackend\fR
+Specifies which server core backend to use\. Current available options are:
+.
+.IP
+\fBcherrypy\fR, \fBbuiltin\fR, \fBbest\fR
+.
+.IP
+The default is \fBbest\fR, which is currently an alias for \fBbuiltin\fR\. More details on the backends can be found in the official documentation\.
+.
 .SS "Account Plugin"
 The account plugin manages authentication data, including the following\.
 .
@@ -212,11 +222,19 @@ Communication protocol to use\. Defaults to xmlrpc/ssl\.
 .
 .TP
 \fBretries\fR
-A client\-only option\. Number of times to retry network communication\.
+A client\-only option\. Number of times to retry network communication\. Default is 3 retries\.
+.
+.TP
+\fBretry_delay\fR
+A client\-only option\. Number of seconds to wait in between retrying network communication\. Default is 1 second\.
 .
 .TP
 \fBserverCommonNames\fR
 A client\-only option\. A colon\-separated list of Common Names the client will accept in the SSL certificate presented by the server\.
+.
+.TP
+\fBtimeout\fR
+A client\-only option\. The network communication timeout\.
 .
 .TP
 \fBuser\fR
@@ -236,15 +254,31 @@ e\.g\. \fBbcfg2 = https://10\.3\.1\.6:6789\fR
 \fBencoding\fR
 Text encoding of configuration files\. Defaults to UTF\-8\.
 .
+.TP
+\fBlockfile\fR
+The path to the client lock file, which is used to ensure that only one Bcfg2 client runs at a time on a single client\.
+.
 .SH "LOGGING OPTIONS"
 Specified in the \fB[logging]\fR section\. These options control the server logging functionality\.
+.
+.TP
+\fBdebug\fR
+Whether or not to enable debug\-level log output\. Default is false\.
 .
 .TP
 \fBpath\fR
 Server log file path\.
 .
+.TP
+\fBsyslog\fR
+Whether or not to send logging data to syslog\. Default is true\.
+.
+.TP
+\fBverbose\fR
+Whether or not to enable verbose log output\. Default is false\.
+.
 .SH "MDATA OPTIONS"
-These options affect the default metadata settings for Paths with type=’file’\.
+Specified in the \fB[mdata]\fR section\. These options affect the default metadata settings for Paths with type=’file’\.
 .
 .TP
 \fBowner\fR
@@ -259,12 +293,20 @@ Global group for Paths (defaults to root)
 Global permissions for Paths (defaults to 644)
 .
 .TP
+\fBsecontext\fR
+Global SELinux context for Path entries (defaults to \fB__default__\fR, which restores the expected context)
+.
+.TP
 \fBparanoid\fR
 Global paranoid settings for Paths (defaults to false)
 .
 .TP
 \fBsensitive\fR
 Global sensitive settings for Paths (defaults to false)
+.
+.TP
+\fBimportant\fR
+Global important settings for Paths\. Defaults to false, and anything else is probably not a good idea\.
 .
 .SH "PACKAGES OPTIONS"
 The following options are specified in the \fB[packages]\fR section of the configuration file\.
@@ -358,34 +400,34 @@ Specifies the passphrase for the CA’s private key (if necessary)\. If no passp
 \fBchaincert\fR
 Specifies the location of your ssl chaining certificate\. This is used when pre\-existing certifcate hostfiles are found, so that they can be validated and only regenerated if they no longer meet the specification\. If you’re using a self signing CA this would be the CA cert that you generated\.
 .
-.SH "STATISTICS OPTIONS"
-Server\-only, specified in the \fB[statistics]\fR section\. These options control the statistics collection functionality of the server\.
+.SH "DATABASE OPTIONS"
+Server\-only, specified in the \fB[database]\fR section\. These options control the database connection of the server\.
 .
 .TP
-\fBdatabase_engine\fR
+\fBengine\fR
 The database engine used by the statistics module\. One of the following:
 .
 .IP
 \fBpostgresql\fR, \fBmysql\fR, \fBsqlite3\fR, \fBado_mssql\fR
 .
 .TP
-\fBdatabase_name\fR
+\fBname\fR
 The name of the database to use for statistics data\. If ‘database_engine’ is set to ‘sqlite3’ this is a file path to sqlite file and defaults to \fB$REPOSITORY_DIR/etc/brpt\.sqlite\fR\.
 .
 .TP
-\fBdatabase_user\fR
+\fBuser\fR
 User for database connections\. Not used for sqlite3\.
 .
 .TP
-\fBdatabase_password\fR
+\fBpassword\fR
 Password for database connections\. Not used for sqlite3\.
 .
 .TP
-\fBdatabase_host\fR
+\fBhost\fR
 Host for database connections\. Not used for sqlite3\.
 .
 .TP
-\fBdatabase_port\fR
+\fBport\fR
 Port for database connections\. Not used for sqlite3\.
 .
 .TP

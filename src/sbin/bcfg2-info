@@ -497,7 +497,6 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                 ('Server Metadata Connector', setup['mconnect']),
                 ('Filemonitor', setup['filemonitor']),
                 ('Server address',    setup['location']),
-                ('Static', setup['static']),
                 ('Path to key', setup['key']),
                 ('Path to SSL certificate', setup['cert']),
                 ('Path to SSL CA certificate', setup['ca']),
