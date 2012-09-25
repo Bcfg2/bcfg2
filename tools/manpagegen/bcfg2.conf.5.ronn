@@ -116,6 +116,12 @@ specified in the `[server]` section of the configuration file.
     More details on the backends can be found in the official
     documentation.
 
+  * `user`:
+    The username or UID to run the daemon as.  Default is `0`
+
+  * `group`:
+    The group name or GID to run the daemon as.  Default is `0`
+
 ### Account Plugin
 
 The account plugin manages authentication data, including the following.

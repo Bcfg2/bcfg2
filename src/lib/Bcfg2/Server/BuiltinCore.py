@@ -30,7 +30,9 @@ class Core(BaseCore):
         BaseCore.__init__(self, setup)
         self.server = None
         self.context = \
-            daemon.DaemonContext(pidfile=PidFile(self.setup['daemon']))
+            daemon.DaemonContext(uid=self.setup['daemon_uid'],
+                                 gid=self.setup['daemon_gid'],
+                                 pidfile=PidFile(self.setup['daemon']))
 
     def _dispatch(self, method, args, dispatch_dict):
         """Custom XML-RPC dispatcher for components.

@@ -7,7 +7,7 @@ from Bcfg2.Server.Core import BaseCore
 import cherrypy
 from cherrypy.lib import xmlrpcutil
 from cherrypy._cptools import ErrorTool
-from cherrypy.process.plugins import Daemonizer, PIDFile
+from cherrypy.process.plugins import Daemonizer, DropPrivileges, PIDFile
 
 
 def on_error(*args, **kwargs):  # pylint: disable=W0613
@@ -90,6 +90,8 @@ class Core(BaseCore):
         return cherrypy.serving.response.body
 
     def _daemonize(self):
+        DropPrivileges(cherrypy.engine, uid=self.setup['daemon_uid'],
+                       gid=self.setup['daemon_gid']).subscribe()
         Daemonizer(cherrypy.engine).subscribe()
         PIDFile(cherrypy.engine, self.setup['daemon']).subscribe()
 

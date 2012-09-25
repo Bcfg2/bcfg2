@@ -7,6 +7,8 @@ import os
 import re
 import shlex
 import sys
+import grp
+import pwd
 import Bcfg2.Client.Tools
 from Bcfg2.Compat import ConfigParser
 from Bcfg2.version import __version__
@@ -332,6 +334,24 @@ def get_bool(val):
         raise ValueError
 
 
+def get_gid(val):
+    """ This takes a group name or gid and returns the corresponding
+    gid. """
+    try:
+        return int(val)
+    except ValueError:
+        return int(grp.getgrnam(val)[2])
+
+
+def get_uid(val):
+    """ This takes a group name or gid and returns the corresponding
+    gid. """
+    try:
+        return int(val)
+    except ValueError:
+        return int(pwd.getpwnam(val)[2])
+
+
 # Options accepts keyword argument list with the following values:
 #         default:    default value for the option
 #         cmd:        command line switch
@@ -522,6 +542,16 @@ SERVER_BACKEND = \
     Option('Server Backend',
            default='best',
            cf=('server', 'backend'))
+SERVER_DAEMON_USER = \
+    Option('User to run the server daemon as',
+           default=0,
+           cf=('server', 'user'),
+           cook=get_uid)
+SERVER_DAEMON_GROUP = \
+    Option('Group to run the server daemon as',
+           default=0,
+           cf=('server', 'group'),
+           cook=get_gid)
 
 # database options
 DB_ENGINE = \
@@ -1000,7 +1030,9 @@ CLI_COMMON_OPTIONS = dict(configfile=CFILE,
                           syslog=LOGGING_SYSLOG)
 
 DAEMON_COMMON_OPTIONS = dict(daemon=DAEMON,
-                             listen_all=SERVER_LISTEN_ALL)
+                             listen_all=SERVER_LISTEN_ALL,
+                             daemon_uid=SERVER_DAEMON_USER,
+                             daemon_gid=SERVER_DAEMON_GROUP)
 
 SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
                              plugins=SERVER_PLUGINS,
