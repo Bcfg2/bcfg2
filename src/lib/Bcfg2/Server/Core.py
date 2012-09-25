@@ -502,7 +502,6 @@ class BaseCore(object):
         the server core implementation to call shutdown() """
         if self.setup['daemon']:
             self._daemonize()
-            open(self.setup['daemon'], "w").write("%s\n" % os.getpid())
 
         self._run()
 
@@ -513,7 +512,7 @@ class BaseCore(object):
         self._block()
 
     def _daemonize(self):
-        """ daemonize the server """
+        """ daemonize the server and write the pidfile """
         raise NotImplementedError
 
     def _run(self):

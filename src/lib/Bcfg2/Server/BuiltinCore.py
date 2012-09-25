@@ -1,5 +1,6 @@
 """ the core of the builtin bcfg2 server """
 
+import os
 import sys
 import time
 import socket
@@ -9,6 +10,18 @@ from Bcfg2.Compat import xmlrpclib, urlparse
 from Bcfg2.SSLServer import XMLRPCServer
 
 
+class PidFile(object):
+    """ context handler to write the pid file """
+    def __init__(self, pidfile):
+        self.pidfile = pidfile
+
+    def __enter__(self):
+        open(self.pidfile, "w").write("%s\n" % os.getpid())
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        os.unlink(self.pidfile)
+
+
 class Core(BaseCore):
     """ The built-in server core """
     name = 'bcfg2-server'
@@ -16,7 +29,8 @@ class Core(BaseCore):
     def __init__(self, setup):
         BaseCore.__init__(self, setup)
         self.server = None
-        self.context = daemon.DaemonContext()
+        self.context = \
+            daemon.DaemonContext(pidfile=PidFile(self.setup['daemon']))
 
     def _dispatch(self, method, args, dispatch_dict):
         """Custom XML-RPC dispatcher for components.
