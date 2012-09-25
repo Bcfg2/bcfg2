@@ -6,7 +6,6 @@ import Bcfg2.Server
 import Bcfg2.Server.Plugin
 from subprocess import Popen, PIPE
 
-# pylint: disable=F0401
 try:
     from syck import load as yaml_load, error as yaml_error
 except ImportError:
@@ -14,7 +13,6 @@ except ImportError:
         from yaml import load as yaml_load, YAMLError as yaml_error
     except ImportError:
         raise ImportError("No yaml library could be found")
-# pylint: enable=F0401
 
 
 class PuppetENCFile(Bcfg2.Server.Plugin.FileBacked):

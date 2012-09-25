@@ -4,13 +4,11 @@ XML-RPC methods. """
 
 import sys
 import Bcfg2.Server.Plugin
-# pylint: disable=F0401
 try:
     import pysvn
     HAS_SVN = False
 except ImportError:
     HAS_SVN = True
-# pylint: enable=F0401
 
 
 class Svn2(Bcfg2.Server.Plugin.Plugin,

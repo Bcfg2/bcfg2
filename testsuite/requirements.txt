@@ -2,3 +2,4 @@ lxml
 nose
 mock
 sphinx
+daemon

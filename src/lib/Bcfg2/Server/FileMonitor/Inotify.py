@@ -2,7 +2,7 @@
 
 import os
 import logging
-import pyinotify  # pylint: disable=F0401
+import pyinotify
 from Bcfg2.Compat import reduce  # pylint: disable=W0622
 from Bcfg2.Server.FileMonitor import Event
 from Bcfg2.Server.FileMonitor.Pseudo import Pseudo

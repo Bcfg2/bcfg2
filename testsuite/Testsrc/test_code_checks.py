@@ -24,14 +24,6 @@ except ImportError:
 # path to Bcfg2 src directory
 srcpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..",
                                        "src"))
-# we set this in the environment rather than with sys.path because we
-# call pylint, an external command, later, and it needs the modified
-# environment
-if 'PYTHONPATH' in os.environ:
-    os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + ":" + \
-        os.path.join(srcpath, "lib")
-else:
-    os.environ['PYTHONPATH'] = os.path.join(srcpath, "lib")
 
 # path to pylint rc file
 rcfile = os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
@@ -74,7 +66,6 @@ error_checks = {
     "lib/Bcfg2/Server/Plugins": ["Decisions.py",
                                  "Deps.py",
                                  "Ldap.py",
-                                 "NagiosGen.py",
                                  "Pkgmgr.py",
                                  "SSHbase.py",
                                  "SSLCA.py"]
@@ -122,9 +113,20 @@ class TestPylint(Bcfg2TestCase):
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_lib_full(self):
-        full_list = list(set(self._get_paths(full_checks)) -
-                         set(expand_path_dict(error_checks)))
+        full_list = list((set(self._get_paths(full_checks)) -
+                          set(expand_path_dict(error_checks))) -
+                         set(expand_path_dict(django_checks)))
         self._pylint_full(full_list)
+
+    @skipUnless(HAS_DJANGO, "Django not found, skipping")
+    @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
+    @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
+    @skipUnless(HAS_PYLINT, "pylint not found, skipping")
+    def test_django_full(self):
+        test_list = list(set(self._get_paths(full_checks)) &
+                         set(expand_path_dict(django_checks)))
+        return self._pylint_errors(test_list,
+                                   extra_args=["-d", "E1101"])
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
@@ -182,7 +184,6 @@ class TestPylint(Bcfg2TestCase):
         rv = pylint.wait()
 
         for line in output.splitlines():
-            #print line
             if self.error_re.search(line):
                 print(line)
         # pylint returns a bitmask, where 1 means fatal errors

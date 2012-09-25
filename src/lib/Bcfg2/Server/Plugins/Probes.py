@@ -10,7 +10,6 @@ import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 
-# pylint: disable=F0401
 try:
     from django.db import models
     HAS_DJANGO = True
@@ -52,7 +51,6 @@ except ImportError:
         HAS_YAML = True
     except ImportError:
         HAS_YAML = False
-# pylint: enable=F0401
 
 
 class ClientProbeDataSet(dict):

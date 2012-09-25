@@ -10,7 +10,7 @@ logger = logging.getLogger('Bcfg2.Plugins.Ldap')
 
 try:
     import ldap
-except:
+except ImportError:
     logger.error("Unable to load ldap module. Is python-ldap installed?")
     raise ImportError
 
@@ -21,15 +21,17 @@ RETRY_DELAY = 5
 RETRY_COUNT = 3
 
 SCOPE_MAP = {
-    "base" : ldap.SCOPE_BASE,
-    "one" : ldap.SCOPE_ONELEVEL,
-    "sub" : ldap.SCOPE_SUBTREE,
+    "base": ldap.SCOPE_BASE,
+    "one": ldap.SCOPE_ONELEVEL,
+    "sub": ldap.SCOPE_SUBTREE,
 }
 
 LDAP_QUERIES = []
 
+
 def register_query(query):
     LDAP_QUERIES.append(query)
+
 
 class ConfigFile(Bcfg2.Server.Plugin.FileBacked):
     """
@@ -57,6 +59,7 @@ class ConfigFile(Bcfg2.Server.Plugin.FileBacked):
         global LDAP_QUERIES
         LDAP_QUERIES = []
         imp.load_source("ldap_cfg", self.filename)
+
 
 class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
     """

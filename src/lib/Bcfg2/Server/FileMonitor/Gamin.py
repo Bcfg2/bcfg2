@@ -2,10 +2,8 @@
 
 import os
 import stat
-# pylint: disable=F0401
 from gamin import WatchMonitor, GAMCreated, GAMExists, GAMEndExist, \
     GAMChanged, GAMDeleted
-# pylint: enable=F0401
 from Bcfg2.Server.FileMonitor import Event, FileMonitor
 
 

@@ -6,15 +6,15 @@ import sys
 import glob
 import socket
 import logging
-import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 
-LOGGER = logging.getLogger('Bcfg2.Plugins.NagiosGen')
+LOGGER = logging.getLogger(__name__)
 
-line_fmt = '\t%-32s %s'
 
 class NagiosGenConfig(Bcfg2.Server.Plugin.StructFile):
+    """ NagiosGen config file handler """
+
     def __init__(self, filename, fam):
         # create config.xml if missing
         if not os.path.exists(filename):
@@ -28,11 +28,10 @@ class NagiosGenConfig(Bcfg2.Server.Plugin.StructFile):
 
 class NagiosGen(Bcfg2.Server.Plugin.Plugin,
                 Bcfg2.Server.Plugin.Generator):
-    """NagiosGen is a Bcfg2 plugin that dynamically generates
-       Nagios configuration file based on Bcfg2 data.
-    """
-    name = 'NagiosGen'
+    """ NagiosGen is a Bcfg2 plugin that dynamically generates Nagios
+    configuration file based on Bcfg2 data. """
     __author__ = 'bcfg-dev@mcs.anl.gov'
+    line_fmt = '\t%-32s %s'
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
@@ -59,84 +58,47 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
         try:
             host_address = socket.gethostbyname(metadata.hostname)
         except socket.gaierror:
-            LOGGER.error("Failed to find IP address for %s" %
-                         metadata.hostname)
+            self.logger.error("Failed to find IP address for %s" %
+                              metadata.hostname)
             raise Bcfg2.Server.Plugin.PluginExecutionError
         host_groups = [grp for grp in metadata.groups
                        if os.path.isfile('%s/%s-group.cfg' % (self.data, grp))]
         host_config = ['define host {',
-                       line_fmt % ('host_name', metadata.hostname),
-                       line_fmt % ('alias', metadata.hostname),
-                       line_fmt % ('address', host_address)]
+                       self.line_fmt % ('host_name', metadata.hostname),
+                       self.line_fmt % ('alias', metadata.hostname),
+                       self.line_fmt % ('address', host_address)]
 
         if host_groups:
-            host_config.append(line_fmt % ("hostgroups",
-                                           ",".join(host_groups)))
+            host_config.append(self.line_fmt % ("hostgroups",
+                                                ",".join(host_groups)))
 
-        # read the old-style Properties config, but emit a warning.
+        # read the config
         xtra = dict()
-        props = None
-        if (hasattr(metadata, 'Properties') and
-            'NagiosGen.xml' in metadata.Properties):
-            props = metadata.Properties['NagiosGen.xml'].data
-        if props is not None:
-            LOGGER.warn("Parsing deprecated Properties/NagiosGen.xml. "
-                        "Update to the new-style config with "
-                        "nagiosgen-convert.py.")
-            xtra = dict((el.tag, el.text)
-                        for el in props.find(metadata.hostname))
-            # hold off on parsing the defaults until we've checked for
-            # a new-style config
-
-        # read the old-style parents.xml, but emit a warning
-        pfile = os.path.join(self.data, "parents.xml")
-        if os.path.exists(pfile):
-            LOGGER.warn("Parsing deprecated NagiosGen/parents.xml. "
-                        "Update to the new-style config with "
-                        "nagiosgen-convert.py.")
-            parents = lxml.etree.parse(pfile,
-                                       parser=Bcfg2.Server.XMLParser)
-            for el in parents.xpath("//Depend[@name='%s']" % metadata.hostname):
-                if 'parent' in xtra:
-                    xtra['parent'] += "," + el.get("on")
-                else:
-                    xtra['parent'] = el.get("on")
-
-        # read the new-style config and overwrite the old-style config
         for el in self.config.Match(metadata):
             if el.tag == 'Option':
                 xtra[el.get("name")] = el.text
 
-        # if we haven't found anything in the new- or old-style
-        # configs, finally read defaults from old-style config
-        if not xtra and props is not None:
-            xtra = dict((el.tag, el.text) for el in props.find('default'))
-
         if xtra:
-            host_config.extend([line_fmt % (opt, val)
+            host_config.extend([self.line_fmt % (opt, val)
                                 for opt, val in list(xtra.items())])
         else:
-            host_config.append(line_fmt % ('use', 'default'))
+            host_config.append(self.line_fmt % ('use', 'default'))
 
         host_config.append('}')
         entry.text = "%s\n" % "\n".join(host_config)
-        [entry.attrib.__setitem__(key, value)
-         for (key, value) in list(self.client_attrib.items())]
+        for (key, value) in list(self.client_attrib.items()):
+            entry.attrib.__setitem__(key, value)
+        fname = os.path.join(self.data, metadata.hostname + "-host.cfg")
         try:
-            fileh = open("%s/%s-host.cfg" %
-                         (self.data, metadata.hostname), 'w')
-            fileh.write(entry.text)
-            fileh.close()
+            open(fname, 'w').write(entry.text)
         except OSError:
-            ioerr = sys.exc_info()[1]
-            LOGGER.error("Failed to write %s/%s-host.cfg" %
-                         (self.data, metadata.hostname))
-            LOGGER.error(ioerr)
+            err = sys.exc_info()[1]
+            self.logger.error("Failed to write %s: %s" % (fname, err))
 
     def createserverconfig(self, entry, _):
         """Build monolithic server configuration file."""
-        host_configs = glob.glob('%s/*-host.cfg' % self.data)
-        group_configs = glob.glob('%s/*-group.cfg' % self.data)
+        host_configs = glob.glob(os.path.join(self.data, '*-host.cfg'))
+        group_configs = glob.glob(os.path.join(self.data, '*-group.cfg'))
         host_data = []
         group_data = []
         for host in host_configs:
@@ -150,13 +112,11 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
                 groupfile.close()
 
         entry.text = "%s\n\n%s" % ("\n".join(group_data), "\n".join(host_data))
-        [entry.attrib.__setitem__(key, value)
-         for (key, value) in list(self.server_attrib.items())]
+        for (key, value) in list(self.server_attrib.items()):
+            entry.attrib.__setitem__(key, value)
+        fname = os.path.join(self.data, "nagiosgen.cfg")
         try:
-            fileh = open("%s/nagiosgen.cfg" % self.data, 'w')
-            fileh.write(entry.text)
-            fileh.close()
+            open(fname, 'w').write(entry.text)
         except OSError:
-            ioerr = sys.exc_info()[1]
-            LOGGER.error("Failed to write %s/nagiosgen.cfg" % self.data)
-            LOGGER.error(ioerr)
+            err = sys.exc_info()[1]
+            self.logger.error("Failed to write %s: %s" % (fname, err))

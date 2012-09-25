@@ -1,7 +1,7 @@
 """ Fam provides FAM support for file alteration events """
 
 import os
-import _fam  # pylint: disable=F0401
+import _fam
 import stat
 import logging
 from time import time

@@ -10,7 +10,6 @@ import os
 import shutil
 import sys
 
-# pylint: disable=F0401
 # python-dulwich git imports
 try:
     import dulwich
@@ -23,7 +22,6 @@ try:
     import pysvn
 except ImportError:
     missing.append('svn')
-# pylint: enable=F0401
 
 import Bcfg2.Client.Tools
 

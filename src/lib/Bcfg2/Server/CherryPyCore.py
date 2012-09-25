@@ -2,9 +2,9 @@
 
 import sys
 import time
-import cherrypy
 from Bcfg2.Compat import urlparse, xmlrpclib, b64decode
 from Bcfg2.Server.Core import BaseCore
+import cherrypy
 from cherrypy.lib import xmlrpcutil
 from cherrypy._cptools import ErrorTool
 from cherrypy.process.plugins import Daemonizer

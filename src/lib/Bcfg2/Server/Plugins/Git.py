@@ -1,7 +1,7 @@
 """ The Git plugin provides a revision interface for Bcfg2 repos using
 git. """
 
-from dulwich.repo import Repo  # pylint: disable=F0401
+from dulwich.repo import Repo
 import Bcfg2.Server.Plugin
 
 

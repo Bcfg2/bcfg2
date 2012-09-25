@@ -69,7 +69,7 @@ from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
 
 LOGGER = logging.getLogger(__name__)
 
-# pylint: disable=E0611,F0401
+# pylint: disable=E0611
 try:
     from pulp.client.consumer.config import ConsumerConfig
     from pulp.client.api.repository import RepositoryAPI
@@ -78,6 +78,7 @@ try:
     HAS_PULP = True
 except ImportError:
     HAS_PULP = False
+# pylint: enable=E0611
 
 try:
     import yum
@@ -91,7 +92,6 @@ except ImportError:
     LOGGER.info("Packages: No yum libraries found; forcing use of internal "
                 "dependency resolver")
 
-# pylint: enable=E0611,F0401
 
 XP = '{http://linux.duke.edu/metadata/common}'
 RP = '{http://linux.duke.edu/metadata/rpm}'

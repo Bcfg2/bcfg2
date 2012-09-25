@@ -27,6 +27,7 @@ Remote interactive console. To return to Annex, type '-'.
 
 """
 import Bcfg2.Server.Plugin
+from guppy.heapy import Remote
 
 
 class Guppy(Bcfg2.Server.Plugin.Plugin):
@@ -45,7 +46,6 @@ class Guppy(Bcfg2.Server.Plugin.Plugin):
     def Enable(self):
         """Enable remote debugging"""
         try:
-            from guppy.heapy import Remote
             Remote.on()
         except:
             self.logger.error("Failed to create Heapy context")
@@ -54,7 +54,6 @@ class Guppy(Bcfg2.Server.Plugin.Plugin):
     def Disable(self):
         """Disable remote debugging"""
         try:
-            from guppy.heapy import Remote
             Remote.off()
         except:
             self.logger.error("Failed to disable Heapy")

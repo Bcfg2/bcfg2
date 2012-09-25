@@ -20,7 +20,7 @@ from Bcfg2.Compat import xmlrpclib, reduce, wraps  # pylint: disable=W0622
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 
 try:
-    import psyco  # pylint: disable=F0401
+    import psyco
     psyco.full()
 except ImportError:
     pass

@@ -16,7 +16,6 @@ except ImportError:
     SSL_LIB = 'm2crypto'
     SSL_ERROR = SSL.SSLError
 
-
 import sys
 import time
 

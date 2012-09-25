@@ -5,10 +5,7 @@ import platform
 import sys
 import time
 
-try:
-    from django.core.exceptions import MultipleObjectsReturned
-except ImportError:
-    pass
+from django.core.exceptions import MultipleObjectsReturned
 
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Reports.importscript import load_stat

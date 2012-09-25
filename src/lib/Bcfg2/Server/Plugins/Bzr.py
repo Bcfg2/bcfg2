@@ -2,10 +2,8 @@
 bazaar. """
 
 import Bcfg2.Server.Plugin
-# pylint: disable=F0401
 from bzrlib.workingtree import WorkingTree
 from bzrlib import errors
-# pylint: enable=F0401
 
 
 class Bzr(Bcfg2.Server.Plugin.Plugin,

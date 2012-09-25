@@ -6,12 +6,10 @@ import lxml.etree
 import os
 import Bcfg2.Server.Plugin
 
-# pylint: disable=F0401
 try:
     import json
 except ImportError:
     import simplejson as json
-# pylint: enable=F0401
 
 PROBECODE = """#!/bin/sh
 
