@@ -12,7 +12,7 @@ if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
         pip install --use-mirrors 'markdown<2.2'
         pip install --use-mirrors simplejson
     fi
-    pip install --use-mirrors genshi cheetah 'django<1.4' M2Crypto yaml
+    pip install --use-mirrors genshi cheetah 'django<1.4' M2Crypto PyYAML
 else
     # python < 2.6 requires M2Crypto for SSL communication, not just
     # for encryption support
