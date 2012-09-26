@@ -1,0 +1,199 @@
+.. -*- mode: rst -*-
+
+.. _development-compat:
+
+====================
+Python Compatibility
+====================
+
+Bcfg2 maintains compatibility with a wide range of Python versions --
+currently 2.4 through 3.2  This requires some (often significant)
+compatibility interfaces.  This page documents the compatibility
+library, ``Bcfg2.Compat``, and its contents.
+
+Note that, due to limitations in Sphinx (the Bcfg2 documentation
+tool), this documentation is *not* automatically generated.
+``Compat.py`` should always be considered the authoritative source.
+
+There are several basic types of symbols found in ``Bcfg2.Compat``:
+
+* Symbols whose names have changed, e.g., ``MutableMapping``.
+* Symbols whose modules have changed names, e.g., ``urljoin``/``urlparse``
+* Symbols that have been added or removed, e.g., ``any``/``all``, ``reduce``,
+  ``walk_packages``
+* Symbols that need some significant workaround to function
+  identically in all versions, e.g., ``b64encode``/``b64decode``.
+* Helper functions and classes for compatibility, e.g., ``CmpMixin``.
+
+Using ``Bcfg2.Compat``
+======================
+
+To use the compatibility libraries, simply import them as such:
+
+.. code-block:: python
+
+    from Bcfg2.Compat import StringIO, all
+
+The individual symbol import is preferred over just importing
+``Bcfg2.Compat`` as a whole, since in the future we will be able to
+remove some items from the library and this makes that process
+easier.  A wildcard import is definitely discouraged.
+
+Bcfg2.Compat symbols
+====================
+
+``Bcfg2.Compat`` defines the following symbols:
+
+Py3K compatibility imports
+--------------------------
+
+The following symbols are imported to provide compatibility with
+Python 3.  In cases where the newer symbols has also been backported
+to Python 2, the older symbol will be used unless otherwise noted.
+This is to ensure that functions or modules with radically different
+behavior (e.g., :func:`input`) do not cause unexpected side-effects.
+
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| Name                            | Python 2                                         | Python 3                                                |
++=================================+==================================================+=========================================================+
+| urljoin                         | :func:`urlparse.urljoin`                         | :func:`urllib.parse.urljoin`                            |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| urlparse                        | :func:`urlparse.urlparse`                        | :func:`urllib.parse.urlparse`                           |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| HTTPBasicAuthHandler            | :class:`urllib2.HTTPBasicAuthHandler`            | :class:`urllib.request.HTTPBasicAuthHandler`            |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| HTTPPasswordMgrWithDefaultRealm | :class:`urllib2.HTTPPasswordMgrWithDefaultRealm` | :class:`urllib.request.HTTPPasswordMgrWithDefaultRealm` |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| build_opener                    | :func:`urllib2.build_opener`                     | :func:`urllib.request.build_opener`                     |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| install_opener                  | :func:`urllib2.install_opener`                   | :func:`urllib.request.install_opener`                   |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| urlopen                         | :func:`urllib2.urlopen`                          | :func:`urllib.request.urlopen`                          |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| HTTPError                       | :exc:`urllib2.HTTPError`                         | :exc:`urllib.error.HTTPError`                           |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| URLError                        | :exc:`urllib2.URLError`                          | :exc:`urllib.error.URLError`                            |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| StringIO                        | :func:`cStringIO.StringIO`                       | :class:`io.StringIO`                                    |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| ConfigParser                    | :mod:`ConfigParser`                              | :mod:`configparser`                                     |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| cPickle                         | :mod:`cPickle`                                   | :mod:`pickle`                                           |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| Queue                           | :class:`Queue.Queue`                             | :class:`queue.Queue`                                    |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| Empty                           | :exc:`Queue.Empty`                               | :exc:`queue.Empty`                                      |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| Full                            | :exc:`Queue.Full`                                | :exc:`queue.Full`                                       |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| xmlrpclib                       | :mod:`xmlrpclib`                                 | :mod:`xmlrpc.client`                                    |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| SimpleXMLRPCServer              | :mod:`SimpleXMLRPCServer`                        | :mod:`xmlrpc.server`                                    |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| SocketServer                    | :mod:`SocketServer`                              | :mod:`socketserver`                                     |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| httplib                         | :mod:`httplib`                                   | :mod:`http.client`                                      |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| input                           | :func:`raw_input`                                | :func:`input`                                           |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| reduce                          | :func:`reduce`                                   | :func:`functools.reduce`                                |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+
+Python 2.4 compatibility
+------------------------
+
+The following symbols are imported or defined to provide compatibility
+with Python 2.4 (and occasionally 2.5).  Be sure to read the notes
+below, since some of these implementations may be feature-incomplete.
+
++----------------+--------------------------------+--------------------------------------------+
+| Name           | Python 2.4                     | Python 2.4+                                |
++================+================================+============================================+
+| formatdate     | :func:`email.Utils.formatdate` | :func:`email.utils.formatdate`             |
++----------------+--------------------------------+--------------------------------------------+
+| walk_packages  | Not implemented                | :func:`pkgutil.walk_packages` (2.6+)       |
++----------------+--------------------------------+--------------------------------------------+
+| any            | Not implemented                | :func:`any`                                |
++----------------+--------------------------------+--------------------------------------------+
+| all            | Not implemented                | :func:`all`                                |
++----------------+--------------------------------+--------------------------------------------+
+| wraps          | Not implemented                | :func:`functools.wraps`                    |
++----------------+--------------------------------+--------------------------------------------+
+| md5            | :func:`md5.md5`                | :class:`hashlib.md5`                       |
++----------------+--------------------------------+--------------------------------------------+
+| MutableMapping | :class:`UserDict.DictMixin`    | :class:`collections.MutableMapping` (2.6+) |
++----------------+--------------------------------+--------------------------------------------+
+
+walk_packages
+~~~~~~~~~~~~~
+
+The ``walk_packages`` implementation for Python 2.5 is
+feature-complete.  The implementation for Python 2.4 is *not*.
+Differences:
+
+* Requires a full path, not a path relative to something in sys.path.
+  Anywhere we care about that shouldn't be an issue.
+* The first element of each tuple is None instead of an importer
+  object.
+
+wraps
+~~~~~
+
+The ``wraps`` implementation for Python 2.4 is a no-op.  It does not
+attempt to copy the docstring or other details from the original
+function to the wrapped function.
+
+md5
+~~~
+
+:mod:`hashlib` is available for Python 2.4, but it is not part of the
+standard base.  If it is installed, it will be used.  If you are doing
+something fancy with MD5 sums, you may need to determine which object
+is in use, since they are not equivalent.  For the majority of simple
+cases -- finding the MD5 sum of a string -- they are equivalent
+enough.
+
+MutableMapping
+~~~~~~~~~~~~~~
+
+:class:`collections.MutableMapping` provides a subset of the
+functionality of :class:`UserDict.DictMixin`; that is, any object that
+is written to work with ``MutableMapping`` will also work with
+``DictMixin``, so you should write classes with ``MutableMapping`` in
+mind.
+
+:class:`collections.MutableMapping` is available in Python 2.6+, and
+will be used if available.
+
+Other Symbols
+-------------
+
+The following functions, classes, and symbols are provided for other
+miscellaneous reasons.
+
+u_str
+~~~~~
+
+.. autofunction:: Bcfg2.Compat.u_str
+
+b64encode/b64decode
+~~~~~~~~~~~~~~~~~~~
+
+In Python 2, :func:`base64.b64encode` and :func:`base64.b64decode`
+expect strings and return strings.  In Python 3, they expect bytes and
+return bytes.  For Python 3, ``Bcfg2.Compat`` provides ``b64encode``
+and ``b64encode`` that transparently encode strings into bytes, then
+decode bytes into strings, so that those functions can be used
+identically to their use in Python 2.
+
+CmpMixin
+~~~~~~~~
+
+.. autoclass:: Bcfg2.Compat.CmpMixin
+
+unicode
+~~~~~~~
+
+In Py3k, the :func:`unicode` class is not defined, because all
+strings are unicode.  ``Bcfg2.Compat`` defines ``unicode`` as
+equivalent to :func:`str` in Python 3.

@@ -13,22 +13,14 @@ except ImportError:
 # urllib imports
 try:
     from urlparse import urljoin, urlparse
-    from urllib2 import HTTPBasicAuthHandler
-    from urllib2 import HTTPPasswordMgrWithDefaultRealm
-    from urllib2 import build_opener
-    from urllib2 import install_opener
-    from urllib2 import urlopen
-    from urllib2 import HTTPError
-    from urllib2 import URLError
+    from urllib2 import HTTPBasicAuthHandler, \
+        HTTPPasswordMgrWithDefaultRealm, build_opener, install_opener, \
+        urlopen, HTTPError, URLError
 except ImportError:
     from urllib.parse import urljoin, urlparse
-    from urllib.request import HTTPBasicAuthHandler
-    from urllib.request import HTTPPasswordMgrWithDefaultRealm
-    from urllib.request import build_opener
-    from urllib.request import install_opener
-    from urllib.request import urlopen
-    from urllib.error import HTTPError
-    from urllib.error import URLError
+    from urllib.request import HTTPBasicAuthHandler, \
+        HTTPPasswordMgrWithDefaultRealm, build_opener, install_opener, urlopen
+    from urllib.error import HTTPError, URLError
 
 try:
     from cStringIO import StringIO
@@ -69,12 +61,10 @@ try:
 except ImportError:
     import http.client as httplib
 
-# py3k compatibility
-if sys.hexversion >= 0x03000000:
-    unicode = str
-else:
+try:
     unicode = unicode
-
+except NameError:
+    unicode = str
 
 def u_str(string, encoding=None):
     """ print to file compatibility """
@@ -88,11 +78,6 @@ def u_str(string, encoding=None):
             return unicode(string, encoding)
         else:
             return unicode(string)
-
-try:
-    unicode = unicode
-except NameError:
-    unicode = str
 
 # base64 compat
 if sys.hexversion >= 0x03000000:
@@ -119,8 +104,9 @@ except ImportError:
 
 
 class CmpMixin(object):
-    """ in py3k __cmp__ is no longer magical, so this mixin can be
-    used to define the rich comparison operators from __cmp__ """
+    """ In Py3K, :meth:`object.__cmp__` is no longer magical, so this
+    mixin can be used to define the rich comparison operators from
+    ``__cmp__`` -- i.e., it makes ``__cmp__`` magical again. """
 
     def __lt__(self, other):
         return self.__cmp__(other) < 0
@@ -184,15 +170,14 @@ except ImportError:
         import os
 
         def walk_packages(path=None, prefix='', onerror=None):
-            """ imperfect, incomplete implementation of
-            walk_packages() for python 2.4. Differences:
+            """ Imperfect, incomplete implementation of
+            :func:`pkgutil.walk_packages` for python 2.4. Differences:
 
-            * requires a full path, not a path relative to something
-              in sys.path.  anywhere we care about that shouldn't be
-              an issue
-
-            * the first element of each tuple is None instead of an
-              importer object
+            * Requires a full path, not a path relative to something
+              in sys.path.  Anywhere we care about that shouldn't be
+              an issue.
+            * The first element of each tuple is None instead of an
+              importer object.
             """
             if path is None:
                 path = sys.path

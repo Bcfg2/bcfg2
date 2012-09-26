@@ -254,7 +254,20 @@ def setup(app):
     app.connect('autodoc-skip-member', skip_member_from_docstring)
 
 # intersphinx settings
-intersphinx_mapping = dict(
-    py=('http://docs.python.org/%s' % '.'.join(str(v)
-                                               for v in sys.version_info[0:2]),
-        None))
+
+# generate intersphinx mappings for all versions of python we support;
+# the default will be the version of python this is built with.
+# Python only started using sphinx in 2.6, so we won't have docs for
+# 2.4 or 2.5.  These are in reverse order, since sphinx seems to look
+# in the last mapping first.
+versions = ["3.2", "2.7", "2.6"]
+cur_version = '.'.join(str(v) for v in sys.version_info[0:2])
+
+intersphinx_mapping = dict()
+for pyver in versions:
+    if pyver == cur_version:
+        key = 'py'
+    else:
+        key = 'py' + pyver.replace(".", "")
+    intersphinx_mapping[key] = ('http://docs.python.org/%s' % pyver,
+                                None)
