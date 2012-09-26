@@ -208,8 +208,8 @@ See :ref:`server-encryption` for more details on encryption in Bcfg2
 in general.
 
 
-Accessing Properties contents from TGenshi
-==========================================
+Accessing Properties contents from Genshi Templates
+===================================================
 
 Access contents of ``Properties/auth.xml``::
 

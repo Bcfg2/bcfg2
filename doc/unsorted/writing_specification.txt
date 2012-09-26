@@ -374,6 +374,6 @@ How the groups are configured is specific to the plugin, but here are
 two common methods:
 
 * xml configuration file (Pkgmgr, Rules)
-* file name encoding (Cfg, TCheetah, SSHBase)
+* file name encoding (Cfg, SSHBase)
 
 Details are included on each plugin's page.

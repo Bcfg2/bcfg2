@@ -6,6 +6,11 @@
 TGenshi
 =======
 
+.. warning::
+
+    The TGenshi plugin is deprecated.  You should instead use
+    :ref:`server-plugins-generators-cfg-genshi` in the Cfg plugin.
+
 This page documents the TGenshi plugin. This plugin works with version
 0.4 and newer of the genshi library.
 
@@ -202,14 +207,7 @@ Examples
 ========
 
 .. toctree::
+   :glob:
    :maxdepth: 1
 
-   bcfg2-cron
-   clientsxml
-   ganglia
-   grubconf
-   hosts
-   iptables
-   motd
-   mycnf
-   test
+   examples/genshi/*

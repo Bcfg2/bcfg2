@@ -366,44 +366,43 @@ the caching features available.
 ClientMetadata
 ==============
 
-A special client metadata class is available to the 
-:ref:`TGenshi <server-plugins-generators-tgenshi-index>` and
-:ref:`TCheetah <server-plugins-generators-tcheetah>` plugins.
+A special client metadata class is available to
+:ref:`server-plugins-generators-cfg-genshi` and
+:ref:`server-plugins-generators-cfg-cheetah`.
 
-+----------------------+------------------------------------------------+-------------------+
-| Attribute            | Description                                    | Value             |
-+======================+================================================+===================+
-| hostname             | Client hostname                                | String            |
-+----------------------+------------------------------------------------+-------------------+
-| profile              | Client profile                                 | String            |
-+----------------------+------------------------------------------------+-------------------+
-| aliases              | Client aliases                                 | List              |
-+----------------------+------------------------------------------------+-------------------+
-| addresses            | Adresses this client is known by               | List              |
-+----------------------+------------------------------------------------+-------------------+
-| groups               | Groups this client is a member of              | List              |
-+----------------------+------------------------------------------------+-------------------+
-| categories           | Categories of this clients groups              | List              |
-+----------------------+------------------------------------------------+-------------------+
-| uuid                 | uuid identifier for this client                | String            |
-+----------------------+------------------------------------------------+-------------------+
-| password             | bcfg password for this client                  | String            |
-+----------------------+------------------------------------------------+-------------------+
-| connectors           | connector plugins known to this client         | List              |
-+----------------------+------------------------------------------------+-------------------+
-| query                | MetadataQuery object                           | MetadataQuery     |
-+----------------------+------------------------------------------------+-------------------+
++------------+------------------------------------------------+---------------+
+| Attribute  | Description                                    | Value         |
++============+================================================+===============+
+| hostname   | Client hostname                                | String        |
++------------+------------------------------------------------+---------------+
+| profile    | Client profile                                 | String        |
++------------+------------------------------------------------+---------------+
+| aliases    | Client aliases                                 | List          |
++------------+------------------------------------------------+---------------+
+| addresses  | Adresses this client is known by               | List          |
++------------+------------------------------------------------+---------------+
+| groups     | Groups this client is a member of              | List          |
++------------+------------------------------------------------+---------------+
+| categories | Categories of this clients groups              | List          |
++------------+------------------------------------------------+---------------+
+| uuid       | uuid identifier for this client                | String        |
++------------+------------------------------------------------+---------------+
+| password   | bcfg password for this client                  | String        |
++------------+------------------------------------------------+---------------+
+| connectors | connector plugins known to this client         | List          |
++------------+------------------------------------------------+---------------+
+| query      | MetadataQuery object                           | MetadataQuery |
++------------+------------------------------------------------+---------------+
 
-|
 
-+------------------------------+------------------------------------------------+-------------------+
-| Method                       | Description                                    | Value             |
-+==============================+================================================+===================+
-| inGroup(group)               | True if this client is a memnber of 'group'    | Boolean           |
-+------------------------------+------------------------------------------------+-------------------+
-| group_in_category(category)  | Returns the group in 'category' if the client  | String            |
-|                              | is a member of 'category', otherwise ''        |                   |
-+------------------------------+------------------------------------------------+-------------------+
++-----------------------------+------------------------------------------------+-------------------+
+| Method                      | Description                                    | Value             |
++=============================+================================================+===================+
+| inGroup(group)              | True if this client is a memnber of 'group'    | Boolean           |
++-----------------------------+------------------------------------------------+-------------------+
+| group_in_category(category) | Returns the group in 'category' if the client  | String            |
+|                             | is a member of 'category', otherwise ''        |                   |
++-----------------------------+------------------------------------------------+-------------------+
 
 MetadataQuery
 -------------

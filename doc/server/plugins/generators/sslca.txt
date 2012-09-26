@@ -9,7 +9,8 @@ SSLCA
 SSLCA is a generator plugin designed to handle creation of SSL private
 keys and certificates on request.
 
-Borrowing ideas from the TGenshi and SSHbase plugins, SSLCA automates
+Borrowing ideas from :ref:`server-plugins-generators-cfg-genshi` and
+the :ref:`server-plugins-generators-sshbase` plugin, SSLCA automates
 the generation of SSL certificates by allowing you to specify key and
 certificate definitions.  Then, when a client requests a Path that
 contains such a definition within the SSLCA repository, the matching

@@ -6,6 +6,11 @@
 TCheetah
 ========
 
+.. warning::
+
+    TCheetah is deprecated.  You should instead use
+    :ref:`server-plugins-generators-cfg-cheetah` in the Cfg plugin.
+
 This document reflects the ``TCheetah`` plugin.
 
 The ``TCheetah`` plugin allows you to use the `cheetah templating system

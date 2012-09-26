@@ -207,9 +207,8 @@ in their name. The following template produces such a config file entry.
 
 Depending on the circumstance, these configuration files can either be
 handled by individual entries in :ref:`server-plugins-generators-cfg`,
-:ref:`server-plugins-generators-tcheetah`, or
-:ref:`server-plugins-generators-tgenshi-index`, or can be mapped to a
-single entry by using the :ref:`server-plugins-structures-altsrc` feature.
+or can be mapped to a single entry by using the
+:ref:`server-plugins-structures-altsrc` feature.
 
 In this example, configuration file names are built using probed results
 from the client. getmac is a probe that gathers client MAC addresses

@@ -310,7 +310,7 @@ Altogether, this should move policy decisions about package architectures
 to bundles/base.
 
 Automated Generation of Pkgmgr Configuration Files
---------------------------------------------------
+==================================================
 
 The two utilities detailed below are provided in the tools directory of
 the source tarball.
@@ -373,7 +373,7 @@ containing RPMs or from a list of YUM repositories.::
 .. note:: The startdate and enddate options are not yet implemented.
 
 pkgmgr_update.py
-----------------
+^^^^^^^^^^^^^^^^
 
 pkgmgr_update will update the release (meaning the epoch, version
 and release) information in an existing Pkgrmgr file from a list of
@@ -398,7 +398,7 @@ and other attributes in the existing file will remain unchanged.::
                             NOTE: Each URL must end in a '/' character.
 
 Pkgmgr Configuration Examples
------------------------------
+=============================
 
 verify_flags
 ^^^^^^^^^^^^

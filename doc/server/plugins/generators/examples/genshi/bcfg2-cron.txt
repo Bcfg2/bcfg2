@@ -1,7 +1,5 @@
 .. -*- mode: rst -*-
 
-.. _server-plugins-generators-tgenshi-bcfg2-cron:
-
 bcfg2-cron
 ==========
 

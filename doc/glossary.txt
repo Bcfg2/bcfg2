@@ -15,7 +15,7 @@ Glossary
     generator
         A type of plugin which provides file contents. For example
         :ref:`server-plugins-generators-cfg` or
-        :ref:`server-plugins-generators-tgenshi-index`.
+        :ref:`server-plugins-generators-sshbase`.
 
     Genshi
         A Python-based templating engine. `Genshi Homepage`_.

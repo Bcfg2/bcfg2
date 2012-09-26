@@ -36,12 +36,14 @@ source to which they apply (based on group memberships, as described
 above). Packages and dependencies are resolved from all applicable
 sources.
 
-.. note:: To recap, a client needs to be a member of the
-          **Architecture** group and any other groups defined in your
-          ``Packages/sources.xml`` file in order for the client to be
-          associated to the proper sources.  If you are using
-          :ref:`server-plugins-generators-packages-magic-groups`, then
-          a client must also be a member of the appropriate OS group.
+.. note::
+
+    To recap, a client needs to be a member of the **Architecture**
+    group and any other groups defined in your
+    ``Packages/sources.xml`` file in order for the client to be
+    associated to the proper sources.  If you are using
+    :ref:`server-plugins-generators-packages-magic-groups`, then a
+    client must also be a member of the appropriate OS group.
 
 .. _server-plugins-generators-packages-magic-groups:
 
@@ -458,7 +460,8 @@ See :ref:`configuration` for more details on these options.
 
     Support for generating Yum configs was added in 1.2.0, and Apt
     configs was added in 1.3.0.  Before that, you could use
-    :doc:`./tgenshi/index` or :doc:`./tcheetah` to generate your
+    :ref:`server-plugins-generators-cfg-genshi` or
+    :ref:`server-plugins-generators-cfg-cheetah` to generate your
     configs.
 
 .. _native-yum-libraries:

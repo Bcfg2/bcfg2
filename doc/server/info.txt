@@ -6,12 +6,11 @@
 Info
 ====
 
-Various file properties for entries served by the :ref:`Cfg
-<server-plugins-generators-cfg>`, :ref:`TGenshi
-<server-plugins-generators-tgenshi-index>`, :ref:`TCheetah
-<server-plugins-generators-tcheetah>`, and :ref:`SSHbase
-<server-plugins-generators-sshbase>` plugins are controlled through
-the use of ``info.xml`` files.
+Various file properties for entries served by most generator plugins,
+including :ref:`server-plugins-generators-cfg`,
+:ref:`server-plugins-generators-sslca`, and
+:ref:`server-plugins-generators-sshbase`, are controlled through the
+use of ``info.xml`` files.
 
 By default, these plugins are set to write files to the filesystem
 with owner **root**, group **root**, and mode **644** (read and write

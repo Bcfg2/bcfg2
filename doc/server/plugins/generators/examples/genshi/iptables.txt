@@ -1,25 +1,22 @@
 .. -*- mode: rst -*-
 
-.. _server-plugins-generators-tgenshi-iptables:
+==========
+ iptables
+==========
 
-iptables
-========
-
-* Setup a TGenshi base iptables file that contains the basic rules you
+* Setup a Genshi base iptables file that contains the basic rules you
   want every host to have
-* Create a custom dir that has group and host specific rules you want
-  to apply
 * To be safe you should have a client side IptablesDeadmanScript if you
   intend on having bcfg2 bounce iptables upon rule updates
 
 .. note:: When updating files in the ``includes`` directory, you will
-          need to `touch` the TGenshi template to regenerate the
+          need to `touch` the Genshi template to regenerate the
           template contents.
 
-/repository/TGenshi/etc/sysconfig/iptables/template.newtxt
-----------------------------------------------------------
+/repository/Cfg/etc/sysconfig/iptables/iptables.genshi
+======================================================
 
-::
+.. code-block:: none
 
     {% python
         from genshi.builder import tag
@@ -32,9 +29,8 @@ iptables
         repo = setup['repo']
         basedir = '%s' % (repo)
 
-        # for instance: /var/lib/bcfg2/custom/etc/sysconfig/iptables/
-        bcfg2BaseDir = basedir + '/includes' + name + '/'
-
+        # for instance: 
+        bcfg2BaseDir = basedir + name + '/'
 
         def checkHostFile(hostName, type):
             fileName = bcfg2BaseDir + type + '.H_' + hostName
@@ -54,7 +50,6 @@ iptables
     # BCFG2 GENERATED IPTABLES
     # DO NOT CHANGE THIS
     # $$Id$$
-    # $$HeadURL$$
     # Templates live in ${bcfg2BaseDir}
     # Manual customization of this file will get reverted.
     # ----------------------------- FILTER --------------------------------- #
@@ -200,10 +195,10 @@ iptables
     {% include ${checkHostFile(metadata.hostname, 'custom-mangle')} %}\
     COMMIT
 
-/var/lib/bcfg2/custom/etc/sysconfig/iptables/custom-filter.G_mysql-server
--------------------------------------------------------------------------
+Cfg/etc/sysconfig/iptables/custom-filter.G_mysql-server
+-------------------------------------------------------
 
-::
+.. code-block:: none
 
     :MYSQL - [0:0]
     -A INPUT -p tcp -m state --state NEW -m tcp --dport 3306 --tcp-flags FIN,SYN,RST,ACK SYN -j MYSQL
@@ -215,8 +210,7 @@ that looks like the following::
     # BCFG2 GENERATED IPTABLES
     # DO NOT CHANGE THIS
     # $Id: template.newtxt 5402 2009-08-19 22:50:06Z unixmouse$
-    # $HeadURL: https://svn.fakecompany.net/bcfg2/trunk/repository/TGenshi/etc/sysconfig/iptables/template.newtxt $
-    # Templates live in /var/lib/bcfg2/custom/etc/sysconfig/iptables/
+    # Templates live in /var/lib/bcfg2/Cfg/etc/sysconfig/iptables/
     # Manual customization of this file will get reverted.
     # ----------------------------- FILTER --------------------------------- #
     # Default CHAINS for FILTER:

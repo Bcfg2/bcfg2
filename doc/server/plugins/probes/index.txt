@@ -13,16 +13,7 @@ the system disk, you would want to know this information to correctly
 generate an `/etc/auto.master` autofs config file for each type. Here
 we will look at how to do this.
 
-For the purposes of this example, you will need to set up the TCheetah
-plugin, as described on the :ref:`server-plugins-generators-tcheetah`
-page.
-
-.. note::
-
-    This does **not** mean that TCheetah is required in order for Probes
-    to operate properly.
-
-Next, we need to create a ``Probes`` directory in our toplevel repository
+First, create a ``Probes`` directory in our toplevel repository
 location::
 
     mkdir /var/lib/bcfg2/Probes
@@ -69,12 +60,15 @@ it also counts the controller as a device. To differentiate between the
 two classes of machines we care about, we just need to check the output
 of this script for numbers greater than 2. We do this in the template.
 
-The ``TCheetah/`` directory is laid out much like the ``Cfg/`` directory.
-For this example we will want to create a ``TCheetah/etc/auto.master``
+This example uses :ref:`server-plugins-generators-cfg-cheetah`, but
+Cheetah templates are **not** required in order for Probes to operate
+properly.
+
+For the template we will want to create a ``Cfg/etc/auto.master``
 directory to hold the template of the file in question. Inside of this
-template we will need to check the result of the Probe script that
-got run and act accordingly. The ``TCheetah/etc/auto.master/template``
-file looks like::
+template we will need to check the result of the Probe script that got
+run and act accordingly. The
+``Cfg/etc/auto.master/auto.master.cheetah`` file looks like::
 
     /software  /etc/auto.software --timeout 3600
     /home      /etc/auto.home --timeout 3600
@@ -116,8 +110,9 @@ Handling Probe Output
 =====================
 
 Bcfg2 stores output from probes in the ``Probes`` property of a
-client's metadata object.  To access this data in TGenshi, for
-instance, you could do::
+client's metadata object.  To access this data in
+:ref:`server-plugins-generators-cfg-genshi`, for instance, you could
+do::
 
   ${metadata.Probes['script-name']}
 

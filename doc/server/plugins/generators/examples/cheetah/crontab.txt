@@ -1,0 +1,26 @@
+.. -*- mode: rst -*-
+
+============================
+Writing crontab with Cheetah
+============================
+
+This example randomizes the time of cron.daily
+execution with a stable result. Cron.daily is run at a consistent,
+randomized time between midnight and 7am.::
+
+    #import random
+    #silent random.seed($self.metadata.hostname)
+
+    # /etc/crontab: system-wide crontab
+    # Unlike any other crontab you don't have to run the `crontab`
+    # command to install the new version when you edit this file.
+    # This file also has a username field, that none of the other crontabs do.
+
+    SHELL=/bin/sh
+    PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin://bin
+
+    # m h dom mon dow user  command
+    17 *    * * *   root    run-parts --report /etc/cron.hourly
+    $random.randrange(0,59) $random.randrange(0,6)    * * *   root    test -x /usr/sbin/anacron || run-parts --report /etc/cron.daily
+    47 6    * * 7   root    test -x /usr/sbin/anacron || run-parts --report /etc/cron.weekly
+    52 6    1 * *   root    test -x /usr/sbin/anacron || run-parts --report /etc/cron.monthly.

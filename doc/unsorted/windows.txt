@@ -21,7 +21,7 @@ be pretty trivial; it would differ from \*nix services in that it would be done 
 Registry
 ========
 
-The best way of handling the registry may be to map it into a file-based representation on the server end. The Cfg and TCheetah plugins could then be used to set registry values as needed.
+The best way of handling the registry may be to map it into a file-based representation on the server end. The Cfg plugin could then be used to set registry values as needed.
 
 Files
 =====

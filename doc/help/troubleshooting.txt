@@ -56,7 +56,7 @@ system. In the ticket, include:
   seconds" appeared between the modification event and the client
   configuration generation request appeared in the server log
 * which plugin handled the file in the repostiory (Cfg, Rules, Packages,
-  TCheetah, TGenshi, Metadata)
+  SSHbase, Metadata, etc.)
 * if a touch of the file after the modification causes the problem to
   go away
 

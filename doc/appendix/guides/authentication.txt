@@ -32,8 +32,9 @@ Scenarios
 Building bcfg2.conf automatically
 =================================
 
-This is a TCheetah template that automatically constructs per-client
-bcfg2.conf from the per-client metadata::
+This is a :ref:`Cheetah template
+<server-plugins-generators-cfg-cheetah>` that automatically constructs
+per-client bcfg2.conf from the per-client metadata::
 
     [communication]
     protocol = xmlrpc/ssl

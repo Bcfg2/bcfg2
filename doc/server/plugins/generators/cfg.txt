@@ -20,7 +20,7 @@ repository location of ``/var/lib/bcfg2``. The contents of this directory
 are a series of directories corresponding to the real-life locations of
 the files on your clients, starting at the root level. For example::
 
-    lueningh@tg-prez:~/bcfg2/repository> ls Cfg
+    % ls Cfg
     bin/  boot/  etc/  opt/  root/  usr/  var/
 
 Specific config files go in like-named directories in this
@@ -96,19 +96,175 @@ classes.
 Templates
 =========
 
+.. _server-plugins-generators-cfg-genshi:
+
 Genshi Templates
 ----------------
 
-Genshi templates maybe used for entries as well.  Any file ending in .genshi
-will be processed using the new template style (like .newtxt in the TGenshi
-plugin).
+Genshi templates allow you to use the `Genshi
+<http://genshi.edgewall.org>`_ templating system.  This is similar to
+the deprecated :ref:`server-plugins-generators-tgenshi-index` plugin.
+Genshi templates should be named with a ``.genshi`` extension, e.g.::
+
+    % ls Cfg/etc/motd 
+    info.xml  motd.genshi
+
+See the genshi `documentation
+<http://genshi.edgewall.org/wiki/Documentation>`_ for examples of
+Genshi syntax.
+
+Inside Genshi Templates
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Several variables are pre-defined inside templates:
+
+* **metadata** is the client's :ref:`metadata
+  <server-plugins-grouping-metadata-clientmetadata>`
+* **name** is the path name specified in Bcfg2
+* **path** is the path to the TGenshi template.  It starts with a
+    leading slash, and is relative to the Bcfg2 specification root.
+    E.g., ``/Cfg/etc/foo.conf/foo.conf.genshi`` or
+    ``/TGenshi/etc/foo.conf/template.newtxt.H_foo.example.com``
+
+Troubleshooting
+~~~~~~~~~~~~~~~
+
+When developing a template, you can see what the template would
+generate on a client with :ref:`bcfg2-info <server-bcfg2-info>`::
+
+    bcfg2-info buildfile <path> <hostname>
+
+E.g.::
+
+    bcfg2-info buildfile /etc/foo.conf foo.example.com
+
+To generate a file with an altsrc attribute, you can run::
+
+    bcfg2-info buildfile /etc/foo/foo.conf --altsrc=/etc/foo.conf \
+        foo.example.com
+
+Sometimes, it's useful to be able to do more in-depth troubleshooting
+by running the template manually. To do this, run ``bcfg2-info
+debug``, and, once in the Python interpreter, run::
+
+    metadata = self.build_metadata("<hostname>")
+    path = "<relative path to template (see note below)>"
+    
+``path`` should be set to the path to the template file with a leading
+slash, relative to the Bcfg2 specification root. See `Inside Genshi
+Templates`_ for examples.
+
+Then, run::
+    
+    import os, Bcfg2.Options
+    from genshi.template import TemplateLoader, NewTextTemplate
+    name = os.path.dirname(path[path.find('/', 1):])
+    setup = Bcfg2.Options.OptionParser({'repo':
+                                        Bcfg2.Options.SERVER_REPOSITORY})
+    setup.parse('--')
+    template = TemplateLoader().load(setup['repo'] + path, cls=NewTextTemplate)
+    print template.generate(metadata=metadata, path=path, name=name).render()
+
+This gives you more fine-grained control over how your template is
+rendered.
+
+You can also use this approach to render templates that depend on
+:ref:`altsrc <server-plugins-structures-altsrc>` tags by setting
+``path`` to the path to the template, and setting ``name`` to the path
+to the file to be generated, e.g.::
+
+    metadata = self.build_metadata("foo.example.com")
+    path = "/Cfg/etc/sysconfig/network-scripts/ifcfg-template/ifcfg-template.genshi"
+    name = "/etc/sysconfig/network-scripts/ifcfg-bond0"
+
+Error handling
+~~~~~~~~~~~~~~
+
+Situations may arise where a templated file cannot be generated due to
+missing or incomplete information.  A TemplateError can be raised to
+force a bind failure and prevent sending an incomplete file to the
+client.  For example, this template::
+
+    {% python
+        from genshi.template import TemplateError
+        grp = None
+        for g in metadata.groups:
+            if g.startswith('ganglia-gmond-'):
+                grp = g
+                break
+        else:
+            raise TemplateError, "Missing group"
+    %}\
+
+will fail to bind if the client is not a member of a group starting with
+"ganglia-gmond-".  The syslogs on the server will contain this message::
+
+    bcfg2-server[5957]: Genshi template error: Missing group
+    bcfg2-server[5957]: Failed to bind entry: Path /etc/ganglia/gmond.conf
+
+...indicating the bind failure and message raised with the TemplateError.
+
+Handling Dollar Signs
+~~~~~~~~~~~~~~~~~~~~~
+
+In a Genshi template, ``$`` is a special character and must be escaped
+by doubling, i.e., ``$$``.  For instance, to embed the Subversion
+``$Id$`` keyword in a Genshi template, you would have to do ``$$Id$$``.
+
+Examples
+~~~~~~~~
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+
+   examples/genshi/*
+
+.. _server-plugins-generators-cfg-cheetah:
 
 Cheetah Templates
 -----------------
 
-Cheetah templates maybe used for entries as well.  Simply name your file
-with a .cheetah extenstion and it will be processed like the TCheetah
-plugin.
+Cheetah templates allow you to use the `cheetah templating system
+<http://www.cheetahtemplate.org/>`_.  This is similar to
+the deprecated :ref:`server-plugins-generators-tcheetah` plugin.
+Cheetah templates should be named with a ``.cheetah`` extension, e.g.::
+
+    % ls Cfg/etc/motd 
+    info.xml  motd.cheetah
+
+Inside Cheetah Templates
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+Several variables are pre-defined inside templates:
+
+* **self.metadata** is the client's :ref:`metadata
+  <server-plugins-grouping-metadata-clientmetadata>`
+* **self.path** is the path name specified in Bcfg2
+* **self.source_path** is the path to the Genshi template on the filesystem.
+
+Examples
+~~~~~~~~
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+
+   examples/cheetah/*
+
+Comments and Cheetah
+~~~~~~~~~~~~~~~~~~~~
+
+As Cheetah processes your templates it will consider hash "#" style
+comments to be actual comments in the template and will strip them
+from the final config file.  If you would like to preserve the comment
+in the final config file you need to escape the hash character '\#'
+which will tell Cheetah (and Python) that you do in fact want the
+comment to appear in the final config file.::
+
+    # This is a comment in my template which will be stripped when it's processed through Cheetah
+    \# This comment will appear in the generated config file.
+
 
 Notes on Using Templates
 ------------------------

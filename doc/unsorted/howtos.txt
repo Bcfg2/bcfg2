@@ -12,8 +12,6 @@ Here are several howtos that describe different aspects of Bcfg2 deployment
 * AnnotatedExamples - a description of basic Bcfg2 specification operations
 * BuildingDebianPackages - How to build debian packages
 * :ref:`appendix-guides-gentoo` - Issues specific to running Bcfg2 on Gentoo
-* :ref:`server-plugins-generators-tcheetah` - Howto use the TCheetah template plugin
-* :ref:`server-plugins-generators-hostbase` - How to use the Hostbase plugin and web interface
 * :ref:`server-plugins-probes-index` - How to use Probes to gather information from a client machine.
 * :ref:`client-tools-actions` - How to use Actions
 * :ref:`unsorted-dynamic_groups` - Using dynamic groups

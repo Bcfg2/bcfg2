@@ -1,11 +1,7 @@
 .. -*- mode: rst -*-
 
-.. _server-plugins-generators-tgenshi-test:
-
 test
 ====
-
-FIXME: This example needs to be retested with new Properties plugin.
 
 As submitted by dclark
 
@@ -14,7 +10,6 @@ This file just shows you what's available. It assumes a
 
 .. code-block:: xml
 
-    #!text/xml
     <Properties>
       <password>
         <bcfg2>fakeBCFG2password</bcfg2>
@@ -80,20 +75,10 @@ This file just shows you what's available. It assumes a
     ${var} \
     {% end %}
 
-When the above file is saved as
-``/var/lib/bcfg2/TGenshi/test/template.newtxt`` and generated with
-``bcfg2-info buildfile /test test.hostname.org``, the results look like
-this (below reformatted a little bit to fit in 80 columns)::
+When the above file is saved as ``Cfg/test/test.genshi`` and generated
+with ``bcfg2-info buildfile /test test.hostname.org``, the results
+look like this (below reformatted a little bit to fit in 80 columns)::
 
-    Failed to read file probed.xml
-    Processed 44 gamin events in 0.108 seconds. 0 collapsed
-    Processed 17 gamin events in 0.245 seconds. 0 collapsed
-    Processed 17 gamin events in 0.163 seconds. 0 collapsed
-    Processed 21 gamin events in 0.197 seconds. 0 collapsed
-    Processed 0 gamin events in 0.100 seconds. 0 collapsed
-    Processed 12 gamin events in 0.105 seconds. 0 collapsed
-    Processed 0 gamin events in 0.100 seconds. 0 collapsed
-    <?xml version='1.0' encoding='UTF-8'?>
     <Path type="file" name="/test" owner="root" perms="644" encoding="ascii" group="root" paranoid="false">
     Hostname is test.hostname.org
 

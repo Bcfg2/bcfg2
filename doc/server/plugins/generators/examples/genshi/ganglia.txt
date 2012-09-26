@@ -1,40 +1,39 @@
 .. -*- mode: rst -*-
 
-.. _server-plugins-generators-tgenshi-ganglia:
-
 ganglia
 =======
 
-Another interesting example of **TGenshi** templating is to automatically
-generate ``gmond``/``gmetad`` configuration files. The idea is that each
-cluster is headless: it communicates with the rest of the cluster members
-on an isolated multicast IP address and port. Any of the cluster members
-is therefore isolated on that particular ip/port pair. Additionally,
-each ``gmond`` instance **also** listens on UDP. This allows for any of
-the cluster members to be polled for information on the entire cluster!
+Another interesting example of Genshi templating is to automatically
+generate ``gmond``/``gmetad`` configuration files. The idea is that
+each cluster is headless: it communicates with the rest of the cluster
+members on an isolated multicast IP address and port. Any of the
+cluster members is therefore isolated on that particular ip/port
+pair. Additionally, each ``gmond`` instance **also** listens on
+UDP. This allows for any of the cluster members to be polled for
+information on the entire cluster!
 
-The second part of the trick is in ``gmetad.conf``. Here, we dynamically
-generate a list of clusters (based on profiles names) and a list of
-members to poll (based on the clients in said profiles). As the number of
-profiles and client grows, this list will grow automatically as well. When
-a new host is added, ``gmetad`` will receive an updated configuration and
-act accordingly.
+The second part of the trick is in ``gmetad.conf``. Here, we
+dynamically generate a list of clusters (based on profiles names) and
+a list of members to poll (based on the clients in said profiles). As
+the number of profiles and client grows, this list will grow
+automatically as well. When a new host is added, ``gmetad`` will
+receive an updated configuration and act accordingly.
 
-There **is** one caveat though. The ``gmetad.conf`` parser is hard coded
-to read 16 arguments per ``data_source`` line. If you have more than 15
-nodes in a cluster, you will see a warning in the logs. You can either
-ignore it, or truncate the list to the first 15 members.
+There **is** one caveat though. The ``gmetad.conf`` parser is hard
+coded to read 16 arguments per ``data_source`` line. If you have more
+than 15 nodes in a cluster, you will see a warning in the logs. You
+can either ignore it, or truncate the list to the first 15 members.
 
 In our environment, a profile is a one to one match with the role of
-that particular host. You can also do this based on groups, or any other
-client property.
+that particular host. You can also do this based on groups, or any
+other client property.
 
 Bundler/ganglia.xml
 -------------------
 
 .. code-block:: xml
 
-    <Bundle name='ganglia' version='2.0' revision='$Revision$' origin='$HeadURL$' >
+    <Bundle name='ganglia'>
         <Package name='ganglia-gmond' />
         <Package name='ganglia-gmond-modules-python' />
         <Path name='/etc/ganglia/gmond.conf' />
@@ -55,17 +54,17 @@ Rules/services-ganglia.xml
 
 .. code-block:: xml
 
-    <Rules priority='10' revision='$Revision$' origin='$HeadURL$' >
+    <Rules priority='10'>
         <Service name='gmond' type='chkconfig' status='on' />
         <Group name='gmetad-server'>
             <Service name='gmetad' type='chkconfig' status='on' />
         </Group>
     </Rules>
 
-TGenshi/etc/ganglia/gmetad.conf/template.newtxt
------------------------------------------------
+Cfg/etc/ganglia/gmetad.conf/gmetad.conf.genshi
+----------------------------------------------
 
-::
+.. code-block:: none
 
     {% python
        client_metadata =  metadata.query.all()
@@ -90,13 +89,12 @@ TGenshi/etc/ganglia/gmetad.conf/template.newtxt
 
     rrd_rootdir "/var/lib/ganglia/rrds"
 
-TGenshi/etc/ganglia/gmond.conf/template.newtxt
-----------------------------------------------
+Cfg/etc/ganglia/gmond.conf/gmod.conf.genshi
+-------------------------------------------
 
-::
+.. code-block:: none
 
     {% python
-    from genshi.builder import tag
     import random
     random.seed(metadata.profile)
     last_octet=random.randint(2,254)

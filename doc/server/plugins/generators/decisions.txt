@@ -30,10 +30,10 @@ client's whitelists or blacklists.
 
 The Decisions plugin uses a directory in the Bcfg2 repository called
 Decisions. Files in the Decisions subdirectory are named similarly to
-files managed by Cfg, probes, TCheetah, and TGenshi (so you can use host-
-and group-specific files and the like after their basename). File basenames
-are either ``whitelist`` or ``blacklist``. These files have a simple format;
-the following is an example.
+files managed by Cfg and Probes, so you can use host- and
+group-specific files and the like after their basename. File basenames
+are either ``whitelist`` or ``blacklist``. These files have a simple
+format; the following is an example.
 
 .. code-block:: xml
 

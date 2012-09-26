@@ -1,16 +1,13 @@
 .. -*- mode: rst -*-
 
-.. _server-plugins-generators-tgenshi-mycnf:
-
-mycnf
-=====
+my.cnf
+======
 
 The following template generates a ``server-id`` based on the last two
 numeric parts of the IP address. The "slave" portion of the configuration
-only applies to machines in the "slave" group.::
+only applies to machines in the "slave" group::
 
     {% python
-    from genshi.builder import tag
     import socket
     parts = socket.gethostbyname(metadata.hostname).split('.')
     server_id = parts[2] + parts[3]

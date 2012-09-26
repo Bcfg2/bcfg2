@@ -26,12 +26,13 @@ Use Cases
 Examples
 ========
 
-* Consider the case of /etc/hosts on linux and /etc/inet/hosts
-  on solaris. These files contain the same data in the same format,
-  and should typically be synchronized, however, exist in different
-  locations. Classically, one would need to create one entry for each in
-  Cfg or TCheetah and perform manual synchronization. Or, you could use
-  symlinks and pray. Altsrc is driven from the bundle side. For example:
+* Consider the case of /etc/hosts on linux and /etc/inet/hosts on
+  solaris. These files contain the same data in the same format, and
+  should typically be synchronized, however, exist in different
+  locations. Classically, one would need to create one entry for each
+  in Cfg and perform manual synchronization. Or, you could use
+  symlinks and pray. Altsrc is driven from the bundle side. For
+  example:
 
   .. code-block:: xml
 
@@ -66,11 +67,11 @@ Examples
   "openssl-rpm", but will be delivered to the client with both packages
   named "openssl" with different types.
 
-* Finally, consider the case where there exist complicated, but
-  completely independent specifications for the same configuration entry
-  but different groups of clients. The following bundle will allow the
-  use of two different TCheetah templates /etc/firewall-rules-external
-  and /etc/firewall-rules-internal for different clients based on their
+* Consider the case where there exist complicated, but completely
+  independent specifications for the same configuration entry but
+  different groups of clients. The following bundle will allow the use
+  of two different templates /etc/firewall-rules-external and
+  /etc/firewall-rules-internal for different clients based on their
   group membership.
 
   .. code-block:: xml
@@ -86,11 +87,13 @@ Examples
       </Bundle>
 
 * Consider the case where a variety of files can be constructed by a
-  single template (TCheetah or TGenshi). It would be possible to copy
-  this template into the proper location for each file, but that requires
-  proper synchronization upon modification and knowing up front what
-  the files will all be called. Instead, the following bundle allows
-  the use of a single template for all proper config file instances.
+  single :ref:`Genshi <server-plugins-generators-cfg-genshi>` or
+  :ref:`Cheetah <server-plugins-generators-cfg-cheetah>` template. It
+  would be possible to copy this template into the proper location for
+  each file, but that requires proper synchronization upon
+  modification and knowing up front what the files will all be
+  called. Instead, the following bundle allows the use of a single
+  template for all proper config file instances.
 
   .. code-block:: xml
 
