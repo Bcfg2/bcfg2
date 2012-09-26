@@ -122,8 +122,8 @@ class SELinux(Bcfg2.Client.Tools.Tool):
             self.logger.debug("Committing SELinux transaction")
             semanage.finish()
             self.txn = False
-            for func, args, kwargs in self.post_txn_queue:
-                func(*args, **kwargs)
+            for func, arg, kwargs in self.post_txn_queue:
+                states[arg] = func(*arg, **kwargs)
 
     def InstallSELinux(self, entry):
         """Dispatch install to the proper method according to type"""
