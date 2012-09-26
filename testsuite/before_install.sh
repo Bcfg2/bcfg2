@@ -5,5 +5,6 @@
 sudo apt-get update -qq
 sudo apt-get install -qq swig pylint
 if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
-    sudo apt-get install -qq python-selinux python-pylibacl
+    sudo apt-get install -qq python-selinux python-pylibacl python-pyinotify \
+        python-yaml yum
 fi
