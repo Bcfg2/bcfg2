@@ -130,16 +130,10 @@ as Gentoo.
 RPM
 ---
 
-.. warning:: Deprecated in favor of :ref:`RPMng <client-tools-yumng>`
+Executes RPM to manage packages on Redhat-based and similar systems.
+Consider using the :ref:`YUM <client-tools-yum>` tool instead if possible.
 
-Executes rpm to manage packages most often on redhat based systems.
-
-RPMng
------
-
-Next-generation RPM tool. Handles RPM sublties like epoch and
-prelinking and 64-bit platforms better than the RPM client
-tool. :ref:`client-tools-yumng`
+Formerly called ``RPMng``, but was renamed for the 1.3 release.
 
 SMF
 ---
@@ -157,12 +151,6 @@ Systemd
 
 Systemd service support.
 
-Example:
-
-.. code-block:: xml
-
-    <Service name='udev' status='on' type='systemd'/>
-
 SYSV
 ----
 
@@ -175,15 +163,16 @@ Upstart service support. Uses `Upstart`_ to configure services.
 
 .. _Upstart: http://upstart.ubuntu.com/
 
-Yum
+YUM
 ---
 
-.. warning:: Deprecated in favor of :ref:`YUMng <client-tools-yumng>`
+Handles RPMs using the YUM package manager. Renamed from ``YUMng`` for
+the 1.3 release.  See :ref:`client-tools-yum` for more details.
 
-Handles RPMs using the YUM package manager.
-
-YUMng
+YUM24
 -----
 
-Handles RPMs using the YUM package manager. Handles sublties better than
-the Yum client tool. :ref:`client-tools-yumng`
+.. warning:: Deprecated in favor of :ref:`YUM <client-tools-yum>`
+
+Handles RPMs using older versions of the YUM package manager.
+

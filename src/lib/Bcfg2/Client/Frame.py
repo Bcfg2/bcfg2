@@ -84,11 +84,11 @@ class Frame(object):
         for tool in list(tclass.values()):
             try:
                 self.tools.append(tool(self.logger, setup, config))
-            except Bcfg2.Client.Tools.toolInstantiationError:
+            except Bcfg2.Client.Tools.ToolInstantiationError:
                 continue
             except:
-                self.logger.error("Failed to instantiate tool %s" % \
-                                  (tool), exc_info=1)
+                self.logger.error("Failed to instantiate tool %s" % tool,
+                                  exc_info=1)
 
         for tool in self.tools[:]:
             for conflict in getattr(tool, 'conflicts', []):
@@ -99,10 +99,15 @@ class Frame(object):
         self.logger.info("Loaded tool drivers:")
         self.logger.info([tool.name for tool in self.tools])
 
+        deprecated = [tool.name for tool in self.tools if tool.deprecated]
+        if deprecated:
+            self.logger.warning("Loaded deprecated tool drivers:")
+            self.logger.warning(deprecated)
+
         # find entries not handled by any tools
         self.unhandled = [entry for struct in config
-                     for entry in struct
-                     if entry not in self.handled]
+                          for entry in struct
+                          if entry not in self.handled]
 
         if self.unhandled:
             self.logger.error("The following entries are not handled by any "

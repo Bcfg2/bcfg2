@@ -6,14 +6,6 @@
 Pkgmgr
 ======
 
-.. note::
-
-    See [wiki:ClientTools/RPMng#PackageTagNewStyleandAttributes
-    RPMng#PackageTagNewStyleandAttributes].''' The way of showing the
-    architecture of the RPM has changed. The new way is "arch". The
-    old way is "multiarch". '''This document needs to be updated and
-    include version of Bcfg2 where change took place.'''
-
 The Pkgmgr plugin resolves the Abstract Configuration Entity "Package"
 to a package specification that the client can use to detect, verify
 and install the specified package.
@@ -48,32 +40,60 @@ Group membership may be negated.
 Tag Attributes in Pkgmgr
 ========================
 
-PackageList Tag
----------------
+Package Tag
+^^^^^^^^^^^
 
-The PackageList Tag may have the following attributes:
+The package tag supports the name and pkg_checks attributes and
+requires the use of Instance tag entries.
 
-+-----------+-----------------------------------------------+----------------+
-| Name      | Description                                   | Values         |
-+===========+===============================================+================+
-| priority  | Sets the priority for packages in the package | Integer        |
-|           | list. The higher value wins.                  |                |
-+-----------+-----------------------------------------------+----------------+
-| type      | Package type that applies to all packages in  | deb|rpm|blast| |
-|           | the list. This value is inherited by all      | encap|sysv|    |
-|           | packages without an explicit type attribute.  | portage|yum    |
-+-----------+-----------------------------------------------+----------------+
-| uri       | URI to prepend to filename sto fetch packages | String         |
-|           | in this list.                                 |                |
-+-----------+-----------------------------------------------+----------------+
-| multiarch | Comma-separated list of architectures that    | String         |
-|           | apply to all packages in this list. Inherited |                |
-|           | by all package entries in the file that does  |                |
-|           | not have this attribute explicitly.           |                |
-+-----------+-----------------------------------------------+----------------+
-| srcs      | To be used with multiarch support. Inherited  | String         |
-|           | by all Package entries without this attribute |                |
-+-----------+-----------------------------------------------+----------------+
++------------+---------------------------------------+------------------------+
+| Attribute  | Description                           | Values                 |
++============+=======================================+========================+
+| name       | Package name.                         | String                 |
++------------+---------------------------------------+------------------------+
+| pkg_checks | Do the version and rpm verify checks. | true(default) or false |
++------------+---------------------------------------+------------------------+
+
+Instance Tag and Attributes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The instance tag supports the following attributes:
+
++---------------------+----------------------------+--------------------------+
+| Attribute           | Description                | Values                   |
++=====================+============================+==========================+
+| simplefile          | Package file name.         | String (see Notes below) |
++---------------------+----------------------------+--------------------------+
+| epoch               | Package epoch.             | String (numeric only)    |
+|                     |                            | (optional)               |
++---------------------+----------------------------+--------------------------+
+| version             | Package version.           | String                   |
++---------------------+----------------------------+--------------------------+
+| release             | Package release.           | String                   |
++---------------------+----------------------------+--------------------------+
+| arch                | Package architecture.      | Architecture String e.g. |
+|                     |                            | (i386|i586|i686|x86_64)  |
++---------------------+----------------------------+--------------------------+
+| verify_flags        | Comma separated list of    | nodeps, nodigest,        |
+|                     | rpm --verify options. See  | nofiles, noscripts,      |
+|                     | the rpm man page for their | nosignature, nolinkto,   |
+|                     | details.                   | nomd5, nosize, nouser,   |
+|                     |                            | nogroup, nomtime,        |
+|                     |                            | nomode, nordev           |
++---------------------+----------------------------+--------------------------+
+| pkg_verify          | Do the rpm verify          | true(default) or false   |
++---------------------+----------------------------+--------------------------+
+| install_action      | Install package instance   | install(default) or none |
+|                     | if it is not installed.    |                          |
++---------------------+----------------------------+--------------------------+
+| version_fail_action | Upgrade package if the     | upgrade(default) or none |
+|                     | incorrect version is       |                          |
+|                     | installed.                 |                          |
++---------------------+----------------------------+--------------------------+
+| verify_fail_action  | Reinstall the package      | reinstall(default) or    |
+|                     | instance if the rpm verify | none                     |
+|                     | failed                     |                          |
++---------------------+----------------------------+--------------------------+
 
 Pkgmgr Group Tag
 ----------------
@@ -88,40 +108,6 @@ The Pkgmgr Group Tag may have the following attributes:
 | negate | Negate group membership (is not a member of) | True|False |
 +--------+----------------------------------------------+------------+
 
-Package Tag
------------
-
-The Package Tag may have the following attributes:
-
-+------------+----------------------------------------------+------------+
-| Name       | Description                                  | Values     |
-+============+==============================================+============+
-| name       | Package Name                                 | String     |
-+------------+----------------------------------------------+------------+
-| version    | Package version, set to ``auto`` to install  | String     |
-|            | the latest version in the client's cache, or |            |
-|            | ``any`` to verify that any version of the    |            |
-|            | package is installed on the client           |            |
-+------------+----------------------------------------------+------------+
-| file       | Package file name. Several other attributes  | String     |
-|            | (name, version) can be automatically defined |            |
-|            | based on regular expressions defined in the  |            |
-|            | Pkgmgr plugin.                               |            |
-+------------+----------------------------------------------+------------+
-| simplefile | Package file name. No name parsing is        | String     |
-|            | performed, so no extra fields get set        |            |
-+------------+----------------------------------------------+------------+
-| verify     | Whether package verification should be done  | True|False |
-+------------+----------------------------------------------+------------+
-| multiarch  | Comma-separated list of the architectures of | String     |
-|            | this package that should be installed.       |            |
-|            | (Temporary work-around)                      |            |
-+------------+----------------------------------------------+------------+
-| srcs       | File name creation rules for multiarch       | String     |
-|            | packages. (Temporary work-around)            |            |
-+------------+----------------------------------------------+------------+
-| type       | Package type (rpm, yum, apt, sysv, blast)    | String     |
-+------------+----------------------------------------------+------------+
 
 Client Tag
 ----------
@@ -323,11 +309,186 @@ implemented that should ease this situation considerably.
 Altogether, this should move policy decisions about package architectures
 to bundles/base.
 
-Client Driver (Plugins) Specific Attributes
-===========================================
+Automated Generation of Pkgmgr Configuration Files
+--------------------------------------------------
 
-Not all the attributes that are available in Pkgmgr are honoured by all
-the client drivers. The following client drivers (plugins) have driver
-specific attributes:
+The two utilities detailed below are provided in the tools directory of
+the source tarball.
 
-* :ref:`RPMng <client-tools-yumng>`
+Also see the general :ref:`Pkgmgr <server-plugins-generators-pkgmgr>`
+and :ref:`server-plugins-structures-altsrc` pages.
+
+pkgmgr_gen.py
+^^^^^^^^^^^^^
+
+pkgmgr_gen will generate a Pkgmgr file from a list of directories
+containing RPMs or from a list of YUM repositories.::
+
+    [root@bcfg2 Pkgmgr]# pkgmgr_gen.py --help usage: pkgmgr_gen.py
+    [options]
+
+    options:
+      -h, --help            show this help message and exit
+      -aARCHS, --archs=ARCHS
+                            Comma separated list of subarchitectures to include.
+                            The highest subarichitecture required in an
+                            architecture group should specified.   Lower
+                            subarchitecture packages will be loaded if that
+                            is all that is available. e.g. The higher of i386,
+                            i486 and i586 packages will be loaded if -a i586
+                            is specified. (Default: all).
+      -dRPMDIRS, --rpmdirs=RPMDIRS
+                            Comma separated list of directories to scan for RPMS.
+                            Wilcards are permitted.
+      -eENDDATE, --enddate=ENDDATE
+                            End date for RPM file selection.
+      -fFORMAT, --format=FORMAT
+                            Format of the Output. Choices are yum or rpm.
+                            (Default: yum)
+      -gGROUPS, --groups=GROUPS
+                            List of comma separated groups to nest Package
+                            entities in.
+      -iINDENT, --indent=INDENT
+                            Number of leading spaces to indent nested entries in
+                            the                                             output.
+                            (Default:4)
+      -oOUTFILE, --outfile=OUTFILE
+                            Output file name.
+      -P, --pkgmgrhdr       Include PackageList header in output.
+      -pPRIORITY, --priority=PRIORITY
+                            Value to set priority attribute in the PackageList Tag.
+                            (Default: 0)
+      -rRELEASE, --release=RELEASE
+                            Which releases to include in the output. Choices are
+                            all or latest.  (Default: latest).
+      -sSTARTDATE, --startdate=STARTDATE
+                            Start date for RPM file selection.
+      -uURI, --uri=URI      URI for PackageList header required for RPM format
+                            ouput.
+      -v, --verbose         Enable verbose output.
+      -yYUMREPOS, --yumrepos=YUMREPOS
+                            Comma separated list of YUM repository URLs to load.
+                            NOTE: Each URL must end in a '/' character.
+
+.. note:: The startdate and enddate options are not yet implemented.
+
+pkgmgr_update.py
+----------------
+
+pkgmgr_update will update the release (meaning the epoch, version
+and release) information in an existing Pkgrmgr file from a list of
+directories containing RPMs or from a list of YUM repositories.  All Tags
+and other attributes in the existing file will remain unchanged.::
+
+    [root@bcfg2 Pkgmgr]# pkgmgr_update.py --help
+    usage: pkgmgr_update.py [options]
+
+    options:
+      -h, --help            show this help message and exit
+      -cCONFIGFILE, --configfile=CONFIGFILE
+                            Existing Pkgmgr configuration  file name.
+      -dRPMDIRS, --rpmdirs=RPMDIRS
+                            Comma separated list of directories to scan for RPMS.
+                            Wilcards are permitted.
+      -oOUTFILE, --outfile=OUTFILE
+                            Output file name or new Pkgrmgr file.
+      -v, --verbose         Enable verbose output.
+      -yYUMREPOS, --yumrepos=YUMREPOS
+                            Comma separated list of YUM repository URLs to load.
+                            NOTE: Each URL must end in a '/' character.
+
+Pkgmgr Configuration Examples
+-----------------------------
+
+verify_flags
+^^^^^^^^^^^^
+
+This entry was used for the Centos test client used during RPM
+development.
+
+.. code-block:: xml
+
+    <Package name='bcfg2' type='rpm'>
+        <Instance simplefile='bcfg2-0.9.3-0.0pre5.noarch.rpm' version='0.9.3' release='0.0pre5' arch='noarch' verify_flags='nomd5,nosize,nomtime'/>
+    </Package>
+
+Multiple Instances
+^^^^^^^^^^^^^^^^^^
+
+.. code-block:: xml
+
+    <Package name='beecrypt' type='rpm'>
+        <Instance simplefile='beecrypt-3.1.0-6.x86_64.rpm' version='3.1.0' release='6' arch='x86_64'/>
+        <Instance simplefile='beecrypt-3.1.0-6.i386.rpm' version='3.1.0' release='6' arch='i386'/>
+    </Package>
+
+Kernel
+^^^^^^
+
+.. note:: Multiple instances with the same architecture must be in the installOnlyPkgs list.
+
+.. code-block:: xml
+
+    <Package name='kernel' type='rpm'>
+        <Instance simplefile='kernel-2.6.9-42.0.8.EL.x86_64.rpm' version='2.6.9' release='42.0.8.EL' arch='x86_64'/>
+        <Instance simplefile='kernel-2.6.9-42.0.10.EL.x86_64.rpm' version='2.6.9' release='42.0.10.EL' arch='x86_64'/>
+    </Package>
+
+Per Instance Ignore
+^^^^^^^^^^^^^^^^^^^
+
+.. note::
+
+    In this case a per instance ignore is actually a bad idea as the
+    verify failure is because of multiarch issues where  the last package
+    installed wins.  So this would be better as a Package level ignore.
+
+Ignore tag entries only work with the RPM driver. They do not appear
+to be supported in YUM as of 1.0pre5.
+
+.. code-block:: xml
+
+    <Package name='glibc' type='rpm'>
+        <Instance simplefile='glibc-2.3.4-2.25.x86_64.rpm' version='2.3.4' release='2.25' arch='x86_64'>
+            <Ignore name='/etc/rpc'/>
+        </Instance>
+        <Instance simplefile='glibc-2.3.4-2.25.i686.rpm' version='2.3.4' release='2.25' arch='i686'/>
+    </Package>
+
+pkg_checks
+^^^^^^^^^^
+
+If pkg_checks = false the version information is not required. If
+pkg_checks = true the full information is needed as normal.
+
+For YUM a minimal entry is
+
+.. code-block:: xml
+
+    <Package name="bcfg2" type="yum" pkg_checks="False"/>
+
+In fact for YUM, with pkg_checks = false, any combination of the nevra
+attributes that will build a valid yum package name (see the Misc heading
+on the yum man page) is valid.
+
+.. code-block:: xml
+
+    <Package name="bcfg2" type="yum" pkg_checks="False" arch="x86_64"/>
+
+For RPM a minimal entry is
+
+.. code-block:: xml
+
+    <Package name="bcfg2" type="rpm" pkg_checks="False" simplefile="bcfg2-0.9.4-0.0pre1.noarch.rpm"/>
+
+verify_fail_action
+^^^^^^^^^^^^^^^^^^
+
+The way I have Bcfg2 configured for my development systems. This way
+it reports bad, but doesn't do anything about it.
+
+.. code-block:: xml
+
+    <Package name='bcfg2' type='rpm'>
+        <Instance simplefile='bcfg2-0.9.3-0.0pre5.noarch.rpm' version='0.9.3' release='0.0pre5' arch='noarch' verify_fail_action='none'/>
+    </Package>

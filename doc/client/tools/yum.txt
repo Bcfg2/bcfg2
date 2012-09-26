@@ -1,0 +1,346 @@
+.. -*- mode: rst -*-
+
+.. _client-tools-yum:
+
+============================
+Bcfg2 RPM/YUM Client Drivers
+============================
+
+The RPM and YUM client drivers provide client support for RPMs
+(installed directly from URLs) and Yum repositories.  These drivers
+were formerly called ``RPMng`` and ``YUMng``, respectively, but were
+renamed for Bcfg2 1.3.0.
+
+Features
+========
+
+* Full RPM package identification using epoch, version, release and
+  arch.
+* Support for multiple instances of packages with the Instance tag.
+* Better control of the RPM verification using the pkg_checks,
+  pkg_verify and verify_flags attributes.
+* Support for install only packages such as the kernel packages.
+* Support for per instance ignoring of individual files for the RPM
+  verification with the Ignore tag.
+* Multiple package Instances with full version information listed in
+  interactive mode.
+* Support for installation and removal of gpg-pubkey packages.
+* Support for controlling what action is taken on package verification
+  failure with the install_action, version_fail_action and
+  verify_fail_action attributes.
+
+Installation
+============
+
+isprelink
+---------
+
+``isprelink`` is a Python module that can greatly improve the
+performance of the ``RPM`` driver.  It should be installed on any
+system that has prelink installed and will be using the ``RPM`` driver.
+
+Source can be found at ftp://ftp.mcs.anl.gov/pub/bcfg/isprelink-0.1.2.tar.gz
+
+To compile and install prelink, execute::
+
+    python setup.py install
+
+in the rpmtools directory. The elfutils-libelf-devel package is required
+for the compilation.
+
+There may also be RPMs available in the repositories for your distro.
+
+Configuration and Usage
+=======================
+
+Loading of RPM
+--------------
+
+The RPM driver can be loaded by command line options, client
+configuration file options or as the default driver for RPM packages.
+
+From the command line::
+
+    bcfg2 -n -v -d -D Action,POSIX,Chkconfig,RPM
+
+This produces quite a bit of output so you may want to redirect the
+output to a file for review.
+
+In the ``bcfg2.conf`` file::
+
+    [client]
+    drivers = Action,Chkconfig,POSIX,RPM
+
+Configuration File Options
+--------------------------
+
+A number of paramters can be set in the client configuration for both
+the RPM and YUM drivers. Each driver has its own section (``[RPM]`` or
+``[YUM]``), and most of the same options are accepted by each driver.
+An example config might look like this::
+
+    [RPM]
+    pkg_checks = true
+    pkg_verify = true
+    erase_flags = allmatches
+    installonlypackages = kernel, kernel-bigmem, kernel-enterprise, kernel-smp, kernel-modules, kernel-debug, kernel-unsupported, kernel-source, kernel-devel, kernel-default, kernel-largesmp-devel, kernel-largesmp, kernel-xen, gpg-pubkey
+    install_action = install
+    version_fail_action = upgrade
+    verify_fail_action = reinstall
+
+installonlypackages
+^^^^^^^^^^^^^^^^^^^
+
+Install-only packages are packages that should only ever be installed
+or deleted, not upgraded.
+
+It is best practice to only ever install/delete kernel packages, the
+wisdom being that the package for the currently running kernel should
+always be installed. Doing an upgrade would delete the running kernel
+package.
+
+``gpg-pubkey`` will be automatically added to the list of install-only
+packages.
+
+Example::
+
+    [RPM]
+    installonlypackages = kernel, kernel-bigmem, kernel-enterprise, kernel-smp, kernel-modules, kernel-debug, kernel-unsupported, kernel-source, kernel-devel, kernel-default, kernel-largesmp-devel, kernel-largesmp, kernel-xen, gpg-pubkey
+
+This option is not honored by the ``YUM`` driver.
+
+erase_flags
+^^^^^^^^^^^
+
+erase_flags are rpm options used by 'rpm -erase' in the client ``Remove()``
+method. The RPM erase is written using rpm-python and does not use
+the rpm command.
+
+The erase flags are specified in the client configuration file as a
+comma separated list and apply to all RPM erase operations.  The
+following rpm erase options are supported. See the rpm man page for
+details::
+
+    noscripts
+    notriggers
+    repackage
+    allmatches
+    nodeps
+
+This option is not honored by the ``YUM`` driver.
+
+pkg_checks
+^^^^^^^^^^
+
+The RPM/YUM drivers do the following three checks/status:
+
+#. Installed
+#. Version
+#. rpm verify
+
+Setting pkg_checks = true (the default) in the client configuration file
+means that all three checks will be done for all packages.
+
+Setting pkg_checks = false in the client configuration file means that
+only the Installed check will be done for all packages.
+
+The true/false value can be any combination of upper and lower case.
+
+.. note::
+    #. pkg_checks must evaluate true for both the client (this option)
+       and the package (see the Package Tag pkg_checks attribute
+       below) for the action to take place.
+    #. If pkg_checks = false then the Pkgmgr entries do not need the
+       version information.  See the examples towards the bottom of
+       the page.
+
+pkg_verify
+^^^^^^^^^^
+
+The RPM/YUM drivers do the following three checks/status:
+
+#. Installed
+#. Version
+#. rpm verify
+
+Setting pkg_verify = true (the default) in the client configuration
+file means that all three checks will be done for all packages as long
+as pkg_checks = true.
+
+Setting pkg_verify = false in the client configuration file means that
+the rpm verify wil not be done for all packages on the client.
+
+The true/false value can be any combination of upper and lower case.
+
+.. note::
+    #. pkg_verify must evaluate true for both the client (this option)
+       and the package instance (see the Instance Tag pkg_verify
+       attribute below) for the action to take place.
+
+install_action
+^^^^^^^^^^^^^^
+
+``install_action`` controls whether or not a package instance will be
+installed if the package instance isn't installed.
+
+If install_action = install then the package instance is installed.
+If install_action = none then the package instance is not installed.
+
+.. note::
+    #. install_action must evaluate true for both the client (this
+       option) and the package instance (see the Instance Tag
+       install_action attribute below) for the action to take place.
+
+version_fail_action
+^^^^^^^^^^^^^^^^^^^
+
+``version_fail_action`` controls whether or not a package instance
+will be updated if the installed package instance isn't the same
+version as specified in the configuration.
+
+If version_fail_action = upgrade then the package instance is upgraded
+(or downgraded).
+
+If version_fail_action = none then the package instance is not upgraded
+(or downgraded).
+
+.. note::
+    #. verion_fail_action must evaluate true for both the client (this
+       option) and the package instance (see the Instance Tag
+       version_fail_action attribute below) for the action to take
+       place.
+
+verify_fail_action
+^^^^^^^^^^^^^^^^^^
+
+``verify_fail_action`` controls whether or not a package instance will
+be reinstalled if the installed package instance fails the Yum or RPM
+verify.
+
+If verify_fail_action = reinstall then the package instance is reinstalled.
+If verify_fail_action = none then the package instance is not reinstalled.
+
+.. note::
+    #. verify_fail_action must evaluate true for both the client (this
+       option) and the package instance (see the Instance Tag
+       verify_fail_action attribute below) for the action to take
+       place.
+    #. The driver will not attempt to reinstall a package instance if
+       the only failure is a configuration file.
+
+Interactive Mode
+----------------
+
+Running the client in interactive mode (-I) prompts for the actions to
+be taken as before. Prompts are per package and may apply to multiple
+instances of that package. Each per package prompt will contain a list
+of actions per instance.
+
+In the RPM driver, actions are encoded as:
+
+* D - Delete
+* I - Install
+* R - Reinstall
+* U - Upgrade/Downgrade
+
+An example follows::
+
+    Install/Upgrade/delete Package aaa_base instance(s) - R(*:10.2-38.*)  (y/N)
+    Install/Upgrade/delete Package evms instance(s) - R(*:2.5.5-67.*)  (y/N)
+    Install/Upgrade/delete Package gpg-pubkey instance(s) - D(*:9c800aca-40d8063e.*) D(*:0dfb3188-41ed929b.*) D(*:7e2e3b05-44748aba.*) D(*:a1912208-446a0899.*) D(*:9c777da4-4515b5fd.*) D(*:307e3d54-44201d5d.*)  (y/N)
+    Install/Upgrade/delete Package module-init-tools instance(s) - R(*:3.2.2-62.*)  (y/N)
+    Install/Upgrade/delete Package multipath-tools instance(s) - R(*:0.4.7-29.*)  (y/N)
+    Install/Upgrade/delete Package pam instance(s) - R(*:0.99.6.3-29.1.*)  (y/N)
+    Install/Upgrade/delete Package perl-AppConfig instance(s) - U(None:1.52-4.noarch -> *:1.63-17.*)  (y/N)
+    Install/Upgrade/delete Package postfix instance(s) - R(*:2.3.2-28.*)  (y/N)
+    Install/Upgrade/delete Package sysconfig instance(s) - R(*:0.60.4-3.*)  (y/N)
+    Install/Upgrade/delete Package udev instance(s) - R(*:103-12.*)  (y/N)
+
+GPG Keys
+--------
+
+GPG is used by RPM to 'sign' packages. All vendor packages are signed
+with the vendors GPG key. Additional signatures maybe added to the rpm
+file at the users discretion.
+
+It is normal to have multiple GPG keys installed. For example, SLES10
+out of the box has six GPG keys installed.
+
+To the RPM database all GPG 'packages' have the name 'gpg-pubkey', which
+may be nothing like the name of the file specified in the rpm -import
+command. For example on Centos 4 the file name is RPM-GPG-KEY-centos4.
+For SLES10 this means that there are six packages with the name
+'gpg-pubkey' installed.
+
+RPM does not check GPG keys at package installation, while YUM does.
+
+RPM uses the rpm command for installation and does not therefore check
+GPG signatures at package install time. RPM uses rpm-python for
+verification and does by default do signature checks as part of the
+client Inventory process. To do the signature check the appropriate
+GPG keys must be installed. rpm-python is not very friendly if the
+required key(s) is not installed (it crashes the client).
+
+The RPM driver detects, on a per package instance basis, if the
+appropriate key is installed. If it is not, a warning message is
+printed and the signature check is disabled for that package instance,
+for that client run only.
+
+GPG keys can be installed and removed by the RPM driver. To install a
+GPG key configure it in Pkgmgr/Rules as a package and add gpg-pubkey
+to the clients abstract configuration. The gpg-pubkey package/instance
+is treated as an install only package. gpg-pubkey packages are
+installed by the RPM driver with the rpm -import command.
+
+gpg-pubkey packages will be removed by ``bcfg2 -r packages`` if they are
+not in the clients configuration.
+
+Ignoring Files during Verification
+----------------------------------
+
+Ignore Tag
+^^^^^^^^^^
+
+The Ignore tag in Pkgmgr is used to "mask out" individual files from
+the RPM verification. This is done by comparing the verification
+failure results with the Ignore tag name. If there is a match, that
+entry is not used by the client to determine if a package has failed
+verification.
+
+Ignore tag entries can be specified at both the Package level, in which
+case they apply to all Instances, and/or at the Instance level, in which
+case they only apply to that instance.
+
+Ignore tag entries are used by the RPM driver. They can be specified
+in both old and new style Pkgmgr files.
+
+The Ignore Tag supports the following attributes:
+
++-----------+-------------+--------+
+| Attribute | Description | Values |
++===========+=============+========+
+| name      | File name.  | String |
++-----------+-------------+--------+
+
+Example
+
+.. code-block:: xml
+
+    <Package name='glibc' type='rpm'>
+        <Ignore name='/etc/rpc'/>
+        <Instance simplefile='glibc-2.3.4-2.25.x86_64.rpm' version='2.3.4' release='2.25' arch='x86_64'/>
+    </Package>
+
+POSIX 'ignore' Path entries
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The YUM analog to the Ignore Tag used by RPM is the use of Path
+entries of type 'ignore'. The following shows an example for the
+centos-release package which doesn't verify if you remove the default
+repos and replace them with a custom repo.
+
+.. code-block:: xml
+
+    <!-- Ignore verification failures for centos-release -->
+    <BoundPath name='/etc/yum.repos.d/CentOS-Base.repo' type='ignore'/>
+    <BoundPath name='/etc/yum.repos.d/CentOS-Media.repo' type='ignore'/>

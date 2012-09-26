@@ -776,55 +776,63 @@ CLIENT_PORTAGE_BINPKGONLY = \
            default=False,
            cf=('Portage', 'binpkgonly'),
            cook=get_bool)
-CLIENT_RPMNG_INSTALLONLY = \
-    Option('RPMng install-only packages',
+CLIENT_RPM_INSTALLONLY = \
+    Option('RPM install-only packages',
            default=['kernel', 'kernel-bigmem', 'kernel-enterprise',
                     'kernel-smp', 'kernel-modules', 'kernel-debug',
                     'kernel-unsupported', 'kernel-devel', 'kernel-source',
                     'kernel-default', 'kernel-largesmp-devel',
                     'kernel-largesmp', 'kernel-xen', 'gpg-pubkey'],
-           cf=('RPMng', 'installonlypackages'),
+           cf=('RPM', 'installonlypackages'),
+           deprecated_cf=('RPMng', 'installonlypackages'),
            cook=list_split)
-CLIENT_RPMNG_PKG_CHECKS = \
-    Option("Perform RPMng package checks",
+CLIENT_RPM_PKG_CHECKS = \
+    Option("Perform RPM package checks",
            default=True,
-           cf=('RPMng', 'pkg_checks'),
+           cf=('RPM', 'pkg_checks'),
+           deprecated_cf=('RPMng', 'pkg_checks'),
            cook=get_bool)
-CLIENT_RPMNG_PKG_VERIFY = \
-    Option("Perform RPMng package verify",
+CLIENT_RPM_PKG_VERIFY = \
+    Option("Perform RPM package verify",
            default=True,
-           cf=('RPMng', 'pkg_verify'),
+           cf=('RPM', 'pkg_verify'),
+           deprecated_cf=('RPMng', 'pkg_verify'),
            cook=get_bool)
-CLIENT_RPMNG_INSTALLED_ACTION = \
-    Option("RPMng installed action",
+CLIENT_RPM_INSTALLED_ACTION = \
+    Option("RPM installed action",
            default="install",
-           cf=('RPMng', 'installed_action'))
-CLIENT_RPMNG_ERASE_FLAGS = \
-    Option("RPMng erase flags",
+           cf=('RPM', 'installed_action'),
+           deprecated_cf=('RPMng', 'installed_action'))
+CLIENT_RPM_ERASE_FLAGS = \
+    Option("RPM erase flags",
            default=["allmatches"],
-           cf=('RPMng', 'erase_flags'),
+           cf=('RPM', 'erase_flags'),
+           deprecated_cf=('RPMng', 'erase_flags'),
            cook=list_split)
-CLIENT_RPMNG_VERSION_FAIL_ACTION = \
-    Option("RPMng version fail action",
+CLIENT_RPM_VERSION_FAIL_ACTION = \
+    Option("RPM version fail action",
            default="upgrade",
-           cf=('RPMng', 'version_fail_action'))
-CLIENT_RPMNG_VERIFY_FAIL_ACTION = \
-    Option("RPMng verify fail action",
+           cf=('RPM', 'version_fail_action'),
+           deprecated_cf=('RPMng', 'version_fail_action'))
+CLIENT_RPM_VERIFY_FAIL_ACTION = \
+    Option("RPM verify fail action",
            default="reinstall",
-           cf=('RPMng', 'verify_fail_action'))
-CLIENT_RPMNG_VERIFY_FLAGS = \
-    Option("RPMng verify flags",
+           cf=('RPM', 'verify_fail_action'),
+           deprecated_cf=('RPMng', 'verify_fail_action'))
+CLIENT_RPM_VERIFY_FLAGS = \
+    Option("RPM verify flags",
            default=[],
-           cf=('RPMng', 'verify_flags'),
+           cf=('RPM', 'verify_flags'),
+           deprecated_cf=('RPMng', 'verify_flags'),
            cook=list_split)
 CLIENT_YUM24_INSTALLONLY = \
-    Option('RPMng install-only packages',
+    Option('YUM24 install-only packages',
            default=['kernel', 'kernel-bigmem', 'kernel-enterprise',
                     'kernel-smp', 'kernel-modules', 'kernel-debug',
                     'kernel-unsupported', 'kernel-devel', 'kernel-source',
                     'kernel-default', 'kernel-largesmp-devel',
                     'kernel-largesmp', 'kernel-xen', 'gpg-pubkey'],
-           cf=('RPMng', 'installonlypackages'),
+           cf=('YUM24', 'installonlypackages'),
            cook=list_split)
 CLIENT_YUM24_PKG_CHECKS = \
     Option("Perform YUM24 package checks",
@@ -863,32 +871,38 @@ CLIENT_YUM24_AUTODEP = \
            default=True,
            cf=('YUM24', 'autodep'),
            cook=get_bool)
-CLIENT_YUMNG_PKG_CHECKS = \
-    Option("Perform YUMng package checks",
+CLIENT_YUM_PKG_CHECKS = \
+    Option("Perform YUM package checks",
            default=True,
-           cf=('YUMng', 'pkg_checks'),
+           cf=('YUM', 'pkg_checks'),
+           deprecated_cf=('YUMng', 'pkg_checks'),
            cook=get_bool)
-CLIENT_YUMNG_PKG_VERIFY = \
-    Option("Perform YUMng package verify",
+CLIENT_YUM_PKG_VERIFY = \
+    Option("Perform YUM package verify",
            default=True,
-           cf=('YUMng', 'pkg_verify'),
+           cf=('YUM', 'pkg_verify'),
+           deprecated_cf=('YUMng', 'pkg_verify'),
            cook=get_bool)
-CLIENT_YUMNG_INSTALLED_ACTION = \
-    Option("YUMng installed action",
+CLIENT_YUM_INSTALLED_ACTION = \
+    Option("YUM installed action",
            default="install",
-           cf=('YUMng', 'installed_action'))
-CLIENT_YUMNG_VERSION_FAIL_ACTION = \
-    Option("YUMng version fail action",
+           cf=('YUM', 'installed_action'),
+           deprecated_cf=('YUMng', 'installed_action'))
+CLIENT_YUM_VERSION_FAIL_ACTION = \
+    Option("YUM version fail action",
            default="upgrade",
-           cf=('YUMng', 'version_fail_action'))
-CLIENT_YUMNG_VERIFY_FAIL_ACTION = \
-    Option("YUMng verify fail action",
+           cf=('YUM', 'version_fail_action'),
+           deprecated_cf=('YUMng', 'version_fail_action'))
+CLIENT_YUM_VERIFY_FAIL_ACTION = \
+    Option("YUM verify fail action",
            default="reinstall",
-           cf=('YUMng', 'verify_fail_action'))
-CLIENT_YUMNG_VERIFY_FLAGS = \
-    Option("YUMng verify flags",
+           cf=('YUM', 'verify_fail_action'),
+           deprecated_cf=('YUMng', 'verify_fail_action'))
+CLIENT_YUM_VERIFY_FLAGS = \
+    Option("YUM verify flags",
            default=[],
-           cf=('YUMng', 'verify_flags'),
+           cf=('YUM', 'verify_flags'),
+           deprecated_cf=('YUMng', 'verify_flags'),
            cook=list_split)
 
 # Logging options
@@ -1008,14 +1022,14 @@ DRIVER_OPTIONS = \
          apt_var_path=CLIENT_APT_TOOLS_VAR_PATH,
          apt_etc_path=CLIENT_SYSTEM_ETC_PATH,
          portage_binpkgonly=CLIENT_PORTAGE_BINPKGONLY,
-         rpmng_installonly=CLIENT_RPMNG_INSTALLONLY,
-         rpmng_pkg_checks=CLIENT_RPMNG_PKG_CHECKS,
-         rpmng_pkg_verify=CLIENT_RPMNG_PKG_VERIFY,
-         rpmng_installed_action=CLIENT_RPMNG_INSTALLED_ACTION,
-         rpmng_erase_flags=CLIENT_RPMNG_ERASE_FLAGS,
-         rpmng_version_fail_action=CLIENT_RPMNG_VERSION_FAIL_ACTION,
-         rpmng_verify_fail_action=CLIENT_RPMNG_VERIFY_FAIL_ACTION,
-         rpmng_verify_flags=CLIENT_RPMNG_VERIFY_FLAGS,
+         rpm_installonly=CLIENT_RPM_INSTALLONLY,
+         rpm_pkg_checks=CLIENT_RPM_PKG_CHECKS,
+         rpm_pkg_verify=CLIENT_RPM_PKG_VERIFY,
+         rpm_installed_action=CLIENT_RPM_INSTALLED_ACTION,
+         rpm_erase_flags=CLIENT_RPM_ERASE_FLAGS,
+         rpm_version_fail_action=CLIENT_RPM_VERSION_FAIL_ACTION,
+         rpm_verify_fail_action=CLIENT_RPM_VERIFY_FAIL_ACTION,
+         rpm_verify_flags=CLIENT_RPM_VERIFY_FLAGS,
          yum24_installonly=CLIENT_YUM24_INSTALLONLY,
          yum24_pkg_checks=CLIENT_YUM24_PKG_CHECKS,
          yum24_pkg_verify=CLIENT_YUM24_PKG_VERIFY,
@@ -1025,12 +1039,12 @@ DRIVER_OPTIONS = \
          yum24_verify_fail_action=CLIENT_YUM24_VERIFY_FAIL_ACTION,
          yum24_verify_flags=CLIENT_YUM24_VERIFY_FLAGS,
          yum24_autodep=CLIENT_YUM24_AUTODEP,
-         yumng_pkg_checks=CLIENT_YUMNG_PKG_CHECKS,
-         yumng_pkg_verify=CLIENT_YUMNG_PKG_VERIFY,
-         yumng_installed_action=CLIENT_YUMNG_INSTALLED_ACTION,
-         yumng_version_fail_action=CLIENT_YUMNG_VERSION_FAIL_ACTION,
-         yumng_verify_fail_action=CLIENT_YUMNG_VERIFY_FAIL_ACTION,
-         yumng_verify_flags=CLIENT_YUMNG_VERIFY_FLAGS)
+         yum_pkg_checks=CLIENT_YUM_PKG_CHECKS,
+         yum_pkg_verify=CLIENT_YUM_PKG_VERIFY,
+         yum_installed_action=CLIENT_YUM_INSTALLED_ACTION,
+         yum_version_fail_action=CLIENT_YUM_VERSION_FAIL_ACTION,
+         yum_verify_fail_action=CLIENT_YUM_VERIFY_FAIL_ACTION,
+         yum_verify_flags=CLIENT_YUM_VERIFY_FLAGS)
 
 CLIENT_COMMON_OPTIONS = \
     dict(extra=CLIENT_EXTRA_DISPLAY,

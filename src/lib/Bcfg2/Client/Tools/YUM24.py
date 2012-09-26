@@ -5,10 +5,7 @@ import os.path
 import sys
 import yum
 import Bcfg2.Client.XML
-import Bcfg2.Client.Tools.RPMng
-
-if not hasattr(Bcfg2.Client.Tools.RPMng, 'RPMng'):
-    raise ImportError
+from Bcfg2.Client.Tools.RPM import RPM
 
 
 def build_yname(pkgname, inst):
@@ -27,11 +24,10 @@ def build_yname(pkgname, inst):
     return ypname
 
 
-class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
+class YUM24(RPM):
     """Support for Yum packages."""
     pkgtype = 'yum'
-
-    name = 'YUM24'
+    deprecated = True
     __execs__ = ['/usr/bin/yum', '/var/lib/rpm']
     __handles__ = [('Package', 'yum'),
                    ('Package', 'rpm'),
@@ -57,7 +53,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                         'Instance': ['version', 'release']}
 
     def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.RPMng.RPMng.__init__(self, logger, setup, config)
+        RPM.__init__(self, logger, setup, config)
         self.__important__ = self.__important__ + \
                              [entry.get('name') for struct in config \
                               for entry in struct \
@@ -140,15 +136,15 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
 
                 if len(pkgDict) > 1:
                     # What do we do with multiple packages?
-                    s = "YUMng: returnPackagesByDep(%s) returned many packages"
+                    s = "YUM24: returnPackagesByDep(%s) returned many packages"
                     self.logger.info(s % entry.get('name'))
-                    s = "YUMng: matching packages: %s"
+                    s = "YUM24: matching packages: %s"
                     self.logger.info(s % str(list(pkgDict.keys())))
                     pkgs = set(pkgDict.keys()) & set(self.yum_installed.keys())
                     if len(pkgs) > 0:
                         # Virtual packages matches an installed real package
                         pkg = pkgDict[pkgs.pop()]
-                        s = "YUMng: chosing: %s" % pkg.name
+                        s = "YUM24: chosing: %s" % pkg.name
                         self.logger.info(s)
                     else:
                         # What's the right package?  This will fail verify
@@ -157,21 +153,20 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                 elif len(pkgDict) == 1:
                     pkg = list(pkgDict.values())[0]
                 else:  # len(pkgDict) == 0
-                    s = "YUMng: returnPackagesByDep(%s) returned no results"
+                    s = "YUM24: returnPackagesByDep(%s) returned no results"
                     self.logger.info(s % entry.get('name'))
                     pkg = None
 
                 if pkg is not None:
-                    s = "YUMng: remapping virtual package %s to %s"
+                    s = "YUM24: remapping virtual package %s to %s"
                     self.logger.info(s % (entry.get('name'), pkg.name))
                     entry.set('name', pkg.name)
 
-        return Bcfg2.Client.Tools.RPMng.RPMng.VerifyPackage(self, entry,
-                                                            modlist)
+        return RPM.VerifyPackage(self, entry, modlist)
 
     def Install(self, packages, states):
         """
-           Try and fix everything that RPMng.VerifyPackages() found wrong for
+           Try and fix everything that YUM24.VerifyPackages() found wrong for
            each Package Entry.  This can result in individual RPMs being
            installed (for the first time), deleted, downgraded
            or upgraded.
@@ -191,7 +186,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
              entry is set to True.
 
         """
-        self.logger.info('Running YUMng.Install()')
+        self.logger.info('Running YUM24.Install()')
 
         install_pkgs = []
         gpg_keys = []
@@ -344,7 +339,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
            packages is a list of Package Entries with Instances generated
            by FindExtraPackages().
         """
-        self.logger.debug('Running YUMng.RemovePackages()')
+        self.logger.debug('Running YUM24.RemovePackages()')
 
         if self.autodep:
             pkgtool = "/usr/bin/yum -d0 -y erase %s"
@@ -368,7 +363,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                                'release': inst.get('release')}
                     self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
                                                  % (pkgspec.get('name'), self.str_evra(pkgspec)))
-                    self.logger.info("         This package will be deleted in a future version of the RPMng driver.")
+                    self.logger.info("         This package will be deleted in a future version of the YUM24 driver.")
 
         cmdrc, output = self.cmd.run(pkgtool % " ".join(erase_args))
         if cmdrc == 0:
@@ -392,7 +387,7 @@ class YUM24(Bcfg2.Client.Tools.RPMng.RPMng):
                     else:
                         self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
                                                  % (pkg.get('name'), self.str_evra(pkg)))
-                        self.logger.info("         This package will be deleted in a future version of the RPMng driver.")
+                        self.logger.info("         This package will be deleted in a future version of the YUM24 driver.")
                         continue
 
                     cmdrc, output = self.cmd.run(self.pkgtool % pkg_arg)

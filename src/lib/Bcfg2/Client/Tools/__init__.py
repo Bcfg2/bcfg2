@@ -42,6 +42,7 @@ class Tool(object):
     __handles__ = []
     __req__ = {}
     __important__ = []
+    deprecated = False
 
     def __init__(self, logger, setup, config):
         self.setup = setup
@@ -144,7 +145,7 @@ class Tool(object):
                 required.extend(self.__req__[entry.tag][entry.get("type")])
             except KeyError:
                 pass
-                
+
         return [attr for attr in required
                 if attr not in entry.attrib or not entry.attrib[attr]]
 
