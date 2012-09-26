@@ -38,14 +38,15 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
             params = ''
 
         try:
-            output = self.cmd.run('/usr/sbin/service %s status %s' % \
-                            ( entry.get('name'), params ))[1][0]
+            output = self.cmd.run('/usr/sbin/service %s status %s' %
+                                  (entry.get('name'), params))[1][0]
         except IndexError:
-            self.logger.error("Service %s not an Upstart service" % \
+            self.logger.error("Service %s not an Upstart service" %
                               entry.get('name'))
             return False
 
-        match = re.compile("%s( \(.*\))? (start|stop)/(running|waiting)" %entry.get('name') ).match( output )
+        match = re.compile("%s( \(.*\))? (start|stop)/(running|waiting)" %
+                           entry.get('name')).match(output)
         if match == None:
             # service does not exist
             entry.set('current_status', 'off')
@@ -80,9 +81,8 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
         """Locate extra Upstart services."""
         specified = [entry.get('name') for entry in self.getSupportedEntries()]
         extra = []
-        for name in [self.svcre.match(fname).group('name') for fname in
-                     glob.glob("/etc/init/*.conf") \
-                     if self.svcre.match(fname).group('name') not in specified]:
-            extra.append(name)
-        return [Bcfg2.Client.XML.Element('Service', type='upstart', name=name) \
+        for fname in glob.glob("/etc/init/*.conf"):
+            if self.svcre.match(fname).group('name') not in specified:
+                extra.append(self.svcre.match(fname).group('name'))
+        return [Bcfg2.Client.XML.Element('Service', type='upstart', name=name)
                 for name in extra]

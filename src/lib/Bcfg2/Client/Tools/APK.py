@@ -28,7 +28,7 @@ class APK(Bcfg2.Client.Tools.PkgTool):
             self.logger.debug(" version: %s" % version)
             self.installed[pkgname] = version
 
-    def VerifyPackage(self, entry, modlist):
+    def VerifyPackage(self, entry, _):
         """Verify Package status for entry."""
         if not 'version' in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
@@ -36,7 +36,8 @@ class APK(Bcfg2.Client.Tools.PkgTool):
             return False
 
         if entry.attrib['name'] in self.installed:
-            if entry.attrib['version'] in ['auto', self.installed[entry.attrib['name']]]:
+            if entry.attrib['version'] in \
+                    ['auto', self.installed[entry.attrib['name']]]:
                 #if not self.setup['quick'] and \
                 #                entry.get('verify', 'true') == 'true':
                 #FIXME: Does APK have any sort of verification mechanism?

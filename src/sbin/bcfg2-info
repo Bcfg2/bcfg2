@@ -701,7 +701,6 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
 
 if __name__ == '__main__':
     optinfo = dict(profile=Bcfg2.Options.CORE_PROFILE,
-                   mconnect=Bcfg2.Options.SERVER_MCONNECT,
                    interactive=Bcfg2.Options.INTERACTIVE,
                    interpreter=Bcfg2.Options.INTERPRETER)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)

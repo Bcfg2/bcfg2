@@ -2,21 +2,7 @@
 
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Frame import matches_white_list, passes_black_list
-from Bcfg2.Compat import input
-
-"""
-<Action timing='pre|post|both'
-        name='name'
-        command='cmd text'
-        when='always|modified'
-        status='ignore|check'/>
-<PostInstall name='foo'/>
-  => <Action timing='post'
-             when='modified'
-             name='n'
-             command='foo'
-             status='ignore'/>
-"""
+from Bcfg2.Compat import input  # pylint: disable=W0622
 
 
 class Action(Bcfg2.Client.Tools.Tool):
@@ -27,6 +13,8 @@ class Action(Bcfg2.Client.Tools.Tool):
                'Action': ['name', 'timing', 'when', 'command', 'status']}
 
     def _action_allowed(self, action):
+        """ Return true if the given action is allowed to be run by
+        the whitelist or blacklist """
         if self.setup['decision'] == 'whitelist' and \
            not matches_white_list(action, self.setup['decision_list']):
             self.logger.info("In whitelist mode: suppressing Action:" + \
@@ -50,16 +38,18 @@ class Action(Bcfg2.Client.Tools.Tool):
                     return False
             if self.setup['servicemode'] == 'build':
                 if entry.get('build', 'true') == 'false':
-                    self.logger.debug("Action: Deferring execution of %s due to build mode" % (entry.get('command')))
+                    self.logger.debug("Action: Deferring execution of %s due "
+                                      "to build mode" % entry.get('command'))
                     return False
             self.logger.debug("Running Action %s" % (entry.get('name')))
-            rc = self.cmd.run(entry.get('command'))[0]
-            self.logger.debug("Action: %s got rc %s" % (entry.get('command'), rc))
-            entry.set('rc', str(rc))
+            rv = self.cmd.run(entry.get('command'))[0]
+            self.logger.debug("Action: %s got return code %s" %
+                              (entry.get('command'), rv))
+            entry.set('rc', str(rv))
             if entry.get('status', 'check') == 'ignore':
                 return True
             else:
-                return rc == 0
+                return rv == 0
         else:
             self.logger.debug("In dryrun mode: not running action: %s" %
                               (entry.get('name')))
@@ -80,6 +70,9 @@ class Action(Bcfg2.Client.Tools.Tool):
         return True
 
     def InstallPostInstall(self, entry):
+        """ Install a deprecated PostInstall entry """
+        self.logger.warning("Installing deprecated PostInstall entry %s" %
+                            entry.get("name"))
         return self.InstallAction(entry)
 
     def BundleUpdated(self, bundle, states):

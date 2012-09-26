@@ -15,12 +15,6 @@ while _path != '/':
     _path = os.path.dirname(_path)
 from common import can_skip, skip, skipIf, skipUnless, Bcfg2TestCase
 
-try:
-    import django
-    HAS_DJANGO = True
-except ImportError:
-    HAS_DJANGO = False
-
 # path to Bcfg2 src directory
 srcpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..",
                                        "src"))
@@ -37,32 +31,34 @@ except OSError:
     HAS_PYLINT = False
 
 
-# perform a full range of code checks on the listed files.
-full_checks = {
-    "lib/Bcfg2": ["*.py"],
-    "lib/Bcfg2/Server": ["Lint",
-                         "Plugin",
-                         "FileMonitor",
-                         "*.py"],
-    "lib/Bcfg2/Server/Plugins": ["Cfg", "Packages", "*.py"],
-    "lib/Bcfg2/Client": ["*.py"],
-    "lib/Bcfg2/Client/Tools": ["POSIX", "SELinux.py"],
+# perform error checks only on the listed executables
+sbin_error_checks = {
+    "sbin": ["bcfg2", "bcfg2-build-reports", "bcfg2-info", "bcfg2-admin",
+             "bcfg2-reports"]
     }
 
-# perform full code checks on the listed executables
-sbin_checks = {
-    "sbin": ["bcfg2-server", "bcfg2-yum-helper", "bcfg2-crypt", "bcfg2-test",
-             "bcfg2-lint"]
-    }
-
-# perform limited, django-safe checks on the listed files
-django_checks = {
-    "lib/Bcfg2/Server": ["Reports", "models.py"]
-    }
+# perform checks on the listed files only if the module listed in the
+# keys can be imported
+contingent_checks = dict(
+    django={"lib/Bcfg2/Server": ["Reports", "SchemaUpdater", "models.py"]},
+    pyinotify={"lib/Bcfg2/Server/FileMonitor": ["Inotify.py"]},
+    yum={"lib/Bcfg2/Client/Tools": ["YUM*"]}
+    )
 
 # perform only error checking on the listed files
 error_checks = {
     "lib/Bcfg2": ["Proxy.py", "SSLServer.py"],
+    "lib/Bcfg2/Server": ["Admin", "Reports", "SchemaUpdater"],
+    "lib/Bcfg2/Client/Tools": ["launchd.py",
+                               "OpenCSW.py",
+                               "Blast.py",
+                               "SYSV.py",
+                               "FreeBSDInit.py",
+                               "DebInit.py",
+                               "RcUpdate.py",
+                               "VCS.py",
+                               "YUM.py",
+                               "YUM24.py"],
     "lib/Bcfg2/Server/Plugins": ["Decisions.py",
                                  "Deps.py",
                                  "Ldap.py",
@@ -73,7 +69,7 @@ error_checks = {
 
 # perform no checks at all on the listed files
 no_checks = {
-    "lib/Bcfg2/Client/Tools": ["APT.py", "RPMng.py", "rpmtools.py"],
+    "lib/Bcfg2/Client/Tools": ["APT.py", "RPM.py", "rpmtools.py"],
     "lib/Bcfg2/Server": ["Snapshots", "Hostbase"],
     "lib/Bcfg2": ["manage.py"],
     "lib/Bcfg2/Server/Reports": ["manage.py"],
@@ -88,12 +84,50 @@ no_checks = {
     }
 
 
+try:
+    any
+except NameError:
+    def any(iterable):
+        """ implementation of builtin any() for python 2.4 """
+        for element in iterable:
+            if element:
+                return True
+        return False
+
+
 def expand_path_dict(pathdict):
     """ given a path dict as above, return a list of all the paths """
     rv = []
     for parent, modules in pathdict.items():
         for mod in modules:
             rv.extend(glob.glob(os.path.join(srcpath, parent, mod)))
+    return rv
+
+
+def whitelist_filter(filelist, whitelist):
+    rv = []
+    for fpath in filelist:
+        if fpath in whitelist:
+            rv.append(fpath)
+            continue
+        # check if the path is in any directories that are in the
+        # whitelist
+        if any(fpath.startswith(wpath + "/") for wpath in whitelist):
+            rv.append(fpath)
+            continue
+    return rv
+
+
+def blacklist_filter(filelist, blacklist):
+    rv = []
+    for fpath in filelist:
+        if fpath in blacklist:
+            continue
+        # check that the path isn't in any directories that are in
+        # the blacklist
+        if any(fpath.startswith(bpath + "/") for bpath in blacklist):
+            continue
+        rv.append(fpath)
     return rv
 
 
@@ -108,33 +142,44 @@ class TestPylint(Bcfg2TestCase):
     # build the blacklist
     blacklist = expand_path_dict(no_checks)
 
-    def _get_paths(self, pathdict):
-        return list(set(expand_path_dict(pathdict)) - set(self.blacklist))
-
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_lib_full(self):
-        full_list = list((set(self._get_paths(full_checks)) -
-                          set(expand_path_dict(error_checks))) -
-                         set(expand_path_dict(django_checks)))
+        blacklist = expand_path_dict(error_checks) + self.blacklist
+        for filedict in contingent_checks.values():
+            blacklist += expand_path_dict(filedict)
+        full_list = []
+        for root, _, files in os.walk(os.path.join(srcpath, "lib")):
+            full_list.extend(blacklist_filter([os.path.join(root, f)
+                                               for f in files
+                                               if f.endswith(".py")],
+                                              blacklist))
         self._pylint_full(full_list)
 
-    @skipUnless(HAS_DJANGO, "Django not found, skipping")
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
-    def test_django_full(self):
-        test_list = list(set(self._get_paths(full_checks)) &
-                         set(expand_path_dict(django_checks)))
-        return self._pylint_errors(test_list,
-                                   extra_args=["-d", "E1101"])
+    def test_contingent_full(self):
+        blacklist = set(expand_path_dict(error_checks) + self.blacklist)
+        for (mod, filedict) in contingent_checks.items():
+            try:
+                __import__(mod)
+            except ImportError:
+                continue
+            self._pylint_full(blacklist_filter(expand_path_dict(filedict),
+                                               blacklist))
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_sbin_full(self):
-        self._pylint_full(self._get_paths(sbin_checks),
+        all_sbin = [os.path.join(srcpath, "sbin", f)
+                    for f in glob.glob(os.path.join(srcpath, "sbin", "*"))]
+        sbin_list = blacklist_filter([f for f in all_sbin
+                                      if not os.path.islink(f)],
+                                     expand_path_dict(sbin_error_checks))
+        self._pylint_full(sbin_list,
                           extra_args=["--module-rgx",
                                       "[a-z_-][a-z0-9_-]*$"])
 
@@ -152,27 +197,29 @@ class TestPylint(Bcfg2TestCase):
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_sbin_errors(self):
-        flist = list(set(os.path.join(srcpath, p)
-                         for p in glob.glob("sbin/*")) - set(self.blacklist))
-        return self._pylint_errors(flist)
+        return self._pylint_errors(expand_path_dict(sbin_error_checks))
 
-    @skipUnless(HAS_DJANGO, "Django not found, skipping")
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
-    def test_django_errors(self):
-        return self._pylint_errors(self._get_paths(django_checks),
-                                   extra_args=["-d", "E1101"])
+    def test_contingent_errors(self):
+        whitelist = expand_path_dict(error_checks)
+        for (mod, filedict) in contingent_checks.items():
+            try:
+                __import__(mod)
+            except ImportError:
+                continue
+            flist = \
+                blacklist_filter(whitelist_filter(expand_path_dict(filedict),
+                                                  whitelist),
+                                     self.blacklist)
+            self._pylint_errors(flist)
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_lib_errors(self):
-        ignore = []
-        for fname_list in django_checks.values() + no_checks.values():
-            ignore.extend(fname_list)
-        return self._pylint_errors(["lib/Bcfg2"],
-                                   extra_args=["--ignore", ",".join(ignore)])
+        return self._pylint_errors(expand_path_dict(error_checks))
 
     def _pylint_errors(self, paths, extra_args=None):
         """ test all files for fatals and errors """

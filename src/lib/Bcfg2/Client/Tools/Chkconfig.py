@@ -51,10 +51,8 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         pstatus = self.check_service(entry)
         if entry.get('status') == 'on':
             status = (len(onlevels) > 0 and pstatus)
-            command = 'start'
         else:
             status = (len(onlevels) == 0 and not pstatus)
-            command = 'stop'
 
         if not status:
             if entry.get('status') == 'on':
@@ -84,8 +82,9 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
 
     def FindExtra(self):
         """Locate extra chkconfig Services."""
-        allsrv = [line.split()[0] for line in \
-                  self.cmd.run("/sbin/chkconfig --list 2>/dev/null|grep :on")[1]]
+        allsrv = [line.split()[0]
+                  for line in self.cmd.run("/sbin/chkconfig "
+                                           "--list 2>/dev/null|grep :on")[1]]
         self.logger.debug('Found active services:')
         self.logger.debug(allsrv)
         specified = [srv.get('name') for srv in self.getSupportedEntries()]

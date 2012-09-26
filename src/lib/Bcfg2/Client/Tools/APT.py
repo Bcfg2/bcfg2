@@ -66,7 +66,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             except SystemError:
                 e = sys.exc_info()[1]
                 self.logger.info("Failed to initialize APT cache: %s" % e)
-                raise Bcfg2.Client.Tools.toolInstantiationError
+                raise Bcfg2.Client.Tools.ToolInstantiationError
             self.pkg_cache.update()
         self.pkg_cache = apt.cache.Cache()
         if 'req_reinstall_pkgs' in dir(self.pkg_cache):

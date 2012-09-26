@@ -104,7 +104,7 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
                     cmdrc = 1
             else:
                 srvdata = self.cmd.run("/usr/bin/svcs -H -o STA %s" %
-                                       entry.get('FMRI'))[1] [0].split()
+                                       entry.get('FMRI'))[1][0].split()
                 if srvdata[0] == 'MNT':
                     cmdarg = 'clear'
                 else:
@@ -126,7 +126,8 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
                    self.cmd.run("/usr/bin/svcs -a -H -o FMRI,STATE")[1]]
                   if version != 'disabled']
 
-        [allsrv.remove(svc.get('FMRI')) for svc in self.getSupportedEntries() \
-         if svc.get("FMRI") in allsrv]
+        for svc in self.getSupportedEntries():
+            if svc.get("FMRI") in allsrv:
+                allsrv.remove(svc.get('FMRI')) 
         return [Bcfg2.Client.XML.Element("Service", type='smf', name=name) \
                 for name in allsrv]

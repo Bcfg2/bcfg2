@@ -23,8 +23,8 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
 
         # check if service is enabled
         cmd = '/sbin/rc-update show default | grep %s'
-        rc = self.cmd.run(cmd % entry.get('name'))[0]
-        is_enabled = (rc == 0)
+        rv = self.cmd.run(cmd % entry.get('name'))[0]
+        is_enabled = (rv == 0)
 
         # check if init script exists
         try:
@@ -36,8 +36,8 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
 
         # check if service is enabled
         cmd = '/etc/init.d/%s status | grep started'
-        rc = self.cmd.run(cmd % entry.attrib['name'])[0]
-        is_running = (rc == 0)
+        rv = self.cmd.run(cmd % entry.attrib['name'])[0]
+        is_running = (rv == 0)
 
         if entry.get('status') == 'on' and not (is_enabled and is_running):
             entry.set('current_status', 'off')
@@ -60,16 +60,16 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
                 self.start_service(entry)
             # make sure it's enabled
             cmd = '/sbin/rc-update add %s default'
-            rc = self.cmd.run(cmd % entry.get('name'))[0]
-            return (rc == 0)
+            rv = self.cmd.run(cmd % entry.get('name'))[0]
+            return (rv == 0)
 
         elif entry.get('status') == 'off':
             if entry.get('current_status') == 'on':
                 self.stop_service(entry)
             # make sure it's disabled
             cmd = '/sbin/rc-update del %s default'
-            rc = self.cmd.run(cmd % entry.get('name'))[0]
-            return (rc == 0)
+            rv = self.cmd.run(cmd % entry.get('name'))[0]
+            return (rv == 0)
 
         return False
 

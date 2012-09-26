@@ -35,7 +35,7 @@ class IPS(Bcfg2.Client.Tools.PkgTool):
             if pinfo['upgradable']:
                 self.pending_upgrades.add(pname)
 
-    def VerifyPackage(self, entry, modlist):
+    def VerifyPackage(self, entry, _):
         """Verify package for entry."""
         pname = entry.get('name')
         if not 'version' in entry.attrib:

@@ -28,7 +28,7 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
             #self.logger.info(" pkgname: %s, version: %s" % (pkgname, version))
             self.installed[pkgname] = version
 
-    def VerifyPackage(self, entry, modlist):
+    def VerifyPackage(self, entry, _):
         '''Verify Package status for entry'''
 
         self.logger.info("VerifyPackage : %s : %s" % entry.get('name'),
@@ -42,7 +42,8 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
         if entry.attrib['name'] in self.installed:
             if entry.attrib['version'] == 'auto':
                 return True
-            elif self.installed[entry.attrib['name']] == entry.attrib['version']:
+            elif self.installed[entry.attrib['name']] == \
+                    entry.attrib['version']:
                 #if not self.setup['quick'] and \
                 #                entry.get('verify', 'true') == 'true':
                 #FIXME: need to figure out if pacman
@@ -79,6 +80,6 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
         try:
             self.logger.debug("Running : %s -S %s" % (self.pkgtool, pkgline))
             self.cmd.run("%s -S %s" % (self.pkgtool, pkgline))
-        except Exception:
-            e = sys.exc_info()[1]
-            self.logger.error("Error occurred during installation: %s" % e)
+        except:  # pylint: disable=W0702
+            err = sys.exc_info()[1]
+            self.logger.error("Error occurred during installation: %s" % err)

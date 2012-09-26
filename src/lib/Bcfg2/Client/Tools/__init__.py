@@ -1,23 +1,25 @@
 """This contains all Bcfg2 Tool modules"""
+
 import os
-import sys
 import stat
-import time
 from subprocess import Popen, PIPE
 import Bcfg2.Client.XML
-from Bcfg2.Compat import input, walk_packages
+from Bcfg2.Compat import input, walk_packages  # pylint: disable=W0622
 
 __all__ = [m[1] for m in walk_packages(path=__path__)]
+
+# pylint: disable=C0103
 drivers = [item for item in __all__ if item not in ['rpmtools']]
-default = [item for item in drivers if item not in ['RPM', 'Yum']]
+default = drivers[:]
+# pylint: enable=C0103
 
 
-class toolInstantiationError(Exception):
+class ToolInstantiationError(Exception):
     """This error is called if the toolset cannot be instantiated."""
     pass
 
 
-class executor:
+class Executor:
     """This class runs stuff for us"""
 
     def __init__(self, logger):
@@ -25,19 +27,33 @@ class executor:
 
     def run(self, command):
         """Run a command in a pipe dealing with stdout buffer overloads."""
-        p = Popen(command, shell=True, bufsize=16384,
-                  stdin=PIPE, stdout=PIPE, close_fds=True)
-        output = p.communicate()[0]
+        proc = Popen(command, shell=True, bufsize=16384,
+                     stdin=PIPE, stdout=PIPE, close_fds=True)
+        output = proc.communicate()[0]
         for line in output.splitlines():
             self.logger.debug('< %s' % line)
-        return (p.returncode, output.splitlines())
+        return (proc.returncode, output.splitlines())
 
 
+class ClassName(object):
+    """ This very simple descriptor class exists only to get the name
+    of the owner class.  This is used because, for historical reasons,
+    we expect every tool to have a ``name`` attribute that is in
+    almost all cases the same as the ``__class__.__name__`` attribute
+    of the plugin object.  This makes that more dynamic so that each
+    plugin isn't repeating its own name."""
+
+    def __get__(self, inst, owner):
+        return owner.__name__
+
+
+# pylint: disable=W0702
+# in the base tool class we frequently want to catch all exceptions,
+# regardless of type, so disable the pylint rule that catches that.
 class Tool(object):
-    """
-    All tools subclass this. It defines all interfaces that need to be defined.
-    """
-    name = 'Tool'
+    """ All tools subclass this. It defines all interfaces that need
+    to be defined. """
+    name = ClassName()
     __execs__ = []
     __handles__ = []
     __req__ = {}
@@ -50,7 +66,7 @@ class Tool(object):
         if not hasattr(self, '__ireq__'):
             self.__ireq__ = self.__req__
         self.config = config
-        self.cmd = executor(logger)
+        self.cmd = Executor(logger)
         self.modified = []
         self.extra = []
         self.__important__ = []
@@ -66,38 +82,38 @@ class Tool(object):
             try:
                 mode = stat.S_IMODE(os.stat(filename)[stat.ST_MODE])
                 if mode & stat.S_IEXEC != stat.S_IEXEC:
-                    self.logger.debug("%s: %s not executable" % \
+                    self.logger.debug("%s: %s not executable" %
                                       (self.name, filename))
-                    raise toolInstantiationError
+                    raise ToolInstantiationError
             except OSError:
-                raise toolInstantiationError
+                raise ToolInstantiationError
             except:
                 self.logger.debug("%s failed" % filename, exc_info=1)
-                raise toolInstantiationError
+                raise ToolInstantiationError
 
-    def BundleUpdated(self, _, states):
+    def BundleUpdated(self, bundle, states):  # pylint: disable=W0613
         """This callback is used when bundle updates occur."""
         return
 
-    def BundleNotUpdated(self, _, states):
+    def BundleNotUpdated(self, bundle, states):  # pylint: disable=W0613
         """This callback is used when a bundle is not updated."""
         return
 
-    def Inventory(self, states, structures=[]):
+    def Inventory(self, states, structures=None):
         """Dispatch verify calls to underlying methods."""
         if not structures:
             structures = self.config.getchildren()
         mods = self.buildModlist()
-        for (struct, entry) in [(struct, entry) for struct in structures \
-                                for entry in struct.getchildren() \
-                                if self.canVerify(entry)]:
-            try:
-                func = getattr(self, "Verify%s" % (entry.tag))
-                states[entry] = func(entry, mods)
-            except:
-                self.logger.error(
-                    "Unexpected failure of verification method for entry type %s" \
-                    % (entry.tag), exc_info=1)
+        for struct in structures:
+            for entry in struct.getchildren():
+                if self.canVerify(entry):
+                    try:
+                        func = getattr(self, "Verify%s" % entry.tag)
+                        states[entry] = func(entry, mods)
+                    except:
+                        self.logger.error("Unexpected failure of verification "
+                                          "method for entry type %s" %
+                                          entry.tag, exc_info=1)
         self.extra = self.FindExtra()
 
     def Install(self, entries, states):
@@ -109,8 +125,9 @@ class Tool(object):
                 if states[entry]:
                     self.modified.append(entry)
             except:
-                self.logger.error("Unexpected failure of install method for entry type %s" \
-                                  % (entry.tag), exc_info=1)
+                self.logger.error("Unexpected failure of install method for "
+                                  "entry type %s" % entry.tag,
+                                  exc_info=1)
 
     def Remove(self, entries):
         """Remove specified extra entries"""
@@ -118,26 +135,32 @@ class Tool(object):
 
     def getSupportedEntries(self):
         """Return a list of supported entries."""
-        return [entry for struct in \
-                self.config.getchildren() for entry in \
-                struct.getchildren() \
-                if self.handlesEntry(entry)]
+        rv = []
+        for struct in self.config.getchildren():
+            rv.extend([entry for entry in struct.getchildren()
+                       if self.handlesEntry(entry)])
+        return rv
 
     def handlesEntry(self, entry):
         """Return if entry is handled by this tool."""
         return (entry.tag, entry.get('type')) in self.__handles__
 
     def buildModlist(self):
-        '''Build a list of potentially modified POSIX paths for this entry'''
-        return [entry.get('name') for struct in self.config.getchildren() \
-                for entry in struct.getchildren() \
-                if entry.tag == 'Path']
+        """ Build a list of potentially modified POSIX paths for this
+        entry """
+        rv = []
+        for struct in self.config.getchildren():
+            rv.extend([entry.get('name') for entry in struct.getchildren()
+                       if entry.tag == 'Path'])
+        return rv
 
     def gatherCurrentData(self, entry):
         """Default implementation of the information gathering routines."""
         pass
 
     def missing_attrs(self, entry):
+        """ Return a list of attributes that were expected on entry
+        but not found """
         required = self.__req__[entry.tag]
         if isinstance(required, dict):
             required = ["type"]
@@ -155,9 +178,8 @@ class Tool(object):
             return False
 
         if 'failure' in entry.attrib:
-            self.logger.error("Entry %s:%s reports bind failure: %s" % \
-                              (entry.tag,
-                               entry.get('name'),
+            self.logger.error("Entry %s:%s reports bind failure: %s" %
+                              (entry.tag, entry.get('name'),
                                entry.get('failure')))
             return False
 
@@ -190,7 +212,7 @@ class Tool(object):
             return False
 
         if 'failure' in entry.attrib:
-            self.logger.error("Cannot install entry %s:%s with bind failure" % \
+            self.logger.error("Cannot install entry %s:%s with bind failure" %
                               (entry.tag, entry.get('name')))
             return False
 
@@ -202,6 +224,7 @@ class Tool(object):
                                ", ".join(missing)))
             return False
         return True
+# pylint: enable=W0702
 
 
 class PkgTool(Tool):
@@ -216,8 +239,6 @@ class PkgTool(Tool):
     def __init__(self, logger, setup, config):
         Tool.__init__(self, logger, setup, config)
         self.installed = {}
-        self.Remove = self.RemovePackages
-        self.FindExtra = self.FindExtraPackages
         self.RefreshPackages()
 
     def VerifyPackage(self, dummy, _):
@@ -225,32 +246,30 @@ class PkgTool(Tool):
         return False
 
     def Install(self, packages, states):
-        """
-           Run a one-pass install, followed by
-           single pkg installs in case of failure.
-        """
-        self.logger.info("Trying single pass package install for pkgtype %s" % \
+        """ Run a one-pass install, followed by single pkg installs in
+        case of failure. """
+        self.logger.info("Trying single pass package install for pkgtype %s" %
                          self.pkgtype)
 
         data = [tuple([pkg.get(field) for field in self.pkgtool[1][1]])
                 for pkg in packages]
         pkgargs = " ".join([self.pkgtool[1][0] % datum for datum in data])
 
-        self.logger.debug("Installing packages: :%s:" % pkgargs)
-        self.logger.debug("Running command ::%s::" % (self.pkgtool[0] % pkgargs))
+        self.logger.debug("Installing packages: %s" % pkgargs)
+        self.logger.debug("Running command: %s" % (self.pkgtool[0] % pkgargs))
 
         cmdrc = self.cmd.run(self.pkgtool[0] % pkgargs)[0]
         if cmdrc == 0:
             self.logger.info("Single Pass Succeded")
             # set all package states to true and flush workqueues
             pkgnames = [pkg.get('name') for pkg in packages]
-            for entry in [entry for entry in list(states.keys())
-                          if entry.tag == 'Package'
-                          and entry.get('type') == self.pkgtype
-                          and entry.get('name') in pkgnames]:
-                self.logger.debug('Setting state to true for pkg %s' % \
-                                  (entry.get('name')))
-                states[entry] = True
+            for entry in list(states.keys()):
+                if (entry.tag == 'Package'
+                    and entry.get('type') == self.pkgtype
+                    and entry.get('name') in pkgnames):
+                    self.logger.debug('Setting state to true for pkg %s' %
+                                      (entry.get('name')))
+                    states[entry] = True
             self.RefreshPackages()
         else:
             self.logger.error("Single Pass Failed")
@@ -259,19 +278,21 @@ class PkgTool(Tool):
             for pkg in packages:
                 # handle state tracking updates
                 if self.VerifyPackage(pkg, []):
-                    self.logger.info("Forcing state to true for pkg %s" % \
+                    self.logger.info("Forcing state to true for pkg %s" %
                                      (pkg.get('name')))
                     states[pkg] = True
                 else:
                     self.logger.info("Installing pkg %s version %s" %
                                      (pkg.get('name'), pkg.get('version')))
-                    cmdrc = self.cmd.run(self.pkgtool[0] %
-                                         (self.pkgtool[1][0] %
-                                          tuple([pkg.get(field) for field in self.pkgtool[1][1]])))
+                    cmdrc = self.cmd.run(
+                        self.pkgtool[0] %
+                        (self.pkgtool[1][0] %
+                         tuple([pkg.get(field)
+                                for field in self.pkgtool[1][1]])))
                     if cmdrc[0] == 0:
                         states[pkg] = True
                     else:
-                        self.logger.error("Failed to install package %s" % \
+                        self.logger.error("Failed to install package %s" %
                                           (pkg.get('name')))
             self.RefreshPackages()
         for entry in [ent for ent in packages if states[ent]]:
@@ -294,6 +315,9 @@ class PkgTool(Tool):
                                          type=self.pkgtype, version=version) \
                                          for (name, version) in extras]
 
+    Remove = RemovePackages
+    FindExtra = FindExtraPackages
+
 
 class SvcTool(Tool):
     """This class defines basic Service behavior"""
@@ -308,19 +332,23 @@ class SvcTool(Tool):
         return '/etc/init.d/%s %s' % (service.get('name'), action)
 
     def start_service(self, service):
+        """ Start a service """
         self.logger.debug('Starting service %s' % service.get('name'))
         return self.cmd.run(self.get_svc_command(service, 'start'))[0]
 
     def stop_service(self, service):
+        """ Stop a service """
         self.logger.debug('Stopping service %s' % service.get('name'))
         return self.cmd.run(self.get_svc_command(service, 'stop'))[0]
 
     def restart_service(self, service):
+        """ Restart a service """
         self.logger.debug('Restarting service %s' % service.get('name'))
         restart_target = service.get('target', 'restart')
         return self.cmd.run(self.get_svc_command(service, restart_target))[0]
 
     def check_service(self, service):
+        """ Get the status of a service """
         return self.cmd.run(self.get_svc_command(service, 'status'))[0] == 0
 
     def Remove(self, services):
@@ -342,10 +370,10 @@ class SvcTool(Tool):
                  not self.setup['interactive'])):
                 continue
 
-            rc = None
+            rv = None
             if entry.get('status') == 'on':
                 if self.setup['servicemode'] == 'build':
-                    rc = self.stop_service(entry)
+                    rv = self.stop_service(entry)
                 elif entry.get('name') not in self.restarted:
                     if self.setup['interactive']:
                         prompt = ('Restart service %s?: (y/N): ' %
@@ -353,30 +381,26 @@ class SvcTool(Tool):
                         ans = input(prompt)
                         if ans not in ['y', 'Y']:
                             continue
-                    rc = self.restart_service(entry)
-                    if not rc:
+                    rv = self.restart_service(entry)
+                    if not rv:
                         self.restarted.append(entry.get('name'))
             else:
-                rc = self.stop_service(entry)
-            if rc:
+                rv = self.stop_service(entry)
+            if rv:
                 self.logger.error("Failed to manipulate service %s" %
                                   (entry.get('name')))
 
     def Install(self, entries, states):
         """Install all entries in sublist."""
+        install_entries = []
         for entry in entries:
             if entry.get('install', 'true').lower() == 'false':
                 self.logger.info("Service %s installation is false. Skipping "
                                  "installation." % (entry.get('name')))
-                continue
-            try:
-                func = getattr(self, "Install%s" % (entry.tag))
-                states[entry] = func(entry)
-                if states[entry]:
-                    self.modified.append(entry)
-            except:
-                self.logger.error("Unexpected failure of install method for entry type %s"
-                                  % (entry.tag), exc_info=1)
+            else:
+                install_entries.append(entry)
+        return Tool.Install(self, install_entries, states)
 
     def InstallService(self, entry):
+        """ Install a single service entry """
         raise NotImplementedError
