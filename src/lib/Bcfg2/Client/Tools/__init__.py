@@ -228,18 +228,17 @@ class Tool(object):
 
 
 class PkgTool(Tool):
-    """
-       PkgTool provides a one-pass install with
-       fallback for use with packaging systems
-    """
+    """ PkgTool provides a one-pass install with fallback for use with
+    packaging systems """
     pkgtool = ('echo %s', ('%s', ['name']))
     pkgtype = 'echo'
-    name = 'PkgTool'
 
     def __init__(self, logger, setup, config):
         Tool.__init__(self, logger, setup, config)
         self.installed = {}
         self.RefreshPackages()
+        self.Remove = self.RemovePackages  # pylint: disable=C0103
+        self.FindExtra = self.FindExtraPackages  # pylint: disable=C0103
 
     def VerifyPackage(self, dummy, _):
         """Dummy verification method"""
@@ -309,19 +308,15 @@ class PkgTool(Tool):
     def FindExtraPackages(self):
         """Find extra packages."""
         packages = [entry.get('name') for entry in self.getSupportedEntries()]
-        extras = [data for data in list(self.installed.items()) \
+        extras = [data for data in list(self.installed.items())
                   if data[0] not in packages]
-        return [Bcfg2.Client.XML.Element('Package', name=name, \
-                                         type=self.pkgtype, version=version) \
-                                         for (name, version) in extras]
-
-    Remove = RemovePackages
-    FindExtra = FindExtraPackages
+        return [Bcfg2.Client.XML.Element('Package', name=name,
+                                         type=self.pkgtype, version=version)
+                for (name, version) in extras]
 
 
 class SvcTool(Tool):
     """This class defines basic Service behavior"""
-    name = 'SvcTool'
 
     def __init__(self, logger, setup, config):
         Tool.__init__(self, logger, setup, config)
