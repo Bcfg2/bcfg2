@@ -57,7 +57,6 @@ error_checks = {
                                "DebInit.py",
                                "RcUpdate.py",
                                "VCS.py",
-                               "YUM.py",
                                "YUM24.py"],
     "lib/Bcfg2/Server/Plugins": ["Decisions.py",
                                  "Deps.py",
