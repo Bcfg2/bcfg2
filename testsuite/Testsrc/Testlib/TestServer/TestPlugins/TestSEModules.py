@@ -19,6 +19,7 @@ from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
     patchIf, datastore
 from TestPlugin import TestSpecificData, TestGroupSpool
 
+
 class TestSEModuleData(TestSpecificData):
     test_obj = SEModuleData
     path = os.path.join(datastore, "SEModules", "test.pp", "test.pp")

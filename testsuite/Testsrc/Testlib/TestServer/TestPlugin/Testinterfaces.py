@@ -18,6 +18,7 @@ from common import call, builtins, skip, skipIf, skipUnless, Bcfg2TestCase, \
     patchIf, datastore
 from TestServer.TestPlugin.Testbase import TestPlugin
 
+
 class TestGenerator(Bcfg2TestCase):
     test_obj = Generator
 

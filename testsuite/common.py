@@ -3,12 +3,7 @@ import re
 import sys
 import unittest
 from mock import patch, MagicMock, _patch, DEFAULT
-
-try:
-    from functools import wraps
-except ImportError:
-    def wraps(wrapped):
-        return lambda f: f
+from Bcfg2.Compat import wraps
 
 datastore = "/"
 
@@ -32,6 +27,7 @@ try:
     Bcfg2.settings.DATABASES['default']['NAME'] = Bcfg2.settings.DATABASE_NAME
 except ImportError:
     has_django = False
+
 
 try:
     from mock import call

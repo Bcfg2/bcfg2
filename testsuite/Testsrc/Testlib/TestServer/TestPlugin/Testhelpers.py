@@ -155,9 +155,9 @@ class TestDirectoryBacked(Bcfg2TestCase):
                  6: 'xyzzy/',
                  7: 'xyzzy/plugh/'}
     testfiles = ['foo', 'bar/baz.txt', 'plugh.py']
-    ignore = [] # ignore no events
-    badevents = [] # DirectoryBacked handles all files, so there's no
-                   # such thing as a bad event
+    ignore = []  # ignore no events
+    badevents = []  # DirectoryBacked handles all files, so there's no
+                    # such thing as a bad event
 
     def test_child_interface(self):
         # ensure that the child object has the correct interface

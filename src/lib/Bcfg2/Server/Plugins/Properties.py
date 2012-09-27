@@ -41,8 +41,7 @@ class PropertyFile(Bcfg2.Server.Plugin.StructFile):
             raise PluginExecutionError(msg)
 
         try:
-            open(self.name,
-                 "wb").write(
+            open(self.name, "wb").write(
                 lxml.etree.tostring(self.xdata,
                                     xml_declaration=False,
                                     pretty_print=True).decode('UTF-8'))
@@ -60,7 +59,7 @@ class PropertyFile(Bcfg2.Server.Plugin.StructFile):
         if os.path.exists(schemafile):
             try:
                 schema = lxml.etree.XMLSchema(file=schemafile)
-            except:
+            except lxml.etree.XMLSchemaParseError:
                 err = sys.exc_info()[1]
                 raise PluginExecutionError("Failed to process schema for %s: "
                                            "%s" % (self.name, err))
@@ -105,6 +104,8 @@ class PropertyFile(Bcfg2.Server.Plugin.StructFile):
                 # error is raised below
                 pass
         except KeyError:
+            # bruteforce_decrypt raises an EVPError with a sensible
+            # error message, so we just let it propagate up the stack
             return bruteforce_decrypt(element.text,
                                       passphrases=passes.values(),
                                       algorithm=get_algorithm(SETUP))
