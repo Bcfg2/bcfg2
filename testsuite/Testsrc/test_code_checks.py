@@ -31,18 +31,13 @@ except OSError:
     HAS_PYLINT = False
 
 
-# perform error checks only on the listed executables
-sbin_error_checks = {
-    "sbin": ["bcfg2-build-reports", "bcfg2-info", "bcfg2-admin",
-             "bcfg2-reports"]
-    }
-
 # perform checks on the listed files only if the module listed in the
 # keys can be imported
 contingent_checks = {
     ("django",): {"lib/Bcfg2/Server": ["Reports",
                                        "SchemaUpdater",
-                                       "models.py"]},
+                                       "models.py"],
+                  "sbin": ["bcfg2-reports"]},
     ("pyinotify",): {"lib/Bcfg2/Server/FileMonitor": ["Inotify.py"]},
     ("yum",): {"lib/Bcfg2/Client/Tools": ["YUM*"]},
     ("genshi",): {"lib/Bcfg2/Server/Plugins/Cfg": ["CfgGenshiGenerator.py"]},
@@ -58,6 +53,8 @@ contingent_checks = {
 
 # perform only error checking on the listed files
 error_checks = {
+    "sbin": ["bcfg2-build-reports", "bcfg2-info", "bcfg2-admin",
+             "bcfg2-reports"],
     "lib/Bcfg2": ["Proxy.py", "SSLServer.py"],
     "lib/Bcfg2/Server": ["Admin", "Reports", "SchemaUpdater"],
     "lib/Bcfg2/Client/Tools": ["launchd.py",
@@ -149,22 +146,27 @@ class TestPylint(Bcfg2TestCase):
     # regex to find errors and fatal errors
     error_re = re.compile(r':\d+:\s+\[[EF]\d{4}')
 
-    # build the blacklist
+    # build the blacklists
     blacklist = expand_path_dict(no_checks)
+
+    contingent_blacklist = []
+    for filedict in contingent_checks.values():
+        contingent_blacklist += expand_path_dict(filedict)
+
+    full_blacklist = expand_path_dict(error_checks) + contingent_blacklist + \
+        blacklist
+
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_lib_full(self):
-        blacklist = expand_path_dict(error_checks) + self.blacklist
-        for filedict in contingent_checks.values():
-            blacklist += expand_path_dict(filedict)
         full_list = []
         for root, _, files in os.walk(os.path.join(srcpath, "lib")):
             full_list.extend(blacklist_filter([os.path.join(root, f)
                                                for f in files
                                                if f.endswith(".py")],
-                                              blacklist))
+                                              self.full_blacklist))
         self._pylint_full(full_list)
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
@@ -189,7 +191,7 @@ class TestPylint(Bcfg2TestCase):
                     for f in glob.glob(os.path.join(srcpath, "sbin", "*"))]
         sbin_list = blacklist_filter([f for f in all_sbin
                                       if not os.path.islink(f)],
-                                     expand_path_dict(sbin_error_checks))
+                                     self.full_blacklist)
         self._pylint_full(sbin_list,
                           extra_args=["--module-rgx",
                                       "[a-z_-][a-z0-9_-]*$"])
@@ -208,7 +210,14 @@ class TestPylint(Bcfg2TestCase):
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_sbin_errors(self):
-        return self._pylint_errors(expand_path_dict(sbin_error_checks))
+        all_sbin = [os.path.join(srcpath, "sbin", f)
+                    for f in glob.glob(os.path.join(srcpath, "sbin", "*"))]
+        sbin_list = blacklist_filter([f for f in all_sbin
+                                      if not os.path.islink(f)],
+                                     self.contingent_blacklist)
+        self._pylint_errors(sbin_list,
+                            extra_args=["--module-rgx",
+                                        "[a-z_-][a-z0-9_-]*$"])
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
@@ -231,10 +240,8 @@ class TestPylint(Bcfg2TestCase):
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_lib_errors(self):
-        blacklist = []
-        for filedict in contingent_checks.values():
-            blacklist += expand_path_dict(filedict)
-        filelist = blacklist_filter(expand_path_dict(error_checks), blacklist)
+        filelist = blacklist_filter(expand_path_dict(error_checks),
+                                    self.contingent_blacklist)
         return self._pylint_errors(filelist)
 
     def _pylint_errors(self, paths, extra_args=None):
