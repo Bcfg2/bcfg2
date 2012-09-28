@@ -29,6 +29,13 @@ ALGORITHM = "aes_256_cbc"
 #: automated fashion.
 IV = '\0' * 16
 
+#: The config file section encryption options and passphrases are
+#: stored in
+CFG_SECTION = "encryption"
+
+#: The config option used to store the algorithm
+CFG_ALGORITHM = "algorithm"
+
 Rand.rand_seed(os.urandom(1024))
 
 
@@ -103,13 +110,8 @@ def ssl_decrypt(data, passwd, algorithm=ALGORITHM):
     :type algorithm: string
     :returns: string - The decrypted data
     """
-    # base64-decode the data if necessary
-    try:
-        data = b64decode(data)
-    except TypeError:
-        # already decoded
-        pass
-
+    # base64-decode the data
+    data = b64decode(data)
     salt = data[8:16]
     hashes = [md5(passwd + salt).digest()]
     for i in range(1, 3):
@@ -160,7 +162,7 @@ def get_algorithm(setup):
     :type setup: Bcfg2.Options.OptionParser
     :returns: dict - a dict of ``<passphrase name>``: ``<passphrase>``
     """
-    return setup.cfp.get("encryption", "algorithm",
+    return setup.cfp.get(CFG_SECTION, CFG_ALGORITHM,
                          default=ALGORITHM).lower().replace("-", "_")
 
 
@@ -171,10 +173,11 @@ def get_passphrases(setup):
     :type setup: Bcfg2.Options.OptionParser
     :returns: dict - a dict of ``<passphrase name>``: ``<passphrase>``
     """
-    section = "encryption"
+    section = CFG_SECTION
     if setup.cfp.has_section(section):
         return dict([(o, setup.cfp.get(section, o))
-                     for o in setup.cfp.options(section)])
+                     for o in setup.cfp.options(section)
+                     if o != CFG_ALGORITHM])
     else:
         return dict()
 
