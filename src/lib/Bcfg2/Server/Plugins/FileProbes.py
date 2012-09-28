@@ -13,9 +13,14 @@ import Bcfg2.Server
 import Bcfg2.Server.Plugin
 from Bcfg2.Compat import b64decode
 
+#: The probe we send to clients to get the file data.  Returns an XML
+#: document describing the file and its metadata.  We avoid returning
+#: a non-0 error code on most errors, since that could halt client
+#: execution.
 PROBECODE = """#!/usr/bin/env python
 
 import os
+import sys
 import pwd
 import grp
 import Bcfg2.Client.XML
@@ -24,16 +29,24 @@ from Bcfg2.Compat import b64encode
 path = "%s"
 
 if not os.path.exists(path):
-    print("%%s does not exist" %% path)
-    raise SystemExit(1)
+    sys.stderr.write("%%s does not exist" %% path)
+    raise SystemExit(0)
 
-stat = os.stat(path)
+try:
+    stat = os.stat(path)
+except:
+    sys.stderr.write("Could not stat %%s: %%s" % (path, sys.exc_info()[1]))
+    raise SystemExit(0)
 data = Bcfg2.Client.XML.Element("ProbedFileData",
                                 name=path,
                                 owner=pwd.getpwuid(stat[4])[0],
                                 group=grp.getgrgid(stat[5])[0],
-                                perms=oct(stat[0] & 07777))
-data.text = b64encode(open(path).read())
+                                perms=oct(stat[0] & 4095))
+try:
+    data.text = b64encode(open(path).read())
+except:
+    sys.stderr.write("Could not read %%s: %%s" % (path, sys.exc_info()[1]))
+    raise SystemExit(0)
 print(Bcfg2.Client.XML.tostring(data, xml_declaration=False).decode('UTF-8'))
 """
 
@@ -45,8 +58,6 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
     replaced on the client if it is missing; if it has changed on the
     client, it can either be updated in the specification or replaced on
     the client """
-
-    name = 'FileProbes'
     __author__ = 'chris.a.st.pierre@gmail.com'
 
     def __init__(self, core, datastore):

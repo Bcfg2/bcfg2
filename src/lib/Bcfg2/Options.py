@@ -723,6 +723,13 @@ CLIENT_DECISION_LIST = \
            cmd='--decision-list',
            odesc='<file>',
            long_arg=True)
+CLIENT_EXIT_ON_PROBE_FAILURE = \
+    Option("The client should exit if a probe fails",
+           default=True,
+           cmd='--exit-on-probe-failure',
+           long_arg=True,
+           cf=('client', 'exit_on_probe_failure'),
+           cook=get_bool)
 
 # bcfg2-test and bcfg2-lint options
 TEST_NOSEOPTS = \
@@ -1079,7 +1086,8 @@ CLIENT_COMMON_OPTIONS = \
          ca=CLIENT_CA,
          serverCN=CLIENT_SCNS,
          timeout=CLIENT_TIMEOUT,
-         decision_list=CLIENT_DECISION_LIST)
+         decision_list=CLIENT_DECISION_LIST,
+         probe_exit=CLIENT_EXIT_ON_PROBE_FAILURE)
 CLIENT_COMMON_OPTIONS.update(DRIVER_OPTIONS)
 CLIENT_COMMON_OPTIONS.update(CLI_COMMON_OPTIONS)
 
