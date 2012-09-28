@@ -968,6 +968,6 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         self._runYumTransaction()
         self.extra = self.FindExtraPackages()
 
-    def VerifyPath(self, _, _):
+    def VerifyPath(self, entry, _):  # pylint: disable=W0613
         """Do nothing here since we only verify Path type=ignore"""
         return True
