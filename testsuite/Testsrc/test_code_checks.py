@@ -33,7 +33,7 @@ except OSError:
 
 # perform error checks only on the listed executables
 sbin_error_checks = {
-    "sbin": ["bcfg2", "bcfg2-build-reports", "bcfg2-info", "bcfg2-admin",
+    "sbin": ["bcfg2-build-reports", "bcfg2-info", "bcfg2-admin",
              "bcfg2-reports"]
     }
 
