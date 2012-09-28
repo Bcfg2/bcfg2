@@ -188,8 +188,13 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             err = sys.exc_info()[1]
             if err.errno == 95:
                 # fs is mounted noacl
-                self.logger.error("POSIX: Cannot set ACLs on filesystem "
-                                  "mounted without ACL support: %s" % path)
+                if entry.findall("ACL"):
+                    self.logger.error("POSIX: Cannot set ACLs on filesystem "
+                                      "mounted without ACL support: %s" % path)
+                else:
+                    # no ACLs on the entry, no ACLs on the filesystem.
+                    # all is well in the world.
+                    return True
             else:
                 self.logger.error("POSIX: Error getting current ACLS on %s: %s"
                                   % (path, err))
