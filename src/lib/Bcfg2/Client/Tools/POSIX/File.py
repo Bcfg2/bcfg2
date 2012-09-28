@@ -107,13 +107,16 @@ class POSIXFile(POSIXTool):
                               (os.path.dirname(entry.get('name')), err))
             return False
         try:
-            os.fdopen(newfd, 'w').write(filedata)
-        except (OSError, IOError):
-            err = sys.exc_info()[1]
-            self.logger.error("POSIX: Failed to open temp file %s for writing "
-                              "%s: %s" %
-                              (newfile, entry.get("name"), err))
-            return False
+            try:
+                os.fdopen(newfd, 'w').write(filedata)
+            except (OSError, IOError):
+                err = sys.exc_info()[1]
+                self.logger.error("POSIX: Failed to open temp file %s for "
+                                  "writing %s: %s" %
+                                  (newfile, entry.get("name"), err))
+                return False
+        finally:
+            os.close(newfd)
         return newfile
 
     def _rename_tmpfile(self, newfile, entry):
