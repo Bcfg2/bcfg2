@@ -39,11 +39,22 @@ sbin_error_checks = {
 
 # perform checks on the listed files only if the module listed in the
 # keys can be imported
-contingent_checks = dict(
-    django={"lib/Bcfg2/Server": ["Reports", "SchemaUpdater", "models.py"]},
-    pyinotify={"lib/Bcfg2/Server/FileMonitor": ["Inotify.py"]},
-    yum={"lib/Bcfg2/Client/Tools": ["YUM*"]}
-    )
+contingent_checks = {
+    ("django",): {"lib/Bcfg2/Server": ["Reports",
+                                       "SchemaUpdater",
+                                       "models.py"]},
+    ("pyinotify",): {"lib/Bcfg2/Server/FileMonitor": ["Inotify.py"]},
+    ("yum",): {"lib/Bcfg2/Client/Tools": ["YUM*"]},
+    ("genshi",): {"lib/Bcfg2/Server/Plugins/Cfg": ["CfgGenshiGenerator.py"]},
+    ("Cheetah",): {"lib/Bcfg2/Server/Plugins/Cfg": ["CfgCheetahGenerator.py"]},
+    ("M2Crypto",): {"lib/Bcfg2": ["Encryption.py"],
+                    "lib/Bcfg2/Server/Plugins/Cfg":
+                        ["CfgEncryptedGenerator.py"]},
+    ("M2Crypto", "genshi"): {"lib/Bcfg2/Server/Plugins/Cfg":
+                                 ["CfgEncryptedGenshiGenerator.py"]},
+    ("M2Crypto", "Cheetah"): {"lib/Bcfg2/Server/Plugins/Cfg":
+                                  ["CfgEncryptedCheetahGenerator.py"]},
+    }
 
 # perform only error checking on the listed files
 error_checks = {
@@ -161,9 +172,10 @@ class TestPylint(Bcfg2TestCase):
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_contingent_full(self):
         blacklist = set(expand_path_dict(error_checks) + self.blacklist)
-        for (mod, filedict) in contingent_checks.items():
+        for (mods, filedict) in contingent_checks.items():
             try:
-                __import__(mod)
+                for mod in mods:
+                    __import__(mod)
             except ImportError:
                 continue
             self._pylint_full(blacklist_filter(expand_path_dict(filedict),
@@ -203,9 +215,10 @@ class TestPylint(Bcfg2TestCase):
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_contingent_errors(self):
         whitelist = expand_path_dict(error_checks)
-        for (mod, filedict) in contingent_checks.items():
+        for (mods, filedict) in contingent_checks.items():
             try:
-                __import__(mod)
+                for mod in mods:
+                    __import__(mod)
             except ImportError:
                 continue
             flist = \
@@ -218,7 +231,11 @@ class TestPylint(Bcfg2TestCase):
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
     @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_lib_errors(self):
-        return self._pylint_errors(expand_path_dict(error_checks))
+        blacklist = []
+        for filedict in contingent_checks.values():
+            blacklist += expand_path_dict(filedict)
+        filelist = blacklist_filter(expand_path_dict(error_checks), blacklist)
+        return self._pylint_errors(filelist)
 
     def _pylint_errors(self, paths, extra_args=None):
         """ test all files for fatals and errors """
