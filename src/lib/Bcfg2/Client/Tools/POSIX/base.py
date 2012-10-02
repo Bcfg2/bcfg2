@@ -173,8 +173,10 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
 
     def _set_acls(self, entry, path=None):  # pylint: disable=R0912
         """ set POSIX ACLs on the file on disk according to the config """
+        acls = self._list_entry_acls(entry)
+
         if not HAS_ACLS:
-            if entry.findall("ACL"):
+            if acls:
                 self.logger.debug("POSIX: ACLs listed for %s but no pylibacl "
                                   "library installed" % entry.get('name'))
             return True
@@ -188,7 +190,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             err = sys.exc_info()[1]
             if err.errno == 95:
                 # fs is mounted noacl
-                if entry.findall("ACL"):
+                if acls:
                     self.logger.error("POSIX: Cannot set ACLs on filesystem "
                                       "mounted without ACL support: %s" % path)
                 else:
@@ -221,7 +223,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         else:
             defacl = None
 
-        for aclkey, perms in self._list_entry_acls(entry).items():
+        for aclkey, perms in acls.items():
             atype, scope, qualifier = aclkey
             if atype == "default":
                 if defacl is None:
