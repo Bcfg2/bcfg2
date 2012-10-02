@@ -10,7 +10,7 @@ import Bcfg2.Options
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Lint
 # pylint: disable=W0622
-from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages
+from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages, any
 # pylint: enable=W0622
 
 LOGGER = logging.getLogger(__name__)
@@ -63,7 +63,7 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
         Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific,
                                                   encoding)
         self.encoding = encoding
-        self.regex = self.__class__.get_regex(name)
+        self.regex = self.__class__.get_regex(basename=name)
     __init__.__doc__ = Bcfg2.Server.Plugin.SpecificData.__init__.__doc__ + \
 """
 .. -----
@@ -126,15 +126,10 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
         else:
             basenames = [basename]
 
-        # do simple non-regex matching first
-        match = False
-        for bname in basenames:
-            if event.filename.startswith(os.path.basename(bname)):
-                match = True
-                break
-        return (match and
-                cls.get_regex(
-                    basename=os.path.basename(basename)).match(event.filename))
+        return any(
+            cls.get_regex(
+                basename=os.path.basename(bname)).match(event.filename)
+            for bname in basenames)
 
     @classmethod
     def ignore(cls, event, basename=None):
@@ -162,15 +157,10 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
         else:
             basenames = [basename]
 
-        # do simple non-regex matching first
-        match = False
-        for bname in basenames:
-            if event.filename.startswith(os.path.basename(bname)):
-                match = True
-                break
-        return (match and
-                cls.get_regex(basename=os.path.basename(basename),
-                              extensions=cls.__ignore__).match(event.filename))
+        return any(
+            cls.get_regex(basename=os.path.basename(bname),
+                          extensions=cls.__ignore__).match(event.filename)
+            for bname in basenames)
 
     def __str__(self):
         return "%s(%s)" % (self.__class__.__name__, self.name)
@@ -282,7 +272,7 @@ class CfgInfo(CfgBaseFileMatcher):
         """
         for key, value in list(info.items()):
             if not key.startswith("__"):
-                entry.attrib.__setitem__(key, value)
+                entry.attrib[key] = value
 
 
 class CfgVerifier(CfgBaseFileMatcher):
@@ -413,9 +403,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                      (action, event.filename))
 
     def get_matching(self, metadata):
-        return [item for item in list(self.entries.values())
-                if (isinstance(item, CfgGenerator) and
-                    item.specific.matches(metadata))]
+        return self.get_handlers(metadata, CfgGenerator)
     get_matching.__doc__ = Bcfg2.Server.Plugin.EntrySet.get_matching.__doc__
 
     def entry_init(self, event, hdlr):  # pylint: disable=W0221
@@ -444,76 +432,22 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 self.entries[event.filename] = hdlr(fpath)
             self.entries[event.filename].handle_event(event)
 
-    def bind_entry(self, entry, metadata):  # pylint: disable=R0912,R0915
-        info_handlers = []
-        generators = []
-        filters = []
-        verifiers = []
-        for ent in self.entries.values():
-            if ent.__specific__ and not ent.specific.matches(metadata):
-                continue
-            if isinstance(ent, CfgInfo):
-                info_handlers.append(ent)
-            if isinstance(ent, CfgGenerator):
-                generators.append(ent)
-            if isinstance(ent, CfgFilter):
-                filters.append(ent)
-            if isinstance(ent, CfgVerifier):
-                verifiers.append(ent)
-            if ent.deprecated:
-                if ent.__basenames__:
-                    fdesc = "/".join(ent.__basenames__)
-                elif ent.__extensions__:
-                    fdesc = "." + "/.".join(ent.__extensions__)
-                LOGGER.warning("Cfg: %s: Use of %s files is deprecated" %
-                               (ent.name, fdesc))
+    def bind_entry(self, entry, metadata):
+        self.bind_info_to_entry(entry, metadata)
+        data = self._generate_data(entry, metadata)
 
-        DEFAULT_INFO.bind_info_to_entry(entry, metadata)
-        if len(info_handlers) > 1:
-            LOGGER.error("More than one info supplier found for %s: %s" %
-                         (entry.get("name"), info_handlers))
-        if len(info_handlers):
-            info_handlers[0].bind_info_to_entry(entry, metadata)
-        if entry.tag == 'Path':
-            entry.set('type', 'file')
-
-        generator = self.best_matching(metadata, generators)
-        if entry.get('perms').lower() == 'inherit':
-            # use on-disk permissions
-            fname = os.path.join(self.path, generator.name)
-            entry.set('perms',
-                      str(oct(stat.S_IMODE(os.stat(fname).st_mode))))
-        try:
-            data = generator.get_data(entry, metadata)
-        except:
-            msg = "Cfg: exception rendering %s with %s: %s" % \
-                (entry.get("name"), generator, sys.exc_info()[1])
-            LOGGER.error(msg)
-            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-
-        for fltr in filters:
+        for fltr in self.get_handlers(metadata, CfgFilter):
             data = fltr.modify_data(entry, metadata, data)
 
         if SETUP['validate']:
-            # we can have multiple verifiers, but we only want to use the
-            # best matching verifier of each class
-            verifiers_by_class = dict()
-            for verifier in verifiers:
-                cls = verifier.__class__.__name__
-                if cls not in verifiers_by_class:
-                    verifiers_by_class[cls] = [verifier]
-                else:
-                    verifiers_by_class[cls].append(verifier)
-            for verifiers in verifiers_by_class.values():
-                verifier = self.best_matching(metadata, verifiers)
-                try:
-                    verifier.verify_entry(entry, metadata, data)
-                except CfgVerificationError:
-                    msg = "Data for %s for %s failed to verify: %s" % \
-                        (entry.get('name'), metadata.hostname,
-                         sys.exc_info()[1])
-                    LOGGER.error(msg)
-                    raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            try:
+                self._validate_data(entry, metadata, data)
+            except CfgVerificationError:
+                msg = "Data for %s for %s failed to verify: %s" % \
+                    (entry.get('name'), metadata.hostname,
+                     sys.exc_info()[1])
+                LOGGER.error(msg)
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
 
         if entry.get('encoding') == 'base64':
             data = b64encode(data)
@@ -531,7 +465,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 msg = "Error in specification for %s: %s" % (entry.get('name'),
                                                              sys.exc_info()[1])
                 LOGGER.error(msg)
-                LOGGER.error("You need to specify base64 encoding for %s." %
+                LOGGER.error("You need to specify base64 encoding for %s" %
                              entry.get('name'))
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             except TypeError:
@@ -545,6 +479,100 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             entry.set('empty', 'true')
         return entry
     bind_entry.__doc__ = Bcfg2.Server.Plugin.EntrySet.bind_entry.__doc__
+
+    def get_handlers(self, metadata, handler_type):
+        """ Get all handlers of the given type for the given metadata.
+
+        :param metadata: The metadata to get all handlers for.
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :param handler_type: The type of Cfg handler to get
+        :type handler_type: type
+        :returns: list of Cfg handler classes
+        """
+        rv = []
+        for ent in self.entries.values():
+            if (isinstance(ent, handler_type) and
+                (not ent.__specific__ or ent.specific.matches(metadata))):
+                rv.append(ent)
+                if ent.deprecated:
+                    if ent.__basenames__:
+                        fdesc = "/".join(ent.__basenames__)
+                    elif ent.__extensions__:
+                        fdesc = "." + "/.".join(ent.__extensions__)
+                    LOGGER.warning("Cfg: %s: Use of %s files is deprecated" %
+                                   (ent.name, fdesc))
+        return rv
+
+    def bind_info_to_entry(self, entry, metadata):
+        """ Bind entry metadata to the entry with the best CfgInfo
+        handler
+
+        :param entry: The abstract entry to bind the info to. This
+                      will be modified in place
+        :type entry: lxml.etree._Element
+        :param metadata: The client metadata to get info for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: None
+        """
+        info_handlers = self.get_handlers(metadata, CfgInfo)
+        DEFAULT_INFO.bind_info_to_entry(entry, metadata)
+        if len(info_handlers) > 1:
+            LOGGER.error("More than one info supplier found for %s: %s" %
+                         (entry.get("name"), info_handlers))
+        if len(info_handlers):
+            info_handlers[0].bind_info_to_entry(entry, metadata)
+        if entry.tag == 'Path':
+            entry.set('type', 'file')
+
+    def _generate_data(self, entry, metadata):
+        """ Generate data for the given entry on the given client
+
+        :param entry: The abstract entry to generate data for.  This
+                      will not be modified
+        :type entry: lxml.etree._Element
+        :param metadata: The client metadata generate data for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: string - the data for the entry
+        """
+        generator = self.best_matching(metadata,
+                                       self.get_handlers(metadata,
+                                                         CfgGenerator))
+        if entry.get('perms').lower() == 'inherit':
+            # use on-disk permissions
+            fname = os.path.join(self.path, generator.name)
+            entry.set('perms',
+                      str(oct(stat.S_IMODE(os.stat(fname).st_mode))))
+        try:
+            return generator.get_data(entry, metadata)
+        except:
+            msg = "Cfg: exception rendering %s with %s: %s" % \
+                (entry.get("name"), generator, sys.exc_info()[1])
+            LOGGER.error(msg)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+
+    def _validate_data(self, entry, metadata, data):
+        """ Validate data for the given entry on the given client
+
+        :param entry: The abstract entry to validate data for
+        :type entry: lxml.etree._Element
+        :param metadata: The client metadata validate data for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: None
+        :raises: :exc:`Bcfg2.Server.Plugins.Cfg.CfgVerificationError`
+        """
+        verifiers = self.get_handlers(metadata, CfgVerifier)
+        # we can have multiple verifiers, but we only want to use the
+        # best matching verifier of each class
+        verifiers_by_class = dict()
+        for verifier in verifiers:
+            cls = verifier.__class__.__name__
+            if cls not in verifiers_by_class:
+                verifiers_by_class[cls] = [verifier]
+            else:
+                verifiers_by_class[cls].append(verifier)
+        for verifiers in verifiers_by_class.values():
+            verifier = self.best_matching(metadata, verifiers)
+            verifier.verify_entry(entry, metadata, data)
 
     def list_accept_choices(self, entry, metadata):
         '''return a list of candidate pull locations'''
@@ -643,6 +671,7 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
 
         SETUP = core.setup
+        print "SETUP=%s" % SETUP
         if 'validate' not in SETUP:
             SETUP.add_option('validate', Bcfg2.Options.CFG_VALIDATION)
             SETUP.reparse()
@@ -664,12 +693,8 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
         if entry.get('name') not in self.entries:
             return False
 
-        for ent in self.entries[entry.get('name')].entries.values():
-            if ent.__specific__ and not ent.specific.matches(metadata):
-                continue
-            if isinstance(ent, CfgGenerator):
-                return True
-        return False
+        return bool(self.entries[entry.get('name')].get_handlers(metadata,
+                                                                 CfgGenerator))
 
     def AcceptChoices(self, entry, metadata):
         return self.entries[entry.get('name')].list_accept_choices(entry,
@@ -692,11 +717,10 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
         for basename, entry in list(self.core.plugins['Cfg'].entries.items()):
             self.check_entry(basename, entry)
 
-
     @classmethod
     def Errors(cls):
-        return {"cat-file-used":"warning",
-                "diff-file-used":"warning"}
+        return {"cat-file-used": "warning",
+                "diff-file-used": "warning"}
 
     def check_entry(self, basename, entry):
         """ check that no .cat or .diff files are in use """

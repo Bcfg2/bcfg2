@@ -1292,7 +1292,8 @@ class EntrySet(Debuggable):
         """ Shortcut to call :func:`bind_info` with the base
         info/info.xml for this EntrySet.
 
-        :param entry: The abstract entry to bind the info to
+        :param entry: The abstract entry to bind the info to. This
+                      will be modified in place
         :type entry: lxml.etree._Element
         :param metadata: The client metadata to get info for
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata

@@ -17,15 +17,10 @@ while path != '/':
     if os.path.basename(path) == "testsuite":
         break
     path = os.path.dirname(path)
-from common import XI_NAMESPACE, XI, call, builtins, skip, skipIf, skipUnless, \
-    Bcfg2TestCase, patchIf, datastore, inPy3k, can_skip
+from common import XI_NAMESPACE, XI, call, builtins, skip, skipIf, \
+    skipUnless, Bcfg2TestCase, patchIf, datastore, inPy3k, can_skip, re_type
 from TestServer.TestPlugin.Testbase import TestPlugin, TestDebuggable
 from TestServer.TestPlugin.Testinterfaces import TestGenerator
-
-try:
-    re_type = re._pattern_type
-except AttributeError:
-    re_type = type(re.compile(""))
 
 def tostring(el):
     return lxml.etree.tostring(el, xml_declaration=False).decode('UTF-8')
@@ -1349,6 +1344,9 @@ class TestSpecificData(Bcfg2TestCase):
             specific = Mock()
         return self.test_obj(name, specific, encoding)
     
+    def test__init(self):
+        pass
+
     @patch("%s.open" % builtins)
     def test_handle_event(self, mock_open):
         event = Mock()
@@ -1783,7 +1781,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
             self.assertItemsEqual(gs.Entries, {gs.entry_type: {}})
 
         inner()
-    
+
     @patch("os.path.isdir")
     @patch("os.path.isfile")
     def test_add_entry(self, mock_isfile, mock_isdir):

@@ -284,3 +284,10 @@ class patchIf(object):
                     # 10 args -- mocksignature has been removed
                     args.pop(5)
                     return _noop_patch(*args)(func)
+
+
+try:
+    re_type = re._pattern_type
+except AttributeError:
+    re_type = type(re.compile(""))
+
