@@ -539,6 +539,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                                                          CfgGenerator))
         if entry.get('perms').lower() == 'inherit':
             # use on-disk permissions
+            LOGGER.warning("Cfg: %s: Use of perms='inherit' is deprecated" %
+                           entry.get("name"))
             fname = os.path.join(self.path, generator.name)
             entry.set('perms',
                       str(oct(stat.S_IMODE(os.stat(fname).st_mode))))
