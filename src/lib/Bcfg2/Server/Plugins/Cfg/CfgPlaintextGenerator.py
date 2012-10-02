@@ -4,6 +4,7 @@
 
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 
+
 class CfgPlaintextGenerator(CfgGenerator):
     """ CfgPlaintextGenerator is a
     :class:`Bcfg2.Server.Plugins.Cfg.CfgGenerator` that handles plain

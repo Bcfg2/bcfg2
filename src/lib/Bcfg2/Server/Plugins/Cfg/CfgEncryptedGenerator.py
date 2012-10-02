@@ -30,18 +30,12 @@ class CfgEncryptedGenerator(CfgGenerator):
     __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def handle_event(self, event):
-        if event.code2str() == 'deleted':
-            return
-        try:
-            crypted = open(self.name).read()
-        except UnicodeDecodeError:
-            crypted = open(self.name, mode='rb').read()
-        except:
-            LOGGER.error("Failed to read %s" % self.name)
+        CfgGenerator.handle_event(self, event)
+        if self.data is None:
             return
         # todo: let the user specify a passphrase by name
         try:
-            self.data = bruteforce_decrypt(crypted, setup=SETUP,
+            self.data = bruteforce_decrypt(self.data, setup=SETUP,
                                            algorithm=get_algorithm(SETUP))
         except EVPError:
             msg = "Failed to decrypt %s" % self.name

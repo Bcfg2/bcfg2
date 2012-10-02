@@ -49,7 +49,7 @@ class TestFunctions(Bcfg2TestCase):
                           bind_info,
                           entry, metadata, infoxml=infoxml)
         infoxml.pnode.Match.assert_called_with(metadata, dict(), entry=entry)
-        
+
         # test with valid infoxml
         entry = lxml.etree.Element("Path", name="/test")
         infoxml.reset_mock()
@@ -1343,7 +1343,7 @@ class TestSpecificData(Bcfg2TestCase):
         if specific is None:
             specific = Mock()
         return self.test_obj(name, specific, encoding)
-    
+
     def test__init(self):
         pass
 
@@ -1358,7 +1358,7 @@ class TestSpecificData(Bcfg2TestCase):
             self.assertIsNone(sd.data)
         else:
             self.assertFalse(hasattr(sd, 'data'))
-        
+
         event = Mock()
         mock_open.return_value.read.return_value = "test"
         sd.handle_event(event)
@@ -1761,14 +1761,14 @@ class TestEntrySet(TestDebuggable):
 
 class TestGroupSpool(TestPlugin, TestGenerator):
     test_obj = GroupSpool
-    
+
     def get_obj(self, core=None):
         @patch("%s.%s.AddDirectoryMonitor" % (self.test_obj.__module__,
                                               self.test_obj.__name__),
                Mock())
         def inner():
             return TestPlugin.get_obj(self, core=core)
-        
+
         return inner()
 
     def test__init(self):

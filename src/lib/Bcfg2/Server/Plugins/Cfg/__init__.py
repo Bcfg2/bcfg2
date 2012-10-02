@@ -673,7 +673,6 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
 
         SETUP = core.setup
-        print "SETUP=%s" % SETUP
         if 'validate' not in SETUP:
             SETUP.add_option('validate', Bcfg2.Options.CFG_VALIDATION)
             SETUP.reparse()

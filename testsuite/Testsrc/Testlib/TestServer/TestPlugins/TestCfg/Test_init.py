@@ -1,6 +1,5 @@
 import os
 import sys
-import copy
 import lxml.etree
 import Bcfg2.Options
 from Bcfg2.Compat import walk_packages
@@ -44,29 +43,36 @@ class TestCfgBaseFileMatcher(TestSpecificData):
         for basename in basenames:
             for extension in extensions:
                 def test_match(spec):
-                    return regex.match(basename + "." + spec + extension)
+                    mstr = basename
+                    if spec:
+                        mstr += "." + spec
+                    if extension:
+                        mstr += "." + extension
+                    return regex.match(mstr)
 
-            regex = self.test_obj.get_regex(basename=basename)
-            self.assertTrue(regex.match(basename))
-            self.assertFalse(regex.match("bogus"))
-            if self.test_obj.__specific__:
-                self.assertTrue(test_match("G20_foo"))
-                self.assertTrue(test_match("G1_foo"))
-                self.assertTrue(test_match("G32768_foo"))
-                # a group named '_'
-                self.assertTrue(test_match("G10__"))
-                self.assertTrue(test_match("H_hostname"))
-                self.assertTrue(test_match("H_fqdn.subdomain.example.com"))
-                self.assertTrue(test_match("G20_group_with_underscores"))
+                regex = self.test_obj.get_regex(basename=basename)
+                self.assertTrue(test_match(''))
+                self.assertFalse(regex.match("bogus"))
+                if self.test_obj.__specific__:
+                    if extension:
+                        self.assertFalse(regex.match("bogus." + extension))
+                    self.assertTrue(test_match("G20_foo"))
+                    self.assertTrue(test_match("G1_foo"))
+                    self.assertTrue(test_match("G32768_foo"))
+                    # a group named '_'
+                    self.assertTrue(test_match("G10__"))
+                    self.assertTrue(test_match("H_hostname"))
+                    self.assertTrue(test_match("H_fqdn.subdomain.example.com"))
+                    self.assertTrue(test_match("G20_group_with_underscores"))
 
-                self.assertFalse(test_match("G20_group with spaces"))
-                self.assertFalse(test_match("G_foo"))
-                self.assertFalse(test_match("G_"))
-                self.assertFalse(test_match("G20_"))
-                self.assertFalse(test_match("H_"))
-            else:
-                self.assertFalse(test_match("G20_foo"))
-                self.assertFalse(test_match("H_hostname"))
+                    self.assertFalse(test_match("G20_group with spaces"))
+                    self.assertFalse(test_match("G_foo"))
+                    self.assertFalse(test_match("G_"))
+                    self.assertFalse(test_match("G20_"))
+                    self.assertFalse(test_match("H_"))
+                else:
+                    self.assertFalse(test_match("G20_foo"))
+                    self.assertFalse(test_match("H_hostname"))
 
     @patch("Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.get_regex")
     def test_handles(self, mock_get_regex):
@@ -125,7 +131,7 @@ class TestCfgBaseFileMatcher(TestSpecificData):
             self.assertFalse(mock_get_regex.called)
         elif self.test_obj.__basenames__:
             match.return_value = False
-            self.assertFalse(self.test_obj.handles(evt))
+            self.assertFalse(self.test_obj.ignore(evt))
             self.assertItemsEqual(mock_get_regex.call_args_list,
                                   [call(basename=b,
                                         extensions=self.test_obj.__ignore__)
@@ -137,12 +143,13 @@ class TestCfgBaseFileMatcher(TestSpecificData):
             mock_get_regex.reset_mock()
             match.reset_mock()
             match.return_value = True
-            self.assertTrue(self.test_obj.handles(evt))            
+            self.assertTrue(self.test_obj.ignore(evt))            
             match.assert_called_with(evt.filename)
         else:
             match.return_value = False
-            self.assertFalse(self.test_obj.handles(evt,
-                                         basename=os.path.basename(self.path)))
+            self.assertFalse(self.test_obj.ignore(
+                    evt,
+                    basename=os.path.basename(self.path)))
             mock_get_regex.assert_called_with(
                 basename=os.path.basename(self.path),
                 extensions=self.test_obj.__ignore__)
@@ -151,11 +158,12 @@ class TestCfgBaseFileMatcher(TestSpecificData):
             mock_get_regex.reset_mock()
             match.reset_mock()
             match.return_value = True
-            self.assertTrue(self.test_obj.handles(evt,
-                                        basename=os.path.basename(self.path),
-                                        extensions=self.test_obj.__ignore__))
+            self.assertTrue(self.test_obj.ignore(
+                    evt,
+                    basename=os.path.basename(self.path)))
             mock_get_regex.assert_called_with(
-                basename=os.path.basename(self.path))
+                basename=os.path.basename(self.path),
+                extensions=self.test_obj.__ignore__)
             match.assert_called_with(evt.filename)
 
 
@@ -496,7 +504,7 @@ class TestCfgEntrySet(TestEntrySet):
         # test failed validation
         entry = reset()
         eset._validate_data.side_effect = CfgVerificationError
-        self.assertRaises(Bcfg2.Server.Plugin.PluginExecutionError,
+        self.assertRaises(PluginExecutionError,
                           eset.bind_entry, entry, metadata)
         eset.bind_info_to_entry.assert_called_with(entry, metadata)
         eset._generate_data.assert_called_with(entry, metadata)
@@ -634,7 +642,7 @@ class TestCfgEntrySet(TestEntrySet):
         # test failure to generate data
         reset()
         generator.get_data.side_effect = OSError
-        self.assertRaises(Bcfg2.Server.Plugin.PluginExecutionError,
+        self.assertRaises(PluginExecutionError,
                           eset._generate_data, entry, metadata)
 
     def test_validate_data(self):

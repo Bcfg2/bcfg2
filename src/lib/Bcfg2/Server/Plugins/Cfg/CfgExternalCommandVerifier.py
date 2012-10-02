@@ -1,6 +1,7 @@
 """ Invoke an external command to verify file contents """
 
 import os
+import sys
 import shlex
 import logging
 import Bcfg2.Server.Plugin
@@ -23,23 +24,30 @@ class CfgExternalCommandVerifier(CfgVerifier):
     __init__.__doc__ = CfgVerifier.__init__.__doc__
 
     def verify_entry(self, entry, metadata, data):
-        proc = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        err = proc.communicate(input=data)[1]
-        rv = proc.wait()
-        if rv != 0:
-            raise CfgVerificationError(err)
+        try:
+            proc = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            err = proc.communicate(input=data)[1]
+            rv = proc.wait()
+            if rv != 0:
+                raise CfgVerificationError(err)
+        except:
+            err = sys.exc_info()[1]
+            raise CfgVerificationError("Error running external command "
+                                       "verifier: %s" % err)
     verify_entry.__doc__ = CfgVerifier.verify_entry.__doc__
 
     def handle_event(self, event):
-        if event.code2str() == 'deleted':
+        CfgVerifier.handle_event(self, event)
+        if not self.data:
             return
         self.cmd = []
         if not os.access(self.name, os.X_OK):
-            bangpath = open(self.name).readline().strip()
+            bangpath = self.data.splitlines()[0].strip()
             if bangpath.startswith("#!"):
                 self.cmd.extend(shlex.split(bangpath[2:].strip()))
             else:
-                msg = "Cannot execute %s" % self.name
+                msg = "%s: Cannot execute %s" % (self.__class__.__name__,
+                                                 self.name)
                 LOGGER.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         self.cmd.append(self.name)

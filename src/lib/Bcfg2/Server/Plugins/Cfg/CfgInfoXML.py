@@ -23,9 +23,9 @@ class CfgInfoXML(CfgInfo):
         mdata = dict()
         self.infoxml.pnode.Match(metadata, mdata, entry=entry)
         if 'Info' not in mdata:
-            LOGGER.error("Failed to set metadata for file %s" %
-                         entry.get('name'))
-            raise Bcfg2.Server.Plugin.PluginExecutionError
+            msg = "Failed to set metadata for file %s" % entry.get('name')
+            LOGGER.error(msg)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         self._set_info(entry, mdata['Info'][None])
     bind_info_to_entry.__doc__ = CfgInfo.bind_info_to_entry.__doc__
 

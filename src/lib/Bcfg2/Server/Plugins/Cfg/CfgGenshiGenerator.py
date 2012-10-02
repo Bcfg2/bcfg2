@@ -142,13 +142,13 @@ class CfgGenshiGenerator(CfgGenerator):
         raise
 
     def handle_event(self, event):
-        if event.code2str() == 'deleted':
-            return
         CfgGenerator.handle_event(self, event)
+        if self.data is None:
+            return
         try:
             self.template = self.loader.load(self.name, cls=NewTextTemplate,
                                              encoding=self.encoding)
-        except Exception:
+        except:
             msg = "Cfg: Could not load template %s: %s" % (self.name,
                                                            sys.exc_info()[1])
             LOGGER.error(msg)

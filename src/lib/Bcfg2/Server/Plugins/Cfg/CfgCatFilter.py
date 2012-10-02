@@ -3,6 +3,7 @@ plaintext files """
 
 from Bcfg2.Server.Plugins.Cfg import CfgFilter
 
+
 class CfgCatFilter(CfgFilter):
     """ CfgCatFilter appends lines to and remove lines from plaintext
     :ref:`server-plugins-generators-Cfg` files"""
