@@ -158,6 +158,7 @@ class Client(object):
                 Bcfg2.Proxy.CertificateError,
                 socket.gaierror,
                 socket.error):
+            err = sys.exc_info()[1]
             self.fatal_error("Failed to download probes from bcfg2: %s" % err)
         except Bcfg2.Client.XML.ParseError:
             err = sys.exc_info()[1]
