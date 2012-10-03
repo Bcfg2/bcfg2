@@ -34,7 +34,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     or defer to package manager libraries for truly dynamic
     resolution.
 
-    .. private-include: _build_packages, _get_collection"""
+    .. private-include: _build_packages"""
 
     #: Packages is an alternative to
     #: :mod:`Bcfg2.Server.Plugins.Pkgmgr` and conflicts with it.
@@ -177,7 +177,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                       perms='0644',
                       important='true')
 
-        collection = self._get_collection(metadata)
+        collection = self.get_collection(metadata)
         entry.text = collection.get_config()
         for (key, value) in list(attrib.items()):
             entry.attrib.__setitem__(key, value)
@@ -199,7 +199,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :return: lxml.etree._Element - The fully bound entry
         """
         if entry.tag == 'Package':
-            collection = self._get_collection(metadata)
+            collection = self.get_collection(metadata)
             entry.set('version', self.core.setup.cfp.get("packages",
                                                          "version",
                                                          default="auto"))
@@ -230,7 +230,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if entry.tag == 'Package':
             if self.core.setup.cfp.getboolean("packages", "magic_groups",
                                               default=False):
-                collection = self._get_collection(metadata)
+                collection = self.get_collection(metadata)
                 if collection.magic_groups_match():
                     return True
             else:
@@ -275,7 +275,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :type structures: list of lxml.etree._Element objects
         :returns: None
         """
-        collection = self._get_collection(metadata)
+        collection = self.get_collection(metadata)
         indep = lxml.etree.Element('Independent')
         self._build_packages(metadata, indep, structures,
                              collection=collection)
@@ -301,7 +301,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :type structures: list of lxml.etree._Element objects
         :param collection: The collection of sources for this client.
                            If none is given, one will be created with
-                           :func:`_get_collection`
+                           :func:`get_collection`
         :type collection: Bcfg2.Server.Plugins.Packages.Collection.Collection
         """
         if self.disableResolver:
@@ -309,7 +309,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             return
 
         if collection is None:
-            collection = self._get_collection(metadata)
+            collection = self.get_collection(metadata)
         # initial is the set of packages that are explicitly specified
         # in the configuration
         initial = set()
@@ -442,7 +442,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             if kfile not in keyfiles:
                 os.unlink(kfile)
 
-    def _get_collection(self, metadata):
+    def get_collection(self, metadata):
         """ Get a
         :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
         object for this client.
@@ -508,7 +508,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :return: dict of lists of ``url_map`` data
         """
-        collection = self._get_collection(metadata)
+        collection = self.get_collection(metadata)
         return dict(sources=collection.get_additional_data())
 
     def end_client_run(self, metadata):

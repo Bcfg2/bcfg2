@@ -9,11 +9,14 @@ import logging
 import tempfile
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import u_str, reduce, b64encode
+from Bcfg2.Compat import u_str, reduce, b64encode  # pylint: disable=W0622
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
+
 
 class KeyData(Bcfg2.Server.Plugin.SpecificData):
+    """ class to handle key data for HostKeyEntrySet """
+
     def __init__(self, name, specific, encoding):
         Bcfg2.Server.Plugin.SpecificData.__init__(self,
                                                   name,
@@ -24,7 +27,14 @@ class KeyData(Bcfg2.Server.Plugin.SpecificData):
     def __lt__(self, other):
         return self.name < other.name
 
-    def bind_entry(self, entry, metadata):
+    def bind_entry(self, entry, _):
+        """ Bind the entry with the data of this key
+
+        :param entry: The abstract entry to bind.  This will be
+                      modified in place.
+        :type entry: lxml.etree._Element
+        :returns: None
+        """
         entry.set('type', 'file')
         if entry.get('encoding') == 'base64':
             entry.text = b64encode(self.data)
@@ -32,22 +42,24 @@ class KeyData(Bcfg2.Server.Plugin.SpecificData):
             try:
                 entry.text = u_str(self.data, self.encoding)
             except UnicodeDecodeError:
-                e = sys.exc_info()[1]
-                logger.error("Failed to decode %s: %s" % (entry.get('name'), e))
-                logger.error("Please verify you are using the proper encoding.")
-                raise Bcfg2.Server.Plugin.PluginExecutionError
+                msg = "Failed to decode %s: %s" % (entry.get('name'),
+                                                   sys.exc_info()[1])
+                LOGGER.error(msg)
+                LOGGER.error("Please verify you are using the proper encoding")
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             except ValueError:
-                e = sys.exc_info()[1]
-                logger.error("Error in specification for %s" %
+                msg = "Error in specification for %s: %s" % (entry.get('name'),
+                                                             sys.exc_info()[1])
+                LOGGER.error(msg)
+                LOGGER.error("You need to specify base64 encoding for %s" %
                              entry.get('name'))
-                logger.error(str(e))
-                logger.error("You need to specify base64 encoding for %s." %
-                             entry.get('name'))
-                raise Bcfg2.Server.Plugin.PluginExecutionError
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         if entry.text in ['', None]:
             entry.set('empty', 'true')
 
+
 class HostKeyEntrySet(Bcfg2.Server.Plugin.EntrySet):
+    """ EntrySet to handle all kinds of host keys """
     def __init__(self, basename, path):
         if basename.startswith("ssh_host_key"):
             encoding = "base64"
@@ -67,6 +79,7 @@ class HostKeyEntrySet(Bcfg2.Server.Plugin.EntrySet):
 
 
 class KnownHostsEntrySet(Bcfg2.Server.Plugin.EntrySet):
+    """ EntrySet to handle the ssh_known_hosts file """
     def __init__(self, path):
         Bcfg2.Server.Plugin.EntrySet.__init__(self, "ssh_known_hosts", path,
                                               KeyData, None)
@@ -128,11 +141,12 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         self.entries = dict()
         self.Entries['Path'] = dict()
 
-        self.entries['/etc/ssh/ssh_known_hosts'] = KnownHostsEntrySet(self.data)
+        self.entries['/etc/ssh/ssh_known_hosts'] = \
+            KnownHostsEntrySet(self.data)
         self.Entries['Path']['/etc/ssh/ssh_known_hosts'] = self.build_skn
         for keypattern in self.keypatterns:
-            self.entries["/etc/ssh/" + keypattern] = HostKeyEntrySet(keypattern,
-                                                                     self.data)
+            self.entries["/etc/ssh/" + keypattern] = \
+                HostKeyEntrySet(keypattern, self.data)
             self.Entries['Path']["/etc/ssh/" + keypattern] = self.build_hk
 
     def get_skn(self):
@@ -159,17 +173,19 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     newnames.add(name.split('.')[0])
                     try:
                         newips.add(self.get_ipcache_entry(name)[0])
-                    except:
+                    except:  # pylint: disable=W0702
                         continue
                 names[cmeta.hostname].update(newnames)
                 names[cmeta.hostname].update(cmeta.addresses)
                 names[cmeta.hostname].update(newips)
-                # TODO: Only perform reverse lookups on IPs if an option is set.
+                # TODO: Only perform reverse lookups on IPs if an
+                # option is set.
                 if True:
                     for ip in newips:
                         try:
-                            names[cmeta.hostname].update(self.get_namecache_entry(ip))
-                        except:
+                            names[cmeta.hostname].update(
+                                self.get_namecache_entry(ip))
+                        except:  # pylint: disable=W0702
                             continue
                 names[cmeta.hostname] = sorted(names[cmeta.hostname])
 
@@ -178,7 +194,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             pubkeys.sort()
             for pubkey in pubkeys:
                 for entry in sorted(self.entries[pubkey].entries.values(),
-                                    key=lambda e: e.specific.hostname or e.specific.group):
+                                    key=lambda e: (e.specific.hostname or
+                                                   e.specific.group)):
                     specific = entry.specific
                     hostnames = []
                     if specific.hostname and specific.hostname in names:
@@ -251,9 +268,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 del self.static[event.filename]
                 self.skn = False
             else:
-                self.static[event.filename] = \
-                    Bcfg2.Server.Plugin.FileBacked(os.path.join(self.data,
-                                                                event.filename))
+                self.static[event.filename] = Bcfg2.Server.Plugin.FileBacked(
+                    os.path.join(self.data, event.filename))
                 self.static[event.filename].HandleEvent(event)
                 self.skn = False
             return
@@ -304,28 +320,29 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 return self.namecache[cip]
             except socket.gaierror:
                 self.namecache[cip] = False
-                self.logger.error("Failed to find any names associated with IP address %s" % cip)
+                self.logger.error("Failed to find any names associated with "
+                                  "IP address %s" % cip)
                 raise
 
     def build_skn(self, entry, metadata):
         """This function builds builds a host specific known_hosts file."""
         try:
-            rv = self.entries[entry.get('name')].bind_entry(entry, metadata)
+            self.entries[entry.get('name')].bind_entry(entry, metadata)
         except Bcfg2.Server.Plugin.PluginExecutionError:
-            client = metadata.hostname
             entry.text = self.skn
             hostkeys = []
-            for k in self.keypatterns:
-                if k.endswith(".pub"):
+            for key in self.keypatterns:
+                if key.endswith(".pub"):
                     try:
-                        hostkeys.append(self.entries["/etc/ssh/" +
-                                                     k].best_matching(metadata))
+                        hostkeys.append(
+                            self.entries["/etc/ssh/" +
+                                         key].best_matching(metadata))
                     except Bcfg2.Server.Plugin.PluginExecutionError:
                         pass
             hostkeys.sort()
             for hostkey in hostkeys:
-                entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" % \
-                              (hostkey.data)
+                entry.text += "localhost,localhost.localdomain,127.0.0.1 %s" \
+                    % hostkey.data
             self.entries[entry.get('name')].bind_info_to_entry(entry, metadata)
 
     def build_hk(self, entry, metadata):
@@ -410,5 +427,6 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             if log:
                 print("Wrote file %s" % filename)
         except KeyError:
-            self.logger.error("Failed to pull %s. This file does not currently "
-                              "exist on the client" % entry.get('name'))
+            self.logger.error("Failed to pull %s. This file does not "
+                              "currently exist on the client" %
+                              entry.get('name'))

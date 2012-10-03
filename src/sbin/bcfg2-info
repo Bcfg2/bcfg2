@@ -2,91 +2,55 @@
 """This tool loads the Bcfg2 core into an interactive debugger."""
 
 import os
+import re
 import sys
 import cmd
-import errno
 import getopt
 import fnmatch
-import logging
-import tempfile
 import lxml.etree
 import traceback
 from code import InteractiveConsole
-
-try:
-    try:
-        import cProfile as profile
-    except:
-        import profile
-    import pstats
-    have_profile = True
-except:
-    have_profile = False
-
 import Bcfg2.Logger
 import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Plugin
+import Bcfg2.Client.Tools.POSIX
+
+try:
+    try:
+        import cProfile as profile
+    except ImportError:
+        import profile
+    import pstats
+    HAS_PROFILE = True
+except ImportError:
+    HAS_PROFILE = False
 
 try:
     from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
-    has_genshi = True
+    HAS_GENSHI = True
 except ImportError:
-    has_genshi = False
-
-logger = logging.getLogger('bcfg2-info')
-USAGE = """Commands:
-build <hostname> <filename> - Build config for hostname, writing to filename
-builddir <hostname> <dirname> - Build config for hostname, writing separate files to dirname
-buildall <directory> [<hostnames*>] - Build configs for all clients in directory
-buildallfile <directory> <filename> [<hostnames*>] - Build config file for all clients in directory
-buildfile <filename> <hostname> - Build config file for hostname (not written to disk)
-buildbundle <bundle> <hostname> - Render a templated bundle for hostname (not written to disk)
-automatch <propertyfile> <hostname> - Perform automatch on a Properties file
-bundles - Print out group/bundle information
-clients - Print out client/profile information
-config - Print out the configuration of the Bcfg2 server
-debug - Shell out to native python interpreter
-event_debug - Display filesystem events as they are processed
-groups - List groups
-help - Print this list of available commands
-mappings <type*> <name*> - Print generator mappings for optional type and name
-packageresolve <hostname> <package> [<package>...] - Resolve the specified set of packages
-packagesources <hostname> - Show package sources
-profile <command> <args> - Profile a single bcfg2-info command
-quit - Exit the bcfg2-info command line
-showentries <hostname> <type> - Show abstract configuration entries for a given host
-showclient <client1> <client2> - Show metadata for given hosts
-update - Process pending file events"""
-
-BUILDDIR_USAGE = """Usage: builddir [-f] <hostname> <output dir>
-
-Generates a config for client <hostname> and writes the
-individual configuration files out separately in a tree
-under <output dir>.  The <output dir> directory must be
-rooted under /tmp unless the -f argument is provided, in
-which case it can be located anywhere.
-
-NOTE: Currently only handles file entries and writes
-all content with the default owner and permissions.  These
-could be much more permissive than would be created by the
-Bcfg2 client itself."""
+    HAS_GENSHI = False
 
 
-class mockLog(object):
+class MockLog(object):
+    """ Fake logger that just discards all messages in order to mask
+    errors from builddir being unable to chown files it creates """
     def error(self, *args, **kwargs):
+        """ discard error messages """
+        pass
+
+    def warning(self, *args, **kwargs):
+        """ discard warning messages """
         pass
 
     def info(self, *args, **kwargs):
+        """ discard info messages """
         pass
 
     def debug(self, *args, **kwargs):
+        """ discard debug messages """
         pass
-
-
-class dummyError(Exception):
-    """This is just a dummy."""
-    pass
 
 
 class FileNotBuilt(Exception):
@@ -94,14 +58,15 @@ class FileNotBuilt(Exception):
     def __init__(self, value):
         Exception.__init__(self)
         self.value = value
+
     def __str__(self):
         return repr(self.value)
 
 
-def printTabular(rows):
+def print_tabular(rows):
     """Print data in tabular format."""
-    cmax = tuple([max([len(str(row[index])) for row in rows]) + 1 \
-                    for index in range(len(rows[0]))])
+    cmax = tuple([max([len(str(row[index])) for row in rows]) + 1
+                  for index in range(len(rows[0]))])
     fstring = (" %%-%ss |" * len(cmax)) % cmax
     fstring = ('|'.join([" %%-%ss "] * len(cmax))) % cmax
     print(fstring % rows[0])
@@ -109,17 +74,22 @@ def printTabular(rows):
     for row in rows[1:]:
         print(fstring % row)
 
-def displayTrace(trace, num=80, sort=('time', 'calls')):
+
+def display_trace(trace):
+    """ display statistics from a profile trace """
     stats = pstats.Stats(trace)
     stats.sort_stats('cumulative', 'calls', 'time')
     stats.print_stats(200)
 
+
 def load_interpreters():
+    """ Load a dict of available Python interpreters """
     interpreters = dict(python=lambda v: InteractiveConsole(v).interact())
     best = "python"
     try:
         import bpython.cli
-        interpreters["bpython"] = lambda v: bpython.cli.main(args=[], locals_=v)
+        interpreters["bpython"] = lambda v: bpython.cli.main(args=[],
+                                                             locals_=v)
         best = "bpython"
     except ImportError:
         pass
@@ -148,11 +118,15 @@ def load_interpreters():
     return interpreters
 
 
-class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
+class InfoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
     """Main class for bcfg2-info."""
     def __init__(self, setup):
         cmd.Cmd.__init__(self)
+        saved = (setup['syslog'], setup['logging'])
+        setup['syslog'] = False
+        setup['logging'] = None
         Bcfg2.Server.Core.BaseCore.__init__(self, setup=setup)
+        setup['syslog'], setup['logging'] = saved
         self.prompt = '> '
         self.cont = True
         self.fam.handle_events_in_interval(4)
@@ -180,6 +154,10 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             clist.difference_update(rv)
         return list(rv)
 
+    def _get_usage(self, func):
+        """ get the short usage message for a given function """
+        return "Usage: " + re.sub(r'\s+', ' ', func.__doc__).split(" - ", 1)[0]
+
     def do_loop(self):
         """Looping."""
         self.cont = True
@@ -194,17 +172,17 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             except KeyboardInterrupt:
                 print("Ctrl-C pressed exiting...")
                 self.do_exit([])
-            except dummyError:
-                continue
             except:
-                logger.error("Command failure", exc_info=1)
+                self.logger.error("Command failure", exc_info=1)
 
     def do_debug(self, args):
-        """Debugging mode for more details."""
+        """ debug [-n] [-f <command list>] - Shell out to native
+        python interpreter """
         try:
             opts, _ = getopt.getopt(args.split(), 'nf:')
-        except:
-            print("Usage: debug [-n] [-f <command list>]")
+        except getopt.GetoptError:
+            print(str(sys.exc_info()[1]))
+            print(self._get_usage(self.do_debug))
             return
         self.cont = False
         scriptmode = False
@@ -216,43 +194,42 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             elif opt[0] == '-n':
                 interactive = False
         if scriptmode:
-            sh = InteractiveConsole(locals())
+            console = InteractiveConsole(locals())
             for command in [c.strip() for c in open(spath).readlines()]:
                 if command:
-                    sh.push(command)
+                    console.push(command)
         if interactive:
             interpreters = load_interpreters()
-            if setup['interpreter'] in interpreters:
+            if self.setup['interpreter'] in interpreters:
                 print("Dropping to %s interpreter; press ^D to resume" %
-                      setup['interpreter'])
-                interpreters[setup['interpreter']](locals())
+                      self.setup['interpreter'])
+                interpreters[self.setup['interpreter']](locals())
             else:
-                logger.error("Invalid interpreter %s" % setup['interpreter'])
-                logger.error("Valid interpreters are: %s" %
-                             ", ".join(interpreters.keys()))
+                self.logger.error("Invalid interpreter %s" %
+                                  self.setup['interpreter'])
+                self.logger.error("Valid interpreters are: %s" %
+                                  ", ".join(interpreters.keys()))
 
     def do_quit(self, _):
-        """
-           Exit program.
-           Usage: [quit|exit]
-        """
+        """ quit|exit - Exit program """
         for plugin in list(self.plugins.values()):
             plugin.shutdown()
-        os._exit(0)
+        os._exit(0)  # pylint: disable=W0212
 
     do_EOF = do_quit
     do_exit = do_quit
 
     def do_help(self, _):
-        """Print out usage info."""
+        """ help - Print this list of available commands """
         print(USAGE)
 
     def do_update(self, _):
-        """Process pending filesystem events."""
+        """ update - Process pending filesystem events"""
         self.fam.handle_events_in_interval(0.1)
 
     def do_build(self, args):
-        """Build client configuration."""
+        """ build [-f] <hostname> <filename> - Build config for
+        hostname, writing to filename"""
         alist = args.split()
         path_force = False
         for arg in alist:
@@ -262,20 +239,34 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
         if len(alist) == 2:
             client, ofile = alist
             if not ofile.startswith('/tmp') and not path_force:
-                print("Refusing to write files outside of /tmp without -f option")
+                print("Refusing to write files outside of /tmp without -f "
+                      "option")
                 return
-            lxml.etree.ElementTree(self.BuildConfiguration(client)).write(ofile,
-                                       encoding='UTF-8', xml_declaration=True,
-                                       pretty_print=True)
+            lxml.etree.ElementTree(self.BuildConfiguration(client)).write(
+                ofile,
+                encoding='UTF-8', xml_declaration=True,
+                pretty_print=True)
         else:
-            print('Usage: build [-f] <hostname> <output file>')
+            print(self._get_usage(self.do_build))
 
     def help_builddir(self):
         """Display help for builddir command."""
-        print(BUILDDIR_USAGE)
+        print("""Usage: builddir [-f] <hostname> <output dir>
+
+Generates a config for client <hostname> and writes the
+individual configuration files out separately in a tree
+under <output dir>.  The <output dir> directory must be
+rooted under /tmp unless the -f argument is provided, in
+which case it can be located anywhere.
+
+NOTE: Currently only handles file entries and writes
+all content with the default owner and permissions.  These
+could be much more permissive than would be created by the
+Bcfg2 client itself.""")
 
     def do_builddir(self, args):
-        """Build client configuration as separate files within a dir."""
+        """ builddir [-f] <hostname> <dirname> - Build config for
+        hostname, writing separate files to dirname"""
         alist = args.split()
         path_force = False
         if '-f' in args:
@@ -284,7 +275,8 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
         if len(alist) == 2:
             client, odir = alist
             if not odir.startswith('/tmp') and not path_force:
-                print("Refusing to write files outside of /tmp without -f option")
+                print("Refusing to write files outside of /tmp without -f "
+                      "option")
                 return
             client_config = self.BuildConfiguration(client)
             if client_config.tag == 'error':
@@ -296,20 +288,22 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                     if entry.tag == 'Path':
                         entry.set('name', odir + '/' + entry.get('name'))
 
-            log = mockLog()
-            import Bcfg2.Client.Tools.POSIX
-            p = Bcfg2.Client.Tools.POSIX.POSIX(log, setup, client_config)
+            posix = Bcfg2.Client.Tools.POSIX.POSIX(MockLog(),
+                                                   self.setup,
+                                                   client_config)
             states = dict()
-            p.Inventory(states)
-            p.Install(list(states.keys()), states)
+            posix.Inventory(states)
+            posix.Install(list(states.keys()), states)
         else:
             print('Error: Incorrect number of parameters.')
             self.help_builddir()
 
     def do_buildall(self, args):
+        """ buildall <directory> [<hostnames*>] - Build configs for
+        all clients in directory """
         alist = args.split()
         if len(alist) < 1:
-            print("Usage: buildall <directory> [<hostnames*>]")
+            print(self._get_usage(self.do_buildall))
             return
 
         destdir = alist[0]
@@ -328,19 +322,20 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                                                           client + ".xml")))
 
     def do_buildallfile(self, args):
-        """Build a config file for all clients."""
-        usage = 'Usage: buildallfile [--altsrc=<altsrc>] <directory> <filename> [<hostnames*>]'
+        """ buildallfile <directory> <filename> [<hostnames*>] - Build
+        config file for all clients in directory """
         try:
             opts, args = getopt.gnu_getopt(args.split(), '', ['altsrc='])
-        except:
-            print(usage)
+        except getopt.GetoptError:
+            print(str(sys.exc_info()[1]))
+            print(self._get_usage(self.do_buildallfile))
             return
         altsrc = None
         for opt in opts:
             if opt[0] == '--altsrc':
                 altsrc = opt[1]
         if len(args) < 2:
-            print(usage)
+            print(self._get_usage(self.do_buildallfile))
             return
 
         destdir = args[0]
@@ -364,12 +359,14 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                                       filename, client))
 
     def do_buildfile(self, args):
-        """Build a config file for client."""
-        usage = 'Usage: buildfile [-f <outfile>] [--altsrc=<altsrc>] filename hostname'
+        """ buildfile [-f <outfile>] [--altsrc=<altsrc>] <filename>
+        <hostname> - Build config file for hostname (not written to
+        disk)"""
         try:
             opts, alist = getopt.gnu_getopt(args.split(), 'f:', ['altsrc='])
-        except:
-            print(usage)
+        except getopt.GetoptError:
+            print(str(sys.exc_info()[1]))
+            print(self.do_buildfile.__doc__)
             return
         altsrc = None
         outfile = None
@@ -379,7 +376,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             elif opt[0] == '-f':
                 outfile = opt[1]
         if len(alist) != 2:
-            print(usage)
+            print(self.do_buildfile.__doc__)
             return
 
         fname, client = alist
@@ -406,14 +403,15 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             print(data)
 
     def do_buildbundle(self, args):
-        """Render a bundle for client."""
+        """ buildbundle <bundle> <hostname> - Render a templated
+        bundle for hostname (not written to disk) """
         if len(args.split()) == 2:
             bname, client = args.split()
             try:
                 metadata = self.build_metadata(client)
                 if bname in self.plugins['Bundler'].entries:
                     bundle = self.plugins['Bundler'].entries[bname]
-                    if (has_genshi and
+                    if (HAS_GENSHI and
                         isinstance(bundle,
                                    BundleTemplateFile)):
                         stream = bundle.template.generate(metadata=metadata)
@@ -422,15 +420,17 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                         print(bundle.data)
                 else:
                     print("No such bundle %s" % bname)
-            except:
+            except:  # pylint: disable=W0702
                 err = sys.exc_info()[1]
                 print("Failed to render bundle %s for host %s: %s" % (bname,
                                                                       client,
                                                                       err))
         else:
-            print('Usage: buildbundle filename hostname')
+            print(self._get_usage(self.do_buildbundle))
 
     def do_automatch(self, args):
+        """ automatch [-f] <propertyfile> <hostname> - Perform automatch on
+        a Properties file """
         alist = args.split()
         force = False
         for arg in alist:
@@ -438,7 +438,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                 alist.remove('-f')
                 force = True
         if len(alist) != 2:
-            print("Usage: automatch [-f] <propertiesfile> <hostname>")
+            print(self._get_usage(self.do_automatch))
             return
 
         if 'Properties' not in self.plugins:
@@ -446,70 +446,63 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             return
 
         pname, client = alist
-        try:
-            automatch = self.setup.cfp.getboolean("properties",
-                                                  "automatch",
-                                                  default=False)
-
-            pfile = self.plugins['Properties'].store.entries[pname]
-            if (not force and
-                not automatch and
-                pfile.xdata.get("automatch", "false").lower() != "true"):
-                print("Automatch not enabled on %s" % pname)
-            else:
-                metadata = self.build_metadata(client)
-                print(lxml.etree.tostring(pfile.XMLMatch(metadata),
-                                          xml_declaration=False,
-                                          pretty_print=True).decode('UTF-8'))
-        except:
-            err = sys.exc_info()[1]
-            print("Failed to automatch %s for host %s: %s" % (pname,
-                                                              client,
-                                                              err))
+        automatch = self.setup.cfp.getboolean("properties", "automatch",
+                                              default=False)
+        pfile = self.plugins['Properties'].store.entries[pname]
+        if (not force and
+            not automatch and
+            pfile.xdata.get("automatch", "false").lower() != "true"):
+            print("Automatch not enabled on %s" % pname)
+        else:
+            metadata = self.build_metadata(client)
+            print(lxml.etree.tostring(pfile.XMLMatch(metadata),
+                                      xml_declaration=False,
+                                      pretty_print=True).decode('UTF-8'))
                 
     def do_bundles(self, _):
-        """Print out group/bundle info."""
+        """ bundles - Print out group/bundle info """
         data = [('Group', 'Bundles')]
         groups = list(self.metadata.groups.keys())
         groups.sort()
         for group in groups:
             data.append((group,
                          ','.join(self.metadata.groups[group][0])))
-        printTabular(data)
+        print_tabular(data)
 
     def do_clients(self, _):
-        """Print out client info."""
+        """ clients - Print out client/profile info """
         data = [('Client', 'Profile')]
         clist = self.metadata.clients
         clist.sort()
         for client in clist:
             imd = self.metadata.get_initial_metadata(client)
             data.append((client, imd.profile))
-        printTabular(data)
+        print_tabular(data)
 
     def do_config(self, _):
-        """Print out the current configuration of Bcfg2."""
+        """ config - Print out the current configuration of Bcfg2"""
         output = [
                 ('Description', 'Value'),
-                ('Path Bcfg2 repository', setup['repo']),
-                ('Plugins', setup['plugins']),
-                ('Password', setup['password']),
-                ('Server Metadata Connector', setup['mconnect']),
-                ('Filemonitor', setup['filemonitor']),
-                ('Server address',    setup['location']),
-                ('Path to key', setup['key']),
-                ('Path to SSL certificate', setup['cert']),
-                ('Path to SSL CA certificate', setup['ca']),
-                ('Protocol', setup['protocol']),
-                ('Logging', setup['logging'])
+                ('Path Bcfg2 repository', self.setup['repo']),
+                ('Plugins', self.setup['plugins']),
+                ('Password', self.setup['password']),
+                ('Server Metadata Connector', self.setup['mconnect']),
+                ('Filemonitor', self.setup['filemonitor']),
+                ('Server address',    self.setup['location']),
+                ('Path to key', self.setup['key']),
+                ('Path to SSL certificate', self.setup['cert']),
+                ('Path to SSL CA certificate', self.setup['ca']),
+                ('Protocol', self.setup['protocol']),
+                ('Logging', self.setup['logging'])
                 ]
-        printTabular(output)
+        print_tabular(output)
 
     def do_showentries(self, args):
-        """Show abstract configuration entries for a given host."""
+        """ showentries <hostname> <type> - Show abstract
+        configuration entries for a given host """
         arglen = len(args.split())
         if arglen not in [1, 2]:
-            print("Usage: showentries <hostname> <type>")
+            print(self._get_usage(self.do_showentries))
             return
         client = args.split()[0]
         try:
@@ -529,12 +522,10 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                 for child in item.getchildren():
                     if child.tag in [etype, "Bound%s" % etype]:
                         output.append((child.tag, child.get('name')))
-        printTabular(output)
+        print_tabular(output)
 
     def do_groups(self, _):
-        """Print out group info."""
-        # FIXME: Contains doesn't work. Not sure what it was used for
-        #data = [("Groups", "Profile", "Category", "Contains")]
+        """ groups - Print out group info """
         data = [("Groups", "Profile", "Category")]
         grouplist = list(self.metadata.groups.keys())
         grouplist.sort()
@@ -545,18 +536,18 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                 prof = 'no'
             cat = self.metadata.groups[group].category
             data.append((group, prof, cat))
-        printTabular(data)
+        print_tabular(data)
 
     def do_showclient(self, args):
-        """Print host metadata."""
-        data = [('Client', 'Profile', "Groups", "Bundles")]
+        """ showclient <client> [<client> ...] - Show metadata for the
+        given hosts """
         if not len(args):
-            print("Usage:\nshowclient <client> ... <clientN>")
+            print(self._get_usage(self.do_showclient))
             return
         for client in args.split():
             try:
                 client_meta = self.build_metadata(client)
-            except:
+            except Bcfg2.Server.Plugin.MetadataConsistencyError:
                 print("Client %s not defined" % client)
                 continue
             fmt = "%-10s  %s"
@@ -590,7 +581,8 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                         print("=" * 80)
 
     def do_mappings(self, args):
-        """Print out mapping info."""
+        """ mappings <type*> <name*> - Print generator mappings for
+        optional type and name """
         # Dump all mappings unless type specified
         data = [('Plugin', 'Type', 'Name')]
         arglen = len(args.split())
@@ -610,38 +602,19 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                 for name in [name for name in names if name in
                              generator.Entries.get(etype, {})]:
                     data.append((generator.name, etype, name))
-        printTabular(data)
+        print_tabular(data)
 
-    def do_event_debug(self, args):
+    def do_event_debug(self, _):
+        """ event_debug - Display filesystem events as they are
+        processed """
         self.fam.debug = True
 
-    def do_cfgdebug(self, args):
-        try:
-            meta = self.build_metadata(args)
-        except Bcfg2.Server.Plugin.MetadataConsistencyError:
-            print("Unable to find metadata for host %s" % args)
-            return
-        structures = self.GetStructures(meta)
-        for clist in [struct.findall('Path') for struct in structures]:
-            for cfile in clist:
-                if cfile.get('name') in \
-                        self.plugins['Cfg'].Entries['ConfigFile']:
-                    cset = self.plugins['Cfg'].entries[cfile.get('name')]
-                    cand = cset.get_matching(meta)
-                    fields = ['all', 'group']
-                    while len(cand) > 1 and fields:
-                        field = fields.pop(0)
-                        [cand.remove(c) for c in cand[:]
-                         if getattr(c.specific, field)]
-                    if len(cand) != 1:
-                        sys.stderr.write("Entry %s failed" % cfile.get('name'))
-                        continue
-                    print(cand[0].name)
-
     def do_packageresolve(self, args):
+        """ packageresolve <hostname> <package> [<package>...] -
+        Resolve the specified set of packages """
         arglist = args.split(" ")
         if len(arglist) < 2:
-            print("Usage: packageresolve <hostname> <package> [<package>...]")
+            print(self._get_usage(self.do_packageresolve))
             return
 
         if 'Packages' not in self.plugins:
@@ -651,7 +624,7 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
         initial = arglist[1:]
         metadata = self.build_metadata(hostname)
         self.plugins['Packages'].toggle_debug()
-        collection = self.plugins['Packages']._get_collection(metadata)
+        collection = self.plugins['Packages'].get_collection(metadata)
         packages, unknown = collection.complete(initial)
         newpkgs = list(packages.difference(initial))
         print("%d initial packages" % len(initial))
@@ -664,8 +637,9 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             print("    %s" % "\n    ".join(unknown))
 
     def do_packagesources(self, args):
+        """ packagesources <hostname> - Show package sources """
         if not args:
-            print("Usage: packagesources <hostname>")
+            print(self._get_usage(self.do_packagesources))
             return
         if 'Packages' not in self.plugins:
             print("Packages plugin not enabled")
@@ -675,31 +649,57 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
         except Bcfg2.Server.Plugin.MetadataConsistencyError:
             print("Unable to build metadata for host %s" % args)
             return
-        collection = self.plugins['Packages']._get_collection(metadata)
+        collection = self.plugins['Packages'].get_collection(metadata)
         print(collection.sourcelist())
 
     def do_profile(self, arg):
-        """."""
-        if not have_profile:
+        """ profile <command> <args> - Profile a single bcfg2-info
+        command """
+        if not HAS_PROFILE:
             print("Profiling functionality not available.")
             return
         if len(arg) == 0:
-            print("Usage: profile <command> <args>")
+            print(self._get_usage(self.do_profile))
             return
-        tracefname = tempfile.mktemp()
-        p = profile.Profile()
-        p.runcall(self.onecmd, arg)
-        displayTrace(p)
+        prof = profile.Profile()
+        prof.runcall(self.onecmd, arg)
+        display_trace(prof)
 
-    def Run(self, args):
-        """."""
+    def run(self, args):  # pylint: disable=W0221
         if args:
             self.onecmd(" ".join(args))
-            os._exit(0)
         else:
             self.do_loop()
 
-if __name__ == '__main__':
+    def _daemonize(self):
+        pass
+
+    def _run(self):
+        pass
+    
+    def _block(self):
+        pass
+                
+
+
+def build_usage():
+    """ build usage message """
+    cmd_blacklist = ["do_loop", "do_EOF"]
+    usage = dict()
+    for attrname in dir(InfoCore):
+        attr = getattr(InfoCore, attrname)
+        if (hasattr(attr, "__func__") and
+            attr.__func__.func_name not in cmd_blacklist and
+            attr.__func__.func_name.startswith("do_") and
+            attr.__func__.func_doc):
+            usage[attr.__name__] = re.sub(r'\s+', ' ', attr.__doc__)
+    return "Commands:\n" + "\n".join(usage[k] for k in sorted(usage.keys()))
+
+
+USAGE = build_usage()
+
+
+def main():
     optinfo = dict(profile=Bcfg2.Options.CORE_PROFILE,
                    interactive=Bcfg2.Options.INTERACTIVE,
                    interpreter=Bcfg2.Options.INTERPRETER)
@@ -712,24 +712,20 @@ if __name__ == '__main__':
                           USAGE])
 
     setup.parse(sys.argv[1:])
-    if setup['debug']:
-        level = logging.DEBUG
-    elif setup['verbose']:
-        level = logging.INFO
-    else:
-        level = logging.WARNING
-    Bcfg2.Logger.setup_logging('bcfg2-info', to_syslog=False,
-                               level=level)
     if setup['args'] and setup['args'][0] == 'help':
         print(setup.hm)
         sys.exit(0)
-    elif setup['profile'] and have_profile:
+    elif setup['profile'] and HAS_PROFILE:
         prof = profile.Profile()
-        loop = prof.runcall(infoCore, setup)
-        displayTrace(prof)
+        loop = prof.runcall(InfoCore, setup)
+        display_trace(prof)
     else:
         if setup['profile']:
             print("Profiling functionality not available.")
-        loop = infoCore(setup)
+        loop = InfoCore(setup)
 
-    loop.Run(setup['args'])
+    loop.run(setup['args'])
+
+
+if __name__ == '__main__':
+    sys.exit(main())
