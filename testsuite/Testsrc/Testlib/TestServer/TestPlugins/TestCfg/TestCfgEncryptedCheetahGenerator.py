@@ -1,6 +1,5 @@
 import os
 import sys
-from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugins.Cfg.CfgEncryptedCheetahGenerator import *
 
 # add all parent testsuite directories to sys.path to allow (most)
@@ -12,9 +11,7 @@ while path != "/":
     if os.path.basename(path) == "testsuite":
         break
     path = os.path.dirname(path)
-from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
-    skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, \
-    patchIf, datastore, re_type
+from common import can_skip, skipUnless
 
 try:
     from TestServer.TestPlugins.TestCfg.TestCfgCheetahGenerator import \
@@ -27,7 +24,7 @@ except ImportError:
 try:
     from TestServer.TestPlugins.TestCfg.TestCfgEncryptedGenerator import \
         TestCfgEncryptedGenerator
-    HAS_CRYPTO = True
+    from Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator import HAS_CRYPTO
 except ImportError:
     TestCfgEncryptedGenerator = object
     HAS_CRYPTO = False
