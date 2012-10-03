@@ -1,3 +1,5 @@
+""" Base classes for admin modes """
+
 __all__ = [
         'Backup',
         'Bundle',
@@ -23,16 +25,13 @@ import sys
 
 import Bcfg2.Server.Core
 import Bcfg2.Options
-# Compatibility import
 from Bcfg2.Compat import ConfigParser
 
 
-class ModeOperationError(Exception):
-    pass
-
-
 class Mode(object):
-    """Help message has not yet been added for mode."""
+    """ Base object for admin modes.  Docstrings are used as help
+    messages, so if you are seeing this, a help message has not yet
+    been added for this mode. """
     __shorthelp__ = 'Shorthelp not defined yet'
     __longhelp__ = 'Longhelp not defined yet'
     __usage__ = None
@@ -47,6 +46,7 @@ class Mode(object):
             setup.hm = self.__usage__
 
     def getCFP(self):
+        """ get a config parser for the Bcfg2 config file """
         if not self.__cfp:
             self.__cfp = ConfigParser.ConfigParser()
             self.__cfp.read(self.configfile)
@@ -55,20 +55,23 @@ class Mode(object):
     cfp = property(getCFP)
 
     def __call__(self, args):
-        pass
+        raise NotImplementedError
 
     def errExit(self, emsg):
+        """ exit with an error """
         print(emsg)
         raise SystemExit(1)
 
     def load_stats(self, client):
+        """ Load static statistics from the repository """
         stats = lxml.etree.parse("%s/etc/statistics.xml" % self.setup['repo'])
         hostent = stats.xpath('//Node[@name="%s"]' % client)
         if not hostent:
             self.errExit("Could not find stats for client %s" % (client))
         return hostent[0]
 
-    def print_table(self, rows, justify='left', hdr=True, vdelim=" ", padding=1):
+    def print_table(self, rows, justify='left', hdr=True, vdelim=" ",
+                    padding=1):
         """Pretty print a table
 
         rows - list of rows ([[row 1], [row 2], ..., [row n]])
@@ -83,25 +86,27 @@ class Mode(object):
                    'center': str.center,
                    'right': str.rjust}[justify.lower()]
 
-        """
-        Calculate column widths (longest item in each column
-        plus padding on both sides)
-
-        """
+        # Calculate column widths (longest item in each column
+        # plus padding on both sides)
         cols = list(zip(*rows))
-        colWidths = [max([len(str(item)) + 2 * padding for \
+        col_widths = [max([len(str(item)) + 2 * padding for \
                           item in col]) for col in cols]
-        borderline = vdelim.join([w * hdelim for w in colWidths])
+        borderline = vdelim.join([w * hdelim for w in col_widths])
 
         # Print out the table
         print(borderline)
         for row in rows:
             print(vdelim.join([justify(str(item), width) for \
-                               (item, width) in zip(row, colWidths)]))
+                               (item, width) in zip(row, col_widths)]))
             if hdr:
                 print(borderline)
                 hdr = False
 
+
+# pylint wants MetadataCore and StructureMode to be concrete classes
+# and implement __call__, but they aren't and they don't, so we
+# disable that warning
+# pylint: disable=W0223
 
 class MetadataCore(Mode):
     """Base class for admin-modes that handle metadata."""
@@ -128,5 +133,6 @@ class MetadataCore(Mode):
         self.metadata = self.bcore.metadata
 
 
-class StructureMode(MetadataCore):
+class StructureMode(MetadataCore):  # pylint: disable=W0223
+    """ Base class for admin modes that handle structure plugins """
     pass
