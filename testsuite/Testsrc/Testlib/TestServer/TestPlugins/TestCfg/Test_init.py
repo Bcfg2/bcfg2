@@ -40,8 +40,9 @@ class TestCfgBaseFileMatcher(TestSpecificData):
             extensions = self.test_obj.__extensions__
         else:
             extensions = ['']
-        for basename in basenames:
-            for extension in extensions:
+        for extension in extensions:
+            regex = self.test_obj.get_regex(basenames)
+            for basename in basenames:
                 def test_match(spec):
                     mstr = basename
                     if spec:
@@ -50,7 +51,6 @@ class TestCfgBaseFileMatcher(TestSpecificData):
                         mstr += "." + extension
                     return regex.match(mstr)
 
-                regex = self.test_obj.get_regex(basename=basename)
                 self.assertTrue(test_match(''))
                 self.assertFalse(regex.match("bogus"))
                 if self.test_obj.__specific__:
@@ -86,9 +86,8 @@ class TestCfgBaseFileMatcher(TestSpecificData):
         if self.test_obj.__basenames__:
             match.return_value = False
             self.assertFalse(self.test_obj.handles(evt))
-            self.assertItemsEqual(mock_get_regex.call_args_list,
-                                  [call(basename=b)
-                                   for b in self.test_obj.__basenames__])
+            mock_get_regex.assert_called_with(
+                [b for b in self.test_obj.__basenames__])
             self.assertItemsEqual(match.call_args_list,
                                   [call(evt.filename)
                                    for b in self.test_obj.__basenames__])
@@ -102,8 +101,7 @@ class TestCfgBaseFileMatcher(TestSpecificData):
             match.return_value = False
             self.assertFalse(self.test_obj.handles(evt,
                                          basename=os.path.basename(self.path)))
-            mock_get_regex.assert_called_with(
-                basename=os.path.basename(self.path))
+            mock_get_regex.assert_called_with([os.path.basename(self.path)])
             match.assert_called_with(evt.filename)
 
             mock_get_regex.reset_mock()
@@ -111,60 +109,22 @@ class TestCfgBaseFileMatcher(TestSpecificData):
             match.return_value = True
             self.assertTrue(self.test_obj.handles(evt,
                                         basename=os.path.basename(self.path)))
-            mock_get_regex.assert_called_with(
-                basename=os.path.basename(self.path))
+            mock_get_regex.assert_called_with([os.path.basename(self.path)])
             match.assert_called_with(evt.filename)
 
-    @patch("%s.%s.get_regex" % (test_obj.__module__, test_obj.__name__))
-    def test_ignore(self, mock_get_regex):
-        match = Mock()
-        mock_get_regex.return_value = Mock()
-        mock_get_regex.return_value.match = match
-
+    def test_ignore(self):
         evt = Mock()
         evt.filename = "event.txt"
 
         if not self.test_obj.__ignore__:
             self.assertFalse(self.test_obj.ignore(evt))
-            self.assertFalse(mock_get_regex.called)
-            self.assertFalse(self.test_obj.ignore(evt, basename=os.path.basename(self.path)))
-            self.assertFalse(mock_get_regex.called)
-        elif self.test_obj.__basenames__:
-            match.return_value = False
-            self.assertFalse(self.test_obj.ignore(evt))
-            self.assertItemsEqual(mock_get_regex.call_args_list,
-                                  [call(basename=b,
-                                        extensions=self.test_obj.__ignore__)
-                                   for b in self.test_obj.__basenames__])
-            self.assertItemsEqual(match.call_args_list,
-                                  [call(evt.filename)
-                                   for b in self.test_obj.__basenames__])
-
-            mock_get_regex.reset_mock()
-            match.reset_mock()
-            match.return_value = True
-            self.assertTrue(self.test_obj.ignore(evt))            
-            match.assert_called_with(evt.filename)
         else:
-            match.return_value = False
-            self.assertFalse(self.test_obj.ignore(
-                    evt,
-                    basename=os.path.basename(self.path)))
-            mock_get_regex.assert_called_with(
-                basename=os.path.basename(self.path),
-                extensions=self.test_obj.__ignore__)
-            match.assert_called_with(evt.filename)
-
-            mock_get_regex.reset_mock()
-            match.reset_mock()
-            match.return_value = True
-            self.assertTrue(self.test_obj.ignore(
-                    evt,
-                    basename=os.path.basename(self.path)))
-            mock_get_regex.assert_called_with(
-                basename=os.path.basename(self.path),
-                extensions=self.test_obj.__ignore__)
-            match.assert_called_with(evt.filename)
+            self.assertFalse(self.test_obj.ignore(evt))
+            for extension in self.test_obj.__ignore__:
+                for name in ["event.txt", "....", extension, "." + extension]:
+                    for filler in ['', '.blah', '......', '.' + extension]:
+                        evt.filename = name + filler + '.' + extension
+                        self.assertTrue(self.test_obj.ignore(evt))
 
 
 class TestCfgGenerator(TestCfgBaseFileMatcher):
@@ -297,7 +257,7 @@ class TestCfgEntrySet(TestEntrySet):
         for hdlr in eset.handlers:
             self.assertFalse(hdlr.handles.called)
             self.assertFalse(hdlr.ignore.called)
-        
+
         # test creation of a new file
         for action in ["exists", "created", "changed"]:
             evt = Mock()

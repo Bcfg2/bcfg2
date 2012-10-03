@@ -44,11 +44,11 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
     #: indicators).
     __extensions__ = []
 
-    #: This handler ignores files with the listed extensions.  A file
-    #: that is ignored by a handler will not be handled by any other
-    #: handlers; that is, a file is ignored if any handler ignores it.
-    #: Ignoring a file is not simply a means to defer handling of that
-    #: file to another handler.
+    #: This handler ignores all files with the listed extensions.  A
+    #: file that is ignored by a handler will not be handled by any
+    #: other handlers; that is, a file is ignored if any handler
+    #: ignores it.  Ignoring a file is not simply a means to defer
+    #: handling of that file to another handler.
     __ignore__ = []
 
     #: Whether or not the files handled by this handler are permitted
@@ -63,7 +63,7 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
         Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific,
                                                   encoding)
         self.encoding = encoding
-        self.regex = self.__class__.get_regex(basename=name)
+        self.regex = self.__class__.get_regex([name])
     __init__.__doc__ = Bcfg2.Server.Plugin.SpecificData.__init__.__doc__ + \
 """
 .. -----
@@ -73,7 +73,7 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
 .. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__specific__"""
 
     @classmethod
-    def get_regex(cls, basename=None, extensions=None):
+    def get_regex(cls, basenames):
         """ Get a compiled regular expression to match filenames (not
         full paths) that this handler handles.
 
@@ -83,23 +83,15 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
                          directory that contains the files the regex
                          will be applied to)
         :type basename: string
-        :param extensions: Override the default list of
-                           :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__extensions__`
-                           to include in the regex.
-        :type extensions: list of strings
         :returns: compiled regex
         """
-        if extensions is None:
-            extensions = cls.__extensions__
-        if cls.__basenames__:
-            basename = '|'.join(cls.__basenames__)
-
-        components = ['^(?P<basename>%s)' % basename]
+        components = ['^(?P<basename>%s)' % '|'.join(basenames)]
         if cls.__specific__:
             components.append('(|\\.H_(?P<hostname>\S+?)|' +
-                              '.G(?P<prio>\d+)_(?P<group>\S+?))')
-        if extensions:
-            components.append('\\.(?P<extension>%s)' % '|'.join(extensions))
+                              '\.G(?P<prio>\d+)_(?P<group>\S+?))')
+        if cls.__extensions__:
+            components.append('\\.(?P<extension>%s)' %
+                              '|'.join(cls.__extensions__))
         components.append('$')
         return re.compile("".join(components))
 
@@ -124,15 +116,12 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
         if cls.__basenames__:
             basenames = cls.__basenames__
         else:
-            basenames = [basename]
+            basenames = [os.path.basename(basename)]
 
-        return any(
-            cls.get_regex(
-                basename=os.path.basename(bname)).match(event.filename)
-            for bname in basenames)
+        return bool(cls.get_regex(basenames).match(event.filename))
 
     @classmethod
-    def ignore(cls, event, basename=None):
+    def ignore(cls, event, basename=None):  # pylint: disable=W0613
         """ Return True if this handler ignores the file described by
         ``event``.  See
         :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__ignore__`
@@ -149,18 +138,7 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
         :returns: bool - True if this handler handles the file listed
                   in the event, False otherwise.
         """
-        if not cls.__ignore__:
-            return False
-
-        if cls.__basenames__:
-            basenames = cls.__basenames__
-        else:
-            basenames = [basename]
-
-        return any(
-            cls.get_regex(basename=os.path.basename(bname),
-                          extensions=cls.__ignore__).match(event.filename)
-            for bname in basenames)
+        return any(event.filename.endswith("." + e) for e in cls.__ignore__)
 
     def __str__(self):
         return "%s(%s)" % (self.__class__.__name__, self.name)
@@ -423,7 +401,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         if hdlr.__specific__:
             Bcfg2.Server.Plugin.EntrySet.entry_init(
                 self, event, entry_type=hdlr,
-                specific=hdlr.get_regex(os.path.basename(self.path)))
+                specific=hdlr.get_regex([os.path.basename(self.path)]))
         else:
             if event.filename in self.entries:
                 LOGGER.warn("Got duplicate add for %s" % event.filename)
