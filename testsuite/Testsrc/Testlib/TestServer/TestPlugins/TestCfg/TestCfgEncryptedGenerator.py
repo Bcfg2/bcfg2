@@ -28,8 +28,10 @@ if can_skip or HAS_CRYPTO:
         def setUp(self):
             pass
 
-        @patch("Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.get_algorithm")
-        @patch("Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.bruteforce_decrypt")
+        @patchIf(HAS_CRYPTO,
+                 "Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.get_algorithm")
+        @patchIf(HAS_CRYPTO,
+                 "Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.bruteforce_decrypt")
         def test_handle_event(self, mock_decrypt, mock_get_algorithm):
             @patch("Bcfg2.Server.Plugins.Cfg.CfgGenerator.handle_event")
             def inner(mock_handle_event):

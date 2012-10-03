@@ -263,7 +263,7 @@ class TestPylint(Bcfg2TestCase):
         rv = pylint.wait()
 
         for line in output.splitlines():
-            if self.error_re.search(line):
+            if self.error_re.search(str(line)):
                 print(line)
         # pylint returns a bitmask, where 1 means fatal errors
         # were encountered and 2 means errors were encountered.

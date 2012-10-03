@@ -19,7 +19,7 @@ from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
 try:
     from TestServer.TestPlugins.TestCfg.TestCfgCheetahGenerator import \
         TestCfgCheetahGenerator
-    HAS_CHEETAH = True
+    from Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator import HAS_CHEETAH
 except ImportError:
     TestCfgCheetahGenerator = object
     HAS_CHEETAH = False
