@@ -108,11 +108,11 @@ class CfgGenshiGenerator(CfgGenerator):
 
         # a failure in a %{ python ... %} block -- the snippet in
         # the traceback is just the beginning of the block.
-        err = [1]
+        err = exc[1]
         stack = traceback.extract_tb(exc[2])
         lineno, func = stack[-1][1:3]
         execs = [contents
-                 for etype, contents in self.template.stream[:2]
+                 for etype, contents, _ in self.template.stream
                  if etype == self.template.EXEC]
         contents = None
         if len(execs) == 1:
