@@ -46,9 +46,9 @@ if HAS_GENSHI:
             """ get the rendered XML data that applies to the given
             client """
             if not hasattr(self, 'template'):
-                self.logger.error("No parsed template information for %s" %
-                             self.name)
-                raise Bcfg2.Server.Plugin.PluginExecutionError
+                msg = "No parsed template information for %s" % self.name
+                self.logger.error(msg)
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             stream = self.template.generate(metadata=metadata).filter(
                 Bcfg2.Server.Plugins.TGenshi.removecomment)
             data = lxml.etree.XML(stream.render('xml',
