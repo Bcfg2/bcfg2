@@ -622,7 +622,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         else:
             return self._remove_xdata(self.clients_xml, "Client", client_name)
 
-    def _handle_clients_xml_event(self, _):
+    def _handle_clients_xml_event(self, _):  # pylint: disable=R0912
         """ handle all events for clients.xml and files xincluded from
         clients.xml """
         xdata = self.clients_xml.xdata
@@ -674,10 +674,19 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                     self.raddresses[clname] = set()
                 self.raddresses[clname].add(alias.get('address'))
             self.clients.append(clname)
+            profile = client.get("profile")
+            if self.groups:  # check if we've parsed groups.xml yet
+                if profile not in self.groups:
+                    self.logger.warning("Metadata: %s has nonexistent "
+                                        "profile group %s" % (clname, profile))
+                elif not self.groups[profile].is_profile:
+                    self.logger.warning("Metadata: %s set as profile for "
+                                        "%s, but is not a profile group" %
+                                        (profile, clname))
             try:
-                self.clientgroups[clname].append(client.get('profile'))
+                self.clientgroups[clname].append(profile)
             except KeyError:
-                self.clientgroups[clname] = [client.get('profile')]
+                self.clientgroups[clname] = [profile]
         self.states['clients.xml'] = True
         if self._use_db:
             self.clients = self.list_clients()
@@ -1331,11 +1340,14 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
     def Run(self):
         self.nested_clients()
         self.deprecated_options()
+        self.bogus_profiles()
 
     @classmethod
     def Errors(cls):
         return {"nested-client-tags": "warning",
-                "deprecated-clients-options": "warning"}
+                "deprecated-clients-options": "warning",
+                "nonexistent-profile-group": "error",
+                "non-profile-set-as-profile": "error"}
 
     def deprecated_options(self):
         """ check for the location='floating' option, which has been
@@ -1350,7 +1362,7 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                     floating = False
                 self.LintError("deprecated-clients-options",
                                "The location='%s' option is deprecated.  "
-                               "Please use floating='%s' instead: %s" %
+                               "Please use floating='%s' instead:\n%s" %
                                (loc, floating, self.RenderXML(el)))
 
     def nested_clients(self):
@@ -1361,3 +1373,20 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
             self.LintError("nested-client-tags",
                            "Client %s nested within Client tag: %s" %
                            (el.get("name"), self.RenderXML(el)))
+
+    def bogus_profiles(self):
+        """ check for clients that have profiles that are either not
+        flagged as public groups in groups.xml, or don't exist """
+        for client in self.metadata.clients_xml.xdata.findall('.//Client'):
+            profile = client.get("profile")
+            if profile not in self.metadata.groups:
+                self.LintError("nonexistent-profile-group",
+                               "%s has nonexistent profile group %s:\n%s" %
+                               (client.get("name"), profile,
+                                self.RenderXML(client)))
+            elif not self.metadata.groups[profile].is_profile:
+                self.LintError("non-profile-set-as-profile",
+                               "%s is set as profile for %s, but %s is not a "
+                               "profile group:\n%s" %
+                               (profile, client.get("name"), profile,
+                                self.RenderXML(client)))
