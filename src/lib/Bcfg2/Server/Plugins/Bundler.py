@@ -189,7 +189,7 @@ class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
             # genshi template
             xdata = lxml.etree.parse(bundle.template.filepath).getroot()
 
-        fname = bundle.name.split('Bundler/')[1].split('.')[0]
+        fname = os.path.splitext(os.path.basename(bundle.name))[0]
         bname = xdata.get('name')
         if fname != bname:
             self.LintError("inconsistent-bundle-name",
