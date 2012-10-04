@@ -152,7 +152,7 @@ def main():
             errorhandler.RegisterErrors(getattr(plugin, 'Errors')())
 
         print("%-35s %-35s" % ("Error name", "Handler"))
-        for err, handler in errorhandler.errors.items():
+        for err, handler in errorhandler.errortypes.items():
             print("%-35s %-35s" % (err, handler.__name__))
         raise SystemExit(0)
 

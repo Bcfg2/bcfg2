@@ -118,26 +118,26 @@ class ErrorHandler (object):
         else:
             self._wrapper = lambda s: [s]
 
-        self.errors = dict()
+        self.errortypes = dict()
         if config is not None:
-            self.RegisterErrors(config.items())
+            self.RegisterErrors(dict(config.items()))
 
     def RegisterErrors(self, errors):
         """ Register a dict of errors (name: default level) that a
         plugin may raise """
         for err, action in errors.items():
-            if err not in self.errors:
+            if err not in self.errortypes:
                 if "warn" in action:
-                    self.errors[err] = self.warn
+                    self.errortypes[err] = self.warn
                 elif "err" in action:
-                    self.errors[err] = self.error
+                    self.errortypes[err] = self.error
                 else:
-                    self.errors[err] = self.debug
+                    self.errortypes[err] = self.debug
 
     def dispatch(self, err, msg):
         """ Dispatch an error to the correct handler """
-        if err in self.errors:
-            self.errors[err](msg)
+        if err in self.errortypes:
+            self.errortypes[err](msg)
             self.logger.debug("    (%s)" % err)
         else:
             # assume that it's an error, but complain
