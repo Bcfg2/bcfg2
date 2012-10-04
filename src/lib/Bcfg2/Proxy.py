@@ -91,7 +91,8 @@ class RetryMethod(xmlrpclib._Method):
                     msg = "Server failure: %s" % err
             except CertificateError:
                 err = sys.exc_info()[1]
-                msg = "Got unallowed commonName %s from server" % err.commonName
+                msg = "Got unallowed commonName %s from server" % \
+                    err.commonName
             except KeyError:
                 err = sys.exc_info()[1]
                 msg = "Server disallowed connection: %s" % err
@@ -99,8 +100,9 @@ class RetryMethod(xmlrpclib._Method):
                 err = sys.exc_info()[1]
                 msg = err
             except:
-                err = sys.exc_info()[1]
-                msg = "Unknown failure: %s" % err
+                raise
+                etype, err = sys.exc_info()[:2]
+                msg = "Unknown failure: %s (%s)" % (err, etype.__name__)
             if msg:
                 if final:
                     self.log.error(msg)

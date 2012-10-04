@@ -182,7 +182,7 @@ class SSLServer(SocketServer.TCPServer, object):
     url = property(_get_url)
 
 
-class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
+class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     """Component XML-RPC request handler.
 
     Adds support for HTTP authentication.
@@ -265,7 +265,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             except:
                 (etype, msg) = sys.exc_info()[:2]
                 self.logger.error("Error sending 500 response (%s): %s" %
-                                  (etype, msg))
+                                  (etype.__name__, msg))
                 raise
         else:
             # got a valid XML RPC response
@@ -308,7 +308,8 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 etype, err = sys.exc_info()[:2]
                 self.logger.error("Unknown error sending response to %s: "
                                   "%s (%s)" %
-                                  (self.client_address[0], err, etype))
+                                  (self.client_address[0], err,
+                                   etype.__name__))
 
     def finish(self):
         # shut down the connection
