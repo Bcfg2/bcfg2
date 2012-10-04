@@ -1,5 +1,5 @@
 .
-.TH "BCFG2\.CONF" "5" "September 2012" "" ""
+.TH "BCFG2\.CONF" "5" "October 2012" "" ""
 .
 .SH "NAME"
 \fBbcfg2\.conf\fR \- configuration parameters for Bcfg2
@@ -67,6 +67,14 @@ Specifies which server core backend to use\. Current available options are:
 .
 .IP
 The default is \fBbest\fR, which is currently an alias for \fBbuiltin\fR\. More details on the backends can be found in the official documentation\.
+.
+.TP
+\fBuser\fR
+The username or UID to run the daemon as\. Default is \fB0\fR
+.
+.TP
+\fBgroup\fR
+The group name or GID to run the daemon as\. Default is \fB0\fR
 .
 .SS "Account Plugin"
 The account plugin manages authentication data, including the following\.
