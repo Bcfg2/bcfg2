@@ -7,23 +7,18 @@ __all__ = [
 import os
 import sys
 import socket
-import base64
 import select
 import signal
 import logging
 import ssl
 import threading
 import time
-# Compatibility imports
-from Bcfg2.Compat import xmlrpclib, SimpleXMLRPCServer, SocketServer
+from Bcfg2.Compat import xmlrpclib, SimpleXMLRPCServer, SocketServer, \
+    b64decode
 
 
-class ForkedChild(Exception):
-    pass
-
-
-class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
-    logger = logging.getLogger("Cobalt.Server.XMLRPCDispatcher")
+class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
+    logger = logging.getLogger("Bcfg2.SSLServer.XMLRPCDispatcher")
 
     def __init__(self, allow_none, encoding):
         try:
@@ -66,8 +61,7 @@ class XMLRPCDispatcher (SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
         return raw_response
 
 
-class SSLServer (SocketServer.TCPServer, object):
-
+class SSLServer(SocketServer.TCPServer, object):
     """TCP server supporting SSL encryption.
 
     Methods:
@@ -79,7 +73,7 @@ class SSLServer (SocketServer.TCPServer, object):
     """
 
     allow_reuse_address = True
-    logger = logging.getLogger("Cobalt.Server.TCPServer")
+    logger = logging.getLogger("Bcfg2.SSLServer.SSLServer")
 
     def __init__(self, listen_all, server_address, RequestHandlerClass,
                  keyfile=None, certfile=None, reqCert=False, ca=None,
@@ -122,20 +116,29 @@ class SSLServer (SocketServer.TCPServer, object):
         self.timeout = timeout
         self.socket.settimeout(timeout)
         self.keyfile = keyfile
-        if keyfile != None:
-            if keyfile == False or not os.path.exists(keyfile):
-                self.logger.error("Keyfile %s does not exist" % keyfile)
-                raise Exception("keyfile doesn't exist")
+        if (keyfile is not None and
+            (keyfile == False or
+             not os.path.exists(keyfile) or
+             not os.access(keyfile, os.R_OK))):
+            msg = "Keyfile %s does not exist or is not readable" % keyfile
+            self.logger.error(msg)
+            raise Exception(msg)
         self.certfile = certfile
-        if certfile != None:
-            if certfile == False or not os.path.exists(certfile):
-                self.logger.error("Certfile %s does not exist" % certfile)
-                raise Exception("certfile doesn't exist")
+        if (certfile is not None and
+            (certfile == False or
+             not os.path.exists(certfile) or
+             not os.access(certfile, os.R_OK))):
+            msg = "Certfile %s does not exist or is not readable" % certfile
+            self.logger.error(msg)
+            raise Exception(msg)
         self.ca = ca
-        if ca != None:
-            if ca == False or not os.path.exists(ca):
-                self.logger.error("CA %s does not exist" % ca)
-                raise Exception("ca doesn't exist")
+        if (ca is not None and
+            (ca == False or
+             not os.path.exists(ca) or
+             not os.access(ca, os.R_OK))):
+            msg = "CA %s does not exist or is not readable" % ca
+            self.logger.error(msg)
+            raise Exception(msg)
         self.reqCert = reqCert
         if ca and certfile:
             self.mode = ssl.CERT_OPTIONAL
@@ -180,20 +183,20 @@ class SSLServer (SocketServer.TCPServer, object):
 
 
 class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
-
     """Component XML-RPC request handler.
 
     Adds support for HTTP authentication.
 
     Exceptions:
-    CouldNotAuthenticate -- client did not present acceptable authentication information
+
+    CouldNotAuthenticate -- client did not present acceptable
+    authentication information
 
     Methods:
     authenticate -- prompt a check of a client's provided username and password
     handle_one_request -- handle a single rpc (optionally authenticating)
-
     """
-    logger = logging.getLogger("Cobalt.Server.XMLRPCRequestHandler")
+    logger = logging.getLogger("Bcfg2.SSLServer.XMLRPCRequestHandler")
 
     def authenticate(self):
         try:
@@ -201,12 +204,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         except KeyError:
             self.logger.error("No authentication data presented")
             return False
-        auth_type, auth_content = header.split()
-        try:
-            # py3k compatibility
-            auth_content = base64.standard_b64decode(auth_content)
-        except TypeError:
-            auth_content = base64.standard_b64decode(bytes(auth_content.encode('ascii')))
+        auth_content = b64decode(header.split()[1])
         try:
             # py3k compatibility
             try:
@@ -226,7 +224,6 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         """Extends parse_request.
 
         Optionally check HTTP authentication when parsing.
-
         """
         if not SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.parse_request(self):
             return False
@@ -235,7 +232,7 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 self.logger.error("Authentication Failure")
                 self.send_error(401, self.responses[401][0])
                 return False
-        except:
+        except:  # pylint: disable=W0702
             self.logger.error("Unexpected Authentication Failure", exc_info=1)
             self.send_error(401, self.responses[401][0])
             return False
@@ -261,14 +258,14 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                                                        data)
             if sys.hexversion >= 0x03000000:
                 response = response.encode('utf-8')
-        except:
+        except:  # pylint: disable=W0702
             try:
                 self.send_response(500)
                 self.end_headers()
             except:
-                (type, msg) = sys.exc_info()[:2]
-                self.logger.error("Error sending 500 response (%s): %s" % \
-                    (type, msg))
+                (etype, msg) = sys.exc_info()[:2]
+                self.logger.error("Error sending 500 response (%s): %s" %
+                                  (etype, msg))
                 raise
         else:
             # got a valid XML RPC response
@@ -292,20 +289,26 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                         if failcount < 5:
                             continue
                         raise
-            except:
-                (type, msg) = sys.exc_info()[:2]
-                if str(type) == 'socket.error' and msg[0] == 32:
+            except socket.error:
+                err = sys.exc_info()[1]
+                if err[0] == 32:
                     self.logger.warning("Connection dropped from %s" %
                                         self.client_address[0])
-                elif str(type) == 'socket.error' and msg[0] == 104:
+                elif err[0] == 104:
                     self.logger.warning("Connection reset by peer: %s" %
                                         self.client_address[0])
-                elif str(type) == 'ssl.SSLError':
-                    self.logger.warning("SSLError handling client %s: %s" %
-                                        (self.client_address[0], msg))
                 else:
-                    self.logger.error("Error sending response (%s): %s" %
-                                      (type, msg))
+                    self.logger.warning("Socket error sending response to %s: "
+                                        "%s" % (self.client_address[0], err))
+            except ssl.SSLError:
+                err = sys.exc_info()[1]
+                self.logger.warning("SSLError handling client %s: %s" %
+                                    (self.client_address[0], err))
+            except:
+                etype, err = sys.exc_info()[:2]
+                self.logger.error("Unknown error sending response to %s: "
+                                  "%s (%s)" %
+                                  (self.client_address[0], err, etype))
 
     def finish(self):
         # shut down the connection
@@ -319,9 +322,8 @@ class XMLRPCRequestHandler (SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         self.rfile.close()
 
 
-class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
-                    XMLRPCDispatcher, object):
-
+class XMLRPCServer(SocketServer.ThreadingMixIn, SSLServer,
+                   XMLRPCDispatcher, object):
     """Component XMLRPCServer.
 
     Methods:
@@ -338,7 +340,6 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
     Properties:
     require_auth -- the request handler is requiring authorization
     credentials -- valid credentials being used for authentication
-
     """
 
     def __init__(self, listen_all, server_address, RequestHandlerClass=None,
@@ -346,7 +347,6 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
                  timeout=10,
                  logRequests=False,
                  register=True, allow_none=True, encoding=None):
-
         """Initialize the XML-RPC server.
 
         Arguments:
@@ -357,10 +357,10 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
         keyfile -- private encryption key filename
         certfile -- certificate file
         logRequests -- log all requests (default False)
-        register -- presence should be reported to service-location (default True)
+        register -- presence should be reported to service-location
+                    (default True)
         allow_none -- allow None values in xml-rpc
         encoding -- encoding to use for xml-rpc (default UTF-8)
-
         """
 
         XMLRPCDispatcher.__init__(self, allow_none, encoding)
@@ -368,7 +368,8 @@ class XMLRPCServer (SocketServer.ThreadingMixIn, SSLServer,
         if not RequestHandlerClass:
             # pylint: disable=E0102
             class RequestHandlerClass (XMLRPCRequestHandler):
-                """A subclassed request handler to prevent class-attribute conflicts."""
+                """A subclassed request handler to prevent
+                class-attribute conflicts."""
             # pylint: enable=E0102
 
         SSLServer.__init__(self,
