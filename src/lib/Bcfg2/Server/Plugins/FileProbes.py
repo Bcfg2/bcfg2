@@ -35,7 +35,7 @@ if not os.path.exists(path):
 try:
     stat = os.stat(path)
 except:
-    sys.stderr.write("Could not stat %%s: %%s" % (path, sys.exc_info()[1]))
+    sys.stderr.write("Could not stat %%s: %%s" %% (path, sys.exc_info()[1]))
     raise SystemExit(0)
 data = Bcfg2.Client.XML.Element("ProbedFileData",
                                 name=path,
@@ -45,7 +45,7 @@ data = Bcfg2.Client.XML.Element("ProbedFileData",
 try:
     data.text = b64encode(open(path).read())
 except:
-    sys.stderr.write("Could not read %%s: %%s" % (path, sys.exc_info()[1]))
+    sys.stderr.write("Could not read %%s: %%s" %% (path, sys.exc_info()[1]))
     raise SystemExit(0)
 print(Bcfg2.Client.XML.tostring(data, xml_declaration=False).decode('UTF-8'))
 """
