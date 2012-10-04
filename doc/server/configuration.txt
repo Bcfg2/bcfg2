@@ -1,0 +1,207 @@
+.. -*- mode: rst -*-
+
+.. _server-configuration:
+
+======================
+ Server Configuration
+======================
+
+This page documents various aspects of server configuration.
+
+.. _server-dropping-privs:
+
+Running as a non-root user
+==========================
+
+Although the Bcfg2 server runs as root by default, it is possible (and
+probably encouraged) to run it as an unprivileged user.  This may
+become the default in the future.  This can be done in all versions of
+Bcfg2, although it has become easier in 1.3.0.  The steps to do so are
+described in three sections below:  Common steps for all versions;
+steps for older versions only; and steps for 1.3.0.
+
+Common Steps
+------------
+
+We will assume for the sake of these steps that we are running the
+Bcfg2 server as the ``bcfg2`` user, who is a member of the ``bcfg2``
+group.  To create that user and group, you can run:
+
+.. code-block:: bash
+
+    groupadd bcfg2
+    useradd -g bcfg2 -M -r -s /sbin/nologin -d /var/lib/bcfg2 \
+        -c "Bcfg2 server user" bcfg2
+
+``useradd`` arguments can vary wildly on different OSes, so please
+read ``useradd`` and run a command appropriate for your platform.
+
+The Bcfg2 server has to be able to read and write its data, so we need
+to set ownership on several things.  The config file and specification
+data, of course:
+
+.. code-block:: bash
+
+    chown bcfg2:bcfg2 /etc/bcfg2.conf
+    chmod 0600 /etc/bcfg2.conf
+    chown -R bcfg2:bcfg2 /var/lib/bcfg2/*
+    chmod -R 0700 /var/lib/bcfg2/*
+
+Note that this does not change the permissions of ``/var/lib/bcfg2``
+itself, which would prevent the ``bcfg2`` user from enabling a new
+plugin.  If you depend on this capability (e.g., if your specification
+is stored in a VCS and checked out onto the Bcfg2 server by a script
+running as the ``bcfg2`` user), then you would want to ``chown`` and
+``chmod`` ``/var/lib/bcfg2`` rather than ``/var/lib/bcfg2/*``.  Note
+also that the recursive ``chmod`` will change permissions on any files
+that are using ``perms="inherit"`` in :ref:`server-info`.
+
+The Bcfg2 server also needs to be able to read its SSL certificate,
+key and the SSL CA certificate:
+
+.. code-block:: bash
+
+    chown bcfg2:bcfg2 /etc/pki/tls/private/bcfg2.key \
+        /etc/pki/tls/certs/bcfg2.crt
+    chmod 0600 /etc/pki/tls/private/bcfg2.key
+    chmod 0644 /etc/pki/tls/certs/bcfg2.crt
+
+The paths to your SSL key and cert may be quite different,
+particularly on older versions of Bcfg2.
+
+.. note::
+
+    This step can be skipped if you are using the CherryPy
+    :ref:`backend <server-backends>`.  CherryPy reads in the
+    certificate data before dropping privileges, so you can (and
+    should) keep the keypair owned by root to prevent a compromised
+    Bcfg2 server process from modifying that data.
+
+Most of these steps can (and should) be done via Bcfg2 itself.
+
+Steps on older versions
+-----------------------
+
+On older versions of Bcfg2, you must change the location of the PID
+file.  This change has been made the default in newer versions.
+
+This can be accomplished in one of two ways.
+
+* On systems where ``/var/run`` is world-writable with the sticky bit set,
+  no change needs to be made.
+* On systems where ``/var/run`` is only writable by root, create a
+  subdirectory for the PID file and configure the Bcfg2 server to
+  write its PID file there:
+
+.. code-block:: bash
+
+    mkdir /var/run/bcfg2-server
+    chown bcfg2:bcfg2 /var/run/bcfg2-server
+    chmod 0644 /var/run/bcfg2-server
+
+To change the PID file:
+
+* On Debian and derivatives, add ``export
+  PIDFILE=/var/run/bcfg2-server/bcfg2-server.pid`` to
+  ``/etc/default/bcfg2-server``
+* On Red Hat Enterprise Linux and derivatives, add ``export
+  PIDFILE=/var/run/bcfg2-server/bcfg2-server.pid`` to
+  ``/etc/sysconfig/bcfg2-server``.  This includes recent versions that
+  are using systemd.
+* On other platforms, take the appropriate steps to change the PID
+  file, which is given to the ``bcfg2-server`` process with the ``-D``
+  option, in your init system.
+
+On older versions of Bcfg2, you must also manually change the init script
+or process to drop privileges to the ``bcfg2`` user before the daemon
+is even invoked.
+
+* On RHEL and derivatives that are not using systemd, modify the
+  ``bcfg2-server`` init script to run ``daemon --user=bcfg2 $DAEMON
+  ...`` in the ``start()`` function.
+* On Debian and derivatives, modify the ``bcfg2-server`` init script
+  to run ``start_daemon --user=bcfg2 ${DAEMON} ...`` in the
+  ``start()`` function.
+* On systems that use systemd as their init system, add ``User=bcfg``
+  to the ``[Service]`` section of
+  ``/etc/systemd/system/bcfg2-server.service``
+* On other platforms, take the appropriate steps to change to the
+  ``bcfg2`` user when spawning the ``bcfg2-server`` daemon.
+
+Restart ``bcfg2-server`` and you should see it running as non-root in
+``ps`` output::
+
+    % ps -ef | grep '[b]cfg2-server'   
+    1000     11581     1  0 07:55 ?        00:00:15 python usr/sbin/bcfg2-server -C /etc/bcfg2.conf -D /var/run/bcfg2-server/bcfg2-server.pid
+
+Steps on Bcfg2 1.3.0
+--------------------
+
+.. versionadded:: 1.3.0
+
+On Bcfg2 1.3, the default PID file location has been changed, but it
+is still owned by root since no ``bcfg2`` user is created by default.
+Consequently, you simply have to run:
+
+.. code-block:: bash
+
+    chown bcfg2:bcfg2 /var/run/bcfg2-server
+    chmod 0644 /var/run/bcfg2-server
+
+Additionally, the server daemon itself supports dropping privileges
+natively in 1.3.  Simply add the following lines to ``bcfg2.conf``::
+
+    [server]
+    ...
+    user = bcfg2
+    group = bcfg2
+
+Restart ``bcfg2-server`` and you should see it running as non-root in
+``ps`` output::
+
+    % ps -ef | grep '[b]cfg2-server'   
+    1000     11581     1  0 07:55 ?        00:00:15 python usr/sbin/bcfg2-server -C /etc/bcfg2.conf -D /var/run/bcfg2-server/bcfg2-server.pid
+
+.. _server-backends:
+
+Server Backends
+===============
+
+.. versionadded:: 1.3.0
+
+Bcfg2 supports two different server backends: a builtin server
+based on the Python SimpleXMLRPCServer object, and a server that uses
+CherryPy (http://www.cherrypy.org).  Each one has advantages and
+disadvantages.
+
+The builtin server:
+
+* Is very stable and mature;
+* Supports certificate authentication;
+* Works on Python 2.4;
+* Is slow with larger numbers of clients.
+
+The CherryPy server:
+
+* Is very new and potentially buggy;
+* Does not support certificate authentication yet, only password
+  authentication;
+* Requires CherryPy 3.2, which requires Python 2.5;
+* Is smarter about daemonization, particularly if you are
+  :ref:`server-dropping-privs`;
+* Is faster with large numbers of clients.
+
+Basically, the builtin server should be used unless you have a
+particular need for performance, and can sacrifice certificate
+authentication.
+
+To select which backend to use, set the ``backend`` option in the
+``[server]`` section of ``/etc/bcfg2.conf``.  Options are:
+
+* ``cherrypy``
+* ``builtin``
+* ``best`` (the default; currently the same as ``builtin``)
+
+If the certificate authentication issues (a limitation in CherryPy
+itself) can be resolved and the CherryPy server proves to be stable,
+it will likely become the default (and ``best``) in a future release.

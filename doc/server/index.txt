@@ -29,7 +29,7 @@ clients.
    snapshots/index
    bcfg2-info
    selinux
-   backends
+   configuration
    database
    caching
    encryption

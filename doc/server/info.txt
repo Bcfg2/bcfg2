@@ -2,9 +2,9 @@
 
 .. _server-info:
 
-====
-Info
-====
+========
+info.xml
+========
 
 Various file properties for entries served by most generator plugins,
 including :ref:`server-plugins-generators-cfg`,
