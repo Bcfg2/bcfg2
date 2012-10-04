@@ -341,6 +341,7 @@ cp -r build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 
 %{__mkdir_p} %{buildroot}%{_localstatedir}/cache/%{name}
 %{__mkdir_p} %{buildroot}%{_localstatedir}/lib/%{name}
+%{__mkdir_p} %{buildroot}%{_localstatedir}/run/bcfg2-server
 
 for selinuxvariant in %{selinux_variants}; do
   install -d %{buildroot}%{_datadir}/selinux/${selinuxvariant}
@@ -409,6 +410,7 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %{_mandir}/man5/bcfg2-lint.conf.5*
 %{_mandir}/man8/*.8*
 %dir %{_prefix}/lib/bcfg2
+%dir %{_localstatedir}/run/bcfg2-server
 %ghost %config(noreplace,missingok) %attr(0600,root,root) %{_sysconfdir}/bcfg2.conf
 
 %doc %{_defaultdocdir}/bcfg2-server-%{version}
