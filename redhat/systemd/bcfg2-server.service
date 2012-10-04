@@ -6,7 +6,7 @@ After=syslog.target network.target
 Type=forking
 StandardOutput=syslog
 StandardError=syslog
-EnvironmentFile=-/etc/sysconfig/bcfg2
+EnvironmentFile=-/etc/sysconfig/bcfg2-server
 ExecStart=/usr/sbin/bcfg2-server $OPTIONS
 
 [Install]

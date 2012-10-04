@@ -9,7 +9,7 @@
 #              to clients.
 
 DAEMON=/usr/sbin/bcfg2-server
-PIDFILE=/var/run/bcfg2-server.pid
+PIDFILE=/var/run/bcfg2-server/bcfg2-server.pid
 PARAMS="-D $PIDFILE"
 prog=$(basename $DAEMON)
 conf="/etc/bcfg2.conf"
