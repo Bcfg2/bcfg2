@@ -53,12 +53,6 @@ BuildRequires:    python-sphinx10
 BuildRequires:    python-sphinx >= 1.0
 %endif
 
-%if 0%{?fedora} >= 16
-# we require a sufficiently new cherrypy that it's really only
-# available in Fedora for now
-Requires:         python-cherrypy >= 3.2.2
-%endif
-
 Requires:         python-lxml >= 0.9
 %if 0%{?rhel_version}
 # the debian init script needs redhat-lsb.
@@ -150,6 +144,50 @@ Bcfg2 can enable the construction of complex change management and
 deployment strategies.
 
 This package includes the Bcfg2 server software.
+
+%package server-cherrypy
+Version:          1.3.0
+Summary:          Bcfg2 Server - CherryPy backend
+%if 0%{?suse_version}
+Group:            System/Management
+%else
+Group:            System Tools
+%endif
+Requires:         bcfg2 = %{version}
+Requires:         bcfg2-server = %{version}
+
+# cherrypy 3.2.3 actually doesn't exist yet, but 3.2.2 has bugs that
+# prevent it from working:
+# https://bitbucket.org/cherrypy/cherrypy/issue/1154/assertionerror-in-recv-when-ssl-is-enabled
+Requires:         python-cherrypy > 3.2.2
+
+%description server-cherrypy
+Bcfg2 helps system administrators produce a consistent, reproducible,
+and verifiable description of their environment, and offers
+visualization and reporting tools to aid in day-to-day administrative
+tasks. It is the fifth generation of configuration management tools
+developed in the Mathematics and Computer Science Division of Argonne
+National Laboratory.
+
+It is based on an operational model in which the specification can be
+used to validate and optionally change the state of clients, but in a
+feature unique to bcfg2 the client's response to the specification can
+also be used to assess the completeness of the specification. Using
+this feature, bcfg2 provides an objective measure of how good a job an
+administrator has done in specifying the configuration of client
+systems. Bcfg2 is therefore built to help administrators construct an
+accurate, comprehensive specification.
+
+Bcfg2 has been designed from the ground up to support gentle
+reconciliation between the specification and current client states. It
+is designed to gracefully cope with manual system modifications.
+
+Finally, due to the rapid pace of updates on modern networks, client
+systems are constantly changing; if required in your environment,
+Bcfg2 can enable the construction of complex change management and
+deployment strategies.
+
+This package includes the Bcfg2 CherryPy server backend.
 
 %package doc
 Summary:          Configuration management system documentation
@@ -387,6 +425,7 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %dir %{python_sitelib}/Bcfg2
 %{python_sitelib}/Bcfg2/Server
 %{python_sitelib}/Bcfg2/Reporting
+%exclude %{python_sitelib}/Bcfg2/Server/CherryPyCore.py
 
 %{python_sitelib}/*egg-info
 
@@ -418,6 +457,10 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %ghost %config(noreplace,missingok) %attr(0600,root,root) %{_sysconfdir}/bcfg2.conf
 
 %doc %{_defaultdocdir}/bcfg2-server-%{version}
+
+%files server-cherrypy
+%defattr(-,root,root,-)
+%{python_sitelib}/Bcfg2/Server/CherryPyCore.py
 
 %files doc
 %defattr(-,root,root,-)
