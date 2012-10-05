@@ -16,9 +16,7 @@ while path != "/":
     path = os.path.dirname(path)
 from Test__init import get_config, get_posix_object
 from Testbase import TestPOSIXTool
-from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
-    skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, \
-    patchIf, datastore
+from common import *
 
 class TestPOSIXNonexistent(TestPOSIXTool):
     test_obj = POSIXNonexistent

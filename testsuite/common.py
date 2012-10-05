@@ -1,19 +1,37 @@
+""" In order to make testing easier and more consistent, we provide a
+number of convenience functions, variables, and classes, for a wide
+variety of reasons. To import this module, first set up
+:ref:`development-unit-testing-relative-imports` and then simply do:
+
+.. code-block:: python
+
+    from common import *
+"""
+
 import os
 import re
 import sys
+import codecs
 import unittest
 from mock import patch, MagicMock, _patch, DEFAULT
 from Bcfg2.Compat import wraps
 
+#: The path to the Bcfg2 specification root for the tests.  Using the
+#: root directory exposes a lot of potential problems with building
+#: paths.
 datastore = "/"
 
+#: The XInclude namespace name
 XI_NAMESPACE = "http://www.w3.org/2001/XInclude"
+
+#: The XInclude namespace in a format suitable for use in XPath
+#: expressions
 XI = "{%s}" % XI_NAMESPACE
 
+#: Whether or not the tests are being run on Python 3.
+inPy3k = False
 if sys.hexversion >= 0x03000000:
     inPy3k = True
-else:
-    inPy3k = False
 
 try:
     from django.core.management import setup_environ
@@ -33,45 +51,84 @@ try:
     from mock import call
 except ImportError:
     def call(*args, **kwargs):
-        """ the Mock call object is a fairly recent addition, but it's
-        very very useful, so we create our own function to create Mock
-        calls """
+        """ Analog to the Mock call object, which is a fairly recent
+        addition, but it's very very useful, so we create our own
+        function to create Mock calls"""
         return (args, kwargs)
+
+#: The name of the builtin module, for mocking Python builtins.  In
+#: Python 2, this is ``__builtin__``, in Python 3 ``builtins``.  To
+#: patch a builtin, you must do something like:
+#:
+#: .. code-block:: python
+#:
+#:     @patch("%s.open" % open)
+#:     def test_something(self, mock_open):
+#:         ...
+builtins = "__builtin__"
+
 
 if inPy3k:
     builtins = "builtins"
 
-    def u(x):
-        return x
+    def u(s):
+        """ Get a unicode string, whatever that means.  In Python 2,
+        returns a unicode object; in Python 3, returns a str object.
+
+        :param s: The string to unicode-ify.
+        :type s: str
+        :returns: str or unicode """
+        return s
 else:
-    builtins = "__builtin__"
+    def u(s):
+        """ Get a unicode string, whatever that means.  In Python 2,
+        returns a unicode object; in Python 3, returns a str object.
 
-    import codecs
-    def u(x):
-        return codecs.unicode_escape_decode(x)[0]
+        :param s: The string to unicode-ify.
+        :type s: str
+        :returns: str or unicode """
+        return codecs.unicode_escape_decode(s)[0]
 
+
+#: Whether or not skipping tests is natively supported by
+#: :mod:`unittest`.  If it isn't, then we have to make tests that
+#: would be skipped succeed instead.
+can_skip = False
 
 if hasattr(unittest, "skip"):
     can_skip = True
+
+    #: skip decorator from :func:`unittest.skip`
     skip = unittest.skip
+
+    #: skipIf decorator from :func:`unittest.skipIf`
     skipIf = unittest.skipIf
+
+    #: skipUnless decorator from :func:`unittest.skipUnless`
     skipUnless = unittest.skipUnless
 else:
     # we can't actually skip tests, we just make them pass
     can_skip = False
 
     def skip(msg):
+        """ skip decorator used when :mod:`unittest` doesn't support
+        skipping tests.  Replaces the decorated function with a
+        no-op. """
         def decorator(func):
             return lambda *args, **kwargs: None
         return decorator
 
     def skipIf(condition, msg):
+        """ skipIf decorator used when :mod:`unittest` doesn't support
+        skipping tests """
         if not condition:
             return lambda f: f
         else:
             return skip(msg)
 
     def skipUnless(condition, msg):
+        """ skipUnless decorator used when :mod:`unittest` doesn't
+        support skipping tests """
         if condition:
             return lambda f: f
         else:
@@ -114,6 +171,7 @@ def _count_diff_all_purpose(actual, expected):
         result.append(diff)
     return result
 
+
 def _assertion(predicate, default_msg=None):
     @wraps(predicate)
     def inner(self, *args, **kwargs):
@@ -130,6 +188,7 @@ def _assertion(predicate, default_msg=None):
         assert predicate(*args, **kwargs), msg
     return inner
 
+
 def _regex_matches(val, regex):
     if hasattr(regex, 'search'):
         return regex.search(val)
@@ -138,11 +197,23 @@ def _regex_matches(val, regex):
 
 
 class Bcfg2TestCase(unittest.TestCase):
+    """ Base TestCase class that inherits from
+    :class:`unittest.TestCase`.  This class does a few things:
+
+    * Adds :func:`assertXMLEqual`, a useful assertion method given all
+      the XML used by Bcfg2;
+
+    * Defines convenience methods that were (mostly) added in Python
+      2.7.
+    """
     if not hasattr(unittest.TestCase, "assertItemsEqual"):
         # TestCase in Py3k lacks assertItemsEqual, but has the other
         # convenience methods.  this code is (mostly) cribbed from the
         # py2.7 unittest library
         def assertItemsEqual(self, expected_seq, actual_seq, msg=None):
+            """ Implementation of
+            :func:`unittest.TestCase.assertItemsEqual` for python
+            versions that lack it """
             first_seq, second_seq = list(actual_seq), list(expected_seq)
             differences = _count_diff_all_purpose(first_seq, second_seq)
 
@@ -191,6 +262,9 @@ class Bcfg2TestCase(unittest.TestCase):
                                      "%s is not less than or equal to %s")
 
     def assertXMLEqual(self, el1, el2, msg=None):
+        """ Test that the two XML trees given are equal.  Both
+        elements and all children are expected to have ``name``
+        attributes. """
         self.assertEqual(el1.tag, el2.tag, msg=msg)
         self.assertEqual(el1.text, el2.text, msg=msg)
         self.assertItemsEqual(el1.attrib, el2.attrib, msg=msg)
@@ -208,11 +282,12 @@ class Bcfg2TestCase(unittest.TestCase):
 
 
 class DBModelTestCase(Bcfg2TestCase):
+    """ Test case class for Django database models """
     models = []
 
     @skipUnless(has_django, "Django not found, skipping")
     def test_syncdb(self):
-        # create the test database
+        """ Create the test database and sync the schema """
         setup_environ(Bcfg2.settings)
         import django.core.management
         django.core.management.call_command("syncdb", interactive=False,
@@ -221,14 +296,16 @@ class DBModelTestCase(Bcfg2TestCase):
 
     @skipUnless(has_django, "Django not found, skipping")
     def test_cleandb(self):
-        # ensure that we a) can connect to the database; b) start with
-        # a clean database
+        """ Ensure that we a) can connect to the database; b) start
+        with a clean database """
         for model in self.models:
             model.objects.all().delete()
             self.assertItemsEqual(list(model.objects.all()), [])
 
 
 def syncdb(modeltest):
+    """ Given an instance of a :class:`DBModelTestCase` object, sync
+    and clean the database """
     inst = modeltest(methodName='test_syncdb')
     inst.test_syncdb()
     inst.test_cleandb()
@@ -246,15 +323,39 @@ class _noop_patch(_patch):
 
 
 class patchIf(object):
-    """ perform conditional patching.  this is necessary because some
-    libraries might not be installed (e.g., selinux, pylibacl), and
-    patching will barf on that.  Other workarounds are not available
-    to us; e.g., context managers aren't in python 2.4, and using
-    inner functions doesn't work because python 2.6 applies all
-    decorators at compile-time, not at run-time, so decorating inner
-    functions does not prevent the decorators from being run. """
+    """ Decorator class to perform conditional patching.  This is
+    necessary because some libraries might not be installed (e.g.,
+    selinux, pylibacl), and patching will barf on that.  Other
+    workarounds are not available to us; e.g., context managers aren't
+    in python 2.4, and using inner functions doesn't work because
+    python 2.6 parses all decorators at compile-time, not at run-time,
+    so decorating inner functions does not prevent the decorators from
+    being run. """
+
     def __init__(self, condition, target, new=DEFAULT, spec=None, create=False,
                  spec_set=None):
+        """
+        :param condition: The condition to evaluate to decide if the
+                          patch will be applied.
+        :type condition: bool
+        :param target: The name of the target object to patch
+        :type target: str
+        :param new: The new object to replace the target with.  If
+                    this is omitted, a new :class:`mock.MagicMock` is
+                    created and passed as an extra argument to the
+                    decorated function.
+        :type new: any
+        :param spec: Spec passed to the MagicMock object if
+                     ``patchIf`` is creating one for you.
+        :type spec: List of strings or existing object
+        :param create: Tell patch to create attributes on the fly.
+                       See the documentation for :func:`mock.patch`
+                       for more details on this.
+        :type create: bool
+        :param spec_set: Spec set passed to the MagicMock object if
+                         ``patchIf`` is creating one for you.
+        :type spec_set: List of strings or existing object
+        """
         self.condition = condition
         self.target = target
 
@@ -286,6 +387,8 @@ class patchIf(object):
                     return _noop_patch(*args)(func)
 
 
+#: The type of compiled regular expression objects
+re_type = None
 try:
     re_type = re._pattern_type
 except AttributeError:

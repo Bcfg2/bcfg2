@@ -13,8 +13,7 @@ while path != "/":
     if os.path.basename(path) == "testsuite":
         break
     path = os.path.dirname(path)
-from common import call, skip, skipIf, skipUnless, Bcfg2TestCase, patchIf, \
-    datastore
+from common import *
 from TestPlugin import TestDirectoryBacked, TestConnector, TestPlugin, \
     TestFileBacked
 

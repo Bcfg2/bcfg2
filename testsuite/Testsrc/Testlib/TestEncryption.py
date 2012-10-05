@@ -13,8 +13,7 @@ while path != "/":
     if os.path.basename(path) == "testsuite":
         break
     path = os.path.dirname(path)
-from common import call, u, can_skip, skip, skipIf, skipUnless, \
-    Bcfg2TestCase, patchIf
+from common import *
 
 try:
     from Bcfg2.Encryption import *

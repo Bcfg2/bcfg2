@@ -13,7 +13,7 @@ while _path != '/':
     if os.path.basename(_path) == "testsuite":
         break
     _path = os.path.dirname(_path)
-from common import can_skip, skip, skipIf, skipUnless, Bcfg2TestCase
+from common import *
 
 # path to Bcfg2 src directory
 srcpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..",
@@ -167,7 +167,6 @@ class TestPylint(Bcfg2TestCase):
 
     full_blacklist = expand_path_dict(error_checks) + contingent_blacklist + \
         blacklist
-
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)

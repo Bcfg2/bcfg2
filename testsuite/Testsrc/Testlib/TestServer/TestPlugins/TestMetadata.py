@@ -18,11 +18,10 @@ while path != "/":
     if os.path.basename(path) == "testsuite":
         break
     path = os.path.dirname(path)
-from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
-    skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, \
-    patchIf, datastore
+from common import *
 from TestPlugin import TestXMLFileBacked, TestMetadata as _TestMetadata, \
     TestStatistics, TestDatabaseBacked
+
 
 def get_clients_test_tree():
     return lxml.etree.XML('''
@@ -46,6 +45,7 @@ def get_clients_test_tree():
   <Client name="client9" profile="group2" secure="true" password="password3"/>
   <Client name="client10" profile="group1" floating="true"/>
 </Clients>''').getroottree()
+
 
 def get_groups_test_tree():
     return lxml.etree.XML('''

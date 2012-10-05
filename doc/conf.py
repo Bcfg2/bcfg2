@@ -20,6 +20,7 @@ import time
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../src/lib'))
+sys.path.insert(0, os.path.abspath('..'))
 
 # -- General configuration -----------------------------------------------------
 
@@ -263,7 +264,8 @@ def setup(app):
 versions = ["3.2", "2.7", "2.6"]
 cur_version = '.'.join(str(v) for v in sys.version_info[0:2])
 
-intersphinx_mapping = dict()
+intersphinx_mapping = dict(mock=('http://www.voidspace.org.uk/python/mock',
+                                 None))
 for pyver in versions:
     if pyver == cur_version:
         key = 'py'

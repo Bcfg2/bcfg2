@@ -16,9 +16,7 @@ while path != "/":
     if os.path.basename(path) == "testsuite":
         break
     path = os.path.dirname(path)
-from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
-    skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, \
-    patchIf, datastore, re_type
+from common import *
 from TestPlugin import TestSpecificData, TestEntrySet, TestGroupSpool, \
     TestPullTarget
 

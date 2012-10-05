@@ -11,7 +11,7 @@ while path != "/":
     if os.path.basename(path) == "testsuite":
         break
     path = os.path.dirname(path)
-from common import can_skip, skipUnless
+from common import *
 
 try:
     from TestServer.TestPlugins.TestCfg.TestCfgCheetahGenerator import \

@@ -8,22 +8,24 @@ Testing
 Testing Prereleases
 -------------------
 
-Before each release, several prereleases will be tagged. It is 
-helpful to have users test these releases (when feasible) because 
-it is hard to replicate the full range of potential reconfiguration 
-situations; between different operating systems, system management
-tools, and configuration specification variation, there can be 
-large differences between sites.
+Before each release, several prereleases will be tagged. It is helpful
+to have users test these releases (when feasible) because it is hard
+to replicate the full range of potential reconfiguration situations;
+between different operating systems, system management tools, and
+configuration specification variation, there can be large differences
+between sites.
 
 
-For more details please visit `Tracking Development Releases of Bcfg2 <http://trac.mcs.anl.gov/projects/bcfg2/wiki/TrackingDevelopmentTrunk>`_ .
+For more details please visit `Tracking Development Releases of Bcfg2
+<http://trac.mcs.anl.gov/projects/bcfg2/wiki/TrackingDevelopmentTrunk>`_
+.
 
 
 Upgrade Testing
 ---------------
 
-This section describes upgrade procedures to completely test the 
-client and server. These procedures can be used for either pre-release 
+This section describes upgrade procedures to completely test the
+client and server. These procedures can be used for either pre-release
 testing, or for confidence building in a new release.
 
 
@@ -33,9 +35,9 @@ Server Testing
 1. Ensure that the server produces the same configurations for clients
 
  * Before the upgrade, generate all client configurations using the
-   buildall subcommand of bcfg2-info. This subcommand takes a directory
-   argument; it will generate one client configuration in each file,
-   naming each according to the client name.
+   buildall subcommand of bcfg2-info. This subcommand takes a
+   directory argument; it will generate one client configuration in
+   each file, naming each according to the client name.
 
        .. code-block:: sh
 
@@ -54,7 +56,8 @@ Server Testing
  * Upgrade the server software
  * Generate all client configurations in a second location using the
    new software. Any tracebacks reflect bugs, and should be filed in
-   the ticketing system. Any new messages should be carefully examined.
+   the ticketing system. Any new messages should be carefully
+   examined.
  * Compare each file in the old directory to those in the new directory
    using ``bcfg2-admin compare -r /old/directory /new/directory``
 
@@ -78,5 +81,5 @@ Server Testing
 Client Testing
 ^^^^^^^^^^^^^^
 
-Run the client in dry-run and non-dry-run mode; ensure that multiple 
+Run the client in dry-run and non-dry-run mode; ensure that multiple
 runs produce consistent results.

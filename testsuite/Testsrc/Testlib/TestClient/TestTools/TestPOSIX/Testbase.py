@@ -17,9 +17,7 @@ while path != "/":
         break
     path = os.path.dirname(path)
 from Test__init import get_posix_object
-from common import XI_NAMESPACE, XI, inPy3k, call, builtins, u, can_skip, \
-    skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, \
-    patchIf, datastore
+from common import *
 
 try:
     import selinux
@@ -32,6 +30,7 @@ try:
     HAS_ACLS = True
 except ImportError:
     HAS_ACLS = False
+
 
 class TestPOSIXTool(Bcfg2TestCase):
     test_obj = POSIXTool
@@ -52,7 +51,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         # fully_specified should do no checking on the abstract
         # POSIXTool object
         self.assertTrue(self.ptool.fully_specified(Mock()))
-    
+
     @patch('os.stat')
     @patch('os.walk')
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._verify_metadata" %

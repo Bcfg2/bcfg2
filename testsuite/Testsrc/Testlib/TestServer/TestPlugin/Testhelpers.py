@@ -17,10 +17,10 @@ while path != '/':
     if os.path.basename(path) == "testsuite":
         break
     path = os.path.dirname(path)
-from common import XI_NAMESPACE, XI, call, builtins, skip, skipIf, \
-    skipUnless, Bcfg2TestCase, patchIf, datastore, inPy3k, can_skip, re_type
+from common import *
 from TestServer.TestPlugin.Testbase import TestPlugin, TestDebuggable
 from TestServer.TestPlugin.Testinterfaces import TestGenerator
+
 
 def tostring(el):
     return lxml.etree.tostring(el, xml_declaration=False).decode('UTF-8')
@@ -155,12 +155,13 @@ class TestDirectoryBacked(Bcfg2TestCase):
                     # such thing as a bad event
 
     def test_child_interface(self):
-        # ensure that the child object has the correct interface
+        """ ensure that the child object has the correct interface """
         self.assertTrue(hasattr(self.test_obj.__child__, "HandleEvent"))
 
     def get_obj(self, fam=None):
         if fam is None:
             fam = Mock()
+
         @patch("%s.%s.add_directory_monitor" % (self.test_obj.__module__,
                                                 self.test_obj.__name__),
                Mock())

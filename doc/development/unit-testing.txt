@@ -6,12 +6,14 @@
 Bcfg2 unit testing
 ==================
 
-.. _Python Mock Module: http://python-mock.sourceforge.net/
+.. _Python Mock Module: http://www.voidspace.org.uk/python/mock
 .. _Python Nose: http://readthedocs.org/docs/nose/en/latest/
 
 You will first need to install the `Python Mock Module`_ and `Python
 Nose`_ modules. You can then run the existing tests with the
-following.::
+following:
+
+.. code-block: bash
 
     cd testsuite
     nosetests
@@ -26,3 +28,351 @@ You should see output something like the following::
 
 Unit tests are also run by Travis-CI, a free continuous integration
 service, at http://travis-ci.org/#!/Bcfg2/bcfg2/
+
+Testing in a virtualenv
+=======================
+
+Travis-CI runs the unit tests in a virtual environment, so to emulate
+that testing environment as closely as possible you can also use a
+virtual environment.  To do so, you must have `virtualenv
+<http://www.virtualenv.org/>`_ installed.
+
+There are two ways to test: Either with just the bare essential
+packages installed, or with optional packages installed as well.
+(Optional packages are things like Genshi; you can run Bcfg2 with them
+or without them.)  For completeness, the tests should be run in both
+manners.  (On Python 3, almost none of the optional packages are
+available, so it can only be run with just the required packages.)  To
+install the optional packages, set:
+
+.. code-block:: bash
+
+    export WITH_OPTIONAL_DEPS=yes
+
+This flag tells the install script to install optional dependencies as
+well as requirements.
+
+This assumes that you will create a virtual environment in
+``~/venvs/``, and that the Bcfg2 source tree is cloned into
+``~/bcfg2``.
+
+First, create a new virtual environment and activate it:
+
+.. code-block:: bash
+
+    cd ~/venvs
+    virtualenv travis
+    source travis/bin/activate
+
+Get the test suite from bcfg2:
+
+.. code-block:: bash
+
+    cp -R ~/bcfg2/* ~/venvs/travis/
+
+Next, you must install prerequisite packages that are required to
+build some of the required Python packages, and some optional packages
+that are much easier to install from binary (rather than from source).
+If you are running on Ubuntu (the platform Travis-CI runs on) and have
+sudo, you can simply run:
+
+.. code-block:: bash
+
+    testsuite/before_install.sh
+
+If not, you will need to examine ``testsuite/before_install.sh``
+and install the packages manually.  The equivalent for Fedora, for
+instance, would be:
+
+.. code-block:: bash
+
+    yum -y update
+    yum -y install swig pylint
+    if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
+        sudo yum -y install libselinux-python pylibacl python-inotify \
+            PyYAML
+    fi
+
+Next, install required Python packages:
+
+.. code-block:: bash
+
+    testsuite/install.sh
+
+Install Bcfg2 itself to the virtualenv:
+
+.. code-block:: bash
+
+    pip install -e .
+
+Now you can run tests:
+
+.. code-block:: bash
+
+    nosetests testsuite
+
+Writing Unit Tests
+==================
+
+Bcfg2 makes extremely heavy use of object inheritance, which can make
+it challenging at times to write reusable tests.  For instance, when
+writing tests for the base :class:`Bcfg2.Server.Plugin.base.Plugin`
+class, which all Bcfg2 :ref:`server-plugins-index` inherit from via
+the :mod:`Plugin interfaces <Bcfg2.Server.Plugin.interfaces>`,
+yielding several levels of often-multiple inheritance.  To make this
+easier, our unit tests adhere to several design considerations:
+
+Inherit Tests
+-------------
+
+Our test objects should have inheritance trees that mirror the
+inheritance trees of their tested objects.  For instance, the
+:class:`Bcfg2.Server.Plugins.Metadata.Metadata` class definition is:
+
+.. code-block:: python
+
+    class Metadata(Bcfg2.Server.Plugin.Metadata,
+                   Bcfg2.Server.Plugin.Statistics,
+                   Bcfg2.Server.Plugin.DatabaseBacked):
+
+Consequently, the ``TestMetadata`` class definition is:
+
+.. code-block:: python
+
+    class TestMetadata(TestPlugin.TestMetadata,
+                       TestPlugin.TestStatistics,
+                       TestPlugin.TestDatabaseBacked):
+
+.. note::
+
+    The test object names are abbreviated because of the system of
+    relative imports in the ``testsuite`` tree, described below.
+
+This gives us a large number of tests basically "for free": all core
+:class:`Bcfg2.Server.Plugin.interfaces.Metadata`,
+:class:`Bcfg2.Server.Plugin.interfaces.Statistics`, and
+:class:`Bcfg2.Server.Plugin.helpers.DatabaseBacked` functionality is
+automatically tested on the ``Metadata`` class, which gives the test
+writer a lot of free functionality and also an easy list of which
+tests must be overridden to provide tests appropriate for the ``Metadata``
+class implementation.
+
+Additionally, a test class should have a class variable that describes
+the class that is being tested, and tests in that class should use
+that class variable to instantate the tested object.  For instance,
+the test for :class:`Bcfg2.Server.Plugin.helpers.DirectoryBacked`
+looks like this:
+
+.. code-block:: python
+
+    class TestDirectoryBacked(Bcfg2TestCase):
+        test_obj = DirectoryBacked
+        ...
+
+
+        def test_child_interface(self):
+            """ ensure that the child object has the correct interface """
+            self.assertTrue(hasattr(self.test_obj.__child__, "HandleEvent"))
+
+Then test objects that inherit from ``TestDirectoryBacked`` can
+override that object, and the ``test_child_interface`` test (e.g.)
+will still work.  For example:
+
+.. code-block:: python
+
+    class TestPropDirectoryBacked(TestDirectoryBacked):
+        test_obj = PropDirectoryBacked
+
+Finally, each test class must also provide a ``get_obj`` method that
+takes no required arguments and produces an instance of ``test_obj``.
+All test methods must use ``self.get_obj()`` to instantiate an object
+to be tested.
+
+An object that does not inherit from any other tested Bcfg2 objects
+should inherit from :class:`testsuite.common.Bcfg2TestCase`, described
+below.
+
+.. _development-unit-testing-relative-imports:
+
+Relative Imports
+----------------
+
+In order to reuse test code and allow for test inheritance, each test
+module should add all parent module paths to its ``sys.path``.  For
+instance, assuming a test in
+``testsuite/Testsrc/Testlib/TestServer/TestPlugins/TestMetadata.py``,
+the following paths should be added to ``sys.path``::
+
+    testsuite
+    testsuite/Testsrc
+    testsuite/Testsrc/Testlib
+    testsuite/Testsrc/Testlib/TestServer
+    testsuite/Testsrc/Testlib/TestServer/TestPlugins
+
+This must be done because Python 2.4, one of our target platforms,
+does not support relative imports.  An easy way to do this is to add
+the following snippet to the top of each test file:
+
+.. code-block:: python
+
+    import os
+    import sys
+
+    # add all parent testsuite directories to sys.path to allow (most)
+    # relative imports in python 2.4
+    path = os.path.dirname(__file__)
+    while path != "/":
+        if os.path.basename(path).lower().startswith("test"):
+            sys.path.append(path)
+        if os.path.basename(path) == "testsuite":
+            break
+        path = os.path.dirname(path)
+
+In addition, each new directory created in ``testsuite`` must contain
+an empty ``__init__.py``.
+
+This will allow you, within ``TestMetadata.py``, to import common test
+code and the parent objects the ``TestMetadata`` class will inherit from:
+
+.. code-block:: python
+
+    from common import inPy3k, call, builtins, u, can_skip, \
+        skip, skipIf, skipUnless, Bcfg2TestCase, DBModelTestCase, syncdb, \
+        patchIf, datastore
+    from TestPlugin import TestXMLFileBacked, TestMetadata as _TestMetadata, \
+        TestStatistics, TestDatabaseBacked
+
+Avoid Patching Where Possible
+-----------------------------
+
+The `Python Mock Module`_ provides a ``patch`` decorator that can be
+used to replace tested objects with ``Mock`` objects.  This is
+wonderful and necessary, but due to differences in the way various
+versions of Python and Python Mock handle object scope, it's not
+always reliable when combined with our system of test object
+inheritance.  Consequently, you should follow these rules when
+considering whether to use ``patch``:
+
+* If you need to mock an object that is not part of Bcfg2 (e.g., a
+  builtin or an object in another Python library), use ``patch``.
+* If you need to patch an object being tested in order to instantiate
+  it, use ``patch``, but see below.
+* If you need to patch a function (not a method) that is part of
+  Bcfg2, use ``patch``.
+* If you need to mock an object that is part of the object being
+  tested, do not use ``patch``.
+
+As an example of the last rule, assume you are writing tests for
+:class:`Bcfg2.Server.Plugin.helpers.FileBacked`.
+:func:`Bcfg2.Server.Plugin.helpers.FileBacked.HandleEvent` calls
+:func:`Bcfg2.Server.Plugin.helpers.FileBacked.Index`, so we need to
+mock the ``Index`` function.  This is the **wrong** way to do that:
+
+.. code-block:: python
+
+    class TestFileBacked(Bcfg2TestCase):
+        @patch("%s.open" % builtins)
+        @patch("Bcfg2.Server.Plugin.helpers.FileBacked.Index")
+        def test_HandleEvent(self, mock_Index, mock_open):
+            ...
+
+Tests that inherit from ``TestFileBacked`` will not reliably patch the
+correct ``Index`` function.  Instead, assign the object to be mocked
+directly:
+
+.. code-block:: python
+
+    class TestFileBacked(Bcfg2TestCase):
+        @patch("%s.open" % builtins)
+        def test_HandleEvent(self, mock_open):
+            fb = self.get_obj()
+            fb.Index = Mock()
+
+.. note::
+
+    ``@patch`` decorations are evaluated at compile-time, so a
+    workaround like this does **not** work:
+
+    .. code-block:: python
+
+        class TestFileBacked(Bcfg2TestCase):
+            @patch("%s.open" % builtins)
+            @patch("%s.%s.Index" % (self.test_obj.__module__,
+                                    self.test_obj.__name))
+            def test_HandleEvent(self, mock_Index, mock_open):
+                ...
+    
+    But see below about patching objects before instantiation.
+
+In some cases, you will need to patch an object in order to
+instantiate it.  For instance, consider
+:class:`Bcfg2.Server.Plugin.helpers.DirectoryBacked`, which attempts
+to set a file access monitor watch when it is instantiated.  This
+won't work during unit testing, so we have to patch
+:func:`Bcfg2.Server.Plugin.helpers.DirectoryBacked.add_directory_monitor`
+in order to successfully instantiate a ``DirectoryBacked`` object.  In
+order to do that, we need to patch the object being tested, which is a
+variable, but we need to evaluate the patch at run-time, not at
+compile time, in order to deal with inheritance.  This can be done
+with a ``@patch`` decorator on an inner function, e.g.:
+
+.. code-block:: python
+
+    class TestDirectoryBacked(Bcfg2TestCase):
+        test_obj = DirectoryBacked
+
+        def test__init(self):
+            @patch("%s.%s.add_directory_monitor" % (self.test_obj.__module__,
+                                                    self.test_obj.__name__))
+            def inner(mock_add_monitor):
+                db = self.test_obj(datastore, Mock())
+                mock_add_monitor.assert_called_with('')
+
+            inner()
+
+``inner()`` is patched when ``test__init()`` is called, and so
+``@patch()`` is called with the module and the name of the object
+being tested as defined by the test object (i.e., not as defined by
+the parent object).  If this is not done, then the patch will be
+applied at compile-time and ``add_directory_monitor`` will be patched
+on the ``DirectoryBacked`` class instead of on the class to be tested.
+
+Some of our older unit tests do not follow these rules religiously, so
+as more tests are written that inherit from larger portions of the
+``testsuite`` tree they may need to be refactored.
+
+Naming
+------
+
+In order to make the system of inheritance we implement possible, we
+must follow these naming conventions fairly religiously.
+
+* Test classes are given the name of the object to be tested with
+  ``Test`` prepended.  E.g., the test for the
+  :class:`Bcfg2.Server.Plugins.Metadata.Metadata` is named
+  ``TestMetadata``.
+* Test classes that test miscellaneous functions in a module are named
+  ``TestFunctions``.
+* Test modules are given the name of the module to be tested with
+  ``Test`` prepended.  Tests for ``__init__.py`` are named
+  ``Test_init.py`` (one underscore).
+* Tests for methods or functions are given the name of the method or
+  function to be tested with ``test_`` prepended.  E.g., the test for
+  :class:`Bcfg2.Server.Plugin.helpers.StructFile.Match` is called
+  ``test_Match``; the test for
+  :class:`Bcfg2.Server.Plugin.helpers.StructFile._match` is called
+  ``test__match``.
+* Tests for magic methods -- those that start and end with double
+  underscores -- are named ``test__<name>``, where name is the name of
+  the magic method without underscores.  E.g., a test for ``__init__``
+  is called ``test__init``, and a test for ``__getitem__`` is called
+  ``test__getitem``. If this causes a collision with a non-magic
+  function (e.g., if a class also has a function called
+  ``_getitem()``, the test for which would also be called
+  ``test__getitem``, seriously consider refactoring the code for the
+  class.
+
+Common Test Code
+----------------
+
+.. automodule:: testsuite.common
