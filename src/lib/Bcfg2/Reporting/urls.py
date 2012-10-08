@@ -3,6 +3,8 @@ from django.core.urlresolvers import reverse, NoReverseMatch
 from django.http import HttpResponsePermanentRedirect
 from Bcfg2.Reporting.utils import filteredUrls, paginatedUrls, timeviewUrls
 
+handler500 = 'Bcfg2.Reporting.views.server_error'
+
 def newRoot(request):
     try:
         grid_view = reverse('reports_grid_view')
