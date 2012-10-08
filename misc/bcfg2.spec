@@ -192,10 +192,10 @@ Version:          1.3.0
 Summary:          Bcfg2 Web Reporting Interface
 %if 0%{?suse_version}
 Group:            System/Management
-Requires:         httpd,python-django
+Requires:         httpd,python-django,python-django-south
 %else
 Group:            System Tools
-Requires:         httpd,Django
+Requires:         httpd,Django,Django-south
 %endif
 Requires:         bcfg2-server
 %if "%{_vendor}" == "redhat"
@@ -384,6 +384,7 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %{_initrddir}/bcfg2-server
 %dir %{python_sitelib}/Bcfg2
 %{python_sitelib}/Bcfg2/Server
+%{python_sitelib}/Bcfg2/Reporting
 
 %{python_sitelib}/*egg-info
 
@@ -399,6 +400,7 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %{_sbindir}/bcfg2-lint
 %{_sbindir}/bcfg2-repo-validate
 %{_sbindir}/bcfg2-reports
+%{_sbindir}/bcfg2-report-collector
 %{_sbindir}/bcfg2-server
 %{_sbindir}/bcfg2-yum-helper
 %{_sbindir}/bcfg2-test
