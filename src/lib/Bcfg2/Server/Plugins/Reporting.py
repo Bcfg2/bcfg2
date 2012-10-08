@@ -44,7 +44,6 @@ class Reporting(Statistics, PullSource):
 
         core.setup.update(REPORTING_COMMON_OPTIONS)
         core.setup.reparse()
-        self.logger.error("File limit: %s" % core.setup['reporting_file_limit'])
 
         try:
             self.transport = load_transport_from_config(core.setup)
