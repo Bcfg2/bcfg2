@@ -129,7 +129,7 @@ def _handle_filters(query, **kwargs):
 
     if 'group' in kwargs and kwargs['group']:
         group = get_object_or_404(Group, name=kwargs['group'])
-        query = query.filter(metadata__groups__id=group.pk)
+        query = query.filter(groups__id=group.pk)
     return query
 
 
