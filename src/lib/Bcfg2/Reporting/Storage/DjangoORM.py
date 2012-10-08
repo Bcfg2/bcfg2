@@ -28,7 +28,7 @@ from Bcfg2.Reporting.models import *
 class DjangoORM(StorageBase):
     def __init__(self, setup):
         super(DjangoORM, self).__init__(setup)
-        self.size_limit = setup.get('reporting_size_limit')
+        self.size_limit = setup.get('reporting_file_limit')
 
     @transaction.commit_on_success
     def _import_interaction(self, interaction):
