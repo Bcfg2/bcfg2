@@ -442,10 +442,8 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 if [ $1 -eq 1 ]; then
 %if 0%{?suse_version}
   %fillup_and_insserv -f bcfg2-server
-  %fillup_and_insserv -f bcfg2-report-collector
 %else
   /sbin/chkconfig --add bcfg2-server
-  /sbin/chkconfig --add bcfg2-report-collector
 %endif
 fi
 
