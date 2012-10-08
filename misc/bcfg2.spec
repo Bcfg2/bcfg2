@@ -192,10 +192,10 @@ Version:          1.3.0
 Summary:          Bcfg2 Web Reporting Interface
 %if 0%{?suse_version}
 Group:            System/Management
-Requires:         httpd,python-django,python-django-south
+Requires:         httpd,python-django >= 1.2,python-django-south >= 0.7
 %else
 Group:            System Tools
-Requires:         httpd,Django,Django-south
+Requires:         httpd,Django >= 1.2,Django-south >= 0.7
 %endif
 Requires:         bcfg2-server
 %if "%{_vendor}" == "redhat"
