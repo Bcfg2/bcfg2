@@ -238,7 +238,7 @@ E.G. 1.2.0pre1 is a valid version.
                      'Release:          0.0%s\n' % version_info['build'],
                      dryrun=options.dryrun)
     # update the version in reports
-    find_and_replace('src/lib/Bcfg2/Server/Reports/reports/templates/base.html',
+    find_and_replace('src/lib/Bcfg2/Reporting/templates/base.html',
                      'Bcfg2 Version',
                      '    <span>Bcfg2 Version %s</span>\n' % version,
                      dryrun=options.dryrun)

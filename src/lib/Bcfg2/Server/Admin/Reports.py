@@ -8,19 +8,16 @@ import pickle
 import platform
 import sys
 import traceback
-from lxml.etree import XML, XMLSyntaxError
 
-from Bcfg2.Compat import ConfigParser, md5
+from Bcfg2.Compat import md5
 
-import Bcfg2.settings
+from Bcfg2 import settings
 
 # Load django and reports stuff _after_ we know we can load settings
-import django.core.management
-from Bcfg2.Server.Reports.importscript import load_stats
-from Bcfg2.Server.SchemaUpdater import update_database, UpdaterError
-from Bcfg2.Server.Reports.utils import *
+from django.core import management
+from Bcfg2.Reporting.utils import *
 
-project_directory = os.path.dirname(Bcfg2.settings.__file__)
+project_directory = os.path.dirname(settings.__file__)
 project_name = os.path.basename(project_directory)
 sys.path.append(os.path.join(project_directory, '..'))
 project_module = __import__(project_name, '', '', [''])
@@ -30,9 +27,8 @@ sys.path.pop()
 os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
 from django.db import connection, transaction
 
-from Bcfg2.Server.Reports.reports.models import Client, Interaction, Entries, \
-                                Entries_interactions, Performance, \
-                                Reason
+from Bcfg2.Reporting.models import Client, Interaction, \
+                                Performance
 
 
 def printStats(fn):
@@ -54,7 +50,8 @@ def printStats(fn):
         self.log.info("Interactions removed: %s" %
                       (start_i - Interaction.objects.count()))
         self.log.info("Interactions->Entries removed: %s" %
-                      (start_ei - Entries_interactions.objects.count()))
+                      (start_ei - 0))
+        #              (start_ei - Entries_interactions.objects.count()))
         self.log.info("Metrics removed: %s" %
                       (start_perf - Performance.objects.count()))
 
@@ -70,9 +67,6 @@ class Reports(Bcfg2.Server.Admin.Mode):
                  "\n"
                  "  Commands:\n"
                  "    init                 Initialize the database\n"
-                 "    load_stats           Load statistics data\n"
-                 "      -s|--stats         Path to statistics.xml file\n"
-                 "      -O3                Fast mode.  Duplicates data!\n"
                  "    purge                Purge records\n"
                  "      --client [n]       Client to operate on\n"
                  "      --days   [n]       Records older then n days\n"
@@ -85,6 +79,11 @@ class Reports(Bcfg2.Server.Admin.Mode):
 
     def __init__(self, setup):
         Bcfg2.Server.Admin.Mode.__init__(self, setup)
+        try:
+            import south
+        except ImportError:
+            print "Django south is required for Reporting"
+            raise SystemExit(-3)
 
     def __call__(self, args):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
@@ -99,24 +98,16 @@ class Reports(Bcfg2.Server.Admin.Mode):
         elif args[0] == 'scrub':
             self.scrub()
         elif args[0] in ['init', 'update']:
+            if self.setup['verbose'] or self.setup['debug']:
+                vrb = 2
+            else:
+                vrb = 0
             try:
-                update_database()
-            except UpdaterError:
-                print("Update failed")
+                management.call_command("syncdb", verbosity=vrb)
+                management.call_command("migrate", verbosity=vrb)
+            except:
+                print("Update failed: %s" % traceback.format_exc().splitlines()[-1])
                 raise SystemExit(-1)
-        elif args[0] == 'load_stats':
-            quick = '-O3' in args
-            stats_file = None
-            i = 1
-            while i < len(args):
-                if args[i] == '-s' or args[i] == '--stats':
-                    stats_file = args[i + 1]
-                    if stats_file[0] == '-':
-                        self.errExit("Invalid statistics file: %s" % stats_file)
-                elif args[i] == '-c' or args[i] == '--clients-file':
-                    print("DeprecationWarning: %s is no longer used" % args[i])
-                i = i + 1
-            self.load_stats(stats_file, self.log.getEffectiveLevel() > logging.WARNING, quick)
         elif args[0] == 'purge':
             expired = False
             client = None
@@ -203,9 +194,9 @@ class Reports(Bcfg2.Server.Admin.Mode):
         Reason.prune_orphans()
         self.log.info("Pruned %d Reason records" % (start_count - Reason.objects.count()))
 
-        start_count = Entries.objects.count()
-        Entries.prune_orphans()
-        self.log.info("Pruned %d Entries records" % (start_count - Entries.objects.count()))
+        #start_count = Entries.objects.count()
+        #Entries.prune_orphans()
+        #self.log.info("Pruned %d Entries records" % (start_count - Entries.objects.count()))
 
     def django_command_proxy(self, command):
         '''Call a django command'''
@@ -214,37 +205,6 @@ class Reports(Bcfg2.Server.Admin.Mode):
         else:
             django.core.management.call_command(command)
 
-    def load_stats(self, stats_file=None, verb=0, quick=False):
-        '''Load statistics data into the database'''
-        location = ''
-
-        if not stats_file:
-            try:
-                stats_file = "%s/etc/statistics.xml" % self.cfp.get('server', 'repository')
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-                self.errExit("Could not read bcfg2.conf; exiting")
-        try:
-            statsdata = XML(open(stats_file).read())
-        except (IOError, XMLSyntaxError):
-            self.errExit("StatReports: Failed to parse %s" % (stats_file))
-
-        try:
-            encoding = self.cfp.get('components', 'encoding')
-        except:
-            encoding = 'UTF-8'
-
-        try:
-            load_stats(statsdata,
-                       encoding,
-                       verb,
-                       self.log,
-                       quick=quick,
-                       location=platform.node())
-        except UpdaterError:
-            self.errExit("StatReports: Database updater failed")
-        except:
-            self.errExit("failed to import stats: %s" 
-                % traceback.format_exc().splitlines()[-1])
 
     @printStats
     def purge(self, client=None, maxdate=None, state=None):
@@ -272,7 +232,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
             self.log.debug("Filtering by maxdate: %s" % maxdate)
             ipurge = ipurge.filter(timestamp__lt=maxdate)
 
-        if Bcfg2.settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+        if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
             grp_limit = 100
         else:
             grp_limit = 1000

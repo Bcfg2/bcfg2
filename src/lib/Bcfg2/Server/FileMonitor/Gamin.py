@@ -7,6 +7,7 @@ from gamin import WatchMonitor, GAMCreated, GAMExists, GAMEndExist, \
 from Bcfg2.Server.FileMonitor import Event, FileMonitor
 
 
+
 class GaminEvent(Event):
     """
     This class provides an event analogous to

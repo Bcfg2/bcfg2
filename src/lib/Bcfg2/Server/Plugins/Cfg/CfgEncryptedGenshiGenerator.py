@@ -21,6 +21,8 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 
+LOGGER = logging.getLogger(__name__)
+
 
 class EncryptedTemplateLoader(TemplateLoader):
     """ Subclass :class:`genshi.template.TemplateLoader` to decrypt

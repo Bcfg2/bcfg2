@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% load split %}
+{% load syntax_coloring %}
+
+
+{% block title %}Bcfg2 - Element Details{% endblock %}
+
+
+{% block extra_header_info %}
+<style type="text/css">
+#table_list_header {
+	font-size: 100%;
+}
+table.entry_list {
+        width: auto;
+}
+div.information_wrapper {
+	margin: 15px;
+}
+div.diff_wrapper {
+	overflow: auto;
+}
+div.entry_list h3 {
+	font-size: 90%;
+	padding: 5px;
+}
+</style>
+{% endblock%}
+
+{% block pagebanner %}Element Details{% endblock %}
+
+{% block content %}
+    <div class='detail_header'>
+      <h3>{{item.get_state_display}} {{item.entry_type}}: {{item.name}}</h3>
+    </div>
+
+  <div class="information_wrapper">
+{% block item_details %}
+  {% if item.is_extra %}
+  <p>This item exists on the host but is not defined in the configuration.</p>
+  {% endif %}
+
+  {% if not item.exists %}
+  <div class="warning">This item does not currently exist on the host but is specified to exist in the configuration.</div>
+  {% endif %}
+
+{# Really need a better test here #}
+{% if item.perms_problem or item.status_problem or item.linkentry.link_problem or item.version_problem %}
+  <table class='entry_list'>
+      <tr id='table_list_header'>
+          <td style='text-align: right;'>Problem Type</td><td>Expected</td><td style='border-bottom: 1px solid #98DBCC;'>Found</td></tr>
+  {% if item.perms_problem %}
+      {% if item.current_perms.owner %}
+      <tr><td style='text-align: right'><b>Owner</b></td><td>{{item.target_perms.owner}}</td>
+          <td>{{item.current_perms.owner}}</td></tr>
+      {% endif %}
+      {% if item.current_perms.group %}
+      <tr><td style='text-align: right'><b>Group</b></td><td>{{item.target_perms.group}}</td>
+          <td>{{item.current_perms.group}}</td></tr>
+      {% endif %}
+      {% if item.current_perms.perms %}
+      <tr><td style='text-align: right'><b>Perms</b></td><td>{{item.target_perms.perms}}</td>
+          <td>{{item.current_perms.perms}}</td></tr>
+      {% endif %}
+  {% endif %}
+  {% if item.status_problem %}
+  <tr><td style='text-align: right'><b>Status</b></td><td>{{item.target_status}}</td>
+          <td>{{item.current_status}}</td></tr>
+  {% endif %}
+  {% if item.linkentry.link_problem %}
+  <tr><td style='text-align: right'><b>{{item.get_path_type_display}}</b></td><td>{{item.linkentry.target_path}}</td>
+          <td>{{item.linkentry.current_path}}</td></tr>
+  {% endif %}
+  {% if item.version_problem %}
+    <tr><td style='text-align: right'><b>Package Version</b></td><td>{{item.target_version|cut:"("|cut:")"}}</td>
+        <td>{{item.current_version|cut:"("|cut:")"}}</td></tr>
+  {% endif %}
+  </table>
+{% endif %}
+
+  {% if item.has_detail %}
+    <div class='entry_list'>
+      <div class='entry_list_head'>
+        {% if item.is_sensitive %}
+          <h3>File contents unavailable, as they might contain sensitive data.</h3>
+        {% else %}
+          <h3>Incorrect file contents ({{item.get_detail_type_display}})</h3>
+        {% endif %}
+      </div>
+      {% if item.is_diff %}
+        <div class='diff_wrapper'>
+          {{ item.details|syntaxhilight }}
+        </div>
+      {% else %}
+          {{ item.details }}
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <!-- display extra directory entries -->
+  {% if item.reason.unpruned %}
+    <div class='entry_list'>
+      <div class='entry_list_head'>
+          <h3>Extra entries found</h3>
+      </div>
+      <table class='entry_list' cellpadding='3'>
+        {% for unpruned_item in item.reason.unpruned|split %}
+          <tr><td>{{ unpruned_item }}</td></tr>
+        {% endfor %}
+      </table>
+    </div>
+  {% endif %}
+{% endblock %}
+
+
+  <div class='entry_list'>
+    <div class='entry_list_head'>
+      <h3>Occurences on {{ timestamp|date:"Y-m-d" }}</h3>
+    </div>
+    {% if associated_list %}
+      <table class="entry_list" cellpadding="3">
+        {% for inter in associated_list %}
+          <tr><td><a href="{% url reports_client_detail inter.client.name %}"
+              >{{inter.client.name}}</a></td>
+          <td><a href="{% url reports_client_detail_pk hostname=inter.client.name,pk=inter.id %}"
+              >{{inter.timestamp}}</a></td>
+          </tr>
+        {% endfor %}
+      </table>
+    {% else %}
+      <p>Missing client list</p>
+    {% endif %}
+  </div>
+
+  </div><!-- information_wrapper -->
+{% endblock %}

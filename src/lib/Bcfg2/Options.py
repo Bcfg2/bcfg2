@@ -333,6 +333,23 @@ def get_bool(val):
     else:
         raise ValueError
 
+def get_size(value):
+    if value == -1:
+        return value
+    mat = re.match("(\d+)([KkMmGg])?", value)
+    if not mat:
+        raise ValueError
+    rvalue = int(mat.group(1))
+    mult = mat.group(2).lower()
+    if mult == 'k':
+        return rvalue * 1024
+    elif mult == 'm':
+        return rvalue * 1024 * 1024
+    elif mult == 'g':
+        return rvalue * 1024 * 1024 * 1024
+    else:
+        return rvalue
+
 
 def get_gid(val):
     """ This takes a group name or gid and returns the corresponding
@@ -607,6 +624,12 @@ DJANGO_WEB_PREFIX = \
            default=None,
            cf=('statistics', 'web_prefix'),)
 
+# Reporting options
+REPORTING_FILE_LIMIT = \
+    Option('Reporting file size limit',
+           default=get_size('512m'),
+           cf=('reporting', 'file_limit'),
+           cook=get_size,)
 
 # Client options
 CLIENT_KEY = \
@@ -1134,6 +1157,8 @@ DATABASE_COMMON_OPTIONS = dict(web_configfile=WEB_CFILE,
                                time_zone=DJANGO_TIME_ZONE,
                                django_debug=DJANGO_DEBUG,
                                web_prefix=DJANGO_WEB_PREFIX)
+
+REPORTING_COMMON_OPTIONS = dict(reporting_file_limit=REPORTING_FILE_LIMIT)
 
 
 class OptionParser(OptionSet):

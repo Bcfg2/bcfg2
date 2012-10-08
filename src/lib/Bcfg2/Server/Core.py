@@ -148,25 +148,18 @@ class BaseCore(object):
         Bcfg2.settings.read_config(repo=self.datastore)
 
         self._database_available = False
-        # verify our database schema
-        try:
-            from Bcfg2.Server.SchemaUpdater import update_database, \
-                UpdaterError
+        if Bcfg2.settings.HAS_DJANGO:
+            from django.core.exceptions import ImproperlyConfigured
+            from django.core import management
             try:
-                update_database()
+                management.call_command("syncdb", interactive=False, verbosity=0)
                 self._database_available = True
-            except UpdaterError:
-                err = sys.exc_info()[1]
-                self.logger.error("Failed to update database schema: %s" % err)
-        except ImportError:
-            # assume django is not installed
-            pass
-        except Exception:
-            inst = sys.exc_info()[1]
-            self.logger.error("Failed to update database schema")
-            self.logger.error(str(inst))
-            self.logger.error(str(type(inst)))
-            raise CoreInitError
+            except ImproperlyConfigured:
+                self.logger.error("Django configuration problem: %s" % 
+                    format_exc().splitlines()[-1])
+            except:
+                self.logger.error("Database update failed: %s" % 
+                    format_exc().splitlines()[-1])
 
         if '' in setup['plugins']:
             setup['plugins'].remove('')

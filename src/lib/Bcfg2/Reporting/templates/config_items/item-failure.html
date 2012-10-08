@@ -1,0 +1,13 @@
+{% extends "config_items/item.html" %}
+{% load syntax_coloring %}
+
+{% block item_details %}
+<div class='entry_list'>
+    <div class='entry_list_head'>
+        <h3>This item failed to bind on the server</h3>
+    </div>
+    <div class='diff_wrapper'>
+        {{ item.message|syntaxhilight:"py" }}
+    </div>
+</div>
+{% endblock %}

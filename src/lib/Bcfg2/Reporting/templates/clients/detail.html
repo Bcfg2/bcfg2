@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% load bcfg2_tags %}
+
+{% block title %}Bcfg2 - Client {{client.name}}{% endblock %}
+
+{% block extra_header_info %}
+<style type="text/css">
+.node_data {
+	border: 1px solid #98DBCC;
+	margin: 10px;
+	padding-left: 18px;
+}
+.node_data td {
+	padding: 1px 20px 1px 2px;
+}
+span.history_links {
+	font-size: 90%;
+	margin-left: 50px;
+}
+span.history_links a {
+	font-size: 90%;
+}
+</style>
+{% endblock %}
+
+{% block body_onload %}javascript:clientdetailload(){% endblock %}
+
+{% block pagebanner %}Client Details{% endblock %}
+
+{% block content %}
+  <div class='detail_header'>
+    <h2>{{client.name}}</h2>
+    <a href='{% url reports_client_manage %}#{{ client.name }}'>[manage]</a>
+  <span class='history_links'><a href="{% url reports_client_history client.name %}">View History</a> | Jump to&nbsp;
+    <select id="quick" name="quick" onchange="javascript:pageJump('quick');">
+    <option value="" selected="selected">--- Time ---</option>
+    {% for i in client.interactions.all|slice:":25" %}
+        <option value="{% url reports_client_detail_pk hostname=client.name, pk=i.id %}">{{i.timestamp|date:"c"}}</option>
+    {% endfor %}
+  </select></span>
+  </div>
+
+  {% if interaction.isstale %}
+  <div class="warningbox">
+    This node did not run within the last 24 hours &#8212; it may be out of date.
+  </div>
+  {% endif %}
+  <table class='node_data'>
+    <tr><td>Timestamp</td><td>{{interaction.timestamp}}</td></tr>
+    {% if interaction.server %}
+    <tr><td>Served by</td><td>{{interaction.server}}</td></tr>
+    {% endif %}
+    <tr><td>Profile</td><td>{{interaction.profile}}</td></tr>
+    {% if interaction.repo_rev_code %}
+    <tr><td>Revision</td><td>{{interaction.repo_rev_code}}</td></tr>
+    {% endif %}
+    <tr><td>State</td><td class='{{interaction.state}}-lineitem'>{{interaction.state|capfirst}}</td></tr>
+    <tr><td>Managed entries</td><td>{{interaction.total_count}}</td></tr>
+    {% if not interaction.isclean %}
+    <tr><td>Deviation</td><td>{{interaction.percentbad|floatformat:"3"}}%</td></tr>
+    {% endif %}
+  </table>
+
+  {% for group in interaction.groups.all %}
+  {% if forloop.first %}
+  <div class='entry_list'>
+    <div class='entry_list_head' onclick='javascript:toggleMe("groups_table");'>
+      <h3>Group membership</h3>
+      <div class='entry_expand_tab' id='plusminus_groups_table'>[+]</div>
+    </div>
+    <table id='groups_table' class='entry_list' style='display: none'>
+  {% endif %}
+        <tr class='{% cycle listview,listview_alt %}'>
+          <td class='entry_list_type'>{{group}}</td>
+        </tr>
+  {% if forloop.last %}
+    </table>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  {% for bundle in interaction.bundles.all %}
+  {% if forloop.first %}
+  <div class='entry_list'>
+    <div class='entry_list_head' onclick='javascript:toggleMe("bundles_table");'>
+      <h3>Bundle membership</h3>
+      <div class='entry_expand_tab' id='plusminus_bundless_table'>[+]</div>
+    </div>
+    <table id='bundles_table' class='entry_list' style='display: none'>
+  {% endif %}
+        <tr class='{% cycle listview,listview_alt %}'>
+          <td class='entry_list_type'>{{bundle}}</td>
+        </tr>
+  {% if forloop.last %}
+    </table>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  {% for entry_type, entry_list in entry_types.items %}
+  {% if entry_list %}
+  <div class='entry_list'>
+    <div class='entry_list_head {{entry_type}}-lineitem' onclick='javascript:toggleMe("{{entry_type}}_table");'>
+      <h3>{{ entry_type|capfirst }} Entries &#8212; {{ entry_list|length }}</h3>
+      <div class='entry_expand_tab' id='plusminus_{{entry_type}}_table'>[+]</div>
+    </div>
+    <table id='{{entry_type}}_table' class='entry_list'>
+      {% for entry in entry_list %}
+        <tr class='{% cycle listview,listview_alt %}'>
+          <td class='entry_list_type'>{{entry.entry_type}}</td>
+          <td><a href="{% url reports_item entry.class_name entry.pk interaction.pk %}">
+              {{entry.name}}</a></td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  {% if interaction.failures.all %}
+  <div class='entry_list'>
+    <div class='entry_list_head' onclick='javascript:toggleMe("failures_table");'>
+      <h3>Failed entries</h3>
+      <div class='entry_expand_tab' id='plusminus_failuress_table'>[+]</div>
+    </div>
+    <table id='failures_table' class='entry_list' style='display: none'>
+      {% for failure in interaction.failures.all %}
+        <tr class='{% cycle listview,listview_alt %}'>
+          <td class='entry_list_type'>{{failure.entry_type}}</td>
+          <td><a href="{% url reports_item failure.class_name failure.pk interaction.pk %}">
+              {{failure.name}}</a></td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% endif %}
+
+  {% if entry_list %}
+  <div class="entry_list recent_history_wrapper">
+    <div class="entry_list_head" style="border-bottom: 2px solid #98DBCC;">
+      <h4 style="display: inline"><a href="{% url reports_client_history client.name %}">Recent Interactions</a></h4>
+    </div>
+    <div class='recent_history_box'>
+      {% include "widgets/interaction_list.inc" %}
+      <div style='padding-left: 5px'><a href="{% url reports_client_history client.name %}">more...</a></div>
+    </div>
+  </div>
+  {% endif %}
+{% endblock %}

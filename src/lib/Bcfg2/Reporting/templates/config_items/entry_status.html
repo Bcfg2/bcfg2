@@ -1,0 +1,32 @@
+{% extends "base-timeview.html" %}
+{% load bcfg2_tags %}
+
+{% block title %}Bcfg2 - Entry Status{% endblock %}
+
+{% block extra_header_info %}
+{% endblock%}
+
+{% block pagebanner %}{{ entry.entry_type }} entry {{ entry.name }} status{% endblock %}
+
+{% block content %}
+{% filter_navigator %}
+{% if items %}
+    <div class='entry_list'>
+      <table class='entry_list'>
+          <tr style='text-align: left' ><th>Name</th><th>Timestamp</th><th>State</th><th>Reason</th></tr>
+        {% for item, inters in items %}
+          {% for inter in inters %}
+          <tr class='{% cycle listview,listview_alt %}'>
+            <td><a href='{% url reports_client_detail hostname=inter.client.name %}'>{{inter.client.name}}</a></td>
+            <td><a href='{% url reports_client_detail_pk hostname=inter.client.name, pk=inter.pk %}'>{{inter.timestamp|date:"Y-m-d\&\n\b\s\p\;H:i"|safe}}</a></td>
+            <td>{{ item.get_state_display }}</td>
+            <td style='white-space: nowrap'><a href="{% url reports_item entry_type=item.class_name pk=item.pk %}">({{item.pk}}) {{item.short_list|join:","}}</a></td>
+          </tr>
+          {% endfor %}
+        {% endfor %}
+      </table>
+    </div>
+{% else %}
+    <p>There are currently no hosts with this configuration entry.</p>
+{% endif %}
+{% endblock %}

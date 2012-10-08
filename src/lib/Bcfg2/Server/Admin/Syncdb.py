@@ -1,8 +1,7 @@
 import Bcfg2.settings
 import Bcfg2.Options
 import Bcfg2.Server.Admin
-from Bcfg2.Server.SchemaUpdater import update_database, UpdaterError
-from django.core.management import setup_environ
+from django.core.management import setup_environ, call_command
 
 class Syncdb(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = ("Sync the Django ORM with the configured database")
@@ -23,7 +22,13 @@ class Syncdb(Bcfg2.Server.Admin.Mode):
         Bcfg2.Server.models.load_models(cfile=self.opts['configfile'])
 
         try:
-            update_database()
-        except UpdaterError:
-            print("Update failed")
+            call_command("syncdb", interactive=False, verbosity=0)
+            self._database_available = True
+        except ImproperlyConfigured:
+            self.logger.error("Django configuration problem: %s" %
+                format_exc().splitlines()[-1])
+            raise SystemExit(-1)
+        except:
+            self.logger.error("Database update failed: %s" %
+                format_exc().splitlines()[-1])
             raise SystemExit(-1)

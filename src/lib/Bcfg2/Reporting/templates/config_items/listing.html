@@ -1,0 +1,35 @@
+{% extends "base-timeview.html" %}
+{% load bcfg2_tags %}
+
+{% block title %}Bcfg2 - Element Listing{% endblock %}
+
+{% block extra_header_info %}
+{% endblock%}
+
+{% block pagebanner %}{{item_state|capfirst}} Element Listing{% endblock %}
+
+{% block content %}
+{% filter_navigator %}
+{% if item_list %}
+  {% for type_name, type_data in item_list %}
+    <div class='entry_list'>
+      <div class='entry_list_head element_list_head' onclick='javascript:toggleMe("table_{{ type_name }}");'>
+        <h3>{{ type_name }} &#8212; {{ type_data|length }}</h3>
+        <div class='entry_expand_tab' id='plusminus_table_{{ type_name }}'>[&ndash;]</div>
+  </div>
+      <table id='table_{{ type_name }}' class='entry_list'>
+        <tr style='text-align: left' ><th>Name</th><th>Count</th><th>Reason</th></tr>
+        {% for entry in type_data %}
+          <tr class='{% cycle listview,listview_alt %}'>
+            <td><a href="{% url reports_entry entry.class_name entry.pk %}">{{entry.name}}</a></td>
+            <td>{{entry.num_entries}}</td>
+            <td><a href="{% url reports_item entry.class_name entry.pk %}">{{entry.short_list|join:","}}</a></td>
+          </tr>
+        {% endfor %}
+      </table>
+    </div>
+  {% endfor %}
+{% else %}
+    <p>There are currently no inconsistent configuration entries.</p>
+{% endif %}
+{% endblock %}
