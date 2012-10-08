@@ -98,7 +98,6 @@ def read_config(cfile=DEFAULT_CONFIG, repo=None, quiet=False):
     TIME_ZONE = setup['time_zone']
 
     DEBUG = setup['django_debug']
-    DEBUG = True
     TEMPLATE_DEBUG = DEBUG
     if DEBUG:
         print("Warning: Setting web_debug to True causes extraordinary memory "
