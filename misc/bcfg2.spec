@@ -320,6 +320,7 @@ mkdir -p %{buildroot}%{_defaultdocdir}/bcfg2-server-%{version}
 %{__mv} %{buildroot}%{_bindir}/bcfg2* %{buildroot}%{_sbindir}
 %{__install} -m 755 debian/bcfg2.init %{buildroot}%{_initrddir}/bcfg2
 %{__install} -m 755 debian/bcfg2-server.init %{buildroot}%{_initrddir}/bcfg2-server
+%{__install} -m 755 debian/bcfg2-report-collector.init %{buildroot}%{_initrddir}/bcfg2-report-collector
 %{__install} -m 755 debian/bcfg2.default %{buildroot}%{_sysconfdir}/default/bcfg2
 %{__install} -m 755 debian/bcfg2-server.default %{buildroot}%{_sysconfdir}/default/bcfg2-server
 %{__install} -m 755 debian/bcfg2.cron.daily %{buildroot}%{_sysconfdir}/cron.daily/bcfg2
@@ -382,6 +383,7 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %files server
 %defattr(-,root,root,-)
 %{_initrddir}/bcfg2-server
+%{_initrddir}/bcfg2-report-collector
 %dir %{python_sitelib}/Bcfg2
 %{python_sitelib}/Bcfg2/Server
 %{python_sitelib}/Bcfg2/Reporting
@@ -440,8 +442,10 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 if [ $1 -eq 1 ]; then
 %if 0%{?suse_version}
   %fillup_and_insserv -f bcfg2-server
+  %fillup_and_insserv -f bcfg2-report-collector
 %else
   /sbin/chkconfig --add bcfg2-server
+  /sbin/chkconfig --add bcfg2-report-collector
 %endif
 fi
 
@@ -457,6 +461,7 @@ fi
 %if 0%{?suse_version}
 if [ $1 -eq 0 ]; then
   %stop_on_removal bcfg2-server
+  %stop_on_removal bcfg2-report-collector
 fi
 %endif
 

@@ -11,3 +11,8 @@
 # Uncomment the following line to enable any of the below selections
 #   Default: 0 (disable)
 BCFG2_SERVER_ENABLED=1
+
+# BCFG2_REPORT_OPTIONS:
+# Set the default options for Bcfg2 Report Collector on startup
+#   Default: ""
+#BCFG2_REPORT_OPTIONS
