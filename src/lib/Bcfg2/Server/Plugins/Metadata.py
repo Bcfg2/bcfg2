@@ -1341,13 +1341,15 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
         self.nested_clients()
         self.deprecated_options()
         self.bogus_profiles()
+        self.duplicate_groups()
 
     @classmethod
     def Errors(cls):
         return {"nested-client-tags": "warning",
                 "deprecated-clients-options": "warning",
                 "nonexistent-profile-group": "error",
-                "non-profile-set-as-profile": "error"}
+                "non-profile-set-as-profile": "error",
+                "duplicate-group": "error"}
 
     def deprecated_options(self):
         """ check for the location='floating' option, which has been
@@ -1390,3 +1392,22 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                                "profile group:\n%s" %
                                (profile, client.get("name"), profile,
                                 self.RenderXML(client)))
+
+    def duplicate_groups(self):
+        """ check for groups that are defined twice.  We count a group
+        tag as a definition if it a) has profile or public set; or b)
+        has any children. """
+        groups = dict()
+        for grp in self.metadata.groups_xml.xdata.xpath("//Groups/Group") + \
+                self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group"):
+            if grp.get("profile") or grp.get("public") or grp.getchildren():
+                if grp.get("name") in groups:
+                    groups[grp.get("name")].append(self.RenderXML(grp))
+                else:
+                    groups[grp.get("name")] = [self.RenderXML(grp)]
+        for gname, grps in groups.items():
+            if len(grps) > 1:
+                self.LintError("duplicate-group",
+                               "Group %s is defined multiple times in %s:\n%s"
+                               % (gname, self.metadata.groups_xml.name,
+                                  "\n".join(grps)))
