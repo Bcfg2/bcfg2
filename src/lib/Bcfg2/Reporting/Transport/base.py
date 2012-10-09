@@ -21,7 +21,7 @@ class TransportBase(object):
         clsname = self.__class__.__name__
         self.logger = logging.getLogger(clsname)
         self.logger.debug("Loading %s transport" % clsname)
-        self.data = os.path.join(setup['repo'], clsname.split()[-1])
+        self.data = os.path.join(setup['repo'], 'Reporting', clsname)
         self.setup = setup
         self.timeout = 2
 
