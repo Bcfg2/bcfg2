@@ -12,10 +12,10 @@ except ImportError:
 
 # required for reporting
 try:
-    import south
-    has_south = True
-except:
-    has_south = False
+    import south  # pylint: disable=W0611
+    HAS_SOUTH = True
+except ImportError:
+    HAS_SOUTH = False
 
 DATABASES = dict()
 
@@ -108,15 +108,6 @@ def read_config(cfile=DEFAULT_CONFIG, repo=None, quiet=False):
     else:
         MEDIA_URL = '/site_media'
 
-    if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] < 3:
-        CACHE_BACKEND = 'locmem:///'
-    else:
-        CACHES = {
-            'default': {
-                'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-            }
-        }
-
 # initialize settings from /etc/bcfg2-web.conf or /etc/bcfg2.conf, or
 # set up basic defaults.  this lets manage.py work in all cases
 read_config(quiet=True)
@@ -140,7 +131,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'Bcfg2.Server',
 )
-if has_south:
+if HAS_SOUTH:
     INSTALLED_APPS = INSTALLED_APPS + (
         'south',
         'Bcfg2.Reporting',
@@ -156,6 +147,15 @@ ADMIN_MEDIA_PREFIX = '/media/'
 #TODO - make this unique
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'eb5+y%oy-qx*2+62vv=gtnnxg1yig_odu0se5$h0hh#pc*lmo7'
+
+if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] < 3:
+    CACHE_BACKEND = 'locmem:///'
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    }
 
 if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] < 2:
     TEMPLATE_LOADERS = (

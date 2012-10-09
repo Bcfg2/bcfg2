@@ -34,7 +34,8 @@ except OSError:
 # perform checks on the listed files only if the module listed in the
 # keys can be imported
 contingent_checks = {
-    ("django",): {"lib/Bcfg2/Server": ["Reports",
+    ("django",): {"lib/Bcfg2": ["Reporting"],
+                  "lib/Bcfg2/Server": ["Reports",
                                        "SchemaUpdater",
                                        "models.py"],
                   "lib/Bcfg2/Server/Admin": ["Reports.py", "Syncdb.py"],
@@ -55,7 +56,7 @@ contingent_checks = {
 # perform only error checking on the listed files
 error_checks = {
     "sbin": ["bcfg2-build-reports", "bcfg2-admin", "bcfg2-reports"],
-    "lib/Bcfg2": ["Proxy.py", "SSLServer.py"],
+    "lib/Bcfg2": ["Proxy.py", "SSLServer.py", "Reporting"],
     "lib/Bcfg2/Server": ["Reports", "SchemaUpdater"],
     "lib/Bcfg2/Server/Admin": ["Backup.py",
                                "Bundle.py",

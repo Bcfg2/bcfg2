@@ -152,14 +152,15 @@ class BaseCore(object):
             from django.core.exceptions import ImproperlyConfigured
             from django.core import management
             try:
-                management.call_command("syncdb", interactive=False, verbosity=0)
+                management.call_command("syncdb", interactive=False,
+                                        verbosity=0)
                 self._database_available = True
             except ImproperlyConfigured:
-                self.logger.error("Django configuration problem: %s" % 
-                    format_exc().splitlines()[-1])
+                self.logger.error("Django configuration problem: %s" %
+                                  format_exc().splitlines()[-1])
             except:
-                self.logger.error("Database update failed: %s" % 
-                    format_exc().splitlines()[-1])
+                self.logger.error("Database update failed: %s" %
+                                  format_exc().splitlines()[-1])
 
         if '' in setup['plugins']:
             setup['plugins'].remove('')

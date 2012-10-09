@@ -333,7 +333,10 @@ def get_bool(val):
     else:
         raise ValueError
 
+
 def get_size(value):
+    """ Given a number of bytes in a human-readable format (e.g.,
+    '512m', '2g'), get the absolute number of bytes as an integer """
     if value == -1:
         return value
     mat = re.match("(\d+)([KkMmGg])?", value)
