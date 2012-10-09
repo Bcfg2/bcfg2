@@ -86,7 +86,6 @@ class Reports(Bcfg2.Server.Admin.Mode):
             raise SystemExit(-3)
 
     def __call__(self, args):
-        Bcfg2.Server.Admin.Mode.__call__(self, args)
         if len(args) == 0 or args[0] == '-h':
             print(self.__usage__)
             raise SystemExit(0)
