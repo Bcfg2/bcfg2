@@ -200,9 +200,9 @@ class Reports(Bcfg2.Server.Admin.Mode):
     def django_command_proxy(self, command):
         '''Call a django command'''
         if command == 'sqlall':
-            django.core.management.call_command(command, 'reports')
+            management.call_command(command, 'Reporting')
         else:
-            django.core.management.call_command(command)
+            management.call_command(command)
 
 
     @printStats
