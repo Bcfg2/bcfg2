@@ -320,16 +320,11 @@ class ThreadedStatistics(Statistics, threading.Thread):
         try:
             while not self.work_queue.empty():
                 (metadata, data) = self.work_queue.get_nowait()
-                try:
-                    pending_data.append(
-                        (metadata.hostname,
-                         lxml.etree.tostring(
-                                data,
-                                xml_declaration=False).decode("UTF-8")))
-                except Full:
-                    err = sys.exc_info()[1]
-                    self.logger.warning("Dropping interaction for %s: %s" %
-                                        (metadata.hostname, err))
+                pending_data.append(
+                    (metadata.hostname,
+                     lxml.etree.tostring(
+                            data,
+                            xml_declaration=False).decode("UTF-8")))
         except Empty:
             pass
 
@@ -401,7 +396,7 @@ class ThreadedStatistics(Statistics, threading.Thread):
                 (client, xdata) = self.work_queue.get(block=True, timeout=2)
             except Empty:
                 continue
-            except Exception:
+            except:
                 err = sys.exc_info()[1]
                 self.logger.error("ThreadedStatistics: %s" % err)
                 continue
