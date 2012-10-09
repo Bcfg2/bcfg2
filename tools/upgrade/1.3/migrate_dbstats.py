@@ -1,8 +1,14 @@
+import os
+os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
+
+import sys
 import logging
 import Bcfg2.Logger
+import Bcfg2.Options
 from django.core.cache import cache
 from django.db import connection, transaction, backend
 
+from Bcfg2.Server.Admin.Reports import Reports
 from Bcfg2.Reporting import models as new_models
 from Bcfg2.Server.Reports.reports import models as legacy_models
 
@@ -22,7 +28,7 @@ def _quote(value):
         try:
             _our_backend = backend.DatabaseOperations(connection)
         except TypeError:
-            _our_backend = backend.DatabaseOperations(connection)
+            _our_backend = backend.DatabaseOperations()
     return _our_backend.quote_name(value)
 
 
@@ -166,10 +172,8 @@ def _shove(old_table, new_table, columns):
     cursor.close()
 
 
-@transaction.commit_manually
-def _restructure():
-    """major restructure of reporting data"""
-
+@transaction.commit_on_success
+def migrate_stage1():
     logger.info("Migrating clients")
     try:
         _shove(legacy_models.Client._meta.db_table, new_models.Client._meta.db_table,
@@ -193,6 +197,16 @@ def _restructure():
     except:
         logger.error("Failed to migrate groups", exc_info=1)
         return False
+    return True
+
+
+@transaction.commit_manually
+def _restructure():
+    """major restructure of reporting data"""
+
+    # try to avoid dangling transactions
+    if not migrate_stage1():
+        return
 
     try:
         entries = {}
@@ -201,8 +215,6 @@ def _restructure():
     except:
         logger.error("Failed to populate entries dict", exc_info=1)
         return False
-
-    transaction.commit()
 
     failures = []
     int_count = legacy_models.Interaction.objects.count()
@@ -226,5 +238,15 @@ if __name__ == '__main__':
     Bcfg2.Logger.setup_logging('bcfg2-report-collector',
                                    to_console=logging.INFO,
                                    level=logging.INFO)
+
+    optinfo = dict()
+    optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
+    optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
+    setup = Bcfg2.Options.OptionParser(optinfo)
+    setup.parse(sys.argv[1:])
+
+    #sync!
+    Reports(setup).__call__(['update'])
+
     _restructure()
 
