@@ -259,6 +259,12 @@ class Group(models.Model):
         ordering = ('name',)
 
 
+    @staticmethod
+    def prune_orphans():
+        '''Prune unused groups'''
+        Group.objects.filter(interaction__isnull=True, group__isnull=True).delete()
+
+
 class Bundle(models.Model):
     """
     Bundles extracted from interactions
@@ -273,6 +279,12 @@ class Bundle(models.Model):
 
     class Meta:
         ordering = ('name',)
+
+
+    @staticmethod
+    def prune_orphans():
+        '''Prune unused bundles'''
+        Bundle.objects.filter(interaction__isnull=True, group__isnull=True).delete()
 
 
 # new interaction models
@@ -368,6 +380,12 @@ class BaseEntry(models.Model):
         return isinstance(self, FailureEntry)
 
 
+    @classmethod
+    def prune_orphans(cls):
+        '''Remove unused entries'''
+        cls.objects.filter(interaction__isnull=True).delete()
+
+
 class SuccessEntry(BaseEntry):
     """Base for successful entries"""
     state = models.IntegerField(choices=TYPE_CHOICES)
@@ -411,7 +429,6 @@ class ActionEntry(SuccessEntry):
     output = models.IntegerField(default=0)
 
     ENTRY_TYPE = r"Action"
-    #TODO - prune
 
 
 class PackageEntry(SuccessEntry):

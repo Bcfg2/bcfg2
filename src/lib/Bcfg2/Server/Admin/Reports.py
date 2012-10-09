@@ -28,7 +28,8 @@ os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
 from django.db import connection, transaction
 
 from Bcfg2.Reporting.models import Client, Interaction, \
-                                Performance
+    Performance, Bundle, Group, FailureEntry, PathEntry, \
+    PackageEntry, ServiceEntry, ActionEntry
 
 
 def printStats(fn):
@@ -146,56 +147,19 @@ class Reports(Bcfg2.Server.Admin.Mode):
     def scrub(self):
         ''' Perform a thorough scrub and cleanup of the database '''
 
-        # Currently only reasons are a problem
-        try:
-            start_count = Reason.objects.count()
-        except Exception:
-            e = sys.exc_info()[1]
-            self.log.error("Failed to load reason objects: %s" % e)
-            return
-        dup_reasons = []
+        # Cleanup unused entries
+        for cls in (Group, Bundle, FailureEntry, ActionEntry, PathEntry, 
+                PackageEntry, PathEntry):
+            try:
+                start_count = cls.objects.count()
+                cls.prune_orphans()
+                self.log.info("Pruned %d %s records" % \
+                    (start_count - cls.objects.count(), cls.__class__.__name__))
+            except:
+                print("Failed to prune %s: %s" % \
+                    (cls.__class__.__name__, 
+                    traceback.format_exc().splitlines()[-1]))
 
-        cmp_reasons = dict()
-        batch_update = []
-        for reason in BatchFetch(Reason.objects):
-            ''' Loop through each reason and create a key out of the data. \
-                This lets us take advantage of a fast hash lookup for \
-                comparisons '''
-            id = reason.id
-            reason.id = None
-            key = md5(pickle.dumps(reason)).hexdigest()
-            reason.id = id
-
-            if key in cmp_reasons:
-                self.log.debug("Update interactions from %d to %d" \
-                                    % (reason.id, cmp_reasons[key]))
-                dup_reasons.append([reason.id])
-                batch_update.append([cmp_reasons[key], reason.id])
-            else:
-                cmp_reasons[key] = reason.id
-            self.log.debug("key %d" % reason.id)
-
-        self.log.debug("Done with updates, deleting dupes")
-        try:
-            cursor = connection.cursor()
-            cursor.executemany('update reports_entries_interactions set reason_id=%s where reason_id=%s', batch_update)
-            cursor.executemany('delete from reports_reason where id = %s', dup_reasons)
-            transaction.set_dirty()
-        except Exception:
-            ex = sys.exc_info()[1]
-            self.log.error("Failed to delete reasons: %s" % ex)
-            raise
-
-        self.log.info("Found %d dupes out of %d" % (len(dup_reasons), start_count))
-
-        # Cleanup orphans
-        start_count = Reason.objects.count()
-        Reason.prune_orphans()
-        self.log.info("Pruned %d Reason records" % (start_count - Reason.objects.count()))
-
-        #start_count = Entries.objects.count()
-        #Entries.prune_orphans()
-        #self.log.info("Pruned %d Entries records" % (start_count - Entries.objects.count()))
 
     def django_command_proxy(self, command):
         '''Call a django command'''
