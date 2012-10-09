@@ -495,6 +495,18 @@ class BaseCore(object):
         """ run the server core. note that it is the responsibility of
         the server core implementation to call shutdown() """
         if self.setup['daemon']:
+            # if we're dropping privs, then the pidfile is likely
+            # /var/run/bcfg2-server/bcfg2-server.pid or similar.
+            # since some OSes clean directories out of /var/run on
+            # reboot, we need to ensure that the directory containing
+            # the pidfile exists and has the appropriate permissions
+            piddir = os.path.dirname(self.setup['daemon'])
+            if not os.path.exists(piddir):
+                os.makedirs(piddir)
+                os.chown(piddir,
+                         self.setup['daemon_uid'],
+                         self.setup['daemon_gid'])
+                os.chmod(piddir, 420)  # 0644
             self._daemonize()
 
         self._run()
