@@ -1,7 +1,9 @@
 import Bcfg2.settings
 import Bcfg2.Options
 import Bcfg2.Server.Admin
+import Bcfg2.Server.models
 from django.core.management import setup_environ, call_command
+
 
 class Syncdb(Bcfg2.Server.Admin.Mode):
     __shorthelp__ = ("Sync the Django ORM with the configured database")
@@ -10,15 +12,11 @@ class Syncdb(Bcfg2.Server.Admin.Mode):
     options = {'configfile': Bcfg2.Options.WEB_CFILE}
 
     def __call__(self, args):
-        import Bcfg2.Server.Admin
-        Bcfg2.Server.Admin.Mode.__call__(self, args)
-
         # Parse options
         self.opts = Bcfg2.Options.OptionParser(self.options)
         self.opts.parse(args)
 
         setup_environ(Bcfg2.settings)
-        import Bcfg2.Server.models
         Bcfg2.Server.models.load_models(cfile=self.opts['configfile'])
 
         try:
