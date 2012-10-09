@@ -6,18 +6,14 @@ Leans on FileMonitor to detect changes
 """
 
 import os
-import os.path
 import select
 import time
 import traceback
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Reporting.Collector import ReportingCollector, ReportingError
 from Bcfg2.Reporting.Transport.base import TransportBase, TransportError
+from Bcfg2.Compat import cPickle
 
-try:
-    import cPickle as pickle
-except:
-    import pickle
 
 class LocalFilesystem(TransportBase):
     def __init__(self, setup):
@@ -59,11 +55,23 @@ class LocalFilesystem(TransportBase):
         self.fmon.start()
         self.fmon.AddMonitor(self.work_path, self)
 
-    def store(self, hostname, payload):
+    def store(self, hostname, metadata, stats):
         """Store the file to disk"""
 
-        save_file = "%s/%s-%s" % (self.work_path, hostname, time.time())
-        tmp_file = "%s/.%s-%s" % (self.work_path, hostname, time.time())
+        try:
+            payload = cPickle.dumps(dict(hostname=hostname,
+                                         metadata=metadata,
+                                         stats=stats))
+        except:  # pylint: disable=W0702
+            msg = "%s: Failed to build interaction object: %s" % \
+                (self.__class__.__name__,
+                 traceback.format_exc().splitlines()[-1])
+            self.logger.error(msg)
+            raise TransportError(msg)
+
+        fname = "%s-%s" % (hostname, time.time())
+        save_file = os.path.join(self.work_path, fname)
+        tmp_file = os.path.join(self.work_path, "." + fname)
         if os.path.exists(save_file):
             self.logger.error("%s: Oops.. duplicate statistic in directory." %
                 self.__class__.__name__)
@@ -108,14 +116,14 @@ class LocalFilesystem(TransportBase):
             payload = os.path.join(self.work_path, event.filename)
             try:
                 payloadfd = open(payload, "r")
-                interaction = pickle.load(payloadfd)
+                interaction = cPickle.load(payloadfd)
                 payloadfd.close()
                 os.unlink(payload)
                 return interaction
             except IOError:
                 self.logger.error("Failed to read payload: %s" %
                     traceback.format_exc().splitlines()[-1])
-            except pickle.UnpicklingError:
+            except cPickle.UnpicklingError:
                 self.logger.error("Failed to unpickle payload: %s" %
                     traceback.format_exc().splitlines()[-1])
                 payloadfd.close()
@@ -157,7 +165,7 @@ class LocalFilesystem(TransportBase):
             cls_method = getattr(self._phony_collector.storage, method)
             return cls_method(*args, **kwargs)
         except:
-            self.logger.error("RPC method %s failed: %s" % 
+            self.logger.error("RPC method %s failed: %s" %
                 (method, traceback.format_exc().splitlines()[-1]))
             raise TransportError
 

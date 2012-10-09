@@ -3,10 +3,9 @@
 import time
 import platform
 import traceback
-from lxml import etree
+import lxml.etree
 from Bcfg2.Reporting.Transport import load_transport_from_config, \
     TransportError
-from Bcfg2.Compat import cPickle
 from Bcfg2.Options import REPORTING_COMMON_OPTIONS
 from Bcfg2.Server.Plugin import Statistics, PullSource, PluginInitError, \
     PluginExecutionError
@@ -36,7 +35,7 @@ class Reporting(Statistics, PullSource):  # pylint: disable=W0223
     """ Unified statistics and reporting plugin """
     __rmi__ = ['Ping', 'GetExtra', 'GetCurrentEntry']
 
-    CLIENT_METADATA_FILEDS = ('profile', 'bundles', 'aliases', 'addresses',
+    CLIENT_METADATA_FIELDS = ('profile', 'bundles', 'aliases', 'addresses',
                               'groups', 'categories', 'uuid', 'version')
 
     def __init__(self, core, datastore):
@@ -59,16 +58,17 @@ class Reporting(Statistics, PullSource):  # pylint: disable=W0223
         try:
             self.transport = load_transport_from_config(core.setup)
         except TransportError:
-            self.logger.error("%s: Failed to load transport: %s" %
-                (self.name, traceback.format_exc().splitlines()[-1]))
-            raise PluginInitError
+            msg = "%s: Failed to load transport: %s" % \
+                (self.name, traceback.format_exc().splitlines()[-1])
+            self.logger.error(msg)
+            raise PluginInitError(msg)
 
     def process_statistics(self, client, xdata):
         stats = xdata.find("Statistics")
         stats.set('time', time.asctime(time.localtime()))
 
         cdata = {'server': self.whoami}
-        for field in self.CLIENT_METADATA_FILEDS:
+        for field in self.CLIENT_METADATA_FIELDS:
             try:
                 value = getattr(client, field)
             except AttributeError:
@@ -78,22 +78,13 @@ class Reporting(Statistics, PullSource):  # pylint: disable=W0223
                     value = [v for v in value]
                 cdata[field] = value
 
-        try:
-            interaction_data = cPickle.dumps(dict(
-                    hostname=client.hostname,
-                    metadata=cdata,
-                    stats=etree.tostring(
-                        stats,
-                        xml_declaration=False).decode('UTF-8')))
-        except:  # pylint: disable=W0702
-            self.logger.error("%s: Failed to build interaction object: %s" %
-                (self.__class__.__name__,
-                 traceback.format_exc().splitlines()[-1]))
-
         # try 3 times to store the data
         for i in [1, 2, 3]:
             try:
-                self.transport.store(client.hostname, interaction_data)
+                self.transport.store(client.hostname, cdata,
+                                     lxml.etree.tostring(
+                        stats,
+                        xml_declaration=False).decode('UTF-8'))
                 self.logger.debug("%s: Queued statistics data for %s" %
                     (self.__class__.__name__, client.hostname))
                 return

@@ -29,7 +29,7 @@ class TransportBase(object):
         """Called to start monitoring"""
         raise NotImplementedError
 
-    def store(self, hostname, payload):
+    def store(self, hostname, metadata, stats):
         raise NotImplementedError
 
     def fetch(self):
@@ -42,4 +42,3 @@ class TransportBase(object):
     def rpc(self, method, *args, **kwargs):
         """Send a request for data to the collector"""
         raise NotImplementedError
-
