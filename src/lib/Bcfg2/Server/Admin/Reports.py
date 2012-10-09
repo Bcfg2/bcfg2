@@ -63,7 +63,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
     '''Admin interface for dynamic reports'''
     __shorthelp__ = "Manage dynamic reports"
     __longhelp__ = (__shorthelp__)
-    django_commands = ['dbshell', 'shell', 'syncdb', 'sqlall', 'validate']
+    django_commands = ['dbshell', 'shell', 'sqlall', 'validate']
     __usage__ = ("bcfg2-admin reports [command] [options]\n"
                  "\n"
                  "  Commands:\n"
@@ -97,9 +97,11 @@ class Reports(Bcfg2.Server.Admin.Mode):
             self.django_command_proxy(args[0])
         elif args[0] == 'scrub':
             self.scrub()
-        elif args[0] in ['init', 'update']:
-            if self.setup['verbose'] or self.setup['debug']:
+        elif args[0] in ['init', 'update', 'syncdb']:
+            if self.setup['debug']:
                 vrb = 2
+            elif self.setup['verbose']:
+                vrb = 1
             else:
                 vrb = 0
             try:
