@@ -28,5 +28,5 @@ def load_transport(transport_name, setup):
 
 def load_transport_from_config(setup):
     """Load the transport in the config... eventually"""
-    return load_transport('LocalFilesystem', setup)
+    return load_transport('DirectStore', setup)
 
