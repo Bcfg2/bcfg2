@@ -63,6 +63,7 @@ def _migrate_transaction(inter, entries):
             unkown_profile, created = new_models.Group.objects.get_or_create(name="<<Unknown>>")
             cache.set("PROFILE_UNKNOWN", unkown_profile)
         newint.profile = unkown_profile
+        groups = [unkown_profile]
     newint.save()
     if bundles:
         newint.bundles.add(*bundles)
