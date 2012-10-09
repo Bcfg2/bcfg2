@@ -1,2 +1,1 @@
 var/lib/bcfg2
-var/run/bcfg2-server
