@@ -25,10 +25,13 @@ def run_serverless_plugins(plugins, setup=None, errorhandler=None, files=None):
 def run_server_plugins(plugins, setup=None, errorhandler=None, files=None):
     """ run plugins that require a running server to run """
     core = load_server(setup)
-    LOGGER.debug("Running server plugins")
-    for plugin_name, plugin in list(plugins.items()):
-        run_plugin(plugin, plugin_name, args=[core], errorhandler=errorhandler,
-                   setup=setup, files=files)
+    try:
+        LOGGER.debug("Running server plugins")
+        for plugin_name, plugin in list(plugins.items()):
+            run_plugin(plugin, plugin_name, args=[core],
+                       errorhandler=errorhandler, setup=setup, files=files)
+    finally:
+        core.shutdown()
 
 
 def run_plugin(plugin, plugin_name, setup=None, errorhandler=None,
