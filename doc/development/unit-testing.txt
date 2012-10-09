@@ -86,12 +86,15 @@ instance, would be:
 
 .. code-block:: bash
 
-    yum -y update
-    yum -y install swig pylint
+    sudo yum -y update
+    sudo yum -y install swig pylint
     if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
         sudo yum -y install libselinux-python pylibacl python-inotify \
             PyYAML
     fi
+
+You could install these requirements using pip, but you'll likely need
+to install a great many development packages required to compile them.
 
 Next, install required Python packages:
 
