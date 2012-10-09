@@ -12,3 +12,6 @@ migrate_configs.py
 service_modes.py
     - Convert Service tags from "mode" attribute to separate "restart"
       and "install" attributes
+
+migrate_dbstats.py
+    - Convert old DBStats entries to the new Reporting system
