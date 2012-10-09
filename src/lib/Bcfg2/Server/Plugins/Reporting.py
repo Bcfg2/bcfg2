@@ -11,6 +11,13 @@ from Bcfg2.Options import REPORTING_COMMON_OPTIONS
 from Bcfg2.Server.Plugin import Statistics, PullSource, PluginInitError, \
     PluginExecutionError
 
+# required for reporting
+try:
+    import south  # pylint: disable=W0611
+    HAS_SOUTH = True
+except ImportError:
+    HAS_SOUTH = False
+
 
 def _rpc_call(method):
     """ Given the name of a Reporting Transport method, get a function
@@ -43,6 +50,11 @@ class Reporting(Statistics, PullSource):  # pylint: disable=W0223
 
         core.setup.update(REPORTING_COMMON_OPTIONS)
         core.setup.reparse()
+
+        if not HAS_SOUTH:
+            msg = "Django south is required for Reporting"
+            self.logger.error(msg)
+            raise PluginInitError(msg)
 
         try:
             self.transport = load_transport_from_config(core.setup)
