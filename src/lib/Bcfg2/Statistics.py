@@ -1,6 +1,7 @@
 """ module for tracking execution time statistics from the bcfg2
 server core """
 
+
 class Statistic(object):
     """ a single named statistic, tracking minimum, maximum, and
     average execution time, and number of invocations """
@@ -40,4 +41,4 @@ class Statistics(object):
         return dict([value.get_value() for value in list(self.data.values())])
 
 
-stats = Statistics()
+stats = Statistics()  # pylint: disable=C0103
