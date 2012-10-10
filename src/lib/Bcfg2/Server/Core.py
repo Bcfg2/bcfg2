@@ -16,8 +16,9 @@ import Bcfg2.Logger
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Cache import Cache
 import Bcfg2.Statistics
-from Bcfg2.Compat import xmlrpclib, reduce, wraps  # pylint: disable=W0622
-from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
+from Bcfg2.Compat import xmlrpclib, reduce  # pylint: disable=W0622
+from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError, \
+    track_statistics
 
 try:
     import psyco
@@ -33,31 +34,6 @@ def exposed(func):
     expose it via XML-RPC """
     func.exposed = True
     return func
-
-
-class track_statistics(object):  # pylint: disable=C0103
-    """ decorator that tracks execution time for the given
-    function """
-
-    def __init__(self, name=None):
-        self.name = name
-
-    def __call__(self, func):
-        if self.name is None:
-            self.name = func.__name__
-
-        @wraps(func)
-        def inner(obj, *args, **kwargs):
-            """ The decorated function """
-            name = "%s:%s" % (obj.__class__.__name__, self.name)
-
-            start = time.time()
-            try:
-                return func(obj, *args, **kwargs)
-            finally:
-                Bcfg2.Statistics.stats.add_value(name, time.time() - start)
-
-        return inner
 
 
 def sort_xml(node, key=None):

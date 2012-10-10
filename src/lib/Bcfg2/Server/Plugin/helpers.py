@@ -4,12 +4,14 @@ import os
 import re
 import sys
 import copy
+import time
 import logging
 import operator
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Options
-from Bcfg2.Compat import CmpMixin
+import Bcfg2.Statistics
+from Bcfg2.Compat import CmpMixin, wraps
 from Bcfg2.Server.Plugin.base import Debuggable, Plugin
 from Bcfg2.Server.Plugin.interfaces import Generator
 from Bcfg2.Server.Plugin.exceptions import SpecificityError, PluginInitError, \
@@ -77,6 +79,38 @@ def bind_info(entry, metadata, infoxml=None, default=DEFAULT_FILE_METADATA):
             entry.set(attr, val)
 
 
+class track_statistics(object):  # pylint: disable=C0103
+    """ Decorator that tracks execution time for the given
+    :class:`Plugin` method for reporting via ``bcfg2-admin perf`` """
+
+    def __init__(self, name=None):
+        """
+        :param name: The name under which statistics for this function
+                     will be tracked.  By default the name of the
+                     function will be used.
+        :type name: string
+        """
+        # if this is None, it will be set later during __call_
+        self.name = name
+
+    def __call__(self, func):
+        if self.name is None:
+            self.name = func.__name__
+
+        @wraps(func)
+        def inner(obj, *args, **kwargs):
+            """ The decorated function """
+            name = "%s:%s" % (obj.__class__.__name__, self.name)
+
+            start = time.time()
+            try:
+                return func(obj, *args, **kwargs)
+            finally:
+                Bcfg2.Statistics.stats.add_value(name, time.time() - start)
+
+        return inner
+
+
 class DatabaseBacked(Plugin):
     """ Provides capabilities for a plugin to read and write to a
     database.
@@ -92,8 +126,8 @@ class DatabaseBacked(Plugin):
     option = "use_database"
 
     def _section(self):
-        """ The section to look in for
-        :attr:`DatabaseBacked.option` """
+        """ The section to look in for :attr:`DatabaseBacked.option`
+        """
         return self.name.lower()
     section = property(_section)
 
