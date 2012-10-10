@@ -15,7 +15,7 @@ import Bcfg2.Server
 import Bcfg2.Logger
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Cache import Cache
-from Bcfg2.Statistics import Statistics
+import Bcfg2.Statistics
 from Bcfg2.Compat import xmlrpclib, reduce, wraps  # pylint: disable=W0622
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 
@@ -55,7 +55,7 @@ class track_statistics(object):  # pylint: disable=C0103
             try:
                 return func(obj, *args, **kwargs)
             finally:
-                obj.stats.add_value(name, time.time() - start)
+                Bcfg2.Statistics.stats.add_value(name, time.time() - start)
 
         return inner
 
@@ -208,7 +208,6 @@ class BaseCore(object):
                              target=self._file_monitor_thread)
         self.lock = threading.Lock()
 
-        self.stats = Statistics()
         self.metadata_cache = Cache()
 
     def plugins_by_type(self, base_cls):
@@ -310,9 +309,9 @@ class BaseCore(object):
                     self.logger.error("%s: Error invoking hook %s: %s" %
                                       (plugin, hook, err))
         finally:
-            self.stats.add_value("%s:client_run_hook:%s" %
-                                 (self.__class__.__name__, hook),
-                                 time.time() - start)
+            Bcfg2.Statistics.stats.add_value("%s:client_run_hook:%s" %
+                                             (self.__class__.__name__, hook),
+                                             time.time() - start)
 
     @track_statistics()
     def validate_structures(self, metadata, data):
@@ -430,9 +429,10 @@ class BaseCore(object):
             raise PluginExecutionError("No matching generator: %s:%s" %
                                        (entry.tag, entry.get('name')))
         finally:
-            self.stats.add_value("%s:Bind:%s" % (self.__class__.__name__,
-                                                 entry.tag),
-                                 time.time() - start)
+            Bcfg2.Statistics.stats.add_value("%s:Bind:%s" % 
+                                             (self.__class__.__name__,
+                                              entry.tag),
+                                             time.time() - start)
 
     def BuildConfiguration(self, client):
         """Build configuration for clients."""
@@ -507,9 +507,12 @@ class BaseCore(object):
                          self.setup['daemon_uid'],
                          self.setup['daemon_gid'])
                 os.chmod(piddir, 420)  # 0644
-            self._daemonize()
+            if not self._daemonize():
+                return False
 
-        self._run()
+        if not self._run():
+            self.shutdown()
+            return False
 
         self.fam.start()
         self.fam_thread.start()
@@ -777,4 +780,4 @@ class BaseCore(object):
     @exposed
     def get_statistics(self, _):
         """Get current statistics about component execution"""
-        return self.stats.display()
+        return Bcfg2.Statistics.stats.display()

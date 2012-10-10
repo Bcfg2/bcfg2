@@ -5,6 +5,7 @@ import sys
 import time
 import socket
 import daemon
+import Bcfg2.Statistics
 from Bcfg2.Server.Core import BaseCore, NoExposedMethod
 from Bcfg2.Compat import xmlrpclib, urlparse
 from Bcfg2.SSLServer import XMLRPCServer
@@ -56,7 +57,8 @@ class Core(BaseCore):
             try:
                 result = method_func(*args)
             finally:
-                self.stats.add_value(method, time.time() - method_start)
+                Bcfg2.Statistics.stats.add_value(method,
+                                                 time.time() - method_start)
         except xmlrpclib.Fault:
             raise
         except Exception:
@@ -89,7 +91,9 @@ class Core(BaseCore):
             err = sys.exc_info()[1]
             self.logger.error("Server startup failed: %s" % err)
             self.context.close()
+            return False
         self.server.register_instance(self)
+        return True
 
     def _block(self):
         try:
