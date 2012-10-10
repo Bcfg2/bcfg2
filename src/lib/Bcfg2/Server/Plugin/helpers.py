@@ -171,8 +171,14 @@ class FileBacked(object):
         :type fam: Bcfg2.Server.FileMonitor.FileMonitor
         """
         object.__init__(self)
+
+        #: A string containing the raw data in this file
         self.data = ''
+
+        #: The full path to the file
         self.name = name
+
+        #: The FAM object used to receive notifications of changes
         self.fam = fam
 
     def HandleEvent(self, event=None):
@@ -403,14 +409,15 @@ class DirectoryBacked(object):
 
 
 class XMLFileBacked(FileBacked):
-    """ This object is caches XML file data in memory.  It can be used
-    as a standalone object or as a part of
+    """ This object parses and caches XML file data in memory.  It can
+    be used as a standalone object or as a part of
     :class:`Bcfg2.Server.Plugin.helpers.XMLDirectoryBacked`
     """
 
-    #: If ``__identifier__`` is not None, then it must be the name of
-    #: an XML attribute that will be required on the top-level tag of
-    #: the file being cached
+    #: If ``__identifier__`` is set, then a top-level tag with the
+    #: specified name will be required on the file being cached.  Its
+    #: value will be available as :attr:`label`.  To disable this
+    #: behavior, set ``__identifier__`` to ``None``.
     __identifier__ = 'name'
 
     def __init__(self, filename, fam=None, should_monitor=False):
@@ -432,12 +439,26 @@ class XMLFileBacked(FileBacked):
         .. -----
         .. autoattribute:: __identifier__
         """
-        FileBacked.__init__(self, filename)
+        FileBacked.__init__(self, filename, fam=fam)
+
+        #: The raw XML data contained in the file as an
+        #: :class:`lxml.etree.ElementTree` object, with XIncludes
+        #: processed.
         self.xdata = None
+
+        #: The label of this file.  This is determined from the
+        #: top-level tag in the file, which must have an attribute
+        #: specified by :attr:`__identifier__`.
         self.label = ""
+
+        #: All entries in this file.  By default, all immediate
+        #: children of the top-level XML tag.
         self.entries = []
+
+        #: "Extra" files included in this file by XInclude.
         self.extras = []
-        self.fam = fam
+
+        #: Whether or not to monitor this file for changes.
         self.should_monitor = should_monitor
         if fam and should_monitor:
             self.fam.AddMonitor(filename, self)
