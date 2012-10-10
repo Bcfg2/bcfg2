@@ -28,5 +28,8 @@ def load_transport(transport_name, setup):
 
 def load_transport_from_config(setup):
     """Load the transport in the config... eventually"""
-    return load_transport('DirectStore', setup)
+    try:
+        return load_transport(setup['reporting_transport'], setup)
+    except KeyError:
+        raise TransportImportError('Transport missing in config')
 

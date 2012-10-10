@@ -634,6 +634,12 @@ REPORTING_FILE_LIMIT = \
            cf=('reporting', 'file_limit'),
            cook=get_size,)
 
+# Reporting options
+REPORTING_TRANSPORT = \
+    Option('Reporting transport',
+           default='DirectStore',
+           cf=('reporting', 'transport'),)
+
 # Client options
 CLIENT_KEY = \
     Option('Path to SSL key',
@@ -1161,7 +1167,8 @@ DATABASE_COMMON_OPTIONS = dict(web_configfile=WEB_CFILE,
                                django_debug=DJANGO_DEBUG,
                                web_prefix=DJANGO_WEB_PREFIX)
 
-REPORTING_COMMON_OPTIONS = dict(reporting_file_limit=REPORTING_FILE_LIMIT)
+REPORTING_COMMON_OPTIONS = dict(reporting_file_limit=REPORTING_FILE_LIMIT,
+                                reporting_transport=REPORTING_TRANSPORT)
 
 
 class OptionParser(OptionSet):

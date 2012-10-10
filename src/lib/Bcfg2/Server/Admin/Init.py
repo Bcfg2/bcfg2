@@ -37,6 +37,9 @@ sendmailpath = %s
 # Not used with sqlite3.
 #port =
 
+[reporting]
+transport = LocalFilesystem
+
 [communication]
 protocol = %s
 password = %s

@@ -9,6 +9,7 @@ import threading
 import Bcfg2.Logger
 from Bcfg2.Reporting.Transport import load_transport_from_config, \
     TransportError, TransportImportError
+from Bcfg2.Reporting.Transport.DirectStore import DirectStore
 from Bcfg2.Reporting.Storage import load_storage_from_config, \
     StorageError, StorageImportError
 
@@ -52,6 +53,12 @@ class ReportingCollector(object):
         except StorageError:
             self.logger.error("Failed to load storage: %s" %
                 traceback.format_exc().splitlines()[-1])
+            raise ReportingError
+
+        if isinstance(self.transport, DirectStore):
+            self.logger.error("DirectStore cannot be used with the collector. "
+                              "Use LocalFilesystem instead")
+            self.shutdown()
             raise ReportingError
 
         try:
