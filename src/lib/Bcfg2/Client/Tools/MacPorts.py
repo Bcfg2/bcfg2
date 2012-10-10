@@ -22,8 +22,12 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
         pkgcache = self.cmd.run("/opt/local/bin/port installed")[1]
         self.installed = {}
         for pkg in pkgcache:
+            if pkg.startswith("Warning:"):
+                continue
             if pkg.startswith("The following ports are currently installed"):
                 continue
+            if pkg.startswith("No ports are installed"):
+                return
             pkgname = pkg.split('@')[0].strip()
             version = pkg.split('@')[1].split(' ')[0]
             self.logger.info(" pkgname: %s version: %s" % (pkgname, version))
