@@ -30,9 +30,9 @@ def main():
     except ReportingError:
         msg = sys.exc_info()[1]
         logger.error(msg)
-        raise SystemError(1)
+        raise SystemExit(1)
     except KeyboardInterrupt:
-        raise SystemError(1)
+        raise SystemExit(1)
 
 
 if __name__ == '__main__':
