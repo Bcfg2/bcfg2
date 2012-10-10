@@ -116,6 +116,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     def toggle_debug(self):
         rv = Bcfg2.Server.Plugin.Plugin.toggle_debug(self)
         self.sources.toggle_debug()
+        for collection in self.collections.values():
+            collection.toggle_debug()
         return rv
     toggle_debug.__doc__ = Bcfg2.Server.Plugin.Plugin.toggle_debug.__doc__
 
@@ -463,7 +465,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if not self.sources.loaded:
             # if sources.xml has not received a FAM event yet, defer;
             # instantiate a dummy Collection object
-            return Collection(metadata, [], self.cachepath)
+            return Collection(metadata, [], self.cachepath, self.data,
+                              self.core.fam)
 
         if metadata.hostname in self.clients:
             return self.collections[self.clients[metadata.hostname]]
@@ -493,8 +496,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             self.logger.error("Packages: Using %s for Collection of sources "
                               "for %s" % (cclass.__name__, metadata.hostname))
 
-        collection = cclass(metadata, relevant, self.cachepath,
-                            debug=self.debug_flag)
+        collection = cclass(metadata, relevant, self.cachepath, self.data,
+                            self.core.fam, debug=self.debug_flag)
         ckey = collection.cachekey
         self.clients[metadata.hostname] = ckey
         self.collections[ckey] = collection

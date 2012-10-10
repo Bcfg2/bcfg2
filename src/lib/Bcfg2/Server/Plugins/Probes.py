@@ -140,7 +140,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
         """ Get an XML description of all probes for a client suitable
         for sending to that client.
 
-        :params metadata: The client metadata to get probes for.
+        :param metadata: The client metadata to get probes for.
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: list of lxml.etree._Element objects, each of which
                   represents one probe.

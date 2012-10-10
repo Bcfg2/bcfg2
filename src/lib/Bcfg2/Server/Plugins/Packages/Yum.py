@@ -54,6 +54,7 @@ import os
 import re
 import sys
 import copy
+import errno
 import socket
 import logging
 import lxml.etree
@@ -144,6 +145,111 @@ def _setup_pulp(setup):
     return PULPSERVER
 
 
+class PulpCertificateData(Bcfg2.Server.Plugin.SpecificData):
+    """ Handle pulp consumer certificate data for
+    :class:`PulpCertificateSet` """
+
+    def bind_entry(self, entry, _):
+        """ Given an abstract entry, add data to it and return it.
+        :class:`PulpCertificateSet` handles binding entry metadata.
+
+        :param entry: The abstract entry to bind data to
+        :type entry: lxml.etree._Element
+        :returns: lxml.etree._Element - the bound entry
+        """
+        entry.set("type", "file")
+        if self.data:
+            entry.text = self.data
+        else:
+            entry.set("empty", "true")
+        return entry
+
+
+class PulpCertificateSet(Bcfg2.Server.Plugin.EntrySet):
+    """ Handle Pulp consumer certificates. """
+
+    #: The path to certificates on consumer machines
+    certpath = "/etc/pki/consumer/cert.pem"
+
+    def __init__(self, path, fam):
+        """
+        :param path: The path to the directory where Pulp consumer
+                     certificates will be stored
+        :type path: string
+        """
+        Bcfg2.Server.Plugin.EntrySet.__init__(self,
+                                              os.path.basename(self.certpath),
+                                              path,
+                                              PulpCertificateData,
+                                              "UTF-8")
+        self.metadata = dict(owner='root',
+                             group='root',
+                             perms='0644',
+                             secontext='__default__',
+                             important='true',
+                             sensitive='true',
+                             paranoid=self.metadata['paranoid'])
+        self.fam = fam
+        self.fam.AddMonitor(path, self)
+
+    def HandleEvent(self, event):
+        """ Handle FAM events on certificate files.
+
+        :param event: The event to handle
+        :type event: Bcfg2.Server.FileMonitor.Event """
+        if event.filename != self.path:
+            return self.handle_event(event)
+
+    def write_data(self, data, metadata):
+        """ Write a new certificate to the filesystem.
+
+        :param data: The new certificate data
+        :type data: string
+        :param metadata: Metadata for the client to write the
+                         certificate for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        """
+        specific = "%s.H_%s" % (os.path.basename(self.certpath),
+                                metadata.hostname)
+        fileloc = os.path.join(self.path, specific)
+
+        self.logger.info("Packages: Writing certificate data for %s to %s" %
+                         (metadata.hostname, fileloc))
+        try:
+            open(fileloc, 'wb').write(data)
+        except IOError:
+            err = sys.exc_info()[1]
+            self.logger.error("Could not write %s: %s" % (fileloc, err))
+            return
+        self.verify_file(specific)
+
+    def verify_file(self, filename):
+        """ Service the FAM events queued up by the key generation so
+        the data structure entries will be available for binding.
+
+        NOTE: We wait for up to ten seconds. There is some potential
+        for race condition, because if the file monitor doesn't get
+        notified about the new key files in time, those entries won't
+        be available for binding. In practice, this seems "good
+        enough."
+
+        :param filename: The filename to check for events on
+        :type filename: string
+        """
+        tries = 0
+        updated = False
+        while not updated:
+            if tries >= 10:
+                self.logger.error("%s still not registered" % filename)
+                return
+            self.fam.handle_events_in_interval(1)
+            if filename in self.entries:
+                break
+            else:
+                tries += 1
+                continue
+
+
 class YumCollection(Collection):
     """ Handle collections of Yum sources.  If we're using the yum
     Python libraries, then this becomes a very full-featured
@@ -159,14 +265,19 @@ class YumCollection(Collection):
     #: yum.conf we write out
     option_blacklist = ["use_yum_libraries", "helper"]
 
-    def __init__(self, metadata, sources, basepath, debug=False):
-        Collection.__init__(self, metadata, sources, basepath, debug=debug)
-        self.keypath = os.path.join(self.basepath, "keys")
+    #: :class:`PulpCertificateSet` object used to handle Pulp certs
+    pulp_cert_set = None
+
+    def __init__(self, metadata, sources, cachepath, basepath, fam,
+                 debug=False):
+        Collection.__init__(self, metadata, sources, cachepath, basepath, fam,
+                            debug=debug)
+        self.keypath = os.path.join(self.cachepath, "keys")
 
         if self.use_yum:
             #: Define a unique cache file for this collection to use
             #: for cached yum metadata
-            self.cachefile = os.path.join(self.basepath,
+            self.cachefile = os.path.join(self.cachepath,
                                          "cache-%s" % self.cachekey)
             if not os.path.exists(self.cachefile):
                 os.mkdir(self.cachefile)
@@ -180,6 +291,22 @@ class YumCollection(Collection):
 
         if HAS_PULP and self.has_pulp_sources:
             _setup_pulp(self.setup)
+            if self.pulp_cert_set is None:
+                certdir = os.path.join(
+                    self.basepath,
+                    "pulp",
+                    os.path.basename(PulpCertificateSet.certpath))
+                try:
+                    os.makedirs(certdir)
+                except OSError:
+                    err = sys.exc_info()[1]
+                    if err.errno == errno.EEXIST:
+                        pass
+                    else:
+                        self.logger.error("Could not create Pulp consumer "
+                                          "cert directory at %s: %s" %
+                                          (certdir, err))
+                self.pulp_cert_set = PulpCertificateSet(certdir, self.fam)
 
         self._helper = None
 
@@ -409,11 +536,14 @@ class YumCollection(Collection):
             consumer = self._get_pulp_consumer(consumerapi=consumerapi)
             if consumer is None:
                 consumer = consumerapi.create(self.metadata.hostname,
-                                              self.metadata.hostname)
+                                              self.metadata.hostname,
+                                              capabilities=dict(bind=False))
                 lxml.etree.SubElement(independent, "BoundAction",
                                       name="pulp-update", timing="pre",
                                       when="always", status="check",
                                       command="pulp-consumer consumer update")
+                self.pulp_cert_set.write_data(consumer['certificate'],
+                                              self.metadata)
 
             for source in self:
                 # each pulp source can only have one arch, so we don't
@@ -423,10 +553,8 @@ class YumCollection(Collection):
                     consumerapi.bind(self.metadata.hostname, source.pulp_id)
 
             crt = lxml.etree.SubElement(independent, "BoundPath",
-                                        name="/etc/pki/consumer/cert.pem",
-                                        type="file", owner="root",
-                                        group="root", perms="0644")
-            crt.text = consumerapi.certificate(self.metadata.hostname)
+                                        name=self.pulp_cert_set.certpath)
+            self.pulp_cert_set.bind_entry(crt, self.metadata)
 
     @Bcfg2.Server.Plugin.track_statistics()
     def _get_pulp_consumer(self, consumerapi=None):
