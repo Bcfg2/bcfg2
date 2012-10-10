@@ -1,0 +1,20 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      acl config schema for bcfg2
+	  Matt Schwager
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:import namespace="http://www.w3.org/XML/1998/namespace"
+              schemaLocation="xml.xsd"/>
+
+  <xsd:complexType name="IPs">
+    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:element name="IP" type="xsd:string" minOccurs="1"
+                   maxOccurs="unbounded"/>
+    </xsd:choice>
+  </xsd:complexType>
+
+</xsd:schema>
