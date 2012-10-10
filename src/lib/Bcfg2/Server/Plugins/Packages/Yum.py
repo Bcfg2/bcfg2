@@ -187,10 +187,7 @@ class YumCollection(Collection):
     def __package_groups__(self):
         """ YumCollections support package groups only if
         :attr:`use_yum` is True """
-        if self.use_yum:
-            return True
-        else:
-            return False
+        return self.use_yum
 
     @property
     def helper(self):
@@ -238,6 +235,7 @@ class YumCollection(Collection):
             cachefiles.add(self.cachefile)
         return list(cachefiles)
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def write_config(self):
         """ Write the server-side config file to :attr:`cfgfile` based
         on the data from :func:`get_config`"""
@@ -339,6 +337,7 @@ class YumCollection(Collection):
             return "# This config was generated automatically by the Bcfg2 " \
                    "Packages plugin\n\n" + buf.getvalue()
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def build_extra_structures(self, independent):
         """ Add additional entries to the ``<Independent/>`` section
         of the final configuration.  This adds several kinds of
@@ -429,6 +428,7 @@ class YumCollection(Collection):
                                         group="root", perms="0644")
             crt.text = consumerapi.certificate(self.metadata.hostname)
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def _get_pulp_consumer(self, consumerapi=None):
         """ Get a Pulp consumer object for the client.
 
@@ -457,6 +457,7 @@ class YumCollection(Collection):
                               "%s" % err)
         return consumer
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def _add_gpg_instances(self, keyentry, localkey, remotekey, keydata=None):
         """ Add GPG keys instances to a ``Package`` entry.  This is
         called from :func:`build_extra_structures` to add GPG keys to
@@ -499,6 +500,7 @@ class YumCollection(Collection):
             self.logger.error("Packages: Could not read GPG key %s: %s" %
                               (localkey, err))
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def get_groups(self, grouplist):
         """ If using the yum libraries, given a list of package group
         names, return a dict of ``<group name>: <list of packages>``.
@@ -660,6 +662,7 @@ class YumCollection(Collection):
                 new.append(pkg)
         return new
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def complete(self, packagelist):
         """ Build a complete list of all packages and their dependencies.
 
@@ -699,6 +702,7 @@ class YumCollection(Collection):
         else:
             return set(), set()
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def call_helper(self, command, inputdata=None):
         """ Make a call to :ref:`bcfg2-yum-helper`.  The yum libs have
         horrific memory leaks, so apparently the right way to get
@@ -923,6 +927,7 @@ class YumSource(Source):
                 self.file_to_arch[self.escape_url(fullurl)] = arch
         return urls
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def read_files(self):
         """ When using the builtin yum parser, read and parse locally
         downloaded metadata files.  This diverges from the stock
@@ -964,6 +969,7 @@ class YumSource(Source):
                 self.packages[key].difference(self.packages['global'])
         self.save_state()
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def parse_filelist(self, data, arch):
         """ parse filelists.xml.gz data """
         if arch not in self.filemap:
@@ -977,6 +983,7 @@ class YumSource(Source):
                         self.filemap[arch][fentry.text] = \
                             set([pkg.get('name')])
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def parse_primary(self, data, arch):
         """ parse primary.xml.gz data """
         if arch not in self.packages:

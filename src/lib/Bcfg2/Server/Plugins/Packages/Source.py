@@ -328,6 +328,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
                       self.essentialpkgs), cache, 2)
         cache.close()
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def setup_data(self, force_update=False):
         """ Perform all data fetching and setup tasks.  For most
         backends, this involves downloading all metadata from the

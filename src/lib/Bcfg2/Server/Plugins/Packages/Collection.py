@@ -218,6 +218,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
             cachefiles.add(source.cachefile)
         return list(cachefiles)
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def get_groups(self, grouplist):
         """ Given a list of package group names, return a dict of
         ``<group name>: <list of packages>``.  This method is provided
@@ -238,6 +239,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
             rv[group] = self.get_group(group, ptype)
         return rv
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def get_group(self, group, ptype=None):
         """ Get the list of packages of the given type in a package
         group.
@@ -486,6 +488,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         """
         return list(complete.difference(initial))
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def complete(self, packagelist):  # pylint: disable=R0912,R0914
         """ Build a complete list of all packages and their dependencies.
 

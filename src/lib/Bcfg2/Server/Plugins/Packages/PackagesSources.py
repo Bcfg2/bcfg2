@@ -111,6 +111,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
         load its data. """
         return sorted(list(self.parsed)) == sorted(self.extras)
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def Index(self):
         Bcfg2.Server.Plugin.StructFile.Index(self)
         self.entries = []
@@ -123,6 +124,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
 ``Index`` is responsible for calling :func:`source_from_xml` for each
 ``Source`` tag in each file. """
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def source_from_xml(self, xsource):
         """ Create a
         :class:`Bcfg2.Server.Plugins.Packages.Source.Source` subclass

@@ -248,6 +248,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 return True
         return False
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def validate_structures(self, metadata, structures):
         """ Do the real work of Packages.  This does two things:
 
@@ -282,6 +283,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         collection.build_extra_structures(indep)
         structures.append(indep)
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def _build_packages(self, metadata, independent, structures,
                         collection=None):
         """ Perform dependency resolution and build the complete list
@@ -352,6 +354,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         newpkgs.sort()
         collection.packages_to_entry(newpkgs, independent)
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def Refresh(self):
         """ Packages.Refresh() => True|False
 
@@ -359,6 +362,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self._load_config(force_update=True)
         return True
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def Reload(self):
         """ Packages.Refresh() => True|False
 
@@ -442,6 +446,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             if kfile not in keyfiles:
                 os.unlink(kfile)
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def get_collection(self, metadata):
         """ Get a
         :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
