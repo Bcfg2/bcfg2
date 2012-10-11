@@ -571,9 +571,16 @@ Pulp Support
 .. versionadded:: 1.2.0
 
 Bcfg2 contains explicit support for repositories managed by Pulp
-(http://pulpproject.org/). Due to the amount of data about a
-repository that can be retrieved directly from Pulp, the only thing
-necessary to configure a Pulp repo is the repo ID:
+(http://pulpproject.org/).
+
+.. note::
+
+    Only the Pulp 1.x API is supported at this time.  When the Pulp
+    2.x API is finalized support will be added for it.
+
+Due to the amount of data about a repository that can be retrieved
+directly from Pulp, the only thing necessary to configure a Pulp repo
+is the repo ID:
 
 .. code-block:: xml
 
