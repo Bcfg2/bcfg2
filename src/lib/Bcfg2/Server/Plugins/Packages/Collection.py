@@ -117,6 +117,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         :param debug: Enable debugging output
         :type debug: bool
 
+        .. -----
         .. autoattribute:: __package_groups__
         """
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
