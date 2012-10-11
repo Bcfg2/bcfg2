@@ -41,7 +41,7 @@ def printStats(fn):
     def print_stats(self, *data):
         classes = (Client, Interaction, Performance, \
             FailureEntry, ActionEntry, PathEntry, PackageEntry, \
-            ServiceEntry)
+            ServiceEntry, Group, Bundle)
 
         starts = {}
         for cls in classes:
@@ -227,11 +227,12 @@ class Reports(Bcfg2.Server.Admin.Mode):
             del a, b, c
             self.log.error(msg)
 
-        # bulk operations bypass the Interaction.delete method
-        self.log.debug("Pruning orphan Performance objects")
-        Performance.prune_orphans()
-        self.log.debug("Pruning orphan Reason objects")
-        Reason.prune_orphans()
+        # Prune any orphaned ManyToMany relations
+        for m2m in (ActionEntry, PackageEntry, PathEntry, ServiceEntry, \
+                FailureEntry, Group, Bundle):
+            self.log.debug("Pruning any orphaned %s objects" % \
+                m2m().__class__.__name__)
+            m2m.prune_orphans()
 
         if client and not filtered:
             '''Delete the client, ping data is automatic'''
