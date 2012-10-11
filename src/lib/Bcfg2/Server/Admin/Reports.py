@@ -70,6 +70,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
                  "      --days   [n]       Records older then n days\n"
                  "      --expired          Expired clients only\n"
                  "    scrub                Scrub the database for duplicate reasons and orphaned entries\n"
+                 "    stats                print database statistics\n"
                  "    update               Apply any updates to the reporting database\n"
                  "\n"
                  "  Django commands:\n    " \
@@ -94,6 +95,8 @@ class Reports(Bcfg2.Server.Admin.Mode):
             self.django_command_proxy(args[0])
         elif args[0] == 'scrub':
             self.scrub()
+        elif args[0] == 'stats':
+            self.stats()
         elif args[0] in ['init', 'update', 'syncdb']:
             if self.setup['debug']:
                 vrb = 2
@@ -258,5 +261,13 @@ class Reports(Bcfg2.Server.Admin.Mode):
             self.log.debug("Purging client %s" % client)
             Interaction.objects.filter(client=client).delete()
             client.delete()
-        self.log.debug("Pruning orphan Performance objects")
-        Performance.prune_orphans()
+
+    def stats(self):
+        classes = (Client, Interaction, Performance, \
+            FailureEntry, ActionEntry, PathEntry, PackageEntry, \
+            ServiceEntry, Group, Bundle)
+
+        for cls in classes:
+            print("%s has %s records" % (cls().__class__.__name__,
+                cls.objects.count()))
+
