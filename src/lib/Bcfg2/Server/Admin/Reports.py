@@ -39,22 +39,19 @@ def printStats(fn):
     Decorator for purging.  Prints database statistics after a run.
     """
     def print_stats(self, *data):
-        start_client = Client.objects.count()
-        start_i = Interaction.objects.count()
-        start_ei = Entries_interactions.objects.count()
-        start_perf = Performance.objects.count()
+        classes = (Client, Interaction, Performance, \
+            FailureEntry, ActionEntry, PathEntry, PackageEntry, \
+            ServiceEntry)
+
+        starts = {}
+        for cls in classes:
+            starts[cls] = cls.objects.count()
 
         fn(self, *data)
 
-        self.log.info("Clients removed: %s" %
-                      (start_client - Client.objects.count()))
-        self.log.info("Interactions removed: %s" %
-                      (start_i - Interaction.objects.count()))
-        self.log.info("Interactions->Entries removed: %s" %
-                      (start_ei - 0))
-        #              (start_ei - Entries_interactions.objects.count()))
-        self.log.info("Metrics removed: %s" %
-                      (start_perf - Performance.objects.count()))
+        for cls in classes:
+            print("%s removed: %s" % (cls().__class__.__name__,
+                cls.objects.count() - starts[cls]))
 
     return print_stats
 
