@@ -625,12 +625,13 @@ DJANGO_DEBUG = \
 DJANGO_WEB_PREFIX = \
     Option('Web prefix',
            default=None,
-           cf=('statistics', 'web_prefix'),)
+           cf=('reporting', 'web_prefix'),
+           deprecated_cf=('statistics', 'web_prefix'),)
 
 # Reporting options
 REPORTING_FILE_LIMIT = \
     Option('Reporting file size limit',
-           default=get_size('512m'),
+           default=get_size('1m'),
            cf=('reporting', 'file_limit'),
            cook=get_size,)
 
