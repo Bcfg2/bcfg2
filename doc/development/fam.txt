@@ -1,0 +1,72 @@
+.. -*- mode: rst -*-
+
+.. _development-fam:
+
+==========================
+ File Monitor Development
+==========================
+
+Bcfg2 depends heavily on file activity monitoring (FAM) to reload data
+from disk when it changes.  A number of FAM backends are supported
+(documented thoroughly below), but you may wish to develop additional
+backends.  For instance, the current best FAM backend on Linux is
+INotify, but if you are running a non-Linux system that lacks INotify
+support you may wish to write a backend for your OS (e.g., a kqueue
+backend for BSD-based Bcfg2 servers).  This page documents the FAM API
+and the existing FAM backends.
+
+.. _development-fam-event-codes:
+
+Event Codes
+===========
+
+Five event codes are generally understood:
+
++----------+-----------------------------------------------------------+
+| Event    | Description                                               |
++==========+===========================================================+
+| exists   | Produced when a monitor is added to a file or directory   |
+|          | that exists, and produced for all files or directories    |
+|          | inside a directory that is monitored (non-recursively).   |
++----------+-----------------------------------------------------------+
+| endExist | Produced immediately after ``exists``.  No plugins should |
+|          | process this event meaningfully, so FAM backends do not   |
+|          | need to produce it.                                       |
++----------+-----------------------------------------------------------+
+| created  | Produced when a file is created inside a monitored        |
+|          | directory.                                                |
++----------+-----------------------------------------------------------+
+| changed  | Produced when a monitored file, or a file inside a        |
+|          | monitored directory, is changed.                          |
++----------+-----------------------------------------------------------+
+| deleted  | Produced when a monitored file, or a file inside a        |
+|          | monitored directory, is deleted.                          |
++----------+-----------------------------------------------------------+
+
+Basics
+======
+
+.. automodule:: Bcfg2.Server.FileMonitor
+
+Existing FAM Backends
+=====================
+
+Pseudo
+------
+
+.. automodule:: Bcfg2.Server.FileMonitor.Pseudo
+
+Fam
+---
+
+.. automodule:: Bcfg2.Server.FileMonitor.Fam
+
+Gamin
+-----
+
+.. automodule:: Bcfg2.Server.FileMonitor.Gamin
+
+Inotify
+-------
+
+.. automodule:: Bcfg2.Server.FileMonitor.Inotify

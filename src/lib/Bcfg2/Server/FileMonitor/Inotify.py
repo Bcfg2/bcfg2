@@ -1,4 +1,5 @@
-""" Inotify driver for file alteration events """
+"""File monitor backend with `inotify <http://inotify.aiken.cz/>`_
+support. """
 
 import os
 import logging
@@ -11,29 +12,75 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Inotify(Pseudo, pyinotify.ProcessEvent):
-    """ file monitor with inotify support """
+    """ File monitor backend with `inotify
+    <http://inotify.aiken.cz/>`_ support. """
 
-    __priority__ = 1
+    #: Inotify is the best FAM backend, so it gets a very high
+    #: priority
+    __priority__ = 99
+
     # pylint: disable=E1101
+    #: Map pyinotify event constants to FAM :ref:`event codes
+    #: <development-fam-event-codes>`.  The mapping is not
+    #: terrifically exact.
     action_map = {pyinotify.IN_CREATE: 'created',
                   pyinotify.IN_DELETE: 'deleted',
                   pyinotify.IN_MODIFY: 'changed',
                   pyinotify.IN_MOVED_FROM: 'deleted',
                   pyinotify.IN_MOVED_TO: 'created'}
     # pylint: enable=E1101
+
+    #: The pyinotify event mask.  We only ask for events that are
+    #: listed in :attr:`action_map`
     mask = reduce(lambda x, y: x | y, action_map.keys())
 
     def __init__(self, ignore=None, debug=False):
         Pseudo.__init__(self, ignore=ignore, debug=debug)
         pyinotify.ProcessEvent.__init__(self)
+
+        #: inotify can't set useful monitors directly on files, only
+        #: on directories, so when a monitor is added on a file we add
+        #: its parent directory to ``event_filter`` and then only
+        #: produce events on a file in that directory if the file is
+        #: listed in ``event_filter``.  Keys are directories -- the
+        #: parent directories of individual files that are monitored
+        #: -- and values are lists of full paths to files in each
+        #: directory that events *should* be produced for.  An event
+        #: on a file whose parent directory is in ``event_filter`` but
+        #: which is not itself listed will be silently suppressed.
         self.event_filter = dict()
+
+        #: inotify doesn't like monitoring a path twice, so we keep a
+        #: dict of :class:`pyinotify.Watch` objects, keyed by monitor
+        #: path, to avoid trying to create duplicate monitors.
+        #: (Duplicates can happen if an object accidentally requests
+        #: duplicate monitors, or if two files in a single directory
+        #: are both individually monitored, since inotify can't set
+        #: monitors on the files but only on the parent directories.)
         self.watches_by_path = dict()
-        # these are created in start() after the server is done forking
+
+        #: The :class:`pyinotify.ThreadedNotifier` object.  This is
+        #: created in :func:`start` after the server is done
+        #: daemonizing.
         self.notifier = None
+
+        #: The :class:`pyinotify.WatchManager` object. This is created
+        #: in :func:`start` after the server is done daemonizing.
         self.watchmgr = None
+
+        #: The queue used to record monitors that are added before
+        #: :func:`start` has been called and :attr:`notifier` and
+        #: :attr:`watchmgr` are created.
         self.add_q = []
 
     def start(self):
+        """ The inotify notifier and manager objects in
+        :attr:`notifier` and :attr:`watchmgr` must be created by the
+        daemonized process, so they are created in ``start()``. Before
+        those objects are created, monitors are added to
+        :attr:`add_q`, and are created once the
+        :class:`pyinotify.ThreadedNotifier` and
+        :class:`pyinotify.WatchManager` objects are created."""
         Pseudo.start(self)
         self.watchmgr = pyinotify.WatchManager()
         self.notifier = pyinotify.ThreadedNotifier(self.watchmgr, self)
@@ -47,8 +94,17 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
             return self.watchmgr.get_fd()
         else:
             return None
+    fileno.__doc__ = Pseudo.fileno.__doc__
 
     def process_default(self, ievent):
+        """ Process all inotify events received.  This process a
+        :class:`pyinotify._Event` object, creates a
+        :class:`Bcfg2.Server.FileMonitor.Event` object from it, and
+        adds that event to :attr:`events`.
+
+        :param ievent: Event to be processed
+        :type ievent: pyinotify._Event
+        """
         action = ievent.maskname
         for amask, aname in self.action_map.items():
             if ievent.mask & amask:
@@ -142,7 +198,9 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
         else:
             self.handles[path] = obj
             return path
+    AddMonitor.__doc__ = Pseudo.AddMonitor.__doc__
 
     def shutdown(self):
         if self.notifier:
             self.notifier.stop()
+    shutdown.__doc__ = Pseudo.shutdown.__doc__

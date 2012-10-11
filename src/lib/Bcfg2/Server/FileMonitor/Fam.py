@@ -1,7 +1,8 @@
-""" Fam provides FAM support for file alteration events """
+""" File monitor backend with support for the `File Alteration Monitor
+<http://oss.sgi.com/projects/fam/>`_."""
 
 import os
-import _fam
+#import _fam
 import stat
 import logging
 from time import time
@@ -11,30 +12,37 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Fam(FileMonitor):
-    """ file monitor with support for FAM """
+    """ File monitor backend with support for the `File Alteration
+    Monitor <http://oss.sgi.com/projects/fam/>`_ (also abbreviated
+    "FAM")."""
 
-    __priority__ = 90
+    #: FAM is the worst actual monitor backend, so give it a low
+    #: priority.
+    __priority__ = 10
 
     def __init__(self, ignore=None, debug=False):
         FileMonitor.__init__(self, ignore=ignore, debug=debug)
         self.filemonitor = _fam.open()
         self.users = {}
+    __init__.__doc__ = FileMonitor.__init__.__doc__
 
     def fileno(self):
-        """Return fam file handle number."""
         return self.filemonitor.fileno()
+    fileno.__doc__ = FileMonitor.fileno.__doc__
 
     def handle_event_set(self, _=None):
         self.Service()
+    handle_event_set.__doc__ = FileMonitor.handle_event_set.__doc__
 
     def handle_events_in_interval(self, interval):
         now = time()
         while (time() - now) < interval:
             if self.Service():
                 now = time()
+    handle_events_in_interval.__doc__ = \
+        FileMonitor.handle_events_in_interval.__doc__
 
     def AddMonitor(self, path, obj, _=None):
-        """Add a monitor to path, installing a callback to obj.HandleEvent."""
         mode = os.stat(path)[stat.ST_MODE]
         if stat.S_ISDIR(mode):
             handle = self.filemonitor.monitorDirectory(path, None)
@@ -44,9 +52,19 @@ class Fam(FileMonitor):
         if obj != None:
             self.users[handle.requestID()] = obj
         return handle.requestID()
+    AddMonitor.__doc__ = FileMonitor.AddMonitor.__doc__
 
     def Service(self, interval=0.50):
-        """Handle all fam work."""
+        """ Handle events for the specified period of time (in
+        seconds).  This call will block for ``interval`` seconds.
+
+        :param interval: The interval, in seconds, during which events
+                         should be handled.  Any events that are
+                         already pending when :func:`Service` is
+                         called will also be handled.
+        :type interval: int
+        :returns: None
+        """
         count = 0
         collapsed = 0
         rawevents = []
