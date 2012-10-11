@@ -581,7 +581,7 @@ DB_ENGINE = \
            deprecated_cf=('statistics', 'database_engine'))
 DB_NAME = \
     Option('Database name',
-           default=os.path.join(SERVER_REPOSITORY.default, "bcfg2.sqlite"),
+           default=os.path.join(SERVER_REPOSITORY.default, "etc/bcfg2.sqlite"),
            cf=('database', 'name'),
            deprecated_cf=('statistics', 'database_name'))
 DB_USER = \
