@@ -51,7 +51,7 @@ def printStats(fn):
 
         for cls in classes:
             print("%s removed: %s" % (cls().__class__.__name__,
-                cls.objects.count() - starts[cls]))
+                starts[cls] - cls.objects.count()))
 
     return print_stats
 
