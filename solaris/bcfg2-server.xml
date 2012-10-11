@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<!DOCTYPE service_bundle SYSTEM "/usr/share/lib/xml/dtd/service_bundle.dtd.1">
+
+<!-- This file belongs in /var/svc/manifest/site -->
+
+<service_bundle type="manifest" name="bcfg2-server">
+<service name="site/bcfg2-server" type="service" version="4">
+
+	<create_default_instance enabled="false"/>
+	<single_instance/>
+
+	<!-- First of all, if the config file is not present,
+             then we needn't bother with anything else.  -->
+
+	<dependency name="config-file" grouping="require_all" restart_on="none" type="path">
+		<service_fmri value="file:///etc/bcfg2.conf"/>
+	</dependency>
+
+	<!-- If there's no network, then there's no point in running -->
+
+	<dependency name="loopback" grouping="require_all" restart_on="error" type="service">
+		<service_fmri value="svc:/network/loopback:default"/>
+	</dependency>
+
+	<dependency name="physical" grouping="require_all" restart_on="error" type="service">
+		<service_fmri value="svc:/network/physical:default"/>
+	</dependency>
+
+	<dependency name="fs-local" grouping="require_all" restart_on="none" type="service">
+		<service_fmri value="svc:/system/filesystem/local"/>
+	</dependency>
+
+	<exec_method type="method" name="start" exec="/lib/svc/method/bcfg2-server start" timeout_seconds="60"/>
+	<exec_method type="method" name="stop" exec="/lib/svc/method/bcfg2-server stop" timeout_seconds="60"/>
+	<exec_method type="method" name="restart" exec="/lib/svc/method/bcfg2-server restart" timeout_seconds="60"/>
+	<exec_method type="method" name="refresh" exec="/lib/svc/method/bcfg2-server reload" timeout_seconds="60"/>
+
+	<stability value="Unstable"/>
+
+	<template>
+		<common_name>
+			<loctext xml:lang="C">BCFG2 Server</loctext>
+		</common_name>
+		<documentation>
+			<doc_link name="bcfg2.org" uri="http://bcfg2.org/"/>
+		</documentation>
+	</template>
+</service>
+</service_bundle>
+
