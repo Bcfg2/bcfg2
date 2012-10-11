@@ -1342,6 +1342,8 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
         self.deprecated_options()
         self.bogus_profiles()
         self.duplicate_groups()
+        self.duplicate_default_groups()
+        self.duplicate_clients()
 
     @classmethod
     def Errors(cls):
@@ -1349,7 +1351,9 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                 "deprecated-clients-options": "warning",
                 "nonexistent-profile-group": "error",
                 "non-profile-set-as-profile": "error",
-                "duplicate-group": "error"}
+                "duplicate-group": "error",
+                "duplicate-client": "error",
+                "multiple-default-groups": "error"}
 
     def deprecated_options(self):
         """ check for the location='floating' option, which has been
@@ -1397,17 +1401,45 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
         """ check for groups that are defined twice.  We count a group
         tag as a definition if it a) has profile or public set; or b)
         has any children. """
-        groups = dict()
+        self.duplicate_entries(
+            self.metadata.groups_xml.xdata.xpath("//Groups/Group") + \
+                self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group"),
+            "group",
+            include=lambda g: (g.get("profile") or
+                               g.get("public") or
+                               g.getchildren()))
+
+    def duplicate_default_groups(self):
+        """ check for multiple default groups """
+        defaults = []
         for grp in self.metadata.groups_xml.xdata.xpath("//Groups/Group") + \
                 self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group"):
-            if grp.get("profile") or grp.get("public") or grp.getchildren():
-                if grp.get("name") in groups:
-                    groups[grp.get("name")].append(self.RenderXML(grp))
+            if grp.get("default"):
+                defaults.append(self.RenderXML(grp))
+        if len(defaults) > 1:
+            self.LintError("multiple-default-groups",
+                           "Multiple default groups defined:\n%s" %
+                           "\n".join(defaults))
+
+    def duplicate_clients(self):
+        """ check for clients that are defined twice. """
+        self.duplicate_entries(
+            self.metadata.clients_xml.xdata.xpath("//Client"),
+            "client")
+
+    def duplicate_entries(self, allentries, etype, include=None):
+        """ generic duplicate entry finder """
+        if include is None:
+            include = lambda e: True
+        entries = dict()
+        for el in allentries:
+            if include(el):
+                if el.get("name") in entries:
+                    entries[el.get("name")].append(self.RenderXML(el))
                 else:
-                    groups[grp.get("name")] = [self.RenderXML(grp)]
-        for gname, grps in groups.items():
-            if len(grps) > 1:
-                self.LintError("duplicate-group",
-                               "Group %s is defined multiple times in %s:\n%s"
-                               % (gname, self.metadata.groups_xml.name,
-                                  "\n".join(grps)))
+                    entries[el.get("name")] = [self.RenderXML(el)]
+        for ename, els in entries.items():
+            if len(els) > 1:
+                self.LintError("duplicate-%s" % etype,
+                               "%s %s is defined multiple times:\n%s" %
+                               (etype.title(), ename, "\n".join(els)))
