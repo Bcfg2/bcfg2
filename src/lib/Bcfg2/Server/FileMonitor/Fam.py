@@ -2,7 +2,7 @@
 <http://oss.sgi.com/projects/fam/>`_."""
 
 import os
-#import _fam
+import _fam
 import stat
 import logging
 from time import time
