@@ -6,6 +6,26 @@
 Bcfg2 Dynamic Reporting System
 ==============================
 
+Summary and Features
+====================
+
+The new reporting system was implemented to address a number of
+deficiencies in the previous system. By storing statistics data in a
+relational database, we are now able to view and analyze more information
+about the state of the configuration, including information about previous
+configuration. Specific features in the new system include:
+
+* The ability to look at a :ref:`reports-calendar-summary` with past
+  statistics information.
+* More recent data concerning hosts.
+* Additional information display in reports. Primarily, reasons for
+  :ref:`configuration item verification failure <reports-item-detail>`
+  are now accessible.
+* Instead of static pages, pages are generated on the fly, allowing
+  users to drill down to find out about a :ref:`specific host
+  <reports-node-dropdown>`, rather than only having one huge page with
+  too much information.
+
 Installation
 ============
 
@@ -14,7 +34,7 @@ Prerequisites
 
 * sqlite3
 * pysqlite2 (if using python 2.4)
-* `Django <http://www.djangoproject.com>`_
+* `Django <http://www.djangoproject.com>`_ >= 1.2
 * mod-wsgi
 
 .. warning::
@@ -31,9 +51,12 @@ Install
 Be sure to include the specified fields included in the example
 ``bcfg2.conf`` file. These can be specified in either ``/etc/bcfg2.conf``,
 if it is readable by the webserver user, or ``/etc/bcfg2-web.conf``. Any
-database supported by Django can be used. If you are not using sqlite
-(the default choice), please see the :ref:`alternative-databases`
-section below.
+database supported by `Django <http://www.djangoproject.com>`_ can be used. 
+As of version 1.3, `South <http://south.aeracode.org>`_ is used to control
+schema changes.  If your database is not supported by South, any updates
+will need to be applied manually.  Sqlite is configured by default.
+Please see the :ref:`reporting-databases` section to configure alternative
+databases.
 
 .. warning::
 
@@ -47,10 +70,15 @@ section below.
     Distributed environments can share a single remote database for
     reporting.
 
-The recommended statistics plugin is DBStats. To use it, add it to the
-**plugins** line in your ``bcfg2.conf``.  Alternatively, the Statistics
-plugin can be used in conjunction with a crontab entry to run
-``/usr/sbin/bcfg2-admin reports load_stats``.
+After configuring your database be sure to run `bcfg2-admin reports init`
+to create the schema.
+
+To enable statistics collection in the bcfg2-server, add 
+:ref:`Reporting <server-plugins-statistics-reporting>` to the **plugins**
+line in your ``bcfg2.conf`` and restart the bcfg2-server.  A report collecting
+daemon should be run to import the collected statistics into the backend.  
+Please see the section :ref:`Report Collector <report_collector>` for more 
+information.
 
 Detailed installation instructions can be found :ref:`here
 <appendix-guides-web-reports-install>`.
@@ -81,6 +109,11 @@ Apache configuration for web-based reports
 An example site config is included below::
 
     <IfModule mod_wsgi.c>
+      #
+      # Read an alternate configuration file
+      #
+      # SetEnv BCFG2_CONFIG_FILE /etc/bcfg2_testing.conf
+
       #
       # If the root is changed update the static content alias as well
       #
@@ -114,10 +147,68 @@ from an RPM or deb package.
 At this point you should be able to point your web browser to
 http://localhost/bcfg2 and see the new reports.
 
-.. _alternative-databases:
+Upgrading
+============
 
-Notes on Alternative Databases
-------------------------------
+1. Convert database config 
+
+    Run `tools/upgrade/1.3/migrate_configs.py`
+
+    Beginning with 1.3 the database configuration moved from [statistics] to
+    [database] in `bcfg2.conf` and `bcfg2-web.conf`.  The old settings will
+    be accepted but a deprecation warning will be displayed.
+
+2. Replace the DBStats plugin with the Reporting plugin.
+
+3. Migrate historic data.
+    Run `tools/upgrade/1.3/migrate_dbstats.py`
+
+    The reporting schema is now managed using `South <http://south.aeracode.org>`_
+    instead of a set of custom scripts. This creates the new schema and imports
+    all of the historic data to the new format.
+
+.. Note:
+
+    After the database is upgraded all of the old tables are left intact.  To
+    remove them any table starting with reports_ can be dropped.
+
+4. `(Optional)` Run the :ref:`Report Collector <report_collector>`
+    Add "transport = LocalFilesystem" under "[reporting]" in `bcfg2.conf`.
+    Restart the bcfg2-server and start the bcfg2-report-collector.
+
+Configuring
+===========
+
+Most of the configuration is handled through the ``/etc/bcfg2.conf`` or alternatively 
+``/etc/bcfg2-web.conf``.
+
+An example using the defaults is listed below::
+
+    [database]
+    engine = sqlite3
+    name = '/var/lib/bcfg2/etc/bcfg2.sqlite'
+    user =
+    password =
+    host =
+    port =
+
+    [statistics]
+    config = /etc/bcfg2-web.conf
+    time_zone =
+    web_debug = False
+
+    [reporting]
+    transport = DirectStore
+    web_prefix =
+    file_limit = 1m
+
+Configuration Sections
+----------------------
+
+.. _reporting-databases:
+
+database
+^^^^^^^^
 
 If you choose to use a different database, you'll need to edit
 ``/etc/bcfg2.conf``. These fields should be updated in the [database]
@@ -134,28 +225,82 @@ section:
 * host
 * port (optional)
 
-Summary and Features
-====================
+.. warning::
 
-The new reporting system was implemented to address a number of
-deficiencies in the previous system. By storing statistics data in a
-relational database, we are now able to view and analyze more information
-about the state of the configuration, including information about previous
-configuration. Specific features in the new system include:
+    If mysql is used as a backend, it is recommended to use InnoDB for
+    the `storage engine <http://dev.mysql.com/doc/refman/5.1/en/storage-engine-setting.html>`_.
 
-* The ability to look at a :ref:`reports-calendar-summary` with past
-  statistics information.
-* More recent data concerning hosts.
-* Additional information display in reports. Primarily, reasons for
-  :ref:`configuration item verification failure <reports-item-detail>`
-  are now accessible.
-* Instead of static pages, pages are generated on the fly, allowing
-  users to drill down to find out about a :ref:`specific host
-  <reports-node-dropdown>`, rather than only having one huge page with
-  too much information.
+
+statistics
+^^^^^^^^^^
+
+* config: The config file to be read for additional reporting
+  data.  This is used to restrict what can be read by the web
+  server.
+* time_zone: The django TIME_ZONE settings parameter.
+* web_debug: Set Django's DEBUG and TEMPLATE_DEBUG settings. This
+  is known to cause memory leaks.  Use with caution!
+
+reporting
+^^^^^^^^^
+
+* transport: See :ref:`Transports <dynamic_transports>`.
+* web_prefix: Prefix to be added to Django's MEDIA_URL
+* file_limit: The maximum size of a diff or binary data to
+  store in the database.
+
+
+.. _dynamic_transports:
+
+Statistics Transports
+---------------------
+
+A transport is required to pass the data collected from the bcfg2-server 
+to the bcfg2-report-collector.  At the time of this writing two transports
+are available:
+
+* LocalFilesystem: Statistics are written to the local file system and collected
+  on the local machine.
+* DirectStore: DBStats style threaded imports in the main server process.
+
+Future transports will allow multiple servers to pass data to a single or multiple
+bcfg2-report-collector processes.  New installations default to and should use the
+LocalFilesystem transport.  Upgrades will use DirectStore by default in the 1.3 
+release.
+
+.. Note::
+    If DirectStore is used, the bcfg2-report-collector process will refuse to run
+    since this method is not compatible with an external process.
 
 Usage
 =====
+
+.. _report_collector:
+
+Report Collector daemon
+-----------------------
+
+.. Note::
+    This section does not apply when the DirectStore transport is used.
+
+The bcfg2-report-collector gathers statistics from the bcfg2-server process
+and records them in the backend database.
+
+Options are similar to the bcfg2-server daemon::
+
+     -D <pidfile>                 Daemonize process, storing pid
+     -o <path>                    Set path of file log
+     -h                           Print this usage message
+     -E <encoding>                Encoding of cfg files
+     -W <conffile>                Web interface configuration file
+     -Q <repository path>         Server repository path
+     -C <conffile>                Specify configuration file
+     --version                    Print the version and exit
+     -d                           Enable debugging output
+     -v                           Enable verbose output
+
+.. Note::
+    The bcfg2-report-collector is not set to start by default
 
 bcfg2-admin reports (command line script)
 -----------------------------------------
@@ -165,18 +310,23 @@ the reporting database.  A few useful `Django <http://www.djangoproject.com>`_
 commands are provided as well.
 
 * init: Initialize a new database
-* load_stats: Load statistics data from the Statistics plugin into the
-  database. This was importscript.py.
-* scrub: Scrub the database for duplicate reasons.
 * update: Apply any updates to the reporting database. Unlike the syncdb
   command, this will modify existing tables.
+* purge: Removes unwanted clients and data.
+
+  * -c --client [client name] - Remove interactions from a single client.
+  * --expired - Remove all data for expired clients.  --days is used to exclude
+    clients expired within n days.
+  * --days [n] - Remove interactions older then n days.  If not used with any
+    other modifiers, all data older then n days is removed.
+
+* scrub: Scrub the database for any orphaned objects.
 
 Django commands
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-* syncdb:  Create the tables for any models not installed.  Django will
-  not modify any existing tables.
-* sqlall:  Print the sql statements used to create the database.  Note:
-  This does not show the fixture data.
+* dbshell:  Connects to the backend database.
+* shell:  Starts an interactive python shell with the Django environment setup.
+* sqlall:  Print the sql statements used to create the database.
 * validate:  Validate the database against the current models.
 
 bcfg2-reports (command line script)
