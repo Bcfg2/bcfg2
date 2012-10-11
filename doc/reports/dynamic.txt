@@ -2,9 +2,9 @@
 
 .. _reports-dynamic:
 
-==============================
-Bcfg2 Dynamic Reporting System
-==============================
+==========================
+Bcfg2 Web Reporting System
+==========================
 
 Summary and Features
 ====================
@@ -28,6 +28,11 @@ configuration. Specific features in the new system include:
 
 Installation
 ============
+
+Quickstart
+----------
+
+:ref:`appendix-guides-web-reports-install`
 
 Prerequisites
 -------------
@@ -74,7 +79,7 @@ After configuring your database be sure to run `bcfg2-admin reports init`
 to create the schema.
 
 To enable statistics collection in the bcfg2-server, add 
-:ref:`Reporting <server-plugins-statistics-reporting>` to the **plugins**
+:ref:`server-plugins-statistics-reporting` to the **plugins**
 line in your ``bcfg2.conf`` and restart the bcfg2-server.  A report collecting
 daemon should be run to import the collected statistics into the backend.  
 Please see the section :ref:`Report Collector <report_collector>` for more 

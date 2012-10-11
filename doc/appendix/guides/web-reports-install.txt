@@ -7,9 +7,9 @@
 
 .. _appendix-guides-web-reports-install:
 
-==================================
-Dynamic (web) Reports installation
-==================================
+========================
+Web Reporting Quickstart
+========================
 
 You need to install the bcfg2-web package that is available for your
 particular distribution. All packages for Fedora are in the Fedora
@@ -23,14 +23,17 @@ The same packages are needed for Debian/Ubuntu systems::
 
     [root@system01 ~]# aptitude install bcfg2-web
 
-Add DBStats to the plugins line of ``bcfg2.conf``. The resulting
+Add Reporting to the plugins line of ``bcfg2.conf``. The resulting
 **[server]** section should look something like this::
 
     [server]
     repository = /var/lib/bcfg2
-    plugins = Base,Bundler,Cfg,...,DBStats
+    plugins = Base,Bundler,Cfg,...,Reporting
 
-You then need to initialize the DBStats reporting database::
+    [reporting]
+    transport = LocalFilesystem
+
+You then need to initialize the reporting database::
 
     [root@system01 ~]# bcfg2-admin reports init
 
@@ -38,9 +41,11 @@ Start/restart the Bcfg2 server::
 
     [root@system01 ~]# /etc/init.d/bcfg2-server restart
 
-Run the Bcfg2 client in order to populate the statistics database
-(this run should take a bit longer since you are uploading the client
-statistics to the database).
+Start the Bcfg2 report collector::
+
+    [root@system01 ~]# /etc/init.d/bcfg2-report-collector start
+
+Run the Bcfg2 client in order to populate the statistics database.
 
 Copy server/statistics sections of ``bcfg2.conf`` to
 ``/etc/bcfg2-web.conf`` (make sure it is world-readable).  You should
@@ -48,10 +53,7 @@ then have something like this::
 
     [server]
     repository = /var/lib/bcfg2
-    plugins = Base,Bundler,Cfg,...,DBStats
-
-    [statistics]
-    sendmailpath = /usr/lib/sendmail
+    plugins = Base,Bundler,Cfg,...,Reporting
 
     [database]
     engine = sqlite3
@@ -64,6 +66,9 @@ then have something like this::
     host =
     # Not used with sqlite3.
     port =
+
+    [reporting]
+    transport = LocalFilesystem
 
 Restart apache and point a browser to your Bcfg2 server.
 

@@ -88,7 +88,7 @@ Statistics Plugins
 
    statistics/*
 
-DBStats can be enabled by adding it to the plugins line in
+Reporting can be enabled by adding it to the plugins line in
 ``/etc/bcfg2.conf``.
 
 Version Plugins
