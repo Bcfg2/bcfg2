@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# This file belongs in /lib/svc/method
+
+. /lib/svc/share/smf_include.sh
+
+ACTION="$1"
+test "x$ACTION" = x && exit $SMF_EXIT_ERR_CONFIG
+test "x$ACTION" = xrefresh && ACTION="reload"
+if test "x$ACTION" = xmanifest; then
+	echo "/var/svc/manifest/site/bcfg2-server.xml"
+	exit $SMF_EXIT_OK;
+fi
+
+/etc/init.d/bcfg2-server $ACTION
+RC=$?
+
+test $RC == 0 && exit $SMF_EXIT_OK
+exit $SMF_EXIT_ERR_FATAL
