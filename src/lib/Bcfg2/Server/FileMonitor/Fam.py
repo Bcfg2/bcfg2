@@ -1,5 +1,5 @@
 """ File monitor backend with support for the `File Alteration Monitor
-<http://oss.sgi.com/projects/fam/>`_."""
+<http://oss.sgi.com/projects/fam/>`_.  The FAM backend is deprecated. """
 
 import os
 import _fam
@@ -12,9 +12,9 @@ LOGGER = logging.getLogger(__name__)
 
 
 class Fam(FileMonitor):
-    """ File monitor backend with support for the `File Alteration
-    Monitor <http://oss.sgi.com/projects/fam/>`_ (also abbreviated
-    "FAM")."""
+    """ **Deprecated** file monitor backend with support for the `File
+    Alteration Monitor <http://oss.sgi.com/projects/fam/>`_ (also
+    abbreviated "FAM")."""
 
     #: FAM is the worst actual monitor backend, so give it a low
     #: priority.
@@ -24,6 +24,8 @@ class Fam(FileMonitor):
         FileMonitor.__init__(self, ignore=ignore, debug=debug)
         self.filemonitor = _fam.open()
         self.users = {}
+        LOGGER.warning("The Fam file monitor backend is deprecated. Please "
+                       "switch to a supported file monitor.")
     __init__.__doc__ = FileMonitor.__init__.__doc__
 
     def fileno(self):
