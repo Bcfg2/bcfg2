@@ -90,6 +90,7 @@ def get_groups_test_tree():
 def get_metadata_object(core=None, watch_clients=False, use_db=False):
     if core is None:
         core = Mock()
+        core.setup = MagicMock()
         core.metadata_cache = MagicMock()
     core.setup.cfp.getboolean = Mock(return_value=use_db)
     return Metadata(core, datastore, watch_clients=watch_clients)
@@ -248,7 +249,7 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
         self.assertEqual(config.base_xdata, "<test/>")
 
     def test_add_monitor(self):
-        core = Mock()
+        core = MagicMock()
         config = self.get_obj(core=core)
 
         fname = "test.xml"
@@ -441,7 +442,7 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
 
     def test__init(self):
         # test with watch_clients=False
-        core = Mock()
+        core = MagicMock()
         metadata = self.get_obj(core=core)
         self.assertIsInstance(metadata, Bcfg2.Server.Plugin.Plugin)
         self.assertIsInstance(metadata, Bcfg2.Server.Plugin.Metadata)
@@ -452,7 +453,7 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         self.assertEqual(metadata.states, dict())
 
         # test with watch_clients=True
-        core.fam = Mock()
+        core.fam = MagicMock()
         metadata = self.get_obj(core=core, watch_clients=True)
         self.assertEqual(len(metadata.states), 2)
         core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
@@ -1206,7 +1207,7 @@ class TestMetadataBase(TestMetadata):
 
     @patch('os.path.exists')
     def test__init(self, mock_exists):
-        core = Mock()
+        core = MagicMock()
         core.fam = Mock()
         mock_exists.return_value = False
         metadata = self.get_obj(core=core, watch_clients=True)

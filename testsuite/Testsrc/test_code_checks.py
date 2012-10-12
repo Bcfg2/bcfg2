@@ -81,8 +81,7 @@ error_checks = {
                                "RcUpdate.py",
                                "VCS.py",
                                "YUM24.py"],
-    "lib/Bcfg2/Server/Plugins": ["Decisions.py",
-                                 "Deps.py",
+    "lib/Bcfg2/Server/Plugins": ["Deps.py",
                                  "Ldap.py",
                                  "Pkgmgr.py"]
     }

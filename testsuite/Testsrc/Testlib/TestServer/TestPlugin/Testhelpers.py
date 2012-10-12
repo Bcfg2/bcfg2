@@ -87,7 +87,7 @@ class TestDatabaseBacked(TestPlugin):
         core.setup.cfp.getboolean.return_value = False
         db = self.get_obj(core)
         self.assertFalse(db._use_db)
-        
+
         Bcfg2.Server.Plugin.helpers.HAS_DJANGO = False
         core = Mock()
         db = self.get_obj(core)
@@ -1764,6 +1764,17 @@ class TestGroupSpool(TestPlugin, TestGenerator):
     test_obj = GroupSpool
 
     def get_obj(self, core=None):
+        if core is None:
+            print "creating core as a magicmock"
+            core = MagicMock()
+            core.setup = MagicMock()
+        else:
+            try:
+                core.setup['encoding']
+            except TypeError:
+                print "creating core.setup.__getitem__"
+                core.setup.__getitem__ = MagicMock()
+
         @patch("%s.%s.AddDirectoryMonitor" % (self.test_obj.__module__,
                                               self.test_obj.__name__),
                Mock())
@@ -1773,11 +1784,10 @@ class TestGroupSpool(TestPlugin, TestGenerator):
         return inner()
 
     def test__init(self):
-        core = Mock()
         @patch("%s.%s.AddDirectoryMonitor" % (self.test_obj.__module__,
                                               self.test_obj.__name__))
         def inner(mock_Add):
-            gs = self.test_obj(core, datastore)
+            gs = self.test_obj(MagicMock(), datastore)
             mock_Add.assert_called_with('')
             self.assertItemsEqual(gs.Entries, {gs.entry_type: {}})
 
@@ -1792,7 +1802,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
         gs.event_id = Mock()
         gs.event_path = Mock()
         gs.AddDirectoryMonitor = Mock()
-        
+
         def reset():
             gs.es_cls.reset_mock()
             gs.es_child_cls.reset_mock()

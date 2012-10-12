@@ -86,7 +86,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Structure.__init__(self)
-        self.encoding = core.encoding
+        self.encoding = core.setup['encoding']
         self.__child__ = self.template_dispatch
         try:
             Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self,

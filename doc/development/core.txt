@@ -1,0 +1,62 @@
+.. -*- mode: rst -*-
+
+.. _development-core:
+
+=========================
+ Server Core Development
+=========================
+
+.. versionadded:: 1.3.0
+
+Bcfg2 1.3 added a pluggable server core system so that the server core
+itself can be easily swapped out to use different technologies.  It
+currently ships with two backends: a builtin core written from scratch
+using the various server tools in the Python standard library; and an
+experimental `CherryPy <http://www.cherrypy.org/>`_ based core.  This
+page documents the server core interface so that other cores can be
+written to take advantage of other technologies, e.g., `Tornado
+<http://www.tornadoweb.org/>`_ or `Twisted
+<http://twistedmatrix.com/trac/>`_.
+
+A core implementation needs to:
+
+* Override :func:`Bcfg2.Server.Core.Core._daemonize` to handle
+  daemonization, writing the PID file, and dropping privileges.
+* Override :func:`Bcfg2.Server.Core.Core._run` to handle server
+  startup.
+* Override :func:`Bcfg2.Server.Core.Core._block` to run the blocking
+  server loop.
+* Call :func:`Bcfg2.Server.Core.Core.shutdown` on orderly shutdown.
+
+Nearly all XML-RPC handling is delegated entirely to the core
+implementation.  It needs to:
+
+* Call :func:`Bcfg2.Server.Core.Core.authenticate` to authenticate
+  clients.
+* Handle :exc:`xmlrpclib.Fault` exceptions raised by the exposed
+  XML-RPC methods as appropriate.
+* Dispatch XML-RPC method invocations to the appropriate method,
+  including Plugin RMI.
+
+Additionally, running and configuring the server is delegated to the
+core.  It needs to honor the configuration options that influence how
+and where the server runs, including the server location (host and
+port), listening interfaces, and SSL certificate and key.
+
+Base Core
+=========
+
+.. automodule:: Bcfg2.Server.Core
+
+Core Implementations
+====================
+
+Builtin Core
+------------
+
+.. automodule:: Bcfg2.Server.BuiltinCore
+
+CherryPy Core
+-------------
+
+.. automodule:: Bcfg2.Server.CherryPyCore

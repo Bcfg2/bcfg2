@@ -201,7 +201,7 @@ class TestProbes(TestProbing, TestConnector, TestDatabaseBacked):
 
     def get_obj(self, core=None):
         if core is None:
-            core = Mock()
+            core = MagicMock()
         return self.test_obj(core, datastore)
 
     def get_test_probedata(self):
@@ -233,7 +233,7 @@ text
                 "bar.example.com": []}
 
     def get_probes_object(self, use_db=False, load_data=None):
-        core = Mock()
+        core = MagicMock()
         core.setup.cfp.getboolean = Mock()
         core.setup.cfp.getboolean.return_value = use_db
         if load_data is None:

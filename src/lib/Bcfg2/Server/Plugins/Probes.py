@@ -181,7 +181,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
 
         try:
-            self.probes = ProbeSet(self.data, core.fam, core.encoding,
+            self.probes = ProbeSet(self.data, core.fam, core.setup['encoding'],
                                    self.name)
         except:
             err = sys.exc_info()[1]

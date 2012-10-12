@@ -1417,7 +1417,7 @@ class GroupSpool(Plugin, Generator):
         self.entries = {}
         self.handles = {}
         self.AddDirectoryMonitor('')
-        self.encoding = core.encoding
+        self.encoding = core.setup['encoding']
     __init__.__doc__ = Plugin.__init__.__doc__
 
     def add_entry(self, event):

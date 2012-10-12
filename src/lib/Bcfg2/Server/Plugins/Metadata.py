@@ -419,7 +419,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.session_cache = {}
         self.default = None
         self.pdirty = False
-        self.password = core.password
+        self.password = core.setup['password']
         self.query = MetadataQuery(core.build_metadata,
                                    lambda: list(self.clients),
                                    self.get_client_names_by_groups,

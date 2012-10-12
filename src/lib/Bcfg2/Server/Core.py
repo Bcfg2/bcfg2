@@ -1,4 +1,5 @@
-"""Bcfg2.Server.Core provides the runtime support for Bcfg2 modules."""
+""" Bcfg2.Server.Core provides the base core object that server core
+implementations inherit from. """
 
 import os
 import atexit
@@ -30,14 +31,30 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
 
 
 def exposed(func):
-    """ decorator that sets the 'exposed' attribute of a function to
-    expose it via XML-RPC """
+    """ Decorator that sets the ``exposed`` attribute of a function to
+    ``True`` expose it via XML-RPC.  This currently works for both the
+    builtin and CherryPy cores, although if other cores are added this
+    may need to be made a core-specific function.
+
+    :param func: The function to decorate
+    :type func: callable
+    :returns: callable - the decorated function"""
     func.exposed = True
     return func
 
 
 def sort_xml(node, key=None):
-    """ sort XML in a deterministic fashion """
+    """ Recursively sort an XML document in a deterministic fashion.
+    This shouldn't be used to perform a *useful* sort, merely to put
+    XML in a deterministic, replicable order.  The document is sorted
+    in-place.
+
+    :param node: The root node of the XML tree to sort
+    :type node: lxml.etree._Element or lxml.etree.ElementTree
+    :param key: The key to sort by
+    :type key: callable
+    :returns: None
+    """
     for child in node:
         sort_xml(child, key)
 
@@ -49,12 +66,13 @@ def sort_xml(node, key=None):
 
 
 class CoreInitError(Exception):
-    """This error is raised when the core cannot be initialized."""
+    """ Raised when the server core cannot be initialized. """
     pass
 
 
 class NoExposedMethod (Exception):
-    """There is no method exposed with the given name."""
+    """ Raised when an XML-RPC method is called, but there is no
+    method exposed with the given name. """
 
 
 # pylint: disable=W0702
@@ -63,11 +81,22 @@ class NoExposedMethod (Exception):
 
 
 class BaseCore(object):
-    """The Core object is the container for all
-    Bcfg2 Server logic and modules.
-    """
+    """ The server core is the container for all Bcfg2 server logic
+    and modules. All core implementations must inherit from
+    ``BaseCore``. """
 
     def __init__(self, setup):  # pylint: disable=R0912,R0915
+        """
+        :param setup: A Bcfg2 options dict
+        :type setup: Bcfg2.Options.OptionParser
+
+        .. automethod:: _daemonize
+        .. automethod:: _run
+        .. automethod:: _block
+        .. -----
+        .. automethod:: _file_monitor_thread
+        """
+        #: The Bcfg2 repository directory
         self.datastore = setup['repo']
 
         if setup['debug']:
@@ -86,6 +115,8 @@ class BaseCore(object):
                                    to_syslog=setup['syslog'],
                                    to_file=setup['logging'],
                                    level=level)
+
+        #: A :class:`logging.Logger` object for use by the core
         self.logger = logging.getLogger('bcfg2-server')
 
         try:
@@ -100,29 +131,51 @@ class BaseCore(object):
             famargs['ignore'] = setup['ignore']
         if 'debug' in setup:
             famargs['debug'] = setup['debug']
+
         try:
+            #: The :class:`Bcfg2.Server.FileMonitor.FileMonitor`
+            #: object used by the core to monitor for Bcfg2 data
+            #: changes.
             self.fam = filemonitor(**famargs)
         except IOError:
             msg = "Failed to instantiate fam driver %s" % setup['filemonitor']
             self.logger.error(msg, exc_info=1)
             raise CoreInitError(msg)
-        self.pubspace = {}
+
+        #: Path to bcfg2.conf
         self.cfile = setup['configfile']
-        self.cron = {}
+
+        #: Dict of plugins that are enabled.  Keys are the plugin
+        #: names (just the plugin name, in the correct case; e.g.,
+        #: "Cfg", not "Bcfg2.Server.Plugins.Cfg"), and values are
+        #: plugin objects.
         self.plugins = {}
+
+        #: Blacklist of plugins that conflict with enabled plugins.
+        #: If two plugins are loaded that conflict with each other,
+        #: the first one loaded wins.
         self.plugin_blacklist = {}
+
+        #: Revision of the Bcfg2 specification.  This will be sent to
+        #: the client in the configuration, and can be set by a
+        #: :class:`Bcfg2.Server.Plugin.interfaces.Version` plugin.
         self.revision = '-1'
-        self.password = setup['password']
-        self.encoding = setup['encoding']
+
+        #: The Bcfg2 options dict
         self.setup = setup
+
         atexit.register(self.shutdown)
-        # Create an event to signal worker threads to shutdown
+
+        #: Threading event to signal worker threads (e.g.,
+        #: :attr:`fam_thread`) to shutdown
         self.terminate = threading.Event()
 
         # generate Django ORM settings.  this must be done _before_ we
         # load plugins
         Bcfg2.settings.read_config(repo=self.datastore)
 
+        #: Whether or not it's possible to use the Django database
+        #: backend for plugins that have that capability
         self._database_available = False
         if Bcfg2.settings.HAS_DJANGO:
             from django.core.exceptions import ImproperlyConfigured
@@ -143,7 +196,7 @@ class BaseCore(object):
 
         for plugin in setup['plugins']:
             if not plugin in self.plugins:
-                self.init_plugins(plugin)
+                self.init_plugin(plugin)
         # Remove blacklisted plugins
         for plugin, blacklist in list(self.plugin_blacklist.items()):
             if len(blacklist) > 0:
@@ -166,41 +219,82 @@ class BaseCore(object):
                              (" ".join([x.name for x in depr])))
 
         mlist = self.plugins_by_type(Bcfg2.Server.Plugin.Metadata)
-        if len(mlist) == 1:
+        if len(mlist) >= 1:
+            #: The Metadata plugin
             self.metadata = mlist[0]
+            if len(mlist) > 1:
+                self.logger.error("Multiple Metadata plugins loaded; "
+                                  "using %s" % self.metadata)
         else:
-            self.logger.error("No Metadata Plugin loaded; "
+            self.logger.error("No Metadata plugin loaded; "
                               "failed to instantiate Core")
             raise CoreInitError("No Metadata Plugin")
+
+        #: The list of plugins that handle
+        #: :class:`Bcfg2.Server.Plugin.interfaces.Statistics`
         self.statistics = self.plugins_by_type(Bcfg2.Server.Plugin.Statistics)
+
+        #: The list of plugins that implement the
+        #: :class:`Bcfg2.Server.Plugin.interfaces.PullSource`
+        #: interface
         self.pull_sources = \
             self.plugins_by_type(Bcfg2.Server.Plugin.PullSource)
+
+        #: The list of
+        #: :class:`Bcfg2.Server.Plugin.interfaces.Generator` plugins
         self.generators = self.plugins_by_type(Bcfg2.Server.Plugin.Generator)
+
+        #: The list of plugins that handle
+        #: :class:`Bcfg2.Server.Plugin.interfaces.Structure`
+        #: generation
         self.structures = self.plugins_by_type(Bcfg2.Server.Plugin.Structure)
+
+        #: The list of plugins that implement the
+        #: :class:`Bcfg2.Server.Plugin.interfaces.Connector` interface
         self.connectors = self.plugins_by_type(Bcfg2.Server.Plugin.Connector)
+
+        #: The CA that signed the server cert
         self.ca = setup['ca']
+
+        #: The FAM :class:`threading.Thread`,
+        #: :func:`_file_monitor_thread`
         self.fam_thread = \
             threading.Thread(name="%sFAMThread" % setup['filemonitor'],
                              target=self._file_monitor_thread)
+
+        #: A :func:`threading.Lock` for use by
+        #: :func:`Bcfg2.Server.FileMonitor.FileMonitor.handle_event_set`
         self.lock = threading.Lock()
 
+        #: A :class:`Bcfg2.Cache.Cache` object for caching client
+        #: metadata
         self.metadata_cache = Cache()
 
     def plugins_by_type(self, base_cls):
-        """Return a list of loaded plugins that match the passed type.
+        """ Return a list of loaded plugins that match the passed type.
 
-        The returned list is sorted in ascending order by the Plugins'
-        sort_order value. The sort_order defaults to 500 in Plugin.py,
-        but can be overridden by individual plugins. Plugins with the
-        same numerical sort_order value are sorted in alphabetical
+        The returned list is sorted in ascending order by the plugins'
+        ``sort_order`` value. The
+        :attr:`Bcfg2.Server.Plugin.base.Plugin.sort_order` defaults to
+        500, but can be overridden by individual plugins. Plugins with
+        the same numerical sort_order value are sorted in alphabetical
         order by their name.
+
+        :param base_cls: The base plugin interface class to match (see
+                         :mod:`Bcfg2.Server.Plugin.interfaces`)
+        :type base_cls: type
+        :returns: list of :attr:`Bcfg2.Server.Plugin.base.Plugin`
+                  objects
         """
         return sorted([plugin for plugin in self.plugins.values()
                        if isinstance(plugin, base_cls)],
                       key=lambda p: (p.sort_order, p.name))
 
     def _file_monitor_thread(self):
-        """The thread for monitor the files."""
+        """ The thread that runs the
+        :class:`Bcfg2.Server.FileMonitor.FileMonitor`. This also
+        queries :class:`Bcfg2.Server.Plugin.interfaces.Version`
+        plugins for the current revision of the Bcfg2 repo. """
         famfd = self.fam.fileno()
         terminate = self.terminate
         while not terminate.isSet():
@@ -217,8 +311,16 @@ class BaseCore(object):
             for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Version):
                 self.revision = plugin.get_revision()
 
-    def init_plugins(self, plugin):
-        """Handling for the plugins."""
+    def init_plugin(self, plugin):
+        """ Import and instantiate a single plugin.  The plugin is
+        stored to :attr:`plugins`.
+
+        :param plugin: The name of the plugin.  This is just the name
+                       of the plugin, in the appropriate case.  I.e.,
+                       ``Cfg``, not ``Bcfg2.Server.Plugins.Cfg``.
+        :type plugin: string
+        :returns: None
+        """
         self.logger.debug("Loading plugin %s" % plugin)
         try:
             mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
@@ -250,7 +352,7 @@ class BaseCore(object):
                               % plugin, exc_info=1)
 
     def shutdown(self):
-        """Shutting down the plugins."""
+        """ Perform plugin and FAM shutdown tasks. """
         if not self.terminate.isSet():
             self.terminate.set()
             self.fam.shutdown()
@@ -259,8 +361,9 @@ class BaseCore(object):
 
     @property
     def metadata_cache_mode(self):
-        """ get the client metadata cache mode.  options are off,
-        initial, cautious, aggressive, on (synonym for cautious) """
+        """ Get the client :attr:`metadata_cache` mode.  Options are
+        off, initial, cautious, aggressive, on (synonym for
+        cautious). See :ref:`server-caching` for more details. """
         mode = self.setup.cfp.get("caching", "client_metadata",
                                   default="off").lower()
         if mode == "on":
@@ -269,7 +372,20 @@ class BaseCore(object):
             return mode
 
     def client_run_hook(self, hook, metadata):
-        """invoke client run hooks for a given stage."""
+        """ Invoke hooks from
+        :class:`Bcfg2.Server.Plugin.interfaces.ClientRunHooks` plugins
+        for a given stage.
+
+        :param hook: The name of the stage to run hooks for.  A stage
+                     can be any abstract function defined in the
+                     :class:`Bcfg2.Server.Plugin.interfaces.ClientRunHooks`
+                     interface.
+        :type hook: string
+        :param metadata: Client metadata to run the hook for.  This
+                         will be passed as the sole argument to each
+                         hook.
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        """
         start = time.time()
         try:
             for plugin in \
@@ -291,7 +407,18 @@ class BaseCore(object):
 
     @track_statistics()
     def validate_structures(self, metadata, data):
-        """Checks the data structure."""
+        """ Checks the data structures by calling the
+        :func:`Bcfg2.Server.Plugin.interfaces.StructureValidator.validate_structures`
+        method of
+        :class:`Bcfg2.Server.Plugin.interfaces.StructureValidator`
+        plugins.
+
+        :param metadata: Client metadata to validate structures for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :param data: The list of structures (i.e., bundles) for this
+                     client
+        :type data: list of lxml.etree._Element objects
+        """
         for plugin in \
                 self.plugins_by_type(Bcfg2.Server.Plugin.StructureValidator):
             try:
@@ -307,7 +434,17 @@ class BaseCore(object):
 
     @track_statistics()
     def validate_goals(self, metadata, data):
-        """Checks that the config matches the goals enforced by the plugins."""
+        """ Checks that the config matches the goals enforced by
+        :class:`Bcfg2.Server.Plugin.interfaces.GoalValidator` plugins
+        by calling
+        :func:`Bcfg2.Server.Plugin.interfaces.GoalValidator.validate_goals`.
+
+        :param metadata: Client metadata to validate goals for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :param data: The list of structures (i.e., bundles) for this
+                     client
+        :type data: list of lxml.etree._Element objects
+        """
         for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.GoalValidator):
             try:
                 plugin.validate_goals(metadata, data)
@@ -322,7 +459,12 @@ class BaseCore(object):
 
     @track_statistics()
     def GetStructures(self, metadata):
-        """Get all structures for client specified by metadata."""
+        """ Get all structures (i.e., bundles) for the given client
+
+        :param metadata: Client metadata to get structures for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: list of :class:`lxml.etree._Element` objects
+        """
         structures = reduce(lambda x, y: x + y,
                             [struct.BuildStructures(metadata)
                              for struct in self.structures], [])
@@ -335,8 +477,17 @@ class BaseCore(object):
 
     @track_statistics()
     def BindStructures(self, structures, metadata, config):
-        """ Given a list of structures, bind all the entries in them
-        and add the structures to the config. """
+        """ Given a list of structures (i.e. bundles), bind all the
+        entries in them and add the structures to the config.
+
+        :param structures: The list of structures for this client
+        :type structures: list of lxml.etree._Element objects
+        :param metadata: Client metadata to bind structures for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :param config: The configuration document to add fully-bound
+                       structures to. Modified in-place.
+        :type config: lxml.etree._Element
+        """
         for astruct in structures:
             try:
                 self.BindStructure(astruct, metadata)
@@ -346,7 +497,13 @@ class BaseCore(object):
 
     @track_statistics()
     def BindStructure(self, structure, metadata):
-        """Bind a complete structure."""
+        """ Bind all elements in a single structure (i.e., bundle).
+
+        :param structure: The structure to bind.  Modified in-place.
+        :type structures: lxml.etree._Element
+        :param metadata: Client metadata to bind structure for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        """
         for entry in structure.getchildren():
             if entry.tag.startswith("Bound"):
                 entry.tag = entry.tag[5:]
@@ -367,7 +524,13 @@ class BaseCore(object):
                                   % (entry.tag, entry.get('name')), exc_info=1)
 
     def Bind(self, entry, metadata):
-        """Bind an entry using the appropriate generator."""
+        """ Bind a single entry using the appropriate generator.
+
+        :param entry: The entry to bind.  Modified in-place.
+        :type entry: lxml.etree._Element
+        :param metadata: Client metadata to bind structure for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        """
         start = time.time()
         if 'altsrc' in entry.attrib:
             oldname = entry.get('name')
@@ -405,13 +568,19 @@ class BaseCore(object):
             raise PluginExecutionError("No matching generator: %s:%s" %
                                        (entry.tag, entry.get('name')))
         finally:
-            Bcfg2.Statistics.stats.add_value("%s:Bind:%s" % 
+            Bcfg2.Statistics.stats.add_value("%s:Bind:%s" %
                                              (self.__class__.__name__,
                                               entry.tag),
                                              time.time() - start)
 
     def BuildConfiguration(self, client):
-        """Build configuration for clients."""
+        """ Build the complete configuration for a client.
+
+        :param client: The hostname of the client to build the
+                       configuration for
+        :type client: string
+        :returns: :class:`lxml.etree._Element` - A complete Bcfg2
+                  configuration document """
         start = time.time()
         config = lxml.etree.Element("Configuration", version='2.0',
                                     revision=self.revision)
@@ -458,7 +627,11 @@ class BaseCore(object):
         return config
 
     def HandleEvent(self, event):
-        """ handle a change in the config file """
+        """ Handle a change in the Bcfg2 config file.
+
+        :param event: The event to handle
+        :type event: Bcfg2.Server.FileMonitor.Event
+        """
         if event.filename != self.cfile:
             print("Got event for unknown file: %s" % event.filename)
             return
@@ -468,8 +641,12 @@ class BaseCore(object):
         self.metadata_cache.expire()
 
     def run(self):
-        """ run the server core. note that it is the responsibility of
-        the server core implementation to call shutdown() """
+        """ Run the server core. This calls :func:`_daemonize`,
+        :func:`_run`, starts the :attr:`fam_thread`, and calls
+        :func:`_block`, but note that it is the responsibility of the
+        server core implementation to call :func:`shutdown` under
+        normal operation. This also handles creation of the directory
+        containing the pidfile, if necessary. """
         if self.setup['daemon']:
             # if we're dropping privs, then the pidfile is likely
             # /var/run/bcfg2-server/bcfg2-server.pid or similar.
@@ -497,24 +674,35 @@ class BaseCore(object):
         self._block()
 
     def _daemonize(self):
-        """ daemonize the server and write the pidfile """
+        """ Daemonize the server and write the pidfile.  This must be
+        overridden by a core implementation. """
         raise NotImplementedError
 
     def _run(self):
-        """ start up the server; this method should return immediately """
+        """ Start up the server; this method should return
+        immediately.  This must be overridden by a core
+        implementation. """
         raise NotImplementedError
 
     def _block(self):
-        """ enter the infinite loop.  this method should not return
-        until the server is killed """
+        """ Enter the infinite loop.  This method should not return
+        until the server is killed.  This must be overridden by a core
+        implementation. """
         raise NotImplementedError
 
     def GetDecisions(self, metadata, mode):
-        """Get data for the decision list."""
+        """ Get the decision list for a client.
+
+        :param metadata: Client metadata to get the decision list for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :param mode: The decision mode ("whitelist" or "blacklist")
+        :type mode: string
+        :returns: list of Decision tuples ``(<entry tag>, <entry name>)``
+        """
         result = []
         for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Decision):
             try:
-                result += plugin.GetDecisions(metadata, mode)
+                result.extend(plugin.GetDecisions(metadata, mode))
             except:
                 self.logger.error("Plugin: %s failed to generate decision list"
                                   % plugin.name, exc_info=1)
@@ -522,7 +710,13 @@ class BaseCore(object):
 
     @track_statistics()
     def build_metadata(self, client_name):
-        """Build the metadata structure."""
+        """ Build initial client metadata for a client
+
+        :param client_name: The name of the client to build metadata
+                            for
+        :type client_name: string
+        :returns: :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata`
+        """
         if not hasattr(self, 'metadata'):
             # some threads start before metadata is even loaded
             raise Bcfg2.Server.Plugin.MetadataRuntimeError
@@ -546,7 +740,14 @@ class BaseCore(object):
         return imd
 
     def process_statistics(self, client_name, statistics):
-        """Proceed statistics for client."""
+        """ Process uploaded statistics for client.
+
+        :param client_name: The name of the client to process
+                            statistics for
+        :type client_name: string
+        :param statistics: The statistics document to process
+        :type statistics: lxml.etree._Element
+        """
         meta = self.build_metadata(client_name)
         state = statistics.find(".//Statistics")
         if state.get('version') >= '2.0':
@@ -563,8 +764,28 @@ class BaseCore(object):
         self.client_run_hook("end_statistics", meta)
 
     def resolve_client(self, address, cleanup_cache=False, metadata=True):
-        """ given a client address, get the client hostname and
-        optionally metadata """
+        """ Given a client address, get the client hostname and
+        optionally metadata.
+
+        :param address: The address pair of the client to get the
+                        canonical hostname for.
+        :type address: tuple of (<ip address>, <hostname>)
+        :param cleanup_cache: Tell the
+                              :class:`Bcfg2.Server.Plugin.interfaces.Metadata`
+                              plugin in :attr:`metadata` to clean up
+                              any client or session cache it might
+                              keep
+        :type cleanup_cache: bool
+        :param metadata: Build a
+                         :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata`
+                         object for this client as well.  This is
+                         offered for convenience.
+        :type metadata: bool
+        :returns: tuple - If ``metadata`` is False, returns
+                  ``(<canonical hostname>, None)``; if ``metadata`` is
+                  True, returns ``(<canonical hostname>, <client
+                  metadata object>)``
+        """
         try:
             client = self.metadata.resolve_client(address,
                                                   cleanup_cache=cleanup_cache)
@@ -582,11 +803,17 @@ class BaseCore(object):
                                 (address[0], err))
         return (client, meta)
 
-    def critical_error(self, operation):
-        """Log and err, traceback and return an xmlrpc fault to client."""
-        self.logger.error(operation, exc_info=1)
+    def critical_error(self, message):
+        """ Log an error with its traceback and return an XML-RPC fault
+        to the client.
+
+        :param message: The message to log and return to the client
+        :type message: string
+        :raises: :exc:`xmlrpclib.Fault`
+        """
+        self.logger.error(message, exc_info=1)
         raise xmlrpclib.Fault(xmlrpclib.APPLICATION_ERROR,
-                              "Critical failure: %s" % operation)
+                              "Critical failure: %s" % message)
 
     def _get_rmi(self):
         """ Get a list of RMI calls exposed by plugins """
@@ -598,11 +825,12 @@ class BaseCore(object):
         return rmi
 
     def _resolve_exposed_method(self, method_name):
-        """Resolve an exposed method.
+        """ Resolve a method name to the callable that implements that
+        method.
 
-        Arguments:
-        method_name -- name of the method to resolve
-
+        :param method_name: Name of the method to resolve
+        :type method_name: string
+        :returns: callable
         """
         try:
             func = getattr(self, method_name)
@@ -616,7 +844,12 @@ class BaseCore(object):
 
     @exposed
     def listMethods(self, address):  # pylint: disable=W0613
-        """ list all exposed methods, including plugin RMI """
+        """ List all exposed methods, including plugin RMI.
+
+        :param address: Client (address, hostname) pair
+        :type address: tuple
+        :returns: list of exposed method names
+        """
         methods = [name
                    for name, func in inspect.getmembers(self, callable)
                    if getattr(func, "exposed", False)]
@@ -625,7 +858,14 @@ class BaseCore(object):
 
     @exposed
     def methodHelp(self, address, method_name):  # pylint: disable=W0613
-        """ get help on an exposed method """
+        """ Get help from the docstring of an exposed method
+
+        :param address: Client (address, hostname) pair
+        :type address: tuple
+        :param method_name: The name of the method to get help on
+        :type method_name: string
+        :returns: string - The help message from the method's docstring
+        """
         try:
             func = self._resolve_exposed_method(method_name)
         except NoExposedMethod:
@@ -634,7 +874,15 @@ class BaseCore(object):
 
     @exposed
     def DeclareVersion(self, address, version):
-        """ declare the client version """
+        """ Declare the client version.
+
+        :param address: Client (address, hostname) pair
+        :type address: tuple
+        :param version: The client's declared version
+        :type version: string
+        :returns: bool - True on success
+        :raises: :exc:`xmlrpclib.Fault`
+        """
         client = self.resolve_client(address, metadata=False)[0]
         try:
             self.metadata.set_version(client, version)
@@ -647,7 +895,14 @@ class BaseCore(object):
 
     @exposed
     def GetProbes(self, address):
-        """Fetch probes for a particular client."""
+        """ Fetch probes for the client.
+
+        :param address: Client (address, hostname) pair
+        :type address: tuple
+        :returns: lxml.etree._Element - XML tree describing probes for
+                  this client
+        :raises: :exc:`xmlrpclib.Fault`
+        """
         resp = lxml.etree.Element('probes')
         client, metadata = self.resolve_client(address, cleanup_cache=True)
         try:
@@ -663,7 +918,13 @@ class BaseCore(object):
 
     @exposed
     def RecvProbeData(self, address, probedata):
-        """Receive probe data from clients."""
+        """ Receive probe data from clients.
+
+        :param address: Client (address, hostname) pair
+        :type address: tuple
+        :returns: bool - True on success
+        :raises: :exc:`xmlrpclib.Fault`
+        """
         client, metadata = self.resolve_client(address)
         if self.metadata_cache_mode == 'cautious':
             # clear the metadata cache right after building the
@@ -701,7 +962,13 @@ class BaseCore(object):
 
     @exposed
     def AssertProfile(self, address, profile):
-        """Set profile for a client."""
+        """ Set profile for a client.
+
+        :param address: Client (address, hostname) pair
+        :type address: tuple
+        :returns: bool - True on success
+        :raises: :exc:`xmlrpclib.Fault`
+        """
         client = self.resolve_client(address, metadata=False)[0]
         try:
             self.metadata.set_profile(client, profile, address)
@@ -714,7 +981,15 @@ class BaseCore(object):
 
     @exposed
     def GetConfig(self, address):
-        """Build config for a client."""
+        """ Build config for a client by calling
+        :func:`BuildConfiguration`.
+
+        :param address: Client (address, hostname) pair
+        :type address: tuple
+        :returns: lxml.etree._Element - The full configuration
+                  document for the client
+        :raises: :exc:`xmlrpclib.Fault`
+        """
         client = self.resolve_client(address)[0]
         try:
             config = self.BuildConfiguration(client)
@@ -725,15 +1000,33 @@ class BaseCore(object):
 
     @exposed
     def RecvStats(self, address, stats):
-        """Act on statistics upload."""
+        """ Act on statistics upload with :func:`process_statistics`.
+
+        :param address: Client (address, hostname) pair
+        :type address: tuple
+        :returns: bool - True on success
+        :raises: :exc:`xmlrpclib.Fault`
+        """
         client = self.resolve_client(address)[0]
         sdata = lxml.etree.XML(stats.encode('utf-8'),
                                parser=Bcfg2.Server.XMLParser)
         self.process_statistics(client, sdata)
-        return "<ok/>"
+        return True
 
     def authenticate(self, cert, user, password, address):
-        """ Authenticate a client connection """
+        """ Authenticate a client connection with
+        :func:`Bcfg2.Server.Plugin.interfaces.Metadata.AuthenticateConnection`.
+
+        :param cert: an x509 certificate
+        :type cert: dict
+        :param user: The username of the user trying to authenticate
+        :type user: string
+        :param password: The password supplied by the client
+        :type password: string
+        :param address: An address pair of ``(<ip address>, <hostname>)``
+        :type address: tuple
+        :return: bool - True if the authenticate succeeds, False otherwise
+        """
         if self.ca:
             acert = cert
         else:
@@ -744,16 +1037,24 @@ class BaseCore(object):
 
     @exposed
     def GetDecisionList(self, address, mode):
-        """Get the data of the decision list."""
+        """ Get the decision list for the client with :func:`GetDecisions`.
+
+        :param address: Client (address, hostname) pair
+        :type address: tuple
+        :returns: list of decision tuples
+        :raises: :exc:`xmlrpclib.Fault`
+        """
         metadata = self.resolve_client(address)[1]
         return self.GetDecisions(metadata, mode)
 
     @property
     def database_available(self):
-        """Is the database configured and available"""
+        """ True if the database is configured and available, False
+        otherwise. """
         return self._database_available
 
     @exposed
     def get_statistics(self, _):
-        """Get current statistics about component execution"""
+        """ Get current statistics about component execution from
+        :attr:`Bcfg2.Statistics.stats`. """
         return Bcfg2.Statistics.stats.display()
