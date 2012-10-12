@@ -54,11 +54,11 @@ def _migrate_transaction(inter, entries):
         modified_count=inter.modified_entries,
         extra_count=inter.extra_entries)
 
-    try:
+    if inter.metadata:
         newint.profile_id = inter.metadata.profile.id
         groups = [grp.pk for grp in inter.metadata.groups.all()]
         bundles = [bun.pk for bun in inter.metadata.bundles.all()]
-    except legacy_models.InteractionMetadata.DoesNotExist:
+    else:
         groups = []
         bundles = []
         unkown_profile = cache.get("PROFILE_UNKNOWN")
@@ -224,7 +224,7 @@ def _restructure():
     int_count = legacy_models.Interaction.objects.count()
     int_ctr = 0
     for inter in BatchFetch(legacy_models.Interaction.objects.\
-            select_related().all()):
+            select_related('metadata', 'client').all()):
         if int_ctr % 1000 == 0:
             logger.info("Migrated %s of %s interactions" % (int_ctr, int_count))
         try:
