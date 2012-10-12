@@ -36,7 +36,26 @@ def _quote(value):
 
 
 @transaction.commit_on_success
-def _migrate_transaction(inter, entries):
+def _migrate_perms():
+    """helper"""
+
+    fperms = {}
+
+    logger.info("Creating FilePerms objects")
+    for data in ( ('owner', 'group', 'perms'), 
+            ('current_owner', 'current_group', 'current_perms')):
+        for grp in legacy_models.Reason.objects.values_list(*data).distinct():
+            if grp in fperms:
+                continue
+            fp =  new_models.FilePerms(owner=grp[0], group=grp[1], perms=grp[2])
+            fp.save()
+            fperms[grp] = fp
+
+    return fperms
+
+
+@transaction.commit_on_success
+def _migrate_transaction(inter, entries, fperms):
     """helper"""
 
     logger.debug("Migrating interaction %s for %s" % 
@@ -99,21 +118,17 @@ def _migrate_transaction(inter, entries):
             # these might be hard.. they aren't one to one with the old model
             act_dict['path_type'] = 'file'
 
-            target_dict = dict(
-                owner=ei.reason.owner,
-                group=ei.reason.group,
-                perms=ei.reason.perms
-            )
-            fperm, created = new_models.FilePerms.objects.get_or_create(**target_dict)
-            act_dict['target_perms'] = fperm
+            act_dict['target_perms'] = fperms[(
+                ei.reason.owner,
+                ei.reason.group, 
+                ei.reason.perms
+            )]
 
-            current_dict = dict(
-                owner=ei.reason.current_owner,
-                group=ei.reason.current_group,
-                perms=ei.reason.current_perms
-            )
-            fperm, created = new_models.FilePerms.objects.get_or_create(**current_dict)
-            act_dict['current_perms'] = fperm
+            act_dict['current_perms'] = fperms[(
+                ei.reason.current_owner,
+                ei.reason.current_group,
+                ei.reason.current_perms
+            )]
 
             if ei.reason.to:
                 act_dict['path_type'] = 'symlink'
@@ -219,6 +234,12 @@ def _restructure():
         logger.error("Failed to populate entries dict", exc_info=1)
         return False
 
+    try:
+        fperms = _migrate_perms()
+    except:
+        logger.error("Failed create FilePerms objects", exc_info=1)
+        return False
+
     failures = []
     int_count = legacy_models.Interaction.objects.count()
     int_ctr = 0
@@ -227,7 +248,7 @@ def _restructure():
         if int_ctr % 1000 == 0:
             logger.info("Migrated %s of %s interactions" % (int_ctr, int_count))
         try:
-            _migrate_transaction(inter, entries)
+            _migrate_transaction(inter, entries, fperms)
         except:
             logger.error("Failed to migrate interaction %s for %s" %
                 (inter.id, inter.client.name), exc_info=1)
