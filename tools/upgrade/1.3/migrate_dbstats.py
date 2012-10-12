@@ -12,6 +12,7 @@ from django.db import connection, transaction, backend
 
 from Bcfg2.Server.Admin.Reports import Reports
 from Bcfg2.Reporting import models as new_models
+from Bcfg2.Reporting.utils import BatchFetch
 from Bcfg2.Server.Reports.reports import models as legacy_models
 
 logger = logging.getLogger(__name__)
@@ -66,7 +67,7 @@ def _migrate_transaction(inter, entries):
             cache.set("PROFILE_UNKNOWN", unkown_profile)
         newint.profile = unkown_profile
         groups = [unkown_profile]
-    newint.save()
+    super(new_models.Interaction, newint).save()
     if bundles:
         newint.bundles.add(*bundles)
     if groups:
@@ -222,7 +223,8 @@ def _restructure():
     failures = []
     int_count = legacy_models.Interaction.objects.count()
     int_ctr = 0
-    for inter in legacy_models.Interaction.objects.select_related().all():
+    for inter in BatchFetch(legacy_models.Interaction.objects.\
+            select_related().all()):
         if int_ctr % 1000 == 0:
             logger.info("Migrated %s of %s interactions" % (int_ctr, int_count))
         try:
