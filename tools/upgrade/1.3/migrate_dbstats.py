@@ -204,7 +204,6 @@ def migrate_stage1():
     return True
 
 
-@transaction.commit_manually
 def _restructure():
     """major restructure of reporting data"""
 
