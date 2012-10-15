@@ -473,10 +473,10 @@ MDATA_IMPORTANT = \
            odesc='Important entries are installed first',
            cf=('mdata', 'important'))
 MDATA_PERMS = \
-    Option('Default Path permissions',
+    Option('Default mode for Path',
            default='644',
-           odesc='octal permissions',
-           cf=('mdata', 'perms'))
+           odesc='octal file mode',
+           cf=('mdata', 'mode'))
 MDATA_SECONTEXT = \
     Option('Default SELinux context',
            default='__default__',

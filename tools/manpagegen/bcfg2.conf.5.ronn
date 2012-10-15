@@ -426,7 +426,7 @@ metadata settings for Paths with type=’file’.
   * `group`:
     Global group for Paths (defaults to root)
 
-  * `perms`:
+  * `mode`:
     Global permissions for Paths (defaults to 644)
 
   * `secontext`:
