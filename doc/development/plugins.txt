@@ -156,6 +156,41 @@ For examples, see:
   :ref:`server-plugins-connectors-puppetenc` plugin is incompatible
   with aggressive caching.
 
+Tracking Execution Time
+-----------------------
+
+.. versionadded:: 1.3.0
+
+Statistics can and should track execution time statistics using
+:mod:`Bcfg2.Statistics`.  This module tracks execution time for the
+server core and for plugins, and exposes that data via ``bcfg2-admin
+perf``.  This data can be invaluable for locating bottlenecks or other
+performance issues.
+
+The simplest way to track statistics is to use the
+:func:`Bcfg2.Server.Plugin.helpers.track_statistics` decorator to
+decorate functions that you would like to track execution times for:
+
+.. code-block:: python
+
+    from Bcfg2.Server.Plugin import track_statistics
+    
+    @track_statistics()
+    def do_something(self, ...):
+        ...
+
+This will track the execution time of ``do_something``.
+
+More granular usage is possible by using :func:`time.time` to manually
+determine the execution time of a given event and calling
+:func:`Bcfg2.Statistics.Statistics.add_value` with an appropriate
+statistic name.
+
+Bcfg2.Statistics
+^^^^^^^^^^^^^^^^
+
+.. automodule:: Bcfg2.Statistics
+
 Plugin Helper Classes
 ---------------------
 

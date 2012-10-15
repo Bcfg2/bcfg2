@@ -81,13 +81,15 @@ def bind_info(entry, metadata, infoxml=None, default=DEFAULT_FILE_METADATA):
 
 class track_statistics(object):  # pylint: disable=C0103
     """ Decorator that tracks execution time for the given
-    :class:`Plugin` method for reporting via ``bcfg2-admin perf`` """
+    :class:`Plugin` method with :mod:`Bcfg2.Statistics` for reporting
+    via ``bcfg2-admin perf`` """
 
     def __init__(self, name=None):
         """
         :param name: The name under which statistics for this function
-                     will be tracked.  By default the name of the
-                     function will be used.
+                     will be tracked.  By default, the name will be
+                     the name of the function concatenated with the
+                     name of the class the function is a member of.
         :type name: string
         """
         # if this is None, it will be set later during __call_
