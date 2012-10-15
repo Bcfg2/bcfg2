@@ -5,6 +5,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
 
 import sys
 import logging
+import time
 import Bcfg2.Logger
 import Bcfg2.Options
 from django.core.cache import cache
@@ -243,10 +244,16 @@ def _restructure():
     failures = []
     int_count = legacy_models.Interaction.objects.count()
     int_ctr = 0
+    start_time = 0
     for inter in BatchFetch(legacy_models.Interaction.objects.\
             select_related('metadata', 'client').all()):
         if int_ctr % 1000 == 0:
-            logger.info("Migrated %s of %s interactions" % (int_ctr, int_count))
+            if int_ctr > 0:
+                logger.info("Migrated %s of %s interactions in %ss" % \
+                    (int_ctr, int_count, time.time() - start_time))
+            else:
+                logger.info("Migrating interactions")
+            start_time = time.time()
         try:
             _migrate_transaction(inter, entries, fperms)
         except:
