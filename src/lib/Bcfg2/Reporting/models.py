@@ -346,7 +346,7 @@ class BaseEntry(models.Model):
 
 
     @classmethod
-    def entry_get_or_create(cls, act_dict):
+    def entry_get_or_create(cls, act_dict, skip_fetch=False):
         """Helper to quickly lookup an object"""
         cls_name = cls().__class__.__name__
         act_hash = hash_entry(act_dict)
@@ -356,8 +356,11 @@ class BaseEntry(models.Model):
         newact = cache.get(act_key)
         if newact:
             return newact
-    
-        acts = cls.objects.filter(hash_key=act_hash)
+
+        if not skip_fetch:
+            acts = cls.objects.filter(hash_key=act_hash)
+        else:
+            acts = []
         if len(acts) > 0:
             for act in acts:
                 for key in act_dict:
