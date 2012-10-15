@@ -92,7 +92,7 @@ Produces:
 
 .. code-block:: xml
 
-    <Path type="file" name="/bar.conf" owner="root" perms="0644" group="root">client is ypbound workstation
+    <Path type="file" name="/bar.conf" owner="root" mode="0644" group="root">client is ypbound workstation
     client is a desktop, but not an ubuntu desktop
     </Path>
 

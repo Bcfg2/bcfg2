@@ -129,7 +129,7 @@ directory. Below is a simple example a file ``/foo``.
 
 .. code-block:: none
 
-    perms: 624
+    mode: 624
 
 Output
 ------
@@ -141,7 +141,7 @@ current client probe state.
 
 .. code-block:: xml
 
-    <Path type="file" name="/foo" owner="root" perms="0624" group="root">
+    <Path type="file" name="/foo" owner="root" mode="0624" group="root">
     Hostname is topaz.mcs.anl.gov
     Filename is /foo
     Template is /var/lib/bcfg2/TCheetah/foo/template

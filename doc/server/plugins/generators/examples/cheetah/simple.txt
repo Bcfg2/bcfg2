@@ -32,7 +32,7 @@ Output
 
 .. code-block:: xml
 
-    <Path type="file" name="/foo" owner="root" perms="0644" group="root">
+    <Path type="file" name="/foo" owner="root" mode="0644" group="root">
     Hostname is topaz.mcs.anl.gov
     Filename is /foo
     Template is /var/lib/bcfg2/Cfg/foo/foo.cheetah

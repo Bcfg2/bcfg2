@@ -497,7 +497,7 @@ file that looks like the following:
 .. code-block:: xml
 
     <FileInfo>
-        <Info owner='root' group='root' perms='0644' important='true'/>
+        <Info owner='root' group='root' mode='0644' important='true'/>
     </FileInfo>
 
 Now, running the client shows only unmanaged Service entries. Woohoo!

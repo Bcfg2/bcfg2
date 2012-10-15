@@ -34,7 +34,7 @@ an existing driver, and the process that was used to create it.
    * In the failure path, the current state of failing entry
      attributes should be set in the entry, to aid in auditing.
      (For example, if a file should be mode 644, and is currently
-     mode 600, then set attribute current_perms='600' in the input
+     mode 600, then set attribute current_mode='600' in the input
      entry)
 
 #. Add installation support. This method should return True/False

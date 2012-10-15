@@ -58,9 +58,9 @@ div.entry_list h3 {
       <tr><td style='text-align: right'><b>Group</b></td><td>{{item.target_perms.group}}</td>
           <td>{{item.current_perms.group}}</td></tr>
       {% endif %}
-      {% if item.current_perms.perms %}
+      {% if item.current_perms.mode%}
       <tr><td style='text-align: right'><b>Perms</b></td><td>{{item.target_perms.perms}}</td>
-          <td>{{item.current_perms.perms}}</td></tr>
+          <td>{{item.current_perms.mode}}</td></tr>
       {% endif %}
   {% endif %}
   {% if item.status_problem %}

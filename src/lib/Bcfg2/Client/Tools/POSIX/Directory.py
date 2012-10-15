@@ -10,7 +10,7 @@ from Bcfg2.Client.Tools.POSIX.base import POSIXTool
 
 class POSIXDirectory(POSIXTool):
     """ Handle <Path type='directory' ...> entries """
-    __req__ = ['name', 'perms', 'owner', 'group']
+    __req__ = ['name', 'mode', 'owner', 'group']
 
     def verify(self, entry, modlist):
         ondisk = self._exists(entry)

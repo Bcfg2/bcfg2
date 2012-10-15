@@ -31,9 +31,9 @@ An ``info.xml`` file consists of a ``<FileInfo>`` tag containing an
 +------------+-------------------+----------------------------------+---------+
 | group      | Any valid group   | Sets group of the file           | root    |
 +------------+-------------------+----------------------------------+---------+
-| perms      | Numeric file mode | Sets the permissions of the file | 0644    |
-|            | | 'inherit'       | (or inherits from the files on   |         |
-|            |                   | disk if set to 'inherit')        |         |
+| mode       | Numeric file mode | Sets the mode of the file (or    | 0644    |
+|            | | 'inherit'       | inherits from the files on disk  |         |
+|            |                   | if set to 'inherit')             |         |
 +------------+-------------------+----------------------------------+---------+
 | secontext  | A valid SELinux   | Sets the SELinux context of the  | default |
 |            | context string or | file, or sets to the default     |         |
@@ -56,7 +56,7 @@ A sample info file for CGI script on a web server might look like:
 .. code-block:: xml
 
     <FileInfo>
-      <Info owner="www" group="www" perms="0755"/>
+      <Info owner="www" group="www" mode="0755"/>
     </FileInfo>
 
 Back to the fstab example again, our final ``Cfg/etc/fstab/`` directory
@@ -85,12 +85,12 @@ The following specifies a different global set of permissions
 
     <FileInfo>
       <Client name='foo.example.com'>
-        <Info owner='root' group='root' perms='0652'/>
+        <Info owner='root' group='root' mode='0652'/>
       </Client>
       <Group name='webserver'>
-        <Info owner='root' group='root' perms='0652'/>
+        <Info owner='root' group='root' mode='0652'/>
       </Group>
-      <Info owner='root' group='sys' perms='0651'/>
+      <Info owner='root' group='sys' mode='0651'/>
     </FileInfo>
 
 .. versionadded:: 1.2.0
@@ -100,10 +100,10 @@ of permissions depending on the path of the file::
 
     <FileInfo>
       <Path name="/etc/bcfg2-web.conf">
-        <Info owner="root" group="apache" perms="0640"/>
+        <Info owner="root" group="apache" mode="0640"/>
       </Path>
       <Path name="/etc/bcfg2-web.conf" negate="true">
-        <Info owner="root" group="root" perms="0600"/>
+        <Info owner="root" group="root" mode="0600"/>
       </Path>
     </FileInfo>
 
@@ -130,7 +130,7 @@ An example ``:info`` or ``info`` file would look like::
 
     owner: www
     group: www
-    perms: 0755
+    mode: 0755
 
 All attributes allowed on the ``<Info>`` tag of an ``info.xml`` file
 can be used in an ``:info`` or ``info`` file.

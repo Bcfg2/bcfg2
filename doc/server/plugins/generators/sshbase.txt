@@ -132,28 +132,28 @@ control the permissions and other metadata for the keys and
 
     <FileInfo>
       <Path name="/etc/ssh/ssh_host_dsa_key">
-        <Info owner="root" group="wheel" perms="0660"/>
+        <Info owner="root" group="wheel" mode="0660"/>
       </Path>
       <Path name="/etc/ssh/ssh_host_dsa_key.pub">
-        <Info owner="root" group="wheel" perms="0664"/>
+        <Info owner="root" group="wheel" mode="0664"/>
       </Path>
     </FileInfo>
 
 Default permissions are as follows:
 
-+----------------------------------+-------+-------+-------+-----------+----------+----------+
-| File                             | owner | group | perms | sensitive | paranoid | encoding |
-+==================================+=======+=======+=======+===========+==========+==========+
-| ssh_known_hosts                  | root  | root  | 0644  | false     | false    | None     |
-+----------------------------------+-------+-------+-------+-----------+----------+----------+
-| ssh_host_key                     | root  | root  | 0600  | false     | false    | base64   |
-+----------------------------------+-------+-------+-------+-----------+----------+----------+
-| ssh_host_key.pub                 | root  | root  | 0644  | false     | false    | base64   |
-+----------------------------------+-------+-------+-------+-----------+----------+----------+
-| ssh_host_[rsa|dsa|ecdsa]_key     | root  | root  | 0600  | false     | false    | None     |
-+----------------------------------+-------+-------+-------+-----------+----------+----------+
-| ssh_host_[rsa|dsa|ecdsa]_key.pub | root  | root  | 0644  | false     | false    | None     |
-+----------------------------------+-------+-------+-------+-----------+----------+----------+
++----------------------------------+-------+-------+------+-----------+----------+----------+
+| File                             | owner | group | mode | sensitive | paranoid | encoding |
++==================================+=======+=======+======+===========+==========+==========+
+| ssh_known_hosts                  | root  | root  | 0644 | false     | false    | None     |
++----------------------------------+-------+-------+------+-----------+----------+----------+
+| ssh_host_key                     | root  | root  | 0600 | false     | false    | base64   |
++----------------------------------+-------+-------+------+-----------+----------+----------+
+| ssh_host_key.pub                 | root  | root  | 0644 | false     | false    | base64   |
++----------------------------------+-------+-------+------+-----------+----------+----------+
+| ssh_host_[rsa|dsa|ecdsa]_key     | root  | root  | 0600 | false     | false    | None     |
++----------------------------------+-------+-------+------+-----------+----------+----------+
+| ssh_host_[rsa|dsa|ecdsa]_key.pub | root  | root  | 0644 | false     | false    | None     |
++----------------------------------+-------+-------+------+-----------+----------+----------+
 
 Note that the ``sensitive`` attribute is false, even for private keys,
 in order to permit :ref:`pulling with bcfg2-admin

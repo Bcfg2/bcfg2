@@ -12,7 +12,7 @@ from Bcfg2.Compat import unicode, b64encode, b64decode  # pylint: disable=W0622
 
 class POSIXFile(POSIXTool):
     """ Handle <Path type='file' ...> entries """
-    __req__ = ['name', 'perms', 'owner', 'group']
+    __req__ = ['name', 'mode', 'owner', 'group']
 
     def fully_specified(self, entry):
         return entry.text is not None or entry.get('empty', 'false') == 'true'

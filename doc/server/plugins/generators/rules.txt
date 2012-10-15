@@ -265,7 +265,7 @@ directory
 +-----------+------------------------------+------------+
 | Name      | Description                  | Values     |
 +===========+==============================+============+
-| perms     | Permissions of the directory | String     |
+| mode      | File mode of the directory   | String     |
 +-----------+------------------------------+------------+
 | owner     | Owner of the directory       | String     |
 +-----------+------------------------------+------------+
@@ -284,8 +284,6 @@ hardlink
 | Name      | Description                  | Values |
 +===========+==============================+========+
 | to        | File to link to              | String |
-+-----------+------------------------------+--------+
-| perms     | Permissions of the directory | String |
 +-----------+------------------------------+--------+
 | owner     | Owner of the directory       | String |
 +-----------+------------------------------+--------+
@@ -312,7 +310,7 @@ permissions
 +-----------+--------------------------+--------+
 | Name      | Description              | Values |
 +===========+==========================+========+
-| perms     | Permissions of the file. | String |
+| mode      | Mode of the file.        | String |
 +-----------+--------------------------+--------+
 | owner     | Owner of the file.       | String |
 +-----------+--------------------------+--------+
@@ -343,7 +341,7 @@ child ``<ACL>`` tags.  For instance:
 .. code-block:: xml
 
     <Path name="/etc/foo" type="directory" owner="root" group="root"
-          perms="0775">
+          mode="0775">
       <ACL type="default" scope="user" user="foouser" perms="rw"/>
       <ACL type="default" scope="group" group="users" perms="rx"/>
     </Path>
@@ -384,7 +382,7 @@ on a file than those specified in the ``perms`` attribute on the
 
 .. code-block:: xml
 
-    <Path name="/etc/foo" perms="0644" group="root" owner="root">
+    <Path name="/etc/foo" mode="0644" group="root" owner="root">
       <ACL type="access" scope="user" user="foouser" perms="rwx"/>
     </Path>
 
@@ -544,20 +542,20 @@ how to assign Rules to a host's literal configuration.
 .. code-block:: xml
 
     <Rules priority="0">
-        <Path type='directory' group="root" name="/autonfs" owner="root" perms="0755"/>
-        <Path type='directory' group="utmp" name="/var/run/screen" owner="root" perms="0775"/>
-        <Path type='directory' group="root" name="/autonfs/stage" owner="root" perms="0755"/>
-        <Path type='directory' group="root" name="/exports" owner="root" perms="0755"/>
-        <Path type='directory' name="/etc/condor" owner="root" group="root" perms="0755"/>
-        <Path type='directory' name="/logs" group="wwwtrans" owner="root" perms="0775"/>
-        <Path type='directory' name="/mnt" group="root" owner="root" perms="0755"/>
-        <Path type='directory' name="/my" owner="root" group="root" perms="0755"/>
-        <Path type='directory' name="/my/bin" owner="root" group="root" perms="0755"/>
-        <Path type='directory' name="/nfs" owner="root" group="root" perms="0755"/>
-        <Path type='directory' name="/sandbox" perms="0777" owner="root" group="root"/>
-        <Path type='directory' name="/software" group="root" owner="root" perms="0755"/>
-        <Path type='permissions' perms="0555" group="audio" owner="root" name="/dev/dsp"/>
-        <Path type='permissions' perms="0555" group="audio" owner="root" name="/dev/mixer"/>
+        <Path type='directory' group="root" name="/autonfs" owner="root" mode="0755"/>
+        <Path type='directory' group="utmp" name="/var/run/screen" owner="root" mode="0775"/>
+        <Path type='directory' group="root" name="/autonfs/stage" owner="root" mode="0755"/>
+        <Path type='directory' group="root" name="/exports" owner="root" mode="0755"/>
+        <Path type='directory' name="/etc/condor" owner="root" group="root" mode="0755"/>
+        <Path type='directory' name="/logs" group="wwwtrans" owner="root" mode="0775"/>
+        <Path type='directory' name="/mnt" group="root" owner="root" mode="0755"/>
+        <Path type='directory' name="/my" owner="root" group="root" mode="0755"/>
+        <Path type='directory' name="/my/bin" owner="root" group="root" mode="0755"/>
+        <Path type='directory' name="/nfs" owner="root" group="root" mode="0755"/>
+        <Path type='directory' name="/sandbox" mode="0777" owner="root" group="root"/>
+        <Path type='directory' name="/software" group="root" owner="root" mode="0755"/>
+        <Path type='permissions' mode="0555" group="audio" owner="root" name="/dev/dsp"/>
+        <Path type='permissions' mode="0555" group="audio" owner="root" name="/dev/mixer"/>
         <Path type='symlink' name="/bin/whatami" to="/mcs/adm/bin/whatami"/>
         <Path type='symlink' name="/chibahomes" to="/nfs/chiba-homefarm"/>
         <Path type='symlink' name="/home" to="/nfs/mcs-homefarm"/>

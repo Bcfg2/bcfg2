@@ -65,8 +65,8 @@ For a "Package"
     .. code-block:: xml
 
         <Rules priority="0">
-          <Directory name="/etc/cron.hourly" group="root" owner="root" perms="0700" />
-          <Directory name="/etc/cron.daily" group="root" owner="root" perms="0700" />
+          <Directory name="/etc/cron.hourly" group="root" owner="root" mode="0700" />
+          <Directory name="/etc/cron.daily" group="root" owner="root" mode="0700" />
         </Rules>
 
 * Multiple instances
@@ -111,9 +111,9 @@ For a "Path"
 
          <FileInfo>
            <Group name='webserver'>
-             <Info owner='root' group='root' perms='0652'/>
+             <Info owner='root' group='root' mode='0652'/>
            </Group>
-           <Info owner='root' group='sys' perms='0651'/>
+           <Info owner='root' group='sys' mode='0651'/>
          </FileInfo>
 
 Other troubleshooting tools

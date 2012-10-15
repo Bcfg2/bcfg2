@@ -205,7 +205,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_set_acls.assert_called_with(entry, path=entry.get("name"))
 
         entry = lxml.etree.Element("Path", name="/etc/foo", owner="owner",
-                                   group="group", perms="644", type="file")
+                                   group="group", mode="644", type="file")
         mock_norm_uid.return_value = 10
         mock_norm_gid.return_value = 100
 
@@ -215,7 +215,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_norm_gid.assert_called_with(entry)
         mock_chown.assert_called_with(entry.get("name"), 10, 100)
         mock_chmod.assert_called_with(entry.get("name"),
-                                      int(entry.get("perms"), 8))
+                                      int(entry.get("mode"), 8))
         self.assertFalse(mock_utime.called)
         mock_set_secontext.assert_called_with(entry, path=entry.get("name"))
         mock_set_acls.assert_called_with(entry, path=entry.get("name"))
@@ -228,7 +228,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_norm_gid.assert_called_with(entry)
         mock_chown.assert_called_with(entry.get("name"), 10, 100)
         mock_chmod.assert_called_with(entry.get("name"),
-                                      int(entry.get("perms"), 8))
+                                      int(entry.get("mode"), 8))
         mock_utime.assert_called_with(entry.get("name"), (mtime, mtime))
         mock_set_secontext.assert_called_with(entry, path=entry.get("name"))
         mock_set_acls.assert_called_with(entry, path=entry.get("name"))
@@ -238,7 +238,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_norm_uid.assert_called_with(entry)
         mock_norm_gid.assert_called_with(entry)
         mock_chown.assert_called_with('/etc/bar', 10, 100)
-        mock_chmod.assert_called_with('/etc/bar', int(entry.get("perms"), 8))
+        mock_chmod.assert_called_with('/etc/bar', int(entry.get("mode"), 8))
         mock_utime.assert_called_with(entry.get("name"), (mtime, mtime))
         mock_set_secontext.assert_called_with(entry, path='/etc/bar')
         mock_set_acls.assert_called_with(entry, path='/etc/bar')
@@ -258,7 +258,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_norm_gid.assert_called_with(entry)
         mock_chown.assert_called_with(entry.get("name"), 0, 0)
         mock_chmod.assert_called_with(entry.get("name"),
-                                      int(entry.get("perms"), 8) | list(device_map.values())[0])
+                                      int(entry.get("mode"), 8) | list(device_map.values())[0])
         mock_utime.assert_called_with(entry.get("name"), (mtime, mtime))
         mock_set_secontext.assert_called_with(entry, path=entry.get("name"))
         mock_set_acls.assert_called_with(entry, path=entry.get("name"))
@@ -274,7 +274,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_norm_gid.assert_called_with(entry)
         mock_chown.assert_called_with(entry.get("name"), 10, 100)
         mock_chmod.assert_called_with(entry.get("name"),
-                                      int(entry.get("perms"), 8))
+                                      int(entry.get("mode"), 8))
         mock_utime.assert_called_with(entry.get("name"), (mtime, mtime))
         mock_set_secontext.assert_called_with(entry, path=entry.get("name"))
         mock_set_acls.assert_called_with(entry, path=entry.get("name"))
@@ -292,7 +292,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_norm_gid.assert_called_with(entry)
         mock_chown.assert_called_with(entry.get("name"), 10, 100)
         mock_chmod.assert_called_with(entry.get("name"),
-                                      int(entry.get("perms"), 8))
+                                      int(entry.get("mode"), 8))
         mock_utime.assert_called_with(entry.get("name"), (mtime, mtime))
         mock_set_secontext.assert_called_with(entry, path=entry.get("name"))
         mock_set_acls.assert_called_with(entry, path=entry.get("name"))
@@ -624,7 +624,7 @@ class TestPOSIXTool(Bcfg2TestCase):
                              mock_gather_data, mock_verify_acls,
                              mock_matchpathcon):
         entry = lxml.etree.Element("Path", name="/test", type="file",
-                                   group="group", owner="user", perms="664",
+                                   group="group", owner="user", mode="664",
                                    secontext='etc_t')
         # _verify_metadata() mutates the entry, so we keep a backup so we
         # can start fresh every time
@@ -646,7 +646,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         # expected data.  tuple of attr, return value index, value
         expected = [('current_owner', 1, '0'),
                     ('current_group', 2, '10'),
-                    ('current_perms', 3, '0664'),
+                    ('current_mode', 3, '0664'),
                     ('current_secontext', 4, 'etc_t')]
         mock_norm_uid.return_value = 0
         mock_norm_gid.return_value = 10
@@ -702,7 +702,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         # return value index, new (failing) value
         failures = [('current_owner', 1, '10'),
                     ('current_group', 2, '100'),
-                    ('current_perms', 3, '0660')]
+                    ('current_mode', 3, '0660')]
         if HAS_SELINUX:
             failures.append(('current_secontext', 4, 'root_t'))
         

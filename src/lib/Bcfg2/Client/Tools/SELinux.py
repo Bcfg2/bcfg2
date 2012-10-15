@@ -789,7 +789,7 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
         filesystem """
         pathentry = copy.deepcopy(entry)
         pathentry.set("name", self._filepath(pathentry))
-        pathentry.set("perms", "0644")
+        pathentry.set("mode", "0644")
         pathentry.set("owner", "root")
         pathentry.set("group", "root")
         pathentry.set("secontext", "__default__")

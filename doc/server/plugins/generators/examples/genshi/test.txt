@@ -79,7 +79,7 @@ When the above file is saved as ``Cfg/test/test.genshi`` and generated
 with ``bcfg2-info buildfile /test test.hostname.org``, the results
 look like this (below reformatted a little bit to fit in 80 columns)::
 
-    <Path type="file" name="/test" owner="root" perms="644" encoding="ascii" group="root" paranoid="false">
+    <Path type="file" name="/test" owner="root" mode="644" encoding="ascii" group="root" paranoid="false">
     Hostname is test.hostname.org
 
     Groups:
