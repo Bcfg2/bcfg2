@@ -258,6 +258,14 @@ def _restructure():
         logger.info("Successfully restructured reason data")
         return True
 
+    logger.info("Updating recent interactions")
+    for newint in new_models.Interaction.objects.recent():
+        try:
+            newint.save()
+        except:
+            logger.error("Failed to set current interaction %s for %s" %
+                (newint.id, newint.client.name), exc_info=1)
+
 
 if __name__ == '__main__':
     Bcfg2.Logger.setup_logging('bcfg2-report-collector',
