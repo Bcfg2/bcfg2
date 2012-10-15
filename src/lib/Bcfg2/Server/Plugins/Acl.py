@@ -13,7 +13,7 @@ class AclFile(Bcfg2.Server.Plugin.XMLFileBacked):
 		if not os.path.exists(filename):
 			LOGGER.warning("Acl: %s missing. "
 						   "Creating empty one for you." % filename)
-			open(filename, "w").write("<Acl></Acl>")
+			open(filename, "w").write("<IPs></IPs>")
 
 		try:
 			fam = core.fam

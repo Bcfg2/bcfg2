@@ -1072,6 +1072,13 @@ class BaseCore(object):
         return self.metadata.AuthenticateConnection(acert, user, password,
                                                     address)
 
+    def check_acls(self, client):
+        """ Check if client IP is in list of accepted IPs """
+        try:
+            return client in self.plugins['Acl'].config.ips
+        except KeyError:
+            return True
+
     @exposed
     def GetDecisionList(self, address, mode):
         """ Get the decision list for the client with :func:`GetDecisions`.

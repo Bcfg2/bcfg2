@@ -63,6 +63,9 @@ class Core(BaseCore):
             username = auth_content
             password = ""
 
+        if not self.check_acls(cherrypy.request.remote.ip):
+            raise cherrypy.HTTPError(403)
+
         # FIXME: Get client cert
         cert = None
         address = (cherrypy.request.remote.ip, cherrypy.request.remote.name)
