@@ -27,7 +27,7 @@ except ImportError:
 DEFAULT_FILE_METADATA = Bcfg2.Options.OptionParser(dict(
         owner=Bcfg2.Options.MDATA_OWNER,
         group=Bcfg2.Options.MDATA_GROUP,
-        perms=Bcfg2.Options.MDATA_PERMS,
+        mode=Bcfg2.Options.MDATA_PERMS,
         secontext=Bcfg2.Options.MDATA_SECONTEXT,
         important=Bcfg2.Options.MDATA_IMPORTANT,
         paranoid=Bcfg2.Options.MDATA_PARANOID,
@@ -40,7 +40,7 @@ LOGGER = logging.getLogger(__name__)
 #: a compiled regular expression for parsing info and :info files
 INFO_REGEX = re.compile('owner:(\s)*(?P<owner>\S+)|' +
                         'group:(\s)*(?P<group>\S+)|' +
-                        'perms:(\s)*(?P<perms>\w+)|' +
+                        'mode:(\s)*(?P<mode>\w+)|' +
                         'secontext:(\s)*(?P<secontext>\S+)|' +
                         'paranoid:(\s)*(?P<paranoid>\S+)|' +
                         'sensitive:(\s)*(?P<sensitive>\S+)|' +
@@ -1328,8 +1328,8 @@ class EntrySet(Debuggable):
                     for key, value in list(mgd.items()):
                         if value:
                             self.metadata[key] = value
-                    if len(self.metadata['perms']) == 3:
-                        self.metadata['perms'] = "0%s" % self.metadata['perms']
+                    if len(self.metadata['mode']) == 3:
+                        self.metadata['mode'] = "0%s" % self.metadata['mode']
 
     def reset_metadata(self, event):
         """ Reset metadata to defaults if info. :info, or info.xml are
