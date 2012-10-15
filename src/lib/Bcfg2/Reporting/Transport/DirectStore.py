@@ -3,6 +3,7 @@ storage backend """
 
 import os
 import sys
+import time
 import threading
 from Bcfg2.Reporting.Transport.base import TransportBase, TransportError
 from Bcfg2.Reporting.Storage import load_storage_from_config
@@ -39,7 +40,11 @@ class DirectStore(TransportBase, threading.Thread):
             try:
                 interaction = self.queue.get(block=True,
                                              timeout=self.timeout)
+                start = time.time()
                 self.storage.import_interaction(interaction)
+                self.logger.info("Imported data for %s in %s seconds" \
+                            % (interaction.get('hostname', '<unknown>'), \
+                                time.time() - start))
             except Empty:
                 continue
             except:
