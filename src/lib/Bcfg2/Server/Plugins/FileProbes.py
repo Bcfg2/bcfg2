@@ -219,7 +219,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             "Info",
             owner=data.get("owner", Bcfg2.Options.MDATA_OWNER.value),
             group=data.get("group", Bcfg2.Options.MDATA_GROUP.value),
-            mode=data.get("mode", Bcfg2.Options.MDATA_PERMS.value),
+            mode=data.get("mode", Bcfg2.Options.MDATA_MODE.value),
             encoding=entry.get("encoding", Bcfg2.Options.ENCODING.value))
 
         root = lxml.etree.Element("FileInfo")

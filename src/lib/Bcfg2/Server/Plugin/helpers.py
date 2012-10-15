@@ -27,7 +27,7 @@ except ImportError:
 DEFAULT_FILE_METADATA = Bcfg2.Options.OptionParser(dict(
         owner=Bcfg2.Options.MDATA_OWNER,
         group=Bcfg2.Options.MDATA_GROUP,
-        mode=Bcfg2.Options.MDATA_PERMS,
+        mode=Bcfg2.Options.MDATA_MODE,
         secontext=Bcfg2.Options.MDATA_SECONTEXT,
         important=Bcfg2.Options.MDATA_IMPORTANT,
         paranoid=Bcfg2.Options.MDATA_PARANOID,

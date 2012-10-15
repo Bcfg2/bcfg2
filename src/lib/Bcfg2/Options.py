@@ -472,7 +472,7 @@ MDATA_IMPORTANT = \
            default='False',
            odesc='Important entries are installed first',
            cf=('mdata', 'important'))
-MDATA_PERMS = \
+MDATA_MODE = \
     Option('Default mode for Path',
            default='644',
            odesc='octal file mode',

@@ -14,7 +14,7 @@ class Compare(Bcfg2.Server.Admin.Mode):
 
     def __init__(self, setup):
         Bcfg2.Server.Admin.Mode.__init__(self, setup)
-        self.important = {'Path': ['name', 'type', 'owner', 'group', 'perms',
+        self.important = {'Path': ['name', 'type', 'owner', 'group', 'mode',
                                    'important', 'paranoid', 'sensitive',
                                    'dev_type', 'major', 'minor', 'prune',
                                    'encoding', 'empty', 'to', 'recursive',

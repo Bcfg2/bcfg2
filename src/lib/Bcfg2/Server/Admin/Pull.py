@@ -73,7 +73,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         new_entry = {'type': etype, 'name': ename}
         for plugin in self.bcore.pull_sources:
             try:
-                (owner, group, perms, contents) = \
+                (owner, group, mode, contents) = \
                         plugin.GetCurrentEntry(client, etype, ename)
                 break
             except Bcfg2.Server.Plugin.PluginExecutionError:
@@ -84,7 +84,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         try:
             data = {'owner': owner,
                     'group': group,
-                    'perms': perms,
+                    'mode': mode,
                     'text': contents}
         except UnboundLocalError:
             print("Unable to build entry. "
