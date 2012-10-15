@@ -1699,7 +1699,7 @@ class TestEntrySet(TestDebuggable):
             
             idata = ["owner:owner",
                      "group:             GROUP",
-                     "perms: 775",
+                     "mode: 775",
                      "important:     true",
                      "bogus: line"]
             mock_open.return_value.readlines.return_value = idata
@@ -1707,7 +1707,7 @@ class TestEntrySet(TestDebuggable):
             expected = DEFAULT_FILE_METADATA.copy()
             expected['owner'] = 'owner'
             expected['group'] = 'GROUP'
-            expected['perms'] = '0775'
+            expected['mode'] = '0775'
             expected['important'] = 'true'
             self.assertItemsEqual(eset.metadata,
                                   expected)

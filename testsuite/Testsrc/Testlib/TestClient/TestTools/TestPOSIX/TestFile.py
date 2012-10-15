@@ -158,7 +158,7 @@ class TestPOSIXFile(TestPOSIXTool):
     @patch("Bcfg2.Client.Tools.POSIX.File.%s._get_data" % test_obj.__name__)
     def test_write_tmpfile(self, mock_get_data, mock_mkstemp, mock_fdopen):
         entry = lxml.etree.Element("Path", name="/test", type="file",
-                                   perms='0644', owner='root', group='root')
+                                   mode='0644', owner='root', group='root')
         newfile = "/foo/bar"
 
         def reset():
@@ -191,7 +191,7 @@ class TestPOSIXFile(TestPOSIXTool):
     @patch("os.unlink")
     def test_rename_tmpfile(self, mock_unlink, mock_rename):
         entry = lxml.etree.Element("Path", name="/test", type="file",
-                                   perms='0644', owner='root', group='root')
+                                   mode='0644', owner='root', group='root')
         newfile = "/foo/bar"
 
         self.assertTrue(self.ptool._rename_tmpfile(newfile, entry))
@@ -219,7 +219,7 @@ class TestPOSIXFile(TestPOSIXTool):
     def test__get_diffs(self, mock_is_string, mock_get_data, mock_diff, 
                         mock_open):
         orig_entry = lxml.etree.Element("Path", name="/test", type="file",
-                                        perms='0644', owner='root',
+                                        mode='0644', owner='root',
                                         group='root')
         orig_entry.text = "test"
         ondisk = "test2"
@@ -337,7 +337,7 @@ class TestPOSIXFile(TestPOSIXTool):
     def test_install(self, mock_rename, mock_write, mock_set_perms,
                      mock_makedirs, mock_install, mock_exists):
         entry = lxml.etree.Element("Path", name="/test", type="file",
-                                   perms='0644', owner='root', group='root')
+                                   mode='0644', owner='root', group='root')
 
         def reset():
             mock_rename.reset_mock()

@@ -27,7 +27,7 @@ class TestPOSIXDirectory(TestPOSIXTool):
     @patch("Bcfg2.Client.Tools.POSIX.Directory.%s._exists" % test_obj.__name__)
     def test_verify(self, mock_exists, mock_verify, mock_listdir):
         entry = lxml.etree.Element("Path", name="/test", type="directory",
-                                   perms='0644', owner='root', group='root')
+                                   mode='0644', owner='root', group='root')
 
         mock_exists.return_value = False
         self.assertFalse(self.ptool.verify(entry, []))
@@ -94,7 +94,7 @@ class TestPOSIXDirectory(TestPOSIXTool):
     def test_install(self, mock_makedirs, mock_exists, mock_install,
                      mock_rmtree, mock_isdir, mock_unlink):
         entry = lxml.etree.Element("Path", name="/test/foo/bar",
-                                   type="directory", perms='0644',
+                                   type="directory", mode='0644',
                                    owner='root', group='root')
         
         def reset():

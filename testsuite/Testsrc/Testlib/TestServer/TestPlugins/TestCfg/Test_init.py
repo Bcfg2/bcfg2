@@ -582,7 +582,7 @@ class TestCfgEntrySet(TestEntrySet):
         generator.get_data.return_value = "data"
         eset.best_matching.return_value = generator
         eset.get_handlers = Mock()
-        entry = lxml.etree.Element("Path", name="/test.txt", perms="0640")
+        entry = lxml.etree.Element("Path", name="/test.txt", mode="0640")
         metadata = Mock()
 
         def reset():
