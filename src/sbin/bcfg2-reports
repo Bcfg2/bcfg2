@@ -23,8 +23,7 @@ sys.path.pop()
 # Set DJANGO_SETTINGS_MODULE appropriately.
 os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
 
-from Bcfg2.Server.Reports.reports.models import (Client, Entries_interactions,
-                                                 Entries, TYPE_CHOICES)
+from Bcfg2.Reporting.models import (Client, BaseEntry)
 
 def hosts_by_entry_type(clients, etype, entryspec):
     result = []
@@ -32,8 +31,8 @@ def hosts_by_entry_type(clients, etype, entryspec):
         for client in clients:
             items = getattr(client.current_interaction, etype)()
             for item in items:
-                if (item.entry.kind == entry[0] and
-                    item.entry.name == entry[1]):
+                if (item.entry_type == entry[0] and
+                    item.name == entry[1]):
                     result.append(client)
     return result
 
@@ -198,8 +197,8 @@ def main():
                 print("Host un-expired.")
             client.save()
         elif options.total:
-            managed = client.current_interaction.totalcount
-            good = client.current_interaction.goodcount
+            managed = client.current_interaction.total_count
+            good = client.current_interaction.good_count
             print("Total managed entries: %d (good: %d)" % (managed, good))
         elif mode_family == hostmodes:
             if options.bad or options.show:
@@ -255,30 +254,29 @@ def main():
                 if 'state' in fields:
                     fields.remove('state')
                 fields.append("entry state")
+
                 try:
-                    entry_obj = Entries.objects.get(
-                        kind=entries[0][0],
-                        name=entries[0][1])
-                except Entries.DoesNotExist:
-                    print("No entry %s found" % ":".join(entries[0]))
+                    entry_cls = BaseEntry.entry_from_type(entries[0][0])
+                except ValueError:
+                    print("Unhandled/unkown type %s" % entries[0][0])
                     return 2
 
+                # todo batch fetch this.  sqlite could break
                 for client in clients:
-                    try:
-                        entry = \
-                            Entries_interactions.objects.select_related().get(
-                            interaction=client.current_interaction,
-                            entry=entry_obj)
-                        edata[client] = \
-                            {"entry state":dict(TYPE_CHOICES)[entry.type],
-                             "reason":entry.reason}
-                        result.append(client)
-                    except Entries_interactions.DoesNotExist:
-                        pass
+                    ents = entry_cls.objects.filter(name=entries[0][1], 
+                            interaction=client.current_interaction)
+                    if len(ents) == 0:
+                        continue
+                    edata[client] = {"entry state": ents[0].get_state_display(),
+                                     "reason": ents[0]}
+                    result.append(client)
 
 
         if 'name' not in fields:
             fields.insert(0, "name")
+        if not result:
+            print("No match found")
+            return
         max_name = max(len(c.name) for c in result)
         ffmt = []
         for field in fields:

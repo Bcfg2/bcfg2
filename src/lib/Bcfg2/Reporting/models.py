@@ -346,6 +346,15 @@ class BaseEntry(models.Model):
 
 
     @classmethod
+    def entry_from_type(cls, etype):
+        for entry_cls in (ActionEntry, PackageEntry, PathEntry, ServiceEntry):
+            if etype == entry_cls.ENTRY_TYPE:
+                return entry_cls
+        else:
+            raise ValueError("Invalid type %s" % etype)
+
+
+    @classmethod
     def entry_get_or_create(cls, act_dict, skip_fetch=False):
         """Helper to quickly lookup an object"""
         cls_name = cls().__class__.__name__
