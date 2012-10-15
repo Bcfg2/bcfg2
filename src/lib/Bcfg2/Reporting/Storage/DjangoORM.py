@@ -148,7 +148,7 @@ class DjangoORM(StorageBase):
                     target_dict = dict(
                         owner=entry.get('owner', default="root"),
                         group=entry.get('group', default="root"),
-                        perms=entry.get('perms', default=""),
+                        perms=entry.get('mode', default=entry.get('perms', default=""))
                     )
                     fperm, created = FilePerms.objects.get_or_create(**target_dict)
                     act_dict['target_perms'] = fperm
@@ -156,7 +156,8 @@ class DjangoORM(StorageBase):
                     current_dict = dict(
                         owner=entry.get('current_owner', default=""),
                         group=entry.get('current_group', default=""),
-                        perms=entry.get('current_perms', default=""),
+                        perms=entry.get('current_mode',
+                            default=entry.get('current_perms', default=""))
                     )
                     fperm, created = FilePerms.objects.get_or_create(**current_dict)
                     act_dict['current_perms'] = fperm
