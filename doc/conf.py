@@ -264,8 +264,9 @@ def setup(app):
 versions = ["3.2", "2.7", "2.6"]
 cur_version = '.'.join(str(v) for v in sys.version_info[0:2])
 
-intersphinx_mapping = dict(mock=('http://www.voidspace.org.uk/python/mock',
-                                 None))
+intersphinx_mapping = \
+    dict(mock=('http://www.voidspace.org.uk/python/mock', None),
+         cherrypy=('http://docs.cherrypy.org/stable', None))
 for pyver in versions:
     if pyver == cur_version:
         key = 'py'

@@ -1,8 +1,6 @@
-"""Bcfg2 SSL server."""
-
-__all__ = [
-    "SSLServer", "XMLRPCRequestHandler", "XMLRPCServer",
-]
+""" Bcfg2 SSL server used by the builtin server core
+(:mod:`Bcfg2.Server.BuiltinCore`).  This needs to be documented
+better. """
 
 import os
 import sys
@@ -18,6 +16,8 @@ from Bcfg2.Compat import xmlrpclib, SimpleXMLRPCServer, SocketServer, \
 
 
 class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
+    """ An XML-RPC dispatcher. """
+
     logger = logging.getLogger("Bcfg2.SSLServer.XMLRPCDispatcher")
 
     def __init__(self, allow_none, encoding):
@@ -33,7 +33,6 @@ class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
         self.encoding = encoding
 
     def _marshaled_dispatch(self, address, data):
-        method_func = None
         params, method = xmlrpclib.loads(data)
         try:
             if '.' not in method:
@@ -62,15 +61,7 @@ class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
 
 
 class SSLServer(SocketServer.TCPServer, object):
-    """TCP server supporting SSL encryption.
-
-    Methods:
-    handshake -- perform a SSL/TLS handshake
-
-    Properties:
-    url -- A url pointing to this server.
-
-    """
+    """ TCP server supporting SSL encryption. """
 
     allow_reuse_address = True
     logger = logging.getLogger("Bcfg2.SSLServer.SSLServer")
@@ -78,19 +69,23 @@ class SSLServer(SocketServer.TCPServer, object):
     def __init__(self, listen_all, server_address, RequestHandlerClass,
                  keyfile=None, certfile=None, reqCert=False, ca=None,
                  timeout=None, protocol='xmlrpc/ssl'):
-
-        """Initialize the SSL-TCP server.
-
-        Arguments:
-        server_address -- address to bind to the server
-        RequestHandlerClass -- class to handle requests
-
-        Keyword arguments:
-        keyfile -- private encryption key filename (enables ssl encryption)
-        certfile -- certificate file (enables ssl encryption)
-        reqCert -- client must present certificate
-        timeout -- timeout for non-blocking request handling
-
+        """
+        :param listen_all: Listen on all interfaces
+        :type listen_all: bool
+        :param server_address: Address to bind to the server
+        :param RequestHandlerClass: Request handler used by TCP server
+        :param keyfile: Full path to SSL encryption key file
+        :type keyfile: string
+        :param certfile: Full path to SSL certificate file
+        :type certfile: string
+        :param reqCert: Require client to present certificate
+        :type reqCert: bool
+        :param ca: Full path to SSL CA that signed the key and cert
+        :type ca: string
+        :param timeout: Timeout for non-blocking request handling
+        :param protocol: The protocol to serve.  Supported values are
+                         ``xmlrpc/ssl`` and ``xmlrpc/tlsv1``.
+        :type protocol: string
         """
         # check whether or not we should listen on all interfaces
         if listen_all:
@@ -183,19 +178,11 @@ class SSLServer(SocketServer.TCPServer, object):
 
 
 class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
-    """Component XML-RPC request handler.
+    """ XML-RPC request handler.
 
     Adds support for HTTP authentication.
-
-    Exceptions:
-
-    CouldNotAuthenticate -- client did not present acceptable
-    authentication information
-
-    Methods:
-    authenticate -- prompt a check of a client's provided username and password
-    handle_one_request -- handle a single rpc (optionally authenticating)
     """
+
     logger = logging.getLogger("Bcfg2.SSLServer.XMLRPCRequestHandler")
 
     def authenticate(self):
@@ -325,50 +312,37 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 
 class XMLRPCServer(SocketServer.ThreadingMixIn, SSLServer,
                    XMLRPCDispatcher, object):
-    """Component XMLRPCServer.
-
-    Methods:
-    serve_daemon -- serve_forever in a daemonized process
-    serve_forever -- handle_one_request until not self.serve
-    shutdown -- stop serve_forever (by setting self.serve = False)
-    ping -- return all arguments received
-
-    RPC methods:
-    ping
-
-    (additional system.* methods are inherited from base dispatcher)
-
-    Properties:
-    require_auth -- the request handler is requiring authorization
-    credentials -- valid credentials being used for authentication
-    """
+    """ Component XMLRPCServer. """
 
     def __init__(self, listen_all, server_address, RequestHandlerClass=None,
                  keyfile=None, certfile=None, ca=None, protocol='xmlrpc/ssl',
-                 timeout=10,
-                 logRequests=False,
+                 timeout=10, logRequests=False,
                  register=True, allow_none=True, encoding=None):
-        """Initialize the XML-RPC server.
-
-        Arguments:
-        server_address -- address to bind to the server
-        RequestHandlerClass -- request handler used by TCP server (optional)
-
-        Keyword arguments:
-        keyfile -- private encryption key filename
-        certfile -- certificate file
-        logRequests -- log all requests (default False)
-        register -- presence should be reported to service-location
-                    (default True)
-        allow_none -- allow None values in xml-rpc
-        encoding -- encoding to use for xml-rpc (default UTF-8)
+        """
+        :param listen_all: Listen on all interfaces
+        :type listen_all: bool
+        :param server_address: Address to bind to the server
+        :param RequestHandlerClass: request handler used by TCP server
+        :param keyfile: Full path to SSL encryption key file
+        :type keyfile: string
+        :param certfile: Full path to SSL certificate file
+        :type certfile: string
+        :param ca: Full path to SSL CA that signed the key and cert
+        :type ca: string
+        :param logRequests: Log all requests
+        :type logRequests: bool
+        :param register: Presence should be reported to service-location
+        :type register: bool
+        :param allow_none: Allow None values in XML-RPC
+        :type allow_non: bool
+        :param encoding: Encoding to use for XML-RPC
         """
 
         XMLRPCDispatcher.__init__(self, allow_none, encoding)
 
         if not RequestHandlerClass:
             # pylint: disable=E0102
-            class RequestHandlerClass (XMLRPCRequestHandler):
+            class RequestHandlerClass(XMLRPCRequestHandler):
                 """A subclassed request handler to prevent
                 class-attribute conflicts."""
             # pylint: enable=E0102

@@ -1,4 +1,4 @@
-""" the core of the builtin bcfg2 server """
+""" The core of the builtin Bcfg2 server. """
 
 import os
 import sys
@@ -12,8 +12,15 @@ from Bcfg2.SSLServer import XMLRPCServer
 
 
 class PidFile(object):
-    """ context handler to write the pid file """
+    """ Context handler used by :class:`daemon.DaemonContext` to write
+    the PID file. """
+
     def __init__(self, pidfile):
+        """
+        :param pidfile: The full path to the PID file to write on
+                        entering the context handler
+        :type pidfile: string
+        """
         self.pidfile = pidfile
 
     def __enter__(self):
@@ -29,18 +36,32 @@ class Core(BaseCore):
 
     def __init__(self, setup):
         BaseCore.__init__(self, setup)
+
+        #: The :class:`Bcfg2.SSLServer.XMLRPCServer` instance powering
+        #: this server core
         self.server = None
+
+        #: The :class:`daemon.DaemonContext` used to drop privileges,
+        #: write the PID file (with :class:`PidFile`), and daemonize
+        #: this core.
         self.context = \
             daemon.DaemonContext(uid=self.setup['daemon_uid'],
                                  gid=self.setup['daemon_gid'],
                                  pidfile=PidFile(self.setup['daemon']))
+    __init__.__doc__ = BaseCore.__init__.__doc__.split('.. -----')[0]
 
     def _dispatch(self, method, args, dispatch_dict):
-        """Custom XML-RPC dispatcher for components.
+        """ Dispatch XML-RPC method calls
 
-        method -- XML-RPC method name
-        args -- tuple of paramaters to method
-
+        :param method: XML-RPC method name
+        :type method: string
+        :param args: Paramaters to pass to the method
+        :type args: tuple
+        :param dispatch_dict: A dict of method name -> function that
+                              can be used to provide custom mappings
+        :type dispatch_dict: dict
+        :returns: The return value of the method call
+        :raises: :exc:`xmlrpclib.Fault`
         """
         if method in dispatch_dict:
             method_func = dispatch_dict[method]
@@ -55,7 +76,7 @@ class Core(BaseCore):
         try:
             method_start = time.time()
             try:
-                result = method_func(*args)
+                return method_func(*args)
             finally:
                 Bcfg2.Statistics.stats.add_value(method,
                                                  time.time() - method_start)
@@ -66,13 +87,15 @@ class Core(BaseCore):
             if getattr(err, "log", True):
                 self.logger.error(err, exc_info=True)
             raise xmlrpclib.Fault(getattr(err, "fault_code", 1), str(err))
-        return result
 
     def _daemonize(self):
+        """ Open :attr:`context` to drop privileges, write the PID
+        file, and daemonize the server core. """
         self.context.open()
         self.logger.info("%s daemonized" % self.name)
 
     def _run(self):
+        """ Create :attr:`server` to start the server listening. """
         hostname, port = urlparse(self.setup['location'])[1].split(':')
         server_address = socket.getaddrinfo(hostname,
                                             port,
@@ -96,6 +119,7 @@ class Core(BaseCore):
         return True
 
     def _block(self):
+        """ Enter the blocking infinite loop. """
         try:
             self.server.serve_forever()
         finally:
