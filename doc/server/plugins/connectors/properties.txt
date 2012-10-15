@@ -7,42 +7,125 @@ Properties
 ==========
 
 The Properties plugin is a connector plugin that adds information from
-properties files into client metadata instances.
+XML, JSON, and YAML files into client metadata instances.
 
 Enabling Properties
 ===================
 
-First, ``mkdir /var/lib/bcfg2/Properties``. Each property XML file goes
-in this directory. Each will automatically be cached by the server,
-and reread/reparsed upon changes. Add **Properties** to your ``plugins``
+First, ``mkdir /var/lib/bcfg2/Properties``. Each property file goes in
+this directory. Each will automatically be cached by the server, and
+reread/reparsed upon changes. Add **Properties** to your ``plugins``
 line in ``/etc/bcfg2.conf``.
 
 Data Structures
 ===============
 
 Properties adds a new dictionary to client metadata instances that maps
-property file names to PropertyFile instances. PropertyFile instances
-contain parsed XML data as the "data" attribute.
+property file names to PropertyFile instances.
 
-The XML data in a property file is arbitrary, but a matching ``.xsd``
-file can be created to assign a schema to a property file, which will
-be checked when running ``bcfg2-lint``.  For instance, given::
+A property file can be one of three types:
 
-    Properties/dns-config.xml
-    Properties/dns-config.xsd
+* If the filename ends with ``.xml``, it will be parsed as XML and
+  handled by :class:`Bcfg2.Server.Plugins.Properties.XMLPropertyFile`.
+  See `XML Property Files`_ below.
+* If the filename ends with ``.json`` and JSON libraries are installed
+  (either ``json`` or ``simplejson``, although ``json`` is highly
+  recommended), it will be parsed as `JSON <http://www.json.org/>`_
+  and handled by
+  :class:`Bcfg2.Server.Plugins.Properties.JSONPropertyFile`.  See
+  `JSON Property Files`_ below.
+* If the filename ends with ``.yaml`` or ``.yml`` and PyYAML is
+  installed, it will be parsed as `YAML <http://www.yaml.org/>`_ and
+  handled by
+  :class:`Bcfg2.Server.Plugins.Properties.YAMLPropertyFile`.  See
+  `YAML Property Files`_ below.
 
-``dns-config.xml`` will be validated against ``dns-config.xsd``.
-
-Although Properties files are technically freeform XML, the top-level
-XML tag should be ``<Properties>``.
+The XML interface is undoubtably the most powerful, as it natively
+supports schemas to check the data validity, client- and
+group-specific data, and data encryption.
 
 Usage
 =====
 
+Common Interface
+----------------
+
+Different data types have different interfaces, but there are some
+usage patterns common to all properties files.
+
 Specific property files can be referred to in templates as
-``metadata.Properties[<filename>]``. The ``xdata`` attribute is an
-lxml.etree._Element object. (Documented `here
-<http://codespeak.net/lxml/tutorial.html#the-element-class>`_)
+``metadata.Properties[<filename>]``.
+
+The data in property files is accessible via different attributes:
+
++-----------+----------------+
+| Data Type | Data Attribute |
++===========+================+
+| XML       | ``xdata``      |
++-----------+----------------+
+| JSON      | ``json``       |
++-----------+----------------+
+| YAML      | ``yaml``       |
++-----------+----------------+
+
+For instance, in a :ref:`Genshi template
+<server-plugins-generators-cfg-genshi>`, you might do::
+
+    {% for item in metadata.Properties['foo.json'].json %}\
+    ${item}
+    {% end %}\
+
+    {% for key, value in metadata.Properties['foo.yml'].yaml %}\
+    ${key} = ${value}
+    {% end %}\
+
+    {% for el in metadata.Properties['foo.xml'].xdata.findall("Tag") %}\
+    ${el.get("name")} = ${el.text}
+    {% end %}\
+
+The raw contents of a properties file as a string are available via
+the ``data`` attribute, e.g., ``metadata.Properties['prop-file'].data``.
+
+.. _server-plugins-connectors-properties-write-back:
+
+Writing to Properties files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 1.2.0
+
+If you need to make persistent changes to properties data, you can use
+the ``write`` method of the
+:class:`Bcfg2.Server.Plugins.Properties.PropertyFile` class::
+
+    {% python
+    import lxml.etree
+    from genshi.template import TemplateError
+    lxml.etree.SubElement(metadata.Properties['foo.xml'],
+                          "Client",
+                          name=metadata.hostname)
+    if not metadata.Properties['foo.xml'].write():
+        raise TemplateError("Failed to write changes back to foo.xml")
+
+The interface is the same for YAML or JSON data.
+
+If writing XML data, the ``write`` method checks the data in the
+object against its schema before writing it; see `Data Structures`_
+for details.
+
+Note that use of the ``write`` method can cause race conditions if you
+run more than one Bcfg2 server.  If you run more than one Bcfg2
+server, you can disable Properties write-back by setting the following
+in ``bcfg2.conf``::
+
+    [properties]
+    writes_enabled = false
+
+XML Property Files
+------------------
+
+The data in an XML property file can be accessed with the ``xdata``
+attribute, an :class:`lxml.etree._Element` object documented `here
+<http://codespeak.net/lxml/tutorial.html#the-element-class>`_.
 
 In addition to the ``xdata`` attribute that can be used to access the
 raw data, the following access methods are defined:
@@ -67,9 +150,6 @@ raw data, the following access methods are defined:
                    for el in metadata.Properties['ntp.xml'].XMLMatch(metadata).findall("//Server")]
     %}
 
-As we formulate more common use cases, we will add them to the
-``PropertyFile`` class as methods. This will simplify templates.
-
 You can also access the XML data that comprises a property file
 directly in one of several ways:
 
@@ -82,6 +162,37 @@ directly in one of several ways:
   top-level element.  (I.e., everything directly under the
   ``<Properties>`` tag.)
 
+The XML data in a property file is arbitrary, but a matching ``.xsd``
+file can be created to assign a schema to a property file, which will
+be checked when running ``bcfg2-lint``.  For instance, given::
+
+    Properties/dns-config.xml
+    Properties/dns-config.xsd
+
+``dns-config.xml`` will be validated against ``dns-config.xsd``.
+
+Although Properties files are technically freeform XML, the top-level
+XML tag should be ``<Properties>``.
+
+
+JSON Property Files
+-------------------
+
+The data in a JSON property file can be accessed with the ``json``
+attribute, which is the loaded JSON data.  The JSON properties
+interface does not provide any additional functionality beyond the
+`Common Interface`_.
+
+YAML Property Files
+-------------------
+
+The data in a YAML property file can be accessed with the ``yaml``
+attribute, which is the loaded YAML data.  Only a single YAML document
+may be included in a file.
+
+The YAML properties interface does not provide any additional
+functionality beyond the `Common Interface`_.
+
 .. _server-plugins-connectors-properties-automatch:
 
 Automatch
@@ -90,8 +201,8 @@ Automatch
 .. versionadded:: 1.3.0
 
 You can enable
-:func:`Bcfg2.Server.Plugins.Properties.PropertyFile.XMLMatch()` for
-all Property files by setting ``automatch`` to ``true`` in the
+:func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch()` for all XML
+Property files by setting ``automatch`` to ``true`` in the
 ``[properties]`` section of ``bcfg2.conf``.  This makes
 ``metadata.Properties`` values :class:`lxml.etree._Element` objects
 that contain only matching data.  (This makes it impossible to do
@@ -140,37 +251,6 @@ it anyway with ``-f``::
     With automatch enabled, they are :class:`lxml.etree._Element`
     objects.
 
-.. _server-plugins-connectors-properties-write-back:
-
-Writing to Properties files
-===========================
-
-.. versionadded:: 1.2.0
-
-If you need to make persistent changes to properties data, you can use
-the ``write`` method of the
-:class:`Bcfg2.Server.Plugins.Properties.PropertyFile` class::
-
-    {% python
-    import lxml.etree
-    from genshi.template import TemplateError
-    lxml.etree.SubElement(metadata.Properties['foo.xml'],
-                          "Client",
-                          name=metadata.hostname)
-    if not metadata.Properties['foo.xml'].write():
-        raise TemplateError("Failed to write changes back to foo.xml")
-
-The ``write`` method checks the data in the object against its schema
-before writing it; see `Data Structures`_ for details.
-
-Note that use of the ``write`` method can cause race conditions if you
-run more than one Bcfg2 server.  If you run more than one Bcfg2
-server, you can disable Properties write-back by setting the following
-in ``bcfg2.conf``::
-
-    [properties]
-    writes_enabled = false
-
 .. _server-plugins-connectors-properties-encryption:
 
 Encrypted Properties data
@@ -178,12 +258,12 @@ Encrypted Properties data
 
 .. versionadded:: 1.3.0
 
-You can encrypt selected data in Properties files to protect that data
-from other people who need access to the repository.  See
+You can encrypt selected data in XML Properties files to protect that
+data from other people who need access to the repository.  See
 :ref:`server-encryption-configuration` for details on configuring
 encryption passphrases.  The data is decrypted transparently
 on-the-fly by the server; you never need to decrypt the data in your
-templates.
+templates.  Encryption is only supported on XML properties files.
 
 .. note::
 
@@ -232,3 +312,8 @@ It understands the following directives:
 * ``writes_enabled``: Enable
   :ref:`server-plugins-connectors-properties-write-back`.  Default is
   true.
+
+Module Documentation
+====================
+
+.. automodule:: Bcfg2.Server.Plugins.Properties

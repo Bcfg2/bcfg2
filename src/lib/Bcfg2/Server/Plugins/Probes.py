@@ -41,16 +41,10 @@ except ImportError:
         HAS_JSON = False
 
 try:
-    import syck as yaml
-    import syck.error as YAMLError
+    import yaml
     HAS_YAML = True
 except ImportError:
-    try:
-        import yaml
-        from yaml import YAMLError
-        HAS_YAML = True
-    except ImportError:
-        HAS_YAML = False
+    HAS_YAML = False
 
 
 class ClientProbeDataSet(dict):
@@ -110,7 +104,7 @@ class ProbeData(str):
         if self._yaml is None and HAS_YAML:
             try:
                 self._yaml = yaml.load(self.data)
-            except YAMLError:
+            except yaml.YAMLError:
                 pass
         return self._yaml
 
