@@ -411,7 +411,7 @@ class TestXMLFileBacked(TestFileBacked):
     def test_follow_xincludes(self, mock_parse, mock_exists):
         xfb = self.get_obj()
         xfb.add_monitor = Mock()
-        
+
         def reset():
             xfb.add_monitor.reset_mock()
             mock_parse.reset_mock()
@@ -1765,14 +1765,12 @@ class TestGroupSpool(TestPlugin, TestGenerator):
 
     def get_obj(self, core=None):
         if core is None:
-            print "creating core as a magicmock"
             core = MagicMock()
             core.setup = MagicMock()
         else:
             try:
                 core.setup['encoding']
             except TypeError:
-                print "creating core.setup.__getitem__"
                 core.setup.__getitem__ = MagicMock()
 
         @patch("%s.%s.AddDirectoryMonitor" % (self.test_obj.__module__,
