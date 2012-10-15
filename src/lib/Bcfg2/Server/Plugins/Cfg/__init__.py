@@ -515,12 +515,12 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         generator = self.best_matching(metadata,
                                        self.get_handlers(metadata,
                                                          CfgGenerator))
-        if entry.get('perms').lower() == 'inherit':
+        if entry.get('mode').lower() == 'inherit':
             # use on-disk permissions
-            LOGGER.warning("Cfg: %s: Use of perms='inherit' is deprecated" %
+            LOGGER.warning("Cfg: %s: Use of mode='inherit' is deprecated" %
                            entry.get("name"))
             fname = os.path.join(self.path, generator.name)
-            entry.set('perms',
+            entry.set('mode',
                       str(oct(stat.S_IMODE(os.stat(fname).st_mode))))
         try:
             return generator.get_data(entry, metadata)
@@ -607,7 +607,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             open(name, 'w').write(etext)
             self.debug_log("Wrote file %s" % name, flag=log)
-        badattr = [attr for attr in ['owner', 'group', 'perms']
+        badattr = [attr for attr in ['owner', 'group', 'mode']
                    if attr in new_entry]
         if badattr:
             # check for info files and inform user of their removal

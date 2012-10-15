@@ -70,7 +70,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
             raise PluginExecutionError
         perms = {'owner': 'root',
                  'group': 'root',
-                 'perms': '644'}
+                 'mode': '644'}
         [entry.attrib.__setitem__(key, value)
          for (key, value) in list(perms.items())]
         entry.text = self.filedata[fname]

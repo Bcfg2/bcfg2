@@ -41,7 +41,7 @@ data = Bcfg2.Client.XML.Element("ProbedFileData",
                                 name=path,
                                 owner=pwd.getpwuid(stat[4])[0],
                                 group=grp.getgrgid(stat[5])[0],
-                                perms=oct(stat[0] & 4095))
+                                mode=oct(stat[0] & 4095))
 try:
     data.text = b64encode(open(path).read())
 except:
@@ -219,7 +219,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             "Info",
             owner=data.get("owner", Bcfg2.Options.MDATA_OWNER.value),
             group=data.get("group", Bcfg2.Options.MDATA_GROUP.value),
-            perms=data.get("perms", Bcfg2.Options.MDATA_PERMS.value),
+            mode=data.get("mode", Bcfg2.Options.MDATA_PERMS.value),
             encoding=entry.get("encoding", Bcfg2.Options.ENCODING.value))
 
         root = lxml.etree.Element("FileInfo")

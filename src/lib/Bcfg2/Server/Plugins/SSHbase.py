@@ -73,9 +73,9 @@ class HostKeyEntrySet(Bcfg2.Server.Plugin.EntrySet):
         if encoding is not None:
             self.metadata['encoding'] = encoding
         if basename.endswith('.pub'):
-            self.metadata['perms'] = '0644'
+            self.metadata['mode'] = '0644'
         else:
-            self.metadata['perms'] = '0600'
+            self.metadata['mode'] = '0600'
 
 
 class KnownHostsEntrySet(Bcfg2.Server.Plugin.EntrySet):
@@ -86,7 +86,7 @@ class KnownHostsEntrySet(Bcfg2.Server.Plugin.EntrySet):
         self.metadata = {'owner': 'root',
                          'group': 'root',
                          'type': 'file',
-                         'perms': '0644'}
+                         'mode': '0644'}
 
 
 class SSHbase(Bcfg2.Server.Plugin.Plugin,

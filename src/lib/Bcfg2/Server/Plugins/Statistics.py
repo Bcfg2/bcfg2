@@ -146,7 +146,7 @@ class Statistics(Bcfg2.Server.Plugin.ThreadedStatistics,
 
         owner = cfentry.get('current_owner', cfentry.get('owner'))
         group = cfentry.get('current_group', cfentry.get('group'))
-        perms = cfentry.get('current_perms', cfentry.get('perms'))
+        mode = cfentry.get('current_mode', cfentry.get('mode'))
         if cfentry.get('sensitive') in ['true', 'True']:
             raise Bcfg2.Server.Plugin.PluginExecutionError
         elif 'current_bfile' in cfentry.attrib:
@@ -157,4 +157,4 @@ class Statistics(Bcfg2.Server.Plugin.ThreadedStatistics,
         else:
             contents = None
 
-        return (owner, group, perms, contents)
+        return (owner, group, mode, contents)

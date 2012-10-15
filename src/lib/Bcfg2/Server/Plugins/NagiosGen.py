@@ -46,12 +46,12 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
                               'owner': 'root',
                               'group': 'root',
                               'type': 'file',
-                              'perms': '0400'}
+                              'mode': '0400'}
         self.server_attrib = {'encoding': 'ascii',
                               'owner': 'nagios',
                               'group': 'nagios',
                               'type': 'file',
-                              'perms': '0440'}
+                              'mode': '0440'}
 
     def createhostconfig(self, entry, metadata):
         """Build host specific configuration file."""

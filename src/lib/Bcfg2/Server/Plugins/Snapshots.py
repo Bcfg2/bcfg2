@@ -18,8 +18,8 @@ datafields = {
               'Package': ['version'],
               'Path': ['type'],
               'Service': ['status'],
-              'ConfigFile': ['owner', 'group', 'perms'],
-              'Directory': ['owner', 'group', 'perms'],
+              'ConfigFile': ['owner', 'group', 'mode'],
+              'Directory': ['owner', 'group', 'mode'],
               'SymLink': ['to'],
              }
 

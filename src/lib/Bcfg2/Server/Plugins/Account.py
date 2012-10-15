@@ -41,7 +41,7 @@ class Account(Bcfg2.Server.Plugin.Plugin,
         entry.text += self.repository.entries["dyn.%s" % (fname)].data
         perms = {'owner': 'root',
                  'group': 'root',
-                 'perms': '0644'}
+                 'mode': '0644'}
         [entry.attrib.__setitem__(key, value) for (key, value) in \
          list(perms.items())]
 
@@ -55,7 +55,7 @@ class Account(Bcfg2.Server.Plugin.Plugin,
                  useraccess if host == metadata.hostname.split('.')[0]]
         perms = {'owner': 'root',
                  'group': 'root',
-                 'perms': '0600'}
+                 'mode': '0600'}
         [entry.attrib.__setitem__(key, value) for (key, value) in \
          list(perms.items())]
         entry.text += "".join(["%s hard maxlogins 1024\n" % uname for uname in superusers + users])
@@ -78,7 +78,7 @@ class Account(Bcfg2.Server.Plugin.Plugin,
                               ("%s.key" % user) in rdata])
         perms = {'owner': 'root',
                  'group': 'root',
-                 'perms': '0600'}
+                 'mode': '0600'}
         [entry.attrib.__setitem__(key, value) for (key, value) \
          in list(perms.items())]
 
@@ -97,6 +97,6 @@ class Account(Bcfg2.Server.Plugin.Plugin,
                                for uname in superusers])
         perms = {'owner': 'root',
                  'group': 'root',
-                 'perms': '0440'}
+                 'mode': '0440'}
         [entry.attrib.__setitem__(key, value) for (key, value) \
          in list(perms.items())]

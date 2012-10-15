@@ -44,7 +44,7 @@ class CfgLegacyInfo(CfgInfo):
                     dict([(key, value)
                           for key, value in list(match.groupdict().items())
                           if value])
-                if ('perms' in self.metadata and
-                    len(self.metadata['perms']) == 3):
-                    self.metadata['perms'] = "0%s" % self.metadata['perms']
+                if ('mode' in self.metadata and
+                    len(self.metadata['mode']) == 3):
+                    self.metadata['mode'] = "0%s" % self.metadata['mode']
     handle_event.__doc__ = CfgInfo.handle_event.__doc__

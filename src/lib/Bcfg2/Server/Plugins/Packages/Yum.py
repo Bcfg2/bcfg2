@@ -184,7 +184,7 @@ class PulpCertificateSet(Bcfg2.Server.Plugin.EntrySet):
                                               "UTF-8")
         self.metadata = dict(owner='root',
                              group='root',
-                             perms='0644',
+                             mode='0644',
                              secontext='__default__',
                              important='true',
                              sensitive='true',
@@ -520,7 +520,7 @@ class YumCollection(Collection):
                 keypath = lxml.etree.Element("BoundPath", name=remotekey,
                                              encoding='ascii',
                                              owner='root', group='root',
-                                             type='file', perms='0644',
+                                             type='file', mode='0644',
                                              important='true')
                 keypath.text = kdata
 

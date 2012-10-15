@@ -8,7 +8,6 @@ import Bcfg2.Server.Plugin
 class POSIXCompat(Bcfg2.Server.Plugin.Plugin,
                   Bcfg2.Server.Plugin.GoalValidator):
     """POSIXCompat is a goal validator plugin for POSIX entries."""
-    name = 'POSIXCompat'
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)

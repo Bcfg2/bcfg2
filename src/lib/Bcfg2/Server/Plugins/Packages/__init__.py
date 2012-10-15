@@ -176,7 +176,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                       owner='root',
                       group='root',
                       type='file',
-                      perms='0644',
+                      mode='0644',
                       important='true')
 
         collection = self.get_collection(metadata)
