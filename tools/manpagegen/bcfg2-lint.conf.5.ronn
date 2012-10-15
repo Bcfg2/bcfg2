@@ -94,7 +94,7 @@ files, all lines are checked since comment characters may vary.
 
   * `required_attrs`:
     A comma-delimited list of attributes to require on `<Info>` tags.
-    Default is "owner,group,perms".
+    Default is "owner,group,mode".
 
 ### MergeFiles
 

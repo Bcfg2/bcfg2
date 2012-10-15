@@ -80,7 +80,7 @@ the plugins listed below.
 
   * `InfoXML`:
     Check that certain attributes are specified in `info.xml` files. By
-    default, requires that *owner*, *group*, and *perms* are specified.
+    default, requires that *owner*, *group*, and *mode* are specified.
     Can also require that an `info.xml` exists for all Cfg files, and
     that paranoid mode be enabled for all files.
 
