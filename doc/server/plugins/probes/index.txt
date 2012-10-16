@@ -32,6 +32,15 @@ interpreter.
     that the bcfg2 client creates the temporary files in a directory
     from which it can execute.
 
+.. note::
+
+    .. versionadded:: 1.3.0
+
+    A probe script must exit with a return value of 0.  If it exits
+    with a non-0 return value, the client will abort its run.  This
+    behavior can be disabled by setting ``exit_on_probe_failure = 0``
+    in the ``[client]`` section of ``bcfg2.conf``.
+
 Now we need to figure out what exactly we want to do.  In this case,
 we want to hand out an ``/etc/auto.master`` file that looks like::
 
