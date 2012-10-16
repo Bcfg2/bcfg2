@@ -440,9 +440,21 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                     not os.path.exists(localfile)):
                     self.logger.info("Packages: Downloading and parsing %s" %
                                      key)
-                    response = urlopen(key)
-                    open(localfile, 'w').write(response.read())
-                    keys.append(key)
+                    try:
+                        open(localfile, 'w').write(urlopen(key).read())
+                        keys.append(key)
+                    except HTTPError:
+                        err = sys.exc_info()[1]
+                        self.logger.error("Packages: Error downloading %s: %s"
+                                          % (key, err))
+                    except IOError:
+                        err = sys.exc_info()[1]
+                        self.logger.error("Packages: Error writing %s to %s: "
+                                          "%s" % (key, localfile, err))
+                    except:
+                        err = sys.exc_info()[1]
+                        self.logger.error("Packages: Unknown error fetching "
+                                          "%s: %s" % (key, err))
 
         for kfile in glob.glob(os.path.join(self.keypath, "*")):
             if kfile not in keyfiles:
