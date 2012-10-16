@@ -73,7 +73,7 @@ def print_fields(fields, client, fmt, extra=None):
 def print_entries(interaction, etype):
     items = getattr(interaction, etype)()
     for item in items:
-        print("%-70s %s" % (item.entry.kind + ":" + item.entry.name, etype))
+        print("%-70s %s" % (item.entry_type + ":" + item.name, etype))
 
 def main():
     parser = OptionParser(usage="%prog [options] <mode> [arg]")
