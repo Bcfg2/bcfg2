@@ -21,35 +21,33 @@ config file directory can have a ``info.xml`` file if needed.
 An ``info.xml`` file consists of a ``<FileInfo>`` tag containing an
 ``<Info>`` tag; the following attributes are allowed on the ``<Info>`` tag:
 
-+------------+-------------------+----------------------------------+---------+
-| Field      | Possible values   | Description                      | Default |
-+============+===================+==================================+=========+
-| encoding   | ascii | base64    | Encoding of the file. Use        | ascii   |
-|            |                   | base64 for binary files          |         |
-+------------+-------------------+----------------------------------+---------+
-| owner      | Any valid user    | Sets owner of the file           | root    |
-+------------+-------------------+----------------------------------+---------+
-| group      | Any valid group   | Sets group of the file           | root    |
-+------------+-------------------+----------------------------------+---------+
-| mode       | Numeric file mode | Sets the mode of the file (or    | 0644    |
-|            | | 'inherit'       | inherits from the files on disk  |         |
-|            |                   | if set to 'inherit')             |         |
-+------------+-------------------+----------------------------------+---------+
-| secontext  | A valid SELinux   | Sets the SELinux context of the  | default |
-|            | context string or | file, or sets to the default     |         |
-|            | '__default__'     | context set by policy if set to  |         |
-|            |                   | '__default__'                    |         |
-+------------+-------------------+----------------------------------+---------+
-| important  | true | false      | Important entries are            | false   |
-|            |                   | installed first during client    |         |
-|            |                   | execution                        |         |
-+------------+-------------------+----------------------------------+---------+
-| paranoid   | true | false      | Backup file before replacement?  | true    |
-+------------+-------------------+----------------------------------+---------+
-| sensitive  | true | false      | The contents of sensitive        | false   |
-|            |                   | entries aren't included in       |         |
-|            |                   | reports                          |         |
-+------------+-------------------+----------------------------------+---------+
++------------+-----------------+------------------------------------+---------+
+| Field      | Possible values | Description                        | Default |
++============+=================+====================================+=========+
+| encoding   | ascii | base64  | Encoding of the file. Use 'base64' | ascii   |
+|            |                 | for binary files                   |         |
++------------+-----------------+------------------------------------+---------+
+| owner      | Any valid user  | Sets owner of the file             | root    |
++------------+-----------------+------------------------------------+---------+
+| group      | Any valid group | Sets group of the file             | root    |
++------------+-----------------+------------------------------------+---------+
+| mode       | Octal file mode | Sets the mode of the file (or      | 0644    |
+|            | | 'inherit'     | inherits from the files on disk    |         |
+|            |                 | if set to 'inherit'; deprecated)   |         |
++------------+-----------------+------------------------------------+---------+
+| secontext  | SELinux context | Sets the SELinux context of the    | default |
+|            | | '__default__' | file, or sets to the default       |         |
+|            |                 | context set by policy if set to    |         |
+|            |                 | '__default__'                      |         |
++------------+-----------------+------------------------------------+---------+
+| important  | true | false    | Important entries are installed    | false   |
+|            |                 | first during client execution      |         |
++------------+-----------------+------------------------------------+---------+
+| paranoid   | true | false    | Backup file before replacement?    | true    |
++------------+-----------------+------------------------------------+---------+
+| sensitive  | true | false    | The contents of sensitive entries  | false   |
+|            |                 | aren't included in reports         |         |
++------------+-----------------+------------------------------------+---------+
 
 A sample info file for CGI script on a web server might look like:
 
