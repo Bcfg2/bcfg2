@@ -1,6 +1,13 @@
 """ Compatibility imports, mostly for Py3k support, but also for
 Python 2.4 and such-like """
 
+###################################################
+#                                                 #
+#   IF YOU ADD SOMETHING TO THIS FILE, YOU MUST   #
+#   DOCUMENT IT IN docs/development/compat.txt    #
+#                                                 #
+###################################################
+
 import sys
 
 # pylint: disable=E0611,W0611,W0622,C0103
