@@ -4,6 +4,7 @@ from south.db import db
 from south.v2 import SchemaMigration
 from django.db import models
 
+from Bcfg2 import settings
 
 class Migration(SchemaMigration):
 
@@ -14,8 +15,9 @@ class Migration(SchemaMigration):
         # Renaming field 'FilePerms.perms' to 'FilePerms.mode'
         db.rename_column('Reporting_fileperms', 'perms', 'mode')
 
-        # Adding unique constraint on 'FilePerms', fields ['owner', 'group', 'mode']
-        db.create_unique('Reporting_fileperms', ['owner', 'group', 'mode'])
+        if not settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+            # Adding unique constraint on 'FilePerms', fields ['owner', 'group', 'mode']
+            db.create_unique('Reporting_fileperms', ['owner', 'group', 'mode'])
 
 
     def backwards(self, orm):
@@ -25,8 +27,9 @@ class Migration(SchemaMigration):
         # Renaming field 'FilePerms.mode' to 'FilePerms.perms'
         db.rename_column('Reporting_fileperms', 'mode', 'perms')
 
-        # Adding unique constraint on 'FilePerms', fields ['owner', 'perms', 'group']
-        db.create_unique('Reporting_fileperms', ['owner', 'perms', 'group'])
+        if not settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+            # Adding unique constraint on 'FilePerms', fields ['owner', 'perms', 'group']
+            db.create_unique('Reporting_fileperms', ['owner', 'perms', 'group'])
 
 
     models = {
