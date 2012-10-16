@@ -9,7 +9,7 @@ import shutil
 import lxml.etree
 import Bcfg2.Logger
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import ConfigParser, urlopen
+from Bcfg2.Compat import ConfigParser, urlopen, HTTPError
 from Bcfg2.Server.Plugins.Packages.Collection import Collection, \
     get_collection_class
 from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
