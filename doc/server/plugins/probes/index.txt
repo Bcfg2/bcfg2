@@ -60,18 +60,22 @@ we want to get rid of that last line::
 
 So, from the Probes standpoint we want to create a script that counts
 the number of SCSI disks in a client machine. To do this, we create a
-very simple ``Probes/scratchlocal`` script::
+very simple ``Probes/scratchlocal`` script:
 
-    cat /proc/scsi/scsi | grep Vendor | wc -l
+.. code-block:: bash
+
+    grep -c /proc/scsi/scsi
 
 Running this on a node with *n* disks will return the number *n+1*, as
 it also counts the controller as a device. To differentiate between the
 two classes of machines we care about, we just need to check the output
 of this script for numbers greater than 2. We do this in the template.
 
-This example uses :ref:`server-plugins-generators-cfg-cheetah`, but
-Cheetah templates are **not** required in order for Probes to operate
-properly.
+.. note::
+
+    This example uses :ref:`server-plugins-generators-cfg-cheetah`,
+    but Cheetah templates are **not** required in order for Probes to
+    operate properly.
 
 For the template we will want to create a ``Cfg/etc/auto.master``
 directory to hold the template of the file in question. Inside of this
