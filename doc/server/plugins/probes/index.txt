@@ -64,7 +64,7 @@ very simple ``Probes/scratchlocal`` script:
 
 .. code-block:: bash
 
-    grep -c /proc/scsi/scsi
+    grep -c Vendor /proc/scsi/scsi
 
 Running this on a node with *n* disks will return the number *n+1*, as
 it also counts the controller as a device. To differentiate between the
