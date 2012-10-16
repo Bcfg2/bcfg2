@@ -19,7 +19,6 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
                  "only build config for groups"))
 
     def __call__(self, args):
-        Bcfg2.Server.Admin.Mode.__call__(self, args)
         if len(args) == 0:
             self.errExit("No argument specified.\n"
                          "Please see bcfg2-admin minestruct help for usage.")
