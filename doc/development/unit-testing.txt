@@ -87,7 +87,7 @@ instance, would be:
 .. code-block:: bash
 
     sudo yum -y update
-    sudo yum -y install swig pylint
+    sudo yum -y install swig pylint libxml2
     if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
         sudo yum -y install libselinux-python pylibacl python-inotify \
             PyYAML
