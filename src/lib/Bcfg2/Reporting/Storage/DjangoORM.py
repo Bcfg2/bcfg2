@@ -148,7 +148,7 @@ class DjangoORM(StorageBase):
                     target_dict = dict(
                         owner=entry.get('owner', default="root"),
                         group=entry.get('group', default="root"),
-                        perms=entry.get('mode', default=entry.get('perms', default=""))
+                        mode=entry.get('mode', default=entry.get('perms', default=""))
                     )
                     fperm, created = FilePerms.objects.get_or_create(**target_dict)
                     act_dict['target_perms'] = fperm
@@ -156,7 +156,7 @@ class DjangoORM(StorageBase):
                     current_dict = dict(
                         owner=entry.get('current_owner', default=""),
                         group=entry.get('current_group', default=""),
-                        perms=entry.get('current_mode',
+                        mode=entry.get('current_mode',
                             default=entry.get('current_perms', default=""))
                     )
                     fperm, created = FilePerms.objects.get_or_create(**current_dict)
@@ -292,7 +292,7 @@ class DjangoORM(StorageBase):
             raise PluginExecutionError
         entry = result[0]
         ret = []
-        for p_entry in ('owner', 'group', 'perms'):
+        for p_entry in ('owner', 'group', 'mode'):
             this_entry = getattr(entry.current_perms, p_entry)
             if this_entry == '':
                 ret.append(getattr(entry.target_perms, p_entry))

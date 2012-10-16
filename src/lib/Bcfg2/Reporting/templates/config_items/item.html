@@ -45,11 +45,11 @@ div.entry_list h3 {
   {% endif %}
 
 {# Really need a better test here #}
-{% if item.perms_problem or item.status_problem or item.linkentry.link_problem or item.version_problem %}
+{% if item.mdoe_problem or item.status_problem or item.linkentry.link_problem or item.version_problem %}
   <table class='entry_list'>
       <tr id='table_list_header'>
           <td style='text-align: right;'>Problem Type</td><td>Expected</td><td style='border-bottom: 1px solid #98DBCC;'>Found</td></tr>
-  {% if item.perms_problem %}
+  {% if item.mode_problem %}
       {% if item.current_perms.owner %}
       <tr><td style='text-align: right'><b>Owner</b></td><td>{{item.target_perms.owner}}</td>
           <td>{{item.current_perms.owner}}</td></tr>
@@ -59,7 +59,7 @@ div.entry_list h3 {
           <td>{{item.current_perms.group}}</td></tr>
       {% endif %}
       {% if item.current_perms.mode%}
-      <tr><td style='text-align: right'><b>Perms</b></td><td>{{item.target_perms.perms}}</td>
+      <tr><td style='text-align: right'><b>Mode</b></td><td>{{item.target_perms.mode}}</td>
           <td>{{item.current_perms.mode}}</td></tr>
       {% endif %}
   {% endif %}

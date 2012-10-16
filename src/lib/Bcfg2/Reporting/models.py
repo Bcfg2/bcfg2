@@ -291,14 +291,14 @@ class Bundle(models.Model):
 class FilePerms(models.Model):
     owner = models.CharField(max_length=128)
     group = models.CharField(max_length=128)
-    perms = models.CharField(max_length=128)
+    mode = models.CharField(max_length=128)
 
     class Meta:
-        unique_together = ('owner', 'group', 'perms')
+        unique_together = ('owner', 'group', 'mode')
 
     def empty(self):
         """Return true if we have no real data"""
-        if self.owner or self.group or self.perms:
+        if self.owner or self.group or self.mode:
             return False
         else:
             return True
@@ -522,10 +522,10 @@ class PathEntry(SuccessEntry):
 
     ENTRY_TYPE = r"Path"
 
-    def perms_problem(self):
+    def mode_problem(self):
         if self.current_perms.empty():
             return False
-        elif self.target_perms.perms != self.current_perms.perms:
+        elif self.target_perms.mode != self.current_perms.mode:
             return True
         else:
             return False
@@ -553,8 +553,8 @@ class PathEntry(SuccessEntry):
         rv = super(PathEntry, self).short_list()
         if self.is_extra():
             return rv
-        if self.perms_problem():
-            rv.append("File permissions")
+        if self.modes_problem():
+            rv.append("File mode")
         if self.detail_type == PathEntry.DETAIL_PRUNED:
             rv.append("Directory has extra files")
         elif self.detail_type != PathEntry.DETAIL_UNUSED:
