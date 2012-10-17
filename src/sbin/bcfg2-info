@@ -733,7 +733,7 @@ Bcfg2 client itself.""")
 
     def _run(self):
         pass
-    
+
     def _block(self):
         pass
                 

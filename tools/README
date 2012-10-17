@@ -20,6 +20,10 @@ bcfg2-import-config
     - Create tarball of changed files on a client for import into the
       specification
 
+bcfg2_local.py
+    - Perform a full Bcfg2 run against a local repository instead of
+      against a remote server
+
 bcfg2-profile-templates.py [<template>]
     - Benchmark template rendering times
 
