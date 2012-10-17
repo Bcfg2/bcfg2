@@ -21,6 +21,10 @@ class CfgEncryptedGenerator(CfgGenerator):
     #: Handle .crypt files
     __extensions__ = ["crypt"]
 
+    #: Low priority to avoid matching host- or group-specific
+    #: .genshi.crypt and .cheetah.crypt files
+    __priority__ = 50
+
     def __init__(self, fname, spec, encoding):
         CfgGenerator.__init__(self, fname, spec, encoding)
         if not HAS_CRYPTO:

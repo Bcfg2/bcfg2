@@ -13,6 +13,9 @@ class CfgEncryptedCheetahGenerator(CfgCheetahGenerator, CfgEncryptedGenerator):
     #: handle .crypt.cheetah or .cheetah.crypt files
     __extensions__ = ['cheetah.crypt', 'crypt.cheetah']
 
+    #: Override low priority from parent class
+    __priority__ = 0
+
     def handle_event(self, event):
         CfgEncryptedGenerator.handle_event(self, event)
     handle_event.__doc__ = CfgEncryptedGenerator.handle_event.__doc__

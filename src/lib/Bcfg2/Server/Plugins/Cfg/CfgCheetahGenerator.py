@@ -23,6 +23,10 @@ class CfgCheetahGenerator(CfgGenerator):
     #: Handle .cheetah files
     __extensions__ = ['cheetah']
 
+    #: Low priority to avoid matching host- or group-specific
+    #: .crypt.cheetah files
+    __priority__ = 50
+
     #: :class:`Cheetah.Template.Template` compiler settings
     settings = dict(useStackFrames=False)
 

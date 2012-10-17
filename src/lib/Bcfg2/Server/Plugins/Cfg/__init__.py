@@ -5,6 +5,7 @@ import os
 import sys
 import stat
 import logging
+import operator
 import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
@@ -56,6 +57,16 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
     #: ``.H_client.example.com`` or ``.G10_foogroup``.
     __specific__ = True
 
+    #: Cfg handlers are checked in ascending order of priority to see
+    #: if they handle a given event.  If this explicit priority is not
+    #: set, then
+    #: :class:`Bcfg2.Server.Plugins.Cfg.CfgPlaintextGenerator` would
+    #: match against nearly every other sort of generator file if it
+    #: comes first.  It's not necessary to set ``__priority`` on
+    #: handlers where :attr:`__specific__` is False, since they don't
+    #: have a potentially open-ended regex
+    __priority__ = 0
+
     #: Flag to indicate a deprecated handler.
     deprecated = False
 
@@ -63,14 +74,14 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
         Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific,
                                                   encoding)
         self.encoding = encoding
-        self.regex = self.__class__.get_regex([name])
     __init__.__doc__ = Bcfg2.Server.Plugin.SpecificData.__init__.__doc__ + \
 """
 .. -----
 .. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__basenames__
 .. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__extensions__
 .. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__ignore__
-.. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__specific__"""
+.. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__specific__
+.. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__priority__ """
 
     @classmethod
     def get_regex(cls, basenames):
@@ -339,6 +350,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 if set(hdlr.__mro__).intersection([CfgInfo, CfgFilter,
                                                    CfgGenerator, CfgVerifier]):
                     self._handlers.append(hdlr)
+            self._handlers.sort(key=operator.attrgetter("__priority__"))
         return self._handlers
 
     def handle_event(self, event):

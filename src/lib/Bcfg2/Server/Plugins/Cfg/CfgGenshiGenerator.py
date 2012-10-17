@@ -53,6 +53,10 @@ class CfgGenshiGenerator(CfgGenerator):
     #: Genshi ``{% include ... %}`` directive without raising warnings.
     __ignore__ = ["genshi_include"]
 
+    #: Low priority to avoid matching host- or group-specific
+    #: .crypt.genshi files
+    __priority__ = 50
+
     #: Error-handling in Genshi is pretty obtuse.  This regex is used
     #: to extract the first line of the code block that raised an
     #: exception in a Genshi template so we can provide a decent error

@@ -12,4 +12,7 @@ class CfgPlaintextGenerator(CfgGenerator):
     files. The base Generator class already implements this
     functionality, so CfgPlaintextGenerator doesn't need to do
     anything itself."""
-    pass
+
+    #: Very low priority to avoid matching host- or group-specific
+    #: files with other extensions -- e.g., .genshi, .crypt, etc.
+    __priority__ = 100

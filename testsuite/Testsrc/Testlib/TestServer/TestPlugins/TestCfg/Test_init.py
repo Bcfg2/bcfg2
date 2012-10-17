@@ -24,11 +24,6 @@ from TestPlugin import TestSpecificData, TestEntrySet, TestGroupSpool, \
 class TestCfgBaseFileMatcher(TestSpecificData):
     test_obj = CfgBaseFileMatcher
 
-    def test__init(self):
-        TestSpecificData.test__init(self)
-        bfm = self.get_obj()
-        self.assertIsInstance(bfm.regex, re_type)
-
     def test_get_regex(self):
         if self.test_obj.__basenames__:
             basenames = self.test_obj.__basenames__
