@@ -209,6 +209,8 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             password = ""
         cert = self.request.getpeercert()
         client_address = self.request.getpeername()
+        if not self.server.instance.check_acls(client_address[0]):
+            return False
         return self.server.instance.authenticate(cert, username,
                                                  password, client_address)
 
