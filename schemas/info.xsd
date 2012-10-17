@@ -17,7 +17,7 @@
     <xsd:attribute name='group' type='xsd:string'/>
     <xsd:attribute name='important' type='xsd:string'/>
     <xsd:attribute name='owner' type='xsd:string'/>
-    <xsd:attribute name='perms' type='xsd:string'/>
+    <xsd:attribute name='mode' type='xsd:string'/>
     <xsd:attribute name='secontext' type='xsd:string'/>
     <xsd:attribute name='paranoid' type='xsd:boolean'/>
     <xsd:attribute name='sensitive' type='xsd:boolean'/>

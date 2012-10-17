@@ -141,7 +141,6 @@
     <xsd:attribute type="xsd:integer" name="major"/>
     <xsd:attribute type="xsd:integer" name="minor"/>
     <xsd:attribute type="xsd:integer" name="mode"/>
-    <xsd:attribute type="xsd:string" name="perms"/>
     <xsd:attribute type="xsd:string" name="owner"/>
     <xsd:attribute type="xsd:string" name="group"/>
     <xsd:attribute type="xsd:string" name="secontext"/>
