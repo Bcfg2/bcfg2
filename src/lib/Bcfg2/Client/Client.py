@@ -1,3 +1,5 @@
+""" The main Bcfg2 client class """
+
 import os
 import sys
 import stat
@@ -18,7 +20,7 @@ from subprocess import Popen, PIPE
 
 
 class Client(object):
-    """The main bcfg2 client class"""
+    """ The main Bcfg2 client class """
 
     def __init__(self, setup):
         self.toolset = None

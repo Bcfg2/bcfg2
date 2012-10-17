@@ -4,7 +4,7 @@
 import sys
 import signal
 import Bcfg2.Options
-from Bcfg2.Client import Client
+from Bcfg2.Client.Client import Client
 
 
 def cb_sigint_handler(signum, frame):
