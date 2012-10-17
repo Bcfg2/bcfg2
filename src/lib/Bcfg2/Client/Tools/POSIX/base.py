@@ -11,7 +11,7 @@ import Bcfg2.Client.XML
 
 try:
     import selinux
-    HAS_SELINUX = True
+    HAS_SELINUX = selinux.is_selinux_enabled()
 except ImportError:
     HAS_SELINUX = False
 
