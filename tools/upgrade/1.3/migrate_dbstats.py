@@ -48,7 +48,7 @@ def _migrate_perms():
         for grp in legacy_models.Reason.objects.values_list(*data).distinct():
             if grp in fperms:
                 continue
-            fp =  new_models.FilePerms(owner=grp[0], group=grp[1], perms=grp[2])
+            fp =  new_models.FilePerms(owner=grp[0], group=grp[1], mode=grp[2])
             fp.save()
             fperms[grp] = fp
 
