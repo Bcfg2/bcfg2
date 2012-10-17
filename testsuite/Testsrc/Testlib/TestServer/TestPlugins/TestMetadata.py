@@ -1000,6 +1000,9 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     def test_get_client_names_by_profiles(self):
         metadata = self.load_clients_data(metadata=self.load_groups_data())
+        metadata.core.build_metadata = Mock()
+        metadata.core.build_metadata.side_effect = \
+            lambda c: metadata.get_initial_metadata(c)
         self.assertItemsEqual(metadata.get_client_names_by_profiles(["group2"]),
                               [c.get("name")
                                for c in get_clients_test_tree().findall("//Client[@profile='group2']")])
