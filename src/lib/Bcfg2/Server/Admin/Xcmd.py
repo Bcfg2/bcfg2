@@ -1,17 +1,15 @@
-import sys
+""" XML-RPC Command Interface for bcfg2-admin"""
 
+import sys
 import Bcfg2.Options
 import Bcfg2.Proxy
 import Bcfg2.Server.Admin
-
-# Compatibility import
 from Bcfg2.Compat import xmlrpclib
 
 
 class Xcmd(Bcfg2.Server.Admin.Mode):
-    __shorthelp__ = ("XML-RPC Command Interface")
-    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin xcmd command\n")
-    __usage__ = ("bcfg2-admin xcmd <command>")
+    """ XML-RPC Command Interface """
+    __usage__ = "<command>"
 
     def __call__(self, args):
         optinfo = {

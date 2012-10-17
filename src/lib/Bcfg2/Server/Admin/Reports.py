@@ -3,14 +3,8 @@ import Bcfg2.Logger
 import Bcfg2.Server.Admin
 import datetime
 import os
-import logging
-import pickle
-import platform
 import sys
 import traceback
-
-from Bcfg2.Compat import md5
-
 from Bcfg2 import settings
 
 # Load django and reports stuff _after_ we know we can load settings
@@ -25,7 +19,7 @@ sys.path.pop()
 
 # Set DJANGO_SETTINGS_MODULE appropriately.
 os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
-from django.db import connection, transaction
+from django.db import transaction
 
 from Bcfg2.Reporting.models import Client, Interaction, \
     Performance, Bundle, Group, FailureEntry, PathEntry, \
@@ -57,21 +51,20 @@ def printStats(fn):
 
 
 class Reports(Bcfg2.Server.Admin.Mode):
-    '''Admin interface for dynamic reports'''
-    __shorthelp__ = "Manage dynamic reports"
-    __longhelp__ = (__shorthelp__)
+    """ Manage dynamic reports """
     django_commands = ['dbshell', 'shell', 'sqlall', 'validate']
-    __usage__ = ("bcfg2-admin reports [command] [options]\n"
-                 "\n"
+    __usage__ = ("[command] [options]\n"
                  "  Commands:\n"
                  "    init                 Initialize the database\n"
                  "    purge                Purge records\n"
                  "      --client [n]       Client to operate on\n"
                  "      --days   [n]       Records older then n days\n"
                  "      --expired          Expired clients only\n"
-                 "    scrub                Scrub the database for duplicate reasons and orphaned entries\n"
+                 "    scrub                Scrub the database for duplicate "
+                 "reasons and orphaned entries\n"
                  "    stats                print database statistics\n"
-                 "    update               Apply any updates to the reporting database\n"
+                 "    update               Apply any updates to the reporting "
+                 "database\n"
                  "\n"
                  "  Django commands:\n    " \
                  + "\n    ".join(django_commands))
@@ -108,8 +101,9 @@ class Reports(Bcfg2.Server.Admin.Mode):
                 management.call_command("syncdb", verbosity=vrb)
                 management.call_command("migrate", verbosity=vrb)
             except:
-                print("Update failed: %s" % traceback.format_exc().splitlines()[-1])
-                raise SystemExit(-1)
+                print("Update failed: %s" %
+                      traceback.format_exc().splitlines()[-1])
+                raise SystemExit(1)
         elif args[0] == 'purge':
             expired = False
             client = None
@@ -127,9 +121,11 @@ class Reports(Bcfg2.Server.Admin.Mode):
                     if maxdate:
                         self.errExit("Max date specified multiple times")
                     try:
-                        maxdate = datetime.datetime.now() - datetime.timedelta(days=int(args[i + 1]))
+                        maxdate = datetime.datetime.now() - \
+                            datetime.timedelta(days=int(args[i + 1]))
                     except:
-                        self.log.error("Invalid number of days: %s" % args[i + 1])
+                        self.log.error("Invalid number of days: %s" %
+                                       args[i + 1])
                         raise SystemExit(-1)
                     i = i + 1
                 elif args[i] == '--expired':
@@ -150,18 +146,17 @@ class Reports(Bcfg2.Server.Admin.Mode):
         ''' Perform a thorough scrub and cleanup of the database '''
 
         # Cleanup unused entries
-        for cls in (Group, Bundle, FailureEntry, ActionEntry, PathEntry, 
-                PackageEntry, PathEntry):
+        for cls in (Group, Bundle, FailureEntry, ActionEntry, PathEntry,
+                    PackageEntry, PathEntry):
             try:
                 start_count = cls.objects.count()
                 cls.prune_orphans()
                 self.log.info("Pruned %d %s records" % \
                     (start_count - cls.objects.count(), cls.__class__.__name__))
             except:
-                print("Failed to prune %s: %s" % \
-                    (cls.__class__.__name__, 
-                    traceback.format_exc().splitlines()[-1]))
-
+                print("Failed to prune %s: %s" %
+                      (cls.__class__.__name__,
+                       traceback.format_exc().splitlines()[-1]))
 
     def django_command_proxy(self, command):
         '''Call a django command'''
@@ -169,7 +164,6 @@ class Reports(Bcfg2.Server.Admin.Mode):
             management.call_command(command, 'Reporting')
         else:
             management.call_command(command)
-
 
     @printStats
     def purge(self, client=None, maxdate=None, state=None):
@@ -197,15 +191,16 @@ class Reports(Bcfg2.Server.Admin.Mode):
             self.log.debug("Filtering by maxdate: %s" % maxdate)
             ipurge = ipurge.filter(timestamp__lt=maxdate)
 
-        if settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
+        if settings.DATABASES['default']['ENGINE'] == \
+                'django.db.backends.sqlite3':
             grp_limit = 100
         else:
             grp_limit = 1000
         if state:
             filtered = True
             if state not in ('dirty', 'clean', 'modified'):
-                raise TypeError("state is not one of the following values " + \
-                                "('dirty','clean','modified')")
+                raise TypeError("state is not one of the following values: "
+                                "dirty, clean, modified")
             self.log.debug("Filtering by state: %s" % state)
             ipurge = ipurge.filter(state=state)
 
@@ -217,7 +212,8 @@ class Reports(Bcfg2.Server.Admin.Mode):
                 # just in case...
                 if not grp:
                     break
-                Interaction.objects.filter(id__in=[x['id'] for x in grp]).delete()
+                Interaction.objects.filter(id__in=[x['id']
+                                                   for x in grp]).delete()
                 rnum += len(grp)
                 self.log.debug("Deleted %s of %s" % (rnum, count))
         except:
@@ -235,7 +231,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
             m2m.prune_orphans()
 
         if client and not filtered:
-            '''Delete the client, ping data is automatic'''
+            # Delete the client, ping data is automatic
             try:
                 self.log.debug("Purging client %s" % client)
                 cobj.delete()
@@ -271,4 +267,3 @@ class Reports(Bcfg2.Server.Admin.Mode):
         for cls in classes:
             print("%s has %s records" % (cls().__class__.__name__,
                 cls.objects.count()))
-

@@ -1,14 +1,13 @@
-import sys
+""" Get performance data from server """
 
+import sys
 import Bcfg2.Options
 import Bcfg2.Proxy
 import Bcfg2.Server.Admin
 
 
 class Perf(Bcfg2.Server.Admin.Mode):
-    __shorthelp__ = ("Query server for performance data")
-    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin perf\n")
-    __usage__ = ("bcfg2-admin perf")
+    """ Get performance data from server """
 
     def __call__(self, args):
         output = [('Name', 'Min', 'Max', 'Mean', 'Count')]
@@ -34,5 +33,6 @@ class Perf(Bcfg2.Server.Admin.Mode):
         for key in sorted(data.keys()):
             output.append((key, ) +
                           tuple(["%.06f" % item
-                                 for item in data[key][:-1]] + [data[key][-1]]))
+                                 for item in data[key][:-1]] + \
+                                    [data[key][-1]]))
         self.print_table(output)

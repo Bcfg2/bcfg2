@@ -1,33 +1,24 @@
+""" Retrieves entries from clients and integrates the information into
+the repository """
+
 import getopt
 import sys
-
 import Bcfg2.Server.Admin
-from Bcfg2.Compat import input
+from Bcfg2.Compat import input  # pylint: disable=W0622
 
 
 class Pull(Bcfg2.Server.Admin.MetadataCore):
-    """Pull mode retrieves entries from clients and
-    integrates the information into the repository.
-    """
-    __shorthelp__ = ("Integrate configuration information "
-                     "from clients into the server repository")
-    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin pull [-v] [-f][-I] [-s] "
-                                    "<client> <entry type> <entry name>\n")
-    __usage__ = ("bcfg2-admin pull [options] <client> <entry type> "
-                 "<entry name>\n\n"
+    """ Retrieves entries from clients and integrates the information
+    into the repository """
+    __usage__ = ("[options] <client> <entry type> <entry name>\n\n"
                  "     %-25s%s\n"
                  "     %-25s%s\n"
                  "     %-25s%s\n"
                  "     %-25s%s\n" %
-                ("-v",
-                 "be verbose",
-                 "-f",
-                 "force",
-                 "-I",
-                 "interactive",
-                 "-s",
-                 "stdin"))
-    allowed = ['Metadata', "DBStats", "Statistics", "Cfg", "SSHbase"]
+                ("-v", "be verbose",
+                 "-f", "force",
+                 "-I", "interactive",
+                 "-s", "stdin"))
 
     def __init__(self, setup):
         Bcfg2.Server.Admin.MetadataCore.__init__(self, setup)
@@ -40,7 +31,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         try:
             opts, gargs = getopt.getopt(args, 'vfIs')
         except:
-            print(self.__shorthelp__)
+            print(self.__doc__)
             raise SystemExit(1)
         for opt in opts:
             if opt[0] == '-v':
@@ -48,7 +39,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
             elif opt[0] == '-f':
                 self.mode = 'force'
             elif opt[0] == '-I':
-                self.mode == 'interactive'
+                self.mode = 'interactive'
             elif opt[0] == '-s':
                 use_stdin = True
 
@@ -61,8 +52,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                 except:
                     print("Bad entry: %s" % line.strip())
         elif len(gargs) < 3:
-            print(self.__longhelp__)
-            raise SystemExit(1)
+            self.usage()
         else:
             self.PullEntry(gargs[0], gargs[1], gargs[2])
 
@@ -90,9 +80,9 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
             print("Unable to build entry. "
                   "Do you have a statistics plugin enabled?")
             raise SystemExit(1)
-        for k, v in list(data.items()):
-            if v:
-                new_entry[k] = v
+        for key, val in list(data.items()):
+            if val:
+                new_entry[key] = val
         return new_entry
 
     def Choose(self, choices):
@@ -129,20 +119,20 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         glist = [gen for gen in self.bcore.generators if
                  ename in gen.Entries.get(etype, {})]
         if len(glist) != 1:
-            self.errExit("Got wrong numbers of matching generators for entry:" \
-                         + "%s" % ([g.name for g in glist]))
+            self.errExit("Got wrong numbers of matching generators for entry:"
+                         "%s" % ([g.name for g in glist]))
         plugin = glist[0]
         if not isinstance(plugin, Bcfg2.Server.Plugin.PullTarget):
-            self.errExit("Configuration upload not supported by plugin %s" \
-                         % (plugin.name))
+            self.errExit("Configuration upload not supported by plugin %s" %
+                         plugin.name)
         try:
             choices = plugin.AcceptChoices(new_entry, meta)
             specific = self.Choose(choices)
             if specific:
                 plugin.AcceptPullData(specific, new_entry, self.log)
         except Bcfg2.Server.Plugin.PluginExecutionError:
-            self.errExit("Configuration upload not supported by plugin %s" \
-                         % (plugin.name))
+            self.errExit("Configuration upload not supported by plugin %s" %
+                         plugin.name)
         # Commit if running under a VCS
         for vcsplugin in list(self.bcore.plugins.values()):
             if isinstance(vcsplugin, Bcfg2.Server.Plugin.Version):

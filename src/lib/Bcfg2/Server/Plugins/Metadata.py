@@ -1070,7 +1070,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         """ return a list of names of clients in the given profile groups """
         rv = []
         for client in list(self.clients):
-            mdata = self.get_initial_metadata(client)
+            mdata = self.core.build_metadata(client)
             if mdata.profile in profiles:
                 rv.append(client)
         return rv
@@ -1226,6 +1226,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
     def viz(self, hosts, bundles, key, only_client, colors):
         """Admin mode viz support."""
+        clientmeta = None
         if only_client:
             clientmeta = self.core.build_metadata(only_client)
 
@@ -1233,9 +1234,11 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         categories = {'default': 'grey83'}
         viz_str = []
         egroups = groups.findall("Group") + groups.findall('.//Groups/Group')
+        color = 0
         for group in egroups:
             if not group.get('category') in categories:
-                categories[group.get('category')] = colors.pop()
+                categories[group.get('category')] = colors[color]
+                color = (color + 1) % len(colors)
             group.set('color', categories[group.get('category')])
         if None in categories:
             del categories[None]
@@ -1332,6 +1335,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 if include_group(group.get('name')):
                     rv.append('"group-%s" -> "group-%s";' %
                               (group.get('name'), parent.get('name')))
+        return rv
 
 
 class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):

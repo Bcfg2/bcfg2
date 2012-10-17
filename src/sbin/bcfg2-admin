@@ -1,16 +1,14 @@
 #!/usr/bin/env python
-"""bcfg2-admin is a script that helps to administrate a Bcfg2 deployment."""
+""" bcfg2-admin is a script that helps to administer a Bcfg2
+deployment. """
 
+import re
 import sys
 import logging
 import Bcfg2.Logger
 import Bcfg2.Options
 import Bcfg2.Server.Admin
-# Compatibility import
 from Bcfg2.Compat import StringIO
-
-log = logging.getLogger('bcfg2-admin')
-
 
 def mode_import(modename):
     """Load Bcfg2.Server.Admin.<mode>."""
@@ -32,10 +30,10 @@ def create_description():
     description.write("Available modes are:\n\n")
     for mode in modes:
         try:
-            description.write(("   %-15s   %s\n" %
-                               (mode, mode_import(mode).__shorthelp__)))
+            doc = re.sub(r'\s{2,}', ' ', mode_import(mode).__doc__.strip())
         except (ImportError, SystemExit):
-            pass
+            continue
+        description.write(("   %-15s   %s\n" % (mode, doc)))
     return description.getvalue()
 
 
@@ -58,6 +56,8 @@ def main():
     Bcfg2.Logger.setup_logging('bcfg2-admin', to_syslog=setup['syslog'],
                                level=level)
 
+    log = logging.getLogger('bcfg2-admin')
+
     # Provide help if requested or no args were specified
     if (not setup['args'] or len(setup['args']) < 1 or
         setup['args'][0] == 'help' or setup['help']):
@@ -72,18 +72,19 @@ def main():
     if setup['args'][0] in get_modes():
         modname = setup['args'][0].capitalize()
         if len(setup['args']) > 1 and setup['args'][1] == 'help':
-            print(mode_import(modname).__longhelp__)
-            raise SystemExit(0)
+            mode_cls = mode_import(modname)
+            mode_cls.usage(rv=0)
         try:
             mode_cls = mode_import(modname)
         except ImportError:
-            e = sys.exc_info()[1]
-            log.error("Failed to load admin mode %s: %s" % (modname, e))
+            err = sys.exc_info()[1]
+            log.error("Failed to load admin mode %s: %s" % (modname, err))
             raise SystemExit(1)
         mode = mode_cls(setup)
-        mode(setup['args'][1:])
-        if hasattr(mode, 'bcore'):
-            mode.bcore.shutdown()
+        try:
+            mode(setup['args'][1:])
+        finally:
+            mode.shutdown()
     else:
         log.error("Error: Unknown mode '%s'\n" % setup['args'][0])
         print(create_description())

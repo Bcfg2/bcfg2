@@ -1,15 +1,12 @@
 import lxml.etree
 import os
-
 import Bcfg2.Server.Admin
 
 
 class Compare(Bcfg2.Server.Admin.Mode):
-    __shorthelp__ = ("Determine differences between files or "
-                     "directories of client specification instances")
-    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin compare <file1> <file2>"
-                                    "\nbcfg2-admin compare -r <dir1> <dir2>")
-    __usage__ = ("bcfg2-admin compare <old> <new>\n\n"
+    """ Determine differences between files or directories of client
+    specification instances """
+    __usage__ = ("<old> <new>\n\n"
                  "     -r\trecursive")
 
     def __init__(self, setup):

@@ -12,10 +12,8 @@ from Bcfg2.Server.Snapshots.model import Snapshot, Client, Metadata, Base, \
 from Bcfg2.Compat import u_str
 
 class Snapshots(Bcfg2.Server.Admin.Mode):
-    __shorthelp__ = "Interact with the Snapshots system"
-    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin snapshots init"
-                                    "\nbcfg2-admin query qtype\n")
-    __usage__ = ("bcfg2-admin snapshots [init|query qtype]")
+    """ Interact with the Snapshots system """
+    __usage__ = "[init|query qtype]"
 
     q_dispatch = {'client':   Client,
                   'group':    Group,

@@ -1,14 +1,13 @@
-import lxml.etree
+""" Create, delete, or list client entries """
+
+import sys
 import Bcfg2.Server.Admin
 from Bcfg2.Server.Plugin import MetadataConsistencyError
 
 
 class Client(Bcfg2.Server.Admin.MetadataCore):
-    __shorthelp__ = "Create, delete, or list client entries"
-    __longhelp__ = (__shorthelp__ + "\n\nbcfg2-admin client add <client> "
-                                    "\nbcfg2-admin client list"
-                                    "\nbcfg2-admin client del <client>\n")
-    __usage__ = ("bcfg2-admin client [options] [add|del|list] [attr=val]")
+    """ Create, delete, or list client entries """
+    __usage__ = "[options] [add|del|list] [attr=val]"
 
     def __call__(self, args):
         Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
@@ -19,13 +18,15 @@ class Client(Bcfg2.Server.Admin.MetadataCore):
             try:
                 self.metadata.add_client(args[1])
             except MetadataConsistencyError:
-                print("Error in adding client")
+                err = sys.exc_info()[1]
+                print("Error in adding client: %s" % err)
                 raise SystemExit(1)
         elif args[0] in ['delete', 'remove', 'del', 'rm']:
             try:
                 self.metadata.remove_client(args[1])
             except MetadataConsistencyError:
-                print("Error in deleting client")
+                err = sys.exc_info()[1]
+                print("Error in deleting client: %s" % err)
                 raise SystemExit(1)
         elif args[0] in ['list', 'ls']:
             for client in self.metadata.list_clients():
@@ -33,4 +34,3 @@ class Client(Bcfg2.Server.Admin.MetadataCore):
         else:
             print("No command specified")
             raise SystemExit(1)
-

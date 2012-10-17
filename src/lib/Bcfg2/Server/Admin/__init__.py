@@ -19,10 +19,10 @@ __all__ = [
         'Xcmd'
         ]
 
+import re
+import sys
 import logging
 import lxml.etree
-import sys
-
 import Bcfg2.Server.Core
 import Bcfg2.Options
 from Bcfg2.Compat import ConfigParser
@@ -32,8 +32,6 @@ class Mode(object):
     """ Base object for admin modes.  Docstrings are used as help
     messages, so if you are seeing this, a help message has not yet
     been added for this mode. """
-    __shorthelp__ = 'Shorthelp not defined yet'
-    __longhelp__ = 'Longhelp not defined yet'
     __usage__ = None
     __args__ = []
 
@@ -42,8 +40,10 @@ class Mode(object):
         self.configfile = setup['configfile']
         self.__cfp = False
         self.log = logging.getLogger('Bcfg2.Server.Admin.Mode')
+        usage = "bcfg2-admin %s" % self.__class__.__name__.lower()
         if self.__usage__ is not None:
-            setup.hm = self.__usage__
+            usage += " " + self.__usage__
+        setup.hm = usage
 
     def getCFP(self):
         """ get a config parser for the Bcfg2 config file """
@@ -56,6 +56,22 @@ class Mode(object):
 
     def __call__(self, args):
         raise NotImplementedError
+
+    @classmethod
+    def usage(cls, rv=1):
+        """ Exit with a long usage message """
+        print(re.sub(r'\s{2,}', ' ', cls.__doc__.strip()))
+        print("")
+        print("Usage:")
+        usage = "bcfg2-admin %s" % cls.__name__.lower()
+        if cls.__usage__ is not None:
+            usage += " " + cls.__usage__
+        print("  %s" % usage)
+        raise SystemExit(rv)
+
+    def shutdown(self):
+        """ Perform any necessary shtudown tasks for this mode """
+        pass
 
     def errExit(self, emsg):
         """ exit with an error """
@@ -131,6 +147,10 @@ class MetadataCore(Mode):
             self.errExit("Core load failed: %s" % msg)
         self.bcore.fam.handle_event_set()
         self.metadata = self.bcore.metadata
+
+    def shutdown(self):
+        if hasattr(self, 'bcore'):
+            self.bcore.shutdown()
 
 
 class StructureMode(MetadataCore):  # pylint: disable=W0223

@@ -133,9 +133,6 @@ def create_conf(confpath, confdata):
 
 class Init(Bcfg2.Server.Admin.Mode):
     """Interactively initialize a new repository."""
-    __shorthelp__ = ("Interactively initialize a new repository.")
-    __longhelp__ = __shorthelp__ + "\n\nbcfg2-admin init"
-    __usage__ = "bcfg2-admin init"
     options = {'configfile': Bcfg2.Options.CFILE,
                'plugins': Bcfg2.Options.SERVER_PLUGINS,
                'proto': Bcfg2.Options.SERVER_PROTOCOL,

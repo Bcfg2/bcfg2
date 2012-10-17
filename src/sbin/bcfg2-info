@@ -687,6 +687,25 @@ Bcfg2 client itself.""")
         collection = self.plugins['Packages'].get_collection(metadata)
         print(collection.sourcelist())
 
+    def do_query(self, args):
+        """ query {-g group|-p profile|-b bundle} - Query clients """
+        arglist = args.split(" ")
+        if len(arglist) != 2:
+            print(self._get_usage(self.do_query))
+            return
+
+        qtype, qparam = arglist
+        if qtype == '-p':
+            res = self.metadata.get_client_names_by_profiles(qparam.split(','))
+        elif qtype == '-g':
+            res = self.metadata.get_client_names_by_groups(qparam.split(','))
+        elif qtype == '-b':
+            res = self.metadata.get_client_names_by_bundles(qparam.split(','))
+        else:
+            print(self._get_usage(self.do_query))
+            return
+        print("\n".join(res))
+
     def do_profile(self, arg):
         """ profile <command> <args> - Profile a single bcfg2-info
         command """
