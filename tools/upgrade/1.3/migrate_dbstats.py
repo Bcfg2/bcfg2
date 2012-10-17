@@ -107,14 +107,14 @@ def _migrate_transaction(inter, entries, fperms):
                 act_dict['status'] = "check"
             act_dict['output'] = -1
             logger.debug("Adding action %s" % name)
-            updates['actions'].append(new_models.ActionEntry.entry_get_or_create(act_dict, skip_fetch=1))
+            updates['actions'].append(new_models.ActionEntry.entry_get_or_create(act_dict))
 
         elif ent.kind == 'Package':
             act_dict['target_version'] = ei.reason.version
             act_dict['current_version'] = ei.reason.current_version
             logger.debug("Adding package %s %s" % 
                 (name, act_dict['target_version']))
-            updates['packages'].append(new_models.PackageEntry.entry_get_or_create(act_dict, skip_fetch=1))
+            updates['packages'].append(new_models.PackageEntry.entry_get_or_create(act_dict))
         elif ent.kind == 'Path':
             # these might be hard.. they aren't one to one with the old model
             act_dict['path_type'] = 'file'
@@ -136,7 +136,7 @@ def _migrate_transaction(inter, entries, fperms):
                 act_dict['target_path'] = ei.reason.to
                 act_dict['current_path'] = ei.reason.current_to
                 logger.debug("Adding link %s" % name)
-                updates['paths'].append(new_models.LinkEntry.entry_get_or_create(act_dict, skip_fetch=1))
+                updates['paths'].append(new_models.LinkEntry.entry_get_or_create(act_dict))
                 continue
 
             act_dict['detail_type'] = new_models.PathEntry.DETAIL_UNUSED
@@ -156,13 +156,13 @@ def _migrate_transaction(inter, entries, fperms):
                 act_dict['detail_type'] = new_models.PathEntry.DETAIL_DIFF
                 act_dict['details'] = ei.reason.current_diff
             logger.debug("Adding path %s" % name)
-            updates['paths'].append(new_models.PathEntry.entry_get_or_create(act_dict, skip_fetch=1))
+            updates['paths'].append(new_models.PathEntry.entry_get_or_create(act_dict))
 
         elif ent.kind == 'Service':
             act_dict['target_status'] = ei.reason.status
             act_dict['current_status'] = ei.reason.current_status
             logger.debug("Adding service %s" % name)
-            updates['services'].append(new_models.ServiceEntry.entry_get_or_create(act_dict, skip_fetch=1))
+            updates['services'].append(new_models.ServiceEntry.entry_get_or_create(act_dict))
         else:
             logger.warn("Skipping type %s" % ent.kind)
 
