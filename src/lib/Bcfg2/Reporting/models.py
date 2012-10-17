@@ -312,7 +312,7 @@ class FileAcl(models.Model):
 class BaseEntry(models.Model):
     """ Abstract base for all entry types """
     name = models.CharField(max_length=128, db_index=True)
-    hash_key = models.IntegerField(editable=False, db_index=True)
+    hash_key = models.BigIntegerField(editable=False, db_index=True)
 
     class Meta:
         abstract = True
