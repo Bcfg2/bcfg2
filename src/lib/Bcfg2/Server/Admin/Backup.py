@@ -11,7 +11,6 @@ class Backup(Bcfg2.Server.Admin.MetadataCore):
     """ Make a backup of the Bcfg2 repository """
 
     def __call__(self, args):
-        Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
         datastore = self.setup['repo']
         timestamp = time.strftime('%Y%m%d%H%M%S')
         fmt = 'gz'

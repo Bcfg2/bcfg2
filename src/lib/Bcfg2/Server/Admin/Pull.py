@@ -26,7 +26,6 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         self.mode = 'interactive'
 
     def __call__(self, args):
-        Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
         use_stdin = False
         try:
             opts, gargs = getopt.getopt(args, 'vfIs')

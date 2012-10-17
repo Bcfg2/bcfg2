@@ -10,7 +10,6 @@ class Client(Bcfg2.Server.Admin.MetadataCore):
     __usage__ = "[options] [add|del|list] [attr=val]"
 
     def __call__(self, args):
-        Bcfg2.Server.Admin.MetadataCore.__call__(self, args)
         if len(args) == 0:
             self.errExit("No argument specified.\n"
                          "Usage: %s" % self.__usage__)
