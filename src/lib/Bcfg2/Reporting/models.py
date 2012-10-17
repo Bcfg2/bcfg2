@@ -381,7 +381,7 @@ class BaseEntry(models.Model):
             newact = cls(**act_dict)
             newact.save(hash_key=act_hash)
     
-        cache.set(act_key, newact)
+        cache.set(act_key, newact, 60 * 60)
         return newact
 
 
