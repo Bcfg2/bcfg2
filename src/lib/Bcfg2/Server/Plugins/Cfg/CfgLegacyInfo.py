@@ -33,6 +33,7 @@ class CfgLegacyInfo(CfgInfo):
     def handle_event(self, event):
         if event.code2str() == 'deleted':
             return
+        self.metadata = dict()
         for line in open(self.path).readlines():
             match = Bcfg2.Server.Plugin.INFO_REGEX.match(line)
             if not match:
@@ -40,11 +41,9 @@ class CfgLegacyInfo(CfgInfo):
                                (event.filename, line))
                 continue
             else:
-                self.metadata = \
-                    dict([(key, value)
-                          for key, value in list(match.groupdict().items())
-                          if value])
-                if ('mode' in self.metadata and
-                    len(self.metadata['mode']) == 3):
-                    self.metadata['mode'] = "0%s" % self.metadata['mode']
+                for key, value in list(match.groupdict().items()):
+                    if value:
+                        self.metadata[key] = value
+        if ('mode' in self.metadata and len(self.metadata['mode']) == 3):
+            self.metadata['mode'] = "0%s" % self.metadata['mode']
     handle_event.__doc__ = CfgInfo.handle_event.__doc__
