@@ -7,6 +7,7 @@ import sys
 import cmd
 import getopt
 import fnmatch
+import logging
 import lxml.etree
 import traceback
 from code import InteractiveConsole
@@ -122,11 +123,7 @@ class InfoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
     """Main class for bcfg2-info."""
     def __init__(self, setup):
         cmd.Cmd.__init__(self)
-        saved = (setup['syslog'], setup['logging'])
-        setup['syslog'] = False
-        setup['logging'] = None
         Bcfg2.Server.Core.BaseCore.__init__(self, setup=setup)
-        setup['syslog'], setup['logging'] = saved
         self.prompt = '> '
         self.cont = True
         self.fam.handle_events_in_interval(4)
@@ -769,6 +766,15 @@ def main():
                           USAGE])
 
     setup.parse(sys.argv[1:])
+
+    if setup['debug']:
+        level = logging.DEBUG
+    elif setup['verbose']:
+        level = logging.INFO
+    else:
+        level = logging.WARNING
+    Bcfg2.Logger.setup_logging('bcfg2-info', to_syslog=False, level=level)
+
     if setup['args'] and setup['args'][0] == 'help':
         print(setup.hm)
         sys.exit(0)

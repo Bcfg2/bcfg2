@@ -29,7 +29,7 @@ class Client(Bcfg2.Server.Admin.MetadataCore):
                 raise SystemExit(1)
         elif args[0] in ['list', 'ls']:
             for client in self.metadata.list_clients():
-                print(client.hostname)
+                print(client)
         else:
             print("No command specified")
             raise SystemExit(1)

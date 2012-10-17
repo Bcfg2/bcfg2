@@ -138,7 +138,7 @@ class MetadataCore(Mode):
             setup['plugins'] = [p for p in setup['plugins']
                                 if p not in self.__plugin_blacklist__]
 
-        # admin modes con't need to watch for changes.  one shot is fine here.
+        # admin modes don't need to watch for changes.  one shot is fine here.
         setup['filemonitor'] = 'pseudo'
         try:
             self.bcore = Bcfg2.Server.Core.BaseCore(setup)
