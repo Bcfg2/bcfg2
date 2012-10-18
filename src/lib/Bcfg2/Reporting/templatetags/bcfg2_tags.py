@@ -230,6 +230,9 @@ class AddUrlFilter(template.Node):
                 except NoReverseMatch:
                     link = reverse(self.fallback_view, args=None,
                         kwargs={filter_name: filter_value})
+                qs = context['request'].GET.urlencode()
+                if qs:
+                    link += "?" + qs
         except NoReverseMatch:
             rm = sys.exc_info()[1]
             raise rm
