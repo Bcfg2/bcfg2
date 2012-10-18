@@ -1,6 +1,5 @@
 """ The core of the builtin Bcfg2 server. """
 
-import os
 import sys
 import time
 import socket
