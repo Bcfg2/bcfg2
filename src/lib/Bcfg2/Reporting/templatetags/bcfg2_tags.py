@@ -119,6 +119,11 @@ def filter_navigator(context):
         if 'page_limit' in kwargs:
             del kwargs['page_limit']
 
+        # get a query string
+        qs = context['request'].GET.urlencode()
+        if qs:
+            qs = '?' + qs
+
         filters = []
         for filter in filter_list:
             if filter == 'group':
@@ -127,7 +132,7 @@ def filter_navigator(context):
                 myargs = kwargs.copy()
                 del myargs[filter]
                 filters.append((filter,
-                                reverse(view, args=args, kwargs=myargs)))
+                                reverse(view, args=args, kwargs=myargs) + qs))
         filters.sort(lambda x, y: cmp(x[0], y[0]))
 
         myargs = kwargs.copy()
@@ -135,10 +140,10 @@ def filter_navigator(context):
         if 'group' in myargs:
             del myargs['group']
             selected=False
-        groups = [('---', reverse(view, args=args, kwargs=myargs), selected)]
+        groups = [('---', reverse(view, args=args, kwargs=myargs) + qs, selected)]
         for group in Group.objects.values('name'):
             myargs['group'] = group['name']
-            groups.append((group['name'], reverse(view, args=args, kwargs=myargs), 
+            groups.append((group['name'], reverse(view, args=args, kwargs=myargs) + qs, 
                 group['name'] == kwargs.get('group', '')))
             
         return {'filters': filters, 'groups': groups}
