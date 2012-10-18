@@ -7,7 +7,8 @@ import threading
 
 # pylint: disable=E0611
 try:
-    from daemon.pidfile import PIDLockFile, PIDFileError
+    from lockfile.pidlockfile import PIDLockFile
+    from lockfile import Error as PIDFileError
 except ImportError:
     from daemon.pidlockfile import PIDLockFile, PIDFileError
 # pylint: enable=E0611
