@@ -4,7 +4,13 @@ import logging
 import time
 import traceback
 import threading
-from daemon.pidlockfile import PIDLockFile, PIDFileError
+
+# pylint: disable=E0611
+try:
+    from daemon.pidfile import PIDLockFile, PIDFileError
+except ImportError:
+    from daemon.pidlockfile import PIDLockFile, PIDFileError
+# pylint: enable=E0611
 
 import Bcfg2.Logger
 from Bcfg2.Reporting.Transport import load_transport_from_config, \
