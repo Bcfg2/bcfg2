@@ -111,6 +111,7 @@ class Core(BaseCore):
                        gid=self.setup['daemon_gid']).subscribe()
         Daemonizer(cherrypy.engine).subscribe()
         PIDFile(cherrypy.engine, self.setup['daemon']).subscribe()
+        return True
 
     def _run(self):
         """ Start the server listening. """

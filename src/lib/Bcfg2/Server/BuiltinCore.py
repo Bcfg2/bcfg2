@@ -81,6 +81,7 @@ class Core(BaseCore):
         file, and daemonize the server core. """
         self.context.open()
         self.logger.info("%s daemonized" % self.name)
+        return True
 
     def _run(self):
         """ Create :attr:`server` to start the server listening. """
