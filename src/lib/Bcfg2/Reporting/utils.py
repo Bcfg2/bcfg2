@@ -100,7 +100,9 @@ def filteredUrls(pattern, view, kwargs=None, name=None):
                    '/group/(?P<group>[\w\-\.]+)',
                    '/group/(?P<group>[\w\-\.]+)/(?P<state>[A-Za-z]+)',
                    '/server/(?P<server>[\w\-\.]+)',
-                   '/server/(?P<server>[\w\-\.]+)/(?P<state>[A-Za-z]+)'):
+                   '/server/(?P<server>[\w\-\.]+)/(?P<state>[A-Za-z]+)',
+                   '/server/(?P<server>[\w\-\.]+)/group/(?P<group>[\w\-\.]+)',
+                   '/server/(?P<server>[\w\-\.]+)/group/(?P<group>[\w\-\.]+)/(?P<state>[A-Za-z]+)'):
         results += [(pattern + filter + tail, view, kwargs)]
     return results
 
