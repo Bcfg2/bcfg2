@@ -303,10 +303,8 @@ def client_detailed_list(request, timestamp=None, **kwargs):
 
         if sort_key == "client":
             kwargs['orderby'] = "%s__name" % sort
-        elif sort_key == "good":
-            kwargs['orderby'] = "%scount" % sort
-        elif sort_key in ["bad", "modified", "extra"]:
-            kwargs['orderby'] = "%s_entries" % sort
+        elif sort_key in ["good", "bad", "modified", "extra"]:
+            kwargs['orderby'] = "%s_count" % sort
         else:
             kwargs['orderby'] = sort
         kwargs['sort'] = sort
