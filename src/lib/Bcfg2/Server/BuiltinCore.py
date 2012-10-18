@@ -29,13 +29,17 @@ class Core(BaseCore):
         #: this server core
         self.server = None
 
-        #: The :class:`daemon.DaemonContext` used to drop privileges,
-        #: write the PID file (with :class:`PidFile`), and daemonize
-        #: this core.
-        self.context = \
-            daemon.DaemonContext(uid=self.setup['daemon_uid'],
-                                 gid=self.setup['daemon_gid'],
-                                 pidfile=PIDLockFile(self.setup['daemon']))
+        if self.setup['daemon']:
+            #: The :class:`daemon.DaemonContext` used to drop
+            #: privileges, write the PID file (with :class:`PidFile`),
+            #: and daemonize this core.
+            self.context = \
+                daemon.DaemonContext(uid=self.setup['daemon_uid'],
+                                     gid=self.setup['daemon_gid'],
+                                     pidfile=PIDLockFile(self.setup['daemon']))
+        else:
+            self.context = daemon.DaemonContext(uid=self.setup['daemon_uid'],
+                                                gid=self.setup['daemon_gid'])
     __init__.__doc__ = BaseCore.__init__.__doc__.split('.. -----')[0]
 
     def _dispatch(self, method, args, dispatch_dict):
