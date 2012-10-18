@@ -50,15 +50,14 @@ start () {
 stop () {
     echo -n "Stopping Configuration Report Collector: "
     if [ -f $PIDFILE ]; then
-      PID=`cat $PIDFILE | tr -d -c '0-9'`
-      killproc -p $PID ${BINARY}
+      killproc -p $PIDFILE ${BINARY}
     else
       killproc ${BINARY}
     fi
     STATUS=$?
     if [ "$STATUS" = 0 ]; then
       log_success_msg "bcfg2-report-collector"
-      test -d /var/lock/subsys && touch /var/lock/subsys/bcfg2-report-collector
+      test -e /var/lock/subsys/bcfg2-report-collector && rm /var/lock/subsys/bcfg2-report-collector
     else
       log_failure_msg "bcfg2-report-collector"
     fi
@@ -66,8 +65,7 @@ stop () {
 }
 
 status () {
-    # Inspired by redhat /etc/init.d/functions status() call
-    PID=$(pidof -x $BINARY -o %PPID)
+    PID=$(pidofproc -p "$PIDFILE" $BINARY)
     if [ -n "$PID" ]; then
       echo "$BINARY (pid $PID) is running..."
       return 0
