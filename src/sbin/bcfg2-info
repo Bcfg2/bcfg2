@@ -689,7 +689,7 @@ Bcfg2 client itself.""")
         if len(args) == 0:
             print("\n".join(self.metadata.clients))
             return
-        arglist = args.strip().split(" ")
+        arglist = args.split(" ")
         if len(arglist) != 2:
             print(self._get_usage(self.do_query))
             return
