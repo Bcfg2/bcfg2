@@ -7,22 +7,28 @@ Svn
 ===
 
 The Svn plugin is useful if you would like to track changes to your
-bcfg2 repository using a `Subversion <http://subversion.tigris.org/>`_
-backend. It deprecates the previous Subversion integration mentioned here
-at ftp://ftp.mcs.anl.gov/pub/bcfg/papers/directing-change-with-bcfg2.pdf.
+Bcfg2 repository using a `Subversion <http://subversion.tigris.org/>`_
+backend.
 
-Currently, It enables you to get revision information out of your
-repository for reporting purposes. Once the plugin is enabled, every time
-a client checks in, it will include the current repository revision in
-the reports/statistics.
+As with the other Version plugins, the Svn plugin enables you to get
+revision information out of your repository for reporting
+purposes. Once the plugin is enabled, every time a client checks in,
+it will include the current repository revision in the
+reports/statistics.
 
-Future plans are to commit changes to the repo which are made by the
-server (adding clients, ssh keys, etc).
+Additionally, if the ``pysvn`` library is installed, the Svn plugin
+exposes two XML-RPC method calls:
 
-How to enable the Svn plugin
-============================
+* ``Svn.Update`` updates the working copy to the latest version in the
+  repository.
+* ``Svn.Commit`` commits any changes to the working copy back to the
+  repository.  In order for this to work, the user Bcfg2 runs as must
+  be able to commit to the repository non-interactively.
+
+Enabling the Svn plugin
+=======================
 
 Simply add Svn to your plugins line in ``/etc/bcfg2.conf``::
 
     [server]
-    plugins = Base,Bundler,Cfg,..,Svn
+    plugins = Bundler,Cfg,Metadata,..,Svn

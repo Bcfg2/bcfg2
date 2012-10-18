@@ -506,7 +506,7 @@ class GoalValidator(object):
         raise NotImplementedError
 
 
-class Version(object):
+class Version(Plugin):
     """ Version plugins interact with various version control systems. """
 
     #: The path to the VCS metadata file or directory, relative to the
@@ -514,26 +514,23 @@ class Version(object):
     #: be ".svn"
     __vcs_metadata_path__ = None
 
-    def __init__(self, datastore):
-        """
-        :param datastore: The path to the Bcfg2 repository on the
-                          filesystem
-        :type datastore: string
-        :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginInitError`
+    def __init__(self, core, datastore):
+        Plugin.__init__(self, core, datastore)
 
-        .. autoattribute:: __vcs_metadata_path__
-        """
-
-        self.datastore = datastore
         if self.__vcs_metadata_path__:
-            self.vcs_path = os.path.join(datastore, self.__vcs_metadata_path__)
-
-            if os.path.exists(self.vcs_path):
-                self.get_revision()
+            if core.setup['vcs_root']:
+                self.vcs_root = core.setup['vcs_root']
             else:
+                self.vcs_root = datastore
+            self.vcs_path = os.path.join(self.vcs_root,
+                                         self.__vcs_metadata_path__)
+
+            if not os.path.exists(self.vcs_path):
                 raise PluginInitError("%s is not present" % self.vcs_path)
         else:
             self.vcs_path = None
+    __init__.__doc__ = Plugin.__init__.__doc__ + """
+.. autoattribute:: __vcs_metadata_path__ """
 
     def get_revision(self):
         """ Return the current revision of the Bcfg2 specification.

@@ -122,6 +122,12 @@ specified in the `[server]` section of the configuration file.
   * `group`:
     The group name or GID to run the daemon as.  Default is `0`
 
+  * `vcs_root`:
+    Specifies the path to the root of the VCS working copy that holds
+    your Bcfg2 specification, if it is different from `repository`.
+    E.g., if the VCS repository does not hold the bcfg2 data at the
+    top level, you may need to set this option.
+
 ### Account Plugin
 
 The account plugin manages authentication data, including the following.

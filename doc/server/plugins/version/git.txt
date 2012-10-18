@@ -6,26 +6,32 @@
 Git
 ===
 
-Why use the Git plugin
-======================
-
-The Git plugin is useful if you would like to track changes to your bcfg2
-repository using a `Git <http://git-scm.com/>`_ backend. Currently,
-It enables you to get revision information out of your repository for
+The Git plugin is useful if you would like to track changes to your
+bcfg2 repository using a `Git <http://git-scm.com/>`_ backend. It
+enables you to get revision information out of your repository for
 reporting purposes. Once the plugin is enabled, every time a client
 checks in, it will include the current repository revision in the
 reports/statistics.
 
-Future plans are to commit changes to the repo which are made by the
-server (adding clients, ssh keys, etc).
+If the ``dulwich`` library is installed, the Git plugin will use
+that.  If ``dulwich`` is not installed, but ``GitPython`` is, that
+will be used instead.  If neither is installed, then calls will be
+made to the git command.
 
-How to enable the Git plugin
-============================
+If you plan to edit your git repository in-place on the Bcfg2 server
+(which is probably not recommended), then you may want to avoid using
+``dulwich``; it's sufficiently low-level that it may not present a
+user-friendly git repository at all times.
 
-The Git plugin uses `Dulwich <http://samba.org/~jelmer/dulwich/>`_ to
-interface with git repositories. Therefore, you will need to install
-Dulwich on the Bcfg2 server first. Once installed, simply add Git to
-your plugins line in ``/etc/bcfg2.conf``::
+Additionally, the Git plugin exposes one XML-RPC method calls,
+``Git.Update``, which updates the working copy to the latest version
+in the remote origin.
+
+Enabling the Git plugin
+=======================
+
+To enable the Git plugin, simply add it to your plugins line in
+``/etc/bcfg2.conf``::
 
     [server]
-    plugins = Base,Bundler,Cfg,...,Git
+    plugins = Bundler,Cfg,Metadata,...,Git

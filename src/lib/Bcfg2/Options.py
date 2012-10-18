@@ -572,6 +572,11 @@ SERVER_DAEMON_GROUP = \
            default=0,
            cf=('server', 'group'),
            cook=get_gid)
+SERVER_VCS_ROOT = \
+    Option('Server VCS repository root',
+           default=None,
+           odesc='<VCS repository root>',
+           cf=('server', 'vcs_root'))
 
 # database options
 DB_ENGINE = \
@@ -1078,7 +1083,8 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
                              ca=SERVER_CA,
                              protocol=SERVER_PROTOCOL,
                              web_configfile=WEB_CFILE,
-                             backend=SERVER_BACKEND)
+                             backend=SERVER_BACKEND,
+                             vcs_root=SERVER_VCS_ROOT)
 
 CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
                      decrypt=DECRYPT,
