@@ -1,10 +1,10 @@
 import atexit
 import daemon
-import lockfile
 import logging
 import time
 import traceback
 import threading
+from daemon.pidlockfile import PIDLockFile, PIDFileError
 
 import Bcfg2.Logger
 from Bcfg2.Reporting.Transport import load_transport_from_config, \
@@ -79,8 +79,14 @@ class ReportingCollector(object):
 
         if self.setup['daemon']:
             self.logger.debug("Daemonizing")
-            self.context.pidfile = lockfile.FileLock(self.setup['daemon'])
-            self.context.open()
+            try:
+                self.context.pidfile = PIDLockFile(self.setup['daemon'])
+                self.context.open()
+            except PIDFileError:
+                self.logger.error("Error writing pid file: %s" %
+                    traceback.format_exc().splitlines()[-1])
+                self.shutdown()
+                return
             self.logger.info("Starting daemon")
 
         self.transport.start_monitor(self)
