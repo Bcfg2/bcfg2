@@ -9,6 +9,7 @@
 {% block pagebanner %}Common configuration problems{% endblock %}
 
 {% block content %}
+  {% filter_navigator %}
   <div id='threshold_box'>
     <form method='post' action='{{ request.path }}'>
     <span>Showing items with more then {{ threshold }} entries</span>

@@ -224,7 +224,7 @@ def entry_status(request, entry_type, pk, timestamp=None, **kwargs):
 
 
 @timeview
-def common_problems(request, timestamp=None, threshold=None):
+def common_problems(request, timestamp=None, threshold=None, group=None):
     """Mine config entries"""
 
     if request.method == 'POST':
@@ -243,7 +243,13 @@ def common_problems(request, timestamp=None, threshold=None):
     except:
         threshold = 10
 
-    current_clients = Interaction.objects.recent_ids(timestamp)
+    if group:
+        group_obj = get_object_or_404(Group, name=group)
+        current_clients = [inter[0] for inter in \
+            Interaction.objects.recent(timestamp)\
+                .filter(groups=group_obj).values_list('id')]
+    else:
+        current_clients = Interaction.objects.recent_ids(timestamp)
     lists = []
     for etype in ActionEntry, PackageEntry, PathEntry, ServiceEntry:
         ldata = etype.objects.exclude(state=TYPE_GOOD).filter( 

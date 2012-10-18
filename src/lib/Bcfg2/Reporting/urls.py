@@ -27,6 +27,8 @@ urlpatterns += patterns('Bcfg2.Reporting',
     *timeviewUrls(
         (r'^summary/?$', 'views.display_summary', None, 'reports_summary'),
         (r'^timing/?$', 'views.display_timing', None, 'reports_timing'),
+        (r'^common/group/(?P<group>[^/]+)/(?P<threshold>\d+)/?$', 'views.common_problems', None, 'reports_common_problems'),
+        (r'^common/group/(?P<group>[^/]+)+/?$', 'views.common_problems', None, 'reports_common_problems'),
         (r'^common/(?P<threshold>\d+)/?$', 'views.common_problems', None, 'reports_common_problems'),
         (r'^common/?$', 'views.common_problems', None, 'reports_common_problems'),
 ))
