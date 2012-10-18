@@ -10,24 +10,12 @@ from Bcfg2.Server.Core import BaseCore, NoExposedMethod
 from Bcfg2.Compat import xmlrpclib, urlparse
 from Bcfg2.SSLServer import XMLRPCServer
 
-
-class PidFile(object):
-    """ Context handler used by :class:`daemon.DaemonContext` to write
-    the PID file. """
-
-    def __init__(self, pidfile):
-        """
-        :param pidfile: The full path to the PID file to write on
-                        entering the context handler
-        :type pidfile: string
-        """
-        self.pidfile = pidfile
-
-    def __enter__(self):
-        open(self.pidfile, "w").write("%s\n" % os.getpid())
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        os.unlink(self.pidfile)
+# pylint: disable=E0611
+try:
+    from daemon.pidfile import PIDLockFile
+except ImportError:
+    from daemon.pidlockfile import PIDLockFile
+# pylint: enable=E0611
 
 
 class Core(BaseCore):
@@ -47,7 +35,7 @@ class Core(BaseCore):
         self.context = \
             daemon.DaemonContext(uid=self.setup['daemon_uid'],
                                  gid=self.setup['daemon_gid'],
-                                 pidfile=PidFile(self.setup['daemon']))
+                                 pidfile=PIDLockFile(self.setup['daemon']))
     __init__.__doc__ = BaseCore.__init__.__doc__.split('.. -----')[0]
 
     def _dispatch(self, method, args, dispatch_dict):
