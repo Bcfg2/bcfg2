@@ -246,8 +246,10 @@ class DjangoORM(StorageBase):
 
         # verify our database schema
         try:
-            if self.setup['verbose'] or self.setup['debug']:
+            if self.setup['debug']:
                 vrb = 2
+            elif self.setup['verbose']:
+                vrb = 1
             else:
                 vrb = 0
             management.call_command("syncdb", verbosity=vrb, interactive=False)
