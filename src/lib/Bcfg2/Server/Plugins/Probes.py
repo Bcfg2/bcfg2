@@ -197,9 +197,14 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         """ Write received probe data to probed.xml """
         top = lxml.etree.Element("Probed")
         for client, probed in sorted(self.probedata.items()):
-            ctag = lxml.etree.SubElement(top, 'Client', name=client,
-                                         timestamp=str(int(probed.timestamp)))
-            for probe in sorted(probed):
+            # make a copy of probe data for this client in case it
+            # submits probe data while we're trying to write
+            # probed.xml
+            probedata = copy.copy(probed)
+            ctag = \
+                lxml.etree.SubElement(top, 'Client', name=client,
+                                      timestamp=str(int(probedata.timestamp)))
+            for probe in sorted(probedata):
                 lxml.etree.SubElement(ctag, 'Probe', name=probe,
                                       value=str(self.probedata[client][probe]))
             for group in sorted(self.cgroups[client]):
@@ -313,8 +318,8 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         if data.text == None:
             self.logger.info("Got null response to probe %s from %s" %
                              (data.get('name'), client.hostname))
-            self.probedata[client.hostname].update({data.get('name'):
-                                                        ProbeData('')})
+            self.probedata[client.hostname][data.get('name')] = \
+                ProbeData('')
             return
         dlines = data.text.split('\n')
         self.logger.debug("%s:probe:%s:%s" %
@@ -327,7 +332,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                     self.cgroups[client.hostname].append(newgroup)
                 dlines.remove(line)
         dobj = ProbeData("\n".join(dlines))
-        self.probedata[client.hostname].update({data.get('name'): dobj})
+        self.probedata[client.hostname][data.get('name')] = dobj
 
     def get_additional_groups(self, meta):
         return self.cgroups.get(meta.hostname, list())
