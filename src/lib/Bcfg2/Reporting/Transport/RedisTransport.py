@@ -125,17 +125,19 @@ class RedisTransport(TransportBase):
         """
         Send a command to the queue.  Timeout after 10 seconds
         """
+        pubsub = self._redis.pubsub()
+
         channel = "%s%s" % (platform.node(), int(time.time()))
+        pubsub.subscribe(channel)
         self._redis.rpush(RedisTransport.COMMAND_KEY, 
             cPickle.dumps(RedisMessage(channel, method, args, kwargs)))
 
-        self._redis.subscribe(channel)
-        resp = self._redis.listen()
+        resp = pubsub.listen()
         signal.signal(signal.SIGALRM, self.shutdown)
         signal.alarm(10)
         resp.next() # clear subscribe message
         response = resp.next()
-        self._redis.unsubscribe()
+        pubsub.unsubscribe()
 
         try:
             return cPickle.loads(response['data'])
