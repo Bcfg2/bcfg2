@@ -261,6 +261,9 @@ class DjangoORM(StorageBase):
         """Fetch extra entries for a client"""
         try:
             c_inst = Client.objects.get(name=client)
+            if not c_inst.current_interaction:
+                # the rare case where a client has no interations
+                return None
             return [(ent.entry_type, ent.name) for ent in
                     c_inst.current_interaction.extra()]
         except ObjectDoesNotExist:
