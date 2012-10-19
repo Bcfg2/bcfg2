@@ -334,7 +334,9 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         representing the permissions entailed by it.  representations can
         either be a single octal digit, a string of up to three 'r',
         'w', 'x', or '-' characters, or a posix1e.Permset object"""
-        if hasattr(perms, 'test'):
+        if perms is None:
+            return 0
+        elif hasattr(perms, 'test'):
             # Permset object
             return sum([p for p in ACL_MAP.values()
                         if perms.test(p)])
@@ -544,6 +546,10 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             else:
                 self.logger.error("POSIX: Unknown ACL scope %s" %
                                   acl.get("scope"))
+                continue
+            if acl.get('perms') is None:
+                self.logger.error("POSIX: No permissions set for ACL: %s" %
+                                  Bcfg2.Client.XML.tostring(acl))
                 continue
             wanted[(acl.get("type"), scope, acl.get(acl.get("scope")))] = \
                 self._norm_acl_perms(acl.get('perms'))
