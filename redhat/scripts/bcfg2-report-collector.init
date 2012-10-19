@@ -1,0 +1,100 @@
+#!/bin/sh
+#
+# bcfg-report-collector - Bcfg2 reporting collector daemon
+#
+# chkconfig: 2345 19 81
+# description: bcfg2 server for reporting data
+#
+### BEGIN INIT INFO
+# Provides:          bcfg2-report-collector
+# Required-Start:    $network $remote_fs $named
+# Required-Stop:     $network $remote_fs $named
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Configuration management Server
+# Description:       Bcfg2 is a configuration management system that builds
+#                    installs configuration files served by bcfg2-server
+### END INIT INFO
+
+# Include lsb functions
+. /etc//init.d/functions
+
+# Commonly used stuff
+DAEMON=/usr/sbin/bcfg2-report-collector
+PIDFILE=/var/run/bcfg2-server/bcfg2-report-collector.pid
+PARAMS="-D $PIDFILE"
+
+# Include default startup configuration if exists
+test -f "/etc/sysconfig/bcfg2-server" && . /etc/sysconfig/bcfg2-server
+
+# Exit if $DAEMON doesn't exist and is not executable
+test -x $DAEMON || exit 5
+
+# Internal variables
+BINARY=$(basename $DAEMON)
+
+start () {
+    echo -n "Starting Configuration Report Collector: "
+    daemon ${DAEMON} ${PARAMS} ${BCFG2_REPORT_OPTIONS} && success || failure
+    STATUS=$?
+    if [ "$STATUS" = 0 ]
+    then
+        test -d /var/lock/subsys && touch /var/lock/subsys/$BINARY
+    else
+        log_failure_msg "bcfg2-report-collector"
+    fi
+    return $STATUS
+}
+
+stop () {
+    echo -n "Stopping Configuration Report Collector: "
+    if [ -f $PIDFILE ]; then
+      killproc -p $PIDFILE ${BINARY}
+    else
+      killproc ${BINARY}
+    fi
+    STATUS=$?
+    test -e /var/lock/subsys/bcfg2-report-collector && rm /var/lock/subsys/$BINARY
+    return $STATUS
+}
+
+status () {
+    PID=$(pidofproc -p "$PIDFILE" $BINARY)
+    if [ -n "$PID" ]; then
+      echo "$BINARY (pid $PID) is running..."
+      return 0
+    fi
+
+    if [ -f $PIDFILE ]; then
+      if [ -n "$PID" ]; then
+        echo "$BINARY dead but pid file exists..."
+        return 1
+      fi
+    fi
+
+    echo "$BINARY is not running"
+    return 3
+}
+
+case "$1" in
+    start)
+        start
+    ;;
+    stop)
+        stop
+    ;;
+    status)
+        status
+    ;;
+    restart|reload|force-reload)
+        stop
+        sleep 5
+        start
+    ;;
+    *)
+        echo "Usage: $0 {start|stop|status|reload|restart|force-reload}"
+        exit 1
+    ;;
+esac
+
+exit 0
