@@ -1,5 +1,6 @@
 import os
 import logging
+import netaddr
 import Bcfg2.Server.Plugin
 
 class AclFile(Bcfg2.Server.Plugin.XMLFileBacked):
@@ -23,6 +24,7 @@ class AclFile(Bcfg2.Server.Plugin.XMLFileBacked):
         Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, filename, fam=fam,
                                                    should_monitor=True)
         self.core = core
+        self.cidr_ips = []
         self.ips = []
         self.logger = logging.getLogger(self.__class__.__name__)
     
@@ -30,6 +32,14 @@ class AclFile(Bcfg2.Server.Plugin.XMLFileBacked):
         Bcfg2.Server.Plugin.XMLFileBacked.Index(self)
         for entry in self.xdata.xpath('//IPs'):
             [self.ips.append(i.get('name')) for i in entry.findall('IP')]
+            [self.cidr_ips.append(i.get('name')) for i in entry.findall('CIDR')]
+    
+    def check_acl(self, ip):
+        if ('*' in self.ips or 
+            ip in self.ips  or
+            IP(ip) in [CIDR(cidr_ip) for cidr_ip in self.cidr_ips]):
+            return True
+        return False
 
 class Acl(Bcfg2.Server.Plugin.Plugin,
           Bcfg2.Server.Plugin.Connector):

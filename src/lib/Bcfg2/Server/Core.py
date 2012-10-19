@@ -1072,13 +1072,12 @@ class BaseCore(object):
         return self.metadata.AuthenticateConnection(acert, user, password,
                                                     address)
 
-    def check_acls(self, client):
+    def check_acls(self, client_ip):
         """ Check if client IP is in list of accepted IPs """
         try:
-            return (client in self.plugins['Acl'].config.ips or
-					'*' in self.plugins['Acl'].config.ips)
+            return self.plugins['Acl'].config.check_acl(client_ip)
         except KeyError:
-            # No ACL means accept all incoming ips (wildcard)
+            # No ACL means accept all incoming ips
             return True
 
     @exposed
