@@ -1,7 +1,12 @@
 """ The Git plugin provides a revision interface for Bcfg2 repos using
 git. """
 
-from dulwich.repo import Repo
+try:
+    from dulwich.repo import Repo
+except ImportError:
+    # fallback to shell commands when dulwich unavailable
+    from subprocess import Popen, PIPE
+
 import Bcfg2.Server.Plugin
 
 
@@ -22,6 +27,11 @@ class Git(Bcfg2.Server.Plugin.Plugin,
         """Read git revision information for the Bcfg2 repository."""
         try:
             return Repo(self.datastore).head()
+        except NameError:
+            return Popen("env LC_ALL=C git log -1 --pretty=format:%H",
+                         shell=True,
+                         cwd=self.datastore,
+                         stdout=PIPE).stdout.readline()
         except:
             msg = "Failed to read git repository"
             self.logger.error(msg)
