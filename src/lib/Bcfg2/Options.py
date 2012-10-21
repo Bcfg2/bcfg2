@@ -514,8 +514,8 @@ SERVER_FILEMONITOR = \
            cf=('server', 'filemonitor'))
 SERVER_FAM_IGNORE = \
     Option('File globs to ignore',
-           default=['*~', '*#', '.#*', '*.swp', '.*.swx', 'SCCS', '.svn',
-                    '4913', '.gitignore'],
+           default=['*~', '*#', '.#*', '*.swp', '*.swpx', '.*.swx',
+                    'SCCS', '.svn', '4913', '.gitignore'],
            cf=('server', 'ignore_files'),
            cook=list_split)
 SERVER_LISTEN_ALL = \
