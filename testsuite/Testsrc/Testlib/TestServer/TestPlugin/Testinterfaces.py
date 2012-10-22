@@ -326,13 +326,11 @@ class TestGoalValidator(Bcfg2TestCase):
                           gv.validate_goals, None, None)
 
 
-class TestVersion(TestPlugin):
+class TestVersion(Bcfg2TestCase):
     test_obj = Version
-
-    def get_obj(self, core=None):
-        if core is None:
-            core = Mock()
-        return self.test_obj(core, datastore)
+    
+    def get_obj(self):
+        return self.test_obj(datastore)
 
     def test_get_revision(self):
         d = self.get_obj()
