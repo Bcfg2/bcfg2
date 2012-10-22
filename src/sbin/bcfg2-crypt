@@ -50,7 +50,7 @@ class Encryptor(object):
         try:
             return data[0]
         except IndexError:
-            raise EncryptionChunkingError
+            raise EncryptionChunkingError("No data to unchunk")
 
     def set_passphrase(self):
         """ set the passphrase for the current file """
