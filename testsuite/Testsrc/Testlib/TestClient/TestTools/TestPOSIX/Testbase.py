@@ -587,11 +587,15 @@ class TestPOSIXTool(Bcfg2TestCase):
         def inner(mock_getfilecon, mock_stat):
             mock_getfilecon.return_value = [len(context) + 1, context]
             mock_stat.return_value = MagicMock()
+            mock_stat.return_value.__getitem__.return_value = MagicMock()
             # disable acls for this call and test them separately
-            state = Bcfg2.Client.Tools.POSIX.base.HAS_ACLS
+            state = (Bcfg2.Client.Tools.POSIX.base.HAS_ACLS,
+                     Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX)
             Bcfg2.Client.Tools.POSIX.base.HAS_ACLS = False
+            Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = True
             self.assertEqual(self.ptool._gather_data(path)[4], 'root_t')
-            Bcfg2.Client.Tools.POSIX.base.HAS_ACLS = state
+            Bcfg2.Client.Tools.POSIX.base.HAS_ACLS, \
+                Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = state
             mock_getfilecon.assert_called_with(path)
 
         inner()
@@ -606,11 +610,15 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_list_file_acls.return_value = acls
         path = '/test'
         mock_stat.return_value = MagicMock()
+        mock_stat.return_value.__getitem__.return_value = MagicMock()
         # disable selinux for this call and test it separately
-        state = Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX
+        state = (Bcfg2.Client.Tools.POSIX.base.HAS_ACLS,
+                 Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX)
+        Bcfg2.Client.Tools.POSIX.base.HAS_ACLS = True
         Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = False
         self.assertItemsEqual(self.ptool._gather_data(path)[5], acls)
-        Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = state
+        Bcfg2.Client.Tools.POSIX.base.HAS_ACLS, \
+            Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = state
         mock_list_file_acls.assert_called_with(path)
 
     @patchIf(HAS_SELINUX, "selinux.matchpathcon")
