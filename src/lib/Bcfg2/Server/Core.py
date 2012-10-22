@@ -667,9 +667,13 @@ class BaseCore(object):
             self.shutdown()
             return False
 
-        self.fam.start()
-        self.fam_thread.start()
-        self.fam.AddMonitor(self.cfile, self)
+        try:
+            self.fam.start()
+            self.fam_thread.start()
+            self.fam.AddMonitor(self.cfile, self)
+        except:
+            self.shutdown()
+            raise
 
         self._block()
 
