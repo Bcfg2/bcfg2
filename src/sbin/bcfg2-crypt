@@ -47,12 +47,15 @@ class Encryptor(object):
 
     def unchunk(self, data, original):  # pylint: disable=W0613
         """ given chunks of a file, reassemble then into the whole file """
-        return data[0]
+        try:
+            return data[0]
+        except IndexError:
+            raise EncryptionChunkingError
 
     def set_passphrase(self):
         """ set the passphrase for the current file """
         if (not self.setup.cfp.has_section("encryption") or
-            self.setup.cfp.options("encryption") == 0):
+            len(Bcfg2.Encryption.get_passphrases(self.setup)) == 0):
             self.logger.error("No passphrases available in %s" %
                               self.setup['configfile'])
             return False
@@ -77,12 +80,16 @@ class Encryptor(object):
                                   (self.pname, self.setup['configfile']))
                 return False
         else:
-            pnames = self.setup.cfp.options("encryption")
+            pnames = Bcfg2.Encryption.get_passphrases(self.setup)
             if len(pnames) == 1:
-                self.passphrase = self.setup.cfp.get(pnames[0])
-                self.pname = pnames[0]
-                self.logger.info("Using passphrase %s" % pnames[0])
+                self.pname = pnames.keys()[0]
+                self.passphrase = pnames[self.pname]
+                self.logger.info("Using passphrase %s" % self.pname)
                 return True
+            elif len(pnames) > 1:
+                self.logger.warning("Multiple passphrases found in %s, "
+                                    "specify one on the command line with -p" %
+                                    self.setup['configfile'])
         self.logger.info("No passphrase could be determined")
         return False
 
@@ -151,9 +158,9 @@ class Encryptor(object):
                         continue
                 except TypeError:
                     pchunk = None
-                    for pname in self.setup.cfp.options('encryption'):
+                    for pname, passphrase in \
+                          Bcfg2.Encryption.get_passphrases(self.setup).items():
                         self.logger.debug("Trying passphrase %s" % pname)
-                        passphrase = self.setup.cfp.get('encryption', pname)
                         try:
                             pchunk = self._decrypt(chunk, passphrase)
                             break
