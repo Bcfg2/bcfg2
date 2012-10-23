@@ -298,10 +298,12 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             else:
                 olddata = []
 
-        self.cgroups[client.hostname] = []
-        self.probedata[client.hostname] = ClientProbeDataSet()
+        cgroups = []
+        cprobedata = ClientProbeDataSet()
         for data in datalist:
-            self.ReceiveDataItem(client, data)
+            self.ReceiveDataItem(client, data, cgroups, cprobedata)
+        self.cgroups[client.hostname] = cgroups
+        self.probedata[client.hostname] = cprobedata
 
         if (self.core.metadata_cache_mode in ['cautious', 'aggressive'] and
             olddata != self.cgroups[client.hostname]):
@@ -309,17 +311,12 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         self.write_data(client)
     ReceiveData.__doc__ = Bcfg2.Server.Plugin.Probing.ReceiveData.__doc__
 
-    def ReceiveDataItem(self, client, data):
+    def ReceiveDataItem(self, client, data, cgroups, cprobedata):
         """Receive probe results pertaining to client."""
-        if client.hostname not in self.cgroups:
-            self.cgroups[client.hostname] = []
-        if client.hostname not in self.probedata:
-            self.probedata[client.hostname] = ClientProbeDataSet()
         if data.text == None:
             self.logger.info("Got null response to probe %s from %s" %
                              (data.get('name'), client.hostname))
-            self.probedata[client.hostname][data.get('name')] = \
-                ProbeData('')
+            cprobedata[data.get('name')] = ProbeData('')
             return
         dlines = data.text.split('\n')
         self.logger.debug("%s:probe:%s:%s" %
@@ -328,11 +325,11 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         for line in dlines[:]:
             if line.split(':')[0] == 'group':
                 newgroup = line.split(':')[1].strip()
-                if newgroup not in self.cgroups[client.hostname]:
-                    self.cgroups[client.hostname].append(newgroup)
+                if newgroup not in cgroups:
+                    cgroups.append(newgroup)
                 dlines.remove(line)
         dobj = ProbeData("\n".join(dlines))
-        self.probedata[client.hostname][data.get('name')] = dobj
+        cprobedata[data.get('name')] = dobj
 
     def get_additional_groups(self, meta):
         return self.cgroups.get(meta.hostname, list())
