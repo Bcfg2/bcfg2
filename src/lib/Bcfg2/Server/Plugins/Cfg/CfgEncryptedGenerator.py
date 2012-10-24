@@ -42,9 +42,7 @@ class CfgEncryptedGenerator(CfgGenerator):
             self.data = bruteforce_decrypt(self.data, setup=SETUP,
                                            algorithm=get_algorithm(SETUP))
         except EVPError:
-            msg = "Failed to decrypt %s" % self.name
-            LOGGER.error(msg)
-            raise PluginExecutionError(msg)
+            raise PluginExecutionError("Failed to decrypt %s" % self.name)
     handle_event.__doc__ = CfgGenerator.handle_event.__doc__
 
     def get_data(self, entry, metadata):

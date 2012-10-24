@@ -208,17 +208,14 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
         Bcfg2.Server.Plugin.StructFile.Index(self)
         if self.xdata.get("encryption", "false").lower() != "false":
             if not HAS_CRYPTO:
-                msg = "Properties: M2Crypto is not available: %s" % self.name
-                LOGGER.error(msg)
-                raise PluginExecutionError(msg)
+                raise PluginExecutionError("Properties: M2Crypto is not "
+                                           "available: %s" % self.name)
             for el in self.xdata.xpath("//*[@encrypted]"):
                 try:
                     el.text = self._decrypt(el)
                 except EVPError:
-                    msg = "Failed to decrypt %s element in %s" % (el.tag,
-                                                                  self.name)
-                    LOGGER.error(msg)
-                    raise PluginExecutionError(msg)
+                    raise PluginExecutionError("Failed to decrypt %s element "
+                                               "in %s" % (el.tag, self.name))
     Index.__doc__ = Bcfg2.Server.Plugin.StructFile.Index.__doc__
 
     def _decrypt(self, element):
@@ -318,6 +315,7 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
         global SETUP  # pylint: disable=W0603
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
+        SETUP = core.setup
         try:
             self.store = PropDirectoryBacked(self.data, core.fam)
         except OSError:
@@ -326,7 +324,6 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
                               err)
             raise Bcfg2.Server.Plugin.PluginInitError
 
-        SETUP = core.setup
     __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
 
     def get_additional_data(self, metadata):

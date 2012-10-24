@@ -378,7 +378,12 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                                        (action, event.filename))
                     self.debug_log("%s handling %s event on %s" %
                                    (hdlr.__name__, action, event.filename))
-                    self.entry_init(event, hdlr)
+                    try:
+                        self.entry_init(event, hdlr)
+                    except:  # pylint: disable=W0702
+                        err = sys.exc_info()[1]
+                        LOGGER.error("Cfg: Failed to parse %s: %s" %
+                                     (event.filename, err))
                     return
                 elif hdlr.ignore(event, basename=self.path):
                     return

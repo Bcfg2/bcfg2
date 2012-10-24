@@ -198,6 +198,9 @@ class FileBacked(object):
         except IOError:
             err = sys.exc_info()[1]
             LOGGER.error("Failed to read file %s: %s" % (self.name, err))
+        except:
+            err = sys.exc_info()[1]
+            LOGGER.error("Failed to parse file %s: %s" % (self.name, err))
 
     def Index(self):
         """ Index() is called by :func:`HandleEvent` every time the
