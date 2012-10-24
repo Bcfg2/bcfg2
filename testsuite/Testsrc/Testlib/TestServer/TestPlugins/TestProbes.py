@@ -483,9 +483,12 @@ text
         client.hostname = "foo.example.com"
         probes.ReceiveData(client, datalist)
         
+        cgroups = []
+        cprobedata = ClientProbeDataSet()
         self.assertItemsEqual(mock_ReceiveDataItem.call_args_list,
-                              [call(client, "a"), call(client, "b"),
-                               call(client, "c")])
+                              [call(client, "a", cgroups, cprobedata),
+                               call(client, "b", cgroups, cprobedata),
+                               call(client, "c", cgroups, cprobedata)])
         mock_write_data.assert_called_with(client)
         self.assertFalse(probes.core.metadata_cache.expire.called)
 
