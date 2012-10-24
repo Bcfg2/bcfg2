@@ -502,6 +502,8 @@ text
         for cname, cdata in self.get_test_probedata().items():
             client = Mock()
             client.hostname = cname
+            cgroups = []
+            cprobedata = ClientProbeDataSet()
             for pname, pdata in cdata.items():
                 dataitem = lxml.etree.Element("Probe", name=pname)
                 if pname == "text":
@@ -514,11 +516,13 @@ text
                 else:
                     dataitem.text = str(pdata)
 
-                probes.ReceiveDataItem(client, dataitem)
+                probes.ReceiveDataItem(client, dataitem, cgroups, cprobedata)
                 
-                self.assertIn(client.hostname, probes.probedata)
-                self.assertIn(pname, probes.probedata[cname])
-                self.assertEqual(pdata, probes.probedata[cname][pname])
+            probes.cgroups[client.hostname] = cgroups
+            probes.probedata[client.hostname] = cprobedata
+            self.assertIn(client.hostname, probes.probedata)
+            self.assertIn(pname, probes.probedata[cname])
+            self.assertEqual(pdata, probes.probedata[cname][pname])
             self.assertIn(client.hostname, probes.cgroups)
             self.assertEqual(probes.cgroups[cname],
                              self.get_test_cgroups()[cname])
