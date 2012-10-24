@@ -202,7 +202,7 @@ def bruteforce_decrypt(crypted, passphrases=None, setup=None,
     :returns: string - The decrypted data
     :raises: :class:`M2Crypto.EVP.EVPError`, if the data cannot be decrypted
     """
-    if not passphrases:
+    if passphrases is None:
         passphrases = get_passphrases(setup).values()
     for passwd in passphrases:
         try:
