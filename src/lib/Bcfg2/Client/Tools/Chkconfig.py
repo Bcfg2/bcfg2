@@ -14,7 +14,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
     __execs__ = ['/sbin/chkconfig']
     __handles__ = [('Service', 'chkconfig')]
     __req__ = {'Service': ['name', 'status']}
-    os.environ['LANG'] = 'C'
+    os.environ['LC_ALL'] = 'C'
 
     def get_svc_command(self, service, action):
         return "/sbin/service %s %s" % (service.get('name'), action)
