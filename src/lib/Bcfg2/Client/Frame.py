@@ -359,6 +359,9 @@ class Frame(object):
                     for ent in b_to_remv:
                         self.whitelist.remove(ent)
 
+        self.logger.debug("Installing entries in the following bundle(s):")
+        self.logger.debug("  %s" % ", ".join(bundles))
+
         if self.setup['interactive']:
             self.whitelist = self.promptFilter(prompt, self.whitelist)
             self.removal = self.promptFilter(rprompt, self.removal)
