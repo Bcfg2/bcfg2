@@ -550,7 +550,7 @@ class PathEntry(SuccessEntry):
         rv = super(PathEntry, self).short_list()
         if self.is_extra():
             return rv
-        if self.modes_problem():
+        if self.mode_problem():
             rv.append("File mode")
         if self.detail_type == PathEntry.DETAIL_PRUNED:
             rv.append("Directory has extra files")
