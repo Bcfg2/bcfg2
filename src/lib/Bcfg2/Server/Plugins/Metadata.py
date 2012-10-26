@@ -1137,6 +1137,17 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             if group in self.groups:
                 imd.bundles.update(self.groups[group].bundles)
 
+        if not imd.profile:
+            # if the client still doesn't have a profile group after
+            # initial metadata, try to find one in the additional
+            # groups
+            profiles = [g for g in groups
+                        if g in self.groups and self.groups[g].is_profile]
+            if len(profiles) >= 1:
+                imd.profile = profiles[0]
+            elif self.default:
+                imd.profile = self.default
+
     def merge_additional_data(self, imd, source, data):
         if not hasattr(imd, source):
             setattr(imd, source, data)
