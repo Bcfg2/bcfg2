@@ -54,9 +54,10 @@ if HAS_DJANGO:
                 raise KeyError(key)
 
         def __setitem__(self, key, value):
-            client = MetadataClientModel.objects.get_or_create(hostname=key)[0]
-            client.version = value
-            client.save()
+            client, created = MetadataClientModel.objects.get_or_create(hostname=key)
+            if created or client.version != value:
+                client.version = value
+                client.save()
 
         def __delitem__(self, key):
             # UserDict didn't require __delitem__, but MutableMapping
@@ -544,8 +545,11 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         if attribs is None:
             attribs = dict()
         if self._use_db:
-            client = MetadataClientModel(hostname=client_name)
-            client.save()
+            try:
+                client = MetadataClientModel.objects.get(hostname=client_name)
+            except MetadataClientModel.DoesNotExist:
+                client = MetadataClientModel(hostname=client_name)
+                client.save()
             self.clients = self.list_clients()
             return client
         else:
