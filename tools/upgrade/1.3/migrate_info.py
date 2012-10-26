@@ -21,7 +21,7 @@ def convert(info_file):
             for key, value in list(mgd.items()):
                 if value:
                     info.set(key, value)
-    
+
     open(info_xml, "w").write(lxml.etree.tostring(fileinfo, pretty_print=True))
     os.unlink(info_file)
 
