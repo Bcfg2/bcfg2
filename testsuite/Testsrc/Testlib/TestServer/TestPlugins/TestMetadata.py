@@ -326,42 +326,89 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
 
     @patch('Bcfg2.Server.Plugins.Metadata.locked', Mock(return_value=False))
     @patch('fcntl.lockf', Mock())
-    @patch('%s.open' % builtins)
+    @patch('os.open')
+    @patch('os.fdopen')
     @patch('os.unlink')
     @patch('os.rename')
     @patch('os.path.islink')
     @patch('os.readlink')
     def test_write_xml(self, mock_readlink, mock_islink, mock_rename,
-                       mock_unlink, mock_open):
+                       mock_unlink, mock_fdopen, mock_open):
         fname = "clients.xml"
         config = self.get_obj(fname)
         fpath = os.path.join(self.metadata.data, fname)
         tmpfile = "%s.new" % fpath
         linkdest = os.path.join(self.metadata.data, "client-link.xml")
 
+        def reset():
+            mock_readlink.reset_mock()
+            mock_islink.reset_mock()
+            mock_rename.reset_mock()
+            mock_unlink.reset_mock()
+            mock_fdopen.reset_mock()
+            mock_open.reset_mock()
+
         mock_islink.return_value = False
 
+        # basic test - everything works
         config.write_xml(fpath, get_clients_test_tree())
-        mock_open.assert_called_with(tmpfile, "w")
-        self.assertTrue(mock_open.return_value.write.called)
+        mock_open.assert_called_with(tmpfile,
+                                     os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        mock_fdopen.assert_called_with(mock_open.return_value, 'w')
+        self.assertTrue(mock_fdopen.return_value.write.called)
         mock_islink.assert_called_with(fpath)
         mock_rename.assert_called_with(tmpfile, fpath)
 
+        # test: clients.xml.new is locked the first time we write it
+        def rv(fname, mode):
+            print "called rv, raising OSError"
+            mock_open.side_effect = None
+            raise OSError(17, fname)
+
+        reset()
+        mock_open.side_effect = rv
+        config.write_xml(fpath, get_clients_test_tree())
+        self.assertItemsEqual(mock_open.call_args_list,
+                              [call(tmpfile,
+                                    os.O_CREAT | os.O_EXCL | os.O_WRONLY),
+                               call(tmpfile,
+                                    os.O_CREAT | os.O_EXCL | os.O_WRONLY)])
+        mock_fdopen.assert_called_with(mock_open.return_value, 'w')
+        self.assertTrue(mock_fdopen.return_value.write.called)
+        mock_islink.assert_called_with(fpath)
+        mock_rename.assert_called_with(tmpfile, fpath)
+
+        # test writing a symlinked clients.xml
+        reset()
+        mock_open.side_effect = None
         mock_islink.return_value = True
         mock_readlink.return_value = linkdest
         config.write_xml(fpath, get_clients_test_tree())
         mock_rename.assert_called_with(tmpfile, linkdest)
 
+        # test failure of os.rename()
+        reset()
         mock_rename.side_effect = OSError
         self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError,
                           config.write_xml, fpath, get_clients_test_tree())
+        mock_unlink.assert_called_with(tmpfile)
 
+        # test failure of file.write()
+        reset()
         mock_open.return_value.write.side_effect = IOError
         self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError,
                           config.write_xml, fpath, get_clients_test_tree())
         mock_unlink.assert_called_with(tmpfile)
 
-        mock_open.side_effect = IOError
+        # test failure of os.open() (other than EEXIST)
+        reset()
+        mock_open.side_effect = OSError
+        self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError,
+                          config.write_xml, fpath, get_clients_test_tree())
+
+        # test failure of os.fdopen()
+        reset()
+        mock_fdopen.side_effect = OSError
         self.assertRaises(Bcfg2.Server.Plugin.MetadataRuntimeError,
                           config.write_xml, fpath, get_clients_test_tree())
 
@@ -633,7 +680,7 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         metadata.clients_xml.basedata = copy.copy(metadata.clients_xml.data)
 
         new1 = self.get_nonexistent_client(metadata)
-        metadata.add_client(new1, dict())
+        new1_client = metadata.add_client(new1, dict())
         metadata.clients_xml.write.assert_any_call()
         grp = metadata.search_client(new1, metadata.clients_xml.base_xdata)
         self.assertIsNotNone(grp)
@@ -656,9 +703,8 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         metadata.clients_xml.basedata = copy.copy(metadata.clients_xml.data)
 
         metadata.clients_xml.write.reset_mock()
-        self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
-                          metadata.add_client,
-                          new1, dict())
+        self.assertXMLEqual(metadata.add_client(new1, dict()),
+                            new1_client)
         self.assertFalse(metadata.clients_xml.write.called)
 
     def test_update_client(self):

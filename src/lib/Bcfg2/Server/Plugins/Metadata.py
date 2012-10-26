@@ -208,8 +208,11 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
 
         try:
             os.rename(tmpfile, fname)
-
-        except:
+        except:  # pylint: disable=W0702
+            try:
+                os.unlink(tmpfile)
+            except:  # pylint: disable=W0702
+                pass
             msg = "Metadata: Failed to rename %s: %s" % (tmpfile,
                                                          sys.exc_info()[1])
             self.logger.error(msg)
