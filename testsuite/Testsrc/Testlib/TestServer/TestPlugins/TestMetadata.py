@@ -361,7 +361,6 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
 
         # test: clients.xml.new is locked the first time we write it
         def rv(fname, mode):
-            print "called rv, raising OSError"
             mock_open.side_effect = None
             raise OSError(17, fname)
 
