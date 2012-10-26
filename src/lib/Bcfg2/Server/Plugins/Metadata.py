@@ -6,6 +6,7 @@ import os
 import sys
 import time
 import copy
+import errno
 import fcntl
 import socket
 import logging
@@ -159,18 +160,36 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
     def write_xml(self, fname, xmltree):
         """Write changes to xml back to disk."""
         tmpfile = "%s.new" % fname
-        try:
-            datafile = open(tmpfile, 'w')
-        except IOError:
-            msg = "Failed to write %s: %s" % (tmpfile, sys.exc_info()[1])
-            self.logger.error(msg)
-            raise Bcfg2.Server.Plugin.MetadataRuntimeError(msg)
+        datafile = None
+        fd = None
+        i = 0  # counter to avoid flooding logs with lock messages
+        while datafile is None:
+            try:
+                fd = os.open(tmpfile, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                datafile = os.fdopen(fd, 'w')
+            except OSError:
+                err = sys.exc_info()[1]
+                if err.errno == errno.EEXIST:
+                    # note: not a real lock.  this is here to avoid
+                    # the scenario where two threads write to the file
+                    # at the same-ish time, and one writes to
+                    # foo.xml.new, then the other one writes to it
+                    # (losing the first thread's changes), then the
+                    # first renames it, then the second tries to
+                    # rename it and borks.
+                    if (i % 10) == 0:
+                        self.logger.info("%s is locked, waiting" % fname)
+                    i += 1
+                    time.sleep(0.1)
+                else:
+                    msg = "Failed to write %s: %s" % (tmpfile, err)
+                    self.logger.error(msg)
+                    raise Bcfg2.Server.Plugin.MetadataRuntimeError(msg)
         # prep data
         dataroot = xmltree.getroot()
         newcontents = lxml.etree.tostring(dataroot, xml_declaration=False,
                                           pretty_print=True).decode('UTF-8')
 
-        fd = datafile.fileno()
         while locked(fd) == True:
             pass
         try:
@@ -383,7 +402,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.groups_xml = self._handle_file("groups.xml")
         if (self._use_db and
             os.path.exists(os.path.join(self.data, "clients.xml"))):
-            self.logger.warning("Metadata: database enabled but clients.xml"
+            self.logger.warning("Metadata: database enabled but clients.xml "
                                 "found, parsing in compatibility mode")
             self.clients_xml = self._handle_file("clients.xml")
         elif not self._use_db:
