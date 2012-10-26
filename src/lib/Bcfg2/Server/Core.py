@@ -170,6 +170,9 @@ class BaseCore(object):
         #: :attr:`fam_thread`) to shutdown
         self.terminate = threading.Event()
 
+        #: RLock to be held on writes to the backend db
+        self.db_write_lock = threading.RLock()
+
         # generate Django ORM settings.  this must be done _before_ we
         # load plugins
         Bcfg2.settings.read_config(repo=self.datastore)

@@ -218,6 +218,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             err = sys.exc_info()[1]
             self.logger.error("Failed to write probed.xml: %s" % err)
 
+    @Bcfg2.Server.Plugin.DatabaseBacked._db_writer
     def _write_data_db(self, client):
         """ Write received probe data to the database """
         for probe, data in self.probedata[client.hostname].items():

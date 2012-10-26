@@ -118,6 +118,7 @@ class DatabaseBacked(Plugin):
     database.
 
     .. private-include: _use_db
+    .. private-include: _must_lock
     """
 
     #: The option to look up in :attr:`section` to determine whether or
@@ -147,6 +148,34 @@ class DatabaseBacked(Plugin):
         else:
             self.logger.error("%s is true but django not found" % self.option)
             return False
+
+    @property
+    def _must_lock(self):
+        """ Whether or not the backend database allows multiple
+        threads to write. """
+        engine = self.core.setup.cfp.get(Bcfg2.Options.DB_ENGINE.cf[0],
+                                         Bcfg2.Options.DB_ENGINE.cf[1],
+                                         default=Bcfg2.Options.DB_ENGINE.default)
+        if engine == 'sqlite3':
+            return True
+        else:
+            return False
+
+    @staticmethod
+    def _db_writer(fn):
+        """ Decorator to be used when a call will update the data
+        threads to write. """
+        def _acquire_and_run(self, *args, **kwargs):
+            if self._must_lock:
+                try:
+                    self.core.db_write_lock.acquire()
+                    rv = fn(self, *args, **kwargs)
+                finally:
+                    self.core.db_write_lock.release()
+            else:
+                rv = fn(self, *args, **kwargs)
+            return rv
+        return _acquire_and_run
 
 
 class PluginDatabaseModel(object):
