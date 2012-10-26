@@ -504,14 +504,16 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         """ Generic method to add XML data (group, client, etc.) """
         node = self._search_xdata(tag, name, config.xdata, alias=alias)
         if node != None:
-            self.logger.error("%s \"%s\" already exists" % (tag, name))
-            raise Bcfg2.Server.Plugin.MetadataConsistencyError
+            raise Bcfg2.Server.Plugin.MetadataConsistencyError("%s \"%s\" "
+                                                               "already exists"
+                                                               % (tag, name))
         element = lxml.etree.SubElement(config.base_xdata.getroot(),
                                         tag, name=name)
         if attribs:
             for key, val in list(attribs.items()):
                 element.set(key, val)
         config.write()
+        return element
 
     def add_group(self, group_name, attribs):
         """Add group to groups.xml."""
@@ -544,8 +546,15 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             self.clients = self.list_clients()
             return client
         else:
-            return self._add_xdata(self.clients_xml, "Client", client_name,
-                                   attribs=attribs, alias=True)
+            try:
+                return self._add_xdata(self.clients_xml, "Client", client_name,
+                                       attribs=attribs, alias=True)
+            except Bcfg2.Server.Plugin.MetadataConsistencyError:
+                # already exists
+                err = sys.exc_info()[1]
+                self.logger.info(err)
+                return self._search_xdata("Client", client_name,
+                                          self.clients_xml.xdata, alias=True)
 
     def _update_xdata(self, config, tag, name, attribs, alias=False):
         """ Generic method to modify XML data (group, client, etc.) """
