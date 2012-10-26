@@ -15,3 +15,7 @@ service_modes.py
 
 migrate_dbstats.py
     - Convert old DBStats entries to the new Reporting system
+
+migrate_perms_to_mode.py
+    - Convert perms attribute to mode (note that if you have info/:info
+      files, you should run migrate_info.py first)
