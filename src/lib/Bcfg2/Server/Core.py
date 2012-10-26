@@ -887,7 +887,7 @@ class BaseCore(object):
         :returns: bool - True on success
         :raises: :exc:`xmlrpclib.Fault`
         """
-        client = self.resolve_client(address, metadata=False)[0]
+        client = self.resolve_client(address)[0]
         try:
             self.metadata.set_version(client, version)
         except (Bcfg2.Server.Plugin.MetadataConsistencyError,
