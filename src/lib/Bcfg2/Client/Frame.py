@@ -360,7 +360,8 @@ class Frame(object):
                         self.whitelist.remove(ent)
 
         self.logger.debug("Installing entries in the following bundle(s):")
-        self.logger.debug("  %s" % ", ".join(bundles))
+        self.logger.debug("  %s" % ", ".join(b.get("name") for b in bundles
+                                             if b.get("name")))
 
         if self.setup['interactive']:
             self.whitelist = self.promptFilter(prompt, self.whitelist)
