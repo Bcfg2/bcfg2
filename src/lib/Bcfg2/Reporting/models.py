@@ -140,7 +140,7 @@ class Interaction(models.Model):
     failures = models.ManyToManyField("FailureEntry")
 
     # Formerly InteractionMetadata
-    profile = models.ForeignKey("Group", related_name="+")
+    profile = models.ForeignKey("Group", related_name="+", null=True)
     groups = models.ManyToManyField("Group")
     bundles = models.ManyToManyField("Bundle")
 

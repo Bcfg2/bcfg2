@@ -51,7 +51,10 @@ class DjangoORM(StorageBase):
                     (hostname, timestamp))
             return
 
-        profile, created = Group.objects.get_or_create(name=metadata['profile'])
+        if 'profile' in metadata:
+            profile, created = Group.objects.get_or_create(name=metadata['profile'])
+        else:
+            profile = None
         inter = Interaction(client=client,
                              timestamp=timestamp,
                              state=stats.get('state', default="unknown"),

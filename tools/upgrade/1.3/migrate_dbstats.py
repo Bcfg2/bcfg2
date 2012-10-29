@@ -81,12 +81,6 @@ def _migrate_transaction(inter, entries, fperms):
     else:
         groups = []
         bundles = []
-        unkown_profile = cache.get("PROFILE_UNKNOWN")
-        if not unkown_profile:
-            unkown_profile, created = new_models.Group.objects.get_or_create(name="Unknown")
-            cache.set("PROFILE_UNKNOWN", unkown_profile, 60 * 60)
-        newint.profile = unkown_profile
-        groups = [unkown_profile]
     super(new_models.Interaction, newint).save()
     if bundles:
         newint.bundles.add(*bundles)
