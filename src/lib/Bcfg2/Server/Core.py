@@ -956,16 +956,17 @@ class BaseCore(object):
                 if source not in self.plugins:
                     self.logger.warning("Failed to locate plugin %s" % source)
                     continue
-                datalist = [data for data in xpdata
-                            if data.get('source') == source]
-                try:
-                    self.plugins[source].ReceiveData(metadata, datalist)
-                except:
-                    err = sys.exc_info()[1]
-                    self.critical_error("Failed to process probe data from "
-                                        "client %s: %s" %
-                                        (client, err))
                 sources.append(source)
+
+        for source in sources:
+            datalist = [data for data in xpdata
+                        if data.get('source') == source]
+            try:
+                self.plugins[source].ReceiveData(metadata, datalist)
+            except:
+                err = sys.exc_info()[1]
+                self.critical_error("Failed to process probe data from client "
+                                    "%s: %s" % (client, err))
         return True
 
     @exposed
