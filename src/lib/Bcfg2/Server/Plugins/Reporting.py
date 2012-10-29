@@ -42,7 +42,6 @@ class Reporting(Statistics, PullSource):  # pylint: disable=W0223
         Statistics.__init__(self, core, datastore)
         PullSource.__init__(self)
         self.core = core
-        self.experimental = True
 
         self.whoami = platform.node()
         self.transport = None
