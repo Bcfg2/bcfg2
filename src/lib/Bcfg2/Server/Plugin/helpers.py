@@ -151,22 +151,24 @@ class DatabaseBacked(Plugin):
 
     @property
     def _must_lock(self):
-        """ Whether or not the backend database allows multiple
-        threads to write. """
-        engine = self.core.setup.cfp.get(Bcfg2.Options.DB_ENGINE.cf[0],
-                                         Bcfg2.Options.DB_ENGINE.cf[1],
-                                         default=Bcfg2.Options.DB_ENGINE.default)
+        """ Whether or not the backend database must acquire a thread
+        lock before writing, because it does not allow multiple
+        threads to write."""
+        engine = \
+            self.core.setup.cfp.get(Bcfg2.Options.DB_ENGINE.cf[0],
+                                    Bcfg2.Options.DB_ENGINE.cf[1],
+                                    default=Bcfg2.Options.DB_ENGINE.default)
         if engine == 'sqlite3':
             return True
         else:
             return False
 
     @staticmethod
-    def _db_writer(fn):
-        """ Decorator to be used when a call will update the data
-        threads to write. """
+    def get_db_lock(fn):
+        """ Decorator to be used by a method of a
+        :class:`DatabaseBacked` plugin that will update database data. """
         def _acquire_and_run(self, *args, **kwargs):
-            if self._must_lock:
+            if self._must_lock:  # pylint: disable=W0212
                 try:
                     self.core.db_write_lock.acquire()
                     rv = fn(self, *args, **kwargs)

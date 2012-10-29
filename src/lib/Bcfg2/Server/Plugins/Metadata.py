@@ -43,7 +43,8 @@ if HAS_DJANGO:
         hostname = models.CharField(max_length=255, primary_key=True)
         version = models.CharField(max_length=31, null=True)
 
-    class ClientVersions(MutableMapping, object):
+    class ClientVersions(MutableMapping,
+                         Bcfg2.Server.Plugin.DatabaseBacked):
         """ dict-like object to make it easier to access client bcfg2
         versions from the database """
 
@@ -53,12 +54,15 @@ if HAS_DJANGO:
             except MetadataClientModel.DoesNotExist:
                 raise KeyError(key)
 
+        @Bcfg2.Server.Plugin.DatabaseBacked.get_db_lock
         def __setitem__(self, key, value):
-            client, created = MetadataClientModel.objects.get_or_create(hostname=key)
+            client, created = \
+                MetadataClientModel.objects.get_or_create(hostname=key)
             if created or client.version != value:
                 client.version = value
                 client.save()
 
+        @Bcfg2.Server.Plugin.DatabaseBacked.get_db_lock
         def __delitem__(self, key):
             # UserDict didn't require __delitem__, but MutableMapping
             # does.  we don't want deleting a client version record to
@@ -435,7 +439,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.negated_groups = dict()
         # mapping of hostname -> version string
         if self._use_db:
-            self.versions = ClientVersions()
+            self.versions = ClientVersions(core, datastore)
         else:
             self.versions = dict()
         self.uuid = {}
@@ -540,6 +544,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         else:
             return self._add_xdata(self.groups_xml, "Bundle", bundle_name)
 
+    @Bcfg2.Server.Plugin.DatabaseBacked.get_db_lock
     def add_client(self, client_name, attribs=None):
         """Add client to clients.xml."""
         if attribs is None:
@@ -914,9 +919,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             if client not in self.versions or version != self.versions[client]:
                 self.logger.info("Setting client %s version to %s" %
                                  (client, version))
-                self.update_client(client, dict(version=version))
+                if not self._use_db:
+                    self.update_client(client, dict(version=version))
+                    self.clients_xml.write()
                 self.versions[client] = version
-                self.clients_xml.write()
         else:
             msg = "Cannot set version on non-existent client %s" % client
             self.logger.error(msg)
