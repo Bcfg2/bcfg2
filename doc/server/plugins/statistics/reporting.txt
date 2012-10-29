@@ -14,5 +14,6 @@ Reporting can be enabled by adding Reporting to the plugins line in
 For more information on how to use Reporting to setup reporting, see
 :ref:`reports-dynamic`.
 
-..Note:
-This replaces the DBStats plugin
+.. note::
+
+    This replaces the DBStats plugin

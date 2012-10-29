@@ -9,16 +9,21 @@ Global Database Settings
 .. versionadded:: 1.3.0
 
 Several Bcfg2 plugins, including
-:ref:`server-plugins-grouping-metadata` and
-:ref:`server-plugins-probes-index`, can connect use a relational
-database to store data.  They use the global database settings in
-``bcfg2.conf``, described in this document, to connect.
+:ref:`server-plugins-grouping-metadata`,
+:ref:`server-plugins-probes-index`, and
+:ref:`server-plugins-statistics-reporting`, can connect use a
+relational database to store data.  They use the global database
+settings in ``bcfg2.conf``, described in this document, to connect.
 
 .. note::
 
-    The :ref:`server-plugins-statistics-dbstats` plugin and the
-    :ref:`reports-dynamic` do *not* currently use the global database
-    settings.  They use their own separate database configuration.
+    Although SQLite is supported as a database, it may cause
+    significant thread contention (and a performance penalty) if you
+    use SQLite with :ref:`server-plugins-grouping-metadata` or
+    :ref:`server-plugins-probes-index`.  If you are using the
+    database-backed features of either of those plugins, it's
+    recommended that you use a higher performance database backend.
+
 
 Configuration Options
 =====================
