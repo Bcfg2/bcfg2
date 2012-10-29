@@ -965,6 +965,7 @@ class BaseCore(object):
                     self.critical_error("Failed to process probe data from "
                                         "client %s: %s" %
                                         (client, err))
+                sources.append(source)
         return True
 
     @exposed
