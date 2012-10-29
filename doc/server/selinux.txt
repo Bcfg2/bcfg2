@@ -36,7 +36,7 @@ It defines the following booleans:
 |                                     | ``bcfg2_server_t``, which is a fairly   |                                                          |         |
 |                                     | limited context.                        |                                                          |         |
 +-------------------------------------+-----------------------------------------+----------------------------------------------------------+---------+
-| bcfg2_server_can_network_connect_db | Allow the Bcfg2 server to connect to    | :ref:`server-plugins-statistics-dbstats`, the            | off     |
+| bcfg2_server_can_network_connect_db | Allow the Bcfg2 server to connect to    | :ref:`server-plugins-statistics-reporting`, the          | off     |
 |                                     | databases (e.g., MySQL and PostgreSQL)  | :ref:`server-plugins-grouping-metadata-clients-database` |         |
 |                                     |                                         | feature of Metadata, and the database                    |         |
 |                                     |                                         | :ref:`server-plugins-probes-data-storage`                |         |

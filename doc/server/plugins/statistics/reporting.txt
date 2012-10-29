@@ -16,4 +16,4 @@ For more information on how to use Reporting to setup reporting, see
 
 .. note::
 
-    This replaces the DBStats plugin
+    This replaces the DBStats plugin.
