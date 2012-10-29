@@ -164,18 +164,21 @@ class DatabaseBacked(Plugin):
             return False
 
     @staticmethod
-    def get_db_lock(fn):
+    def get_db_lock(func):
         """ Decorator to be used by a method of a
         :class:`DatabaseBacked` plugin that will update database data. """
+
+        @wraps(func)
         def _acquire_and_run(self, *args, **kwargs):
+            """ The decorated function """
             if self._must_lock:  # pylint: disable=W0212
                 try:
                     self.core.db_write_lock.acquire()
-                    rv = fn(self, *args, **kwargs)
+                    rv = func(self, *args, **kwargs)
                 finally:
                     self.core.db_write_lock.release()
             else:
-                rv = fn(self, *args, **kwargs)
+                rv = func(self, *args, **kwargs)
             return rv
         return _acquire_and_run
 

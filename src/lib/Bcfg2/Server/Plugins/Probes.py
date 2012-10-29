@@ -186,6 +186,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         self.load_data()
     __init__.__doc__ = Bcfg2.Server.Plugin.DatabaseBacked.__init__.__doc__
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def write_data(self, client):
         """ Write probe data out for use with bcfg2-info """
         if self._use_db:
@@ -288,10 +289,12 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 self.cgroups[pgroup.hostname] = []
             self.cgroups[pgroup.hostname].append(pgroup.group)
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def GetProbes(self, meta):
         return self.probes.get_probe_data(meta)
     GetProbes.__doc__ = Bcfg2.Server.Plugin.Probing.GetProbes.__doc__
 
+    @Bcfg2.Server.Plugin.track_statistics()
     def ReceiveData(self, client, datalist):
         if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
             if client.hostname in self.cgroups:

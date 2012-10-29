@@ -49,7 +49,7 @@ class TestDebuggable(Bcfg2TestCase):
         d.debug_flag = False
         d.debug_log("test")
         self.assertFalse(d.logger.error.called)
-        
+
         d.logger.reset_mock()
         d.debug_log("test", flag=True)
         self.assertTrue(d.logger.error.called)

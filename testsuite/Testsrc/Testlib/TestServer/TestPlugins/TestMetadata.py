@@ -102,7 +102,8 @@ class TestMetadataDB(DBModelTestCase):
 
 
 if HAS_DJANGO or can_skip:
-    class TestClientVersions(Bcfg2TestCase):
+    class TestClientVersions(TestDatabaseBacked):
+        test_obj = ClientVersions
         test_clients = dict(client1="1.2.0",
                             client2="1.2.2",
                             client3="1.3.0pre1",
@@ -117,17 +118,17 @@ if HAS_DJANGO or can_skip:
                 MetadataClientModel(hostname=client, version=version).save()
 
         def test__contains(self):
-            v = ClientVersions()
+            v = self.get_obj()
             self.assertIn("client1", v)
             self.assertIn("client5", v)
             self.assertNotIn("client__contains", v)
 
         def test_keys(self):
-            v = ClientVersions()
+            v = self.get_obj()
             self.assertItemsEqual(self.test_clients.keys(), v.keys())
 
         def test__setitem(self):
-            v = ClientVersions()
+            v = self.get_obj()
 
             # test setting version of existing client
             v["client1"] = "1.2.3"
@@ -153,7 +154,7 @@ if HAS_DJANGO or can_skip:
             self.assertEqual(client.version, None)
 
         def test__getitem(self):
-            v = ClientVersions()
+            v = self.get_obj()
 
             # test getting existing client
             self.assertEqual(v['client2'], "1.2.2")
@@ -175,15 +176,15 @@ if HAS_DJANGO or can_skip:
                                  "%s not raised" % expected.__class__.__name__)
 
         def test__len(self):
-            v = ClientVersions()
+            v = self.get_obj()
             self.assertEqual(len(v), MetadataClientModel.objects.count())
 
         def test__iter(self):
-            v = ClientVersions()
+            v = self.get_obj()
             self.assertItemsEqual([h for h in iter(v)], v.keys())
 
         def test__delitem(self):
-            v = ClientVersions()
+            v = self.get_obj()
 
             # test adding new client
             new = "client__delitem"
