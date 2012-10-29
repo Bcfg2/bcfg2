@@ -50,7 +50,9 @@ span.history_links a {
     {% if interaction.server %}
     <tr><td>Served by</td><td>{{interaction.server}}</td></tr>
     {% endif %}
+    {% if interaction.profile %}
     <tr><td>Profile</td><td>{{interaction.profile}}</td></tr>
+    {% endif %}
     {% if interaction.repo_rev_code %}
     <tr><td>Revision</td><td>{{interaction.repo_rev_code}}</td></tr>
     {% endif %}
