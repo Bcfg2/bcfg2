@@ -103,7 +103,6 @@ class TestMetadataDB(DBModelTestCase):
 
 if HAS_DJANGO or can_skip:
     class TestClientVersions(TestDatabaseBacked):
-        test_obj = ClientVersions
         test_clients = dict(client1="1.2.0",
                             client2="1.2.2",
                             client3="1.3.0pre1",
@@ -113,6 +112,7 @@ if HAS_DJANGO or can_skip:
 
         @skipUnless(HAS_DJANGO, "Django not found")
         def setUp(self):
+            self.test_obj = ClientVersions
             syncdb(TestMetadataDB)
             for client, version in self.test_clients.items():
                 MetadataClientModel(hostname=client, version=version).save()
