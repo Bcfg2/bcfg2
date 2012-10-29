@@ -35,10 +35,11 @@ class AclFile(Bcfg2.Server.Plugin.XMLFileBacked):
             [self.cidr_ips.append(i.get('name')) for i in entry.findall('CIDR')]
     
     def check_acl(self, ip):
-        if ('*' in self.ips or 
-            ip in self.ips  or
-            IP(ip) in [CIDR(cidr_ip) for cidr_ip in self.cidr_ips]):
+        if ip in self.ips:
             return True
+        for cidr_ip in self.cidr_ips:
+            if netaddr.IPAddress(ip) in netaddr.IPNetwork(cidr_ip):
+                return True
         return False
 
 class Acl(Bcfg2.Server.Plugin.Plugin,
