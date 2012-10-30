@@ -171,7 +171,7 @@ E.G. 1.2.0pre1 is a valid version.
                     "- New upstream release\n", "\n"]
 
     # write out the new RPM changelog
-    specs = ["misc/bcfg2.spec", "redhat/bcfg2.spec.in"]
+    specs = ["misc/bcfg2.spec", "misc/bcfg2-selinux.spec", "redhat/bcfg2.spec.in"]
     if options.dryrun:
         print("*** Add the following to the top of the %%changelog section in %s:\n%s\n"
               % (rpmchangelog, " and ".join(specs)))
