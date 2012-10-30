@@ -73,7 +73,7 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                 except (lxml.etree.XMLSyntaxError, AttributeError):
                     xdata = \
                         lxml.etree.parse(bundle.template.filepath).getroot()
-                    rtype = "sgenshi"
+                    rtype = "genshibundler"
 
                 self.check_xml(bundle.name, xdata, rtype)
 
@@ -103,11 +103,11 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                 for entry in entryset.entries.values():
                     rtype = None
                     if isinstance(entry, CfgGenshiGenerator):
-                        rtype = "tgenshi"
+                        rtype = "genshi"
                     elif isinstance(entry, CfgPlaintextGenerator):
                         rtype = "cfg"
                     elif isinstance(entry, CfgCheetahGenerator):
-                        rtype = "tcheetah"
+                        rtype = "cheetah"
                     elif isinstance(entry, CfgInfoXML):
                         self.check_xml(entry.infoxml.name,
                                        entry.infoxml.pnode.data,

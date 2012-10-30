@@ -57,11 +57,11 @@ HANDLING), above.
 ### Comments
 
 The `Comments` plugin configuration specifies which VCS keywords and
-comments are required for which file types. The valid types of file are
-*global* (all file types), *bundler* (non-templated bundle files),
-*sgenshi* (templated bundle files), *properties* (property files), *cfg*
-(non-templated Cfg files), *tgenshi* (templated Cfg files), *infoxml*
-(info.xml files), and *probe* (probe files).
+comments are required for which file types. The valid types of file
+are *global* (all file types), *bundler* (non-templated bundle files),
+*genshibundler* (templated bundle files), *properties* (property files),
+*cfg* (non-templated Cfg files), *genshi* or *cheetah* (templated Cfg
+files), *infoxml* (info.xml files), and *probe* (probe files).
 
 The specific types (i.e., types other than "global") all supplement
 global; they do not override it. The exception is if you specify an
