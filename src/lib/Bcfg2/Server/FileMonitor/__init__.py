@@ -323,12 +323,6 @@ from Bcfg2.Server.FileMonitor.Pseudo import Pseudo
 available['pseudo'] = Pseudo
 
 try:
-    from Bcfg2.Server.FileMonitor.Fam import Fam
-    available['fam'] = Fam
-except ImportError:
-    pass
-
-try:
     from Bcfg2.Server.FileMonitor.Gamin import Gamin
     available['gamin'] = Gamin
 except ImportError:
