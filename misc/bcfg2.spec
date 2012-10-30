@@ -357,7 +357,6 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %{python_sitelib}/*egg-info
 
 %dir %{_datadir}/bcfg2
-%{_datadir}/bcfg2/Hostbase
 %{_datadir}/bcfg2/schemas
 %{_datadir}/bcfg2/xsl-transforms
 %config(noreplace) %{_sysconfdir}/default/bcfg2-server

@@ -1,6 +1,6 @@
 --- setup.py	2010-11-15 15:30:28.000000000 -0600
 +++ setup.py.macports	2010-11-18 19:06:49.155292524 -0600
-@@ -11,47 +11,22 @@
+@@ -11,38 +11,22 @@
  setup(cmdclass=cmdclass,
        name="Bcfg2",
        version="1.1.1",
@@ -14,13 +14,10 @@
                  "Bcfg2.Client.Tools",
 -                'Bcfg2.Server',
 -                "Bcfg2.Server.Admin",
--                "Bcfg2.Server.Hostbase",
--                "Bcfg2.Server.Hostbase.hostbase",
 -                "Bcfg2.Server.Plugins",
 -                "Bcfg2.Server.Reports",
 -                "Bcfg2.Server.Reports.reports",
 -                "Bcfg2.Server.Reports.reports.templatetags",
--                "Bcfg2.Server.Snapshots",
                  ],
 +      py_modules = ["Bcfg2.Options",
 +                    "Bcfg2.Proxy",
@@ -51,11 +48,5 @@
 -                     glob('src/lib/Server/Reports/reports/templates/clients/*')),
 -                    ('share/bcfg2/Reports/templates/config_items',
 -                     glob('src/lib/Server/Reports/reports/templates/config_items/*')),
--                    ('share/bcfg2/Hostbase/templates',
--                     glob('src/lib/Server/Hostbase/hostbase/webtemplates/*.*')),
--                    ('share/bcfg2/Hostbase/templates/hostbase',
--                     glob('src/lib/Server/Hostbase/hostbase/webtemplates/hostbase/*')),
--                    ('share/bcfg2/Hostbase/repo',
--                     glob('src/lib/Server/Hostbase/templates/*')),
                      ]
        )

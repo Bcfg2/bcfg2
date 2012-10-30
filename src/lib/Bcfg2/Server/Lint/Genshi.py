@@ -11,10 +11,9 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
     def Run(self):
         """ run plugin """
         loader = genshi.template.TemplateLoader()
-        for plugin in ['Cfg', 'TGenshi']:
-            if plugin in self.core.plugins:
-                self.check_files(self.core.plugins[plugin].entries,
-                                 loader=loader)
+        if 'Cfg' in self.core.plugins:
+            self.check_files(self.core.plugins['Cfg'].entries,
+                             loader=loader)
 
     @classmethod
     def Errors(cls):

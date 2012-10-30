@@ -102,9 +102,8 @@ Genshi Templates
 ----------------
 
 Genshi templates allow you to use the `Genshi
-<http://genshi.edgewall.org>`_ templating system.  This is similar to
-the deprecated :ref:`server-plugins-generators-tgenshi-index` plugin.
-Genshi templates should be named with a ``.genshi`` extension, e.g.::
+<http://genshi.edgewall.org>`_ templating system.  Genshi templates
+should be named with a ``.genshi`` extension, e.g.::
 
     % ls Cfg/etc/motd
     info.xml  motd.genshi
@@ -214,9 +213,8 @@ Cheetah Templates
 -----------------
 
 Cheetah templates allow you to use the `cheetah templating system
-<http://www.cheetahtemplate.org/>`_.  This is similar to
-the deprecated :ref:`server-plugins-generators-tcheetah` plugin.
-Cheetah templates should be named with a ``.cheetah`` extension, e.g.::
+<http://www.cheetahtemplate.org/>`_.  Cheetah templates should be
+named with a ``.cheetah`` extension, e.g.::
 
     % ls Cfg/etc/motd
     info.xml  motd.cheetah

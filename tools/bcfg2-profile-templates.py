@@ -73,40 +73,38 @@ def main():
         clients = [core.build_metadata(setup['client'])]
 
     times = dict()
-    for plugin in ['Cfg', 'TGenshi', 'TCheetah']:
-        if plugin not in core.plugins:
-            logger.debug("Skipping disabled plugin %s" % plugin)
-            continue
-        logger.info("Rendering templates from plugin %s" % plugin)
+    if 'Cfg' not in core.plugins:
+        logger.error("Cfg is not enabled")
+        return 1
 
-        entrysets = []
-        for template in templates:
-            try:
-                entrysets.append(core.plugins[plugin].entries[template])
-            except KeyError:
-                logger.debug("Template %s not found in plugin %s" %
-                             (template, plugin))
-        if not entrysets:
-            logger.debug("Using all entrysets in plugin %s" % plugin)
-            entrysets = core.plugins[plugin].entries.values()
+    cfg = core.plugins['Cfg']
+    entrysets = []
+    for template in templates:
+        try:
+            entrysets.append(cfg.entries[template])
+        except KeyError:
+            logger.debug("Template %s not found" % template)
+    if not entrysets:
+        logger.debug("Using all entrysets")
+        entrysets = cfg.entries.values()
 
-        for eset in entrysets:
-            path = eset.path.replace(setup['repo'], '')
-            logger.info("Rendering %s..." % path)
-            times[path] = dict()
-            for metadata in clients:
-                avg = 0.0
-                for i in range(runs):
-                    entry = lxml.etree.Element("Path")
-                    start = time.time()
-                    try:
-                        eset.bind_entry(entry, metadata)
-                        avg += (time.time() - start) / runs
-                    except:
-                        break
-                if avg:
-                    logger.debug("   %s: %.02f sec" % (metadata.hostname, avg))
-                    times[path][metadata.hostname] = avg
+    for eset in entrysets:
+        path = eset.path.replace(setup['repo'], '')
+        logger.info("Rendering %s..." % path)
+        times[path] = dict()
+        for metadata in clients:
+            avg = 0.0
+            for i in range(runs):
+                entry = lxml.etree.Element("Path")
+                start = time.time()
+                try:
+                    eset.bind_entry(entry, metadata)
+                    avg += (time.time() - start) / runs
+                except:
+                    break
+            if avg:
+                logger.debug("   %s: %.02f sec" % (metadata.hostname, avg))
+                times[path][metadata.hostname] = avg
 
     # print out per-template results
     tmpltimes = []

@@ -12,7 +12,6 @@ __all__ = [
         'Pull',
         'Query',
         'Reports',
-        'Snapshots',
         'Syncdb',
         'Tidy',
         'Viz',

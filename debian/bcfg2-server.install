@@ -1,7 +1,6 @@
 debian/bcfg2-server.default usr/share/bcfg2
 debian/tmp/usr/bin/bcfg2-* usr/sbin
 debian/tmp/usr/lib/python*/*-packages/Bcfg2/Server/*
-debian/tmp/usr/share/bcfg2/Hostbase/*
 debian/tmp/usr/share/bcfg2/schemas/*
 debian/tmp/usr/share/bcfg2/xsl-transforms/*
 debian/tmp/usr/share/man/man8/*

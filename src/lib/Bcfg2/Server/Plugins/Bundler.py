@@ -12,11 +12,28 @@ import Bcfg2.Server.Lint
 from Bcfg2.Options import get_option_parser
 
 try:
-    import genshi.template.base
-    import Bcfg2.Server.Plugins.TGenshi
+    import genshi.core
+    import genshi.input
+    from genshi.template import TemplateLoader, \
+                                TextTemplate, MarkupTemplate, TemplateError
     HAS_GENSHI = True
 except ImportError:
     HAS_GENSHI = False
+
+
+def removecomment(stream):
+    """ A Genshi filter that removes comments from the stream.  This
+    function is a generator.
+
+    :param stream: The Genshi stream to remove comments from
+    :type stream: genshi.core.Stream
+    :returns: tuple of ``(kind, data, pos)``, as when iterating
+              through a Genshi stream
+    """
+    for kind, data, pos in stream:
+        if kind is genshi.core.COMMENT:
+            continue
+        yield kind, data, pos
 
 
 class BundleFile(Bcfg2.Server.Plugin.StructFile):
@@ -31,16 +48,36 @@ class BundleFile(Bcfg2.Server.Plugin.StructFile):
 
 
 if HAS_GENSHI:
-    class BundleTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile,
-                             Bcfg2.Server.Plugin.StructFile):
+    class BundleTemplateFile(Bcfg2.Server.Plugin.StructFile):
         """ Representation of a Genshi-templated bundle XML file """
 
-        def __init__(self, name, specific, encoding):
-            Bcfg2.Server.Plugins.TGenshi.TemplateFile.__init__(self, name,
-                                                               specific,
-                                                               encoding)
+        def __init__(self, name, encoding):
             Bcfg2.Server.Plugin.StructFile.__init__(self, name)
+            self.encoding = encoding
             self.logger = logging.getLogger(name)
+
+        def HandleEvent(self, event=None):
+            """Handle all fs events for this template."""
+            if event and event.code2str() == 'deleted':
+                return
+            try:
+                loader = TemplateLoader()
+                try:
+                    self.template = loader.load(self.name,
+                                                cls=MarkupTemplate,
+                                                encoding=self.encoding)
+                except LookupError:
+                    err = sys.exc_info()[1]
+                    self.logger.error('Genshi lookup error in %s: %s' %
+                                      (self.name, err))
+                except TemplateError:
+                    err = sys.exc_info()[1]
+                    self.logger.error('Genshi template error in %s: %s' %
+                                      (self.name, err))
+                except genshi.input.ParseError:
+                    err = sys.exc_info()[1]
+                    self.logger.error('Genshi parse error in %s: %s' %
+                                      (self.name, err))
 
         def get_xml_value(self, metadata):
             """ get the rendered XML data that applies to the given
@@ -51,8 +88,7 @@ if HAS_GENSHI:
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             stream = self.template.generate(
                 metadata=metadata,
-                repo=get_option_parser()['repo']).filter(
-                Bcfg2.Server.Plugins.TGenshi.removecomment)
+                repo=get_option_parser()['repo']).filter(removecomment)
             data = lxml.etree.XML(stream.render('xml',
                                                 strip_whitespace=False),
                                   parser=Bcfg2.Server.XMLParser)
@@ -70,11 +106,6 @@ if HAS_GENSHI:
             self.logger.debug("File %s got %d match(es)" % (self.name,
                                                             len(rv)))
             return rv
-
-    class SGenshiTemplateFile(BundleTemplateFile):
-        """ provided for backwards compat with the deprecated SGenshi
-        plugin """
-        pass
 
 
 class Bundler(Bcfg2.Server.Plugin.Plugin,
@@ -111,8 +142,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
             ('py' in nsmap and
              nsmap['py'] == 'http://genshi.edgewall.org/')):
             if HAS_GENSHI:
-                spec = Bcfg2.Server.Plugin.Specificity()
-                return BundleTemplateFile(name, spec, self.encoding)
+                return BundleTemplateFile(name, self.encoding)
             else:
                 raise Bcfg2.Server.Plugin.PluginExecutionError("Genshi not "
                                                                "available: %s"
@@ -139,7 +169,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
                 continue
             try:
                 bundleset.append(entries[0].get_xml_value(metadata))
-            except genshi.template.base.TemplateError:
+            except TemplateError:
                 err = sys.exc_info()[1]
                 self.logger.error("Bundler: Failed to render templated bundle "
                                   "%s: %s" % (bundlename, err))

@@ -1,8 +1,0 @@
-.. -*- mode: rst -*-
-
-.. _server-admin-snapshots:
-
-snapshots
-=========
-
-Interact with the Snapshots system.

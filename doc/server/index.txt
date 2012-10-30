@@ -26,7 +26,6 @@ clients.
    admin/index
    configurationentries
    info
-   snapshots/index
    bcfg2-info
    selinux
    configuration

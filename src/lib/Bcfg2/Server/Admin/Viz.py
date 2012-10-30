@@ -29,10 +29,10 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
               'indianred1', 'limegreen', 'orange1', 'lightblue2',
               'green1', 'blue1', 'yellow1', 'darkturquoise', 'gray66']
 
-    __plugin_blacklist__ = ['DBStats', 'Snapshots', 'Cfg', 'Pkgmgr',
-                            'Packages', 'Rules', 'Account', 'Decisions',
+    __plugin_blacklist__ = ['DBStats', 'Cfg', 'Pkgmgr',
+                            'Packages', 'Rules', 'Decisions',
                             'Deps', 'Git', 'Svn', 'Fossil', 'Bzr', 'Bundler',
-                            'TGenshi', 'Base']
+                            'Base']
 
     def __call__(self, args):
         # First get options to the 'viz' subcommand
