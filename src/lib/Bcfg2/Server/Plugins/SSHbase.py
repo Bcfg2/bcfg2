@@ -135,7 +135,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         # do so once
         self.badnames = dict()
 
-        core.fam.AddMonitor(self.data, self)
+        self.fam = Bcfg2.Server.FileMonitor.get_fam()
+        self.fam.AddMonitor(self.data, self)
 
         self.static = dict()
         self.entries = dict()
@@ -368,7 +369,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     msg = "%s still not registered" % filename
                     self.logger.error(msg)
                     raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-                self.core.fam.handle_events_in_interval(1)
+                self.fam.handle_events_in_interval(1)
                 tries += 1
                 try:
                     self.entries[entry.get('name')].bind_entry(entry, metadata)

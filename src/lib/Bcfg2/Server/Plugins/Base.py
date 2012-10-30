@@ -21,9 +21,7 @@ class Base(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Structure.__init__(self)
         try:
-            Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self,
-                                                            self.data,
-                                                            self.core.fam)
+            Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data)
         except OSError:
             self.logger.error("Failed to load Base repository")
             raise Bcfg2.Server.Plugin.PluginInitError

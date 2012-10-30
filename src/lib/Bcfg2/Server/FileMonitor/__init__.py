@@ -311,6 +311,31 @@ class FileMonitor(Debuggable):
         raise NotImplementedError
 
 
+#: A module-level FAM object that all plugins, etc., can use.  This
+#: should not be used directly, but retrieved via :func:`get_fam`.
+_FAM = None
+
+def get_fam(filemonitor='default', ignore=None, debug=False):
+    """ Get a filemonitor object.  If :attr:`_FAM` already exists,
+    that will be used; if not, a new filemonitor object will be
+    created.
+
+    :param filemonitor: Which filemonitor backend to use
+    :type filemonitor: string
+    :param ignore: A list of filenames to ignore
+    :type ignore: list of strings (filename globs)
+    :param debug: Produce debugging information
+    :type debug: bool
+    :returns: :class:`Bcfg2.Server.FileMonitor.FileMonitor`
+    """
+    global _FAM  # pylint: disable=W0603
+    if _FAM is None:
+        if ignore is None:
+            ignore = []
+        _FAM = available[filemonitor](ignore=ignore, debug=debug)
+    return _FAM
+
+
 #: A dict of all available FAM backends.  Keys are the human-readable
 #: names of the backends, which are used in bcfg2.conf to select a
 #: backend; values are the backend classes.  In addition, the

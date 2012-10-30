@@ -9,6 +9,7 @@ import operator
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
+import Bcfg2.Server.FileMonitor
 
 try:
     from django.db import models
@@ -117,12 +118,12 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     bangline = re.compile('^#!\s*(?P<interpreter>.*)$')
     basename_is_regex = True
 
-    def __init__(self, path, fam, encoding, plugin_name):
+    def __init__(self, path, encoding, plugin_name):
         self.plugin_name = plugin_name
         Bcfg2.Server.Plugin.EntrySet.__init__(self, '[0-9A-Za-z_\-]+', path,
                                               Bcfg2.Server.Plugin.SpecificData,
                                               encoding)
-        fam.AddMonitor(path, self)
+        Bcfg2.Server.FileMonitor.get_fam().AddMonitor(path, self)
 
     def HandleEvent(self, event):
         """ handle events on everything but probed.xml """
@@ -178,7 +179,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
 
         try:
-            self.probes = ProbeSet(self.data, core.fam, core.setup['encoding'],
+            self.probes = ProbeSet(self.data, core.setup['encoding'],
                                    self.name)
         except:
             err = sys.exc_info()[1]

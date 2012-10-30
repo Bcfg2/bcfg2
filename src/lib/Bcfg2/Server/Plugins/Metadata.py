@@ -103,7 +103,6 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
         # so that XInclude'd files get properly watched
         fpath = os.path.join(metadata.data, basefile)
         Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, fpath,
-                                                   fam=metadata.core.fam,
                                                    should_monitor=False)
         self.should_monitor = watch_clients
         self.metadata = metadata
@@ -112,7 +111,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
         self.basedata = None
         self.basedir = metadata.data
         self.logger = metadata.logger
-        self.pseudo_monitor = isinstance(metadata.core.fam,
+        self.pseudo_monitor = isinstance(Bcfg2.Server.FileMonitor.get_fam(),
                                          Bcfg2.Server.FileMonitor.Pseudo)
 
     def _get_xdata(self):
@@ -250,7 +249,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
 
     def add_monitor(self, fpath):
         self.extras.append(fpath)
-        if self.fam and self.should_monitor:
+        if self.should_monitor:
             self.fam.AddMonitor(fpath, self.metadata)
 
     def HandleEvent(self, event=None):
@@ -469,7 +468,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         (clients.xml or groups.xml, e.g.) """
         if self.watch_clients:
             try:
-                self.core.fam.AddMonitor(os.path.join(self.data, fname), self)
+                Bcfg2.Server.FileMonitor.get_fam().AddMonitor(
+                    os.path.join(self.data, fname), self)
             except:
                 err = sys.exc_info()[1]
                 msg = "Unable to add file monitor for %s: %s" % (fname, err)

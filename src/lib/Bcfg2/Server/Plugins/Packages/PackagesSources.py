@@ -19,7 +19,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
 
     encryption = False
 
-    def __init__(self, filename, cachepath, fam, packages, setup):
+    def __init__(self, filename, cachepath, packages, setup):
         """
         :param filename: The full path to ``sources.xml``
         :type filename: string
@@ -27,9 +27,6 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
                           :class:`Bcfg2.Server.Plugins.Packages.Source.Source`
                           data will be cached
         :type cachepath: string
-        :param fam: The file access monitor to use to create watches
-                    on ``sources.xml`` and any XIncluded files.
-        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
         :param packages: The Packages plugin object ``sources.xml`` is
                          being parsed on behalf of (i.e., the calling
                          object)
@@ -42,7 +39,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
         """
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
         try:
-            Bcfg2.Server.Plugin.StructFile.__init__(self, filename, fam=fam,
+            Bcfg2.Server.Plugin.StructFile.__init__(self, filename,
                                                     should_monitor=True)
         except OSError:
             err = sys.exc_info()[1]

@@ -6,6 +6,7 @@ import socket
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
+from Bcfg2.Server.FileMonitor import _FAM
 from Bcfg2.Server.Plugins.Metadata import *
 from mock import Mock, MagicMock, patch
 
@@ -206,8 +207,7 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
 
     def test__init(self):
         xmc = self.get_obj()
-        self.assertEqual(self.metadata.core.fam, xmc.fam)
-        self.assertFalse(xmc.fam.AddMonitor.called)
+        self.assertFalse(_FAM.AddMonitor.called)
 
     def test_xdata(self):
         config = self.get_obj()
@@ -259,12 +259,12 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
 
         config.extras = []
         config.add_monitor(fpath)
-        self.assertFalse(core.fam.AddMonitor.called)
+        self.assertFalse(_FAM.AddMonitor.called)
         self.assertEqual(config.extras, [fpath])
 
         config = self.get_obj(core=core, watch_clients=True)
         config.add_monitor(fpath)
-        core.fam.AddMonitor.assert_called_with(fpath, config.metadata)
+        _FAM.AddMonitor.assert_called_with(fpath, config.metadata)
         self.assertItemsEqual(config.extras, [fpath])
 
     def test_Index(self):
@@ -501,20 +501,22 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         self.assertEqual(metadata.states, dict())
 
         # test with watch_clients=True
-        core.fam = MagicMock()
+        fam = Bcfg2.Server.FileMonitor._FAM
+        Bcfg2.Server.FileMonitor._FAM = MagicMock()
         metadata = self.get_obj(core=core, watch_clients=True)
         self.assertEqual(len(metadata.states), 2)
-        core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
-                                                         "groups.xml"),
-                                            metadata)
-        core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
-                                                         "clients.xml"),
-                                            metadata)
+        Bcfg2.Server.FileMonitor._FAM.AddMonitor.assert_any_call(os.path.join(metadata.data,
+                                                                              "groups.xml"),
+                                                                 metadata)
+        Bcfg2.Server.FileMonitor._FAM.AddMonitor.assert_any_call(os.path.join(metadata.data,
+                                                                              "clients.xml"),
+                                                                 metadata)
 
-        core.fam.reset_mock()
-        core.fam.AddMonitor = Mock(side_effect=IOError)
+        Bcfg2.Server.FileMonitor._FAM.reset_mock()
+        Bcfg2.Server.FileMonitor._FAM.AddMonitor = Mock(side_effect=IOError)
         self.assertRaises(Bcfg2.Server.Plugin.PluginInitError,
                           self.get_obj, core=core, watch_clients=True)
+        Bcfg2.Server.FileMonitor._FAM = fam
 
     @patch('os.makedirs', Mock())
     @patch('%s.open' % builtins)
@@ -1260,17 +1262,17 @@ class TestMetadataBase(TestMetadata):
 
     @patch('os.path.exists')
     def test__init(self, mock_exists):
-        core = MagicMock()
-        core.fam = Mock()
+        fam = Bcfg2.Server.FileMonitor._FAM
+        Bcfg2.Server.FileMonitor._FAM = MagicMock()
         mock_exists.return_value = False
-        metadata = self.get_obj(core=core, watch_clients=True)
+        metadata = self.get_obj(watch_clients=True)
         self.assertIsInstance(metadata, Bcfg2.Server.Plugin.DatabaseBacked)
-        core.fam.AddMonitor.assert_called_once_with(os.path.join(metadata.data,
-                                                                 "groups.xml"),
-                                                    metadata)
+        Bcfg2.Server.FileMonitor._FAM.AddMonitor.assert_called_once_with(
+            os.path.join(metadata.data, "groups.xml"),
+            metadata)
 
         mock_exists.return_value = True
-        core.fam.reset_mock()
+        Bcfg2.Server.FileMonitor._FAM.reset_mock()
         metadata = self.get_obj(core=core, watch_clients=True)
         core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
                                                          "groups.xml"),
@@ -1516,9 +1518,12 @@ class TestMetadata_ClientsXML(TestMetadataBase):
     def load_clients_data(self, metadata=None, xdata=None):
         if metadata is None:
             metadata = self.get_obj()
-        metadata.core.fam = Mock()
+        fam = Bcfg2.Server.FileMonitor._FAM
+        Bcfg2.Server.FileMonitor._FAM = MagicMock()
         metadata.clients_xml = metadata._handle_file("clients.xml")
         metadata = TestMetadata.load_clients_data(self, metadata=metadata,
                                                   xdata=xdata)
-        return TestMetadataBase.load_clients_data(self, metadata=metadata,
-                                                    xdata=xdata)
+        rv = TestMetadataBase.load_clients_data(self, metadata=metadata,
+                                                xdata=xdata)
+        Bcfg2.Server.FileMonitor._FAM = fam
+        return rv

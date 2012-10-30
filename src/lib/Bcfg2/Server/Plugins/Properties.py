@@ -88,8 +88,8 @@ class PropertyFile(object):
 class JSONPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
     """ Handle JSON Properties files. """
 
-    def __init__(self, name, fam=None):
-        Bcfg2.Server.Plugin.FileBacked.__init__(self, name, fam=fam)
+    def __init__(self, name):
+        Bcfg2.Server.Plugin.FileBacked.__init__(self, name)
         PropertyFile.__init__(self, name)
         self.json = None
     __init__.__doc__ = Bcfg2.Server.Plugin.FileBacked.__init__.__doc__
@@ -127,8 +127,8 @@ class JSONPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
 class YAMLPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
     """ Handle YAML Properties files. """
 
-    def __init__(self, name, fam=None):
-        Bcfg2.Server.Plugin.FileBacked.__init__(self, name, fam=fam)
+    def __init__(self, name):
+        Bcfg2.Server.Plugin.FileBacked.__init__(self, name)
         PropertyFile.__init__(self, name)
         self.yaml = None
     __init__.__doc__ = Bcfg2.Server.Plugin.FileBacked.__init__.__doc__
@@ -166,8 +166,8 @@ class YAMLPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
 class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
     """ Handle XML Properties files. """
 
-    def __init__(self, name, fam=None, should_monitor=False):
-        Bcfg2.Server.Plugin.StructFile.__init__(self, name, fam=fam,
+    def __init__(self, name, should_monitor=False):
+        Bcfg2.Server.Plugin.StructFile.__init__(self, name,
                                                 should_monitor=should_monitor)
         PropertyFile.__init__(self, name)
     __init__.__doc__ = Bcfg2.Server.Plugin.StructFile.__init__.__doc__
@@ -239,8 +239,8 @@ class PropDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):
     #: Ignore XML schema (``.xsd``) files
     ignore = re.compile(r'.*\.xsd$')
 
-    def __init__(self, data, fam):
-        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, data, fam)
+    def __init__(self, data):
+        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, data)
 
         #: Instead of creating children of this object with a static
         #: object, we use :func:`property_dispatcher` to create a
@@ -248,23 +248,21 @@ class PropDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):
         self.__child__ = self.property_dispatcher
     __init__.__doc__ = Bcfg2.Server.Plugin.DirectoryBacked.__init__.__doc__
 
-    def property_dispatcher(self, fname, fam):
+    def property_dispatcher(self, fname):
         """ Dispatch an event on a Properties file to the
         appropriate object.
 
         :param fname: The name of the file that received the event
         :type fname: string
-        :param fam: The file monitor the event was received by
-        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
         :returns: An object of the appropriate subclass of
                   :class:`PropertyFile`
         """
         if fname.endswith(".xml"):
-            return XMLPropertyFile(fname, fam)
+            return XMLPropertyFile(fname)
         elif HAS_JSON and fname.endswith(".json"):
-            return JSONPropertyFile(fname, fam)
+            return JSONPropertyFile(fname)
         elif HAS_YAML and (fname.endswith(".yaml") or fname.endswith(".yml")):
-            return YAMLPropertyFile(fname, fam)
+            return YAMLPropertyFile(fname)
         else:
             raise Bcfg2.Server.Plugin.PluginExecutionError(
                 "Properties: Unknown extension %s" % fname)
@@ -279,7 +277,7 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         try:
-            self.store = PropDirectoryBacked(self.data, core.fam)
+            self.store = PropDirectoryBacked(self.data)
         except OSError:
             err = sys.exc_info()[1]
             self.logger.error("Error while creating Properties store: %s" %

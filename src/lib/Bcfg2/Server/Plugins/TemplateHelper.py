@@ -15,9 +15,8 @@ MODULE_RE = re.compile(r'(?P<filename>(?P<module>[^\/]+)\.py)$')
 class HelperModule(object):
     """ Representation of a TemplateHelper module """
 
-    def __init__(self, name, fam=None):
+    def __init__(self, name):
         self.name = name
-        self.fam = fam
         self._module_name = MODULE_RE.search(self.name).group('module')
         self._attrs = []
 
@@ -75,7 +74,7 @@ class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
-        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, core.fam)
+        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data)
 
     def get_additional_data(self, _):
         return dict([(h._module_name, h)  # pylint: disable=W0212

@@ -122,9 +122,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
         self.encoding = core.setup['encoding']
         self.__child__ = self.template_dispatch
         try:
-            Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self,
-                                                            self.data,
-                                                            self.core.fam)
+            Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data)
         except OSError:
             err = sys.exc_info()[1]
             msg = "Failed to load Bundle repository %s: %s" % (self.data, err)
@@ -148,7 +146,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
                                                                "available: %s"
                                                                % name)
         else:
-            return BundleFile(name, self.fam)
+            return BundleFile(name)
 
     def BuildStructures(self, metadata):
         """Build all structures for client (metadata)."""

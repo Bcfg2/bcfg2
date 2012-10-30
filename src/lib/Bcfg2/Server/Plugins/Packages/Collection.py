@@ -78,6 +78,7 @@ import copy
 import logging
 import lxml.etree
 import Bcfg2.Server.Plugin
+import Bcfg2.Server.FileMonitor
 from Bcfg2.Compat import any, md5  # pylint: disable=W0622
 
 LOGGER = logging.getLogger(__name__)
@@ -93,8 +94,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
     #: Whether or not this Packages backend supports package groups
     __package_groups__ = False
 
-    def __init__(self, metadata, sources, cachepath, basepath, fam,
-                 debug=False):
+    def __init__(self, metadata, sources, cachepath, basepath, debug=False):
         """
         :param metadata: The client metadata for this collection
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
@@ -111,9 +111,6 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
                          directory, where more permanent data can be
                          stored
         :type basepath: string
-        :param fam: A file monitor object to use if this Collection
-                    needs to monitor for file activity
-        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
         :param debug: Enable debugging output
         :type debug: bool
 
@@ -127,7 +124,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         self.basepath = basepath
         self.cachepath = cachepath
         self.virt_pkgs = dict()
-        self.fam = fam
+        self.fam = Bcfg2.Server.FileMonitor.get_fam()
 
         try:
             self.setup = sources[0].setup

@@ -25,8 +25,7 @@ class Trigger(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
-        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data,
-                                                     self.core.fam)
+        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data)
 
     def async_run(self, args):
         """ Run the trigger script asynchronously in a forked process

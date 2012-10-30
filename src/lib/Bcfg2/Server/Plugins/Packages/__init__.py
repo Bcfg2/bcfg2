@@ -79,7 +79,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         #: :class:`Bcfg2.Server.Plugins.Packages.Source.Source` objects for
         #: this plugin.
         self.sources = PackagesSources(os.path.join(self.data, "sources.xml"),
-                                       self.cachepath, core.fam, self,
+                                       self.cachepath, self,
                                        self.core.setup)
 
         #: We cache
@@ -477,8 +477,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if not self.sources.loaded:
             # if sources.xml has not received a FAM event yet, defer;
             # instantiate a dummy Collection object
-            return Collection(metadata, [], self.cachepath, self.data,
-                              self.core.fam)
+            return Collection(metadata, [], self.cachepath, self.data)
 
         if metadata.hostname in self.clients:
             return self.collections[self.clients[metadata.hostname]]
@@ -509,7 +508,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                               "for %s" % (cclass.__name__, metadata.hostname))
 
         collection = cclass(metadata, relevant, self.cachepath, self.data,
-                            self.core.fam, debug=self.debug_flag)
+                            debug=self.debug_flag)
         ckey = collection.cachekey
         self.clients[metadata.hostname] = ckey
         self.collections[ckey] = collection

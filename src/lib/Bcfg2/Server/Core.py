@@ -137,7 +137,7 @@ class BaseCore(object):
             #: The :class:`Bcfg2.Server.FileMonitor.FileMonitor`
             #: object used by the core to monitor for Bcfg2 data
             #: changes.
-            self.fam = filemonitor(**famargs)
+            self.fam = Bcfg2.Server.FileMonitor.get_fam(**famargs)
         except IOError:
             msg = "Failed to instantiate fam driver %s" % \
                 self.setup['filemonitor']

@@ -12,6 +12,7 @@ import Bcfg2.Server
 import Bcfg2.Options
 import Bcfg2.Statistics
 from Bcfg2.Compat import CmpMixin, wraps
+from Bcfg2.Server.FileMonitor import get_fam
 from Bcfg2.Server.Plugin.base import Debuggable, Plugin
 from Bcfg2.Server.Plugin.interfaces import Generator
 from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
@@ -193,13 +194,10 @@ class FileBacked(object):
     principally meant to be used as a part of
     :class:`Bcfg2.Server.Plugin.helpers.DirectoryBacked`. """
 
-    def __init__(self, name, fam=None):
+    def __init__(self, name):
         """
         :param name: The full path to the file to cache and monitor
         :type name: string
-        :param fam: The FAM object used to receive notifications of
-                    changes
-        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
         """
         object.__init__(self)
 
@@ -210,7 +208,7 @@ class FileBacked(object):
         self.name = name
 
         #: The FAM object used to receive notifications of changes
-        self.fam = fam
+        self.fam = get_fam()
 
     def HandleEvent(self, event=None):
         """ HandleEvent is called whenever the FAM registers an event.
@@ -263,14 +261,11 @@ class DirectoryBacked(object):
     #: :attr:`patterns` or ``ignore``, then a warning will be produced.
     ignore = None
 
-    def __init__(self, data, fam):
+    def __init__(self, data):
         """
         :param data: The path to the data directory that will be
                      monitored
         :type data: string
-        :param fam: The FAM object used to receive notifications of
-                    changes
-        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
 
         .. -----
         .. autoattribute:: __child__
@@ -278,7 +273,7 @@ class DirectoryBacked(object):
         object.__init__(self)
 
         self.data = os.path.normpath(data)
-        self.fam = fam
+        self.fam = get_fam()
 
         #: self.entries contains information about the files monitored
         #: by this object. The keys of the dict are the relative
@@ -332,8 +327,7 @@ class DirectoryBacked(object):
         :returns: None
         """
         self.entries[relative] = self.__child__(os.path.join(self.data,
-                                                             relative),
-                                                self.fam)
+                                                             relative))
         self.entries[relative].HandleEvent(event)
 
     def HandleEvent(self, event):  # pylint: disable=R0912
@@ -454,13 +448,10 @@ class XMLFileBacked(FileBacked):
     #: behavior, set ``__identifier__`` to ``None``.
     __identifier__ = 'name'
 
-    def __init__(self, filename, fam=None, should_monitor=False):
+    def __init__(self, filename, should_monitor=False):
         """
         :param filename: The full path to the file to cache and monitor
         :type filename: string
-        :param fam: The FAM object used to receive notifications of
-                    changes
-        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
         :param should_monitor: Whether or not to monitor this file for
                                changes. It may be useful to disable
                                monitoring when, for instance, the file
@@ -473,7 +464,7 @@ class XMLFileBacked(FileBacked):
         .. -----
         .. autoattribute:: __identifier__
         """
-        FileBacked.__init__(self, filename, fam=fam)
+        FileBacked.__init__(self, filename)
 
         #: The raw XML data contained in the file as an
         #: :class:`lxml.etree.ElementTree` object, with XIncludes
@@ -494,7 +485,7 @@ class XMLFileBacked(FileBacked):
 
         #: Whether or not to monitor this file for changes.
         self.should_monitor = should_monitor
-        if fam and should_monitor:
+        if should_monitor:
             self.fam.AddMonitor(filename, self)
 
     def _follow_xincludes(self, fname=None, xdata=None):
@@ -553,7 +544,7 @@ class XMLFileBacked(FileBacked):
         :returns: None
         """
         self.extras.append(fpath)
-        if self.fam and self.should_monitor:
+        if self.should_monitor:
             self.fam.AddMonitor(fpath, self)
 
     def __iter__(self):
@@ -908,7 +899,7 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
         Generator.__init__(self)
-        XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
+        XMLDirectoryBacked.__init__(self, self.data)
     __init__.__doc__ = Plugin.__init__.__doc__
 
     def HandleEvent(self, event):
@@ -1478,6 +1469,8 @@ class GroupSpool(Plugin, Generator):
         if self.data[-1] == '/':
             self.data = self.data[:-1]
 
+        self.fam = get_fam()
+
         #: See :class:`Bcfg2.Server.Plugins.interfaces.Generator` for
         #: details on the Entries attribute.
         self.Entries[self.entry_type] = {}
@@ -1624,5 +1617,5 @@ class GroupSpool(Plugin, Generator):
             if not os.path.isdir(name):
                 self.logger.error("Failed to open directory %s" % name)
                 return
-            reqid = self.core.fam.AddMonitor(name, self)
+            reqid = self.fam.AddMonitor(name, self)
             self.handles[reqid] = relative

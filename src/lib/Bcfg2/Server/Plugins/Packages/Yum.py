@@ -59,6 +59,7 @@ import socket
 import logging
 import lxml.etree
 from subprocess import Popen, PIPE
+import Bcfg2.Server.FileMonitor
 import Bcfg2.Server.Plugin
 # pylint: disable=W0622
 from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
@@ -174,7 +175,7 @@ class PulpCertificateSet(Bcfg2.Server.Plugin.EntrySet):
     #: The path to certificates on consumer machines
     certpath = "/etc/pki/consumer/cert.pem"
 
-    def __init__(self, path, fam):
+    def __init__(self, path):
         """
         :param path: The path to the directory where Pulp consumer
                      certificates will be stored
@@ -192,7 +193,7 @@ class PulpCertificateSet(Bcfg2.Server.Plugin.EntrySet):
                              important='true',
                              sensitive='true',
                              paranoid=self.metadata['paranoid'])
-        self.fam = fam
+        self.fam = Bcfg2.Server.FileMonitor.get_fam().
         self.fam.AddMonitor(path, self)
 
     def HandleEvent(self, event):
@@ -271,9 +272,8 @@ class YumCollection(Collection):
     #: :class:`PulpCertificateSet` object used to handle Pulp certs
     pulp_cert_set = None
 
-    def __init__(self, metadata, sources, cachepath, basepath, fam,
-                 debug=False):
-        Collection.__init__(self, metadata, sources, cachepath, basepath, fam,
+    def __init__(self, metadata, sources, cachepath, basepath, debug=False):
+        Collection.__init__(self, metadata, sources, cachepath, basepath,
                             debug=debug)
         self.keypath = os.path.join(self.cachepath, "keys")
 
@@ -309,7 +309,7 @@ class YumCollection(Collection):
                         self.logger.error("Could not create Pulp consumer "
                                           "cert directory at %s: %s" %
                                           (certdir, err))
-                self.pulp_cert_set = PulpCertificateSet(certdir, self.fam)
+                self.pulp_cert_set = PulpCertificateSet(certdir)
 
     @property
     def __package_groups__(self):

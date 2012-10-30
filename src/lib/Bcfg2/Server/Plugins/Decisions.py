@@ -5,6 +5,7 @@ import os
 import sys
 import lxml.etree
 import Bcfg2.Server.Plugin
+import Bcfg2.Server.FileMonitor
 
 
 class DecisionFile(Bcfg2.Server.Plugin.SpecificData):
@@ -46,7 +47,7 @@ class Decisions(Bcfg2.Server.Plugin.EntrySet,
                                               DecisionFile,
                                               core.setup['encoding'])
         try:
-            core.fam.AddMonitor(self.data, self)
+            Bcfg2.Server.FileMonitor.get_fam().AddMonitor(self.data, self)
         except OSError:
             err = sys.exc_info()[1]
             msg = 'Adding filemonitor for %s failed: %s' % (self.data, err)
