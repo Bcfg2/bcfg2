@@ -693,13 +693,6 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
             # raises an appropriate exception
             return self._create_data(entry, metadata)
 
-        if entry.get('mode').lower() == 'inherit':
-            # use on-disk permissions
-            self.logger.warning("Cfg: %s: Use of mode='inherit' is deprecated"
-                                % entry.get("name"))
-            fname = os.path.join(self.path, generator.name)
-            entry.set('mode',
-                      oct_mode(stat.S_IMODE(os.stat(fname).st_mode)))
         try:
             return generator.get_data(entry, metadata)
         except:
