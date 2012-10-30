@@ -134,8 +134,8 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
 
 
 def add_console_handler(level=logging.DEBUG):
-    """Add a logging handler that logs at a level to sys.stdout."""
-    console = logging.StreamHandler(sys.stdout)
+    """ Add a logging handler that logs at a level to sys.stderr """
+    console = logging.StreamHandler(sys.stderr)
     console.setLevel(level)
     # tell the handler to use this format
     console.setFormatter(TermiosFormatter())
