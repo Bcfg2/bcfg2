@@ -252,6 +252,16 @@ E.G. 1.2.0pre1 is a valid version.
                          version_info['build'],
                      startswith=True,
                      dryrun=options.dryrun)
+    find_and_replace('misc/bcfg2.spec', 'BuildRoot',
+                     'BuildRoot:        %%{_tmppath}/%%{name}-%%{version}%s-%%{release}-root-%%(%%{__id_u} -n)\n' %
+                         version_info['build'],
+                     startswith=True,
+                     dryrun=options.dryrun)
+    find_and_replace('misc/bcfg2-selinux.spec', 'BuildRoot',
+                     'BuildRoot:        %%{_tmppath}/%%{name}-%%{version}%s-%%{release}-root-%%(%%{__id_u} -n)\n' %
+                         version_info['build'],
+                     startswith=True,
+                     dryrun=options.dryrun)
     # fix pre problem noted in
     # http://trac.mcs.anl.gov/projects/bcfg2/ticket/1129
     find_and_replace('misc/bcfg2.spec',
