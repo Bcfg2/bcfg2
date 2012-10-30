@@ -13,10 +13,6 @@
   <xsd:import namespace="http://genshi.edgewall.org/"
               schemaLocation="genshi.xsd"/>
 
-  <xsd:complexType name='PostInstallType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-  </xsd:complexType>
-
   <xsd:group name="rulesElements">
     <xsd:choice>
       <xsd:group ref="py:genshiElements"/>
@@ -123,15 +119,6 @@
         <xsd:annotation>
           <xsd:documentation>
             Fully bound description of a POSIXGroup entry.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-      <xsd:element name='PostInstall' type='PostInstallType'>
-        <xsd:annotation>
-          <xsd:documentation>
-            PostInstall entries are deprecated in favor of Action
-            entries. Actions can do everything PostInstall entries can
-            do and more.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>

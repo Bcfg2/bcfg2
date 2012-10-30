@@ -205,7 +205,7 @@ real ``/etc/motd`` file to that location, run the client again, and
 you will find that we now have a correct entry::
 
     Loaded tool drivers:
-     Chkconfig    POSIX        PostInstall  RPM
+     Chkconfig    POSIX     Action   RPM
 
     Phase: initial
     Correct entries:        1

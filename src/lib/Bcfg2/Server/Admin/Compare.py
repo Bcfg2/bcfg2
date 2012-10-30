@@ -22,8 +22,7 @@ class Compare(Bcfg2.Server.Admin.Mode):
                           'Service': ['name', 'type', 'status', 'mode',
                                       'target', 'sequence', 'parameters'],
                           'Action': ['name', 'timing', 'when', 'status',
-                                     'command'],
-                          'PostInstall': ['name']
+                                     'command']
                           }
 
     def compareStructures(self, new, old):
