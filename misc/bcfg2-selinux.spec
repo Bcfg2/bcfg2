@@ -25,12 +25,7 @@ Conflicts:        selinux-policy = 3.11.1
 License:          BSD
 URL:              http://bcfg2.org
 Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-%{version}.tar.gz
-%if 0%{?suse_version}
-# SUSEs OBS does not understand the id macro below.
-BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}
-%else
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-%endif
 BuildArch:        noarch
 
 BuildRequires:    checkpolicy, selinux-policy-devel, hardlink

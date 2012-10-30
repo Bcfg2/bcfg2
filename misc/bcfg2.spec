@@ -18,12 +18,7 @@ Group:            Applications/System
 License:          BSD
 URL:              http://bcfg2.org
 Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}.tar.gz
-%if 0%{?suse_version}
-# SUSEs OBS does not understand the id macro below.
-BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}
-%else
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-%endif
 BuildArch:        noarch
 
 BuildRequires:    python-devel
