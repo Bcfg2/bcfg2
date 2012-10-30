@@ -256,7 +256,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     self.skn = False
                 return
 
-        if event.filename in ['info', 'info.xml', ':info']:
+        if event.filename == 'info.xml':
             for entry in list(self.entries.values()):
                 entry.handle_event(event)
             return

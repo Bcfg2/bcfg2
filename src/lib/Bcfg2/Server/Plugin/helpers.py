@@ -31,17 +31,6 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 
-#: a compiled regular expression for parsing info and :info files
-INFO_REGEX = re.compile('owner:(\s)*(?P<owner>\S+)|' +
-                        'group:(\s)*(?P<group>\S+)|' +
-                        'mode:(\s)*(?P<mode>\w+)|' +
-                        'secontext:(\s)*(?P<secontext>\S+)|' +
-                        'paranoid:(\s)*(?P<paranoid>\S+)|' +
-                        'sensitive:(\s)*(?P<sensitive>\S+)|' +
-                        'encoding:(\s)*(?P<encoding>\S+)|' +
-                        'important:(\s)*(?P<important>\S+)|' +
-                        'mtime:(\s)*(?P<mtime>\w+)|')
-
 
 def default_path_metadata():
     """ Get the default Path entry metadata from the config.
@@ -1296,7 +1285,7 @@ class EntrySet(Debuggable):
         """
         action = event.code2str()
 
-        if event.filename in ['info', 'info.xml', ':info']:
+        if event.filename == 'info.xml':
             if action in ['exists', 'created', 'changed']:
                 self.update_metadata(event)
             elif action == 'deleted':
@@ -1401,8 +1390,8 @@ class EntrySet(Debuggable):
         return Specificity(**kwargs)
 
     def update_metadata(self, event):
-        """ Process changes to or creation of info, :info, and
-        info.xml files for the EntrySet.
+        """ Process changes to or creation of info.xml files for the
+        EntrySet.
 
         :param event: An event that applies to an info handled by this
                       EntrySet
@@ -1414,24 +1403,9 @@ class EntrySet(Debuggable):
             if not self.infoxml:
                 self.infoxml = InfoXML(fpath)
             self.infoxml.HandleEvent(event)
-        elif event.filename in [':info', 'info']:
-            for line in open(fpath).readlines():
-                match = INFO_REGEX.match(line)
-                if not match:
-                    LOGGER.warning("Failed to match line in %s: %s" % (fpath,
-                                                                       line))
-                    continue
-                else:
-                    mgd = match.groupdict()
-                    for key, value in list(mgd.items()):
-                        if value:
-                            self.metadata[key] = value
-                    if len(self.metadata['mode']) == 3:
-                        self.metadata['mode'] = "0%s" % self.metadata['mode']
 
     def reset_metadata(self, event):
-        """ Reset metadata to defaults if info. :info, or info.xml are
-        removed.
+        """ Reset metadata to defaults if info.xml is removed.
 
         :param event: An event that applies to an info handled by this
                       EntrySet
@@ -1440,8 +1414,6 @@ class EntrySet(Debuggable):
         """
         if event.filename == 'info.xml':
             self.infoxml = None
-        elif event.filename in [':info', 'info']:
-            self.metadata = default_path_metadata()
 
     def bind_info_to_entry(self, entry, metadata):
         """ Shortcut to call :func:`bind_info` with the base

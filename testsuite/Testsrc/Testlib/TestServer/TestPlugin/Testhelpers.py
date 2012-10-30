@@ -1636,25 +1636,25 @@ class TestEntrySet(TestDebuggable):
             eset.reset_metadata.reset_mock()
             eset.entry_init.reset_mock()
 
-        for fname in ["info", "info.xml", ":info"]:
-            for evt in ["exists", "created", "changed"]:
-                reset()
-                event = Mock()
-                event.code2str.return_value = evt
-                event.filename = fname
-                eset.handle_event(event)
-                eset.update_metadata.assert_called_with(event)
-                self.assertFalse(eset.entry_init.called)
-                self.assertFalse(eset.reset_metadata.called)
-
+        fname = "info.xml"
+        for evt in ["exists", "created", "changed"]:
             reset()
             event = Mock()
-            event.code2str.return_value = "deleted"
+            event.code2str.return_value = evt
             event.filename = fname
             eset.handle_event(event)
-            eset.reset_metadata.assert_called_with(event)
+            eset.update_metadata.assert_called_with(event)
             self.assertFalse(eset.entry_init.called)
-            self.assertFalse(eset.update_metadata.called)
+            self.assertFalse(eset.reset_metadata.called)
+
+        reset()
+        event = Mock()
+        event.code2str.return_value = "deleted"
+        event.filename = fname
+        eset.handle_event(event)
+        eset.reset_metadata.assert_called_with(event)
+        self.assertFalse(eset.entry_init.called)
+        self.assertFalse(eset.update_metadata.called)
 
         for evt in ["exists", "created", "changed"]:
             reset()
@@ -1813,25 +1813,6 @@ class TestEntrySet(TestDebuggable):
         self.assertFalse(mock_InfoXML.called)
         eset.infoxml.HandleEvent.assert_called_with(event)
 
-        for fname in [':info', 'info']:
-            event = Mock()
-            event.filename = fname
-
-            idata = ["owner:owner",
-                     "group:             GROUP",
-                     "mode: 775",
-                     "important:     true",
-                     "bogus: line"]
-            mock_open.return_value.readlines.return_value = idata
-            eset.metadata = default_path_metadata()
-            eset.update_metadata(event)
-            expected = default_path_metadata()
-            expected['owner'] = 'owner'
-            expected['group'] = 'GROUP'
-            expected['mode'] = '0775'
-            expected['important'] = 'true'
-            self.assertItemsEqual(eset.metadata, expected)
-
     @patch("Bcfg2.Server.Plugin.helpers.default_path_metadata")
     def test_reset_metadata(self, mock_default_path_metadata):
         eset = self.get_obj()
@@ -1842,14 +1823,6 @@ class TestEntrySet(TestDebuggable):
         eset.infoxml = Mock()
         eset.reset_metadata(event)
         self.assertIsNone(eset.infoxml)
-
-        for fname in [':info', 'info']:
-            event = Mock()
-            event.filename = fname
-            eset.metadata = Mock()
-            eset.reset_metadata(event)
-            self.assertEqual(eset.metadata,
-                             mock_default_path_metadata.return_value)
 
     @patch("Bcfg2.Server.Plugin.helpers.bind_info")
     def test_bind_info_to_entry(self, mock_bind_info):

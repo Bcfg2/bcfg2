@@ -781,13 +781,6 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         badattr = [attr for attr in ['owner', 'group', 'mode']
                    if attr in new_entry]
         if badattr:
-            # check for info files and inform user of their removal
-            for ifile in ['info', ':info']:
-                info = os.path.join(self.path, ifile)
-                if os.path.exists(info):
-                    self.logger.info("Removing %s and replacing with info.xml"
-                                     % info)
-                    os.remove(info)
             metadata_updates = {}
             metadata_updates.update(self.metadata)
             for attr in badattr:
