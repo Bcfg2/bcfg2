@@ -867,26 +867,11 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
 
     def Run(self):
         for basename, entry in list(self.core.plugins['Cfg'].entries.items()):
-            self.check_delta(basename, entry)
             self.check_pubkey(basename, entry)
 
     @classmethod
     def Errors(cls):
-        return {"cat-file-used": "warning",
-                "diff-file-used": "warning",
-                "no-pubkey-xml": "warning"}
-
-    def check_delta(self, basename, entry):
-        """ check that no .cat or .diff files are in use """
-        for fname, handler in entry.entries.items():
-            path = handler.name
-            if self.HandlesFile(path) and isinstance(handler, CfgFilter):
-                extension = fname.split(".")[-1]
-                if extension in ["cat", "diff"]:
-                    self.LintError("%s-file-used" % extension,
-                                   "%s file used on %s: %s" % (extension,
-                                                               basename,
-                                                               fname))
+        return {"no-pubkey-xml": "warning"}
 
     def check_pubkey(self, basename, entry):
         """ check that privkey.xml files have corresponding pubkey.xml
