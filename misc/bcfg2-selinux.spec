@@ -70,7 +70,7 @@ deployment strategies.
 This package includes the Bcfg2 server and client SELinux policy.
 
 %prep
-%setup -q -n bcfg2-%{version}
+%setup -q -n %{name}-%{version}
 
 %build
 cd redhat/selinux

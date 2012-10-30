@@ -137,14 +137,13 @@ E.G. 1.2.0pre1 is a valid version.
     tarname = '/tmp/%s-%s.tar.gz' % (pkgname, version)
 
     newchangelog = \
-"""bcfg2 (%s%s-0.0) unstable; urgency=low
+"""bcfg2 (%s-0.0) unstable; urgency=low
 
   * New upstream release
 
  -- %s <%s>  %s
 
-""" % (version_release,
-       version_info['build'],
+""" % (version,
        name,
        email,
        formatdate(localtime=True))
@@ -174,7 +173,7 @@ E.G. 1.2.0pre1 is a valid version.
     # write out the new RPM changelog
     specs = ["misc/bcfg2.spec", "redhat/bcfg2.spec.in"]
     if options.dryrun:
-        print("*** Add the following to the top of the %changelog section in %s:\n%s\n"
+        print("*** Add the following to the top of the %%changelog section in %s:\n%s\n"
               % (rpmchangelog, " and ".join(specs)))
     else:
         for fname in specs:
@@ -197,7 +196,7 @@ E.G. 1.2.0pre1 is a valid version.
 
     # Update redhat directory versions
     if options.dryrun:
-        print("*** Replace redhat/VERIONS content with '%s'."
+        print("*** Replace redhat/VERSIONS content with '%s'."
               % version_release)
         print("*** Replace redhat/RELEASE content with '%s'."
               % version_info['build'])
@@ -230,12 +229,40 @@ E.G. 1.2.0pre1 is a valid version.
                      '__version__ =',
                      '__version__ = "%s"\n' % version,
                      dryrun=options.dryrun)
-    # replace version in misc/bcfg2.spec
+    # replace version in misc/bcfg2.spec and misc/bcfg2-selinux.spec
     find_and_replace('misc/bcfg2.spec', 'Version:',
+                     'Version:          %s\n' % version_release,
+                     dryrun=options.dryrun)
+    find_and_replace('misc/bcfg2-selinux.spec', 'Version:',
                      'Version:          %s\n' % version_release,
                      dryrun=options.dryrun)
     find_and_replace('misc/bcfg2.spec', 'Release: ',
                      'Release:          0.0%s\n' % version_info['build'],
+                     dryrun=options.dryrun)
+    find_and_replace('misc/bcfg2-selinux.spec', 'Release: ',
+                     'Release:          0.0%s\n' % version_info['build'],
+                     dryrun=options.dryrun)
+    find_and_replace('misc/bcfg2.spec', '%setup',
+                     '%%setup -q -n %%{name}-%%{version}%s\n' %
+                         version_info['build'],
+                     startswith=True,
+                     dryrun=options.dryrun)
+    find_and_replace('misc/bcfg2-selinux.spec', '%setup',
+                     '%%setup -q -n %%{name}-%%{version}%s\n' %
+                         version_info['build'],
+                     startswith=True,
+                     dryrun=options.dryrun)
+    # fix pre problem noted in
+    # http://trac.mcs.anl.gov/projects/bcfg2/ticket/1129
+    find_and_replace('misc/bcfg2.spec',
+                     'Source0',
+                     'Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%%{name}-%%{version}%s.tar.gz\n' % version_info["build"],
+                     startswith=True,
+                     dryrun=options.dryrun)
+    find_and_replace('misc/bcfg2-selinux.spec',
+                     'Source0',
+                     'Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%%{name}-%%{version}%s.tar.gz\n' % version_info["build"],
+                     startswith=True,
                      dryrun=options.dryrun)
     # update the version in reports
     find_and_replace('src/lib/Bcfg2/Reporting/templates/base.html',
