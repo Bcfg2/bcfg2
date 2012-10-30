@@ -2,7 +2,7 @@
 
 import re
 
-__version__ = "1.3.0pre1"
+__version__ = "1.3.0pre2"
 
 
 class Bcfg2VersionInfo(tuple):

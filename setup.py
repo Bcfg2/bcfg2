@@ -130,7 +130,7 @@ if need_m2crypto:
 
 setup(cmdclass=cmdclass,
       name="Bcfg2",
-      version="1.3.0pre1",
+      version="1.3.0pre2",
       description="Bcfg2 Server",
       author="Narayan Desai",
       author_email="desai@mcs.anl.gov",

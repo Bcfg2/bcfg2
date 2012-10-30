@@ -6,7 +6,7 @@
 
 Name:             bcfg2
 Version:          1.3.0
-Release:          0.2pre1
+Release:          0.0pre2
 Summary:          Configuration management system
 
 %if 0%{?suse_version}
@@ -17,8 +17,8 @@ Group:            Applications/System
 %endif
 License:          BSD
 URL:              http://bcfg2.org
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}.tar.gz
-BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}pre2.tar.gz
+BuildRoot:        %{_tmppath}/%{name}-%{version}pre2-%{release}-root-%(%{__id_u} -n)
 BuildArch:        noarch
 
 BuildRequires:    python-devel
@@ -267,7 +267,7 @@ deployment strategies.
 This package includes the Bcfg2 reports web frontend.
 
 %prep
-%setup -q -n %{name}-%{version}
+%setup -q -n %{name}-%{version}pre2
 
 %build
 %{__python}%{pythonversion} setup.py build
@@ -445,6 +445,9 @@ fi
 %endif
 
 %changelog
+* Tue Oct 30 2012 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0pre2
+- New upstream release
+
 * Wed Oct 17 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.3.0-0.2pre1
 - Split bcfg2-selinux into its own specfile
 
