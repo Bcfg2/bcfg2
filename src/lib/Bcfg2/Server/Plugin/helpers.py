@@ -11,8 +11,8 @@ import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Options
 import Bcfg2.Statistics
+import Bcfg2.Server.FileMonitor
 from Bcfg2.Compat import CmpMixin, wraps
-from Bcfg2.Server.FileMonitor import get_fam
 from Bcfg2.Server.Plugin.base import Debuggable, Plugin
 from Bcfg2.Server.Plugin.interfaces import Generator
 from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
@@ -208,7 +208,7 @@ class FileBacked(object):
         self.name = name
 
         #: The FAM object used to receive notifications of changes
-        self.fam = get_fam()
+        self.fam = Bcfg2.Server.FileMonitor.get_fam()
 
     def HandleEvent(self, event=None):
         """ HandleEvent is called whenever the FAM registers an event.
@@ -273,7 +273,7 @@ class DirectoryBacked(object):
         object.__init__(self)
 
         self.data = os.path.normpath(data)
-        self.fam = get_fam()
+        self.fam = Bcfg2.Server.FileMonitor.get_fam()
 
         #: self.entries contains information about the files monitored
         #: by this object. The keys of the dict are the relative
@@ -809,8 +809,8 @@ class XMLSrc(XMLFileBacked):
     __cacheobj__ = dict
     __priority_required__ = True
 
-    def __init__(self, filename, fam=None, should_monitor=False):
-        XMLFileBacked.__init__(self, filename, fam, should_monitor)
+    def __init__(self, filename, should_monitor=False):
+        XMLFileBacked.__init__(self, filename, should_monitor)
         self.items = {}
         self.cache = None
         self.pnode = None
@@ -1469,7 +1469,7 @@ class GroupSpool(Plugin, Generator):
         if self.data[-1] == '/':
             self.data = self.data[:-1]
 
-        self.fam = get_fam()
+        self.fam = Bcfg2.Server.FileMonitor.get_fam()
 
         #: See :class:`Bcfg2.Server.Plugins.interfaces.Generator` for
         #: details on the Entries attribute.

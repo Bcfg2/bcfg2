@@ -5,6 +5,7 @@ import copy
 import logging
 import Bcfg2.Options
 import Bcfg2.Server.Plugins
+from Bcfg2.Compat import walk_packages
 from django.db import models
 
 LOGGER = logging.getLogger('Bcfg2.Server.models')
@@ -21,7 +22,18 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
         # namely, _all_ plugins, so that the database is guaranteed to
         # work, even if /etc/bcfg2.conf isn't set up properly
         plugin_opt = copy.deepcopy(Bcfg2.Options.SERVER_PLUGINS)
-        plugin_opt.default = Bcfg2.Server.Plugins.__all__
+        all_plugins = []
+        for submodule in walk_packages(path=Bcfg2.Server.Plugins.__path__,
+                                       prefix="Bcfg2.Server.Plugins."):
+            module = submodule[1].rsplit('.', 1)[-1]
+            if submodule[1] == "Bcfg2.Server.Plugins.%s" % module:
+                # we only include direct children of
+                # Bcfg2.Server.Plugins -- e.g., all_plugins should
+                # include Bcfg2.Server.Plugins.Cfg, but not
+                # Bcfg2.Server.Plugins.Cfg.CfgInfoXML
+                all_plugins.append(module)
+        plugin_opt.default = all_plugins
+
         setup = Bcfg2.Options.get_option_parser()
         setup.add_option("plugins", plugin_opt)
         setup.add_option("configfile", Bcfg2.Options.CFILE)

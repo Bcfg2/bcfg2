@@ -114,10 +114,10 @@ class TestFileBacked(Bcfg2TestCase):
     test_obj = FileBacked
     path = os.path.join(datastore, "test")
 
-    def get_obj(self, path=None, fam=None):
+    def get_obj(self, path=None):
         if path is None:
             path = self.path
-        return self.test_obj(path, fam=fam)
+        return self.test_obj(path)
 
     @patch("%s.open" % builtins)
     def test_HandleEvent(self, mock_open):
@@ -163,24 +163,20 @@ class TestDirectoryBacked(Bcfg2TestCase):
         """ ensure that the child object has the correct interface """
         self.assertTrue(hasattr(self.test_obj.__child__, "HandleEvent"))
 
-    def get_obj(self, fam=None):
-        if fam is None:
-            fam = Mock()
-
+    def get_obj(self):
         @patch("%s.%s.add_directory_monitor" % (self.test_obj.__module__,
                                                 self.test_obj.__name__),
                Mock())
         def inner():
             return self.test_obj(os.path.join(datastore,
-                                              self.test_obj.__name__),
-                                 fam)
+                                              self.test_obj.__name__))
         return inner()
 
     def test__init(self):
         @patch("%s.%s.add_directory_monitor" % (self.test_obj.__module__,
                                                 self.test_obj.__name__))
         def inner(mock_add_monitor):
-            db = self.test_obj(datastore, Mock())
+            db = self.test_obj(datastore)
             mock_add_monitor.assert_called_with('')
 
         inner()
@@ -249,10 +245,9 @@ class TestDirectoryBacked(Bcfg2TestCase):
         db.fam = Mock()
 
         class MockChild(Mock):
-            def __init__(self, path, fam, **kwargs):
+            def __init__(self, path, **kwargs):
                 Mock.__init__(self, **kwargs)
                 self.path = path
-                self.fam = fam
                 self.HandleEvent = Mock()
         db.__child__ = MockChild
 
@@ -262,7 +257,6 @@ class TestDirectoryBacked(Bcfg2TestCase):
             self.assertIn(path, db.entries)
             self.assertEqual(db.entries[path].path,
                              os.path.join(db.data, path))
-            self.assertEqual(db.entries[path].fam, db.fam)
             db.entries[path].HandleEvent.assert_called_with(event)
 
     @patch("os.path.isdir")
@@ -400,27 +394,27 @@ class TestXMLFileBacked(TestFileBacked):
     should_monitor = None
     path = os.path.join(datastore, "test", "test1.xml")
 
-    def get_obj(self, path=None, fam=None, should_monitor=False):
+    def get_obj(self, path=None, should_monitor=False):
         if path is None:
             path = self.path
-        return self.test_obj(path, fam=fam, should_monitor=should_monitor)
+        return self.test_obj(path, should_monitor=should_monitor)
 
-    def test__init(self):
-        fam = Mock()
+    @patch("Bcfg2.Server.FileMonitor.get_fam")
+    def test__init(self, mock_get_fam):
         xfb = self.get_obj()
         if self.should_monitor is True:
-            self.assertIsNotNone(xfb.fam)
+            self.assertEqual(xfb.fam, mock_get_fam.return_value)
         else:
             self.assertIsNone(xfb.fam)
 
         if self.should_monitor is not True:
-            xfb = self.get_obj(fam=fam)
-            self.assertFalse(fam.AddMonitor.called)
+            xfb = self.get_obj()
+            self.assertFalse(xfb.fam.AddMonitor.called)
 
         if self.should_monitor is not False:
             fam.reset_mock()
-            xfb = self.get_obj(fam=fam, should_monitor=True)
-            fam.AddMonitor.assert_called_with(self.path, xfb)
+            xfb = self.get_obj(should_monitor=True)
+            xfb.fam.AddMonitor.assert_called_with(self.path, xfb)
 
     @patch("os.path.exists")
     @patch("lxml.etree.parse")
@@ -568,6 +562,7 @@ class TestXMLFileBacked(TestFileBacked):
         test3 = lxml.etree.Element("Test", name="test3")
         replacements = {"/test/test2.xml": test2,
                         "/test/test_dir/test3.xml": test3}
+
         def xinclude():
             for el in xfb.xdata.findall('//%sinclude' %
                                         Bcfg2.Server.XI_NAMESPACE):
@@ -585,25 +580,25 @@ class TestXMLFileBacked(TestFileBacked):
         self.assertItemsEqual([tostring(e) for e in xfb.entries],
                               [tostring(e) for e in children])
 
+    @patch("Bcfg2.Server.FileMonitor.get_fam", Mock())
     def test_add_monitor(self):
         xfb = self.get_obj()
         xfb.add_monitor("/test/test2.xml")
         self.assertIn("/test/test2.xml", xfb.extras)
 
-        fam = Mock()
         if self.should_monitor is not True:
             fam.reset_mock()
-            xfb = self.get_obj(fam=fam)
-            fam.reset_mock()
+            xfb = self.get_obj()
+            xfb.fam = Mock()
             xfb.add_monitor("/test/test3.xml")
-            self.assertFalse(fam.AddMonitor.called)
+            self.assertFalse(xfb.fam.AddMonitor.called)
             self.assertIn("/test/test3.xml", xfb.extras)
 
         if self.should_monitor is not False:
-            fam.reset_mock()
-            xfb = self.get_obj(fam=fam, should_monitor=True)
+            xfb = self.get_obj(should_monitor=True)
+            xfb.fam = Mock()
             xfb.add_monitor("/test/test4.xml")
-            fam.AddMonitor.assert_called_with("/test/test4.xml", xfb)
+            xfb.fam.AddMonitor.assert_called_with("/test/test4.xml", xfb)
             self.assertIn("/test/test4.xml", xfb.extras)
 
 
@@ -2071,6 +2066,3 @@ class TestGroupSpool(TestPlugin, TestGenerator):
         gs.event_id.assert_called_with(event)
         self.assertNotIn("/baz/quux", gs.entries)
         self.assertNotIn("/baz/quux", gs.Entries[gs.entry_type])
-
-
-

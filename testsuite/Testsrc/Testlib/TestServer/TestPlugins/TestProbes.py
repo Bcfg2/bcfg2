@@ -16,7 +16,6 @@ while path != "/":
         break
     path = os.path.dirname(path)
 from common import *
-from Bcfg2.Server.FileMonitor import _FAM
 from Bcfg2.Server.Plugins.Probes import *
 from TestPlugin import TestEntrySet, TestProbing, TestConnector, \
     TestDatabaseBacked
@@ -101,14 +100,11 @@ class TestProbeSet(TestEntrySet):
         rv.entry_type = MagicMock()
         return rv
 
-    def test__init(self):
-        fam = Bcfg2.Server.FileMonitor._FAM
-        Bcfg2.Server.FileMonitor._FAM = Mock()
+    @patch("Bcfg2.Server.FileMonitor.get_fam")
+    def test__init(self, mock_get_fam):
         ps = self.get_obj()
         self.assertEqual(ps.plugin_name, "Probes")
-        Bcfg2.Server.FileMonitor._FAM.AddMonitor.assert_called_with(datastore,
-                                                                    ps)
-        Bcfg2.Server.FileMonitor._FAM = fam
+        mock_get_fam.return_value.AddMonitor.assert_called_with(datastore, ps)
         TestEntrySet.test__init(self)
 
     def test_HandleEvent(self):
@@ -258,9 +254,6 @@ text
     def test__init(self):
         mock_load_data = Mock()
         probes = self.get_probes_object(load_data=mock_load_data)
-        _FAM.AddMonitor.assert_called_with(os.path.join(datastore,
-                                                        probes.name),
-                                           probes.probes)
         mock_load_data.assert_any_call()
         self.assertEqual(probes.probedata, ClientProbeDataSet())
         self.assertEqual(probes.cgroups, dict())

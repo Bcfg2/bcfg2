@@ -14,8 +14,7 @@ from Bcfg2.Options import get_option_parser
 try:
     import genshi.core
     import genshi.input
-    from genshi.template import TemplateLoader, \
-                                TextTemplate, MarkupTemplate, TemplateError
+    from genshi.template import TemplateLoader, MarkupTemplate, TemplateError
     HAS_GENSHI = True
 except ImportError:
     HAS_GENSHI = False
@@ -55,6 +54,7 @@ if HAS_GENSHI:
             Bcfg2.Server.Plugin.StructFile.__init__(self, name)
             self.encoding = encoding
             self.logger = logging.getLogger(name)
+            self.template = None
 
         def HandleEvent(self, event=None):
             """Handle all fs events for this template."""
@@ -62,22 +62,20 @@ if HAS_GENSHI:
                 return
             try:
                 loader = TemplateLoader()
-                try:
-                    self.template = loader.load(self.name,
-                                                cls=MarkupTemplate,
-                                                encoding=self.encoding)
-                except LookupError:
-                    err = sys.exc_info()[1]
-                    self.logger.error('Genshi lookup error in %s: %s' %
-                                      (self.name, err))
-                except TemplateError:
-                    err = sys.exc_info()[1]
-                    self.logger.error('Genshi template error in %s: %s' %
-                                      (self.name, err))
-                except genshi.input.ParseError:
-                    err = sys.exc_info()[1]
-                    self.logger.error('Genshi parse error in %s: %s' %
-                                      (self.name, err))
+                self.template = loader.load(self.name, cls=MarkupTemplate,
+                                            encoding=self.encoding)
+            except LookupError:
+                err = sys.exc_info()[1]
+                self.logger.error('Genshi lookup error in %s: %s' %
+                                  (self.name, err))
+            except TemplateError:
+                err = sys.exc_info()[1]
+                self.logger.error('Genshi template error in %s: %s' %
+                                  (self.name, err))
+            except genshi.input.ParseError:
+                err = sys.exc_info()[1]
+                self.logger.error('Genshi parse error in %s: %s' %
+                                  (self.name, err))
 
         def get_xml_value(self, metadata):
             """ get the rendered XML data that applies to the given

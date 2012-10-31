@@ -193,7 +193,7 @@ class PulpCertificateSet(Bcfg2.Server.Plugin.EntrySet):
                              important='true',
                              sensitive='true',
                              paranoid=self.metadata['paranoid'])
-        self.fam = Bcfg2.Server.FileMonitor.get_fam().
+        self.fam = Bcfg2.Server.FileMonitor.get_fam()
         self.fam.AddMonitor(path, self)
 
     def HandleEvent(self, event):
