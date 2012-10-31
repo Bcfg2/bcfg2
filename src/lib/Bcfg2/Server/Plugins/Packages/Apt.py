@@ -47,10 +47,6 @@ class AptCollection(Collection):
 class AptSource(Source):
     """ Handle APT sources """
 
-    #: :ref:`server-plugins-generators-packages-magic-groups` for
-    #: ``AptSource`` are "apt", "debian", "ubuntu", and "nexenta"
-    basegroups = ['apt', 'debian', 'ubuntu', 'nexenta']
-
     #: AptSource sets the ``type`` on Package entries to "deb"
     ptype = 'deb'
 

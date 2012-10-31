@@ -933,10 +933,6 @@ class YumCollection(Collection):
 class YumSource(Source):
     """ Handle yum sources """
 
-    #: :ref:`server-plugins-generators-packages-magic-groups` for
-    #: ``YumSource`` are "yum", "redhat", "centos", and "fedora"
-    basegroups = ['yum', 'redhat', 'centos', 'fedora']
-
     #: YumSource sets the ``type`` on Package entries to "yum"
     ptype = 'yum'
 

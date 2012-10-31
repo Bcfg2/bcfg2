@@ -28,10 +28,6 @@ class PacCollection(Collection):
 class PacSource(Source):
     """ Handle Pacman sources """
 
-    #: :ref:`server-plugins-generators-packages-magic-groups` for
-    #: ``PacSource`` are "arch" and "parabola"
-    basegroups = ['arch', 'parabola']
-
     #: PacSource sets the ``type`` on Package entries to "pacman"
     ptype = 'pacman'
 

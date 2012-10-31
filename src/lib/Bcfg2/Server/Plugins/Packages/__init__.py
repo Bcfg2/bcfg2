@@ -64,14 +64,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             # create key directory if needed
             os.makedirs(self.keypath)
 
-        # warn about deprecated magic groups
-        if self.core.setup.cfp.getboolean("packages", "magic_groups",
-                                          default=False):
-            self.logger.warning("Packages: Magic groups are deprecated and "
-                                "will be removed in a future release")
-            self.logger.warning("You can disable magic groups by setting "
-                                "magic_groups=0 in [packages] in bcfg2.conf")
-
         # pylint: disable=C0301
         #: The
         #: :class:`Bcfg2.Server.Plugins.Packages.PackagesSources.PackagesSources`
@@ -230,13 +222,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
         """
         if entry.tag == 'Package':
-            if self.core.setup.cfp.getboolean("packages", "magic_groups",
-                                              default=False):
-                collection = self.get_collection(metadata)
-                if collection.magic_groups_match():
-                    return True
-            else:
-                return True
+            return True
         elif entry.tag == 'Path':
             # managed entries for yum/apt configs
             if (entry.get("name") == \

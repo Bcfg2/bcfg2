@@ -201,19 +201,6 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         return sorted(list(set(groups)))
 
     @property
-    def basegroups(self):
-        """ Get a list of group names used by this Collection type in
-        resolution of
-        :ref:`server-plugins-generators-packages-magic-groups`.
-
-        The base implementation simply aggregates the results of
-        :attr:`Bcfg2.Server.Plugins.Packages.Source.Source.basegroups`."""
-        groups = set()
-        for source in self:
-            groups.update(source.basegroups)
-        return list(groups)
-
-    @property
     def cachefiles(self):
         """ A list of the full path to all cachefiles used by this
         collection.
@@ -382,20 +369,6 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         """
         for source in self:
             source.filter_unknown(unknown)
-
-    def magic_groups_match(self):
-        """ Returns True if the client's
-        :ref:`server-plugins-generators-packages-magic-groups` match
-        the magic groups for any of the sources contained in this
-        Collection.
-
-        The base implementation returns True if any source
-        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.magic_groups_match`
-        returns True.
-
-        :returns: bool
-        """
-        return any(s.magic_groups_match(self.metadata) for s in self)
 
     def build_extra_structures(self, independent):
         """ Add additional entries to the ``<Independent/>`` section

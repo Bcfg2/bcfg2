@@ -176,7 +176,7 @@ First, replace **Pkgmgr** with **Packages** in the plugins
 line of ``bcfg2.conf``. Then create Packages layout (as per
 :ref:`packages-exampleusage`) in ``/var/lib/bcfg2``
 
-.. note:: I am using the RawURL syntax here since we are using `mrepo`_
+.. note:: I am using the rawurl syntax here since we are using `mrepo`_
           to manage our yum mirrors.
 
 .. _mrepo: http://dag.wieers.com/home-made/mrepo/
@@ -184,43 +184,36 @@ line of ``bcfg2.conf``. Then create Packages layout (as per
 .. code-block:: xml
 
     <Sources>
-            <!-- CentOS (5.4) sources -->
-            <YUMSource>
-                    <Group>centos-5.4</Group>
-                    <RawURL>http://mrepo/centos5-x86_64/RPMS.os</RawURL>
-                    <Arch>x86_64</Arch>
-            </YUMSource>
-            <YUMSource>
-                    <Group>centos-5.4</Group>
-                    <RawURL>http://mrepo/centos5-x86_64/RPMS.updates</RawURL>
-                    <Arch>x86_64</Arch>
-            </YUMSource>
-            <YUMSource>
-                    <Group>centos-5.4</Group>
-                    <RawURL>http://mrepo/centos5-x86_64/RPMS.extras</RawURL>
-                    <Arch>x86_64</Arch>
-            </YUMSource>
+        <Group name="centos5">
+            <!-- CentOS 5 sources -->
+            <Source type="yum"
+                    rawurl="http://mrepo/centos5-x86_64/RPMS.os">
+                <Arch>x86_64</Arch>
+            </Source>
+            <Source type="yum"
+                    rawurl="http://mrepo/centos5-x86_64/RPMS.updates">
+                <Arch>x86_64</Arch>
+            </Source>
+            <Source type="yum"
+                    rawurl="http://mrepo/centos5-x86_64/RPMS.extras">
+                <Arch>x86_64</Arch>
+            </Source>
+        </Group>
     </Sources>
 
-Due to the :ref:`server-plugins-generators-packages-magic-groups`,
-we need to modify our Metadata. Let's add a **centos5.4** group which
-inherits a **centos** group (this should replace the existing **redhat**
-group) present in ``/var/lib/bcfg2/Metadata/groups.xml``. The resulting
-file should look something like this
-
-.. note::
-
-    The reason we are creating a release-specific group in this case is
-    that the YUMSource above is specific to the 5.4 release of centos.
-    That is, it should not apply to other releases (5.1, 5.3, etc).
+To make these sources apply to our centos 5 clients, we need to modify
+our Metadata. Let's add a **centos5** group which inherits a
+**centos** group (this should replace the existing **redhat** group)
+present in ``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file
+should look something like this
 
 .. code-block:: xml
 
     <Groups version='3.0'>
        <Group profile='true' public='true' default='true' name='basic'>
-          <Group name='centos-5.4'/>
+          <Group name='centos-5'/>
        </Group>
-       <Group name='centos-5.4'>
+       <Group name='centos-5'>
           <Group name='centos'/>
        </Group>
        <Group name='ubuntu'/>
@@ -277,7 +270,7 @@ profile group might look something like this
 
     <Group profile='true' public='true' default='true' name='basic'>
        <Bundle name='base-packages'/>
-       <Group name='centos5.4'/>
+       <Group name='centos5'/>
     </Group>
 
 Now if we run the client, we can see what this has done for us.::

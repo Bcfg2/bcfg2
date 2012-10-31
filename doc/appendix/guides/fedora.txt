@@ -209,8 +209,10 @@ near your location according the `Mirror list`_ .
 .. code-block:: xml
 
 	<Sources>
-	    <Group name="fedora-13">
-	        <Source type="yum" url="ftp://fedora.tu-chemnitz.de/pub/linux/fedora/linux/releases/" version="13">
+	    <Group name="fedora13">
+	        <Source type="yum"
+                        url="ftp://fedora.tu-chemnitz.de/pub/linux/fedora/linux/releases/"
+                        version="13">
 	            <Component>Fedora</Component>
 	            <Arch>i386</Arch>
 	            <Arch>x86_64</Arch>
@@ -219,11 +221,11 @@ near your location according the `Mirror list`_ .
 	</Sources>
 
 
-Due to the :ref:`server-plugins-generators-packages-magic-groups`,
-we need to modify our Metadata. Let's add a **fedora13** group which
-inherits a **fedora** group (this should replace the existing **redhat**
-group) present in ``/var/lib/bcfg2/Metadata/groups.xml``. The resulting
-file should look something like this
+In order to make these sources apply to our clients, we need to modify
+our Metadata. Let's add a **fedora13** group which inherits a
+**fedora** group (this should replace the existing **redhat** group)
+present in ``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file
+should look something like this
 
 .. note::
 

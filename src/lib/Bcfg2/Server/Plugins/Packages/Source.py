@@ -27,7 +27,6 @@ in your ``Source`` subclass:
 
 * :func:`Source.urls`
 * :func:`Source.read_files`
-* :attr:`Source.basegroups`
 
 Additionally, you may want to consider overriding the following
 methods and attributes:
@@ -105,11 +104,6 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
     consistent, and to make it trivial for other backends to support
     those features.
     """
-
-    #: The list of
-    #: :ref:`server-plugins-generators-packages-magic-groups` that
-    #: make sources of this type available to clients.
-    basegroups = []
 
     #: The Package type handled by this Source class.  The ``type``
     #: attribute of Package entries will be set to the value ``ptype``
@@ -304,8 +298,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         :return: list of strings - group names
         """
         return sorted(list(set([g for g in metadata.groups
-                                if (g in self.basegroups or
-                                    g in self.groups or
+                                if (g in self.groups or
                                     g in self.arches)])))
 
     def load_state(self):
@@ -632,16 +625,15 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
 
     def applies(self, metadata):
         """ Return true if this source applies to the given client,
-        i.e., the client is in all necessary groups and
-        :ref:`server-plugins-generators-packages-magic-groups`.
+        i.e., the client is in all necessary groups.
 
         :param metadata: The client metadata to check to see if this
                          source applies
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: bool
         """
-        # check base groups
-        if not self.magic_groups_match(metadata):
+        # check arch groups
+        if not self.arch_groups_match(metadata):
             return False
 
         # check Group/Client tags from sources.xml
@@ -712,29 +704,13 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         """
         return []
 
-    def magic_groups_match(self, metadata):
-        """ Returns True if the client's
-        :ref:`server-plugins-generators-packages-magic-groups` match
-        the magic groups this source.  Also returns True if magic
-        groups are off in the configuration and the client's
-        architecture matches (i.e., architecture groups are *always*
-        checked).
+    def arch_groups_match(self, metadata):
+        """ Returns True if the client is in an arch group that
+        matches the arch of this source.
 
         :returns: bool
         """
-        found_arch = False
         for arch in self.arches:
             if arch in metadata.groups:
-                found_arch = True
-                break
-        if not found_arch:
-            return False
-
-        if not self.setup.cfp.getboolean("packages", "magic_groups",
-                                         default=False):
-            return True
-        else:
-            for group in self.basegroups:
-                if group in metadata.groups:
-                    return True
-            return False
+                return True
+        return False

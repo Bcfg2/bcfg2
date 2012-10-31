@@ -181,9 +181,9 @@ Create Packages layout (as per :ref:`packages-exampleusage`) in
       </Group>
     </Sources>
 
-Due to the :ref:`server-plugins-generators-packages-magic-groups`,
-we need to modify our Metadata. Let's add an **ubuntu-lucid**
-group which inherits the **ubuntu** group already present in
+To make these sources apply to our clients, we need to modify our
+Metadata. Let's add an **ubuntu-lucid** group which inherits the
+**ubuntu** group already present in
 ``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file should look
 something like this
 

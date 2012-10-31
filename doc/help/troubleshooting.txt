@@ -259,8 +259,7 @@ Server Errors
          :ref:`server-info` file for this entry.
 .. [s11] Verify that you have the proper prefix set in bcfg2.conf.
 .. [s12] Ensure that the client is a member of all the appropriate
-	 :ref:`server-plugins-generators-packages-magic-groups` as
-	 well as any additional groups you may have defined in your
+	 groups you may have defined in your
 	 :ref:`server-plugins-generators-packages` configuration.
 
 FAQs
