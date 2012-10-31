@@ -126,7 +126,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
     __req__ = {'Package': ['name'],
                'Path': ['type']}
 
-    conflicts = ['YUM24', 'RPM', 'RPMng', 'YUMng']
+    conflicts = ['RPM']
 
     def __init__(self, logger, setup, config):
         self.yumbase = self._loadYumBase(setup=setup, logger=logger)

@@ -106,7 +106,7 @@ Run ``bcfg2`` to be sure you are able to communicate with the server:
       import md5
     Loaded plugins: presto, refresh-packagekit
     Loaded tool drivers:
-     Action     Chkconfig  POSIX      YUMng
+     Action     Chkconfig  POSIX      YUM
     Extra Package imsettings-libs 0.108.0-2.fc13.i686.
     Extra Package PackageKit-device-rebind 0.6.4-1.fc13.i686.
     ...

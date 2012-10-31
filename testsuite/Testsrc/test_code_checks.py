@@ -57,7 +57,7 @@ contingent_checks = {
 
 # perform only error checking on the listed files
 error_checks = {
-    "sbin": ["bcfg2-build-reports", "bcfg2-reports"],
+    "sbin": ["bcfg2-reports"],
     "lib/Bcfg2": ["Proxy.py", "SSLServer.py", "Reporting"],
     "lib/Bcfg2/Server": ["Reports", "SchemaUpdater"],
     "lib/Bcfg2/Server/Admin": ["Compare.py"],
@@ -68,8 +68,7 @@ error_checks = {
                                "FreeBSDInit.py",
                                "DebInit.py",
                                "RcUpdate.py",
-                               "VCS.py",
-                               "YUM24.py"],
+                               "VCS.py"],
     "lib/Bcfg2/Server/Plugins": ["Deps.py",
                                  "Ldap.py",
                                  "Pkgmgr.py"]

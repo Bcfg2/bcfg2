@@ -7,9 +7,7 @@ Bcfg2 RPM/YUM Client Drivers
 ============================
 
 The RPM and YUM client drivers provide client support for RPMs
-(installed directly from URLs) and Yum repositories.  These drivers
-were formerly called ``RPMng`` and ``YUMng``, respectively, but were
-renamed for Bcfg2 1.3.0.
+(installed directly from URLs) and Yum repositories.
 
 Features
 ========

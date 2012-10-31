@@ -587,33 +587,27 @@ SERVER_UMASK = \
 DB_ENGINE = \
     Option('Database engine',
            default='sqlite3',
-           cf=('database', 'engine'),
-           deprecated_cf=('statistics', 'database_engine'))
+           cf=('database', 'engine'))
 DB_NAME = \
     Option('Database name',
            default=os.path.join(SERVER_REPOSITORY.default, "etc/bcfg2.sqlite"),
-           cf=('database', 'name'),
-           deprecated_cf=('statistics', 'database_name'))
+           cf=('database', 'name'))
 DB_USER = \
     Option('Database username',
            default=None,
-           cf=('database', 'user'),
-           deprecated_cf=('statistics', 'database_user'))
+           cf=('database', 'user'))
 DB_PASSWORD = \
     Option('Database password',
            default=None,
-           cf=('database', 'password'),
-           deprecated_cf=('statistics', 'database_password'))
+           cf=('database', 'password'))
 DB_HOST = \
     Option('Database host',
            default='localhost',
-           cf=('database', 'host'),
-           deprecated_cf=('statistics', 'database_host'))
+           cf=('database', 'host'))
 DB_PORT = \
     Option('Database port',
            default='',
-           cf=('database', 'port'),
-           deprecated_cf=('statistics', 'database_port'))
+           cf=('database', 'port'))
 
 # Django options
 WEB_CFILE = \
@@ -635,8 +629,7 @@ DJANGO_DEBUG = \
 DJANGO_WEB_PREFIX = \
     Option('Web prefix',
            default=None,
-           cf=('reporting', 'web_prefix'),
-           deprecated_cf=('statistics', 'web_prefix'),)
+           cf=('reporting', 'web_prefix'))
 
 # Reporting options
 REPORTING_FILE_LIMIT = \
@@ -869,125 +862,65 @@ CLIENT_RPM_INSTALLONLY = \
                     'kernel-default', 'kernel-largesmp-devel',
                     'kernel-largesmp', 'kernel-xen', 'gpg-pubkey'],
            cf=('RPM', 'installonlypackages'),
-           deprecated_cf=('RPMng', 'installonlypackages'),
            cook=list_split)
 CLIENT_RPM_PKG_CHECKS = \
     Option("Perform RPM package checks",
            default=True,
            cf=('RPM', 'pkg_checks'),
-           deprecated_cf=('RPMng', 'pkg_checks'),
            cook=get_bool)
 CLIENT_RPM_PKG_VERIFY = \
     Option("Perform RPM package verify",
            default=True,
            cf=('RPM', 'pkg_verify'),
-           deprecated_cf=('RPMng', 'pkg_verify'),
            cook=get_bool)
 CLIENT_RPM_INSTALLED_ACTION = \
     Option("RPM installed action",
            default="install",
-           cf=('RPM', 'installed_action'),
-           deprecated_cf=('RPMng', 'installed_action'))
+           cf=('RPM', 'installed_action'))
 CLIENT_RPM_ERASE_FLAGS = \
     Option("RPM erase flags",
            default=["allmatches"],
            cf=('RPM', 'erase_flags'),
-           deprecated_cf=('RPMng', 'erase_flags'),
            cook=list_split)
 CLIENT_RPM_VERSION_FAIL_ACTION = \
     Option("RPM version fail action",
            default="upgrade",
-           cf=('RPM', 'version_fail_action'),
-           deprecated_cf=('RPMng', 'version_fail_action'))
+           cf=('RPM', 'version_fail_action'))
 CLIENT_RPM_VERIFY_FAIL_ACTION = \
     Option("RPM verify fail action",
            default="reinstall",
-           cf=('RPM', 'verify_fail_action'),
-           deprecated_cf=('RPMng', 'verify_fail_action'))
+           cf=('RPM', 'verify_fail_action'))
 CLIENT_RPM_VERIFY_FLAGS = \
     Option("RPM verify flags",
            default=[],
            cf=('RPM', 'verify_flags'),
-           deprecated_cf=('RPMng', 'verify_flags'),
            cook=list_split)
-CLIENT_YUM24_INSTALLONLY = \
-    Option('YUM24 install-only packages',
-           default=['kernel', 'kernel-bigmem', 'kernel-enterprise',
-                    'kernel-smp', 'kernel-modules', 'kernel-debug',
-                    'kernel-unsupported', 'kernel-devel', 'kernel-source',
-                    'kernel-default', 'kernel-largesmp-devel',
-                    'kernel-largesmp', 'kernel-xen', 'gpg-pubkey'],
-           cf=('YUM24', 'installonlypackages'),
-           cook=list_split)
-CLIENT_YUM24_PKG_CHECKS = \
-    Option("Perform YUM24 package checks",
-           default=True,
-           cf=('YUM24', 'pkg_checks'),
-           cook=get_bool)
-CLIENT_YUM24_PKG_VERIFY = \
-    Option("Perform YUM24 package verify",
-           default=True,
-           cf=('YUM24', 'pkg_verify'),
-           cook=get_bool)
-CLIENT_YUM24_INSTALLED_ACTION = \
-    Option("YUM24 installed action",
-           default="install",
-           cf=('YUM24', 'installed_action'))
-CLIENT_YUM24_ERASE_FLAGS = \
-    Option("YUM24 erase flags",
-           default=["allmatches"],
-           cf=('YUM24', 'erase_flags'),
-           cook=list_split)
-CLIENT_YUM24_VERSION_FAIL_ACTION = \
-    Option("YUM24 version fail action",
-           cf=('YUM24', 'version_fail_action'),
-           default="upgrade")
-CLIENT_YUM24_VERIFY_FAIL_ACTION = \
-    Option("YUM24 verify fail action",
-           default="reinstall",
-           cf=('YUM24', 'verify_fail_action'))
-CLIENT_YUM24_VERIFY_FLAGS = \
-    Option("YUM24 verify flags",
-           default=[],
-           cf=('YUM24', 'verify_flags'),
-           cook=list_split)
-CLIENT_YUM24_AUTODEP = \
-    Option("YUM24 autodependency processing",
-           default=True,
-           cf=('YUM24', 'autodep'),
-           cook=get_bool)
 CLIENT_YUM_PKG_CHECKS = \
     Option("Perform YUM package checks",
            default=True,
            cf=('YUM', 'pkg_checks'),
-           deprecated_cf=('YUMng', 'pkg_checks'),
            cook=get_bool)
 CLIENT_YUM_PKG_VERIFY = \
     Option("Perform YUM package verify",
            default=True,
            cf=('YUM', 'pkg_verify'),
-           deprecated_cf=('YUMng', 'pkg_verify'),
            cook=get_bool)
 CLIENT_YUM_INSTALLED_ACTION = \
     Option("YUM installed action",
            default="install",
-           cf=('YUM', 'installed_action'),
-           deprecated_cf=('YUMng', 'installed_action'))
+           cf=('YUM', 'installed_action'))
 CLIENT_YUM_VERSION_FAIL_ACTION = \
     Option("YUM version fail action",
            default="upgrade",
-           cf=('YUM', 'version_fail_action'),
-           deprecated_cf=('YUMng', 'version_fail_action'))
+           cf=('YUM', 'version_fail_action'))
 CLIENT_YUM_VERIFY_FAIL_ACTION = \
     Option("YUM verify fail action",
            default="reinstall",
-           cf=('YUM', 'verify_fail_action'),
-           deprecated_cf=('YUMng', 'verify_fail_action'))
+           cf=('YUM', 'verify_fail_action'))
 CLIENT_YUM_VERIFY_FLAGS = \
     Option("YUM verify flags",
            default=[],
            cf=('YUM', 'verify_flags'),
-           deprecated_cf=('YUMng', 'verify_flags'),
            cook=list_split)
 
 # Logging options
@@ -1127,15 +1060,6 @@ DRIVER_OPTIONS = \
          rpm_version_fail_action=CLIENT_RPM_VERSION_FAIL_ACTION,
          rpm_verify_fail_action=CLIENT_RPM_VERIFY_FAIL_ACTION,
          rpm_verify_flags=CLIENT_RPM_VERIFY_FLAGS,
-         yum24_installonly=CLIENT_YUM24_INSTALLONLY,
-         yum24_pkg_checks=CLIENT_YUM24_PKG_CHECKS,
-         yum24_pkg_verify=CLIENT_YUM24_PKG_VERIFY,
-         yum24_installed_action=CLIENT_YUM24_INSTALLED_ACTION,
-         yum24_erase_flags=CLIENT_YUM24_ERASE_FLAGS,
-         yum24_version_fail_action=CLIENT_YUM24_VERSION_FAIL_ACTION,
-         yum24_verify_fail_action=CLIENT_YUM24_VERIFY_FAIL_ACTION,
-         yum24_verify_flags=CLIENT_YUM24_VERIFY_FLAGS,
-         yum24_autodep=CLIENT_YUM24_AUTODEP,
          yum_pkg_checks=CLIENT_YUM_PKG_CHECKS,
          yum_pkg_verify=CLIENT_YUM_PKG_VERIFY,
          yum_installed_action=CLIENT_YUM_INSTALLED_ACTION,

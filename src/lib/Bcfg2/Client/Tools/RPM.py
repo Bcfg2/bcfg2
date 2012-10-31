@@ -26,8 +26,6 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
     __new_gpg_ireq__ = {'Package': ['name'],
                         'Instance': ['version', 'release']}
 
-    conflicts = ['RPMng']
-
     pkgtype = 'rpm'
     pkgtool = ("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))
 

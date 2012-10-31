@@ -102,7 +102,7 @@ Run bcfg2 to be sure you are able to communicate with the server::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action Chkconfig POSIX YUMng
+     Action Chkconfig POSIX YUM
 
     Phase: initial
     Correct entries: 0
@@ -147,7 +147,7 @@ Now if you run the client, no more warning::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action Chkconfig POSIX YUMng
+     Action Chkconfig POSIX YUM
 
     Phase: initial
     Correct entries: 0
@@ -291,7 +291,7 @@ Now if we run the client, we can see what this has done for us.::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action Chkconfig POSIX YUMng
+     Action Chkconfig POSIX YUM
             Package pam failed verification.
 
     Phase: initial
@@ -336,7 +336,7 @@ entries?::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action Chkconfig POSIX YUMng
+     Action Chkconfig POSIX YUM
     Extra Package openssh-clients 4.3p2-36.el5_4.4.x86_64.
     Extra Package libuser 0.54.7-2.1el5_4.1.x86_64.
     ...
@@ -394,7 +394,7 @@ package::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action Chkconfig POSIX YUMng
+     Action Chkconfig POSIX YUM
     Extra Package gpg-pubkey e8562897-459f07a4.None.
     Extra Package gpg-pubkey 217521f6-45e8a532.None.
 
@@ -562,7 +562,7 @@ Now we run the client and see there are no more unmanaged entries!::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action Chkconfig POSIX YUMng
+     Action Chkconfig POSIX YUM
 
     Phase: initial
     Correct entries: 205

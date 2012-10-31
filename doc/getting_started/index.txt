@@ -70,7 +70,7 @@ That can be translated as "bcfg2 quick verbose no-op". The output
 should be something similar to::
 
     Loaded tool drivers:
-     Chkconfig    POSIX        YUMng
+     Chkconfig    POSIX        YUM
 
     Phase: initial
     Correct entries:        0
@@ -175,7 +175,7 @@ Next, we create a motd.xml file in the Bundler directory:
 Now when we run the client, we get slightly different output::
 
     Loaded tool drivers:
-     Chkconfig    POSIX        YUMng
+     Chkconfig    POSIX        YUM
     Incomplete information for entry Path:/etc/motd; cannot verify
 
     Phase: initial

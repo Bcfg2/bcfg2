@@ -35,7 +35,7 @@ In alphabetical order of the given name:
   Bcfg client and server and implemented a common logging infrastructure.
 - Fabian Affolter <mail@fabian-affolter.ch> made some patches, added  
   some new features and plugins, and restructured the manual for Bcfg2.
-- Jack Neely <jjneely@ncsu.edu> worked on YUMng.
+- Jack Neely <jjneely@ncsu.edu> worked on YUMng (now YUM).
 - James Yang <jjyang@mcs.anl.gov> worked on ``bcfg2-admin`` and 
   ``bcfg2-reports``.
 - Jason Pepas <cell@ices.utexas.edu> has written a RPM package list creator
