@@ -270,7 +270,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
 class ClientMetadata(object):
     """This object contains client metadata."""
     # pylint: disable=R0913
-    def __init__(self, client, profile, groups, bundles, aliases, addresses,  
+    def __init__(self, client, profile, groups, bundles, aliases, addresses,
                  categories, uuid, password, version, query):
         self.hostname = client
         self.profile = profile
@@ -1140,7 +1140,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                                          imd.hostname,
                                          imd.categories[category]))
                     continue
-                imd.categories[group] = category
+                imd.categories[category] = group
             imd.groups.add(group)
 
         self._merge_groups(imd.hostname, imd.groups,

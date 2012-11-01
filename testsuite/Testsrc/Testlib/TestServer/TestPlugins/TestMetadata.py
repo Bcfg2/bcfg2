@@ -84,6 +84,7 @@ def get_groups_test_tree():
       <Group name="group10"/>
     </Group>
   </Group>
+  <Group name="group12" category="category3" public="false"/>
 </Groups>''').getroottree()
 
 
@@ -836,7 +837,7 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         self.assertItemsEqual([g.name
                                for g in metadata.negated_groups.values()],
                               negated_groups)
-        
+
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     def test_set_profile(self):
         metadata = self.get_obj()
@@ -1015,7 +1016,7 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     def test_merge_groups(self):
-        metadata = self.get_obj()        
+        metadata = self.get_obj()
         self.load_groups_data(metadata=metadata)
         self.load_clients_data(metadata=metadata)
 
@@ -1090,6 +1091,13 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         self.assertEqual(imd.groups, oldgroups.union(["group7"]))
         self.assertEqual(imd.bundles, oldbundles.union(["bundle3"]))
 
+        # test adding groups with categories
+        oldgroups = imd.groups
+        metadata.merge_additional_groups(imd, ["group12"])
+        self.assertEqual(imd.groups, oldgroups.union(["group12"]))
+        self.assertIn("category3", imd.categories)
+        self.assertEqual(imd.categories["category3"], "group12")
+
         # test adding multiple groups
         imd = metadata.get_initial_metadata("client2")
         oldgroups = imd.groups
@@ -1103,7 +1111,6 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         metadata.merge_additional_groups(imd, ["group6", "newgroup"])
         self.assertItemsEqual(imd.groups,
                               oldgroups.union(["group6", "newgroup"]))
-        
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     def test_merge_additional_data(self):
@@ -1264,7 +1271,7 @@ class TestMetadataBase(TestMetadata):
         core.fam.AddMonitor.assert_called_once_with(os.path.join(metadata.data,
                                                                  "groups.xml"),
                                                     metadata)
-        
+
         mock_exists.return_value = True
         core.fam.reset_mock()
         metadata = self.get_obj(core=core, watch_clients=True)
@@ -1274,7 +1281,7 @@ class TestMetadataBase(TestMetadata):
         core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
                                                          "clients.xml"),
                                             metadata)
-    
+
     def test_add_group(self):
         pass
 
