@@ -17,3 +17,6 @@ TAGS
 
 # test artifacts
 testsuite/test.sqlite
+
+# rope project metadata
+.ropeproject
