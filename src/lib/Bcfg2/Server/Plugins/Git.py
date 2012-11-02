@@ -92,7 +92,8 @@ except ImportError:
                 """ API for :class:`Git` using subprocess to run git
                 commands """
                 def revision(self):
-                    proc = Popen(["git", "--work-tree", self.path,
+                    proc = Popen(["git", "--work-tree",
+                                  os.path.join(self.path, ".git"),
                                   "rev-parse", "HEAD"], stdout=PIPE,
                                  stderr=PIPE)
                     rv, err = proc.communicate()
@@ -102,7 +103,8 @@ except ImportError:
                     return rv.strip()  # pylint: disable=E1103
 
                 def pull(self):
-                    proc = Popen(["git", "--work-tree", self.path,
+                    proc = Popen(["git", "--work-tree",
+                                  os.path.join(self.path, ".git"),
                                   "pull", "--rebase"], stdout=PIPE,
                                  stderr=PIPE)
                     err = proc.communicate()[1].strip()
