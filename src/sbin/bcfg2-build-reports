@@ -150,7 +150,6 @@ def pretty_print(element, level=0):
 
 
 if __name__ == '__main__':
-    ping=True
     all=False
     if '-C' in sys.argv:
         cfpath = sys.argv[sys.argv.index('-C') + 1]
@@ -170,11 +169,11 @@ if __name__ == '__main__':
     #websrcspath = "/usr/share/bcfg2/web-rprt-srcs/"
 
     try:
-        opts, args = getopt.getopt(sys.argv[1:], "C:hAc:Ns:", ["help", "all", "config=","no-ping", "stats="])
+        opts, args = getopt.getopt(sys.argv[1:], "C:hAc:Ns:", ["help", "all", "config=", "stats="])
     except getopt.GetoptError:
         mesg = sys.exc_info()[1]
         # Print help information and exit:
-        print("%s\nUsage:\nbcfg2-build-reports [-h][-A (include ALL clients)] [-c <configuration-file>] [-s <statistics-file>][-N (do not ping clients)]" % (mesg))
+        print("%s\nUsage:\nbcfg2-build-reports [-h][-A (include ALL clients)] [-c <configuration-file>] [-s <statistics-file>]" % (mesg))
         raise SystemExit(2)
     for o, a in opts:
         if o in ("-h", "--help"):
@@ -184,20 +183,8 @@ if __name__ == '__main__':
             all=True
         if o in ("-c", "--config"):
             configpath = a
-        if o in ("-N", "--no-ping"):
-            ping = False
         if o in ("-s", "--stats"):
             statpath = a
-
-
-    # See if hostinfo.xml exists, and is less than 23.5 hours old
-    #try:
-        #hostinstat = os.stat(hostinfopath)
-        #if (time() - hostinstat[9])/(60*60) > 23.5:
-    if ping:
-        os.system('bcfg2-ping-sweep -C %s' % cfpath) # bcfg2-ping-sweep needs to be in path
-    #except OSError:
-    #    os.system('GenerateHostInfo')#Generate HostInfo needs to be in path
 
 
     """Reads data & config files."""
