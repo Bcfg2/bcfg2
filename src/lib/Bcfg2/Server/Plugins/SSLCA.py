@@ -43,32 +43,33 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         if event.filename.endswith('.xml'):
             if action in ['exists', 'created', 'changed']:
                 if event.filename.endswith('key.xml'):
-                    key_spec = dict(list(lxml.etree.parse(
-                                epath,
-                                parser=Bcfg2.Server.XMLParser
-                                ).find('Key').items()))
+                    key_spec = lxml.etree.parse(epath,
+                                                parser=Bcfg2.Server.XMLParser
+                                                ).find('Key')
                     self.key_specs[ident] = {
-                        'bits': key_spec.get('bits', 2048),
+                        'bits': key_spec.get('bits', '2048'),
                         'type': key_spec.get('type', 'rsa')
                     }
                     self.Entries['Path'][ident] = self.get_key
                 elif event.filename.endswith('cert.xml'):
-                    cert_spec = dict(list(lxml.etree.parse(
-                                epath,
-                                parser=Bcfg2.Server.XMLParser
-                                ).find('Cert').items()))
+                    cert_spec = lxml.etree.parse(epath,
+                                                 parser=Bcfg2.Server.XMLParser
+                                                 ).find('Cert')
                     ca = cert_spec.get('ca', 'default')
                     self.cert_specs[ident] = {
                         'ca': ca,
                         'format': cert_spec.get('format', 'pem'),
                         'key': cert_spec.get('key'),
-                        'days': cert_spec.get('days', 365),
+                        'days': cert_spec.get('days', '365'),
                         'C': cert_spec.get('c'),
                         'L': cert_spec.get('l'),
                         'ST': cert_spec.get('st'),
                         'OU': cert_spec.get('ou'),
                         'O': cert_spec.get('o'),
-                        'emailAddress': cert_spec.get('emailaddress')
+                        'emailAddress': cert_spec.get('emailaddress'),
+                        'append_chain':
+                            cert_spec.get('append_chain',
+                                          'false').lower() == 'true',
                     }
                     cfp = ConfigParser.ConfigParser()
                     cfp.read(self.core.cfile)
@@ -246,6 +247,9 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             os.unlink(req)
         except OSError:
             self.logger.error("Failed to unlink temporary files")
+        if (self.cert_specs[entry.get('name')]['append_chain'] and
+            self.CAs[ca]['chaincert']):
+            cert += open(self.CAs[ca]['chaincert']).read()
         return cert
 
     def build_req_config(self, entry, metadata):
