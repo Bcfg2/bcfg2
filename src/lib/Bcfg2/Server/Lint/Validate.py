@@ -6,7 +6,6 @@ import glob
 import fnmatch
 import lxml.etree
 from subprocess import Popen, PIPE, STDOUT
-from Bcfg2.Server import XI_NAMESPACE
 import Bcfg2.Server.Lint
 
 
