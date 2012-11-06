@@ -20,6 +20,7 @@ Bcfg2 documentation |release|
    help/index
    glossary
    appendix/index
+   man/index
  
    unsorted/index
    obsolete/index

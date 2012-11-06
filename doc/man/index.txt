@@ -1,0 +1,13 @@
+.. vim: ft=rst
+
+.. _man-index:
+
+=========
+Man Pages
+=========
+
+.. toctree::
+    :maxdepth: 1
+    :glob:
+
+    *
