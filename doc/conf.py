@@ -24,10 +24,13 @@ sys.path.insert(0, os.path.abspath('..'))
 
 # -- General configuration -----------------------------------------------------
 
+# If your documentation needs a minimal Sphinx version, state it here.
+#needs_sphinx = '1.0'
+
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
-              'sphinx.ext.intersphinx']
+              'sphinx.ext.intersphinx', 'sphinx.ext.viewcode']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -36,7 +39,7 @@ templates_path = ['_templates']
 source_suffix = '.txt'
 
 # The encoding of source files.
-#source_encoding = 'utf-8'
+#source_encoding = 'utf-8-sig'
 
 # The master toctree document.
 #master_doc = 'contents'
@@ -70,12 +73,9 @@ release = '1.3.0'
 # Else, today_fmt is used as the format for a strftime call.
 #today_fmt = '%B %d, %Y'
 
-# List of documents that shouldn't be included in the build.
-#unused_docs = []
-
-# List of directories, relative to source directory, that shouldn't be searched
-# for source files.
-exclude_trees = ['_build']
+# List of patterns, relative to source directory, that match files and
+# directories to ignore when looking for source files.
+exclude_patterns = ['_build']
 
 # The reST default role (used for this markup: `text`) to use for all documents.
 #default_role = None
@@ -100,8 +100,8 @@ pygments_style = 'sphinx'
 
 # -- Options for HTML output ---------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  Major themes that come with
-# Sphinx are currently 'default' and 'sphinxdoc'.
+# The theme to use for HTML and HTML Help pages.  See the documentation for
+# a list of builtin themes.
 html_theme = 'default'
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -153,7 +153,7 @@ html_sidebars = {
 #html_additional_pages = {}
 
 # If false, no module index is generated.
-#html_use_modindex = True
+#html_domain_indices = True
 
 # If false, no index is generated.
 #html_use_index = True
@@ -164,13 +164,19 @@ html_sidebars = {
 # If true, links to the reST sources are added to the pages.
 #html_show_sourcelink = True
 
+# If true, "Created using Sphinx" is shown in the HTML footer. Default is True.
+#html_show_sphinx = True
+
+# If true, "(C) Copyright ..." is shown in the HTML footer. Default is True.
+#html_show_copyright = True
+
 # If true, an OpenSearch description file will be output, and all pages will
 # contain a <link> tag referring to it.  The value of this option must be the
 # base URL from which the finished HTML is served.
 #html_use_opensearch = ''
 
-# If nonempty, this is the file name suffix for HTML files (e.g. ".xhtml").
-#html_file_suffix = ''
+# This is the file name suffix for HTML files (e.g. ".xhtml").
+#html_file_suffix = None
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Bcfg2doc'
@@ -178,24 +184,29 @@ htmlhelp_basename = 'Bcfg2doc'
 
 # -- Options for LaTeX output --------------------------------------------------
 
-# The paper size ('letter' or 'a4').
-latex_paper_size = 'letter'
+latex_elements = {
+# The paper size ('letterpaper' or 'a4paper').
+#'papersize': 'letterpaper',
 
 # The font size ('10pt', '11pt' or '12pt').
-latex_font_size = '11pt'
+#'pointsize': '10pt',
+
+# Additional stuff for the LaTeX preamble.
+#'preamble': '',
+}
 
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 # py3k compatibility
 if sys.hexversion >= 0x03000000:
     latex_documents = [
-      ('contents', 'bcfg2.tex', 'Bcfg2 Documentation',
-       'Narayan Desai et al.', 'manual', True),
+      ('index', 'Bcfg2.tex', 'Bcfg2 Documentation',
+       'Narayan Desai et al.', 'manual'),
     ]
 else:
     latex_documents = [
-      ('contents', 'bcfg2.tex', u'Bcfg2 Documentation',
-       u'Narayan Desai et al.', 'manual', True),
+      ('index', 'Bcfg2.tex', u'Bcfg2 Documentation',
+       u'Narayan Desai et al.', 'manual'),
     ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -213,7 +224,61 @@ else:
 #latex_appendices = []
 
 # If false, no module index is generated.
-latex_use_modindex = False
+#latex_domain_indices = True
+
+
+# -- Options for manual page output --------------------------------------------
+
+# One entry per manual page. List of tuples
+# (source start file, name, description, authors, manual section).
+man_pages = [
+    ('man/bcfg2', 'bcfg2', 'Bcfg2 client tool', [], 1),
+    ('man/bcfg2-admin', 'bcfg2-admin',
+     'Perform repository administration tasks', [], 8),
+    ('man/bcfg2-build-reports', 'bcfg2-build-reports',
+     'Generate state reports for Bcfg2 clients', [], 8),
+    ('man/bcfg2.conf', 'bcfg2.conf',
+     'Configuration parameters for Bcfg2', [], 5),
+    ('man/bcfg2-crypt', 'bcfg2-crypt',
+     'Bcfg2 encryption and decryption utility', [], 8),
+    ('man/bcfg2-info', 'bcfg2-info',
+     'Creates a local version of the Bcfg2 server core for state observation',
+     [], 8),
+    ('man/bcfg2-lint', 'bcfg2-lint',
+     'Check Bcfg2 specification for validity, common mistakes, and style',
+     [], 8),
+    ('man/bcfg2-lint.conf', 'bcfg2-lint.conf',
+     'Configuration parameters for bcfg2-lint', [], 5),
+    ('man/bcfg2-reports', 'bcfg2-reports',
+     'Query reporting system for client status', [], 8),
+    ('man/bcfg2-server', 'bcfg2-server',
+     'Server for client configuration specifications', [], 8),
+]
+
+# If true, show URL addresses after external links.
+#man_show_urls = False
+
+
+# -- Options for Texinfo output ------------------------------------------------
+
+# Grouping the document tree into Texinfo files. List of tuples
+# (source start file, target name, title, author,
+#  dir menu entry, description, category)
+texinfo_documents = [
+  ('index', 'Bcfg2', u'Bcfg2 Documentation',
+   u'Narayan Desai', 'Bcfg2', 'One line description of project.',
+   'Miscellaneous'),
+]
+
+# Documents to append as an appendix to all manuals.
+#texinfo_appendices = []
+
+# If false, no module index is generated.
+#texinfo_domain_indices = True
+
+# How to display URL addresses: 'footnote', 'no', or 'inline'.
+#texinfo_show_urls = 'footnote'
+
 
 # autodoc settings
 autodoc_default_flags = ['members', 'show-inheritance']

@@ -1,0 +1,111 @@
+.. vim: ft=rst
+
+bcfg2-reports
+=============
+
+.. program:: bcfg2-reports
+
+Synopsis
+--------
+
+**bcfg2-reports** [-a] [-b *NAME*] [-c] [-d] [-e *NAME*] [-h]
+[-m *NAME*] [-s *NAME*] [-x *NAME*] [--badentry=\ *KIND,NAME*]
+[--extraentry=\ *KIND,NAME*] [--fields=\ *ARG1,ARG2,...*]
+[--modifiedentry=\ *KIND,NAME*] [--sort=\ *ARG1,ARG2,...*] [--stale] [-v]
+
+Description
+-----------
+
+:program:`bcfg2-reports` allows you to retrieve data from the database
+about clients, and the states of their current interactions. It also
+allows you to change the expired/unexpired states. The utility runs as a
+standalone application. It does, however, use the models from
+`src/lib/Bcfg2/Reporting/models.py`.
+
+Options
+-------
+
+-h
+    Shows help and usage info about :program:`bcfg2-reports`.
+
+Modes
+-----
+
+The following are various modes available for :program:`bcfg2-reports`.
+
+Single-Host Modes
++++++++++++++++++
+
+-b, --bad *hostname*
+    Shows bad entries from the current interaction of *hostname*.
+
+-e, --extra *hostname*
+    Shows extra entries from the current interaction of *hostname*.
+
+-m, --modified *hostname*
+    Shows modified entries from the current interaction of *hostname*.
+
+-s, --show *hostname*
+    Shows bad, modified, and extra entries from the current interaction
+    of *hostname*.
+
+-t, --total *hostname*
+    Shows total number of managed and good entries from the current
+    interaction of *hostname*.
+
+-x, --expire *hostname*
+    Toggles expired/unexpired state of *hostname*.
+
+-a, --all
+    Show all hosts, including expired hosts.
+
+Host Selection Modes
+++++++++++++++++++++
+
+-a, --all
+    Show all hosts, including expired hosts.
+
+-c, --clean
+    Show only clean hosts.
+
+-d, --dirty
+    Show only dirty hosts.
+
+--stale
+    Show hosts that haven't run in the last 24 hours.
+
+Entry Modes
++++++++++++
+
+--badentry=\ *entry type, entry name*
+    Shows only hosts whose current interaction has bad entries of type
+    *entry type* and name *entry name*.
+
+--extraentry=\ *entry type, entry name*
+    Shows only hosts whose current interaction has extra entries of type
+    *entry type* and name *entry name*.
+
+--entrystatus=\ *entry type, entry name*
+    Shows the status of entry type *entry type* and name *entry name*
+    on all hosts.
+
+--modifiedentry
+    Shows only hosts whose current interaction has modifiedentries of
+    type *entry type* and name *entry name*.
+
+Entry Options
+^^^^^^^^^^^^^
+
+The following options can be used with the above Entry Modes.
+
+--fields=\ *FIELD,FIELD,...*
+    Only display the listed fields.
+
+--file=\ *FILE*
+    Read TYPE:NAME pairs from the specified file instead of the command
+    line.
+
+See Also
+--------
+
+:manpage:`bcfg2(1)`, :manpage:`bcfg2-server(8)`

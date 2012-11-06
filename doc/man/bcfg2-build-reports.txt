@@ -1,0 +1,39 @@
+.. vim: ft=rst
+
+bcfg2-build-reports
+===================
+
+.. program:: bcfg2-build-reports
+
+Synopsis
+--------
+
+**bcfg2-build-reports** [*-A*] [*-c*] [*-s*]
+
+Description
+-----------
+
+:program:`bcfg2-build-reports` is used to build all client state
+reports. See the Bcfg2 manual for report setup information.
+
+Options
+-------
+
+-A
+    Displays all data.
+
+-c *configuration file*
+    Specify an alternate report configuration path. The default is
+    `repo/etc/reports-configuration.xml`.
+
+-h
+    Produce a help message.
+
+-s *statistics path*
+    Use an alternative path for the statistics file. The default is
+    `repo/etc/statistics.xml`.
+
+See Also
+--------
+
+:manpage:`bcfg2(1)`, :manpage:`bcfg2-server(8)`

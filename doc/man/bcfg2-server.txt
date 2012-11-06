@@ -1,0 +1,51 @@
+.. vim: ft=rst
+
+bcfg2-server
+============
+
+.. program:: bcfg2-server
+
+Synopsis
+--------
+
+**bcfg2-server** [-d] [-v] [-C *configfile*] [-D *pidfile*] [-E
+*encoding*] [-Q *repo path*] [-S *server url*] [-o *logfile*] [-x
+*password*] [--ssl-key=\ *ssl key*]
+
+Description
+-----------
+
+:program:`bcfg2-server` is the daemon component of Bcfg2 which serves
+configurations to clients based on the data in its repository.
+
+Options
+-------
+
+-C *configfile*
+    Specify alternate bcfg2.conf location.
+
+-D *pidfile*
+    Daemonize, placing the program pid in the specified pidfile.
+
+-E *encoding*
+    Specify the encoding of config files (default is UTF-8).
+
+-Q *repo path*
+    Set repository path.
+
+-S *https://server:port*
+    Set server address.
+
+-d
+    Run :program:`bcfg2-server` in debug mode.
+
+-v
+    Run :program:`bcfg2-server` in verbose mode.
+
+--ssl-key=\ *ssl key*
+    Set path to SSL key.
+
+See Also
+--------
+
+:manpage:`bcfg2(1)`, :manpage:`bcfg2-lint(8)`
