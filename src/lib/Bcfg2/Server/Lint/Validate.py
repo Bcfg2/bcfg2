@@ -16,22 +16,28 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerlessPlugin.__init__(self, *args, **kwargs)
         self.filesets = \
-            {"metadata:groups": "%s/metadata.xsd",
-             "metadata:clients": "%s/clients.xsd",
-             "info": "%s/info.xsd",
-             "%s/Bundler/*.xml": "%s/bundle.xsd",
-             "%s/Bundler/*.genshi": "%s/bundle.xsd",
-             "%s/Pkgmgr/*.xml": "%s/pkglist.xsd",
-             "%s/Base/*.xml": "%s/base.xsd",
-             "%s/Rules/*.xml": "%s/rules.xsd",
-             "%s/Defaults/*.xml": "%s/defaults.xsd",
-             "%s/etc/report-configuration.xml": "%s/report-configuration.xsd",
-             "%s/Deps/*.xml": "%s/deps.xsd",
-             "%s/Decisions/*.xml": "%s/decisions.xsd",
-             "%s/Packages/sources.xml": "%s/packages.xsd",
-             "%s/GroupPatterns/config.xml": "%s/grouppatterns.xsd",
-             "%s/NagiosGen/config.xml": "%s/nagiosgen.xsd",
-             "%s/FileProbes/config.xml": "%s/fileprobes.xsd",
+            {"Metadata/groups.xml": "metadata.xsd",
+             "Metadata/clients.xml": "clients.xsd",
+             "Cfg/**/info.xml": "info.xsd",
+             "SSHbase/**/info.xml": "info.xsd",
+             "SSLCA/**/info.xml": "info.xsd",
+             "TGenshi/**/info.xml": "info.xsd",
+             "TCheetah/**/info.xml": "info.xsd",
+             "Bundler/*.xml": "bundle.xsd",
+             "Bundler/*.genshi": "bundle.xsd",
+             "Pkgmgr/*.xml": "pkglist.xsd",
+             "Base/*.xml": "base.xsd",
+             "Rules/*.xml": "rules.xsd",
+             "Defaults/*.xml": "defaults.xsd",
+             "etc/report-configuration.xml": "report-configuration.xsd",
+             "Deps/*.xml": "deps.xsd",
+             "Decisions/*.xml": "decisions.xsd",
+             "Packages/sources.xml": "packages.xsd",
+             "GroupPatterns/config.xml": "grouppatterns.xsd",
+             "NagiosGen/config.xml": "nagiosgen.xsd",
+             "FileProbes/config.xml": "fileprobes.xsd",
+             "SSLCA/**/cert.xml": "sslca-cert.xsd",
+             "SSLCA/**/key.xml": "sslca-key.xsd"
              }
 
         self.filelists = {}
@@ -48,7 +54,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
 
             if filelist:
                 # avoid loading schemas for empty file lists
-                schemafile = schemaname % schemadir
+                schemafile = os.path.join(schemadir, schemaname)
                 schema = self._load_schema(schemafile)
                 if schema:
                     for filename in filelist:
@@ -58,8 +64,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"broken-xinclude-chain": "warning",
-                "schema-failed-to-parse": "warning",
+        return {"schema-failed-to-parse": "warning",
                 "properties-schema-not-found": "warning",
                 "xml-failed-to-parse": "error",
                 "xml-failed-to-read": "error",
@@ -84,7 +89,6 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             schema = self._load_schema(schemafile)
             if not schema:
                 return False
-
         try:
             datafile = lxml.etree.parse(filename)
         except SyntaxError:
@@ -115,93 +119,29 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
     def get_filelists(self):
         """ get lists of different kinds of files to validate """
         if self.files is not None:
-            listfiles = lambda p: fnmatch.filter(self.files, p % "*")
+            listfiles = lambda p: fnmatch.filter(self.files,
+                                                 os.path.join('*', p))
         else:
-            listfiles = lambda p: glob.glob(p % self.config['repo'])
+            listfiles = lambda p: glob.glob(os.path.join(self.config['repo'],
+                                                         p))
 
         for path in self.filesets.keys():
-            if path.startswith("metadata:"):
-                mtype = path.split(":")[1]
-                self.filelists[path] = self.get_metadata_list(mtype)
-            elif path == "info":
+            if '/**/' in path:
                 if self.files is not None:
-                    self.filelists[path] = \
-                                         [f for f in self.files
-                                          if os.path.basename(f) == 'info.xml']
+                    self.filelists[path] = listfiles(path)
                 else:  # self.files is None
+                    fpath, fname = path.split('/**/')
                     self.filelists[path] = []
-                    for infodir in ['Cfg', 'SSHbase', 'SSLCA', 'TGenshi',
-                                    'TCheetah']:
-                        for root, _, files in \
-                                os.walk(os.path.join(self.config['repo'],
-                                                     infodir)):
-                            self.filelists[path].extend([os.path.join(root, f)
-                                                         for f in files
-                                                         if f == 'info.xml'])
+                    for root, _, files in \
+                            os.walk(os.path.join(self.config['repo'],
+                                                 fpath)):
+                        self.filelists[path].extend([os.path.join(root, f)
+                                                     for f in files
+                                                     if f == fname])
             else:
                 self.filelists[path] = listfiles(path)
 
-        self.filelists['props'] = listfiles("%s/Properties/*.xml")
-        all_metadata = listfiles("%s/Metadata/*.xml")
-
-        # if there are other files in Metadata that aren't xincluded
-        # from clients.xml or groups.xml, we can't verify them.  warn
-        # about those.
-        for fname in all_metadata:
-            if (fname not in self.filelists['metadata:groups'] and
-                fname not in self.filelists['metadata:clients']):
-                self.LintError("broken-xinclude-chain",
-                               "Broken XInclude chain: Could not determine "
-                               "file type of %s" % fname)
-
-    def get_metadata_list(self, mtype):
-        """ get all metadata files for the specified type (clients or
-        group) """
-        if self.files is not None:
-            rv = fnmatch.filter(self.files, "*/Metadata/%s.xml" % mtype)
-        else:
-            rv = glob.glob("%s/Metadata/%s.xml" % (self.config['repo'], mtype))
-
-        # attempt to follow XIncludes.  if the top-level files aren't
-        # listed in self.files, though, there's really nothing we can
-        # do to guess what a file in Metadata is
-        if rv:
-            try:
-                rv.extend(self.follow_xinclude(rv[0]))
-            except lxml.etree.XMLSyntaxError:
-                err = sys.exc_info()[1]
-                self.LintError("xml-failed-to-parse",
-                               "%s fails to parse:\n%s" % (rv[0], err))
-        return rv
-
-    def follow_xinclude(self, xfile):
-        """ follow xincludes in the given file """
-        xdata = lxml.etree.parse(xfile)
-        included = set([el
-                        for el in xdata.findall('./%sinclude' % XI_NAMESPACE)])
-        rv = []
-
-        while included:
-            try:
-                el = included.pop()
-            except KeyError:
-                continue
-            filename = el.get("href")
-
-            path = os.path.join(os.path.dirname(xfile), filename)
-            if not os.path.exists(path):
-                if not el.findall('./%sfallback' % XI_NAMESPACE):
-                    self.LintError("broken-xinclude-chain",
-                                   "XInclude %s does not exist in %s: %s" %
-                                   (filename, xfile, self.RenderXML(el)))
-            elif self.HandlesFile(path):
-                rv.append(path)
-                groupdata = lxml.etree.parse(path)
-                included.update(el for el in groupdata.findall('./%sinclude' %
-                                                               XI_NAMESPACE))
-                included.discard(filename)
-
-        return rv
+        self.filelists['props'] = listfiles("Properties/*.xml")
 
     def _load_schema(self, filename):
         """ load an XML schema document, returning the Schema object """

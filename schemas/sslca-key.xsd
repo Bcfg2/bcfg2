@@ -1,0 +1,39 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+  <xsd:annotation>
+    <xsd:documentation>
+      SSLCA key.xml schema for bcfg2
+      Chris St. Pierre
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <!-- key.xml does not support Group or Client tags, but it should
+       (and will, some day), so this is commented out for now -->
+  <!--
+  <xsd:complexType name="GroupType">
+    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:element name="Key" type="KeyType"/>
+      <xsd:element name="Group" type="GroupType"/>
+      <xsd:element name="Client" type="GroupType"/>
+    </xsd:choice>
+    <xsd:attribute type="xsd:string" name="name" use="required"/>
+    <xsd:attribute type="xsd:string" name="negate"/>
+  </xsd:complexType>
+  -->
+
+  <xsd:complexType name="KeyType">
+    <xsd:attribute type="xsd:string" name="type"/>
+    <xsd:attribute type="xsd:string" name="bits"/>
+  </xsd:complexType>
+
+  <xsd:element name="KeyInfo">
+    <xsd:complexType>
+      <xsd:choice minOccurs="1" maxOccurs="unbounded">
+        <xsd:element name="Key" type="KeyType"/>
+        <!--
+        <xsd:element name="Group" type="GroupType"/>
+        <xsd:element name="Client" type="GroupType"/>
+        -->
+      </xsd:choice>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>
