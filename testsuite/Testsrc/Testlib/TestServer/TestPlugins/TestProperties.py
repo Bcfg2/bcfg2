@@ -256,7 +256,7 @@ class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
         pf._decrypt = Mock()
         pf._decrypt.return_value = 'plaintext'
         pf.data = '''
-<Properties encryption="true">
+<Properties encryption="true" decrypt="strict">
   <Crypted encrypted="foo">
     crypted
     <Plain foo="bar">plain</Plain>
@@ -275,10 +275,17 @@ class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
         for el in pf.xdata.xpath("//Crypted"):
             self.assertEqual(el.text, pf._decrypt.return_value)
 
-        # test failed decryption
+        # test failed decryption, strict
         pf._decrypt.reset_mock()
         pf._decrypt.side_effect = EVPError
         self.assertRaises(PluginExecutionError, pf.Index)
+
+        # test failed decryption, lax
+        pf.data = pf.data.replace("strict", "lax")
+        pf._decrypt.reset_mock()
+        pf.Index()
+        self.assertItemsEqual(pf._decrypt.call_args_list,
+                              [call(el) for el in pf.xdata.xpath("//Crypted")])
 
     @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
     def test_decrypt(self):

@@ -210,12 +210,20 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
             if not HAS_CRYPTO:
                 raise PluginExecutionError("Properties: M2Crypto is not "
                                            "available: %s" % self.name)
+            strict = self.xdata.get(
+                "decrypt",
+                SETUP.cfp.get("properties", "decrypt",
+                              default="strict")) == "strict"
             for el in self.xdata.xpath("//*[@encrypted]"):
                 try:
                     el.text = self._decrypt(el)
                 except EVPError:
-                    raise PluginExecutionError("Failed to decrypt %s element "
-                                               "in %s" % (el.tag, self.name))
+                    msg = "Failed to decrypt %s element in %s" % (el.tag,
+                                                                  self.name)
+                    if strict:
+                        raise PluginExecutionError(msg)
+                    else:
+                        LOGGER.warning(msg)
     Index.__doc__ = Bcfg2.Server.Plugin.StructFile.Index.__doc__
 
     def _decrypt(self, element):

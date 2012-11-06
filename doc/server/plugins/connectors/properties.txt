@@ -150,6 +150,9 @@ raw data, the following access methods are defined:
                    for el in metadata.Properties['ntp.xml'].XMLMatch(metadata).findall("//Server")]
     %}
 
+  ``XMLMatch()`` can be run automatically on properties files by using
+  the :ref:`server-plugins-connectors-properties-automatch` feature.
+
 You can also access the XML data that comprises a property file
 directly in one of several ways:
 
@@ -281,6 +284,20 @@ changes to the file in a VCS, and also lets unprivileged users work
 with the other data in the file.  Only character content of an element
 can be encrypted; attribute content and XML elements themselves cannot
 be encrypted.
+
+By default, decryption is *strict*; that is, if any element cannot be
+decrypted, parsing of the file is aborted.  If you wish for parsing to
+continue, with unencryptable elements simply skipped, then you can set
+decryption to *lax* in one of two ways:
+
+* Set ``decrypt=lax`` in the ``[properties]`` section of
+  ``bcfg2.conf`` to set lax decryption on all Properties files by
+  default; or
+* Set the ``decrypt="lax"`` attribute on the top-level ``Properties``
+  tag of a Properties file to set lax decryption for a single file.
+
+Note that you could, for instance, set lax decryption by default, and
+then set strict decryption on individual files.
 
 To encrypt or decrypt a file, use :ref:`bcfg2-crypt`.
 
