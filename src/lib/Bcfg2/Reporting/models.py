@@ -556,7 +556,7 @@ class PathEntry(SuccessEntry):
             rv.append("Directory has extra files")
         elif self.detail_type != PathEntry.DETAIL_UNUSED:
             rv.append("Incorrect data")
-        if hasattr(self, 'linkentry') and \
+        if hasattr(self, 'linkentry') and self.linkentry and \
                 self.linkentry.target_path != self.linkentry.current_path:
             rv.append("Incorrect target")
         return rv
