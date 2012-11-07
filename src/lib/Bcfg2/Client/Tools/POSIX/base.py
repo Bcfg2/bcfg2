@@ -174,13 +174,12 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
 
     def _set_acls(self, entry, path=None):  # pylint: disable=R0912
         """ set POSIX ACLs on the file on disk according to the config """
-        acls = self._list_entry_acls(entry)
-
         if not HAS_ACLS:
-            if acls:
+            if entry.findall("ACL"):
                 self.logger.debug("POSIX: ACLs listed for %s but no pylibacl "
                                   "library installed" % entry.get('name'))
             return True
+        acls = self._list_entry_acls(entry)
 
         if path is None:
             path = entry.get("name")
