@@ -37,7 +37,7 @@ Options
     Be verbose.
 
 --lint-config
-    Specify path to bcfg2-lint.conf (default `/etc/bcfg2-lint.conf`).
+    Specify path to bcfg2-lint.conf (default ``/etc/bcfg2-lint.conf``).
 
 --stdin
     Rather than operating on all files in the Bcfg2 specification, only

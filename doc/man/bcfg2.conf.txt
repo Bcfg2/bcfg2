@@ -63,7 +63,7 @@ ignore_files
 listen_all
     This setting tells the server to listen on all available interfaces.
     The default is to only listen on those interfaces specified by the
-    bcfg2 setting in the components section of `bcfg2.conf`.
+    bcfg2 setting in the components section of ``bcfg2.conf``.
 
 plugins
     A comma-delimited list of enabled server plugins. Currently
@@ -116,7 +116,7 @@ plugins
 
 prefix
     Specifies a prefix if the Bcfg2 installation isn't placed in the
-    default location (e.g. `/usr/local`).
+    default location (e.g. ``/usr/local``).
 
 backend
     Specifies which server core backend to use. Current available
@@ -153,11 +153,11 @@ Account Plugin
 
 The account plugin manages authentication data, including the following.
 
-* `/etc/passwd`
-* `/etc/group`
-* `/etc/security/limits.conf`
-* `/etc/sudoers`
-* `/root/.ssh/authorized_keys`
+* ``/etc/passwd``
+* ``/etc/group``
+* ``/etc/security/limits.conf``
+* ``/etc/sudoers``
+* ``/root/.ssh/authorized_keys``
 
 Base Plugin
 +++++++++++
@@ -510,7 +510,7 @@ Specified in the **[components]** section.
         and port the server listens on. On the client, this specifies
         where the client will attempt to contact the server.
 
-        e.g. `bcfg2 = https://10.3.1.6:6789`
+        e.g. *bcfg2 = https://10.3.1.6:6789*
 
     encoding
         Text encoding of configuration files. Defaults to UTF-8.
@@ -585,7 +585,7 @@ The following options are specified in the **[packages]** section.
 
     gpg_keypath
         The path on the client where RPM GPG keys will be copied before
-        they are imported on the client. Default is `/etc/pki/rpm-gpg`.
+        they are imported on the client. Default is ``/etc/pki/rpm-gpg``.
 
     version
         Set the version attribute used when binding Packages. Default is
@@ -603,7 +603,7 @@ The following options are specified in the **[packages:yum]** section.
 
     helper
         Path to bcfg2-yum-helper. By default, Bcfg2 looks first in $PATH
-        and then in `/usr/sbin/bcfg2-yum-helper` for the helper.
+        and then in ``/usr/sbin/bcfg2-yum-helper`` for the helper.
 
 The following options are specified in the **[packages:pulp]** section.
 
@@ -628,7 +628,7 @@ the configuration file.
 
     path
         Custom path for backups created in paranoid mode. The default is
-        in `/var/cache/bcfg2`.
+        in ``/var/cache/bcfg2``.
 
     max_copies
         Specify a maximum number of copies for the server to keep when
@@ -647,7 +647,7 @@ server snapshots functionality.
     database
         The name of the database to use for statistics data.
 
-        e.g.: `$REPOSITORY_DIR/etc/bcfg2.sqlite`
+        e.g.: ``$REPOSITORY_DIR/etc/bcfg2.sqlite``
 
 SSLCA options
 -------------
@@ -689,7 +689,7 @@ control the database connection of the server.
     name
         The name of the database to use for statistics data. If
         'database_engine' is set to 'sqlite3' this is a file path to
-        the sqlite file and defaults to `$REPOSITORY_DIR/etc/brpt.sqlite`.
+        the sqlite file and defaults to ``$REPOSITORY_DIR/etc/brpt.sqlite``.
 
     user
         User for database connections. Not used for sqlite3.

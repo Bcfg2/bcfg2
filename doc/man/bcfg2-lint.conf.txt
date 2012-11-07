@@ -117,7 +117,7 @@ Validate
 
 schema
     The full path to the XML Schema files. Default is
-    `/usr/share/bcfg2/schema`. This can be overridden with the
+    ``/usr/share/bcfg2/schema``. This can be overridden with the
     *--schema* command-line option.
 
 See Also

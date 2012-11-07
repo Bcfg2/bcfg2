@@ -24,14 +24,14 @@ Options
 
 -c *configuration file*
     Specify an alternate report configuration path. The default is
-    `repo/etc/reports-configuration.xml`.
+    ``repo/etc/reports-configuration.xml``.
 
 -h
     Produce a help message.
 
 -s *statistics path*
     Use an alternative path for the statistics file. The default is
-    `repo/etc/statistics.xml`.
+    ``repo/etc/statistics.xml``.
 
 See Also
 --------

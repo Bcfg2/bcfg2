@@ -20,7 +20,7 @@ Description
 about clients, and the states of their current interactions. It also
 allows you to change the expired/unexpired states. The utility runs as a
 standalone application. It does, however, use the models from
-`src/lib/Bcfg2/Reporting/models.py`.
+``src/lib/Bcfg2/Reporting/models.py``.
 
 Options
 -------
