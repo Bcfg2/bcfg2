@@ -1,99 +1,164 @@
+.TH "BCFG2-LINT.CONF" "5" "November 07, 2012" "1.3" "Bcfg2"
+.SH NAME
+bcfg2-lint.conf \- Configuration parameters for bcfg2-lint
 .
-.TH "BCFG2\-LINT\.CONF" "5" "October 2012" "" ""
+.nr rst2man-indent-level 0
 .
-.SH "NAME"
-\fBbcfg2\-lint\.conf\fR \- configuration parameters for bcfg2\-lint
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.\" Man page generated from reStructeredText.
 .
-.SH "DESCRIPTION"
-\fBbcfg2\-lint\.conf\fR includes configuration parameters for \fBbcfg2\-lint\fR\.
-.
-.SH "FILE FORMAT"
-The file is INI\-style and consists of sections and options\. A section begins with the name of the sections in square brackets and continues until the next section begins\.
-.
-.P
-Options are specified in the form "name=value"\.
-.
-.P
-The file is line\-based each newline\-terminated line represents either a comment, a section name or an option\.
-.
-.P
-Any line beginning with a hash (#) is ignored, as are lines containing only whitespace\.
-.
-.P
-The file consists of one \fB[lint]\fR section, up to one \fB[errors]\fR section, and then any number of plugin\-specific sections, documented below\. (Note that this makes it quite feasible to combine your \fBbcfg2\-lint\.conf\fR into your \fBbcfg2\.conf\fR(5) file, if you so desire)\.
-.
-.SH "GLOBAL OPTIONS"
-These options apply to \fBbcfg2\-lint\fR generally, and must be in the \fB[lint]\fR section\.
-.
+.SH DESCRIPTION
+.sp
+bcfg2\-lint.conf includes configuration parameters for bcfg2\-lint.
+.SH FILE FORMAT
+.sp
+The file is INI\-style and consists of sections and options. A section
+begins with the name of the sections in square brackets and continues
+until the next section begins.
+.sp
+Options are specified in the form "name=value".
+.sp
+The file is line\-based each newline\-terminated line represents either a
+comment, a section name or an option.
+.sp
+Any line beginning with a hash (#) is ignored, as are lines containing
+only whitespace.
+.sp
+The file consists of one \fI[lint]\fP section, up to one \fI[errors]\fP section,
+and then any number of plugin\-specific sections, documented below. (Note
+that this makes it quite feasible to combine your \fIbcfg2\-lint.conf\fP into
+your \fIbcfg2.conf(5)\fP file, if you so desire).
+.SH GLOBAL OPTIONS
+.sp
+These options apply to \fIbcfg2\-lint\fP generally, and must be in the
+\fI[lint]\fP section.
+.INDENT 0.0
 .TP
-\fBplugins\fR
-A comma\-delimited list of plugins to run\. By default, all plugins are run\. This can be overridden by listing plugins on the command line\. See \fBbcfg2\-lint\fR(8) for a list of the available plugins\.
-.
-.SH "ERROR HANDLING"
-Error handling is configured in the \fB[errors]\fR section\. Each option should be the name of an error and one of \fIerror\fR, \fIwarning\fR, or \fIsilent\fR, which tells \fBbcfg2\-lint\fR(8) how to handle the warning\. Error names and their defaults can be displayed by running \fBbcfg2\-lint\fR(8) with the \fB\-\-list\-errors\fR option\.
-.
-.SH "PLUGIN OPTIONS"
-These options apply only to a single plugin\. Each option should be in a section named for its plugin; for instance, options for the InfoXML plugin would be in a section called \fB[InfoXML]\fR\.
-.
-.P
-If a plugin is not listed below, then it has no configuration\.
-.
-.P
-In many cases, the behavior of a plugin can be configured by modifying how errors from it are handled\. See \fI\fBERROR HANDLING\fR\fR, above\.
-.
-.SS "Comments"
-The \fBComments\fR plugin configuration specifies which VCS keywords and comments are required for which file types\. The valid types of file are \fIglobal\fR (all file types), \fIbundler\fR (non\-templated bundle files), \fIsgenshi\fR (templated bundle files), \fIproperties\fR (property files), \fIcfg\fR (non\-templated Cfg files), \fItgenshi\fR (templated Cfg files), \fIinfoxml\fR (info\.xml files), and \fIprobe\fR (probe files)\.
-.
-.P
-The specific types (i\.e\., types other than "global") all supplement global; they do not override it\. The exception is if you specify an empty option, e\.g\.:
-.
-.P
+.B plugins
+A comma\-delimited list of plugins to run. By default, all plugins
+are run. This can be overridden by listing plugins on the command
+line. See \fIbcfg2\-lint(8)\fP for a list of the available
+plugins.
+.UNINDENT
+.SH ERROR HANDLING
+.sp
+Error handling is configured in the \fI[errors]\fP section. Each option
+should be the name of an error and one of \fIerror\fP, \fIwarning\fP, or
+\fIsilent\fP, which tells \fBbcfg2\-lint\fP how to handle the
+warning. Error names and their defaults can be displayed by running
+\fBbcfg2\-lint\fP with the \fI\-\-list\-errors\fP option.
+.SH PLUGIN OPTIONS
+.sp
+These options apply only to a single plugin. Each option should be in a
+section named for its plugin; for instance, options for the InfoXML
+plugin would be in a section called \fI[InfoXML]\fP.
+.sp
+If a plugin is not listed below, then it has no configuration.
+.sp
+In many cases, the behavior of a plugin can be configured by modifying
+how errors from it are handled. See ERROR HANDLING, above.
+.SS Comments
+.sp
+The \fIComments\fP plugin configuration specifies which VCS keywords and
+comments are required for which file types. The valid types of file are
+\fIglobal\fP (all file types), \fIbundler\fP (non\-templated bundle files),
+\fIgenshibundler\fP (templated bundle files), \fIproperties\fP (property files),
+\fIcfg\fP (non\-templated Cfg files), \fIgenshi\fP or \fIcheetah\fP (templated Cfg
+files), \fIinfoxml\fP (info.xml files), and \fIprobe\fP (probe files).
+.sp
+The specific types (i.e., types other than "global") all supplement
+global; they do not override it. The exception is if you specify an
+empty option, e.g.:
+.INDENT 0.0
+.INDENT 3.5
 cfg_keywords =
-.
-.P
-By default, the \fI$Id$\fR keyword is checked for and nothing else\.
-.
-.P
-Multiple keywords or comments should be comma\-delimited\.
-.
-.P
-· \fB<type>_keywords\fR
-.
-.P
-Ensure that files of the specified type have the given VCS keyword\. Do \fInot\fR include the dollar signs\. I\.e\.:
-.
-.P
+.UNINDENT
+.UNINDENT
+.sp
+By default, the \fI$Id$\fP keyword is checked for and nothing else.
+.sp
+Multiple keywords or comments should be comma\-delimited.
+.INDENT 0.0
+.INDENT 3.5
+.INDENT 0.0
+.IP \(bu 2
+\fI<type>_keywords\fP
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.sp
+Ensure that files of the specified type have the given VCS keyword. Do
+\fInot\fP include the dollar signs. I.e.:
+.INDENT 0.0
+.INDENT 3.5
 infoxml_keywords = Revision
-.
-.P
-\fInot\fR:
-.
-.P
+.UNINDENT
+.UNINDENT
+.sp
+\fInot\fP
+.INDENT 0.0
+.INDENT 3.5
 infoxml_keywords = $Revision$
-.
-.P
-\fB· <type>_comments\fR
-.
-.P
-Ensure that files of the specified type have a comment containing the given string\. In XML files, only comments are checked\. In plain text files, all lines are checked since comment characters may vary\.
-.
-.SS "InfoXML"
-.
+.INDENT 0.0
+.IP \(bu 2
+\fI<type>_comments\fP
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.sp
+Ensure that files of the specified type have a comment containing the
+given string. In XML files, only comments are checked. In plain text
+files, all lines are checked since comment characters may vary.
+.SS InfoXML
+.INDENT 0.0
 .TP
-\fBrequired_attrs\fR
-A comma\-delimited list of attributes to require on \fB<Info>\fR tags\. Default is "owner,group,mode"\.
-.
-.SS "MergeFiles"
-.
+.B required_attrs
+A comma\-delimited list of attributes to require on \fI<Info>\fP tags.
+Default is "owner,group,mode".
+.UNINDENT
+.SS MergeFiles
+.INDENT 0.0
 .TP
-\fBthreshold\fR
-The threshold at which MergeFiles will suggest merging config files and probes\. Default is 75% similar\.
-.
-.SS "Validate"
-.
+.B threshold
+The threshold at which MergeFiles will suggest merging config files
+and probes. Default is 75% similar.
+.UNINDENT
+.SS Validate
+.INDENT 0.0
 .TP
-\fBschema\fR
-The full path to the XML Schema files\. Default is \fB/usr/share/bcfg2/schema\fR\. This can be overridden with the \fI\-\-schema\fR command\-line option
+.B schema
+The full path to the XML Schema files. Default is
+\fB/usr/share/bcfg2/schema\fP. This can be overridden with the
+\fI\-\-schema\fP command\-line option.
+.UNINDENT
+.SH SEE ALSO
+.sp
+\fIbcfg2\-lint(8)\fP
+.SH COPYRIGHT
+2009-2012, Narayan Desai
+.\" Generated by docutils manpage writer.
+.\" 
 .
-.SH "SEE ALSO"
-bcfg2\-lint(8)

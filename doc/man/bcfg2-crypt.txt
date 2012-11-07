@@ -1,3 +1,4 @@
+.. -*- mode: rst -*-
 .. vim: ft=rst
 
 bcfg2-crypt
@@ -23,54 +24,39 @@ usually figure out what to do.
 Options
 -------
 
--C *configfile*
-    Specify alternate bcfg2.conf location.
-
---decrypt, --encrypt
-    Specify which operation you'd like to perform.
-    :program:`bcfg2-crypt` can usually determine which is necessary
-    based on the contents of each file.
-
---cfg
-    Tell :program:`bcfg2-crypt` that an XML file should be encrypted in
-    its entirety rather than element-by-element. This is only necessary
-    if the file is an XML file whose name ends with *.xml* and whose
-    top-level tag is *<Properties>*. See [MODES] below for details.
-
---properties
-    Tell :program:`bcfg2-crypt` to process a file as an XML Properties
-    file, and encrypt the text of each element separately. This is
-    necessary if, for example, you've used a different top-level tag
-    than *Properties* in your Properties files. See [MODES] below for
-    details.
-
---stdout
-    Print the resulting file to stdout instead of writing it to a file.
-
---remove
-    Remove the plaintext file after it has been encrypted.  Only
-    meaningful for Cfg files.
-
---xpath *xpath*
-    Encrypt the character content of all elements that match the
-    specified XPath expression.  The default is *\*[@encrypted]* or
-    *\**; see [MODES] below for more details. Only meaningful for
-    Properties files.
-
--p *passphrase*
-    Specify the name of a passphrase specified in the *[encryption]*
-    section of *bcfg2.conf*. See [SELECTING PASSPHRASE] below for more
-    details.
-
--v
-    Be verbose.
-
--I
-    When encrypting a Properties file, interactively select the elements
-    whose data should be encrypted.
-
--h
-    Display help and exit.
+-C configfile         Specify alternate bcfg2.conf location.
+--decrypt, --encrypt  Select encryption or decryption mode for the
+                      given file(s). This is usually unnecessary, as
+                      :program:`bcfg2-crypt` can often determine which
+                      is necessary based on the contents of each file.
+--cfg                 An XML file should be encrypted in its entirety
+                      rather than element-by-element. This is only
+                      necessary if the file is an XML file whose name
+                      ends with *.xml* and whose top-level tag is
+                      *<Properties>*. See [MODES] below for details.
+--properties          Process a file as an XML Properties file, and
+                      encrypt the text of each element
+                      separately. This is necessary if, for example,
+                      you've used a different top-level tag than
+                      *Properties* in your Properties files. See
+                      [MODES] below for details.
+--stdout              Print the resulting file to stdout instead of
+                      writing it to a file.
+--remove              Remove the plaintext file after it has been
+                      encrypted.  Only meaningful for Cfg files.
+--xpath xpath         Encrypt the character content of all elements
+                      that match the specified XPath expression.  The
+                      default is *\*[@encrypted]* or *\**; see [MODES]
+                      below for more details. Only meaningful for
+                      Properties files.
+-p passphrase         Specify the name of a passphrase specified in
+                      the *[encryption]* section of *bcfg2.conf*. See
+                      [SELECTING PASSPHRASE] below for more details.
+-v                    Be verbose.
+-I                    When encrypting a Properties file, interactively
+                      select the elements whose data should be
+                      encrypted.
+-h                    Print usage information.
 
 Modes
 -----

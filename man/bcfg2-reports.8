@@ -1,76 +1,148 @@
+.TH "BCFG2-REPORTS" "8" "November 07, 2012" "1.3" "Bcfg2"
+.SH NAME
+bcfg2-reports \- Query reporting system for client status
 .
-.TH "BCFG2\-REPORTS" "8" "September 2012" "" ""
+.nr rst2man-indent-level 0
 .
-.SH "NAME"
-\fBbcfg2\-reports\fR \- Query reporting system for client status
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.\" Man page generated from reStructeredText.
 .
-.SH "SYNOPSIS"
-\fBbcfg2\-reports\fR [\-a] [\-b \fINAME\fR] [\-c] [\-d] [\-e \fINAME\fR] [\-h] [\-m \fINAME\fR] [\-s \fINAME\fR] [\-x \fINAME\fR] [\-\-badentry=\fIKIND,NAME\fR] [\-\-extraentry=\fIKIND,NAME\fR] [\-\-fields=<ARG1,ARG2,\.\.\.>] [\-\-modifiedentry=\fIKIND,NAME\fR] [\-\-sort=<ARG1,ARG2,\.\.\.>] [\-\-stale] [\-v]
-.
-.SH "DESCRIPTION"
-\fBbcfg2\-reports\fR allows you to retrieve data from the database about clients, and the states of their current interactions\. It also allows you to change the expired/unexpired states\. The utility runs as a standalone application\. It does, however, use the models from \fB/src/lib/Server/Reports/reports/models\.py\fR\.
-.
-.SH "OPTIONS"
-.
+.SH SYNOPSIS
+.sp
+\fBbcfg2\-reports\fP [\-a] [\-b \fINAME\fP] [\-c] [\-d] [\-e \fINAME\fP] [\-h]
+[\-m \fINAME\fP] [\-s \fINAME\fP] [\-x \fINAME\fP] [\-\-badentry=\fIKIND,NAME\fP]
+[\-\-extraentry=\fIKIND,NAME\fP] [\-\-fields=\fIARG1,ARG2,...\fP]
+[\-\-modifiedentry=\fIKIND,NAME\fP] [\-\-sort=\fIARG1,ARG2,...\fP] [\-\-stale] [\-v]
+.SH DESCRIPTION
+.sp
+\fBbcfg2\-reports\fP allows you to retrieve data from the database
+about clients, and the states of their current interactions. It also
+allows you to change the expired/unexpired states. The utility runs as a
+standalone application. It does, however, use the models from
+\fBsrc/lib/Bcfg2/Reporting/models.py\fP.
+.SH OPTIONS
+.INDENT 0.0
 .TP
-\fB\-a\fR
-Specify alternate bcfg2\.conf location
-.
+.B \-h
+Print usage information.
+.UNINDENT
+.SH MODES
+.sp
+The following are various modes available for \fBbcfg2\-reports\fP.
+.SS Single\-Host Modes
+.INDENT 0.0
 .TP
-\fB\-b\fR \fIhostname\fR
-Single host mode \- shows bad entries from the current interaction of \fIhostname\fR\.
-.
+.BI \-b,  \-\-bad \ hostname
+Shows bad entries from the current
+interaction of \fIhostname\fP.
 .TP
-\fB\-c\fR
-Shows only clean hosts\.
-.
+.BI \-e,  \-\-extra \ hostname
+Shows extra entries from the current
+interaction of \fIhostname\fP.
 .TP
-\fB\-d\fR
-Shows only dirty hosts\.
-.
+.BI \-m,  \-\-modified \ hostname
+Shows modified entries from the current
+interaction of \fIhostname\fP.
 .TP
-\fB\-e\fR \fIhostname\fR
-Single host mode \- shows extra entries from the current interaction of \fIhostname\fR\.
-.
+.BI \-s,  \-\-show \ hostname
+Shows bad, modified, and extra entries from
+the current interaction of \fIhostname\fP.
 .TP
-\fB\-h\fR
-Shows help and usage info about \fBbcfg2\-reports\fR\.
-.
+.BI \-t,  \-\-total \ hostname
+Shows total number of managed and good
+entries from the current interaction of
+\fIhostname\fP.
 .TP
-\fB\-m\fR \fIhostname\fR
-Single host mode \- shows modified entries from the current interaction of \fIhostname\fR\.
-.
+.BI \-x,  \-\-expire \ hostname
+Toggles expired/unexpired state of
+\fIhostname\fP.
 .TP
-\fB\-s\fR \fIhostname\fR
-Single host mode \- shows bad, modified, and extra entries from the current interaction of \fIhostname\fR\.
-.
+.B \-a,  \-\-all
+Show all hosts, including expired hosts.
+.UNINDENT
+.SS Host Selection Modes
+.INDENT 0.0
 .TP
-\fB\-x\fR \fIhostname\fR
-Toggles expired/unexpired state of \fIhostname\fR\.
-.
+.B \-a,  \-\-all
+Show all hosts, including expired hosts.
 .TP
-\fB\-\-badentry=\fR\fIentry type, entry name\fR
-Shows only hosts whose current interaction has bad entries of type \fIentry type\fR and name \fIentry name\fR\. If a single argument ARG1 is given, then \fIentry type\fR,\fIentry name\fR pairs will be read from a file of name ARG1\.
-.
+.B \-c,  \-\-clean
+Show only clean hosts.
 .TP
-\fB\-\-extraentry=\fR\fIentry type, entry name\fR
-Shows only hosts whose current interaction has extra entries of type \fIentry type\fR and name \fIentry name\fR\. If a single argument ARG1 is given, then \fIentry type\fR,\fIentry name\fR pairs will be read from a file of name ARG1\.
-.
+.B \-d,  \-\-dirty
+Show only dirty hosts.
 .TP
-\fB\-\-fields=\fR<ARG1,ARG2,\.\.\.>
-Only displays the fields \fIARG1,ARG2,\.\.\.\fR (name, time, state, total, good, bad)\.
-.
+.B \-\-stale
+Show hosts that haven\(aqt run in the last 24 hours.
+.UNINDENT
+.SS Entry Modes
+.sp
+The following mode flags require either a comma\-delimited list of any
+number of \fI<entry type>:<entry name>\fP arguments describing entries, or
+the \fI\-\-file\fP option.
+.INDENT 0.0
 .TP
-\fB\-\-modifiedentry=\fR\fIentry type, entry name\fR
-Shows only hosts whose current interaction has modified entries of type \fIentry type\fR and name \fIentry name\fR\. If a single argument ARG1 is given, then \fIentry type\fR,\fIentry name\fR pairs will be read from a file of name ARG1\.
-.
+.BI \-\-badentry\fB= entrylist
+Shows only hosts whose current interaction
+has bad entries matching the given entry or
+entries.
 .TP
-\fB\-\-sort=\fR<ARG1,ARG2,\.\.\.>
-Sorts output on ARG1,ARG2,\.\.\. (name, time, state, total, good, bad)\.
-.
+.BI \-\-extraentry\fB= entrylist
+Shows only hosts whose current interaction
+has extra entries matching the given entry
+or entries.
 .TP
-\fB\-\-stale\fR
-Shows hosts which haven’t run in the last 24 hours\.
+.BI \-\-entrystatus\fB= entry
+Shows the status of the single entry (given
+by \fI<entry type>:<entry name>\fP) on all
+hosts.
+.TP
+.BI \-\-modifiedentry\fB= entrylist
+Shows only hosts whose current interaction
+has modified entries matching the given
+entry or entries.
+.UNINDENT
+.SS Entry Options
+.sp
+The following options can be used with the above Entry Modes.
+.INDENT 0.0
+.TP
+.BI \-\-fields\fB= fields
+Only display the listed fields.  Takes a
+comma\-delimited list of field names
+.TP
+.BI \-\-file\fB= file
+Read \fI<entry type>:<entry name>\fP pairs from the
+specified file instead of the command line.
+.UNINDENT
+.SH SEE ALSO
+.sp
+\fIbcfg2(1)\fP, \fIbcfg2\-server(8)\fP
+.SH COPYRIGHT
+2009-2012, Narayan Desai
+.\" Generated by docutils manpage writer.
+.\" 
 .
-.SH "SEE ALSO"
-bcfg2(1), bcfg2\-server(8)

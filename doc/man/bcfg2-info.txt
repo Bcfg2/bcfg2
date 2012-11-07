@@ -1,3 +1,4 @@
+.. -*- mode: rst -*-
 .. vim: ft=rst
 
 bcfg2-info
@@ -20,26 +21,13 @@ data examination and debugging purposes.
 Options
 -------
 
--C *configfile*
-    Specify alternate bcfg2.conf location.
-
--E *encoding*
-    Specify the encoding of config files.
-
--Q *repository path*
-    Specify the server repository path.
-
--d
-    Run in debug mode.
-
--h
-    Print usage information.
-
--p *profile*
-    Specify a profile.
-
--x *password*
-    Set the communication password.
+-C configfile     Specify alternate bcfg2.conf location.
+-E encoding       Specify the encoding of config files.
+-Q path           Specify the path to the server repository.
+-d                Enable debugging output.
+-h                Print usage information.
+-p profile        Specify a profile.
+-x password       Use 'password' for client communication.
 
 Modes
 -----

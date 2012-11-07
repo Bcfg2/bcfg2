@@ -1,260 +1,255 @@
+.TH "BCFG2-ADMIN" "8" "November 07, 2012" "1.3" "Bcfg2"
+.SH NAME
+bcfg2-admin \- Perform repository administration tasks
 .
-.TH "BCFG2\-ADMIN" "8" "September 2012" "" ""
+.nr rst2man-indent-level 0
 .
-.SH "NAME"
-\fBbcfg2\-admin\fR \- Perform repository administration tasks
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.\" Man page generated from reStructeredText.
 .
-.SH "SYNOPSIS"
-\fBbcfg2\-admin\fR [\-C \fIconfigfile\fR] \fImode\fR [\fImode args\fR] [\fImode options\fR]
-.
-.SH "DESCRIPTION"
-\fBbcfg2\-admin\fR is used to perform Bcfg2 repository administration
-.
-.SH "OPTIONS"
-.
+.SH SYNOPSIS
+.sp
+\fBbcfg2\-admin\fP [\-C \fIconfigfile\fP] \fImode\fP [\fImode args\fP] [\fImode options\fP]
+.SH DESCRIPTION
+.sp
+\fBbcfg2\-admin\fP is used to perform Bcfg2 repository
+administration.
+.SH OPTIONS
+.INDENT 0.0
 .TP
-\fB\-C\fR \fIconfigfile\fR
-Specify alternate bcfg2\.conf location\.
-.
+.BI \-C \ configfile
+Specify alternate bcfg2.conf location.
 .TP
-\fB\-E\fR \fIencoding\fR
-Specify the encoding of Cfg files\.
-.
+.BI \-E \ encoding
+Specify the encoding of config files.
 .TP
-\fB\-Q\fR \fIrepository path\fR
-Specify the path to the server repository\.
-.
+.BI \-Q \ path
+Specify the path to the server repository.
 .TP
-\fB\-S\fR \fIhttps://server:port\fR
-Manually specify the server location (as opposed to using the value in bcfg2\.conf)\.
-.
+.BI \-S \ server
+Manually specify the server location (as opposed to
+using the value in bcfg2.conf). This should be in
+the format "\fI\%https://server:port\fP"
 .TP
-\fB\-d\fR
-Enable debugging output\.
-.
+.B \-d
+Enable debugging output.
 .TP
-\fB\-h\fR
-Print Usage information\.
-.
+.B \-h
+Print usage information.
 .TP
-\fB\-o\fR \fIlogfile path\fR
-Writes a log to the specified path\.
-.
+.BI \-o \ logfile
+Writes a log to the specified path.
 .TP
-\fB\-v\fR
-Enable verbose output\.
-.
+.BI \-\-ssl\-key\fB= key
+Specify the path to the SSL key.
 .TP
-\fB\-x\fR \fIpassword\fR
-Use ’password’ for client communication\.
-.
+.B \-v
+Enable verbose output.
 .TP
-\fB\-\-ssl\-key=\fR\fIssl key\fR
-Specifiy the path to the SSL key\.
-.
-.SH "MODES"
-.
+.BI \-x \ password
+Use \(aqpassword\(aq for client communication.
+.UNINDENT
+.SH MODES
+.INDENT 0.0
 .TP
-\fBbackup\fR
-Create an archive of the entire Bcfg2 repository\.
-.
+.B backup
+Create an archive of the entire Bcfg2 repository.
 .TP
-\fBbundle\fR \fIaction\fR
-Display details about the available bundles (See \fI\fBBUNDLE OPTIONS\fR\fR below)\.
-.
+.B bundle \fIaction\fP
+Display details about the available bundles (See BUNDLE OPTIONS
+below).
 .TP
-\fBclient\fR \fIaction\fR \fIclient\fR [attribute=value]
-Add, edit, or remove clients entries in metadata (See \fI\fBCLIENT OPTIONS\fR\fR below)\.
-.
+.B client \fIaction\fP \fIclient\fP [attribute=value]
+Add, edit, or remove clients entries in metadata (See CLIENT OPTIONS
+below).
 .TP
-\fBcompare\fR \fIold\fR \fInew\fR
-Compare two client configurations\. Can be used to verify consistent behavior between releases\. Determine differences between files or directories (See \fI\fBCOMPARE OPTIONS\fR\fR below)\.
-.
+.B compare \fIold\fP \fInew\fP
+Compare two client configurations. Can be used to verify consistent
+behavior between releases. Determine differences between files or
+directories (See COMPARE OPTIONS below).
 .TP
-\fBinit\fR
-Initialize a new repository (interactive)\.
-.
+.B init
+Initialize a new repository (interactive).
 .TP
-\fBminestruct\fR \fIclient\fR [\-f xml\-file] [\-g groups]
-Build structure entries based on client statistics extra entries (See \fI\fBMINESTRUCT OPTIONS\fR\fR below)\.
-.
+.B minestruct \fIclient\fP [\-f xml\-file] [\-g groups]
+Build structure entries based on client statistics extra entries
+(See MINESTRUCT OPTIONS below).
 .TP
-\fBperf\fR
-Query server for performance data\.
-.
+.B perf
+Query server for performance data.
 .TP
-\fBpull\fR \fIclient\fR \fIentry\-type\fR \fIentry\-name\fR
-Install configuration information into repo based on client bad entries (See \fI\fBPULL OPTIONS\fR\fR below)\.
-.
+.B pull \fIclient\fP \fIentry\-type\fP \fIentry\-name\fP
+Install configuration information into repo based on client bad
+entries (See PULL OPTIONS below).
 .TP
-\fBquery\fR [g=group] [p=profile] [\-f output\-file] [\-n] [\-c]
-Search for clients based on group or profile (See \fI\fBQUERY OPTIONS\fR\fR below)\.
-.
+.B reports [init|load_stats|purge|scrub|update]
+Interact with the dynamic reporting system (See REPORTS OPTIONS
+below).
 .TP
-\fBreports\fR [init|load_stats|purge|scrub|update]
-Interact with the dynamic reporting system (See \fI\fBREPORTS OPTIONS\fR\fR below)\.
-.
+.B snapshots [init|dump|query|reports]
+Interact with the Snapshots database (See SNAPSHOTS OPTIONS below).
 .TP
-\fBsnapshots\fR [init|dump|query|reports]
-Interact with the Snapshots database (See \fI\fBSNAPSHOTS OPTIONS\fR\fR below)\.
-.
+.B syncdb
+Sync the Django ORM with the configured database.
 .TP
-\fBsyncdb\fR
-Sync the Django ORM with the configured database\.
-.
+.B tidy
+Remove unused files from repository.
 .TP
-\fBtidy\fR
-Remove unused files from repository\.
-.
+.B viz [\-H] [\-b] [\-k] [\-o png\-file]
+Create a graphviz diagram of client, group and bundle information
+(See VIZ OPTIONS below).
 .TP
-\fBviz\fR [\-H] [\-b] [\-k] [\-o png\-file]
-Create a graphviz diagram of client, group and bundle information (See \fI\fBVIZ OPTIONS\fR\fR below)\.
-.
+.B xcmd
+Provides a XML\-RPC Command Interface to the bcfg2\-server.
+.UNINDENT
+.SS BUNDLE OPTIONS
+.INDENT 0.0
 .TP
-\fBxcmd\fR
-Provides a XML\-RPC Command Interface to the bcfg2\-server\.
-.
-.SS "BUNDLE OPTIONS"
-.
+.B mode
+One of the following.
+.INDENT 7.0
 .TP
-\fBmode\fR
-List all available xml bundles ’list\-xml’ or for all available genshi bundles ’list\-genshi’\. ’show’ provides an interactive dialog to get details about the available bundles\.
-.
-.SS "CLIENT OPTIONS"
-.
+.B \fIlist\-xml\fP
+List all available xml bundles
 .TP
-\fBmode\fR
-Add a client ’add’, delete a client ’del’, or ’list’ all client entries\.
-.
+.B \fIlist\-genshi\fP
+List all available genshi bundles
 .TP
-\fBclient\fR
-Specify the client’s name\.
-.
+.B \fIshow\fP
+Interactive dialog to get details about the available bundles
+.UNINDENT
+.UNINDENT
+.SS CLIENT OPTIONS
+.INDENT 0.0
 .TP
-\fBattribute=value\fR
-Set attribute values when adding a new client\. Allowed attributes are ’profile’, ’uuid’, ’password’, ’location’, ’secure’, and ’address’\.
-.
-.SS "QUERY OPTIONS"
-.
+.B mode
+One of the following.
+.INDENT 7.0
 .TP
-\fBb=bundle\fR
-Specify a bundle to search for within client metadata\.
-.
+.B \fIadd\fP
+Add a client
 .TP
-\fBg=group\fR
-Specify a group to search within\.
-.
+.B \fIdel\fP
+Delete a client
 .TP
-\fBp=profile\fR
-Specify a profile to search within\.
-.
+.B \fIlist\fP
+List all client entries
+.UNINDENT
 .TP
-\fB\-f\fR \fIoutput file\fR
-Write the results of the query to a file\.
-.
+.B client
+Specify the client\(aqs name.
 .TP
-\fB\-n\fR
-Print the results, one on each line\.
-.
+.B attribute=value
+Set attribute values when adding a new client. Allowed attributes
+are \(aqprofile\(aq, \(aquuid\(aq, \(aqpassword\(aq, \(aqlocation\(aq, \(aqsecure, and
+\(aqaddress\(aq.
+.UNINDENT
+.SS COMPARE OPTIONS
+.INDENT 0.0
 .TP
-\fB\-c\fR
-Print the results, separated by commas\.
-.
-.SS "COMPARE OPTIONS"
-.
+.B old
+Specify the location of the old configuration file.
 .TP
-\fBold\fR
-Specify the location of the old configuration file\.
-.
+.B new
+Specify the location of the new configuration file.
+.UNINDENT
+.SS MINESTRUCT OPTIONS
+.INDENT 0.0
 .TP
-\fBnew\fR
-Specify the location of the new configuration file\.
-.
-.SS "MINESTRUCT OPTIONS"
-.
+.B client
+Client whose metadata is to be searched for extra entries.
 .TP
-\fBclient\fR
-Client whose metadata is to be searched for extra entries\.
-.
+.B \-g \fIgroups\fP
+Hierarchy of groups in which to place the extra entries in.
 .TP
-\fB\-g\fR \fIgroups\fR
-Hierarchy of groups in which to place the extra entries in\.
-.
+.B \-f \fIoutputfile\fP
+Specify the xml file in which to write the extra entries.
+.UNINDENT
+.SS PULL OPTIONS
+.INDENT 0.0
 .TP
-\fB\-f\fR \fIxml output file\fR
-Specify the xml file in which to write the extra entries\.
-.
-.SS "PULL OPTIONS"
-.
+.B client
+Specify the name of the client to search for.
 .TP
-\fBclient\fR
-Specify the name of the client to search for\.
-.
+.B entry type
+Specify the type of the entry to pull.
 .TP
-\fBentry type\fR
-Specify the type of the entry to pull\.
-.
+.B entry name
+Specify the name of the entry to pull.
+.UNINDENT
+.SS REPORTS OPTIONS
+.INDENT 0.0
 .TP
-\fBentry name\fR
-Specify the name of the entry to pull\.
-.
-.SS "REPORTS OPTIONS"
-.
+.B load_stats [\-s] [\-c] [\-03]
+Load statistics data.
 .TP
-\fBinit\fR
-Initialize the database\.
-.
+.B purge [\-\-client [n]] [\-\-days [n]] [\-\-expired]
+Purge historic and expired data.
 .TP
-\fBload_stats\fR [\-s] [\-c] [\-03]
-Load statistics data\.
-.
+.B scrub
+Scrub the database for duplicate reasons and orphaned entries.
 .TP
-\fBpurge\fR [\-\-client [n]] [\-\-days [n]] [\-\-expired]
-Purge historic and expired data\.
-.
+.B update
+Apply any updates to the reporting database.
+.UNINDENT
+.SS SNAPSHOTS OPTIONS
+.INDENT 0.0
 .TP
-\fBscrub\fR
-Scrub the database for duplicate reasons and orphaned entries\.
-.
+.B init
+Initialize the snapshots database.
 .TP
-\fBupdate\fR
-Apply any updates to the reporting database\.
-.
-.SS "SNAPSHOTS OPTIONS"
-.
+.B query
+Query the snapshots database.
 .TP
-\fBinit\fR
-Initialize the snapshots database\.
-.
+.B dump
+Dump some of the contents of the snapshots database.
 .TP
-\fBquery\fR
-Query the snapshots database\.
-.
+.B reports [\-a] [\-b] [\-e] [\-\-date=MM\-DD\-YYYY]
+Generate reports for clients in the snapshots database.
+.UNINDENT
+.SS VIZ OPTIONS
+.INDENT 0.0
 .TP
-\fBdump\fR
-Dump some of the contents of the snapshots database\.
-.
+.B \-H
+Include hosts in diagram.
 .TP
-\fBreports\fR [\-a] [\-b] [\-e] [\-\-date=\fIMM\-DD\-YYYY\fR]
-Generate reports for clients in the snapshots database\.
-.
-.SS "VIZ OPTIONS"
-.
+.B \-b
+Include bundles in diagram.
 .TP
-\fB\-H\fR
-Include hosts in diagram\.
-.
+.BI \-o \ <outfile>
+Write to outfile file instead of stdout.
 .TP
-\fB\-b\fR
-Include bundles in diagram\.
+.B \-k
+Add a shape/color key.
+.UNINDENT
+.SH SEE ALSO
+.sp
+\fIbcfg2\-info(8)\fP, \fIbcfg2\-server(8)\fP
+.SH COPYRIGHT
+2009-2012, Narayan Desai
+.\" Generated by docutils manpage writer.
+.\" 
 .
-.TP
-\fB\-o\fR \fIoutput file\fR
-Write to outfile file instead of stdout\.
-.
-.TP
-\fB\-k\fR
-Add a shape/color key\.
-.
-.SH "SEE ALSO"
-bcfg2\-info(8), bcfg2\-server(8)

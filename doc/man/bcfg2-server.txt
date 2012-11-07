@@ -1,3 +1,4 @@
+.. -*- mode: rst -*-
 .. vim: ft=rst
 
 bcfg2-server
@@ -21,29 +22,18 @@ configurations to clients based on the data in its repository.
 Options
 -------
 
--C *configfile*
-    Specify alternate bcfg2.conf location.
-
--D *pidfile*
-    Daemonize, placing the program pid in the specified pidfile.
-
--E *encoding*
-    Specify the encoding of config files (default is UTF-8).
-
--Q *repo path*
-    Set repository path.
-
--S *https://server:port*
-    Set server address.
-
--d
-    Run :program:`bcfg2-server` in debug mode.
-
--v
-    Run :program:`bcfg2-server` in verbose mode.
-
---ssl-key=\ *ssl key*
-    Set path to SSL key.
+-C configfile     Specify alternate bcfg2.conf location.
+-D pidfile        Daemonize, placing the program pid in the specified
+                  pidfile.
+-E encoding       Specify the encoding of config files.
+-Q path           Specify the path to the server repository.
+-S server         Manually specify the server location (as opposed to
+                  using the value in bcfg2.conf). This should be in
+                  the format "https://server:port"
+-d                Enable debugging output.
+-v                Run in verbose mode.
+-h                Print usage information.
+--ssl-key=key     Specify the path to the SSL key.
 
 See Also
 --------

@@ -1,91 +1,156 @@
+.TH "BCFG2-CRYPT" "8" "November 07, 2012" "1.3" "Bcfg2"
+.SH NAME
+bcfg2-crypt \- Bcfg2 encryption and decryption utility
 .
-.TH "BCFG2\-CRYPT" "8" "September 2012" "" ""
+.nr rst2man-indent-level 0
 .
-.SH "NAME"
-\fBbcfg2\-crypt\fR \- Bcfg2 encryption and decryption utility
+.de1 rstReportMargin
+\\$1 \\n[an-margin]
+level \\n[rst2man-indent-level]
+level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
+-
+\\n[rst2man-indent0]
+\\n[rst2man-indent1]
+\\n[rst2man-indent2]
+..
+.de1 INDENT
+.\" .rstReportMargin pre:
+. RS \\$1
+. nr rst2man-indent\\n[rst2man-indent-level] \\n[an-margin]
+. nr rst2man-indent-level +1
+.\" .rstReportMargin post:
+..
+.de UNINDENT
+. RE
+.\" indent \\n[an-margin]
+.\" old: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.nr rst2man-indent-level -1
+.\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
+.in \\n[rst2man-indent\\n[rst2man-indent-level]]u
+..
+.\" Man page generated from reStructeredText.
 .
-.SH "SYNOPSIS"
-\fBbcfg2\-crypt\fR [\fI\-C configfile\fR] [\-\-decrypt|\-\-encrypt] [\-\-cfg|\-\-properties] [\-\-stdout] [\-\-remove] [\-\-xpath \fIxpath\fR] [\-p \fIpassphrase\-or\-name\fR] [\-v] [\-I] \fIfilename\fR [\fIfilename\fR\.\.\.]
-.
-.SH "DESCRIPTION"
-\fBbcfg2\-crypt\fR performs encryption and decryption of Cfg and Properties files\. It\'s often sufficient to run \fBbcfg2\-crypt\fR with only the name of the file you wish to encrypt or decrypt; it can usually figure out what to do\.
-.
-.SH "OPTIONS"
-.
+.SH SYNOPSIS
+.sp
+\fBbcfg2\-crypt\fP [\-C \fIconfigfile\fP] [\-\-decrypt|\-\-encrypt]
+[\-\-cfg|\-\-properties] [\-\-stdout] [\-\-remove] [\-\-xpath \fIxpath\fP]
+[\-p \fIpassphrase\-or\-name\fP] [\-v] [\-I] \fIfilename\fP [\fIfilename\fP...]
+.SH DESCRIPTION
+.sp
+\fBbcfg2\-crypt\fP performs encryption and decryption of Cfg and
+Properties files. It\(aqs often sufficient to run \fBbcfg2\-crypt\fP
+with only the name of the file you wish to encrypt or decrypt; it can
+usually figure out what to do.
+.SH OPTIONS
+.INDENT 0.0
 .TP
-\fB\-C\fR \fIconfigfile\fR
-Specify alternate bcfg2\.conf location
-.
+.BI \-C \ configfile
+Specify alternate bcfg2.conf location.
 .TP
-\fB\-\-decrypt\fR, \fB\-\-encrypt\fR
-Specify which operation you\'d like to perform\. \fBbcfg2\-crypt\fR can usually determine which is necessary based on the contents of each file\.
-.
+.B \-\-decrypt,  \-\-encrypt
+Select encryption or decryption mode for the
+given file(s). This is usually unnecessary, as
+\fBbcfg2\-crypt\fP can often determine which
+is necessary based on the contents of each file.
 .TP
-\fB\-\-cfg\fR
-Tell \fBbcfg2\-crypt\fR that an XML file should be encrypted in its entirety rather than element\-by\-element\. This is only necessary if the file is an XML file whose name ends with \fB\.xml\fR and whose top\-level tag is \fB<Properties>\fR\. See \fIMODES\fR below for details\.
-.
+.B \-\-cfg
+An XML file should be encrypted in its entirety
+rather than element\-by\-element. This is only
+necessary if the file is an XML file whose name
+ends with \fI.xml\fP and whose top\-level tag is
+\fI<Properties>\fP. See [MODES] below for details.
 .TP
-\fB\-\-properties\fR
-Tell \fBbcfg2\-crypt\fR to process a file as an XML Properties file, and encrypt the text of each element separately\. This is necessary if, for example, you\'ve used a different top\-level tag than \fB<Properties>\fR in your Properties files\. See \fIMODES\fR below for details\.
-.
+.B \-\-properties
+Process a file as an XML Properties file, and
+encrypt the text of each element
+separately. This is necessary if, for example,
+you\(aqve used a different top\-level tag than
+\fIProperties\fP in your Properties files. See
+[MODES] below for details.
 .TP
-\fB\-\-stdout\fR
-Print the resulting file to stdout instead of writing it to a file\.
-.
+.B \-\-stdout
+Print the resulting file to stdout instead of
+writing it to a file.
 .TP
-\fB\-\-remove\fR
-Remove the plaintext file after it has been encrypted\. Only meaningful for Cfg files\.
-.
+.B \-\-remove
+Remove the plaintext file after it has been
+encrypted.  Only meaningful for Cfg files.
 .TP
-\fB\-\-xpath <xpath>\fR
-Encrypt the character content of all elements that match the specified XPath expression\. The default is \fB*[@encrypted]\fR or \fB*\fR; see \fIMODES\fR below for more details\. Only meaningful for Properties files\.
-.
+.BI \-\-xpath \ xpath
+Encrypt the character content of all elements
+that match the specified XPath expression.  The
+default is \fI*[@encrypted]\fP or \fI*\fP; see [MODES]
+below for more details. Only meaningful for
+Properties files.
 .TP
-\fB\-p <passphrase>\fR
-Specify the name of a passphrase specified in the \fB[encryption]\fR section of \fBbcfg2\.conf\fR\. See \fISELECTING PASSPHRASE\fR below for more details\.
-.
+.BI \-p \ passphrase
+Specify the name of a passphrase specified in
+the \fI[encryption]\fP section of \fIbcfg2.conf\fP. See
+[SELECTING PASSPHRASE] below for more details.
 .TP
-\fB\-v\fR
-Be verbose\.
-.
+.B \-v
+Be verbose.
 .TP
-\fB\-I\fR
-When encrypting a Properties file, interactively select the elements whose data should be encrypted\.
-.
+.B \-I
+When encrypting a Properties file, interactively
+select the elements whose data should be
+encrypted.
 .TP
-\fB\-h\fR
-Display help and exit\.
-.
-.SH "MODES"
-\fBbcfg2\-crypt\fR can encrypt Cfg files or Properties files; they are handled very differently\.
-.
+.B \-h
+Print usage information.
+.UNINDENT
+.SH MODES
+.sp
+\fBbcfg2\-crypt\fP can encrypt Cfg files or Properties files; they
+are handled very differently.
+.INDENT 0.0
 .TP
-Cfg
-When \fBbcfg2\-crypt\fR is used on a Cfg file, the entire file is encrypted\. This is the default behavior on files that are not XML, or that are XML but whose top\-level tag is not \fB<Properties>\fR\. This can be enforced by use of the \fB\-\-cfg\fR option\.
-.
+.B Cfg
+When \fBbcfg2\-crypt\fP is used on a Cfg file, the entire file
+is encrypted. This is the default behavior on files that are not
+XML, or that are XML but whose top\-level tag is not \fI<Properties>\fP.
+This can be enforced by use of the \fI\-\-cfg\fP option.
 .TP
-Properties
-When \fBbcfg2\-crypt\fR is used on a Properties file, it encrypts the character content of elements matching the XPath expression given by \fB\-\-xpath\fR\. By default the expression is \fB*[@encrypted]\fR, which matches all elements with an \fBencrypted\fR attribute\. If you are encrypting a file and that expression doesn\'t match any elements, then the default is \fB*\fR, which matches everything\. When \fBbcfg2\-crypt\fR encrypts the character content of an element, it also adds the \fBencrypted\fR attribute, set to the name of the passphrase used to encrypt that element\. When it decrypts an element it does not remove \fBencrypted\fR, though; this lets you easily and efficiently run \fBbcfg2\-crypt\fR against a single Properties file to encrypt and decrypt it without needing to specify a long list of options\. See the online Bcfg2 docs on Properties files for more information on how this works\.
+.B Properties
+When \fBbcfg2\-crypt\fP is used on a Properties file, it
+encrypts the character content of elements matching the XPath
+expression given by \fI\-\-xpath\fP. By default the expression is
+\fI*[@encrypted]\fP, which matches all elements with an \fIencrypted\fP
+attribute. If you are encrypting a file and that expression doesn\(aqt
+match any elements, then the default is \fI*\fP, which matches
+everything. When \fBbcfg2\-crypt\fP encrypts the character
+content of an element, it also adds the \fIencrypted\fP attribute, set
+to the name of the passphrase used to encrypt that element. When it
+decrypts an element it does not remove \fIencrypted\fP, though; this
+lets you easily and efficiently run \fBbcfg2\-crypt\fP against a
+single Properties file to encrypt and decrypt it without needing to
+specify a long list of options. See the online Bcfg2 docs on
+Properties files for more information on how this works.
+.UNINDENT
+.SH SELECTING PASSPHRASE
+.sp
+The passphrase used to encrypt or decrypt a file is discovered in the
+following order.
+.INDENT 0.0
+.IP 1. 3
+The passphrase given on the command line using \fI\-p\fP is used.
+.IP 2. 3
+If exactly one passphrase is specified in \fIbcfg2.conf\fP, it will be
+used.
+.IP 3. 3
+If operating in Properties mode, \fIbcfg2.conf\fP will attempt to read
+the name of the passphrase from the encrypted elements.
+.IP 4. 3
+If decrypting, all passphrases will be tried sequentially.
+.IP 5. 3
+If no passphrase has been determined at this point, an error is
+produced and the file being encrypted or decrypted is skipped.
+.UNINDENT
+.SH SEE ALSO
+.sp
+\fIbcfg2\-server(8)\fP
+.SH COPYRIGHT
+2009-2012, Narayan Desai
+.\" Generated by docutils manpage writer.
+.\" 
 .
-.SH "SELECTING PASSPHRASE"
-The passphrase used to encrypt or decrypt a file is discovered in the following order:
-.
-.IP "\(bu" 4
-First, the passphrase given on the command line using \fB\-p\fR is used\.
-.
-.IP "\(bu" 4
-Next, if exactly one passphrase is specified in \fBbcfg2\.conf\fR, it will be used\.
-.
-.IP "\(bu" 4
-Next, if operating in Properties mode, \fBbcfg2\-crypt\fR will attempt to read the name of the passphrase from the encrypted elements\.
-.
-.IP "\(bu" 4
-Next, if decrypting, all passphrases will be tried sequentially\.
-.
-.IP "\(bu" 4
-If no passphrase has been determined at this point, an error is produced and the file being encrypted or decrypted is skipped\.
-.
-.IP "" 0
-.
-.SH "SEE ALSO"
-bcfg2\-server(8)

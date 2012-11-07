@@ -1,3 +1,4 @@
+.. -*- mode: rst -*-
 .. vim: ft=rst
 
 bcfg2-lint
@@ -27,36 +28,31 @@ tool.
 Options
 -------
 
--C *configfile*
-    Specify alternate bcfg2.conf location.
+-C configfile     Specify alternate bcfg2.conf location.
+-Q path           Specify the path to the server repository.
+-v                Be verbose.
+--lint-config     Specify path to bcfg2-lint.conf (default
+                  ``/etc/bcfg2-lint.conf``).
+--stdin           Rather than operating on all files in the Bcfg2
+                  specification, only validate a list of files
+                  supplied on stdin. This mode is particularly useful
+                  in pre-commit hooks.
 
--Q
-    Specify the server repository path.
+                  This makes a few assumptions:
 
--v
-    Be verbose.
+                  Metadata files will only be checked if a valid chain
+                  of XIncludes can be followed all the way from
+                  clients.xml or groups.xml. Since there are multiple
+                  formats of metadata stored in Metadata/ (i.e.,
+                  clients and groups), there is no way to determine
+                  which sort of data a file contains unless there is a
+                  valid chain of XIncludes. It may be useful to always
+                  specify all metadata files should be checked, even
+                  if not all of them have changed.
 
---lint-config
-    Specify path to bcfg2-lint.conf (default ``/etc/bcfg2-lint.conf``).
-
---stdin
-    Rather than operating on all files in the Bcfg2 specification, only
-    validate a list of files supplied on stdin. This mode is
-    particularly useful in pre-commit hooks.
-
-    This makes a few assumptions:
-
-        Metadata files will only be checked if a valid chain of
-        XIncludes can be followed all the way from clients.xml or
-        groups.xml. Since there are multiple formats of metadata stored
-        in Metadata/ (i.e., clients and groups), there is no way to
-        determine which sort of data a file contains unless there is a
-        valid chain of XIncludes. It may be useful to always specify all
-        metadata files should be checked, even if not all of them have
-        changed.
-
-        Property files will only be validated if both the property file
-        itself and its matching schema are included on stdin.
+                  Property files will only be validated if both the
+                  property file itself and its matching schema are
+                  included on stdin.
 
 Plugins
 -------

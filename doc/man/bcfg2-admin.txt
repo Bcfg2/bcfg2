@@ -1,3 +1,4 @@
+.. -*- mode: rst -*-
 .. vim: ft=rst
 
 bcfg2-admin
@@ -19,36 +20,18 @@ administration.
 Options
 -------
 
--C *configfile*
-    Specify alternate bcfg2.conf location.
-
--E *encoding*
-    Specify the encoding of Cfg files.
-
--Q *path*
-    Specify the path to the server repository.
-
--S *https://server:port*
-    Manually specify the server location (as opposed to using the value
-    in bcfg2.conf).
-
--d
-    Enable debugging output.
-
--h
-    Print usage information.
-
--o *logfile*
-    Writes a log to the specified path.
-
---ssl-key=\ *key*
-    Specify the path to the SSL key.
-
--v
-    Enable verbose output.
-
--x *password*
-    Use 'password' for client communication.
+-C configfile     Specify alternate bcfg2.conf location.
+-E encoding       Specify the encoding of config files.
+-Q path           Specify the path to the server repository.
+-S server         Manually specify the server location (as opposed to
+                  using the value in bcfg2.conf). This should be in
+                  the format "https://server:port"
+-d                Enable debugging output.
+-h                Print usage information.
+-o logfile        Writes a log to the specified path.
+--ssl-key=key     Specify the path to the SSL key.
+-v                Enable verbose output.
+-x password       Use 'password' for client communication.
 
 Modes
 -----
