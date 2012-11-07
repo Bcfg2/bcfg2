@@ -5,6 +5,7 @@ import sys
 import pwd
 import grp
 import stat
+import copy
 import shutil
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
@@ -672,7 +673,8 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         us, but it sets permissions according to umask, which is
         probably wrong.  we need to find out which directories were
         created and set permissions on those
-        (http://trac.mcs.anl.gov/projects/bcfg2/ticket/1125) """
+        (http://trac.mcs.anl.gov/projects/bcfg2/ticket/1125 and
+        http://trac.mcs.anl.gov/projects/bcfg2/ticket/1134) """
         created = []
         if path is None:
             path = entry.get("name")
@@ -689,8 +691,22 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             self.logger.error('POSIX: Failed to create directory %s: %s' %
                               (path, err))
             rv = False
+
+        # we need to make sure that we give +x to everyone who needs
+        # it.  E.g., if the file that's been distributed is 0600, we
+        # can't make the parent directories 0600 also; that'd be
+        # pretty useless.  They need to be 0700.
+        tmpentry = copy.deepcopy(entry)
+        newmode = int(entry.get('mode'), 8)
+        for i in range(0, 3):
+            if newmode & (6 * pow(8, i)):
+                newmode |= 1 * pow(8, i)
+        tmpentry.set('mode', oct(newmode))
+        for acl in tmpentry.findall('ACL'):
+            acl.set('perms',
+                    oct(self._norm_acl_perms(acl.get('perms')) | ACL_MAP['x']))
         for cpath in created:
-            rv &= self._set_perms(entry, path=cpath)
+            rv &= self._set_perms(tmpentry, path=cpath)
         return rv
 
 

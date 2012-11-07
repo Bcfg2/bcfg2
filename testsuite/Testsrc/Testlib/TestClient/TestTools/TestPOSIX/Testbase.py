@@ -87,7 +87,7 @@ class TestPOSIXTool(Bcfg2TestCase):
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._set_perms" % test_obj.__name__)
     def test_install(self, mock_set_perms, mock_walk):
         entry = lxml.etree.Element("Path", name="/test", type="file")
-        
+
         mock_set_perms.return_value = True
         self.assertTrue(self.ptool.install(entry))
         mock_set_perms.assert_called_with(entry)
@@ -705,7 +705,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         for attr, idx, val in expected:
             self.assertEqual(entry.get(attr), val)
         self.assertEqual(entry.get("current_mtime"), str(mtime))
-        
+
         # failure modes for each checked datum. tuple of changed attr,
         # return value index, new (failing) value
         failures = [('current_owner', 1, '10'),
@@ -713,7 +713,7 @@ class TestPOSIXTool(Bcfg2TestCase):
                     ('current_mode', 3, '0660')]
         if HAS_SELINUX:
             failures.append(('current_secontext', 4, 'root_t'))
-        
+
         for fail_attr, fail_idx, fail_val in failures:
             entry = reset()
             entry.set("mtime", str(mtime))
@@ -749,7 +749,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         for attr, idx, val in expected:
             self.assertEqual(entry.get(attr), val)
         self.assertEqual(entry.get("current_mtime"), str(fail_mtime))
-        
+
         if HAS_SELINUX:
             # test success and failure for __default__ secontext
             entry = reset()
@@ -905,7 +905,7 @@ class TestPOSIXTool(Bcfg2TestCase):
         # _verify_acls code, and I don't feel like doing that, so eff
         # it.  let's just test to make sure that failures are
         # identified at all for now.
-        
+
         acls = {("access", posix1e.ACL_USER, "user"): 7,
                 ("default", posix1e.ACL_GROUP, "group"): 5}
         extra_acls = copy.deepcopy(acls)
@@ -950,7 +950,9 @@ class TestPOSIXTool(Bcfg2TestCase):
     @patch("Bcfg2.Client.Tools.POSIX.base.%s._set_perms" % test_obj.__name__)
     def test_makedirs(self, mock_set_perms, mock_exists, mock_makedirs):
         entry = lxml.etree.Element("Path", name="/test/foo/bar",
-                                   type="directory")
+                                   type="directory", mode="0644")
+        parent_entry = lxml.etree.Element("Path", name="/test/foo/bar",
+                                          type="directory", mode="0755")
 
         def reset():
             mock_exists.reset_mock()
@@ -968,17 +970,21 @@ class TestPOSIXTool(Bcfg2TestCase):
         self.assertItemsEqual(mock_exists.call_args_list,
                               [call("/test"), call("/test/foo"),
                                call("/test/foo/bar")])
-        self.assertItemsEqual(mock_set_perms.call_args_list,
-                              [call(entry, path="/test/foo"),
-                               call(entry, path="/test/foo/bar")])
+        for args in mock_set_perms.call_args_list:
+            self.assertXMLEqual(args[0][0], parent_entry)
+        self.assertItemsEqual([a[1] for a in mock_set_perms.call_args_list],
+                              [dict(path="/test/foo"),
+                               dict(path="/test/foo/bar")])
         mock_makedirs.assert_called_with(entry.get("name"))
 
         reset()
         mock_makedirs.side_effect = OSError
         self.assertFalse(self.ptool._makedirs(entry))
-        self.assertItemsEqual(mock_set_perms.call_args_list,
-                              [call(entry, path="/test/foo"),
-                               call(entry, path="/test/foo/bar")])
+        for args in mock_set_perms.call_args_list:
+            self.assertXMLEqual(args[0][0], parent_entry)
+        self.assertItemsEqual([a[1] for a in mock_set_perms.call_args_list],
+                              [dict(path="/test/foo"),
+                               dict(path="/test/foo/bar")])
 
         reset()
         mock_makedirs.side_effect = None
@@ -992,7 +998,9 @@ class TestPOSIXTool(Bcfg2TestCase):
         self.assertItemsEqual(mock_exists.call_args_list,
                               [call("/test"), call("/test/foo"),
                                call("/test/foo/bar")])
-        self.assertItemsEqual(mock_set_perms.call_args_list,
-                              [call(entry, path="/test/foo"),
-                               call(entry, path="/test/foo/bar")])
+        for args in mock_set_perms.call_args_list:
+            self.assertXMLEqual(args[0][0], parent_entry)
+        self.assertItemsEqual([a[1] for a in mock_set_perms.call_args_list],
+                              [dict(path="/test/foo"),
+                               dict(path="/test/foo/bar")])
         mock_makedirs.assert_called_with(entry.get("name"))
