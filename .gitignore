@@ -20,3 +20,6 @@ testsuite/test.sqlite
 
 # rope project metadata
 .ropeproject
+
+# sphinx build data
+man/.doctrees
