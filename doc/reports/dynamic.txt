@@ -23,7 +23,7 @@ configuration. Specific features in the new system include:
   are now accessible.
 * Instead of static pages, pages are generated on the fly, allowing
   users to drill down to find out about a :ref:`specific host
-  <reports-node-dropdown>`, rather than only having one huge page with
+  <reports-client-detail>`, rather than only having one huge page with
   too much information.
 
 Installation
@@ -386,26 +386,65 @@ displays::
 Screenshots
 ===========
 
+Grid Overview
+-------------
+
+.. image:: GridView.png
+   :alt: Grid overview
+   :width: 850px
+   :height: 530px
+
+Detailed Overview
+-----------------
+
+.. image:: DetailedView.png
+   :alt: Detailed overview
+   :width: 850px
+   :height: 530px
+
 .. _reports-calendar-summary:
 
 Calendar Summary
 ----------------
 
-.. image:: summary_cal.jpg
+.. image:: CalView.png
    :alt: Calendar summary
+   :width: 850px
+   :height: 530px
 
 .. _reports-item-detail:
 
-Item detail
------------
-
-.. image:: item_detail.jpg
-   :alt: Item detail
-
-Node dropdown
+Client Detail
 -------------
 
-.. _reports-node-dropdown:
+.. _reports-client-detail:
 
-.. image:: node_dropdown.jpg
-   :alt: Node dropdown
+.. image:: ClientDetail.png
+   :alt: Client detail
+   :width: 850px
+   :height: 530px
+
+Common Problems
+---------------
+
+.. image:: CommonProblems.png
+   :alt: Common configuration problems
+   :width: 850px
+   :height: 530px
+
+Item Listing
+------------
+
+.. image:: BadListing.png
+   :alt: Item listing
+   :width: 850px
+   :height: 530px
+
+Item Detail
+-----------
+
+.. image:: ConfigItem.png
+   :alt: Item detail
+   :width: 850px
+   :height: 530px
+
