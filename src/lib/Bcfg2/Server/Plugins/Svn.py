@@ -22,6 +22,9 @@ class Svn(Bcfg2.Server.Plugin.Version):
     else:
         __vcs_metadata_path__ = ".svn"
 
+    def callback_conflict_resolver(self):
+            return pysvn.wc_conflict_choice.theirs_full, None, False
+
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Version.__init__(self, core, datastore)
 
@@ -33,6 +36,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
             self.client = None
         else:
             self.client = pysvn.Client()
+            self.client.callback_conflict_resolver = self.callback_conflict_resolver
 
         self.logger.debug("Initialized svn plugin with SVN directory %s" %
                           self.vcs_path)
