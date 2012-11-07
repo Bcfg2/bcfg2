@@ -1,4 +1,4 @@
-].. -*- mode: rst -*-
+.. -*- mode: rst -*-
 
 .. _server-plugins-grouping-metadata:
 
