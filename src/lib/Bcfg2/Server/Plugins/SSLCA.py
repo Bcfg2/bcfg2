@@ -1,11 +1,12 @@
 """ The SSLCA generator handles the creation and management of ssl
 certificates and their keys. """
 
+import os
+import sys
 import Bcfg2.Server.Plugin
 import Bcfg2.Options
 import lxml.etree
 import tempfile
-import os
 from subprocess import Popen, PIPE, STDOUT
 from Bcfg2.Compat import ConfigParser, md5
 
@@ -107,6 +108,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         filename = os.path.join(path, "%s.H_%s" % (os.path.basename(path),
                                                    metadata.hostname))
         if filename not in list(self.entries.keys()):
+            self.logger.info("SSLCA: Generating new key %s" % filename)
             key = self.build_key(entry)
             open(self.data + filename, 'w').write(key)
             entry.text = key
@@ -130,6 +132,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             cmd = ["openssl", "genrsa", bits]
         elif ktype == 'dsa':
             cmd = ["openssl", "dsaparam", "-noout", "-genkey", bits]
+        self.debug_log("SSLCA: Generating new key: %s" % " ".join(cmd))
         return Popen(cmd, stdout=PIPE).stdout.read()
 
     def get_cert(self, entry, metadata):
@@ -151,10 +154,11 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             self.core.Bind(el, metadata)
 
         # check if we have a valid hostfile
-        if (filename in list(self.entries.keys()) and
+        if (filename in self.entries.keys() and
             self.verify_cert(filename, key_filename, entry)):
             entry.text = self.entries[filename].data
         else:
+            self.logger.info("SSLCA: Generating new cert %s" % filename)
             cert = self.build_cert(key_filename, entry, metadata)
             open(self.data + filename, 'w').write(cert)
             self.entries[filename] = self.__child__(self.data + filename)
@@ -241,12 +245,19 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
                "-days", days, "-batch"]
         if passphrase:
             cmd.extend(["-passin", "pass:%s" % passphrase])
-        cert = Popen(cmd, stdout=PIPE).stdout.read()
+        self.debug_log("SSLCA: Generating new certificate: %s" % " ".join(cmd))
+        proc = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+        (cert, err) = proc.communicate()
+        if proc.wait():
+            raise Bcfg2.Server.Plugin.PluginExecutionError(
+                "SSLCA: Failed to generate cert: %s" %
+                err.splitlines()[-1])  # pylint: disable=E1103
         try:
             os.unlink(req_config)
             os.unlink(req)
         except OSError:
-            self.logger.error("Failed to unlink temporary files")
+            self.logger.error("SSLCA: Failed to unlink temporary files: %s" %
+                              sys.exc_info()[1])
         if (self.cert_specs[entry.get('name')]['append_chain'] and
             self.CAs[ca]['chaincert']):
             cert += open(self.CAs[ca]['chaincert']).read()
@@ -303,5 +314,6 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         key = self.data + key_filename
         cmd = ["openssl", "req", "-new", "-config", req_config,
                "-days", days, "-key", key, "-text", "-out", req]
+        self.debug_log("SSLCA: Generating new CSR: %s" % " ".join(cmd))
         Popen(cmd, stdout=PIPE).wait()
         return req
