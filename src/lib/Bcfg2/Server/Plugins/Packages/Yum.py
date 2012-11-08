@@ -357,7 +357,7 @@ class YumCollection(Collection):
     def cachefiles(self):
         """ A list of the full path to all cachefiles used by this
         collection."""
-        cachefiles = set(Collection.cachefiles(self))
+        cachefiles = set(Collection.cachefiles.fget(self))
         if self.cachefile:
             cachefiles.add(self.cachefile)
         return list(cachefiles)
