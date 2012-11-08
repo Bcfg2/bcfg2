@@ -695,6 +695,8 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                         self.logger.error("Refusing to add dynamic membership in private group %s for client %s" % (g, imd.hostname))
                         continue
                     imd.groups.add(g)
+                    if g in self.categories:
+                        imd.categories[self.categories[g]] = g
 
     def merge_additional_data(self, imd, source, data):
         if not hasattr(imd, source):
@@ -820,7 +822,7 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
 
         def include_group(group):
             return not only_client or group in clientmeta.groups
-        
+
         groups_tree = lxml.etree.parse(self.data + "/groups.xml",
                                        parser=Bcfg2.Server.XMLParser)
         try:
