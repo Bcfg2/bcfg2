@@ -1,11 +1,13 @@
 """ Interactively initialize a new repository. """
-import getpass
+
 import os
+import sys
+import stat
+import select
 import random
 import socket
-import stat
 import string
-import sys
+import getpass
 import subprocess
 
 import Bcfg2.Server.Admin
@@ -85,6 +87,14 @@ OS_LIST = [('Red Hat/Fedora/RHEL/RHAS/Centos', 'redhat'),
            ('Arch', 'arch')]
 
 
+def safe_input(prompt):
+    """ input() that flushes the input buffer before accepting input """
+    # flush input buffer
+    while len(select.select([sys.stdin.fileno()], [], [], 0.0)[0]) > 0:
+        os.read(sys.stdin.fileno(), 4096)
+    return input(prompt)
+
+
 def gen_password(length):
     """Generates a random alphanumeric password with length characters."""
     chars = string.letters + string.digits
@@ -116,8 +126,8 @@ def create_conf(confpath, confdata):
     """ create the config file """
     # Don't overwrite existing bcfg2.conf file
     if os.path.exists(confpath):
-        result = input("\nWarning: %s already exists. "
-                       "Overwrite? [y/N]: " % confpath)
+        result = safe_input("\nWarning: %s already exists. "
+                            "Overwrite? [y/N]: " % confpath)
         if result not in ['Y', 'y']:
             print("Leaving %s unchanged" % confpath)
             return
@@ -186,8 +196,8 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_hostname(self):
         """Ask for the server hostname."""
-        data = input("What is the server's hostname [%s]: " %
-                     socket.getfqdn())
+        data = safe_input("What is the server's hostname [%s]: " %
+                          socket.getfqdn())
         if data != '':
             self.data['shostname'] = data
         else:
@@ -195,21 +205,21 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_config(self):
         """Ask for the configuration file path."""
-        newconfig = input("Store Bcfg2 configuration in [%s]: " %
-                          self.configfile)
+        newconfig = safe_input("Store Bcfg2 configuration in [%s]: " %
+                               self.configfile)
         if newconfig != '':
             self.data['configfile'] = os.path.abspath(newconfig)
 
     def _prompt_repopath(self):
         """Ask for the repository path."""
         while True:
-            newrepo = input("Location of Bcfg2 repository [%s]: " %
+            newrepo = safe_input("Location of Bcfg2 repository [%s]: " %
                             self.data['repopath'])
             if newrepo != '':
                 self.data['repopath'] = os.path.abspath(newrepo)
             if os.path.isdir(self.data['repopath']):
-                response = input("Directory %s exists. Overwrite? [y/N]:" %
-                                 self.data['repopath'])
+                response = safe_input("Directory %s exists. Overwrite? [y/N]:"
+                                      % self.data['repopath'])
                 if response.lower().strip() == 'y':
                     break
             else:
@@ -225,8 +235,8 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_server(self):
         """Ask for the server name."""
-        newserver = input("Input the server location [%s]: " %
-                          self.data['server_uri'])
+        newserver = safe_input("Input the server location [%s]: " %
+                               self.data['server_uri'])
         if newserver != '':
             self.data['server_uri'] = newserver
 
@@ -238,7 +248,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         prompt += ': '
         while True:
             try:
-                osidx = int(input(prompt))
+                osidx = int(safe_input(prompt))
                 self.data['os_sel'] = OS_LIST[osidx - 1][1]
                 break
             except ValueError:
@@ -248,27 +258,28 @@ class Init(Bcfg2.Server.Admin.Mode):
         """Ask for the key details (country, state, and location)."""
         print("The following questions affect SSL certificate generation.")
         print("If no data is provided, the default values are used.")
-        newcountry = input("Country name (2 letter code) for certificate: ")
+        newcountry = safe_input("Country name (2 letter code) for "
+                                "certificate: ")
         if newcountry != '':
             if len(newcountry) == 2:
                 self.data['country'] = newcountry
             else:
                 while len(newcountry) != 2:
-                    newcountry = input("2 letter country code (eg. US): ")
+                    newcountry = safe_input("2 letter country code (eg. US): ")
                     if len(newcountry) == 2:
                         self.data['country'] = newcountry
                         break
         else:
             self.data['country'] = 'US'
 
-        newstate = input("State or Province Name (full name) for "
-                         "certificate: ")
+        newstate = safe_input("State or Province Name (full name) for "
+                              "certificate: ")
         if newstate != '':
             self.data['state'] = newstate
         else:
             self.data['state'] = 'Illinois'
 
-        newlocation = input("Locality Name (eg, city) for certificate: ")
+        newlocation = safe_input("Locality Name (eg, city) for certificate: ")
         if newlocation != '':
             self.data['location'] = newlocation
         else:
@@ -277,12 +288,12 @@ class Init(Bcfg2.Server.Admin.Mode):
     def _prompt_keypath(self):
         """ Ask for the key pair location.  Try to use sensible
         defaults depending on the OS """
-        keypath = input("Path where Bcfg2 server private key will be created "
-                        "[%s]: " % self.data['keypath'])
+        keypath = safe_input("Path where Bcfg2 server private key will be "
+                             "created [%s]: " % self.data['keypath'])
         if keypath:
             self.data['keypath'] = keypath
-        certpath = input("Path where Bcfg2 server cert will be created"
-                         "[%s]: " % self.data['certpath'])
+        certpath = safe_input("Path where Bcfg2 server cert will be created"
+                              "[%s]: " % self.data['certpath'])
         if certpath:
             self.data['certpath'] = certpath
 

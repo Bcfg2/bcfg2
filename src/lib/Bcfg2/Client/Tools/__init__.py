@@ -1,7 +1,9 @@
 """This contains all Bcfg2 Tool modules"""
 
 import os
+import sys
 import stat
+import select
 from subprocess import Popen, PIPE
 import Bcfg2.Client.XML
 from Bcfg2.Compat import input, walk_packages  # pylint: disable=W0622
@@ -373,6 +375,10 @@ class SvcTool(Tool):
                     if self.setup['interactive']:
                         prompt = ('Restart service %s?: (y/N): ' %
                                   entry.get('name'))
+                        # flush input buffer
+                        while len(select.select([sys.stdin.fileno()], [], [],
+                                                0.0)[0]) > 0:
+                            os.read(sys.stdin.fileno(), 4096)
                         ans = input(prompt)
                         if ans not in ['y', 'Y']:
                             continue
