@@ -81,7 +81,7 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
         if xtra:
             host_config.extend([self.line_fmt % (opt, val)
                                 for opt, val in list(xtra.items())])
-        else:
+        if 'use' not in xtra:
             host_config.append(self.line_fmt % ('use', 'default'))
 
         host_config.append('}')
