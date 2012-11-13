@@ -106,7 +106,9 @@ class Client(object):
                 self.logger.info(ret.text)
             finally:
                 os.unlink(scriptname)
-        except:  # pylint: disable=W0702
+        except SystemExit:
+            raise
+        except:
             self._probe_failure(name, sys.exc_info()[1])
         return ret
 
@@ -258,8 +260,7 @@ class Client(object):
         except Bcfg2.Client.XML.ParseError:
             syntax_error = sys.exc_info()[1]
             self.fatal_error("The configuration could not be parsed: %s" %
-                             (syntax_error))
-            return(1)
+                             syntax_error)
 
         times['config_parse'] = time.time()
 
@@ -296,10 +297,13 @@ class Client(object):
                                      "If you what to bypass the check, run "
                                      "with %s option" %
                                      Bcfg2.Options.OMIT_LOCK_CHECK.cmd)
-            except:  # pylint: disable=W0702
+            except SystemExit:
+                raise
+            except:
                 lockfile = None
                 self.logger.error("Failed to open lockfile")
-        # execute the said configuration
+
+        # execute the configuration
         self.tools.Execute()
 
         if not self.setup['omit_lock_check']:
