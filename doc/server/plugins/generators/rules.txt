@@ -494,9 +494,9 @@ user
 +=============+===============================+===========+==========+
 | name        | SELinux username              | String    | Yes      |
 +-------------+-------------------------------+-----------+----------+
-| roles       | Space-separated list of roles | String    | No       |
+| roles       | Space-separated list of roles | String    | Yes      |
 +-------------+-------------------------------+-----------+----------+
-| prefix      | Home directory context prefix | String    | No       |
+| prefix      | Home directory context prefix | String    | Yes      |
 +-------------+-------------------------------+-----------+----------+
 
 interface
