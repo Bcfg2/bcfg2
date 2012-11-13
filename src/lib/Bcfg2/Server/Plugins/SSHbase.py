@@ -9,7 +9,7 @@ import logging
 import tempfile
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import u_str, reduce, b64encode  # pylint: disable=W0622
+from Bcfg2.Compat import any, u_str, reduce, b64encode  # pylint: disable=W0622
 
 LOGGER = logging.getLogger(__name__)
 
@@ -111,9 +111,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
          is regenerated each time a new key is generated.
 
     """
-    name = 'SSHbase'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-
     keypatterns = ["ssh_host_dsa_key",
                    "ssh_host_ecdsa_key",
                    "ssh_host_rsa_key",
@@ -250,7 +248,9 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         for entry in list(self.entries.values()):
             if entry.specific.match(event.filename):
                 entry.handle_event(event)
-                if event.filename.endswith(".pub"):
+                if any(event.filename.startswith(kp)
+                       for kp in self.keypatterns
+                       if kp.endswith(".pub")):
                     self.logger.info("New public key %s; invalidating "
                                      "ssh_known_hosts cache" % event.filename)
                     self.skn = False
