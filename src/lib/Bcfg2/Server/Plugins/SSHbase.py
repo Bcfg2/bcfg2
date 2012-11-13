@@ -9,6 +9,7 @@ import logging
 import tempfile
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
+from Bcfg2.Server.Plugin import PluginExecutionError
 from Bcfg2.Compat import any, u_str, reduce, b64encode  # pylint: disable=W0622
 
 LOGGER = logging.getLogger(__name__)
@@ -386,26 +387,30 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             else:
                 keytype = 'rsa1'
         else:
-            self.logger.error("Unknown key filename: %s" % filename)
-            return
+            raise PluginExecutionError("Unknown key filename: %s" % filename)
 
-        fileloc = "%s/%s" % (self.data, hostkey)
-        publoc = self.data + '/' + ".".join([hostkey.split('.')[0], 'pub',
-                                             "H_%s" % client])
+        fileloc = os.path.join(self.data, hostkey)
+        publoc = os.path.join(self.data,
+                              ".".join([hostkey.split('.')[0], 'pub',
+                                        "H_%s" % client]))
         tempdir = tempfile.mkdtemp()
-        temploc = "%s/%s" % (tempdir, hostkey)
+        temploc = os.path.join(tempdir, hostkey)
         cmd = ["ssh-keygen", "-q", "-f", temploc, "-N", "",
                "-t", keytype, "-C", "root@%s" % client]
+        self.debug_log("SSHbase: Running: %s" % " ".join(cmd))
         proc = Popen(cmd, stdout=PIPE, stdin=PIPE)
-        proc.communicate()
-        proc.wait()
+        err = proc.communicate()[1]
+        if proc.wait():
+            raise PluginExecutionError("SSHbase: Error running ssh-keygen: %s"
+                                       % err)
 
         try:
             shutil.copy(temploc, fileloc)
             shutil.copy("%s.pub" % temploc, publoc)
         except IOError:
             err = sys.exc_info()[1]
-            self.logger.error("Temporary SSH keys not found: %s" % err)
+            raise PluginExecutionError("Temporary SSH keys not found: %s" %
+                                       err)
 
         try:
             os.unlink(temploc)
@@ -413,7 +418,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             os.rmdir(tempdir)
         except OSError:
             err = sys.exc_info()[1]
-            self.logger.error("Failed to unlink temporary ssh keys: %s" % err)
+            raise PluginExecutionError("Failed to unlink temporary ssh keys: "
+                                       "%s" % err)
 
     def AcceptChoices(self, _, metadata):
         return [Bcfg2.Server.Plugin.Specificity(hostname=metadata.hostname)]
@@ -421,8 +427,9 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
     def AcceptPullData(self, specific, entry, log):
         """Per-plugin bcfg2-admin pull support."""
         # specific will always be host specific
-        filename = "%s/%s.H_%s" % (self.data, entry['name'].split('/')[-1],
-                                   specific.hostname)
+        filename = os.path.join(self.data,
+                                "%s.H_%s" % (entry['name'].split('/')[-1],
+                                             specific.hostname))
         try:
             open(filename, 'w').write(entry['text'])
             if log:
