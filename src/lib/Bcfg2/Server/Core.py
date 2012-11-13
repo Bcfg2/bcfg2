@@ -516,7 +516,7 @@ class BaseCore(object):
             except PluginExecutionError:
                 exc = sys.exc_info()[1]
                 if 'failure' not in entry.attrib:
-                    entry.set('failure', 'bind error: %s' % format_exc())
+                    entry.set('failure', 'bind error: %s' % exc)
                 self.logger.error("Failed to bind entry %s:%s: %s" %
                                   (entry.tag, entry.get('name'), exc))
             except Exception:
