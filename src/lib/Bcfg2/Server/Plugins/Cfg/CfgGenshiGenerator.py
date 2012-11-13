@@ -4,12 +4,9 @@
 
 import re
 import sys
-import logging
 import traceback
-import Bcfg2.Server.Plugin
+from Bcfg2.Server.Plugin import PluginExecutionError
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
-
-LOGGER = logging.getLogger(__name__)
 
 try:
     import genshi.core
@@ -67,9 +64,7 @@ class CfgGenshiGenerator(CfgGenerator):
     def __init__(self, fname, spec, encoding):
         CfgGenerator.__init__(self, fname, spec, encoding)
         if not HAS_GENSHI:
-            msg = "Cfg: Genshi is not available: %s" % fname
-            LOGGER.error(msg)
-            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            raise PluginExecutionError("Genshi is not available")
         self.template = None
         self.loader = self.__loader_cls__(max_cache_size=0)
     __init__.__doc__ = CfgGenerator.__init__.__doc__
@@ -92,15 +87,15 @@ class CfgGenshiGenerator(CfgGenerator):
             stack = traceback.extract_tb(sys.exc_info()[2])
             for quad in stack:
                 if quad[0] == self.name:
-                    LOGGER.error("Cfg: Error rendering %s at '%s': %s: %s" %
-                                 (fname, quad[2], err.__class__.__name__, err))
-                    break
+                    raise PluginExecutionError("%s: %s at '%s'" %
+                                               (err.__class__.__name__, err,
+                                                quad[2]))
             raise
         except:
-            self._handle_genshi_exception(fname, sys.exc_info())
+            self._handle_genshi_exception(sys.exc_info())
     get_data.__doc__ = CfgGenerator.get_data.__doc__
 
-    def _handle_genshi_exception(self, fname, exc):
+    def _handle_genshi_exception(self, exc):
         """ this is horrible, and I deeply apologize to whoever gets
         to maintain this after I go to the Great Beer Garden in the
         Sky.  genshi is incredibly opaque about what's being executed,
@@ -140,9 +135,9 @@ class CfgGenshiGenerator(CfgGenerator):
             # single line break)
             real_lineno = lineno - contents.code.co_firstlineno
             src = re.sub(r'\n\n+', '\n', contents.source).splitlines()
-            LOGGER.error("Cfg: Error rendering %s at '%s': %s: %s" %
-                         (fname, src[real_lineno], err.__class__.__name__,
-                          err))
+            raise PluginExecutionError("%s: %s at '%s'" %
+                                       (err.__class__.__name__, err,
+                                        src[real_lineno]))
         raise
 
     def handle_event(self, event):
@@ -150,8 +145,6 @@ class CfgGenshiGenerator(CfgGenerator):
             self.template = self.loader.load(self.name, cls=NewTextTemplate,
                                              encoding=self.encoding)
         except:
-            msg = "Cfg: Could not load template %s: %s" % (self.name,
-                                                           sys.exc_info()[1])
-            LOGGER.error(msg)
-            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            raise PluginExecutionError("Failed to load template: %s" %
+                                       sys.exc_info()[1])
     handle_event.__doc__ = CfgGenerator.handle_event.__doc__

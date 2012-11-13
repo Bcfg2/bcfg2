@@ -1,10 +1,7 @@
 """ Handle info.xml files """
 
-import logging
-import Bcfg2.Server.Plugin
+from Bcfg2.Server.Plugin import PluginExecutionError, InfoXML
 from Bcfg2.Server.Plugins.Cfg import CfgInfo
-
-LOGGER = logging.getLogger(__name__)
 
 
 class CfgInfoXML(CfgInfo):
@@ -16,16 +13,15 @@ class CfgInfoXML(CfgInfo):
 
     def __init__(self, path):
         CfgInfo.__init__(self, path)
-        self.infoxml = Bcfg2.Server.Plugin.InfoXML(path)
+        self.infoxml = InfoXML(path)
     __init__.__doc__ = CfgInfo.__init__.__doc__
 
     def bind_info_to_entry(self, entry, metadata):
         mdata = dict()
         self.infoxml.pnode.Match(metadata, mdata, entry=entry)
         if 'Info' not in mdata:
-            msg = "Failed to set metadata for file %s" % entry.get('name')
-            LOGGER.error(msg)
-            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            raise PluginExecutionError("Failed to set metadata for file %s" %
+                                       entry.get('name'))
         self._set_info(entry, mdata['Info'][None])
     bind_info_to_entry.__doc__ = CfgInfo.bind_info_to_entry.__doc__
 
