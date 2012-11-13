@@ -70,8 +70,8 @@ class CfgGenshiGenerator(CfgGenerator):
             msg = "Cfg: Genshi is not available: %s" % fname
             LOGGER.error(msg)
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-        self.loader = self.__loader_cls__()
         self.template = None
+        self.loader = self.__loader_cls__(max_cache_size=0)
     __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def get_data(self, entry, metadata):
@@ -146,9 +146,6 @@ class CfgGenshiGenerator(CfgGenerator):
         raise
 
     def handle_event(self, event):
-        CfgGenerator.handle_event(self, event)
-        if self.data is None:
-            return
         try:
             self.template = self.loader.load(self.name, cls=NewTextTemplate,
                                              encoding=self.encoding)
