@@ -121,8 +121,8 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
                 self.entries.append(source)
     Index.__doc__ = Bcfg2.Server.Plugin.StructFile.Index.__doc__ + """
 
-``Index`` is responsible for calling :func:`source_from_xml` for each
-``Source`` tag in each file. """
+        ``Index`` is responsible for calling :func:`source_from_xml`
+        for each ``Source`` tag in each file. """
 
     @Bcfg2.Server.Plugin.track_statistics()
     def source_from_xml(self, xsource):
