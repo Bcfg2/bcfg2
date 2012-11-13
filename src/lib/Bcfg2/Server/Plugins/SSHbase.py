@@ -365,8 +365,9 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             is_bound = False
             while not is_bound:
                 if tries >= 10:
-                    self.logger.error("%s still not registered" % filename)
-                    raise Bcfg2.Server.Plugin.PluginExecutionError
+                    msg = "%s still not registered" % filename
+                    self.logger.error(msg)
+                    raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
                 self.core.fam.handle_events_in_interval(1)
                 tries += 1
                 try:
