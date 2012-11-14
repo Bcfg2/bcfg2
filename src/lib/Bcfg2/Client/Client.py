@@ -293,9 +293,9 @@ class Client(object):
                                 fcntl.LOCK_EX | fcntl.LOCK_NB)
                 except IOError:
                     # otherwise exit and give a warning to the user
-                    self.fatal_error("An other instance of Bcfg2 is running. "
-                                     "If you what to bypass the check, run "
-                                     "with %s option" %
+                    self.fatal_error("Another instance of Bcfg2 is running. "
+                                     "If you want to bypass the check, run "
+                                     "with the %s option" %
                                      Bcfg2.Options.OMIT_LOCK_CHECK.cmd)
             except SystemExit:
                 raise
