@@ -278,7 +278,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         used to generate the required certificate request
         """
         # create temp request config file
-        fh, fname = tempfile.mkstemp()
+        fd, fname = tempfile.mkstemp()
         cfp = ConfigParser.ConfigParser({})
         cfp.optionxform = str
         defaults = {
@@ -312,7 +312,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         cfp.set('req_distinguished_name', 'CN', metadata.hostname)
         self.debug_log("SSLCA: Writing temporary request config to %s" % fname)
         try:
-            cfp.write(os.fdopen(fh, 'w'))
+            cfp.write(os.fdopen(fd, 'w'))
         except IOError:
             raise PluginExecutionError("SSLCA: Failed to write temporary CSR "
                                        "config file: %s" % sys.exc_info()[1])
@@ -322,8 +322,8 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         """
         creates the certificate request
         """
-        fh, req = tempfile.mkstemp()
-        os.close(fh)
+        fd, req = tempfile.mkstemp()
+        os.close(fd)
         days = self.cert_specs[entry.get('name')]['days']
         key = self.data + key_filename
         cmd = ["openssl", "req", "-new", "-config", req_config,
