@@ -665,6 +665,8 @@ class BaseCore(object):
                 os.chmod(piddir, 420)  # 0644
             if not self._daemonize():
                 return False
+        else:
+            os.umask(int(self.setup['umask'], 8))
 
         if not self._run():
             self.shutdown()
