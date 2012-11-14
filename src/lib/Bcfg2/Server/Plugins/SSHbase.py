@@ -252,8 +252,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 if any(event.filename.startswith(kp)
                        for kp in self.keypatterns
                        if kp.endswith(".pub")):
-                    self.logger.info("New public key %s; invalidating "
-                                     "ssh_known_hosts cache" % event.filename)
+                    self.debug_log("New public key %s; invalidating "
+                                   "ssh_known_hosts cache" % event.filename)
                     self.skn = False
                 return
 
