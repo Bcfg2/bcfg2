@@ -42,9 +42,9 @@ Description: Configuration management web interface
  bcfg2-web is the reporting server for bcfg2.
 
 Package: bcfg2-doc
+Section: doc
 Architecture: all
 Depends: ${sphinxdoc:Depends}, ${misc:Depends}
-XB-Python-Version: >= 2.4
 Description: Configuration management system documentation
  Bcfg2 is a configuration management system that generates configuration sets
  for clients bound by client profiles.
