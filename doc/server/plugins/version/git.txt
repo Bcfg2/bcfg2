@@ -13,19 +13,16 @@ reporting purposes. Once the plugin is enabled, every time a client
 checks in, it will include the current repository revision in the
 reports/statistics.
 
-If the ``dulwich`` library is installed, the Git plugin will use
-that.  If ``dulwich`` is not installed, but ``GitPython`` is, that
-will be used instead.  If neither is installed, then calls will be
-made to the git command.
+As with the other Version plugins, the Git plugin enables you to get
+revision information out of your repository for reporting
+purposes. Once the plugin is enabled, every time a client checks in,
+it will include the current repository revision in the
+reports/statistics.
 
-If you plan to edit your git repository in-place on the Bcfg2 server
-(which is probably not recommended), then you may want to avoid using
-``dulwich``; it's sufficiently low-level that it may not present a
-user-friendly git repository at all times.
-
-Additionally, the Git plugin exposes one XML-RPC method calls,
-``Git.Update``, which updates the working copy to the latest version
-in the remote origin.
+Additionally, if the ``GitPython`` library is installed, the Git
+plugin exposes an additional XML-RPC method call, ``Git.Update``,
+which updates the working copy to the latest version in the remote
+origin.
 
 Enabling the Git plugin
 =======================
