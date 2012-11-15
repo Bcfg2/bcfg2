@@ -16,7 +16,7 @@ override_dh_installinit:
 	# Install bcfg2-server initscript without starting it on postinst
 	dh_installinit --package=bcfg2-server --no-start
 
-override_dh_autobuild:
+override_dh_auto_build:
 	dh_auto_build
 	python setup.py build_sphinx
 
