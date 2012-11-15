@@ -83,34 +83,35 @@ class TestPOSIXDirectory(TestPOSIXTool):
         mock_verify.assert_called_with(self.ptool, entry, modlist)
         mock_listdir.assert_called_with(entry.get("name"))
         self.assertEqual(len(entry.findall("Prune")), 0)
-    
+
     @patch("os.unlink")
-    @patch("os.path.isdir")
-    @patch("shutil.rmtree")
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.install")
     @patch("Bcfg2.Client.Tools.POSIX.Directory.%s._exists" % test_obj.__name__)
     @patch("Bcfg2.Client.Tools.POSIX.Directory.%s._makedirs" %
            test_obj.__name__)
     def test_install(self, mock_makedirs, mock_exists, mock_install,
-                     mock_rmtree, mock_isdir, mock_unlink):
+                     mock_unlink):
         entry = lxml.etree.Element("Path", name="/test/foo/bar",
                                    type="directory", mode='0644',
                                    owner='root', group='root')
-        
+
+        self.ptool._makedirs = Mock()
+        self.ptool._remove = Mock()
+
         def reset():
             mock_exists.reset_mock()
             mock_install.reset_mock()
             mock_unlink.reset_mock()
-            mock_rmtree.reset_mock()
-            mock_rmtree.mock_makedirs()
+            self.ptool._makedirs.reset_mock()
+            self.ptool._remove.reset_mock()
 
-        mock_makedirs.return_value = True
+        self.ptool._makedirs.return_value = True
         mock_exists.return_value = False
         mock_install.return_value = True
         self.assertTrue(self.ptool.install(entry))
         mock_exists.assert_called_with(entry)
         mock_install.assert_called_with(self.ptool, entry)
-        mock_makedirs.assert_called_with(entry)
+        self.ptool._makedirs.assert_called_with(entry)
 
         reset()
         exists_rv = MagicMock()
@@ -119,7 +120,7 @@ class TestPOSIXDirectory(TestPOSIXTool):
         self.assertTrue(self.ptool.install(entry))
         mock_unlink.assert_called_with(entry.get("name"))
         mock_exists.assert_called_with(entry)
-        mock_makedirs.assert_called_with(entry)
+        self.ptool._makedirs.assert_called_with(entry)
         mock_install.assert_called_with(self.ptool, entry)
 
         reset()
@@ -138,20 +139,13 @@ class TestPOSIXDirectory(TestPOSIXTool):
         prune = ["/test/foo/bar/prune1", "/test/foo/bar/prune2"]
         for path in prune:
             lxml.etree.SubElement(entry, "Prune", path=path)
-        
+
         reset()
         mock_install.return_value = True
 
-        def isdir_rv(path):
-            if path.endswith("prune2"):
-                return True
-            else:
-                return False
-        mock_isdir.side_effect = isdir_rv
         self.assertTrue(self.ptool.install(entry))
         mock_exists.assert_called_with(entry)
         mock_install.assert_called_with(self.ptool, entry)
-        self.assertItemsEqual(mock_isdir.call_args_list,
-                              [call(p) for p in prune])
-        mock_unlink.assert_called_with("/test/foo/bar/prune1")
-        mock_rmtree.assert_called_with("/test/foo/bar/prune2")
+        self.assertItemsEqual([c[0][0].get("path")
+                               for c in self.ptool._remove.call_args_list],
+                              prune)

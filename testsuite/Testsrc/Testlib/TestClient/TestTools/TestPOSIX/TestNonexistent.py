@@ -18,6 +18,7 @@ from Test__init import get_config, get_posix_object
 from Testbase import TestPOSIXTool
 from common import *
 
+
 class TestPOSIXNonexistent(TestPOSIXTool):
     test_obj = POSIXNonexistent
 
@@ -31,59 +32,41 @@ class TestPOSIXNonexistent(TestPOSIXTool):
             self.assertEqual(self.ptool.verify(entry, []), not val)
             mock_lexists.assert_called_with(entry.get("name"))
 
-    @patch("os.rmdir")
-    @patch("os.remove")
-    @patch("os.path.isdir")
-    @patch("shutil.rmtree")
-    def test_install(self, mock_rmtree, mock_isdir, mock_remove, mock_rmdir):
+    def test_install(self):
         entry = lxml.etree.Element("Path", name="/test", type="nonexistent")
 
+        self.ptool._remove = Mock()
+
         def reset():
-            mock_isdir.reset_mock()
-            mock_remove.reset_mock()
-            mock_rmdir.reset_mock()
-            mock_rmtree.reset_mock()
+            self.ptool._remove.reset_mock()
 
-        mock_isdir.return_value = False
         self.assertTrue(self.ptool.install(entry))
-        mock_remove.assert_called_with(entry.get("name"))
-
-        reset()
-        mock_remove.side_effect = OSError
-        self.assertFalse(self.ptool.install(entry))
-        mock_remove.assert_called_with(entry.get("name"))
-
-        reset()
-        mock_isdir.return_value = True
-        self.assertTrue(self.ptool.install(entry))
-        mock_rmdir.assert_called_with(entry.get("name"))
-
-        reset()
-        mock_rmdir.side_effect = OSError
-        self.assertFalse(self.ptool.install(entry))
-        mock_rmdir.assert_called_with(entry.get("name"))
+        self.ptool._remove.assert_called_with(entry, recursive=False)
 
         reset()
         entry.set("recursive", "true")
         self.assertTrue(self.ptool.install(entry))
-        mock_rmtree.assert_called_with(entry.get("name"))
+        self.ptool._remove.assert_called_with(entry, recursive=True)
 
-        reset()
-        mock_rmtree.side_effect = OSError
-        self.assertFalse(self.ptool.install(entry))
-        mock_rmtree.assert_called_with(entry.get("name"))
-
+        print "about to start"
         reset()
         child_entry = lxml.etree.Element("Path", name="/test/foo",
                                          type="nonexistent")
         ptool = self.get_obj(posix=get_posix_object(config=get_config([child_entry])))
-        mock_rmtree.side_effect = None
+        ptool._remove = Mock()
         self.assertTrue(ptool.install(entry))
-        mock_rmtree.assert_called_with(entry.get("name"))
+        ptool._remove.assert_called_with(entry, recursive=True)
 
         reset()
         child_entry = lxml.etree.Element("Path", name="/test/foo",
                                          type="file")
         ptool = self.get_obj(posix=get_posix_object(config=get_config([child_entry])))
-        mock_rmtree.side_effect = None
+        ptool._remove = Mock()
         self.assertFalse(ptool.install(entry))
+        self.assertFalse(ptool._remove.called)
+
+        reset()
+        entry.set("recursive", "false")
+        self.ptool._remove.side_effect = OSError
+        self.assertFalse(self.ptool.install(entry))
+        self.ptool._remove.assert_called_with(entry, recursive=False)

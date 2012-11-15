@@ -3,7 +3,6 @@
 import os
 import sys
 import stat
-import shutil
 import Bcfg2.Client.XML
 from Bcfg2.Client.Tools.POSIX.base import POSIXTool
 
@@ -67,25 +66,14 @@ class POSIXDirectory(POSIXTool):
             rv &= self._makedirs(entry)
 
         if entry.get('prune', 'false') == 'true':
-            ulfailed = False
             for pent in entry.findall('Prune'):
                 pname = pent.get('path')
-                ulfailed = False
-                if os.path.isdir(pname):
-                    remove = shutil.rmtree
-                else:
-                    remove = os.unlink
                 try:
                     self.logger.debug("POSIX: Removing %s" % pname)
-                    remove(pname)
+                    self._remove(pent)
                 except OSError:
                     err = sys.exc_info()[1]
                     self.logger.error("POSIX: Failed to unlink %s: %s" %
                                       (pname, err))
-                    ulfailed = True
-            if ulfailed:
-                # even if prune failed, we still want to install the
-                # entry to make sure that we get permissions and
-                # whatnot set
-                rv = False
+                    rv = False
         return POSIXTool.install(self, entry) and rv

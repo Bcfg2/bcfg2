@@ -123,57 +123,84 @@ class TestPOSIXTool(Bcfg2TestCase):
         mock_walk.assert_called_with(entry.get("name"))
         self.assertItemsEqual(mock_set_perms.call_args_list, all_set_perms)
 
+    @patch('os.rmdir')
+    @patch('os.unlink')
+    @patch('shutil.rmtree')
+    @patch('os.path.isdir')
+    @patch('os.path.islink')
+    def test_remove(self, mock_islink, mock_isdir, mock_rmtree, mock_unlink,
+                    mock_rmdir):
+        entry = lxml.etree.Element("Path", name="/etc/foo")
+
+        def reset():
+            mock_islink.reset_mock()
+            mock_isdir.reset_mock()
+            mock_rmtree.reset_mock()
+            mock_unlink.reset_mock()
+            mock_rmdir.reset_mock()
+
+        mock_islink.return_value = True
+        mock_isdir.return_value = False
+        self.ptool._remove(entry)
+        mock_unlink.assert_called_with(entry.get('name'))
+        self.assertFalse(mock_rmtree.called)
+        self.assertFalse(mock_rmdir.called)
+
+        reset()
+        mock_islink.return_value = False
+        mock_isdir.return_value = True
+        self.ptool._remove(entry)
+        mock_rmtree.assert_called_with(entry.get('name'))
+        self.assertFalse(mock_unlink.called)
+        self.assertFalse(mock_rmdir.called)
+
+        reset()
+        self.ptool._remove(entry, recursive=False)
+        mock_rmdir.assert_called_with(entry.get('name'))
+        self.assertFalse(mock_unlink.called)
+        self.assertFalse(mock_rmtree.called)
+
+        reset()
+        mock_islink.return_value = False
+        mock_isdir.return_value = False
+        self.ptool._remove(entry, recursive=False)
+        mock_unlink.assert_called_with(entry.get('name'))
+        self.assertFalse(mock_rmtree.called)
+        self.assertFalse(mock_rmdir.called)
+
     @patch('os.lstat')
-    @patch("os.unlink")
-    @patch("os.path.isdir")
-    @patch("shutil.rmtree")
-    def test_exists(self, mock_rmtree, mock_isdir, mock_unlink, mock_lstat):
+    def test_exists(self, mock_lstat):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
+
+        self.ptool._remove = Mock()
+
+        def reset():
+            mock_lstat.reset_mock()
+            self.ptool._remove.reset_mock()
 
         mock_lstat.side_effect = OSError
         self.assertFalse(self.ptool._exists(entry))
         mock_lstat.assert_called_with(entry.get('name'))
-        self.assertFalse(mock_unlink.called)
+        self.assertFalse(self.ptool._remove.called)
 
-        mock_lstat.reset_mock()
-        mock_unlink.reset_mock()
+        reset()
         rv = MagicMock()
         mock_lstat.return_value = rv
         mock_lstat.side_effect = None
         self.assertEqual(self.ptool._exists(entry), rv)
         mock_lstat.assert_called_with(entry.get('name'))
-        self.assertFalse(mock_unlink.called)
+        self.assertFalse(self.ptool._remove.called)
 
-        mock_lstat.reset_mock()
-        mock_unlink.reset_mock()
-        mock_isdir.return_value = False
-        self.assertFalse(self.ptool._exists(entry, remove=True))
-        mock_isdir.assert_called_with(entry.get('name'))
+        reset()
+        self.assertEqual(self.ptool._exists(entry, remove=True), None)
         mock_lstat.assert_called_with(entry.get('name'))
-        mock_unlink.assert_called_with(entry.get('name'))
-        self.assertFalse(mock_rmtree.called)
+        self.ptool._remove.assert_called_with(entry)
 
-        mock_lstat.reset_mock()
-        mock_isdir.reset_mock()
-        mock_unlink.reset_mock()
-        mock_rmtree.reset_mock()
-        mock_isdir.return_value = True
-        self.assertFalse(self.ptool._exists(entry, remove=True))
-        mock_isdir.assert_called_with(entry.get('name'))
-        mock_lstat.assert_called_with(entry.get('name'))
-        mock_rmtree.assert_called_with(entry.get('name'))
-        self.assertFalse(mock_unlink.called)
-
-        mock_isdir.reset_mock()
-        mock_lstat.reset_mock()
-        mock_unlink.reset_mock()
-        mock_rmtree.reset_mock()
-        mock_rmtree.side_effect = OSError
+        reset()
+        self.ptool._remove.side_effect = OSError
         self.assertEqual(self.ptool._exists(entry, remove=True), rv)
-        mock_isdir.assert_called_with(entry.get('name'))
         mock_lstat.assert_called_with(entry.get('name'))
-        mock_rmtree.assert_called_with(entry.get('name'))
-        self.assertFalse(mock_unlink.called)
+        self.ptool._remove.assert_called_with(entry)
 
     @patch("os.chown")
     @patch("os.chmod")
