@@ -113,13 +113,13 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
     __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
 
-    def toggle_debug(self):
-        rv = Bcfg2.Server.Plugin.Plugin.toggle_debug(self)
-        self.sources.toggle_debug()
+    def set_debug(self, debug):
+        rv = Bcfg2.Server.Plugin.Plugin.set_debug(self, debug)
+        self.sources.set_debug(debug)
         for collection in self.collections.values():
-            collection.toggle_debug()
+            collection.set_debug(debug)
         return rv
-    toggle_debug.__doc__ = Bcfg2.Server.Plugin.Plugin.toggle_debug.__doc__
+    set_debug.__doc__ = Bcfg2.Server.Plugin.Plugin.set_debug.__doc__
 
     @property
     def disableResolver(self):

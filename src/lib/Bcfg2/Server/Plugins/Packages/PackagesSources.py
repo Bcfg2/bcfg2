@@ -75,11 +75,11 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
         #: should be told to reload its data.
         self.parsed = set()
 
-    def toggle_debug(self):
-        Bcfg2.Server.Plugin.Debuggable.toggle_debug(self)
+    def set_debug(self, debug):
+        Bcfg2.Server.Plugin.Debuggable.set_debug(self, debug)
         for source in self.entries:
-            source.toggle_debug()
-    toggle_debug.__doc__ = Bcfg2.Server.Plugin.Plugin.toggle_debug.__doc__
+            source.set_debug(debug)
+    set_debug.__doc__ = Bcfg2.Server.Plugin.Plugin.set_debug.__doc__
 
     def HandleEvent(self, event=None):
         """ HandleEvent is called whenever the FAM registers an event.
