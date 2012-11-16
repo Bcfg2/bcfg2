@@ -210,7 +210,7 @@ class TestDirectoryBacked(Bcfg2TestCase):
         db = self.get_obj()
         db.fam = Mock()
         db.fam.rv = 0
-        
+
         def reset():
             db.fam.rv += 1
             db.fam.AddMonitor.return_value = db.fam.rv
@@ -242,6 +242,7 @@ class TestDirectoryBacked(Bcfg2TestCase):
     def test_add_entry(self):
         db = self.get_obj()
         db.fam = Mock()
+
         class MockChild(Mock):
             def __init__(self, path, fam, **kwargs):
                 Mock.__init__(self, **kwargs)
@@ -346,7 +347,7 @@ class TestDirectoryBacked(Bcfg2TestCase):
                 event = get_event(fname, "deleted", req_id)
                 db.HandleEvent(event)
                 self.assertNotIn(relpath, db.entries)
-                
+
                 # test that changing a file that doesn't exist works
                 reset()
                 event = get_event(fname, "changed", req_id)
@@ -354,7 +355,7 @@ class TestDirectoryBacked(Bcfg2TestCase):
                 db.add_entry.assert_called_with(relpath, event)
                 self.assertFalse(db.add_directory_monitor.called)
                 db.entries[relpath] = MagicMock()
-            
+
         # test that deleting a directory works. this is a little
         # strange because the _parent_ directory has to handle the
         # deletion
@@ -383,7 +384,7 @@ class TestDirectoryBacked(Bcfg2TestCase):
                              msg="Failed to ignore %s" % fname)
             self.assertFalse(db.add_directory_monitor.called,
                              msg="Failed to ignore %s" % fname)
-                
+
 
 class TestXMLFileBacked(TestFileBacked):
     test_obj = XMLFileBacked
@@ -508,7 +509,7 @@ class TestXMLFileBacked(TestFileBacked):
            test_obj.__name__)
     def test_Index(self, mock_follow):
         xfb = self.get_obj()
-        
+
         def reset():
             mock_follow.reset_mock()
             FakeElementTree.xinclude.reset_mock()
@@ -594,7 +595,7 @@ class TestStructFile(TestXMLFileBacked):
 
     def _get_test_data(self):
         """ build a very complex set of test data """
-        # top-level group and client elements 
+        # top-level group and client elements
         groups = dict()
         # group and client elements that are descendents of other group or
         # client elements
@@ -698,7 +699,7 @@ class TestStructFile(TestXMLFileBacked):
     def test__match(self, mock_include):
         sf = self.get_obj()
         metadata = Mock()
-        
+
         (xdata, groups, subgroups, children, subchildren, standalone) = \
             self._get_test_data()
 
@@ -757,7 +758,7 @@ class TestStructFile(TestXMLFileBacked):
     def test__xml_match(self, mock_include):
         sf = self.get_obj()
         metadata = Mock()
-        
+
         (xdata, groups, subgroups, children, subchildren, standalone) = \
             self._get_test_data()
 
@@ -943,7 +944,7 @@ class TestINode(Bcfg2TestCase):
             self.assertItemsEqual(inode.contents, dict())
 
         inner()
-            
+
         data = lxml.etree.Element("Parent")
         child1 = lxml.etree.SubElement(data, "Data", name="child1",
                                        attr="some attr")
@@ -973,7 +974,7 @@ class TestINode(Bcfg2TestCase):
                                        __children__=[subchild1]))
 
         inner2()
-        
+
         # test ignore.  no ignore is set on INode by default, so we
         # have to set one
         old_ignore = copy.copy(self.test_obj.ignore)
@@ -1029,7 +1030,7 @@ class TestINode(Bcfg2TestCase):
         inode.Match(metadata, data, entry=child)
         self.assertEqual(data, inode.contents)
         inode.predicate.assert_called_with(metadata, child)
-            
+
 
 class TestInfoNode(TestINode):
     __test__ = True
@@ -1107,7 +1108,7 @@ class TestXMLSrc(TestXMLFileBacked):
 
         mock_open.reset_mock()
         xsrc = self.get_obj("/test/foo.xml")
-        xsrc.__node__ = Mock()        
+        xsrc.__node__ = Mock()
         xsrc.HandleEvent(Mock())
         mock_open.assert_called_with("/test/foo.xml")
         mock_open.return_value.read.assert_any_call()
@@ -1115,14 +1116,14 @@ class TestXMLSrc(TestXMLFileBacked):
         self.assertEqual(xsrc.__node__.call_args[0][1], dict())
         self.assertEqual(xsrc.pnode, xsrc.__node__.return_value)
         self.assertEqual(xsrc.cache, None)
-        
+
     @patch("Bcfg2.Server.Plugin.helpers.XMLSrc.HandleEvent")
     def test_Cache(self, mock_HandleEvent):
         xsrc = self.get_obj("/test/foo.xml")
         metadata = Mock()
         xsrc.Cache(metadata)
         mock_HandleEvent.assert_any_call()
-        
+
         xsrc.pnode = Mock()
         xsrc.Cache(metadata)
         xsrc.pnode.Match.assert_called_with(metadata, xsrc.__cacheobj__())
@@ -1181,7 +1182,7 @@ class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
                                              "/etc/baz.conf": pd.BindEntry},
                                        Package={"quux": pd.BindEntry,
                                                 "xyzzy": pd.BindEntry}))
-        
+
         inner()
 
     def test__matches(self):
@@ -1207,7 +1208,7 @@ class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
         self.assertItemsEqual(entry.attrib,
                               dict(name="/etc/foo.conf",
                                    test1="test1", test2="test2"))
-        
+
     def test_get_attrs(self):
         pd = self.get_obj()
         entry = lxml.etree.Element("Path", name="/etc/foo.conf")
@@ -1271,7 +1272,7 @@ class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
         entry = lxml.etree.Element("Package", name="xyzzy")
         self.assertRaises(PluginExecutionError,
                           pd.get_attrs, entry, metadata)
-        
+
 
 class TestSpecificity(Bcfg2TestCase):
     test_obj = Specificity
@@ -1307,7 +1308,7 @@ class TestSpecificity(Bcfg2TestCase):
                 elif i < j:
                     self.assertEqual(1, specs[i].__cmp__(specs[j]))
                     self.assertEqual(-1, specs[j].__cmp__(specs[i]))
-    
+
     def test_cmp(self):
         """ test __lt__/__gt__/__eq__ """
         specs = [self.get_obj(all=True),
@@ -1384,7 +1385,7 @@ class TestEntrySet(TestDebuggable):
     # filenames that should be ignored
     ignore = ["foo~", ".#foo", ".foo.swp", ".foo.swx",
               "test.txt.genshi_include", "test.G_foo.genshi_include"]
-    
+
     def get_obj(self, basename="test", path=datastore, entry_type=MagicMock(),
                 encoding=None):
         return self.test_obj(basename, path, entry_type, encoding)
@@ -1526,7 +1527,7 @@ class TestEntrySet(TestDebuggable):
                 eset.update_metadata.assert_called_with(event)
                 self.assertFalse(eset.entry_init.called)
                 self.assertFalse(eset.reset_metadata.called)
-            
+
             reset()
             event = Mock()
             event.code2str.return_value = "deleted"
@@ -1535,7 +1536,7 @@ class TestEntrySet(TestDebuggable):
             eset.reset_metadata.assert_called_with(event)
             self.assertFalse(eset.entry_init.called)
             self.assertFalse(eset.update_metadata.called)
-        
+
         for evt in ["exists", "created", "changed"]:
             reset()
             event = Mock()
@@ -1592,7 +1593,7 @@ class TestEntrySet(TestDebuggable):
         self.assertFalse(eset.specificity_from_filename.called)
         self.assertFalse(eset.entry_type.called)
         eset.entries["test.txt"].handle_event.assert_called_with(event)
-        
+
         # test keyword args
         etype = Mock()
         specific = Mock()
@@ -1617,7 +1618,7 @@ class TestEntrySet(TestDebuggable):
         eset.specificity_from_filename.assert_called_with("test3.txt",
                                                           specific=None)
         self.assertFalse(eset.entry_type.called)
-    
+
     @patch("Bcfg2.Server.Plugin.helpers.Specificity")
     def test_specificity_from_filename(self, mock_spec):
         # There's a strange scoping issue in py3k that prevents this
@@ -1658,7 +1659,7 @@ class TestEntrySet(TestDebuggable):
                  hostname="fqdn.subdomain.example.com")
             test(eset, ppath + ".G20_group_with_underscores",
                  group="group_with_underscores", prio=20)
-        
+
             for bogus in self.bogus_names:
                 fails(eset, bogus)
             fails(eset, ppath + ".G_group with spaces")
@@ -1692,11 +1693,11 @@ class TestEntrySet(TestDebuggable):
         eset.update_metadata(event)
         self.assertFalse(mock_InfoXML.called)
         eset.infoxml.HandleEvent.assert_called_with(event)
-        
+
         for fname in [':info', 'info']:
             event = Mock()
             event.filename = fname
-            
+
             idata = ["owner:owner",
                      "group:             GROUP",
                      "mode: 775",
@@ -1711,7 +1712,7 @@ class TestEntrySet(TestDebuggable):
             expected['important'] = 'true'
             self.assertItemsEqual(eset.metadata,
                                   expected)
-                                  
+
     def test_reset_metadata(self):
         eset = self.get_obj()
 
@@ -1825,7 +1826,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
                                                                event.filename))
         self.assertNotIn(ident, gs.entries)
         mock_isdir.assert_called_with(epath)
-        
+
         # file that is not in self.entries
         reset()
         event = Mock()
@@ -1850,7 +1851,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
                          gs.es_cls.return_value.bind_entry)
         gs.entries[ident].handle_event.assert_called_with(event)
         mock_isfile.assert_called_with(epath)
-        
+
         # file that is in self.entries
         reset()
         gs.add_entry(event)
@@ -1867,7 +1868,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
         event.filename = "foo"
         for i in range(1, 4):
             event.requestID = i
-            self.assertEqual(gs.event_path(event),                         
+            self.assertEqual(gs.event_path(event),
                              os.path.join(datastore, gs.name,
                                           gs.handles[event.requestID].lstrip('/'),
                                           event.filename))
@@ -1876,7 +1877,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
     def test_event_id(self, mock_isdir):
         gs = self.get_obj()
         gs.event_path = Mock()
-        
+
         def reset():
             gs.event_path.reset_mock()
             mock_isdir.reset_mock()
@@ -1894,7 +1895,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
                              os.path.join(gs.handles[event.requestID].lstrip('/'),
                                           event.filename))
             mock_isdir.assert_called_with(gs.event_path.return_value)
-            
+
             reset()
             mock_isdir.return_value = False
             self.assertEqual(gs.event_id(event),
@@ -1906,16 +1907,16 @@ class TestGroupSpool(TestPlugin, TestGenerator):
         gs.entries = {"/foo": Mock(),
                       "/bar": Mock(),
                       "/baz/quux": Mock()}
-        
+
         @patch("Bcfg2.Server.Plugin.helpers.Plugin.toggle_debug")
         def inner(mock_debug):
             gs.toggle_debug()
             mock_debug.assert_called_with(gs)
             for entry in gs.entries.values():
                 entry.toggle_debug.assert_any_call()
-        
+
         inner()
-        
+
         TestPlugin.test_toggle_debug(self)
 
     def test_HandleEvent(self):
@@ -1950,7 +1951,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
             gs.HandleEvent(event)
             gs.event_id.assert_called_with(event)
             gs.add_entry.assert_called_with(event)
-        
+
         # test deleting entry, changing entry that does exist
         for evt in ["changed", "deleted"]:
             reset()
