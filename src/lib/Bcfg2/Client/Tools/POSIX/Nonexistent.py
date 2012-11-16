@@ -23,7 +23,6 @@ class POSIXNonexistent(POSIXTool):
             # ensure that configuration spec is consistent first
             for struct in self.config.getchildren():
                 for el in struct.getchildren():
-                    import lxml.etree
                     if (el.tag == 'Path' and
                         el.get('type') != 'nonexistent' and
                         el.get('name').startswith(ename)):
