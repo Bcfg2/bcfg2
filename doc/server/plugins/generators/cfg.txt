@@ -106,25 +106,12 @@ Genshi templates allow you to use the `Genshi
 the deprecated :ref:`server-plugins-generators-tgenshi-index` plugin.
 Genshi templates should be named with a ``.genshi`` extension, e.g.::
 
-    % ls Cfg/etc/motd 
+    % ls Cfg/etc/motd
     info.xml  motd.genshi
 
 See the genshi `documentation
 <http://genshi.edgewall.org/wiki/Documentation>`_ for examples of
 Genshi syntax.
-
-Inside Genshi Templates
-~~~~~~~~~~~~~~~~~~~~~~~
-
-Several variables are pre-defined inside templates:
-
-* **metadata** is the client's :ref:`metadata
-  <server-plugins-grouping-metadata-clientmetadata>`
-* **name** is the path name specified in Bcfg2
-* **path** is the path to the TGenshi template.  It starts with a
-    leading slash, and is relative to the Bcfg2 specification root.
-    E.g., ``/Cfg/etc/foo.conf/foo.conf.genshi`` or
-    ``/TGenshi/etc/foo.conf/template.newtxt.H_foo.example.com``
 
 Troubleshooting
 ~~~~~~~~~~~~~~~
@@ -138,7 +125,8 @@ E.g.::
 
     bcfg2-info buildfile /etc/foo.conf foo.example.com
 
-To generate a file with an altsrc attribute, you can run::
+To generate a file with an :ref:`altsrc
+<server-plugins-structures-altsrc>` attribute, you can run::
 
     bcfg2-info buildfile /etc/foo/foo.conf --altsrc=/etc/foo.conf \
         foo.example.com
@@ -149,13 +137,13 @@ debug``, and, once in the Python interpreter, run::
 
     metadata = self.build_metadata("<hostname>")
     path = "<relative path to template (see note below)>"
-    
+
 ``path`` should be set to the path to the template file with a leading
 slash, relative to the Bcfg2 specification root. See `Inside Genshi
 Templates`_ for examples.
 
 Then, run::
-    
+
     import os, Bcfg2.Options
     from genshi.template import TemplateLoader, NewTextTemplate
     name = os.path.dirname(path[path.find('/', 1):])
@@ -230,18 +218,8 @@ Cheetah templates allow you to use the `cheetah templating system
 the deprecated :ref:`server-plugins-generators-tcheetah` plugin.
 Cheetah templates should be named with a ``.cheetah`` extension, e.g.::
 
-    % ls Cfg/etc/motd 
+    % ls Cfg/etc/motd
     info.xml  motd.cheetah
-
-Inside Cheetah Templates
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-Several variables are pre-defined inside templates:
-
-* **self.metadata** is the client's :ref:`metadata
-  <server-plugins-grouping-metadata-clientmetadata>`
-* **self.path** is the path name specified in Bcfg2
-* **self.source_path** is the path to the Genshi template on the filesystem.
 
 Examples
 ~~~~~~~~
@@ -265,12 +243,48 @@ comment to appear in the final config file.::
     # This is a comment in my template which will be stripped when it's processed through Cheetah
     \# This comment will appear in the generated config file.
 
+Inside Templates
+----------------
+
+Several variables are pre-defined inside templates:
+
++-------------+--------------------------------------------------------+
+| Name        | Description                                            |
++=============+========================================================+
+| metadata    | :ref:`Client metadata                                  |
+|             | <server-plugins-grouping-metadata-clientmetadata>`     |
++-------------+--------------------------------------------------------+
+| name        | The value of the ``name`` attribute as specified in    |
+|             | the Path entry in Bcfg2.  If an :ref:`altsrc           |
+|             | <server-plugins-structures-altsrc>` attribute is used, |
+|             | then ``name`` will be the value of that attribute.     |
++-------------+--------------------------------------------------------+
+| source_path | The path to the template file on the filesystem        |
++-------------+--------------------------------------------------------+
+| repo        | The path to the Bcfg2 repository on the filesystem     |
++-------------+--------------------------------------------------------+
+| path        | In Genshi templates, ``path`` is a synonym for         |
+|             | ``source_path``.  In Cheetah templates, it's a synonym |
+|             | for ``name``.  For this reason, use of ``path`` is     |
+|             | discouraged, and it may be deprecated in a future      |
+|             | release.                                               |
++-------------+--------------------------------------------------------+
+
+To access these variables in a Genshi template, you can simply use the
+name, e.g.::
+
+    Path to this file: ${name}
+
+In a Cheetah template, the variables are properties of ``self``,
+e.g.::
+
+    Path to this file: $self.name
 
 Notes on Using Templates
 ------------------------
 
 Templates can be host and group specific as well.  Deltas will not be
-processed for any genshi or cheetah base file.
+processed for any Genshi or Cheetah base file.
 
 .. note::
 
@@ -278,19 +292,22 @@ processed for any genshi or cheetah base file.
     or group-specific files, you will need to ensure that the ``.genshi``
     or ``.cheetah`` extension is at the **end** of the filename. Using the
     examples from above for *host.example.com* and group *server* you would
-    have the following (using genshi only)::
+    have the following::
 
         Cfg/etc/fstab/fstab.H_host.example.com.genshi
-        Cfg/etc/fstab/fstab.G50_server.genshi
+        Cfg/etc/fstab/fstab.G50_server.cheetah
 
 Genshi templates take precence over cheetah templates.  For example, if
-two files exist named
+two files exist named::
 
     Cfg/etc/fstab/fstab.genshi
     Cfg/etc/fstab/fstab.cheetah
 
-the cheetah template is ignored.  But you can mix genshi and cheetah when
-using different host-specific or group-specific files.  For example:
+The Cheetah template is ignored.  Exploiting this fact is probably a
+pretty bad idea in practice.
+
+You can mix Genshi and Cheetah when using different host-specific or
+group-specific files.  For example:
 
     Cfg/etc/fstab/fstab.H_host.example.com.genshi
     Cfg/etc/fstab/fstab.G50_server.cheetah

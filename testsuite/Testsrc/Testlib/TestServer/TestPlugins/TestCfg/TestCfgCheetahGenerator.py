@@ -31,9 +31,18 @@ if HAS_CHEETAH or can_skip:
             ccg.data = "data"
             entry = lxml.etree.Element("Path", name="/test.txt")
             metadata = Mock()
+            Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator.SETUP = MagicMock()
 
             self.assertEqual(ccg.get_data(entry, metadata),
                              mock_Template.return_value.respond.return_value)
+            Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator.SETUP.__getitem__.assert_called_with("repo")
             mock_Template.assert_called_with("data".decode(ccg.encoding),
                                              compilerSettings=ccg.settings)
-            mock_Template.return_value.respond.assert_called_with()
+            tmpl = mock_Template.return_value
+            tmpl.respond.assert_called_with()
+            self.assertEqual(tmpl.metadata, metadata)
+            self.assertEqual(tmpl.name, entry.get("name"))
+            self.assertEqual(tmpl.path, entry.get("name"))
+            self.assertEqual(tmpl.source_path, ccg.name)
+            self.assertEqual(tmpl.repo,
+                             Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator.SETUP.__getitem__.return_value)
