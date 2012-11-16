@@ -1079,3 +1079,13 @@ class BaseCore(object):
     @exposed
     def toggle_fam_debug(self, _):
         return self.fam.toggle_debug()
+
+    @exposed
+    def set_debug(self, address, debug):
+        for plugin in self.plugins.values():
+            plugin.set_debug(debug)
+        return self.set_fam_debug(address, debug)
+
+    @exposed
+    def set_fam_debug(self, _, debug):
+        return self.fam.set_debug(debug)

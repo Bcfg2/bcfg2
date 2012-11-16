@@ -129,7 +129,7 @@ class FileMonitor(Debuggable):
         .. -----
         .. autoattribute:: __priority__
         """
-        Debuggable.__init__(self, name="FileMonitor")
+        Debuggable.__init__(self)
         self.debug_flag = debug
 
         #: A dict that records which objects handle which events.
