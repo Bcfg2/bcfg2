@@ -1902,22 +1902,22 @@ class TestGroupSpool(TestPlugin, TestGenerator):
                              gs.handles[event.requestID].rstrip('/'))
             mock_isdir.assert_called_with(gs.event_path.return_value)
 
-    def test_toggle_debug(self):
+    def test_set_debug(self):
         gs = self.get_obj()
         gs.entries = {"/foo": Mock(),
                       "/bar": Mock(),
                       "/baz/quux": Mock()}
 
-        @patch("Bcfg2.Server.Plugin.helpers.Plugin.toggle_debug")
+        @patch("Bcfg2.Server.Plugin.helpers.Plugin.set_debug")
         def inner(mock_debug):
-            gs.toggle_debug()
-            mock_debug.assert_called_with(gs)
+            gs.set_debug(True)
+            mock_debug.assert_called_with(gs, True)
             for entry in gs.entries.values():
-                entry.toggle_debug.assert_any_call()
+                entry.set_debug.assert_called_with(True)
 
         inner()
 
-        TestPlugin.test_toggle_debug(self)
+        TestPlugin.test_set_debug(self)
 
     def test_HandleEvent(self):
         gs = self.get_obj()
