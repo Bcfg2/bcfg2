@@ -110,6 +110,13 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
             if ievent.mask & amask:
                 action = aname
                 break
+        else:
+            # event action is not in the mask, and thus is not
+            # something we care about
+            self.debug_log("Ignoring event %s for %s" % (action,
+                                                         ievent.pathname))
+            return
+
         try:
             watch = self.watchmgr.watches[ievent.wd]
         except KeyError:
