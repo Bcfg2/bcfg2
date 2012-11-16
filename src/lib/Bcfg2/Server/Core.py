@@ -1071,5 +1071,11 @@ class BaseCore(object):
         return Bcfg2.Statistics.stats.display()
 
     @exposed
+    def toggle_debug(self, address):
+        for plugin in self.plugins.values():
+            plugin.toggle_debug()
+        return self.toggle_fam_debug(address)
+
+    @exposed
     def toggle_fam_debug(self, _):
         return self.fam.toggle_debug()
