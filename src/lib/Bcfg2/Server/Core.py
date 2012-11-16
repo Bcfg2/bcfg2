@@ -1069,3 +1069,7 @@ class BaseCore(object):
         """ Get current statistics about component execution from
         :attr:`Bcfg2.Statistics.stats`. """
         return Bcfg2.Statistics.stats.display()
+
+    @exposed
+    def toggle_fam_debug(self, _):
+        return self.fam.toggle_debug()
