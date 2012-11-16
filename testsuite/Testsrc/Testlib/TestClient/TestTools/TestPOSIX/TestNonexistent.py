@@ -48,7 +48,6 @@ class TestPOSIXNonexistent(TestPOSIXTool):
         self.assertTrue(self.ptool.install(entry))
         self.ptool._remove.assert_called_with(entry, recursive=True)
 
-        print "about to start"
         reset()
         child_entry = lxml.etree.Element("Path", name="/test/foo",
                                          type="nonexistent")
