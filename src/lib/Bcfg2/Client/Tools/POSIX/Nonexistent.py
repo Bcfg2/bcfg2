@@ -20,13 +20,10 @@ class POSIXNonexistent(POSIXTool):
         ename = entry.get('name')
         recursive = entry.get('recursive', '').lower() == 'true'
         if recursive:
-            print "here"
             # ensure that configuration spec is consistent first
             for struct in self.config.getchildren():
-                print "checking struct"
                 for el in struct.getchildren():
                     import lxml.etree
-                    print "checking entry: %s" % lxml.etree.tostring(el)
                     if (el.tag == 'Path' and
                         el.get('type') != 'nonexistent' and
                         el.get('name').startswith(ename)):

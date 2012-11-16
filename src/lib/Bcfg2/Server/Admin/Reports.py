@@ -74,7 +74,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
         try:
             import south
         except ImportError:
-            print "Django south is required for Reporting"
+            print("Django south is required for Reporting")
             raise SystemExit(-3)
 
     def __call__(self, args):

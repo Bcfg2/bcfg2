@@ -94,7 +94,7 @@ def load_interpreters():
         best = "bpython"
     except ImportError:
         pass
-            
+
     try:
         # whether ipython is actually better than bpython is
         # up for debate, but this is the behavior that existed
@@ -454,7 +454,7 @@ Bcfg2 client itself.""")
             print(lxml.etree.tostring(pfile.XMLMatch(metadata),
                                       xml_declaration=False,
                                       pretty_print=True).decode('UTF-8'))
-                
+
     def do_bundles(self, _):
         """ bundles - Print out group/bundle info """
         data = [('Group', 'Bundles')]
@@ -503,7 +503,6 @@ Bcfg2 client itself.""")
             pretty = True
             alist.remove('-p')
         if len(alist) != 1:
-            print 'alist=%s' % alist
             print(self._get_usage(self.do_probes))
             return
         hostname = alist[0]
@@ -736,7 +735,7 @@ Bcfg2 client itself.""")
 
     def _block(self):
         pass
-                
+
 
 
 def build_usage():
