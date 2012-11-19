@@ -9,11 +9,12 @@ from Bcfg2.Server.Core import BaseCore, NoExposedMethod
 from Bcfg2.Compat import xmlrpclib, urlparse
 from Bcfg2.SSLServer import XMLRPCServer
 
+from lockfile import LockFailed
 # pylint: disable=E0611
 try:
-    from daemon.pidfile import PIDLockFile, LockFailed
+    from daemon.pidfile import PIDLockFile
 except ImportError:
-    from daemon.pidlockfile import PIDLockFile, LockFailed
+    from daemon.pidlockfile import PIDLockFile
 # pylint: enable=E0611
 
 
