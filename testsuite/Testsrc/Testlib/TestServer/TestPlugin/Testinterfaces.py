@@ -157,7 +157,7 @@ class TestThreadedStatistics(TestStatistics):
         # verify this call in an ugly way
         self.assertItemsEqual(mock_dump.call_args[0][0], self.data)
         self.assertEqual(mock_dump.call_args[0][1], mock_open.return_value)
-        
+
     @patch("os.unlink")
     @patch("os.path.exists")
     @patch("%s.open" % builtins)
@@ -169,7 +169,7 @@ class TestThreadedStatistics(TestStatistics):
         core = Mock()
         core.terminate.isSet.return_value = False
         ts = self.get_obj(core)
-        
+
         ts.work_queue = Mock()
         ts.work_queue.data = []
         def reset():
@@ -279,7 +279,7 @@ class TestThreadedStatistics(TestStatistics):
         ts = self.get_obj()
         self.assertRaises(NotImplementedError,
                           ts.handle_statistic, None, None)
-        
+
 
 class TestPullSource(Bcfg2TestCase):
     def test_GetCurrentEntry(self):
@@ -302,7 +302,7 @@ class TestPullTarget(Bcfg2TestCase):
 
 class TestDecision(Bcfg2TestCase):
     test_obj = Decision
-    
+
     def get_obj(self):
         return self.test_obj()
 
@@ -332,6 +332,7 @@ class TestVersion(TestPlugin):
     def get_obj(self, core=None):
         if core is None:
             core = Mock()
+            core.setup = MagicMock()
         return self.test_obj(core, datastore)
 
     def test_get_revision(self):

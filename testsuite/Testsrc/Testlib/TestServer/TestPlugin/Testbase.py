@@ -71,10 +71,12 @@ class TestPlugin(TestDebuggable):
     def get_obj(self, core=None):
         if core is None:
             core = Mock()
+            core.setup = MagicMock()
         return self.test_obj(core, datastore)
 
     def test__init(self):
         core = Mock()
+        core.setup = MagicMock()
         p = self.get_obj(core=core)
         self.assertEqual(p.data, os.path.join(datastore, p.name))
         self.assertEqual(p.core, core)

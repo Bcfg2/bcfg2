@@ -517,11 +517,11 @@ class Version(Plugin):
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
 
+        if core.setup['vcs_root']:
+            self.vcs_root = core.setup['vcs_root']
+        else:
+            self.vcs_root = datastore
         if self.__vcs_metadata_path__:
-            if core.setup['vcs_root']:
-                self.vcs_root = core.setup['vcs_root']
-            else:
-                self.vcs_root = datastore
             self.vcs_path = os.path.join(self.vcs_root,
                                          self.__vcs_metadata_path__)
 

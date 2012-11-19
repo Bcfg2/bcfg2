@@ -17,10 +17,9 @@ except ImportError:
 class Svn(Bcfg2.Server.Plugin.Version):
     """Svn is a version plugin for dealing with Bcfg2 repos."""
     __author__ = 'bcfg-dev@mcs.anl.gov'
+    __vcs_metadata_path__ = ".svn"
     if HAS_SVN:
         __rmi__ = Bcfg2.Server.Plugin.Version.__rmi__ + ['Update', 'Commit']
-    else:
-        __vcs_metadata_path__ = ".svn"
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Version.__init__(self, core, datastore)
