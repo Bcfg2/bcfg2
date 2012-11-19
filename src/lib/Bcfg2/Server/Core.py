@@ -662,7 +662,7 @@ class BaseCore(object):
                 os.chown(piddir,
                          self.setup['daemon_uid'],
                          self.setup['daemon_gid'])
-                os.chmod(piddir, 420)  # 0644
+                os.chmod(piddir, 493)  # 0775
             if not self._daemonize():
                 return False
         else:
