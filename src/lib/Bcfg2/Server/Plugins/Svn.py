@@ -23,7 +23,8 @@ class Svn(Bcfg2.Server.Plugin.Version):
         __vcs_metadata_path__ = ".svn"
 
     def callback_conflict_resolver(self):
-            return pysvn.wc_conflict_choice.theirs_full, None, False
+        """PySvn callback function to resolve conflicts"""
+        return pysvn.wc_conflict_choice.theirs_full, None, False
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Version.__init__(self, core, datastore)
@@ -94,7 +95,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
             self.logger.info("Updated %s from revision %s to %s" % \
                 (self.vcs_root, old_revision, self.revision.number))
         return True
-
+ 
     def Commit(self):
         """Svn.Commit() => True|False\nCommit svn repository\n"""
         # First try to update
