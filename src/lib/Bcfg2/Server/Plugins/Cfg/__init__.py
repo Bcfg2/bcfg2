@@ -542,8 +542,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         try:
             return generator.get_data(entry, metadata)
         except:
-            msg = "Cfg: exception rendering %s with %s: %s" % \
-                (entry.get("name"), generator, sys.exc_info()[1])
+            msg = "Cfg: Error rendering %s: %s" % (entry.get("name"),
+                                                   sys.exc_info()[1])
             LOGGER.error(msg)
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
 

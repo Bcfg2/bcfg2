@@ -1,8 +1,10 @@
 """ Frame is the Client Framework that verifies and installs entries,
 and generates statistics. """
 
+import os
 import sys
 import time
+import select
 import fnmatch
 import logging
 import Bcfg2.Client.Tools
@@ -160,6 +162,9 @@ class Frame(object):
                 iprompt = entry.get('qtext')
             else:
                 iprompt = prompt % (entry.tag, entry.get('name'))
+            # flush input buffer
+            while len(select.select([sys.stdin.fileno()], [], [], 0.0)[0]) > 0:
+                os.read(sys.stdin.fileno(), 4096)
             try:
                 ans = input(iprompt.encode(sys.stdout.encoding, 'replace'))
                 if ans in ['y', 'Y']:

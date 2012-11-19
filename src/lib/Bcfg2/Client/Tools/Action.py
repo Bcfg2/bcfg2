@@ -1,5 +1,8 @@
 """Action driver"""
 
+import os
+import sys
+import select
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Frame import matches_white_list, passes_black_list
 from Bcfg2.Compat import input  # pylint: disable=W0622
@@ -33,6 +36,10 @@ class Action(Bcfg2.Client.Tools.Tool):
             if self.setup['interactive']:
                 prompt = ('Run Action %s, %s: (y/N): ' %
                           (entry.get('name'), entry.get('command')))
+                # flush input buffer
+                while len(select.select([sys.stdin.fileno()], [], [],
+                                        0.0)[0]) > 0:
+                    os.read(sys.stdin.fileno(), 4096)
                 ans = input(prompt)
                 if ans not in ['y', 'Y']:
                     return False

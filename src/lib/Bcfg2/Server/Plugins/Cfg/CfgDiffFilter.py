@@ -1,13 +1,10 @@
 """ Handle .diff files, which apply diffs to plaintext files """
 
 import os
-import logging
 import tempfile
-import Bcfg2.Server.Plugin
+from Bcfg2.Server.Plugin import PluginExecutionError
 from subprocess import Popen, PIPE
 from Bcfg2.Server.Plugins.Cfg import CfgFilter
-
-LOGGER = logging.getLogger(__name__)
 
 
 class CfgDiffFilter(CfgFilter):
@@ -32,8 +29,7 @@ class CfgDiffFilter(CfgFilter):
         output = open(basename, 'r').read()
         os.unlink(basename)
         if ret != 0:
-            msg = "Error applying diff %s: %s" % (self.name, stderr)
-            LOGGER.error(msg)
-            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            raise PluginExecutionError("Error applying diff %s: %s" %
+                                       (self.name, stderr))
         return output
     modify_data.__doc__ = CfgFilter.modify_data.__doc__

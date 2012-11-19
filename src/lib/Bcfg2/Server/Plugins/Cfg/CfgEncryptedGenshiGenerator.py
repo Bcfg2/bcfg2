@@ -1,7 +1,6 @@
 """ Handle encrypted Genshi templates (.crypt.genshi or .genshi.crypt
 files) """
 
-import logging
 from Bcfg2.Compat import StringIO
 from Bcfg2.Server.Plugin import PluginExecutionError
 from Bcfg2.Server.Plugins.Cfg import SETUP
@@ -18,10 +17,6 @@ try:
 except ImportError:
     # CfgGenshiGenerator will raise errors if genshi doesn't exist
     TemplateLoader = object  # pylint: disable=C0103
-
-LOGGER = logging.getLogger(__name__)
-
-LOGGER = logging.getLogger(__name__)
 
 
 class EncryptedTemplateLoader(TemplateLoader):
@@ -53,6 +48,4 @@ class CfgEncryptedGenshiGenerator(CfgGenshiGenerator):
     def __init__(self, fname, spec, encoding):
         CfgGenshiGenerator.__init__(self, fname, spec, encoding)
         if not HAS_CRYPTO:
-            msg = "Cfg: M2Crypto is not available"
-            LOGGER.error(msg)
-            raise PluginExecutionError(msg)
+            raise PluginExecutionError("M2Crypto is not available")

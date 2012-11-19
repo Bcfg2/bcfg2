@@ -66,18 +66,26 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                     rv &= self._set_perms(entry, path=os.path.join(root, path))
         return rv
 
+    def _remove(self, entry, recursive=True):
+        """ Remove a Path entry, whatever that takes """
+        if os.path.islink(entry.get('name')):
+            os.unlink(entry.get('name'))
+        elif os.path.isdir(entry.get('name')):
+            if recursive:
+                shutil.rmtree(entry.get('name'))
+            else:
+                os.rmdir(entry.get('name'))
+        else:
+            os.unlink(entry.get('name'))
+
     def _exists(self, entry, remove=False):
         """ check for existing paths and optionally remove them.  if
         the path exists, return the lstat of it """
         try:
             ondisk = os.lstat(entry.get('name'))
             if remove:
-                if os.path.isdir(entry.get('name')):
-                    remove = shutil.rmtree
-                else:
-                    remove = os.unlink
                 try:
-                    remove(entry.get('name'))
+                    self._remove(entry)
                     return None
                 except OSError:
                     err = sys.exc_info()[1]

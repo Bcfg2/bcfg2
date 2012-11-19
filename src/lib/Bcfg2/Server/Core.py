@@ -516,7 +516,7 @@ class BaseCore(object):
             except PluginExecutionError:
                 exc = sys.exc_info()[1]
                 if 'failure' not in entry.attrib:
-                    entry.set('failure', 'bind error: %s' % format_exc())
+                    entry.set('failure', 'bind error: %s' % exc)
                 self.logger.error("Failed to bind entry %s:%s: %s" %
                                   (entry.tag, entry.get('name'), exc))
             except Exception:
@@ -665,6 +665,8 @@ class BaseCore(object):
                 os.chmod(piddir, 420)  # 0644
             if not self._daemonize():
                 return False
+        else:
+            os.umask(int(self.setup['umask'], 8))
 
         if not self._run():
             self.shutdown()
@@ -1065,5 +1067,59 @@ class BaseCore(object):
     @exposed
     def get_statistics(self, _):
         """ Get current statistics about component execution from
-        :attr:`Bcfg2.Statistics.stats`. """
+        :attr:`Bcfg2.Statistics.stats`.
+
+        :returns: dict - The statistics data as returned by
+                  :func:`Bcfg2.Statistics.Statistics.display` """
         return Bcfg2.Statistics.stats.display()
+
+    @exposed
+    def toggle_debug(self, address):
+        """ Toggle debug status of the FAM and all plugins
+
+        :param address: Client (address, hostname) pair
+        :type address: tuple
+        :returns: bool - The new debug state of the FAM
+        """
+        for plugin in self.plugins.values():
+            plugin.toggle_debug()
+        return self.toggle_fam_debug(address)
+
+    @exposed
+    def toggle_fam_debug(self, _):
+        """ Toggle debug status of the FAM
+
+        :returns: bool - The new debug state of the FAM
+        """
+        return self.fam.toggle_debug()
+
+    @exposed
+    def set_debug(self, address, debug):
+        """ Explicitly set debug status of the FAM and all plugins
+
+        :param debug: The new debug status.  This can either be a
+                      boolean, or a string describing the state (e.g.,
+                      "true" or "false"; case-insensitive)
+        :type debug: bool or string
+        :returns: bool - The new debug state
+        """
+        if debug not in [True, False]:
+            debug = debug.lower() == "true"
+        for plugin in self.plugins.values():
+            plugin.set_debug(debug)
+        return self.set_fam_debug(address, debug)
+
+    @exposed
+    def set_fam_debug(self, _, debug):
+        """ Explicitly set debug status of the FAM
+
+        :param debug: The new debug status of the FAM.  This can
+                      either be a boolean, or a string describing the
+                      state (e.g., "true" or "false";
+                      case-insensitive)
+        :type debug: bool or string
+        :returns: bool - The new debug state of the FAM
+        """
+        if debug not in [True, False]:
+            debug = debug.lower() == "true"
+        return self.fam.set_debug(debug)

@@ -54,15 +54,15 @@ start () {
 case "$1" in
     start)
         start
-    ;;
-    stop) 
+        ;;
+    stop|status)
         exit 0
-    ;;
+        ;;
     restart|force-reload)
 	start
-    ;;
+        ;;
     *)
-        echo "Usage: $0 {start|stop|restart|force-reload}"
+        echo "Usage: $0 {start|stop|status|restart|force-reload}"
         RETVAL=3
 esac
 

@@ -577,6 +577,11 @@ SERVER_VCS_ROOT = \
            default=None,
            odesc='<VCS repository root>',
            cf=('server', 'vcs_root'))
+SERVER_UMASK = \
+    Option('Server umask',
+           default='0077',
+           odesc='<Server umask>',
+           cf=('server', 'umask'))
 
 # database options
 DB_ENGINE = \
@@ -1068,6 +1073,7 @@ CLI_COMMON_OPTIONS = dict(configfile=CFILE,
                           syslog=LOGGING_SYSLOG)
 
 DAEMON_COMMON_OPTIONS = dict(daemon=DAEMON,
+                             umask=SERVER_UMASK,
                              listen_all=SERVER_LISTEN_ALL,
                              daemon_uid=SERVER_DAEMON_USER,
                              daemon_gid=SERVER_DAEMON_GROUP)

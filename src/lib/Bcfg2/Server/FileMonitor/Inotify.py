@@ -110,11 +110,18 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
             if ievent.mask & amask:
                 action = aname
                 break
+        else:
+            # event action is not in the mask, and thus is not
+            # something we care about
+            self.debug_log("Ignoring event %s for %s" % (action,
+                                                         ievent.pathname))
+            return
+
         try:
             watch = self.watchmgr.watches[ievent.wd]
         except KeyError:
-            LOGGER.error("Error handling event for %s: Watch %s not found" %
-                         (ievent.pathname, ievent.wd))
+            LOGGER.error("Error handling event %s for %s: Watch %s not found" %
+                         (action, ievent.pathname, ievent.wd))
             return
         # FAM-style file monitors return the full path to the parent
         # directory that is being watched, relative paths to anything

@@ -9,7 +9,7 @@ class Debuggable(object):
     via XML-RPC on :class:`Bcfg2.Server.Plugin.base.Plugin` objects """
 
     #: List of names of methods to be exposed as XML-RPC functions
-    __rmi__ = ['toggle_debug']
+    __rmi__ = ['toggle_debug', 'set_debug']
 
     def __init__(self, name=None):
         """
@@ -26,17 +26,25 @@ class Debuggable(object):
         self.debug_flag = False
         self.logger = logging.getLogger(name)
 
+    def set_debug(self, debug):
+        """ Explicitly enable or disable debugging.  This method is exposed
+        via XML-RPC.
+
+        :returns: bool - The new value of the debug flag
+        """
+        self.debug_flag = debug
+        self.debug_log("%s: debug_flag = %s" % (self.__class__.__name__,
+                                                self.debug_flag),
+                       flag=True)
+        return debug
+
     def toggle_debug(self):
         """ Turn debugging output on or off.  This method is exposed
         via XML-RPC.
 
         :returns: bool - The new value of the debug flag
         """
-        self.debug_flag = not self.debug_flag
-        self.debug_log("%s: debug_flag = %s" % (self.__class__.__name__,
-                                                self.debug_flag),
-                       flag=True)
-        return self.debug_flag
+        return self.set_debug(not self.debug_flag)
 
     def debug_log(self, message, flag=None):
         """ Log a message at the debug level.

@@ -266,6 +266,7 @@ are available:
 
 * LocalFilesystem: Statistics are written to the local file system and collected
   on the local machine.
+* RedisTransport: Statistics are sent through a list in redis.
 * DirectStore: DBStats style threaded imports in the main server process.
 
 Future transports will allow multiple servers to pass data to a single or multiple
@@ -276,6 +277,30 @@ release.
 .. Note::
     If DirectStore is used, the bcfg2-report-collector process will refuse to run
     since this method is not compatible with an external process.
+
+RedisTransport
+^^^^^^^^^^^^^^
+
+This transport uses a single redis instance for communication between bcfg2-server and
+bcfg2-report-collector.  Multiple servers can write to a single redis instance and multiple
+report collectors may be run as well.
+
+An example configuration with the default values::
+
+    [reporting]
+    transport = RedisTransport
+    redis_host = 127.0.0.1
+    redis_port = 6379
+    redis_db = 0
+
+bcfg2-admin commands operate slightly differently in this mode.  Instead of querying the 
+database directly, rpc commands are issued to the report collectors.  This only affects
+the minestruct and pull commands.
+
+.. warning::
+
+   At the time of this writing the version of python-redis in EPEL is too old to use with
+   this transport.  Current versions of the python-redis package require python >= 2.5.
 
 Usage
 =====

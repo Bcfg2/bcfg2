@@ -27,21 +27,26 @@ class TestDebuggable(Bcfg2TestCase):
         self.assertIsInstance(d.logger, logging.Logger)
         self.assertFalse(d.debug_flag)
 
-    def test_toggle_debug(self):
+    def test_set_debug(self):
         d = self.get_obj()
         d.debug_log = Mock()
-        orig = d.debug_flag
-        d.toggle_debug()
-        self.assertNotEqual(orig, d.debug_flag)
+        self.assertEqual(True, d.set_debug(True))
+        self.assertEqual(d.debug_flag, True)
         self.assertTrue(d.debug_log.called)
 
         d.debug_log.reset_mock()
 
-        changed = d.debug_flag
-        d.toggle_debug()
-        self.assertNotEqual(changed, d.debug_flag)
-        self.assertEqual(orig, d.debug_flag)
+        self.assertEqual(False, d.set_debug(False))
+        self.assertEqual(d.debug_flag, False)
         self.assertTrue(d.debug_log.called)
+
+    def test_toggle_debug(self):
+        d = self.get_obj()
+        d.set_debug = Mock()
+        orig = d.debug_flag
+        self.assertEqual(d.toggle_debug(),
+                         d.set_debug.return_value)
+        d.set_debug.assert_called_with(not orig)
 
     def test_debug_log(self):
         d = self.get_obj()

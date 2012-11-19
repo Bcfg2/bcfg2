@@ -967,9 +967,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 return self.aliases[cname]
             return cname
         except socket.herror:
-            warning = "address resolution error for %s" % address
-            self.logger.warning(warning)
-            raise Bcfg2.Server.Plugin.MetadataConsistencyError(warning)
+            err = "Address resolution error for %s: %s" % (address,
+                                                           sys.exc_info()[1])
+            self.logger.error(err)
+            raise Bcfg2.Server.Plugin.MetadataConsistencyError(err)
 
     def _merge_groups(self, client, groups, categories=None):
         """ set group membership based on the contents of groups.xml

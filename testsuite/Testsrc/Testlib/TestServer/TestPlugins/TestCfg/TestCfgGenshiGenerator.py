@@ -105,27 +105,18 @@ if can_skip or HAS_GENSHI:
             self.assertTrue(cgg._handle_genshi_exception.called)
 
         def test_handle_event(self):
-            @patch("Bcfg2.Server.Plugins.Cfg.CfgGenerator.handle_event")
-            def inner(mock_handle_event):
-                cgg = self.get_obj()
-                cgg.loader = Mock()
-                cgg.data = "template data"
-                event = Mock()
-                cgg.handle_event(event)
-                cgg.loader.load.assert_called_with(cgg.name,
-                                                   cls=NewTextTemplate,
-                                                   encoding=cgg.encoding)
+            cgg = self.get_obj()
+            cgg.loader = Mock()
+            event = Mock()
+            cgg.handle_event(event)
+            cgg.loader.load.assert_called_with(cgg.name,
+                                               cls=NewTextTemplate,
+                                               encoding=cgg.encoding)
 
-                cgg.loader.reset_mock()
-                cgg.loader.load.side_effect = OSError
-                self.assertRaises(PluginExecutionError,
-                                  cgg.handle_event, event)
-                cgg.loader.load.assert_called_with(cgg.name,
-                                                   cls=NewTextTemplate,
-                                                   encoding=cgg.encoding)
-
-            inner()
-            loader_cls = self.test_obj.__loader_cls__
-            self.test_obj.__loader_cls__ = Mock
-            TestCfgGenerator.test_handle_event(self)
-            self.test_obj.__loader_cls__ = loader_cls
+            cgg.loader.reset_mock()
+            cgg.loader.load.side_effect = OSError
+            self.assertRaises(PluginExecutionError,
+                              cgg.handle_event, event)
+            cgg.loader.load.assert_called_with(cgg.name,
+                                               cls=NewTextTemplate,
+                                               encoding=cgg.encoding)

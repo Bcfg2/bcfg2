@@ -107,8 +107,10 @@ class Core(BaseCore):
         :class:`cherrypy.process.plugins.DropPrivileges`, daemonize
         with :class:`cherrypy.process.plugins.Daemonizer`, and write a
         PID file with :class:`cherrypy.process.plugins.PIDFile`. """
-        DropPrivileges(cherrypy.engine, uid=self.setup['daemon_uid'],
-                       gid=self.setup['daemon_gid']).subscribe()
+        DropPrivileges(cherrypy.engine,
+                       uid=self.setup['daemon_uid'],
+                       gid=self.setup['daemon_gid'],
+                       umask=int(self.setup['umask'], 8)).subscribe()
         Daemonizer(cherrypy.engine).subscribe()
         PIDFile(cherrypy.engine, self.setup['daemon']).subscribe()
         return True

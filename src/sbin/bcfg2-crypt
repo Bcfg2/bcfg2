@@ -4,6 +4,7 @@
 import os
 import sys
 import copy
+import select
 import logging
 import lxml.etree
 import Bcfg2.Logger
@@ -31,7 +32,7 @@ class Encryptor(object):
         self.passphrase = None
         self.pname = None
         self.logger = logging.getLogger(self.__class__.__name__)
-        
+
     def get_encrypted_filename(self, plaintext_filename):
         """ get the name of the file encrypted data should be written to """
         return plaintext_filename
@@ -67,7 +68,7 @@ class Encryptor(object):
 
         if self.setup['passphrase']:
             self.pname = self.setup['passphrase']
-                
+
         if self.pname:
             if self.setup.cfp.has_option("encryption", self.pname):
                 self.passphrase = self.setup.cfp.get("encryption",
@@ -182,7 +183,7 @@ class Encryptor(object):
             self.logger.error("Error getting encrypted data from %s: %s" %
                               (fname, err))
             return False
-        
+
         try:
             return self.unchunk(plaintext, crypted)
         except EncryptionChunkingError:
@@ -317,10 +318,14 @@ class PropertiesEncryptor(Encryptor):
                 print(lxml.etree.tostring(
                     elt,
                     xml_declaration=False).decode("UTF-8").strip())
+                # flush input buffer
+                while len(select.select([sys.stdin.fileno()], [], [],
+                                        0.0)[0]) > 0:
+                    os.read(sys.stdin.fileno(), 4096)
                 ans = input("Encrypt this element? [y/N] ")
                 if not ans.lower().startswith("y"):
                     elements.remove(element)
-                
+
         # this is not a good use of a generator, but we need to
         # generate the full list of elements in order to ensure that
         # some exist before we know what to return
@@ -386,11 +391,11 @@ def main():  # pylint: disable=R0912,R0915
         elif setup['interactive']:
             logger.error("Cannot decrypt interactively")
             setup['interactive'] = False
-    
+
     if setup['cfg']:
         if setup['properties']:
             logger.error("You cannot specify both --cfg and --properties")
-            raise SystemExit(1)        
+            raise SystemExit(1)
         if setup['xpath']:
             logger.error("Specifying --xpath with --cfg is nonsensical, "
                          "ignoring --xpath")
@@ -411,7 +416,7 @@ def main():  # pylint: disable=R0912,R0915
         if not os.path.exists(fname):
             logger.error("%s does not exist, skipping" % fname)
             continue
-        
+
         # figure out if we need to encrypt this as a Properties file
         # or as a Cfg file
         props = False

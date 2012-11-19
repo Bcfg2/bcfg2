@@ -13,15 +13,25 @@ LOGGER = logging.getLogger(__name__)
 MODULE_RE = re.compile(r'(?P<filename>(?P<module>[^\/]+)\.py)$')
 
 
-class HelperModule(Bcfg2.Server.Plugin.FileBacked):
+class HelperModule(object):
     """ Representation of a TemplateHelper module """
 
     def __init__(self, name, fam=None):
-        Bcfg2.Server.Plugin.FileBacked.__init__(self, name, fam=fam)
+        self.name = name
+        self.fam = fam
         self._module_name = MODULE_RE.search(self.name).group('module')
         self._attrs = []
 
-    def Index(self):
+    def HandleEvent(self, event=None):
+        """ HandleEvent is called whenever the FAM registers an event.
+
+        :param event: The event object
+        :type event: Bcfg2.Server.FileMonitor.Event
+        :returns: None
+        """
+        if event and event.code2str() not in ['exists', 'changed', 'created']:
+            return
+
         try:
             module = imp.load_source(self._module_name, self.name)
         except:  # pylint: disable=W0702
@@ -54,27 +64,23 @@ class HelperModule(Bcfg2.Server.Plugin.FileBacked):
         self._attrs = newattrs
 
 
-class HelperSet(Bcfg2.Server.Plugin.DirectoryBacked):
-    """ A set of template helper modules """
+class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
+                     Bcfg2.Server.Plugin.Connector,
+                     Bcfg2.Server.Plugin.DirectoryBacked):
+    """ A plugin to provide helper classes and functions to templates """
+    __author__ = 'chris.a.st.pierre@gmail.com'
     ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\.py[co])$")
     patterns = MODULE_RE
     __child__ = HelperModule
 
-
-class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
-                     Bcfg2.Server.Plugin.Connector):
-    """ A plugin to provide helper classes and functions to templates """
-    name = 'TemplateHelper'
-    __author__ = 'chris.a.st.pierre@gmail.com'
-
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
-        self.helpers = HelperSet(self.data, core.fam)
+        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, core.fam)
 
     def get_additional_data(self, _):
         return dict([(h._module_name, h)  # pylint: disable=W0212
-                     for h in self.helpers.entries.values()])
+                     for h in self.entries.values()])
 
 
 class TemplateHelperLint(Bcfg2.Server.Lint.ServerlessPlugin):
@@ -130,9 +136,9 @@ class TemplateHelperLint(Bcfg2.Server.Lint.ServerlessPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"templatehelper-import-error":"error",
-                "templatehelper-no-export":"error",
-                "templatehelper-nonlist-export":"error",
-                "templatehelper-nonexistent-export":"error",
-                "templatehelper-reserved-export":"error",
-                "templatehelper-underscore-export":"warning"}
+        return {"templatehelper-import-error": "error",
+                "templatehelper-no-export": "error",
+                "templatehelper-nonlist-export": "error",
+                "templatehelper-nonexistent-export": "error",
+                "templatehelper-reserved-export": "error",
+                "templatehelper-underscore-export": "warning"}

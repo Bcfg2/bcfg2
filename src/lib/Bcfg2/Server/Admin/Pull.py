@@ -1,8 +1,10 @@
 """ Retrieves entries from clients and integrates the information into
 the repository """
 
-import getopt
+import os
 import sys
+import getopt
+import select
 import Bcfg2.Server.Admin
 from Bcfg2.Compat import input  # pylint: disable=W0622
 
@@ -99,6 +101,10 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                 else:
                     print(" => host entry: %s" % (choice.hostname))
 
+                # flush input buffer
+                while len(select.select([sys.stdin.fileno()], [], [],
+                                        0.0)[0]) > 0:
+                    os.read(sys.stdin.fileno(), 4096)
                 ans = input("Use this entry? [yN]: ") in ['y', 'Y']
                 if ans:
                     return choice

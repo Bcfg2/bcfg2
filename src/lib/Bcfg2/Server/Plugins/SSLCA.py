@@ -1,13 +1,15 @@
 """ The SSLCA generator handles the creation and management of ssl
 certificates and their keys. """
 
+import os
+import sys
 import Bcfg2.Server.Plugin
 import Bcfg2.Options
 import lxml.etree
 import tempfile
-import os
 from subprocess import Popen, PIPE, STDOUT
 from Bcfg2.Compat import ConfigParser, md5
+from Bcfg2.Server.Plugin import PluginExecutionError
 
 
 class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
@@ -107,6 +109,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         filename = os.path.join(path, "%s.H_%s" % (os.path.basename(path),
                                                    metadata.hostname))
         if filename not in list(self.entries.keys()):
+            self.logger.info("SSLCA: Generating new key %s" % filename)
             key = self.build_key(entry)
             open(self.data + filename, 'w').write(key)
             entry.text = key
@@ -130,6 +133,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             cmd = ["openssl", "genrsa", bits]
         elif ktype == 'dsa':
             cmd = ["openssl", "dsaparam", "-noout", "-genkey", bits]
+        self.debug_log("SSLCA: Generating new key: %s" % " ".join(cmd))
         return Popen(cmd, stdout=PIPE).stdout.read()
 
     def get_cert(self, entry, metadata):
@@ -151,10 +155,11 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             self.core.Bind(el, metadata)
 
         # check if we have a valid hostfile
-        if (filename in list(self.entries.keys()) and
+        if (filename in self.entries.keys() and
             self.verify_cert(filename, key_filename, entry)):
             entry.text = self.entries[filename].data
         else:
+            self.logger.info("SSLCA: Generating new cert %s" % filename)
             cert = self.build_cert(key_filename, entry, metadata)
             open(self.data + filename, 'w').write(cert)
             self.entries[filename] = self.__child__(self.data + filename)
@@ -231,22 +236,37 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         """
         creates a new certificate according to the specification
         """
-        req_config = self.build_req_config(entry, metadata)
-        req = self.build_request(key_filename, req_config, entry)
-        ca = self.cert_specs[entry.get('name')]['ca']
-        ca_config = self.CAs[ca]['config']
-        days = self.cert_specs[entry.get('name')]['days']
-        passphrase = self.CAs[ca].get('passphrase')
-        cmd = ["openssl", "ca", "-config", ca_config, "-in", req,
-               "-days", days, "-batch"]
-        if passphrase:
-            cmd.extend(["-passin", "pass:%s" % passphrase])
-        cert = Popen(cmd, stdout=PIPE).stdout.read()
+        req_config = None
+        req = None
         try:
-            os.unlink(req_config)
-            os.unlink(req)
-        except OSError:
-            self.logger.error("Failed to unlink temporary files")
+            req_config = self.build_req_config(entry, metadata)
+            req = self.build_request(key_filename, req_config, entry)
+            ca = self.cert_specs[entry.get('name')]['ca']
+            ca_config = self.CAs[ca]['config']
+            days = self.cert_specs[entry.get('name')]['days']
+            passphrase = self.CAs[ca].get('passphrase')
+            cmd = ["openssl", "ca", "-config", ca_config, "-in", req,
+                   "-days", days, "-batch"]
+            if passphrase:
+                cmd.extend(["-passin", "pass:%s" % passphrase])
+            self.debug_log("SSLCA: Generating new certificate: %s" %
+                           " ".join(cmd))
+            proc = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
+            (cert, err) = proc.communicate()
+            if proc.wait():
+                # pylint: disable=E1103
+                raise PluginExecutionError("SSLCA: Failed to generate cert: %s"
+                                           % err.splitlines()[-1])
+                # pylint: enable=E1103
+        finally:
+            try:
+                if req_config and os.path.exists(req_config):
+                    os.unlink(req_config)
+                if req and os.path.exists(req):
+                    os.unlink(req)
+            except OSError:
+                self.logger.error("SSLCA: Failed to unlink temporary files: %s"
+                                  % sys.exc_info()[1])
         if (self.cert_specs[entry.get('name')]['append_chain'] and
             self.CAs[ca]['chaincert']):
             cert += open(self.CAs[ca]['chaincert']).read()
@@ -258,7 +278,7 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
         used to generate the required certificate request
         """
         # create temp request config file
-        conffile = open(tempfile.mkstemp()[1], 'w')
+        fd, fname = tempfile.mkstemp()
         cfp = ConfigParser.ConfigParser({})
         cfp.optionxform = str
         defaults = {
@@ -290,18 +310,28 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
                 cfp.set('req_distinguished_name', item,
                         self.cert_specs[entry.get('name')][item])
         cfp.set('req_distinguished_name', 'CN', metadata.hostname)
-        cfp.write(conffile)
-        conffile.close()
-        return conffile.name
+        self.debug_log("SSLCA: Writing temporary request config to %s" % fname)
+        try:
+            cfp.write(os.fdopen(fd, 'w'))
+        except IOError:
+            raise PluginExecutionError("SSLCA: Failed to write temporary CSR "
+                                       "config file: %s" % sys.exc_info()[1])
+        return fname
 
     def build_request(self, key_filename, req_config, entry):
         """
         creates the certificate request
         """
-        req = tempfile.mkstemp()[1]
+        fd, req = tempfile.mkstemp()
+        os.close(fd)
         days = self.cert_specs[entry.get('name')]['days']
         key = self.data + key_filename
         cmd = ["openssl", "req", "-new", "-config", req_config,
                "-days", days, "-key", key, "-text", "-out", req]
-        Popen(cmd, stdout=PIPE).wait()
+        self.debug_log("SSLCA: Generating new CSR: %s" % " ".join(cmd))
+        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        err = proc.communicate()[1]
+        if proc.wait():
+            raise PluginExecutionError("SSLCA: Failed to generate CSR: %s" %
+                                       err)
         return req

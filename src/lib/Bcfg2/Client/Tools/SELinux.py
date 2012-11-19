@@ -41,7 +41,7 @@ def netmask_itoa(netmask, proto="ipv4"):
         size = 128
         family = socket.AF_INET6
     try:
-        int(netmask)
+        netmask = int(netmask)
     except ValueError:
         return netmask
 

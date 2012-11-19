@@ -1,0 +1,16 @@
+bcfg2 (1.1.0-1) unstable; urgency=low
+
+  Due to repository changes made to support Path entries it is recommended
+  to upgrade the clients before upgrading the server. After that, you can
+  use the posixunified.py script (included as an example in the server
+  package) to convert your repository.
+
+ -- Arto Jantunen <viiru@debian.org>  Fri, 05 Nov 2010 19:07:59 +0200
+
+bcfg2 (1.0.1-1) unstable; urgency=low
+
+  Since version 1.0, Bcfg2 no longer supports agent mode. Please update your 
+  configuration accordingly if you were using it.
+
+ -- Arto Jantunen <viiru@debian.org>  Tue, 03 Aug 2010 12:28:54 +0300
+

@@ -102,6 +102,9 @@ FL = '{http://linux.duke.edu/metadata/filelists}'
 PULPSERVER = None
 PULPCONFIG = None
 
+#: The path to bcfg2-yum-helper
+HELPER = None
+
 
 def _setup_pulp(setup):
     """ Connect to a Pulp server and pass authentication credentials.
@@ -308,8 +311,6 @@ class YumCollection(Collection):
                                           (certdir, err))
                 self.pulp_cert_set = PulpCertificateSet(certdir, self.fam)
 
-        self._helper = None
-
     @property
     def __package_groups__(self):
         """ YumCollections support package groups only if
@@ -324,20 +325,20 @@ class YumCollection(Collection):
         a call to it; I wish there was a way to do this without
         forking, but apparently not); finally we check in /usr/sbin,
         the default location. """
-        try:
-            return self.setup.cfp.get("packages:yum", "helper")
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            pass
-
-        if not self._helper:
-            # first see if bcfg2-yum-helper is in PATH
+        global HELPER
+        if not HELPER:
             try:
-                Popen(['bcfg2-yum-helper'],
-                      stdin=PIPE, stdout=PIPE, stderr=PIPE).wait()
-                self._helper = 'bcfg2-yum-helper'
-            except OSError:
-                self._helper = "/usr/sbin/bcfg2-yum-helper"
-        return self._helper
+                HELPER = self.setup.cfp.get("packages:yum", "helper")
+            except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+                # first see if bcfg2-yum-helper is in PATH
+                try:
+                    self.debug_log("Checking for bcfg2-yum-helper in $PATH")
+                    Popen(['bcfg2-yum-helper'],
+                          stdin=PIPE, stdout=PIPE, stderr=PIPE).wait()
+                    HELPER = 'bcfg2-yum-helper'
+                except OSError:
+                    HELPER = "/usr/sbin/bcfg2-yum-helper"
+        return HELPER
 
     @property
     def use_yum(self):
@@ -357,7 +358,7 @@ class YumCollection(Collection):
     def cachefiles(self):
         """ A list of the full path to all cachefiles used by this
         collection."""
-        cachefiles = set(Collection.cachefiles(self))
+        cachefiles = set(Collection.cachefiles.fget(self))
         if self.cachefile:
             cachefiles.add(self.cachefile)
         return list(cachefiles)

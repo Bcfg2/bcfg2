@@ -1526,12 +1526,12 @@ class GroupSpool(Plugin, Generator):
         else:
             return self.handles[event.requestID].rstrip("/")
 
-    def toggle_debug(self):
+    def set_debug(self, debug):
         for entry in self.entries.values():
-            if hasattr(entry, "toggle_debug"):
-                entry.toggle_debug()
-        return Plugin.toggle_debug(self)
-    toggle_debug.__doc__ = Plugin.toggle_debug.__doc__
+            if hasattr(entry, "set_debug"):
+                entry.set_debug(debug)
+        return Plugin.set_debug(self, debug)
+    set_debug.__doc__ = Plugin.set_debug.__doc__
 
     def HandleEvent(self, event):
         """ HandleEvent is the event dispatcher for GroupSpool

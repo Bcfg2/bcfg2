@@ -1,7 +1,6 @@
 """ CfgEncryptedGenerator lets you encrypt your plaintext
 :ref:`server-plugins-generators-cfg` files on the server. """
 
-import logging
 from Bcfg2.Server.Plugin import PluginExecutionError
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator, SETUP
 try:
@@ -10,8 +9,6 @@ try:
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
-
-LOGGER = logging.getLogger(__name__)
 
 
 class CfgEncryptedGenerator(CfgGenerator):
@@ -28,9 +25,7 @@ class CfgEncryptedGenerator(CfgGenerator):
     def __init__(self, fname, spec, encoding):
         CfgGenerator.__init__(self, fname, spec, encoding)
         if not HAS_CRYPTO:
-            msg = "Cfg: M2Crypto is not available"
-            LOGGER.error(msg)
-            raise PluginExecutionError(msg)
+            raise PluginExecutionError("M2Crypto is not available")
     __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def handle_event(self, event):

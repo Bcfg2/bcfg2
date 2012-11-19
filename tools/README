@@ -62,6 +62,9 @@ export.py
 export.sh
     - Export a tagged version of the Bcfg2 source
 
+generate-manpages.bash
+    - Generate man pages from the Sphinx source
+
 hostbasepush.py
     - Call the Hostbase.rebuildState XML-RPC method
 

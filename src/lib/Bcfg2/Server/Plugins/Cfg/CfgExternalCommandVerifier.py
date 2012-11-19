@@ -3,12 +3,9 @@
 import os
 import sys
 import shlex
-import logging
-import Bcfg2.Server.Plugin
+from Bcfg2.Server.Plugin import PluginExecutionError
 from subprocess import Popen, PIPE
 from Bcfg2.Server.Plugins.Cfg import CfgVerifier, CfgVerificationError
-
-LOGGER = logging.getLogger(__name__)
 
 
 class CfgExternalCommandVerifier(CfgVerifier):
@@ -46,9 +43,6 @@ class CfgExternalCommandVerifier(CfgVerifier):
             if bangpath.startswith("#!"):
                 self.cmd.extend(shlex.split(bangpath[2:].strip()))
             else:
-                msg = "%s: Cannot execute %s" % (self.__class__.__name__,
-                                                 self.name)
-                LOGGER.error(msg)
-                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+                raise PluginExecutionError("Cannot execute %s" % self.name)
         self.cmd.append(self.name)
     handle_event.__doc__ = CfgVerifier.handle_event.__doc__

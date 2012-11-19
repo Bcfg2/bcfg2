@@ -50,6 +50,7 @@ import sys
 import fnmatch
 import logging
 from time import sleep, time
+from Bcfg2.Server.Plugin import Debuggable
 
 LOGGER = logging.getLogger(__name__)
 
@@ -104,7 +105,7 @@ class Event(object):
         return "%s (request ID %s)" % (str(self), self.requestID)
 
 
-class FileMonitor(object):
+class FileMonitor(Debuggable):
     """ The base class that all FAM implementions must inherit.
 
     The simplest instance of a FileMonitor subclass needs only to add
@@ -128,8 +129,8 @@ class FileMonitor(object):
         .. -----
         .. autoattribute:: __priority__
         """
-        #: Whether or not to produce debug logging
-        self.debug = debug
+        Debuggable.__init__(self)
+        self.debug_flag = debug
 
         #: A dict that records which objects handle which events.
         #: Keys are monitor handle IDs and values are objects whose
@@ -167,13 +168,6 @@ class FileMonitor(object):
         :class:`Bcfg2.Server.FileMonitor.Inotify.Inotify` for an
         example of this. """
         self.started = True
-
-    def debug_log(self, msg):
-        """ Log a debug message.
-
-        :param msg: The message to log iff :attr:`debug` is set."""
-        if self.debug:
-            LOGGER.info(msg)
 
     def should_ignore(self, event):
         """ Returns True if an event should be ignored, False

@@ -2,7 +2,6 @@
 
 import os
 import sys
-import shutil
 from Bcfg2.Client.Tools.POSIX.base import POSIXTool
 
 
@@ -19,25 +18,21 @@ class POSIXNonexistent(POSIXTool):
 
     def install(self, entry):
         ename = entry.get('name')
-        if entry.get('recursive', '').lower() == 'true':
+        recursive = entry.get('recursive', '').lower() == 'true'
+        if recursive:
             # ensure that configuration spec is consistent first
             for struct in self.config.getchildren():
-                for entry in struct.getchildren():
-                    if (entry.tag == 'Path' and
-                        entry.get('type') != 'nonexistent' and
-                        entry.get('name').startswith(ename)):
+                for el in struct.getchildren():
+                    if (el.tag == 'Path' and
+                        el.get('type') != 'nonexistent' and
+                        el.get('name').startswith(ename)):
                         self.logger.error('POSIX: Not removing %s. One or '
                                           'more files in this directory are '
                                           'specified in your configuration.' %
                                           ename)
                         return False
-            remove = shutil.rmtree
-        elif os.path.isdir(ename):
-            remove = os.rmdir
-        else:
-            remove = os.remove
         try:
-            remove(ename)
+            self._remove(entry, recursive=recursive)
             return True
         except OSError:
             err = sys.exc_info()[1]

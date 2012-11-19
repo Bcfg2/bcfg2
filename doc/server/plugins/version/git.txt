@@ -13,19 +13,45 @@ reporting purposes. Once the plugin is enabled, every time a client
 checks in, it will include the current repository revision in the
 reports/statistics.
 
-If the ``dulwich`` library is installed, the Git plugin will use
-that.  If ``dulwich`` is not installed, but ``GitPython`` is, that
-will be used instead.  If neither is installed, then calls will be
-made to the git command.
+As with the other Version plugins, the Git plugin enables you to get
+revision information out of your repository for reporting
+purposes. Once the plugin is enabled, every time a client checks in,
+it will include the current repository revision in the
+reports/statistics.
 
-If you plan to edit your git repository in-place on the Bcfg2 server
-(which is probably not recommended), then you may want to avoid using
-``dulwich``; it's sufficiently low-level that it may not present a
-user-friendly git repository at all times.
+Additionally, if the ``GitPython`` library is installed, the Git
+plugin exposes an additional XML-RPC method call, ``Git.Update``.
+With no arguments, ``Git.Update`` updates the working copy to the
+latest version in the remote tracking branch.  If the current working
+copy doesn't have a remote tracking branch, then nothing is done.
 
-Additionally, the Git plugin exposes one XML-RPC method calls,
-``Git.Update``, which updates the working copy to the latest version
-in the remote origin.
+``Git.Update`` can also be given a single argument, the name of a git
+tree-ish (branch, tag, ref, commit, etc.) to check out.  When this is
+done, the new working is updated as well.
+
+For example::
+
+    bcfg2-admin xcmd Git.Update master
+
+This checks out the ``master`` branch and updates it to the latest
+data from the remote ``master`` (if applicable).  If you then run::
+
+    bcfg2-admin xcmd Git.Update
+
+This updates to the latest remote data without changing branches.
+Then::
+
+    bcfg2-admin xcmd Git.Update dd0bb776c
+
+This checks out the specified commit.  Subsequently::
+
+    bcfg2-admin xcmd Git.Update
+
+This does nothing, because the working copy is now in "detached HEAD"
+state, and there can be no remote tracking branch to update from.
+
+To put it another way, once you tell ``Git.Update`` which tree-ish to
+checkout, it stays on that tree-ish until you tell it otherwise.
 
 Enabling the Git plugin
 =======================
