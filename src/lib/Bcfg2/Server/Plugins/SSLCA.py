@@ -73,9 +73,8 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
                             cert_spec.get('append_chain',
                                           'false').lower() == 'true',
                     }
-                    cfp = ConfigParser.ConfigParser()
-                    cfp.read(self.core.cfile)
-                    self.CAs[ca] = dict(cfp.items('sslca_' + ca))
+                    self.CAs[ca] = dict(self.core.setup.cfp.items('sslca_%s' %
+                                                                  ca))
                     self.Entries['Path'][ident] = self.get_cert
                 elif event.filename.endswith("info.xml"):
                     self.infoxml[ident] = Bcfg2.Server.Plugin.InfoXML(epath)
