@@ -300,24 +300,26 @@ nonexistent
 +===========+====================+=============+
 | type      | Type of file       | nonexistent |
 +-----------+--------------------+-------------+
-| recursive | Recursively remove | true        |
+| recursive | Recursively remove | Boolean     |
 |           | directory contents |             |
 +-----------+--------------------+-------------+
 
 permissions
 ^^^^^^^^^^^
 
-+-----------+--------------------------+--------+
-| Name      | Description              | Values |
-+===========+==========================+========+
-| mode      | Mode of the file.        | String |
-+-----------+--------------------------+--------+
-| owner     | Owner of the file.       | String |
-+-----------+--------------------------+--------+
-| group     | Group of the file.       | String |
-+-----------+--------------------------+--------+
-| secontext | SELinux context          | String |
-+-----------+--------------------------+--------+
++-----------+-----------------------------+---------+
+| Name      | Description                 | Values  |
++===========+=============================+=========+
+| mode      | Mode of the file            | String  |
++-----------+-----------------------------+---------+
+| owner     | Owner of the file           | String  |
++-----------+-----------------------------+---------+
+| group     | Group of the file           | String  |
++-----------+-----------------------------+---------+
+| secontext | SELinux context             | String  |
++-----------+-----------------------------+---------+
+| recursive | Recursively set permissions | Boolean |
++-----------+-----------------------------+---------+
 
 symlink
 ^^^^^^^
