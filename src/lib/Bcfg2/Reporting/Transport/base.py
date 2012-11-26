@@ -2,16 +2,20 @@
 The base for all server -> collector Transports
 """
 
-import os.path
-import logging 
+import os
+import sys
+import logging
+
 
 class TransportError(Exception):
     """Generic TransportError"""
     pass
 
+
 class TransportImportError(TransportError):
     """Raised when a transport fails to import"""
     pass
+
 
 class TransportBase(object):
     """The base for all transports"""
@@ -22,6 +26,14 @@ class TransportBase(object):
         self.logger = logging.getLogger(clsname)
         self.logger.debug("Loading %s transport" % clsname)
         self.data = os.path.join(setup['repo'], 'Reporting', clsname)
+        if not os.path.exists(self.data):
+            self.logger.info("%s does not exist, creating" % self.data)
+            try:
+                os.makedirs(self.data)
+            except OSError:
+                self.logger.warning("Could not create %s: %s" %
+                                    (self.data, sys.exc_info()[1]))
+                self.logger.warning("The transport may not function properly")
         self.setup = setup
         self.timeout = 2
 
