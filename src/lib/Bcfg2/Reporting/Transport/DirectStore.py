@@ -15,7 +15,10 @@ class DirectStore(TransportBase, threading.Thread):
         TransportBase.__init__(self, setup)
         threading.Thread.__init__(self)
         self.save_file = os.path.join(self.data, ".saved")
+
         self.storage = load_storage_from_config(setup)
+        self.storage.validate()
+
         self.queue = Queue(100000)
         self.terminate = threading.Event()
         self.start()
