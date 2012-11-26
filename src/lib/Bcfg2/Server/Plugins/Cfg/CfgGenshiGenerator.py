@@ -137,9 +137,13 @@ class CfgGenshiGenerator(CfgGenerator):
             # single line break)
             real_lineno = lineno - contents.code.co_firstlineno
             src = re.sub(r'\n\n+', '\n', contents.source).splitlines()
-            raise PluginExecutionError("%s: %s at '%s'" %
-                                       (err.__class__.__name__, err,
-                                        src[real_lineno]))
+            try:
+                raise PluginExecutionError("%s: %s at '%s'" %
+                                           (err.__class__.__name__, err,
+                                            src[real_lineno]))
+            except IndexError:
+                raise PluginExecutionError("%s: %s" %
+                                           (err.__class__.__name__, err))
         raise
 
     def handle_event(self, event):
