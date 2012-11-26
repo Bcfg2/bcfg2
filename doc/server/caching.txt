@@ -20,7 +20,8 @@ can be generated anywhere from 7 to dozens of times per client run
 was made more complex and powerful in 1.3.0, caching these objects
 provides the easiest performance gain.
 
-There are four caching modes available:
+To enable caching, add a ``[caching]`` section to bcfg2.conf with a
+client_metadata option containing one of the following modes:
 
 * ``off``: No caching of client metadata objects is performed.  This
   is the default.

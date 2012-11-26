@@ -434,6 +434,28 @@ Trigger Plugin
 The Trigger plugin provides a method for calling external scripts when
 clients are configured.
 
+Caching options
+---------------
+
+These options are specified in the **[caching]** section.
+
+    client_metadata
+        The following four caching modes are available for client
+        metadata:
+
+        * off: No caching of client metadata objects is performed. This
+          is the default.
+        * initial: Only initial metadata objects are cached. Initial
+          metadata objects are created only from the data in the
+          Metadata plugin, before additional groups from other plugins
+          are merged in.
+        * cautious: Final metadata objects are cached, but each client’s
+          cache is cleared at the start of each client run, immediately
+          after probe data is received. Cache is also cleared as in
+          aggressive mode. *on* is a synonym for cautious.
+        * aggressive: Final metadata objects are cached. Each plugin is
+          responsible for clearing cache when appropriate.
+
 Client options
 --------------
 

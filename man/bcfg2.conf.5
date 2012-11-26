@@ -1,4 +1,4 @@
-.TH "BCFG2.CONF" "5" "November 14, 2012" "1.3" "Bcfg2"
+.TH "BCFG2.CONF" "5" "November 26, 2012" "1.3" "Bcfg2"
 .SH NAME
 bcfg2.conf \- Configuration parameters for Bcfg2
 .
@@ -394,6 +394,37 @@ executed on the client in the created files.
 .sp
 The Trigger plugin provides a method for calling external scripts when
 clients are configured.
+.SH CACHING OPTIONS
+.sp
+These options are specified in the \fB[caching]\fP section.
+.INDENT 0.0
+.INDENT 3.5
+.INDENT 0.0
+.TP
+.B client_metadata
+The following four caching modes are available for client
+metadata:
+.INDENT 7.0
+.IP \(bu 2
+off: No caching of client metadata objects is performed. This
+is the default.
+.IP \(bu 2
+initial: Only initial metadata objects are cached. Initial
+metadata objects are created only from the data in the
+Metadata plugin, before additional groups from other plugins
+are merged in.
+.IP \(bu 2
+cautious: Final metadata objects are cached, but each client’s
+cache is cleared at the start of each client run, immediately
+after probe data is received. Cache is also cleared as in
+aggressive mode. \fIon\fP is a synonym for cautious.
+.IP \(bu 2
+aggressive: Final metadata objects are cached. Each plugin is
+responsible for clearing cache when appropriate.
+.UNINDENT
+.UNINDENT
+.UNINDENT
+.UNINDENT
 .SH CLIENT OPTIONS
 .sp
 These options only affect client functionality. They can be specified in
