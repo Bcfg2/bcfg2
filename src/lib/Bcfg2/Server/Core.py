@@ -180,10 +180,11 @@ class BaseCore(object):
         #: backend for plugins that have that capability
         self._database_available = False
         if Bcfg2.settings.HAS_DJANGO:
-            db = Bcfg2.settings.DATABASES['default']
-            if (self.setup['daemon'] and self.setup['daemon_uid'] and
-                db['ENGINE'].endswith(".sqlite3") and
-                not os.path.exists(db['NAME'])):
+            db_settings = Bcfg2.settings.DATABASES['default']
+            if ('daemon' in self.setup and 'daemon_uid' in self.setup and
+                self.setup['daemon'] and self.setup['daemon_uid'] and
+                db_settings['ENGINE'].endswith(".sqlite3") and
+                not os.path.exists(db_settings['NAME'])):
                 # syncdb will create the sqlite database, and we're
                 # going to daemonize, dropping privs to a non-root
                 # user, so we need to chown the database after
@@ -207,13 +208,13 @@ class BaseCore(object):
 
             if do_chown and self._database_available:
                 try:
-                    os.chown(db['NAME'],
+                    os.chown(db_settings['NAME'],
                              self.setup['daemon_uid'],
                              self.setup['daemon_gid'])
                 except OSError:
                     err = sys.exc_info()[1]
                     self.logger.error("Failed to set ownership of database "
-                                      "at %s: %s" % (db['NAME'], err))
+                                      "at %s: %s" % (db_settings['NAME'], err))
 
         if '' in setup['plugins']:
             setup['plugins'].remove('')
