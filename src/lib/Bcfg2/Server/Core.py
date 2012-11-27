@@ -229,20 +229,23 @@ class BaseCore(object):
                                   "Unloading %s" % (plugin, blacklist))
             for plug in blacklist:
                 del self.plugins[plug]
-        # This section logs the experimental plugins
+
+        # Log experimental plugins
         expl = [plug for plug in list(self.plugins.values())
                 if plug.experimental]
         if expl:
             self.logger.info("Loading experimental plugin(s): %s" %
                              (" ".join([x.name for x in expl])))
             self.logger.info("NOTE: Interfaces subject to change")
-        # This section logs the deprecated plugins
+
+        # Log deprecated plugins
         depr = [plug for plug in list(self.plugins.values())
                 if plug.deprecated]
         if depr:
             self.logger.info("Loading deprecated plugin(s): %s" %
                              (" ".join([x.name for x in depr])))
 
+        # Find the metadata plugin and set self.metadata
         mlist = self.plugins_by_type(Bcfg2.Server.Plugin.Metadata)
         if len(mlist) >= 1:
             #: The Metadata plugin
@@ -698,6 +701,9 @@ class BaseCore(object):
             self.fam.start()
             self.fam_thread.start()
             self.fam.AddMonitor(self.cfile, self)
+
+            for plug in self.plugins_by_type(Bcfg2.Server.Plugin.Threaded):
+                plug.start_threads()
         except:
             self.shutdown()
             raise

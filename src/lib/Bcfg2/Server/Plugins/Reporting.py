@@ -7,8 +7,8 @@ import lxml.etree
 from Bcfg2.Reporting.Transport import load_transport_from_config, \
     TransportError
 from Bcfg2.Options import REPORTING_COMMON_OPTIONS
-from Bcfg2.Server.Plugin import Statistics, PullSource, PluginInitError, \
-    PluginExecutionError
+from Bcfg2.Server.Plugin import Statistics, PullSource, Threaded, \
+    PluginInitError, PluginExecutionError
 
 # required for reporting
 try:
@@ -31,7 +31,7 @@ def _rpc_call(method):
     return _real_rpc_call
 
 
-class Reporting(Statistics, PullSource):  # pylint: disable=W0223
+class Reporting(Statistics, Threaded, PullSource):  # pylint: disable=W0223
     """ Unified statistics and reporting plugin """
     __rmi__ = ['Ping', 'GetExtra', 'GetCurrentEntry']
 
@@ -41,6 +41,7 @@ class Reporting(Statistics, PullSource):  # pylint: disable=W0223
     def __init__(self, core, datastore):
         Statistics.__init__(self, core, datastore)
         PullSource.__init__(self)
+        Threaded.__init__(self)
         self.core = core
 
         self.whoami = platform.node()
@@ -54,8 +55,11 @@ class Reporting(Statistics, PullSource):  # pylint: disable=W0223
             self.logger.error(msg)
             raise PluginInitError(msg)
 
+        self.transport = None
+
+    def start_threads(self):
         try:
-            self.transport = load_transport_from_config(core.setup)
+            self.transport = load_transport_from_config(self.core.setup)
         except TransportError:
             msg = "%s: Failed to load transport: %s" % \
                 (self.name, traceback.format_exc().splitlines()[-1])

@@ -108,15 +108,30 @@ class TestStatistics(TestPlugin):
                           s.process_statistics, None, None)
 
 
-class TestThreadedStatistics(TestStatistics):
+class TestThreaded(Bcfg2TestCase):
+    test_obj = Threaded
+
+    def get_obj(self):
+        return self.test_obj()
+
+    def test_start_threads(self):
+        s = self.get_obj()
+        self.assertRaises(NotImplementedError,
+                          s.start_threads)
+
+
+class TestThreadedStatistics(TestStatistics, TestThreaded):
     test_obj = ThreadedStatistics
     data = [("foo.example.com", "<foo/>"),
             ("bar.example.com", "<bar/>")]
 
+    def get_obj(self, core=None):
+        return TestStatistics.get_obj(self, core=core)
+
     @patch("threading.Thread.start")
-    def test__init(self, mock_start):
-        core = Mock()
-        ts = self.get_obj(core)
+    def test_start_threads(self, mock_start):
+        ts = self.get_obj()
+        ts.start_threads()
         mock_start.assert_any_call()
 
     @patch("%s.open" % builtins)
