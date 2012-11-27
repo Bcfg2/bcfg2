@@ -8,7 +8,7 @@ from Bcfg2.Reporting.Transport import load_transport_from_config, \
     TransportError
 from Bcfg2.Options import REPORTING_COMMON_OPTIONS
 from Bcfg2.Server.Plugin import Statistics, PullSource, Threaded, \
-    PluginInitError, PluginExecutionError
+    Debuggable, PluginInitError, PluginExecutionError
 
 # required for reporting
 try:
@@ -31,9 +31,10 @@ def _rpc_call(method):
     return _real_rpc_call
 
 
-class Reporting(Statistics, Threaded, PullSource):  # pylint: disable=W0223
+# pylint: disable=W0223
+class Reporting(Statistics, Threaded, PullSource, Debuggable):
     """ Unified statistics and reporting plugin """
-    __rmi__ = ['Ping', 'GetExtra', 'GetCurrentEntry']
+    __rmi__ = Debuggable.__rmi__ + ['Ping', 'GetExtra', 'GetCurrentEntry']
 
     CLIENT_METADATA_FIELDS = ('profile', 'bundles', 'aliases', 'addresses',
                               'groups', 'categories', 'uuid', 'version')
@@ -42,7 +43,7 @@ class Reporting(Statistics, Threaded, PullSource):  # pylint: disable=W0223
         Statistics.__init__(self, core, datastore)
         PullSource.__init__(self)
         Threaded.__init__(self)
-        self.core = core
+        Debuggable.__init__(self)
 
         self.whoami = platform.node()
         self.transport = None
@@ -55,8 +56,6 @@ class Reporting(Statistics, Threaded, PullSource):  # pylint: disable=W0223
             self.logger.error(msg)
             raise PluginInitError(msg)
 
-        self.transport = None
-
     def start_threads(self):
         try:
             self.transport = load_transport_from_config(self.core.setup)
@@ -65,6 +64,11 @@ class Reporting(Statistics, Threaded, PullSource):  # pylint: disable=W0223
                 (self.name, traceback.format_exc().splitlines()[-1])
             self.logger.error(msg)
             raise PluginInitError(msg)
+
+    def set_debug(self, debug):
+        rv = Debuggable.set_debug(self, debug)
+        self.transport.set_debug(debug)
+        return rv
 
     def process_statistics(self, client, xdata):
         stats = xdata.find("Statistics")
@@ -88,8 +92,8 @@ class Reporting(Statistics, Threaded, PullSource):  # pylint: disable=W0223
                                      lxml.etree.tostring(
                         stats,
                         xml_declaration=False).decode('UTF-8'))
-                self.logger.debug("%s: Queued statistics data for %s" %
-                    (self.__class__.__name__, client.hostname))
+                self.debug_log("%s: Queued statistics data for %s" %
+                               (self.__class__.__name__, client.hostname))
                 return
             except TransportError:
                 continue
@@ -98,7 +102,7 @@ class Reporting(Statistics, Threaded, PullSource):  # pylint: disable=W0223
                                   % (self.__class__.__name__, i,
                                      traceback.format_exc().splitlines()[-1]))
         self.logger.error("%s: Retry limit reached for %s" %
-                    (self.__class__.__name__, client.hostname))
+                          (self.__class__.__name__, client.hostname))
 
     def shutdown(self):
         super(Reporting, self).shutdown()

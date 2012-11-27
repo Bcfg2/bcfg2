@@ -21,6 +21,8 @@ class DirectStore(TransportBase, threading.Thread):
 
         self.queue = Queue(100000)
         self.terminate = threading.Event()
+        self.debug_log("Reporting: Starting %s thread" %
+                       self.__class__.__name__)
         self.start()
 
     def shutdown(self):
@@ -38,6 +40,8 @@ class DirectStore(TransportBase, threading.Thread):
 
     def run(self):
         if not self._load():
+            self.logger.warning("Reporting: Failed to load saved data, "
+                                "DirectStore thread exiting")
             return
         while not self.terminate.isSet() and self.queue is not None:
             try:
@@ -45,16 +49,19 @@ class DirectStore(TransportBase, threading.Thread):
                                              timeout=self.timeout)
                 start = time.time()
                 self.storage.import_interaction(interaction)
-                self.logger.info("Imported data for %s in %s seconds" \
-                            % (interaction.get('hostname', '<unknown>'), \
-                                time.time() - start))
+                self.logger.info("Imported data for %s in %s seconds" %
+                                 (interaction.get('hostname', '<unknown>'),
+                                  time.time() - start))
             except Empty:
+                self.debug_log("Reporting: Queue is empty")
                 continue
             except:
                 err = sys.exc_info()[1]
                 self.logger.error("Reporting: Could not import interaction: %s"
                                   % err)
                 continue
+        self.debug_log("Reporting: Stopping %s thread" %
+                       self.__class__.__name__)
         if self.queue is not None and not self.queue.empty():
             self._save()
 
@@ -77,6 +84,8 @@ class DirectStore(TransportBase, threading.Thread):
 
     def _save(self):
         """ Save any saved data to a file """
+        self.debug_log("Reporting: Saving pending data to %s" %
+                       self.save_file)
         saved_data = []
         try:
             while not self.queue.empty():
@@ -96,6 +105,7 @@ class DirectStore(TransportBase, threading.Thread):
     def _load(self):
         """ Load any saved data from a file """
         if not os.path.exists(self.save_file):
+            self.debug_log("Reporting: No saved data to load")
             return True
         saved_data = []
         try:
@@ -109,6 +119,8 @@ class DirectStore(TransportBase, threading.Thread):
         for interaction in saved_data:
             # check that shutdown wasnt called early
             if self.terminate.isSet():
+                self.logger.warning("Reporting: Shutdown called while loading "
+                                    " saved data")
                 return False
 
             try:
