@@ -27,12 +27,6 @@ try:
 except ImportError:
     HAS_PROFILE = False
 
-try:
-    from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
-    HAS_GENSHI = True
-except ImportError:
-    HAS_GENSHI = False
-
 
 class MockLog(object):
     """ Fake logger that just discards all messages in order to mask
@@ -401,28 +395,24 @@ Bcfg2 client itself.""")
     def do_buildbundle(self, args):
         """ buildbundle <bundle> <hostname> - Render a templated
         bundle for hostname (not written to disk) """
-        if len(args.split()) == 2:
-            bname, client = args.split()
-            try:
-                metadata = self.build_metadata(client)
-                if bname in self.plugins['Bundler'].entries:
-                    bundle = self.plugins['Bundler'].entries[bname]
-                    if (HAS_GENSHI and
-                        isinstance(bundle,
-                                   BundleTemplateFile)):
-                        stream = bundle.template.generate(metadata=metadata)
-                        print(stream.render("xml"))
-                    else:
-                        print(bundle.data)
-                else:
-                    print("No such bundle %s" % bname)
-            except:  # pylint: disable=W0702
-                err = sys.exc_info()[1]
-                print("Failed to render bundle %s for host %s: %s" % (bname,
-                                                                      client,
-                                                                      err))
-        else:
+        if len(args.split()) != 2:
             print(self._get_usage(self.do_buildbundle))
+            return 1
+
+        bname, client = args.split()
+        try:
+            metadata = self.build_metadata(client)
+            bundle = self.plugins['Bundler'].entries[bname]
+            print(lxml.etree.tostring(bundle.get_xml_value(metadata),
+                                      xml_declaration=False,
+                                      pretty_print=True).decode('UTF-8'))
+        except KeyError:
+            print("No such bundle %s" % bname)
+        except:  # pylint: disable=W0702
+            err = sys.exc_info()[1]
+            print("Failed to render bundle %s for host %s: %s" % (bname,
+                                                                  client,
+                                                                  err))
 
     def do_automatch(self, args):
         """ automatch [-f] <propertyfile> <hostname> - Perform automatch on
