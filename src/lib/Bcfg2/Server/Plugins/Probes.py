@@ -162,6 +162,9 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
             ret.append(probe)
         return ret
 
+    def __str__(self):
+        return "ProbeSet for %s" % self.plugin_name
+
 
 class Probes(Bcfg2.Server.Plugin.Probing,
              Bcfg2.Server.Plugin.Connector,
