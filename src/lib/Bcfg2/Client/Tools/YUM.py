@@ -751,7 +751,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             rescode, restring = self.yumbase.buildTransaction()
         except yum.Errors.YumBaseError:
             err = sys.exc_info()[1]
-            self.logger.error("Yum transaction error: %s" % err)
+            self.logger.error("Error building Yum transaction: %s" % err)
             cleanup()
             return
 
@@ -767,7 +767,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                 self.logger.info("Single Pass for Install Succeeded")
             except yum.Errors.YumBaseError:
                 err = sys.exc_info()[1]
-                self.logger.error("Yum transaction error: %s" % err)
+                self.logger.error("Error processing Yum transaction: %s" % err)
                 cleanup()
                 return
         else:
@@ -788,7 +788,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                     self.logger.debug("   %s" % restring)
             except yum.Errors.YumBaseError:
                 err = sys.exc_info()[1]
-                self.logger.error("Yum transaction error: %s" % err)
+                self.logger.error("Error rerunning Yum transaction: %s" % err)
 
             self.yumbase.conf.skip_broken = skip_broken
 
@@ -850,7 +850,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                     if inst not in self.instance_status:
                         self.logger.warning(
                             "  Asked to install/update package never "
-                            "verified: %s" % 
+                            "verified: %s" %
                             nevra2string(build_yname(pkg.get('name'), inst)))
                         continue
                     status = self.instance_status[inst]
