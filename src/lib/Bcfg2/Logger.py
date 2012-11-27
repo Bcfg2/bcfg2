@@ -158,7 +158,7 @@ def add_syslog_handler(procname, syslog_facility, level=logging.DEBUG):
             logging.Formatter('%(name)s[%(process)d]: %(message)s'))
         logging.root.addHandler(syslog)
     except socket.error:
-        logging.root.error("failed to activate syslogging")
+        logging.root.error("Failed to activate syslogging")
     except:
         print("Failed to activate syslogging")
 
@@ -178,17 +178,22 @@ def setup_logging(procname, to_console=True, to_syslog=True,
     if hasattr(logging, 'already_setup'):
         return
 
+    params = []
+
     if to_console:
         if to_console == True:
-            clvl = min(logging.WARNING, level)
-        else:
-            clvl = min(to_console, level)
+            to_console = logging.WARNING
+        clvl = min(to_console, level)
+        params.append("%s to console" % logging.getLevelName(clvl))
         add_console_handler(clvl)
     if to_syslog:
         slvl = min(level, logging.INFO)
+        params.append("%s to syslog" % logging.getLevelName(slvl))
         add_syslog_handler(procname, syslog_facility, level=slvl)
     if to_file is not None:
+        params.append("%s to %s" % (logging.getLevelName(level), to_file))
         add_file_handler(to_file, level=level)
 
     logging.root.setLevel(logging.DEBUG)
+    logging.root.debug("Configured logging: %s" % "; ".join(params))
     logging.already_setup = True
