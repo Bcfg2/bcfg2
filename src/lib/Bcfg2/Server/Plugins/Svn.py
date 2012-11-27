@@ -36,7 +36,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
 
     def callback_conflict_resolver(self, conflict_description):
         """PySvn callback function to resolve conflicts"""
-        return self.conflict_resolution_map[svn_resolution], None, False
+        return self.conflict_resolution_map[self.svn_resolution], None, False
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Version.__init__(self, core, datastore)
@@ -51,7 +51,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
             self.client = pysvn.Client()
             try:
                 if self.setup.cfg.has_option("svn", "conflict_resolution"):
-                    svn_resolution = self.setup.cfp.get("svn", 
+                    self.svn_resolution = self.setup.cfp.get("svn", 
                                                         "conflict_resolution")
                     self.client.callback_conflict_resolver = self.callback_conflict_resolver
             except ConfigParser.NoSectionError:
