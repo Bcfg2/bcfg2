@@ -6,7 +6,7 @@ import re
 import sys
 import traceback
 from Bcfg2.Server.Plugin import PluginExecutionError
-from Bcfg2.Server.Plugins.Cfg import CfgGenerator
+from Bcfg2.Server.Plugins.Cfg import CfgGenerator, SETUP
 
 try:
     import genshi.core
@@ -74,7 +74,9 @@ class CfgGenshiGenerator(CfgGenerator):
         stream = \
             self.template.generate(name=fname,
                                    metadata=metadata,
-                                   path=self.name).filter(removecomment)
+                                   path=self.name,
+                                   source_path=self.name,
+                                   repo=SETUP['repo']).filter(removecomment)
         try:
             try:
                 return stream.render('text', encoding=self.encoding,
@@ -135,9 +137,13 @@ class CfgGenshiGenerator(CfgGenerator):
             # single line break)
             real_lineno = lineno - contents.code.co_firstlineno
             src = re.sub(r'\n\n+', '\n', contents.source).splitlines()
-            raise PluginExecutionError("%s: %s at '%s'" %
-                                       (err.__class__.__name__, err,
-                                        src[real_lineno]))
+            try:
+                raise PluginExecutionError("%s: %s at '%s'" %
+                                           (err.__class__.__name__, err,
+                                            src[real_lineno]))
+            except IndexError:
+                raise PluginExecutionError("%s: %s" %
+                                           (err.__class__.__name__, err))
         raise
 
     def handle_event(self, event):

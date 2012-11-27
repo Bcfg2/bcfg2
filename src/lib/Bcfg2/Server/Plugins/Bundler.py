@@ -19,6 +19,9 @@ except ImportError:
     HAS_GENSHI = False
 
 
+SETUP = None
+
+
 class BundleFile(Bcfg2.Server.Plugin.StructFile):
     """ Representation of a bundle XML file """
     def get_xml_value(self, metadata):
@@ -49,7 +52,8 @@ if HAS_GENSHI:
                 msg = "No parsed template information for %s" % self.name
                 self.logger.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-            stream = self.template.generate(metadata=metadata).filter(
+            stream = self.template.generate(metadata=metadata,
+                                            repo=SETUP['repo']).filter(
                 Bcfg2.Server.Plugins.TGenshi.removecomment)
             data = lxml.etree.XML(stream.render('xml',
                                                 strip_whitespace=False),
@@ -93,8 +97,13 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
                                                             self.data,
                                                             self.core.fam)
         except OSError:
-            self.logger.error("Failed to load Bundle repository")
-            raise Bcfg2.Server.Plugin.PluginInitError
+            err = sys.exc_info()[1]
+            msg = "Failed to load Bundle repository %s: %s" % (self.data, err)
+            self.logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginInitError(msg)
+
+        global SETUP
+        SETUP = core.setup
 
     def template_dispatch(self, name, _):
         """ Add the correct child entry type to Bundler depending on

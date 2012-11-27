@@ -10,7 +10,6 @@ import threading
 import time
 import inspect
 import lxml.etree
-from traceback import format_exc
 import Bcfg2.settings
 import Bcfg2.Server
 import Bcfg2.Logger
@@ -181,6 +180,19 @@ class BaseCore(object):
         #: backend for plugins that have that capability
         self._database_available = False
         if Bcfg2.settings.HAS_DJANGO:
+            db_settings = Bcfg2.settings.DATABASES['default']
+            if ('daemon' in self.setup and 'daemon_uid' in self.setup and
+                self.setup['daemon'] and self.setup['daemon_uid'] and
+                db_settings['ENGINE'].endswith(".sqlite3") and
+                not os.path.exists(db_settings['NAME'])):
+                # syncdb will create the sqlite database, and we're
+                # going to daemonize, dropping privs to a non-root
+                # user, so we need to chown the database after
+                # creating it
+                do_chown = True
+            else:
+                do_chown = False
+
             from django.core.exceptions import ImproperlyConfigured
             from django.core import management
             try:
@@ -188,11 +200,21 @@ class BaseCore(object):
                                         verbosity=0)
                 self._database_available = True
             except ImproperlyConfigured:
-                self.logger.error("Django configuration problem: %s" %
-                                  format_exc().splitlines()[-1])
+                err = sys.exc_info()[1]
+                self.logger.error("Django configuration problem: %s" % err)
             except:
-                self.logger.error("Database update failed: %s" %
-                                  format_exc().splitlines()[-1])
+                err = sys.exc_info()[1]
+                self.logger.error("Database update failed: %s" % err)
+
+            if do_chown and self._database_available:
+                try:
+                    os.chown(db_settings['NAME'],
+                             self.setup['daemon_uid'],
+                             self.setup['daemon_gid'])
+                except OSError:
+                    err = sys.exc_info()[1]
+                    self.logger.error("Failed to set ownership of database "
+                                      "at %s: %s" % (db_settings['NAME'], err))
 
         if '' in setup['plugins']:
             setup['plugins'].remove('')
@@ -207,20 +229,23 @@ class BaseCore(object):
                                   "Unloading %s" % (plugin, blacklist))
             for plug in blacklist:
                 del self.plugins[plug]
-        # This section logs the experimental plugins
+
+        # Log experimental plugins
         expl = [plug for plug in list(self.plugins.values())
                 if plug.experimental]
         if expl:
             self.logger.info("Loading experimental plugin(s): %s" %
                              (" ".join([x.name for x in expl])))
             self.logger.info("NOTE: Interfaces subject to change")
-        # This section logs the deprecated plugins
+
+        # Log deprecated plugins
         depr = [plug for plug in list(self.plugins.values())
                 if plug.deprecated]
         if depr:
             self.logger.info("Loading deprecated plugin(s): %s" %
                              (" ".join([x.name for x in depr])))
 
+        # Find the metadata plugin and set self.metadata
         mlist = self.plugins_by_type(Bcfg2.Server.Plugin.Metadata)
         if len(mlist) >= 1:
             #: The Metadata plugin
@@ -522,7 +547,7 @@ class BaseCore(object):
             except Exception:
                 exc = sys.exc_info()[1]
                 if 'failure' not in entry.attrib:
-                    entry.set('failure', 'bind error: %s' % format_exc())
+                    entry.set('failure', 'bind error: %s' % exc)
                 self.logger.error("Unexpected failure in BindStructure: %s %s"
                                   % (entry.tag, entry.get('name')), exc_info=1)
 
@@ -599,7 +624,7 @@ class BaseCore(object):
         try:
             structures = self.GetStructures(meta)
         except:
-            self.logger.error("error in GetStructures", exc_info=1)
+            self.logger.error("Error in GetStructures", exc_info=1)
             return lxml.etree.Element("error", type='structure error')
 
         self.validate_structures(meta, structures)
@@ -662,7 +687,7 @@ class BaseCore(object):
                 os.chown(piddir,
                          self.setup['daemon_uid'],
                          self.setup['daemon_gid'])
-                os.chmod(piddir, 420)  # 0644
+                os.chmod(piddir, 493)  # 0775
             if not self._daemonize():
                 return False
         else:
@@ -676,6 +701,9 @@ class BaseCore(object):
             self.fam.start()
             self.fam_thread.start()
             self.fam.AddMonitor(self.cfile, self)
+
+            for plug in self.plugins_by_type(Bcfg2.Server.Plugin.Threaded):
+                plug.start_threads()
         except:
             self.shutdown()
             raise

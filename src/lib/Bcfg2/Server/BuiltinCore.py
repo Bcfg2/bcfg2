@@ -9,6 +9,7 @@ from Bcfg2.Server.Core import BaseCore, NoExposedMethod
 from Bcfg2.Compat import xmlrpclib, urlparse
 from Bcfg2.SSLServer import XMLRPCServer
 
+from lockfile import LockFailed
 # pylint: disable=E0611
 try:
     from daemon.pidfile import PIDLockFile
@@ -80,9 +81,14 @@ class Core(BaseCore):
     def _daemonize(self):
         """ Open :attr:`context` to drop privileges, write the PID
         file, and daemonize the server core. """
-        self.context.open()
-        self.logger.info("%s daemonized" % self.name)
-        return True
+        try:
+            self.context.open()
+            self.logger.info("%s daemonized" % self.name)
+            return True
+        except LockFailed:
+            err = sys.exc_info()[1]
+            self.logger.error("Failed to daemonize %s: %s" % (self.name, err))
+            return False
 
     def _run(self):
         """ Create :attr:`server` to start the server listening. """

@@ -20,7 +20,7 @@ class LocalFilesystem(TransportBase):
         super(LocalFilesystem, self).__init__(setup)
 
         self.work_path = "%s/work" % self.data
-        self.logger.debug("LocalFilesystem: work path %s" % self.work_path)
+        self.debug_log("LocalFilesystem: work path %s" % self.work_path)
         self.fmon = None
         self._phony_collector = None
 
@@ -34,6 +34,11 @@ class LocalFilesystem(TransportBase):
                         traceback.format_exc().splitlines()[-1]))
                 raise TransportError
 
+    def set_debug(self, debug):
+        rv = TransportBase.set_debug(self, debug)
+        self.fmon.set_debug(debug)
+        return rv
+
     def start_monitor(self, collector):
         """Start the file monitor.  Most of this comes from BaseCore"""
         setup = self.setup
@@ -44,12 +49,13 @@ class LocalFilesystem(TransportBase):
                               "forcing to default" % setup['filemonitor'])
             fmon = Bcfg2.Server.FileMonitor.available['default']
 
-        fmdebug = setup.get('debug', False)
         try:
-            self.fmon = fmon(debug=fmdebug)
-            self.logger.info("Using the %s file monitor" % self.fmon.__class__.__name__)
+            self.fmon = fmon(debug=self.debug_flag)
+            self.logger.info("Using the %s file monitor" %
+                             self.fmon.__class__.__name__)
         except IOError:
-            msg = "Failed to instantiate file monitor %s" % setup['filemonitor']
+            msg = "Failed to instantiate file monitor %s" % \
+                setup['filemonitor']
             self.logger.error(msg, exc_info=1)
             raise TransportError(msg)
         self.fmon.start()
@@ -108,11 +114,11 @@ class LocalFilesystem(TransportBase):
 
         #deviate from the normal routines here we only want one event
         etype = event.code2str()
-        self.logger.debug("Recieved event %s for %s" % (etype, event.filename))
+        self.debug_log("Recieved event %s for %s" % (etype, event.filename))
         if os.path.basename(event.filename)[0] == '.':
             return None
         if etype in ('created', 'exists'):
-            self.logger.debug("Handling event %s" % event.filename)
+            self.debug_log("Handling event %s" % event.filename)
             payload = os.path.join(self.work_path, event.filename)
             try:
                 payloadfd = open(payload, "r")
@@ -150,7 +156,7 @@ class LocalFilesystem(TransportBase):
         except ReportingError:
             raise TransportError
         except:
-            self.logger.error("Failed to load collector: %s" % 
+            self.logger.error("Failed to load collector: %s" %
                 traceback.format_exc().splitlines()[-1])
             raise TransportError
 

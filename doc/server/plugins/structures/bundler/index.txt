@@ -113,40 +113,31 @@ demonstrates how group entries can be used in bundles)
 Genshi templates
 ================
 
-Genshi xml templates can be specified one of two ways:
+Genshi XML templates allow you to use the `Genshi
+<http://genshi.edgewall.org>`_ templating system to dynamically
+generate a bundle.  Genshi templates can be specified one of two ways:
 
-1. Add an xml-style genshi template to the Bundler directory with a
+1. Add an XML-style genshi template to the Bundler directory with a
    ``.genshi`` and the associated namespace attribute.
-2. Simply add the appropriate namespace attribute to your existing xml
+2. Simply add the appropriate namespace attribute to your existing XML
    bundle.
 
-The namespace attribute in this case should look like the following::
+The top-level Bundle tag should look like the following::
 
-    xmlns:py="http://genshi.edgewall.org/"
+    <Bundle name="foo" xmlns:py="http://genshi.edgewall.org/">
 
-Motivation
-----------
+Several variables are pre-defined inside templates:
 
-Static Bundles have served us relatively well, but have a relatively
-weak set of interal per-client differentiation mechanisms. In static
-Bundles, the group hierarchy (from the perspective of the current
-client) is available for use via boolean constraints with negation. This
-notion does not mesh well with the use of Probes, which can result in
-freeform data. In the presence of probe results, clients can have a wide
-array of data, and rendering down to a boolean logic may not always
-be desirable. Moreover, while static Bundles allow entry inclusion or
-exclusion based on group memberships, they do not allow programatic entry
-rendering. Hence, Genshi templates not only provide more control options,
-but it also provide the ability to perform new entry rendering operations.
++-------------+--------------------------------------------------------+
+| Name        | Description                                            |
++=============+========================================================+
+| metadata    | :ref:`Client metadata                                  |
+|             | <server-plugins-grouping-metadata-clientmetadata>`     |
++-------------+--------------------------------------------------------+
+| repo        | The path to the Bcfg2 repository on the filesystem     |
++-------------+--------------------------------------------------------+
 
-The `Genshi templating system`_ is used internally.
-
-.. _Genshi templating system: http://genshi.edgewall.org/
-
-Use
----
-
-.. warning::
+.. note::
 
     ``<Group>`` and ``<Client>`` tags are allowed inside of Genshi
     templates as of Bcfg2 1.2.  However, they do not behave the same
@@ -154,7 +145,7 @@ Use
 
         <py:if test="'groupname' in metadata.groups">
 	</py:if>
-    
+
     The conditional is evaluated when the template is rendered, so
     code inside the conditional is not executed if the conditional
     fails.  A ``<Group>`` tag is evaluated *after* the template is
@@ -162,16 +153,6 @@ Use
     important distinction: if you have code that will fail on some
     groups, you *must* use a Genshi conditional, not a ``<Group>``
     tag.  The same caveats apply to ``<Client>`` tags.
-
-Bcfg2 uses the Genshi API for templates, and performs a XML format
-stream rendering of the template into an lxml entry, which is included
-in the client configuration. :ref:`Client metadata <client-metadata>`
-is available inside of the template using the 'metadata' name. Note that
-only the markup Genshi template format can be used, as the target output
-format is XML.
-
-A Genshi template looks much like a Bundler file, except the Bundle tag
-has an additional `xmlns:py` attribute. See the examples.
 
 Troubleshooting
 ---------------

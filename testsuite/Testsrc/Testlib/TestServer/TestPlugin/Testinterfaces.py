@@ -108,15 +108,30 @@ class TestStatistics(TestPlugin):
                           s.process_statistics, None, None)
 
 
-class TestThreadedStatistics(TestStatistics):
+class TestThreaded(Bcfg2TestCase):
+    test_obj = Threaded
+
+    def get_obj(self):
+        return self.test_obj()
+
+    def test_start_threads(self):
+        s = self.get_obj()
+        self.assertRaises(NotImplementedError,
+                          s.start_threads)
+
+
+class TestThreadedStatistics(TestStatistics, TestThreaded):
     test_obj = ThreadedStatistics
     data = [("foo.example.com", "<foo/>"),
             ("bar.example.com", "<bar/>")]
 
+    def get_obj(self, core=None):
+        return TestStatistics.get_obj(self, core=core)
+
     @patch("threading.Thread.start")
-    def test__init(self, mock_start):
-        core = Mock()
-        ts = self.get_obj(core)
+    def test_start_threads(self, mock_start):
+        ts = self.get_obj()
+        ts.start_threads()
         mock_start.assert_any_call()
 
     @patch("%s.open" % builtins)
@@ -157,7 +172,7 @@ class TestThreadedStatistics(TestStatistics):
         # verify this call in an ugly way
         self.assertItemsEqual(mock_dump.call_args[0][0], self.data)
         self.assertEqual(mock_dump.call_args[0][1], mock_open.return_value)
-        
+
     @patch("os.unlink")
     @patch("os.path.exists")
     @patch("%s.open" % builtins)
@@ -169,7 +184,7 @@ class TestThreadedStatistics(TestStatistics):
         core = Mock()
         core.terminate.isSet.return_value = False
         ts = self.get_obj(core)
-        
+
         ts.work_queue = Mock()
         ts.work_queue.data = []
         def reset():
@@ -279,7 +294,7 @@ class TestThreadedStatistics(TestStatistics):
         ts = self.get_obj()
         self.assertRaises(NotImplementedError,
                           ts.handle_statistic, None, None)
-        
+
 
 class TestPullSource(Bcfg2TestCase):
     def test_GetCurrentEntry(self):
@@ -302,7 +317,7 @@ class TestPullTarget(Bcfg2TestCase):
 
 class TestDecision(Bcfg2TestCase):
     test_obj = Decision
-    
+
     def get_obj(self):
         return self.test_obj()
 
@@ -332,6 +347,7 @@ class TestVersion(TestPlugin):
     def get_obj(self, core=None):
         if core is None:
             core = Mock()
+            core.setup = MagicMock()
         return self.test_obj(core, datastore)
 
     def test_get_revision(self):

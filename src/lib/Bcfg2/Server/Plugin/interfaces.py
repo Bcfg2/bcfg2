@@ -299,12 +299,27 @@ class Statistics(Plugin):
         raise NotImplementedError
 
 
-class ThreadedStatistics(Statistics, threading.Thread):
+class Threaded(object):
+    """ Threaded plugins use threads in any way.  The thread must be
+    started after daemonization, so this class implements a single
+    method, :func:`start_threads`, that can be used to start threads
+    after daemonization of the server core. """
+
+    def start_threads(self):
+        """ Start this plugin's threads after daemonization.
+
+        :return: None
+        :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginInitError`
+        """
+        raise NotImplementedError
+
+class ThreadedStatistics(Statistics, Threaded, threading.Thread):
     """ ThreadedStatistics plugins process client statistics in a
     separate thread. """
 
     def __init__(self, core, datastore):
         Statistics.__init__(self, core, datastore)
+        Threaded.__init__(self)
         threading.Thread.__init__(self)
         # Event from the core signaling an exit
         self.terminate = core.terminate
@@ -312,6 +327,8 @@ class ThreadedStatistics(Statistics, threading.Thread):
         self.pending_file = os.path.join(datastore, "etc",
                                          "%s.pending" % self.name)
         self.daemon = False
+
+    def start_threads(self):
         self.start()
 
     def _save(self):
@@ -517,11 +534,11 @@ class Version(Plugin):
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
 
+        if core.setup['vcs_root']:
+            self.vcs_root = core.setup['vcs_root']
+        else:
+            self.vcs_root = datastore
         if self.__vcs_metadata_path__:
-            if core.setup['vcs_root']:
-                self.vcs_root = core.setup['vcs_root']
-            else:
-                self.vcs_root = datastore
             self.vcs_path = os.path.join(self.vcs_root,
                                          self.__vcs_metadata_path__)
 

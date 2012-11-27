@@ -67,6 +67,7 @@ provide interfaces that a given plugin may or must implement.
 Interfaces
 ^^^^^^^^^^
 
+.. class:: Bcfg2.Server.Plugin.interfaces
 .. automodule:: Bcfg2.Server.Plugin.interfaces
 
 Exposing XML-RPC Functions
