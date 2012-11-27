@@ -47,7 +47,7 @@ class ProbeData(str):
     objects as XML or JSON data """
     def __new__(cls, data):
         return str.__new__(cls, data)
-    
+
     def __init__(self, data):
         str.__init__(self)
         self._xdata = None
@@ -59,7 +59,7 @@ class ProbeData(str):
         """ provide backwards compatibility with broken ProbeData
         object in bcfg2 1.2.0 thru 1.2.2 """
         return str(self)
-        
+
     @property
     def xdata(self):
         if self._xdata is None:
@@ -108,17 +108,9 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
         self.bangline = re.compile('^#!(?P<interpreter>.*)$')
 
     def HandleEvent(self, event):
-        if event.filename != self.path:
-            if (event.code2str == 'changed' and
-                event.filename.endswith("probed.xml") and
-                event.filename not in self.entries):
-                # for some reason, probed.xml is particularly prone to
-                # getting changed events before created events,
-                # because gamin is the worst ever.  anyhow, we
-                # specifically handle it here to avoid a warning on
-                # every single server startup.
-                self.entry_init(event)
-                return
+        """ handle events on everything but probed.xml """
+        if (event.filename != self.path and
+            not event.filename.endswith("probed.xml")):
             return self.handle_event(event)
 
     def get_probe_data(self, metadata):
