@@ -536,22 +536,37 @@ class YumCollection(Collection):
             consumerapi = ConsumerAPI()
             consumer = self._get_pulp_consumer(consumerapi=consumerapi)
             if consumer is None:
-                consumer = consumerapi.create(self.metadata.hostname,
-                                              self.metadata.hostname,
-                                              capabilities=dict(bind=False))
-                lxml.etree.SubElement(independent, "BoundAction",
-                                      name="pulp-update", timing="pre",
-                                      when="always", status="check",
-                                      command="pulp-consumer consumer update")
-                self.pulp_cert_set.write_data(consumer['certificate'],
-                                              self.metadata)
+                try:
+                    consumer = \
+                        consumerapi.create(self.metadata.hostname,
+                                           self.metadata.hostname,
+                                           capabilities=dict(bind=False))
+                    lxml.etree.SubElement(
+                        independent, "BoundAction", name="pulp-update",
+                        timing="pre", when="always", status="check",
+                        command="pulp-consumer consumer update")
+                    self.pulp_cert_set.write_data(consumer['certificate'],
+                                                  self.metadata)
+                except server.ServerRequestError:
+                    err = sys.exc_info()[1]
+                    self.logger.error("Packages: Could not create Pulp "
+                                      "consumer %s: %s" %
+                                      (self.metadata.hostname, err))
 
             for source in self:
                 # each pulp source can only have one arch, so we don't
                 # have to check the arch in url_map
                 if (source.pulp_id and
                     source.pulp_id not in consumer['repoids']):
-                    consumerapi.bind(self.metadata.hostname, source.pulp_id)
+                    try:
+                        consumerapi.bind(self.metadata.hostname,
+                                         source.pulp_id)
+                    except server.ServerRequestError:
+                        err = sys.exc_info()[1]
+                        self.logger.error("Packages: Could not bind %s to "
+                                          "Pulp repo %s: %s" %
+                                          (self.metadata.hostname,
+                                           source.pulp_id, err))
 
             crt = lxml.etree.SubElement(independent, "BoundPath",
                                         name=self.pulp_cert_set.certpath)
