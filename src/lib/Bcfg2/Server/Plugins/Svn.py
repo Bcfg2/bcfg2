@@ -5,6 +5,7 @@ updating the repository. """
 
 import sys
 import Bcfg2.Server.Plugin
+from Bcfg2.Compat import ConfigParser
 try:
     import pysvn
     HAS_SVN = True
@@ -21,9 +22,21 @@ class Svn(Bcfg2.Server.Plugin.Version):
     if HAS_SVN:
         __rmi__ = Bcfg2.Server.Plugin.Version.__rmi__ + ['Update', 'Commit']
 
-    def callback_conflict_resolver(self):
+        conflict_resolution_map = {
+            "base": pysvn.wc_conflict_choice.base,
+            "working": pysvn.wc_conflict_choice.working,
+            "mine-conflict": pysvn.wc_conflict_choice.mine_conflict,
+            "theirs-conflict": pysvn.wc_conflict_choice.theirs_conflict,
+            "mine-full": pysvn.wc_conflict_choice.mine_full,
+            "theirs-full": pysvn.wc_conflict_choice.theirs_full,
+            "none": None
+        }
+    else:
+        __vcs_metadata_path__ = ".svn"
+
+    def callback_conflict_resolver(self, conflict_description):
         """PySvn callback function to resolve conflicts"""
-        return pysvn.wc_conflict_choice.theirs_full, None, False
+        return self.conflict_resolution_map[svn_resolution], None, False
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Version.__init__(self, core, datastore)
@@ -36,7 +49,18 @@ class Svn(Bcfg2.Server.Plugin.Version):
             self.client = None
         else:
             self.client = pysvn.Client()
-            self.client.callback_conflict_resolver = self.callback_conflict_resolver
+            try:
+                if self.setup.cfg.has_option("svn", "conflict_resolution"):
+                    svn_resolution = self.setup.cfp.get("svn", 
+                                                        "conflict_resolution")
+                    self.client.callback_conflict_resolver = self.callback_conflict_resolver
+            except ConfigParser.NoSectionError:
+                msg = "Svn: No [svn] section found in bcfg2.conf"
+                LOGGER.warning(msg)
+            except ConfigParser.NoOptionError:
+                msg = "Svn: Option not found in bcfg2.conf: %s" % \
+                sys.exc_info()[1]
+                LOGGER.warning(msg)
 
         self.logger.debug("Initialized svn plugin with SVN directory %s" %
                           self.vcs_path)
