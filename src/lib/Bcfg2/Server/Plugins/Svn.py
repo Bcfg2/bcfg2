@@ -53,14 +53,14 @@ class Svn(Bcfg2.Server.Plugin.Version):
         else:
             self.client = pysvn.Client()
             try:
-                if self.core.setup.cfg.has_option("svn",
+                if self.core.setup.cfg.has_option("Svn",
                                                   "conflict_resolution"):
-                    self.svn_resolution = self.core.setup.cfp.get("svn", 
+                    self.svn_resolution = self.core.setup.cfp.get("Svn", 
                                                         "conflict_resolution")
                     self.client.callback_conflict_resolver = \
                                                 self.callback_conflict_resolver
             except ConfigParser.NoSectionError:
-                msg = "Svn: No [svn] section found in bcfg2.conf"
+                msg = "Svn: No [Svn] section found in bcfg2.conf"
                 self.logger.warning(msg)
             except ConfigParser.NoOptionError:
                 msg = "Svn: Option not found in bcfg2.conf: %s" % \

@@ -32,3 +32,30 @@ Simply add Svn to your plugins line in ``/etc/bcfg2.conf``::
 
     [server]
     plugins = Bundler,Cfg,Metadata,..,Svn
+
+Resolving conflicts
+=======================
+
+By default, the Svn plugin does not attempt to resolve conflicts 
+when trying to commit or update the repository. This can be changed by
+adding to ``/etc/bcfg2.conf``::
+
+    [Svn]
+    conflict_resolution = 
+
++-----------------+
+| Attribute       |
++=================+
+| base            |
++-----------------+
+| working         |
++-----------------+
+| mine-conflict   |
++-----------------+
+| theirs-conflict |
++-----------------+
+| mine-full       |
++-----------------+
+| theirs-full     |
++-----------------+
+
