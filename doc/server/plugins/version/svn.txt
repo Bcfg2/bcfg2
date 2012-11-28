@@ -48,8 +48,6 @@ adding to ``/etc/bcfg2.conf``::
 +=================+
 | base            |
 +-----------------+
-| working         |
-+-----------------+
 | mine-conflict   |
 +-----------------+
 | theirs-conflict |

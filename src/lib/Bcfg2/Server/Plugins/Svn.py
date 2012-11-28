@@ -24,7 +24,6 @@ class Svn(Bcfg2.Server.Plugin.Version):
 
         conflict_resolution_map = {
             "base": pysvn.wc_conflict_choice.base,
-            "working": pysvn.wc_conflict_choice.working,
             "mine-conflict": pysvn.wc_conflict_choice.mine_conflict,
             "theirs-conflict": pysvn.wc_conflict_choice.theirs_conflict,
             "mine-full": pysvn.wc_conflict_choice.mine_full,
@@ -53,11 +52,9 @@ class Svn(Bcfg2.Server.Plugin.Version):
         else:
             self.client = pysvn.Client()
             try:
-                if self.core.setup.cfg.has_option("Svn",
-                                                  "conflict_resolution"):
-                    self.svn_resolution = self.core.setup.cfp.get("Svn", 
-                                                        "conflict_resolution")
-                    self.client.callback_conflict_resolver = \
+                self.svn_resolution = self.core.setup.cfp.get("Svn", 
+                                                         "conflict_resolution")
+                self.client.callback_conflict_resolver = \
                                                 self.callback_conflict_resolver
             except ConfigParser.NoSectionError:
                 msg = "Svn: No [Svn] section found in bcfg2.conf"
@@ -67,7 +64,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
                 sys.exc_info()[1]
                 self.logger.warning(msg)
 
-        self.logger.debug("Initialized svn plugin with SVN directory %s" %
+        self.logger.debug("Svn: Initialized svn plugin with SVN directory %s" %
                           self.vcs_path)
 
     def get_revision(self):
