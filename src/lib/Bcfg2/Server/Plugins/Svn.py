@@ -50,7 +50,8 @@ class Svn(Bcfg2.Server.Plugin.Version):
         else:
             self.client = pysvn.Client()
             try:
-                if self.core.setup.cfg.has_option("svn", "conflict_resolution"):
+                if self.core.setup.cfg.has_option("svn",
+                                                  "conflict_resolution"):
                     self.svn_resolution = self.core.setup.cfp.get("svn", 
                                                         "conflict_resolution")
                     self.client.callback_conflict_resolver = \
