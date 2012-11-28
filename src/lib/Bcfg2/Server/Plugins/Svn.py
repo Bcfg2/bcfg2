@@ -36,6 +36,9 @@ class Svn(Bcfg2.Server.Plugin.Version):
 
     def callback_conflict_resolver(self, conflict_description):
         """PySvn callback function to resolve conflicts"""
+        self.logger.info("Svn: Resolving conflict for %s with %s" % \
+                                            (conflict_description['path'], 
+                                             self.svn_resolution)
         return self.conflict_resolution_map[self.svn_resolution], None, False
 
     def __init__(self, core, datastore):
