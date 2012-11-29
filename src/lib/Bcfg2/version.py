@@ -29,8 +29,8 @@ class Bcfg2VersionInfo(tuple):
             tuple(self)
 
     def __repr__(self):
-        return "(major=%s, minor=%s, micro=%s, releaselevel=%s, serial=%s)" % \
-            tuple(self)
+        return "%s(major=%s, minor=%s, micro=%s, releaselevel=%s, serial=%s)" \
+            % ((self.__class__.__name__,) + tuple(self))
 
     def _release_cmp(self, rel1, rel2):  # pylint: disable=R0911
         """ compare two release numbers """
