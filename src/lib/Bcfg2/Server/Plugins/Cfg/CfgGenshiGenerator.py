@@ -11,8 +11,39 @@ from Bcfg2.Server.Plugins.Cfg import CfgGenerator, SETUP
 try:
     import genshi.core
     from genshi.template import TemplateLoader, NewTextTemplate
-    from genshi.template.eval import UndefinedError
+    from genshi.template.eval import UndefinedError, Suite
+    #: True if Genshi libraries are available
     HAS_GENSHI = True
+
+    def _genshi_removes_blank_lines():
+        """ Genshi 0.5 uses the Python :mod:`compiler` package to
+        compile genshi snippets to AST.  Genshi 0.6 uses some bespoke
+        magic, because compiler has been deprecated.
+        :func:`compiler.parse` produces an AST that removes all excess
+        whitespace (e.g., blank lines), while
+        :func:`genshi.template.astutil.parse` does not.  In order to
+        determine which actual line of code an error occurs on, we
+        need to know which is in use and how it treats blank lines.
+        I've beat my head against this for hours and the best/only way
+        I can find is to compile some genshi code with an error and
+        see which line it's on."""
+        code = """d = dict()
+
+d['a']"""
+        try:
+            Suite(code).execute(dict())
+        except KeyError:
+            line = traceback.extract_tb(sys.exc_info()[2])[-1][1]
+            if line == 2:
+                return True
+            else:
+                return False
+
+    #: True if Genshi removes all blank lines from a code block before
+    #: executing it; False indicates that Genshi only removes leading
+    #: and trailing blank lines. See
+    #: :func:`_genshi_removes_blank_lines` for an explanation of this.
+    GENSHI_REMOVES_BLANK_LINES = _genshi_removes_blank_lines()
 except ImportError:
     TemplateLoader = None  # pylint: disable=C0103
     HAS_GENSHI = False
@@ -111,7 +142,17 @@ class CfgGenshiGenerator(CfgGenerator):
         # the traceback is just the beginning of the block.
         err = exc[1]
         stack = traceback.extract_tb(exc[2])
-        lineno, func = stack[-1][1:3]
+
+        # find the right frame of the stack
+        for frame in reversed(stack):
+            if frame[0] == self.name:
+                lineno, func = frame[1:3]
+                break
+        else:
+            # couldn't even find the stack frame, wtf.
+            raise PluginExecutionError("%s: %s" %
+                                       (err.__class__.__name__, err))
+
         execs = [contents
                  for etype, contents, _ in self.template.stream
                  if etype == self.template.EXEC]
@@ -129,18 +170,20 @@ class CfgGenshiGenerator(CfgGenerator):
         # else, no EXEC blocks -- WTF?
         if contents:
             # we now have the bogus block, but we need to get the
-            # offending line.  To get there, we do (line number
-            # given in the exception) - (firstlineno from the
-            # internal genshi code object of the snippet) + 1 =
-            # (line number of the line with an error within the
-            # block, with all multiple line breaks elided to a
-            # single line break)
-            real_lineno = lineno - contents.code.co_firstlineno
-            src = re.sub(r'\n\n+', '\n', contents.source).splitlines()
+            # offending line.  To get there, we do (line number given
+            # in the exception) - (firstlineno from the internal
+            # genshi code object of the snippet) = (line number of the
+            # line with an error within the block, with blank lines
+            # removed as appropriate for
+            # :attr:`GENSHI_REMOVES_BLANK_LINES`)
+            code = contents.source.strip().splitlines()
+            if GENSHI_REMOVES_BLANK_LINES:
+                code = [l for l in code if l.strip()]
             try:
+                line = code[lineno - contents.code.co_firstlineno]
                 raise PluginExecutionError("%s: %s at '%s'" %
                                            (err.__class__.__name__, err,
-                                            src[real_lineno]))
+                                            line))
             except IndexError:
                 raise PluginExecutionError("%s: %s" %
                                            (err.__class__.__name__, err))
