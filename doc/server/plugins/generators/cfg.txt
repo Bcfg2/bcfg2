@@ -139,8 +139,8 @@ debug``, and, once in the Python interpreter, run::
     path = "<relative path to template (see note below)>"
 
 ``path`` should be set to the path to the template file with a leading
-slash, relative to the Bcfg2 specification root. See `Inside Genshi
-Templates`_ for examples.
+slash, relative to the Bcfg2 specification root. See `Inside Templates`_
+for examples.
 
 Then, run::
 
