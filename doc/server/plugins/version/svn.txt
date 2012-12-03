@@ -44,9 +44,11 @@ adding to ``/etc/bcfg2.conf``::
     conflict_resolution = 
 
 +-----------------+
-| Attribute       |
+| Actions         |
 +=================+
 | base            |
++-----------------+
+| postpone        |
 +-----------------+
 | mine-conflict   |
 +-----------------+
@@ -56,4 +58,10 @@ adding to ``/etc/bcfg2.conf``::
 +-----------------+
 | theirs-full     |
 +-----------------+
+
+Descriptions of each action can be found in the `Version Control with
+Subversion`_ book.
+
+.. _Version Control with Subversion:
+http://svnbook.red-bean.com/en/1.7/svn.ref.svn.html#svn.ref.svn.sw.accept
 
