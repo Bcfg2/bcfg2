@@ -401,7 +401,7 @@ class TestCfgEntrySet(TestEntrySet):
         eset.bind_info_to_entry.assert_called_with(entry, metadata)
         eset._generate_data.assert_called_with(entry, metadata)
         self.assertFalse(eset._validate_data.called)
-        expected = lxml.etree.Element("Path", name="/text.txt", empty="true")
+        expected = lxml.etree.Element("Path", name="/test.txt", empty="true")
         self.assertXMLEqual(bound, expected)
         self.assertEqual(bound, entry)
 
@@ -420,7 +420,7 @@ class TestCfgEntrySet(TestEntrySet):
         filters[1].modify_data.assert_called_with(entry, metadata,
                                                   "modified data")
         self.assertFalse(eset._validate_data.called)
-        expected = lxml.etree.Element("Path", name="/text.txt")
+        expected = lxml.etree.Element("Path", name="/test.txt")
         expected.text = "final data"
         self.assertXMLEqual(bound, expected)
 
@@ -436,7 +436,7 @@ class TestCfgEntrySet(TestEntrySet):
         self.assertFalse(eset._validate_data.called)
         mock_b64encode.assert_called_with("data")
         self.assertFalse(mock_u_str.called)
-        expected = lxml.etree.Element("Path", name="/text.txt",
+        expected = lxml.etree.Element("Path", name="/test.txt",
                                       encoding="base64")
         expected.text = "base64 data"
         self.assertXMLEqual(bound, expected)
@@ -449,7 +449,7 @@ class TestCfgEntrySet(TestEntrySet):
         eset.bind_info_to_entry.assert_called_with(entry, metadata)
         eset._generate_data.assert_called_with(entry, metadata)
         eset._validate_data.assert_called_with(entry, metadata, "data")
-        expected = lxml.etree.Element("Path", name="/text.txt")
+        expected = lxml.etree.Element("Path", name="/test.txt")
         expected.text = "data"
         self.assertXMLEqual(bound, expected)
         self.assertEqual(bound, entry)
