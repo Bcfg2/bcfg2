@@ -16,11 +16,13 @@ while path != "/":
     path = os.path.dirname(path)
 from common import *
 
+
 def get_config(entries):
     config = lxml.etree.Element("Configuration")
     bundle = lxml.etree.SubElement(config, "Bundle", name="test")
     bundle.extend(entries)
     return config
+
 
 def get_posix_object(logger=None, setup=None, config=None):
     if config is None:
@@ -36,7 +38,7 @@ def get_posix_object(logger=None, setup=None, config=None):
     if not setup:
         setup = MagicMock()
     return Bcfg2.Client.Tools.POSIX.POSIX(logger, setup, config)
-    
+
 
 class TestPOSIX(Bcfg2TestCase):
     def setUp(self):
@@ -55,7 +57,7 @@ class TestPOSIX(Bcfg2TestCase):
         self.assertGreater(len(posix.__req__['Path']), 0)
         self.assertGreater(len(posix.__handles__), 0)
         self.assertItemsEqual(posix.handled, entries)
-    
+
     @patch("Bcfg2.Client.Tools.Tool.canVerify")
     def test_canVerify(self, mock_canVerify):
         entry = lxml.etree.Element("Path", name="test", type="file")
@@ -64,7 +66,7 @@ class TestPOSIX(Bcfg2TestCase):
         mock_canVerify.return_value = False
         self.assertFalse(self.posix.canVerify(entry))
         mock_canVerify.assert_called_with(self.posix, entry)
-        
+
         # next, test fully_specified failure
         self.posix.logger.error.reset_mock()
         mock_canVerify.reset_mock()
@@ -77,7 +79,7 @@ class TestPOSIX(Bcfg2TestCase):
         mock_canVerify.assert_called_with(self.posix, entry)
         mock_fully_spec.assert_called_with(entry)
         self.assertTrue(self.posix.logger.error.called)
-        
+
         # finally, test success
         self.posix.logger.error.reset_mock()
         mock_canVerify.reset_mock()
@@ -96,7 +98,7 @@ class TestPOSIX(Bcfg2TestCase):
         mock_canInstall.return_value = False
         self.assertFalse(self.posix.canInstall(entry))
         mock_canInstall.assert_called_with(self.posix, entry)
-        
+
         # next, test fully_specified failure
         self.posix.logger.error.reset_mock()
         mock_canInstall.reset_mock()
@@ -109,7 +111,7 @@ class TestPOSIX(Bcfg2TestCase):
         mock_canInstall.assert_called_with(self.posix, entry)
         mock_fully_spec.assert_called_with(entry)
         self.assertTrue(self.posix.logger.error.called)
-        
+
         # finally, test success
         self.posix.logger.error.reset_mock()
         mock_canInstall.reset_mock()
@@ -177,7 +179,7 @@ class TestPOSIX(Bcfg2TestCase):
 
             posix._prune_old_backups(entry)
             mock_listdir.assert_called_with(setup['ppath'])
-            self.assertItemsEqual(mock_remove.call_args_list, 
+            self.assertItemsEqual(mock_remove.call_args_list,
                                   [call(os.path.join(setup['ppath'], p))
                                    for p in remove])
 
@@ -189,7 +191,7 @@ class TestPOSIX(Bcfg2TestCase):
             # need to be removed even if we get an error
             posix._prune_old_backups(entry)
             mock_listdir.assert_called_with(setup['ppath'])
-            self.assertItemsEqual(mock_remove.call_args_list, 
+            self.assertItemsEqual(mock_remove.call_args_list,
                                   [call(os.path.join(setup['ppath'], p))
                                    for p in remove])
             self.assertTrue(posix.logger.error.called)
@@ -203,7 +205,7 @@ class TestPOSIX(Bcfg2TestCase):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
         setup = dict(ppath='/', max_copies=5, paranoid=False)
         posix = get_posix_object(setup=setup)
-        
+
         # paranoid false globally
         posix._paranoid_backup(entry)
         self.assertFalse(mock_prune.called)

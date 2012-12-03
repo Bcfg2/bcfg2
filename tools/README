@@ -82,6 +82,10 @@ pkgmgr_update.py
     - Update Pkgmgr XML files from a list of directories that contain
       RPMS
 
+posixusers_baseline.py
+    - Create a Bundle with all base POSIXUser/POSIXGroup entries on a
+      client.
+
 rpmlisting.py
     - Generate Pkgmgr XML files for RPM packages
 

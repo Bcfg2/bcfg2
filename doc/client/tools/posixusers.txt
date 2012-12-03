@@ -1,0 +1,51 @@
+.. -*- mode: rst -*-
+
+.. _client-tools-posixusers:
+
+==========
+POSIXUsers
+==========
+
+The POSIXUsers tool handles the creation of users and groups as
+defined by ``POSIXUser`` and ``POSIXGroup`` entries.  For a full
+description of those tags, see :ref:`server-plugins-generators-rules`.
+
+The POSIXUsers tool relies on the ``useradd``, ``usermod``,
+``userdel``, ``groupadd``, ``groupmod``, and ``groupdel`` tools, since
+there is no Python library to manage users and groups.  It expects
+those tools to be in ``/usr/sbin``.
+
+Primary group creation
+======================
+
+Each user must have a primary group, which can be specified with the
+``group`` attribute of the ``POSIXUser`` tag.  (If the ``group``
+attribute is not specified, then a group with the same name as the
+user will be used.)  If that group does not exist, the POSIXUsers tool
+will create it automatically.  It does this by adding a ``POSIXGroup``
+entry on the fly; this has a few repercussions:
+
+* When run in interactive mode (``-I``), Bcfg2 will prompt for
+  installation of the group separately from the user.
+* The ``POSIXGroup`` entry is added to the same bundle as the
+  ``POSIXUser`` entry, so if the group is created, the bundle is
+  considered to have been modified and consequently Actions will be
+  run and Services will be restarted.  This should never be a concern,
+  since the group can only be created, not modified (it has no
+  attributes other than its name), and if the group is being created
+  then the user will certainly be created or modified as well.
+* The group is created with no specified GID number.  If you need to
+  specify a particular GID number, you must explicitly define a
+  ``POSIXGroup`` entry for the group.
+
+Creating a baseline configuration
+=================================
+
+The majority of users on many systems are created by the packages that
+are installed, but currently Bcfg2 cannot query the package database
+to determine these users.  (In some cases, this is a limitation of the
+packaging system.)  The often-tedious task of creating a baseline that
+defines all users and groups can be simplified by use of the
+``tools/posixusers_baseline.py`` script, which outputs a bundle
+containing all users and groups on the machine it's run on.
+

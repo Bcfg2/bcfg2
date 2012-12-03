@@ -62,10 +62,10 @@ The Rules Tag may have the following attributes:
 |          | Rules list.The higher value wins.   |        |
 +----------+-------------------------------------+--------+
 
-Rules Group Tag
----------------
+Group Tag
+---------
 
-The Rules Group Tag may have the following attributes:
+The Group Tag may have the following attributes:
 
 +--------+-------------------------+--------------+
 | Name   | Description             | Values       |
@@ -76,6 +76,27 @@ The Rules Group Tag may have the following attributes:
 |        | (is not a member of)    |              |
 +--------+-------------------------+--------------+
 
+Client Tag
+----------
+
+The Client Tag is used in Rules for selecting the package entries to
+include in the clients literal configuration.  Its function is similar
+to the Group tag in this context.  It can be thought of as::
+
+    if client is name then
+        assign to literal config
+
+The Client Tag may have the following attributes:
+
++--------+-------------------------+--------------+
+| Name   | Description             | Values       |
++========+=========================+==============+
+| name   | Client Name             | String       |
++--------+-------------------------+--------------+
+| negate | Negate client selection | (true|false) |
+|        | (if not client name)    |              |
++--------+-------------------------+--------------+
+
 Package Tag
 -----------
 
@@ -84,8 +105,7 @@ The Package Tag may have the following attributes:
 +------------+----------------------------------------------+----------+
 | Name       | Description                                  | Values   |
 +============+==============================================+==========+
-| name       | Package name or regular expression           | String   |
-|            |                                              | or regex |
+| name       | Package name                                 | String   |
 +------------+----------------------------------------------+----------+
 | version    | Package Version or version='noverify' to     | String   |
 |            | not do version checking in the Yum driver    |          |
@@ -131,8 +151,7 @@ Service Tag
 |            | service (new in 1.3; replaces |                                                         |
 |            | "mode" attribute)             |                                                         |
 +------------+-------------------------------+---------------------------------------------------------+
-| name       | Service name or regular       | String or regex                                         |
-|            | expression                    |                                                         |
+| name       | Service name                  | String                                                  |
 +------------+-------------------------------+---------------------------------------------------------+
 | status     | Should the service be on or   | (on | off | ignore)                                     |
 |            | off (default: off).           |                                                         |
@@ -193,27 +212,6 @@ Service status descriptions
 
   * Don't perform service status checks.
 
-Client Tag
-----------
-
-The Client Tag is used in Rules for selecting the package entries to
-include in the clients literal configuration.  Its function is similar
-to the Group tag in this context.  It can be thought of as::
-
-    if client is name then
-        assign to literal config
-
-The Client Tag may have the following attributes:
-
-+--------+-------------------------+--------------+
-| Name   | Description             | Values       |
-+========+=========================+==============+
-| name   | Client Name             | String       |
-+--------+-------------------------+--------------+
-| negate | Negate client selection | (true|false) |
-|        | (if not client name)    |              |
-+--------+-------------------------+--------------+
-
 Path Tag
 --------
 
@@ -229,11 +227,11 @@ the context of the file to the default set by policy.  See
 
 Attributes common to all Path tags:
 
-+----------+---------------------------------------------------+-----------------+
-| Name     | Description                                       | Values          |
-+==========+===================================================+=================+
-| name     | Full path or regular expression matching the path | String or regex |
-+----------+---------------------------------------------------+-----------------+
++----------+-------------+--------+
+| Name     | Description | Values |
++==========+=============+========+
+| name     | Full path   | String |
++----------+-------------+--------+
 
 
 device
@@ -516,6 +514,74 @@ SEModule Tag
 ^^^^^^^^^^^^
 
 See :ref:`server-plugins-generators-semodules`
+
+POSIXUser Tag
+-------------
+
+The POSIXUser tag allows you to create users on client machines.  It
+takes the following attributes:
+
++-------+-----------------------+---------+-------------------------------+
+| Name  | Description           | Values  | Default                       |
++=======+=======================+=========+===============================+
+| name  | Username              | String  | None                          |
++-------+-----------------------+---------+-------------------------------+
+| uid   | User ID number        | Integer | The client sets the uid       |
++-------+-----------------------+---------+-------------------------------+
+| group | Name of the user's    | String  | The username                  |
+|       | primary group         |         |                               |
++-------+-----------------------+---------+-------------------------------+
+| gecos | Human-readable user   | String  | The username                  |
+|       | name or comment       |         |                               |
++-------+-----------------------+---------+-------------------------------+
+| home  | User's home directory | String  | /root (for "root");           |
+|       |                       |         | /home/<username> otherwise    |
++-------+-----------------------+---------+-------------------------------+
+| shell | User's shell          | String  | /bin/bash                     |
++-------+-----------------------+---------+-------------------------------+
+
+The group specified will automatically be created if it does not
+exist, even if there is no `POSIXGroup Tag`_ for it.  If you need to
+specify a particular GID for the group, you must specify that in a
+``POSIXGroup`` tag.
+
+If you with to change the default shell, you can do so with :ref:`the
+Defaults plugin <server-plugins-structures-defaults>`.
+
+Additionally, a user may be a member of supplementary groups.  These
+can be specified with the ``MemberOf`` child tag of the ``POSIXUser``
+tag.
+
+For example:
+
+.. code-block:: xml
+
+    <POSIXUser name="daemon" home="/sbin" shell="/sbin/nologin"
+               gecos="daemon" uid="2" group="daemon">
+      <MemberOf>lp</MemberOf>
+      <MemberOf>adm</MemberOf>
+      <MemberOf>bin</MemberOf>
+    </BoundPOSIXUser>
+
+See :ref:`client-tools-posixusers` for more information on managing
+users and groups.
+
+POSIXGroup Tag
+--------------
+
+The POSIXGroup tag allows you to create groups on client machines.  It
+takes the following attributes:
+
++-------+-------------------+---------+-------------------------+
+| Name  | Description       | Values  | Default                 |
++=======+===================+=========+=========================+
+| name  | Name of the group | String  | None                    |
++-------+-------------------+---------+-------------------------+
+| gid   | Group ID number   | Integer | The client sets the gid |
++-------+-------------------+---------+-------------------------+
+
+See :ref:`client-tools-posixusers` for more information on managing
+users and groups.
 
 Rules Directory
 ===============

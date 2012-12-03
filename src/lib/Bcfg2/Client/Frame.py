@@ -105,6 +105,10 @@ class Frame(object):
         if deprecated:
             self.logger.warning("Loaded deprecated tool drivers:")
             self.logger.warning(deprecated)
+        experimental = [tool.name for tool in self.tools if tool.experimental]
+        if experimental:
+            self.logger.warning("Loaded experimental tool drivers:")
+            self.logger.warning(experimental)
 
         # find entries not handled by any tools
         self.unhandled = [entry for struct in config
@@ -281,12 +285,15 @@ class Frame(object):
         if self.setup['remove']:
             if self.setup['remove'] == 'all':
                 self.removal = self.extra
-            elif self.setup['remove'] in ['services', 'Services']:
+            elif self.setup['remove'].lower() == 'services':
                 self.removal = [entry for entry in self.extra
                                 if entry.tag == 'Service']
-            elif self.setup['remove'] in ['packages', 'Packages']:
+            elif self.setup['remove'].lower() == 'packages':
                 self.removal = [entry for entry in self.extra
                                 if entry.tag == 'Package']
+            elif self.setup['remove'].lower() == 'users':
+                self.removal = [entry for entry in self.extra
+                                if entry.tag in ['POSIXUser', 'POSIXGroup']]
 
         candidates = [entry for entry in self.states
                       if not self.states[entry]]

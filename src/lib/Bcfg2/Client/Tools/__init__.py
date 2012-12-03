@@ -61,6 +61,7 @@ class Tool(object):
     __req__ = {}
     __important__ = []
     deprecated = False
+    experimental = False
 
     def __init__(self, logger, setup, config):
         self.setup = setup
