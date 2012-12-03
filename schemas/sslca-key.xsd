@@ -6,9 +6,6 @@
     </xsd:documentation>
   </xsd:annotation>
 
-  <!-- key.xml does not support Group or Client tags, but it should
-       (and will, some day), so this is commented out for now -->
-  <!--
   <xsd:complexType name="GroupType">
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
       <xsd:element name="Key" type="KeyType"/>
@@ -18,7 +15,6 @@
     <xsd:attribute type="xsd:string" name="name" use="required"/>
     <xsd:attribute type="xsd:string" name="negate"/>
   </xsd:complexType>
-  -->
 
   <xsd:complexType name="KeyType">
     <xsd:attribute type="xsd:string" name="type"/>
@@ -29,10 +25,8 @@
     <xsd:complexType>
       <xsd:choice minOccurs="1" maxOccurs="unbounded">
         <xsd:element name="Key" type="KeyType"/>
-        <!--
         <xsd:element name="Group" type="GroupType"/>
         <xsd:element name="Client" type="GroupType"/>
-        -->
       </xsd:choice>
     </xsd:complexType>
   </xsd:element>

@@ -3,253 +3,164 @@ certificates and their keys. """
 
 import os
 import sys
-import Bcfg2.Server.Plugin
-import Bcfg2.Options
-import lxml.etree
+import logging
 import tempfile
+import lxml.etree
 from subprocess import Popen, PIPE, STDOUT
-from Bcfg2.Compat import ConfigParser, md5
+import Bcfg2.Options
+import Bcfg2.Server.Plugin
+from Bcfg2.Compat import ConfigParser
 from Bcfg2.Server.Plugin import PluginExecutionError
 
+LOGGER = logging.getLogger(__name__)
 
-class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
-    """ The SSLCA generator handles the creation and management of ssl
-    certificates and their keys. """
-    __author__ = 'g.hagger@gmail.com'
-    __child__ = Bcfg2.Server.Plugin.FileBacked
-    key_specs = {}
-    cert_specs = {}
-    CAs = {}
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.GroupSpool.__init__(self, core, datastore)
-        self.infoxml = dict()
+class SSLCAXMLSpec(Bcfg2.Server.Plugin.StructFile):
+    """ Base class to handle key.xml and cert.xml """
+    attrs = dict()
+    tag = None
 
-    def HandleEvent(self, event=None):
-        """
-        Updates which files this plugin handles based upon filesystem events.
-        Allows configuration items to be added/removed without server restarts.
-        """
+    def get_spec(self, metadata):
+        """ Get a specification for the type of object described by
+        this SSLCA XML file for the given client metadata object """
+        entries = [e for e in self.Match(metadata) if e.tag == self.tag]
+        if len(entries) == 0:
+            raise PluginExecutionError("No matching %s entry found for %s "
+                                       "in %s" % (self.tag,
+                                                  metadata.hostname,
+                                                  self.name))
+        elif len(entries) > 1:
+            LOGGER.warning("More than one matching %s entry found for %s in "
+                           "%s; using first match" % (self.tag,
+                                                      metadata.hostname,
+                                                      self.name))
+        rv = dict()
+        for attr, default in self.attrs.items():
+            val = entries[0].get(attr.lower(), default)
+            if default in ['true', 'false']:
+                rv[attr] = val == 'true'
+            else:
+                rv[attr] = val
+        return rv
+
+
+class SSLCAKeySpec(SSLCAXMLSpec):
+    """ Handle key.xml files """
+    attrs = dict(bits='2048', type='rsa')
+    tag = 'Key'
+
+
+class SSLCACertSpec(SSLCAXMLSpec):
+    """ Handle cert.xml files """
+    attrs = dict(ca='default',
+                 format='pem',
+                 key=None,
+                 days='365',
+                 C=None,
+                 L=None,
+                 ST=None,
+                 OU=None,
+                 O=None,
+                 emailAddress=None,
+                 append_chain='false')
+    tag = 'Cert'
+
+    def get_spec(self, metadata):
+        rv = SSLCAXMLSpec.get_spec(self, metadata)
+        rv['subjectaltname'] = [e.text for e in self.Match(metadata)
+                                if e.tag == "SubjectAltName"]
+        return rv
+
+
+class SSLCADataFile(Bcfg2.Server.Plugin.SpecificData):
+    """ Handle key and cert files """
+    def bind_entry(self, entry, _):
+        """ Bind the data in the file to the given abstract entry """
+        entry.text = self.data
+        return entry
+
+
+class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
+    """ Entry set to handle SSLCA entries and XML files """
+    def __init__(self, _, path, entry_type, encoding, parent=None):
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, os.path.basename(path),
+                                              path, entry_type, encoding)
+        self.parent = parent
+        self.key = None
+        self.cert = None
+
+    def handle_event(self, event):
         action = event.code2str()
-        if event.filename[0] == '/':
-            return
-        epath = "".join([self.data, self.handles[event.requestID],
-                         event.filename])
-        if os.path.isdir(epath):
-            ident = self.handles[event.requestID] + event.filename
-        else:
-            ident = self.handles[event.requestID][:-1]
+        fpath = os.path.join(self.path, event.filename)
 
-        fname = os.path.join(ident, event.filename)
-
-        if event.filename.endswith('.xml'):
+        if event.filename == 'key.xml':
             if action in ['exists', 'created', 'changed']:
-                if event.filename.endswith('key.xml'):
-                    key_spec = lxml.etree.parse(epath,
-                                                parser=Bcfg2.Server.XMLParser
-                                                ).find('Key')
-                    self.key_specs[ident] = {
-                        'bits': key_spec.get('bits', '2048'),
-                        'type': key_spec.get('type', 'rsa')
-                    }
-                    self.Entries['Path'][ident] = self.get_key
-                elif event.filename.endswith('cert.xml'):
-                    cert_spec = lxml.etree.parse(epath,
-                                                 parser=Bcfg2.Server.XMLParser
-                                                 ).find('Cert')
-                    ca = cert_spec.get('ca', 'default')
-                    self.cert_specs[ident] = {
-                        'ca': ca,
-                        'format': cert_spec.get('format', 'pem'),
-                        'key': cert_spec.get('key'),
-                        'days': cert_spec.get('days', '365'),
-                        'C': cert_spec.get('c'),
-                        'L': cert_spec.get('l'),
-                        'ST': cert_spec.get('st'),
-                        'OU': cert_spec.get('ou'),
-                        'O': cert_spec.get('o'),
-                        'emailAddress': cert_spec.get('emailaddress'),
-                        'append_chain':
-                            cert_spec.get('append_chain',
-                                          'false').lower() == 'true',
-                    }
-                    self.CAs[ca] = dict(self.core.setup.cfp.items('sslca_%s' %
-                                                                  ca))
-                    self.Entries['Path'][ident] = self.get_cert
-                elif event.filename.endswith("info.xml"):
-                    self.infoxml[ident] = Bcfg2.Server.Plugin.InfoXML(epath)
-                    self.infoxml[ident].HandleEvent(event)
-            if action == 'deleted':
-                if ident in self.Entries['Path']:
-                    del self.Entries['Path'][ident]
+                self.key = SSLCAKeySpec(fpath)
+            self.key.HandleEvent(event)
+        elif event.filename == 'cert.xml':
+            if action in ['exists', 'created', 'changed']:
+                self.cert = SSLCACertSpec(fpath)
+            self.cert.HandleEvent(event)
         else:
-            if action in ['exists', 'created']:
-                if os.path.isdir(epath):
-                    self.AddDirectoryMonitor(epath[len(self.data):])
-                if ident not in self.entries and os.path.isfile(epath):
-                    self.entries[fname] = self.__child__(epath)
-                    self.entries[fname].HandleEvent(event)
-            if action == 'changed':
-                self.entries[fname].HandleEvent(event)
-            elif action == 'deleted':
-                if fname in self.entries:
-                    del self.entries[fname]
-                else:
-                    self.entries[fname].HandleEvent(event)
+            Bcfg2.Server.Plugin.EntrySet.handle_event(self, event)
 
-    def get_key(self, entry, metadata):
+    def build_key(self, entry, metadata):
         """
         either grabs a prexisting key hostfile, or triggers the generation
         of a new key if one doesn't exist.
         """
-        # check if we already have a hostfile, or need to generate a new key
         # TODO: verify key fits the specs
-        path = entry.get('name')
-        filename = os.path.join(path, "%s.H_%s" % (os.path.basename(path),
-                                                   metadata.hostname))
-        if filename not in list(self.entries.keys()):
-            self.logger.info("SSLCA: Generating new key %s" % filename)
-            key = self.build_key(entry)
-            open(self.data + filename, 'w').write(key)
-            entry.text = key
-            self.entries[filename] = self.__child__(self.data + filename)
-            self.entries[filename].HandleEvent()
-        else:
-            entry.text = self.entries[filename].data
-
-        entry.set("type", "file")
-        if path in self.infoxml:
-            Bcfg2.Server.Plugin.bind_info(entry, metadata,
-                                          infoxml=self.infoxml[path])
-        else:
-            Bcfg2.Server.Plugin.bind_info(entry, metadata)
-
-    def build_key(self, entry):
-        """ generates a new key according the the specification """
-        ktype = self.key_specs[entry.get('name')]['type']
-        bits = self.key_specs[entry.get('name')]['bits']
+        filename = "%s.H_%s" % (os.path.basename(entry.get('name')),
+                                metadata.hostname)
+        self.logger.info("SSLCA: Generating new key %s" % filename)
+        key_spec = self.key.get_spec(metadata)
+        ktype = key_spec['type']
+        bits = key_spec['bits']
         if ktype == 'rsa':
             cmd = ["openssl", "genrsa", bits]
         elif ktype == 'dsa':
             cmd = ["openssl", "dsaparam", "-noout", "-genkey", bits]
         self.debug_log("SSLCA: Generating new key: %s" % " ".join(cmd))
-        return Popen(cmd, stdout=PIPE).stdout.read()
+        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+        key, err = proc.communicate()
+        if proc.wait():
+            raise PluginExecutionError("SSLCA: Failed to generate key %s for "
+                                       "%s: %s" % (entry.get("name"),
+                                                   metadata.hostname, err))
+        open(os.path.join(self.path, filename), 'w').write(key)
+        return key
 
-    def get_cert(self, entry, metadata):
-        """
-        either grabs a prexisting cert hostfile, or triggers the generation
-        of a new cert if one doesn't exist.
-        """
-        path = entry.get('name')
-        filename = os.path.join(path, "%s.H_%s" % (os.path.basename(path),
-                                                   metadata.hostname))
-
-        # first - ensure we have a key to work with
-        key = self.cert_specs[entry.get('name')].get('key')
-        key_filename = os.path.join(key, "%s.H_%s" % (os.path.basename(key),
-                                                      metadata.hostname))
-        if key_filename not in self.entries:
-            el = lxml.etree.Element('Path')
-            el.set('name', key)
-            self.core.Bind(el, metadata)
-
-        # check if we have a valid hostfile
-        if (filename in self.entries.keys() and
-            self.verify_cert(filename, key_filename, entry)):
-            entry.text = self.entries[filename].data
-        else:
-            self.logger.info("SSLCA: Generating new cert %s" % filename)
-            cert = self.build_cert(key_filename, entry, metadata)
-            open(self.data + filename, 'w').write(cert)
-            self.entries[filename] = self.__child__(self.data + filename)
-            self.entries[filename].HandleEvent()
-            entry.text = cert
-
-        entry.set("type", "file")
-        if path in self.infoxml:
-            Bcfg2.Server.Plugin.bind_info(entry, metadata,
-                                          infoxml=self.infoxml[path])
-        else:
-            Bcfg2.Server.Plugin.bind_info(entry, metadata)
-
-    def verify_cert(self, filename, key_filename, entry):
-        """ Perform certification verification against the CA and
-        against the key """
-        ca = self.CAs[self.cert_specs[entry.get('name')]['ca']]
-        do_verify = ca.get('chaincert')
-        if do_verify:
-            return (self.verify_cert_against_ca(filename, entry) and
-                    self.verify_cert_against_key(filename, key_filename))
-        return True
-
-    def verify_cert_against_ca(self, filename, entry):
-        """
-        check that a certificate validates against the ca cert,
-        and that it has not expired.
-        """
-        ca = self.CAs[self.cert_specs[entry.get('name')]['ca']]
-        chaincert = ca.get('chaincert')
-        cert = self.data + filename
-        cmd = ["openssl", "verify"]
-        is_root = ca.get('root_ca', "false").lower() == 'true'
-        if is_root:
-            cmd.append("-CAfile")
-        else:
-            # verifying based on an intermediate cert
-            cmd.extend(["-purpose", "sslserver", "-untrusted"])
-        cmd.extend([chaincert, cert])
-        self.debug_log("SSLCA: Verifying %s against CA: %s" %
-                       (entry.get("name"), " ".join(cmd)))
-        res = Popen(cmd, stdout=PIPE, stderr=STDOUT).stdout.read()
-        if res == cert + ": OK\n":
-            self.debug_log("SSLCA: %s verified successfully against CA" %
-                           entry.get("name"))
-            return True
-        self.logger.warning("SSLCA: %s failed verification against CA: %s" %
-                            (entry.get("name"), res))
-        return False
-
-    def verify_cert_against_key(self, filename, key_filename):
-        """
-        check that a certificate validates against its private key.
-        """
-        cert = self.data + filename
-        key = self.data + key_filename
-        cert_md5 = \
-            md5(Popen(["openssl", "x509", "-noout", "-modulus", "-in", cert],
-                      stdout=PIPE,
-                      stderr=STDOUT).stdout.read().strip()).hexdigest()
-        key_md5 = \
-            md5(Popen(["openssl", "rsa", "-noout", "-modulus", "-in", key],
-                      stdout=PIPE,
-                      stderr=STDOUT).stdout.read().strip()).hexdigest()
-        if cert_md5 == key_md5:
-            self.debug_log("SSLCA: %s verified successfully against key %s" %
-                           (filename, key_filename))
-            return True
-        self.logger.warning("SSLCA: %s failed verification against key %s" %
-                            (filename, key_filename))
-        return False
-
-    def build_cert(self, key_filename, entry, metadata):
-        """
-        creates a new certificate according to the specification
-        """
+    def build_cert(self, entry, metadata, keyfile):
+        """ generate a new cert """
+        filename = "%s.H_%s" % (os.path.basename(entry.get('name')),
+                                metadata.hostname)
+        self.logger.info("SSLCA: Generating new cert %s" % filename)
+        cert_spec = self.cert.get_spec(metadata)
+        ca = self.parent.get_ca(cert_spec['ca'])
         req_config = None
         req = None
         try:
-            req_config = self.build_req_config(entry, metadata)
-            req = self.build_request(key_filename, req_config, entry)
-            ca = self.cert_specs[entry.get('name')]['ca']
-            ca_config = self.CAs[ca]['config']
-            days = self.cert_specs[entry.get('name')]['days']
-            passphrase = self.CAs[ca].get('passphrase')
-            cmd = ["openssl", "ca", "-config", ca_config, "-in", req,
+            req_config = self.build_req_config(metadata)
+            req = self.build_request(keyfile, req_config, metadata)
+            days = cert_spec['days']
+            cmd = ["openssl", "ca", "-config", ca['config'], "-in", req,
                    "-days", days, "-batch"]
+            passphrase = ca.get('passphrase')
             if passphrase:
                 cmd.extend(["-passin", "pass:%s" % passphrase])
+
+                def _scrub_pass(arg):
+                    """ helper to scrub the passphrase from the
+                    argument list """
+                    if arg.startswith("pass:"):
+                        return "pass:******"
+                    else:
+                        return arg
+            else:
+                _scrub_pass = lambda a: a
+
             self.debug_log("SSLCA: Generating new certificate: %s" %
-                           " ".join(cmd))
+                           " ".join(_scrub_pass(a) for a in cmd))
             proc = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
             (cert, err) = proc.communicate()
             if proc.wait():
@@ -266,12 +177,13 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             except OSError:
                 self.logger.error("SSLCA: Failed to unlink temporary files: %s"
                                   % sys.exc_info()[1])
-        if (self.cert_specs[entry.get('name')]['append_chain'] and
-            self.CAs[ca]['chaincert']):
-            cert += open(self.CAs[ca]['chaincert']).read()
+        if cert_spec['append_chain'] and 'chaincert' in ca:
+            cert += open(self.parent.get_ca(ca)['chaincert']).read()
+
+        open(os.path.join(self.path, filename), 'w').write(cert)
         return cert
 
-    def build_req_config(self, entry, metadata):
+    def build_req_config(self, metadata):
         """
         generates a temporary openssl configuration file that is
         used to generate the required certificate request
@@ -298,16 +210,17 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             cfp.add_section(section)
             for key in defaults[section]:
                 cfp.set(section, key, defaults[section][key])
+        cert_spec = self.cert.get_spec(metadata)
         altnamenum = 1
-        altnames = list(metadata.aliases)
+        altnames = cert_spec['subjectaltname']
+        altnames.extend(list(metadata.aliases))
         altnames.append(metadata.hostname)
         for altname in altnames:
             cfp.set('alt_names', 'DNS.' + str(altnamenum), altname)
             altnamenum += 1
         for item in ['C', 'L', 'ST', 'O', 'OU', 'emailAddress']:
-            if self.cert_specs[entry.get('name')][item]:
-                cfp.set('req_distinguished_name', item,
-                        self.cert_specs[entry.get('name')][item])
+            if cert_spec[item]:
+                cfp.set('req_distinguished_name', item, cert_spec[item])
         cfp.set('req_distinguished_name', 'CN', metadata.hostname)
         self.debug_log("SSLCA: Writing temporary request config to %s" % fname)
         try:
@@ -317,16 +230,15 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
                                        "config file: %s" % sys.exc_info()[1])
         return fname
 
-    def build_request(self, key_filename, req_config, entry):
+    def build_request(self, keyfile, req_config, metadata):
         """
         creates the certificate request
         """
         fd, req = tempfile.mkstemp()
         os.close(fd)
-        days = self.cert_specs[entry.get('name')]['days']
-        key = self.data + key_filename
+        days = self.cert.get_spec(metadata)['days']
         cmd = ["openssl", "req", "-new", "-config", req_config,
-               "-days", days, "-key", key, "-text", "-out", req]
+               "-days", days, "-key", keyfile, "-text", "-out", req]
         self.debug_log("SSLCA: Generating new CSR: %s" % " ".join(cmd))
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
         err = proc.communicate()[1]
@@ -334,3 +246,122 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
             raise PluginExecutionError("SSLCA: Failed to generate CSR: %s" %
                                        err)
         return req
+
+    def verify_cert(self, filename, keyfile, entry, metadata):
+        """ Perform certification verification against the CA and
+        against the key """
+        ca = self.parent.get_ca(self.cert.get_spec(metadata)['ca'])
+        do_verify = ca.get('chaincert')
+        if do_verify:
+            return (self.verify_cert_against_ca(filename, entry, metadata) and
+                    self.verify_cert_against_key(filename, keyfile))
+        return True
+
+    def verify_cert_against_ca(self, filename, entry, metadata):
+        """
+        check that a certificate validates against the ca cert,
+        and that it has not expired.
+        """
+        ca = self.parent.get_ca(self.cert.get_spec(metadata)['ca'])
+        chaincert = ca.get('chaincert')
+        cert = os.path.join(self.path, filename)
+        cmd = ["openssl", "verify"]
+        is_root = ca.get('root_ca', "false").lower() == 'true'
+        if is_root:
+            cmd.append("-CAfile")
+        else:
+            # verifying based on an intermediate cert
+            cmd.extend(["-purpose", "sslserver", "-untrusted"])
+        cmd.extend([chaincert, cert])
+        self.debug_log("SSLCA: Verifying %s against CA: %s" %
+                       (entry.get("name"), " ".join(cmd)))
+        res = Popen(cmd, stdout=PIPE, stderr=STDOUT).stdout.read()
+        if res == cert + ": OK\n":
+            self.debug_log("SSLCA: %s verified successfully against CA" %
+                           entry.get("name"))
+            return True
+        self.logger.warning("SSLCA: %s failed verification against CA: %s" %
+                            (entry.get("name"), res))
+        return False
+
+    def verify_cert_against_key(self, filename, keyfile):
+        """
+        check that a certificate validates against its private key.
+        """
+        def _modulus(fname, ftype="x509"):
+            """ get the modulus from the given file """
+            cmd = ["openssl", ftype, "-noout", "-modulus", "-in", fname]
+            self.debug_log("SSLCA: Getting modulus of %s for verification: %s"
+                           % (fname, " ".join(cmd)))
+            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
+            rv, err = proc.communicate()
+            if proc.wait():
+                self.logger.warning("SSLCA: Failed to get modulus of %s: %s" %
+                                    (fname, err))
+            return rv.strip()  # pylint: disable=E1103
+
+        certfile = os.path.join(self.path, filename)
+        cert = _modulus(certfile)
+        key = _modulus(keyfile, ftype="rsa")
+        if cert == key:
+            self.debug_log("SSLCA: %s verified successfully against key %s" %
+                           (filename, keyfile))
+            return True
+        self.logger.warning("SSLCA: %s failed verification against key %s" %
+                            (filename, keyfile))
+        return False
+
+    def bind_entry(self, entry, metadata):
+        if self.key:
+            self.bind_info_to_entry(entry, metadata)
+            try:
+                return self.best_matching(metadata).bind_entry(entry, metadata)
+            except PluginExecutionError:
+                entry.text = self.build_key(entry, metadata)
+                return entry
+        elif self.cert:
+            key = self.cert.get_spec(metadata)['key']
+            cleanup_keyfile = False
+            try:
+                keyfile = self.parent.entries[key].best_matching(metadata).name
+            except PluginExecutionError:
+                cleanup_keyfile = True
+                # create a temp file with the key in it
+                fd, keyfile = tempfile.mkstemp()
+                os.chmod(keyfile, 384)  # 0600
+                el = lxml.etree.Element('Path', name=key)
+                self.parent.core.Bind(el, metadata)
+                os.fdopen(fd, 'w').write(el.text)
+
+            try:
+                self.bind_info_to_entry(entry, metadata)
+                try:
+                    best = self.best_matching(metadata)
+                    if self.verify_cert(best.name, keyfile, entry, metadata):
+                        return best.bind_entry(entry, metadata)
+                except PluginExecutionError:
+                    pass
+                # if we get here, it's because either a) there was no best
+                # matching entry; or b) the existing cert did not verify
+                entry.text = self.build_cert(entry, metadata, keyfile)
+                return entry
+            finally:
+                if cleanup_keyfile:
+                    try:
+                        os.unlink(keyfile)
+                    except OSError:
+                        err = sys.exc_info()[1]
+                        self.logger.error("SSLCA: Failed to unlink temporary "
+                                          "key %s: %s" % (keyfile, err))
+
+
+class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
+    """ The SSLCA generator handles the creation and management of ssl
+    certificates and their keys. """
+    __author__ = 'g.hagger@gmail.com'
+    es_cls = lambda self, *args: SSLCAEntrySet(*args, parent=self)
+    es_child_cls = SSLCADataFile
+
+    def get_ca(self, name):
+        """ get a dict describing a CA from the config file """
+        return dict(self.core.setup.cfp.items("sslca_%s" % name))

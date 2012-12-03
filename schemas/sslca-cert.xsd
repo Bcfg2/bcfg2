@@ -6,42 +6,24 @@
     </xsd:documentation>
   </xsd:annotation>
 
-  <!-- cert.xml does not support Group or Client tags, but it should
-       (and will, some day), so this is commented out for now -->
-  <!--
   <xsd:complexType name="GroupType">
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
       <xsd:element name="Cert" type="CertType"/>
       <xsd:element name="Group" type="GroupType"/>
       <xsd:element name="Client" type="GroupType"/>
+      <xsd:element name="subjectAltName" type="xsd:string"/>
     </xsd:choice>
     <xsd:attribute type="xsd:string" name="name" use="required"/>
     <xsd:attribute type="xsd:string" name="negate"/>
-  </xsd:complexType>
-  -->
-
-  <xsd:complexType name="CertType">
-    <xsd:attribute type="xsd:string" name="key" use="required"/>
-    <xsd:attribute type="xsd:string" name="format"/>
-    <xsd:attribute type="xsd:string" name="ca"/>
-    <xsd:attribute type="xsd:integer" name="days"/>
-    <xsd:attribute type="xsd:string" name="c"/>
-    <xsd:attribute type="xsd:string" name="l"/>
-    <xsd:attribute type="xsd:string" name="st"/>
-    <xsd:attribute type="xsd:string" name="ou"/>
-    <xsd:attribute type="xsd:string" name="o"/>
-    <xsd:attribute type="xsd:string" name="emailaddress"/>
-    <xsd:attribute type="xsd:string" name="append_chain"/>
   </xsd:complexType>
 
   <xsd:element name="CertInfo">
     <xsd:complexType>
       <xsd:choice minOccurs="1" maxOccurs="unbounded">
         <xsd:element name="Cert" type="CertType"/>
-        <!--
         <xsd:element name="Group" type="GroupType"/>
         <xsd:element name="Client" type="GroupType"/>
-        -->
+        <xsd:element name="subjectAltName" type="xsd:string"/>
       </xsd:choice>
     </xsd:complexType>
   </xsd:element>
