@@ -21,24 +21,20 @@ class Svn(Bcfg2.Server.Plugin.Version):
     __vcs_metadata_path__ = ".svn"
     if HAS_SVN:
         __rmi__ = Bcfg2.Server.Plugin.Version.__rmi__ + ['Update', 'Commit']
-
-        conflict_resolution_map = {
-            "base": pysvn.wc_conflict_choice.base,
-            "mine-conflict": pysvn.wc_conflict_choice.mine_conflict,
-            "theirs-conflict": pysvn.wc_conflict_choice.theirs_conflict,
-            "mine-full": pysvn.wc_conflict_choice.mine_full,
-            "theirs-full": pysvn.wc_conflict_choice.theirs_full,
-            "none": None
-        }
     else:
         __vcs_metadata_path__ = ".svn"
 
     def callback_conflict_resolver(self, conflict_description):
         """PySvn callback function to resolve conflicts"""
-        self.logger.info("Svn: Resolving conflict for %s with %s" % \
-                                            (conflict_description['path'], 
-                                             self.svn_resolution))
-        return self.conflict_resolution_map[self.svn_resolution], None, False
+        try:
+            choice = getattr(pysvn.wc_conflict_choice,
+                             self.svn_resolution.replace('-','_'))
+            self.logger.info("Svn: Resolving conflict for %s with %s" % \
+                                                (conflict_description['path'], 
+                                                 self.svn_resolution))
+            return choice, None, False
+        except AttributeError:
+            return pysvn.wc_conflict_choice.postpone
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Version.__init__(self, core, datastore)
