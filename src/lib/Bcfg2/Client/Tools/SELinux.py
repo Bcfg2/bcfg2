@@ -58,35 +58,43 @@ def netmask_itoa(netmask, proto="ipv4"):
 class SELinux(Bcfg2.Client.Tools.Tool):
     """ SELinux entry support """
     name = 'SELinux'
-    __handles__ = [('SELinux', 'boolean'),
-                   ('SELinux', 'port'),
-                   ('SELinux', 'fcontext'),
-                   ('SELinux', 'node'),
-                   ('SELinux', 'login'),
-                   ('SELinux', 'user'),
-                   ('SELinux', 'interface'),
-                   ('SELinux', 'permissive'),
-                   ('SELinux', 'module')]
-    __req__ = dict(SELinux=dict(boolean=['name', 'value'],
-                                module=['name'],
-                                port=['name', 'selinuxtype'],
-                                fcontext=['name', 'selinuxtype'],
-                                node=['name', 'selinuxtype', 'proto'],
-                                login=['name', 'selinuxuser'],
-                                user=['name', 'roles', 'prefix'],
-                                interface=['name', 'selinuxtype'],
-                                permissive=['name']))
+    __handles__ = [('SEBoolean', None),
+                   ('SEFcontext', None),
+                   ('SEInterface', None),
+                   ('SELogin', None),
+                   ('SEModule', None),
+                   ('SENode', None),
+                   ('SEPermissive', None),
+                   ('SEPort', None),
+                   ('SEUser', None)]
+    __req__ = dict(SEBoolean=['name', 'value'],
+                   SEFcontext=['name', 'selinuxtype'],
+                   SEInterface=['name', 'selinuxtype'],
+                   SELogin=['name', 'selinuxuser'],
+                   SEModule=['name'],
+                   SENode=['name', 'selinuxtype', 'proto'],
+                   SEPermissive=['name'],
+                   SEPort=['name', 'selinuxtype'],
+                   SEUser=['name', 'roles', 'prefix'])
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
         self.handlers = {}
-        for handles in self.__handles__:
-            etype = handles[1]
+        for handler in self.__handles__:
+            etype = handler[0]
             self.handlers[etype] = \
                 globals()["SELinux%sHandler" % etype.title()](self, logger,
                                                               setup, config)
         self.txn = False
         self.post_txn_queue = []
+
+    def __getattr__(self, attr):
+        if attr.startswith("VerifySE"):
+            return self.GenericSEVerify
+        elif attr.startswith("InstallSE"):
+            return self.GenericSEInstall
+        else:
+            return object.__getattr__(self, attr)
 
     def BundleUpdated(self, _, states):
         for handler in self.handlers.values():
@@ -100,12 +108,12 @@ class SELinux(Bcfg2.Client.Tools.Tool):
 
     def canInstall(self, entry):
         return (Bcfg2.Client.Tools.Tool.canInstall(self, entry) and
-                self.handlers[entry.get('type')].canInstall(entry))
+                self.handlers[entry.tag].canInstall(entry))
 
     def primarykey(self, entry):
         """ return a string that should be unique amongst all entries
         in the specification """
-        return self.handlers[entry.get('type')].primarykey(entry)
+        return self.handlers[entry.tag].primarykey(entry)
 
     def Install(self, entries, states):
         # start a transaction
@@ -125,32 +133,32 @@ class SELinux(Bcfg2.Client.Tools.Tool):
             for func, arg, kwargs in self.post_txn_queue:
                 states[arg] = func(*arg, **kwargs)
 
-    def InstallSELinux(self, entry):
-        """Dispatch install to the proper method according to type"""
-        return self.handlers[entry.get('type')].Install(entry)
+    def GenericSEInstall(self, entry):
+        """Dispatch install to the proper method according to entry tag"""
+        return self.handlers[entry.tag].Install(entry)
 
-    def VerifySELinux(self, entry, _):
-        """Dispatch verify to the proper method according to type"""
-        rv = self.handlers[entry.get('type')].Verify(entry)
+    def GenericSEVerify(self, entry, _):
+        """Dispatch verify to the proper method according to entry tag"""
+        rv = self.handlers[entry.tag].Verify(entry)
         if entry.get('qtext') and self.setup['interactive']:
             entry.set('qtext',
-                      '%s\nInstall SELinux %s %s: (y/N) ' %
+                      '%s\nInstall %s: (y/N) ' %
                       (entry.get('qtext'),
-                       entry.get('type'),
-                       self.handlers[entry.get('type')].tostring(entry)))
+                       self.handlers[entry.tag].tostring(entry)))
         return rv
 
     def Remove(self, entries):
-        """Dispatch verify to the proper removal method according to type"""
+        """Dispatch verify to the proper removal
+        method according to entry tag"""
         # sort by type
         types = list()
         for entry in entries:
-            if entry.get('type') not in types:
-                types.append(entry.get('type'))
+            if entry.tag not in types:
+                types.append(entry.tag)
 
         for etype in types:
             self.handlers[etype].Remove([e for e in entries
-                                         if e.get('type') == etype])
+                                         if e.tag == etype])
 
 
 class SELinuxEntryHandler(object):
@@ -253,8 +261,7 @@ class SELinuxEntryHandler(object):
     def key2entry(self, key):
         """ Generate an XML entry from an SELinux record key """
         attrs = self._key2attrs(key)
-        attrs["type"] = self.etype
-        return Bcfg2.Client.XML.Element("SELinux", **attrs)
+        return Bcfg2.Client.XML.Element(self.etype, **attrs)
 
     def _args(self, entry, method):
         """ Get the argument list for invoking _modify or _add, or
@@ -279,7 +286,7 @@ class SELinuxEntryHandler(object):
         """ return a string that should be unique amongst all entries
         in the specification.  some entry types are not universally
         disambiguated by tag:type:name alone """
-        return ":".join([entry.tag, entry.get("type"), entry.get("name")])
+        return ":".join([entry.tag, entry.get("name")])
 
     def exists(self, entry):
         """ return True if the entry already exists in the record list """
@@ -303,8 +310,8 @@ class SELinuxEntryHandler(object):
                 continue
             if current_attrs[attr] != desired_attrs[attr]:
                 entry.set('current_%s' % attr, current_attrs[attr])
-                errors.append("SELinux %s %s has wrong %s: %s, should be %s" %
-                              (self.etype, self.tostring(entry), attr,
+                errors.append("%s %s has wrong %s: %s, should be %s" %
+                              (entry.tag, entry.get('name'), attr,
                                current_attrs[attr], desired_attrs[attr]))
 
         if errors:
@@ -331,8 +338,8 @@ class SELinuxEntryHandler(object):
             return True
         except ValueError:
             err = sys.exc_info()[1]
-            self.logger.debug("Failed to %s SELinux %s %s: %s" %
-                              (method, self.etype, self.tostring(entry), err))
+            self.logger.info("Failed to %s SELinux %s %s: %s" %
+                             (method, self.etype, self.tostring(entry), err))
             return False
 
     def Remove(self, entries):
@@ -365,7 +372,7 @@ class SELinuxEntryHandler(object):
         pass
 
 
-class SELinuxBooleanHandler(SELinuxEntryHandler):
+class SELinuxSebooleanHandler(SELinuxEntryHandler):
     """ handle SELinux boolean entries """
     etype = "boolean"
     value_format = ("value",)
@@ -414,7 +421,7 @@ class SELinuxBooleanHandler(SELinuxEntryHandler):
                 SELinuxEntryHandler.canInstall(self, entry))
 
 
-class SELinuxPortHandler(SELinuxEntryHandler):
+class SELinuxSeportHandler(SELinuxEntryHandler):
     """ handle SELinux port entries """
     etype = "port"
     value_format = ('selinuxtype', None)
@@ -486,7 +493,7 @@ class SELinuxPortHandler(SELinuxEntryHandler):
         return tuple(entry.get("name").split("/"))
 
 
-class SELinuxFcontextHandler(SELinuxEntryHandler):
+class SELinuxSefcontextHandler(SELinuxEntryHandler):
     """ handle SELinux file context entries """
 
     etype = "fcontext"
@@ -556,11 +563,11 @@ class SELinuxFcontextHandler(SELinuxEntryHandler):
                 '', '')
 
     def primarykey(self, entry):
-        return ":".join([entry.tag, entry.get("type"), entry.get("name"),
+        return ":".join([entry.tag, entry.get("name"),
                          entry.get("filetype", "all")])
 
 
-class SELinuxNodeHandler(SELinuxEntryHandler):
+class SELinuxSenodeHandler(SELinuxEntryHandler):
     """ handle SELinux node entries """
 
     etype = "node"
@@ -592,7 +599,7 @@ class SELinuxNodeHandler(SELinuxEntryHandler):
                 entry.get("selinuxtype"))
 
 
-class SELinuxLoginHandler(SELinuxEntryHandler):
+class SELinuxSeloginHandler(SELinuxEntryHandler):
     """ handle SELinux login entries """
 
     etype = "login"
@@ -603,7 +610,7 @@ class SELinuxLoginHandler(SELinuxEntryHandler):
         return (entry.get("name"), entry.get("selinuxuser"), "")
 
 
-class SELinuxUserHandler(SELinuxEntryHandler):
+class SELinuxSeuserHandler(SELinuxEntryHandler):
     """ handle SELinux user entries """
 
     etype = "user"
@@ -652,7 +659,7 @@ class SELinuxUserHandler(SELinuxEntryHandler):
         return tuple(rv)
 
 
-class SELinuxInterfaceHandler(SELinuxEntryHandler):
+class SELinuxSeinterfaceHandler(SELinuxEntryHandler):
     """ handle SELinux interface entries """
 
     etype = "interface"
@@ -663,7 +670,7 @@ class SELinuxInterfaceHandler(SELinuxEntryHandler):
         return (entry.get("name"), '', entry.get("selinuxtype"))
 
 
-class SELinuxPermissiveHandler(SELinuxEntryHandler):
+class SELinuxSepermissiveHandler(SELinuxEntryHandler):
     """ handle SELinux permissive domain entries """
 
     etype = "permissive"
@@ -695,7 +702,7 @@ class SELinuxPermissiveHandler(SELinuxEntryHandler):
         return (entry.get("name"),)
 
 
-class SELinuxModuleHandler(SELinuxEntryHandler):
+class SELinuxSemoduleHandler(SELinuxEntryHandler):
     """ handle SELinux module entries """
 
     etype = "module"
@@ -808,10 +815,9 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
     def Install(self, entry, _=None):
         if not self.filetool.install(self._pathentry(entry)):
             return False
-        if hasattr(self, 'records'):
+        if hasattr(seobject, 'moduleRecords'):
             # if seobject has the moduleRecords attribute, install the
             # module using the seobject library
-            self.records  # pylint: disable=W0104
             return self._install_seobject(entry)
         else:
             # seobject doesn't have the moduleRecords attribute, so
@@ -891,8 +897,7 @@ class SELinuxModuleHandler(SELinuxEntryHandler):
 
     def FindExtra(self):
         specified = [self._key(e)
-                     for e in self.tool.getSupportedEntries()
-                     if e.get("type") == self.etype]
+                     for e in self.tool.getSupportedEntries()]
         rv = []
         for module in self._all_records_from_filesystem().keys():
             if module not in specified:

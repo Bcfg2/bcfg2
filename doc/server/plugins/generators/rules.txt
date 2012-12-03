@@ -394,14 +394,12 @@ the permissions to ``0674``.  When this happens, Bcfg2 will change the
 permissions and set the ACLs on every run and the entry will be
 eternally marked as bad.
 
-SELinux Tag
------------
+SELinux Entries
+---------------
 
-The SELinux tag has different values depending on the *type* attribute
-of the SELinux entry specified in your configuration. Below is a set
-of tables which describe the attributes available for various SELinux
-types.  The types (except for ``module``) correspond to ``semanage``
-subcommands.
+Below is a set of tables which describe the attributes available
+for various SELinux types.  The entry types (except for ``module``)
+correspond to ``semanage`` subcommands.
 
 Note that the ``selinuxtype`` attribute takes only an SELinux type,
 not a full context; e.g., "``etc_t``", not
@@ -411,18 +409,10 @@ As it can be very tedious to create a baseline of all existing SELinux
 entries, you can use ``selinux_baseline.py`` located in the ``tools/``
 directory to do that for you.
 
-In certain cases, it may be necessary to create multiple SELinux
-entries with the same name.  For instance, "root" is both an SELinux
-user and an SELinux login record; or a given fcontext may need two
-different SELinux types depending on whether it's a symlink or a plain
-file.  In these (few) cases, it is necessary to create BoundSELinux
-entries directly in Bundler rather than using abstract SELinux entries
-in Bundler and binding them with Rules.
-
 See :ref:`server-selinux` for more information.
 
-boolean
-^^^^^^^
+SEBoolean Tag
+^^^^^^^^^^^^^
 
 +-------+----------------------+---------+----------+
 | Name  | Description          | Values  | Required |
@@ -432,8 +422,8 @@ boolean
 | value | Value of the boolean | on|off  | Yes      |
 +-------+----------------------+---------+----------+
 
-port
-^^^^
+SEPort Tag
+^^^^^^^^^^
 
 +-------------+------------------------+---------------------------+----------+
 | Name        | Description            | Values                    | Required |
@@ -445,8 +435,8 @@ port
 |             | to this port           |                           |          |
 +-------------+------------------------+---------------------------+----------+
 
-fcontext
-^^^^^^^^
+SEFcontext Tag
+^^^^^^^^^^^^^^
 
 +-------------+-------------------------+---------------------+----------+
 | Name        | Description             | Values              | Required |
@@ -462,8 +452,8 @@ fcontext
 |             |                         |  socket|block|char) |          |
 +-------------+-------------------------+---------------------+----------+
 
-node
-^^^^
+SENode Tag
+^^^^^^^^^^
 
 +-------------+------------------------------------+------------------+----------+
 | Name        | Description                        | Values           | Required |
@@ -477,8 +467,8 @@ node
 | proto       | Protocol                           | (ipv4|ipv6)      | Yes      |
 +-------------+------------------------------------+------------------+----------+
 
-login
-^^^^^
+SELogin Tag
+^^^^^^^^^^^
 
 +-------------+-------------------------------+-----------+----------+
 | Name        | Description                   | Values    | Required |
@@ -488,8 +478,8 @@ login
 | selinuxuser | SELinux username              | String    | Yes      |
 +-------------+-------------------------------+-----------+----------+
 
-user
-^^^^
+SEUser Tag
+^^^^^^^^^^
 
 +-------------+-------------------------------+-----------+----------+
 | Name        | Description                   | Values    | Required |
@@ -501,8 +491,8 @@ user
 | prefix      | Home directory context prefix | String    | Yes      |
 +-------------+-------------------------------+-----------+----------+
 
-interface
-^^^^^^^^^
+SEInterface Tag
+^^^^^^^^^^^^^^^
 
 +-------------+-------------------------+-------------+----------+
 | Name        | Description             | Values      | Required |
@@ -513,8 +503,8 @@ interface
 |             | to this interface       |             |          |
 +-------------+-------------------------+-------------+----------+
 
-permissive
-^^^^^^^^^^
+SEPermissive Tag
+^^^^^^^^^^^^^^^^
 
 +-------------+------------------------------------+-------------+----------+
 | Name        | Description                        | Values      | Required |
@@ -522,8 +512,8 @@ permissive
 | name        | SELinux type to make permissive    | String      | Yes      |
 +-------------+------------------------------------+-------------+----------+
 
-module
-^^^^^^
+SEModule Tag
+^^^^^^^^^^^^
 
 See :ref:`server-plugins-generators-semodules`
 
