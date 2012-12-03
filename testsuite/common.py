@@ -267,7 +267,7 @@ class Bcfg2TestCase(unittest.TestCase):
         attributes. """
         self.assertEqual(el1.tag, el2.tag, msg=msg)
         self.assertEqual(el1.text, el2.text, msg=msg)
-        self.assertItemsEqual(el1.attrib, el2.attrib, msg=msg)
+        self.assertItemsEqual(el1.attrib.items(), el2.attrib.items(), msg=msg)
         self.assertEqual(len(el1.getchildren()),
                          len(el2.getchildren()))
         for child1 in el1.getchildren():
@@ -275,10 +275,11 @@ class Bcfg2TestCase(unittest.TestCase):
             self.assertIsNotNone(cname,
                                  msg="Element %s has no 'name' attribute" %
                                  child1.tag)
-            children2 = el2.xpath("*[@name='%s']" % cname)
+            children2 = el2.xpath("%s[@name='%s']" % (child1.tag, cname))
             self.assertEqual(len(children2), 1,
-                             msg="More than one element named %s" % cname)
-            self.assertXMLEqual(child1, children2[0], msg=msg)        
+                             msg="More than one %s element named %s" % \
+                                 (child1.tag, cname))
+            self.assertXMLEqual(child1, children2[0], msg=msg)
 
 
 class DBModelTestCase(Bcfg2TestCase):

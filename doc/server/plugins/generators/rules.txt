@@ -62,10 +62,10 @@ The Rules Tag may have the following attributes:
 |          | Rules list.The higher value wins.   |        |
 +----------+-------------------------------------+--------+
 
-Rules Group Tag
----------------
+Group Tag
+---------
 
-The Rules Group Tag may have the following attributes:
+The Group Tag may have the following attributes:
 
 +--------+-------------------------+--------------+
 | Name   | Description             | Values       |
@@ -76,6 +76,27 @@ The Rules Group Tag may have the following attributes:
 |        | (is not a member of)    |              |
 +--------+-------------------------+--------------+
 
+Client Tag
+----------
+
+The Client Tag is used in Rules for selecting the package entries to
+include in the clients literal configuration.  Its function is similar
+to the Group tag in this context.  It can be thought of as::
+
+    if client is name then
+        assign to literal config
+
+The Client Tag may have the following attributes:
+
++--------+-------------------------+--------------+
+| Name   | Description             | Values       |
++========+=========================+==============+
+| name   | Client Name             | String       |
++--------+-------------------------+--------------+
+| negate | Negate client selection | (true|false) |
+|        | (if not client name)    |              |
++--------+-------------------------+--------------+
+
 Package Tag
 -----------
 
@@ -84,8 +105,7 @@ The Package Tag may have the following attributes:
 +------------+----------------------------------------------+----------+
 | Name       | Description                                  | Values   |
 +============+==============================================+==========+
-| name       | Package name or regular expression           | String   |
-|            |                                              | or regex |
+| name       | Package name                                 | String   |
 +------------+----------------------------------------------+----------+
 | version    | Package Version or version='noverify' to     | String   |
 |            | not do version checking in the Yum driver    |          |
@@ -131,8 +151,7 @@ Service Tag
 |            | service (new in 1.3; replaces |                                                         |
 |            | "mode" attribute)             |                                                         |
 +------------+-------------------------------+---------------------------------------------------------+
-| name       | Service name or regular       | String or regex                                         |
-|            | expression                    |                                                         |
+| name       | Service name                  | String                                                  |
 +------------+-------------------------------+---------------------------------------------------------+
 | status     | Should the service be on or   | (on | off | ignore)                                     |
 |            | off (default: off).           |                                                         |
@@ -193,27 +212,6 @@ Service status descriptions
 
   * Don't perform service status checks.
 
-Client Tag
-----------
-
-The Client Tag is used in Rules for selecting the package entries to
-include in the clients literal configuration.  Its function is similar
-to the Group tag in this context.  It can be thought of as::
-
-    if client is name then
-        assign to literal config
-
-The Client Tag may have the following attributes:
-
-+--------+-------------------------+--------------+
-| Name   | Description             | Values       |
-+========+=========================+==============+
-| name   | Client Name             | String       |
-+--------+-------------------------+--------------+
-| negate | Negate client selection | (true|false) |
-|        | (if not client name)    |              |
-+--------+-------------------------+--------------+
-
 Path Tag
 --------
 
@@ -229,11 +227,11 @@ the context of the file to the default set by policy.  See
 
 Attributes common to all Path tags:
 
-+----------+---------------------------------------------------+-----------------+
-| Name     | Description                                       | Values          |
-+==========+===================================================+=================+
-| name     | Full path or regular expression matching the path | String or regex |
-+----------+---------------------------------------------------+-----------------+
++----------+-------------+--------+
+| Name     | Description | Values |
++==========+=============+========+
+| name     | Full path   | String |
++----------+-------------+--------+
 
 
 device
@@ -394,14 +392,12 @@ the permissions to ``0674``.  When this happens, Bcfg2 will change the
 permissions and set the ACLs on every run and the entry will be
 eternally marked as bad.
 
-SELinux Tag
------------
+SELinux Entries
+---------------
 
-The SELinux tag has different values depending on the *type* attribute
-of the SELinux entry specified in your configuration. Below is a set
-of tables which describe the attributes available for various SELinux
-types.  The types (except for ``module``) correspond to ``semanage``
-subcommands.
+Below is a set of tables which describe the attributes available
+for various SELinux types.  The entry types (except for ``module``)
+correspond to ``semanage`` subcommands.
 
 Note that the ``selinuxtype`` attribute takes only an SELinux type,
 not a full context; e.g., "``etc_t``", not
@@ -411,18 +407,10 @@ As it can be very tedious to create a baseline of all existing SELinux
 entries, you can use ``selinux_baseline.py`` located in the ``tools/``
 directory to do that for you.
 
-In certain cases, it may be necessary to create multiple SELinux
-entries with the same name.  For instance, "root" is both an SELinux
-user and an SELinux login record; or a given fcontext may need two
-different SELinux types depending on whether it's a symlink or a plain
-file.  In these (few) cases, it is necessary to create BoundSELinux
-entries directly in Bundler rather than using abstract SELinux entries
-in Bundler and binding them with Rules.
-
 See :ref:`server-selinux` for more information.
 
-boolean
-^^^^^^^
+SEBoolean Tag
+^^^^^^^^^^^^^
 
 +-------+----------------------+---------+----------+
 | Name  | Description          | Values  | Required |
@@ -432,8 +420,8 @@ boolean
 | value | Value of the boolean | on|off  | Yes      |
 +-------+----------------------+---------+----------+
 
-port
-^^^^
+SEPort Tag
+^^^^^^^^^^
 
 +-------------+------------------------+---------------------------+----------+
 | Name        | Description            | Values                    | Required |
@@ -445,8 +433,8 @@ port
 |             | to this port           |                           |          |
 +-------------+------------------------+---------------------------+----------+
 
-fcontext
-^^^^^^^^
+SEFcontext Tag
+^^^^^^^^^^^^^^
 
 +-------------+-------------------------+---------------------+----------+
 | Name        | Description             | Values              | Required |
@@ -462,8 +450,8 @@ fcontext
 |             |                         |  socket|block|char) |          |
 +-------------+-------------------------+---------------------+----------+
 
-node
-^^^^
+SENode Tag
+^^^^^^^^^^
 
 +-------------+------------------------------------+------------------+----------+
 | Name        | Description                        | Values           | Required |
@@ -477,8 +465,8 @@ node
 | proto       | Protocol                           | (ipv4|ipv6)      | Yes      |
 +-------------+------------------------------------+------------------+----------+
 
-login
-^^^^^
+SELogin Tag
+^^^^^^^^^^^
 
 +-------------+-------------------------------+-----------+----------+
 | Name        | Description                   | Values    | Required |
@@ -488,8 +476,8 @@ login
 | selinuxuser | SELinux username              | String    | Yes      |
 +-------------+-------------------------------+-----------+----------+
 
-user
-^^^^
+SEUser Tag
+^^^^^^^^^^
 
 +-------------+-------------------------------+-----------+----------+
 | Name        | Description                   | Values    | Required |
@@ -501,8 +489,8 @@ user
 | prefix      | Home directory context prefix | String    | Yes      |
 +-------------+-------------------------------+-----------+----------+
 
-interface
-^^^^^^^^^
+SEInterface Tag
+^^^^^^^^^^^^^^^
 
 +-------------+-------------------------+-------------+----------+
 | Name        | Description             | Values      | Required |
@@ -513,8 +501,8 @@ interface
 |             | to this interface       |             |          |
 +-------------+-------------------------+-------------+----------+
 
-permissive
-^^^^^^^^^^
+SEPermissive Tag
+^^^^^^^^^^^^^^^^
 
 +-------------+------------------------------------+-------------+----------+
 | Name        | Description                        | Values      | Required |
@@ -522,10 +510,78 @@ permissive
 | name        | SELinux type to make permissive    | String      | Yes      |
 +-------------+------------------------------------+-------------+----------+
 
-module
-^^^^^^
+SEModule Tag
+^^^^^^^^^^^^
 
 See :ref:`server-plugins-generators-semodules`
+
+POSIXUser Tag
+-------------
+
+The POSIXUser tag allows you to create users on client machines.  It
+takes the following attributes:
+
++-------+-----------------------+---------+-------------------------------+
+| Name  | Description           | Values  | Default                       |
++=======+=======================+=========+===============================+
+| name  | Username              | String  | None                          |
++-------+-----------------------+---------+-------------------------------+
+| uid   | User ID number        | Integer | The client sets the uid       |
++-------+-----------------------+---------+-------------------------------+
+| group | Name of the user's    | String  | The username                  |
+|       | primary group         |         |                               |
++-------+-----------------------+---------+-------------------------------+
+| gecos | Human-readable user   | String  | The username                  |
+|       | name or comment       |         |                               |
++-------+-----------------------+---------+-------------------------------+
+| home  | User's home directory | String  | /root (for "root");           |
+|       |                       |         | /home/<username> otherwise    |
++-------+-----------------------+---------+-------------------------------+
+| shell | User's shell          | String  | /bin/bash                     |
++-------+-----------------------+---------+-------------------------------+
+
+The group specified will automatically be created if it does not
+exist, even if there is no `POSIXGroup Tag`_ for it.  If you need to
+specify a particular GID for the group, you must specify that in a
+``POSIXGroup`` tag.
+
+If you with to change the default shell, you can do so with :ref:`the
+Defaults plugin <server-plugins-structures-defaults>`.
+
+Additionally, a user may be a member of supplementary groups.  These
+can be specified with the ``MemberOf`` child tag of the ``POSIXUser``
+tag.
+
+For example:
+
+.. code-block:: xml
+
+    <POSIXUser name="daemon" home="/sbin" shell="/sbin/nologin"
+               gecos="daemon" uid="2" group="daemon">
+      <MemberOf>lp</MemberOf>
+      <MemberOf>adm</MemberOf>
+      <MemberOf>bin</MemberOf>
+    </BoundPOSIXUser>
+
+See :ref:`client-tools-posixusers` for more information on managing
+users and groups.
+
+POSIXGroup Tag
+--------------
+
+The POSIXGroup tag allows you to create groups on client machines.  It
+takes the following attributes:
+
++-------+-------------------+---------+-------------------------+
+| Name  | Description       | Values  | Default                 |
++=======+===================+=========+=========================+
+| name  | Name of the group | String  | None                    |
++-------+-------------------+---------+-------------------------+
+| gid   | Group ID number   | Integer | The client sets the gid |
++-------+-------------------+---------+-------------------------+
+
+See :ref:`client-tools-posixusers` for more information on managing
+users and groups.
 
 Rules Directory
 ===============

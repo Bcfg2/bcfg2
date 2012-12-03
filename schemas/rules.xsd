@@ -57,6 +57,20 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+      <xsd:element name='POSIXUser' type='POSIXUserType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a POSIXUser entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='POSIXGroup' type='POSIXGroupType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a POSIXGroup entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
       <xsd:element name='PostInstall' type='PostInstallType'>
         <xsd:annotation>
           <xsd:documentation>

@@ -220,4 +220,21 @@
     <xsd:attribute type="xsd:string" name="selinuxuser"/>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
+
+  <xsd:complexType name="POSIXUserType">
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='MemberOf' type='xsd:string'/>
+    </xsd:choice>
+    <xsd:attribute type="xsd:string" name="name" use="required"/>
+    <xsd:attribute type="xsd:integer" name="uid"/>
+    <xsd:attribute type="xsd:string" name="group"/>
+    <xsd:attribute type="xsd:string" name="gecos"/>
+    <xsd:attribute type="xsd:string" name="home"/>
+    <xsd:attribute type="xsd:string" name="shell"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="POSIXGroupType">
+    <xsd:attribute type="xsd:string" name="name" use="required"/>
+    <xsd:attribute type="xsd:integer" name="gid"/>
+  </xsd:complexType>
 </xsd:schema>

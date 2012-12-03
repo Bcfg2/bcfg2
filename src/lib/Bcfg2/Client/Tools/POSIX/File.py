@@ -188,6 +188,10 @@ class POSIXFile(POSIXTool):
                         prompt.append(udiff)
                     except UnicodeEncodeError:
                         prompt.append("Could not encode diff")
+                elif entry.get("empty", "true"):
+                    # the file doesn't exist on disk, but there's no
+                    # expected content
+                    prompt.append("%s does not exist" % entry.get("name"))
                 else:
                     prompt.append("Diff took too long to compute, no "
                                   "printable diff")

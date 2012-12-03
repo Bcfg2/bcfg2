@@ -88,7 +88,7 @@ class TestCfgBaseFileMatcher(TestSpecificData):
             mock_get_regex.reset_mock()
             match.reset_mock()
             match.return_value = True
-            self.assertTrue(self.test_obj.handles(evt))            
+            self.assertTrue(self.test_obj.handles(evt))
             match.assert_called_with(evt.filename)
         else:
             match.return_value = False
@@ -389,7 +389,7 @@ class TestCfgEntrySet(TestEntrySet):
         eset.bind_info_to_entry.assert_called_with(entry, metadata)
         eset._generate_data.assert_called_with(entry, metadata)
         self.assertFalse(eset._validate_data.called)
-        expected = lxml.etree.Element("Path", name="/text.txt")
+        expected = lxml.etree.Element("Path", name="/test.txt")
         expected.text = "data"
         self.assertXMLEqual(bound, expected)
         self.assertEqual(bound, entry)

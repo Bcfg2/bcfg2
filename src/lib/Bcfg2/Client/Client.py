@@ -56,8 +56,8 @@ class Client(object):
             self.logger.error("Service removal is nonsensical; "
                               "removed services will only be disabled")
         if (self.setup['remove'] and
-            self.setup['remove'].lower() not in ['all', 'services',
-                                                 'packages']):
+            self.setup['remove'].lower() not in ['all', 'services', 'packages',
+                                                 'users']):
             self.logger.error("Got unknown argument %s for -r" %
                               self.setup['remove'])
         if self.setup["file"] and self.setup["cache"]:

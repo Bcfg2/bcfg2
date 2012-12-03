@@ -36,7 +36,7 @@
           <xsd:documentation>
             Abstract implementation of a Path entry.  The entry will
             either be handled by Cfg, TGenshi, or another
-            DirectoryBacked plugin; or handled by Rules, in which case
+            Generator plugin; or handled by Rules, in which case
             the full specification of this entry will be included in
             Rules.
           </xsd:documentation>
@@ -63,6 +63,20 @@
           <xsd:documentation>
             Abstract implementation of an SELinux entry.  The
             full specification will be included in Rules.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='POSIXUser' type='StructureEntry'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract description of a POSIXUser entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='POSIXGroup' type='StructureEntry'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract description of a POSIXGroup entry.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
@@ -108,6 +122,20 @@
         <xsd:annotation>
           <xsd:documentation>
             Fully bound description of an SELinux entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundPOSIXUser' type='POSIXUserType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a POSIXUser entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundPOSIXGroup' type='POSIXGroupType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of a POSIXGroup entry.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>

@@ -136,33 +136,33 @@ by running the template manually. To do this, run ``bcfg2-info
 debug``, and, once in the Python interpreter, run::
 
     metadata = self.build_metadata("<hostname>")
-    path = "<relative path to template (see note below)>"
-
-``path`` should be set to the path to the template file with a leading
-slash, relative to the Bcfg2 specification root. See `Inside Genshi
-Templates`_ for examples.
+    source_path = "<full path to template>"
+    name = source_path[len(self.setup['repo']):]
 
 Then, run::
 
-    import os, Bcfg2.Options
+    import os
     from genshi.template import TemplateLoader, NewTextTemplate
-    name = os.path.dirname(path[path.find('/', 1):])
-    setup = Bcfg2.Options.OptionParser({'repo':
-                                        Bcfg2.Options.SERVER_REPOSITORY})
-    setup.parse('--')
-    template = TemplateLoader().load(setup['repo'] + path, cls=NewTextTemplate)
-    print template.generate(metadata=metadata, path=path, name=name).render()
+    template = TemplateLoader().load(source_path, cls=NewTextTemplate)
+    data = dict(metadata=metadata,
+                source_path=source_path,
+                path=source_path,
+                name=name,
+                repo=self.setup['repo'])
+    print(template.generate(**data).render())
 
 This gives you more fine-grained control over how your template is
-rendered.
+rendered.  E.g., you can tweak the values of the variables passed to
+the template, or evaluate the template manually, line-by-line, and so
+on.
 
 You can also use this approach to render templates that depend on
 :ref:`altsrc <server-plugins-structures-altsrc>` tags by setting
-``path`` to the path to the template, and setting ``name`` to the path
+``source_path`` to the path to the template, and setting ``name`` to the path
 to the file to be generated, e.g.::
 
     metadata = self.build_metadata("foo.example.com")
-    path = "/Cfg/etc/sysconfig/network-scripts/ifcfg-template/ifcfg-template.genshi"
+    source_path = "/Cfg/etc/sysconfig/network-scripts/ifcfg-template/ifcfg-template.genshi"
     name = "/etc/sysconfig/network-scripts/ifcfg-bond0"
 
 Error handling

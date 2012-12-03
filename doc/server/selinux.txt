@@ -135,47 +135,16 @@ will be considered extra, making ``selinux_baseline.py`` quite
 necessary.
 
 ``selinux_baseline.py`` writes a bundle to stdout that contains
-``BoundSELinux`` entries for the appropriate SELinux entities.  It
-does this rather than separate Bundle/Rules files because of the
-:ref:`server-selinux-duplicate-entries` problem.
+``BoundSELinux`` entries for the appropriate SELinux entities.
 
 .. _server-selinux-duplicate-entries:
 
 Duplicate Entries
 -----------------
 
-In certain cases, it may be necessary to create multiple SELinux
-entries with the same name.  For instance, "root" is both an SELinux
-user and an SELinux login record, so to manage both, you would have
-the following in Bundler:
-
-.. code-block:: xml
-
-    <SELinux name="root"/>
-    <SELinux name="root"/>
-
-And in Rules:
-
-.. code-block:: xml
-
-    <SELinux type="login" selinuxuser="root" name="root"/>
-    <SELinux type="user" prefix="user" name="root"
-             roles="system_r sysadm_r user_r"/>
-
-But Rules has no way to tell which "root" is which, and you will get
-errors.  In these cases, it is necessary to use ``BoundSELinux`` tags
-directly in Bundler.  (See :ref:`boundentries` for more details on
-bound entries.)  For instance:
-
-.. code-block:: xml
-
-    <BoundSELinux type="login" selinuxuser="root" name="root"/>
-    <BoundSELinux type="user" prefix="user" name="root"
-                  roles="system_r sysadm_r user_r"/>
-
-It may also be necessary to use ``BoundSELinux`` tags if a single
-fcontext needs two different SELinux types depending on whether it's a
-symlink or a plain file.  For instance:
+It may be necessary to use `BoundSELinux` tags if a single fcontext
+needs two different SELinux types depending on whether it's a symlink
+or a plain file.  For instance:
 
 .. code-block:: xml
 
