@@ -9,6 +9,7 @@ import copy
 import shutil
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
+from Bcfg2.Compat import oct_mode
 
 try:
     import selinux
@@ -128,7 +129,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                 wanted_mode |= device_map[entry.get('dev_type')]
             try:
                 self.logger.debug("POSIX: Setting mode on %s to %s" %
-                                  (path, oct(wanted_mode)))
+                                  (path, oct_mode(wanted_mode)))
                 os.chmod(path, wanted_mode)
             except (OSError, KeyError):
                 self.logger.error('POSIX: Failed to change mode on %s' %
@@ -436,7 +437,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             group = None
 
         try:
-            mode = oct(ondisk[stat.ST_MODE])[-4:]
+            mode = oct_mode(ondisk[stat.ST_MODE])[-4:]
         except (OSError, KeyError, TypeError):
             err = sys.exc_info()[1]
             self.logger.debug("POSIX: Could not get current permissions of "
@@ -507,7 +508,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                           (path, attrib['current_group'], entry.get('group')))
 
         if (wanted_mode and
-            oct(int(attrib['current_mode'], 8)) != oct(wanted_mode)):
+            oct_mode(int(attrib['current_mode'], 8)) != oct_mode(wanted_mode)):
             errors.append("Permissions for path %s are incorrect. "
                           "Current permissions are %s but should be %s" %
                           (path, attrib['current_mode'], entry.get('mode')))
@@ -708,10 +709,11 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         for i in range(0, 3):
             if newmode & (6 * pow(8, i)):
                 newmode |= 1 * pow(8, i)
-        tmpentry.set('mode', oct(newmode))
+        tmpentry.set('mode', oct_mode(newmode))
         for acl in tmpentry.findall('ACL'):
             acl.set('perms',
-                    oct(self._norm_acl_perms(acl.get('perms')) | ACL_MAP['x']))
+                    oct_mode(self._norm_acl_perms(acl.get('perms')) | \
+                                 ACL_MAP['x']))
         for cpath in created:
             rv &= self._set_perms(tmpentry, path=cpath)
         return rv

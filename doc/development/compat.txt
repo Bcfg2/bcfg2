@@ -197,3 +197,9 @@ unicode
 In Py3k, the :func:`unicode` class is not defined, because all
 strings are unicode.  ``Bcfg2.Compat`` defines ``unicode`` as
 equivalent to :func:`str` in Python 3.
+
+oct_mode
+~~~~~~~~
+
+.. autofunction:: Bcfg2.Compat.oct_mode
+

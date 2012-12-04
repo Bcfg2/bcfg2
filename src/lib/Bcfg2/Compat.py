@@ -245,3 +245,18 @@ except ImportError:
     def wraps(wrapped):  # pylint: disable=W0613
         """ implementation of functools.wraps() for python 2.4 """
         return lambda f: f
+
+
+def oct_mode(mode):
+    """ Convert a decimal number describing a POSIX permissions mode
+    to a string giving the octal mode.  In Python 2, this is a synonym
+    for :func:`oct`, but in Python 3 the octal format has changed to
+    ``0o000``, which cannot be used as an octal permissions mode, so
+    we need to strip the 'o' from the output.  I.e., this function
+    acts like the Python 2 :func:`oct` regardless of what version of
+    Python is in use.
+
+    :param mode: The decimal mode to convert to octal
+    :type mode: int
+    :returns: string """
+    return oct(mode).replace('o', '')
