@@ -24,18 +24,6 @@ class Svn(Bcfg2.Server.Plugin.Version):
     else:
         __vcs_metadata_path__ = ".svn"
 
-    def callback_conflict_resolver(self, conflict_description):
-        """PySvn callback function to resolve conflicts"""
-        try:
-            choice = getattr(pysvn.wc_conflict_choice,
-                             self.svn_resolution.replace('-','_'))
-            self.logger.info("Svn: Resolving conflict for %s with %s" % \
-                                                (conflict_description['path'], 
-                                                 self.svn_resolution))
-            return choice, None, False
-        except AttributeError:
-            return pysvn.wc_conflict_choice.postpone
-
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Version.__init__(self, core, datastore)
 
@@ -47,21 +35,42 @@ class Svn(Bcfg2.Server.Plugin.Version):
             self.client = None
         else:
             self.client = pysvn.Client()
+            # pylint: disable=E1101
+            choice = pysvn.wc_conflict_choice.postpone
             try:
-                self.svn_resolution = self.core.setup.cfp.get("Svn", 
-                                                         "conflict_resolution")
-                self.client.callback_conflict_resolver = \
-                                                self.callback_conflict_resolver
-            except ConfigParser.NoSectionError:
-                msg = "Svn: No [Svn] section found in bcfg2.conf"
-                self.logger.warning(msg)
-            except ConfigParser.NoOptionError:
-                msg = "Svn: Option not found in bcfg2.conf: %s" % \
-                sys.exc_info()[1]
-                self.logger.warning(msg)
+                resolution = self.core.setup.cfp.get(
+                    "svn",
+                    "conflict_resolution").replace('-', '_')
+                if resolution in ["edit", "launch", "working"]:
+                    self.logger.warning("Svn: Conflict resolver %s requires "
+                                        "manual intervention, using %s" %
+                                        choice)
+                else:
+                    choice = getattr(pysvn.wc_conflict_choice, resolution)
+            except AttributeError:
+                self.logger.warning("Svn: Conflict resolver %s does not "
+                                    "exist, using %s" % choice)
+            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+                self.logger.info("Svn: No conflict resolution method "
+                                 "selected, using %s" % choice)
+            # pylint: enable=E1101
+            self.debug_log("Svn: Conflicts will be resolved with %s" %
+                           choice)
+            self.client.callback_conflict_resolver = \
+                self.get_conflict_resolver(choice)
 
         self.logger.debug("Svn: Initialized svn plugin with SVN directory %s" %
                           self.vcs_path)
+
+    def get_conflict_resolver(self, choice):
+        """ Get a PySvn conflict resolution callback """
+        def callback(self, conflict_description):
+            """ PySvn callback function to resolve conflicts """
+            self.debug_log("Svn: Resolving conflict for %s with %s" %
+                           (conflict_description['path'], choice))
+            return choice, None, False
+
+        return callback
 
     def get_revision(self):
         """Read svn revision information for the Bcfg2 repository."""
@@ -76,16 +85,15 @@ class Svn(Bcfg2.Server.Plugin.Version):
                 msg = "Svn: Failed to get revision: %s" % sys.exc_info()[1]
         else:
             try:
-                data = Popen(("env LC_ALL=C svn info %s" %
-                             pipes.quote(self.vcs_root)), shell=True,
+                data = Popen("env LC_ALL=C svn info %s" %
+                             pipes.quote(self.vcs_root), shell=True,
                              stdout=PIPE).communicate()[0].split('\n')
-                return [line.split(': ')[1] for line in data \
+                return [line.split(': ')[1] for line in data
                         if line[:9] == 'Revision:'][-1]
             except IndexError:
                 msg = "Failed to read svn info"
                 self.logger.error('Ran command "svn info %s"' % self.vcs_root)
         self.revision = None
-        self.logger.error(msg)
         raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
 
     def Update(self):
@@ -113,10 +121,11 @@ class Svn(Bcfg2.Server.Plugin.Version):
         if old_revision == self.revision.number:
             self.logger.debug("repository is current")
         else:
-            self.logger.info("Updated %s from revision %s to %s" % \
-                (self.vcs_root, old_revision, self.revision.number))
+            self.logger.info("Updated %s from revision %s to %s" %
+                             (self.vcs_root, old_revision,
+                              self.revision.number))
         return True
- 
+
     def Commit(self):
         """Svn.Commit() => True|False\nCommit svn repository\n"""
         # First try to update

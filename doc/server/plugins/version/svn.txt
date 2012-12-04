@@ -36,29 +36,24 @@ Simply add Svn to your plugins line in ``/etc/bcfg2.conf``::
 Resolving conflicts
 =======================
 
-By default, the Svn plugin does not attempt to resolve conflicts 
+By default, the Svn plugin does not attempt to resolve conflicts
 when trying to commit or update the repository. This can be changed by
-adding to ``/etc/bcfg2.conf``::
+adding to ``/etc/bcfg2.conf``, e.g.::
 
-    [Svn]
-    conflict_resolution = 
+    [svn]
+    conflict_resolution = theirs-conflict
 
-+-----------------+
-| Actions         |
-+=================+
-| base            |
-+-----------------+
-| postpone        |
-+-----------------+
-| mine-conflict   |
-+-----------------+
-| theirs-conflict |
-+-----------------+
-| mine-full       |
-+-----------------+
-| theirs-full     |
-+-----------------+
+The possible values of ``conflict_resolution`` are:
 
+* ``base``
+* ``postpone`` (default)
+* ``mine-conflict``
+* ``theirs-conflict``
+* ``mine-full`
+* ``theirs-full``
+
+The other possible SVN conflict resolvers (``edit``, ``launch``,
+``working``) require manual intervention and so are not possible.
 Descriptions of each action can be found in the `Version Control with
 Subversion`_ book.
 
