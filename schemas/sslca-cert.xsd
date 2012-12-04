@@ -17,6 +17,20 @@
     <xsd:attribute type="xsd:string" name="negate"/>
   </xsd:complexType>
 
+  <xsd:complexType name="CertType">
+    <xsd:attribute type="xsd:string" name="key" use="required"/>
+    <xsd:attribute type="xsd:string" name="format"/>
+    <xsd:attribute type="xsd:string" name="ca"/>
+    <xsd:attribute type="xsd:integer" name="days"/>
+    <xsd:attribute type="xsd:string" name="c"/>
+    <xsd:attribute type="xsd:string" name="l"/>
+    <xsd:attribute type="xsd:string" name="st"/>
+    <xsd:attribute type="xsd:string" name="ou"/>
+    <xsd:attribute type="xsd:string" name="o"/>
+    <xsd:attribute type="xsd:string" name="emailaddress"/>
+    <xsd:attribute type="xsd:string" name="append_chain"/>
+  </xsd:complexType>
+
   <xsd:element name="CertInfo">
     <xsd:complexType>
       <xsd:choice minOccurs="1" maxOccurs="unbounded">
