@@ -58,14 +58,14 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
         self.logger.info("attribname: %s" % (entry.attrib['name']))
         return False
 
-    def RemovePackages(self, packages):
+    def Remove(self, packages):
         '''Remove extra packages'''
         names = [pkg.get('name') for pkg in packages]
         self.logger.info("Removing packages: %s" % " ".join(names))
         self.cmd.run("%s --noconfirm --noprogressbar -R %s" % \
                      (self.pkgtool, " ".join(names)))
         self.RefreshPackages()
-        self.extra = self.FindExtraPackages()
+        self.extra = self.FindExtra()
 
     def Install(self, packages, states):
         '''

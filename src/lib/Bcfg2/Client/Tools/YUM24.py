@@ -197,7 +197,7 @@ class YUM24(RPM):
         if len(self.extra_instances) > 0:
             if (self.setup.get('remove') == 'all' or \
                 self.setup.get('remove') == 'packages'):
-                self.RemovePackages(self.extra_instances)
+                self.Remove(self.extra_instances)
             else:
                 self.logger.info("The following extra package instances will be removed by the '-r' option:")
                 for pkg in self.extra_instances:
@@ -332,14 +332,14 @@ class YUM24(RPM):
         for entry in [ent for ent in packages if states[ent]]:
             self.modified.append(entry)
 
-    def RemovePackages(self, packages):
+    def Remove(self, packages):
         """
            Remove specified entries.
 
            packages is a list of Package Entries with Instances generated
-           by FindExtraPackages().
+           by FindExtra().
         """
-        self.logger.debug('Running YUM24.RemovePackages()')
+        self.logger.debug('Running YUM24.Remove()')
 
         if self.autodep:
             pkgtool = "/usr/bin/yum -d0 -y erase %s"
@@ -401,4 +401,4 @@ class YUM24(RPM):
                     self.modified.append(pkg)
 
         self.RefreshPackages()
-        self.extra = self.FindExtraPackages()
+        self.extra = self.FindExtra()

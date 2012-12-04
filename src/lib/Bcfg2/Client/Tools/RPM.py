@@ -408,15 +408,15 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             return False
         return True
 
-    def RemovePackages(self, packages):
+    def Remove(self, packages):
         """
            Remove specified entries.
 
            packages is a list of Package Entries with Instances generated
-           by FindExtraPackages().
+           by FindExtra().
 
         """
-        self.logger.debug('Running RPM.RemovePackages()')
+        self.logger.debug('Running RPM.Remove()')
 
         pkgspec_list = []
         for pkg in packages:
@@ -478,7 +478,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                     self.modified.append(pkg)
 
         self.RefreshPackages()
-        self.extra = self.FindExtraPackages()
+        self.extra = self.FindExtra()
 
     def FixInstance(self, instance, inst_status):
         """
@@ -570,7 +570,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             if (self.setup.get('remove') == 'all' or \
                 self.setup.get('remove') == 'packages') and\
                 not self.setup.get('dryrun'):
-                self.RemovePackages(self.extra_instances)
+                self.Remove(self.extra_instances)
             else:
                 self.logger.info("The following extra package instances will be removed by the '-r' option:")
                 for pkg in self.extra_instances:
@@ -843,7 +843,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                             return False
         return True
 
-    def FindExtraPackages(self):
+    def FindExtra(self):
         """Find extra packages."""
         packages = [entry.get('name') for entry in self.getSupportedEntries()]
         extras = []

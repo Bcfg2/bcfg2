@@ -125,7 +125,6 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
 
     __req__ = {'Package': ['name'],
                'Path': ['type']}
-    __ireq__ = {'Package': ['name']}
 
     conflicts = ['YUM24', 'RPM', 'RPMng', 'YUMng']
 
@@ -675,7 +674,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         else:
             return extra_entry
 
-    def FindExtraPackages(self):
+    def FindExtra(self):
         """Find extra packages."""
         packages = [e.get('name') for e in self.getSupportedEntries()]
         extras = []
@@ -830,7 +829,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         if self.extra_instances is not None and len(self.extra_instances) > 0:
             if (self.setup.get('remove') == 'all' or \
                 self.setup.get('remove') == 'packages'):
-                self.RemovePackages(self.extra_instances)
+                self.Remove(self.extra_instances)
             else:
                 self.logger.info("The following extra package instances will "
                                  "be removed by the '-r' option:")
@@ -944,14 +943,14 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         for entry in [ent for ent in packages if states[ent]]:
             self.modified.append(entry)
 
-    def RemovePackages(self, packages):
+    def Remove(self, packages):
         """
            Remove specified entries.
 
            packages is a list of Package Entries with Instances generated
-           by FindExtraPackages().
+           by FindExtra().
         """
-        self.logger.debug('Running Yum.RemovePackages()')
+        self.logger.debug('Running Yum.Remove()')
 
         for pkg in packages:
             for inst in pkg:
@@ -966,7 +965,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                                       nevra['release']))
 
         self._runYumTransaction()
-        self.extra = self.FindExtraPackages()
+        self.extra = self.FindExtra()
 
     def VerifyPath(self, entry, _):  # pylint: disable=W0613
         """Do nothing here since we only verify Path type=ignore"""

@@ -61,11 +61,12 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
     #: Cfg handlers are checked in ascending order of priority to see
     #: if they handle a given event.  If this explicit priority is not
     #: set, then
-    #: :class:`Bcfg2.Server.Plugins.Cfg.CfgPlaintextGenerator` would
-    #: match against nearly every other sort of generator file if it
-    #: comes first.  It's not necessary to set ``__priority`` on
-    #: handlers where :attr:`__specific__` is False, since they don't
-    #: have a potentially open-ended regex
+    #: :class:`Bcfg2.Server.Plugins.Cfg.CfgPlaintextGenerator.CfgPlaintextGenerator`
+    #: would match against nearly every other sort of generator file
+    #: if it comes first.  It's not necessary to set ``__priority`` on
+    #: handlers where
+    #: :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__specific__`
+    #: is False, since they don't have a potentially open-ended regex
     __priority__ = 0
 
     #: Flag to indicate a deprecated handler.

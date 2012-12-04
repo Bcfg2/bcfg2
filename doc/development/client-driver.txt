@@ -2,73 +2,69 @@
 
 .. _development-client-driver:
 
-Writing A Client Tool Driver
-============================
+==============================
+ Writing A Client Tool Driver
+==============================
 
 This page describes the step-by-step process of writing a client tool
 driver for a configuration element type. The included example describes
 an existing driver, and the process that was used to create it.
 
 #. Pick a name for the driver. In this case, we picked the name RPM.
-#. Create a file in ``src/lib/Client/Tools`` with the same name (RPM.py)
-#. Create a class in this file with the same name (class RPM)
+#. Create a file in ``src/lib/Bcfg2/Client/Tools`` with the same name
+   (RPM.py)
+#. Create a class in this file with the same name (``class RPM``)
 
-   * If it handles **Package** entries, subclass ``Bcfg2.Client.Tools.PkgTool``
-     (from here referenced as branch [P])
-   * If it handles **Service** entries, subclass ``Bcfg2.Client.Tools.SvcTool``
-     (from here referenced as branch [S])
-   * Otherwise, subclass ``Bcfg2.Client.Tools.Tool`` (from here referenced
-     as branch [T])
+   * If it handles **Package** entries, subclass
+     :class:`Bcfg2.Client.Tools.PkgTool`
+   * If it handles **Service** entries, subclass
+     :class:`Bcfg2.Client.Tools.SvcTool`
+   * Otherwise, subclass :class:`Bcfg2.Client.Tools.Tool`.
 
-#. Set ``name`` to "RPM"
-#. Add any required executable programs to ``__execs__``
-#. Set ``__handles__`` to a list of (**entry.tag**, **entry.get('type')**)
-   tuples. This determines which entries the Tool module can be used
-   on. In this case, we set ``__handles__ = [('Package', 'rpm')]``.
-#. Add verification. This method should return True/False depending
-   on current entry installation status.
+#. Add any required executable programs to
+   :attr:`Bcfg2.Client.Tools.Tool.__execs__`
+#. Set :attr:`Bcfg2.Client.Tools.Tool.__handles__` to a list of
+   ``(<tag>, <type>)`` tuples. This determines which entries the Tool
+   module can be used on. In this case, we set ``__handles__ =
+   [('Package', 'rpm')]``.
+#. Add verification support by defining a method named
+   ``Verify<tag>``. See :func:`Bcfg2.Client.Tools.Tool.Inventory` for
+   details. This method should return True/False depending on current
+   entry installation status. In the failure path, the current state
+   of failing entry attributes should be set in the entry, to aid in
+   auditing.  (For example, if a file should be mode 644, and is
+   currently mode 600, then set attribute current_mode='600' in the
+   input entry)
+#. Add installation support by defining a method named
+   ``Install<tag``.  See :func:`Bcfg2.Client.Tools.Tool.Install` for
+   details. This method should return True/False depending on the
+   results of the installation process.
 
-   * [T] Add a Verify<entry.tag> method.
-   * [P] Add a VerifyPackage method.
-   * [S] Add a VerifyService method.
-   * In the failure path, the current state of failing entry
-     attributes should be set in the entry, to aid in auditing.
-     (For example, if a file should be mode 644, and is currently
-     mode 600, then set attribute current_mode='600' in the input
-     entry)
+   If you are writing a tool to handle Package entries, PkgTool class
+   has a generic mechanism for performing all-at-once installations,
+   followed, in the case of failures, by single installations. See
+   :func:`Bcfg2.Client.Tools.PkgTool.Install` for details.
+#. Optionally, add support for removing extra entries by defining a
+   :func:`Bcfg2.Client.Tools.Tool.Remove` method.
+#. Optionally, add a :func:`Bcfg2.Client.Tools.Tool.FindExtra` method
+   that locates entries not included in the configuration.
+#. Package drivers require a
+   :func:`Bcfg2.Client.Tools.PkgTool.RefreshPackages` method that
+   updates the internal representation of the package database.
 
-#. Add installation support. This method should return True/False
-   depending on the results of the installation process.
+Client Tool API
+===============
 
-   * [T,S] Add an Install<entry.tag> method.
-   * [P] The PkgTool baseclass has a generic mechanism for performing
-     all-at-once installations, followed, in the case of failures, 
-     by single installations. To enable this support, set the pkgtype 
-     attribute to the package type handled by this driver. Set the
-     pkgtool to a tuple ("command string %s", ("per-package string
-     format", [list of package entry fields])). For RPM, we have
-     setup ``pkgtool =  ("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))``
+Base Classes
+------------
 
-#. Implement entry removal
+.. autoclass:: Bcfg2.Client.Tools.Tool
+.. autoclass:: Bcfg2.Client.Tools.PkgTool
+.. autoclass:: Bcfg2.Client.Tools.SvcTool
 
-   * [T,S] Implement a ``Remove`` method that removes all specified
-     entries (``prototype Remove(self, entries)``)
-   * [P] Implement a ``RemovePackages`` that removes all specified
-     entries (same prototype as Remove)
+Helper Classes
+--------------
 
-#. Add a ``FindExtra`` method that locates entries not included in the
-   configuration. This may or may not be required, certain drivers
-   do not have the capability to find extra entries.
-#. [P] Package drivers require a ``RefreshPackages`` method that updates
-   the internal representation of the package database.
-
-Writing Tool Driver Methods
----------------------------
-
-#. Programs can be run using ``self.cmd.run``. This function returns a
-   (return code, stdout list) tuple.
-#. The configuration is available as ``self.config``
-#. Runtime options are available in a dictionary as ``self.setup``
-#. Informational, error, and debug messages can be produced by 
-   running ``self.logger.info/error/debug``.
-
+.. autoclass:: Bcfg2.Client.Tools.ClassName
+.. autoclass:: Bcfg2.Client.Tools.Executor
+.. autoclass:: Bcfg2.Client.Tools.ToolInstantiationError

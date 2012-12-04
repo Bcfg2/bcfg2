@@ -10,9 +10,7 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
     """Support for Solaris SMF Services."""
     __handles__ = [('Service', 'smf')]
     __execs__ = ['/usr/sbin/svcadm', '/usr/bin/svcs']
-    name = 'SMF'
-    __req__ = {'Service': ['name', 'status']}
-    __ireq__ = {'Service': ['name', 'status', 'FMRI']}
+    __req__ = {'Service': ['name', 'status', 'FMRI']}
 
     def get_svc_command(self, service, action):
         if service.get('type') == 'lrc':
@@ -128,6 +126,6 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
 
         for svc in self.getSupportedEntries():
             if svc.get("FMRI") in allsrv:
-                allsrv.remove(svc.get('FMRI')) 
+                allsrv.remove(svc.get('FMRI'))
         return [Bcfg2.Client.XML.Element("Service", type='smf', name=name) \
                 for name in allsrv]

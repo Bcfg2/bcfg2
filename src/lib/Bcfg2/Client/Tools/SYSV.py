@@ -95,11 +95,11 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
                     return True
         return False
 
-    def RemovePackages(self, packages):
+    def Remove(self, packages):
         """Remove specified Sysv packages."""
         names = [pkg.get('name') for pkg in packages]
         self.logger.info("Removing packages: %s" % (names))
         self.cmd.run("/usr/sbin/pkgrm -a %s -n %s" % \
                      (self.noaskname, names))
         self.RefreshPackages()
-        self.extra = self.FindExtraPackages()
+        self.extra = self.FindExtra()

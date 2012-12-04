@@ -11,7 +11,7 @@ class Blast(Bcfg2.Client.Tools.SYSV.SYSV):
     name = 'Blast'
     __execs__ = ['/opt/csw/bin/pkg-get', "/usr/bin/pkginfo"]
     __handles__ = [('Package', 'blast')]
-    __ireq__ = {'Package': ['name', 'version', 'bname']}
+    __req__ = {'Package': ['name', 'version', 'bname']}
 
     def __init__(self, logger, setup, config):
         # dont use the sysv constructor
@@ -27,6 +27,6 @@ class Blast(Bcfg2.Client.Tools.SYSV.SYSV):
     # Install comes from Bcfg2.Client.Tools.PkgTool
     # Extra comes from Bcfg2.Client.Tools.Tool
     # Remove comes from Bcfg2.Client.Tools.SYSV
-    def FindExtraPackages(self):
+    def FindExtra(self):
         """Pass through to null FindExtra call."""
         return []

@@ -42,10 +42,10 @@ class Encap(Bcfg2.Client.Tools.PkgTool):
             return True
         return False
 
-    def RemovePackages(self, packages):
+    def Remove(self, packages):
         """Deal with extra configuration detected."""
         names = " ".join([pkg.get('name') for pkg in packages])
         self.logger.info("Removing packages: %s" % (names))
         self.cmd.run("/usr/local/bin/epkg -l -q -r %s" % (names))
         self.RefreshPackages()
-        self.extra = self.FindExtraPackages()
+        self.extra = self.FindExtra()
