@@ -93,8 +93,12 @@ class SELinux(Bcfg2.Client.Tools.Tool):
             return self.GenericSEVerify
         elif attr.startswith("InstallSE"):
             return self.GenericSEInstall
-        else:
-            return object.__getattr__(self, attr)
+        # there's no need for an else here, because python checks for
+        # an attribute in the "normal" ways first.  i.e., if self.txn
+        # is used, __getattr__() is never called because txn exists as
+        # a "normal" attribute of this object.  See
+        # http://docs.python.org/2/reference/datamodel.html#object.__getattr__
+        # for details
 
     def BundleUpdated(self, _, states):
         for handler in self.handlers.values():

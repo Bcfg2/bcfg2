@@ -38,34 +38,29 @@ class TestSEModules(TestGroupSpool):
     def test__get_module_name(self):
         modules = self.get_obj()
         for mname in ["foo", "foo.pp"]:
-            entry = lxml.etree.Element("SELinux", type="module", name=mname)
+            entry = lxml.etree.Element("SEModule", type="module", name=mname)
             self.assertEqual(modules._get_module_name(entry), "foo")
 
     def test__get_module_filename(self):
         modules = self.get_obj()
         for mname in ["foo", "foo.pp"]:
-            entry = lxml.etree.Element("SELinux", type="module", name=mname)
+            entry = lxml.etree.Element("SEModule", type="module", name=mname)
             self.assertEqual(modules._get_module_filename(entry), "/foo.pp")
 
     def test_HandlesEntry(self):
         modules = self.get_obj()
         modules._get_module_filename = Mock()
-        modules.Entries['SELinux']['/foo.pp'] = Mock()
-        modules.Entries['SELinux']['/bar.pp'] = Mock()
+        modules.Entries['SEModule']['/foo.pp'] = Mock()
+        modules.Entries['SEModule']['/bar.pp'] = Mock()
         for el in [lxml.etree.Element("Path", name="foo.pp"),
-                   lxml.etree.Element("SELinux", type="fcontext",
-                                      name="foo.pp"),
-                   lxml.etree.Element("SELinux", type="module",
-                                      name="baz.pp")]:
+                   lxml.etree.Element("SEModule", name="baz.pp")]:
             modules._get_module_filename.return_value = "/" + el.get("name")
             self.assertFalse(modules.HandlesEntry(el, Mock()))
-            if el.get("type") == "module":
+            if el.tag == "SEModule":
                 modules._get_module_filename.assert_called_with(el)
 
-        for el in [lxml.etree.Element("SELinux", type="module",
-                                      name="foo.pp"),
-                   lxml.etree.Element("SELinux", type="module",
-                                      name="bar.pp")]:
+        for el in [lxml.etree.Element("SEModule", name="foo.pp"),
+                   lxml.etree.Element("SEModule", name="bar.pp")]:
             modules._get_module_filename.return_value = "/" + el.get("name")
             self.assertTrue(modules.HandlesEntry(el, Mock()),
                             msg="SEModules fails to handle %s" % el.get("name"))
@@ -77,10 +72,10 @@ class TestSEModules(TestGroupSpool):
         modules = self.get_obj()
         modules._get_module_name = Mock()
         handler = Mock()
-        modules.Entries['SELinux']['/foo.pp'] = handler
+        modules.Entries['SEModule']['/foo.pp'] = handler
         modules._get_module_name.return_value = "foo"
 
-        entry = lxml.etree.Element("SELinux", type="module", name="foo")
+        entry = lxml.etree.Element("SEModule", type="module", name="foo")
         metadata = Mock()
         self.assertEqual(modules.HandleEntry(entry, metadata),
                          handler.return_value)
