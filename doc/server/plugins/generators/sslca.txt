@@ -150,7 +150,7 @@ honors ``Group`` and ``Client`` tags much like Bundler.  It must have
 a top-level ``CertInfo`` tag and can contain two types of tags:
 
 Cert
-~~~~
+^^^^
 
 The ``Cert`` tag explains how the certificate should be generated.
 There should be at least one ``Cert`` tag, and at most one ``Cert``
@@ -195,14 +195,14 @@ tag should apply to any given client.
 +--------------+------------------------------------------+---------+---------+
 
 SubjectAltName
-~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^
 
 The ``SubjectAltName`` tag contains text giving a subject alternative
 name for the certificate.  Any number of ``SubjectAltName`` tags may
 be used.
 
 Example
-~~~~~~~
+^^^^^^^
 
 .. code-block: xml
 
@@ -225,7 +225,7 @@ key.xml
 tag that contains at least one ``Key`` tag.
 
 Key
-~~~
+^^^
 
 The ``Cert`` tag explains how the certificate should be generated.
 There should be at least one ``Cert`` tag, and at most one ``Cert``
@@ -240,7 +240,7 @@ tag should apply to any given client.
 +--------------+------------------------------------------+---------+---------+
 
 Example
-~~~~~~~
+^^^^^^^
 
 .. code-block: xml
 
