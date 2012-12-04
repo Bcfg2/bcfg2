@@ -5,6 +5,7 @@ updating the repository. """
 
 import sys
 import Bcfg2.Server.Plugin
+from Bcfg2.Compat import ConfigParser
 try:
     import pysvn
     HAS_SVN = True
@@ -20,6 +21,20 @@ class Svn(Bcfg2.Server.Plugin.Version):
     __vcs_metadata_path__ = ".svn"
     if HAS_SVN:
         __rmi__ = Bcfg2.Server.Plugin.Version.__rmi__ + ['Update', 'Commit']
+    else:
+        __vcs_metadata_path__ = ".svn"
+
+    def callback_conflict_resolver(self, conflict_description):
+        """PySvn callback function to resolve conflicts"""
+        try:
+            choice = getattr(pysvn.wc_conflict_choice,
+                             self.svn_resolution.replace('-','_'))
+            self.logger.info("Svn: Resolving conflict for %s with %s" % \
+                                                (conflict_description['path'], 
+                                                 self.svn_resolution))
+            return choice, None, False
+        except AttributeError:
+            return pysvn.wc_conflict_choice.postpone
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Version.__init__(self, core, datastore)
@@ -32,8 +47,20 @@ class Svn(Bcfg2.Server.Plugin.Version):
             self.client = None
         else:
             self.client = pysvn.Client()
+            try:
+                self.svn_resolution = self.core.setup.cfp.get("Svn", 
+                                                         "conflict_resolution")
+                self.client.callback_conflict_resolver = \
+                                                self.callback_conflict_resolver
+            except ConfigParser.NoSectionError:
+                msg = "Svn: No [Svn] section found in bcfg2.conf"
+                self.logger.warning(msg)
+            except ConfigParser.NoOptionError:
+                msg = "Svn: Option not found in bcfg2.conf: %s" % \
+                sys.exc_info()[1]
+                self.logger.warning(msg)
 
-        self.logger.debug("Initialized svn plugin with SVN directory %s" %
+        self.logger.debug("Svn: Initialized svn plugin with SVN directory %s" %
                           self.vcs_path)
 
     def get_revision(self):
@@ -89,7 +116,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
             self.logger.info("Updated %s from revision %s to %s" % \
                 (self.vcs_root, old_revision, self.revision.number))
         return True
-
+ 
     def Commit(self):
         """Svn.Commit() => True|False\nCommit svn repository\n"""
         # First try to update
