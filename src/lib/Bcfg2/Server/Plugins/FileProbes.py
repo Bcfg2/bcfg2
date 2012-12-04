@@ -24,7 +24,7 @@ import sys
 import pwd
 import grp
 import Bcfg2.Client.XML
-from Bcfg2.Compat import b64encode
+from Bcfg2.Compat import b64encode, oct_mode
 
 path = "%s"
 
@@ -41,7 +41,7 @@ data = Bcfg2.Client.XML.Element("ProbedFileData",
                                 name=path,
                                 owner=pwd.getpwuid(stat[4])[0],
                                 group=grp.getgrgid(stat[5])[0],
-                                mode=oct(stat[0] & 4095))
+                                mode=oct_mode(stat[0] & 4095))
 try:
     data.text = b64encode(open(path).read())
 except:
@@ -101,7 +101,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
 
         for data in datalist:
             if data.text is None:
-                self.logger.error("Got null response to %s file probe from %s" 
+                self.logger.error("Got null response to %s file probe from %s"
                                   % (data.get('name'), metadata.hostname))
             else:
                 try:

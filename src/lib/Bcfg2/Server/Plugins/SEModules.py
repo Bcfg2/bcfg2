@@ -40,8 +40,8 @@ class SEModules(Bcfg2.Server.Plugin.GroupSpool):
     #: objects as its EntrySet children.
     es_child_cls = SEModuleData
 
-    #: SEModules manages ``SELinux`` entries
-    entry_type = 'SELinux'
+    #: SEModules manages ``SEModule`` entries
+    entry_type = 'SEModule'
 
     #: The SEModules plugin is experimental
     experimental = True
@@ -68,7 +68,7 @@ class SEModules(Bcfg2.Server.Plugin.GroupSpool):
         return name.lstrip("/")
 
     def HandlesEntry(self, entry, metadata):
-        if entry.tag in self.Entries and entry.get('type') == 'module':
+        if entry.tag in self.Entries:
             return self._get_module_filename(entry) in self.Entries[entry.tag]
         return Bcfg2.Server.Plugin.GroupSpool.HandlesEntry(self, entry,
                                                            metadata)

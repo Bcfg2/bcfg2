@@ -276,7 +276,7 @@ def client_index(request, timestamp=None, **kwargs):
 
     """
     list = _handle_filters(Interaction.objects.recent(timestamp), **kwargs).\
-           select_related().order_by("client__name").all()
+           select_related('client').order_by("client__name").all()
 
     return render_to_response('clients/index.html',
                               {'inter_list': list,

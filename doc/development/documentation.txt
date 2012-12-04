@@ -103,5 +103,5 @@ Basics
 Sections
 --------
 
-Unless necessary, all the documentation follows the sections header
-rules available at http://docs.python.org/documenting/rest.html#sections.
+Unless necessary, all the documentation follows the sections header rules
+available at http://docs.python.org/devguide/documenting.html#sections

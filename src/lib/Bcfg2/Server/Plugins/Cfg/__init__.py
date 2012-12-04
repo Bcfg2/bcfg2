@@ -11,7 +11,8 @@ import Bcfg2.Options
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Lint
 # pylint: disable=W0622
-from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages, any
+from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages, any, \
+    oct_mode
 # pylint: enable=W0622
 
 LOGGER = logging.getLogger(__name__)
@@ -538,7 +539,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                            entry.get("name"))
             fname = os.path.join(self.path, generator.name)
             entry.set('mode',
-                      str(oct(stat.S_IMODE(os.stat(fname).st_mode))))
+                      oct_mode(stat.S_IMODE(os.stat(fname).st_mode)))
         try:
             return generator.get_data(entry, metadata)
         except:
