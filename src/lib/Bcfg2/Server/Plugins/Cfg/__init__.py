@@ -30,19 +30,19 @@ SETUP = None
 
 
 class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
-    """ CfgBaseFileMatcher is the parent class for all Cfg handler
+    """ .. currentmodule:: Bcfg2.Server.Plugins.Cfg
+
+    CfgBaseFileMatcher is the parent class for all Cfg handler
     objects. """
 
     #: The set of filenames handled by this handler.  If
     #: ``__basenames__`` is the empty list, then the basename of each
-    #: :class:`Bcfg2.Server.Plugins.Cfg.CfgEntrySet` is used -- i.e.,
-    #: the name of the directory that contains the file is used for
-    #: the basename.
+    #: :class:`CfgEntrySet` is used -- i.e., the name of the directory
+    #: that contains the file is used for the basename.
     __basenames__ = []
 
     #: This handler only handles files with the listed extensions
-    #: (which come *after*
-    #: :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__specific__`
+    #: (which come *after* :attr:`CfgBaseFileMatcher.__specific__`
     #: indicators).
     __extensions__ = []
 
@@ -60,13 +60,11 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
 
     #: Cfg handlers are checked in ascending order of priority to see
     #: if they handle a given event.  If this explicit priority is not
-    #: set, then
-    #: :class:`Bcfg2.Server.Plugins.Cfg.CfgPlaintextGenerator.CfgPlaintextGenerator`
+    #: set, then :class:`CfgPlaintextGenerator.CfgPlaintextGenerator`
     #: would match against nearly every other sort of generator file
     #: if it comes first.  It's not necessary to set ``__priority`` on
-    #: handlers where
-    #: :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__specific__`
-    #: is False, since they don't have a potentially open-ended regex
+    #: handlers where :attr:`CfgBaseFileMatcher.__specific__` is
+    #: False, since they don't have a potentially open-ended regex
     __priority__ = 0
 
     #: Flag to indicate a deprecated handler.
@@ -79,11 +77,11 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
     __init__.__doc__ = Bcfg2.Server.Plugin.SpecificData.__init__.__doc__ + \
 """
 .. -----
-.. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__basenames__
-.. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__extensions__
-.. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__ignore__
-.. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__specific__
-.. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__priority__ """
+.. autoattribute:: CfgBaseFileMatcher.__basenames__
+.. autoattribute:: CfgBaseFileMatcher.__extensions__
+.. autoattribute:: CfgBaseFileMatcher.__ignore__
+.. autoattribute:: CfgBaseFileMatcher.__specific__
+.. autoattribute:: CfgBaseFileMatcher.__priority__ """
 
     @classmethod
     def get_regex(cls, basenames):
@@ -91,7 +89,7 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
         full paths) that this handler handles.
 
         :param basename: The base filename to use if
-                         :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__basenames__`
+                         :attr:`CfgBaseFileMatcher.__basenames__`
                          is not defined (i.e., the name of the
                          directory that contains the files the regex
                          will be applied to)
@@ -112,13 +110,13 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
     def handles(cls, event, basename=None):
         """ Return True if this handler handles the file described by
         ``event``.  This is faster than just applying
-        :func:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.get_regex`
+        :func:`CfgBaseFileMatcher.get_regex`
         because it tries to do non-regex matching first.
 
         :param event: The FAM event to check
         :type event: Bcfg2.Server.FileMonitor.Event
         :param basename: The base filename to use if
-                         :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__basenames__`
+                         :attr:`CfgBaseFileMatcher.__basenames__`
                          is not defined (i.e., the name of the
                          directory that contains the files the regex
                          will be applied to)
@@ -137,13 +135,13 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
     def ignore(cls, event, basename=None):  # pylint: disable=W0613
         """ Return True if this handler ignores the file described by
         ``event``.  See
-        :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__ignore__`
+        :attr:`CfgBaseFileMatcher.__ignore__`
         for more information on how ignoring files works.
 
         :param event: The FAM event to check
         :type event: Bcfg2.Server.FileMonitor.Event
         :param basename: The base filename to use if
-                         :attr:`Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__basenames__`
+                         :attr:`CfgBaseFileMatcher.__basenames__`
                          is not defined (i.e., the name of the
                          directory that contains the files the regex
                          will be applied to)
