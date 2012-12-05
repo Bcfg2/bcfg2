@@ -55,8 +55,7 @@ The possible values of ``conflict_resolution`` are:
 The other possible SVN conflict resolvers (``edit``, ``launch``,
 ``working``) require manual intervention and so are not possible.
 Descriptions of each action can be found in the `Version Control with
-Subversion`_ book.
-
-.. _Version Control with Subversion:
-http://svnbook.red-bean.com/en/1.7/svn.ref.svn.html#svn.ref.svn.sw.accept
+Subversion
+<http://svnbook.red-bean.com/en/1.7/svn.ref.svn.html#svn.ref.svn.sw.accept>`_
+book.
 
