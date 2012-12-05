@@ -6,6 +6,8 @@
 POSIXUsers
 ==========
 
+.. versionadded:: 1.3.0
+
 The POSIXUsers tool handles the creation of users and groups as
 defined by ``POSIXUser`` and ``POSIXGroup`` entries.  For a full
 description of those tags, see :ref:`server-plugins-generators-rules`.

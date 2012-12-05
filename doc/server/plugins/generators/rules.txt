@@ -395,6 +395,14 @@ eternally marked as bad.
 SELinux Entries
 ---------------
 
+.. versionadded:: 1.3.0
+
+.. note::
+
+    In order to use these entries, the client also needs to be at least
+    version 1.3.0 since they require a client tool which is unavailable
+    in previous versions.
+
 Below is a set of tables which describe the attributes available
 for various SELinux types.  The entry types (except for ``module``)
 correspond to ``semanage`` subcommands.
@@ -518,6 +526,14 @@ See :ref:`server-plugins-generators-semodules`
 POSIXUser Tag
 -------------
 
+.. versionadded:: 1.3.0
+
+.. note::
+
+    In order to use this, the client also needs to be at least version
+    1.3.0 since they require a client tool which is unavailable in
+    previous versions.
+
 The POSIXUser tag allows you to create users on client machines.  It
 takes the following attributes:
 
@@ -568,6 +584,14 @@ users and groups.
 
 POSIXGroup Tag
 --------------
+
+.. versionadded:: 1.3.0
+
+.. note::
+
+    In order to use this, the client also needs to be at least version
+    1.3.0 since they require a client tool which is unavailable in
+    previous versions.
 
 The POSIXGroup tag allows you to create groups on client machines.  It
 takes the following attributes:
