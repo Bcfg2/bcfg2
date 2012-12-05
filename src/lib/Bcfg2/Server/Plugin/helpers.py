@@ -641,6 +641,11 @@ class StructFile(XMLFileBacked):
                     item.remove(child)
                     item.getparent().append(child)
                     self._xml_match(child, metadata)
+                if item.text:
+                    if item.getparent().text is None:
+                        item.getparent().text = item.text
+                    else:
+                        item.getparent().text += item.text
                 item.getparent().remove(item)
             else:
                 for child in item.iterchildren():
