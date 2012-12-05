@@ -64,10 +64,10 @@ class Svn(Bcfg2.Server.Plugin.Version):
 
     def get_conflict_resolver(self, choice):
         """ Get a PySvn conflict resolution callback """
-        def callback(self, conflict_description):
+        def callback(conflict_description):
             """ PySvn callback function to resolve conflicts """
-            self.debug_log("Svn: Resolving conflict for %s with %s" %
-                           (conflict_description['path'], choice))
+            self.logger.info("Svn: Resolving conflict for %s with %s" %
+                             (conflict_description['path'], choice))
             return choice, None, False
 
         return callback
