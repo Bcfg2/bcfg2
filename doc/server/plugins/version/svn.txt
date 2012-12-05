@@ -49,7 +49,7 @@ The possible values of ``conflict_resolution`` are:
 * ``postpone`` (default)
 * ``mine-conflict``
 * ``theirs-conflict``
-* ``mine-full`
+* ``mine-full``
 * ``theirs-full``
 
 The other possible SVN conflict resolvers (``edit``, ``launch``,
