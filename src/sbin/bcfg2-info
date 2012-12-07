@@ -12,6 +12,7 @@ import lxml.etree
 import os
 import sys
 import tempfile
+import time
 
 try:
     try:
@@ -47,7 +48,7 @@ help - Print this list of available commands
 mappings <type*> <name*> - Print generator mappings for optional type and name
 packageresolve <hostname> <package> [<package>...] - Resolve the specified set of packages
 packagesources <hostname> - Show package sources
-profile <command> <args> - Profile a single bcfg2-info command
+profile [-o] [dir] <command> <args> - Profile a single bcfg2-info command
 quit - Exit the bcfg2-info command line
 showentries <hostname> <type> - Show abstract configuration entries for a given host
 showclient <client1> <client2> - Show metadata for given hosts
@@ -559,8 +560,19 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             return
         tracefname = tempfile.mktemp()
         p = profile.Profile()
-        p.runcall(self.onecmd, arg)
-        displayTrace(p)
+        # Flag to output stats to a file
+        # Usage: profile -o [directory] <command>
+        if "-o" in arg.split():
+            p.runcall(self.onecmd, ' '.join(arg.split()[2:]))
+            dir = arg.split()[1]
+            if not os.path.isdir(dir):
+                print "Output directory %s doesn't exist" % (dir)
+                return
+            out = arg.split()[2]
+            p.dump_stats("%s.%d.profile" % (os.path.join(dir, out), int(time.time())))
+        else:
+            p.runcall(self.onecmd, arg)
+            displayTrace(p)
 
     def Run(self, args):
         """."""
