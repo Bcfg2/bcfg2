@@ -5,8 +5,8 @@
 Ohai
 ====
 
-.. _Ohai: http://wiki.opscode.com/display/ohai/Home
-.. _Ohai-Install: http://wiki.opscode.com/display/ohai/Installation
+.. _Ohai: http://wiki.opscode.com/display/chef/Ohai
+.. _Ohai-Install: http://wiki.opscode.com/display/chef/Ohai+Installation+and+Use
 
 The `Ohai`_ plugin is used to detect information about the client
 operating system. The data is reported back to the server using JSON.
