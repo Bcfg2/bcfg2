@@ -8,6 +8,7 @@
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:include schemaLocation="selinux.xsd"/>
   <xsd:import namespace="http://genshi.edgewall.org/"
               schemaLocation="genshi.xsd"/>
 
@@ -91,12 +92,62 @@
   </xsd:simpleType>
 
   <xsd:complexType name='ActionType'>
-    <xsd:attribute type='ActionTimingEnum' name='timing'/>
-    <xsd:attribute type='ActionWhenEnum' name='when'/>
-    <xsd:attribute type='ActionStatusEnum' name='status'/>
-    <xsd:attribute type="xsd:boolean" name="build"/>
-    <xsd:attribute type='xsd:string' name='name'/>
-    <xsd:attribute type='xsd:string' name='command'/>
+    <xsd:annotation>
+      <xsd:documentation>
+        Action entries are external shell commands that are executed
+        either before bundle installation, after bundle installation
+        or both.
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:attribute type='ActionTimingEnum' name='timing' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>
+          When the action is run.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='ActionWhenEnum' name='when' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>
+          If the action is always run, or is only run when a bundle
+          has been modified.  Actions that run before bundle
+          installation ("pre" and "both") ignore the setting of
+          ``when`` and are always run regardless.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='ActionStatusEnum' name='status' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Whether or not to check the return code of the action.  If
+          this is "check", then a non-zero return code will result in
+          the entry being flagged as bad.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:boolean" name="build" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Also execute the action in build mode.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='name' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The freeform name of the action.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='command' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The command to run.  The command is executed within a shell,
+          so flow control and other shell-specific things can be used.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
@@ -123,118 +174,287 @@
   </xsd:simpleType>
 
   <xsd:complexType name="ACLType">
-    <xsd:attribute type="ACLTypeEnum" name="type" use="required"/>
-    <xsd:attribute type="ACLScopeEnum" name="scope"/>
-    <xsd:attribute type="xsd:string" name="perms" use="required"/>
-    <xsd:attribute type="xsd:string" name="user"/>
-    <xsd:attribute type="xsd:string" name="group"/>
+    <xsd:annotation>
+      <xsd:documentation>
+        Define POSIX ACLs for a Path entry.
+      </xsd:documentation>
+    </xsd:annotation>
+
+    <xsd:attribute type="ACLTypeEnum" name="type" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          ACL type
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="ACLScopeEnum" name="scope">
+      <xsd:annotation>
+        <xsd:documentation>
+          ACL scope.  This is omitted for
+          :xml:attribute:`ACLType:type` = ``default``.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="perms" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Permissions for the ACL.  This can either be a single octal
+          digit (e.g., ``6`` would indicate read and write, but not
+          execute), or a symbolic mode including 'r', 'w', and 'x'.
+          You can include '-' for operations that are not permitted,
+          but it's not required.  I.e., all of the following are
+          identical::
+
+              perms="5"
+              perms="rx"
+              perms="r-x"
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="user">
+      <xsd:annotation>
+        <xsd:documentation>
+          User the ACL applies to (with :xml:attribute:`ACLType:scope`
+          = ``user``).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="group">
+      <xsd:annotation>
+        <xsd:documentation>
+          Group the ACL applies to (with
+          :xml:attribute:`ACLType:scope` = ``group``).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
-  <xsd:complexType name="PathType">
+  <xsd:complexType name="PathType" mixed="true">
+    <xsd:annotation>
+      <xsd:documentation>
+        Manage filesystem paths -- files, directories, symlinks, etc.
+      </xsd:documentation>
+    </xsd:annotation>
+
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='ACL' type='ACLType'/>
     </xsd:choice>
-    <xsd:attribute type="PathTypeEnum" name="type"/>
-    <xsd:attribute type="xsd:string" name="name" use="required"/>
-    <xsd:attribute type="DeviceTypeEnum" name="dev_type"/>
-    <xsd:attribute type="xsd:integer" name="major"/>
-    <xsd:attribute type="xsd:integer" name="minor"/>
-    <xsd:attribute type="xsd:integer" name="mode"/>
-    <xsd:attribute type="xsd:string" name="owner"/>
-    <xsd:attribute type="xsd:string" name="group"/>
-    <xsd:attribute type="xsd:string" name="secontext"/>
-    <xsd:attribute type="xsd:string" name="recursive"/>
-    <xsd:attribute type="xsd:string" name="prune"/>
-    <xsd:attribute type="xsd:string" name="to"/>
-    <xsd:attribute type="xsd:string" name="vcstype"/>
-    <xsd:attribute type="xsd:string" name="revision"/>
-    <xsd:attribute type="xsd:string" name="sourceurl"/>
+    <xsd:attribute type="PathTypeEnum" name="type">
+      <xsd:annotation>
+        <xsd:documentation>
+          Type of path to manage.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="name" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Full path.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="DeviceTypeEnum" name="dev_type">
+      <xsd:annotation>
+        <xsd:documentation>
+          Type of device.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:nonNegativeInteger" name="major">
+      <xsd:annotation>
+        <xsd:documentation>
+          Major device number (``block`` and ``char`` devices only).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:nonNegativeInteger" name="minor">
+      <xsd:annotation>
+        <xsd:documentation>
+          Minor device number (``block`` and ``char`` devices only).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:nonNegativeInteger" name="mode">
+      <xsd:annotation>
+        <xsd:documentation>
+          Permissions mode in octal format.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="owner">
+      <xsd:annotation>
+        <xsd:documentation>
+          Owner username or UID number
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="group">
+      <xsd:annotation>
+        <xsd:documentation>
+          Group name or GID number
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="secontext" default="__default__">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux context for the path.  This should be a full
+          context, not just the type.  E.g.,
+          ``system_u:object_r:etc_t:s0``, not just ``etc_t``.  You can
+          also specify ``__default__``, which will restore the context
+          of the file to the default set by policy.  See
+          :ref:`server-selinux` for more information.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:boolean" name="recursive">
+      <xsd:annotation>
+        <xsd:documentation>
+          Recursively remove files or set permissions, as appropriate.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:boolean" name="prune">
+      <xsd:annotation>
+        <xsd:documentation>
+          Remove entries that are not in the Bcfg2 specification from
+          the directory.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="to">
+      <xsd:annotation>
+        <xsd:documentation>
+          File to link to
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:boolean" name="empty">
+      <xsd:annotation>
+        <xsd:documentation>
+          The file entry has no content.  This must be set as a
+          safeguard against accidentally empty content.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="VCSTypeEnum" name="vcstype">
+      <xsd:annotation>
+        <xsd:documentation>
+          The VCS backend to checkout contents from.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="revision">
+      <xsd:annotation>
+        <xsd:documentation>
+          The revision to checkout.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:anyURI" name="sourceurl">
+      <xsd:annotation>
+        <xsd:documentation>
+          The VCS URL to checkout.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
-  <xsd:simpleType name='SELinuxTypeEnum'>
+  <xsd:simpleType name='VCSTypeEnum'>
     <xsd:restriction base='xsd:string'>
-      <xsd:enumeration value='boolean'/>
-      <xsd:enumeration value='module'/>
-      <xsd:enumeration value='port'/>
-      <xsd:enumeration value='fcontext'/>
-      <xsd:enumeration value='node'/>
-      <xsd:enumeration value='login'/>
-      <xsd:enumeration value='user'/>
-      <xsd:enumeration value='interface'/>
-      <xsd:enumeration value='permissive'/>
+      <xsd:enumeration value='svn'/>
+      <xsd:enumeration value='git'/>
     </xsd:restriction>
   </xsd:simpleType>
-
-  <xsd:simpleType name='SELinuxFileTypeEnum'>
-    <xsd:restriction base='xsd:string'>
-      <xsd:enumeration value='all'/>
-      <xsd:enumeration value='regular'/>
-      <xsd:enumeration value='directory'/>
-      <xsd:enumeration value='symlink'/>
-      <xsd:enumeration value='pipe'/>
-      <xsd:enumeration value='socket'/>
-      <xsd:enumeration value='block'/>
-      <xsd:enumeration value='char'/>
-    </xsd:restriction>
-  </xsd:simpleType>
-
-  <xsd:simpleType name='SELinuxBooleanValueEnum'>
-    <xsd:restriction base='xsd:string'>
-      <xsd:enumeration value='on'/>
-      <xsd:enumeration value='off'/>
-    </xsd:restriction>
-  </xsd:simpleType>
-
-  <xsd:simpleType name='SELinuxEntryTypeEnum'>
-    <xsd:restriction base='xsd:string'>
-      <xsd:enumeration value='boolean'/>
-      <xsd:enumeration value='module'/>
-      <xsd:enumeration value='port'/>
-      <xsd:enumeration value='fcontext'/>
-      <xsd:enumeration value='node'/>
-      <xsd:enumeration value='login'/>
-      <xsd:enumeration value='user'/>
-      <xsd:enumeration value='interface'/>
-      <xsd:enumeration value='permissive'/>
-    </xsd:restriction>
-  </xsd:simpleType>
-
-  <xsd:complexType name="SELinuxStructure">
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type="xsd:boolean" name="disabled"/>
-    <xsd:attributeGroup ref="py:genshiAttrs"/>
-  </xsd:complexType>
-
-  <xsd:complexType name="SELinuxType">
-    <xsd:attribute type="xsd:string" name="name" use="required"/>
-    <xsd:attribute type="SELinuxEntryTypeEnum" name="type" use="required"/>
-    <xsd:attribute type="SELinuxBooleanValueEnum" name="value"/>
-    <xsd:attribute type="xsd:boolean" name="disabled"/>
-    <xsd:attribute type="xsd:string" name="selinuxtype"/>
-    <xsd:attribute type="SELinuxFileTypeEnum" name="filetype"/>
-    <xsd:attribute type="xsd:string" name="proto"/>
-    <xsd:attribute type="xsd:string" name="roles"/>
-    <xsd:attribute type="xsd:string" name="prefix"/>
-    <xsd:attribute type="xsd:string" name="selinuxuser"/>
-    <xsd:attributeGroup ref="py:genshiAttrs"/>
-  </xsd:complexType>
 
   <xsd:complexType name="POSIXUserType">
+    <xsd:annotation>
+      <xsd:documentation>
+        The POSIXUser tag allows you to create users on client machines.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='MemberOf' type='xsd:string'/>
+      <xsd:element name='MemberOf' type='xsd:token'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Specify additional supplementary groups for the POSIXUser
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
     </xsd:choice>
-    <xsd:attribute type="xsd:string" name="name" use="required"/>
-    <xsd:attribute type="xsd:integer" name="uid"/>
-    <xsd:attribute type="xsd:string" name="group"/>
-    <xsd:attribute type="xsd:string" name="gecos"/>
-    <xsd:attribute type="xsd:string" name="home"/>
-    <xsd:attribute type="xsd:string" name="shell"/>
+    <xsd:attribute type="xsd:token" name="name" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Username
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:integer" name="uid">
+      <xsd:annotation>
+        <xsd:documentation>
+          User ID number.  If this is not specified, each client is
+          allowed to set the UID.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="group">
+      <xsd:annotation>
+        <xsd:documentation>
+          Name of the user's primary group.  If this is not set, the
+          user's primary group will be the same as the username.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="gecos">
+      <xsd:annotation>
+        <xsd:documentation>
+          Human-readable user name or comment.  If this is not set,
+          the GECOS will be the same as the username.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="home">
+      <xsd:annotation>
+        <xsd:documentation>
+          User's home directory.  Default is ``/root`` for the root
+          user, ``/home/&lt;username&gt;`` otherwise.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="shell" default="/bin/bash">
+      <xsd:annotation>
+        <xsd:documentation>
+          User's shell
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:complexType name="POSIXGroupType">
-    <xsd:attribute type="xsd:string" name="name" use="required"/>
-    <xsd:attribute type="xsd:integer" name="gid"/>
+    <xsd:annotation>
+      <xsd:documentation>
+        The POSIXGroup tag allows you to create groups on client
+        machines.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:token" name="name" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Username
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:integer" name="gid">
+      <xsd:annotation>
+        <xsd:documentation>
+          Group ID number.  If this is not specified, each client is
+          allowed to set the GID.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 </xsd:schema>

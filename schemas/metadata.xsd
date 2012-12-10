@@ -3,8 +3,8 @@
 
   <xsd:annotation>
     <xsd:documentation>
-      metadata schema for bcfg2
-      Narayan Desai, Argonne National Laboratory
+      Bcfg2 schema for declaring groups and associating groups with
+      bundles.
     </xsd:documentation>
   </xsd:annotation>
 
@@ -14,47 +14,170 @@
               schemaLocation="xinclude.xsd"/>
 
   <xsd:complexType name='bundleDeclaration'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:annotation>
+      <xsd:documentation>
+        Declaration of a bundle as a member of a group.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type='xsd:string' name='name' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The bundle name
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
-  <xsd:complexType name='groupType'>
+  <xsd:complexType name='MetadataGroupType'>
+    <xsd:annotation>
+      <xsd:documentation>
+        The Group tag serves two purposes:
+
+        * If it is at the top level of ``groups.xml`` (i.e., its
+          direct parent is :xml:element:`Groups`), or if it has no
+          children, then it is considered to declare a new group, and
+          :xml:attribute:`MetadataGroupType:profile`,
+          :xml:attribute:`MetadataGroupType:public`,
+          :xml:attribute:`MetadataGroupType:category`, and
+          :xml:attribute:`MetadataGroupType:default` are parsed.
+
+        * If it is not at the top level of ``groups.xml`` *and* it has
+          children, then it is considered to be a conditional; its
+          children only apply to clients that are already members in
+          the group.  The attributes listed above are not parsed.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Bundle' type='bundleDeclaration'/>
-      <xsd:element name='Group' type='groupType'/>
+      <xsd:element name='Group' type='MetadataGroupType'/>
       <xsd:element name='Client' type='clientType'/>
       <xsd:element name='Groups' type='groupsType'/>
     </xsd:choice>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:boolean' name='profile'/>
-    <xsd:attribute type='xsd:boolean' name='public'/>
-    <xsd:attribute type='xsd:boolean' name='default'/>
-    <xsd:attribute type='xsd:string' name='auth'/>
-    <xsd:attribute type='xsd:string' name='category'/>
-    <xsd:attribute type='xsd:string' name='comment'/>
-    <xsd:attribute type='xsd:string' name='negate'/>
+    <xsd:attribute type='xsd:string' name='name' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Name of the group
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:boolean' name='profile' default='false'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Mark the group as a profile, which allows a client to be
+          directly associated with this group in
+          :ref:`server-plugins-grouping-metadata-clients-xml`.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:boolean' name='public' default='false'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Mark the group as public, which allows any client to assert
+          membership in the group with ``bcfg2 -p``.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:boolean' name='default' default='false'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Set as the profile to use for clients that are not
+          associated with any profile explicitly in
+          :ref:`server-plugins-grouping-metadata-clients-xml`.
+          Setting ``default`` to ``true`` requires setting
+          :xml:attribute:`MetadataGroupType:profile` to ``true`` as
+          well.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='category'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Assign the group to the given category.  A client can only
+          be a member of one group in a given category.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:boolean' name='negate' default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          When the Group tag is used as a conditional, only apply the
+          child elements if the named group does not match.  When the
+          Group tag is used as a declaration, do not apply the named
+          group to matching clients.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name='clientType'>
+    <xsd:annotation>
+      <xsd:documentation>
+        Client tags are conditionals, and can be used to set
+        per-client groups and bundles.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Bundle' type='bundleDeclaration'/>
-      <xsd:element name='Group' type='groupType'/>
+      <xsd:element name='Group' type='MetadataGroupType'/>
       <xsd:element name='Client' type='clientType'/>
       <xsd:element name='Groups' type='groupsType'/>
     </xsd:choice>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='negate'/>
+    <xsd:attribute type='xsd:string' name='name' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the client.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:boolean' name='negate' default='false'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Only apply the child tags if the named client does not
+          match.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name='groupsType'>
+    <xsd:annotation>
+      <xsd:documentation>
+        Metadata group list top-level tag
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='Group' type='groupType'/>
+      <xsd:element name='Group' type='MetadataGroupType'/>
       <xsd:element name='Client' type='clientType'/>
-      <xsd:element name='Groups' type='groupsType'/>
+      <xsd:element name='Groups' type='groupsType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Nested ``Groups`` tags allowed to support XInclude
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
       <xsd:element ref="xi:include"/>
     </xsd:choice>
-    <xsd:attribute name='version' type='xsd:string'/>
-    <xsd:attribute name='origin' type='xsd:string'/>
-    <xsd:attribute name='revision' type='xsd:string'/>
+    <xsd:attribute name='version' type='xsd:string'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Group schema version
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name='origin' type='xsd:anyURI'>
+      <xsd:annotation>
+        <xsd:documentation>
+          URI of master version (for common repository)
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name='revision' type='xsd:string'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Master version control revision
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute ref='xml:base'/>
   </xsd:complexType>
 

@@ -23,24 +23,7 @@ so they can be centrally observed. Actions look like:
             status='ignore|check'
             build='true|false'/>
 
-+-----------+------------------+-------------------------------------------+
-| Attribute | Values           | Meaning                                   |
-+===========+==================+===========================================+
-| timing    | pre, post, both  | When the action is run                    |
-+-----------+------------------+-------------------------------------------+
-| name      | freeform         | action name                               |
-+-----------+------------------+-------------------------------------------+
-| command   | freeform         | command text                              |
-+-----------+------------------+-------------------------------------------+
-| when      | always, modified | If the action is always run, or only when |
-|           |                  | a bundle should be or has been modified   |
-+-----------+------------------+-------------------------------------------+
-| status    | ignore, check    | If the return code of the action          |
-|           |                  | should be reported or not                 |
-+-----------+------------------+-------------------------------------------+
-| build     | true, false      | Also execute the action in build mode     |
-|           |                  | (default: true)                           |
-+-----------+------------------+-------------------------------------------+
+.. xml:type:: ActionType
 
 Note that the status attribute tells the bcfg2 client to ignore
 return status, causing failures to still not be centrally reported. If
@@ -65,7 +48,8 @@ Then a corresponding entry must be included in the Rules directory, like:
 .. code-block:: xml
 
     <Rules priority='0'>
-    <Action timing='post' when='modified' name='action_name' command='/path/to/command arg1 arg2' status='ignore'/>
+      <Action timing='post' when='modified' name='action_name'
+              command='/path/to/command arg1 arg2' status='ignore'/>
     </Rules>
 
 This allows different clients to get different actions as a part of the

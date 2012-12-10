@@ -6,67 +6,202 @@
            elementFormDefault="qualified">
   <xs:annotation>
     <xs:documentation>
-      Genshi schema
-      Chris St. Pierre
+      Genshi XML templating language schema
     </xs:documentation>
   </xs:annotation>
 
   <!-- genshi types -->
   <xs:complexType name="forType" mixed="true">
+    <xs:annotation>
+      <xs:documentation>
+        `for directive
+        &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id3&gt;`_
+      </xs:documentation>
+    </xs:annotation>
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax"/>
     </xs:choice>
-    <xs:attribute name="each" type="xs:string" use="required"/>
+    <xs:attribute name="each" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          The loop iterator
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="ifType" mixed="true">
+    <xs:annotation>
+      <xs:documentation>
+        `if directive
+        &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id1&gt;`_
+      </xs:documentation>
+    </xs:annotation>
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax"/>
     </xs:choice>
-    <xs:attribute name="test" type="xs:string" use="required"/>
+    <xs:attribute name="test" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          The statement giving the value to test
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="matchType" mixed="true">
+    <xs:annotation>
+      <xs:documentation>
+        `match directive
+        &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id5&gt;`_
+      </xs:documentation>
+    </xs:annotation>
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax"/>
     </xs:choice>
-    <xs:attribute name="path" type="xs:string" use="required"/>
-    <xs:attribute name="once" type="xs:boolean" default="false"/>
-    <xs:attribute name="buffer" type="xs:boolean" default="true"/>
-    <xs:attribute name="recursive" type="xs:boolean" default="true"/>
+    <xs:attribute name="path" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          XPath expression to search for in the template.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="once" type="xs:boolean" default="false">
+      <xs:annotation>
+        <xs:documentation>
+          Whether the engine should stop looking for more matching
+          elements after the first match. Use this on match templates
+          that match elements that can only occur once in the stream,
+          such as the &lt;head&gt; or &lt;body&gt; elements in an HTML
+          template, or elements with a specific ID.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="buffer" type="xs:boolean" default="true">
+      <xs:annotation>
+        <xs:documentation>
+          Whether the matched content should be buffered in
+          memory. Buffering can improve performance a bit at the cost
+          of needing more memory during rendering. Buffering is
+          *required* for match templates that contain more than one
+          invocation of the ``select()`` function. If there is only
+          one call, and the matched content can potentially be very
+          long, consider disabling buffering to avoid excessive memory
+          use.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="recursive" type="xs:boolean" default="true">
+      <xs:annotation>
+        <xs:documentation>
+          Whether the match template should be applied to its own
+          output. Note that once implies non-recursive behavior, so
+          this attribute only needs to be set for match templates that
+          don't also have once set.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="defType" mixed="true">
+    <xs:annotation>
+      <xs:documentation>
+        `def directive
+        &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id4&gt;`_
+      </xs:documentation>
+    </xs:annotation>
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax"/>
     </xs:choice>
-    <xs:attribute name="function" type="xs:string" use="required"/>
+    <xs:attribute name="function" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          The function prototype
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="withType" mixed="true">
+    <xs:annotation>
+      <xs:documentation>
+        `with directive
+        &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#py-with&gt;`_
+      </xs:documentation>
+    </xs:annotation>
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax"/>
     </xs:choice>
-    <xs:attribute name="vars" type="xs:string" use="required"/>
+    <xs:attribute name="vars" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          A semicolon-delimited list of variables to define and their
+          values.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="replaceType" mixed="true">
+    <xs:annotation>
+      <xs:documentation>
+        `replace directive
+        &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id8&gt;`_
+      </xs:documentation>
+    </xs:annotation>
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax"/>
     </xs:choice>
-    <xs:attribute name="value" type="xs:string" use="required"/>
+    <xs:attribute name="value" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          The value to replace the contents with.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="chooseType" mixed="true">
+    <xs:annotation>
+      <xs:documentation>
+        `choose directive
+        &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id2&gt;`_
+      </xs:documentation>
+    </xs:annotation>
     <xs:sequence>
-      <xs:element name="when" type="py:ifType" maxOccurs="unbounded"/>
+      <xs:element name="when" type="py:ifType" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>
+            The ``when`` directive is used inside
+            :xml:type:`py:chooseType` or
+            :xml:attribute:`py:genshiAttrs:choose` to handle a single
+            specific condition.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
       <xs:element name="otherwise" type="py:otherwiseType"
-                   minOccurs="0"/>
+                  minOccurs="0"/>
     </xs:sequence>
-    <xs:attribute name="test" type="xs:string" use="required"/>
+    <xs:attribute name="test" type="xs:string" use="required">
+      <xs:annotation>
+        <xs:documentation>
+          If ``test`` is set, the child :xml:element:`py:when`
+          directives are tested for equality to the value of the
+          expression.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
   <xs:complexType name="otherwiseType" mixed="true">
+    <xs:annotation>
+      <xs:documentation>
+        The ``otherwise`` directive is used inside
+        :xml:type:`py:chooseType` or
+        :xml:attribute:`py:genshiAttrs:choose` to handle all
+        conditions not handled by a :xml:element:`py:when`.
+      </xs:documentation>
+    </xs:annotation>
     <xs:choice minOccurs="0" maxOccurs="unbounded">
       <xs:any processContents="lax"/>
     </xs:choice>
@@ -74,6 +209,13 @@
 
   <!-- genshi tags -->
   <xs:group name="genshiElements">
+    <xs:annotation>
+      <xs:documentation>
+        Most Genshi templating directives can be used either as
+        standalone elements or as attributes on existing elements.
+        This element group defines the standalone tags.
+      </xs:documentation>
+    </xs:annotation>
     <xs:choice>
       <xs:element name="with" type="py:withType"/>
       <xs:element name="replace" type="py:replaceType"/>
@@ -87,17 +229,113 @@
 
   <!-- genshi attributes -->
   <xs:attributeGroup name="genshiAttrs">
-    <xs:attribute name="if" type="xs:string" form="qualified"/>
-    <xs:attribute name="choose" type="xs:string" form="qualified"/>
-    <xs:attribute name="when" type="xs:string" form="qualified"/>
-    <xs:attribute name="otherwise" type="xs:string" form="qualified"/>
-    <xs:attribute name="for" type="xs:string" form="qualified"/>
-    <xs:attribute name="def" type="xs:string" form="qualified"/>
-    <xs:attribute name="match" type="xs:string" form="qualified"/>
-    <xs:attribute name="with" type="xs:string" form="qualified"/>
-    <xs:attribute name="attrs" type="xs:string" form="qualified"/>
-    <xs:attribute name="content" type="xs:string" form="qualified"/>
-    <xs:attribute name="replace" type="xs:string" form="qualified"/>
-    <xs:attribute name="strip" type="xs:string" form="qualified"/>
+    <xs:annotation>
+      <xs:documentation>
+        Most Genshi templating directives can be used either as
+        standalone elements or as attributes on existing elements.
+        This attribute group defines the attribute directives.
+      </xs:documentation>
+    </xs:annotation>
+    <xs:attribute name="if" type="xs:string" form="qualified">
+      <xs:annotation>
+        <xs:documentation>
+          `if directive
+          &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id1&gt;`_
+
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="choose" type="xs:string" form="qualified">
+      <xs:annotation>
+        <xs:documentation>
+          `choose directive
+          &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id2&gt;`_
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="when" type="xs:string" form="qualified">
+      <xs:annotation>
+        <xs:documentation>
+          The ``when`` directive is used inside
+          :xml:type:`py:chooseType` or
+          :xml:attribute:`py:genshiAttrs:choose` to handle a single
+          specific condition.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="otherwise" type="xs:string" form="qualified">
+      <xs:annotation>
+        <xs:documentation>
+          The ``otherwise`` directive is used inside
+          :xml:type:`py:chooseType` or
+          :xml:attribute:`py:genshiAttrs:choose` to handle all
+          conditions not handled by a :xml:element:`py:when`.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="for" type="xs:string" form="qualified">
+      <xs:annotation>
+        <xs:documentation>
+          `for directive
+          &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id3&gt;`_
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="def" type="xs:string" form="qualified">
+      <xs:annotation>
+        <xs:documentation>
+          `def directive
+          &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id4&gt;`_
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="match" type="xs:string" form="qualified">
+      <xs:annotation>
+        <xs:documentation>
+          `match directive
+          &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id5&gt;`_
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="with" type="xs:string" form="qualified">
+      <xs:annotation>
+        <xs:documentation>
+          `with directive
+          &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#py-with&gt;`_
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="attrs" type="xs:string" form="qualified">
+      <xs:annotation>
+        <xs:documentation>
+          `attrs directive
+          &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id6&gt;`_
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="content" type="xs:string" form="qualified">
+      <xs:annotation>
+        <xs:documentation>
+          `content directive
+          &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id7&gt;`_
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="replace" type="xs:string" form="qualified">
+      <xs:annotation>
+        <xs:documentation>
+          `replace directive
+          &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id8&gt;`_
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute name="strip" type="xs:string" form="qualified">
+      <xs:annotation>
+        <xs:documentation>
+          `strip directive
+          &lt;http://genshi.edgewall.org/wiki/Documentation/xml-templates.html#id9&gt;`_
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:attributeGroup>
 </xs:schema>

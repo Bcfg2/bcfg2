@@ -1,4 +1,4 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">  
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
   <xsd:annotation>
     <xsd:documentation>
       NagiosGen config schema for bcfg2
@@ -6,11 +6,11 @@
     </xsd:documentation>
   </xsd:annotation>
 
-  <xsd:complexType name="GroupType">
+  <xsd:complexType name="NagiosGenGroupType">
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
       <xsd:element name="Option" type="OptionType"/>
-      <xsd:element name="Group" type="GroupType"/>
-      <xsd:element name="Client" type="GroupType"/>
+      <xsd:element name="Group" type="NagiosGenGroupType"/>
+      <xsd:element name="Client" type="NagiosGenGroupType"/>
     </xsd:choice>
     <xsd:attribute type="xsd:string" name="name" use="required"/>
     <xsd:attribute type="xsd:string" name="negate"/>
@@ -23,8 +23,8 @@
   <xsd:element name="NagiosGen">
     <xsd:complexType>
       <xsd:choice minOccurs="1" maxOccurs="unbounded">
-        <xsd:element name="Group" type="GroupType"/>
-        <xsd:element name="Client" type="GroupType"/>
+        <xsd:element name="Group" type="NagiosGenGroupType"/>
+        <xsd:element name="Client" type="NagiosGenGroupType"/>
       </xsd:choice>
     </xsd:complexType>
   </xsd:element>

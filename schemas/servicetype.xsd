@@ -1,6 +1,5 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
-
   <xsd:annotation>
     <xsd:documentation>
       services schema for bcfg2
@@ -16,35 +15,88 @@
     <xsd:restriction base='xsd:string'>
       <xsd:enumeration value='true'/>
       <xsd:enumeration value='false'/>
-      <xsd:enumeration value='1'/>
-      <xsd:enumeration value='0'/>
       <xsd:enumeration value='interactive'/>
     </xsd:restriction>
   </xsd:simpleType>
 
   <xsd:complexType name="ServiceType">
-    <xsd:choice minOccurs="0" maxOccurs="unbounded">
-      <xsd:element name="User">
-        <xsd:complexType>
-          <xsd:attribute name="address" type="xsd:string" use="required"/>
-          <xsd:attribute name="mask" type="xsd:string" use="required"/>
-        </xsd:complexType>
-      </xsd:element>
-      <xsd:group ref="py:genshiElements"/>
-    </xsd:choice>
-    <xsd:attribute name="name" type="xsd:string" use="required"/>
-    <xsd:attribute name="status" type="StatusEnum"/>
-    <xsd:attribute name="restart" type="RestartEnum"/>
-    <xsd:attribute name="install" type="xsd:boolean"/>
-    <xsd:attribute name="type" type="ServiceTypeEnum"/>
-    <xsd:attribute name="port" type="xsd:string"/>
-    <xsd:attribute name="protocol" type="xsd:string"/>
-    <xsd:attribute name="custom" type="xsd:string"/>
-    <xsd:attribute name="FMRI" type="xsd:string"/>
-    <xsd:attribute name="sequence" type="xsd:string"/>
-    <xsd:attribute name="target" type="xsd:string"/>
-    <xsd:attribute name="parameters" type="xsd:string"/>
+    <xsd:annotation>
+      <xsd:documentation>
+        Concrete description of a service entry.  Note that, due to
+        the great proliferation of init systems, many of the
+        attributes listed only apply to one or a few client tools.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="name" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the service.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="status" type="StatusEnum" default="off">
+      <xsd:annotation>
+        <xsd:documentation>
+          Whether the service should start at boot.  If this is set to
+          "ignore", then the boot-time status of the service will not
+          be checked.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="restart" type="RestartEnum" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Whether or not to restart the service when the bundle is
+          modified.  (New in 1.3; replaces "mode" attribute.)
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="install" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Whether or not to install the service initially.  (New in
+          1.3; replaces "mode" attribute.)
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="type" type="ServiceTypeEnum">
+      <xsd:annotation>
+        <xsd:documentation>
+          Driver to use on the client to manage this service.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="FMRI" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>
+          The resource identifier for SMF services.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="sequence" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>
+          Order for service startup.  Only meaningful for DebInit
+          services.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="target" type="xsd:string" default="restart">
+      <xsd:annotation>
+        <xsd:documentation>
+          Command to pass to the service management system when
+          restarting a service.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="parameters" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>
+          Parameters to pass to the service.  Only meaningful for
+          Upstart services.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
-
 </xsd:schema>

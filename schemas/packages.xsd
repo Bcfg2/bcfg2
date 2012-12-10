@@ -1,5 +1,4 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
-
   <xsd:annotation>
     <xsd:documentation>
       packages config schema for bcfg2
@@ -10,7 +9,7 @@
   <xsd:import namespace="http://www.w3.org/XML/1998/namespace"
               schemaLocation="xml.xsd"/>
 
-  <xsd:simpleType name="sourceTypeEnum">
+  <xsd:simpleType name="SourceTypeEnum">
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="yum"/>
       <xsd:enumeration value="apt"/>
@@ -19,50 +18,212 @@
   </xsd:simpleType>
 
   <xsd:complexType name="RepoOptionsType">
-      <xsd:attribute type="xsd:boolean" name="serveronly"/>
-      <xsd:attribute type="xsd:boolean" name="clientonly"/>
-      <xsd:anyAttribute processContents="lax"/>
+    <xsd:annotation>
+      <xsd:documentation>
+        **RepoOptionsType** can be used to specify arbitrary
+        repository options.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:boolean" name="serveronly">
+      <xsd:annotation>
+        <xsd:documentation>
+          The options given in this tag will only be used on the Bcfg2
+          server, not on the clients.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:boolean" name="clientonly">
+      <xsd:annotation>
+        <xsd:documentation>
+          The options given in this tag will only be used on the Bcfg2
+          clients, not on the server.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:anyAttribute processContents="lax">
+      <xsd:annotation>
+        <xsd:documentation>
+          All other (arbitrary) attributes will be added to the
+          repository configuration.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:anyAttribute>
   </xsd:complexType>
 
-  <xsd:complexType name="sourceType">
+  <xsd:complexType name="SourceType">
+    <xsd:annotation>
+      <xsd:documentation>
+        **SourceType** elements are used to specify software sources
+        (i.e., repositories) for the Packages plugin.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:choice minOccurs="0" maxOccurs="unbounded">
-      <xsd:element name="Component" type="xsd:string"/>
-      <xsd:element name="Arch" type="xsd:string"/>
-      <xsd:element name="GPGKey" type="xsd:string"/>
-      <xsd:element name="Options" type="RepoOptionsType"/>
+      <xsd:element name="Component" type="xsd:string">
+        <xsd:annotation>
+          <xsd:documentation>
+            Components are used to build multiple repository URLs from
+            a single :xml:element:`Source` tag.  This is only
+            meaningful if the :xml:attribute:`SourceType:url`
+            attribute is specified; see that attribute above for more
+            detail.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Arch" type="xsd:string">
+        <xsd:annotation>
+          <xsd:documentation>
+            The architecture(s) of the repository.  A client must be a
+            member of one of the listed architecture groups in order
+            for this source to apply to the client.  Additionally, if
+            the :xml:attribute:`SourceType:url` attribute is
+            specified, the :xml:element:`Arch` tag is used to generate
+            URLs.  See :xml:attribute:`the url attribute
+            &lt;SourceType:url&gt;` for more detail.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="GPGKey" type="xsd:string">
+        <xsd:annotation>
+          <xsd:documentation>
+            The GPG key(s) for the repository.  This only applies to
+            sources with :xml:attribute:`SourceType:type` = ``yum``.
+            If GPG keys are specified, then GPG checking will be
+            automatically enabled for the repository, both on the
+            Bcfg2 server (if :ref:`yum libraries
+            &lt;native-yum-libraries&gt;` are in use) and on the Bcfg2
+            client (if you use
+            :ref:`server-plugins-generators-packages` to
+            :ref:`generate your Yum config
+            &lt;generating-client-configs&gt;`).
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Options" type="RepoOptionsType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Arbitrary options to be used in the repository
+            configuration.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
       <xsd:choice>
-        <xsd:element name="Blacklist" type="xsd:string"/>
-        <xsd:element name="Whitelist" type="xsd:string"/>
+        <xsd:element name="Blacklist" type="xsd:string">
+          <xsd:annotation>
+            <xsd:documentation>
+              Blacklist the given package(s) from the
+              :ref:`server-plugins-generators-packages` plugin.  This
+              prevents them from being included in
+              automatically-resolved dependencies.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
+        <xsd:element name="Whitelist" type="xsd:string">
+          <xsd:annotation>
+            <xsd:documentation>
+              If **Whitelist** is specified, *only* packages listed
+              will be included by the
+              :ref:`server-plugins-generators-packages` plugin.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:element>
       </xsd:choice>
     </xsd:choice>
-    <xsd:attribute type="xsd:boolean" name="recommended"/>
-    <xsd:attribute type="sourceTypeEnum" name="type"/>
-    <xsd:attribute type="xsd:string" name="pulp_id"/>
-    <xsd:attribute type="xsd:string" name="url"/>
-    <xsd:attribute type="xsd:string" name="rawurl"/>
-    <xsd:attribute type="xsd:string" name="version"/>
+    <xsd:attribute type="xsd:boolean" name="recommended" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Include packages recommended as dependencies by APT.  This
+          only applies to sources with
+          :xml:attribute:`SourceType:type` = ``apt``.  You must
+          regenerate the Packages cache after changing this attribute.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:boolean" name="essential" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Include essential packages from this repo by default (i.e.,
+          without needing to specify them in a bundle).  This only
+          applies to sources with :xml:attribute:`SourceType:type` =
+          ``apt``.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="SourceTypeEnum" name="type" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          The type of the repository.  This corresponds to the
+          Packages plugin driver that will handle the source.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="pulp_id">
+      <xsd:annotation>
+        <xsd:documentation>
+          The :ref:`Pulp &lt;pulp-source-support&gt;` repository ID
+          for this repo.  This only applies to sources with
+          :xml:attribute:`SourceType:type` = ``yum``.  Due to the
+          amount of data that can be queried directly from Pulp,
+          there's rarely a need to supply other attributes.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="url">
+      <xsd:annotation>
+        <xsd:documentation>
+          The base URL to use when generating URLs for this source.
+          If :xml:attribute:`SourceType:url` is used, you must also
+          provide the :xml:element:`Arch` tag, at least one
+          :xml:element:`Component` tag, and the
+          :xml:attribute:`SourceType:version` attribute.  You must not
+          specify :xml:attribute:`SourceType:rawurl`. For each
+          combination of component and Arch tag, a URL is created in
+          the format::
+
+              &lt;url&gt;/&lt;version&gt;/&lt;component&gt;/&lt;arch&gt;
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="rawurl">
+      <xsd:annotation>
+        <xsd:documentation>
+          The raw URL to the (single) repository defined by this
+          source. :xml:element:`Component` and
+          :xml:attribute:`SourceType:version` are ignored if this is
+          given.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="version">
+      <xsd:annotation>
+        <xsd:documentation>
+          The OS version this source applies to.  This is used to
+          generate URLs if the :xml:attribute:`SourceType:url`
+          attribute is given, and ignored otherwise.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
-  <xsd:complexType name="groupType">
+  <xsd:complexType name="PackagesGroupType">
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
-      <xsd:element name="Group" type="groupType"/>
-      <xsd:element name="Client" type="groupType"/>
-      <xsd:element name="Sources" type="sourcesType"/>
-      <xsd:element name="Source" type="sourceType"/>
+      <xsd:element name="Group" type="PackagesGroupType"/>
+      <xsd:element name="Client" type="PackagesGroupType"/>
+      <xsd:element name="Sources" type="SourcesType"/>
+      <xsd:element name="Source" type="SourceType"/>
     </xsd:choice>
     <xsd:attribute type="xsd:string" name="name" use="required"/>
     <xsd:attribute type="xsd:boolean" name="negate"/>
   </xsd:complexType>
 
-  <xsd:complexType name="sourcesType">
+  <xsd:complexType name="SourcesType">
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
-      <xsd:element name="Group" type="groupType"/>
-      <xsd:element name="Client" type="groupType"/>
-      <xsd:element name="Source" type="sourceType"/>
-      <xsd:element name="Sources" type="sourcesType"/>
+      <xsd:element name="Group" type="PackagesGroupType"/>
+      <xsd:element name="Client" type="PackagesGroupType"/>
+      <xsd:element name="Source" type="SourceType"/>
+      <xsd:element name="Sources" type="SourcesType"/>
     </xsd:choice>
     <xsd:attribute ref="xml:base"/>
   </xsd:complexType>
 
-  <xsd:element name="Sources" type="sourcesType"/>
+  <xsd:element name="Sources" type="SourcesType"/>
 </xsd:schema>

@@ -18,38 +18,13 @@ for owner, read only for group and other). These options, and a few
 others, can be overridden through use of ``info.xml`` files. Each
 config file directory can have a ``info.xml`` file if needed.
 
-An ``info.xml`` file consists of a ``<FileInfo>`` tag containing an
-``<Info>`` tag; the following attributes are allowed on the ``<Info>`` tag:
+.. xml:schema:: info.xsd
+   :linktotype:
+   :inlinetypes: InfoType
+   :noautodep: ACLType
 
-+------------+-----------------+------------------------------------+---------+
-| Field      | Possible values | Description                        | Default |
-+============+=================+====================================+=========+
-| encoding   | ascii | base64  | Encoding of the file. Use 'base64' | ascii   |
-|            |                 | for binary files                   |         |
-+------------+-----------------+------------------------------------+---------+
-| owner      | Any valid user  | Sets owner of the file             | root    |
-+------------+-----------------+------------------------------------+---------+
-| group      | Any valid group | Sets group of the file             | root    |
-+------------+-----------------+------------------------------------+---------+
-| mode       | Octal file mode | Sets the mode of the file (or      | 0644    |
-|            | | 'inherit'     | inherits from the files on disk    |         |
-|            |                 | if set to 'inherit'; deprecated)   |         |
-+------------+-----------------+------------------------------------+---------+
-| secontext  | SELinux context | Sets the SELinux context of the    | default |
-|            | | '__default__' | file, or sets to the default       |         |
-|            |                 | context set by policy if set to    |         |
-|            |                 | '__default__'                      |         |
-+------------+-----------------+------------------------------------+---------+
-| important  | true | false    | Important entries are installed    | false   |
-|            |                 | first during client execution      |         |
-+------------+-----------------+------------------------------------+---------+
-| paranoid   | true | false    | Backup file before replacement?    | true    |
-+------------+-----------------+------------------------------------+---------+
-| sensitive  | true | false    | The contents of sensitive entries  | false   |
-|            |                 | aren't included in reports         |         |
-+------------+-----------------+------------------------------------+---------+
-
-A sample info file for CGI script on a web server might look like:
+A sample ``info.xml`` file for CGI script on a web server might look
+like:
 
 .. code-block:: xml
 
@@ -57,72 +32,37 @@ A sample info file for CGI script on a web server might look like:
       <Info owner="www" group="www" mode="0755"/>
     </FileInfo>
 
-Back to the fstab example again, our final ``Cfg/etc/fstab/`` directory
-might look like::
+A more complex example for a template that generates both
+``bcfg2.conf`` and ``bcfg2-web.conf`` might look like this:
 
-    info.xml
-    fstab
-    fstab.G50_server
-    fstab.G99_fileserver
-    fstab.H_host.example.com
-
-See :ref:`server-selinux` for more information on the ``secontext``
-attribute and managing SELinux in general.
-
-``info.xml`` files also have the ability to specify different sets of
-file metadata on a group by group or host by host basis, or by path
-(for files using :ref:`altsrc
-<server-plugins-structures-altsrc>`). These files are XML, and work
-similarly to those used by :ref:`Rules
-<server-plugins-generators-rules>` or :ref:`Bundler
-<server-plugins-structures-bundler-index>`.
-
-The following specifies a different global set of permissions
-(root/sys/0651) than on clients in group webserver or named
-"foo.example.com" (root/root/0652)::
-
-    <FileInfo>
-      <Client name='foo.example.com'>
-        <Info owner='root' group='root' mode='0652'/>
-      </Client>
-      <Group name='webserver'>
-        <Info owner='root' group='root' mode='0652'/>
-      </Group>
-      <Info owner='root' group='sys' mode='0651'/>
-    </FileInfo>
-
-.. versionadded:: 1.2.0
-
-You can also use the ``<Path>`` directive to specify a different set
-of permissions depending on the path of the file::
+.. code-block:: xml
 
     <FileInfo>
       <Path name="/etc/bcfg2-web.conf">
         <Info owner="root" group="apache" mode="0640"/>
       </Path>
       <Path name="/etc/bcfg2-web.conf" negate="true">
-        <Info owner="root" group="root" mode="0600"/>
+        <Group name="bcfg2-server">
+          <Info owner="bcfg2" group="bcfg2" mode="0600"/>
+        </Group>
+        <Group name="bcfg2-server" negate="true">
+          <Info owner="root" group="root" mode="0600"/>
+        </Group>
       </Path>
     </FileInfo>
 
-.. versionadded:: 1.3.0
-
-You can also specify ACLs as children of ``<Info>`` tags in
-``info.xml``.  See :ref:`server-plugins-generators-rules-acls` for
-more information on the formatting of ACL tags.
+See :ref:`server-selinux` for more information on the ``secontext``
+attribute and managing SELinux in general.
 
 :info and info files
 ====================
+
+.. deprecated:: 1.3.0
 
 Historically, Bcfg2 also accepted the use of ``:info`` and ``info``
 files, which function the same as ``info.xml``, but are not XML.  They
 lack the ability to specify different permissions based on client,
 group, or path, and cannot be used to specify ACLs, either.
-
-.. note::
-
-    ``:info`` and ``info`` files are deprecated and will be removed in
-    a future release.
 
 An example ``:info`` or ``info`` file would look like::
 

@@ -358,15 +358,15 @@ class MetadataGroup(tuple):
     """ representation of a metadata group.  basically just a named tuple """
 
     # pylint: disable=R0913,W0613
-    def __new__(cls, name, bundles=None, category=None,
-                 is_profile=False, is_public=False, is_private=False):
+    def __new__(cls, name, bundles=None, category=None, is_profile=False,
+                is_public=False):
         if bundles is None:
             bundles = set()
         return tuple.__new__(cls, (bundles, category))
     # pylint: enable=W0613
 
-    def __init__(self, name, bundles=None, category=None,
-                 is_profile=False, is_public=False, is_private=False):
+    def __init__(self, name, bundles=None, category=None, is_profile=False,
+                 is_public=False):
         if bundles is None:
             bundles = set()
         tuple.__init__(self)
@@ -375,7 +375,6 @@ class MetadataGroup(tuple):
         self.category = category
         self.is_profile = is_profile
         self.is_public = is_public
-        self.is_private = is_private
         # record which clients we've warned about category suppression
         self.warned = []
     # pylint: enable=R0913
@@ -795,8 +794,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                                        for b in grp.findall("Bundle")],
                               category=grp.get("category"),
                               is_profile=grp.get("profile", "false") == "true",
-                              is_public=grp.get("public", "false") == "true",
-                              is_private=grp.get("public", "true") == "false")
+                              is_public=grp.get("public", "false") == "true")
             if grp.get('default', 'false') == 'true':
                 self.default = grp.get('name')
 

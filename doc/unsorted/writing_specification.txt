@@ -38,7 +38,6 @@ configuration is then used to generate the clients literal configuration.
 For instance the above abstract configuration entry may generate a
 literal configuration of
 
-
 .. code-block:: xml
 
     <Package name='bcfg2' version='0.9.2-0.1' type='yum'/>
@@ -243,105 +242,20 @@ can be used in bundles)
 Bundle Tag
 ^^^^^^^^^^
 
-The Bundle Tag has the following possible attributes:
-
-+----------+-----------------------------------------+--------+
-| Name     | Description                             | Values |
-+==========+=========================================+========+
-| name     | The name of the bundle                  | String |
-+----------+-----------------------------------------+--------+
-| version  | Bundle schema version                   | String |
-+----------+-----------------------------------------+--------+
-| origin   | URL of master version (for common repo) | String |
-+----------+-----------------------------------------+--------+
-| revision | Master version control revision         | String |
-+----------+-----------------------------------------+--------+
+.. xml:type:: BundleType
+   :nochildren:
 
 As mentioned above the Configuration Entity Tags may only have the name
 attribute in Bundle definitions.
 
-Abstract Group Tag
-^^^^^^^^^^^^^^^^^^
+Group and Client Tags
+^^^^^^^^^^^^^^^^^^^^^
 
-In the Abstract Configuration plugins (Base and Bundle) the Group Tag
-may have the following attributes:
+.. xml:type:: BundlerGroupType
+   :nochildren:
 
-+--------+------------------------------+---------------+
-| Name   | Description                  | Values        |
-+========+==============================+===============+
-| name   | Name of group.               | String        |
-+--------+------------------------------+---------------+
-| negate | Negate the group association | (True|False*) |
-|        | (is not a member of)         |               |
-+--------+------------------------------+---------------+
-
-An abstract group may contain any of the Configuration Entity types and other groups.
-
-Using Base
-^^^^^^^^^^
-
-The Base plugin provides a mechanism to add independent configuration
-entities to a client's abstract configuration.  All files in the Base/
-subdirectory of the repository are processed, and all entries that fall
-within the scope of the client metadata are included in its abstract
-configuration.::
-
-    $ ls Base/
-    centos-4-x86.xml
-    fedora-core-4-x86.xml
-    rhel-as-4-x86.xml
-    rhel-es-4-x86.xml
-    rhel-ws-4-x86_64.xml
-    rhel-ws-4-x86.xml
-
-.. code-block:: xml
-
-    <Base>
-        <Group name='Centos4.4-Standard'>
-            <Package name='audit'/>
-            <Package name='audit-libs'/>
-            <Package name='basesystem'/>
-            <Package name='bash'/>
-            <Package name='bcfg2'/>
-            <Package name='beecrypt'/>
-            ....
-            <Package name='yum'/>
-            <Package name='zlib'/>
-            <Group name='x86_64'>
-                <Package name='systemimager-x86_64initrd_template'/>
-            </Group>
-        </Group>
-    </Base>
-
-The format of the Base files are similar to those used by the Bundler.
-The majority of the elements are usually Packages, but Paths of any type
-may all be defined. A partial example is below:
-
-Base Tag
-^^^^^^^^
-
-The Base Tag has no attributes
-
-As mentioned above the Configuration Entity Tags contained in a Base
-definition may only have the name attribute in Base definitions.
-
-Abstract Group Tag
-^^^^^^^^^^^^^^^^^^
-
-In the Abstract Configuration plugins (Base and Bundle) the Group Tag
-may have the following attributes:
-
-+--------+------------------------------+---------------+
-| Name   | Description                  | Values        |
-+========+==============================+===============+
-| name   | Name of group.               | String        |
-+--------+------------------------------+---------------+
-| negate | Negate the group association | (True|False*) |
-|        | (is not a member of)         |               |
-+--------+------------------------------+---------------+
-
-An abstract group may contain any of the Configuration Entity types and
-other groups.
+An abstract group may contain any of the Configuration Entity types
+and other groups.
 
 Literal Configuration (Generators)
 ==================================

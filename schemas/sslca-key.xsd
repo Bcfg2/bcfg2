@@ -1,32 +1,86 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
   <xsd:annotation>
     <xsd:documentation>
-      SSLCA key.xml schema for bcfg2
-      Chris St. Pierre
+      Schema for :ref:`server-plugins-generators-sslca` ``key.xml``
     </xsd:documentation>
   </xsd:annotation>
 
-  <xsd:complexType name="GroupType">
+  <xsd:complexType name="SSLCAKeyGroupType">
+    <xsd:annotation>
+      <xsd:documentation>
+        An **SSLCAKeyGroupType** is a tag used to provide logic.
+        Child entries of an SSLCAKeyGroupType tag only apply to
+        machines that match the condition specified -- either
+        membership in a group, or a matching client name.
+        :xml:attribute:`SSLCAKeyGroupType:negate` can be set to negate
+        the sense of the match.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
       <xsd:element name="Key" type="KeyType"/>
-      <xsd:element name="Group" type="GroupType"/>
-      <xsd:element name="Client" type="GroupType"/>
+      <xsd:element name="Group" type="SSLCAKeyGroupType"/>
+      <xsd:element name="Client" type="SSLCAKeyGroupType"/>
     </xsd:choice>
-    <xsd:attribute type="xsd:string" name="name" use="required"/>
-    <xsd:attribute type="xsd:string" name="negate"/>
+    <xsd:attribute name='name' type='xsd:string'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the client or group to match on.  Child entries
+          will only apply to this client or group (unless
+          :xml:attribute:`SSLCAKeyGroupType:negate` is set).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name='negate' type='xsd:boolean'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Negate the sense of the match, so that child entries only
+          apply to a client if it is not a member of the given group
+          or does not have the given name.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
+  <xsd:simpleType name="KeyTypeEnum">
+    <xsd:annotation>
+      <xsd:documentation>
+        Available generated key types
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:token">
+      <xsd:enumeration value="rsa"/>
+      <xsd:enumeration value="dsa"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
   <xsd:complexType name="KeyType">
-    <xsd:attribute type="xsd:string" name="type"/>
-    <xsd:attribute type="xsd:string" name="bits"/>
+    <xsd:attribute type="xsd:string" name="type" default='rsa'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The key type
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:nonNegativeInteger" name="bits" default="2048">
+      <xsd:annotation>
+        <xsd:documentation>
+          The key length
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:element name="KeyInfo">
+    <xsd:annotation>
+      <xsd:documentation>
+        Top-level tag for describing an SSLCA generated key.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:complexType>
       <xsd:choice minOccurs="1" maxOccurs="unbounded">
         <xsd:element name="Key" type="KeyType"/>
-        <xsd:element name="Group" type="GroupType"/>
-        <xsd:element name="Client" type="GroupType"/>
+        <xsd:element name="Group" type="SSLCAKeyGroupType"/>
+        <xsd:element name="Client" type="SSLCAKeyGroupType"/>
       </xsd:choice>
     </xsd:complexType>
   </xsd:element>

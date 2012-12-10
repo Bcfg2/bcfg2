@@ -1,5 +1,4 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
-  
   <xsd:annotation>
     <xsd:documentation>
       dependency schema for bcfg2
@@ -7,21 +6,21 @@
     </xsd:documentation>
   </xsd:annotation>
 
- <xsd:complexType name='StructureEntry'>
+  <xsd:complexType name='Dependency'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Package' type='PackageStructure'/>
-      <xsd:element name='Service' type='StructureEntry'/>
-      <xsd:element name='Path' type='StructureEntry'/>
+      <xsd:element name='Service' type='Dependency'/>
+      <xsd:element name='Path' type='Dependency'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
 
-  <xsd:complexType name='GroupType'>
+  <xsd:complexType name='DepsGroupType'>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Package' type='PackageStructure'/>
-      <xsd:element name='Service' type='StructureEntry'/>
-      <xsd:element name='Path' type='StructureEntry'/>
-      <xsd:element name='Group' type='GroupType'/>
+      <xsd:element name='Service' type='Dependency'/>
+      <xsd:element name='Path' type='Dependency'/>
+      <xsd:element name='Group' type='DepsGroupType'/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'/>
   </xsd:complexType>
@@ -30,9 +29,9 @@
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
         <xsd:element name='Package' type='PackageStructure'/>
-        <xsd:element name='Service' type='StructureEntry'/>
-        <xsd:element name='Path' type='StructureEntry'/>
-        <xsd:element name='Group' type='GroupType'/>
+        <xsd:element name='Service' type='Dependency'/>
+        <xsd:element name='Path' type='Dependency'/>
+        <xsd:element name='Group' type='DepsGroupType'/>
       </xsd:choice>
       <xsd:attribute type='xsd:string' name='priority' />
     </xsd:complexType>

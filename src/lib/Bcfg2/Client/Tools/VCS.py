@@ -28,17 +28,12 @@ import Bcfg2.Client.Tools
 
 class VCS(Bcfg2.Client.Tools.Tool):
     """VCS support."""
-    name = 'VCS'
     __handles__ = [('Path', 'vcs')]
     __req__ = {'Path': ['name',
                         'type',
                         'vcstype',
                         'sourceurl',
                         'revision']}
-
-    def __init__(self, logger, cfg, setup):
-        Bcfg2.Client.Tools.Tool.__init__(self, logger, cfg, setup)
-        self.cfg = cfg
 
     def git_write_index(self, entry):
         """Write the git index"""
@@ -72,7 +67,7 @@ class VCS(Bcfg2.Client.Tools.Tool):
                 else:
                     os.remove(destname)
             except OSError:
-                self.logger.info('Failed to remove %s' % \
+                self.logger.info('Failed to remove %s' %
                                  destname)
                 return False
 

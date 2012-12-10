@@ -1,36 +1,104 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
-  
+
   <xsd:annotation>
     <xsd:documentation>
       package list schema for bcfg2
       Narayan Desai, Argonne National Laboratory
     </xsd:documentation>
   </xsd:annotation>
-  
+
   <xsd:include schemaLocation="pkgtype.xsd"/>
   <xsd:include schemaLocation="types.xsd"/>
 
   <xsd:complexType name='PackageContainerType'>
+    <xsd:annotation>
+      <xsd:documentation>
+        An **PackageContainerType** is a tag used to provide logic.
+        Child entries of an PackageContainerType tag only apply to
+        machines that match the condition specified -- either
+        membership in a group, or a matching client name.
+        :xml:attribute:`PackageContainerType:negate` can be set to
+        negate the sense of the match.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Package' type='PackageType'/>
       <xsd:element name='Group' type='PackageContainerType'/>
       <xsd:element name='Client' type='PackageContainerType'/>
     </xsd:choice>
-    <xsd:attribute name='name' type='xsd:string' use='required'/>
-    <xsd:attribute name='negate' type='xsd:string'/>
+    <xsd:attribute name='name' type='xsd:string'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the client or group to match on.  Child entries
+          will only apply to this client or group (unless
+          :xml:attribute:`PackageContainerType:negate` is set).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name='negate' type='xsd:boolean'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Negate the sense of the match, so that child entries only
+          apply to a client if it is not a member of the given group
+          or does not have the given name.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:element name='PackageList'>
+    <xsd:annotation>
+      <xsd:documentation>
+        The top-level tag in a :ref:`server-plugins-generators-pkgmgr`
+        XML package list.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
         <xsd:element name='Group' type='PackageContainerType'/>
+        <xsd:element name='Client' type='PackageContainerType'/>
         <xsd:element name='Package' type='PackageType'/>
       </xsd:choice>
-      <xsd:attribute name='priority' type='xsd:integer' use='required'/>
-      <xsd:attribute name='type' use='optional' type='PackageTypeEnum' />
-      <xsd:attribute name='uri' type='xsd:string' use='optional'/>
-      <xsd:attribute type='xsd:string' name='multiarch'/>
-      <xsd:attribute type='xsd:string' name='srcs'/>
+      <xsd:attribute name='priority' type='xsd:integer' use='required'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Sets the priority for rules in this file for
+            :ref:`server-plugins-generators-rules`.  The higher value
+            wins.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
+      <xsd:attribute name='type' type='PackageTypeEnum'>
+        <xsd:annotation>
+          <xsd:documentation>
+            The package type, which determines which client driver will
+            handle installation of packages in this package list.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
+      <xsd:attribute name='uri' type='xsd:string'>
+        <xsd:annotation>
+          <xsd:documentation>
+            The URI to the repository that data in this package list
+            file was parsed from.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
+      <xsd:attribute type='xsd:string' name='multiarch'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Comma-separated list of architectures of packages in this
+            package list that should be installed.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
+      <xsd:attribute type='xsd:string' name='srcs'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Filename creation rules for multiarch packages.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
     </xsd:complexType>
   </xsd:element>
 </xsd:schema>

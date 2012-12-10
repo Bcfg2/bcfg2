@@ -1,4 +1,4 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">  
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
   <xsd:annotation>
     <xsd:documentation>
       FileProbes plugin config schema for bcfg2
@@ -6,11 +6,11 @@
     </xsd:documentation>
   </xsd:annotation>
 
-  <xsd:complexType name="GroupType">
+  <xsd:complexType name="FileProbesGroupType">
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
       <xsd:element name="FileProbe" type="FileProbeType"/>
-      <xsd:element name="Group" type="GroupType"/>
-      <xsd:element name="Client" type="GroupType"/>
+      <xsd:element name="Group" type="FileProbesGroupType"/>
+      <xsd:element name="Client" type="FileProbesGroupType"/>
     </xsd:choice>
     <xsd:attribute type="xsd:string" name="name" use="required"/>
     <xsd:attribute type="xsd:string" name="negate"/>
@@ -26,8 +26,8 @@
     <xsd:complexType>
       <xsd:choice minOccurs="1" maxOccurs="unbounded">
         <xsd:element name="FileProbe" type="FileProbeType"/>
-        <xsd:element name="Group" type="GroupType"/>
-        <xsd:element name="Client" type="GroupType"/>
+        <xsd:element name="Group" type="FileProbesGroupType"/>
+        <xsd:element name="Client" type="FileProbesGroupType"/>
       </xsd:choice>
     </xsd:complexType>
   </xsd:element>

@@ -1,44 +1,169 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
-
   <xsd:annotation>
     <xsd:documentation>
-      client schema for bcfg2
-      Narayan Desai, Argonne National Laboratory
+      Bcfg2 client list schema
     </xsd:documentation>
   </xsd:annotation>
 
   <xsd:import namespace="http://www.w3.org/XML/1998/namespace"
               schemaLocation="xml.xsd"/>
 
+  <xsd:simpleType name="MetadataAuthEnum">
+    <xsd:restriction base="xsd:token">
+      <xsd:enumeration value="cert+password"/>
+      <xsd:enumeration value="bootstrap"/>
+      <xsd:enumeration value="cert"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
   <xsd:complexType name='ClientType'>
+    <xsd:annotation>
+      <xsd:documentation>
+        Describe a Bcfg2 client machine.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Alias'>
+        <xsd:annotation>
+          <xsd:documentation>
+            **Alias** allows you to set alternative hostname and IP
+            address pairs that also resolve to this client.
+          </xsd:documentation>
+        </xsd:annotation>
         <xsd:complexType>
-          <xsd:attribute type='xsd:string' name='name' use='required'/>
-          <xsd:attribute type='xsd:string' name='address'/>
+          <xsd:attribute type='xsd:string' name='name' use='required'>
+            <xsd:annotation>
+              <xsd:documentation>
+                Hostname of the alternative client name-address pair.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:attribute>
+          <xsd:attribute type='xsd:string' name='address'>
+            <xsd:annotation>
+              <xsd:documentation>
+                IP address of the alternative client name-address pair.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:attribute>
         </xsd:complexType>
       </xsd:element>
     </xsd:choice>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-    <xsd:attribute type='xsd:string' name='profile' use='required'/>
-    <xsd:attribute type='xsd:string' name='pingable' use='optional'/>
-    <xsd:attribute type='xsd:string' name='auth' use='optional'/>
-    <xsd:attribute type='xsd:string' name='uuid'/>
-    <xsd:attribute type='xsd:string' name='password'/>
-    <xsd:attribute type='xsd:string' name='location'/>
-    <xsd:attribute type='xsd:boolean' name='floating'/>
-    <xsd:attribute type='xsd:boolean' name='secure'/>
-    <xsd:attribute type='xsd:string' name='pingtime' use='optional'/>
-    <xsd:attribute type='xsd:string' name='address'/>
-    <xsd:attribute type='xsd:string' name='version'/>
+    <xsd:attribute type='xsd:string' name='name' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Hostname of client.  This needs to be the name (probably
+          FQDN) returned by a reverse lookup on the connecting IP
+          address.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='profile' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Profile group naem to associate this client with.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='pingable'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Deprecated.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='MetadataAuthEnum' name='auth' default="cert+password">
+      <xsd:annotation>
+        <xsd:documentation>
+          Authentication mode for the client.  See
+          :ref:`appendix-guides-authentication` for details on the
+          values available.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='uuid'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Establishes a name for this cilent that can be used to
+          bypass dns-based client resolution.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='password'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Establishes a per-client password that can be used instead
+          of the global password.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='location'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Deprecated.  Use :xml:attribute:`ClientType:floating` instead.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:boolean' name='floating' default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Allows requests to come from any IP address, rather than
+          requiring requests to come from an IP associated with this
+          client.  Note that, since this forces the Bcfg2 server to
+          trust any connection that claims to be from this hostname,
+          it can introduce security issues.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:boolean' name='secure' default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Requires the use of :xml:attribute:`ClientType:password` for
+          this client.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='pingtime'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Deprecated.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='address'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Establishes an extra IP address that resolves to this client.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:token' name='version'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The version of the Bcfg2 client running on this machine.
+          You should not have to set this manually, but can let the
+          Bcfg2 server set it automatically.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name='ClientsType'>
+    <xsd:annotation>
+      <xsd:documentation>
+        Metadata client list top-level tag
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='Client' type='ClientType'/>
       <xsd:element name='Clients' type='ClientsType'/>
     </xsd:choice>
-    <xsd:attribute name='version' type='xsd:string'/>
+    <xsd:attribute name='version' type='xsd:string'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Client schema version
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute ref="xml:base"/>
   </xsd:complexType>
 

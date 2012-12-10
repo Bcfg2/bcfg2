@@ -40,94 +40,9 @@ Group membership may be negated.
 Tag Attributes in Pkgmgr
 ========================
 
-Package Tag
-^^^^^^^^^^^
-
-The package tag supports the name and pkg_checks attributes and
-requires the use of Instance tag entries.
-
-+------------+---------------------------------------+------------------------+
-| Attribute  | Description                           | Values                 |
-+============+=======================================+========================+
-| name       | Package name.                         | String                 |
-+------------+---------------------------------------+------------------------+
-| pkg_checks | Do the version and rpm verify checks. | true(default) or false |
-+------------+---------------------------------------+------------------------+
-
-Instance Tag and Attributes
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The instance tag supports the following attributes:
-
-+---------------------+----------------------------+--------------------------+
-| Attribute           | Description                | Values                   |
-+=====================+============================+==========================+
-| simplefile          | Package file name.         | String (see Notes below) |
-+---------------------+----------------------------+--------------------------+
-| epoch               | Package epoch.             | String (numeric only)    |
-|                     |                            | (optional)               |
-+---------------------+----------------------------+--------------------------+
-| version             | Package version.           | String                   |
-+---------------------+----------------------------+--------------------------+
-| release             | Package release.           | String                   |
-+---------------------+----------------------------+--------------------------+
-| arch                | Package architecture.      | Architecture String e.g. |
-|                     |                            | (i386|i586|i686|x86_64)  |
-+---------------------+----------------------------+--------------------------+
-| verify_flags        | Comma separated list of    | nodeps, nodigest,        |
-|                     | rpm --verify options. See  | nofiles, noscripts,      |
-|                     | the rpm man page for their | nosignature, nolinkto,   |
-|                     | details.                   | nomd5, nosize, nouser,   |
-|                     |                            | nogroup, nomtime,        |
-|                     |                            | nomode, nordev           |
-+---------------------+----------------------------+--------------------------+
-| pkg_verify          | Do the rpm verify          | true(default) or false   |
-+---------------------+----------------------------+--------------------------+
-| install_action      | Install package instance   | install(default) or none |
-|                     | if it is not installed.    |                          |
-+---------------------+----------------------------+--------------------------+
-| version_fail_action | Upgrade package if the     | upgrade(default) or none |
-|                     | incorrect version is       |                          |
-|                     | installed.                 |                          |
-+---------------------+----------------------------+--------------------------+
-| verify_fail_action  | Reinstall the package      | reinstall(default) or    |
-|                     | instance if the rpm verify | none                     |
-|                     | failed                     |                          |
-+---------------------+----------------------------+--------------------------+
-
-Pkgmgr Group Tag
-----------------
-
-The Pkgmgr Group Tag may have the following attributes:
-
-+--------+----------------------------------------------+------------+
-| Name   | Description                                  | Values     |
-+========+==============================================+============+
-| name   | Group Name                                   | String     |
-+--------+----------------------------------------------+------------+
-| negate | Negate group membership (is not a member of) | True|False |
-+--------+----------------------------------------------+------------+
-
-
-Client Tag
-----------
-
-The Client Tag is used in a PackageList for selecting the package entries
-to include in the clients literal configuration. Its function is similar
-to the Group tag in this context. It can be thought of as::
-
-    if client is name then
-        assign to literal config
-
-The Client Tag may have the following attributes:
-
-+--------+----------------------------------------------+------------+
-| Name   | Description                                  | Values     |
-+========+==============================================+============+
-| name   | Client Name                                  | String     |
-+--------+----------------------------------------------+------------+
-| negate | Negate client selection (if not client name) | True|False |
-+--------+----------------------------------------------+------------+
+.. xml:schema:: pkglist.xsd
+   :linktotype:
+   :noautodep: PackageType
 
 Pkgmgr Directory
 ================

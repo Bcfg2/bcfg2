@@ -18,14 +18,14 @@ through those channels.
 Limiting sources to groups
 ==========================
 
-``Packages/sources.xml`` processes ``<Group>`` and ``<Client>`` tags
-just like Bundles. In addition to any groups or clients specified
-that way, clients must
-be a member of the appropriate architecture group as specified in a
-Source stanza. In total, in order for a source to be associated with
-a client, the client must be in one of the magic groups (debian,
-ubuntu, or nexenta), any explicit groups or clients specified in
-``sources.xml``, and any specified architecture groups.
+`sources.xml`_ processes ``<Group>`` and ``<Client>`` tags just like
+Bundles. In addition to any groups or clients specified that way,
+clients must be a member of the appropriate architecture group as
+specified in a Source stanza. In total, in order for a source to be
+associated with a client, the client must be in any explicit groups or
+clients specified in `sources.xml`_, and any specified architecture
+groups.  If `"Magic Groups"`_ are enabled, then the client must be a
+member of a matching magic group as well.
 
 Memberships in architecture groups is needed so that Packages can map
 software sources to clients. There is no other way to handle this than
@@ -40,7 +40,7 @@ sources.
 
     To recap, a client needs to be a member of the **Architecture**
     group and any other groups defined in your
-    ``Packages/sources.xml`` file in order for the client to be
+    `sources.xml`_ file in order for the client to be
     associated to the proper sources.  If you are using
     :ref:`server-plugins-generators-packages-magic-groups`, then a
     client must also be a member of the appropriate OS group.
@@ -50,8 +50,7 @@ sources.
 "Magic Groups"
 ==============
 
-.. note:: Magic groups are deprecated in 1.3.0 and will be removed in
-          a future release.  They are disabled by default.
+.. deprecated:: 1.3.0
 
 Packages has the ability to use a feature known as "magic groups"; it
 is the only plugin to use that feature. Most plugins operate based on
@@ -98,21 +97,97 @@ Setup
 
 Three basic steps are required for Packages to work properly.
 
-#. Create ``Packages/sources.xml``. This file should look
-   approximately like the example below, and describes both which
-   software repositories should be used, and which clients are eligible
-   to use each one.
+#. Create Packages/`sources.xml`_. This file should look
+   approximately  like the  example  below, and  describes both  which
+   software  repositories  should  be  used,  and  which  clients  are
+   eligible to use each one.
 #. Ensure that clients are members of the proper groups. Each client
-   should be a member of one of the magic groups listed above, all of
-   the groups listed in the ``sources.xml`` (like ubuntu-intrepid or
-   centos-5.2 in the following examples), and one of the architecture
-   groups listed in the source configuration (i386, amd64 or x86_64 in
-   the following examples). '''Failure to do this will result in the
-   source either not applying to the client, or only architecture
-   independent packages being made available to the client.'''
+   should be a member of all of the groups listed in the `sources.xml`
+   (like ubuntu-intrepid or centos-5.2 in the following examples), one
+   of the architecture groups listed in the source configuration
+   (i386, amd64 or x86_64 in the following examples), and one of the
+   magic groups listed above, if magic groups are enabled. '''Failure
+   to do this will result in the source either not applying to the
+   client, or only architecture independent packages being made
+   available to the client.'''
 #. Add Package entries to bundles.
 #. Sit back and relax, as dependencies are resolved, and automatically
    added to client configurations.
+
+sources.xml
+-----------
+
+``sources.xml`` is where all package sources are configured for the
+Packages plugin.  It processes ``<Group>`` and ``<Client>`` tags just like
+Bundles. The primary element in ``sources.xml`` is the Source tag:
+
+.. xml:element:: Source
+
+Handling GPG Keys
+-----------------
+
+.. versionadded:: 1.2.0
+
+If you have yum libraries installed, Packages can automatically handle
+GPG signing keys for Yum and Pulp repositories. (You do not need to
+use the native yum resolver; if yum libraries are available, GPG
+signing keys can be handled automatically.) Simply specify the URL to
+the GPG key(s) for a repository with :xml:element:`GPGKey` elements:
+
+.. code-block:: xml
+
+    <Source type="yum"
+            rawurl="http://mirror.example.com/centos6-x86_64/RPMS.os">
+      <Arch>x86_64</Arch>
+      <GPGKey>http://mirror.example.com/keys/RPM-GPG-KEY-CentOS-6</GPGKey>
+    </Source>
+
+More than one ``<GPGKey>`` tag can be specified per Source.
+
+With the keys specified thusly, Packages will include the keys in the
+generated yum config file, and will ensure that the keys are imported
+on the client.
+
+There is no need to specify ``<GPGKey>`` tags for :ref:`Pulp sources
+<pulp-source-support>`; that data is pulled directly from the Pulp
+REST API.
+
+Arbitrary Repo Options
+----------------------
+
+.. versionadded:: 1.2.3
+
+You can specify arbitrary options to be added to the repository config
+on the server side, if you are using the native yum libraries, and on
+the client side if you are using the ability of Packages to
+automatically generate your Yum config.  To do this, add an
+:xml:element:`Options` tag to a :xml:element:`Source`; all of its
+attributes will be added verbatim to the repository in the generated
+config.  For instance:
+
+.. code-block:: xml
+
+    <Source type="yum" rawurl="http://mirror.example.com/centos-6-os">
+      <Arch>x86_64</Arch>
+      <Options proxy="http://proxy.example.com"/>
+    </Source>
+
+If you are using native yum libraries and need to set options only on
+the Bcfg2 server, you can set the
+:xml:attribute:`RepoOptionsType:serveronly` attribute to "true"; or,
+if you need to set options only on the client, you can set the
+:xml:attribute:`RepoOptionsType:clientonly` attribute to "true".  For
+instance, if your Bcfg2 server needed to use a proxy to access a repo,
+and you wanted to expire metadata caches very quickly on the client,
+you could do:
+
+.. code-block:: xml
+
+    <Source type="yum" rawurl="http://mirror.example.com/centos-6-os">
+      <Arch>x86_64</Arch>
+      <Options serveronly="true" proxy="http://proxy.example.com"/>
+      <Options clientonly="true" metadata_expire="0"/>
+    </Source>
 
 Prerequisite Resolution
 =======================
@@ -151,9 +226,9 @@ Blacklisting faulty dependencies
 If you encounter an issue with faulty dependency resolution due to
 Packages, please file a bug report so that we can fix the problem in
 future releases. In the meantime, you can work around this issue by
-blacklisting the offending Package in your Sources. The blacklist
-element should immediately follow the Component section of your source
-and should look like the following:
+blacklisting the offending Package in your Sources. The
+:xml:element:`Blacklist` element should immediately follow the
+Component section of your source and should look like the following:
 
 .. code-block:: xml
 
@@ -163,75 +238,12 @@ If you use the built-in :ref:`Yum config generator
 <generating-client-configs>`, blacklisted packages will be added to
 the ``exclude`` list for the source.
 
-Handling GPG Keys
------------------
-
-.. versionadded:: 1.2.0
-
-If you have yum libraries installed, Packages can automatically handle
-GPG signing keys for Yum and Pulp repositories. (You do not need to
-use the native yum resolver; if yum libraries are available, GPG
-signing keys can be handled automatically.) Simply specify the URL to
-the GPG key(s) for a repository in ``sources.xml``:
-
-.. code-block:: xml
-
-    <Source type="yum"
-            rawurl="http://mirror.example.com/centos6-x86_64/RPMS.os">
-      <Arch>x86_64</Arch>
-      <GPGKey>http://mirror.example.com/keys/RPM-GPG-KEY-CentOS-6</GPGKey>
-    </Source>
-
-More than one ``<GPGKey>`` tag can be specified per Source.
-
-With the keys specified thusly, Packages will include the keys in the
-generated yum config file, and will ensure that the keys are imported
-on the client.
-
-There is no need to specify ``<GPGKey>`` tags for :ref:`Pulp sources
-<pulp-source-support>`; that data is pulled directly from the Pulp
-REST API.
-
-Arbitrary Repo Options
-----------------------
-
-.. versionadded:: 1.2.3
-
-You can specify arbitrary options to be added to the repository config
-on the server side, if you are using the native yum libraries, and on
-the client side if you are using the ability of Packages to
-automatically generate your Yum config.  To do this, add an
-``<Options>`` tag to a Source; all of its attributes will be added
-verbatim to the repository in the generated config.  For instance:
-
-.. code-block:: xml
-
-    <Source type="yum" rawurl="http://mirror.example.com/centos-6-os">
-      <Arch>x86_64</Arch>
-      <Options proxy="http://proxy.example.com"/>
-    </Source>
-
-If you are using native yum libraries and need to set options only on
-the Bcfg2 server, you can set the ``serveronly`` attribute to "true";
-or, if you need to set options only on the client, you can set the
-``clientonly`` attribute to "true".  For instance, if your Bcfg2
-server needed to use a proxy to access a repo, and you wanted to
-expire metadata caches very quickly on the client, you could do:
-
-.. code-block:: xml
-
-    <Source type="yum" rawurl="http://mirror.example.com/centos-6-os">
-      <Arch>x86_64</Arch>
-      <Options serveronly="true" proxy="http://proxy.example.com"/>
-      <Options clientonly="true" metadata_expire="0"/>
-    </Source>
-
 .. _packages-exampleusage:
 
 Example usage
 =============
 
-Create a ``sources.xml`` file in the Packages directory that looks
+Create a _`sources.xml` file in the Packages directory that looks
 something like this:
 
 .. code-block:: xml
@@ -254,12 +266,13 @@ something like this:
     .. versionadded:: 1.1.0
 
     The default behavior of the Packages plugin is to not make any
-    assumptions about which packages you want to have added automatically
-    [#f1]_. For that reason, neither **Recommended** nor **Suggested**
-    packages are added as dependencies by default. You will notice
-    that the default behavior for apt is to add Recommended packages as
-    dependencies. You can configure the Packages plugin to add recommended
-    packages by adding the ``recommended`` attribute, e.g.:
+    assumptions about which packages you want to have added
+    automatically [#f1]_. For that reason, neither **Recommended** nor
+    **Suggested** packages are added as dependencies by default. You
+    will notice that the default behavior for apt is to add
+    Recommended packages as dependencies. You can configure the
+    Packages plugin to add recommended packages by adding the
+    :xml:attribute:`SourceType:recommended` attribute, e.g.:
 
     .. code-block:: xml
 
@@ -270,7 +283,8 @@ something like this:
 
     .. [#f1] Bcfg2 will by default add **Essential** packages to the
              client specification. You can disable this behavior by
-             setting the ``essential`` attribute to *false*:
+             setting the :xml:attribute:`SourceType:essential`
+             attribute to *false*:
 
     .. code-block:: xml
 
@@ -295,8 +309,8 @@ Yum sources can be similarly specified:
       </Group>
     </Sources>
 
-For sources with a **URL** attribute, the **Version** attribute is
-also necessary.
+For sources with a :xml:attribute:`SourceType:url` attribute, the
+:xml:attribute:`SourceType:version` attribute is also necessary.
 
 :ref:`Pulp sources <pulp-source-support>` are very simple to specify
 due to the amount of data that can be queried from Pulp itself:
@@ -388,8 +402,7 @@ download only missing sources.::
     [0:3711] bcfg2-admin xcmd Packages.Reload
     True
 
-This is done automatically any time ``Packages/sources.xml`` is
-updated.
+This is done automatically any time `sources.xml`_ is updated.
 
 Availability
 ============
@@ -397,19 +410,11 @@ Availability
 Support for clients using yum and apt is currently available. Support for
 other package managers (Portage, Zypper, IPS, etc) remain to be added.
 
-Validation
-==========
-
-A schema for ``Packages/sources.xml`` is included; ``sources.xml`` can
-be validated using ``bcfg2-lint``.
-
-.. note:: The schema requires that elements be specified in the above order.
-
 Package Checking and Verification
 =================================
 
-In order to do disable per-package verification Pkgmgr style, you will
-need to use :ref:`BoundEntries <boundentries>`, e.g.:
+In order to do disable per-package verification, you will need to use
+:ref:`BoundEntries <boundentries>`, e.g.:
 
 .. code-block:: xml
 
@@ -533,9 +538,9 @@ Package Groups
 --------------
 
 Yum package groups are supported by the native Yum libraries. To
-include a package group, use the ``group`` attribute of the
-``Package`` tag. You can use either the short group ID or the long
-group name:
+include a package group, use the :xml:attribute:`PackageType:group`
+attribute of the :xml:element:`Package` tag. You can use either the
+short group ID or the long group name:
 
 .. code-block:: xml
 
@@ -544,7 +549,7 @@ group name:
 
 By default, only those packages considered the "default" packages in a
 group will be installed. You can change this behavior using the
-"type" attribute:
+:xml:attribute:`PackageStructure:type` attribute:
 
 .. code-block:: xml
 
@@ -557,6 +562,8 @@ Valid values of "type" are:
 * ``default``: Install default packages from the group (the default).
 * ``optional`` or ``all``: Install all packages in the group,
   including mandatory, default, and optional packages.
+
+See :xml:element:`PackageStructure` for details.
 
 You can view the packages in a group by category with the ``yum
 groupinfo`` command. More information about the different levels can
@@ -580,7 +587,7 @@ Bcfg2 contains explicit support for repositories managed by Pulp
 
 Due to the amount of data about a repository that can be retrieved
 directly from Pulp, the only thing necessary to configure a Pulp repo
-is the repo ID:
+is the repo ID, in :xml:attribute:`SourceType:pulp_id`:
 
 .. code-block:: xml
 
@@ -668,7 +675,6 @@ TODO list
 
 * Zypper support
 * Portage support
-* Explicit version pinning (a la Pkgmgr)
 
 .. _configuration:
 
@@ -694,7 +700,7 @@ It understands the following directives:
 | metadata    | Enable metadata processing. Disabling ``metadata``   | Boolean  | True                        |
 |             | implies disabling ``resolver`` as well.              |          |                             |
 +-------------+------------------------------------------------------+----------+-----------------------------+
-| yum_config  | The path at which to generate Yum configs.           | String   | /etc/yum.repos.d/bcfg2.repo | 
+| yum_config  | The path at which to generate Yum configs.           | String   | /etc/yum.repos.d/bcfg2.repo |
 +-------------+------------------------------------------------------+----------+-----------------------------+
 | apt_config  | The path at which to generate APT configs.           | String   | /etc/apt/sources.d/bcfg2    |
 +-------------+------------------------------------------------------+----------+-----------------------------+

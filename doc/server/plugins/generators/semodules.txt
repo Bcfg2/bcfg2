@@ -37,24 +37,23 @@ For more information on this directory layout, see
 Entries
 =======
 
-SEModules handles ``<SELinux>`` entries with the ``module`` type.  For
-instance:
+SEModules handles ``<SEModule>`` entries.  For instance:
 
 .. code-block:: xml
 
     <Bundle name="foo">
-      <SELinux type="module" name="foo.pp"/>
+      <SEModule name="foo.pp"/>
     </Bundle>
 
 The ``.pp`` extension is optional.
 
 .. note::
 
-    If you use a ``BoundSELinux`` tag, you must *not* include the
+    If you use a ``BoundSEModule`` tag, you must *not* include the
     ``.pp`` extension.  This is not recommend, though.
 
 You can also install a disabled module:
 
 .. code-block:: xml
 
-    <SELinux type="module" name="foo" disabled="true"/>
+    <SEModule name="foo" disabled="true"/>

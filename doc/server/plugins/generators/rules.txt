@@ -12,6 +12,9 @@ The Rules plugin resolves the following Abstract Configuration Entities:
 * Package
 * Path
 * Action
+* All SELinux entries
+* POSIXUser
+* POSIXGroup
 
 to literal configuration entries suitable for the client drivers to
 consume.
@@ -53,121 +56,27 @@ entry specified.
 Rules Tag
 ---------
 
-The Rules Tag may have the following attributes:
-
-+----------+-------------------------------------+--------+
-| Name     | Description                         | Values |
-+==========+=====================================+========+
-| priority | Sets the priority for Rules in this | String |
-|          | Rules list.The higher value wins.   |        |
-+----------+-------------------------------------+--------+
-
-Group Tag
----------
-
-The Group Tag may have the following attributes:
-
-+--------+-------------------------+--------------+
-| Name   | Description             | Values       |
-+========+=========================+==============+
-| name   | Group Name              | String       |
-+--------+-------------------------+--------------+
-| negate | Negate group membership | (true|false) |
-|        | (is not a member of)    |              |
-+--------+-------------------------+--------------+
-
-Client Tag
-----------
-
-The Client Tag is used in Rules for selecting the package entries to
-include in the clients literal configuration.  Its function is similar
-to the Group tag in this context.  It can be thought of as::
-
-    if client is name then
-        assign to literal config
-
-The Client Tag may have the following attributes:
-
-+--------+-------------------------+--------------+
-| Name   | Description             | Values       |
-+========+=========================+==============+
-| name   | Client Name             | String       |
-+--------+-------------------------+--------------+
-| negate | Negate client selection | (true|false) |
-|        | (if not client name)    |              |
-+--------+-------------------------+--------------+
+.. xml:element:: Rules
+   :linktotype:
+   :noautodep:
+   :inlinetypes: PostInstall,RContainerType
 
 Package Tag
 -----------
 
-The Package Tag may have the following attributes:
-
-+------------+----------------------------------------------+----------+
-| Name       | Description                                  | Values   |
-+============+==============================================+==========+
-| name       | Package name                                 | String   |
-+------------+----------------------------------------------+----------+
-| version    | Package Version or version='noverify' to     | String   |
-|            | not do version checking in the Yum driver    |          |
-|            | only (temporary work a round).               |          |
-+------------+----------------------------------------------+----------+
-| file       | Package file name.  Several other attributes | String   |
-|            | (name, version) can be automatically defined |          |
-|            | based on regular expressions defined in the  |          |
-|            | Pkgmgr plugin.                               |          |
-+------------+----------------------------------------------+----------+
-| simplefile | Package file name. No name parsing is        | String   |
-|            | performed, so no extra fields get set        |          |
-+------------+----------------------------------------------+----------+
-| verify     | verify='false' - do not do package           | String   |
-|            | verification                                 |          |
-+------------+----------------------------------------------+----------+
-| multiarch  | Comma separated list of the architectures of | String   |
-|            | this package that should be installed.       |          |
-+------------+----------------------------------------------+----------+
-| srcs       | Filename creation rules for multiarch        | String   |
-|            | packages.                                    |          |
-+------------+----------------------------------------------+----------+
-| type       | Package type. (rpm, yum, apt,sysv,blast)     | String   |
-+------------+----------------------------------------------+----------+
+.. xml:type:: PackageType
 
 Action Tag
 ----------
 
-See :ref:`client-tools-actions`
+.. xml:type:: ActionType
+
+See also :ref:`client-tools-actions`.
 
 Service Tag
 -----------
 
-+------------+-------------------------------+---------------------------------------------------------+
-| Name       | Description                   | Values                                                  |
-+============+===============================+=========================================================+
-| restart    | Whether to restart the        | ( true | false | interactive )                          |
-|            | service when the bundle       |                                                         |
-|            | changes (new in 1.3; replaces |                                                         |
-|            | "mode" attribute)             |                                                         |
-+------------+-------------------------------+---------------------------------------------------------+
-| install    | Whether to install the        | ( true | false )                                        |
-|            | service (new in 1.3; replaces |                                                         |
-|            | "mode" attribute)             |                                                         |
-+------------+-------------------------------+---------------------------------------------------------+
-| name       | Service name                  | String                                                  |
-+------------+-------------------------------+---------------------------------------------------------+
-| status     | Should the service be on or   | (on | off | ignore)                                     |
-|            | off (default: off).           |                                                         |
-+------------+-------------------------------+---------------------------------------------------------+
-| target     | Service command for restart   | String                                                  |
-|            | (default: restart)            |                                                         |
-+------------+-------------------------------+---------------------------------------------------------+
-| type       | Driver to use on the client   | (chkconfig | deb | rc-update | smf | upstart |          |
-|            | to manage this service.       |  systemd | freebsd | launchd )                          |
-+------------+-------------------------------+---------------------------------------------------------+
-| sequence   | Order for service startup     | integer                                                 |
-|            | (debian services only)        |                                                         |
-+------------+-------------------------------+---------------------------------------------------------+
-| parameters | Pass parameters to service    | String                                                  |
-|            | (Upstart services only)       |                                                         |
-+------------+-------------------------------+---------------------------------------------------------+
+.. xml:type:: ServiceType
 
 Service mode specification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -175,7 +84,8 @@ Service mode specification
 .. versionadded:: 1.3.0
 
 In the 1.3.0 release, the "mode" attribute has been replaced by a pair
-of attributes, "restart" and "install," which control how a service is
+of attributes, :xml:attribute:`ServiceType:restart` and
+:xml:attribute:`ServiceType:install`, which control how a service is
 handled more granularly than the old "mode" attribute.  The old "mode"
 attribute values are equivalent as follows:
 
@@ -197,21 +107,6 @@ Previously, "supervised" could be used to start a service during the
 verification phase; this is no longer supported.  Services that have
 been stopped on a client will be started during the install phase.
 
-Service status descriptions
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-* on
-
-  * start the service at boot time
-
-* off
-
-  * don't start the service at boot time
-
-* ignore
-
-  * Don't perform service status checks.
-
 Path Tag
 --------
 
@@ -227,106 +122,142 @@ the context of the file to the default set by policy.  See
 
 Attributes common to all Path tags:
 
-+----------+-------------+--------+
-| Name     | Description | Values |
-+==========+=============+========+
-| name     | Full path   | String |
-+----------+-------------+--------+
+.. xml:type:: PathType
+   :nochildren:
+   :noattributegroups:
+   :nodoc:
+   :notext:
+   :onlyattrs: name,type
 
 
 device
 ^^^^^^
 
-+-----------+---------------------+-------------------+
-| Name      | Description         | Values            |
-+===========+=====================+===================+
-| dev_type  | Type of device      | (block|char|fifo) |
-+-----------+---------------------+-------------------+
-| owner     | Device owner        | String            |
-+-----------+---------------------+-------------------+
-| group     | Device group        | String            |
-+-----------+---------------------+-------------------+
-| mode      | Mode for the device | String            |
-+-----------+---------------------+-------------------+
-| secontext | SELinux context     | String            |
-+-----------+---------------------+-------------------+
-| major     | Major number (block | integer           |
-|           | or char devices)    |                   |
-+-----------+---------------------+-------------------+
-| minor     | Minor number (block | integer           |
-|           | or char devices)    |                   |
-+-----------+---------------------+-------------------+
+Manage devices.
+
+.. xml:type:: PathType
+   :nochildren:
+   :noattributegroups:
+   :nodoc:
+   :notext:
+   :onlyattrs: dev_type,owner,group,mode,secontext,major,minor
+   :requiredattrs: dev_type,owner,group,mode
 
 directory
 ^^^^^^^^^
 
-+-----------+------------------------------+------------+
-| Name      | Description                  | Values     |
-+===========+==============================+============+
-| mode      | File mode of the directory   | String     |
-+-----------+------------------------------+------------+
-| owner     | Owner of the directory       | String     |
-+-----------+------------------------------+------------+
-| group     | Group Owner of the directory | String     |
-+-----------+------------------------------+------------+
-| secontext | SELinux context              | String     |
-+-----------+------------------------------+------------+
-| prune     | prune unspecified entries    | true|false |
-|           | from the Directory           |            |
-+-----------+------------------------------+------------+
+Entry represents a directory.  :xml:attribute:`PathType:prune` can be
+set to remove all contents from the directory that are not explicitly
+specified in Bcfg2.
+
+.. xml:type:: PathType
+   :nochildren:
+   :noattributegroups:
+   :nodoc:
+   :notext:
+   :onlyattrs: owner,group,mode,secontext,prune
+   :requiredattrs: owner,group,mode
+
+file
+^^^^
+
+Distribute an file with content explicitly specified in-line (i.e., as
+opposed to using :ref:`server-plugins-generators-cfg` for this file).
+If the file has no content, :xml:attribute:`PathType:empty` *must* be
+set to ``true``.
+
+.. xml:type:: PathType
+   :nochildren:
+   :noattributegroups:
+   :nodoc:
+   :onlyattrs: owner,group,mode,secontext,empty
+   :requiredattrs: owner,group,mode
 
 hardlink
 ^^^^^^^^
 
-+-----------+------------------------------+--------+
-| Name      | Description                  | Values |
-+===========+==============================+========+
-| to        | File to link to              | String |
-+-----------+------------------------------+--------+
-| owner     | Owner of the directory       | String |
-+-----------+------------------------------+--------+
-| group     | Group Owner of the directory | String |
-+-----------+------------------------------+--------+
-| secontext | SELinux context              | String |
-+-----------+------------------------------+--------+
+Manage a hard link.
+
+.. xml:type:: PathType
+   :nochildren:
+   :noattributegroups:
+   :nodoc:
+   :notext:
+   :onlyattrs: owner,group,mode,secontext,to
+   :requiredattrs: owner,group,mode,to
+
+.. _path-ignore:
+
+ignore
+^^^^^^
+
+``ignore`` lets you flag files that are distributed by system software
+packages, but have been modified locally, to be ignored by package
+verification routines.  This is useful for, e.g., a package that
+installs an initial version of a file and then modifies it
+automatically.
+
+.. xml:type:: PathType
+   :nochildren:
+   :noattributegroups:
+   :nodoc:
+   :notext:
+   :onlyattrs: name
+   :requiredattrs: name
 
 nonexistent
 ^^^^^^^^^^^
 
-+-----------+--------------------+-------------+
-| Name      | Description        | Values      |
-+===========+====================+=============+
-| type      | Type of file       | nonexistent |
-+-----------+--------------------+-------------+
-| recursive | Recursively remove | Boolean     |
-|           | directory contents |             |
-+-----------+--------------------+-------------+
+Remove the specified file or directory.  If
+:xml:attribute:`PathType:recursive` is set, remove the directory
+recursively (i.e., ``rm -rf``).
+
+.. xml:type:: PathType
+   :nochildren:
+   :noattributegroups:
+   :nodoc:
+   :notext:
+   :onlyattrs: recursive
 
 permissions
 ^^^^^^^^^^^
 
-+-----------+-----------------------------+---------+
-| Name      | Description                 | Values  |
-+===========+=============================+=========+
-| mode      | Mode of the file            | String  |
-+-----------+-----------------------------+---------+
-| owner     | Owner of the file           | String  |
-+-----------+-----------------------------+---------+
-| group     | Group of the file           | String  |
-+-----------+-----------------------------+---------+
-| secontext | SELinux context             | String  |
-+-----------+-----------------------------+---------+
-| recursive | Recursively set permissions | Boolean |
-+-----------+-----------------------------+---------+
+Merely set permissions on the specified path, which is presumed to
+already exist.
+
+.. xml:type:: PathType
+   :nochildren:
+   :noattributegroups:
+   :nodoc:
+   :notext:
+   :onlyattrs: owner,group,mode,secontext,recursive
+   :requiredattrs: owner,group,mode
 
 symlink
 ^^^^^^^
 
-+------+----------------------+--------+
-| Name | Description          | Values |
-+======+======================+========+
-| to   | File to link to      | String |
-+------+----------------------+--------+
+Manage symlinks.
+
+.. xml:type:: PathType
+   :nochildren:
+   :noattributegroups:
+   :nodoc:
+   :notext:
+   :onlyattrs: to
+   :requiredattrs: to
+
+vcs
+^^^
+
+Check out the specified VCS repository to the given path.
+
+.. xml:type:: PathType
+   :nochildren:
+   :noattributegroups:
+   :nodoc:
+   :notext:
+   :onlyattrs: vcstype,revision,sourceurl
+   :requiredattrs: vcstype,revision,sourceurl
 
 .. _server-plugins-generators-rules-acls:
 
@@ -346,31 +277,7 @@ child ``<ACL>`` tags.  For instance:
       <ACL type="default" scope="group" group="users" perms="rx"/>
     </Path>
 
-The ACL tag has the following attributes:
-
-+-------+---------------------------------------------------+----------------+
-| Name  | Description                                       | Values         |
-+=======+===================================================+================+
-| type  | ACL type                                          | default|access |
-+-------+---------------------------------------------------+----------------+
-| scope | ACL scope                                         | user|group     |
-+-------+---------------------------------------------------+----------------+
-| user  | User the ACL applies to ``(with scope="user"``)   | String         |
-+-------+---------------------------------------------------+----------------+
-| group | Group the ACL applies to ``(with scope="group"``) | String         |
-+-------+---------------------------------------------------+----------------+
-| perms | Permissions for the ACL                           | See below      |
-+-------+---------------------------------------------------+----------------+
-
-The ``perms`` attribute can either be a single octal digit (e.g.,
-``6`` would indicate read and write, but not execute), or a symbolic
-mode including 'r', 'w', and 'x'.  You can include '-' for operations
-that are not permitted, but it's not required.  I.e., all of the
-following are identical::
-
-    perms="5"
-    perms="rx"
-    perms="r-x"
+.. xml:element:: ACL
 
 It is not currently possible to manually set an effective rights mask;
 the mask will be automatically calculated from the given ACLs when
@@ -420,108 +327,49 @@ See :ref:`server-selinux` for more information.
 SEBoolean Tag
 ^^^^^^^^^^^^^
 
-+-------+----------------------+---------+----------+
-| Name  | Description          | Values  | Required |
-+=======+======================+=========+==========+
-| name  | Name of the boolean  | String  | Yes      |
-+-------+----------------------+---------+----------+
-| value | Value of the boolean | on|off  | Yes      |
-+-------+----------------------+---------+----------+
+.. xml:type:: SEBooleanType
 
 SEPort Tag
 ^^^^^^^^^^
 
-+-------------+------------------------+---------------------------+----------+
-| Name        | Description            | Values                    | Required |
-+=============+========================+===========================+==========+
-| name        | Port number or range   | ``<port>/<proto>`` or     | Yes      |
-|             | and protocol (tcp|udp) | ``<start>-<end>/<proto>`` |          |
-+-------------+------------------------+---------------------------+----------+
-| selinuxtype | SELinux type to apply  | String                    | Yes      |
-|             | to this port           |                           |          |
-+-------------+------------------------+---------------------------+----------+
+.. xml:type:: SEPortType
 
 SEFcontext Tag
 ^^^^^^^^^^^^^^
 
-+-------------+-------------------------+---------------------+----------+
-| Name        | Description             | Values              | Required |
-+=============+=========================+=====================+==========+
-| name        | File specification      | String              | Yes      |
-+-------------+-------------------------+---------------------+----------+
-| selinuxtype | SELinux type to apply   | String              | Yes      |
-|             | to files matching this  |                     |          |
-|             | specification           |                     |          |
-+-------------+-------------------------+---------------------+----------+
-| filetype    | File type to match.     | (regular|directory| | No       |
-|             | Default: all            |  symlink|pipe|all|  |          |
-|             |                         |  socket|block|char) |          |
-+-------------+-------------------------+---------------------+----------+
+.. xml:type:: SEFcontextType
 
 SENode Tag
 ^^^^^^^^^^
 
-+-------------+------------------------------------+------------------+----------+
-| Name        | Description                        | Values           | Required |
-+=============+====================================+==================+==========+
-| name        | IP address and netmask of node.    | <addr>/<netmask> | Yes      |
-|             | Netmask can be numeric (/16) or    |                  |          |
-|             | dotted-quad (/255.255.0.0)         |                  |          |
-+-------------+------------------------------------+------------------+----------+
-| selinuxtype | SELinux type to apply to this node | String           | Yes      |
-+-------------+------------------------------------+------------------+----------+
-| proto       | Protocol                           | (ipv4|ipv6)      | Yes      |
-+-------------+------------------------------------+------------------+----------+
+.. xml:type:: SENodeType
 
 SELogin Tag
 ^^^^^^^^^^^
 
-+-------------+-------------------------------+-----------+----------+
-| Name        | Description                   | Values    | Required |
-+=============+===============================+===========+==========+
-| name        | Unix username                 | String    | Yes      |
-+-------------+-------------------------------+-----------+----------+
-| selinuxuser | SELinux username              | String    | Yes      |
-+-------------+-------------------------------+-----------+----------+
+.. xml:type:: SELoginType
 
 SEUser Tag
 ^^^^^^^^^^
 
-+-------------+-------------------------------+-----------+----------+
-| Name        | Description                   | Values    | Required |
-+=============+===============================+===========+==========+
-| name        | SELinux username              | String    | Yes      |
-+-------------+-------------------------------+-----------+----------+
-| roles       | Space-separated list of roles | String    | Yes      |
-+-------------+-------------------------------+-----------+----------+
-| prefix      | Home directory context prefix | String    | Yes      |
-+-------------+-------------------------------+-----------+----------+
+.. xml:type:: SEUserType
 
 SEInterface Tag
 ^^^^^^^^^^^^^^^
 
-+-------------+-------------------------+-------------+----------+
-| Name        | Description             | Values      | Required |
-+=============+=========================+=============+==========+
-| name        | Interface name          | String      | Yes      |
-+-------------+-------------------------+-------------+----------+
-| selinuxtype | SELinux type to apply   | String      | Yes      |
-|             | to this interface       |             |          |
-+-------------+-------------------------+-------------+----------+
+.. xml:type:: SEInterfaceType
 
 SEPermissive Tag
 ^^^^^^^^^^^^^^^^
 
-+-------------+------------------------------------+-------------+----------+
-| Name        | Description                        | Values      | Required |
-+=============+====================================+=============+==========+
-| name        | SELinux type to make permissive    | String      | Yes      |
-+-------------+------------------------------------+-------------+----------+
+.. xml:type:: SEPermissiveType
 
 SEModule Tag
 ^^^^^^^^^^^^
 
-See :ref:`server-plugins-generators-semodules`
+.. xml:type:: SEModuleType
+
+See also :ref:`server-plugins-generators-semodules`.
 
 POSIXUser Tag
 -------------
@@ -534,39 +382,7 @@ POSIXUser Tag
     1.3.0 since they require a client tool which is unavailable in
     previous versions.
 
-The POSIXUser tag allows you to create users on client machines.  It
-takes the following attributes:
-
-+-------+-----------------------+---------+-------------------------------+
-| Name  | Description           | Values  | Default                       |
-+=======+=======================+=========+===============================+
-| name  | Username              | String  | None                          |
-+-------+-----------------------+---------+-------------------------------+
-| uid   | User ID number        | Integer | The client sets the uid       |
-+-------+-----------------------+---------+-------------------------------+
-| group | Name of the user's    | String  | The username                  |
-|       | primary group         |         |                               |
-+-------+-----------------------+---------+-------------------------------+
-| gecos | Human-readable user   | String  | The username                  |
-|       | name or comment       |         |                               |
-+-------+-----------------------+---------+-------------------------------+
-| home  | User's home directory | String  | /root (for "root");           |
-|       |                       |         | /home/<username> otherwise    |
-+-------+-----------------------+---------+-------------------------------+
-| shell | User's shell          | String  | /bin/bash                     |
-+-------+-----------------------+---------+-------------------------------+
-
-The group specified will automatically be created if it does not
-exist, even if there is no `POSIXGroup Tag`_ for it.  If you need to
-specify a particular GID for the group, you must specify that in a
-``POSIXGroup`` tag.
-
-If you with to change the default shell, you can do so with :ref:`the
-Defaults plugin <server-plugins-structures-defaults>`.
-
-Additionally, a user may be a member of supplementary groups.  These
-can be specified with the ``MemberOf`` child tag of the ``POSIXUser``
-tag.
+.. xml:type:: POSIXUserType
 
 For example:
 
@@ -578,6 +394,14 @@ For example:
       <MemberOf>adm</MemberOf>
       <MemberOf>bin</MemberOf>
     </BoundPOSIXUser>
+
+The group specified will automatically be created if it does not
+exist, even if there is no :xml:type:`POSIXGroup tag <POSIXGroupType>`
+for it.  If you need to specify a particular GID for the group, you
+must specify that in a ``POSIXGroup`` tag.
+
+If you with to change the default shell, you can do so with :ref:`the
+Defaults plugin <server-plugins-structures-defaults>`.
 
 See :ref:`client-tools-posixusers` for more information on managing
 users and groups.
@@ -593,16 +417,7 @@ POSIXGroup Tag
     1.3.0 since they require a client tool which is unavailable in
     previous versions.
 
-The POSIXGroup tag allows you to create groups on client machines.  It
-takes the following attributes:
-
-+-------+-------------------+---------+-------------------------+
-| Name  | Description       | Values  | Default                 |
-+=======+===================+=========+=========================+
-| name  | Name of the group | String  | None                    |
-+-------+-------------------+---------+-------------------------+
-| gid   | Group ID number   | Integer | The client sets the gid |
-+-------+-------------------+---------+-------------------------+
+.. xml:type:: POSIXGroupType
 
 See :ref:`client-tools-posixusers` for more information on managing
 users and groups.

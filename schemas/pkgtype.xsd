@@ -13,48 +13,304 @@
               schemaLocation="genshi.xsd"/>
 
   <xsd:complexType name="PackageStructure">
-    <xsd:attribute type="xsd:string" name="name"/>
-    <xsd:attribute type="xsd:string" name="group"/>
-    <xsd:attribute type="xsd:string" name="verify" use="optional"/>
-    <xsd:attribute type="PackageGroupTypeEnum" name="type"
-                   use="optional"/>
+    <xsd:annotation>
+      <xsd:documentation>
+        Abstract description of a package or package group to be
+        installed.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:string" name="name">
+      <xsd:annotation>
+        <xsd:documentation>
+          Install the named package. Either ``name`` or
+          :xml:attribute:`PackageStructure:group` must be specified.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="group">
+      <xsd:annotation>
+        <xsd:documentation>
+          Install the named package group. Package groups are only
+          supported for Yum :xml:element:`Source` repositories, and
+          only if the :ref:`yum libraries
+          &lt;native-yum-libraries&gt;` are in use.  Either ``group``
+          or :xml:attribute:`PackageStructure:name` must be specified.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:boolean" name="verify" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Whether or not to verify the package.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="PackageGroupTypeEnum" name="type" default="default">
+      <xsd:annotation>
+        <xsd:documentation>
+          The package set to select from a given package group. Only
+          meaningful if :xml:attribute:`PackageStructure:group` is
+          specified.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:complexType name="PackageType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Concrete specification of a package to be installed.  A
+        package can be specified in one of two ways:
+
+        * A single Package tag that lists all of the attributes for
+          the single instance of the package that should be installed.
+
+        * A Package tag with any number of :xml:element:`Instance`
+          children, each of which lists the attributes of an instance
+          of the package that should be installed.  In this case, the
+          Package tag should only have
+          :xml:attribute:`PackageType:name` and
+          :xml:attribute:`PackageType:type`.
+
+        Note that many of the attributes listed below are specific to
+        one or a few package drivers.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:choice minOccurs="0" maxOccurs="unbounded">
       <xsd:element name="Instance">
+        <xsd:annotation>
+          <xsd:documentation>
+            An Instance element describes a single instance of a
+            package that may have several different versions, arches,
+            etc., installed at once.
+          </xsd:documentation>
+        </xsd:annotation>
         <xsd:complexType>
-          <xsd:attribute name="arch" type="xsd:string"/>
-          <xsd:attribute name="epoch" type="xsd:string"/>
-          <xsd:attribute name="version" type="xsd:string"/>
-          <xsd:attribute name="release" type="xsd:string"/>
-          <xsd:attribute name="simplefile" type="xsd:string"/>
-          <xsd:attribute name="pkg_verify" type="xsd:boolean"/>
-          <xsd:attribute name="verify_flags" type="xsd:string"/>
-          <xsd:attribute name="installed_action" type="xsd:string"/>
-          <xsd:attribute name="version_fail_action" type="xsd:string"/>
-          <xsd:attribute name="verify_fail_action" type="xsd:string"/>
+          <xsd:attribute type="xsd:string" name="arch">
+            <xsd:annotation>
+              <xsd:documentation>
+                The architecture of the package to be installed.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:attribute>
+          <xsd:attribute name="epoch" type="xsd:integer">
+            <xsd:annotation>
+              <xsd:documentation>
+                The epoch of the package to be installed.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:attribute>
+          <xsd:attribute type="xsd:string" name="version">
+            <xsd:annotation>
+              <xsd:documentation>
+                The version of the package to be installed. See
+                :xml:attribute:`PackageType:version` for details.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:attribute>
+          <xsd:attribute type="xsd:string" name="release">
+            <xsd:annotation>
+              <xsd:documentation>
+                The release of the package to be installed.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:attribute>
+          <xsd:attribute type="xsd:string" name="simplefile">
+            <xsd:annotation>
+              <xsd:documentation>
+                Package file name. No name parsing is performed, so no
+                extra fields get set.  This is only used for manual
+                maintenance of ``gpg-pubkey`` packages with the
+                :ref:`YUM, YUM24, or RPM &lt;client-tools-yum&gt;`
+                driver.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:attribute>
+          <xsd:attribute name="pkg_verify" type="xsd:boolean">
+            <xsd:annotation>
+              <xsd:documentation>
+                Whether or not to perform full package verification (file
+                integrity, etc.) on this package with the :ref:`YUM, YUM24,
+                or RPM &lt;client-tools-yum&gt;` driver.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:attribute>
+          <xsd:attribute name="verify_flags" type="xsd:string">
+            <xsd:annotation>
+              <xsd:documentation>
+                Comma-separated list of flags to pass to the package
+                verification routines of the :ref:`YUM, YUM24, or RPM
+                &lt;client-tools-yum&gt;` driver.  See ``man rpm`` for
+                details on the flags.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:attribute>
+          <xsd:attribute name="installed_action" type="xsd:string"
+                         default="install">
+            <xsd:annotation>
+              <xsd:documentation>
+                If this is set to any value other than "install",
+                package installation will be suppressed with the
+                :ref:`YUM24 and RPM &lt;client-tools-yum&gt;` drivers.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:attribute>
+          <xsd:attribute name="version_fail_action" type="xsd:string"
+                         default="upgrade">
+            <xsd:annotation>
+              <xsd:documentation>
+                If this is set to any value other than "upgrade", a
+                package that has the incorrect version installed will
+                not be fixed with the :ref:`YUM24 and RPM
+                &lt;client-tools-yum&gt;` drivers.  Note that
+                "upgrade" is misleading; if a package is installed
+                that is newer than the desired version, it will not be
+                downgraded if this attribute is set to anything other
+                than "upgrade".
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:attribute>
+          <xsd:attribute name="verify_fail_action" type="xsd:string">
+            <xsd:annotation>
+              <xsd:documentation>
+                If this is set to any value other than "reinstall", a
+                package that fails package verification will not be
+                reinstalled with the :ref:`YUM24 and RPM
+                &lt;client-tools-yum&gt;` drivers.
+              </xsd:documentation>
+            </xsd:annotation>
+          </xsd:attribute>
           <xsd:attributeGroup ref="py:genshiAttrs"/>
         </xsd:complexType>
       </xsd:element>
       <xsd:group ref="py:genshiElements"/>
     </xsd:choice>
-    <xsd:attribute type="xsd:string" name="name"/>
-    <xsd:attribute type="xsd:string" name="group"/>
-    <xsd:attribute type="xsd:string" name="arch"/>
-    <xsd:attribute type="xsd:string" name="version"/>
-    <xsd:attribute type="xsd:string" name="release"/>
-    <xsd:attribute type="xsd:string" name="file"/>
-    <xsd:attribute type="xsd:boolean" name="verify"/>
-    <xsd:attribute type="xsd:string" name="simplefile"/>
-    <xsd:attribute type="xsd:string" name="multiarch"/>
-    <xsd:attribute type="xsd:string" name="srcs"/>
-    <xsd:attribute type="PackageTypeEnum" name="type"/>
-    <xsd:attribute type="xsd:string" name="bname"/>
-    <xsd:attribute name="pkg_checks" type="xsd:boolean"/>
-    <xsd:attribute name="pkg_verify" type="xsd:boolean"/>
-    <xsd:attribute name="verify_flags" type="xsd:string"/>
+    <xsd:attribute type="xsd:string" name="name" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Package name.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="arch">
+      <xsd:annotation>
+        <xsd:documentation>
+          The architecture of the package to be installed.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="version">
+      <xsd:annotation>
+        <xsd:documentation>
+          The version of the package to be installed. This should
+          *only* be the version, i.e., not the release. Release should
+          be specified in :xml:attribute:`PackageType:release`, and it
+          is an error to append the release to this.
+
+          This can also be one of two "special" values:
+
+          * ``auto`` will select the newest version of the package
+            available.
+          * ``any`` will select any version of the package, and can be
+            used to ensure that a package is installed without
+            requiring any particular version.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="release">
+      <xsd:annotation>
+        <xsd:documentation>
+          The release of the package to be installed.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="file">
+      <xsd:annotation>
+        <xsd:documentation>
+          Package file name.  Several other attributes (name, version)
+          can be automatically defined based on regular expressions
+          defined in the :ref:`server-plugins-generators-pkgmgr`
+          plugin, which is the only plugin with which this is useful.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:boolean" name="verify" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Whether or not to perform package verification.  This is not
+          supported by the :ref:`YUM &lt;client-tools-yum&gt;` driver.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="simplefile">
+      <xsd:annotation>
+        <xsd:documentation>
+          Package file name. No name parsing is performed, so no extra
+          fields get set.  This is only used for some edge cases with
+          :ref:`server-plugins-generators-pkgmgr`.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="multiarch">
+      <xsd:annotation>
+        <xsd:documentation>
+          Comma-separated list of architectures of this package that
+          should be installed.  This is only used by the
+          :ref:`server-plugins-generators-pkgmgr` plugin.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="srcs">
+      <xsd:annotation>
+        <xsd:documentation>
+          Filename creation rules for multiarch packages. This is only
+          used by the :ref:`server-plugins-generators-pkgmgr` plugin.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="PackageTypeEnum" name="type" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          The package type, which determines which client driver will
+          handle installation of this package.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="bname">
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the package for installing (as opposed to the
+          name when verifying) with the Blast and OpenCSW drivers.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="pkg_checks" type="xsd:boolean">
+      <xsd:annotation>
+        <xsd:documentation>
+          Whether or not to perform basic package checks (version,
+          release, etc.) on this package with the :ref:`YUM, YUM24, or
+          RPM &lt;client-tools-yum&gt;` driver.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="pkg_verify" type="xsd:boolean" default="true">
+      <xsd:annotation>
+        <xsd:documentation>
+          Whether or not to perform full package verification (file
+          integrity, etc.) on this package with the :ref:`YUM, YUM24,
+          or RPM &lt;client-tools-yum&gt;` driver.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="verify_flags" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>
+          Flags to pass to the package verification routines of the
+          :ref:`YUM, YUM24, or RPM &lt;client-tools-yum&gt;` driver.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 </xsd:schema>

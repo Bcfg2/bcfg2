@@ -1,43 +1,166 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
   <xsd:annotation>
     <xsd:documentation>
-      SSLCA cert.xml schema for bcfg2
-      Chris St. Pierre
+      Schema for :ref:`server-plugins-generators-sslca` ``cert.xml``
     </xsd:documentation>
   </xsd:annotation>
 
-  <xsd:complexType name="GroupType">
+  <xsd:complexType name="SSLCACertGroupType">
+    <xsd:annotation>
+      <xsd:documentation>
+        An **SSLCACertGroupType** is a tag used to provide logic.
+        Child entries of an SSLCACertGroupType tag only apply to
+        machines that match the condition specified -- either
+        membership in a group, or a matching client name.
+        :xml:attribute:`SSLCACertGroupType:negate` can be set to negate
+        the sense of the match.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
       <xsd:element name="Cert" type="CertType"/>
-      <xsd:element name="Group" type="GroupType"/>
-      <xsd:element name="Client" type="GroupType"/>
-      <xsd:element name="subjectAltName" type="xsd:string"/>
+      <xsd:element name="Group" type="SSLCACertGroupType"/>
+      <xsd:element name="Client" type="SSLCACertGroupType"/>
+      <xsd:element name="subjectAltName" type="SubjectAltNameType"/>
     </xsd:choice>
-    <xsd:attribute type="xsd:string" name="name" use="required"/>
-    <xsd:attribute type="xsd:string" name="negate"/>
+    <xsd:attribute name='name' type='xsd:string'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the client or group to match on.  Child entries
+          will only apply to this client or group (unless
+          :xml:attribute:`SSLCACertGroupType:negate` is set).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name='negate' type='xsd:boolean'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Negate the sense of the match, so that child entries only
+          apply to a client if it is not a member of the given group
+          or does not have the given name.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
+  <xsd:simpleType name="SSLCACertFormatEnum">
+    <xsd:annotation>
+      <xsd:documentation>
+        Available certificate formats
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="pem"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name="SubjectAltNameType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Explicitly specify subject alternative names for the generated
+        certificate.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:string"/>
+  </xsd:simpleType>
+
   <xsd:complexType name="CertType">
-    <xsd:attribute type="xsd:string" name="key" use="required"/>
-    <xsd:attribute type="xsd:string" name="format"/>
-    <xsd:attribute type="xsd:string" name="ca"/>
-    <xsd:attribute type="xsd:integer" name="days"/>
-    <xsd:attribute type="xsd:string" name="c"/>
-    <xsd:attribute type="xsd:string" name="l"/>
-    <xsd:attribute type="xsd:string" name="st"/>
-    <xsd:attribute type="xsd:string" name="ou"/>
-    <xsd:attribute type="xsd:string" name="o"/>
-    <xsd:attribute type="xsd:string" name="emailaddress"/>
-    <xsd:attribute type="xsd:string" name="append_chain"/>
+    <xsd:attribute type="xsd:string" name="key" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          The full path to the key entry to use for this certificate.
+          This is the *client* path; e.g., for a key defined at
+          ``/var/lib/bcfg2/SSLCA/etc/pki/tls/private/foo.key/key.xml``,
+          **key** should be ``/etc/pki/tls/private/foo.key``.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="SSLCACertFormatEnum" name="format" default="pem">
+      <xsd:annotation>
+        <xsd:documentation>
+          The certificate format to produce.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="ca" default="default">
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the CA (from :ref:`bcfg2.conf
+          &lt;sslca-configuration&gt;`) to use to generate this
+          certificate.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:integer" name="days" default="365">
+      <xsd:annotation>
+        <xsd:documentation>
+          Time (in days) the certificate will be valid for.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="c">
+      <xsd:annotation>
+        <xsd:documentation>
+          Override the country set in the CA config
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="l">
+      <xsd:annotation>
+        <xsd:documentation>
+          Override the location set in the CA config
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="st">
+      <xsd:annotation>
+        <xsd:documentation>
+          Override the state set in the CA config
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="ou">
+      <xsd:annotation>
+        <xsd:documentation>
+          Override the organizational unit set in the CA config
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="o">
+      <xsd:annotation>
+        <xsd:documentation>
+          Override the organization set in the CA config
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="emailaddress">
+      <xsd:annotation>
+        <xsd:documentation>
+          Override the email address set in the CA config
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:boolean" name="append_chain" default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Append the CA chain certificate to the generated certificate
+          (e.g., to produce a certificate in the format required by Nginx.)
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:element name="CertInfo">
+    <xsd:annotation>
+      <xsd:documentation>
+        Top-level tag for describing an SSLCA generated certificate.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:complexType>
       <xsd:choice minOccurs="1" maxOccurs="unbounded">
         <xsd:element name="Cert" type="CertType"/>
-        <xsd:element name="Group" type="GroupType"/>
-        <xsd:element name="Client" type="GroupType"/>
-        <xsd:element name="subjectAltName" type="xsd:string"/>
+        <xsd:element name="Group" type="SSLCACertGroupType"/>
+        <xsd:element name="Client" type="SSLCACertGroupType"/>
+        <xsd:element name="subjectAltName" type="SubjectAltNameType"/>
       </xsd:choice>
     </xsd:complexType>
   </xsd:element>

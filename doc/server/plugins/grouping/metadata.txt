@@ -10,27 +10,28 @@ The metadata mechanism has two types of information, client metadata
 and group metadata. The client metadata describes which top level
 group a client is associated with.The group metadata describes groups
 in terms of what bundles and other groups they include. Group data and
-clients' memberships are reflected in the ``Metadata/groups.xml`` and
-``Metadata/clients.xml`` files, respectively.
+clients' memberships are reflected in the `groups.xml`_ and
+`clients.xml`_ files, respectively.
 
 Usage of Groups in Metadata
 ===========================
 
-Clients are assigned membership of groups in the Metadata descriptions.
-Clients can be directly assigned to *'profile'* or *'public'* groups.
-Client membership of all other groups is by those groups being
-associated with the profile or public groups. This file can be indirectly
-modified from clients through use of the ``-p`` flag to ``bcfg2``.
+Clients are assigned membership of groups in the Metadata
+descriptions.  Clients can be directly assigned to *'profile'* or
+*'public'* groups.  Client membership of all other groups is by those
+groups being associated with the profile or public groups. This file
+can be indirectly modified from clients through use of the ``-p`` flag
+to ``bcfg2``.
 
-Clients are associated with profile groups in ``Metadata/clients.xml`` as
-shown below.
+Clients are associated with profile groups in `clients.xml`_
+as shown below.
 
 .. _server-plugins-grouping-metadata-clients-xml:
 
-Metadata/clients.xml
-====================
+clients.xml
+===========
 
-The ``Metadata/clients.xml`` file contains the mappings of Profile Groups
+The ``clients.xml`` file contains the mappings of Profile Groups
 to clients. The file is just a series of *<Client />* tags, each of which
 describe one host. A sample file is below:
 
@@ -46,63 +47,7 @@ describe one host. A sample file is below:
       </Client>
     </Clients>
 
-Clients Tag
------------
-
-The Clients tag has the following possible attributes:
-
-+---------+-----------------------+--------+
-| Name    | Description           | Values |
-+=========+=======================+========+
-| version | Client schema version | String |
-+---------+-----------------------+--------+
-
-Client Tag
-----------
-
-Each entry in ``clients.xml`` **must** have the following properties:
-
-+---------+---------------------------------------+--------+
-| Name    | Description                           | Values |
-+=========+=======================================+========+
-| name    | Host name of client. This needs to be | String |
-|         | the name (possibly a FQDN) returned   |        |
-|         | by a reverse lookup on the connecting |        |
-|         | IP address.                           |        |
-+---------+---------------------------------------+--------+
-| profile | Profile group name to associate this  | String |
-|         | client with.                          |        |
-+---------+---------------------------------------+--------+
-
-Additionally, the following properties can be specified:
-
-+----------+----------------------------------------+----------------+
-| Name     | Description                            | Values         |
-+==========+========================================+================+
-| Alias    | Alternative name and address for the   | XML Element    |
-|          | client.                                |                |
-+----------+----------------------------------------+----------------+
-| address  | Establishes an extra IP address that   | ip address     |
-|          | resolves to this client.               |                |
-+----------+----------------------------------------+----------------+
-| floating | Allows requests to come from any IP,   | true|false     |
-|          | rather than requiring requests to come |                |
-|          | from an IP associated with the client  |                |
-+----------+----------------------------------------+----------------+
-| password | Establishes a per-node password that   | String         |
-|          | can be used instead of the global      |                |
-|          | password.                              |                |
-+----------+----------------------------------------+----------------+
-| secure   | Requires the use of the per-client     | true|false     |
-|          | password for this client.              |                |
-+----------+----------------------------------------+----------------+
-| uuid     | Establishes a per-node name that can   | String         |
-|          | be used to bypass dns-based client     |                |
-|          | resolution.                            |                |
-+----------+----------------------------------------+----------------+
-
-Floating can also be configured by setting ``location="floating"``,
-but that is deprecated.
+.. xml:schema:: clients.xsd
 
 For detailed information on client authentication see
 :ref:`appendix-guides-authentication`
@@ -110,47 +55,46 @@ For detailed information on client authentication see
 .. _server-plugins-grouping-metadata-clients-database:
 
 Clients Database
-~~~~~~~~~~~~~~~~
+----------------
 
 .. versionadded:: 1.3.0
 
 It is also possible to store client records in a database rather than
-writing back to ``clients.xml``.  This provides several advantages:
+writing back to `clients.xml`_.  This provides several advantages:
 
-* ``clients.xml`` will never be written by the server, removing an
+* `clients.xml`_ will never be written by the server, removing an
   area of contention between the user and server.
-* ``clients.xml`` can be removed entirely for many sites.
+* `clients.xml`_ can be removed entirely for many sites.
 * The Bcfg2 client list can be queried by other machines without
-  obtaining and parsing ``clients.xml``.
+  obtaining and parsing `clients.xml`_.
 * A single client list can be shared amongst multiple Bcfg2 servers.
 
 In general, storing clients in the database works almost the same as
-``clients.xml``.  ``groups.xml`` is parsed identically.  If
-``clients.xml`` is present, it is parsed, but ``<Client>`` tags in
-``clients.xml`` *do not* assert client existence; they are only used
+`clients.xml`_.  `groups.xml`_ is parsed identically.  If
+`clients.xml`_ is present, it is parsed, but ``<Client>`` tags in
+`clients.xml`_ *do not* assert client existence; they are only used
 to set client options *if* the client exists (in the database).  That
-is, the two purposes of ``clients.xml`` -- to track which clients
+is, the two purposes of `clients.xml`_ -- to track which clients
 exist, and to set client options -- have been separated.
 
-With the improvements in ``groups.xml`` parsing in 1.3, client groups
-can now be set directly in ``groups.xml`` with ``<Client>`` tags. (See
-:ref:`metadata-client-tag` for more details.)  As a result,
-``clients.xml`` is only necessary if you need to set
-options (e.g., aliases, floating clients, per-client passwords, etc.)
-on clients.
+With the improvements in `groups.xml`_ parsing in 1.3, client groups
+can now be set directly in `groups.xml`_ with ``<Client>`` tags. (See
+:xml:type:`clientType` for more details.)  As a result, `clients.xml`_
+is only necessary if you need to set options (e.g., aliases, floating
+clients, per-client passwords, etc.) on clients.
 
-To use the database backend instead of ``clients.xml``, set
+To use the database backend instead of `clients.xml`_, set
 ``use_database`` in the ``[metadata]`` section of ``bcfg2.conf`` to
 ``true``.  You will also need to configure the :ref:`Global Server
 Database Settings <server-database>`.
 
-The ``clients.xml``-based model remains the default.
+The `clients.xml`_-based model remains the default.
 
-Metadata/groups.xml
-===================
+groups.xml
+==========
 
-The ``Metadata/groups.xml`` file contains Group and Profile
-definitions. Here's a simple ``Metadata/groups.xml`` file:
+The ``groups.xml`` file contains Group and Profile definitions. Here's
+a simple ``groups.xml`` file:
 
 .. code-block:: xml
 
@@ -197,8 +141,8 @@ groups; a RHEL 6 client that is a member of the ``mail-server``
 profile group would be a member of the ``apache-server``,
 ``nfs-client``, ``server``, and ``postfix-server`` groups.
 
-Client tags in ``groups.xml`` allow you to supplement the profile
-group declarations in ``clients.xml`` and/or client group assignments
+Client tags in `groups.xml`_ allow you to supplement the profile
+group declarations in `clients.xml`_ and/or client group assignments
 with the :ref:`server-plugins-grouping-grouppatterns` plugin.  They
 should be used sparingly.  (They are more useful when you are using
 the database backend for client records.)
@@ -235,101 +179,19 @@ groups:
     Nested Group conditionals, Client tags, and negated Group tags are
     all new in 1.3.0.
 
-Order of ``groups.xml`` does not matter.
-
-Groups describe clients in terms for abstract, disjoint aspects. Groups
-can be combined to form complex descriptions of clients that use
-configuration commonality and inheritance. Groups have several attributes,
-described below:
+.. xml:schema:: metadata.xsd
 
 
-Metadata Groups Tag
--------------------
+XInclude
+========
 
-The Groups tag has the following possible attributes:
-
-+----------+---------------------------------+--------+
-| Name     | Description                     | Values |
-+==========+=================================+========+
-| version  | Group schema version            | String |
-+----------+---------------------------------+--------+
-| origin   | URL of master version           | String |
-|          | (for common repository)         |        |
-+----------+---------------------------------+--------+
-| revision | Master version control revision | String |
-+----------+---------------------------------+--------+
-
-Metadata Group Tag
-------------------
-
-The Group Tag has the following possible attributes:
-
-+----------+----------------------------------------------+--------------+
-| Name     | Description                                  | Values       |
-+==========+==============================================+==============+
-| name     | Name of the group                            | String       |
-+----------+----------------------------------------------+--------------+
-| profile  | If a client can be directly associated with  | True|False   |
-|          | this group                                   |              |
-+----------+----------------------------------------------+--------------+
-| public   | If a client can freely associate itself with | True|False   |
-|          | this group. For use with the ``bcfg2 -p``    |              |
-|          | option on the client.                        |              |
-+----------+----------------------------------------------+--------------+
-| category | A group can only contain one instance of a   | String       |
-|          | group in any one category. This provides the |              |
-|          | basis for representing groups which are      |              |
-|          | conjugates of one another in a rigorous way. |              |
-+----------+----------------------------------------------+--------------+
-| default  | Set as the profile to use for clients that   | True|False   |
-|          | are not associated with a profile in         |              |
-|          | ``clients.xml``                              |              |
-+----------+----------------------------------------------+--------------+
-| comment  | English text description of group            | String       |
-+----------+----------------------------------------------+--------------+
-| negate   | When used as a conditional, only apply the   | True|False   |
-|          | children if the named group does not match.  |              |
-|          | When used as a declaration, do not apply     |              |
-|          | the named group to matching clients.         |              |
-+----------+----------------------------------------------+--------------+
-
-The ``profile``, ``public``, ``category``, ``default``, and
-``comment`` attributes are only parsed if a Group tag either a) is the
-direct child of a Groups tag (i.e., at the top level of an XML file);
-or b) has no children.  This matches legacy behavior in Bcfg2 1.2 and
-earlier.
-
-Groups can also contain other groups, clients, and bundles.
-
-.. _metadata-client-tag:
-
-Metadata Client Tag
--------------------
-
-The Client Tag has the following possible attributes:
-
-+----------+-----------------------------------------------+--------------+
-| Name     | Description                                   | Values       |
-+==========+===============================================+==============+
-| name     | Name of the client                            | String       |
-+----------+-----------------------------------------------+--------------+
-| negate   | Only apply the child tags if the named client | True|False   |
-|          | does not match.                               |              |
-+----------+-----------------------------------------------+--------------+
-
-Clients can also contain groups, other clients (although that's likely
-nonsensical), and bundles.
-
-
-Use of XInclude
-===============
+.. versionadded:: 0.9.0
 
 `XInclude <http://www.w3.org/TR/xinclude/>`_ is a W3C specification
-for the inclusion of external XML documents into XML source
-files. Much like the use of ``#include`` in C, this allows complex
-definitions to be split into smaller, more manageable pieces. As of
-bcfg2-0.9.0pre1, the `Metadata`_ plugin supports the use of XInclude
-specifications to split the ``clients.xml`` and ``groups.xml``
+for the inclusion of external XML documents into XML source files,
+allowing complex definitions to be split into smaller, more manageable
+pieces. The `Metadata`_ plugin supports the use of XInclude
+specifications to split the `clients.xml`_ and `groups.xml`_
 files. This mechanism allows the following specification to produce
 useful results:
 
@@ -358,7 +220,7 @@ Metadata Caching
 
 Client metadata can be cached in order to improve performance.  This
 is particularly important if you have lots of templates that use
-metadata from other clients (e.g., with the MetadataQuery interface
+metadata from other clients (e.g., with the `MetadataQuery`_ interface
 described below.  See :ref:`server-caching` for a full description of
 the caching features available.
 
@@ -393,7 +255,7 @@ A special client metadata class is available to
 +------------+------------------------------------------------+---------------+
 | connectors | connector plugins known to this client         | List          |
 +------------+------------------------------------------------+---------------+
-| query      | MetadataQuery object                           | MetadataQuery |
+| query      | `MetadataQuery`_ object                        | MetadataQuery |
 +------------+------------------------------------------------+---------------+
 
 

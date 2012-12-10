@@ -298,46 +298,19 @@ not in the clients configuration.
 Ignoring Files during Verification
 ----------------------------------
 
-Ignore Tag
-^^^^^^^^^^
-
-The Ignore tag in Pkgmgr is used to "mask out" individual files from
-the RPM verification. This is done by comparing the verification
-failure results with the Ignore tag name. If there is a match, that
-entry is not used by the client to determine if a package has failed
+The :ref:`path-ignore` Path tag is used to exempt individual files
+from the RPM verification. This is done by comparing the verification
+failure results with the ignore Path. If there is a match, that entry
+is not used by the client to determine if a package has failed
 verification.
 
-Ignore tag entries can be specified at both the Package level, in which
-case they apply to all Instances, and/or at the Instance level, in which
-case they only apply to that instance.
+Path ignore entries can be specified at both the Package level, in
+which case they apply to all Instances, and/or at the Instance level,
+in which case they only apply to that instance.
 
-Ignore tag entries are used by the RPM driver. They can be specified
-in both old and new style Pkgmgr files.
+See :ref:`path-ignore` for more details.
 
-The Ignore Tag supports the following attributes:
-
-+-----------+-------------+--------+
-| Attribute | Description | Values |
-+===========+=============+========+
-| name      | File name.  | String |
-+-----------+-------------+--------+
-
-Example
-
-.. code-block:: xml
-
-    <Package name='glibc' type='rpm'>
-        <Ignore name='/etc/rpc'/>
-        <Instance simplefile='glibc-2.3.4-2.25.x86_64.rpm' version='2.3.4' release='2.25' arch='x86_64'/>
-    </Package>
-
-POSIX 'ignore' Path entries
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The YUM analog to the Ignore Tag used by RPM is the use of Path
-entries of type 'ignore'. The following shows an example for the
-centos-release package which doesn't verify if you remove the default
-repos and replace them with a custom repo.
+Example:
 
 .. code-block:: xml
 

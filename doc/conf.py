@@ -21,6 +21,7 @@ import time
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 sys.path.insert(0, os.path.abspath('../src/lib'))
 sys.path.insert(0, os.path.abspath('..'))
+sys.path.insert(0, os.path.abspath('exts'))
 
 # -- General configuration -----------------------------------------------------
 
@@ -30,10 +31,14 @@ sys.path.insert(0, os.path.abspath('..'))
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['sphinx.ext.autodoc', 'sphinx.ext.doctest',
-              'sphinx.ext.intersphinx', 'sphinx.ext.viewcode']
+              'sphinx.ext.intersphinx', 'sphinx.ext.viewcode',
+              'xmlschema']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
+
+# Path to XML schemas
+xmlschema_path = "../schemas"
 
 # The suffix of source filenames.
 source_suffix = '.txt'
@@ -288,6 +293,7 @@ private_re = re.compile(r'^\s*\.\.\s*private-include:\s*(.+)$')
 
 private_include = []
 
+
 def skip_member_from_docstring(app, what, name, obj, skip, options):
     """ since sphinx 1.0 autodoc doesn't support the :private-members:
     directive, this function allows you to specify
@@ -308,13 +314,14 @@ def skip_member_from_docstring(app, what, name, obj, skip, options):
             if match:
                 private_include.extend(re.split(r',\s*', match.group(1)))
         return None
-        
+
     if not skip:
         return None
 
     if name in private_include:
         return False
     return None
+
 
 def setup(app):
     app.connect('autodoc-skip-member', skip_member_from_docstring)

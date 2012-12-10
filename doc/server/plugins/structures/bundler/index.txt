@@ -154,6 +154,8 @@ Several variables are pre-defined inside templates:
     groups, you *must* use a Genshi conditional, not a ``<Group>``
     tag.  The same caveats apply to ``<Client>`` tags.
 
+See also the :ref:`xml-genshi-reference`.
+
 Troubleshooting
 ---------------
 

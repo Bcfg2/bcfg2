@@ -139,7 +139,7 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element name='Group' type='GroupType'>
+      <xsd:element name='Group' type='BundlerGroupType'>
         <xsd:annotation>
           <xsd:documentation>
             Elements within Group tags only apply to clients that are
@@ -148,7 +148,7 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element name='Client' type='GroupType'>
+      <xsd:element name='Client' type='BundlerGroupType'>
         <xsd:annotation>
           <xsd:documentation>
             Elements within Client tags only apply to the named client
@@ -167,21 +167,34 @@
     </xsd:choice>
   </xsd:group>
 
-  <xsd:complexType name='GroupType'>
+  <xsd:complexType name='BundlerGroupType'>
+    <xsd:annotation>
+      <xsd:documentation>
+        A **BundlerGroupType** is a tag used to provide logic.  Child
+        entries of a BundlerGroupType tag only apply to machines that
+        match the condition specified -- either membership in a group,
+        or a matching client name.
+        :xml:attribute:`BundlerGroupType:negate` can be set to negate
+        the sense of the match.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:group ref="bundleElements"/>
     </xsd:choice>
     <xsd:attribute type='xsd:string' name='name' use='required'>
       <xsd:annotation>
-        <xsd:documentation>The group name</xsd:documentation>
+        <xsd:documentation>
+          The group name
+        </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
     <xsd:attribute type='xsd:string' name='negate'>
       <xsd:annotation>
         <xsd:documentation>
-          Negate the sense of this group; i.e., entries within this
-          tag are only used on clients that are not members of the
-          group
+          Negate the sense of this group or client; i.e., entries
+          within this tag are only used on clients that are not
+          members of the group, or that have hostnames that do not
+          match.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -192,11 +205,42 @@
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:group ref="bundleElements"/>
     </xsd:choice>
-    <xsd:attribute type='xsd:string' name='description' />
-    <xsd:attribute type='xsd:string' name='name'/>
-    <xsd:attribute type='xsd:string' name='version'/>
-    <xsd:attribute type='xsd:string' name='origin'/>
-    <xsd:attribute type='xsd:string' name='revision'/>
+    <xsd:attribute type='xsd:string' name='description'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Freeform description of the bundle.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='name' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the bundle.  This must match the bundle
+          filename, minus the extension.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='version'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Bundle schema version.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:anyURI' name='origin'>
+      <xsd:annotation>
+        <xsd:documentation>
+          URL of master version (for common repo)
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='revision'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Master version control revision.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
     <xsd:attribute ref="xml:base"/>
   </xsd:complexType>

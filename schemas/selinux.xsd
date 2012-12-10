@@ -1,0 +1,302 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      SELinux element definitions for bcfg2
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
+
+  <xsd:simpleType name='SEFileTypeEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='all'/>
+      <xsd:enumeration value='regular'/>
+      <xsd:enumeration value='directory'/>
+      <xsd:enumeration value='symlink'/>
+      <xsd:enumeration value='pipe'/>
+      <xsd:enumeration value='socket'/>
+      <xsd:enumeration value='block'/>
+      <xsd:enumeration value='char'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name='SEBooleanValueEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='on'/>
+      <xsd:enumeration value='off'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="SELinuxStructure">
+    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:attribute type="xsd:boolean" name="disabled"/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="SEBooleanType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Concrete SELinux boolean entry
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:string" name="name" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Name of the boolean
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="SEBooleanValueEnum" name="value"
+                   use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Value of the boolean
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="SEPortType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Concrete SELinux port entry
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="SEPortNamePattern" name="name" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Port number or range and protocol
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="selinuxtype" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux type to apply to this port
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="SEPortNamePattern">
+    <xsd:annotation>
+      <xsd:documentation>
+        Port number or range and protocol for SEPort entries.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>
+          ``&lt;port&gt;/&lt;proto&gt;`` or
+          ``&lt;start&gt;-&lt;end&gt;/&lt;proto&gt;``
+        </xsd:documentation>
+      </xsd:annotation>
+      <xsd:pattern value="\d+(-\d+)?/(tcp|udp)"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="SEFcontextType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Concrete SELinux file context ("fcontext") entry
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:string" name="name" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Regular expression file specification
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="selinuxtype" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux type to apply to files matching this specification
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="SEFileTypeEnum" name="filetype" default="all">
+      <xsd:annotation>
+        <xsd:documentation>
+          File type to match
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="SENodeType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Concrete SELinux node entry
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="SENodeNamePattern" name="name" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          IP address and netmask of node
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="selinuxtype" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux type to apply to this node
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="SENodeProtocolEnum" name="proto">
+      <xsd:annotation>
+        <xsd:documentation>
+          Protocol
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="SENodeNamePattern">
+    <xsd:annotation>
+      <xsd:documentation>
+        IP address and netmask for SENode entries.  Netmask can be
+        numeric or dotted-quad.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>
+          ``&lt;addr&gt;/&lt;netmask&gt;``. Netmask can be numeric
+          (``/16``) or dotted-quad (``/255.255.0.0``).
+        </xsd:documentation>
+      </xsd:annotation>
+      <xsd:pattern value="(\d{1,3}\.){3}\d{1,3}/(\d\d?|\d{1,3}\.){3}\d{1,3}"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:simpleType name='SENodeProtocolEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='ipv4'/>
+      <xsd:enumeration value='ipv6'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="SELoginType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Concrete SELinux login entry
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:token" name="name" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Unix username
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="selinuxuser" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux username
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="SEUserType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Concrete SELinux user entry
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:token" name="name" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux username
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="roles" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Space-separated list of rules
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="prefix" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Home directory context prefix
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="SEInterfaceType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Concrete SELinux interface entry
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:token" name="name" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Interface name
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="selinuxtype" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux type to apply to this interface
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="SEPermissiveType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Concrete SELinux permissive domain entry
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:token" name="name" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux type to make permissive
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="SEModuleType" mixed="true">
+    <xsd:annotation>
+      <xsd:documentation>
+        Concrete SELinux module entry
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:string" name="name" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux module name or filename
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:boolean" name="disabled">
+      <xsd:annotation>
+        <xsd:documentation>
+          Disable this module
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+</xsd:schema>

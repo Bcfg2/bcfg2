@@ -1,6 +1,5 @@
 <xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
             xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
-
   <xsd:annotation>
     <xsd:documentation>
       string enumeration definitions for bcfg2
@@ -50,10 +49,66 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element name='SELinux' type='SELinuxType'>
+      <xsd:element name='SEBoolean' type='SEBooleanType'>
         <xsd:annotation>
           <xsd:documentation>
-            Fully bound description of an SELinux entry.
+            Fully bound description of an SELinux boolean entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SEPort' type='SEPortType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux port entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SEFcontext' type='SEFcontextType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux file context entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SENode' type='SENodeType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux node entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SELogin' type='SELoginType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux login entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SEUser' type='SEUserType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux user entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SEInterface' type='SEInterfaceType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux interface entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SEPermissive' type='SEPermissiveType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux permissive domain entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SEModule' type='SEModuleType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux module entry.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
@@ -84,8 +139,8 @@
         <xsd:annotation>
           <xsd:documentation>
             Elements within Group tags only apply to clients that are
-            members of that group (or vice-versa; see #element_negate
-            below)
+            members of that group (or vice-versa, if
+            :xml:attribute:`RContainerType:negate` is set)
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
@@ -93,7 +148,8 @@
         <xsd:annotation>
           <xsd:documentation>
             Elements within Client tags only apply to the named client
-            (or vice-versa; see #element_negate below)
+            (or vice-versa, if :xml:attribute:`RContainerType:negate`
+            is set)
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
@@ -101,20 +157,60 @@
   </xsd:group>
 
   <xsd:complexType name='RContainerType'>
+    <xsd:annotation>
+      <xsd:documentation>
+        An **RContainerType** is a Rules tag used to provide logic.
+        Child entries of an RContainerType tag only apply to machines
+        that match the condition specified -- either membership in a
+        group, or a matching client name.
+        :xml:attribute:`RContainerType:negate` can be set to negate
+        the sense of the match.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:group ref="rulesElements"/>
     </xsd:choice>
-    <xsd:attribute name='name' type='xsd:string'/>
-    <xsd:attribute name='negate' type='xsd:boolean'/>
+    <xsd:attribute name='name' type='xsd:string'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the client or group to match on.  Child entries
+          will only apply to this client or group (unless
+          :xml:attribute:`RContainerType:negate` is set).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name='negate' type='xsd:boolean' default="false">
+      <xsd:annotation>
+        <xsd:documentation>
+          Negate the sense of the match, so that child entries only
+          apply to a client if it is not a member of the given group
+          or does not have the given name.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:element name='Rules'>
+    <xsd:annotation>
+      <xsd:documentation>
+        The top-level tag for concrete descriptions of entries in
+        :ref:`server-plugins-generators-rules`.
+      </xsd:documentation>
+    </xsd:annotation>
     <xsd:complexType>
       <xsd:choice minOccurs='0' maxOccurs='unbounded'>
         <xsd:group ref="rulesElements"/>
       </xsd:choice>
-      <xsd:attribute name='priority' type='xsd:integer' use='required'/>
+      <xsd:attribute name='priority' type='xsd:integer' use='required'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Sets the priority for rules in this file for
+            :ref:`server-plugins-generators-rules`.  The higher value
+            wins.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
       <xsd:attributeGroup ref="py:genshiAttrs"/>
     </xsd:complexType>
   </xsd:element>

@@ -33,3 +33,4 @@ clients.
    database
    caching
    encryption
+   genshi-xml
