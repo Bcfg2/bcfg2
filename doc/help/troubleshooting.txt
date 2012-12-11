@@ -34,6 +34,31 @@ Review server log messages
 The bcfg2-server process logs to syslog facility LOG_DAEMON. The server
 produces a series of messages upon a variety of events and errors.
 
+The server also supports two XML-RPC methods that can be used
+to turn up the debug level in a live server:
+
+* ``toggle_debug``: Turn debug on or off, depending on the current
+  setting.
+* ``set_debug``: Turn debug explicitly on or off.
+
+These can be called with :ref:`bcfg2-admin xcmd <server-admin-xcmd>`,
+e.g.::
+
+    bcfg2-admin xcmd toggle_debug
+    bcfg2-admin xcmd set_debug true
+
+Each plugin also supports these two methods, which can be used to set
+the debug level individually on a given plugin, e.g.::
+
+    bcfg2-admin xcmd Packages.set_debug true
+    bcfg2-admin xcmd Probes.toggle_debug
+
+Finally, the File Activity Monitor has its own analogue to these two
+methods, for setting the debug level of the FAM:
+
+    bcfg2-admin xcmd toggle_fam_debug
+    bcfg2-admin xcmd set_fam_debug false
+
 Check if all repository XML files conform to schemas
 ====================================================
 
