@@ -20,7 +20,6 @@ class Trigger(Bcfg2.Server.Plugin.Plugin,
               Bcfg2.Server.Plugin.ClientRunHooks,
               Bcfg2.Server.Plugin.DirectoryBacked):
     """Trigger is a plugin that calls external scripts (on the server)."""
-    name = 'Trigger'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
