@@ -1,5 +1,6 @@
 """ Unified statistics and reporting plugin """
 
+import sys
 import time
 import platform
 import traceback
@@ -27,7 +28,7 @@ def _rpc_call(method):
             return self.transport.rpc(method, *args, **kwargs)
         except TransportError:
             # this is needed for Admin.Pull
-            raise PluginExecutionError
+            raise PluginExecutionError(sys.exc_info()[1])
     return _real_rpc_call
 
 

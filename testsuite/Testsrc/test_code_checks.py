@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import glob
+import copy
 from subprocess import Popen, PIPE, STDOUT
 
 # add all parent testsuite directories to sys.path to allow (most)
@@ -15,13 +16,14 @@ while _path != '/':
     _path = os.path.dirname(_path)
 from common import *
 
+# path to base testsuite directory
+testdir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
 # path to Bcfg2 src directory
-srcpath = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..",
-                                       "src"))
+srcpath = os.path.abspath(os.path.join(testdir, "..", "src"))
 
 # path to pylint rc file
-rcfile = os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
-                                      "pylintrc.conf"))
+rcfile = os.path.join(testdir, "pylintrc.conf")
 
 # test for pylint existence
 try:
@@ -140,7 +142,7 @@ def blacklist_filter(filelist, blacklist):
 
 class TestPylint(Bcfg2TestCase):
     pylint_cmd = ["pylint", "--rcfile", rcfile, "--init-hook",
-                  "import sys;sys.path.append('%s')" %
+                  "import sys;sys.path.extend('%s')" %
                   os.path.join(srcpath, "lib")]
 
     # regex to find errors and fatal errors
@@ -155,6 +157,11 @@ class TestPylint(Bcfg2TestCase):
 
     full_blacklist = expand_path_dict(error_checks) + contingent_blacklist + \
         blacklist
+
+    def get_env(self):
+        env = copy.copy(os.environ)
+        env['PYTHONPATH'] = '%s:%s' % (env['PYTHONPATH'], testdir)
+        return env
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
@@ -206,7 +213,7 @@ class TestPylint(Bcfg2TestCase):
             extra_args = []
         args = self.pylint_cmd + extra_args + \
             [os.path.join(srcpath, p) for p in paths]
-        pylint = Popen(args, stdout=PIPE, stderr=STDOUT)
+        pylint = Popen(args, stdout=PIPE, stderr=STDOUT, env=self.get_env())
         print(pylint.communicate()[0])
         self.assertEqual(pylint.wait(), 0)
 
@@ -260,7 +267,7 @@ class TestPylint(Bcfg2TestCase):
         args = self.pylint_cmd + extra_args + \
             ["-f", "parseable", "-d", "R0801,E1103"] + \
             [os.path.join(srcpath, p) for p in paths]
-        pylint = Popen(args, stdout=PIPE, stderr=STDOUT)
+        pylint = Popen(args, stdout=PIPE, stderr=STDOUT, env=self.get_env())
         output = pylint.communicate()[0]
         rv = pylint.wait()
 

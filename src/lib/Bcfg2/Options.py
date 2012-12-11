@@ -331,7 +331,7 @@ def get_bool(val):
     elif val in falselist:
         return False
     else:
-        raise ValueError
+        raise ValueError("Not a boolean value", val)
 
 
 def get_size(value):
@@ -341,7 +341,7 @@ def get_size(value):
         return value
     mat = re.match("(\d+)([KkMmGg])?", value)
     if not mat:
-        raise ValueError
+        raise ValueError("Not a valid size", value)
     rvalue = int(mat.group(1))
     mult = mat.group(2).lower()
     if mult == 'k':

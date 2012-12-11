@@ -67,7 +67,7 @@ def fetch_url(url):
     if '@' in url:
         mobj = re.match('(\w+://)([^:]+):([^@]+)@(.*)$', url)
         if not mobj:
-            raise ValueError
+            raise ValueError("Invalid URL")
         user = mobj.group(2)
         passwd = mobj.group(3)
         url = mobj.group(1) + mobj.group(4)
