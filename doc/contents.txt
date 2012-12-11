@@ -21,9 +21,8 @@ Bcfg2 documentation |release|
    glossary
    appendix/index
    man/index
- 
+
    unsorted/index
-   obsolete/index
 
 
 Indices, glossary and tables
