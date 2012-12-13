@@ -355,10 +355,20 @@ class PropertiesEncryptor(Encryptor):
         if not crypted.text or not crypted.text.strip():
             self.logger.warning("Skipping empty element %s" % crypted.tag)
             return crypted
-        crypted.text = Bcfg2.Encryption.ssl_decrypt(
+        decrypted = Bcfg2.Encryption.ssl_decrypt(
             crypted.text,
             passphrase,
             Bcfg2.Encryption.get_algorithm(self.setup)).strip()
+        try:
+            crypted.text = decrypted.encode('ascii', 'xmlcharrefreplace')
+        except UnicodeDecodeError:
+            # we managed to decrypt the value, but it contains content
+            # that can't even be encoded into xml entities.  what
+            # probably happened here is that we coincidentally could
+            # decrypt a value encrypted with a different key, and
+            # wound up with gibberish.
+            self.logger.warning("Decrypted %s to gibberish, skipping" %
+                                crypted.tag)
         return crypted
 
 
