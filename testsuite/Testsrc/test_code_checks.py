@@ -216,7 +216,7 @@ class TestPylint(Bcfg2TestCase):
             extra_args = []
         args = self.pylint_cmd + extra_args + \
             [os.path.join(srcpath, p) for p in paths]
-        pylint = Popen(args, stdout=PIPE, stderr=STDOUT, env=self.get_env())
+        pylint = Popen(args, stdout=PIPE, stderr=STDOUT)
         print(pylint.communicate()[0])
         self.assertEqual(pylint.wait(), 0)
 
@@ -270,7 +270,7 @@ class TestPylint(Bcfg2TestCase):
         args = self.pylint_cmd + extra_args + \
             ["-f", "parseable", "-d", "R0801,E1103"] + \
             [os.path.join(srcpath, p) for p in paths]
-        pylint = Popen(args, stdout=PIPE, stderr=STDOUT, env=self.get_env())
+        pylint = Popen(args, stdout=PIPE, stderr=STDOUT)
         output = pylint.communicate()[0]
         rv = pylint.wait()
 
