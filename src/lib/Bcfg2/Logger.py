@@ -183,11 +183,17 @@ def setup_logging(procname, to_console=True, to_syslog=True,
     if to_console:
         if to_console == True:
             to_console = logging.WARNING
-        clvl = min(to_console, level)
+        if level == 0:
+            clvl = to_console
+        else:
+            clvl = min(to_console, level)
         params.append("%s to console" % logging.getLevelName(clvl))
         add_console_handler(clvl)
     if to_syslog:
-        slvl = min(level, logging.INFO)
+        if level == 0:
+            slvl = logging.INFO
+        else:
+            slvl = min(level, logging.INFO)
         params.append("%s to syslog" % logging.getLevelName(slvl))
         add_syslog_handler(procname, syslog_facility, level=slvl)
     if to_file is not None:
