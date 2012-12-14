@@ -142,7 +142,7 @@ def blacklist_filter(filelist, blacklist):
 
 class TestPylint(Bcfg2TestCase):
     pylint_cmd = ["pylint", "--rcfile", rcfile, "--init-hook",
-                  "import sys;sys.path.extend('%s')" %
+                  "import sys;sys.path.append('%s')" %
                   os.path.join(srcpath, "lib")]
 
     # regex to find errors and fatal errors
