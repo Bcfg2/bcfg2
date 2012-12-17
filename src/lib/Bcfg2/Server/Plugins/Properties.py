@@ -216,10 +216,14 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
                               default="strict")) == "strict"
             for el in self.xdata.xpath("//*[@encrypted]"):
                 try:
-                    el.text = self._decrypt(el)
+                    el.text = self._decrypt(el).encode('ascii',
+                                                       'xmlcharrefreplace')
+                except UnicodeDecodeError:
+                    LOGGER.info("Properties: Decrypted %s to gibberish, "
+                                "skipping" % el.tag)
                 except EVPError:
-                    msg = "Failed to decrypt %s element in %s" % (el.tag,
-                                                                  self.name)
+                    msg = "Properties: Failed to decrypt %s element in %s" % \
+                        (el.tag, self.name)
                     if strict:
                         raise PluginExecutionError(msg)
                     else:
