@@ -182,7 +182,7 @@
       <xs:element name="otherwise" type="py:otherwiseType"
                   minOccurs="0"/>
     </xs:sequence>
-    <xs:attribute name="test" type="xs:string" use="required">
+    <xs:attribute name="test" type="xs:string">
       <xs:annotation>
         <xs:documentation>
           If ``test`` is set, the child :xml:element:`py:when`
