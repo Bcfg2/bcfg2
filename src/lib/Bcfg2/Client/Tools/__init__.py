@@ -607,7 +607,7 @@ class SvcTool(Tool):
         for entry in [ent for ent in bundle if self.handlesEntry(ent)]:
             restart = entry.get("restart", "true")
             if (restart.lower() == "false" or
-                (restart.lower == "interactive" and
+                (restart.lower() == "interactive" and
                  not self.setup['interactive'])):
                 continue
 
