@@ -396,12 +396,11 @@ class Tool(object):
         missing = self.missing_attrs(entry)
         if missing:
             if action is None:
-                msg = "%s: %s is missing required attribute(s): %s"
+                desc = "%s is" % self.primarykey(entry)
             else:
-                msg = "%%s: Cannot %s %%s due to missing required " + \
-                    "attribute(s): %%s" % action
-            self.logger.error(msg % (self.name, self.primarykey(entry),
-                                     ", ".join(missing)))
+                desc = "Cannot %s %s due to" % (action, self.primarykey(entry))
+            self.logger.error("%s: %s missing required attribute(s): %s" %
+                              (self.name, desc, ", ".join(missing)))
             return False
         return True
 
