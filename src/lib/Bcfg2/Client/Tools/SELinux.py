@@ -265,7 +265,7 @@ class SELinuxEntryHandler(object):
     def key2entry(self, key):
         """ Generate an XML entry from an SELinux record key """
         attrs = self._key2attrs(key)
-        return Bcfg2.Client.XML.Element(self.etype, **attrs)
+        return Bcfg2.Client.XML.Element("SE%s" % self.etype.title(), **attrs)
 
     def _args(self, entry, method):
         """ Get the argument list for invoking _modify or _add, or
