@@ -328,15 +328,25 @@ class TestDecision(Bcfg2TestCase):
 
 
 class TestStructureValidator(Bcfg2TestCase):
+    test_obj = StructureValidator
+
+    def get_obj(self):
+        return self.test_obj()
+
     def test_validate_structures(self):
-        sv = StructureValidator()
+        sv = self.get_obj()
         self.assertRaises(NotImplementedError,
                           sv.validate_structures, None, None)
 
 
 class TestGoalValidator(Bcfg2TestCase):
+    test_obj = GoalValidator
+
+    def get_obj(self):
+        return self.test_obj()
+
     def test_validate_goals(self):
-        gv = GoalValidator()
+        gv = self.get_obj()
         self.assertRaises(NotImplementedError,
                           gv.validate_goals, None, None)
 

@@ -7,7 +7,6 @@ import Bcfg2.Server.Plugins.Rules
 class Defaults(Bcfg2.Server.Plugins.Rules.Rules,
                Bcfg2.Server.Plugin.StructureValidator):
     """Set default attributes on bound entries"""
-    name = 'Defaults'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     # Rules is a Generator that happens to implement all of the
@@ -20,16 +19,13 @@ class Defaults(Bcfg2.Server.Plugins.Rules.Rules,
     def HandlesEntry(self, entry, metadata):
         return False
 
-    def HandleEntry(self, entry, metadata):
-        raise Bcfg2.Server.Plugin.PluginExecutionError
-
     def HandleEvent(self, event):
         Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent(self, event)
 
     def validate_structures(self, metadata, structures):
         """ Apply defaults """
         for struct in structures:
-            for entry in struct.iter():
+            for entry in struct.getchildren():
                 if entry.tag.startswith("Bound"):
                     is_bound = True
                     entry.tag = entry.tag[5:]
@@ -48,6 +44,7 @@ class Defaults(Bcfg2.Server.Plugins.Rules.Rules,
                     if is_bound:
                         entry.tag = "Bound" + entry.tag
 
+    @property
     def _regex_enabled(self):
         """ Defaults depends on regex matching, so force it enabled """
         return True

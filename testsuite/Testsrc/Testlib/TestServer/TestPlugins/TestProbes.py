@@ -21,7 +21,8 @@ from TestPlugin import TestEntrySet, TestProbing, TestConnector, \
     TestDatabaseBacked
 
 # test data for JSON and YAML tests
-test_data = dict(a=1, b=[1, 2, 3], c="test")
+test_data = dict(a=1, b=[1, 2, 3], c="test",
+                 d=dict(a=1, b=dict(a=1), c=(1, "2", 3)))
 
 
 class FakeList(list):
@@ -75,14 +76,14 @@ class TestProbeData(Bcfg2TestCase):
         data = ProbeData(jdata)
         self.assertIsNotNone(data.json)
         self.assertItemsEqual(test_data, data.json)
-        
+
     @skipUnless(HAS_YAML, "YAML libraries not found, skipping YAML tests")
     def test_yaml(self):
         jdata = yaml.dump(test_data)
         data = ProbeData(jdata)
         self.assertIsNotNone(data.yaml)
         self.assertItemsEqual(test_data, data.yaml)
-        
+
 
 class TestProbeSet(TestEntrySet):
     test_obj = ProbeSet
@@ -123,7 +124,7 @@ class TestProbeSet(TestEntrySet):
         evt.filename = "probed.xml"
         ps.HandleEvent(evt)
         self.assertFalse(ps.handle_event.called)
-        
+
         # test that other events are processed appropriately
         evt.reset_mock()
         evt.filename = "fooprobe"
@@ -133,7 +134,7 @@ class TestProbeSet(TestEntrySet):
     @patch("%s.list" % builtins, FakeList)
     def test_get_probe_data(self):
         ps = self.get_obj()
-        
+
         # build some fairly complex test data for this.  in the end,
         # we want the probe data to include only the most specific
         # version of a given probe, and by basename only, not full
@@ -390,7 +391,7 @@ text
         client = Mock()
         client.hostname = cname
         probes._write_data_db(client)
-        
+
         pdata = ProbesDataModel.objects.filter(hostname=cname).all()
         self.assertEqual(len(pdata), len(probes.probedata[cname]))
         pgroups = ProbesGroupsModel.objects.filter(hostname=cname).all()
@@ -476,13 +477,13 @@ text
         # we use a simple (read: bogus) datalist here to make this
         # easy to test
         datalist = ["a", "b", "c"]
-        
+
         probes = self.get_probes_object()
         probes.core.metadata_cache_mode = 'off'
         client = Mock()
         client.hostname = "foo.example.com"
         probes.ReceiveData(client, datalist)
-        
+
         cgroups = []
         cprobedata = ClientProbeDataSet()
         self.assertItemsEqual(mock_ReceiveDataItem.call_args_list,
@@ -496,7 +497,7 @@ text
         probes.cgroups[client.hostname] = datalist
         probes.core.metadata_cache_mode = 'aggressive'
         probes.ReceiveData(client, ['a', 'b', 'd'])
-        
+
         mock_write_data.assert_called_with(client)
         probes.core.metadata_cache.expire.assert_called_with(client.hostname)
 
@@ -520,7 +521,7 @@ text
                     dataitem.text = str(pdata)
 
                 probes.ReceiveDataItem(client, dataitem, cgroups, cprobedata)
-                
+
             probes.cgroups[client.hostname] = cgroups
             probes.probedata[client.hostname] = cprobedata
             self.assertIn(client.hostname, probes.probedata)
@@ -563,5 +564,5 @@ text
         metadata.hostname = "nonexistent"
         self.assertEqual(probes.get_additional_data(metadata),
                          ClientProbeDataSet())
-        
-        
+
+

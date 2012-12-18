@@ -6,7 +6,6 @@ import Bcfg2.Server.Plugin
 
 class Rules(Bcfg2.Server.Plugin.PrioDir):
     """This is a generator that handles service assignments."""
-    name = 'Rules'
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
@@ -19,14 +18,13 @@ class Rules(Bcfg2.Server.Plugin.PrioDir):
                                  self.Entries[entry.tag].keys())
         return False
 
-    def HandleEntry(self, entry, metadata):
-        return self.BindEntry(entry, metadata)
-
     def BindEntry(self, entry, metadata):
         attrs = self.get_attrs(entry, metadata)
         for key, val in list(attrs.items()):
             if key not in entry.attrib:
                 entry.attrib[key] = val
+
+    HandleEntry = BindEntry
 
     def _matches(self, entry, metadata, rules):
         if Bcfg2.Server.Plugin.PrioDir._matches(self, entry, metadata, rules):
@@ -48,6 +46,7 @@ class Rules(Bcfg2.Server.Plugin.PrioDir):
                     return True
         return False
 
+    @property
     def _regex_enabled(self):
         """ Return True if rules regexes are enabled, False otherwise """
         return self.core.setup.cfp.getboolean("rules", "regex", default=False)
