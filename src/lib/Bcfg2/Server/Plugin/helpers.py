@@ -155,7 +155,8 @@ class DatabaseBacked(Plugin):
         lock before writing, because it does not allow multiple
         threads to write."""
         engine = \
-            self.core.setup.cfp.get(*Bcfg2.Options.DB_ENGINE.cf,
+            self.core.setup.cfp.get(Bcfg2.Options.DB_ENGINE.cf[0],
+                                    Bcfg2.Options.DB_ENGINE.cf[1],
                                     default=Bcfg2.Options.DB_ENGINE.default)
         return engine == 'sqlite3'
 
