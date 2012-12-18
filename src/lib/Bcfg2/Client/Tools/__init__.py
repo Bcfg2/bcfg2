@@ -49,7 +49,7 @@ class Executor:
         self.logger.debug("Running: %s" % command)
         proc = Popen(command, shell=True, bufsize=16384,
                      stdin=PIPE, stdout=PIPE, close_fds=True)
-        output = proc.communicate()[0].splitlines
+        output = proc.communicate()[0].splitlines()
         for line in output:
             self.logger.debug('< %s' % line)
         return (proc.wait(), output)
