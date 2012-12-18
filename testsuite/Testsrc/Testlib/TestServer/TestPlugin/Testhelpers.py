@@ -388,6 +388,11 @@ class TestDirectoryBacked(Bcfg2TestCase):
 
 class TestXMLFileBacked(TestFileBacked):
     test_obj = XMLFileBacked
+
+    # can be set to True (on child test cases where should_monitor is
+    # always True) or False (on child test cases where should_monitor
+    # is always False)
+    should_monitor = None
     path = os.path.join(datastore, "test", "test1.xml")
 
     def get_obj(self, path=None, fam=None, should_monitor=False):
@@ -398,14 +403,19 @@ class TestXMLFileBacked(TestFileBacked):
     def test__init(self):
         fam = Mock()
         xfb = self.get_obj()
-        self.assertIsNone(xfb.fam)
+        if self.should_monitor is True:
+            self.assertIsNotNone(xfb.fam)
+        else:
+            self.assertIsNone(xfb.fam)
 
-        xfb = self.get_obj(fam=fam)
-        self.assertFalse(fam.AddMonitor.called)
+        if self.should_monitor is not True:
+            xfb = self.get_obj(fam=fam)
+            self.assertFalse(fam.AddMonitor.called)
 
-        fam.reset_mock()
-        xfb = self.get_obj(fam=fam, should_monitor=True)
-        fam.AddMonitor.assert_called_with(self.path, xfb)
+        if self.should_monitor is not False:
+            fam.reset_mock()
+            xfb = self.get_obj(fam=fam, should_monitor=True)
+            fam.AddMonitor.assert_called_with(self.path, xfb)
 
     @patch("os.path.exists")
     @patch("lxml.etree.parse")
@@ -577,17 +587,20 @@ class TestXMLFileBacked(TestFileBacked):
         self.assertIn("/test/test2.xml", xfb.extras)
 
         fam = Mock()
-        xfb = self.get_obj(fam=fam)
-        fam.reset_mock()
-        xfb.add_monitor("/test/test3.xml")
-        self.assertFalse(fam.AddMonitor.called)
-        self.assertIn("/test/test3.xml", xfb.extras)
+        if self.should_monitor is not True:
+            fam.reset_mock()
+            xfb = self.get_obj(fam=fam)
+            fam.reset_mock()
+            xfb.add_monitor("/test/test3.xml")
+            self.assertFalse(fam.AddMonitor.called)
+            self.assertIn("/test/test3.xml", xfb.extras)
 
-        fam.reset_mock()
-        xfb = self.get_obj(fam=fam, should_monitor=True)
-        xfb.add_monitor("/test/test4.xml")
-        fam.AddMonitor.assert_called_with("/test/test4.xml", xfb)
-        self.assertIn("/test/test4.xml", xfb.extras)
+        if self.should_monitor is not False:
+            fam.reset_mock()
+            xfb = self.get_obj(fam=fam, should_monitor=True)
+            xfb.add_monitor("/test/test4.xml")
+            fam.AddMonitor.assert_called_with("/test/test4.xml", xfb)
+            self.assertIn("/test/test4.xml", xfb.extras)
 
 
 class TestStructFile(TestXMLFileBacked):

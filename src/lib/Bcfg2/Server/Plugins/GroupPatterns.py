@@ -118,7 +118,8 @@ class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
                     self.patterns.append(PatternMap(None, rng, groups))
             except:  # pylint: disable=W0702
                 self.logger.error("GroupPatterns: Failed to initialize "
-                                  "pattern %s" % entry.get('pattern'))
+                                  "pattern %s: %s" % (entry.text,
+                                                      sys.exc_info()[1]))
 
     def process_patterns(self, hostname):
         """ return a list of groups that should be added to the given
@@ -126,9 +127,9 @@ class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
         ret = []
         for pattern in self.patterns:
             try:
-                grpname = pattern.process(hostname)
-                if grpname is not None:
-                    ret.extend(grpname)
+                grps = pattern.process(hostname)
+                if grps is not None:
+                    ret.extend(grps)
             except:  # pylint: disable=W0702
                 self.logger.error("GroupPatterns: Failed to process pattern "
                                   "%s for %s" % (pattern.pattern, hostname),
