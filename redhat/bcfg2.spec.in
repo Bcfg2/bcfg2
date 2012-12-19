@@ -123,7 +123,6 @@ done
 
 %build
 %{__python} -c 'import setuptools; execfile("setup.py")' build
-%{__python} -c 'import setuptools; execfile("setup.py")' build_dtddoc
 
 %{?pythonpath: export PYTHONPATH="%{pythonpath}"}
 %{__python} -c 'import setuptools; execfile("setup.py")' build_sphinx
@@ -153,7 +152,6 @@ install -m 755 tools/bcfg2-cron %{buildroot}%{_libexecdir}/bcfg2-cron
 install -m 644 debian/bcfg2.default %{buildroot}%{_sysconfdir}/sysconfig/bcfg2
 
 mv build/sphinx/html/* %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
-mv build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 
 touch %{buildroot}%{_sysconfdir}/bcfg2.conf
 touch %{buildroot}%{_sysconfdir}/bcfg2.key

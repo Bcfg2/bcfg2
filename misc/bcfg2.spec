@@ -271,7 +271,6 @@ This package includes the Bcfg2 reports web frontend.
 
 %build
 %{__python}%{pythonversion} setup.py build
-%{__python}%{pythonversion} setup.py build_dtddoc
 
 %{?pythonpath: export PYTHONPATH="%{pythonpath}"}
 %{__python}%{pythonversion} setup.py build_sphinx
@@ -310,7 +309,6 @@ ln -s %{_initrddir}/bcfg2-server %{buildroot}%{_sbindir}/rcbcfg2-server
 
 cp -r tools/* %{buildroot}%{_defaultdocdir}/bcfg2-server-%{version}
 cp -r build/sphinx/html/* %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
-cp -r build/dtd %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}/
 
 %{__install} -d %{buildroot}%{apache_conf}/conf.d
 %{__install} -m 644 misc/apache/bcfg2.conf %{buildroot}%{apache_conf}/conf.d/wsgi_bcfg2.conf
