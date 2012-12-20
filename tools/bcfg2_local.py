@@ -22,10 +22,10 @@ class LocalCore(BaseCore):
         self.fam.handle_events_in_interval(4)
 
     def _daemonize(self):
-        pass
+        return True
 
     def _run(self):
-        pass
+        return True
 
     def _block(self):
         pass
