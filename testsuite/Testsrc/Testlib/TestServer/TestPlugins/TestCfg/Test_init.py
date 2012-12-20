@@ -1,5 +1,6 @@
 import os
 import sys
+import errno
 import lxml.etree
 import Bcfg2.Options
 from Bcfg2.Compat import walk_packages
@@ -179,6 +180,64 @@ class TestCfgVerifier(TestCfgBaseFileMatcher):
         cf = self.get_obj()
         self.assertRaises(NotImplementedError,
                           cf.verify_entry, Mock(), Mock(), Mock())
+
+
+class TestCfgCreator(TestCfgBaseFileMatcher):
+    test_obj = CfgCreator
+    path = "/foo/bar/test.txt"
+
+    def test_create_data(self):
+        cc = self.get_obj()
+        self.assertRaises(NotImplementedError,
+                          cc.create_data, Mock(), Mock())
+
+    @patch("os.makedirs")
+    @patch("%s.open" % builtins)
+    def test_write_data(self, mock_open, mock_makedirs):
+        cc = self.get_obj()
+        data = "test\ntest"
+
+        def reset():
+            mock_open.reset_mock()
+            mock_makedirs.reset_mock()
+
+        # test writing non-specific file
+        cc.write_data(data)
+        mock_makedirs.assert_called_with("/foo/bar")
+        mock_open.assert_called_with("/foo/bar/bar", "wb")
+        mock_open.return_value.write.assert_called_with(data)
+
+        # test writing group-specific file
+        reset()
+        cc.write_data(data, group="foogroup", prio=9)
+        mock_makedirs.assert_called_with("/foo/bar")
+        mock_open.assert_called_with("/foo/bar/bar.G09_foogroup", "wb")
+        mock_open.return_value.write.assert_called_with(data)
+
+        # test writing host-specific file
+        reset()
+        cc.write_data(data, host="foo.example.com")
+        mock_makedirs.assert_called_with("/foo/bar")
+        mock_open.assert_called_with("/foo/bar/bar.H_foo.example.com", "wb")
+        mock_open.return_value.write.assert_called_with(data)
+
+        # test already-exists error from makedirs
+        reset()
+        mock_makedirs.side_effect = OSError(errno.EEXIST, self.path)
+        cc.write_data(data)
+        mock_makedirs.assert_called_with("/foo/bar")
+        mock_open.assert_called_with("/foo/bar/bar", "wb")
+        mock_open.return_value.write.assert_called_with(data)
+
+        # test error from open
+        reset()
+        mock_open.side_effect = IOError
+        self.assertRaises(CfgCreationError, cc.write_data, data)
+
+        # test real error from makedirs
+        reset()
+        mock_makedirs.side_effect = OSError
+        self.assertRaises(CfgCreationError, cc.write_data, data)
 
 
 class TestCfgDefaultInfo(TestCfgInfo):
@@ -570,9 +629,36 @@ class TestCfgEntrySet(TestEntrySet):
 
         Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO = default_info
 
+    def test_create_data(self):
+        eset = self.get_obj()
+        eset.best_matching = Mock()
+        creator = Mock()
+        creator.create_data.return_value = "data"
+        eset.best_matching.return_value = creator
+        eset.get_handlers = Mock()
+        entry = lxml.etree.Element("Path", name="/test.txt", mode="0640")
+        metadata = Mock()
+
+        def reset():
+            eset.best_matching.reset_mock()
+            eset.get_handlers.reset_mock()
+
+        # test success
+        self.assertEqual(eset._create_data(entry, metadata), "data")
+        eset.get_handlers.assert_called_with(metadata, CfgCreator)
+        eset.best_matching.assert_called_with(metadata,
+                                              eset.get_handlers.return_value)
+
+        # test failure to create data
+        reset()
+        creator.create_data.side_effect = OSError
+        self.assertRaises(PluginExecutionError,
+                          eset._create_data, entry, metadata)
+
     def test_generate_data(self):
         eset = self.get_obj()
         eset.best_matching = Mock()
+        eset._create_data = Mock()
         generator = Mock()
         generator.get_data.return_value = "data"
         eset.best_matching.return_value = generator
@@ -583,7 +669,7 @@ class TestCfgEntrySet(TestEntrySet):
         def reset():
             eset.best_matching.reset_mock()
             eset.get_handlers.reset_mock()
-
+            eset._create_data.reset_mock()
 
         # test success
         self.assertEqual(eset._generate_data(entry, metadata),
@@ -591,12 +677,24 @@ class TestCfgEntrySet(TestEntrySet):
         eset.get_handlers.assert_called_with(metadata, CfgGenerator)
         eset.best_matching.assert_called_with(metadata,
                                               eset.get_handlers.return_value)
+        self.assertFalse(eset._create_data.called)
 
         # test failure to generate data
         reset()
         generator.get_data.side_effect = OSError
         self.assertRaises(PluginExecutionError,
                           eset._generate_data, entry, metadata)
+
+        # test no generator found
+        reset()
+        eset.best_matching.side_effect = PluginExecutionError
+        self.assertEqual(eset._generate_data(entry, metadata),
+                         eset._create_data.return_value)
+        eset.get_handlers.assert_called_with(metadata, CfgGenerator)
+        eset.best_matching.assert_called_with(metadata,
+                                              eset.get_handlers.return_value)
+        eset._create_data.assert_called_with(entry, metadata)
+
 
     def test_validate_data(self):
         class MockChild1(Mock):

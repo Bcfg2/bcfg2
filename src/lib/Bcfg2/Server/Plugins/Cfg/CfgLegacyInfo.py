@@ -1,10 +1,7 @@
 """ Handle info and :info files """
 
-import logging
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Cfg import CfgInfo
-
-LOGGER = logging.getLogger(__name__)
 
 
 class CfgLegacyInfo(CfgInfo):
@@ -37,8 +34,8 @@ class CfgLegacyInfo(CfgInfo):
         for line in open(self.path).readlines():
             match = Bcfg2.Server.Plugin.INFO_REGEX.match(line)
             if not match:
-                LOGGER.warning("Failed to parse line in %s: %s" %
-                               (event.filename, line))
+                self.logger.warning("Failed to parse line in %s: %s" %
+                                    (event.filename, line))
                 continue
             else:
                 for key, value in list(match.groupdict().items()):

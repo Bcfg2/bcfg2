@@ -4,18 +4,17 @@ import re
 import os
 import sys
 import stat
-import logging
+import errno
 import operator
 import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Lint
+from Bcfg2.Server.Plugin import PluginExecutionError
 # pylint: disable=W0622
-from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages, any, \
-    oct_mode
+from Bcfg2.Compat import u_str, unicode, b64encode, b64decode, walk_packages, \
+    any, oct_mode
 # pylint: enable=W0622
-
-LOGGER = logging.getLogger(__name__)
 
 #: SETUP contains a reference to the
 #: :class:`Bcfg2.Options.OptionParser` created by the Bcfg2 core for
@@ -29,7 +28,8 @@ LOGGER = logging.getLogger(__name__)
 SETUP = None
 
 
-class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
+class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData,
+                         Bcfg2.Server.Plugin.Debuggable):
     """ .. currentmodule:: Bcfg2.Server.Plugins.Cfg
 
     CfgBaseFileMatcher is the parent class for all Cfg handler
@@ -70,9 +70,13 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
     #: Flag to indicate a deprecated handler.
     deprecated = False
 
+    #: Flag to indicate an experimental handler.
+    experimental = False
+
     def __init__(self, name, specific, encoding):
         Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific,
                                                   encoding)
+        Bcfg2.Server.Plugin.Debuggable.__init__(self)
         self.encoding = encoding
     __init__.__doc__ = Bcfg2.Server.Plugin.SpecificData.__init__.__doc__ + \
 """
@@ -183,7 +187,6 @@ class CfgGenerator(CfgBaseFileMatcher):
         :param metadata: The client metadata to generate data for.
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: string - the contents of the entry
-        :raises: any
         """
         return self.data
 
@@ -290,15 +293,84 @@ class CfgVerifier(CfgBaseFileMatcher):
         :param data: The contents of the entry
         :type data: string
         :returns: None
-        :raises: Bcfg2.Server.Plugins.Cfg.CfgVerificationError
+        :raises: :exc:`Bcfg2.Server.Plugins.Cfg.CfgVerificationError`
         """
         raise NotImplementedError
+
+
+class CfgCreator(CfgBaseFileMatcher):
+    """ CfgCreator handlers create static entry data if no generator
+    was found to generate any.  A CfgCreator runs at most once per
+    client, writes its data to disk as a static file, and is not
+    called on subsequent runs by the same client. """
+
+    def create_data(self, entry, metadata):
+        """ Create new data for the given entry and write it to disk
+        using :func:`Bcfg2.Server.Plugins.Cfg.CfgCreator.write_data`.
+
+        :param entry: The entry to create data for.
+        :type entry: lxml.etree._Element
+        :param metadata: The client metadata to create data for.
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: string - the contents of the entry
+        """
+        raise NotImplementedError
+
+    def write_data(self, data, host=None, group=None, prio=0):
+        """ Write the new data to disk.  If ``host`` is given, it is
+        written as a host-specific file, or as a group-specific file
+        if ``group`` and ``prio`` are given.  If neither ``host`` nor
+        ``group`` is given, it will be written as a non-specific file.
+
+        :param data: The data to write
+        :type data: string
+        :param host: The data applies to the given host
+        :type host: bool
+        :param group: The data applies to the given group
+        :type group: string
+        :param prio: The data has the given priority relative to other
+                     objects that also apply to the same group.
+                     ``group`` must also be specified.
+        :type prio: int
+        :returns: None
+        :raises: :exc:`Bcfg2.Server.Plugins.Cfg.CfgCreationError`
+        """
+        basefilename = \
+            os.path.join(os.path.dirname(self.name),
+                         os.path.basename(os.path.dirname(self.name)))
+        if group:
+            fileloc = "%s.G%02d_%s" % (basefilename, prio, group)
+        elif host:
+            fileloc = "%s.H_%s" % (basefilename, host)
+        else:
+            fileloc = basefilename
+
+        self.debug_log("%s: Writing new file %s" % (self.name, fileloc))
+        try:
+            os.makedirs(os.path.dirname(fileloc))
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno != errno.EEXIST:
+                raise CfgCreationError("Could not create parent directories "
+                                       "for %s: %s" % (fileloc, err))
+
+        try:
+            open(fileloc, 'wb').write(data)
+        except IOError:
+            err = sys.exc_info()[1]
+            raise CfgCreationError("Could not write %s: %s" % (fileloc, err))
 
 
 class CfgVerificationError(Exception):
     """ Raised by
     :func:`Bcfg2.Server.Plugins.Cfg.CfgVerifier.verify_entry` when an
     entry fails verification """
+    pass
+
+
+class CfgCreationError(Exception):
+    """ Raised by :class:`Bcfg2.Server.Plugins.Cfg.CfgCreator` when
+    various stages of data creation fail """
     pass
 
 
@@ -323,13 +395,15 @@ class CfgDefaultInfo(CfgInfo):
 DEFAULT_INFO = CfgDefaultInfo(Bcfg2.Server.Plugin.DEFAULT_FILE_METADATA)
 
 
-class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
+class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
+                  Bcfg2.Server.Plugin.Debuggable):
     """ Handle a collection of host- and group-specific Cfg files with
     multiple different Cfg handlers in a single directory. """
 
     def __init__(self, basename, path, entry_type, encoding):
         Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path,
                                               entry_type, encoding)
+        Bcfg2.Server.Plugin.Debuggable.__init__(self)
         self.specific = None
         self._handlers = None
     __init__.__doc__ = Bcfg2.Server.Plugin.EntrySet.__doc__
@@ -347,8 +421,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 module = getattr(__import__(submodule[1]).Server.Plugins.Cfg,
                                  mname)
                 hdlr = getattr(module, mname)
-                if set(hdlr.__mro__).intersection([CfgInfo, CfgFilter,
-                                                   CfgGenerator, CfgVerifier]):
+                if CfgBaseFileMatcher in hdlr.__mro__:
                     self._handlers.append(hdlr)
             self._handlers.sort(key=operator.attrgetter("__priority__"))
         return self._handlers
@@ -374,16 +447,16 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                     if action == 'changed':
                         # warn about a bogus 'changed' event, but
                         # handle it like a 'created'
-                        LOGGER.warning("Got %s event for unknown file %s" %
-                                       (action, event.filename))
+                        self.logger.warning("Got %s event for unknown file %s"
+                                            % (action, event.filename))
                     self.debug_log("%s handling %s event on %s" %
                                    (hdlr.__name__, action, event.filename))
                     try:
                         self.entry_init(event, hdlr)
                     except:  # pylint: disable=W0702
                         err = sys.exc_info()[1]
-                        LOGGER.error("Cfg: Failed to parse %s: %s" %
-                                     (event.filename, err))
+                        self.logger.error("Cfg: Failed to parse %s: %s" %
+                                          (event.filename, err))
                     return
                 elif hdlr.ignore(event, basename=self.path):
                     return
@@ -394,8 +467,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             del self.entries[event.filename]
             return
 
-        LOGGER.error("Could not process event %s for %s; ignoring" %
-                     (action, event.filename))
+        self.logger.error("Could not process event %s for %s; ignoring" %
+                          (action, event.filename))
 
     def get_matching(self, metadata):
         return self.get_handlers(metadata, CfgGenerator)
@@ -421,7 +494,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 specific=hdlr.get_regex([os.path.basename(self.path)]))
         else:
             if event.filename in self.entries:
-                LOGGER.warn("Got duplicate add for %s" % event.filename)
+                self.logger.warn("Got duplicate add for %s" % event.filename)
             else:
                 fpath = os.path.join(self.path, event.filename)
                 self.entries[event.filename] = hdlr(fpath)
@@ -441,8 +514,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 msg = "Data for %s for %s failed to verify: %s" % \
                     (entry.get('name'), metadata.hostname,
                      sys.exc_info()[1])
-                LOGGER.error(msg)
-                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+                self.logger.error(msg)
+                raise PluginExecutionError(msg)
 
         if entry.get('encoding') == 'base64':
             data = b64encode(data)
@@ -453,16 +526,17 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             except UnicodeDecodeError:
                 msg = "Failed to decode %s: %s" % (entry.get('name'),
                                                    sys.exc_info()[1])
-                LOGGER.error(msg)
-                LOGGER.error("Please verify you are using the proper encoding")
-                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+                self.logger.error(msg)
+                self.logger.error("Please verify you are using the proper "
+                                  "encoding")
+                raise PluginExecutionError(msg)
             except ValueError:
                 msg = "Error in specification for %s: %s" % (entry.get('name'),
                                                              sys.exc_info()[1])
-                LOGGER.error(msg)
-                LOGGER.error("You need to specify base64 encoding for %s" %
-                             entry.get('name'))
-                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+                self.logger.error(msg)
+                self.logger.error("You need to specify base64 encoding for %s"
+                                  % entry.get('name'))
+                raise PluginExecutionError(msg)
             except TypeError:
                 # data is already unicode; newer versions of Cheetah
                 # seem to return unicode
@@ -489,13 +563,17 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             if (isinstance(ent, handler_type) and
                 (not ent.__specific__ or ent.specific.matches(metadata))):
                 rv.append(ent)
+
+                if ent.__basenames__:
+                    fdesc = "/".join(ent.__basenames__)
+                elif ent.__extensions__:
+                    fdesc = "." + "/.".join(ent.__extensions__)
                 if ent.deprecated:
-                    if ent.__basenames__:
-                        fdesc = "/".join(ent.__basenames__)
-                    elif ent.__extensions__:
-                        fdesc = "." + "/.".join(ent.__extensions__)
-                    LOGGER.warning("Cfg: %s: Use of %s files is deprecated" %
-                                   (ent.name, fdesc))
+                    self.logger.warning("Cfg: %s: Use of %s files is "
+                                        "deprecated" % (ent.name, fdesc))
+                elif ent.experimental:
+                    self.logger.warning("Cfg: %s: Use of %s files is "
+                                        "experimental" % (ent.name, fdesc))
         return rv
 
     def bind_info_to_entry(self, entry, metadata):
@@ -512,12 +590,31 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         info_handlers = self.get_handlers(metadata, CfgInfo)
         DEFAULT_INFO.bind_info_to_entry(entry, metadata)
         if len(info_handlers) > 1:
-            LOGGER.error("More than one info supplier found for %s: %s" %
-                         (entry.get("name"), info_handlers))
+            self.logger.error("More than one info supplier found for %s: %s" %
+                              (entry.get("name"), info_handlers))
         if len(info_handlers):
             info_handlers[0].bind_info_to_entry(entry, metadata)
         if entry.tag == 'Path':
             entry.set('type', 'file')
+
+    def _create_data(self, entry, metadata):
+        """ Create data for the given entry on the given client
+
+        :param entry: The abstract entry to create data for.  This
+                      will not be modified
+        :type entry: lxml.etree._Element
+        :param metadata: The client metadata to create data for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: string - the data for the entry
+        """
+        creator = self.best_matching(metadata, self.get_handlers(metadata,
+                                                                 CfgCreator))
+
+        try:
+            return creator.create_data(entry, metadata)
+        except:
+            raise PluginExecutionError("Cfg: Error creating data for %s: %s" %
+                                       (entry.get("name"), sys.exc_info()[1]))
 
     def _generate_data(self, entry, metadata):
         """ Generate data for the given entry on the given client
@@ -525,17 +622,23 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         :param entry: The abstract entry to generate data for.  This
                       will not be modified
         :type entry: lxml.etree._Element
-        :param metadata: The client metadata generate data for
+        :param metadata: The client metadata to generate data for
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: string - the data for the entry
         """
-        generator = self.best_matching(metadata,
-                                       self.get_handlers(metadata,
-                                                         CfgGenerator))
+        try:
+            generator = self.best_matching(metadata,
+                                           self.get_handlers(metadata,
+                                                             CfgGenerator))
+        except PluginExecutionError:
+            # if no creators or generators exist, _create_data()
+            # raises an appropriate exception
+            return self._create_data(entry, metadata)
+
         if entry.get('mode').lower() == 'inherit':
             # use on-disk permissions
-            LOGGER.warning("Cfg: %s: Use of mode='inherit' is deprecated" %
-                           entry.get("name"))
+            self.logger.warning("Cfg: %s: Use of mode='inherit' is deprecated"
+                                % entry.get("name"))
             fname = os.path.join(self.path, generator.name)
             entry.set('mode',
                       oct_mode(stat.S_IMODE(os.stat(fname).st_mode)))
@@ -544,8 +647,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         except:
             msg = "Cfg: Error rendering %s: %s" % (entry.get("name"),
                                                    sys.exc_info()[1])
-            LOGGER.error(msg)
-            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            self.logger.error(msg)
+            raise PluginExecutionError(msg)
 
     def _validate_data(self, entry, metadata, data):
         """ Validate data for the given entry on the given client
@@ -578,8 +681,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                           ent.specific.matches(metadata))]
         if not generators:
             msg = "No base file found for %s" % entry.get('name')
-            LOGGER.error(msg)
-            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+            self.logger.error(msg)
+            raise PluginExecutionError(msg)
 
         rv = []
         try:
@@ -609,19 +712,19 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             name = self.build_filename(specific)
             if os.path.exists("%s.genshi" % name):
                 msg = "Cfg: Unable to pull data for genshi types"
-                LOGGER.error(msg)
-                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+                self.logger.error(msg)
+                raise PluginExecutionError(msg)
             elif os.path.exists("%s.cheetah" % name):
                 msg = "Cfg: Unable to pull data for cheetah types"
-                LOGGER.error(msg)
-                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+                self.logger.error(msg)
+                raise PluginExecutionError(msg)
             try:
                 etext = new_entry['text'].encode(self.encoding)
             except:
                 msg = "Cfg: Cannot encode content of %s as %s" % \
                     (name, self.encoding)
-                LOGGER.error(msg)
-                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+                self.logger.error(msg)
+                raise PluginExecutionError(msg)
             open(name, 'w').write(etext)
             self.debug_log("Wrote file %s" % name, flag=log)
         badattr = [attr for attr in ['owner', 'group', 'mode']
@@ -631,8 +734,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
             for ifile in ['info', ':info']:
                 info = os.path.join(self.path, ifile)
                 if os.path.exists(info):
-                    LOGGER.info("Removing %s and replacing with info.xml" %
-                                info)
+                    self.logger.info("Removing %s and replacing with info.xml"
+                                     % info)
                     os.remove(info)
             metadata_updates = {}
             metadata_updates.update(self.metadata)

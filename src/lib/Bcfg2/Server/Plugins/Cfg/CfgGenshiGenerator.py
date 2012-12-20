@@ -101,7 +101,7 @@ class CfgGenshiGenerator(CfgGenerator):
     __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def get_data(self, entry, metadata):
-        fname = entry.get('realname', entry.get('name'))
+        fname = entry.get('name')
         stream = \
             self.template.generate(name=fname,
                                    metadata=metadata,
