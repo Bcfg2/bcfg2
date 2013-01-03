@@ -461,6 +461,12 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         self._handlers = None
     __init__.__doc__ = Bcfg2.Server.Plugin.EntrySet.__doc__
 
+    def set_debug(self, debug):
+        rv = Bcfg2.Server.Plugin.Debuggable.set_debug(self, debug)
+        for entry in self.entries.values():
+            entry.set_debug(debug)
+        return rv
+
     @property
     def handlers(self):
         """ A list of Cfg handler classes. Loading the handlers must
@@ -541,15 +547,33 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         :returns: None
         :raises: :class:`Bcfg2.Server.Plugin.exceptions.SpecificityError`
         """
+        fpath = os.path.join(self.path, event.filename)
+        if hdlr.__basenames__:
+            fdesc = "/".join(hdlr.__basenames__)
+        elif hdlr.__extensions__:
+            fdesc = "." + "/.".join(hdlr.__extensions__)
+        if hdlr.deprecated:
+            self.logger.warning("Cfg: %s: Use of %s files is deprecated" %
+                                (fpath, fdesc))
+        elif hdlr.experimental:
+            self.logger.warning("Cfg: %s: Use of %s files is experimental" %
+                                (fpath, fdesc))
+
         if hdlr.__specific__:
+            if hdlr.__basenames__:
+                # specific entry with explicit basenames
+                basenames = hdlr.__basenames__
+            else:
+                # specific entry with no explicit basename; use the
+                # directory name as the basename
+                basenames = [os.path.basename(self.path)]
             Bcfg2.Server.Plugin.EntrySet.entry_init(
                 self, event, entry_type=hdlr,
-                specific=hdlr.get_regex([os.path.basename(self.path)]))
+                specific=hdlr.get_regex(basenames))
         else:
             if event.filename in self.entries:
                 self.logger.warn("Got duplicate add for %s" % event.filename)
             else:
-                fpath = os.path.join(self.path, event.filename)
                 self.entries[event.filename] = hdlr(fpath)
             self.entries[event.filename].handle_event(event)
 
@@ -616,17 +640,6 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
             if (isinstance(ent, handler_type) and
                 (not ent.__specific__ or ent.specific.matches(metadata))):
                 rv.append(ent)
-
-                if ent.__basenames__:
-                    fdesc = "/".join(ent.__basenames__)
-                elif ent.__extensions__:
-                    fdesc = "." + "/.".join(ent.__extensions__)
-                if ent.deprecated:
-                    self.logger.warning("Cfg: %s: Use of %s files is "
-                                        "deprecated" % (ent.name, fdesc))
-                elif ent.experimental:
-                    self.logger.warning("Cfg: %s: Use of %s files is "
-                                        "experimental" % (ent.name, fdesc))
         return rv
 
     def bind_info_to_entry(self, entry, metadata):
@@ -869,20 +882,44 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
 
     def Run(self):
         for basename, entry in list(self.core.plugins['Cfg'].entries.items()):
-            self.check_entry(basename, entry)
+            self.check_delta(basename, entry)
+            self.check_pubkey(basename, entry)
 
     @classmethod
     def Errors(cls):
         return {"cat-file-used": "warning",
-                "diff-file-used": "warning"}
+                "diff-file-used": "warning",
+                "no-pubkey-xml": "warning"}
 
-    def check_entry(self, basename, entry):
+    def check_delta(self, basename, entry):
         """ check that no .cat or .diff files are in use """
-        cfg = self.core.plugins['Cfg']
-        for basename, entry in list(cfg.entries.items()):
-            for fname, handler in entry.entries.items():
-                if self.HandlesFile(fname) and isinstance(handler, CfgFilter):
-                    extension = fname.split(".")[-1]
+        for fname, handler in entry.entries.items():
+            path = handler.name
+            if self.HandlesFile(path) and isinstance(handler, CfgFilter):
+                extension = fname.split(".")[-1]
+                if extension in ["cat", "diff"]:
                     self.LintError("%s-file-used" % extension,
-                                   "%s file used on %s: %s" %
-                                   (extension, basename, fname))
+                                   "%s file used on %s: %s" % (extension,
+                                                               basename,
+                                                               fname))
+
+    def check_pubkey(self, basename, entry):
+        """ check that privkey.xml files have corresponding pubkey.xml
+        files """
+        if "privkey.xml" not in entry.entries:
+            return
+        privkey = entry.entries["privkey.xml"]
+        if not self.HandlesFile(privkey.name):
+            return
+
+        pubkey = basename + ".pub"
+        if pubkey not in self.core.plugins['Cfg'].entries:
+            self.LintError("no-pubkey-xml",
+                           "%s has no corresponding pubkey.xml at %s" %
+                           (basename, pubkey))
+        else:
+            pubset = self.core.plugins['Cfg'].entries[pubkey]
+            if "pubkey.xml" not in pubset.entries:
+                self.LintError("no-pubkey-xml",
+                               "%s has no corresponding pubkey.xml at %s" %
+                               (basename, pubkey))
