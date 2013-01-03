@@ -14,7 +14,7 @@ import Bcfg2.Statistics
 from Bcfg2.Compat import CmpMixin, wraps
 from Bcfg2.Server.Plugin.base import Debuggable, Plugin
 from Bcfg2.Server.Plugin.interfaces import Generator
-from Bcfg2.Server.Plugin.exceptions import SpecificityError, PluginInitError, \
+from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
     PluginExecutionError
 
 try:
@@ -530,14 +530,8 @@ class XMLFileBacked(FileBacked):
                         LOGGER.warning(msg)
 
     def Index(self):
-        try:
-            self.xdata = lxml.etree.XML(self.data, base_url=self.name,
-                                        parser=Bcfg2.Server.XMLParser)
-        except lxml.etree.XMLSyntaxError:
-            msg = "Failed to parse %s: %s" % (self.name, sys.exc_info()[1])
-            LOGGER.error(msg)
-            raise PluginInitError(msg)
-
+        self.xdata = lxml.etree.XML(self.data, base_url=self.name,
+                                    parser=Bcfg2.Server.XMLParser)
         self._follow_xincludes()
         if self.extras:
             try:
@@ -1082,7 +1076,7 @@ class SpecificData(object):
         :param event: The event that applies to this file
         :type event: Bcfg2.Server.FileMonitor.Event
         :returns: None
-        :raises: Bcfg2.Server.Plugin.exceptions.PluginExecutionError
+        :raises: :exc:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
         """
         if event.code2str() == 'deleted':
             return
