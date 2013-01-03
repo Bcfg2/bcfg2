@@ -1,0 +1,16 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+  <xsd:annotation>
+    <xsd:documentation>
+      Schema for :ref:`server-plugins-generators-cfg-sshkeys` ``pubkey.xml``
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:element name="PublicKey">
+    <xsd:annotation>
+      <xsd:documentation>
+        Top-level tag for flagging a generated SSH public key.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexType/>
+  </xsd:element>
+</xsd:schema>

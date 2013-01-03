@@ -12,7 +12,7 @@ import Bcfg2.Server.Plugin
 import Bcfg2.Server.Lint
 from Bcfg2.Server.Plugin import PluginExecutionError
 # pylint: disable=W0622
-from Bcfg2.Compat import u_str, unicode, b64encode, b64decode, walk_packages, \
+from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages, \
     any, oct_mode
 # pylint: enable=W0622
 
@@ -26,6 +26,14 @@ from Bcfg2.Compat import u_str, unicode, b64encode, b64decode, walk_packages, \
 #: :class:`Bcfg2.Server.Plugin.helpers.EntrySet` objects and thence to
 #: the EntrySet children.
 SETUP = None
+
+#: CFG is a reference to the :class:`Bcfg2.Server.Plugins.Cfg.Cfg`
+#: plugin object created by the Bcfg2 core.  This is provided so that
+#: the handler objects can access it as necessary, since the existing
+#: :class:`Bcfg2.Server.Plugin.helpers.GroupSpool` and
+#: :class:`Bcfg2.Server.Plugin.helpers.EntrySet` classes have no
+#: facility for passing it otherwise.
+CFG = None
 
 
 class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData,
@@ -62,8 +70,8 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData,
     #: if they handle a given event.  If this explicit priority is not
     #: set, then :class:`CfgPlaintextGenerator.CfgPlaintextGenerator`
     #: would match against nearly every other sort of generator file
-    #: if it comes first.  It's not necessary to set ``__priority`` on
-    #: handlers where :attr:`CfgBaseFileMatcher.__specific__` is
+    #: if it comes first.  It's not necessary to set ``__priority__``
+    #: on handlers where :attr:`CfgBaseFileMatcher.__specific__` is
     #: False, since they don't have a potentially open-ended regex
     __priority__ = 0
 
@@ -304,6 +312,23 @@ class CfgCreator(CfgBaseFileMatcher):
     client, writes its data to disk as a static file, and is not
     called on subsequent runs by the same client. """
 
+    #: CfgCreators generally store their configuration in a single XML
+    #: file, and are thus not specific
+    __specific__ = False
+
+    #: The CfgCreator interface is experimental at this time
+    experimental = True
+
+    def __init__(self, fname):
+        """
+        :param name: The full path to the file
+        :type name: string
+
+        .. -----
+        .. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgCreator.__specific__
+        """
+        CfgBaseFileMatcher.__init__(self, fname, None, None)
+
     def create_data(self, entry, metadata):
         """ Create new data for the given entry and write it to disk
         using :func:`Bcfg2.Server.Plugins.Cfg.CfgCreator.write_data`.
@@ -312,11 +337,43 @@ class CfgCreator(CfgBaseFileMatcher):
         :type entry: lxml.etree._Element
         :param metadata: The client metadata to create data for.
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-        :returns: string - the contents of the entry
+        :returns: string - The contents of the entry
+        :raises: :exc:`Bcfg2.Server.Plugins.Cfg.CfgCreationError`
         """
         raise NotImplementedError
 
-    def write_data(self, data, host=None, group=None, prio=0):
+    def get_filename(self, host=None, group=None, prio=0, ext=''):
+        """ Get the filename where the new data will be written.  If
+        ``host`` is given, it will be host-specific.  It will be
+        group-specific if ``group`` and ``prio`` are given.  If
+        neither ``host`` nor ``group`` is given, the filename will be
+        non-specific.
+
+        :param host: The file applies to the given host
+        :type host: bool
+        :param group: The file applies to the given group
+        :type group: string
+        :param prio: The file has the given priority relative to other
+                     objects that also apply to the same group.
+                     ``group`` must also be specified.
+        :type prio: int
+        :param ext: An extension to add after the specificity (e.g.,
+                    '.crypt', to signal that an encrypted file has
+                    been created)
+        :type prio: string
+        :returns: string - the filename
+        """
+        basefilename = \
+            os.path.join(os.path.dirname(self.name),
+                         os.path.basename(os.path.dirname(self.name)))
+        if group:
+            return "%s.G%02d_%s%s" % (basefilename, prio, group, ext)
+        elif host:
+            return "%s.H_%s%s" % (basefilename, host, ext)
+        else:
+            return "%s%s" % (basefilename, ext)
+
+    def write_data(self, data, host=None, group=None, prio=0, ext=''):
         """ Write the new data to disk.  If ``host`` is given, it is
         written as a host-specific file, or as a group-specific file
         if ``group`` and ``prio`` are given.  If neither ``host`` nor
@@ -332,19 +389,14 @@ class CfgCreator(CfgBaseFileMatcher):
                      objects that also apply to the same group.
                      ``group`` must also be specified.
         :type prio: int
+        :param ext: An extension to add after the specificity (e.g.,
+                    '.crypt', to signal that an encrypted file has
+                    been created)
+        :type prio: string
         :returns: None
         :raises: :exc:`Bcfg2.Server.Plugins.Cfg.CfgCreationError`
         """
-        basefilename = \
-            os.path.join(os.path.dirname(self.name),
-                         os.path.basename(os.path.dirname(self.name)))
-        if group:
-            fileloc = "%s.G%02d_%s" % (basefilename, prio, group)
-        elif host:
-            fileloc = "%s.H_%s" % (basefilename, host)
-        else:
-            fileloc = basefilename
-
+        fileloc = self.get_filename(host=host, group=group, prio=prio, ext=ext)
         self.debug_log("%s: Writing new file %s" % (self.name, fileloc))
         try:
             os.makedirs(os.path.dirname(fileloc))
@@ -369,8 +421,9 @@ class CfgVerificationError(Exception):
 
 
 class CfgCreationError(Exception):
-    """ Raised by :class:`Bcfg2.Server.Plugins.Cfg.CfgCreator` when
-    various stages of data creation fail """
+    """ Raised by
+    :func:`Bcfg2.Server.Plugins.Cfg.CfgCreator.create_data` when data
+    creation fails """
     pass
 
 
@@ -607,8 +660,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: string - the data for the entry
         """
-        creator = self.best_matching(metadata, self.get_handlers(metadata,
-                                                                 CfgCreator))
+        creator = self.best_matching(metadata,
+                                     self.get_handlers(metadata, CfgCreator))
 
         try:
             return creator.create_data(entry, metadata)
@@ -766,9 +819,11 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
     es_child_cls = Bcfg2.Server.Plugin.SpecificData
 
     def __init__(self, core, datastore):
-        global SETUP  # pylint: disable=W0603
+        global SETUP, CFG  # pylint: disable=W0603
         Bcfg2.Server.Plugin.GroupSpool.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
+
+        CFG = self
 
         SETUP = core.setup
         if 'validate' not in SETUP:

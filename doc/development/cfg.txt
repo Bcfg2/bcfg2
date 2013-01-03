@@ -20,10 +20,11 @@ implement more than one handler type.
 Cfg Handler Types
 =================
 
-There are four different types of Cfg handlers.  A new handler must
+There are several different types of Cfg handlers.  A new handler must
 inherit either from one of these classes, or from an existing handler.
 
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgGenerator
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgCreator
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgFilter
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgInfo
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgVerifier
@@ -43,6 +44,7 @@ Cfg Exceptions
 Cfg handlers may produce the following exceptions:
 
 .. autoexception:: Bcfg2.Server.Plugins.Cfg.CfgVerificationError
+.. autoexception:: Bcfg2.Server.Plugins.Cfg.CfgCreationError
 
 In addition, Cfg handlers may produce the following base plugin
 exceptions:
@@ -53,10 +55,11 @@ exceptions:
 .. autoexception:: Bcfg2.Server.Plugin.exceptions.PluginInitError
    :noindex:
 
-Accessing Configuration Options
-===============================
+Global Variables
+================
 
 .. autodata:: Bcfg2.Server.Plugins.Cfg.SETUP
+.. autodata:: Bcfg2.Server.Plugins.Cfg.CFG
 
 Existing Cfg Handlers
 =====================
@@ -70,6 +73,13 @@ Generators
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.CfgEncryptedGenerator
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenshiGenerator.CfgEncryptedGenshiGenerator
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEncryptedCheetahGenerator.CfgEncryptedCheetahGenerator
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgAuthorizedKeysGenerator.CfgAuthorizedKeysGenerator
+
+Creators
+--------
+
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator.CfgPrivateKeyCreator
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator.CfgPublicKeyCreator
 
 Filters
 -------

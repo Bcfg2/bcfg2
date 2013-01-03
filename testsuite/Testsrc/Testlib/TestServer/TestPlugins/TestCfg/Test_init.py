@@ -82,9 +82,10 @@ class TestCfgBaseFileMatcher(TestSpecificData):
             self.assertFalse(self.test_obj.handles(evt))
             mock_get_regex.assert_called_with(
                 [b for b in self.test_obj.__basenames__])
-            self.assertItemsEqual(match.call_args_list,
-                                  [call(evt.filename)
+            print("match calls: %s" % match.call_args_list)
+            print("expected: %s" % [call(evt.filename)
                                    for b in self.test_obj.__basenames__])
+            match.assert_called_with(evt.filename)
 
             mock_get_regex.reset_mock()
             match.reset_mock()
@@ -186,47 +187,61 @@ class TestCfgCreator(TestCfgBaseFileMatcher):
     test_obj = CfgCreator
     path = "/foo/bar/test.txt"
 
+    def get_obj(self, name=None):
+        if name is None:
+            name = self.path
+        return self.test_obj(name)
+
     def test_create_data(self):
         cc = self.get_obj()
         self.assertRaises(NotImplementedError,
                           cc.create_data, Mock(), Mock())
+
+    def test_get_filename(self):
+        cc = self.get_obj()
+
+        # tuples of (args to get_filename(), expected result)
+        cases = [(dict(), "/foo/bar/bar"),
+                 (dict(prio=50), "/foo/bar/bar"),
+                 (dict(ext=".crypt"), "/foo/bar/bar.crypt"),
+                 (dict(ext="bar"), "/foo/bar/barbar"),
+                 (dict(host="foo.bar.example.com"),
+                  "/foo/bar/bar.H_foo.bar.example.com"),
+                 (dict(host="foo.bar.example.com", prio=50, ext=".crypt"),
+                  "/foo/bar/bar.H_foo.bar.example.com.crypt"),
+                 (dict(group="group", prio=1), "/foo/bar/bar.G01_group"),
+                 (dict(group="group", prio=50), "/foo/bar/bar.G50_group"),
+                 (dict(group="group", prio=50, ext=".crypt"),
+                  "/foo/bar/bar.G50_group.crypt")]
+
+        for args, expected in cases:
+            self.assertEqual(cc.get_filename(**args), expected)
 
     @patch("os.makedirs")
     @patch("%s.open" % builtins)
     def test_write_data(self, mock_open, mock_makedirs):
         cc = self.get_obj()
         data = "test\ntest"
+        parent = os.path.dirname(self.path)
 
         def reset():
             mock_open.reset_mock()
             mock_makedirs.reset_mock()
 
-        # test writing non-specific file
-        cc.write_data(data)
-        mock_makedirs.assert_called_with("/foo/bar")
-        mock_open.assert_called_with("/foo/bar/bar", "wb")
-        mock_open.return_value.write.assert_called_with(data)
-
-        # test writing group-specific file
+        # test writing file
         reset()
-        cc.write_data(data, group="foogroup", prio=9)
-        mock_makedirs.assert_called_with("/foo/bar")
-        mock_open.assert_called_with("/foo/bar/bar.G09_foogroup", "wb")
-        mock_open.return_value.write.assert_called_with(data)
-
-        # test writing host-specific file
-        reset()
-        cc.write_data(data, host="foo.example.com")
-        mock_makedirs.assert_called_with("/foo/bar")
-        mock_open.assert_called_with("/foo/bar/bar.H_foo.example.com", "wb")
+        spec = dict(group="foogroup", prio=9)
+        cc.write_data(data, **spec)
+        mock_makedirs.assert_called_with(parent)
+        mock_open.assert_called_with(cc.get_filename(**spec), "wb")
         mock_open.return_value.write.assert_called_with(data)
 
         # test already-exists error from makedirs
         reset()
         mock_makedirs.side_effect = OSError(errno.EEXIST, self.path)
         cc.write_data(data)
-        mock_makedirs.assert_called_with("/foo/bar")
-        mock_open.assert_called_with("/foo/bar/bar", "wb")
+        mock_makedirs.assert_called_with(parent)
+        mock_open.assert_called_with(cc.get_filename(), "wb")
         mock_open.return_value.write.assert_called_with(data)
 
         # test error from open
@@ -391,6 +406,10 @@ class TestCfgEntrySet(TestEntrySet):
         evt = Mock()
         evt.filename = "test.txt"
         handler = Mock()
+        handler.__basenames__ = []
+        handler.__extensions__ = []
+        handler.deprecated = False
+        handler.experimental = False
         handler.__specific__ = True
 
         # test handling an event with the parent entry_init

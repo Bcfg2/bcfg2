@@ -1,0 +1,138 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+  <xsd:annotation>
+    <xsd:documentation>
+      Schema for :ref:`server-plugins-generators-cfg-sshkeys` ``privkey.xml``
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:complexType name="PrivateKeyGroupType">
+    <xsd:annotation>
+      <xsd:documentation>
+        An **PrivateKeyGroupType** is a tag used to provide logic.
+        Child entries of a PrivateKeyGroupType tag only apply to
+        machines that match the condition specified -- either
+        membership in a group, or a matching client name.
+        :xml:attribute:`PrivateKeyGroupType:negate` can be set to
+        negate the sense of the match.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:element name="Passphrase" type="PassphraseType"/>
+      <xsd:element name="Params" type="PrivateKeyParamsType"/>
+      <xsd:element name="Group" type="PrivateKeyGroupType"/>
+      <xsd:element name="Client" type="PrivateKeyGroupType"/>
+    </xsd:choice>
+    <xsd:attribute name='name' type='xsd:string'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the client or group to match on.  Child entries
+          will only apply to this client or group (unless
+          :xml:attribute:`PrivateKeyGroupType:negate` is set).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name='negate' type='xsd:boolean'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Negate the sense of the match, so that child entries only
+          apply to a client if it is not a member of the given group
+          or does not have the given name.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:simpleType name="PrivateKeyTypeEnum">
+    <xsd:annotation>
+      <xsd:documentation>
+        Available private key formats
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="rsa"/>
+      <xsd:enumeration value="dsa"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="PassphraseType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Specify the private key passphrase.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:string">
+        <xsd:attribute name="encrypted" type="xsd:string">
+          <xsd:annotation>
+            <xsd:documentation>
+              The name of the passphrase to use to encrypt this
+              private key on the filesystem (in Bcfg2).
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+
+  <xsd:complexType name="PrivateKeyParamsType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Specify parameters for creating the private key
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="bits" type="xsd:positiveInteger">
+      <xsd:annotation>
+        <xsd:documentation>
+          Number of bits in the key.  See :manpage:`ssh-keygen(1)` for
+          defaults.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="type" type="PrivateKeyTypeEnum" default="rsa">
+      <xsd:annotation>
+        <xsd:documentation>
+          Key type to create.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:element name="PrivateKey">
+    <xsd:annotation>
+      <xsd:documentation>
+        Top-level tag for describing a generated SSH key pair.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexType>
+      <xsd:choice minOccurs="0" maxOccurs="unbounded">
+        <xsd:element name="Passphrase" type="PassphraseType"/>
+        <xsd:element name="Params" type="PrivateKeyParamsType"/>
+        <xsd:element name="Group" type="PrivateKeyGroupType"/>
+        <xsd:element name="Client" type="PrivateKeyGroupType"/>
+      </xsd:choice>
+      <xsd:attribute name="perhost" type="xsd:boolean">
+        <xsd:annotation>
+          <xsd:documentation>
+            Create keys on a per-host basis (rather than on a per-group
+            basis).
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
+      <xsd:attribute name="category" type="xsd:string">
+        <xsd:annotation>
+          <xsd:documentation>
+            Create keys specific to the given category, instead of
+            specific to the category given in ``bcfg2.conf``.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
+      <xsd:attribute name="priority" type="xsd:positiveInteger" default="50">
+        <xsd:annotation>
+          <xsd:documentation>
+            Create group-specific keys with the given priority.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
+    </xsd:complexType>
+  </xsd:element>
+</xsd:schema>

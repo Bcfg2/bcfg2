@@ -29,7 +29,7 @@ in ``Cfg/etc/passwd/passwd``, while the ssh pam module config file,
 ``/etc/pam.d/sshd``, goes in ``Cfg/etc/pam.d/sshd/sshd``. The reason for
 the like-name directory is to allow multiple versions of each file to
 exist, as described below. Note that these files are exact copies of what
-will appear on the client machine (except when using genshi or cheetah
+will appear on the client machine (except when using Genshi or Cheetah
 templating -- see below).
 
 Group-Specific Files
@@ -354,6 +354,219 @@ either order, e.g.::
     Cfg/etc/foo.conf/foo.conf.H_bar.example.com.crypt.cheetah
 
 To encrypt or decrypt a file, use :ref:`bcfg2-crypt`.
+
+.. _server-plugins-generators-cfg-sshkeys:
+
+SSH Keys
+========
+
+.. versionadded:: 1.3.0
+
+Cfg can also be used to automatically create and distribute SSH key
+pairs and the ``authorized_keys`` file.
+
+Keys can be created one of two ways:
+
+* Host-specific keys, where each client has its own key pair.  This is
+  the default.
+* Group-specific keys.  To do this, you must set ``category`` in
+  either ``bcfg2.conf`` (see "Configuration" below) or in
+  ``privkey.xml``.  Keys created for a given client will be specific
+  to that client's group in the specified category.
+
+Group-specific keys are useful if, for instance, you have multiple
+distinct environments (development, testing, production, for example)
+and want to maintain separate keys for each environment.
+
+This feature actually creates static keys, much like the
+:ref:`server-plugins-generators-sshbase` plugin creates SSH
+certificates.  It doesn't generate them on the fly for each request;
+it generates the key once, then saves it to the filesystem.
+
+Creating key pairs
+------------------
+
+To create an SSH key pair, you need to define how the private key will
+be created in ``privkey.xml``.  For instance, to create
+``/home/foo/.ssh/id_rsa``, you would create
+``/var/lib/bcfg2/Cfg/home/foo/.ssh/id_rsa/privkey.xml``.
+
+This will create *both* the private key and the public key; the latter
+is created by appending ``.pub`` to the private key filename.  It is
+not possible to change the public key filename.
+
+You may *optionally* also create a corresponding ``pubkey.xml``, which
+will allow the key pair to be created when the public key is
+requested.  (For the example above, you'd create
+``/var/lib/bcfg2/Cfg/home/foo/.ssh/id_rsa.pub/pubkey.xml``. This can
+speed up the propagation of SSH keys throughout your managed systems,
+particularly if you use the ``authorized_keys`` generation feature.
+
+``privkey.xml``
+~~~~~~~~~~~~~~~
+
+``privkey.xml`` contains a top-level ``PrivateKey`` element, and is
+structured as follows:
+
+.. xml:element:: PrivateKey
+   :linktotype:
+
+``pubkey.xml``
+~~~~~~~~~~~~~~~
+
+``pubkey.xml`` only ever contains a single line:
+
+.. code-block:: xml
+
+    <PublicKey/>
+
+.. xml:element:: PublicKey
+
+It acts only as a flag to Bcfg2 that a key pair should be generated, if
+none exists, using the associated ``privkey.xml`` file.  The path to
+``privkey.xml`` is determined by removing ``.pub`` from the directory
+containing ``pubkey.xml``.  I.e., if you create
+``/var/lib/bcfg2/Cfg/home/foo/.ssh/id_rsa.pub/pubkey.xml``, then Bcfg2
+will use ``/var/lib/bcfg2/Cfg/home/foo/.ssh/id_rsa/privkey.xml`` to
+create the key pair.
+
+Use of ``pubkey.xml`` is optional, but is recommended.  If you do not
+use ``pubkey.xml`` files, you may encounter two problems:
+
+* On the first Bcfg2 client run on a given client, the private keys
+  may be present but the public keys may not be.  This will be fixed
+  by running ``bcfg2`` again.
+* If you are including an automatically created public key in
+  ``authorized_keys``, it will not be created until the client the key
+  is for requests the key pair.
+
+As an example of this latter scenario, suppose that your
+``authorized_keys.xml`` allows access to foo.example.com from
+``/root/.ssh/id_rsa.pub`` for bar.example.com.  If bar.example.com has
+not run the Bcfg2 client, then no key pair will have been generated,
+and generating the foo.example.com ``authorized_keys`` file will
+create a warning.  But if you create
+``Cfg/root/.ssh/id_rsa.pub/pubkey.xml``, then building
+``authorized_keys`` for foo.example.com will create root's keypair for
+bar.example.com.
+
+.. note::
+
+    In order to use ``pubkey.xml``, there *must* be a corresponding
+    ``privkey.xml``.  You cannot, for instance, populate a directory
+    with manually-generated private SSH keys, drop ``pubkey.xml`` in
+    the related public key directory, and expect Bcfg2 to generate the
+    public keys.  It will not.
+
+Examples
+~~~~~~~~
+
+``privkey.xml`` can, at its simplest, be very simple indeed:
+
+.. code-block:: xml
+
+    <PrivateKey/>
+
+This will create a private key with all defaults.  Or it can be more
+complex:
+
+.. code-block:: xml
+
+    <PrivateKey category="environment"/>
+      <Params bits="1024" type="dsa"/>
+      <Group name="secure">
+        <Passphrase encrypted="secure">U2FsdGVkX19xACol83uyPELP94s4CmngD12oU6PLLuE=</Passphrase>
+      </Group>
+    </PrivateKey>
+
+This creates a 1024-bit DSA key for each group in the ``environment``
+category, and keys for clients in the ``secure`` group will be
+protected with the given (encrypted) passphrase.
+
+To complete the example, assume that this file was saved at
+``/var/lib/bcfg2/Cfg/home/foo/.ssh/id_rsa/privkey.xml``.  If a client
+in the ``development`` group, which is a group in the ``environment``
+category, requests the private key, then the following files would be
+created::
+
+    /var/lib/bcfg2/Cfg/home/foo/.ssh/id_rsa/id_rsa.G50_development
+    /var/lib/bcfg2/Cfg/home/foo/.ssh/id_rsa.pub/id_rsa.pub.G50_development
+
+``/var/lib/bcfg2/Cfg/home/foo/.ssh/id_rsa.pub`` would be created if it
+did not exist.
+
+Subsequent clients that were also members of the ``development``
+environment would get the keys that have already been generated.
+
+``pubkey.xml`` always contains a single empty tag:
+
+.. code-block:: xml
+
+    <PublicKey/>
+
+Generating ``authorized_keys``
+------------------------------
+
+``authorized_keys`` can be automatically generated from public SSH
+keys that exist in the Cfg tree.  The keys in question can be
+generated from ``privkey.xml``, or they can be manually created.
+
+If a key doesn't exist when ``authorized_keys`` is generated, the key
+will only be created if ``pubkey.xml`` exists.  If that is not the
+case, a warning will be produced.
+
+To generate ``authorized_keys``, create ``authorized_keys.xml``, e.g.:
+``/var/lib/bcfg2/Cfg/root/.ssh/authorized_keys/authorized_keys.xml``.
+
+``authorized_keys.xml``
+~~~~~~~~~~~~~~~~~~~~~~~
+
+``authorized_keys.xml`` is structured as follows:
+
+.. xml:element:: AuthorizedKeys
+   :linktotype:
+
+Example
+~~~~~~~
+
+.. code-block:: xml
+
+    <AuthorizedKeys>
+      <Group name="some_group">
+        <Allow from="/root/.ssh/id_rsa.pub"/>
+        <Allow from="/root/.ssh/id_rsa.pub" group="test"/>
+      </Group>
+      <Allow from="/root/.ssh/id_rsa.pub" host="foo.example.com"/>
+      <Allow from="/home/foo_user/.ssh/id_rsa.pub">
+        <Params command="/home/foo_user/.ssh/ssh_command_filter"/>
+      </Allow>
+      <Allow>
+        ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDw/rgKQeARRAHK5bQQhAAe1b+gzdtqBXWrZIQ6cIaLgxqj76TwZ3DY4A6aW9RgC4zzd0p4a9MfsScUIB4+UeZsx9GopUj4U6H8Vz7S3pXxrr4E9logVLuSfOLFbI/wMWNRuOANqquLYQ+JYWKeP4kagkVp0aAWp7mH5IOI0rp0A6qE2you4ep9N/nKvHDrtypwhYBWprsgTUXXMHnAWGmyuHGYWxNYBV9AARPdAvZfb8ggtuwibcOULlyK4DdVNbDTAN1/BDBE1ve6WZDcrc386KhqUGj/yoRyPjNZ46uZiOjRr3cdY6yUZoCwzzxvm5vle6mEbLjHgjGEMQMArzM9 vendor@example.com
+      </Allow>
+    </AuthorizedKeys>
+
+Configuration
+-------------
+
+In addition to ``privkey.xml`` and ``authorized_keys.xml``, described
+above, the behavior of the SSH key generation feature can be
+influenced by several options in ``bcfg2.conf``:
+
++----------------+---------------------------------------------------------+-----------------------+------------+
+| Option         | Description                                             | Values                | Default    |
++================+=========================================================+=======================+============+
+| ``passphrase`` | Use the named passphrase to encrypt private keys on the | String                | None       |
+|                | filesystem. The passphrase must be defined in the       |                       |            |
+|                | ``[encryption]`` section. See :ref:`server-encryption`  |                       |            |
+|                | for more details on encryption in Bcfg2 in general.     |                       |            |
++----------------+---------------------------------------------------------+-----------------------+------------+
+| ``category``   | Generate keys specific to groups in the given category. | String                | None       |
+|                | It is best to pick a category that all clients have a   |                       |            |
+|                | group from.                                             |                       |            |
++----------------+---------------------------------------------------------+-----------------------+------------+
+| ``decrypt``    | If decrypt is set to ``lax``, then a key that cannot be | ``strict`` or ``lax`` | ``strict`` |
+|                | decrypted will produce a warning instead of an error.   |                       |            |
++----------------+---------------------------------------------------------+-----------------------+------------+
 
 Deltas
 ======

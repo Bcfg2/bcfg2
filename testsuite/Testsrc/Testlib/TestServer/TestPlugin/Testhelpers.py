@@ -433,9 +433,12 @@ class TestXMLFileBacked(TestFileBacked):
         xdata = dict()
         mock_parse.side_effect = lambda p: xdata[p]
 
+        base = os.path.dirname(self.path)
+
         # basic functionality
-        xdata['/test/test2.xml'] = lxml.etree.Element("Test").getroottree()
-        xfb._follow_xincludes(xdata=xdata['/test/test2.xml'])
+        test2 = os.path.join(base, 'test2.xml')
+        xdata[test2] = lxml.etree.Element("Test").getroottree()
+        xfb._follow_xincludes(xdata=xdata[test2])
         self.assertFalse(xfb.add_monitor.called)
 
         if (not hasattr(self.test_obj, "xdata") or
@@ -443,56 +446,56 @@ class TestXMLFileBacked(TestFileBacked):
             # if xdata is settable, test that method of getting data
             # to _follow_xincludes
             reset()
-            xfb.xdata = xdata['/test/test2.xml'].getroot()
+            xfb.xdata = xdata[test2].getroot()
             xfb._follow_xincludes()
             self.assertFalse(xfb.add_monitor.called)
             xfb.xdata = None
 
         reset()
-        xfb._follow_xincludes(fname="/test/test2.xml")
+        xfb._follow_xincludes(fname=test2)
         self.assertFalse(xfb.add_monitor.called)
 
         # test one level of xinclude
         xdata[self.path] = lxml.etree.Element("Test").getroottree()
         lxml.etree.SubElement(xdata[self.path].getroot(),
                               Bcfg2.Server.XI_NAMESPACE + "include",
-                              href="/test/test2.xml")
+                              href=test2)
         reset()
         xfb._follow_xincludes(fname=self.path)
-        xfb.add_monitor.assert_called_with("/test/test2.xml")
+        xfb.add_monitor.assert_called_with(test2)
         self.assertItemsEqual(mock_parse.call_args_list,
                               [call(f) for f in xdata.keys()])
-        mock_exists.assert_called_with("/test/test2.xml")
+        mock_exists.assert_called_with(test2)
 
         reset()
         xfb._follow_xincludes(fname=self.path, xdata=xdata[self.path])
-        xfb.add_monitor.assert_called_with("/test/test2.xml")
+        xfb.add_monitor.assert_called_with(test2)
         self.assertItemsEqual(mock_parse.call_args_list,
                               [call(f) for f in xdata.keys()
                                if f != self.path])
-        mock_exists.assert_called_with("/test/test2.xml")
+        mock_exists.assert_called_with(test2)
 
         # test two-deep level of xinclude, with some files in another
         # directory
-        xdata["/test/test3.xml"] = \
-            lxml.etree.Element("Test").getroottree()
-        lxml.etree.SubElement(xdata["/test/test3.xml"].getroot(),
+        test3 = os.path.join(base, "test3.xml")
+        test4 = os.path.join(base, "test_dir", "test4.xml")
+        test5 = os.path.join(base, "test_dir", "test5.xml")
+        test6 = os.path.join(base, "test_dir", "test6.xml")
+        xdata[test3] = lxml.etree.Element("Test").getroottree()
+        lxml.etree.SubElement(xdata[test3].getroot(),
                               Bcfg2.Server.XI_NAMESPACE + "include",
-                              href="/test/test_dir/test4.xml")
-        xdata["/test/test_dir/test4.xml"] = \
-            lxml.etree.Element("Test").getroottree()
-        lxml.etree.SubElement(xdata["/test/test_dir/test4.xml"].getroot(),
+                              href=test4)
+        xdata[test4] = lxml.etree.Element("Test").getroottree()
+        lxml.etree.SubElement(xdata[test4].getroot(),
                               Bcfg2.Server.XI_NAMESPACE + "include",
-                              href="/test/test_dir/test5.xml")
-        xdata['/test/test_dir/test5.xml'] = \
-            lxml.etree.Element("Test").getroottree()
-        xdata['/test/test_dir/test6.xml'] = \
-            lxml.etree.Element("Test").getroottree()
+                              href=test5)
+        xdata[test5] = lxml.etree.Element("Test").getroottree()
+        xdata[test6] = lxml.etree.Element("Test").getroottree()
         # relative includes
         lxml.etree.SubElement(xdata[self.path].getroot(),
                               Bcfg2.Server.XI_NAMESPACE + "include",
                               href="test3.xml")
-        lxml.etree.SubElement(xdata["/test/test3.xml"].getroot(),
+        lxml.etree.SubElement(xdata[test3].getroot(),
                               Bcfg2.Server.XI_NAMESPACE + "include",
                               href="test_dir/test6.xml")
 
@@ -525,10 +528,6 @@ class TestXMLFileBacked(TestFileBacked):
             FakeElementTree.xinclude.reset_mock()
             xfb.extras = []
             xfb.xdata = None
-
-        # syntax error
-        xfb.data = "<"
-        self.assertRaises(PluginInitError, xfb.Index)
 
         # no xinclude
         reset()

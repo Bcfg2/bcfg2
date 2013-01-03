@@ -299,15 +299,24 @@ class XMLDocumentor(object):
     def document_complexType(self):
         rv = nodes.definition_list()
 
+        content = self.entity.find("xs:simpleContent", namespaces=NSMAP)
+        if content is not None:
+            base = content.xpath("xs:extension|xs:restriction",
+                                 namespaces=NSMAP)[0]
+            attr_container = base
+        else:
+            base = None
+            attr_container = self.entity
+
         ##### ATTRIBUTES #####
         table, tbody = self.get_attr_table()
-        attrs = self.get_attrs(self.entity)
+        attrs = self.get_attrs(attr_container)
         if attrs:
             tbody.extend(attrs)
 
         foreign_attr_groups = nodes.bullet_list()
-        for agroup in self.entity.xpath("xs:attributeGroup",
-                                        namespaces=NSMAP):
+        for agroup in attr_container.xpath("xs:attributeGroup",
+                                           namespaces=NSMAP):
             # if the attribute group is in another namespace, just
             # link to it
             ns, name = self.split_ns(agroup.get('ref'))
@@ -349,11 +358,17 @@ class XMLDocumentor(object):
                 append_node(rv, nodes.definition, *groups)
 
         ##### TEXT CONTENT #####
-        if (self.include['text'] and
-            self.entity.get("mixed", "false").lower() == "true"):
-            append_node(rv, nodes.term, text("Text content:"))
-            append_node(rv, nodes.definition,
-                        build_paragraph(self.get_values_from_simpletype()))
+        if self.include['text']:
+            if self.entity.get("mixed", "false").lower() == "true":
+                append_node(rv, nodes.term, text("Text content:"))
+                append_node(rv, nodes.definition,
+                            build_paragraph(self.get_values_from_simpletype()))
+            elif base is not None:
+                append_node(rv, nodes.term, text("Text content:"))
+                append_node(
+                    rv, nodes.definition,
+                    build_paragraph(self.get_values_from_simpletype(content)))
+
         return [rv]
 
     def document_attributeGroup(self):
@@ -544,8 +559,10 @@ class XMLDocumentor(object):
         if entity is None:
             entity = self.entity
         # todo: xs:union, xs:list
-        restriction = entity.find("xs:restriction", namespaces=NSMAP)
-        if restriction is None:
+        try:
+            restriction = entity.xpath("xs:restriction|xs:extension",
+                                       namespaces=NSMAP)[0]
+        except IndexError:
             return "Any"
         doc = self.get_doc(restriction)
         if len(doc) == 1 and len(doc[0]) == 0:
