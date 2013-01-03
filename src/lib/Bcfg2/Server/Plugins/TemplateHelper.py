@@ -1,6 +1,5 @@
 """ A plugin to provide helper classes and functions to templates """
 
-import os
 import re
 import imp
 import sys
@@ -83,20 +82,16 @@ class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
                      for h in self.entries.values()])
 
 
-class TemplateHelperLint(Bcfg2.Server.Lint.ServerlessPlugin):
+class TemplateHelperLint(Bcfg2.Server.Lint.ServerPlugin):
     """ find duplicate Pkgmgr entries with the same priority """
     def __init__(self, *args, **kwargs):
-        Bcfg2.Server.Lint.ServerlessPlugin.__init__(self, *args, **kwargs)
+        Bcfg2.Server.Lint.ServerPlugin.__init__(self, *args, **kwargs)
         self.reserved_keywords = dir(HelperModule("foo.py"))
 
     def Run(self):
-        for fname in os.listdir(os.path.join(self.config['repo'],
-                                             "TemplateHelper")):
-            helper = os.path.join(self.config['repo'], "TemplateHelper",
-                                  fname)
-            if not MODULE_RE.search(helper) or not self.HandlesFile(helper):
-                continue
-            self.check_helper(helper)
+        for helper in self.core.plugins['TemplateHelper'].entries.values():
+            if self.HandlesFile(helper):
+                self.check_helper(helper.name)
 
     def check_helper(self, helper):
         """ check a helper module for export errors """
