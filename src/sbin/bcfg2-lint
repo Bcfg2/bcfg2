@@ -111,7 +111,23 @@ def load_plugins(setup):
         except AttributeError:
             err = sys.exc_info()[1]
             LOGGER.error("Failed to load plugin %s: %s" % (plugin, err))
-            
+
+    for plugin in setup['plugins']:
+        if plugin in allplugins:
+            # already loaded
+            continue
+
+        try:
+            allplugins[plugin] = \
+                load_plugin("Bcfg2.Server.Plugins." + plugin,
+                            obj_name=plugin + "Lint")
+        except AttributeError:
+            pass
+        except ImportError:
+            err = sys.exc_info()[1]
+            LOGGER.error("Failed to load plugin %s: %s" % (plugin + "Lint",
+                                                           err))
+
     serverplugins = dict()
     serverlessplugins = dict()
     for plugin_name, plugin in allplugins.items():
