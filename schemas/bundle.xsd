@@ -118,10 +118,66 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element name='BoundSELinux' type='SELinuxType'>
+      <xsd:element name='BoundSEBoolean' type='SEBooleanType'>
         <xsd:annotation>
           <xsd:documentation>
-            Fully bound description of an SELinux entry.
+            Fully bound description of an SELinux boolean entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundSEPort' type='SEPortType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux port entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundSEFcontext' type='SEFcontextType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux file context entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundSENode' type='SENodeType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux node entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundSELogin' type='SELoginType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux login entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundSEUser' type='SEUserType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux user entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundSEInterface' type='SEInterfaceType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux interface entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundSEPermissive' type='SEPermissiveType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux permissive domain entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='BoundSEModule' type='SEModuleType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Fully bound description of an SELinux module entry.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
