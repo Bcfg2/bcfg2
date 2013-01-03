@@ -4,7 +4,8 @@ import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugins.Cfg import CfgCreationError, CfgCreator
 from Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator import *
-from Bcfg2.Server.Plugin import StructFile, PluginExecutionError
+import Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator
+from Bcfg2.Server.Plugin import PluginExecutionError
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4

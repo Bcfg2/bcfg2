@@ -3,7 +3,7 @@ import sys
 import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugins.Cfg.CfgAuthorizedKeysGenerator import *
-from Bcfg2.Server.Plugin import PluginExecutionError
+import Bcfg2.Server.Plugins.Cfg.CfgAuthorizedKeysGenerator
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4
@@ -137,8 +137,11 @@ class TestCfgAuthorizedKeysGenerator(TestCfgGenerator, TestStructFile):
                                   attrib={"from": pubkey, "host": host}),
             "Params", foo="foo", bar="bar=bar")
         akg.XMLMatch.return_value = spec
-        self.assertEqual(akg.get_data(entry, metadata),
-                         "foo=foo,bar=bar=bar %s %s" % (host, pubkey))
+        params, actual_host, actual_pubkey = akg.get_data(entry,
+                                                          metadata).split()
+        self.assertEqual(actual_host, host)
+        self.assertEqual(actual_pubkey, pubkey)
+        self.assertItemsEqual(params.split(","), ["foo=foo", "bar=bar=bar"])
         akg.XMLMatch.assert_called_with(metadata)
         akg.core.build_metadata.assert_called_with(host)
         self.assertEqual(akg.core.Bind.call_args[0][0].get("name"), pubkey)

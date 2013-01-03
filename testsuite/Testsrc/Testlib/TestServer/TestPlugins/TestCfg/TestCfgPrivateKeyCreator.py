@@ -5,6 +5,7 @@ from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugins.Cfg import CfgCreationError
 from Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator import *
 from Bcfg2.Server.Plugin import PluginExecutionError
+import Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator
 try:
     from Bcfg2.Encryption import EVPError
     HAS_CRYPTO = True
@@ -210,7 +211,14 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
     def test_create_data(self, mock_open, mock_rmtree):
         pkc = self.get_obj()
         pkc.XMLMatch = Mock()
-        pkc.get_specificity = MagicMock()
+        pkc.get_specificity = Mock()
+        # in order to make ** magic work in older versions of python,
+        # get_specificity() must return an actual dict, not just a
+        # Mock object that works like a dict.  in order to test that
+        # the get_specificity() return value is being used
+        # appropriately, we put some dummy data in it and test for
+        # that data
+        pkc.get_specificity.side_effect = lambda m, s: dict(group="foo")
         pkc._gen_keypair = Mock()
         privkey = os.path.join(datastore, "privkey")
         pkc._gen_keypair.return_value = privkey
@@ -248,14 +256,10 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
                                                 pkc.XMLMatch.return_value)
             self.assertItemsEqual(mock_open.call_args_list,
                                   [call(privkey + ".pub"), call(privkey)])
-            pkc.pubkey_creator.get_filename.assert_called_with(
-                **pkc.get_specificity.return_value)
+            pkc.pubkey_creator.get_filename.assert_called_with(group="foo")
             pkc.pubkey_creator.write_data.assert_called_with(
-                "ssh-rsa publickey pubkey.filename\n",
-                **pkc.get_specificity.return_value)
-            pkc.write_data.assert_called_with(
-                "privatekey",
-                **pkc.get_specificity.return_value)
+                "ssh-rsa publickey pubkey.filename\n", group="foo")
+            pkc.write_data.assert_called_with("privatekey", group="foo")
             mock_rmtree.assert_called_with(datastore)
 
             reset()
@@ -269,14 +273,11 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
                                                 pkc.XMLMatch.return_value)
             self.assertItemsEqual(mock_open.call_args_list,
                                   [call(privkey + ".pub"), call(privkey)])
-            pkc.pubkey_creator.get_filename.assert_called_with(
-                **pkc.get_specificity.return_value)
+            pkc.pubkey_creator.get_filename.assert_called_with(group="foo")
             pkc.pubkey_creator.write_data.assert_called_with(
                 "ssh-rsa publickey pubkey.filename\n",
-                **pkc.get_specificity.return_value)
-            pkc.write_data.assert_called_with(
-                "privatekey",
-                **pkc.get_specificity.return_value)
+                group="foo")
+            pkc.write_data.assert_called_with("privatekey", group="foo")
             mock_rmtree.assert_called_with(datastore)
 
         inner()
@@ -299,14 +300,11 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
                                                     pkc.XMLMatch.return_value)
                 self.assertItemsEqual(mock_open.call_args_list,
                                       [call(privkey + ".pub"), call(privkey)])
-                pkc.pubkey_creator.get_filename.assert_called_with(
-                    **pkc.get_specificity.return_value)
+                pkc.pubkey_creator.get_filename.assert_called_with(group="foo")
                 pkc.pubkey_creator.write_data.assert_called_with(
-                    "ssh-rsa publickey pubkey.filename\n",
-                    **pkc.get_specificity.return_value)
-                pkc.write_data.assert_called_with(
-                    "encryptedprivatekey",
-                    **pkc.get_specificity.return_value)
+                    "ssh-rsa publickey pubkey.filename\n", group="foo")
+                pkc.write_data.assert_called_with("encryptedprivatekey",
+                                                  group="foo", ext=".crypt")
                 mock_ssl_encrypt.assert_called_with(
                     "privatekey", "foo",
                     algorithm=mock_get_algorithm.return_value)
