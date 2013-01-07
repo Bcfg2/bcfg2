@@ -150,11 +150,14 @@ ul.menu-level2 {
         color: #10324b;
         text-decoration: none;
 }
-.modified-lineitem {
-	background: #FFEC8B;
-}
 .extra-lineitem {
 	background: #63B8FF;
+}
+.failed-lineitem {
+        background: #FF7777;
+}
+.modified-lineitem {
+	background: #FFEC8B;
 }
 
 table.grid-view {

@@ -121,8 +121,8 @@ span.history_links a {
 
   {% if interaction.failures.all %}
   <div class='entry_list'>
-    <div class='entry_list_head' onclick='javascript:toggleMe("failures_table");'>
-      <h3>Failed entries</h3>
+    <div class='entry_list_head failed-lineitem' onclick='javascript:toggleMe("failures_table");'>
+      <h3>Failed Entries &#8212; {{ interaction.failures.all|length }}</h3>
       <div class='entry_expand_tab' id='plusminus_failuress_table'>[+]</div>
     </div>
     <table id='failures_table' class='entry_list' style='display: none'>
