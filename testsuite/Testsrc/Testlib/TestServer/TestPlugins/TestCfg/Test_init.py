@@ -24,6 +24,7 @@ from TestPlugin import TestSpecificData, TestEntrySet, TestGroupSpool, \
 
 class TestCfgBaseFileMatcher(TestSpecificData):
     test_obj = CfgBaseFileMatcher
+    path = os.path.join(datastore, "test+test.txt")
 
     def test_get_regex(self):
         if self.test_obj.__basenames__:

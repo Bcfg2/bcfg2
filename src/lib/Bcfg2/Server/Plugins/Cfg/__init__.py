@@ -108,7 +108,8 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData,
         :type basename: string
         :returns: compiled regex
         """
-        components = ['^(?P<basename>%s)' % '|'.join(basenames)]
+        components = ['^(?P<basename>%s)' % '|'.join(re.escape(b)
+                                                     for b in basenames)]
         if cls.__specific__:
             components.append('(|\\.H_(?P<hostname>\S+?)|' +
                               '\.G(?P<prio>\d+)_(?P<group>\S+?))')
