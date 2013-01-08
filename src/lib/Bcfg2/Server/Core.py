@@ -16,7 +16,8 @@ import Bcfg2.Logger
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Cache import Cache
 import Bcfg2.Statistics
-from Bcfg2.Compat import xmlrpclib, reduce  # pylint: disable=W0622
+from itertools import chain
+from Bcfg2.Compat import xmlrpclib  # pylint: disable=W0622
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError, \
     track_statistics
 
@@ -493,9 +494,8 @@ class BaseCore(object):
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: list of :class:`lxml.etree._Element` objects
         """
-        structures = reduce(lambda x, y: x + y,
-                            [struct.BuildStructures(metadata)
-                             for struct in self.structures], [])
+        structures = list(chain(*[struct.BuildStructures(metadata)
+                                  for struct in self.structures]))
         sbundles = [b.get('name') for b in structures if b.tag == 'Bundle']
         missing = [b for b in metadata.bundles if b not in sbundles]
         if missing:

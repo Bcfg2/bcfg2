@@ -2,9 +2,8 @@
 
 import copy
 import lxml.etree
-import sys
-from Bcfg2.Compat import reduce
 import Bcfg2.Server.Plugin
+from itertools import chain
 
 
 class Base(Bcfg2.Server.Plugin.Plugin,
@@ -18,7 +17,6 @@ class Base(Bcfg2.Server.Plugin.Plugin,
     __child__ = Bcfg2.Server.Plugin.StructFile
     deprecated = True
 
-    """Base creates independent clauses based on client metadata."""
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Structure.__init__(self)
@@ -33,8 +31,8 @@ class Base(Bcfg2.Server.Plugin.Plugin,
     def BuildStructures(self, metadata):
         """Build structures for client described by metadata."""
         ret = lxml.etree.Element("Independent", version='2.0')
-        fragments = reduce(lambda x, y: x + y,
-                           [base.Match(metadata) for base
-                            in list(self.entries.values())], [])
-        [ret.append(copy.copy(frag)) for frag in fragments]
+        fragments = list(chain(*[base.Match(metadata)
+                                 for base in list(self.entries.values())]))
+        for frag in fragments:
+            ret.append(copy.copy(frag))
         return [ret]

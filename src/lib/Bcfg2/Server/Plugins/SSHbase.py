@@ -7,10 +7,11 @@ import socket
 import shutil
 import logging
 import tempfile
+from itertools import chain
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugin import PluginExecutionError
-from Bcfg2.Compat import any, u_str, reduce, b64encode  # pylint: disable=W0622
+from Bcfg2.Compat import any, u_str, b64encode  # pylint: disable=W0622
 
 LOGGER = logging.getLogger(__name__)
 
@@ -200,15 +201,13 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     if specific.hostname and specific.hostname in names:
                         hostnames = names[specific.hostname]
                     elif specific.group:
-                        hostnames = \
-                            reduce(lambda x, y: x + y,
-                                   [names[cmeta.hostname]
-                                    for cmeta in \
-                                    mquery.by_groups([specific.group])], [])
+                        hostnames = list(chain(
+                                *[names[cmeta.hostname]
+                                  for cmeta in \
+                                      mquery.by_groups([specific.group])]))
                     elif specific.all:
                         # a generic key for all hosts?  really?
-                        hostnames = reduce(lambda x, y: x + y,
-                                           list(names.values()), [])
+                        hostnames = list(chain(*list(names.values())))
                     if not hostnames:
                         if specific.hostname:
                             key = specific.hostname
