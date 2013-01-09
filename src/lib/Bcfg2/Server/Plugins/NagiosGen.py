@@ -104,9 +104,17 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
         for host in host_configs:
             host_data.append(open(host, 'r').read())
 
+        group_list = []
+        for line in "\n".join(host_data).splitlines():
+            # only include those groups which are actually used
+            if "hostgroup" in line:
+                group_list += line.split()[1].split(',')
+
+        group_list = list(set(group_list))
+
         for group in group_configs:
             group_name = re.sub("(-group.cfg|.*/(?=[^/]+))", "", group)
-            if "\n".join(host_data).find(group_name) != -1:
+            if group_name in group_list:
                 groupfile = open(group, 'r')
                 group_data.append(groupfile.read())
                 groupfile.close()
