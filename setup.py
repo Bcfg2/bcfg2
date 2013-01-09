@@ -23,7 +23,7 @@ if need_m2crypto:
     inst_reqs.append('M2Crypto')
 
 setup(name="Bcfg2",
-      version="1.3.0pre2",
+      version="1.3.0rc1",
       description="Bcfg2 Server",
       author="Narayan Desai",
       author_email="desai@mcs.anl.gov",
