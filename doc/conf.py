@@ -333,16 +333,33 @@ def setup(app):
 # Python only started using sphinx in 2.6, so we won't have docs for
 # 2.4 or 2.5.  These are in reverse order, since sphinx seems to look
 # in the last mapping first.
+
+def check_object_path(key, url, path):
+    if os.path.isfile(path):
+        return {key: (url, path)}
+    return {}
+
+intersphinx_mapping = {}
+intersphinx_mapping.update(\
+    check_object_path('mock',
+                      'http://www.voidspace.org.uk/python/mock',
+                      '/usr/share/doc/python-mock-doc/html/objects.inv'))
+intersphinx_mapping.update(\
+    check_object_path('cherrypy',
+                      'http://docs.cherrypy.org/stable',
+                      'intersphinx/cherrypy/objects.inv'))
+
 versions = ["3.2", "2.7", "2.6"]
 cur_version = '.'.join(str(v) for v in sys.version_info[0:2])
 
-intersphinx_mapping = \
-    dict(mock=('http://www.voidspace.org.uk/python/mock', None),
-         cherrypy=('http://docs.cherrypy.org/stable', None))
 for pyver in versions:
     if pyver == cur_version:
         key = 'py'
     else:
         key = 'py' + pyver.replace(".", "")
-    intersphinx_mapping[key] = ('http://docs.python.org/%s' % pyver,
-                                None)
+    intersphinx_mapping.update(\
+        check_object_path(key,
+                          'http://docs.python.org/',
+                          '/usr/share/doc/python'
+                            + '.'.join([str(x) for x in sys.version_info[0:2]])
+                            + '/html/objects.inv'))
