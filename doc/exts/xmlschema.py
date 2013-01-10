@@ -218,18 +218,17 @@ class XMLDocumentor(object):
         return rv
 
     def document_schema(self):
-        element = self.entity.find("xs:element", namespaces=NSMAP)
-        if element is not None:
+        try:
+            element = self.entity.xpath("xs:element", namespaces=NSMAP)[0]
             ns, name = self.split_ns(element.get("name"))
             doc = self.get_documentor(element, name=name,
                                       ns_uri=self.namespaces[ns])
             return doc.document()
-        else:
+        except IndexError:
             # no top-level element or group -- just a list of
             # (abstract) complexTypes?
             rv = []
-            for ctype in self.entity.findall("xs:complexType",
-                                             namespaces=NSMAP):
+            for ctype in self.entity.xpath("xs:complexType", namespaces=NSMAP):
                 ns, name = self.split_ns(ctype.get("name"))
                 doc = self.get_documentor(ctype, name=name,
                                           ns_uri=self.namespaces[ns])
@@ -287,7 +286,7 @@ class XMLDocumentor(object):
                 self.app.error("Unknown element type %s" % fqtype)
         else:
             rv = []
-            typespec = self.entity.find("xs:complexType", namespaces=NSMAP)
+            typespec = self.entity.xpath("xs:complexType", namespaces=NSMAP)[0]
             if self.include['doc'] and not self.get_doc(self.entity):
                 rv.append(self.get_doc(typespec))
             if typespec is not None:
@@ -299,12 +298,13 @@ class XMLDocumentor(object):
     def document_complexType(self):
         rv = nodes.definition_list()
 
-        content = self.entity.find("xs:simpleContent", namespaces=NSMAP)
-        if content is not None:
+        try:
+            content = self.entity.xpath("xs:simpleContent",
+                                        namespaces=NSMAP)[0]
             base = content.xpath("xs:extension|xs:restriction",
                                  namespaces=NSMAP)[0]
             attr_container = base
-        else:
+        except IndexError:
             base = None
             attr_container = self.entity
 
@@ -405,10 +405,10 @@ class XMLDocumentor(object):
         if nodeclass is None:
             nodeclass = nodes.list_item
 
-        if el.find("xs:any", namespaces=NSMAP) is not None:
+        if el.xpath("xs:any", namespaces=NSMAP):
             return True
 
-        for child in el.findall("xs:element", namespaces=NSMAP):
+        for child in el.xpath("xs:element", namespaces=NSMAP):
             node = nodeclass()
             if child.get('ref'):
                 node.append(build_paragraph(get_xref('element',
@@ -419,7 +419,7 @@ class XMLDocumentor(object):
                 node.extend(doc.document())
             children.append(node)
 
-        for group in el.findall("xs:group", namespaces=NSMAP):
+        for group in el.xpath("xs:group", namespaces=NSMAP):
             if group.get('ref'):
                 name = group.get('ref')
                 node = nodeclass()
@@ -479,10 +479,10 @@ class XMLDocumentor(object):
                 row.append(build_paragraph(
                         self.get_values_from_type(entity=attr)))
             else:
-                atype = attr.find("xs:simpleType", namespaces=NSMAP)
-                if atype:
+                try:
+                    atype = attr.xpath("xs:simpleType", namespaces=NSMAP)[0]
                     row.append(self.get_values_from_simpletype(atype))
-                else:
+                except IndexError:
                     # todo: warn about no type found
                     pass
             reqd = 0
@@ -503,11 +503,13 @@ class XMLDocumentor(object):
         rows.sort(key=operator.itemgetter(0))
         rows.sort(key=operator.itemgetter(1), reverse=True)
         if not self.options['onlyattrs'] or '*' in self.options['onlyattrs']:
-            anyattr = el.find("xs:anyAttribute", namespaces=NSMAP)
-            if anyattr is not None:
+            try:
+                anyattr = el.xpath("xs:anyAttribute", namespaces=NSMAP)[0]
                 rows.append((None, None,
                              build_table_row('*', self.get_doc(anyattr),
                                              "Any", "No", "None")))
+            except IndexError:
+                pass
         return [r[2] for r in rows]
 
     def get_values_from_type(self, entity=None, typeattr='type'):
@@ -569,8 +571,8 @@ class XMLDocumentor(object):
             # if get_doc returns a paragraph node with an empty Text
             # node
             enum = [e.get("value")
-                    for e in restriction.findall("xs:enumeration",
-                                                 namespaces=NSMAP)]
+                    for e in restriction.xpath("xs:enumeration",
+                                               namespaces=NSMAP)]
             if len(enum):
                 return get_value_list(enum)
             else:
@@ -787,6 +789,12 @@ def add_xml_datatype_role(app):
 
 def load_xml_schemas(app):
     entities = dict()
+    entities[None] = dict(schema=dict(),
+                          group=dict(),
+                          attributeGroup=dict(),
+                          element=dict(),
+                          simpleType=dict(),
+                          complexType=dict())
     namespaces = dict()
     namespaces_by_uri = dict()
     schemapath = os.path.abspath(os.path.join(app.builder.env.srcdir,
