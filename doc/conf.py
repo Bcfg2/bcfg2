@@ -337,7 +337,8 @@ def setup(app):
 def check_object_path(key, url, path):
     if os.path.isfile(path):
         return {key: (url, path)}
-    return {}
+    else:
+        return {key: (url, None)}
 
 intersphinx_mapping = {}
 intersphinx_mapping.update(\
@@ -359,7 +360,7 @@ for pyver in versions:
         key = 'py' + pyver.replace(".", "")
     intersphinx_mapping.update(\
         check_object_path(key,
-                          'http://docs.python.org/',
+                          'http://docs.python.org/%s' % pyver,
                           '/usr/share/doc/python'
                             + '.'.join([str(x) for x in sys.version_info[0:2]])
                             + '/html/objects.inv'))
