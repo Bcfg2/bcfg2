@@ -77,6 +77,7 @@ class SSLCADataFile(Bcfg2.Server.Plugin.SpecificData):
     def bind_entry(self, entry, _):
         """ Bind the data in the file to the given abstract entry """
         entry.text = self.data
+        entry.set("type", "file")
         return entry
 
 
@@ -318,6 +319,7 @@ class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 return self.best_matching(metadata).bind_entry(entry, metadata)
             except PluginExecutionError:
                 entry.text = self.build_key(entry, metadata)
+                entry.set("type", "file")
                 return entry
         elif self.cert:
             key = self.cert.get_spec(metadata)['key']
@@ -344,6 +346,7 @@ class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 # if we get here, it's because either a) there was no best
                 # matching entry; or b) the existing cert did not verify
                 entry.text = self.build_cert(entry, metadata, keyfile)
+                entry.set("type", "file")
                 return entry
             finally:
                 if cleanup_keyfile:
