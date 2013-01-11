@@ -550,7 +550,8 @@ Configuration
 
 In addition to ``privkey.xml`` and ``authorized_keys.xml``, described
 above, the behavior of the SSH key generation feature can be
-influenced by several options in ``bcfg2.conf``:
+influenced by several options in the ``[sshkeys]`` section of
+``bcfg2.conf``:
 
 +----------------+---------------------------------------------------------+-----------------------+------------+
 | Option         | Description                                             | Values                | Default    |
