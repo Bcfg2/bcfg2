@@ -99,24 +99,28 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 mask=dict(perms=lambda v: re.match('^([0-7]|[rwx\-]{0,3}',
                                                    v))),
             Package={None: dict(name=None)},
-            SELinux=dict(
-                boolean=dict(name=None,
-                             value=lambda v: v in ['on', 'off']),
-                module=dict(name=None, __text__=None),
-                port=dict(name=lambda v: re.match(r'^\d+(-\d+)?/(tcp|udp)', v),
-                          selinuxtype=is_selinux_type),
-                fcontext=dict(name=None, selinuxtype=is_selinux_type),
-                node=dict(name=lambda v: "/" in v,
-                          selinuxtype=is_selinux_type,
-                          proto=lambda v: v in ['ipv6', 'ipv4']),
-                login=dict(name=is_username,
-                           selinuxuser=is_selinux_user),
-                user=dict(name=is_selinux_user,
-                          roles=lambda v: all(is_selinux_user(u)
-                                              for u in " ".split(v)),
-                          prefix=None),
-                interface=dict(name=None, selinuxtype=is_selinux_type),
-                permissive=dict(name=is_selinux_type))
+            SEBoolean={None: dict(name=None,
+                                  value=lambda v: v in ['on', 'off'])},
+            SEModule={None: dict(name=None, __text__=None)},
+            SEPort={None:
+                        dict(name=lambda v: re.match(r'^\d+(-\d+)?/(tcp|udp)',
+                                                     v),
+                             selinuxtype=is_selinux_type)},
+            SEFcontext={None: dict(name=None, selinuxtype=is_selinux_type)},
+            SENode={None: dict(name=lambda v: "/" in v,
+                               selinuxtype=is_selinux_type,
+                               proto=lambda v: v in ['ipv6', 'ipv4'])},
+            SELogin={None: dict(name=is_username,
+                                selinuxuser=is_selinux_user)},
+            SEUser={None: dict(name=is_selinux_user,
+                               roles=lambda v: all(is_selinux_user(u)
+                                                   for u in " ".split(v)),
+                               prefix=None)},
+            SEInterface={None: dict(name=None, selinuxtype=is_selinux_type)},
+            SEPermissive={None: dict(name=is_selinux_type)},
+            POSIXGroup={None: dict(name=is_username)},
+            POSIXUser={None: dict(name=is_username)},
+            MemberOf={None: dict(__text__=is_username)},
             )
 
     def Run(self):
@@ -130,65 +134,70 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"unknown-entry-type":"error",
-                "unknown-entry-tag":"error",
-                "required-attrs-missing":"error",
-                "required-attr-format":"error",
-                "extra-attrs":"warning"}
+        return {"unknown-entry-type": "error",
+                "unknown-entry-tag": "error",
+                "required-attrs-missing": "error",
+                "required-attr-format": "error",
+                "extra-attrs": "warning"}
 
     def check_packages(self):
         """ check package sources for Source entries with missing attrs """
-        if 'Packages' in self.core.plugins:
-            for source in self.core.plugins['Packages'].sources:
-                if isinstance(source, Yum.YumSource):
-                    if (not source.pulp_id and not source.url and
-                        not source.rawurl):
-                        self.LintError("required-attrs-missing",
-                                       "A %s source must have either a url, "
-                                       "rawurl, or pulp_id attribute: %s" %
-                                       (source.ptype,
-                                        self.RenderXML(source.xsource)))
-                elif not source.url and not source.rawurl:
-                    self.LintError("required-attrs-missing",
-                                   "A %s source must have either a url or "
-                                   "rawurl attribute: %s" %
-                                   (source.ptype,
-                                    self.RenderXML(source.xsource)))
+        if 'Packages' not in self.core.plugins:
+            return
 
-                if (not isinstance(source, Apt.AptSource) and
-                    source.recommended):
-                    self.LintError("extra-attrs",
-                                   "The recommended attribute is not "
-                                   "supported on %s sources: %s" %
-                                   (source.ptype,
-                                    self.RenderXML(source.xsource)))
+        for source in self.core.plugins['Packages'].sources:
+            if isinstance(source, Yum.YumSource):
+                if (not source.pulp_id and not source.url and
+                    not source.rawurl):
+                    self.LintError(
+                        "required-attrs-missing",
+                        "A %s source must have either a url, rawurl, or "
+                        "pulp_id attribute: %s" %
+                        (source.ptype, self.RenderXML(source.xsource)))
+            elif not source.url and not source.rawurl:
+                self.LintError(
+                    "required-attrs-missing",
+                    "A %s source must have either a url or rawurl attribute: "
+                    "%s" %
+                    (source.ptype, self.RenderXML(source.xsource)))
+
+            if (not isinstance(source, Apt.AptSource) and
+                source.recommended):
+                self.LintError(
+                    "extra-attrs",
+                    "The recommended attribute is not supported on %s sources:"
+                    " %s" %
+                    (source.ptype, self.RenderXML(source.xsource)))
 
     def check_rules(self):
         """ check Rules for Path entries with missing attrs """
-        if 'Rules' in self.core.plugins:
-            for rules in self.core.plugins['Rules'].entries.values():
-                xdata = rules.pnode.data
-                for path in xdata.xpath("//Path"):
-                    self.check_entry(path, os.path.join(self.config['repo'],
-                                                        rules.name))
+        if 'Rules' not in self.core.plugins:
+            return
+
+        for rules in self.core.plugins['Rules'].entries.values():
+            xdata = rules.pnode.data
+            for path in xdata.xpath("//Path"):
+                self.check_entry(path, os.path.join(self.config['repo'],
+                                                    rules.name))
 
     def check_bundles(self):
         """ check bundles for BoundPath entries with missing attrs """
-        if 'Bundler' in self.core.plugins:
-            for bundle in self.core.plugins['Bundler'].entries.values():
-                if (self.HandlesFile(bundle.name) and
-                    (not HAS_GENSHI or
-                     not isinstance(bundle, BundleTemplateFile))):
-                    try:
-                        xdata = lxml.etree.XML(bundle.data)
-                    except (lxml.etree.XMLSyntaxError, AttributeError):
-                        xdata = lxml.etree.parse(
-                            bundle.template.filepath).getroot()
+        if 'Bundler' not in self.core.plugins:
+            return
 
-                    for path in xdata.xpath(
-                        "//*[substring(name(), 1, 5) = 'Bound']"
-                        ):
-                        self.check_entry(path, bundle.name)
+        for bundle in self.core.plugins['Bundler'].entries.values():
+            if (self.HandlesFile(bundle.name) and
+                (not HAS_GENSHI or
+                 not isinstance(bundle, BundleTemplateFile))):
+                try:
+                    xdata = lxml.etree.XML(bundle.data)
+                except (lxml.etree.XMLSyntaxError, AttributeError):
+                    xdata = \
+                        lxml.etree.parse(bundle.template.filepath).getroot()
+
+                for path in \
+                        xdata.xpath("//*[substring(name(), 1, 5) = 'Bound']"):
+                    self.check_entry(path, bundle.name)
 
     def check_entry(self, entry, filename):
         """ generic entry check """
@@ -201,11 +210,12 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 self.LintError("unknown-entry-tag",
                                "Unknown entry tag '%s': %s" %
                                (tag, self.RenderXML(entry)))
+                return
 
             if isinstance(self.required_attrs[tag], dict):
                 etype = entry.get('type')
                 if etype in self.required_attrs[tag]:
-                    required_attrs = self.required_attrs[tag][etype] 
+                    required_attrs = self.required_attrs[tag][etype]
                 else:
                     self.LintError("unknown-entry-type",
                                    "Unknown %s type %s: %s" %
@@ -233,6 +243,12 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                    "Text missing for %s %s in %s: %s" %
                                    (tag, name, filename,
                                     self.RenderXML(entry)))
+                fmt = required_attrs['__text__']
+                if fmt is not None and not fmt(entry.text):
+                    self.LintError(
+                        "required-attr-format",
+                        "Text content of %s %s in %s is malformed\n%s" %
+                        (tag, name, filename, self.RenderXML(entry)))
 
             if not attrs.issuperset(required_attrs.keys()):
                 self.LintError(
@@ -247,8 +263,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
 
             for attr, fmt in required_attrs.items():
                 if fmt and attr in attrs and not fmt(entry.attrib[attr]):
-                    self.LintError("required-attr-format",
-                                   "The %s attribute of %s %s in %s is "
-                                   "malformed\n%s" %
-                                   (attr, tag, name, filename,
-                                    self.RenderXML(entry)))
+                    self.LintError(
+                        "required-attr-format",
+                        "The %s attribute of %s %s in %s is malformed\n%s" %
+                        (attr, tag, name, filename, self.RenderXML(entry)))
