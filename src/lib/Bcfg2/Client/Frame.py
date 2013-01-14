@@ -228,12 +228,7 @@ class Frame(object):
 
         # take care of important entries first
         if not self.dryrun:
-            for cfile in self.config.findall(".//Path"):
-                if (cfile.get('name') not in self.__important__ or
-                    cfile.get('type') != 'file' or
-                    cfile not in self.whitelist):
-                    continue
-                parent = cfile.getparent()
+            for parent in self.config.findall(".//Path/.."):
                 if ((parent.tag == "Bundle" and
                      ((self.setup['bundle'] and
                        parent.get("name") not in self.setup['bundle']) or
@@ -242,9 +237,15 @@ class Frame(object):
                     (parent.tag == "Independent" and
                      (self.setup['bundle'] or self.setup['skipindep']))):
                     continue
-                tools = [t for t in self.tools
-                         if t.handlesEntry(cfile) and t.canVerify(cfile)]
-                if tools:
+                for cfile in parent.findall("./Path"):
+                    if (cfile.get('name') not in self.__important__ or
+                        cfile.get('type') != 'file' or
+                        cfile not in self.whitelist):
+                        continue
+                    tools = [t for t in self.tools
+                            if t.handlesEntry(cfile) and t.canVerify(cfile)]
+                    if not tools:
+                        continue
                     if (self.setup['interactive'] and not
                         self.promptFilter("Install %s: %s? (y/N):", [cfile])):
                         self.whitelist.remove(cfile)
