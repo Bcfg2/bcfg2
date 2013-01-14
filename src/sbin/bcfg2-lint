@@ -90,10 +90,7 @@ def load_plugins(setup):
     elif "bcfg2-repo-validate" in sys.argv[0]:
         plugin_list = 'RequiredAttrs,Validate'.split(',')
     else:
-        try:
-            plugin_list = setup.cfp.get('lint', 'plugins').split(',')
-        except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
-            plugin_list = Bcfg2.Server.Lint.__all__
+        plugin_list = setup['lint_plugins']
 
     allplugins = dict()
     for plugin in plugin_list:
@@ -144,7 +141,7 @@ def main():
                    showerrors=Bcfg2.Options.LINT_SHOW_ERRORS,
                    stdin=Bcfg2.Options.LINT_FILES_ON_STDIN,
                    schema=Bcfg2.Options.SCHEMA_PATH,
-                   plugins=Bcfg2.Options.SERVER_PLUGINS)
+                   lint_plugins=Bcfg2.Options.LINT_PLUGINS)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
@@ -156,6 +153,7 @@ def main():
     Bcfg2.Logger.setup_logging('bcfg2-info', **log_args)
 
     setup.cfp.read(setup['lint_config'])
+    setup.reparse()
 
     if setup['stdin']:
         files = [s.strip() for s in sys.stdin.readlines()]

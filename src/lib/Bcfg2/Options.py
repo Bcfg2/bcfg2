@@ -827,6 +827,11 @@ LINT_CONFIG = \
            cmd='--lint-config',
            odesc='<conffile>',
            long_arg=True)
+LINT_PLUGINS = \
+    Option('bcfg2-lint plugin list',
+           default=None,  # default is Bcfg2.Server.Lint.__all__
+           cf=('lint', 'plugins'),
+           cook=list_split)
 LINT_SHOW_ERRORS = \
     Option('Show error handling',
            default=False,
