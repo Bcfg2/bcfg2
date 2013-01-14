@@ -231,6 +231,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 required_attrs[entry.get('scope')] = is_username
 
             if '__text__' in required_attrs:
+                fmt = required_attrs['__text__']
                 del required_attrs['__text__']
                 if (not entry.text and
                     not entry.get('empty', 'false').lower() == 'true'):
@@ -238,7 +239,6 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                    "Text missing for %s %s in %s: %s" %
                                    (tag, name, filename,
                                     self.RenderXML(entry)))
-                fmt = required_attrs['__text__']
                 if fmt is not None and not fmt(entry.text):
                     self.LintError(
                         "required-attr-format",
