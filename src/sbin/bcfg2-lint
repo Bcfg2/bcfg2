@@ -89,8 +89,10 @@ def load_plugins(setup):
         plugin_list = setup['args']
     elif "bcfg2-repo-validate" in sys.argv[0]:
         plugin_list = 'RequiredAttrs,Validate'.split(',')
-    else:
+    elif setup['lint_plugins']:
         plugin_list = setup['lint_plugins']
+    else:
+        plugin_list = Bcfg2.Server.Lint.__all__
 
     allplugins = dict()
     for plugin in plugin_list:
