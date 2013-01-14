@@ -14,6 +14,11 @@
 
   <xsd:simpleType name='PackageTypeEnum'>
     <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='apk' />
+      <xsd:enumeration value='ips' />
+      <xsd:enumeration value='macport' />
+      <xsd:enumeration value='opencsw' />
+      <xsd:enumeration value='pacman' />
       <xsd:enumeration value='deb' />
       <xsd:enumeration value='rpm' />
       <xsd:enumeration value='blast' />

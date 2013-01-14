@@ -78,12 +78,8 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                             hasattr(Bcfg2.Client.Tools.VCS,
                                                     "Install%s" % v)),
                          revision=None, sourceurl=None)),
-            Service={
-                "chkconfig": dict(name=None),
-                "deb": dict(name=None),
-                "rc-update": dict(name=None),
-                "smf": dict(name=None, FMRI=None),
-                "upstart": dict(name=None)},
+            Service={"__any__": dict(name=None),
+                     "smf": dict(name=None, FMRI=None)},
             Action={None: dict(name=None,
                                timing=lambda v: v in ['pre', 'post', 'both'],
                                when=lambda v: v in ['modified', 'always'],
@@ -98,7 +94,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                                      v)),
                 mask=dict(perms=lambda v: re.match('^([0-7]|[rwx\-]{0,3}',
                                                    v))),
-            Package={None: dict(name=None)},
+            Package={"__any__": dict(name=None)},
             SEBoolean={None: dict(name=None,
                                   value=lambda v: v in ['on', 'off'])},
             SEModule={None: dict(name=None, __text__=None)},
@@ -212,17 +208,16 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                (tag, self.RenderXML(entry)))
                 return
 
-            if isinstance(self.required_attrs[tag], dict):
-                etype = entry.get('type')
-                if etype in self.required_attrs[tag]:
-                    required_attrs = self.required_attrs[tag][etype]
-                else:
-                    self.LintError("unknown-entry-type",
-                                   "Unknown %s type %s: %s" %
-                                   (tag, etype, self.RenderXML(entry)))
-                    return
+            etype = entry.get('type')
+            if etype in self.required_attrs[tag]:
+                required_attrs = self.required_attrs[tag][etype]
+            elif '__any__' in self.required_attrs[tag]:
+                required_attrs = self.required_attrs[tag]['__any__']
             else:
-                required_attrs = self.required_attrs[tag]
+                self.LintError("unknown-entry-type",
+                               "Unknown %s type %s: %s" %
+                               (tag, etype, self.RenderXML(entry)))
+                return
             attrs = set(entry.attrib.keys())
 
             if 'dev_type' in required_attrs:
