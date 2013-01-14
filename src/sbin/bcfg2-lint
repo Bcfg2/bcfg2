@@ -88,7 +88,7 @@ def load_plugins(setup):
     if setup['args']:
         plugin_list = setup['args']
     elif "bcfg2-repo-validate" in sys.argv[0]:
-        plugin_list = 'Duplicates,RequiredAttrs,Validate'.split(',')
+        plugin_list = 'RequiredAttrs,Validate'.split(',')
     else:
         try:
             plugin_list = setup.cfp.get('lint', 'plugins').split(',')

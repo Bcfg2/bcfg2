@@ -1,4 +1,4 @@
-.TH "BCFG2-LINT" "8" "November 14, 2012" "1.3" "Bcfg2"
+.TH "BCFG2-LINT" "8" "January 14, 2013" "1.3" "Bcfg2"
 .SH NAME
 bcfg2-lint \- Check Bcfg2 specification for validity, common mistakes, and style
 .
@@ -85,16 +85,11 @@ included on stdin.
 .UNINDENT
 .SH PLUGINS
 .sp
-See \fIbcfg2\-lint.conf(5)\fP for more information on the
-configuration of the plugins listed below.
+In addition to the plugins listed below, Bcfg2 server plugins may have
+their own \fIbcfg2\-lint\fP functionality, which is enabled automatically
+when the server plugin is enabled.  See \fIbcfg2\-lint.conf(5)\fP
+for more information on lint plugin configuration.
 .INDENT 0.0
-.TP
-.B Bundles
-Check the specification for several issues with Bundler: bundles
-referenced in metadata but not found in \fIBundler/\fP; bundles whose
-\fIname\fP attribute does not match the filename; and Genshi template
-bundles that use the \fI<Group>\fP tag (which is not processed in
-templated bundles).
 .TP
 .B Comments
 Check the specification for VCS keywords and any comments that are
@@ -106,9 +101,12 @@ you might require that every file have a "Maintainer" comment.)
 In XML files, only comments are checked for the keywords and
 comments required.
 .TP
-.B Duplicates
-Check for several types of duplicates in the Metadata: duplicate
-groups; duplicate clients; and multiple default groups.
+.B Genshi
+Ensure that all Genshi templates are valid and compile properly.
+.TP
+.B GroupNames
+Ensure that all groups called by name in Metadata, Rules, Bundler,
+GroupPatterns, and Cfg are valid.
 .TP
 .B InfoXML
 Check that certain attributes are specified in \fIinfo.xml\fP files. By
@@ -120,14 +118,10 @@ that paranoid mode be enabled for all files.
 Suggest that similar probes and config files be merged into single
 probes or TGenshi templates.
 .TP
-.B Pkgmgr
-Check for duplicate packages specified in Pkgmgr.
-.TP
 .B RequiredAttrs
-Check that all \fIPath\fP and \fIBoundPath\fP tags have the attributes that
-are required by their type (e.g., a path of type symlink must have
-name and to specified to be valid). This sort of validation is
-beyond the scope of an XML schema.
+Check that all entries have the appropriate required attributes,
+and that the attributes are in a valid format.  This goes above
+and beyond the validation offered by an XML schema.
 .TP
 .B Validate
 Validate the Bcfg2 specification against the XML schemas.
@@ -140,10 +134,10 @@ in \fIntp.xsd\fP schema validation will be performed on \fIntp.xml\fP.
 .UNINDENT
 .SH BUGS
 .sp
-\fBbcfg2\-lint\fP may not handle some older plugins as well as it
-handles newer ones. For instance, there may be some places where it
-expects all of your configuration files to be handled by Cfg rather than
-by a mix of Cfg and TGenshi or TCheetah.
+\fBbcfg2\-lint\fP may not handle some deprecated plugins as well
+as it handles newer ones. For instance, there may be some places where
+it expects all of your configuration files to be handled by Cfg rather
+than by a mix of Cfg and TGenshi or TCheetah.
 .SH SEE ALSO
 .sp
 \fIbcfg2(1)\fP, \fIbcfg2\-server(8)\fP,

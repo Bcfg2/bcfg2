@@ -57,15 +57,10 @@ Options
 Plugins
 -------
 
-See :manpage:`bcfg2-lint.conf(5)` for more information on the
-configuration of the plugins listed below.
-
-Bundles
-    Check the specification for several issues with Bundler: bundles
-    referenced in metadata but not found in *Bundler/*; bundles whose
-    *name* attribute does not match the filename; and Genshi template
-    bundles that use the *<Group>* tag (which is not processed in
-    templated bundles).
+In addition to the plugins listed below, Bcfg2 server plugins may have
+their own *bcfg2-lint* functionality, which is enabled automatically
+when the server plugin is enabled.  See :manpage:`bcfg2-lint.conf(5)`
+for more information on lint plugin configuration.
 
 Comments
     Check the specification for VCS keywords and any comments that are
@@ -77,9 +72,12 @@ Comments
     In XML files, only comments are checked for the keywords and
     comments required.
 
-Duplicates
-    Check for several types of duplicates in the Metadata: duplicate
-    groups; duplicate clients; and multiple default groups.
+Genshi
+    Ensure that all Genshi templates are valid and compile properly.
+
+GroupNames
+    Ensure that all groups called by name in Metadata, Rules, Bundler,
+    GroupPatterns, and Cfg are valid.
 
 InfoXML
     Check that certain attributes are specified in *info.xml* files. By
@@ -91,14 +89,10 @@ MergeFiles
     Suggest that similar probes and config files be merged into single
     probes or TGenshi templates.
 
-Pkgmgr
-    Check for duplicate packages specified in Pkgmgr.
-
 RequiredAttrs
-    Check that all *Path* and *BoundPath* tags have the attributes that
-    are required by their type (e.g., a path of type symlink must have
-    name and to specified to be valid). This sort of validation is
-    beyond the scope of an XML schema.
+    Check that all entries have the appropriate required attributes,
+    and that the attributes are in a valid format.  This goes above
+    and beyond the validation offered by an XML schema.
 
 Validate
     Validate the Bcfg2 specification against the XML schemas.
@@ -113,10 +107,10 @@ Validate
 Bugs
 ----
 
-:program:`bcfg2-lint` may not handle some older plugins as well as it
-handles newer ones. For instance, there may be some places where it
-expects all of your configuration files to be handled by Cfg rather than
-by a mix of Cfg and TGenshi or TCheetah.
+:program:`bcfg2-lint` may not handle some deprecated plugins as well
+as it handles newer ones. For instance, there may be some places where
+it expects all of your configuration files to be handled by Cfg rather
+than by a mix of Cfg and TGenshi or TCheetah.
 
 See Also
 --------
