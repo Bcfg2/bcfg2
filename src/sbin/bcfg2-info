@@ -12,6 +12,7 @@ import lxml.etree
 import os
 import sys
 import tempfile
+import time
 
 try:
     try:
@@ -47,7 +48,7 @@ help - Print this list of available commands
 mappings <type*> <name*> - Print generator mappings for optional type and name
 packageresolve <hostname> <package> [<package>...] - Resolve the specified set of packages
 packagesources <hostname> - Show package sources
-profile <command> <args> - Profile a single bcfg2-info command
+profile [-o] <dir> [-s] <sort by (comma separated)> [-n] <num lines> <command> <args> - Profile a single bcfg2-info command
 quit - Exit the bcfg2-info command line
 showentries <hostname> <type> - Show abstract configuration entries for a given host
 showclient <client1> <client2> - Show metadata for given hosts
@@ -101,10 +102,10 @@ def printTabular(rows):
     for row in rows[1:]:
         print(fstring % row)
 
-def displayTrace(trace, num=80, sort=('time', 'calls')):
+def displayTrace(trace, num=80, sort=['cumulative', 'calls', 'time']):
     stats = pstats.Stats(trace)
-    stats.sort_stats('cumulative', 'calls', 'time')
-    stats.print_stats(200)
+    stats.sort_stats(*sort)
+    stats.print_stats(num)
 
 class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     """Main class for bcfg2-info."""
@@ -559,8 +560,28 @@ class infoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
             return
         tracefname = tempfile.mktemp()
         p = profile.Profile()
-        p.runcall(self.onecmd, arg)
-        displayTrace(p)
+        args = arg.split()
+
+        # Control output format
+        if "-o" in args:
+            if "-n" in args or "-s" in args:
+                print "Please specify either -o or -s/n"
+                return
+            p.runcall(self.onecmd, ' '.join(args[2:]))
+            dir = args[1]
+            if not os.path.isdir(dir):
+                print "Output directory %s doesn't exist" % (dir)
+                return
+            profile_func = args[2]
+            p.dump_stats("%s.%d.profile" % (profile_func, int(time.time())))
+        elif "-n" in args and "-s" in args:
+            n = int(args[args.index("-n")+1])    
+            sort_by = args[args.index("-s")+1].split(",")
+            p.runcall(self.onecmd, ' '.join(args[4:]))
+            displayTrace(p, num=n, sort=sort_by)
+        else:
+            p.runcall(self.onecmd, arg)
+            displayTrace(p)
 
     def Run(self, args):
         """."""
