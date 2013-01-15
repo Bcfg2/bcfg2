@@ -9,7 +9,6 @@ import Bcfg2.Logger
 import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Lint
-from Bcfg2.Compat import ConfigParser
 
 LOGGER = logging.getLogger('bcfg2-lint')
 
