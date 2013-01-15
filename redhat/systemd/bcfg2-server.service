@@ -7,8 +7,8 @@ Type=forking
 StandardOutput=syslog
 StandardError=syslog
 EnvironmentFile=-/etc/sysconfig/bcfg2-server
-PIDFile=/run/bcfg2-server.pid
-ExecStart=/usr/sbin/bcfg2-server -D /run/bcfg2-server.pid $BCFG2_SERVER_OPTIONS
+PIDFile=/run/bcfg2-server/bcfg2-server.pid
+ExecStart=/usr/sbin/bcfg2-server -D /run/bcfg2-server/bcfg2-server.pid $BCFG2_SERVER_OPTIONS
 
 [Install]
 WantedBy=multi-user.target
