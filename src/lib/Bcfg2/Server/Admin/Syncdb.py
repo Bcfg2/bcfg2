@@ -8,15 +8,17 @@ from django.core.management import setup_environ, call_command
 
 class Syncdb(Bcfg2.Server.Admin.Mode):
     """ Sync the Django ORM with the configured database """
-    options = {'configfile': Bcfg2.Options.WEB_CFILE}
 
     def __call__(self, args):
         # Parse options
-        opts = Bcfg2.Options.OptionParser(self.options)
-        opts.parse(args)
+        setup = Bcfg2.Options.get_option_parser()
+        setup.add_option("web_configfile", Bcfg2.Options.WEB_CFILE)
+        opts = sys.argv[1:]
+        opts.remove(self.__class__.__name__.lower())
+        setup.reparse(argv=opts)
 
         setup_environ(Bcfg2.settings)
-        Bcfg2.Server.models.load_models(cfile=opts['configfile'])
+        Bcfg2.Server.models.load_models(cfile=setup['web_configfile'])
 
         try:
             call_command("syncdb", interactive=False, verbosity=0)

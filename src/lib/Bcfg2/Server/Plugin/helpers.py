@@ -23,18 +23,6 @@ try:
 except ImportError:
     HAS_DJANGO = False
 
-#: A dict containing default metadata for Path entries from bcfg2.conf
-DEFAULT_FILE_METADATA = Bcfg2.Options.OptionParser(dict(
-        owner=Bcfg2.Options.MDATA_OWNER,
-        group=Bcfg2.Options.MDATA_GROUP,
-        mode=Bcfg2.Options.MDATA_MODE,
-        secontext=Bcfg2.Options.MDATA_SECONTEXT,
-        important=Bcfg2.Options.MDATA_IMPORTANT,
-        paranoid=Bcfg2.Options.MDATA_PARANOID,
-        sensitive=Bcfg2.Options.MDATA_SENSITIVE))
-DEFAULT_FILE_METADATA.parse(sys.argv[1:])
-del DEFAULT_FILE_METADATA['args']
-
 LOGGER = logging.getLogger(__name__)
 
 #: a compiled regular expression for parsing info and :info files
@@ -49,7 +37,20 @@ INFO_REGEX = re.compile('owner:(\s)*(?P<owner>\S+)|' +
                         'mtime:(\s)*(?P<mtime>\w+)|')
 
 
-def bind_info(entry, metadata, infoxml=None, default=DEFAULT_FILE_METADATA):
+def default_path_metadata():
+    """ Get the default Path entry metadata from the config.
+
+    :returns: dict of metadata attributes and their default values
+    """
+    attrs = Bcfg2.Options.PATH_METADATA_OPTIONS.keys()
+    setup = Bcfg2.Options.get_option_parser()
+    if not set(attrs).issubset(setup.keys()):
+        setup.add_options(Bcfg2.Options.PATH_METADATA_OPTIONS)
+        setup.reparse()
+    return dict([(k, setup[k]) for k in attrs])
+
+
+def bind_info(entry, metadata, infoxml=None, default=None):
     """ Bind the file metadata in the given
     :class:`Bcfg2.Server.Plugin.helpers.InfoXML` object to the given
     entry.
@@ -66,6 +67,8 @@ def bind_info(entry, metadata, infoxml=None, default=DEFAULT_FILE_METADATA):
     :returns: None
     :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
     """
+    if default is None:
+        default = default_path_metadata()
     for attr, val in list(default.items()):
         entry.set(attr, val)
     if infoxml:
@@ -1154,7 +1157,7 @@ class EntrySet(Debuggable):
         self.path = path
         self.entry_type = entry_type
         self.entries = {}
-        self.metadata = DEFAULT_FILE_METADATA.copy()
+        self.metadata = default_path_metadata()
         self.infoxml = None
         self.encoding = encoding
 
@@ -1376,7 +1379,7 @@ class EntrySet(Debuggable):
         if event.filename == 'info.xml':
             self.infoxml = None
         elif event.filename in [':info', 'info']:
-            self.metadata = DEFAULT_FILE_METADATA.copy()
+            self.metadata = default_path_metadata()
 
     def bind_info_to_entry(self, entry, metadata):
         """ Shortcut to call :func:`bind_info` with the base

@@ -11,17 +11,17 @@ class Perf(Bcfg2.Server.Admin.Mode):
 
     def __call__(self, args):
         output = [('Name', 'Min', 'Max', 'Mean', 'Count')]
-        optinfo = {
-            'ca': Bcfg2.Options.CLIENT_CA,
-            'certificate': Bcfg2.Options.CLIENT_CERT,
-            'key': Bcfg2.Options.SERVER_KEY,
-            'password': Bcfg2.Options.SERVER_PASSWORD,
-            'server': Bcfg2.Options.SERVER_LOCATION,
-            'user': Bcfg2.Options.CLIENT_USER,
-            'timeout': Bcfg2.Options.CLIENT_TIMEOUT,
-            }
-        setup = Bcfg2.Options.OptionParser(optinfo)
-        setup.parse(sys.argv[1:])
+        setup = Bcfg2.Options.get_option_parser()
+        setup.add_options(dict(ca=Bcfg2.Options.CLIENT_CA,
+                               certificate=Bcfg2.Options.CLIENT_CERT,
+                               key=Bcfg2.Options.SERVER_KEY,
+                               password=Bcfg2.Options.SERVER_PASSWORD,
+                               server=Bcfg2.Options.SERVER_LOCATION,
+                               user=Bcfg2.Options.CLIENT_USER,
+                               timeout=Bcfg2.Options.CLIENT_TIMEOUT))
+        opts = sys.argv[1:]
+        opts.remove(self.__class__.__name__.lower())
+        setup.reparse(argv=opts)
         proxy = Bcfg2.Proxy.ComponentProxy(setup['server'],
                                            setup['user'],
                                            setup['password'],

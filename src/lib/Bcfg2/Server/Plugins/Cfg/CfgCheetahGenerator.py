@@ -3,7 +3,7 @@
 :ref:`server-plugins-generators-cfg` files. """
 
 from Bcfg2.Server.Plugin import PluginExecutionError
-from Bcfg2.Server.Plugins.Cfg import CfgGenerator, SETUP
+from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 
 try:
     from Cheetah.Template import Template
@@ -40,6 +40,6 @@ class CfgCheetahGenerator(CfgGenerator):
         template.name = entry.get('realname', entry.get('name'))
         template.path = entry.get('realname', entry.get('name'))
         template.source_path = self.name
-        template.repo = SETUP['repo']
+        template.repo = self.setup['repo']
         return template.respond()
     get_data.__doc__ = CfgGenerator.get_data.__doc__

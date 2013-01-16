@@ -1106,6 +1106,14 @@ CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
                      cfg=CRYPT_CFG,
                      remove=CRYPT_REMOVE)
 
+PATH_METADATA_OPTIONS = dict(owner=MDATA_OWNER,
+                             group=MDATA_GROUP,
+                             mode=MDATA_MODE,
+                             secontext=MDATA_SECONTEXT,
+                             important=MDATA_IMPORTANT,
+                             paranoid=MDATA_PARANOID,
+                             sensitive=MDATA_SENSITIVE)
+
 DRIVER_OPTIONS = \
     dict(apt_install_path=CLIENT_APT_TOOLS_INSTALL_PATH,
          apt_var_path=CLIENT_APT_TOOLS_VAR_PATH,
@@ -1190,10 +1198,11 @@ REPORTING_COMMON_OPTIONS = dict(reporting_file_limit=REPORTING_FILE_LIMIT,
 
 
 class OptionParser(OptionSet):
-    """
-       OptionParser bootstraps option parsing,
-       getting the value of the config file
-    """
+    """ OptionParser bootstraps option parsing, getting the value of
+    the config file.  This should only be instantiated by
+    :func:`get_option_parser`, below, not by individual plugins or
+    scripts. """
+
     def __init__(self, args, argv=None, quiet=False):
         if argv is None:
             argv = sys.argv[1:]
@@ -1208,17 +1217,21 @@ class OptionParser(OptionSet):
         self.argv = []
         self.do_getopt = True
 
-    def reparse(self):
+    def reparse(self, argv=None, do_getopt=None):
         """ parse the options again, taking any changes (e.g., to the
         config file) into account """
         for key, opt in self.optinfo.items():
             self[key] = opt
-        if "args" not in self.optinfo:
+        if "args" not in self.optinfo and "args" in self:
             del self['args']
-        self.parse(self.argv, self.do_getopt)
+        if do_getopt is None:
+            do_getopt = self.do_getopt
+        if argv is None:
+            argv = self.argv
+        self.parse(argv, do_getopt)
 
-    def parse(self, argv, do_getopt=True):
-        self.argv = argv
+    def parse(self, argv=None, do_getopt=True):
+        self.argv = argv or sys.argv[1:]
         self.do_getopt = do_getopt
         OptionSet.parse(self, self.argv, do_getopt=self.do_getopt)
 
@@ -1227,6 +1240,43 @@ class OptionParser(OptionSet):
         self[name] = opt
         self.optinfo[name] = opt
 
+    def add_options(self, options):
+        """ Add a set of options to the parser """
+        self.update(options)
+        self.optinfo.update(options)
+
     def update(self, optdict):
         dict.update(self, optdict)
         self.optinfo.update(optdict)
+
+
+#: A module-level OptionParser object that all plugins, etc., can use.
+#: This should not be used directly, but retrieved via
+#: :func:`get_option_parser`.
+_PARSER = None
+
+
+def get_option_parser(args=None, argv=None, quiet=False):
+    """ Get an OptionParser object.  If :attr:`_PARSER` already
+    exists, that will be used; if not, a new OptionParser object will
+    be created.
+
+    If ``args`` or ``argv`` are given, then a new OptionParser object
+    will be instantiated regardless of whether one already exists.
+
+    :param args: The argument set to parse.  This is required on the
+                 first invocation of :func:`get_option_parser`.
+    :type args: dict of :class:`Bcfg2.Options.Option` objects
+    :param argv: The command-line argument list.  If this is not
+                 provided, :attr:`sys.argv` will be used.
+    :type argv: list of strings
+    :param quiet: Be quiet when bootstrapping the argument parser.
+    :type quiet: bool
+    :returns: :class:`Bcfg2.Options.OptionParser`
+    """
+    global _PARSER  # pylint: disable=W0603
+    if _PARSER is None or args is not None or argv is not None:
+        if args is None:
+            args = CLI_COMMON_OPTIONS
+        _PARSER = OptionParser(args, argv=argv, quiet=quiet)
+    return _PARSER

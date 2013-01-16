@@ -69,8 +69,8 @@ class Reports(Bcfg2.Server.Admin.Mode):
                  "  Django commands:\n    " \
                  + "\n    ".join(django_commands))
 
-    def __init__(self, setup):
-        Bcfg2.Server.Admin.Mode.__init__(self, setup)
+    def __init__(self):
+        Bcfg2.Server.Admin.Mode.__init__(self)
         try:
             import south
         except ImportError:

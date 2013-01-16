@@ -4,7 +4,7 @@ access. """
 
 import lxml.etree
 from Bcfg2.Server.Plugin import StructFile, PluginExecutionError
-from Bcfg2.Server.Plugins.Cfg import CfgGenerator, SETUP, CFG
+from Bcfg2.Server.Plugins.Cfg import CfgGenerator, CFG
 from Bcfg2.Server.Plugins.Metadata import ClientMetadata
 
 
@@ -35,9 +35,9 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
     def category(self):
         """ The name of the metadata category that generated keys are
         specific to """
-        if (SETUP.cfp.has_section("sshkeys") and
-            SETUP.cfp.has_option("sshkeys", "category")):
-            return SETUP.cfp.get("sshkeys", "category")
+        if (self.setup.cfp.has_section("sshkeys") and
+            self.setup.cfp.has_option("sshkeys", "category")):
+            return self.setup.cfp.get("sshkeys", "category")
         return None
 
     def handle_event(self, event):

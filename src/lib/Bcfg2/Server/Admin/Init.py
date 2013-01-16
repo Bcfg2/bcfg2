@@ -143,14 +143,9 @@ def create_conf(confpath, confdata):
 
 class Init(Bcfg2.Server.Admin.Mode):
     """Interactively initialize a new repository."""
-    options = {'configfile': Bcfg2.Options.CFILE,
-               'plugins': Bcfg2.Options.SERVER_PLUGINS,
-               'proto': Bcfg2.Options.SERVER_PROTOCOL,
-               'repo': Bcfg2.Options.SERVER_REPOSITORY,
-               'sendmail': Bcfg2.Options.SENDMAIL_PATH}
 
-    def __init__(self, setup):
-        Bcfg2.Server.Admin.Mode.__init__(self, setup)
+    def __init__(self):
+        Bcfg2.Server.Admin.Mode.__init__(self)
         self.data = dict()
         self.plugins = Bcfg2.Options.SERVER_PLUGINS.default
 
@@ -177,9 +172,16 @@ class Init(Bcfg2.Server.Admin.Mode):
         Bcfg2.Server.Admin.Mode.__call__(self, args)
 
         # Parse options
-        opts = Bcfg2.Options.OptionParser(self.options)
-        opts.parse(args)
-        self._set_defaults(opts)
+        setup = Bcfg2.Options.get_option_parser()
+        setup.add_options(dict(configfile=Bcfg2.Options.CFILE,
+                               plugins=Bcfg2.Options.SERVER_PLUGINS,
+                               proto=Bcfg2.Options.SERVER_PROTOCOL,
+                               repo=Bcfg2.Options.SERVER_REPOSITORY,
+                               sendmail=Bcfg2.Options.SENDMAIL_PATH))
+        opts = sys.argv[1:]
+        opts.remove(self.__class__.__name__.lower())
+        setup.reparse(argv=opts)
+        self._set_defaults(setup)
 
         # Prompt the user for input
         self._prompt_config()

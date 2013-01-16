@@ -115,9 +115,9 @@ def load_interpreters():
 
 class InfoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
     """Main class for bcfg2-info."""
-    def __init__(self, setup):
+    def __init__(self):
         cmd.Cmd.__init__(self)
-        Bcfg2.Server.Core.BaseCore.__init__(self, setup=setup)
+        Bcfg2.Server.Core.BaseCore.__init__(self)
         self.prompt = '> '
         self.cont = True
         self.fam.handle_events_in_interval(4)
@@ -751,7 +751,7 @@ def main():
                    interpreter=Bcfg2.Options.INTERPRETER)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
-    setup = Bcfg2.Options.OptionParser(optinfo)
+    setup = Bcfg2.Options.get_option_parser(optinfo)
     setup.hm = "\n".join(["     bcfg2-info [options] [command <command args>]",
                           "Options:",
                           setup.buildHelpMessage(),
@@ -772,12 +772,12 @@ def main():
         sys.exit(0)
     elif setup['profile'] and HAS_PROFILE:
         prof = profile.Profile()
-        loop = prof.runcall(InfoCore, setup)
+        loop = prof.runcall(InfoCore)
         display_trace(prof)
     else:
         if setup['profile']:
             print("Profiling functionality not available.")
-        loop = InfoCore(setup)
+        loop = InfoCore()
 
     loop.run(setup['args'])
 

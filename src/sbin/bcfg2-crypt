@@ -27,8 +27,8 @@ class EncryptionChunkingError(Exception):
 class Encryptor(object):
     """ Generic encryptor for all files """
 
-    def __init__(self, setup):
-        self.setup = setup
+    def __init__(self):
+        self.setup = Bcfg2.Options.get_option_parser()
         self.passphrase = None
         self.pname = None
         self.logger = logging.getLogger(self.__class__.__name__)
@@ -56,7 +56,7 @@ class Encryptor(object):
     def set_passphrase(self):
         """ set the passphrase for the current file """
         if (not self.setup.cfp.has_section(Bcfg2.Encryption.CFG_SECTION) or
-            len(Bcfg2.Encryption.get_passphrases(self.setup)) == 0):
+            len(Bcfg2.Encryption.get_passphrases()) == 0):
             self.logger.error("No passphrases available in %s" %
                               self.setup['configfile'])
             return False
@@ -83,7 +83,7 @@ class Encryptor(object):
                                   (self.pname, self.setup['configfile']))
                 return False
         else:
-            pnames = Bcfg2.Encryption.get_passphrases(self.setup)
+            pnames = Bcfg2.Encryption.get_passphrases()
             if len(pnames) == 1:
                 self.pname = pnames.keys()[0]
                 self.passphrase = pnames[self.pname]
@@ -127,9 +127,7 @@ class Encryptor(object):
     #  pylint: disable=W0613
     def _encrypt(self, plaintext, passphrase, name=None):
         """ encrypt a single chunk of a file """
-        return Bcfg2.Encryption.ssl_encrypt(
-            plaintext, passphrase,
-            Bcfg2.Encryption.get_algorithm(self.setup))
+        return Bcfg2.Encryption.ssl_encrypt(plaintext, passphrase)
     #  pylint: enable=W0613
 
     def decrypt(self, fname):
@@ -162,7 +160,7 @@ class Encryptor(object):
                 except TypeError:
                     pchunk = None
                     for pname, passphrase in \
-                          Bcfg2.Encryption.get_passphrases(self.setup).items():
+                          Bcfg2.Encryption.get_passphrases().items():
                         self.logger.debug("Trying passphrase %s" % pname)
                         try:
                             pchunk = self._decrypt(chunk, passphrase)
@@ -196,9 +194,7 @@ class Encryptor(object):
 
     def _decrypt(self, crypted, passphrase):
         """ decrypt a single chunk """
-        return Bcfg2.Encryption.ssl_decrypt(
-            crypted, passphrase,
-            Bcfg2.Encryption.get_algorithm(self.setup))
+        return Bcfg2.Encryption.ssl_decrypt(crypted, passphrase)
 
     def write_encrypted(self, fname, data=None):
         """ write encrypted data to disk """
@@ -287,10 +283,8 @@ class PropertiesEncryptor(Encryptor):
         if name is None:
             name = "true"
         if plaintext.text and plaintext.text.strip():
-            plaintext.text = Bcfg2.Encryption.ssl_encrypt(
-                plaintext.text,
-                passphrase,
-                Bcfg2.Encryption.get_algorithm(self.setup)).strip()
+            plaintext.text = Bcfg2.Encryption.ssl_encrypt(plaintext.text,
+                                                          passphrase).strip()
             plaintext.set("encrypted", name)
         return plaintext
 
@@ -358,10 +352,8 @@ class PropertiesEncryptor(Encryptor):
         if not crypted.text or not crypted.text.strip():
             self.logger.warning("Skipping empty element %s" % crypted.tag)
             return crypted
-        decrypted = Bcfg2.Encryption.ssl_decrypt(
-            crypted.text,
-            passphrase,
-            Bcfg2.Encryption.get_algorithm(self.setup)).strip()
+        decrypted = Bcfg2.Encryption.ssl_decrypt(crypted.text,
+                                                 passphrase).strip()
         try:
             crypted.text = decrypted.encode('ascii', 'xmlcharrefreplace')
         except UnicodeDecodeError:
@@ -379,10 +371,10 @@ def main():  # pylint: disable=R0912,R0915
     optinfo = dict(interactive=Bcfg2.Options.INTERACTIVE)
     optinfo.update(Bcfg2.Options.CRYPT_OPTIONS)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
-    setup = Bcfg2.Options.OptionParser(optinfo)
+    setup = Bcfg2.Options.get_option_parser(optinfo)
     setup.hm = "     bcfg2-crypt [options] <filename>\nOptions:\n%s" % \
         setup.buildHelpMessage()
-    setup.parse(sys.argv[1:])
+    setup.parse()
 
     if not setup['args']:
         print(setup.hm)

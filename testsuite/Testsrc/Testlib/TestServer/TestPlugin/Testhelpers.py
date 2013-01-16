@@ -1716,16 +1716,17 @@ class TestEntrySet(TestDebuggable):
                      "important:     true",
                      "bogus: line"]
             mock_open.return_value.readlines.return_value = idata
+            eset.metadata = default_path_metadata()
             eset.update_metadata(event)
-            expected = DEFAULT_FILE_METADATA.copy()
+            expected = default_path_metadata()
             expected['owner'] = 'owner'
             expected['group'] = 'GROUP'
             expected['mode'] = '0775'
             expected['important'] = 'true'
-            self.assertItemsEqual(eset.metadata,
-                                  expected)
+            self.assertItemsEqual(eset.metadata, expected)
 
-    def test_reset_metadata(self):
+    @patch("Bcfg2.Server.Plugin.helpers.default_path_metadata")
+    def test_reset_metadata(self, mock_default_path_metadata):
         eset = self.get_obj()
 
         # test info.xml
@@ -1740,7 +1741,8 @@ class TestEntrySet(TestDebuggable):
             event.filename = fname
             eset.metadata = Mock()
             eset.reset_metadata(event)
-            self.assertItemsEqual(eset.metadata, DEFAULT_FILE_METADATA)
+            self.assertEqual(eset.metadata,
+                             mock_default_path_metadata.return_value)
 
     @patch("Bcfg2.Server.Plugin.helpers.bind_info")
     def test_bind_info_to_entry(self, mock_bind_info):

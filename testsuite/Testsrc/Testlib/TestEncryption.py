@@ -110,37 +110,17 @@ baz
             self.assertRaises(EVPError, ssl_decrypt,
                               crypted, passwd)  # bogus algorithm
 
-        def test_get_algorithm(self):
-            setup = Mock()
-            # we don't care what the default is, as long as there is
-            # one
-            setup.cfp.get.return_value = ALGORITHM
-            self.assertRegexpMatches(get_algorithm(setup),
-                                     r'^[a-z0-9]+_[a-z0-9_]+$')
-            setup.cfp.get.assert_called_with(CFG_SECTION, CFG_ALGORITHM,
-                                             default=ALGORITHM)
-
-            setup.cfp.get.return_value = self.algo
-            self.assertEqual(get_algorithm(setup), self.algo)
-            setup.cfp.get.assert_called_with(CFG_SECTION, CFG_ALGORITHM,
-                                             default=ALGORITHM)
-
-            # test that get_algorithm converts algorithms given in
-            # OpenSSL style to M2Crypto style
-            setup.cfp.get.return_value = "DES-EDE3-CFB8"
-            self.assertEqual(get_algorithm(setup), "des_ede3_cfb8")
-            setup.cfp.get.assert_called_with(CFG_SECTION, CFG_ALGORITHM,
-                                             default=ALGORITHM)
-
-        def test_get_passphrases(self):
+        @patch("Bcfg2.Options.get_option_parser")
+        def test_get_passphrases(self, mock_get_option_parser):
             setup = Mock()
             setup.cfp.has_section.return_value = False
-            self.assertEqual(get_passphrases(setup), dict())
+            mock_get_option_parser.return_value = setup
+            self.assertEqual(get_passphrases(), dict())
 
             setup.cfp.has_section.return_value = True
             setup.cfp.options.return_value = ["foo", "bar", CFG_ALGORITHM]
             setup.cfp.get.return_value = "passphrase"
-            self.assertItemsEqual(get_passphrases(setup),
+            self.assertItemsEqual(get_passphrases(),
                                   dict(foo="passphrase",
                                        bar="passphrase"))
 
@@ -148,14 +128,12 @@ baz
         def test_bruteforce_decrypt(self, mock_passphrases):
             passwd = "a simple passphrase"
             crypted = ssl_encrypt(self.plaintext, passwd)
-            setup = Mock()
 
             # test with no passphrases given nor in config
             mock_passphrases.return_value = dict()
             self.assertRaises(EVPError,
-                              bruteforce_decrypt,
-                              crypted, setup=setup)
-            mock_passphrases.assert_called_with(setup)
+                              bruteforce_decrypt, crypted)
+            mock_passphrases.assert_called_with()
 
             # test with good passphrase given in function call
             mock_passphrases.reset_mock()
@@ -179,15 +157,14 @@ baz
                                                  real=passwd,
                                                  bogus2="also bogus")
             self.assertEqual(self.plaintext,
-                             bruteforce_decrypt(crypted, setup=setup))
-            mock_passphrases.assert_called_with(setup)
+                             bruteforce_decrypt(crypted))
+            mock_passphrases.assert_called_with()
 
             # test that passphrases given in function call take
             # precedence over config
             mock_passphrases.reset_mock()
             self.assertRaises(EVPError,
-                              bruteforce_decrypt,
-                              crypted, setup=setup,
+                              bruteforce_decrypt, crypted,
                               passphrases=["bogus", "also bogus"])
             self.assertFalse(mock_passphrases.called)
 
@@ -195,5 +172,4 @@ baz
             mock_passphrases.reset_mock()
             crypted = ssl_encrypt(self.plaintext, passwd, algorithm=self.algo)
             self.assertEqual(self.plaintext,
-                             bruteforce_decrypt(crypted, setup=setup,
-                                                algorithm=self.algo))
+                             bruteforce_decrypt(crypted, algorithm=self.algo))

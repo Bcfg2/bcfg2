@@ -22,12 +22,12 @@ from subprocess import Popen, PIPE
 class Client(object):
     """ The main Bcfg2 client class """
 
-    def __init__(self, setup):
+    def __init__(self):
         self.toolset = None
         self.tools = None
         self.config = None
         self._proxy = None
-        self.setup = setup
+        self.setup = Bcfg2.Options.get_option_parser()
 
         if self.setup['debug']:
             level = logging.DEBUG

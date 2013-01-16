@@ -2,10 +2,9 @@
 :ref:`server-plugins-generators-cfg` files on the server. """
 
 from Bcfg2.Server.Plugin import PluginExecutionError
-from Bcfg2.Server.Plugins.Cfg import CfgGenerator, SETUP
+from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 try:
-    from Bcfg2.Encryption import bruteforce_decrypt, EVPError, \
-        get_algorithm
+    from Bcfg2.Encryption import bruteforce_decrypt, EVPError
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
@@ -34,8 +33,7 @@ class CfgEncryptedGenerator(CfgGenerator):
             return
         # todo: let the user specify a passphrase by name
         try:
-            self.data = bruteforce_decrypt(self.data, setup=SETUP,
-                                           algorithm=get_algorithm(SETUP))
+            self.data = bruteforce_decrypt(self.data)
         except EVPError:
             raise PluginExecutionError("Failed to decrypt %s" % self.name)
     handle_event.__doc__ = CfgGenerator.handle_event.__doc__
