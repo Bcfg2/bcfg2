@@ -402,17 +402,13 @@ class TestXMLFileBacked(TestFileBacked):
     @patch("Bcfg2.Server.FileMonitor.get_fam")
     def test__init(self, mock_get_fam):
         xfb = self.get_obj()
-        if self.should_monitor is True:
-            self.assertEqual(xfb.fam, mock_get_fam.return_value)
-        else:
-            self.assertIsNone(xfb.fam)
+        self.assertEqual(xfb.fam, mock_get_fam.return_value)
 
         if self.should_monitor is not True:
             xfb = self.get_obj()
             self.assertFalse(xfb.fam.AddMonitor.called)
 
         if self.should_monitor is not False:
-            fam.reset_mock()
             xfb = self.get_obj(should_monitor=True)
             xfb.fam.AddMonitor.assert_called_with(self.path, xfb)
 
@@ -587,7 +583,6 @@ class TestXMLFileBacked(TestFileBacked):
         self.assertIn("/test/test2.xml", xfb.extras)
 
         if self.should_monitor is not True:
-            fam.reset_mock()
             xfb = self.get_obj()
             xfb.fam = Mock()
             xfb.add_monitor("/test/test3.xml")
