@@ -17,7 +17,12 @@ from common import *
 
 try:
     from Bcfg2.Encryption import *
+    HAS_CRYPTO = True
+except ImportError:
+    HAS_CRYPTO = False
 
+
+if can_skip or HAS_CRYPTO:
     class TestEncryption(Bcfg2TestCase):
         plaintext = """foo bar
 baz
@@ -27,6 +32,10 @@ baz
         iv = "0123456789ABCDEF"
         salt = "01234567"
         algo = "des_cbc"
+
+        @skipUnless(HAS_CRYPTO, "Encryption libraries not found")
+        def setUp(self):
+            pass
 
         def test_str_crypt(self):
             """ test str_encrypt/str_decrypt """
@@ -193,6 +202,3 @@ baz
             self.assertEqual(self.plaintext,
                              bruteforce_decrypt(crypted, setup=setup,
                                                 algorithm=self.algo))
-
-except ImportError:
-    pass
