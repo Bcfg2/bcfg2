@@ -32,7 +32,7 @@ DEFAULT_FILE_METADATA = Bcfg2.Options.OptionParser(dict(
         important=Bcfg2.Options.MDATA_IMPORTANT,
         paranoid=Bcfg2.Options.MDATA_PARANOID,
         sensitive=Bcfg2.Options.MDATA_SENSITIVE))
-DEFAULT_FILE_METADATA.parse([])
+DEFAULT_FILE_METADATA.parse(sys.argv[1:])
 del DEFAULT_FILE_METADATA['args']
 
 LOGGER = logging.getLogger(__name__)
