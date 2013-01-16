@@ -545,6 +545,20 @@ Example
       </Allow>
     </AuthorizedKeys>
 
+.. note::
+
+    ``authorized_keys.xml`` allows you to specify the group whose
+    public key should be allowed.  This retrieves the public key
+    specific to that group (if it exists), *not* the public key for
+    all hosts in that group.  This is due to the performance penalties
+    that would be imposed by that approach.
+
+    Similarly, it is not possible to allow access from all keys for a
+    given user (i.e., at a given path).
+
+    Hopefully, the performance concerns can be resolved in a future
+    release and these features can be added.
+
 Configuration
 -------------
 
