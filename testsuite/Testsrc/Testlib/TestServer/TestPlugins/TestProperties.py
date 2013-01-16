@@ -19,6 +19,12 @@ from TestPlugin import TestStructFile, TestFileBacked, TestConnector, \
     TestPlugin, TestDirectoryBacked
 
 try:
+    from Bcfg2.Encryption import EVPError
+    HAS_CRYPTO = True
+except:
+    HAS_CRYPTO = False
+
+try:
     import json
     JSON = "json"
 except ImportError:
@@ -35,7 +41,7 @@ class TestPropertyFile(Bcfg2TestCase):
         return self.test_obj(path)
 
     def test_write(self):
-        Bcfg2.Server.Plugins.Properties.SETUP = Mock()
+        Bcfg2.Server.Plugins.Properties.SETUP = MagicMock()
         pf = self.get_obj()
         pf.validate_data = Mock()
         pf._write = Mock()
@@ -288,77 +294,84 @@ class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
                               [call(el) for el in pf.xdata.xpath("//Crypted")])
 
     @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
-    def test_decrypt(self):
+    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.ssl_decrypt")
+    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.get_algorithm")
+    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.get_passphrases")
+    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.bruteforce_decrypt")
+    def test_decrypt(self, mock_bruteforce, mock_get_passphrases,
+                     mock_get_algorithm, mock_ssl):
+        pf = self.get_obj()
+        Bcfg2.Server.Plugins.Properties.SETUP = MagicMock()
 
-        @patch("Bcfg2.Encryption.ssl_decrypt")
-        @patch("Bcfg2.Encryption.get_algorithm")
-        @patch("Bcfg2.Encryption.get_passphrases")
-        @patch("Bcfg2.Encryption.bruteforce_decrypt")
-        def inner(mock_bruteforce, mock_get_passphrases, mock_get_algorithm,
-                  mock_ssl):
-            pf = self.get_obj()
+        def reset():
+            mock_bruteforce.reset_mock()
+            mock_get_algorithm.reset_mock()
+            mock_get_passphrases.reset_mock()
+            mock_ssl.reset_mock()
 
-            def reset():
-                mock_bruteforce.reset_mock()
-                mock_get_algorithm.reset_mock()
-                mock_get_passphrases.reset_mock()
-                mock_ssl.reset_mock()
+        # test element without text contents
+        self.assertIsNone(pf._decrypt(lxml.etree.Element("Test")))
+        self.assertFalse(mock_bruteforce.called)
+        self.assertFalse(mock_get_passphrases.called)
+        self.assertFalse(mock_ssl.called)
 
-            # test element without text contents
-            self.assertIsNone(pf._decrypt(lxml.etree.Element("Test")))
-            self.assertFalse(mock_bruteforce.called)
-            self.assertFalse(mock_get_passphrases.called)
-            self.assertFalse(mock_ssl.called)
+        # test element with a passphrase in the config file
+        reset()
+        el = lxml.etree.Element("Test", encrypted="foo")
+        el.text = "crypted"
+        mock_get_passphrases.return_value = dict(foo="foopass",
+                                                 bar="barpass")
+        mock_get_algorithm.return_value = "bf_cbc"
+        mock_ssl.return_value = "decrypted with ssl"
+        self.assertEqual(pf._decrypt(el), mock_ssl.return_value)
+        mock_get_passphrases.assert_called_with(
+            Bcfg2.Server.Plugins.Properties.SETUP)
+        mock_get_algorithm.assert_called_with(
+            Bcfg2.Server.Plugins.Properties.SETUP)
+        mock_ssl.assert_called_with(el.text, "foopass",
+                                    algorithm="bf_cbc")
+        self.assertFalse(mock_bruteforce.called)
 
-            # test element with a passphrase in the config file
-            reset()
-            el = lxml.etree.Element("Test", encrypted="foo")
-            el.text = "crypted"
-            mock_get_passphrases.return_value = dict(foo="foopass",
-                                                     bar="barpass")
-            mock_get_algorithm.return_value = "bf_cbc"
-            mock_ssl.return_value = "decrypted with ssl"
-            self.assertEqual(pf._decrypt(el), mock_ssl.return_value)
-            mock_get_passphrases.assert_called_with(SETUP)
-            mock_get_algorithm.assert_called_with(SETUP)
-            mock_ssl.assert_called_with(el.text, "foopass",
-                                        algorithm="bf_cbc")
-            self.assertFalse(mock_bruteforce.called)
+        # test failure to decrypt element with a passphrase in the config
+        reset()
+        mock_ssl.side_effect = EVPError
+        self.assertRaises(EVPError, pf._decrypt, el)
+        mock_get_passphrases.assert_called_with(
+            Bcfg2.Server.Plugins.Properties.SETUP)
+        mock_get_algorithm.assert_called_with(
+            Bcfg2.Server.Plugins.Properties.SETUP)
+        mock_ssl.assert_called_with(el.text, "foopass",
+                                    algorithm="bf_cbc")
+        self.assertFalse(mock_bruteforce.called)
 
-            # test failure to decrypt element with a passphrase in the config
-            reset()
-            mock_ssl.side_effect = EVPError
-            self.assertRaises(EVPError, pf._decrypt, el)
-            mock_get_passphrases.assert_called_with(SETUP)
-            mock_get_algorithm.assert_called_with(SETUP)
-            mock_ssl.assert_called_with(el.text, "foopass",
-                                        algorithm="bf_cbc")
-            self.assertFalse(mock_bruteforce.called)
+        # test element without valid passphrase
+        reset()
+        el.set("encrypted", "true")
+        mock_bruteforce.return_value = "decrypted with bruteforce"
+        self.assertEqual(pf._decrypt(el), mock_bruteforce.return_value)
+        mock_get_passphrases.assert_called_with(
+            Bcfg2.Server.Plugins.Properties.SETUP)
+        mock_get_algorithm.assert_called_with(
+            Bcfg2.Server.Plugins.Properties.SETUP)
+        mock_bruteforce.assert_called_with(el.text,
+                                           passphrases=["foopass",
+                                                        "barpass"],
+                                           algorithm="bf_cbc")
+        self.assertFalse(mock_ssl.called)
 
-            # test element without valid passphrase
-            reset()
-            el.set("encrypted", "true")
-            mock_bruteforce.return_value = "decrypted with bruteforce"
-            self.assertEqual(pf._decrypt(el), mock_bruteforce.return_value)
-            mock_get_passphrases.assert_called_with(SETUP)
-            mock_get_algorithm.assert_called_with(SETUP)
-            mock_bruteforce.assert_called_with(el.text,
-                                               passphrases=["foopass",
-                                                            "barpass"],
-                                               algorithm="bf_cbc")
-            self.assertFalse(mock_ssl.called)
-
-            # test failure to decrypt element without valid passphrase
-            reset()
-            mock_bruteforce.side_effect = EVPError
-            self.assertRaises(EVPError, pf._decrypt, el)
-            mock_get_passphrases.assert_called_with(SETUP)
-            mock_get_algorithm.assert_called_with(SETUP)
-            mock_bruteforce.assert_called_with(el.text,
-                                               passphrases=["foopass",
-                                                            "barpass"],
-                                               algorithm="bf_cbc")
-            self.assertFalse(mock_ssl.called)
+        # test failure to decrypt element without valid passphrase
+        reset()
+        mock_bruteforce.side_effect = EVPError
+        self.assertRaises(EVPError, pf._decrypt, el)
+        mock_get_passphrases.assert_called_with(
+            Bcfg2.Server.Plugins.Properties.SETUP)
+        mock_get_algorithm.assert_called_with(
+            Bcfg2.Server.Plugins.Properties.SETUP)
+        mock_bruteforce.assert_called_with(el.text,
+                                           passphrases=["foopass",
+                                                        "barpass"],
+                                           algorithm="bf_cbc")
+        self.assertFalse(mock_ssl.called)
 
     @patch("copy.copy")
     def test_get_additional_data(self, mock_copy):

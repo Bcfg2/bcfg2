@@ -10,8 +10,7 @@ import lxml.etree
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugin import PluginExecutionError
 try:
-    from Bcfg2.Encryption import ssl_decrypt, get_passphrases, \
-        get_algorithm, bruteforce_decrypt, EVPError
+    import Bcfg2.Encryption
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
@@ -221,7 +220,7 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
                 except UnicodeDecodeError:
                     LOGGER.info("Properties: Decrypted %s to gibberish, "
                                 "skipping" % el.tag)
-                except EVPError:
+                except Bcfg2.Encryption.EVPError:
                     msg = "Properties: Failed to decrypt %s element in %s" % \
                         (el.tag, self.name)
                     if strict:
@@ -232,24 +231,25 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
 
     def _decrypt(self, element):
         """ Decrypt a single encrypted properties file element """
-        if not element.text.strip():
+        if not element.text or not element.text.strip():
             return
-        passes = get_passphrases(SETUP)
+        passes = Bcfg2.Encryption.get_passphrases(SETUP)
         try:
             passphrase = passes[element.get("encrypted")]
             try:
-                return ssl_decrypt(element.text, passphrase,
-                                   algorithm=get_algorithm(SETUP))
-            except EVPError:
+                return Bcfg2.Encryption.ssl_decrypt(
+                    element.text, passphrase,
+                    algorithm=Bcfg2.Encryption.get_algorithm(SETUP))
+            except Bcfg2.Encryption.EVPError:
                 # error is raised below
                 pass
         except KeyError:
             # bruteforce_decrypt raises an EVPError with a sensible
             # error message, so we just let it propagate up the stack
-            return bruteforce_decrypt(element.text,
-                                      passphrases=passes.values(),
-                                      algorithm=get_algorithm(SETUP))
-        raise EVPError("Failed to decrypt")
+            return Bcfg2.Encryption.bruteforce_decrypt(
+                element.text, passphrases=passes.values(),
+                algorithm=Bcfg2.Encryption.get_algorithm(SETUP))
+        raise Bcfg2.Encryption.EVPError("Failed to decrypt")
 
     def get_additional_data(self, metadata):
         if SETUP.cfp.getboolean("properties", "automatch", default=False):

@@ -235,7 +235,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
 
     def _decrypt(self, element):
         """ Decrypt a single encrypted element """
-        if not element.text.strip():
+        if not element.text or not element.text.strip():
             return
         passes = Bcfg2.Encryption.get_passphrases(SETUP)
         try:
