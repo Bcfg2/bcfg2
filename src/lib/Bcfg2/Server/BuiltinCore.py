@@ -22,8 +22,8 @@ class Core(BaseCore):
     """ The built-in server core """
     name = 'bcfg2-server'
 
-    def __init__(self, setup):
-        BaseCore.__init__(self, setup)
+    def __init__(self):
+        BaseCore.__init__(self)
 
         #: The :class:`Bcfg2.SSLServer.XMLRPCServer` instance powering
         #: this server core

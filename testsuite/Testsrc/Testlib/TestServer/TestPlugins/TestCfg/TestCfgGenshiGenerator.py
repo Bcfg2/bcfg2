@@ -43,6 +43,7 @@ if can_skip or HAS_GENSHI:
         def test_get_data(self):
             cgg = self.get_obj()
             cgg._handle_genshi_exception = Mock()
+            cgg.setup = MagicMock()
             cgg.template = Mock()
             fltr = Mock()
             cgg.template.generate.return_value = fltr
@@ -51,24 +52,23 @@ if can_skip or HAS_GENSHI:
             entry = lxml.etree.Element("Path", name="/test.txt")
             metadata = Mock()
 
-            Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator.SETUP = MagicMock()
 
             def reset():
                 cgg.template.reset_mock()
                 cgg._handle_genshi_exception.reset_mock()
-                Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator.SETUP.reset_mock()
+                cgg.setup.reset_mock()
 
             template_vars = dict(
                 name=entry.get("name"),
                 metadata=metadata,
                 path=cgg.name,
                 source_path=cgg.name,
-                repo=Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator.SETUP.__getitem__.return_value)
+                repo=cgg.setup.__getitem__.return_value)
 
             self.assertEqual(cgg.get_data(entry, metadata),
                              stream.render.return_value)
             cgg.template.generate.assert_called_with(**template_vars)
-            Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator.SETUP.__getitem__.assert_called_with("repo")
+            cgg.setup.__getitem__.assert_called_with("repo")
             fltr.filter.assert_called_with(removecomment)
             stream.render.assert_called_with("text", encoding=cgg.encoding,
                                              strip_whitespace=False)
@@ -81,7 +81,7 @@ if can_skip or HAS_GENSHI:
             self.assertEqual(cgg.get_data(entry, metadata),
                              stream.render.return_value)
             cgg.template.generate.assert_called_with(**template_vars)
-            Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator.SETUP.__getitem__.assert_called_with("repo")
+            cgg.setup.__getitem__.assert_called_with("repo")
             fltr.filter.assert_called_with(removecomment)
             self.assertEqual(stream.render.call_args_list,
                              [call("text", encoding=cgg.encoding,
@@ -93,7 +93,7 @@ if can_skip or HAS_GENSHI:
             self.assertRaises(UndefinedError,
                               cgg.get_data, entry, metadata)
             cgg.template.generate.assert_called_with(**template_vars)
-            Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator.SETUP.__getitem__.assert_called_with("repo")
+            cgg.setup.__getitem__.assert_called_with("repo")
             fltr.filter.assert_called_with(removecomment)
             stream.render.assert_called_with("text", encoding=cgg.encoding,
                                              strip_whitespace=False)
@@ -104,7 +104,7 @@ if can_skip or HAS_GENSHI:
             self.assertRaises(ValueError,
                               cgg.get_data, entry, metadata)
             cgg.template.generate.assert_called_with(**template_vars)
-            Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator.SETUP.__getitem__.assert_called_with("repo")
+            cgg.setup.__getitem__.assert_called_with("repo")
             fltr.filter.assert_called_with(removecomment)
             stream.render.assert_called_with("text", encoding=cgg.encoding,
                                              strip_whitespace=False)

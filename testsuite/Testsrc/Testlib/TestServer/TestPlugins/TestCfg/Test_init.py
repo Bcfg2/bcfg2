@@ -439,8 +439,6 @@ class TestCfgEntrySet(TestEntrySet):
     @patch("Bcfg2.Server.Plugins.Cfg.u_str")
     @patch("Bcfg2.Server.Plugins.Cfg.b64encode")
     def test_bind_entry(self, mock_b64encode, mock_u_str):
-        Bcfg2.Server.Plugins.Cfg.SETUP = dict(validate=False)
-
         mock_u_str.side_effect = lambda x: x
 
         eset = self.get_obj()
@@ -448,6 +446,7 @@ class TestCfgEntrySet(TestEntrySet):
         eset._generate_data = Mock()
         eset.get_handlers = Mock()
         eset._validate_data = Mock()
+        eset.setup = dict(validate=False)
 
         def reset():
             mock_b64encode.reset_mock()
@@ -523,7 +522,7 @@ class TestCfgEntrySet(TestEntrySet):
 
         # test successful validation
         entry = reset()
-        Bcfg2.Server.Plugins.Cfg.SETUP['validate'] = True
+        eset.setup['validate'] = True
         bound = eset.bind_entry(entry, metadata)
         eset.bind_info_to_entry.assert_called_with(entry, metadata)
         eset._generate_data.assert_called_with(entry, metadata)
@@ -753,31 +752,39 @@ class TestCfg(TestGroupSpool, TestPullTarget):
     def get_obj(self, core=None):
         if core is None:
             core = Mock()
-        core.setup = MagicMock()
         return TestGroupSpool.get_obj(self, core=core)
 
+    @patch("Bcfg2.Options.get_option_parser")
     @patch("Bcfg2.Server.Plugin.GroupSpool.__init__")
     @patch("Bcfg2.Server.Plugin.PullTarget.__init__")
-    def test__init(self, mock_pulltarget_init, mock_groupspool_init):
-        core = Mock()
-        core.setup = MagicMock()
-        cfg = self.test_obj(core, datastore)
-        mock_pulltarget_init.assert_called_with(cfg)
-        mock_groupspool_init.assert_called_with(cfg, core, datastore)
-        core.setup.add_option.assert_called_with("validate",
-                                                 Bcfg2.Options.CFG_VALIDATION)
-        core.setup.reparse.assert_called_with()
+    def test__init(self, mock_pulltarget_init, mock_groupspool_init,
+                   mock_get_option_parser):
+        setup = MagicMock()
+        setup.__contains__.return_value = False
+        mock_get_option_parser.return_value = setup
 
-        core.reset_mock()
-        core.setup.reset_mock()
-        mock_pulltarget_init.reset_mock()
-        mock_groupspool_init.reset_mock()
-        core.setup.__contains__.return_value = True
+        def reset():
+            core.reset_mock()
+            setup.reset_mock()
+            mock_pulltarget_init.reset_mock()
+            mock_groupspool_init.reset_mock()
+
+        core = Mock()
         cfg = self.test_obj(core, datastore)
         mock_pulltarget_init.assert_called_with(cfg)
         mock_groupspool_init.assert_called_with(cfg, core, datastore)
-        self.assertFalse(core.setup.add_option.called)
-        self.assertFalse(core.setup.reparse.called)
+        setup.add_option.assert_called_with(
+            "validate",
+            Bcfg2.Options.CFG_VALIDATION)
+        mock_get_option_parser.return_value.reparse.assert_called_with()
+
+        reset()
+        setup.__contains__.return_value = True
+        cfg = self.test_obj(core, datastore)
+        mock_pulltarget_init.assert_called_with(cfg)
+        mock_groupspool_init.assert_called_with(cfg, core, datastore)
+        self.assertFalse(setup.add_option.called)
+        self.assertFalse(setup.reparse.called)
 
     def test_has_generator(self):
         cfg = self.get_obj()

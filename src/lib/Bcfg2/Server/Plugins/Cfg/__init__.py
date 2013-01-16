@@ -16,17 +16,6 @@ from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages, \
     any, oct_mode
 # pylint: enable=W0622
 
-#: SETUP contains a reference to the
-#: :class:`Bcfg2.Options.OptionParser` created by the Bcfg2 core for
-#: parsing command-line and config file options.
-#: :class:`Bcfg2.Server.Plugins.Cfg.Cfg` stores it in a module global
-#: so that the handler objects can access it, because there is no other
-#: facility for passing a setup object from a
-#: :class:`Bcfg2.Server.Plugin.helpers.GroupSpool` to its
-#: :class:`Bcfg2.Server.Plugin.helpers.EntrySet` objects and thence to
-#: the EntrySet children.
-SETUP = None
-
 #: CFG is a reference to the :class:`Bcfg2.Server.Plugins.Cfg.Cfg`
 #: plugin object created by the Bcfg2 core.  This is provided so that
 #: the handler objects can access it as necessary, since the existing
@@ -86,6 +75,7 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData,
                                                   encoding)
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
         self.encoding = encoding
+        self.setup = Bcfg2.Options.get_option_parser()
     __init__.__doc__ = Bcfg2.Server.Plugin.SpecificData.__init__.__doc__ + \
 """
 .. -----
@@ -442,11 +432,11 @@ class CfgDefaultInfo(CfgInfo):
     bind_info_to_entry.__doc__ = CfgInfo.bind_info_to_entry.__doc__
 
 #: A :class:`CfgDefaultInfo` object instantiated with
-#: :attr:`Bcfg2.Server.Plugin.helper.DEFAULT_FILE_METADATA` as its
+#: :func:`Bcfg2.Server.Plugin.helper.default_path_metadata` as its
 #: default metadata.  This is used to set a default file metadata set
 #: on an entry before a "real" :class:`CfgInfo` handler applies its
 #: metadata to the entry.
-DEFAULT_INFO = CfgDefaultInfo(Bcfg2.Server.Plugin.DEFAULT_FILE_METADATA)
+DEFAULT_INFO = CfgDefaultInfo(Bcfg2.Server.Plugin.default_path_metadata())
 
 
 class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
@@ -460,6 +450,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
         self.specific = None
         self._handlers = None
+        self.setup = Bcfg2.Options.get_option_parser()
     __init__.__doc__ = Bcfg2.Server.Plugin.EntrySet.__doc__
 
     def set_debug(self, debug):
@@ -585,7 +576,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         for fltr in self.get_handlers(metadata, CfgFilter):
             data = fltr.modify_data(entry, metadata, data)
 
-        if SETUP['validate']:
+        if self.setup['validate']:
             try:
                 self._validate_data(entry, metadata, data)
             except CfgVerificationError:
@@ -833,16 +824,16 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
     es_child_cls = Bcfg2.Server.Plugin.SpecificData
 
     def __init__(self, core, datastore):
-        global SETUP, CFG  # pylint: disable=W0603
+        global CFG  # pylint: disable=W0603
         Bcfg2.Server.Plugin.GroupSpool.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
 
         CFG = self
 
-        SETUP = core.setup
-        if 'validate' not in SETUP:
-            SETUP.add_option('validate', Bcfg2.Options.CFG_VALIDATION)
-            SETUP.reparse()
+        setup = Bcfg2.Options.get_option_parser()
+        if 'validate' not in setup:
+            setup.add_option('validate', Bcfg2.Options.CFG_VALIDATION)
+            setup.reparse()
     __init__.__doc__ = Bcfg2.Server.Plugin.GroupSpool.__init__.__doc__
 
     def has_generator(self, entry, metadata):

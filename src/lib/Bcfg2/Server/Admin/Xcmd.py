@@ -12,17 +12,17 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
     __usage__ = "<command>"
 
     def __call__(self, args):
-        optinfo = {
-            'server': Bcfg2.Options.SERVER_LOCATION,
-            'user': Bcfg2.Options.CLIENT_USER,
-            'password': Bcfg2.Options.SERVER_PASSWORD,
-            'key': Bcfg2.Options.SERVER_KEY,
-            'certificate': Bcfg2.Options.CLIENT_CERT,
-            'ca': Bcfg2.Options.CLIENT_CA,
-            'timeout': Bcfg2.Options.CLIENT_TIMEOUT,
-            }
-        setup = Bcfg2.Options.OptionParser(optinfo)
-        setup.parse(args)
+        setup = Bcfg2.Options.get_option_parser()
+        setup.add_options(dict(ca=Bcfg2.Options.CLIENT_CA,
+                               certificate=Bcfg2.Options.CLIENT_CERT,
+                               key=Bcfg2.Options.SERVER_KEY,
+                               password=Bcfg2.Options.SERVER_PASSWORD,
+                               server=Bcfg2.Options.SERVER_LOCATION,
+                               user=Bcfg2.Options.CLIENT_USER,
+                               timeout=Bcfg2.Options.CLIENT_TIMEOUT))
+        opts = sys.argv[1:]
+        opts.remove(self.__class__.__name__.lower())
+        setup.reparse(argv=opts)
         Bcfg2.Proxy.RetryMethod.max_retries = 1
         proxy = Bcfg2.Proxy.ComponentProxy(setup['server'],
                                            setup['user'],
@@ -34,12 +34,9 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
         if len(setup['args']) == 0:
             print("Usage: xcmd <xmlrpc method> <optional arguments>")
             return
-        cmd = setup['args'][0]
-        args = ()
-        if len(setup['args']) > 1:
-            args = tuple(setup['args'][1:])
+        cmd = args[0]
         try:
-            data = getattr(proxy, cmd)(*args)
+            data = getattr(proxy, cmd)(*setup['args'])
         except xmlrpclib.Fault:
             flt = sys.exc_info()[1]
             if flt.faultCode == 7:

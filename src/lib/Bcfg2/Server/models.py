@@ -1,6 +1,7 @@
 """ Django database models for all plugins """
 
 import sys
+import copy
 import logging
 import Bcfg2.Options
 import Bcfg2.Server.Plugins
@@ -19,14 +20,12 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
         # we want to provide a different default plugin list --
         # namely, _all_ plugins, so that the database is guaranteed to
         # work, even if /etc/bcfg2.conf isn't set up properly
-        plugin_opt = Bcfg2.Options.SERVER_PLUGINS
+        plugin_opt = copy.deepcopy(Bcfg2.Options.SERVER_PLUGINS)
         plugin_opt.default = Bcfg2.Server.Plugins.__all__
-
-        setup = \
-            Bcfg2.Options.OptionParser(dict(plugins=plugin_opt,
-                                            configfile=Bcfg2.Options.CFILE),
-                                       quiet=quiet)
-        setup.parse([Bcfg2.Options.CFILE.cmd, cfile])
+        setup = Bcfg2.Options.get_option_parser()
+        setup.add_option("plugins", plugin_opt)
+        setup.add_option("configfile", Bcfg2.Options.CFILE)
+        setup.reparse(argv=[Bcfg2.Options.CFILE.cmd, cfile])
         plugins = setup['plugins']
 
     if MODELS:

@@ -36,8 +36,8 @@ class Core(BaseCore):
     _cp_config = {'tools.xmlrpc_error.on': True,
                   'tools.bcfg2_authn.on': True}
 
-    def __init__(self, setup):
-        BaseCore.__init__(self, setup)
+    def __init__(self):
+        BaseCore.__init__(self)
 
         cherrypy.tools.bcfg2_authn = cherrypy.Tool('on_start_resource',
                                                    self.do_authn)

@@ -35,15 +35,15 @@ class Mode(object):
     __usage__ = None
     __args__ = []
 
-    def __init__(self, setup):
-        self.setup = setup
-        self.configfile = setup['configfile']
+    def __init__(self):
+        self.setup = Bcfg2.Options.get_option_parser()
+        self.configfile = self.setup['configfile']
         self.__cfp = False
         self.log = logging.getLogger('Bcfg2.Server.Admin.Mode')
         usage = "bcfg2-admin %s" % self.__class__.__name__.lower()
         if self.__usage__ is not None:
             usage += " " + self.__usage__
-        setup.hm = usage
+        self.setup.hm = usage
 
     def getCFP(self):
         """ get a config parser for the Bcfg2 config file """
@@ -129,19 +129,19 @@ class MetadataCore(Mode):
     __plugin_whitelist__ = None
     __plugin_blacklist__ = None
 
-    def __init__(self, setup):
-        Mode.__init__(self, setup)
+    def __init__(self):
+        Mode.__init__(self)
         if self.__plugin_whitelist__ is not None:
-            setup['plugins'] = [p for p in setup['plugins']
+            self.setup['plugins'] = [p for p in self.setup['plugins']
                                 if p in self.__plugin_whitelist__]
         elif self.__plugin_blacklist__ is not None:
-            setup['plugins'] = [p for p in setup['plugins']
+            self.setup['plugins'] = [p for p in self.setup['plugins']
                                 if p not in self.__plugin_blacklist__]
 
         # admin modes don't need to watch for changes.  one shot is fine here.
-        setup['filemonitor'] = 'pseudo'
+        self.setup['filemonitor'] = 'pseudo'
         try:
-            self.bcore = Bcfg2.Server.Core.BaseCore(setup)
+            self.bcore = Bcfg2.Server.Core.BaseCore()
         except Bcfg2.Server.Core.CoreInitError:
             msg = sys.exc_info()[1]
             self.errExit("Core load failed: %s" % msg)

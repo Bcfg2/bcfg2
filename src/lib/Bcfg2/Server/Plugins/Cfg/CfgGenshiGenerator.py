@@ -6,7 +6,7 @@ import re
 import sys
 import traceback
 from Bcfg2.Server.Plugin import PluginExecutionError
-from Bcfg2.Server.Plugins.Cfg import CfgGenerator, SETUP
+from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 
 try:
     import genshi.core
@@ -102,12 +102,12 @@ class CfgGenshiGenerator(CfgGenerator):
 
     def get_data(self, entry, metadata):
         fname = entry.get('realname', entry.get('name'))
-        stream = \
-            self.template.generate(name=fname,
-                                   metadata=metadata,
-                                   path=self.name,
-                                   source_path=self.name,
-                                   repo=SETUP['repo']).filter(removecomment)
+        stream = self.template.generate(
+            name=fname,
+            metadata=metadata,
+            path=self.name,
+            source_path=self.name,
+            repo=self.setup['repo']).filter(removecomment)
         try:
             try:
                 return stream.render('text', encoding=self.encoding,

@@ -3,6 +3,7 @@ handling encryption in Bcfg2.  See :ref:`server-encryption` for more
 details. """
 
 import os
+import Bcfg2.Options
 from M2Crypto import Rand
 from M2Crypto.EVP import Cipher, EVPError
 from Bcfg2.Compat import StringIO, md5, b64encode, b64decode
@@ -17,13 +18,6 @@ ENCRYPT = 1
 #: makes our code more readable.
 DECRYPT = 0
 
-#: Default cipher algorithm.  To get a full list of valid algorithms,
-#: you can run::
-#:
-#:     openssl list-cipher-algorithms | grep -v ' => ' | \
-#:         tr 'A-Z-' 'a-z_' | sort -u
-ALGORITHM = "aes_256_cbc"
-
 #: Default initialization vector.  For best security, you should use a
 #: unique IV for each message.  :func:`ssl_encrypt` does this in an
 #: automated fashion.
@@ -35,6 +29,16 @@ CFG_SECTION = "encryption"
 
 #: The config option used to store the algorithm
 CFG_ALGORITHM = "algorithm"
+
+#: Default cipher algorithm.  To get a full list of valid algorithms,
+#: you can run::
+#:
+#:     openssl list-cipher-algorithms | grep -v ' => ' | \
+#:         tr 'A-Z-' 'a-z_' | sort -u
+ALGORITHM = Bcfg2.Options.get_option_parser().cfp.get(  # pylint: disable=E1103
+    CFG_SECTION,
+    CFG_ALGORITHM,
+    default="aes_256_cbc").lower().replace("-", "_")
 
 Rand.rand_seed(os.urandom(1024))
 
@@ -152,58 +156,37 @@ def ssl_encrypt(plaintext, passwd, algorithm=ALGORITHM, salt=None):
     return b64encode("Salted__" + salt + crypted) + "\n"
 
 
-def get_algorithm(setup):
-    """ Get the cipher algorithm from the config file.  This is used
-    in case someone uses the OpenSSL algorithm name (e.g.,
-    "AES-256-CBC") instead of the M2Crypto name (e.g., "aes_256_cbc"),
-    and to handle errors in a sensible way and deduplicate this code.
-
-    :param setup: The Bcfg2 option set to extract passphrases from
-    :type setup: Bcfg2.Options.OptionParser
-    :returns: dict - a dict of ``<passphrase name>``: ``<passphrase>``
-    """
-    return setup.cfp.get(CFG_SECTION, CFG_ALGORITHM,
-                         default=ALGORITHM).lower().replace("-", "_")
-
-
-def get_passphrases(setup):
+def get_passphrases():
     """ Get all candidate encryption passphrases from the config file.
 
-    :param setup: The Bcfg2 option set to extract passphrases from
-    :type setup: Bcfg2.Options.OptionParser
     :returns: dict - a dict of ``<passphrase name>``: ``<passphrase>``
     """
-    section = CFG_SECTION
-    if setup.cfp.has_section(section):
-        return dict([(o, setup.cfp.get(section, o))
-                     for o in setup.cfp.options(section)
+    setup = Bcfg2.Options.get_option_parser()
+    if setup.cfp.has_section(CFG_SECTION):
+        return dict([(o, setup.cfp.get(CFG_SECTION, o))
+                     for o in setup.cfp.options(CFG_SECTION)
                      if o != CFG_ALGORITHM])
     else:
         return dict()
 
 
-def bruteforce_decrypt(crypted, passphrases=None, setup=None,
-                       algorithm=ALGORITHM):
+def bruteforce_decrypt(crypted, passphrases=None, algorithm=ALGORITHM):
     """ Convenience method to decrypt the given encrypted string by
     trying the given passphrases or all passphrases (as returned by
     :func:`get_passphrases`) sequentially until one is found that
     works.
 
-    Either ``passphrases`` or ``setup`` must be provided.
-
     :param crypted: The data to decrypt
     :type crypted: string
     :param passphrases: The passphrases to try.
     :type passphrases: list
-    :param setup: A Bcfg2 option set to extract passphrases from
-    :type setup: Bcfg2.Options.OptionParser
     :param algorithm: The cipher algorithm to use
     :type algorithm: string
     :returns: string - The decrypted data
     :raises: :class:`M2Crypto.EVP.EVPError`, if the data cannot be decrypted
     """
     if passphrases is None:
-        passphrases = get_passphrases(setup).values()
+        passphrases = get_passphrases().values()
     for passwd in passphrases:
         try:
             return ssl_decrypt(crypted, passwd, algorithm=algorithm)

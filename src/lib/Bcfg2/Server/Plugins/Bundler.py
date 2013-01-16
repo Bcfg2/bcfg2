@@ -1,15 +1,15 @@
 """This provides bundle clauses with translation functionality."""
 
+import os
+import re
+import sys
 import copy
 import logging
 import lxml.etree
-import os
-import os.path
-import re
-import sys
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Lint
+from Bcfg2.Options import get_option_parser
 
 try:
     import genshi.template.base
@@ -17,9 +17,6 @@ try:
     HAS_GENSHI = True
 except ImportError:
     HAS_GENSHI = False
-
-
-SETUP = None
 
 
 class BundleFile(Bcfg2.Server.Plugin.StructFile):
@@ -52,8 +49,9 @@ if HAS_GENSHI:
                 msg = "No parsed template information for %s" % self.name
                 self.logger.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-            stream = self.template.generate(metadata=metadata,
-                                            repo=SETUP['repo']).filter(
+            stream = self.template.generate(
+                metadata=metadata,
+                repo=get_option_parser()['repo']).filter(
                 Bcfg2.Server.Plugins.TGenshi.removecomment)
             data = lxml.etree.XML(stream.render('xml',
                                                 strip_whitespace=False),
@@ -101,9 +99,6 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
             msg = "Failed to load Bundle repository %s: %s" % (self.data, err)
             self.logger.error(msg)
             raise Bcfg2.Server.Plugin.PluginInitError(msg)
-
-        global SETUP
-        SETUP = core.setup
 
     def template_dispatch(self, name, _):
         """ Add the correct child entry type to Bundler depending on

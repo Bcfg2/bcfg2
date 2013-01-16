@@ -2,21 +2,22 @@
 implementations inherit from. """
 
 import os
+import sys
+import time
+import select
 import atexit
 import logging
-import select
-import sys
-import threading
-import time
 import inspect
+import threading
 import lxml.etree
-import Bcfg2.settings
 import Bcfg2.Server
 import Bcfg2.Logger
-import Bcfg2.Server.FileMonitor
-from Bcfg2.Cache import Cache
+import Bcfg2.settings
 import Bcfg2.Statistics
+import Bcfg2.Server.FileMonitor
 from itertools import chain
+from Bcfg2.Cache import Cache
+from Bcfg2.Options import get_option_parser
 from Bcfg2.Compat import xmlrpclib  # pylint: disable=W0622
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError, \
     track_statistics
@@ -85,23 +86,23 @@ class BaseCore(object):
     and modules. All core implementations must inherit from
     ``BaseCore``. """
 
-    def __init__(self, setup):  # pylint: disable=R0912,R0915
+    def __init__(self):  # pylint: disable=R0912,R0915
         """
-        :param setup: A Bcfg2 options dict
-        :type setup: Bcfg2.Options.OptionParser
-
         .. automethod:: _daemonize
         .. automethod:: _run
         .. automethod:: _block
         .. -----
         .. automethod:: _file_monitor_thread
         """
-        #: The Bcfg2 repository directory
-        self.datastore = setup['repo']
+        #: The Bcfg2 options dict
+        self.setup = get_option_parser()
 
-        if setup['debug']:
+        #: The Bcfg2 repository directory
+        self.datastore = self.setup['repo']
+
+        if self.setup['debug']:
             level = logging.DEBUG
-        elif setup['verbose']:
+        elif self.setup['verbose']:
             level = logging.INFO
         else:
             level = logging.WARNING
@@ -112,8 +113,8 @@ class BaseCore(object):
         # setup_logging and the console will get DEBUG output.
         Bcfg2.Logger.setup_logging('bcfg2-server',
                                    to_console=logging.INFO,
-                                   to_syslog=setup['syslog'],
-                                   to_file=setup['logging'],
+                                   to_syslog=self.setup['syslog'],
+                                   to_file=self.setup['logging'],
                                    level=level)
 
         #: A :class:`logging.Logger` object for use by the core
@@ -121,16 +122,16 @@ class BaseCore(object):
 
         try:
             filemonitor = \
-                Bcfg2.Server.FileMonitor.available[setup['filemonitor']]
+                Bcfg2.Server.FileMonitor.available[self.setup['filemonitor']]
         except KeyError:
             self.logger.error("File monitor driver %s not available; "
-                              "forcing to default" % setup['filemonitor'])
+                              "forcing to default" % self.setup['filemonitor'])
             filemonitor = Bcfg2.Server.FileMonitor.available['default']
         famargs = dict(ignore=[], debug=False)
-        if 'ignore' in setup:
-            famargs['ignore'] = setup['ignore']
-        if 'debug' in setup:
-            famargs['debug'] = setup['debug']
+        if 'ignore' in self.setup:
+            famargs['ignore'] = self.setup['ignore']
+        if 'debug' in self.setup:
+            famargs['debug'] = self.setup['debug']
 
         try:
             #: The :class:`Bcfg2.Server.FileMonitor.FileMonitor`
@@ -138,12 +139,13 @@ class BaseCore(object):
             #: changes.
             self.fam = filemonitor(**famargs)
         except IOError:
-            msg = "Failed to instantiate fam driver %s" % setup['filemonitor']
+            msg = "Failed to instantiate fam driver %s" % \
+                self.setup['filemonitor']
             self.logger.error(msg, exc_info=1)
             raise CoreInitError(msg)
 
         #: Path to bcfg2.conf
-        self.cfile = setup['configfile']
+        self.cfile = self.setup['configfile']
 
         #: Dict of plugins that are enabled.  Keys are the plugin
         #: names (just the plugin name, in the correct case; e.g.,
@@ -160,9 +162,6 @@ class BaseCore(object):
         #: the client in the configuration, and can be set by a
         #: :class:`Bcfg2.Server.Plugin.interfaces.Version` plugin.
         self.revision = '-1'
-
-        #: The Bcfg2 options dict
-        self.setup = setup
 
         atexit.register(self.shutdown)
 
@@ -217,10 +216,10 @@ class BaseCore(object):
                     self.logger.error("Failed to set ownership of database "
                                       "at %s: %s" % (db_settings['NAME'], err))
 
-        if '' in setup['plugins']:
-            setup['plugins'].remove('')
+        if '' in self.setup['plugins']:
+            self.setup['plugins'].remove('')
 
-        for plugin in setup['plugins']:
+        for plugin in self.setup['plugins']:
             if not plugin in self.plugins:
                 self.init_plugin(plugin)
         # Remove blacklisted plugins
@@ -283,12 +282,12 @@ class BaseCore(object):
         self.connectors = self.plugins_by_type(Bcfg2.Server.Plugin.Connector)
 
         #: The CA that signed the server cert
-        self.ca = setup['ca']
+        self.ca = self.setup['ca']
 
         #: The FAM :class:`threading.Thread`,
         #: :func:`_file_monitor_thread`
         self.fam_thread = \
-            threading.Thread(name="%sFAMThread" % setup['filemonitor'],
+            threading.Thread(name="%sFAMThread" % self.setup['filemonitor'],
                              target=self._file_monitor_thread)
 
         #: A :func:`threading.Lock` for use by
@@ -393,8 +392,10 @@ class BaseCore(object):
         """ Get the client :attr:`metadata_cache` mode.  Options are
         off, initial, cautious, aggressive, on (synonym for
         cautious). See :ref:`server-caching` for more details. """
+        # pylint: disable=E1103
         mode = self.setup.cfp.get("caching", "client_metadata",
                                   default="off").lower()
+        # pylint: enable=E1103
         if mode == "on":
             return "cautious"
         else:
