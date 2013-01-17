@@ -25,6 +25,7 @@ except ImportError:
 
 #: A dict containing default metadata for Path entries from bcfg2.conf
 DEFAULT_FILE_METADATA = Bcfg2.Options.OptionParser(dict(
+        configfile=Bcfg2.Options.CFILE,
         owner=Bcfg2.Options.MDATA_OWNER,
         group=Bcfg2.Options.MDATA_GROUP,
         mode=Bcfg2.Options.MDATA_MODE,
@@ -32,8 +33,9 @@ DEFAULT_FILE_METADATA = Bcfg2.Options.OptionParser(dict(
         important=Bcfg2.Options.MDATA_IMPORTANT,
         paranoid=Bcfg2.Options.MDATA_PARANOID,
         sensitive=Bcfg2.Options.MDATA_SENSITIVE))
-DEFAULT_FILE_METADATA.parse(sys.argv[1:])
+DEFAULT_FILE_METADATA.parse([Bcfg2.Options.CFILE.cmd, Bcfg2.Options.CFILE])
 del DEFAULT_FILE_METADATA['args']
+del DEFAULT_FILE_METADATA['configfile']
 
 LOGGER = logging.getLogger(__name__)
 
