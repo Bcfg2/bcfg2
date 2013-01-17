@@ -80,18 +80,11 @@ Creators
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator.CfgPrivateKeyCreator
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator.CfgPublicKeyCreator
 
-Filters
--------
-
-.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgCatFilter.CfgCatFilter
-.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgDiffFilter.CfgDiffFilter
-
 Info Handlers
 -------------
 
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgDefaultInfo
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgInfoXML.CfgInfoXML
-.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgLegacyInfo.CfgLegacyInfo
 
 Verifiers
 ---------

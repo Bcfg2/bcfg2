@@ -56,11 +56,6 @@ Pseudo
 
 .. automodule:: Bcfg2.Server.FileMonitor.Pseudo
 
-Fam
----
-
-.. automodule:: Bcfg2.Server.FileMonitor.Fam
-
 Gamin
 -----
 
