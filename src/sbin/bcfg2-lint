@@ -146,7 +146,7 @@ def main():
                    lint_plugins=Bcfg2.Options.LINT_PLUGINS)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
-    setup = Bcfg2.Options.get_option_parser(optinfo)
+    setup = Bcfg2.Options.load_option_parser(optinfo)
     setup.parse(sys.argv[1:])
 
     log_args = dict(to_syslog=setup['syslog'], to_console=logging.WARNING)

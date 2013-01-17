@@ -371,7 +371,7 @@ def main():  # pylint: disable=R0912,R0915
     optinfo = dict(interactive=Bcfg2.Options.INTERACTIVE)
     optinfo.update(Bcfg2.Options.CRYPT_OPTIONS)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
-    setup = Bcfg2.Options.get_option_parser(optinfo)
+    setup = Bcfg2.Options.load_option_parser(optinfo)
     setup.hm = "     bcfg2-crypt [options] <filename>\nOptions:\n%s" % \
         setup.buildHelpMessage()
     setup.parse()
