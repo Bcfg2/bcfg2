@@ -78,7 +78,8 @@ import copy
 import logging
 import lxml.etree
 import Bcfg2.Server.Plugin
-import Bcfg2.Server.FileMonitor
+from Bcfg2.Server.FileMonitor import get_fam
+from Bcfg2.Options import get_option_parser
 from Bcfg2.Compat import any, md5  # pylint: disable=W0622
 
 LOGGER = logging.getLogger(__name__)
@@ -124,13 +125,12 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         self.basepath = basepath
         self.cachepath = cachepath
         self.virt_pkgs = dict()
-        self.fam = Bcfg2.Server.FileMonitor.get_fam()
+        self.fam = get_fam()
+        self.setup = get_option_parser()
 
         try:
-            self.setup = sources[0].setup
             self.ptype = sources[0].ptype
         except IndexError:
-            self.setup = None
             self.ptype = "unknown"
 
     @property
@@ -248,7 +248,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
                       support multiple package types in package groups
                       (e.g., "recommended," "optional," etc.)
         :type ptype: string
-        :returns: list of strings - package names, but see 
+        :returns: list of strings - package names, but see
                   :ref:`pkg-objects`
         """
         if not self.__package_groups__:
@@ -437,7 +437,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         included in the client configuration. See :ref:`pkg-objects`
         for more details.
 
-        :param pkglist: A list of packages as returned by 
+        :param pkglist: A list of packages as returned by
                         :func:`complete`
         :type pkglist: list of strings, but see :ref:`pkg-objects`
         :param entry: The base XML entry to add all of the Package

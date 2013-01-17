@@ -34,7 +34,7 @@ class AptCollection(Collection):
 
         for source in self:
             if source.rawurl:
-                self.logger.info("Packages: Skipping rawurl %s" % 
+                self.logger.info("Packages: Skipping rawurl %s" %
                                  source.rawurl)
             else:
                 lines.append("deb %s %s %s" % (source.url, source.version,

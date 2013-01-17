@@ -4,6 +4,7 @@
 import os
 import sys
 import Bcfg2.Server.Plugin
+from Bcfg2.Options import get_option_parser
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError
 
 
@@ -19,7 +20,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
 
     encryption = False
 
-    def __init__(self, filename, cachepath, packages, setup):
+    def __init__(self, filename, cachepath, packages):
         """
         :param filename: The full path to ``sources.xml``
         :type filename: string
@@ -31,8 +32,6 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
                          being parsed on behalf of (i.e., the calling
                          object)
         :type packages: Bcfg2.Server.Plugins.Packages.Packages
-        :param setup: A Bcfg2 options dict
-        :type setup: dict
 
         :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginInitError` -
                  If ``sources.xml`` cannot be read
@@ -61,7 +60,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
                 self.logger.error("Could not create Packages cache at %s: %s" %
                                   (self.cachepath, err))
         #: The Bcfg2 options dict
-        self.setup = setup
+        self.setup = get_option_parser()
 
         #: The :class:`Bcfg2.Server.Plugins.Packages.Packages` that
         #: instantiated this ``PackagesSources`` object
@@ -156,7 +155,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
             return None
 
         try:
-            source = cls(self.cachepath, xsource, self.setup)
+            source = cls(self.cachepath, xsource)
         except SourceInitError:
             err = sys.exc_info()[1]
             self.logger.error("Packages: %s" % err)
