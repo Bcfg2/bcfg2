@@ -60,6 +60,7 @@ import logging
 import lxml.etree
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
+from Bcfg2.Options import get_option_parser
 # pylint: disable=W0622
 from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
     ConfigParser, any
@@ -106,13 +107,11 @@ PULPCONFIG = None
 HELPER = None
 
 
-def _setup_pulp(setup):
+def _setup_pulp():
     """ Connect to a Pulp server and pass authentication credentials.
     This only needs to be called once, but multiple calls won't hurt
     anything.
 
-    :param setup: A Bcfg2 options dict
-    :type setup: dict
     :returns: :class:`pulp.client.api.server.PulpServer`
     """
     global PULPSERVER, PULPCONFIG
@@ -123,6 +122,7 @@ def _setup_pulp(setup):
         raise Bcfg2.Server.Plugin.PluginInitError(msg)
 
     if PULPSERVER is None:
+        setup = get_option_parser()
         try:
             username = setup.cfp.get("packages:pulp", "username")
             password = setup.cfp.get("packages:pulp", "password")
@@ -293,7 +293,7 @@ class YumCollection(Collection):
             self.cachefile = None
 
         if HAS_PULP and self.has_pulp_sources:
-            _setup_pulp(self.setup)
+            _setup_pulp()
             if self.pulp_cert_set is None:
                 certdir = os.path.join(
                     self.basepath,
@@ -940,13 +940,13 @@ class YumSource(Source):
     #: YumSource sets the ``type`` on Package entries to "yum"
     ptype = 'yum'
 
-    def __init__(self, basepath, xsource, setup):
-        Source.__init__(self, basepath, xsource, setup)
+    def __init__(self, basepath, xsource):
+        Source.__init__(self, basepath, xsource)
         self.pulp_id = None
         if HAS_PULP and xsource.get("pulp_id"):
             self.pulp_id = xsource.get("pulp_id")
 
-            _setup_pulp(self.setup)
+            _setup_pulp()
             repoapi = RepositoryAPI()
             try:
                 self.repo = repoapi.repository(self.pulp_id)

@@ -51,6 +51,7 @@ import os
 import re
 import sys
 import Bcfg2.Server.Plugin
+from Bcfg2.Options import get_option_parser
 from Bcfg2.Compat import HTTPError, HTTPBasicAuthHandler, \
      HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, \
      urlopen, cPickle, md5
@@ -116,15 +117,13 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
     #: when they are handled by :mod:`Bcfg2.Server.Plugins.Packages`.
     ptype = None
 
-    def __init__(self, basepath, xsource, setup):  # pylint: disable=R0912
+    def __init__(self, basepath, xsource):  # pylint: disable=R0912
         """
         :param basepath: The base filesystem path under which cache
                          data for this source should be stored
         :type basepath: string
         :param xsource: The XML tag that describes this source
         :type source: lxml.etree._Element
-        :param setup: A Bcfg2 options dict
-        :type setup: dict
         :raises: :class:`Bcfg2.Server.Plugins.Packages.Source.SourceInitError`
         """
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
@@ -137,7 +136,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         self.xsource = xsource
 
         #: A Bcfg2 options dict
-        self.setup = setup
+        self.setup = get_option_parser()
 
         #: A set of package names that are deemed "essential" by this
         #: source

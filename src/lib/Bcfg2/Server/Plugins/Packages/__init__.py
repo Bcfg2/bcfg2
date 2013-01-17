@@ -79,8 +79,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         #: :class:`Bcfg2.Server.Plugins.Packages.Source.Source` objects for
         #: this plugin.
         self.sources = PackagesSources(os.path.join(self.data, "sources.xml"),
-                                       self.cachepath, core.fam, self,
-                                       self.core.setup)
+                                       self.cachepath, core.fam, self)
 
         #: We cache
         #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
