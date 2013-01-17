@@ -247,14 +247,17 @@ class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
         TestStructFile.test_Index(self)
 
         pf = self.get_obj()
-        pf.xdata = lxml.etree.Element("Properties", encryption="true")
+        pf.xdata = lxml.etree.Element("Properties")
+        lxml.etree.SubElement(pf.xdata, "Crypted", encrypted="foo")
         pf.data = lxml.etree.tostring(pf.xdata)
         # extra test: crypto is not available, but properties file is
         # encrypted
         has_crypto = Bcfg2.Server.Plugins.Properties.HAS_CRYPTO
         Bcfg2.Server.Plugins.Properties.HAS_CRYPTO = False
-        self.assertRaises(PluginExecutionError, pf.Index)
-        Bcfg2.Server.Plugins.Properties.HAS_CRYPTO = has_crypto
+        try:
+            self.assertRaises(PluginExecutionError, pf.Index)
+        finally:
+            Bcfg2.Server.Plugins.Properties.HAS_CRYPTO = has_crypto
 
     @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
     def test_Index_crypto(self):
@@ -262,7 +265,7 @@ class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
         pf._decrypt = Mock()
         pf._decrypt.return_value = 'plaintext'
         pf.data = '''
-<Properties encryption="true" decrypt="strict">
+<Properties decrypt="strict">
   <Crypted encrypted="foo">
     crypted
     <Plain foo="bar">plain</Plain>
@@ -273,6 +276,9 @@ class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
     <Crypted encrypted="foo">crypted</Crypted>
   </Plain>
 </Properties>'''
+
+        print "HAS_CRYPTO: %s" % HAS_CRYPTO
+        print "Properties HAS_CRYPTO: %s" % Bcfg2.Server.Plugins.Properties.HAS_CRYPTO
 
         # test successful decryption
         pf.Index()

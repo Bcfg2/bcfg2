@@ -5,6 +5,8 @@
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:include schemaLocation="types.xsd"/>
+
   <xsd:complexType name="PrivateKeyGroupType">
     <xsd:annotation>
       <xsd:documentation>
@@ -130,6 +132,21 @@
         <xsd:annotation>
           <xsd:documentation>
             Create group-specific keys with the given priority.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
+      <xsd:attribute name="priority" type="xsd:positiveInteger" default="50">
+        <xsd:annotation>
+          <xsd:documentation>
+            Create group-specific keys with the given priority.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
+      <xsd:attribute name="decrypt" type="EncryptStrictnessEnum">
+        <xsd:annotation>
+          <xsd:documentation>
+            Override the global strict/lax decryption setting in
+            ``bcfg2.conf``.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:attribute>

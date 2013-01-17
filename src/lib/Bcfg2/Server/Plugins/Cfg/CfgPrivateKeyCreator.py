@@ -215,8 +215,10 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
     def Index(self):
         StructFile.Index(self)
         if HAS_CRYPTO:
-            strict = SETUP.cfp.get("sshkeys", "decrypt",
-                                   default="strict") == "strict"
+            strict = self.xdata.get(
+                "decrypt",
+                SETUP.cfp.get(Bcfg2.Encryption.CFG_SECTION, "decrypt",
+                              default="strict")) == "strict"
             for el in self.xdata.xpath("//*[@encrypted]"):
                 try:
                     el.text = self._decrypt(el).encode('ascii',

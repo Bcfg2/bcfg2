@@ -411,6 +411,9 @@ structured as follows:
 .. xml:element:: PrivateKey
    :linktotype:
 
+See :ref:`server-encryption` for more details on encryption in Bcfg2
+in general.
+
 ``pubkey.xml``
 ~~~~~~~~~~~~~~~
 
@@ -578,9 +581,6 @@ influenced by several options in the ``[sshkeys]`` section of
 | ``category``   | Generate keys specific to groups in the given category. | String                | None       |
 |                | It is best to pick a category that all clients have a   |                       |            |
 |                | group from.                                             |                       |            |
-+----------------+---------------------------------------------------------+-----------------------+------------+
-| ``decrypt``    | If decrypt is set to ``lax``, then a key that cannot be | ``strict`` or ``lax`` | ``strict`` |
-|                | decrypted will produce a warning instead of an error.   |                       |            |
 +----------------+---------------------------------------------------------+-----------------------+------------+
 
 Deltas

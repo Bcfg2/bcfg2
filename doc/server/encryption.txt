@@ -203,6 +203,26 @@ get a list of valid algorithms, you can run::
     openssl list-cipher-algorithms | grep -v ' => ' | \
         tr 'A-Z-' 'a-z_' | sort -u
 
+Lax vs. Strict decryption
+-------------------------
+
+By default, Bcfg2 expects to be able to decrypt every encrypted
+datum.  Depending on how encryption is implemented at your site,
+though, that may not be possible.  (For instance, if you use
+encryption to protect data for your production environment from your
+staging Bcfg2 server, then you would not expect the staging server to
+be able to decrypt everything.)  In this case, you want to enable lax
+decryption in the ``[encryption]`` section of ``bcfg2.conf``:
+
+    [encryption]
+    decrypt = lax
+
+This causes a failed decrypt to produce a warning only, not an error.
+
+This can be overridden by individual XML files by setting
+``decrypt="strict"`` on the top-level tag (or, vice-versa; if strict
+is the default an XML file can specify ``decrypt="lax"``.
+
 Encryption API
 ==============
 

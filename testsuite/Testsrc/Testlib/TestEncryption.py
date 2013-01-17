@@ -193,11 +193,6 @@ baz
 
             # test that different algorithms are used
             mock_passphrases.reset_mock()
-            self.assertRaises(EVPError,
-                              bruteforce_decrypt,
-                              crypted, setup=setup, algorithm=self.algo)
-
-            mock_passphrases.reset_mock()
             crypted = ssl_encrypt(self.plaintext, passwd, algorithm=self.algo)
             self.assertEqual(self.plaintext,
                              bruteforce_decrypt(crypted, setup=setup,

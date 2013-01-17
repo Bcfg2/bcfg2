@@ -290,9 +290,8 @@ decrypted, parsing of the file is aborted.  If you wish for parsing to
 continue, with unencryptable elements simply skipped, then you can set
 decryption to *lax* in one of two ways:
 
-* Set ``decrypt=lax`` in the ``[properties]`` section of
-  ``bcfg2.conf`` to set lax decryption on all Properties files by
-  default; or
+* Set ``decrypt=lax`` in the ``[encryption]`` section of
+  ``bcfg2.conf`` to set lax decryption on all files by default; or
 * Set the ``decrypt="lax"`` attribute on the top-level ``Properties``
   tag of a Properties file to set lax decryption for a single file.
 

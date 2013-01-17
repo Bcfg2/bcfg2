@@ -55,7 +55,7 @@ class Encryptor(object):
 
     def set_passphrase(self):
         """ set the passphrase for the current file """
-        if (not self.setup.cfp.has_section("encryption") or
+        if (not self.setup.cfp.has_section(Bcfg2.Encryption.CFG_SECTION) or
             len(Bcfg2.Encryption.get_passphrases(self.setup)) == 0):
             self.logger.error("No passphrases available in %s" %
                               self.setup['configfile'])
@@ -70,9 +70,11 @@ class Encryptor(object):
             self.pname = self.setup['passphrase']
 
         if self.pname:
-            if self.setup.cfp.has_option("encryption", self.pname):
-                self.passphrase = self.setup.cfp.get("encryption",
-                                                     self.pname)
+            if self.setup.cfp.has_option(Bcfg2.Encryption.CFG_SECTION,
+                                         self.pname):
+                self.passphrase = \
+                    self.setup.cfp.get(Bcfg2.Encryption.CFG_SECTION,
+                                       self.pname)
                 self.logger.debug("Using passphrase %s specified on command "
                                   "line" % self.pname)
                 return True
@@ -241,8 +243,10 @@ class Encryptor(object):
                 self.logger.info("No passphrase given on command line or "
                                  "found in file")
                 return False
-            elif self.setup.cfp.has_option("encryption", pname):
-                passphrase = self.setup.cfp.get("encryption", pname)
+            elif self.setup.cfp.has_option(Bcfg2.Encryption.CFG_SECTION,
+                                           pname):
+                passphrase = self.setup.cfp.get(Bcfg2.Encryption.CFG_SECTION,
+                                                pname)
             else:
                 self.logger.error("Could not find passphrase %s in %s" %
                                   (pname, self.setup['configfile']))
@@ -339,13 +343,12 @@ class PropertiesEncryptor(Encryptor):
         # find root element
         while xdata.getparent() != None:
             xdata = xdata.getparent()
-        xdata.set("encryption", "true")
         return lxml.etree.tostring(xdata,
                                    xml_declaration=False,
                                    pretty_print=True).decode('UTF-8')
 
     def _get_passphrase(self, chunk):
-        pname = chunk.get("encrypted") or chunk.get("encryption")
+        pname = chunk.get("encrypted")
         if pname and pname.lower() != "true":
             return pname
         return None
