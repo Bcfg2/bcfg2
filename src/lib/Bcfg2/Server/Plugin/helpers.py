@@ -571,9 +571,8 @@ class StructFile(XMLFileBacked):
     #: Whether or not encryption support is enabled in this file
     encryption = True
 
-    def __init__(self, filename, fam=None, should_monitor=False):
-        XMLFileBacked.__init__(self, filename, fam=fam,
-                               should_monitor=should_monitor)
+    def __init__(self, filename, should_monitor=False):
+        XMLFileBacked.__init__(self, filename, should_monitor=should_monitor)
         self.setup = Bcfg2.Options.get_option_parser()
 
     def Index(self):
