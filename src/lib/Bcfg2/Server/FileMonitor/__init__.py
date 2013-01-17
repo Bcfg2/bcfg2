@@ -315,10 +315,11 @@ class FileMonitor(Debuggable):
 #: should not be used directly, but retrieved via :func:`get_fam`.
 _FAM = None
 
-def get_fam(filemonitor='default', ignore=None, debug=False):
-    """ Get a filemonitor object.  If :attr:`_FAM` already exists,
-    that will be used; if not, a new filemonitor object will be
-    created.
+
+def load_fam(filemonitor='default', ignore=None, debug=False):
+    """ Load a new :class:`Bcfg2.Server.FileMonitor.FileMonitor`
+    object, caching it in :attr:`_FAM` for later retrieval via
+    :func:`get_fam`.
 
     :param filemonitor: Which filemonitor backend to use
     :type filemonitor: string
@@ -333,6 +334,19 @@ def get_fam(filemonitor='default', ignore=None, debug=False):
         if ignore is None:
             ignore = []
         _FAM = available[filemonitor](ignore=ignore, debug=debug)
+    return _FAM
+
+
+def get_fam():
+    """ Get an already-created
+    :class:`Bcfg2.Server.FileMonitor.FileMonitor` object.  If
+    :attr:`_FAM` has not been populated, then a new default
+    FileMonitor will be created.
+
+    :returns: :class:`Bcfg2.Server.FileMonitor.FileMonitor`
+    """
+    if _FAM is None:
+        return load_fam('default')
     return _FAM
 
 

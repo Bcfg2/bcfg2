@@ -17,7 +17,7 @@ import Bcfg2.Statistics
 import Bcfg2.Server.FileMonitor
 from itertools import chain
 from Bcfg2.Cache import Cache
-from Bcfg2.Options import get_option_parser
+from Bcfg2.Options import get_option_parser, SERVER_FAM_IGNORE
 from Bcfg2.Compat import xmlrpclib  # pylint: disable=W0622
 from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError, \
     track_statistics
@@ -120,18 +120,16 @@ class BaseCore(object):
         #: A :class:`logging.Logger` object for use by the core
         self.logger = logging.getLogger('bcfg2-server')
 
-        try:
-            filemonitor = \
-                Bcfg2.Server.FileMonitor.available[self.setup['filemonitor']]
-        except KeyError:
+        if 'ignore' not in self.setup:
+            self.setup.add_option('ignore', SERVER_FAM_IGNORE)
+            self.setup.reparse()
+        famargs = dict(filemonitor=self.setup['filemonitor'],
+                       debug=self.setup['debug'],
+                       ignore=self.setup['ignore'])
+        if self.setup['filemonitor'] not in Bcfg2.Server.FileMonitor.available:
             self.logger.error("File monitor driver %s not available; "
                               "forcing to default" % self.setup['filemonitor'])
-            filemonitor = Bcfg2.Server.FileMonitor.available['default']
-        famargs = dict(ignore=[], debug=False)
-        if 'ignore' in self.setup:
-            famargs['ignore'] = self.setup['ignore']
-        if 'debug' in self.setup:
-            famargs['debug'] = self.setup['debug']
+            famargs['filemonitor'] = 'default'
 
         try:
             #: The :class:`Bcfg2.Server.FileMonitor.FileMonitor`
