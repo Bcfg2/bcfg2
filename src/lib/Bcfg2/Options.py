@@ -1256,16 +1256,12 @@ class OptionParser(OptionSet):
 _PARSER = None
 
 
-def get_option_parser(args=None, argv=None, quiet=False):
-    """ Get an OptionParser object.  If :attr:`_PARSER` already
-    exists, that will be used; if not, a new OptionParser object will
-    be created.
+def load_option_parser(args, argv=None, quiet=False):
+    """ Load an :class:`Bcfg2.Options.OptionParser` object, caching it
+    in :attr:`_PARSER` for later retrieval via
+    :func:`get_option_parser`.
 
-    If ``args`` or ``argv`` are given, then a new OptionParser object
-    will be instantiated regardless of whether one already exists.
-
-    :param args: The argument set to parse.  This is required on the
-                 first invocation of :func:`get_option_parser`.
+    :param args: The argument set to parse.
     :type args: dict of :class:`Bcfg2.Options.Option` objects
     :param argv: The command-line argument list.  If this is not
                  provided, :attr:`sys.argv` will be used.
@@ -1275,8 +1271,17 @@ def get_option_parser(args=None, argv=None, quiet=False):
     :returns: :class:`Bcfg2.Options.OptionParser`
     """
     global _PARSER  # pylint: disable=W0603
-    if _PARSER is None or args is not None or argv is not None:
-        if args is None:
-            args = CLI_COMMON_OPTIONS
-        _PARSER = OptionParser(args, argv=argv, quiet=quiet)
+    _PARSER = OptionParser(args, argv=argv, quiet=quiet)
+    return _PARSER
+
+
+def get_option_parser():
+    """ Get an already-created :class:`Bcfg2.Options.OptionParser` object.  If
+    :attr:`_PARSER` has not been populated, then a new OptionParser
+    will be created with basic arguments.
+
+    :returns: :class:`Bcfg2.Options.OptionParser`
+    """
+    if _PARSER is None:
+        return load_option_parser(CLI_COMMON_OPTIONS)
     return _PARSER

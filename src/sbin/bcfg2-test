@@ -69,7 +69,7 @@ def main():
                    validate=Bcfg2.Options.CFG_VALIDATION)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
-    setup = Bcfg2.Options.get_option_parser(args=optinfo)
+    setup = Bcfg2.Options.load_option_parser(optinfo)
     setup.hm = \
         "bcfg2-test [options] [client] [client] [...]\nOptions:\n     %s" % \
         setup.buildHelpMessage()

@@ -4,7 +4,7 @@
 import sys
 import signal
 from Bcfg2.Client.Client import Client
-from Bcfg2.Options import get_option_parser, CLIENT_COMMON_OPTIONS
+from Bcfg2.Options import load_option_parser, CLIENT_COMMON_OPTIONS
 
 
 def cb_sigint_handler(signum, frame):
@@ -13,7 +13,7 @@ def cb_sigint_handler(signum, frame):
 
 
 def main():
-    setup = get_option_parser(CLIENT_COMMON_OPTIONS)
+    setup = load_option_parser(CLIENT_COMMON_OPTIONS)
     setup.parse(sys.argv[1:])
 
     if setup['args']:

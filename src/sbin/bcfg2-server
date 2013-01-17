@@ -16,7 +16,7 @@ def main():
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.DAEMON_COMMON_OPTIONS)
-    setup = Bcfg2.Options.get_option_parser(args=optinfo)
+    setup = Bcfg2.Options.load_option_parser(optinfo)
     setup.parse(sys.argv[1:])
     # check whether the specified bcfg2.conf exists
     if not os.path.exists(setup['configfile']):

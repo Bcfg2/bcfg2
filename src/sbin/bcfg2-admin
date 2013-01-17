@@ -41,7 +41,7 @@ def main():
     optinfo = dict()
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
-    setup = Bcfg2.Options.get_option_parser(optinfo)
+    setup = Bcfg2.Options.load_option_parser(optinfo)
     # override default help message to include description of all modes
     setup.hm = "Usage:\n\n%s\n%s" % (setup.buildHelpMessage(),
                                      create_description())
