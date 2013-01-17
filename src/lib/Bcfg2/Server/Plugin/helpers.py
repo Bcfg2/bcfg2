@@ -42,7 +42,7 @@ def default_path_metadata():
     setup = Bcfg2.Options.get_option_parser()
     if not set(attrs).issubset(setup.keys()):
         setup.add_options(Bcfg2.Options.PATH_METADATA_OPTIONS)
-        setup.reparse()
+        setup.reparse(argv=[Bcfg2.Options.CFILE.cmd, Bcfg2.Options.CFILE])
     return dict([(k, setup[k]) for k in attrs])
 
 

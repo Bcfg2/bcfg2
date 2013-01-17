@@ -58,7 +58,6 @@ exceptions:
 Global Variables
 ================
 
-.. autodata:: Bcfg2.Server.Plugins.Cfg.SETUP
 .. autodata:: Bcfg2.Server.Plugins.Cfg.CFG
 
 Existing Cfg Handlers
