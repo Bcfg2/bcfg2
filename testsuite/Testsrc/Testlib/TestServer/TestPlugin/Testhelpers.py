@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 import copy
 import lxml.etree
@@ -20,6 +19,12 @@ while path != '/':
 from common import *
 from TestServer.TestPlugin.Testbase import TestPlugin, TestDebuggable
 from TestServer.TestPlugin.Testinterfaces import TestGenerator
+
+try:
+    from Bcfg2.Encryption import EVPError
+    HAS_CRYPTO = True
+except:
+    HAS_CRYPTO = False
 
 
 def tostring(el):
@@ -673,6 +678,108 @@ class TestStructFile(TestXMLFileBacked):
 
         children[4] = standalone
         return (xdata, groups, subgroups, children, subchildren, standalone)
+
+    def test_Index(self):
+        has_crypto = Bcfg2.Server.Plugin.helpers.HAS_CRYPTO
+        Bcfg2.Server.Plugin.helpers.HAS_CRYPTO = False
+        TestXMLFileBacked.test_Index(self)
+        Bcfg2.Server.Plugin.helpers.HAS_CRYPTO = has_crypto
+
+    @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
+    def test_Index_crypto(self):
+        if not self.test_obj.encryption:
+            return skip("Encryption disabled on %s objects, skipping" %
+                        self.test_obj.__name__)
+
+        sf = self.get_obj()
+        sf.setup = Mock()
+        sf.setup.cfp.get.return_value = "strict"
+        sf._decrypt = Mock()
+        sf._decrypt.return_value = 'plaintext'
+        sf.data = '''
+<EncryptedData>
+  <Group name="test">
+    <Datum encrypted="foo">crypted</Datum>
+  </Group>
+  <Group name="test" negate="true">
+    <Datum>plain</Datum>
+  </Group>
+</EncryptedData>'''
+
+        # test successful decryption
+        sf.Index()
+        self.assertItemsEqual(
+            sf._decrypt.call_args_list,
+            [call(el) for el in sf.xdata.xpath("//*[@encrypted]")])
+        for el in sf.xdata.xpath("//*[@encrypted]"):
+            self.assertEqual(el.text, sf._decrypt.return_value)
+
+        # test failed decryption, strict
+        sf._decrypt.reset_mock()
+        sf._decrypt.side_effect = EVPError
+        self.assertRaises(PluginExecutionError, sf.Index)
+
+        # test failed decryption, lax
+        sf.setup.cfp.get.return_value = "lax"
+        sf._decrypt.reset_mock()
+        sf.Index()
+        self.assertItemsEqual(
+            sf._decrypt.call_args_list,
+            [call(el) for el in sf.xdata.xpath("//*[@encrypted]")])
+
+    @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
+    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.ssl_decrypt")
+    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.get_passphrases")
+    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.bruteforce_decrypt")
+    def test_decrypt(self, mock_bruteforce, mock_get_passphrases, mock_ssl):
+        sf = self.get_obj()
+
+        def reset():
+            mock_bruteforce.reset_mock()
+            mock_get_passphrases.reset_mock()
+            mock_ssl.reset_mock()
+
+        # test element without text contents
+        self.assertIsNone(sf._decrypt(lxml.etree.Element("Test")))
+        self.assertFalse(mock_bruteforce.called)
+        self.assertFalse(mock_get_passphrases.called)
+        self.assertFalse(mock_ssl.called)
+
+        # test element with a passphrase in the config file
+        reset()
+        el = lxml.etree.Element("Test", encrypted="foo")
+        el.text = "crypted"
+        mock_get_passphrases.return_value = dict(foo="foopass", bar="barpass")
+        mock_ssl.return_value = "decrypted with ssl"
+        self.assertEqual(sf._decrypt(el), mock_ssl.return_value)
+        mock_get_passphrases.assert_called_with()
+        mock_ssl.assert_called_with(el.text, "foopass")
+        self.assertFalse(mock_bruteforce.called)
+
+        # test failure to decrypt element with a passphrase in the config
+        reset()
+        mock_ssl.side_effect = EVPError
+        self.assertRaises(EVPError, sf._decrypt, el)
+        mock_get_passphrases.assert_called_with()
+        mock_ssl.assert_called_with(el.text, "foopass")
+        self.assertFalse(mock_bruteforce.called)
+
+        # test element without valid passphrase
+        reset()
+        el.set("encrypted", "true")
+        mock_bruteforce.return_value = "decrypted with bruteforce"
+        self.assertEqual(sf._decrypt(el), mock_bruteforce.return_value)
+        mock_get_passphrases.assert_called_with()
+        mock_bruteforce.assert_called_with(el.text)
+        self.assertFalse(mock_ssl.called)
+
+        # test failure to decrypt element without valid passphrase
+        reset()
+        mock_bruteforce.side_effect = EVPError
+        self.assertRaises(EVPError, sf._decrypt, el)
+        mock_get_passphrases.assert_called_with()
+        mock_bruteforce.assert_called_with(el.text)
+        self.assertFalse(mock_ssl.called)
 
     def test_include_element(self):
         sf = self.get_obj()

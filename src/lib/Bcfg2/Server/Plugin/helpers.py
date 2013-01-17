@@ -18,6 +18,12 @@ from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
     PluginExecutionError
 
 try:
+    import Bcfg2.Encryption
+    HAS_CRYPTO = True
+except ImportError:
+    HAS_CRYPTO = False
+
+try:
     import django  # pylint: disable=W0611
     HAS_DJANGO = True
 except ImportError:
@@ -571,12 +577,68 @@ class XMLFileBacked(FileBacked):
 class StructFile(XMLFileBacked):
     """ StructFiles are XML files that contain a set of structure file
     formatting logic for handling ``<Group>`` and ``<Client>``
-    tags. """
+    tags.
+
+    .. -----
+    .. autoattribute:: __identifier__
+    """
 
     #: If ``__identifier__`` is not None, then it must be the name of
     #: an XML attribute that will be required on the top-level tag of
     #: the file being cached
     __identifier__ = None
+
+    #: Whether or not encryption support is enabled in this file
+    encryption = True
+
+    def __init__(self, filename, fam=None, should_monitor=False):
+        XMLFileBacked.__init__(self, filename, fam=fam,
+                               should_monitor=should_monitor)
+        self.setup = Bcfg2.Options.get_option_parser()
+
+    def Index(self):
+        Bcfg2.Server.Plugin.XMLFileBacked.Index(self)
+        if self.encryption:
+            strict = self.xdata.get(
+                "decrypt",
+                self.setup.cfp.get(Bcfg2.Encryption.CFG_SECTION, "decrypt",
+                                   default="strict")) == "strict"
+            for el in self.xdata.xpath("//*[@encrypted]"):
+                if not HAS_CRYPTO:
+                    raise PluginExecutionError("Properties: M2Crypto is not "
+                                               "available: %s" % self.name)
+                try:
+                    el.text = self._decrypt(el).encode('ascii',
+                                                       'xmlcharrefreplace')
+                except UnicodeDecodeError:
+                    LOGGER.info("%s: Decrypted %s to gibberish, skipping" %
+                                (self.name, el.tag))
+                except Bcfg2.Encryption.EVPError:
+                    msg = "Failed to decrypt %s element in %s" % (el.tag,
+                                                                  self.name)
+                    if strict:
+                        raise PluginExecutionError(msg)
+                    else:
+                        LOGGER.warning(msg)
+    Index.__doc__ = XMLFileBacked.Index.__doc__
+
+    def _decrypt(self, element):
+        """ Decrypt a single encrypted properties file element """
+        if not element.text or not element.text.strip():
+            return
+        passes = Bcfg2.Encryption.get_passphrases()
+        try:
+            passphrase = passes[element.get("encrypted")]
+            try:
+                return Bcfg2.Encryption.ssl_decrypt(element.text, passphrase)
+            except Bcfg2.Encryption.EVPError:
+                # error is raised below
+                pass
+        except KeyError:
+            # bruteforce_decrypt raises an EVPError with a sensible
+            # error message, so we just let it propagate up the stack
+            return Bcfg2.Encryption.bruteforce_decrypt(element.text)
+        raise Bcfg2.Encryption.EVPError("Failed to decrypt")
 
     def _include_element(self, item, metadata):
         """ determine if an XML element matches the metadata """

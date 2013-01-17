@@ -17,6 +17,7 @@ LOGGER = logging.getLogger(__name__)
 
 class SSLCAXMLSpec(Bcfg2.Server.Plugin.StructFile):
     """ Base class to handle key.xml and cert.xml """
+    encryption = False
     attrs = dict()
     tag = None
 

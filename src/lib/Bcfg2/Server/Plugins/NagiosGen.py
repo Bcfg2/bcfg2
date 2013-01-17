@@ -15,12 +15,14 @@ LOGGER = logging.getLogger(__name__)
 class NagiosGenConfig(Bcfg2.Server.Plugin.StructFile):
     """ NagiosGen config file handler """
 
+    encryption = False
+
     def __init__(self, filename, fam):
         # create config.xml if missing
         if not os.path.exists(filename):
             LOGGER.warning("NagiosGen: %s missing. "
                            "Creating empty one for you." % filename)
-            open(filename, "w").write("<NagiosGen></NagiosGen>")
+            open(filename, "w").write("<NagiosGen/>")
 
         Bcfg2.Server.Plugin.StructFile.__init__(self, filename, fam=fam,
                                                 should_monitor=True)

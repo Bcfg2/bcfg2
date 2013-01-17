@@ -17,6 +17,8 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
 
     __identifier__ = None
 
+    encryption = False
+
     def __init__(self, filename, cachepath, fam, packages, setup):
         """
         :param filename: The full path to ``sources.xml``
