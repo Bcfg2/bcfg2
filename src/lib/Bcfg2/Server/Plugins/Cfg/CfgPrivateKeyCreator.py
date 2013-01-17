@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import subprocess
 from Bcfg2.Options import get_option_parser
-from Bcfg2.Server.Plugin import PluginExecutionError, StructFile
+from Bcfg2.Server.Plugin import StructFile
 from Bcfg2.Server.Plugins.Cfg import CfgCreator, CfgCreationError
 from Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator import CfgPublicKeyCreator
 try:
@@ -211,44 +211,3 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         finally:
             shutil.rmtree(os.path.dirname(filename))
     # pylint: enable=W0221
-
-    def Index(self):
-        StructFile.Index(self)
-        if HAS_CRYPTO:
-            strict = self.xdata.get(
-                "decrypt",
-                SETUP.cfp.get(Bcfg2.Encryption.CFG_SECTION, "decrypt",
-                              default="strict")) == "strict"
-            for el in self.xdata.xpath("//*[@encrypted]"):
-                try:
-                    el.text = self._decrypt(el).encode('ascii',
-                                                       'xmlcharrefreplace')
-                except UnicodeDecodeError:
-                    self.logger.info("Cfg: Decrypted %s to gibberish, skipping"
-                                     % el.tag)
-                except Bcfg2.Encryption.EVPError:
-                    msg = "Cfg: Failed to decrypt %s element in %s" % \
-                        (el.tag, self.name)
-                    if strict:
-                        raise PluginExecutionError(msg)
-                    else:
-                        self.logger.warning(msg)
-    Index.__doc__ = StructFile.Index.__doc__
-
-    def _decrypt(self, element):
-        """ Decrypt a single encrypted element """
-        if not element.text or not element.text.strip():
-            return
-        passes = Bcfg2.Encryption.get_passphrases()
-        try:
-            passphrase = passes[element.get("encrypted")]
-            try:
-                return Bcfg2.Encryption.ssl_decrypt(element.text, passphrase)
-            except Bcfg2.Encryption.EVPError:
-                # error is raised below
-                pass
-        except KeyError:
-            # bruteforce_decrypt raises an EVPError with a sensible
-            # error message, so we just let it propagate up the stack
-            return Bcfg2.Encryption.bruteforce_decrypt(element.text)
-        raise Bcfg2.Encryption.EVPError("Failed to decrypt")

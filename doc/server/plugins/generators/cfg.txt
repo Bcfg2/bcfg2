@@ -583,6 +583,9 @@ influenced by several options in the ``[sshkeys]`` section of
 |                | group from.                                             |                       |            |
 +----------------+---------------------------------------------------------+-----------------------+------------+
 
+See :ref:`server-encryption` for more details on encryption in Bcfg2
+in general.
+
 Deltas
 ======
 
