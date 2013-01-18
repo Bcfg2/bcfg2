@@ -205,27 +205,25 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
 
     def Index(self):
         Bcfg2.Server.Plugin.StructFile.Index(self)
-        strict = self.xdata.get(
-            "decrypt",
-            SETUP.cfp.get(Bcfg2.Encryption.CFG_SECTION, "decrypt",
-                          default="strict")) == "strict"
-        for el in self.xdata.xpath("//*[@encrypted]"):
-            if not HAS_CRYPTO:
-                raise PluginExecutionError("Properties: M2Crypto is not "
-                                           "available: %s" % self.name)
-            try:
-                el.text = self._decrypt(el).encode('ascii',
-                                                   'xmlcharrefreplace')
-            except UnicodeDecodeError:
-                LOGGER.info("Properties: Decrypted %s to gibberish, "
-                            "skipping" % el.tag)
-            except Bcfg2.Encryption.EVPError:
-                msg = "Properties: Failed to decrypt %s element in %s" % \
-                    (el.tag, self.name)
-                if strict:
-                    raise PluginExecutionError(msg)
-                else:
-                    LOGGER.warning(msg)
+        if HAS_CRYPTO:
+            strict = self.xdata.get(
+                "decrypt",
+                SETUP.cfp.get(Bcfg2.Encryption.CFG_SECTION, "decrypt",
+                              default="strict")) == "strict"
+            for el in self.xdata.xpath("//*[@encrypted]"):
+                try:
+                    el.text = self._decrypt(el).encode('ascii',
+                                                       'xmlcharrefreplace')
+                except UnicodeDecodeError:
+                    LOGGER.info("Properties: Decrypted %s to gibberish, "
+                                "skipping" % el.tag)
+                except Bcfg2.Encryption.EVPError:
+                    msg = "Properties: Failed to decrypt %s element in %s" % \
+                        (el.tag, self.name)
+                    if strict:
+                        raise PluginExecutionError(msg)
+                    else:
+                        LOGGER.warning(msg)
     Index.__doc__ = Bcfg2.Server.Plugin.StructFile.Index.__doc__
 
     def _decrypt(self, element):
