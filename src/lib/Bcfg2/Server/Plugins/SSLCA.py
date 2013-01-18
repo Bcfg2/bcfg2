@@ -362,7 +362,8 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
     """ The SSLCA generator handles the creation and management of ssl
     certificates and their keys. """
     __author__ = 'g.hagger@gmail.com'
-    es_cls = lambda self, *args: SSLCAEntrySet(*args, parent=self)
+    # python 2.5 doesn't support mixing *magic and keyword arguments
+    es_cls = lambda self, *args: SSLCAEntrySet(*args, **dict(parent=self))
     es_child_cls = SSLCADataFile
 
     def get_ca(self, name):

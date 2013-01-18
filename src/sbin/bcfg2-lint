@@ -51,7 +51,8 @@ def run_plugin(plugin, plugin_name, setup=None, errorhandler=None,
     else:
         args.append(setup)
 
-    return plugin(*args, files=files, errorhandler=errorhandler).Run()
+    # python 2.5 doesn't support mixing *magic and keyword arguments
+    return plugin(*args, **dict(files=files, errorhandler=errorhandler)).Run()
 
 
 def get_errorhandler(setup):
