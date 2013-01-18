@@ -40,6 +40,52 @@ entry on the fly; this has a few repercussions:
   specify a particular GID number, you must explicitly define a
   ``POSIXGroup`` entry for the group.
 
+Managed UID/GID Ranges
+======================
+
+In many cases, there will be users on a system that you do not want to
+manage with Bcfg2, nor do you want them to be flagged as extra
+entries.  For example, users from an LDAP directory.  In this case,
+you may want to manage the local users on a machine with Bcfg2, while
+leaving the LDAP users to be managed by the LDAP directory.  To do
+this, you can configure the UID and GID ranges that are to be managed
+by Bcfg2 by setting the following options in the ``[POSIXUsers]``
+section of ``bcfg2.conf`` on the *client*:
+
+* ``uid_whitelist``
+* ``uid_blacklist``
+* ``gid_whitelist``
+* ``gid_blacklist``
+
+Each option takes a comma-delimited list of numeric ranges, inclusive
+at both bounds, one of which may be open-ended on the upper bound,
+e.g.::
+
+    [POSIXUsers]
+    uid_blacklist=1000-
+    gid_whitelist=0-500,700-999
+
+This would tell Bcfg2 to manage all users whose uid numbers were *not*
+greater than or equal to 1000, and all groups whose gid numbers were 0
+<= ``gid`` <= 500 or 700 <= ``gid`` <= 999.
+
+If a whitelist is provided, it will be used; otherwise, the blacklist
+will be used.  (I.e., if you provide both, the blacklist will be
+ignored.)
+
+If a user or group is added to the specification with a uid or gid in
+an unmanaged range, it will produce an error.
+
+.. note::
+
+    If you specify POSIXUser or POSIXGroup tags without an explicit
+    uid or gid, this will **not** prevent the users/groups from being
+    created with a uid/gid in an unmanaged range.  If you want that to
+    happen, you will need to configure your ``useradd``/``groupadd``
+    defaults appropriately.  Note also, however, that this will not
+    cause Bcfg2 errors; it is only an error if a POSIXUser or
+    POSIXGroup has an *explicit* uid/gid in an unmanaged range.
+
 Creating a baseline configuration
 =================================
 
@@ -50,4 +96,3 @@ packaging system.)  The often-tedious task of creating a baseline that
 defines all users and groups can be simplified by use of the
 ``tools/posixusers_baseline.py`` script, which outputs a bundle
 containing all users and groups on the machine it's run on.
-
