@@ -6,6 +6,7 @@ import sys
 import logging
 import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
+from Bcfg2.Compat import any  # pylint: disable=W0622
 
 
 class PackedDigitRange(object):
@@ -25,10 +26,8 @@ class PackedDigitRange(object):
         iother = int(other)
         if iother in self.sparse:
             return True
-        for (start, end) in self.ranges:
-            if iother in range(start, end + 1):
-                return True
-        return False
+        return any(iother in range(start, end + 1)
+                   for start, end in self.ranges)
 
 
 class PatternMap(object):

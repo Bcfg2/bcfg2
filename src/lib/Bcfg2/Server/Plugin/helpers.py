@@ -577,15 +577,12 @@ class StructFile(XMLFileBacked):
 
     def Index(self):
         XMLFileBacked.Index(self)
-        if self.encryption:
+        if self.encryption and HAS_CRYPTO:
             strict = self.xdata.get(
                 "decrypt",
                 self.setup.cfp.get(Bcfg2.Encryption.CFG_SECTION, "decrypt",
                                    default="strict")) == "strict"
             for el in self.xdata.xpath("//*[@encrypted]"):
-                if not HAS_CRYPTO:
-                    raise PluginExecutionError("%s: M2Crypto is not available"
-                                               % self.name)
                 try:
                     el.text = self._decrypt(el).encode('ascii',
                                                        'xmlcharrefreplace')

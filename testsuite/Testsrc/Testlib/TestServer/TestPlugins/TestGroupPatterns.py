@@ -22,13 +22,14 @@ class TestPackedDigitRange(Bcfg2TestCase):
     def test_includes(self):
         # tuples of (range description, numbers that are included,
         # numebrs that are excluded)
-        tests = [("1-3", [1, "2", 3], [4, "0"]),
-                 ("1", [1], [0, 2]),
+        tests = [("1-3", [1, "2", 3], [4]),
+                 ("1", [1], [0, "2"]),
                  ("10-11", [10, 11], [0, 1]),
                  ("9-9", [9], [8, 10]),
                  ("0-100", [0, 10, 99, 100], []),
                  ("1,3,5", [1, 3, 5], [0, 2, 4, 6]),
                  ("1-5,7", [1, 3, 5, 7], [0, 6, 8]),
+                 ("1-5,7,9-11", [1, 3, 5, 7, 9, 11], [0, 6, 8, 12]),
                  ("852-855,321-497,763", [852, 855, 321, 400, 497, 763], [])]
         for rng, inc, exc in tests:
             r = PackedDigitRange(rng)
