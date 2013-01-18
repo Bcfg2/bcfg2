@@ -989,6 +989,26 @@ CLIENT_YUM_VERIFY_FLAGS = \
            cf=('YUM', 'verify_flags'),
            deprecated_cf=('YUMng', 'verify_flags'),
            cook=list_split)
+CLIENT_POSIX_UID_WHITELIST = \
+    Option("UID ranges the POSIXUsers tool will manage",
+           default=[],
+           cf=('POSIXUsers', 'uid_whitelist'),
+           cook=list_split)
+CLIENT_POSIX_GID_WHITELIST = \
+    Option("GID ranges the POSIXUsers tool will manage",
+           default=[],
+           cf=('POSIXUsers', 'gid_whitelist'),
+           cook=list_split)
+CLIENT_POSIX_UID_BLACKLIST = \
+    Option("UID ranges the POSIXUsers tool will not manage",
+           default=[],
+           cf=('POSIXUsers', 'uid_blacklist'),
+           cook=list_split)
+CLIENT_POSIX_GID_BLACKLIST = \
+    Option("GID ranges the POSIXUsers tool will not manage",
+           default=[],
+           cf=('POSIXUsers', 'gid_blacklist'),
+           cook=list_split)
 
 # Logging options
 LOGGING_FILE_PATH = \
@@ -1141,7 +1161,11 @@ DRIVER_OPTIONS = \
          yum_installed_action=CLIENT_YUM_INSTALLED_ACTION,
          yum_version_fail_action=CLIENT_YUM_VERSION_FAIL_ACTION,
          yum_verify_fail_action=CLIENT_YUM_VERIFY_FAIL_ACTION,
-         yum_verify_flags=CLIENT_YUM_VERIFY_FLAGS)
+         yum_verify_flags=CLIENT_YUM_VERIFY_FLAGS,
+         posix_uid_whitelist=CLIENT_POSIX_UID_WHITELIST,
+         posix_gid_whitelist=CLIENT_POSIX_UID_WHITELIST,
+         posix_uid_blacklist=CLIENT_POSIX_UID_BLACKLIST,
+         posix_gid_blacklist=CLIENT_POSIX_UID_BLACKLIST)
 
 CLIENT_COMMON_OPTIONS = \
     dict(extra=CLIENT_EXTRA_DISPLAY,

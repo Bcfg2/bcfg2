@@ -4,9 +4,45 @@ and groupadd/mod/del """
 import sys
 import pwd
 import grp
-import Bcfg2.Client.XML
 import subprocess
+import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
+from Bcfg2.Compat import any  # pylint: disable=W0622
+
+
+class IDRangeSet(object):
+    """ Representation of a set of integer ranges.  Used to describe
+    which UID/GID ranges are managed or unmanaged. """
+
+    def __init__(self, *ranges):
+        self.ranges = []
+        self.ints = []
+        self.str = ",".join(str(r) for r in ranges)
+        for item in ranges:
+            item = str(item).strip()
+            if item.endswith("-"):
+                self.ranges.append((int(item[:-1]), None))
+            elif '-' in str(item):
+                self.ranges.append(tuple(int(x) for x in item.split('-')))
+            else:
+                self.ints.append(int(item))
+
+    def __contains__(self, other):
+        other = int(other)
+        if other in self.ints:
+            return True
+        return any((end is None and other >= start) or
+                   (end is not None and other >= start and other <= end)
+                   for start, end in self.ranges)
+
+    def __repr__(self):
+        return "%s:%s" % (self.__class__.__name__, str(self))
+
+    def __str__(self):
+        return "[%s]" % self.str
+
+    def __len__(self):
+        return len(self.ranges) + len(self.ints)
 
 
 class ExecutionError(Exception):
@@ -68,11 +104,15 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                    POSIXGroup=['name'])
     experimental = True
 
-    # A mapping of XML entry attributes to the indexes of
-    # corresponding values in the get*ent data structures
+    #: A mapping of XML entry attributes to the indexes of
+    #: corresponding values in the get{pw|gr}all data structures
     attr_mapping = dict(POSIXUser=dict(name=0, uid=2, gecos=4, home=5,
                                        shell=6),
                         POSIXGroup=dict(name=0, gid=2))
+
+    #: A mapping that describes the attribute name of the id of a given
+    #: user or group
+    id_mapping = dict(POSIXUser="uid", POSIXGroup="gid")
 
     def __init__(self, logger, setup, config):
         Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
@@ -80,6 +120,20 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                                  POSIXGroup=lambda g: g)
         self.cmd = Executor(logger)
         self._existing = None
+        self._whitelist = dict(POSIXUser=None, POSIXGroup=None)
+        self._blacklist = dict(POSIXUser=None, POSIXGroup=None)
+        if self.setup['posix_uid_whitelist']:
+            self._whitelist['POSIXUser'] = \
+                IDRangeSet(*self.setup['posix_uid_whitelist'])
+        else:
+            self._blacklist['POSIXUser'] = \
+                IDRangeSet(*self.setup['posix_uid_blacklist'])
+        if self.setup['posix_gid_whitelist']:
+            self._whitelist['POSIXGroup'] = \
+                IDRangeSet(*self.setup['posix_gid_whitelist'])
+        else:
+            self._blacklist['POSIXGroup'] = \
+                IDRangeSet(*self.setup['posix_gid_blacklist'])
 
     @property
     def existing(self):
@@ -90,6 +144,33 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                                   POSIXGroup=dict([(g[0], g)
                                                    for g in grp.getgrall()]))
         return self._existing
+
+    def _in_managed_range(self, tag, eid):
+        """ Check if the given uid or gid is in the appropriate
+        managed range.  This means that either a) a whitelist is
+        defined, and the uid/gid is in that whitelist; or b) no
+        whitelist is defined, and the uid/gid is not in the
+        blacklist. """
+        if self._whitelist[tag] is None:
+            return eid not in self._blacklist[tag]
+        else:
+            return eid in self._whitelist[tag]
+
+    def canInstall(self, entry):
+        if not Bcfg2.Client.Tools.Tool.canInstall(self, entry):
+            return False
+        eid = entry.get(self.id_mapping[entry.tag])
+        if eid is not None and not self._in_managed_range(entry.tag, eid):
+            if self._whitelist[entry.tag] is not None:
+                err = "not in whitelist"
+            else:  # blacklisted
+                err = "in blacklist"
+            self.logger.debug("%s: %s %s %s: %s" %
+                              (self.primarykey(entry), err,
+                               self.id_mapping[entry.tag], eid,
+                               self._blacklist[entry.tag]))
+            return False
+        return True
 
     def Inventory(self, states, structures=None):
         if not structures:
@@ -121,9 +202,11 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
             for entry in self.getSupportedEntries():
                 if entry.tag == tag:
                     specified.append(entry.get("name"))
-            extra.extend([Bcfg2.Client.XML.Element(tag, name=e)
-                          for e in self.existing[tag].keys()
-                          if e not in specified])
+            for name, data in self.existing[tag].items():
+                eid = data[self.attr_mapping[tag][self.id_mapping[tag]]]
+                if name not in specified and self._in_managed_range(tag, eid):
+                    extra.append(Bcfg2.Client.XML.Element(tag, name=name))
+
         return extra
 
     def populate_user_entry(self, entry):
@@ -201,7 +284,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                     errors.append("%s for %s %s is incorrect.  Current %s is "
                                   "%s, but should be %s" %
                                   (attr.title(), entry.tag, entry.get("name"),
-                                   attr, entry.get(attr), val))
+                                   attr, val, entry.get(attr)))
 
         if errors:
             for error in errors:
