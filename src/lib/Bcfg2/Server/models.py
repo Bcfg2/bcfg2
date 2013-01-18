@@ -58,7 +58,7 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
                 err = sys.exc_info()[1]
                 mod = __import__(plugin)
             except:  # pylint: disable=W0702
-                if plugins != Bcfg2.Server.Plugins.__all__:
+                if plugins != plugin_opt.default:
                     # only produce errors if the default plugin list
                     # was not used -- i.e., if the config file was set
                     # up.  don't produce errors when trying to load
