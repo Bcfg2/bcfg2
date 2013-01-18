@@ -250,14 +250,6 @@ class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
         pf.xdata = lxml.etree.Element("Properties")
         lxml.etree.SubElement(pf.xdata, "Crypted", encrypted="foo")
         pf.data = lxml.etree.tostring(pf.xdata)
-        # extra test: crypto is not available, but properties file is
-        # encrypted
-        has_crypto = Bcfg2.Server.Plugins.Properties.HAS_CRYPTO
-        Bcfg2.Server.Plugins.Properties.HAS_CRYPTO = False
-        try:
-            self.assertRaises(PluginExecutionError, pf.Index)
-        finally:
-            Bcfg2.Server.Plugins.Properties.HAS_CRYPTO = has_crypto
 
     @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
     def test_Index_crypto(self):
