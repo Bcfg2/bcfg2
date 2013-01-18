@@ -19,6 +19,33 @@ while path != "/":
 from common import *
 
 
+class TestIDRangeSet(Bcfg2TestCase):
+    def test_ranges(self):
+        # test cases.  tuples of (ranges, included numbers, excluded
+        # numbers)
+        # tuples of (range description, numbers that are included,
+        # numebrs that are excluded)
+        tests = [(["0-3"], ["0", 1, "2", 3], [4]),
+                 (["1"], [1], [0, "2"]),
+                 (["10-11"], [10, 11], [0, 1]),
+                 (["9-9"], [9], [8, 10]),
+                 (["0-100"], [0, 10, 99, 100], []),
+                 (["1", "3", "5"], [1, 3, 5], [0, 2, 4, 6]),
+                 (["1-5", "7"], [1, 3, 5, 7], [0, 6, 8]),
+                 (["1-5", 7, "9-11"], [1, 3, 5, 7, 9, 11], [0, 6, 8, 12]),
+                 (["852-855", "321-497", 763], [852, 855, 321, 400, 497, 763],
+                  [851, 320, 766, 999]),
+                 (["0-"], [0, 1, 100, 100000], []),
+                 ([1, "5-10", "1000-"], [1, 5, 10, 1000, 10000000],
+                  [4, 11, 999])]
+        for ranges, inc, exc in tests:
+            rng = IDRangeSet(*ranges)
+            for test in inc:
+                self.assertIn(test, rng)
+            for test in exc:
+                self.assertNotIn(test, rng)
+
+
 class TestExecutor(Bcfg2TestCase):
     test_obj = Executor
 
@@ -97,7 +124,8 @@ class TestPOSIXUsers(Bcfg2TestCase):
     def get_obj(self, logger=None, setup=None, config=None):
         if config is None:
             config = lxml.etree.Element("Configuration")
-        if not logger:
+
+        if logger is None:
             def print_msg(msg):
                 print(msg)
             logger = Mock()
@@ -105,8 +133,10 @@ class TestPOSIXUsers(Bcfg2TestCase):
             logger.warning = Mock(side_effect=print_msg)
             logger.info = Mock(side_effect=print_msg)
             logger.debug = Mock(side_effect=print_msg)
-        if not setup:
+
+        if setup is None:
             setup = MagicMock()
+            setup.__getitem__.return_value = []
         return self.test_obj(logger, setup, config)
 
     @patch("pwd.getpwall")
@@ -145,6 +175,60 @@ class TestPOSIXUsers(Bcfg2TestCase):
         mock_getgrall.assert_called_with()
         mock_getpwall.assert_called_with()
 
+    def test__in_managed_range(self):
+        users = self.get_obj()
+        users._whitelist = dict(POSIXGroup=IDRangeSet("1-10"))
+        users._blacklist = dict(POSIXGroup=IDRangeSet("8-100"))
+        self.assertTrue(users._in_managed_range("POSIXGroup", "9"))
+
+        users._whitelist = dict(POSIXGroup=None)
+        users._blacklist = dict(POSIXGroup=IDRangeSet("8-100"))
+        self.assertFalse(users._in_managed_range("POSIXGroup", "9"))
+
+        users._whitelist = dict(POSIXGroup=None)
+        users._blacklist = dict(POSIXGroup=IDRangeSet("100-"))
+        self.assertTrue(users._in_managed_range("POSIXGroup", "9"))
+
+        users._whitelist = dict(POSIXGroup=IDRangeSet("1-10"))
+        users._blacklist = dict(POSIXGroup=None)
+        self.assertFalse(users._in_managed_range("POSIXGroup", "25"))
+
+    @patch("Bcfg2.Client.Tools.Tool.canInstall")
+    def test_canInstall(self, mock_canInstall):
+        users = self.get_obj()
+        users._in_managed_range = Mock()
+        users._in_managed_range.return_value = False
+        mock_canInstall.return_value = False
+
+        def reset():
+            users._in_managed_range.reset()
+            mock_canInstall.reset()
+
+        # test failure of inherited method
+        entry = lxml.etree.Element("POSIXUser", name="test")
+        self.assertFalse(users.canInstall(entry))
+        mock_canInstall.assertCalledWith(users, entry)
+
+        # test with no uid specified
+        reset()
+        mock_canInstall.return_value = True
+        self.assertTrue(users.canInstall(entry))
+        mock_canInstall.assertCalledWith(users, entry)
+
+        # test with uid specified, not in managed range
+        reset()
+        entry.set("uid", "1000")
+        self.assertFalse(users.canInstall(entry))
+        mock_canInstall.assertCalledWith(users, entry)
+        users._in_managed_range.assert_called_with(entry.tag, "1000")
+
+        # test with uid specified, in managed range
+        reset()
+        users._in_managed_range.return_value = True
+        self.assertTrue(users.canInstall(entry))
+        mock_canInstall.assertCalledWith(users, entry)
+        users._in_managed_range.assert_called_with(entry.tag, "1000")
+
     @patch("Bcfg2.Client.Tools.Tool.Inventory")
     def test_Inventory(self, mock_Inventory):
         config = lxml.etree.Element("Configuration")
@@ -168,6 +252,8 @@ class TestPOSIXUsers(Bcfg2TestCase):
 
     def test_FindExtra(self):
         users = self.get_obj()
+        users._in_managed_range = Mock()
+        users._in_managed_range.side_effect = lambda t, i: i < 100
 
         def getSupportedEntries():
             return [lxml.etree.Element("POSIXUser", name="test1"),
@@ -176,15 +262,20 @@ class TestPOSIXUsers(Bcfg2TestCase):
         users.getSupportedEntries = Mock()
         users.getSupportedEntries.side_effect = getSupportedEntries
 
-        users._existing = dict(POSIXUser=dict(test1=(),
-                                              test2=()),
-                               POSIXGroup=dict(test2=()))
+        users._existing = dict(POSIXUser=dict(test1=("test1", "x", 15),
+                                              test2=("test2", "x", 25),
+                                              test3=("test3", "x", 115)),
+                               POSIXGroup=dict(test2=("test2", "x", 25)))
         extra = users.FindExtra()
         self.assertEqual(len(extra), 2)
         self.assertItemsEqual([e.tag for e in extra],
                               ["POSIXUser", "POSIXGroup"])
         self.assertItemsEqual([e.get("name") for e in extra],
                               ["test2", "test2"])
+        self.assertItemsEqual(users._in_managed_range.call_args_list,
+                              [call("POSIXUser", 25),
+                               call("POSIXUser", 115),
+                               call("POSIXGroup", 25)])
 
     def test_populate_user_entry(self):
         users = self.get_obj()
