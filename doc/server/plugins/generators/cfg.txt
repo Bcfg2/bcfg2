@@ -307,7 +307,7 @@ The Cheetah template is ignored.  Exploiting this fact is probably a
 pretty bad idea in practice.
 
 You can mix Genshi and Cheetah when using different host-specific or
-group-specific files.  For example:
+group-specific files.  For example::
 
     Cfg/etc/fstab/fstab.H_host.example.com.genshi
     Cfg/etc/fstab/fstab.G50_server.cheetah
