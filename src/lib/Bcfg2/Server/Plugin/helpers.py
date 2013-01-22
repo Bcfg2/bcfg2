@@ -17,6 +17,7 @@ from Bcfg2.Server.Plugin.base import Debuggable, Plugin
 from Bcfg2.Server.Plugin.interfaces import Generator
 from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
     PluginExecutionError
+import genshi.core
 
 try:
     import Bcfg2.Encryption
@@ -31,6 +32,21 @@ except ImportError:
     HAS_DJANGO = False
 
 LOGGER = logging.getLogger(__name__)
+
+
+def removecomment(stream):
+    """ A Genshi filter that removes comments from the stream.  This
+    function is a generator.
+
+    :param stream: The Genshi stream to remove comments from
+    :type stream: genshi.core.Stream
+    :returns: tuple of ``(kind, data, pos)``, as when iterating
+              through a Genshi stream
+    """
+    for kind, data, pos in stream:
+        if kind is genshi.core.COMMENT:
+            continue
+        yield kind, data, pos
 
 
 def default_path_metadata():

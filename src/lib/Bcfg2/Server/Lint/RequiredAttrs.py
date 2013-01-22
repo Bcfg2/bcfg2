@@ -8,11 +8,7 @@ import Bcfg2.Server.Lint
 import Bcfg2.Client.Tools.POSIX
 import Bcfg2.Client.Tools.VCS
 from Bcfg2.Server.Plugins.Packages import Apt, Yum
-try:
-    from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
-    HAS_GENSHI = True
-except ImportError:
-    HAS_GENSHI = False
+from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
 
 
 # format verifying functions
@@ -183,8 +179,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
 
         for bundle in self.core.plugins['Bundler'].entries.values():
             if (self.HandlesFile(bundle.name) and
-                (not HAS_GENSHI or
-                 not isinstance(bundle, BundleTemplateFile))):
+                 not isinstance(bundle, BundleTemplateFile)):
                 try:
                     xdata = lxml.etree.XML(bundle.data)
                 except (lxml.etree.XMLSyntaxError, AttributeError):

@@ -18,7 +18,7 @@ version = sys.version_info[:2]
 if version < (2, 6):
     need_m2crypto = True
 
-inst_reqs = ['lxml']
+inst_reqs = ['lxml', 'genshi']
 if need_m2crypto:
     inst_reqs.append('M2Crypto')
 

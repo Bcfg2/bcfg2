@@ -3,11 +3,7 @@
 import os
 import re
 import Bcfg2.Server.Lint
-try:
-    from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
-    HAS_GENSHI = True
-except ImportError:
-    HAS_GENSHI = False
+from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
 
 
 class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
@@ -43,8 +39,7 @@ class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
         """ Check groups used in the Bundler plugin for validity """
         for bundle in self.core.plugins['Bundler'].entries.values():
             if (self.HandlesFile(bundle.name) and
-                (not HAS_GENSHI or
-                 not isinstance(bundle, BundleTemplateFile))):
+                not isinstance(bundle, BundleTemplateFile)):
                 self.check_entries(bundle.xdata.xpath("//Group"),
                                    bundle.name)
 

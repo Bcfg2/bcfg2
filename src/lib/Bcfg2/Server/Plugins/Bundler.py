@@ -11,28 +11,8 @@ import Bcfg2.Server.Plugin
 import Bcfg2.Server.Lint
 from Bcfg2.Options import get_option_parser
 
-try:
-    import genshi.core
-    import genshi.input
-    from genshi.template import TemplateLoader, MarkupTemplate, TemplateError
-    HAS_GENSHI = True
-except ImportError:
-    HAS_GENSHI = False
-
-
-def removecomment(stream):
-    """ A Genshi filter that removes comments from the stream.  This
-    function is a generator.
-
-    :param stream: The Genshi stream to remove comments from
-    :type stream: genshi.core.Stream
-    :returns: tuple of ``(kind, data, pos)``, as when iterating
-              through a Genshi stream
-    """
-    for kind, data, pos in stream:
-        if kind is genshi.core.COMMENT:
-            continue
-        yield kind, data, pos
+import genshi.input
+from genshi.template import TemplateLoader, MarkupTemplate, TemplateError
 
 
 class BundleFile(Bcfg2.Server.Plugin.StructFile):
@@ -46,64 +26,64 @@ class BundleFile(Bcfg2.Server.Plugin.StructFile):
         return bundle
 
 
-if HAS_GENSHI:
-    class BundleTemplateFile(Bcfg2.Server.Plugin.StructFile):
-        """ Representation of a Genshi-templated bundle XML file """
+class BundleTemplateFile(Bcfg2.Server.Plugin.StructFile):
+    """ Representation of a Genshi-templated bundle XML file """
 
-        def __init__(self, name, encoding):
-            Bcfg2.Server.Plugin.StructFile.__init__(self, name)
-            self.encoding = encoding
-            self.logger = logging.getLogger(name)
-            self.template = None
+    def __init__(self, name, encoding):
+        Bcfg2.Server.Plugin.StructFile.__init__(self, name)
+        self.encoding = encoding
+        self.logger = logging.getLogger(name)
+        self.template = None
 
-        def HandleEvent(self, event=None):
-            """Handle all fs events for this template."""
-            if event and event.code2str() == 'deleted':
-                return
-            try:
-                loader = TemplateLoader()
-                self.template = loader.load(self.name, cls=MarkupTemplate,
-                                            encoding=self.encoding)
-            except LookupError:
-                err = sys.exc_info()[1]
-                self.logger.error('Genshi lookup error in %s: %s' %
-                                  (self.name, err))
-            except TemplateError:
-                err = sys.exc_info()[1]
-                self.logger.error('Genshi template error in %s: %s' %
-                                  (self.name, err))
-            except genshi.input.ParseError:
-                err = sys.exc_info()[1]
-                self.logger.error('Genshi parse error in %s: %s' %
-                                  (self.name, err))
+    def HandleEvent(self, event=None):
+        """Handle all fs events for this template."""
+        if event and event.code2str() == 'deleted':
+            return
+        try:
+            loader = TemplateLoader()
+            self.template = loader.load(self.name, cls=MarkupTemplate,
+                                        encoding=self.encoding)
+        except LookupError:
+            err = sys.exc_info()[1]
+            self.logger.error('Genshi lookup error in %s: %s' %
+                              (self.name, err))
+        except TemplateError:
+            err = sys.exc_info()[1]
+            self.logger.error('Genshi template error in %s: %s' %
+                              (self.name, err))
+        except genshi.input.ParseError:
+            err = sys.exc_info()[1]
+            self.logger.error('Genshi parse error in %s: %s' %
+                              (self.name, err))
 
-        def get_xml_value(self, metadata):
-            """ get the rendered XML data that applies to the given
-            client """
-            if not hasattr(self, 'template'):
-                msg = "No parsed template information for %s" % self.name
-                self.logger.error(msg)
-                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-            stream = self.template.generate(
-                metadata=metadata,
-                repo=get_option_parser()['repo']).filter(removecomment)
-            data = lxml.etree.XML(stream.render('xml',
-                                                strip_whitespace=False),
-                                  parser=Bcfg2.Server.XMLParser)
-            bundlename = os.path.splitext(os.path.basename(self.name))[0]
-            bundle = lxml.etree.Element('Bundle', name=bundlename)
-            for item in self.Match(metadata, data):
-                bundle.append(copy.deepcopy(item))
-            return bundle
+    def get_xml_value(self, metadata):
+        """ get the rendered XML data that applies to the given
+        client """
+        if not hasattr(self, 'template'):
+            msg = "No parsed template information for %s" % self.name
+            self.logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+        stream = self.template.generate(
+            metadata=metadata,
+            repo=get_option_parser()['repo']
+            ).filter(Bcfg2.Server.Plugin.removecomment)
+        data = lxml.etree.XML(stream.render('xml',
+                                            strip_whitespace=False),
+                              parser=Bcfg2.Server.XMLParser)
+        bundlename = os.path.splitext(os.path.basename(self.name))[0]
+        bundle = lxml.etree.Element('Bundle', name=bundlename)
+        for item in self.Match(metadata, data):
+            bundle.append(copy.deepcopy(item))
+        return bundle
 
-        def Match(self, metadata, xdata):  # pylint: disable=W0221
-            """Return matching fragments of parsed template."""
-            rv = []
-            for child in xdata.getchildren():
-                rv.extend(self._match(child, metadata))
-            self.logger.debug("File %s got %d match(es)" % (self.name,
-                                                            len(rv)))
-            return rv
+    def Match(self, metadata, xdata):  # pylint: disable=W0221
+        """Return matching fragments of parsed template."""
+        rv = []
+        for child in xdata.getchildren():
+            rv.extend(self._match(child, metadata))
+        self.logger.debug("File %s got %d match(es)" % (self.name,
+                                                        len(rv)))
+        return rv
 
 
 class Bundler(Bcfg2.Server.Plugin.Plugin,
@@ -135,14 +115,8 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
                                   parser=Bcfg2.Server.XMLParser)
         nsmap = bundle.getroot().nsmap
         if (name.endswith('.genshi') or
-            ('py' in nsmap and
-             nsmap['py'] == 'http://genshi.edgewall.org/')):
-            if HAS_GENSHI:
-                return BundleTemplateFile(name, self.encoding)
-            else:
-                raise Bcfg2.Server.Plugin.PluginExecutionError("Genshi not "
-                                                               "available: %s"
-                                                               % name)
+            ('py' in nsmap and nsmap['py'] == 'http://genshi.edgewall.org/')):
+            return BundleTemplateFile(name, self.encoding)
         else:
             return BundleFile(name)
 
@@ -183,8 +157,7 @@ class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
         self.missing_bundles()
         for bundle in self.core.plugins['Bundler'].entries.values():
             if (self.HandlesFile(bundle.name) and
-                (not HAS_GENSHI or
-                 not isinstance(bundle, BundleTemplateFile))):
+                not isinstance(bundle, BundleTemplateFile)):
                 self.bundle_names(bundle)
 
     @classmethod

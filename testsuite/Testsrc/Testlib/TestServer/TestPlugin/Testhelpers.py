@@ -3,6 +3,7 @@ import sys
 import copy
 import lxml.etree
 import Bcfg2.Server
+import genshi.core
 from Bcfg2.Compat import reduce
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugin.helpers import *
@@ -36,6 +37,15 @@ class FakeElementTree(lxml.etree._ElementTree):
 
 
 class TestFunctions(Bcfg2TestCase):
+    def test_removecomment(self):
+        data = [(None, "test", 1),
+                (None, "test2", 2)]
+        stream = [(genshi.core.COMMENT, "test", 0),
+                  data[0],
+                  (genshi.core.COMMENT, "test3", 0),
+                  data[1]]
+        self.assertItemsEqual(list(removecomment(stream)), data)
+
     def test_bind_info(self):
         entry = lxml.etree.Element("Path", name="/test")
         metadata = Mock()
