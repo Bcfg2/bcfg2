@@ -264,7 +264,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
                       support multiple package types in package groups
                       (e.g., "recommended," "optional," etc.)
         :type ptype: string
-        :returns: list of strings - package names, but see 
+        :returns: list of strings - package names, but see
                   :ref:`pkg-objects`
         """
         if not self.__package_groups__:
@@ -467,7 +467,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         included in the client configuration. See :ref:`pkg-objects`
         for more details.
 
-        :param pkglist: A list of packages as returned by 
+        :param pkglist: A list of packages as returned by
                         :func:`complete`
         :type pkglist: list of strings, but see :ref:`pkg-objects`
         :param entry: The base XML entry to add all of the Package
@@ -562,7 +562,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
                 # should be resolved
                 current = pkgs.pop()
                 self.debug_log("Packages: handling package requirement %s" %
-                               current)
+                               (current,))
                 packages.add(current)
                 deps = self.get_deps(current)
                 newdeps = set(deps).difference(examined)
