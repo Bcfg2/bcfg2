@@ -269,9 +269,6 @@ class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
   </Plain>
 </Properties>'''
 
-        print "HAS_CRYPTO: %s" % HAS_CRYPTO
-        print "Properties HAS_CRYPTO: %s" % Bcfg2.Server.Plugins.Properties.HAS_CRYPTO
-
         # test successful decryption
         pf.Index()
         self.assertItemsEqual(pf._decrypt.call_args_list,
