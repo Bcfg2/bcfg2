@@ -3,12 +3,10 @@ verified with an XML schema alone"""
 
 import os
 import re
-import lxml.etree
 import Bcfg2.Server.Lint
 import Bcfg2.Client.Tools.POSIX
 import Bcfg2.Client.Tools.VCS
 from Bcfg2.Server.Plugins.Packages import Apt, Yum
-from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
 
 
 # format verifying functions
@@ -178,16 +176,9 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             return
 
         for bundle in self.core.plugins['Bundler'].entries.values():
-            if (self.HandlesFile(bundle.name) and
-                 not isinstance(bundle, BundleTemplateFile)):
-                try:
-                    xdata = lxml.etree.XML(bundle.data)
-                except (lxml.etree.XMLSyntaxError, AttributeError):
-                    xdata = \
-                        lxml.etree.parse(bundle.template.filepath).getroot()
-
-                for path in \
-                        xdata.xpath("//*[substring(name(), 1, 5) = 'Bound']"):
+            if self.HandlesFile(bundle.name) and bundle.template is None:
+                for path in bundle.xdata.xpath(
+                    "//*[substring(name(), 1, 5) = 'Bound']"):
                     self.check_entry(path, bundle.name)
 
     def check_entry(self, entry, filename):

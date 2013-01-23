@@ -1,6 +1,7 @@
 import os
 import sys
 import copy
+import genshi
 import lxml.etree
 import Bcfg2.Server
 import genshi.core
@@ -679,10 +680,47 @@ class TestStructFile(TestXMLFileBacked):
         children[4] = standalone
         return (xdata, groups, subgroups, children, subchildren, standalone)
 
-    def test_Index(self):
+    def _get_template_test_data(self):
+        (xdata, groups, subgroups, children, subchildren, standalone) = \
+            self._get_test_data()
+        template_xdata = \
+            lxml.etree.Element("Test", name="test",
+                               nsmap=dict(py='http://genshi.edgewall.org/'))
+        template_xdata.extend(xdata.getchildren())
+        return (template_xdata, groups, subgroups, children, subchildren,
+                standalone)
+
+    @patch("genshi.template.TemplateLoader")
+    def test_Index(self, mock_TemplateLoader):
         has_crypto = Bcfg2.Server.Plugin.helpers.HAS_CRYPTO
         Bcfg2.Server.Plugin.helpers.HAS_CRYPTO = False
         TestXMLFileBacked.test_Index(self)
+
+        sf = self.get_obj()
+        sf.encoding = Mock()
+        (xdata, groups, subgroups, children, subchildren, standalone) = \
+            self._get_test_data()
+        sf.data = lxml.etree.tostring(xdata)
+
+        mock_TemplateLoader.reset_mock()
+        sf.Index()
+        self.assertFalse(mock_TemplateLoader.called)
+
+        mock_TemplateLoader.reset_mock()
+        template_xdata = \
+            lxml.etree.Element("Test", name="test",
+                               nsmap=dict(py='http://genshi.edgewall.org/'))
+        template_xdata.extend(xdata.getchildren())
+        sf.data = lxml.etree.tostring(template_xdata)
+        sf.Index()
+        mock_TemplateLoader.assert_called_with()
+        loader = mock_TemplateLoader.return_value
+        loader.load.assert_called_with(sf.name,
+                                       cls=genshi.template.MarkupTemplate,
+                                       encoding=sf.encoding)
+        self.assertEqual(sf.template,
+                         loader.load.return_value)
+
         Bcfg2.Server.Plugin.helpers.HAS_CRYPTO = has_crypto
 
     @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
@@ -813,16 +851,15 @@ class TestStructFile(TestXMLFileBacked):
 
         self.assertTrue(inc("Other"))
 
-    @patch("Bcfg2.Server.Plugin.helpers.%s._include_element" %
-           test_obj.__name__)
-    def test__match(self, mock_include):
+    def test__match(self):
         sf = self.get_obj()
+        sf._include_element = Mock()
         metadata = Mock()
 
         (xdata, groups, subgroups, children, subchildren, standalone) = \
             self._get_test_data()
 
-        mock_include.side_effect = \
+        sf._include_element.side_effect = \
             lambda x, _: (x.tag not in ['Client', 'Group'] or
                           x.get("include") == "true")
 
@@ -842,46 +879,51 @@ class TestStructFile(TestXMLFileBacked):
         for el in standalone:
             self.assertXMLEqual(el, sf._match(el, metadata)[0])
 
-    @patch("Bcfg2.Server.Plugin.helpers.%s._match" % test_obj.__name__)
-    def test_Match(self, mock_match):
+    def test_Match(self):
         sf = self.get_obj()
+        sf._match = Mock()
+        metadata = Mock()
+
+        for test_data in [self._get_test_data(),
+                          self._get_template_test_data()]:
+            (xdata, groups, subgroups, children, subchildren, standalone) = \
+                test_data
+            sf.data = lxml.etree.tostring(xdata)
+            sf.Index()
+
+            def match_rv(el, _):
+                if el.tag not in ['Client', 'Group']:
+                    return [el]
+                elif el.get("include") == "true":
+                    return el.getchildren()
+                else:
+                    return []
+            sf._match.side_effect = match_rv
+            actual = sf.Match(metadata)
+            expected = reduce(lambda x, y: x + y,
+                              list(children.values()) + list(subgroups.values()))
+            print "doc: %s" % lxml.etree.tostring(xdata, pretty_print=True)
+            print "actual: %s" % [lxml.etree.tostring(el) for el in actual]
+            print "expected: %s" % [lxml.etree.tostring(el) for el in expected]
+            self.assertEqual(len(actual), len(expected))
+            # easiest way to compare the values is actually to make
+            # them into an XML document and let assertXMLEqual compare
+            # them
+            xactual = lxml.etree.Element("Container")
+            xactual.extend(actual)
+            xexpected = lxml.etree.Element("Container")
+            xexpected.extend(expected)
+            self.assertXMLEqual(xactual, xexpected)
+
+    def test__xml_match(self):
+        sf = self.get_obj()
+        sf._include_element = Mock()
         metadata = Mock()
 
         (xdata, groups, subgroups, children, subchildren, standalone) = \
             self._get_test_data()
-        sf.entries.extend(copy.deepcopy(xdata).getchildren())
 
-        def match_rv(el, _):
-            if el.tag not in ['Client', 'Group']:
-                return [el]
-            elif x.get("include") == "true":
-                return el.getchildren()
-            else:
-                return []
-        mock_match.side_effect = match_rv
-        actual = sf.Match(metadata)
-        expected = reduce(lambda x, y: x + y,
-                          list(children.values()) + list(subgroups.values()))
-        self.assertEqual(len(actual), len(expected))
-        # easiest way to compare the values is actually to make
-        # them into an XML document and let assertXMLEqual compare
-        # them
-        xactual = lxml.etree.Element("Container")
-        xactual.extend(actual)
-        xexpected = lxml.etree.Element("Container")
-        xexpected.extend(expected)
-        self.assertXMLEqual(xactual, xexpected)
-
-    @patch("Bcfg2.Server.Plugin.helpers.%s._include_element" %
-           test_obj.__name__)
-    def test__xml_match(self, mock_include):
-        sf = self.get_obj()
-        metadata = Mock()
-
-        (xdata, groups, subgroups, children, subchildren, standalone) = \
-            self._get_test_data()
-
-        mock_include.side_effect = \
+        sf._include_element.side_effect = \
             lambda x, _: (x.tag not in ['Client', 'Group'] or
                           x.get("include") == "true")
 
@@ -895,9 +937,9 @@ class TestStructFile(TestXMLFileBacked):
         expected.extend(standalone)
         self.assertXMLEqual(actual, expected)
 
-    @patch("Bcfg2.Server.Plugin.helpers.%s._xml_match" % test_obj.__name__)
-    def test_Match(self, mock_xml_match):
+    def test_XMLMatch(self):
         sf = self.get_obj()
+        sf._xml_match = Mock()
         metadata = Mock()
 
         (sf.xdata, groups, subgroups, children, subchildren, standalone) = \
@@ -905,7 +947,7 @@ class TestStructFile(TestXMLFileBacked):
 
         sf.XMLMatch(metadata)
         actual = []
-        for call in mock_xml_match.call_args_list:
+        for call in sf._xml_match.call_args_list:
             actual.append(call[0][0])
             self.assertEqual(call[0][1], metadata)
         expected = list(groups.values()) + standalone

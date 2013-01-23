@@ -4,86 +4,21 @@ import os
 import re
 import sys
 import copy
-import logging
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Lint
-from Bcfg2.Options import get_option_parser
-
-import genshi.input
-from genshi.template import TemplateLoader, MarkupTemplate, TemplateError
+from genshi.template import TemplateError
 
 
 class BundleFile(Bcfg2.Server.Plugin.StructFile):
     """ Representation of a bundle XML file """
     def get_xml_value(self, metadata):
         """ get the XML data that applies to the given client """
-        bundlename = os.path.splitext(os.path.basename(self.name))[0]
-        bundle = lxml.etree.Element('Bundle', name=bundlename)
+        bundle = lxml.etree.Element('Bundle', name=self.xdata.get("name"))
         for item in self.Match(metadata):
             bundle.append(copy.copy(item))
         return bundle
-
-
-class BundleTemplateFile(Bcfg2.Server.Plugin.StructFile):
-    """ Representation of a Genshi-templated bundle XML file """
-
-    def __init__(self, name, encoding):
-        Bcfg2.Server.Plugin.StructFile.__init__(self, name)
-        self.encoding = encoding
-        self.logger = logging.getLogger(name)
-        self.template = None
-
-    def HandleEvent(self, event=None):
-        """Handle all fs events for this template."""
-        if event and event.code2str() == 'deleted':
-            return
-        try:
-            loader = TemplateLoader()
-            self.template = loader.load(self.name, cls=MarkupTemplate,
-                                        encoding=self.encoding)
-        except LookupError:
-            err = sys.exc_info()[1]
-            self.logger.error('Genshi lookup error in %s: %s' %
-                              (self.name, err))
-        except TemplateError:
-            err = sys.exc_info()[1]
-            self.logger.error('Genshi template error in %s: %s' %
-                              (self.name, err))
-        except genshi.input.ParseError:
-            err = sys.exc_info()[1]
-            self.logger.error('Genshi parse error in %s: %s' %
-                              (self.name, err))
-
-    def get_xml_value(self, metadata):
-        """ get the rendered XML data that applies to the given
-        client """
-        if not hasattr(self, 'template'):
-            msg = "No parsed template information for %s" % self.name
-            self.logger.error(msg)
-            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-        stream = self.template.generate(
-            metadata=metadata,
-            repo=get_option_parser()['repo']
-            ).filter(Bcfg2.Server.Plugin.removecomment)
-        data = lxml.etree.XML(stream.render('xml',
-                                            strip_whitespace=False),
-                              parser=Bcfg2.Server.XMLParser)
-        bundlename = os.path.splitext(os.path.basename(self.name))[0]
-        bundle = lxml.etree.Element('Bundle', name=bundlename)
-        for item in self.Match(metadata, data):
-            bundle.append(copy.deepcopy(item))
-        return bundle
-
-    def Match(self, metadata, xdata):  # pylint: disable=W0221
-        """Return matching fragments of parsed template."""
-        rv = []
-        for child in xdata.getchildren():
-            rv.extend(self._match(child, metadata))
-        self.logger.debug("File %s got %d match(es)" % (self.name,
-                                                        len(rv)))
-        return rv
 
 
 class Bundler(Bcfg2.Server.Plugin.Plugin,
@@ -92,13 +27,12 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
     """ The bundler creates dependent clauses based on the
     bundle/translation scheme from Bcfg1. """
     __author__ = 'bcfg-dev@mcs.anl.gov'
+    __child__ = BundleFile
     patterns = re.compile('^(?P<name>.*)\.(xml|genshi)$')
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Structure.__init__(self)
-        self.encoding = core.setup['encoding']
-        self.__child__ = self.template_dispatch
         try:
             Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data)
         except OSError:
@@ -106,19 +40,6 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
             msg = "Failed to load Bundle repository %s: %s" % (self.data, err)
             self.logger.error(msg)
             raise Bcfg2.Server.Plugin.PluginInitError(msg)
-
-    def template_dispatch(self, name, _):
-        """ Add the correct child entry type to Bundler depending on
-        whether the XML file in question is a plain XML file or a
-        templated bundle """
-        bundle = lxml.etree.parse(name,
-                                  parser=Bcfg2.Server.XMLParser)
-        nsmap = bundle.getroot().nsmap
-        if (name.endswith('.genshi') or
-            ('py' in nsmap and nsmap['py'] == 'http://genshi.edgewall.org/')):
-            return BundleTemplateFile(name, self.encoding)
-        else:
-            return BundleFile(name)
 
     def BuildStructures(self, metadata):
         """Build all structures for client (metadata)."""
@@ -156,8 +77,7 @@ class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
         """ run plugin """
         self.missing_bundles()
         for bundle in self.core.plugins['Bundler'].entries.values():
-            if (self.HandlesFile(bundle.name) and
-                not isinstance(bundle, BundleTemplateFile)):
+            if self.HandlesFile(bundle.name):
                 self.bundle_names(bundle)
 
     @classmethod
@@ -186,14 +106,8 @@ class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
 
     def bundle_names(self, bundle):
         """ verify bundle name attribute matches filename """
-        try:
-            xdata = lxml.etree.XML(bundle.data)
-        except AttributeError:
-            # genshi template
-            xdata = lxml.etree.parse(bundle.template.filepath).getroot()
-
         fname = os.path.splitext(os.path.basename(bundle.name))[0]
-        bname = xdata.get('name')
+        bname = bundle.xdata.get('name')
         if fname != bname:
             self.LintError("inconsistent-bundle-name",
                            "Inconsistent bundle name: filename is %s, "

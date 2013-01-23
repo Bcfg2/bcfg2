@@ -5,6 +5,7 @@ import re
 import sys
 import copy
 import time
+import genshi
 import logging
 import operator
 import lxml.etree
@@ -17,7 +18,6 @@ from Bcfg2.Server.Plugin.base import Debuggable, Plugin
 from Bcfg2.Server.Plugin.interfaces import Generator
 from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
     PluginExecutionError
-import genshi.core
 
 try:
     import Bcfg2.Encryption
@@ -590,9 +590,31 @@ class StructFile(XMLFileBacked):
     def __init__(self, filename, should_monitor=False):
         XMLFileBacked.__init__(self, filename, should_monitor=should_monitor)
         self.setup = Bcfg2.Options.get_option_parser()
+        self.encoding = self.setup['encoding']
+        self.template = None
 
     def Index(self):
         XMLFileBacked.Index(self)
+        if (self.name.endswith('.genshi') or
+            ('py' in self.xdata.nsmap and
+             self.xdata.nsmap['py'] == 'http://genshi.edgewall.org/')):
+            try:
+                loader = genshi.template.TemplateLoader()
+                self.template = loader.load(self.name,
+                                            cls=genshi.template.MarkupTemplate,
+                                            encoding=self.encoding)
+            except LookupError:
+                err = sys.exc_info()[1]
+                LOGGER.error('Genshi lookup error in %s: %s' % (self.name,
+                                                                err))
+            except genshi.template.TemplateError:
+                err = sys.exc_info()[1]
+                LOGGER.error('Genshi template error in %s: %s' % (self.name,
+                                                                  err))
+            except genshi.input.ParseError:
+                err = sys.exc_info()[1]
+                LOGGER.error('Genshi parse error in %s: %s' % (self.name, err))
+
         if self.encryption and HAS_CRYPTO:
             strict = self.xdata.get(
                 "decrypt",
@@ -644,6 +666,21 @@ class StructFile(XMLFileBacked):
         else:
             return True
 
+    def _render(self, metadata):
+        """ Render the template for the given client metadata
+
+        :param metadata: Client metadata to match against.
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: lxml.etree._Element object representing the rendered
+                  XML data
+        """
+        stream = self.template.generate(
+            metadata=metadata,
+            repo=self.setup['repo']).filter(removecomment)
+        return lxml.etree.XML(stream.render('xml',
+                                            strip_whitespace=False),
+                              parser=Bcfg2.Server.XMLParser)
+
     def _match(self, item, metadata):
         """ recursive helper for Match() """
         if self._include_element(item, metadata):
@@ -677,7 +714,13 @@ class StructFile(XMLFileBacked):
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: list of lxml.etree._Element objects """
         rv = []
-        for child in self.entries:
+        if self.template is None:
+            entries = self.entries
+        else:
+            entries = self._render(metadata).getchildren()
+            print "rendered: %s" % lxml.etree.tostring(self._render(metadata),
+                                                       pretty_print=True)
+        for child in entries:
             rv.extend(self._match(child, metadata))
         return rv
 
@@ -713,7 +756,10 @@ class StructFile(XMLFileBacked):
         :param metadata: Client metadata to match against.
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: lxml.etree._Element """
-        rv = copy.deepcopy(self.xdata)
+        if self.template is None:
+            rv = copy.deepcopy(self.xdata)
+        else:
+            rv = self._render(metadata)
         for child in rv.iterchildren():
             self._xml_match(child, metadata)
         return rv

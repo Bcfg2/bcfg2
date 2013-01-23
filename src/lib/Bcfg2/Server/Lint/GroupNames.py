@@ -3,7 +3,6 @@
 import os
 import re
 import Bcfg2.Server.Lint
-from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
 
 
 class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
@@ -38,8 +37,7 @@ class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
     def check_bundles(self):
         """ Check groups used in the Bundler plugin for validity """
         for bundle in self.core.plugins['Bundler'].entries.values():
-            if (self.HandlesFile(bundle.name) and
-                not isinstance(bundle, BundleTemplateFile)):
+            if self.HandlesFile(bundle.name) and bundle.template is None:
                 self.check_entries(bundle.xdata.xpath("//Group"),
                                    bundle.name)
 
