@@ -692,6 +692,9 @@ class YumCollection(Collection):
         :type entry: lxml.etree._Element
         :returns: list of tuples
         """
+        if not self.use_yum:
+            return Collection.packages_from_entry(self, entry)
+
         rv = set()
         name = entry.get("name")
 
@@ -737,6 +740,9 @@ class YumCollection(Collection):
         :type entry: lxml.etree._Element
         :returns: None
         """
+        if not self.use_yum:
+            return Collection.packages_to_entry(self, pkglist, entry)
+
         def _get_entry_attrs(pkgtup):
             """ Given a package tuple, return a dict of attributes
             suitable for applying to either a Package or an Instance
