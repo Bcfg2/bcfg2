@@ -683,6 +683,21 @@ class YumCollection(Collection):
 
         return self.call_helper("get_groups", inputdata=gdicts)
 
+    def _element_to_pkg(self, el, name):
+        """ Convert a Package or Instance element to a package tuple """
+        rv = (name, el.get("arch"), el.get("epoch"),
+              el.get("version"), el.get("release"))
+        if rv[3] in ['any', 'auto']:
+            rv = (rv[0], rv[1], rv[2], None, None)
+        # if a package requires no specific version, we just use
+        # the name, not the tuple.  this limits the amount of JSON
+        # encoding/decoding that has to be done to pass the
+        # package list to bcfg2-yum-helper.
+        if rv[1:] == (None, None, None, None):
+            return name
+        else:
+            return rv
+
     def packages_from_entry(self, entry):
         """ When using the Python yum libraries, convert a Package
         entry to a list of package tuples.  See :ref:`yum-pkg-objects`
@@ -698,28 +713,35 @@ class YumCollection(Collection):
         rv = set()
         name = entry.get("name")
 
-        def _tag_to_pkg(tag):
-            """ Convert a Package or Instance tag to a package tuple """
-            rv = (name, tag.get("arch"), tag.get("epoch"),
-                  tag.get("version"), tag.get("release"))
-            if rv[3] in ['any', 'auto']:
-                rv = (rv[0], rv[1], rv[2], None, None)
-            # if a package requires no specific version, we just use
-            # the name, not the tuple.  this limits the amount of JSON
-            # encoding/decoding that has to be done to pass the
-            # package list to bcfg2-yum-helper.
-            if rv[1:] == (None, None, None, None):
-                return name
-            else:
-                return rv
-
         for inst in entry.getchildren():
             if inst.tag != "Instance":
                 continue
-            rv.add(_tag_to_pkg(inst))
+            rv.add(self._element_to_pkg(inst, name))
         if not rv:
-            rv.add(_tag_to_pkg(entry))
+            rv.add(self._element_to_pkg(entry, name))
         return list(rv)
+
+    def _get_entry_attrs(self, pkgtup):
+        """ Given a package tuple, return a dict of attributes
+        suitable for applying to either a Package or an Instance
+        tag """
+        attrs = dict(version=self.setup.cfp.get("packages", "version",
+                                                default="auto"))
+        if attrs['version'] == 'any' or not isinstance(pkgtup, tuple):
+            return attrs
+
+        try:
+            if pkgtup[1]:
+                attrs['arch'] = pkgtup[1]
+            if pkgtup[2]:
+                attrs['epoch'] = pkgtup[2]
+            if pkgtup[3]:
+                attrs['version'] = pkgtup[3]
+            if pkgtup[4]:
+                attrs['release'] = pkgtup[4]
+        except IndexError:
+            self.logger.warning("Malformed package tuple: %s" % pkgtup)
+        return attrs
 
     def packages_to_entry(self, pkglist, entry):
         """ When using the Python yum libraries, convert a list of
@@ -743,29 +765,6 @@ class YumCollection(Collection):
         if not self.use_yum:
             return Collection.packages_to_entry(self, pkglist, entry)
 
-        def _get_entry_attrs(pkgtup):
-            """ Given a package tuple, return a dict of attributes
-            suitable for applying to either a Package or an Instance
-            tag """
-            attrs = dict(version=self.setup.cfp.get("packages",
-                                                    "version",
-                                                    default="auto"))
-            if attrs['version'] == 'any' or not isinstance(pkgtup, tuple):
-                return attrs
-
-            try:
-                if pkgtup[1]:
-                    attrs['arch'] = pkgtup[1]
-                if pkgtup[2]:
-                    attrs['epoch'] = pkgtup[2]
-                if pkgtup[3]:
-                    attrs['version'] = pkgtup[3]
-                if pkgtup[4]:
-                    attrs['release'] = pkgtup[4]
-            except IndexError:
-                self.logger.warning("Malformed package tuple: %s" % pkgtup)
-            return attrs
-
         packages = dict()
         for pkg in pkglist:
             try:
@@ -781,9 +780,9 @@ class YumCollection(Collection):
                                                **pkgattrs)
                 for inst in instances:
                     lxml.etree.SubElement(pkg_el, "Instance",
-                                          _get_entry_attrs(inst))
+                                          self._get_entry_attrs(inst))
             else:
-                attrs = _get_entry_attrs(instances[0])
+                attrs = self._get_entry_attrs(instances[0])
                 attrs.update(pkgattrs)
                 lxml.etree.SubElement(entry, 'BoundPackage', **attrs)
 
