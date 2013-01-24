@@ -70,6 +70,13 @@ class Git(Bcfg2.Server.Plugin.Version):
             self.logger.warning("Git: Failed to perform garbage collection: %s"
                                 % sys.exc_info()[1])
 
+        self.debug_log("Git: Fetching all refs for repo at %s" % self.vcs_root)
+        try:
+            self._log_git_cmd(self.repo.git.fetch('--all'))
+        except git.GitCommandError:
+            self.logger.warning("Git: Failed to fetch refs: %s" %
+                                sys.exc_info()[1])
+
         if ref:
             self.debug_log("Git: Checking out %s" % ref)
             try:
