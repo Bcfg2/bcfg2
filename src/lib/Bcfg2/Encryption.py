@@ -36,6 +36,9 @@ CFG_SECTION = "encryption"
 #: The config option used to store the algorithm
 CFG_ALGORITHM = "algorithm"
 
+#: The config option used to store the decryption strictness
+CFG_DECRYPT = "decrypt"
+
 Rand.rand_seed(os.urandom(1024))
 
 
@@ -177,7 +180,7 @@ def get_passphrases(setup):
     if setup.cfp.has_section(section):
         return dict([(o, setup.cfp.get(section, o))
                      for o in setup.cfp.options(section)
-                     if o != CFG_ALGORITHM])
+                     if o not in [CFG_ALGORITHM, CFG_DECRYPT]])
     else:
         return dict()
 
