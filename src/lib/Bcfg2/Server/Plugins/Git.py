@@ -31,6 +31,11 @@ class Git(Bcfg2.Server.Plugin.Version):
         self.logger.debug("Initialized git plugin with git directory %s" %
                           self.vcs_path)
 
+    def _log_git_cmd(self, output):
+        """ Send output from a GitPython command to the debug log """
+        for line in output.strip().splitlines():
+            self.debug_log("Git: %s" % line)
+
     def get_revision(self):
         """Read git revision information for the Bcfg2 repository."""
         try:
@@ -60,7 +65,7 @@ class Git(Bcfg2.Server.Plugin.Version):
         self.debug_log("Git: Performing garbage collection on repo at %s" %
                        self.vcs_root)
         try:
-            self.repo.git.gc('--auto')
+            self._log_git_cmd(self.repo.git.gc('--auto'))
         except git.GitCommandError:
             self.logger.warning("Git: Failed to perform garbage collection: %s"
                                 % sys.exc_info()[1])
@@ -68,7 +73,7 @@ class Git(Bcfg2.Server.Plugin.Version):
         if ref:
             self.debug_log("Git: Checking out %s" % ref)
             try:
-                self.repo.git.checkout('-f', ref)
+                self._log_git_cmd(self.repo.git.checkout('-f', ref))
             except git.GitCommandError:
                 err = sys.exc_info()[1]
                 msg = "Git: Failed to checkout %s: %s" % (ref, err)
@@ -87,7 +92,7 @@ class Git(Bcfg2.Server.Plugin.Version):
             self.debug_log("Git: %s is a tracking branch, pulling from %s" %
                            (self.repo.head.ref.name, tracking))
             try:
-                self.repo.git.pull("--rebase")
+                self._log_git_cmd(self.repo.git.pull("--rebase"))
             except:  # pylint: disable=W0702
                 err = sys.exc_info()[1]
                 msg = "Git: Failed to pull from upstream: %s" % err
