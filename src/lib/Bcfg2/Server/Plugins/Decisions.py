@@ -62,6 +62,6 @@ class Decisions(Bcfg2.Server.Plugin.EntrySet,
     def GetDecisions(self, metadata, mode):
         ret = []
         for cdt in self.get_matching(metadata):
-            if os.path.basename(cdt).startswith(mode):
+            if os.path.basename(cdt.name).startswith(mode):
                 ret.extend(cdt.get_decisions())
         return ret
