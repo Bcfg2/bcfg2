@@ -1,62 +1,61 @@
 #!/usr/bin/python -Ott
 """ Benchmark template rendering times """
 
+import os
 import sys
 import time
+import signal
 import logging
-import logging.handlers
 import operator
-import lxml.etree
+import Bcfg2.Logger
 import Bcfg2.Server.Core
 
 LOGGER = None
 
-def get_logger(setup=None):
-    """ set up logging according to the verbose level given on the
-    command line """
-    global LOGGER
-    if LOGGER is None:
-        if setup is None:
-            setup = dict()
-        LOGGER = logging.getLogger(sys.argv[0])
-        stderr = logging.StreamHandler()
-        level = logging.WARNING
-        lformat = "%(message)s"
-        if setup.get("debug", False):
-            stderr.setFormatter(logging.Formatter("%(asctime)s: %(levelname)s: %(message)s"))
-            level = logging.DEBUG
-        elif setup.get("verbose", False):
-            level = logging.INFO
-        LOGGER.setLevel(level)
-        LOGGER.addHandler(stderr)
-        syslog = logging.handlers.SysLogHandler("/dev/log")
-        syslog.setFormatter(logging.Formatter("%(name)s: %(message)s"))
-        LOGGER.addHandler(syslog)
-    return LOGGER
+
+def get_sigint_handler(core):
+    """ Get a function that handles SIGINT/Ctrl-C by shutting down the
+    core and exiting properly."""
+
+    def hdlr(sig, frame):  # pylint: disable=W0613
+        """ Handle SIGINT/Ctrl-C by shutting down the core and exiting
+        properly. """
+        core.shutdown()
+        os._exit(1)  # pylint: disable=W0212
+
+    return hdlr
+
 
 def main():
     optinfo = \
-        dict(configfile=Bcfg2.Options.CFILE,
-             help=Bcfg2.Options.HELP,
-             encoding=Bcfg2.Options.ENCODING,
-             repo=Bcfg2.Options.SERVER_REPOSITORY,
-             plugins=Bcfg2.Options.SERVER_PLUGINS,
-             password=Bcfg2.Options.SERVER_PASSWORD,
-             debug=Bcfg2.Options.DEBUG,
-             verbose=Bcfg2.Options.VERBOSE,
-             client=Bcfg2.Options.Option("Benchmark templates for one client",
+        dict(client=Bcfg2.Options.Option("Benchmark templates for one client",
                                          cmd="--client",
                                          odesc="<client>",
                                          long_arg=True,
                                          default=None),
              )
+    optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
+    optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
-    logger = get_logger(setup)
+
+    if setup['debug']:
+        level = logging.DEBUG
+    elif setup['verbose']:
+        level = logging.INFO
+    else:
+        level = logging.WARNING
+    Bcfg2.Logger.setup_logging("bcfg2-test",
+                               to_console=setup['verbose'] or setup['debug'],
+                               to_syslog=False,
+                               to_file=setup['logging'],
+                               level=level)
+    logger = logging.getLogger(sys.argv[0])
 
     core = Bcfg2.Server.Core.BaseCore(setup)
+    signal.signal(signal.SIGINT, get_sigint_handler(core))
     logger.info("Bcfg2 server core loaded")
-    core.fam.handle_events_in_interval(4)
+    core.fam.handle_events_in_interval(0.1)
     logger.debug("Repository events processed")
 
     # how many times to render each template for each client
@@ -73,34 +72,19 @@ def main():
         clients = [core.build_metadata(setup['client'])]
 
     times = dict()
-    for plugin in ['Cfg', 'TGenshi', 'TCheetah']:
-        if plugin not in core.plugins:
-            logger.debug("Skipping disabled plugin %s" % plugin)
-            continue
-        logger.info("Rendering templates from plugin %s" % plugin)
-
-        entrysets = []
-        for template in templates:
-            try:
-                entrysets.append(core.plugins[plugin].entries[template])
-            except KeyError:
-                logger.debug("Template %s not found in plugin %s" %
-                             (template, plugin))
-        if not entrysets:
-            logger.debug("Using all entrysets in plugin %s" % plugin)
-            entrysets = core.plugins[plugin].entries.values()
-
-        for eset in entrysets:
-            path = eset.path.replace(setup['repo'], '')
-            logger.info("Rendering %s..." % path)
-            times[path] = dict()
-            for metadata in clients:
+    for metadata in clients:
+        for struct in core.GetStructures(metadata):
+            logger.info("Rendering templates from structure %s:%s" %
+                        (struct.tag, struct.get("name")))
+            for entry in struct.xpath("//Path"):
+                path = entry.get("name")
+                logger.info("Rendering %s..." % path)
+                times[path] = dict()
                 avg = 0.0
                 for i in range(runs):
-                    entry = lxml.etree.Element("Path")
                     start = time.time()
                     try:
-                        eset.bind_entry(entry, metadata)
+                        core.Bind(entry, metadata)
                         avg += (time.time() - start) / runs
                     except:
                         break
@@ -108,7 +92,7 @@ def main():
                     logger.debug("   %s: %.02f sec" % (metadata.hostname, avg))
                     times[path][metadata.hostname] = avg
 
-    # print out per-template results
+    # print out per-file results
     tmpltimes = []
     for tmpl, clients in times.items():
         try:
