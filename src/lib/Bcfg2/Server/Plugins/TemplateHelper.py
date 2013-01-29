@@ -12,13 +12,26 @@ LOGGER = logging.getLogger(__name__)
 MODULE_RE = re.compile(r'(?P<filename>(?P<module>[^\/]+)\.py)$')
 
 
+def safe_module_name(module):
+    """ Munge the name of a TemplateHelper module to avoid collisions
+    with other Python modules.  E.g., if someone has a helper named
+    'ldap.py', it should not be added to ``sys.modules`` as ``ldap``,
+    but rather as something more obscure. """
+    return '__TemplateHelper_%s' % module
+
+
 class HelperModule(object):
     """ Representation of a TemplateHelper module """
 
     def __init__(self, name, fam=None):
         self.name = name
         self.fam = fam
+
+        #: The name of the module as used by get_additional_data().
+        #: the name of the file with .py stripped off.
         self._module_name = MODULE_RE.search(self.name).group('module')
+
+        #: The attributes exported by this module
         self._attrs = []
 
     def HandleEvent(self, event=None):
@@ -32,7 +45,8 @@ class HelperModule(object):
             return
 
         try:
-            module = imp.load_source(self._module_name, self.name)
+            module = imp.load_source(safe_module_name(self._module_name),
+                                     self.name)
         except:  # pylint: disable=W0702
             err = sys.exc_info()[1]
             LOGGER.error("TemplateHelper: Failed to import %s: %s" %
@@ -98,7 +112,7 @@ class TemplateHelperLint(Bcfg2.Server.Lint.ServerPlugin):
         module_name = MODULE_RE.search(helper).group(1)
 
         try:
-            module = imp.load_source(module_name, helper)
+            module = imp.load_source(safe_module_name(module_name), helper)
         except:  # pylint: disable=W0702
             err = sys.exc_info()[1]
             self.LintError("templatehelper-import-error",
