@@ -9,7 +9,7 @@
 
 Name:             bcfg2-selinux
 Version:          1.3.0
-Release:          0.0rc1
+Release:          0.0rc2
 Summary:          Bcfg2 Client and Server SELinux policy
 
 %if 0%{?suse_version}
@@ -24,8 +24,8 @@ Conflicts:        selinux-policy = 3.11.1
 
 License:          BSD
 URL:              http://bcfg2.org
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}rc1.tar.gz
-BuildRoot:        %{_tmppath}/%{name}-%{version}rc1-%{release}-root-%(%{__id_u} -n)
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}rc2.tar.gz
+BuildRoot:        %{_tmppath}/%{name}-%{version}rc2-%{release}-root-%(%{__id_u} -n)
 BuildArch:        noarch
 
 BuildRequires:    checkpolicy, selinux-policy-devel, hardlink
@@ -65,7 +65,7 @@ deployment strategies.
 This package includes the Bcfg2 server and client SELinux policy.
 
 %prep
-%setup -q -n %{name}-%{version}rc1
+%setup -q -n %{name}-%{version}rc2
 
 %build
 cd redhat/selinux
@@ -120,6 +120,9 @@ if [ $1 -eq 0 ] ; then
 fi
 
 %changelog
+* Tue Jan 29 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0rc2
+- New upstream release
+
 * Wed Jan 09 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0rc1
 - New upstream release
 
