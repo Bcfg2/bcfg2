@@ -179,7 +179,7 @@ class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 self.logger.error("SSLCA: Failed to unlink temporary files: %s"
                                   % sys.exc_info()[1])
         if cert_spec['append_chain'] and 'chaincert' in ca:
-            cert += open(self.parent.get_ca(ca)['chaincert']).read()
+            cert += open(ca['chaincert']).read()
 
         open(os.path.join(self.path, filename), 'w').write(cert)
         return cert
