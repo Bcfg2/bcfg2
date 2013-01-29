@@ -136,6 +136,8 @@ if HAS_SOUTH:
         'south',
         'Bcfg2.Reporting',
     )
+if 'BCFG2_LEGACY_MODELS' in os.environ:
+    INSTALLED_APPS += ('Bcfg2.Server.Reports.reports',)
 
 # Imported from Bcfg2.Server.Reports
 MEDIA_ROOT = ''

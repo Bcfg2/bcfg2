@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+os.environ['BCFG2_LEGACY_MODELS'] = '1'
 os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
 
 import sys
@@ -216,6 +217,14 @@ def migrate_stage1():
 
 def _restructure():
     """major restructure of reporting data"""
+
+    # run any migrations from the previous schema
+    try:
+      from Bcfg2.Server.Reports.updatefix import update_database
+      update_database()
+    except:
+        logger.error("Failed to run legacy schema updates", exc_info=1)
+        return False
 
     # try to avoid dangling transactions
     if not migrate_stage1():
