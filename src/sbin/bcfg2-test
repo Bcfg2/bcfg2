@@ -71,9 +71,14 @@ class ClientTest(TestCase):
 
 
 def get_sigint_handler(core):
-    def hdlr(sig, frame):
+    """ Get a function that handles SIGINT/Ctrl-C by shutting down the
+    core and exiting properly."""
+
+    def hdlr(sig, frame):  # pylint: disable=W0613
+        """ Handle SIGINT/Ctrl-C by shutting down the core and exiting
+        properly. """
         core.shutdown()
-        os._exit(1)
+        os._exit(1)  # pylint: disable=W0212
 
     return hdlr
 

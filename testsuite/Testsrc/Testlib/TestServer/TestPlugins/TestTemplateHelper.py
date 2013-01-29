@@ -39,7 +39,8 @@ class TestHelperModule(Bcfg2TestCase):
         mock_load_source.side_effect = ImportError
         attrs = dir(hm)
         hm.HandleEvent()
-        mock_load_source.assert_called_with(hm._module_name, hm.name)
+        mock_load_source.assert_called_with(safe_module_name(hm._module_name),
+                                            hm.name)
         self.assertEqual(attrs, dir(hm))
         self.assertEqual(hm._attrs, [])
 
@@ -50,7 +51,8 @@ class TestHelperModule(Bcfg2TestCase):
         mock_load_source.return_value = Mock()
         attrs = dir(hm)
         hm.HandleEvent()
-        mock_load_source.assert_called_with(hm._module_name, hm.name)
+        mock_load_source.assert_called_with(safe_module_name(hm._module_name),
+                                            hm.name)
         self.assertEqual(attrs, dir(hm))
         self.assertEqual(hm._attrs, [])
 
@@ -61,7 +63,8 @@ class TestHelperModule(Bcfg2TestCase):
         mock_load_source.return_value = module
         attrs = dir(hm)
         hm.HandleEvent()
-        mock_load_source.assert_called_with(hm._module_name, hm.name)
+        mock_load_source.assert_called_with(safe_module_name(hm._module_name),
+                                            hm.name)
         self.assertEqual(attrs, dir(hm))
         self.assertEqual(hm._attrs, [])
 
@@ -71,7 +74,8 @@ class TestHelperModule(Bcfg2TestCase):
         mock_load_source.reset()
         mock_load_source.return_value = module
         hm.HandleEvent()
-        mock_load_source.assert_called_with(hm._module_name, hm.name)
+        mock_load_source.assert_called_with(safe_module_name(hm._module_name),
+                                            hm.name)
         self.assertTrue(hasattr(hm, "foo"))
         self.assertTrue(hasattr(hm, "bar"))
         self.assertTrue(hasattr(hm, "baz"))
@@ -83,7 +87,8 @@ class TestHelperModule(Bcfg2TestCase):
         mock_load_source.reset()
         mock_load_source.return_value = module
         hm.HandleEvent()
-        mock_load_source.assert_called_with(hm._module_name, hm.name)
+        mock_load_source.assert_called_with(safe_module_name(hm._module_name),
+                                            hm.name)
         self.assertTrue(hasattr(hm, "foo"))
         self.assertTrue(hasattr(hm, "bar"))
         self.assertTrue(hasattr(hm, "quux"))
