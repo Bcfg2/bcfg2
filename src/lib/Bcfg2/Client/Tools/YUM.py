@@ -603,17 +603,18 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             if stat['verify'] != {}:
                 stat['verify_fail'] = True
                 package_fail = True
-                self.logger.debug("It is suggested that you either manage "
-                                  "these files, revert the changes, or ignore "
-                                  "false failures:")
-                self.logger.debug("  Verify Problems:")
+                self.logger.info("It is suggested that you either manage "
+                                 "these files, revert the changes, or ignore "
+                                 "false failures:")
+                self.logger.info("  Verify Problems: %s" %
+                                 stat['pkg'].get('name'))
                 for fname, probs in list(stat['verify'].items()):
                     if len(probs) > 1:
-                        self.logger.debug("    %s" % fname)
+                        self.logger.info("    %s" % fname)
                         for prob in probs:
-                            self.logger.debug("      %s" % prob)
+                            self.logger.info("      %s" % prob[1])
                     else:
-                        self.logger.debug("    %s: %s" % (fname, probs[0]))
+                        self.logger.info("    %s: %s" % (fname, probs[0]))
 
         if len(all_pkg_objs) > 0:
             # Is this an install only package?  We just look at the first one
