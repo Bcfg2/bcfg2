@@ -224,7 +224,11 @@ class DjangoORM(StorageBase):
         inter.extra_count = counter_fields[TYPE_EXTRA]
         inter.save()
         for entry_type in updates.keys():
-            getattr(inter, entry_type).add(*updates[entry_type])
+            # batch this for sqlite
+            i = 0
+            while(i < len(updates[entry_type])):
+                getattr(inter, entry_type).add(*updates[entry_type][i:i+100])
+                i += 100
 
         # performance metrics
         for times in stats.findall('OpStamps'):
