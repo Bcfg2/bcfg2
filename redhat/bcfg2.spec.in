@@ -201,7 +201,12 @@ fi
 
 %{python_sitelib}/Bcfg2*.egg-info
 %dir %{python_sitelib}/Bcfg2
-%{python_sitelib}/Bcfg2/*.py*
+%{python_sitelib}/Bcfg2/Compat.py*
+%{python_sitelib}/Bcfg2/__init__.py*
+%{python_sitelib}/Bcfg2/Logger.py*
+%{python_sitelib}/Bcfg2/Options.py*
+%{python_sitelib}/Bcfg2/Proxy.py*
+%{python_sitelib}/Bcfg2/version.py*
 %{python_sitelib}/Bcfg2/Client
 %{python_sitelib}/Bcfg2/Component.*
 %{python_sitelib}/Bcfg2/Logger.*
@@ -225,6 +230,13 @@ fi
 
 %{_initrddir}/bcfg2-server
 
+%dir %{python_sitelib}/Bcfg2
+%{python_sitelib}/Bcfg2/Cache.py*
+%{python_sitelib}/Bcfg2/Encryption.py*
+%{python_sitelib}/Bcfg2/SSLServer.py*
+%{python_sitelib}/Bcfg2/Statistics.py*
+%{python_sitelib}/Bcfg2/manage.py*
+%{python_sitelib}/Bcfg2/settings.py*
 %{python_sitelib}/Bcfg2/Server
 
 %{_datadir}/bcfg2
