@@ -336,9 +336,23 @@ class BaseCore(object):
                 self.fam.handle_event_set(self.lock)
             except:
                 continue
-            # VCS plugin periodic updates
-            for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Version):
-                self.revision = plugin.get_revision()
+            self._update_vcs_revision()
+
+    @track_statistics()
+    def _update_vcs_revision(self):
+        """ Update the revision of the current configuration on-disk
+        from the VCS plugin """
+        for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Version):
+            try:
+                newrev = plugin.get_revision()
+                if newrev != self.revision:
+                    self.logger.debug("Updated to revision %s" % newrev)
+                self.revision = newrev
+                break
+            except:
+                self.logger.warning("Error getting revision from %s: %s" %
+                                    (plugin.name, sys.exc_info()[1]))
+                self.revision = '-1'
 
     def init_plugin(self, plugin):
         """ Import and instantiate a single plugin.  The plugin is
@@ -364,8 +378,8 @@ class BaseCore(object):
         try:
             plug = getattr(mod, plugin.split('.')[-1])
         except AttributeError:
-            self.logger.error("Failed to load plugin %s (AttributeError)" %
-                              plugin)
+            self.logger.error("Failed to load plugin %s: %s" %
+                              (plugin, sys.exc_info()[1]))
             return
         # Blacklist conflicting plugins
         cplugs = [conflict for conflict in plug.conflicts
