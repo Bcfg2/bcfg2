@@ -189,7 +189,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%doc AUTHORS examples COPYRIGHT README
+%doc examples LICENSE COPYRIGHT README
 
 %ghost %attr(600,root,root) %config(noreplace) %{_sysconfdir}/bcfg2.conf
 
