@@ -124,7 +124,7 @@ Create a nagios Bcfg2 bundle ``/var/lib/bcfg2/Bundler/nagios.xml``
 
 .. code-block:: xml
 
-    <Bundle name='nagios' version='2.0'>
+    <Bundle>
       <Path name='/etc/nagiosgen.status'/>
       <Group name='rh'>
         <Group name='nagios-server'>

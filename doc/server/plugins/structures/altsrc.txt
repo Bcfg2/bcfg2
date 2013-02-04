@@ -36,7 +36,7 @@ Examples
 
   .. code-block:: xml
 
-      <Bundle name='netinfo'>
+      <Bundle>
          <Group name='solaris'>
            <Path name='/etc/inet/hosts' altsrc='/etc/hosts'/>
          </Group>
@@ -58,7 +58,7 @@ Examples
 
   .. code-block:: xml
 
-      <Bundle name='openssl'>
+      <Bundle>
          <Package name='openssl' altsrc='openssl-encap'/>
          <Package name='openssl' altsrc='openssl-rpm'/>
       </Bundle>
@@ -76,7 +76,7 @@ Examples
 
   .. code-block:: xml
 
-      <Bundle name='firewall'>
+      <Bundle>
          ...
          <Group name='conduit'>
            <Path name='/etc/firewall-rules' altsrc='/etc/firewall-rules-external'/>
@@ -97,7 +97,7 @@ Examples
 
   .. code-block:: xml
 
-      <Bundle name='netconfig'>
+      <Bundle>
         <Path name='/etc/sysconfig/network-scripts/ifcfg-eth0' altsrc='/etc/ifcfg-template'/>
         <Path name='/etc/sysconfig/network-scripts/ifcfg-eth1' altsrc='/etc/ifcfg-template'/>
         <Path name='/etc/sysconfig/network-scripts/ifcfg-eth2' altsrc='/etc/ifcfg-template'/>

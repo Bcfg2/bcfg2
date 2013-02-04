@@ -12,7 +12,7 @@ better through use of groups.
 
 .. code-block:: xml
 
-    <Bundle name='ntp'>
+    <Bundle>
       <Package name='xntp'/>
       <Path name='/etc/sysconfig/xntp'/>
       <Path name='/etc/sysconfig/clock'/>

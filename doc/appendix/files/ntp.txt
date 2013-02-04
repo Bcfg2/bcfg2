@@ -13,7 +13,7 @@ another layer of functionality.
 * After each change, run ``bcfg-repo-validate -v``
 * Run the server with ``bcfg2-server -v``
 * Update the client with ``bcfg2 -v -d -n`` (will not actually make
-  client changes) 
+  client changes)
 
 Package only
 ------------
@@ -43,7 +43,7 @@ a client, a profile group, a list of packages, and an NTP bundle.
 
 .. code-block:: xml
 
-    <Bundle name="ntp">
+    <Bundle>
       <Package name='ntp'/>
     </Bundle>
 
@@ -75,7 +75,7 @@ Configure the service, and add it to Rules.
 
 .. code-block:: xml
 
-    <Bundle name="ntp">
+    <Bundle>
       <Package name='ntp'/>
       <Service name='ntpd'/>
     </Bundle>
@@ -85,7 +85,7 @@ Add config file
 
 Setup an ``etc/`` directory structure, and add it to the base::
 
-     # cat Cfg/etc/ntp.conf/ntp.conf 
+     # cat Cfg/etc/ntp.conf/ntp.conf
      server ntp1.utexas.edu
 
 ``Base/base.xml``:
@@ -94,7 +94,7 @@ Setup an ``etc/`` directory structure, and add it to the base::
 
 .. code-block:: xml
 
-    <Bundle name="ntp">
+    <Bundle>
       <Package name='ntp'/>
       <Service name='ntpd'/>
        <Path name='/etc/ntp.conf'/>
@@ -114,18 +114,18 @@ used to provide a single service. This is done for several reasons:
   packages are upgraded, so that they can be repaired if the
   package install clobbered them.
 * Services associated with a bundle get restarted whenever any entity
-  in that bundle is modified. This ensures that new configuration 
-  files and software are used after installation. 
+  in that bundle is modified. This ensures that new configuration
+  files and software are used after installation.
 
 The config file, package, and service are really all related
-components describing the idea of an ntp client, so they should be 
+components describing the idea of an ntp client, so they should be
 logically grouped together. We use a bundle to accomplish this.
 
 ``Bundler/ntp.xml``:
 
 .. code-block:: xml
 
-    <Bundle name='ntp'>
+    <Bundle>
       <Package name='ntp'/>
       <Service name='ntpd'/>
       <Path name='/etc/ntp.conf'/>

@@ -31,14 +31,14 @@ central reporting of action failure is desired, set this attribute to
 'check'. Also note that Action entries included in Base will not be
 executed.
 
-Actions cannot be completely defined inside of a bundle; they are a bound
-entry, much like Packages, Services or Paths. The Rules plugin can bind
-these entries. For example to include the above action in a bundle,
-first the Action entry must be included in the bundle:
+Actions are not completely defined inside of a bundle; they are an
+abstract entry. The Rules plugin can bind these entries. For example
+to include the above action in a bundle, first the Action entry must
+be included in the bundle:
 
 .. code-block:: xml
 
-    <Bundle name='bundle_name'>
+    <Bundle>
       ...
       <Action name='action_name'/>
     </Bundle>
@@ -54,6 +54,14 @@ Then a corresponding entry must be included in the Rules directory, like:
 
 This allows different clients to get different actions as a part of the
 same bundle based on group membership.
+
+It is also possible to do this in one step in the bundle itself with a
+``BoundAction`` tag, e.g.:
+
+    <Bundle>
+      <BoundAction timing='post' when='modified' name='action_name'
+                   command='/path/to/command arg1 arg2' status='ignore'/>
+    </Rules>
 
 Example Action (add APT keys)
 =============================

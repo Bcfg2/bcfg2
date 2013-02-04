@@ -21,7 +21,7 @@ some of which might be better than this one. Feel free to hack as needed.
 
 .. code-block:: xml
 
-    <Bundle name='kernel' version='2.0'>
+    <Bundle>
       <Group name='sles8'>
         <!-- =================== ia32 ==================== -->
         <Group name='ia32'>

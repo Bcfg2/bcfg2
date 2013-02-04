@@ -3,8 +3,6 @@
 import os
 import re
 import sys
-import copy
-import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Lint
@@ -13,12 +11,29 @@ from genshi.template import TemplateError
 
 class BundleFile(Bcfg2.Server.Plugin.StructFile):
     """ Representation of a bundle XML file """
-    def get_xml_value(self, metadata):
-        """ get the XML data that applies to the given client """
-        bundle = lxml.etree.Element('Bundle', name=self.xdata.get("name"))
-        for item in self.Match(metadata):
-            bundle.append(copy.copy(item))
-        return bundle
+    bundle_name_re = re.compile('^(?P<name>.*)\.(xml|genshi)$')
+
+    def __init__(self, filename, should_monitor=False):
+        Bcfg2.Server.Plugin.StructFile.__init__(self, filename,
+                                                should_monitor=should_monitor)
+        if self.name.endswith(".genshi"):
+            self.logger.warning("Bundler: Bundle filenames ending with "
+                                ".genshi are deprecated; add the Genshi XML "
+                                "namespace to a .xml bundle instead")
+    __init__.__doc__ = Bcfg2.Server.Plugin.StructFile.__init__.__doc__
+
+    def Index(self):
+        Bcfg2.Server.Plugin.StructFile.Index(self)
+        if self.xdata.get("name"):
+            self.logger.warning("Bundler: Explicitly specifying bundle names "
+                                "is deprecated")
+    Index.__doc__ = Bcfg2.Server.Plugin.StructFile.Index.__doc__
+
+    @property
+    def bundle_name(self):
+        """ The name of the bundle, as determined from the filename """
+        return self.bundle_name_re.match(
+            os.path.basename(self.name)).group("name")
 
 
 class Bundler(Bcfg2.Server.Plugin.Plugin,
@@ -28,38 +43,35 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
     bundle/translation scheme from Bcfg1. """
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __child__ = BundleFile
-    patterns = re.compile('^(?P<name>.*)\.(xml|genshi)$')
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Structure.__init__(self)
-        try:
-            Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data)
-        except OSError:
-            err = sys.exc_info()[1]
-            msg = "Failed to load Bundle repository %s: %s" % (self.data, err)
-            self.logger.error(msg)
-            raise Bcfg2.Server.Plugin.PluginInitError(msg)
+        Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data)
+        #: Bundles by bundle name, rather than filename
+        self.bundles = dict()
+    __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
+
+    def HandleEvent(self, event):
+        Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent(self, event)
+
+        self.bundles = dict()
+        for bundle in self.entries.values():
+            self.bundles[bundle.bundle_name] = bundle
+    HandleEvent.__doc__ = \
+        Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent.__doc__
 
     def BuildStructures(self, metadata):
-        """Build all structures for client (metadata)."""
         bundleset = []
-
-        bundle_entries = {}
-        for key, item in self.entries.items():
-            bundle_entries.setdefault(
-                self.patterns.match(os.path.basename(key)).group('name'),
-                []).append(item)
-
         for bundlename in metadata.bundles:
             try:
-                entries = bundle_entries[bundlename]
+                bundle = self.bundles[bundlename]
             except KeyError:
                 self.logger.error("Bundler: Bundle %s does not exist" %
                                   bundlename)
                 continue
             try:
-                bundleset.append(entries[0].get_xml_value(metadata))
+                bundleset.append(bundle.XMLMatch(metadata))
             except TemplateError:
                 err = sys.exc_info()[1]
                 self.logger.error("Bundler: Failed to render templated bundle "
@@ -68,6 +80,8 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
                 self.logger.error("Bundler: Unexpected bundler error for %s" %
                                   bundlename, exc_info=1)
         return bundleset
+    BuildStructures.__doc__ = \
+        Bcfg2.Server.Plugin.Structure.BuildStructures.__doc__
 
 
 class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
@@ -83,7 +97,9 @@ class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
     @classmethod
     def Errors(cls):
         return {"bundle-not-found": "error",
-                "inconsistent-bundle-name": "warning"}
+                "unused-bundle": "warning",
+                "explicit-bundle-name": "error",
+                "genshi-extension-bundle": "error"}
 
     def missing_bundles(self):
         """ find bundles listed in Metadata but not implemented in Bundler """
@@ -94,21 +110,28 @@ class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
             ref_bundles = set([b.get("name")
                                for b in groupdata.findall("//Bundle")])
 
-            allbundles = self.core.plugins['Bundler'].entries.keys()
+            allbundles = self.core.plugins['Bundler'].bundles.keys()
             for bundle in ref_bundles:
-                xmlbundle = "%s.xml" % bundle
-                genshibundle = "%s.genshi" % bundle
-                if (xmlbundle not in allbundles and
-                    genshibundle not in allbundles):
+                if bundle not in allbundles:
                     self.LintError("bundle-not-found",
                                    "Bundle %s referenced, but does not exist" %
                                    bundle)
 
+            for bundle in allbundles:
+                if bundle not in ref_bundles:
+                    self.LintError("unused-bundle",
+                                   "Bundle %s defined, but is not referenced "
+                                   "in Metadata" % bundle)
+
     def bundle_names(self, bundle):
-        """ verify bundle name attribute matches filename """
-        fname = os.path.splitext(os.path.basename(bundle.name))[0]
-        bname = bundle.xdata.get('name')
-        if fname != bname:
-            self.LintError("inconsistent-bundle-name",
-                           "Inconsistent bundle name: filename is %s, "
-                           "bundle name is %s" % (fname, bname))
+        """ Verify that deprecated bundle .genshi bundles and explicit
+        bundle names aren't used """
+        if bundle.xdata.get('name'):
+            self.LintError("explicit-bundle-name",
+                           "Deprecated explicit bundle name in %s" %
+                           bundle.name)
+
+        if bundle.name.endswith(".genshi"):
+            self.LintError("genshi-extension-bundle",
+                           "Bundle %s uses deprecated .genshi extension" %
+                           bundle.name)

@@ -30,7 +30,7 @@ The following is an annotated copy of a bundle:
 
 .. code-block:: xml
 
-    <Bundle name='ssh' version='2.0'>
+    <Bundle>
       <Path name='/etc/ssh/ssh_host_dsa_key'/>
       <Path name='/etc/ssh/ssh_host_rsa_key'/>
       <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>
@@ -118,13 +118,14 @@ Genshi XML templates allow you to use the `Genshi
 generate a bundle.  Genshi templates can be specified one of two ways:
 
 1. Add an XML-style genshi template to the Bundler directory with a
-   ``.genshi`` and the associated namespace attribute.
-2. Simply add the appropriate namespace attribute to your existing XML
+   ``.genshi`` and the associated namespace attribute.  *This is
+   deprecated as of Bcfg2 1.4.0.*
+2. Add the Genshi namespace to your existing XML
    bundle.
 
 The top-level Bundle tag should look like the following::
 
-    <Bundle name="foo" xmlns:py="http://genshi.edgewall.org/">
+    <Bundle xmlns:py="http://genshi.edgewall.org/">
 
 Several variables are pre-defined inside templates:
 
@@ -184,8 +185,8 @@ in their name. The following template produces such a config file entry.
 
 .. code-block:: xml
 
-    <Bundle name='foo'  xmlns:py="http://genshi.edgewall.org/">
-        <Path name='/etc/package-${metadata.hostname}'/>
+    <Bundle xmlns:py="http://genshi.edgewall.org/">
+      <Path name='/etc/package-${metadata.hostname}'/>
     </Bundle>
 
 Depending on the circumstance, these configuration files can either be
@@ -199,7 +200,7 @@ and returns them in a newline delimited string.
 
 .. code-block:: xml
 
-    <Bundle name="networkinterfaces" xmlns:py="http://genshi.edgewall.org/">
+    <Bundle xmlns:py="http://genshi.edgewall.org/">
         <?python
           files = metadata.Probes["getmacs"].split("\n")
         ?>
@@ -219,7 +220,7 @@ if declaration.
 
 .. code-block:: xml
 
-    <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
+    <Bundle xmlns:py="http://genshi.edgewall.org/">
          <Path name="/etc/bacula/bconsole.conf"/>
          <Path name="/etc/bacula/bacula-fd.conf"/>
          <Path name="/etc/bacula/bacula-sd.conf"/>
@@ -231,7 +232,7 @@ or alternately
 
 .. code-block:: xml
 
-    <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
+    <Bundle xmlns:py="http://genshi.edgewall.org/">
          <Path name="/etc/bacula/bconsole.conf"/>
          <Path name="/etc/bacula/bacula-fd.conf"/>
          <Path name="/etc/bacula/bacula-sd.conf"/>
@@ -244,7 +245,7 @@ or yet another way
 
 .. code-block:: xml
 
-    <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
+    <Bundle xmlns:py="http://genshi.edgewall.org/">
         <Path name="/etc/bacula/bconsole.conf"/>
         <Path name="/etc/bacula/bacula-fd.conf"/>
         <Path name="/etc/bacula/bacula-sd.conf"/>

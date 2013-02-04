@@ -121,9 +121,8 @@ consist of
 If any of these pieces are installed or updated, all should be rechecked
 and any associated services should be restarted.
 
-All files in the Bundles/ subdirectory of the repository are processed.
-Each bundle must be defined in its own file and the filename must be the
-same as the bundle name with a .xml suffix.::
+All files in the Bundles/ subdirectory of the repository are
+processed.  Each bundle must be defined in its own file::
 
     # ls Bundler
     Glide3.xml
@@ -165,7 +164,7 @@ The following is an annotated copy of a bundle:
 
 .. code-block:: xml
 
-    <Bundle name='ssh' version='2.0'>
+    <Bundle>
       <Path name='/etc/ssh/ssh_host_dsa_key'/>
       <Path name='/etc/ssh/ssh_host_rsa_key'/>
       <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>

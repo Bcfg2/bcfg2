@@ -267,8 +267,8 @@ it with the ubuntu-standard package.
 .. code-block:: xml
 
     root@lucid:~# cat /var/lib/bcfg2/Bundler/base-packages.xml
-    <Bundle name='base-packages'>
-            <Package name='ubuntu-standard'/>
+    <Bundle>
+      <Package name='ubuntu-standard'/>
     </Bundle>
 
 You need to reference the bundle from your Metadata. The resulting
@@ -357,7 +357,7 @@ while, I ended up with a minimal bundle that looks like this
 
 .. code-block:: xml
 
-    <Bundle name='base-packages'>
+    <Bundle>
             <Package name='bash-completion'/>
             <Package name='bcfg2-server'/>
             <Package name='debconf-i18n'/>

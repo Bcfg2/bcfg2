@@ -9,7 +9,7 @@ This is a fairly simple Bundle for the Moab workload manager.
 
 .. code-block:: xml
 
-    <Bundle name='moab' version='2.0'>
+    <Bundle>
       <Path name='/var/spool/moab'/>
       <Path name='/var/spool/moab/moab.cfg'/>
       <Group name='moab-server'>

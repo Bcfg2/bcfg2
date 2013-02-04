@@ -11,7 +11,7 @@ A longer Bundle that includes many group-specific entries.
 
 .. code-block:: xml
 
-    <Bundle name='torque' version='1.0'>
+    <Bundle>
       <Service name='nfs'/>
       <Service name='nfslock'/>
       <BoundPath type='directory' owner='root' group='root' mode='0755' name='/var/spool/torque'/>

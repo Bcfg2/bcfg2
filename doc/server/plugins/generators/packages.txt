@@ -388,7 +388,7 @@ attribute, e.g.:
 
 .. code-block:: xml
 
-    <Bundle name="yum">
+    <Bundle>
       <Group name="sles">
         <Path name="/etc/yum/yum.repos.d/bcfg2.repo"
               altsrc="/etc/yum.repos.d/bcfg2.repo"/>

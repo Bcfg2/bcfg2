@@ -79,7 +79,7 @@ For a "Package"
 
      .. code-block:: xml
 
-         <Bundle name='keys'>
+         <Bundle>
            <!-- GPG keys -->
            <BoundPackage name="gpg-pubkey" type="rpm" version="foo">
              <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL" version="217521f6" release="45e8a532"/>

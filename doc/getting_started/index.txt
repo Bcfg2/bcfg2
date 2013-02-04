@@ -20,7 +20,7 @@ Get and Install Bcfg2 Server
 We recommend running the server on a Linux machine for ease of
 deployment due to the availability of packages for the dependencies.
 
-First, you need to download and install Bcfg2. The section 
+First, you need to download and install Bcfg2. The section
 :ref:`installation-index` in this manual describes the steps to take.
 To start, you will need to install the server on one machine and the
 client on one or more machines. Yes, your server can also be a client
@@ -168,7 +168,7 @@ Next, we create a motd.xml file in the Bundler directory:
 
 .. code-block:: xml
 
-    <Bundle name='motd' version='2.0'>
+    <Bundle>
       <Path name='/etc/motd' />
     </Bundle>
 

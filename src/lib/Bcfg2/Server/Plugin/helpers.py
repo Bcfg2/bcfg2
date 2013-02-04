@@ -570,7 +570,7 @@ class XMLFileBacked(FileBacked):
         return "%s at %s" % (self.__class__.__name__, self.name)
 
 
-class StructFile(XMLFileBacked):
+class StructFile(XMLFileBacked, Debuggable):
     """ StructFiles are XML files that contain a set of structure file
     formatting logic for handling ``<Group>`` and ``<Client>``
     tags.
@@ -589,6 +589,7 @@ class StructFile(XMLFileBacked):
 
     def __init__(self, filename, should_monitor=False):
         XMLFileBacked.__init__(self, filename, should_monitor=should_monitor)
+        Debuggable.__init__(self)
         self.setup = Bcfg2.Options.get_option_parser()
         self.encoding = self.setup['encoding']
         self.template = None
@@ -605,15 +606,16 @@ class StructFile(XMLFileBacked):
                                             encoding=self.encoding)
             except LookupError:
                 err = sys.exc_info()[1]
-                LOGGER.error('Genshi lookup error in %s: %s' % (self.name,
-                                                                err))
+                self.logger.error('Genshi lookup error in %s: %s' % (self.name,
+                                                                     err))
             except genshi.template.TemplateError:
                 err = sys.exc_info()[1]
-                LOGGER.error('Genshi template error in %s: %s' % (self.name,
-                                                                  err))
+                self.logger.error('Genshi template error in %s: %s' %
+                                  (self.name, err))
             except genshi.input.ParseError:
                 err = sys.exc_info()[1]
-                LOGGER.error('Genshi parse error in %s: %s' % (self.name, err))
+                self.logger.error('Genshi parse error in %s: %s' % (self.name,
+                                                                    err))
 
         if self.encryption and HAS_CRYPTO:
             strict = self.xdata.get(
@@ -625,15 +627,15 @@ class StructFile(XMLFileBacked):
                     el.text = self._decrypt(el).encode('ascii',
                                                        'xmlcharrefreplace')
                 except UnicodeDecodeError:
-                    LOGGER.info("%s: Decrypted %s to gibberish, skipping" %
-                                (self.name, el.tag))
+                    self.logger.info("%s: Decrypted %s to gibberish, skipping"
+                                     % (self.name, el.tag))
                 except Bcfg2.Encryption.EVPError:
                     msg = "Failed to decrypt %s element in %s" % (el.tag,
                                                                   self.name)
                     if strict:
                         raise PluginExecutionError(msg)
                     else:
-                        LOGGER.warning(msg)
+                        self.logger.warning(msg)
     Index.__doc__ = XMLFileBacked.Index.__doc__
 
     def _decrypt(self, element):
