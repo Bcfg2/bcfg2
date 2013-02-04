@@ -6,25 +6,32 @@
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
+
   <xsd:complexType name="FileProbesGroupType">
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
       <xsd:element name="FileProbe" type="FileProbeType"/>
       <xsd:element name="Group" type="FileProbesGroupType"/>
       <xsd:element name="Client" type="FileProbesGroupType"/>
     </xsd:choice>
     <xsd:attribute type="xsd:string" name="name" use="required"/>
     <xsd:attribute type="xsd:string" name="negate"/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:complexType name="FileProbeType">
     <xsd:attribute type="xsd:string" name="name" use="required"/>
     <xsd:attribute type="xsd:string" name="encoding"/>
     <xsd:attribute type="xsd:string" name="update"/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:element name="FileProbes">
     <xsd:complexType>
       <xsd:choice minOccurs="1" maxOccurs="unbounded">
+        <xsd:group ref="py:genshiElements"/>
         <xsd:element name="FileProbe" type="FileProbeType"/>
         <xsd:element name="Group" type="FileProbesGroupType"/>
         <xsd:element name="Client" type="FileProbesGroupType"/>

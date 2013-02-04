@@ -6,6 +6,9 @@
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
+
   <xsd:complexType name="AuthorizedKeysGroupType">
     <xsd:annotation>
       <xsd:documentation>
@@ -18,6 +21,7 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
       <xsd:element name="Allow" type="AllowType"/>
       <xsd:element name="Group" type="AuthorizedKeysGroupType"/>
       <xsd:element name="Client" type="AuthorizedKeysGroupType"/>
@@ -40,6 +44,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:complexType name="AllowType" mixed="true">
@@ -50,6 +55,7 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice minOccurs="0" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
       <xsd:element name="Params" type="AuthorizedKeysParamsType"/>
     </xsd:choice>
     <xsd:attribute name="from" type="xsd:string">
@@ -75,6 +81,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:complexType name="AuthorizedKeysParamsType">
@@ -85,6 +92,7 @@
         parameters.
       </xsd:documentation>
     </xsd:annotation>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
     <xsd:anyAttribute processContents="lax"/>
   </xsd:complexType>
 
@@ -96,10 +104,12 @@
     </xsd:annotation>
     <xsd:complexType>
       <xsd:choice minOccurs="1" maxOccurs="unbounded">
+        <xsd:group ref="py:genshiElements"/>
         <xsd:element name="Allow" type="AllowType"/>
         <xsd:element name="Group" type="AuthorizedKeysGroupType"/>
         <xsd:element name="Client" type="AuthorizedKeysGroupType"/>
       </xsd:choice>
+      <xsd:attributeGroup ref="py:genshiAttrs"/>
     </xsd:complexType>
   </xsd:element>
 </xsd:schema>

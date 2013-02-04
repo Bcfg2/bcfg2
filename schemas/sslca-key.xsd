@@ -5,6 +5,9 @@
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
+
   <xsd:complexType name="SSLCAKeyGroupType">
     <xsd:annotation>
       <xsd:documentation>
@@ -17,6 +20,7 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
       <xsd:element name="Key" type="KeyType"/>
       <xsd:element name="Group" type="SSLCAKeyGroupType"/>
       <xsd:element name="Client" type="SSLCAKeyGroupType"/>
@@ -39,6 +43,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:simpleType name="KeyTypeEnum">
@@ -68,6 +73,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:element name="KeyInfo">
@@ -78,6 +84,7 @@
     </xsd:annotation>
     <xsd:complexType>
       <xsd:choice minOccurs="1" maxOccurs="unbounded">
+        <xsd:group ref="py:genshiElements"/>
         <xsd:element name="Key" type="KeyType"/>
         <xsd:element name="Group" type="SSLCAKeyGroupType"/>
         <xsd:element name="Client" type="SSLCAKeyGroupType"/>

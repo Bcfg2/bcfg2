@@ -5,6 +5,9 @@
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
+
   <xsd:complexType name="SSLCACertGroupType">
     <xsd:annotation>
       <xsd:documentation>
@@ -17,6 +20,7 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
       <xsd:element name="Cert" type="CertType"/>
       <xsd:element name="Group" type="SSLCACertGroupType"/>
       <xsd:element name="Client" type="SSLCACertGroupType"/>
@@ -40,6 +44,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:simpleType name="SSLCACertFormatEnum">
@@ -147,6 +152,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:element name="CertInfo">
@@ -157,6 +163,7 @@
     </xsd:annotation>
     <xsd:complexType>
       <xsd:choice minOccurs="1" maxOccurs="unbounded">
+        <xsd:group ref="py:genshiElements"/>
         <xsd:element name="Cert" type="CertType"/>
         <xsd:element name="Group" type="SSLCACertGroupType"/>
         <xsd:element name="Client" type="SSLCACertGroupType"/>
