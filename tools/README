@@ -1,9 +1,5 @@
 This directory contains repository maintenance tools.
 
-accounts2xml.py
-    - Generate an XML description of accounts on a machine from
-      /etc/passwd
-
 basebuilder.py <image directory>
     - builds v2 base.xml from bcfg1 repo
 
