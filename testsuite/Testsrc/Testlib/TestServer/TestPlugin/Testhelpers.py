@@ -747,7 +747,7 @@ class TestStructFile(TestXMLFileBacked):
         def match_rv(el, _):
             if el.tag not in ['Client', 'Group']:
                 return [el]
-            elif x.get("include") == "true":
+            elif el.get("include") == "true":
                 return el.getchildren()
             else:
                 return []
@@ -789,7 +789,7 @@ class TestStructFile(TestXMLFileBacked):
         self.assertXMLEqual(actual, expected)
 
     @patch("Bcfg2.Server.Plugin.helpers.%s._xml_match" % test_obj.__name__)
-    def test_Match(self, mock_xml_match):
+    def test_XMLMatch(self, mock_xml_match):
         sf = self.get_obj()
         metadata = Mock()
 
