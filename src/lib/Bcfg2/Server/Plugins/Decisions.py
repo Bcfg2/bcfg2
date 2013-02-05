@@ -2,67 +2,33 @@
 blacklist certain entries. """
 
 import os
-import sys
-import lxml.etree
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
 
 
-class DecisionFile(Bcfg2.Server.Plugin.SpecificData):
+class DecisionFile(Bcfg2.Server.Plugin.StructFile):
     """ Representation of a Decisions XML file """
 
-    def __init__(self, name, specific, encoding):
-        Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific,
-                                                  encoding)
-        self.contents = None
-
-    def handle_event(self, event):
-        Bcfg2.Server.Plugin.SpecificData.handle_event(self, event)
-        self.contents = lxml.etree.XML(self.data)
-
-    def get_decisions(self):
+    def get_decisions(self, metadata):
         """ Get a list of whitelist or blacklist tuples """
+        if self.xdata is None:
+            # no white/blacklist has been read yet, probably because
+            # it doesn't exist
+            return []
         return [(x.get('type'), x.get('name'))
-                for x in self.contents.xpath('.//Decision')]
+                for x in self.XMLMatch(metadata).xpath('.//Decision')]
 
 
-class Decisions(Bcfg2.Server.Plugin.EntrySet,
-                Bcfg2.Server.Plugin.Plugin,
+class Decisions(Bcfg2.Server.Plugin.Plugin,
                 Bcfg2.Server.Plugin.Decision):
-    """ Decisions plugin
-
-    Arguments:
-    - `core`: Bcfg2.Core instance
-    - `datastore`: File repository location
-    """
-    basename_is_regex = True
+    """ Decisions plugin """
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Decision.__init__(self)
-
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, '(white|black)list',
-                                              self.data,
-                                              DecisionFile,
-                                              core.setup['encoding'])
-        try:
-            Bcfg2.Server.FileMonitor.get_fam().AddMonitor(self.data, self)
-        except OSError:
-            err = sys.exc_info()[1]
-            msg = 'Adding filemonitor for %s failed: %s' % (self.data, err)
-            self.logger.error(msg)
-            raise Bcfg2.Server.Plugin.PluginInitError(msg)
-
-    def HandleEvent(self, event):
-        """ Handle events on Decision files by passing them off to
-        EntrySet.handle_event """
-        if event.filename != self.path:
-            return self.handle_event(event)
+        self.whitelist = DecisionFile(os.path.join(self.data, "whitelist.xml"))
+        self.blacklist = DecisionFile(os.path.join(self.data, "blacklist.xml"))
 
     def GetDecisions(self, metadata, mode):
-        ret = []
-        for cdt in self.get_matching(metadata):
-            if os.path.basename(cdt).startswith(mode):
-                ret.extend(cdt.get_decisions())
-        return ret
+        return getattr(self, mode).get_decision(metadata)

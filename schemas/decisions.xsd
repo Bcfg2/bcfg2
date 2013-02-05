@@ -1,5 +1,6 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
-  
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
+
   <xsd:annotation>
     <xsd:documentation>
       decision list schema for bcfg2
@@ -7,16 +8,64 @@
     </xsd:documentation>
   </xsd:annotation>
 
-  <xsd:element name='Decisions'>
-    <xsd:complexType>
-      <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-        <xsd:element name='Decision'>
-          <xsd:complexType>
-            <xsd:attribute name='type' type='xsd:string' use='required'/>
-            <xsd:attribute name='name' type='xsd:string' use='required'/>
-          </xsd:complexType>
-        </xsd:element>
-      </xsd:choice>
-    </xsd:complexType>
-  </xsd:element>
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
+
+  <xsd:complexType name="DecisionsGroupType">
+    <xsd:annotation>
+      <xsd:documentation>
+        A **DecisionsGroupType** is a tag used to provide logic.
+        Child entries of a DecisionsGroupType tag only apply to
+        machines that match the condition specified -- either
+        membership in a group, or a matching client name.
+        :xml:attribute:`DecisionsGroupType:negate` can be set to
+        negate the sense of the match.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:element name="Decisions" type="DecisionsType"/>
+      <xsd:element name="Decision" type="DecisionType"/>
+      <xsd:element name="Group" type="DecisionsGroupType"/>
+      <xsd:element name="Client" type="DecisionsGroupType"/>
+      <xsd:group ref="py:genshiElements"/>
+    </xsd:choice>
+    <xsd:attribute name='name' type='xsd:string'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the client or group to match on.  Child entries
+          will only apply to this client or group (unless
+          :xml:attribute:`DecisionsGroupType:negate` is set).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name='negate' type='xsd:boolean'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Negate the sense of the match, so that child entries only
+          apply to a client if it is not a member of the given group
+          or does not have the given name.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="DecisionType">
+    <xsd:attribute name='type' type='xsd:string' use='required'/>
+    <xsd:attribute name='name' type='xsd:string' use='required'/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="DecisionsType">
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name="Decisions" type="DecisionsType"/>
+      <xsd:element name="Decision" type="DecisionType"/>
+      <xsd:element name="Group" type="DecisionsGroupType"/>
+      <xsd:element name="Client" type="DecisionsGroupType"/>
+      <xsd:group ref="py:genshiElements"/>
+    </xsd:choice>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:element name='Decisions' type="DecisionsType"/>
 </xsd:schema>
