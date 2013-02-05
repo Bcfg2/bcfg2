@@ -382,21 +382,22 @@ class TestXMLFileBacked(TestFileBacked):
             xfb = self.get_obj(should_monitor=True)
             xfb.fam.AddMonitor.assert_called_with(self.path, xfb)
 
-    @patch("os.path.exists")
+    @patch("glob.glob")
     @patch("lxml.etree.parse")
-    def test_follow_xincludes(self, mock_parse, mock_exists):
+    def test_follow_xincludes(self, mock_parse, mock_glob):
         xfb = self.get_obj()
         xfb.add_monitor = Mock()
+        xfb.add_monitor.side_effect = lambda p: xfb.extras.append(p)
 
         def reset():
             xfb.add_monitor.reset_mock()
+            mock_glob.reset_mock()
             mock_parse.reset_mock()
-            mock_exists.reset_mock()
             xfb.extras = []
 
-        mock_exists.return_value = True
         xdata = dict()
         mock_parse.side_effect = lambda p: xdata[p]
+        mock_glob.side_effect = lambda g: [g]
 
         base = os.path.dirname(self.path)
 
@@ -430,7 +431,7 @@ class TestXMLFileBacked(TestFileBacked):
         xfb.add_monitor.assert_called_with(test2)
         self.assertItemsEqual(mock_parse.call_args_list,
                               [call(f) for f in xdata.keys()])
-        mock_exists.assert_called_with(test2)
+        mock_glob.assert_called_with(test2)
 
         reset()
         xfb._follow_xincludes(fname=self.path, xdata=xdata[self.path])
@@ -438,7 +439,7 @@ class TestXMLFileBacked(TestFileBacked):
         self.assertItemsEqual(mock_parse.call_args_list,
                               [call(f) for f in xdata.keys()
                                if f != self.path])
-        mock_exists.assert_called_with(test2)
+        mock_glob.assert_called_with(test2)
 
         # test two-deep level of xinclude, with some files in another
         # directory
@@ -466,21 +467,41 @@ class TestXMLFileBacked(TestFileBacked):
 
         reset()
         xfb._follow_xincludes(fname=self.path)
-        self.assertItemsEqual(xfb.add_monitor.call_args_list,
-                              [call(f) for f in xdata.keys() if f != self.path])
+        expected = [call(f) for f in xdata.keys() if f != self.path]
+        self.assertItemsEqual(xfb.add_monitor.call_args_list, expected)
         self.assertItemsEqual(mock_parse.call_args_list,
                               [call(f) for f in xdata.keys()])
-        self.assertItemsEqual(mock_exists.call_args_list,
-                              [call(f) for f in xdata.keys() if f != self.path])
+        self.assertItemsEqual(mock_glob.call_args_list, expected)
 
         reset()
         xfb._follow_xincludes(fname=self.path, xdata=xdata[self.path])
-        self.assertItemsEqual(xfb.add_monitor.call_args_list,
-                              [call(f) for f in xdata.keys() if f != self.path])
-        self.assertItemsEqual(mock_parse.call_args_list,
-                              [call(f) for f in xdata.keys() if f != self.path])
-        self.assertItemsEqual(mock_exists.call_args_list,
-                              [call(f) for f in xdata.keys() if f != self.path])
+        expected = [call(f) for f in xdata.keys() if f != self.path]
+        self.assertItemsEqual(xfb.add_monitor.call_args_list, expected)
+        self.assertItemsEqual(mock_parse.call_args_list, expected)
+        self.assertItemsEqual(mock_glob.call_args_list, expected)
+
+        # test wildcard xinclude
+        reset()
+        xdata[self.path] = lxml.etree.Element("Test").getroottree()
+        lxml.etree.SubElement(xdata[self.path].getroot(),
+                              Bcfg2.Server.XI_NAMESPACE + "include",
+                              href="*.xml")
+
+        def glob_rv(path):
+            if path == os.path.join(base, '*.xml'):
+                return [self.path, test2, test3]
+            else:
+                return [path]
+        mock_glob.side_effect = glob_rv
+
+        xfb._follow_xincludes(xdata=xdata[self.path])
+        expected = [call(f) for f in xdata.keys() if f != self.path]
+        self.assertItemsEqual(xfb.add_monitor.call_args_list, expected)
+        self.assertItemsEqual(mock_parse.call_args_list, expected)
+        self.assertItemsEqual(mock_glob.call_args_list,
+                              [call(os.path.join(base, '*.xml')), call(test4),
+                               call(test5), call(test6)])
+
 
     @patch("lxml.etree._ElementTree", FakeElementTree)
     @patch("Bcfg2.Server.Plugin.helpers.%s._follow_xincludes" %

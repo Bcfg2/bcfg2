@@ -198,6 +198,7 @@ if HAS_DJANGO or can_skip:
 
 class TestXMLMetadataConfig(TestXMLFileBacked):
     test_obj = XMLMetadataConfig
+    path = os.path.join(datastore, 'Metadata', 'clients.xml')
 
     def get_obj(self, basefile="clients.xml", core=None, watch_clients=False):
         self.metadata = get_metadata_object(core=core,
