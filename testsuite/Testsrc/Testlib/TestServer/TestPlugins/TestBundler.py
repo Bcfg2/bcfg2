@@ -3,7 +3,6 @@ import sys
 import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugins.Bundler import *
-from Bcfg2.Server.Plugin import PluginExecutionError
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4
