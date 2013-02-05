@@ -58,8 +58,9 @@ contingent_checks = {
 # perform only error checking on the listed files
 error_checks = {
     "sbin": ["bcfg2-reports"],
-    "lib/Bcfg2": ["Proxy.py", "SSLServer.py", "Reporting"],
-    "lib/Bcfg2/Server": ["Reports", "SchemaUpdater"],
+    "lib/Bcfg2": ["Reporting"],
+    "lib/Bcfg2/Client": ["Proxy.py"],
+    "lib/Bcfg2/Server": ["Reports", "SchemaUpdater", "SSLServer.py"],
     "lib/Bcfg2/Server/Admin": ["Compare.py"],
     "lib/Bcfg2/Client/Tools": ["launchd.py",
                                "OpenCSW.py",

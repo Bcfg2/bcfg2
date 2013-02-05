@@ -3,7 +3,7 @@ server. """
 
 import sys
 import time
-import Bcfg2.Statistics
+import Bcfg2.Server.Statistics
 from Bcfg2.Compat import urlparse, xmlrpclib, b64decode
 from Bcfg2.Server.Core import BaseCore
 import cherrypy
@@ -96,8 +96,8 @@ class Core(BaseCore):
         try:
             body = handler(*rpcparams, **params)
         finally:
-            Bcfg2.Statistics.stats.add_value(rpcmethod,
-                                             time.time() - method_start)
+            Bcfg2.Server.Statistics.stats.add_value(rpcmethod,
+                                                    time.time() - method_start)
 
         xmlrpcutil.respond(body, 'utf-8', True)
         return cherrypy.serving.response.body

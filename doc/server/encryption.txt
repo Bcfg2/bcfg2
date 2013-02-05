@@ -233,4 +233,4 @@ is the default an XML file can specify ``decrypt="lax"``.
 Encryption API
 ==============
 
-.. automodule:: Bcfg2.Encryption
+.. automodule:: Bcfg2.Server.Encryption

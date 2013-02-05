@@ -1,6 +1,6 @@
-""" Bcfg2.Encryption provides a number of convenience methods for
-handling encryption in Bcfg2.  See :ref:`server-encryption` for more
-details. """
+""" Bcfg2.Server.Encryption provides a number of convenience methods
+for handling encryption in Bcfg2.  See :ref:`server-encryption` for
+more details. """
 
 import os
 import Bcfg2.Options

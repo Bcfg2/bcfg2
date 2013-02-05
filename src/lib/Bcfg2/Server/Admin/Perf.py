@@ -2,7 +2,7 @@
 
 import sys
 import Bcfg2.Options
-import Bcfg2.Proxy
+import Bcfg2.Client.Proxy
 import Bcfg2.Server.Admin
 
 
@@ -22,13 +22,13 @@ class Perf(Bcfg2.Server.Admin.Mode):
         opts = sys.argv[1:]
         opts.remove(self.__class__.__name__.lower())
         setup.reparse(argv=opts)
-        proxy = Bcfg2.Proxy.ComponentProxy(setup['server'],
-                                           setup['user'],
-                                           setup['password'],
-                                           key=setup['key'],
-                                           cert=setup['certificate'],
-                                           ca=setup['ca'],
-                                           timeout=setup['timeout'])
+        proxy = Bcfg2.Client.Proxy.ComponentProxy(setup['server'],
+                                                  setup['user'],
+                                                  setup['password'],
+                                                  key=setup['key'],
+                                                  cert=setup['certificate'],
+                                                  ca=setup['ca'],
+                                                  timeout=setup['timeout'])
         data = proxy.get_statistics()
         for key in sorted(data.keys()):
             output.append((key, ) +

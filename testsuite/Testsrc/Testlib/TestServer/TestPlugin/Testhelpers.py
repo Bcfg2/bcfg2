@@ -23,7 +23,7 @@ from TestServer.TestPlugin.Testbase import TestPlugin, TestDebuggable
 from TestServer.TestPlugin.Testinterfaces import TestGenerator
 
 try:
-    from Bcfg2.Encryption import EVPError
+    from Bcfg2.Server.Encryption import EVPError
     HAS_CRYPTO = True
 except:
     HAS_CRYPTO = False
@@ -766,9 +766,9 @@ class TestStructFile(TestXMLFileBacked):
             [call(el) for el in sf.xdata.xpath("//*[@encrypted]")])
 
     @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
-    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.ssl_decrypt")
-    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.get_passphrases")
-    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.bruteforce_decrypt")
+    @patchIf(HAS_CRYPTO, "Bcfg2.Server.Encryption.ssl_decrypt")
+    @patchIf(HAS_CRYPTO, "Bcfg2.Server.Encryption.get_passphrases")
+    @patchIf(HAS_CRYPTO, "Bcfg2.Server.Encryption.bruteforce_decrypt")
     def test_decrypt(self, mock_bruteforce, mock_get_passphrases, mock_ssl):
         sf = self.get_obj()
 

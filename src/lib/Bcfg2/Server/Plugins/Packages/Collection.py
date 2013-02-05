@@ -81,6 +81,7 @@ import Bcfg2.Server.Plugin
 from Bcfg2.Server.FileMonitor import get_fam
 from Bcfg2.Options import get_option_parser
 from Bcfg2.Compat import any, md5  # pylint: disable=W0622
+from Bcfg2.Server.Statistics import track_statistics
 
 LOGGER = logging.getLogger(__name__)
 
@@ -213,7 +214,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
             cachefiles.add(source.cachefile)
         return list(cachefiles)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def get_groups(self, grouplist):
         """ Given a list of package group names, return a dict of
         ``<group name>: <list of packages>``.  This method is provided
@@ -234,7 +235,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
             rv[group] = self.get_group(group, ptype)
         return rv
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def get_group(self, group, ptype=None):
         """ Get the list of packages of the given type in a package
         group.
@@ -469,7 +470,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         """
         return list(complete.difference(initial))
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def complete(self, packagelist):  # pylint: disable=R0912,R0914
         """ Build a complete list of all packages and their dependencies.
 

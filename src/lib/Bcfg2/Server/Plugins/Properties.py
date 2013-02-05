@@ -10,11 +10,6 @@ import lxml.etree
 from Bcfg2.Options import get_option_parser
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugin import PluginExecutionError
-try:
-    import Bcfg2.Encryption
-    HAS_CRYPTO = True
-except ImportError:
-    HAS_CRYPTO = False
 
 try:
     import json

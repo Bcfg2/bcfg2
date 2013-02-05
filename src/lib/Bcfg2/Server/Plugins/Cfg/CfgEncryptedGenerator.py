@@ -4,7 +4,7 @@
 from Bcfg2.Server.Plugin import PluginExecutionError
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 try:
-    from Bcfg2.Encryption import bruteforce_decrypt, EVPError
+    from Bcfg2.Server.Encryption import bruteforce_decrypt, EVPError
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False

@@ -13,14 +13,13 @@ import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Logger
 import Bcfg2.settings
-import Bcfg2.Statistics
+import Bcfg2.Server.Statistics
 import Bcfg2.Server.FileMonitor
 from itertools import chain
-from Bcfg2.Cache import Cache
+from Bcfg2.Server.Cache import Cache
 from Bcfg2.Options import get_option_parser, SERVER_FAM_IGNORE
 from Bcfg2.Compat import xmlrpclib  # pylint: disable=W0622
-from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError, \
-    track_statistics
+from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 
 try:
     import psyco
@@ -292,7 +291,7 @@ class BaseCore(object):
         #: :func:`Bcfg2.Server.FileMonitor.FileMonitor.handle_event_set`
         self.lock = threading.Lock()
 
-        #: A :class:`Bcfg2.Cache.Cache` object for caching client
+        #: A :class:`Bcfg2.Server.Cache.Cache` object for caching client
         #: metadata
         self.metadata_cache = Cache()
 
@@ -429,11 +428,11 @@ class BaseCore(object):
                     self.logger.error("%s: Error invoking hook %s: %s" %
                                       (plugin, hook, err))
         finally:
-            Bcfg2.Statistics.stats.add_value("%s:client_run_hook:%s" %
+            Bcfg2.Server.Statistics.stats.add_value("%s:client_run_hook:%s" %
                                              (self.__class__.__name__, hook),
                                              time.time() - start)
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
     def validate_structures(self, metadata, data):
         """ Checks the data structures by calling the
         :func:`Bcfg2.Server.Plugin.interfaces.StructureValidator.validate_structures`
@@ -460,7 +459,7 @@ class BaseCore(object):
                 self.logger.error("Plugin %s: unexpected structure validation "
                                   "failure" % plugin.name, exc_info=1)
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
     def validate_goals(self, metadata, data):
         """ Checks that the config matches the goals enforced by
         :class:`Bcfg2.Server.Plugin.interfaces.GoalValidator` plugins
@@ -485,7 +484,7 @@ class BaseCore(object):
                 self.logger.error("Plugin %s: unexpected goal validation "
                                   "failure" % plugin.name, exc_info=1)
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
     def GetStructures(self, metadata):
         """ Get all structures (i.e., bundles) for the given client
 
@@ -502,7 +501,7 @@ class BaseCore(object):
                               (metadata.hostname, ':'.join(missing)))
         return structures
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
     def BindStructures(self, structures, metadata, config):
         """ Given a list of structures (i.e. bundles), bind all the
         entries in them and add the structures to the config.
@@ -522,7 +521,7 @@ class BaseCore(object):
             except:
                 self.logger.error("error in BindStructure", exc_info=1)
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
     def BindStructure(self, structure, metadata):
         """ Bind all elements in a single structure (i.e., bundle).
 
@@ -595,7 +594,7 @@ class BaseCore(object):
             raise PluginExecutionError("No matching generator: %s:%s" %
                                        (entry.tag, entry.get('name')))
         finally:
-            Bcfg2.Statistics.stats.add_value("%s:Bind:%s" %
+            Bcfg2.Server.Statistics.stats.add_value("%s:Bind:%s" %
                                              (self.__class__.__name__,
                                               entry.tag),
                                              time.time() - start)
@@ -744,7 +743,7 @@ class BaseCore(object):
                                   % plugin.name, exc_info=1)
         return result
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
     def build_metadata(self, client_name):
         """ Build initial client metadata for a client
 
@@ -1094,11 +1093,11 @@ class BaseCore(object):
     @exposed
     def get_statistics(self, _):
         """ Get current statistics about component execution from
-        :attr:`Bcfg2.Statistics.stats`.
+        :attr:`Bcfg2.Server.Statistics.stats`.
 
         :returns: dict - The statistics data as returned by
-                  :func:`Bcfg2.Statistics.Statistics.display` """
-        return Bcfg2.Statistics.stats.display()
+                  :func:`Bcfg2.Server.Statistics.Statistics.display` """
+        return Bcfg2.Server.Statistics.stats.display()
 
     @exposed
     def toggle_debug(self, address):

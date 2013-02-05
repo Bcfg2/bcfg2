@@ -16,7 +16,7 @@ while path != "/":
 from common import *
 
 try:
-    from Bcfg2.Encryption import *
+    from Bcfg2.Server.Encryption import *
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
@@ -124,7 +124,7 @@ baz
                                   dict(foo="passphrase",
                                        bar="passphrase"))
 
-        @patch("Bcfg2.Encryption.get_passphrases")
+        @patch("Bcfg2.Server.Encryption.get_passphrases")
         def test_bruteforce_decrypt(self, mock_passphrases):
             passwd = "a simple passphrase"
             crypted = ssl_encrypt(self.plaintext, passwd)

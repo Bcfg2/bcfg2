@@ -1,6 +1,6 @@
 --- setup.py	2010-11-15 15:30:28.000000000 -0600
 +++ setup.py.macports	2010-11-18 19:06:49.155292524 -0600
-@@ -11,38 +11,22 @@
+@@ -11,38 +11,21 @@
  setup(cmdclass=cmdclass,
        name="Bcfg2",
        version="1.1.1",
@@ -20,7 +20,6 @@
 -                "Bcfg2.Server.Reports.reports.templatetags",
                  ],
 +      py_modules = ["Bcfg2.Options",
-+                    "Bcfg2.Proxy",
 +                    "Bcfg2.Logger",
 +                    ],
        package_dir = {'Bcfg2':'src/lib'},

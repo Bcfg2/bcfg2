@@ -119,8 +119,6 @@ class SSLHTTPConnection(httplib.HTTPConnection):
     implements SSL and related behaviors.
     """
 
-    logger = logging.getLogger('Bcfg2.Proxy.SSLHTTPConnection')
-
     def __init__(self, host, port=None, strict=None, timeout=90, key=None,
                  cert=None, ca=None, scns=None, protocol='xmlrpc/ssl'):
         """Initializes the `httplib.HTTPConnection` object and stores security
@@ -172,6 +170,9 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             httplib.HTTPConnection.__init__(self, host, port, strict)
         else:
             httplib.HTTPConnection.__init__(self, host, port, strict, timeout)
+        self.logger = logging.getLogger("%s.%s" % (self.__class__.__module__,
+                                                   self.__class__.__name__))
+
         self.key = key
         self.cert = cert
         self.ca = ca

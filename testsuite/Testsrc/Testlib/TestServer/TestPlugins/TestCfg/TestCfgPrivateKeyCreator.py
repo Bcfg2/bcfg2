@@ -7,7 +7,7 @@ from Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator import *
 from Bcfg2.Server.Plugin import PluginExecutionError
 import Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator
 try:
-    from Bcfg2.Encryption import EVPError
+    from Bcfg2.Server.Encryption import EVPError
     HAS_CRYPTO = True
 except:
     HAS_CRYPTO = False
@@ -66,7 +66,8 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
         pkc.setup.cfp.get.assert_called_with("sshkeys", "category")
 
     @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
-    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.get_passphrases")
+    @patchIf(HAS_CRYPTO,
+             "Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator.get_passphrases")
     def test_passphrase(self, mock_get_passphrases):
         pkc = self.get_obj()
         pkc.setup = Mock()
@@ -281,7 +282,7 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
 
         if HAS_CRYPTO:
             @patch(passphrase, "foo")
-            @patch("Bcfg2.Encryption.ssl_encrypt")
+            @patch("Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator.ssl_encrypt")
             def inner2(mock_ssl_encrypt):
                 reset()
                 mock_ssl_encrypt.return_value = "encryptedprivatekey"

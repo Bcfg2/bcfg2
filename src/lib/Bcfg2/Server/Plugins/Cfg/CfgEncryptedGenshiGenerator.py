@@ -6,7 +6,7 @@ from Bcfg2.Server.Plugin import PluginExecutionError
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
 
 try:
-    from Bcfg2.Encryption import bruteforce_decrypt
+    from Bcfg2.Server.Encryption import bruteforce_decrypt
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
@@ -21,7 +21,7 @@ except ImportError:
 class EncryptedTemplateLoader(TemplateLoader):
     """ Subclass :class:`genshi.template.TemplateLoader` to decrypt
     the data on the fly as it's read in using
-    :func:`Bcfg2.Encryption.bruteforce_decrypt` """
+    :func:`Bcfg2.Server.Encryption.bruteforce_decrypt` """
     def _instantiate(self, cls, fileobj, filepath, filename, encoding=None):
         plaintext = StringIO(bruteforce_decrypt(fileobj.read()))
         return TemplateLoader._instantiate(self, cls, plaintext, filepath,

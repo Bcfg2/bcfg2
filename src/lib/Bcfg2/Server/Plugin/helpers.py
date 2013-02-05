@@ -4,14 +4,12 @@ import os
 import re
 import sys
 import copy
-import time
 import genshi
 import logging
 import operator
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Options
-import Bcfg2.Statistics
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Compat import CmpMixin, wraps
 from Bcfg2.Server.Plugin.base import Debuggable, Plugin
@@ -20,7 +18,7 @@ from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
     PluginExecutionError
 
 try:
-    import Bcfg2.Encryption
+    import Bcfg2.Server.Encryption
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
@@ -92,40 +90,6 @@ def bind_info(entry, metadata, infoxml=None, default=None):
             raise PluginExecutionError(msg)
         for attr, val in list(mdata['Info'][None].items()):
             entry.set(attr, val)
-
-
-class track_statistics(object):  # pylint: disable=C0103
-    """ Decorator that tracks execution time for the given
-    :class:`Plugin` method with :mod:`Bcfg2.Statistics` for reporting
-    via ``bcfg2-admin perf`` """
-
-    def __init__(self, name=None):
-        """
-        :param name: The name under which statistics for this function
-                     will be tracked.  By default, the name will be
-                     the name of the function concatenated with the
-                     name of the class the function is a member of.
-        :type name: string
-        """
-        # if this is None, it will be set later during __call_
-        self.name = name
-
-    def __call__(self, func):
-        if self.name is None:
-            self.name = func.__name__
-
-        @wraps(func)
-        def inner(obj, *args, **kwargs):
-            """ The decorated function """
-            name = "%s:%s" % (obj.__class__.__name__, self.name)
-
-            start = time.time()
-            try:
-                return func(obj, *args, **kwargs)
-            finally:
-                Bcfg2.Statistics.stats.add_value(name, time.time() - start)
-
-        return inner
 
 
 class DatabaseBacked(Plugin):
@@ -620,8 +584,8 @@ class StructFile(XMLFileBacked, Debuggable):
         if self.encryption and HAS_CRYPTO:
             strict = self.xdata.get(
                 "decrypt",
-                self.setup.cfp.get(Bcfg2.Encryption.CFG_SECTION, "decrypt",
-                                   default="strict")) == "strict"
+                self.setup.cfp.get(Bcfg2.Server.Encryption.CFG_SECTION,
+                                   "decrypt", default="strict")) == "strict"
             for el in self.xdata.xpath("//*[@encrypted]"):
                 try:
                     el.text = self._decrypt(el).encode('ascii',
@@ -629,7 +593,7 @@ class StructFile(XMLFileBacked, Debuggable):
                 except UnicodeDecodeError:
                     self.logger.info("%s: Decrypted %s to gibberish, skipping"
                                      % (self.name, el.tag))
-                except Bcfg2.Encryption.EVPError:
+                except Bcfg2.Server.Encryption.EVPError:
                     msg = "Failed to decrypt %s element in %s" % (el.tag,
                                                                   self.name)
                     if strict:
@@ -642,19 +606,20 @@ class StructFile(XMLFileBacked, Debuggable):
         """ Decrypt a single encrypted properties file element """
         if not element.text or not element.text.strip():
             return
-        passes = Bcfg2.Encryption.get_passphrases()
+        passes = Bcfg2.Server.Encryption.get_passphrases()
         try:
             passphrase = passes[element.get("encrypted")]
             try:
-                return Bcfg2.Encryption.ssl_decrypt(element.text, passphrase)
-            except Bcfg2.Encryption.EVPError:
+                return Bcfg2.Server.Encryption.ssl_decrypt(element.text,
+                                                           passphrase)
+            except Bcfg2.Server.Encryption.EVPError:
                 # error is raised below
                 pass
         except KeyError:
             # bruteforce_decrypt raises an EVPError with a sensible
             # error message, so we just let it propagate up the stack
-            return Bcfg2.Encryption.bruteforce_decrypt(element.text)
-        raise Bcfg2.Encryption.EVPError("Failed to decrypt")
+            return Bcfg2.Server.Encryption.bruteforce_decrypt(element.text)
+        raise Bcfg2.Server.Encryption.EVPError("Failed to decrypt")
 
     def _include_element(self, item, metadata):
         """ determine if an XML element matches the metadata """

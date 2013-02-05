@@ -42,11 +42,10 @@ f none lib/PYVERSION/site-packages/Bcfg2/Server/Plugins/Git.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/FileMonitor.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Server/Core.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/__init__.py 0644 bin bin
-f none lib/PYVERSION/site-packages/Bcfg2/Statistics.py 0644 bin bin
-f none lib/PYVERSION/site-packages/Bcfg2/SSLServer.py 0644 bin bin
+f none lib/PYVERSION/site-packages/Bcfg2/Server/Statistics.py 0644 bin bin
+f none lib/PYVERSION/site-packages/Bcfg2/Server/SSLServer.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Component.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Logger.py 0644 bin bin
-f none lib/PYVERSION/site-packages/Bcfg2/Proxy.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Options.py 0644 bin bin
 d none bin 0755 bin bin
 f none bin/bcfg2-server 0755 bin bin

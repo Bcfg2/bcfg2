@@ -18,8 +18,6 @@ from Bcfg2.Compat import xmlrpclib, SimpleXMLRPCServer, SocketServer, \
 class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     """ An XML-RPC dispatcher. """
 
-    logger = logging.getLogger("Bcfg2.SSLServer.XMLRPCDispatcher")
-
     def __init__(self, allow_none, encoding):
         try:
             SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self,
@@ -29,6 +27,8 @@ class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
             # Python 2.4?
             SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
 
+        self.logger = logging.getLogger("%s.%s" % (self.__class__.__module__,
+                                                   self.__class__.__name__))
         self.allow_none = allow_none
         self.encoding = encoding
 
@@ -62,9 +62,7 @@ class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
 
 class SSLServer(SocketServer.TCPServer, object):
     """ TCP server supporting SSL encryption. """
-
     allow_reuse_address = True
-    logger = logging.getLogger("Bcfg2.SSLServer.SSLServer")
 
     def __init__(self, listen_all, server_address, RequestHandlerClass,
                  keyfile=None, certfile=None, reqCert=False, ca=None,
@@ -96,6 +94,9 @@ class SSLServer(SocketServer.TCPServer, object):
         # check for IPv6 address
         if ':' in server_address[0]:
             self.address_family = socket.AF_INET6
+
+        self.logger = logging.getLogger("%s.%s" % (self.__class__.__module__,
+                                                   self.__class__.__name__))
 
         try:
             SocketServer.TCPServer.__init__(self, listen_address,
@@ -183,7 +184,11 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     Adds support for HTTP authentication.
     """
 
-    logger = logging.getLogger("Bcfg2.SSLServer.XMLRPCRequestHandler")
+    def __init__(self, *args, **kwargs):
+        SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.__init__(self, *args,
+                                                               **kwargs)
+        self.logger = logging.getLogger("%s.%s" % (self.__class__.__module__,
+                                                   self.__class__.__name__))
 
     def authenticate(self):
         try:

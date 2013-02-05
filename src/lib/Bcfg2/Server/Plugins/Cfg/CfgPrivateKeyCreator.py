@@ -9,7 +9,7 @@ from Bcfg2.Server.Plugin import StructFile
 from Bcfg2.Server.Plugins.Cfg import CfgCreator, CfgCreationError
 from Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator import CfgPublicKeyCreator
 try:
-    import Bcfg2.Encryption
+    from Bcfg2.Server.Encryption import get_passphrases, ssl_encrypt
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
@@ -50,9 +50,8 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         if (HAS_CRYPTO and
             self.setup.cfp.has_section("sshkeys") and
             self.setup.cfp.has_option("sshkeys", "passphrase")):
-            return Bcfg2.Encryption.get_passphrases()[self.setup.cfp.get(
-                    "sshkeys",
-                    "passphrase")]
+            return get_passphrases()[self.setup.cfp.get("sshkeys",
+                                                        "passphrase")]
         return None
 
     def handle_event(self, event):
@@ -198,8 +197,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
             privkey = open(filename).read()
             if HAS_CRYPTO and self.passphrase:
                 self.debug_log("Cfg: Encrypting key data at %s" % filename)
-                privkey = Bcfg2.Encryption.ssl_encrypt(privkey,
-                                                       self.passphrase)
+                privkey = ssl_encrypt(privkey, self.passphrase)
                 specificity['ext'] = '.crypt'
 
             self.write_data(privkey, **specificity)

@@ -12,7 +12,7 @@ import Bcfg2.Options
 from Bcfg2.Server import XMLParser
 from Bcfg2.Compat import input  # pylint: disable=W0622
 try:
-    import Bcfg2.Encryption
+    import Bcfg2.Server.Encryption
 except ImportError:
     print("Could not import %s. Is M2Crypto installed?" % sys.exc_info()[1])
     raise SystemExit(1)
@@ -55,8 +55,8 @@ class Encryptor(object):
 
     def set_passphrase(self):
         """ set the passphrase for the current file """
-        if (not self.setup.cfp.has_section(Bcfg2.Encryption.CFG_SECTION) or
-            len(Bcfg2.Encryption.get_passphrases()) == 0):
+        if (not self.setup.cfp.has_section(Bcfg2.Server.Encryption.CFG_SECTION)
+            or len(Bcfg2.Server.Encryption.get_passphrases()) == 0):
             self.logger.error("No passphrases available in %s" %
                               self.setup['configfile'])
             return False
@@ -70,10 +70,10 @@ class Encryptor(object):
             self.pname = self.setup['passphrase']
 
         if self.pname:
-            if self.setup.cfp.has_option(Bcfg2.Encryption.CFG_SECTION,
+            if self.setup.cfp.has_option(Bcfg2.Server.Encryption.CFG_SECTION,
                                          self.pname):
                 self.passphrase = \
-                    self.setup.cfp.get(Bcfg2.Encryption.CFG_SECTION,
+                    self.setup.cfp.get(Bcfg2.Server.Encryption.CFG_SECTION,
                                        self.pname)
                 self.logger.debug("Using passphrase %s specified on command "
                                   "line" % self.pname)
@@ -83,7 +83,7 @@ class Encryptor(object):
                                   (self.pname, self.setup['configfile']))
                 return False
         else:
-            pnames = Bcfg2.Encryption.get_passphrases()
+            pnames = Bcfg2.Server.Encryption.get_passphrases()
             if len(pnames) == 1:
                 self.pname = pnames.keys()[0]
                 self.passphrase = pnames[self.pname]
@@ -127,7 +127,7 @@ class Encryptor(object):
     #  pylint: disable=W0613
     def _encrypt(self, plaintext, passphrase, name=None):
         """ encrypt a single chunk of a file """
-        return Bcfg2.Encryption.ssl_encrypt(plaintext, passphrase)
+        return Bcfg2.Server.Encryption.ssl_encrypt(plaintext, passphrase)
     #  pylint: enable=W0613
 
     def decrypt(self, fname):
@@ -148,7 +148,7 @@ class Encryptor(object):
                     passphrase, pname = self.get_passphrase(chunk)
                     try:
                         plaintext.append(self._decrypt(chunk, passphrase))
-                    except Bcfg2.Encryption.EVPError:
+                    except Bcfg2.Server.Encryption.EVPError:
                         self.logger.info("Could not decrypt %s with the "
                                          "specified passphrase" % fname)
                         continue
@@ -160,12 +160,12 @@ class Encryptor(object):
                 except TypeError:
                     pchunk = None
                     for pname, passphrase in \
-                          Bcfg2.Encryption.get_passphrases().items():
+                          Bcfg2.Server.Encryption.get_passphrases().items():
                         self.logger.debug("Trying passphrase %s" % pname)
                         try:
                             pchunk = self._decrypt(chunk, passphrase)
                             break
-                        except Bcfg2.Encryption.EVPError:
+                        except Bcfg2.Server.Encryption.EVPError:
                             pass
                         except:
                             err = sys.exc_info()[1]
@@ -194,7 +194,7 @@ class Encryptor(object):
 
     def _decrypt(self, crypted, passphrase):
         """ decrypt a single chunk """
-        return Bcfg2.Encryption.ssl_decrypt(crypted, passphrase)
+        return Bcfg2.Server.Encryption.ssl_decrypt(crypted, passphrase)
 
     def write_encrypted(self, fname, data=None):
         """ write encrypted data to disk """
@@ -239,10 +239,11 @@ class Encryptor(object):
                 self.logger.info("No passphrase given on command line or "
                                  "found in file")
                 return False
-            elif self.setup.cfp.has_option(Bcfg2.Encryption.CFG_SECTION,
+            elif self.setup.cfp.has_option(Bcfg2.Server.Encryption.CFG_SECTION,
                                            pname):
-                passphrase = self.setup.cfp.get(Bcfg2.Encryption.CFG_SECTION,
-                                                pname)
+                passphrase = self.setup.cfp.get(
+                    Bcfg2.Server.Encryption.CFG_SECTION,
+                    pname)
             else:
                 self.logger.error("Could not find passphrase %s in %s" %
                                   (pname, self.setup['configfile']))
@@ -283,8 +284,9 @@ class PropertiesEncryptor(Encryptor):
         if name is None:
             name = "true"
         if plaintext.text and plaintext.text.strip():
-            plaintext.text = Bcfg2.Encryption.ssl_encrypt(plaintext.text,
-                                                          passphrase).strip()
+            plaintext.text = \
+                Bcfg2.Server.Encryption.ssl_encrypt(plaintext.text,
+                                                    passphrase).strip()
             plaintext.set("encrypted", name)
         return plaintext
 
@@ -352,8 +354,8 @@ class PropertiesEncryptor(Encryptor):
         if not crypted.text or not crypted.text.strip():
             self.logger.warning("Skipping empty element %s" % crypted.tag)
             return crypted
-        decrypted = Bcfg2.Encryption.ssl_decrypt(crypted.text,
-                                                 passphrase).strip()
+        decrypted = Bcfg2.Server.Encryption.ssl_decrypt(crypted.text,
+                                                        passphrase).strip()
         try:
             crypted.text = decrypted.encode('ascii', 'xmlcharrefreplace')
         except UnicodeDecodeError:

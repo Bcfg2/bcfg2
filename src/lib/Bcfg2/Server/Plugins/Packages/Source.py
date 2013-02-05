@@ -54,6 +54,7 @@ from Bcfg2.Options import get_option_parser
 from Bcfg2.Compat import HTTPError, HTTPBasicAuthHandler, \
      HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, \
      urlopen, cPickle, md5
+from Bcfg2.Server.Statistics import track_statistics
 
 
 def fetch_url(url):
@@ -320,7 +321,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
                       self.essentialpkgs), cache, 2)
         cache.close()
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def setup_data(self, force_update=False):
         """ Perform all data fetching and setup tasks.  For most
         backends, this involves downloading all metadata from the
