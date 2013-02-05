@@ -61,6 +61,7 @@ Packages plugin.  It processes ``<Group>`` and ``<Client>`` tags just like
 Bundles. The primary element in ``sources.xml`` is the Source tag:
 
 .. xml:element:: Source
+   :noautodep: py:genshiElements
 
 Handling GPG Keys
 -----------------

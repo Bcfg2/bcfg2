@@ -112,7 +112,6 @@
         </xsd:annotation>
       </xsd:element>
       <xsd:choice>
-      <xsd:group ref="py:genshiElements"/>
         <xsd:element name="Blacklist" type="xsd:string">
           <xsd:annotation>
             <xsd:documentation>
