@@ -10,6 +10,30 @@ Provides the following directives:
 * ``.. xml:attributegroup:: <name>``: Document an attributeGroup
 * ``.. xml:element:: <name>``: Document an XML element
 
+Each directive supports the following options:
+
+* ``:namespace: <ns>``: Specify the namespace of the given entity
+* ``:nochildren:``: Do not generate documentation for child entities
+* ``:noattributegroups:``: Do not generate documentation about
+  attribute groups
+* ``:nodoc:``: Do not include the documentation included in the entity
+  annotation
+* ``:notext:``: Do not generate documentation about the text content
+  of the entity
+* ``:onlyattrs: <attr>,<attr>``: Only generate documentation about the
+  comma-separated list of attributes given
+* ``:requiredattrs: <attr>,attr>``: Claim that the attributes named in
+  the given comma-separated list are required, even if they are not
+  flagged as such in the schema.
+* ``:linktotype: [<type>,<type>]``: If used as a flag, link to
+  documentation on all child types and elements.  If a list is given,
+  only link to those types given.  (The default is to generate full
+  inline docs for those types.)
+* ``:noautodep: [<name>,<name>]``: Do not automatically generate docs
+  for any dependent entities.
+* ``:inlinetypes: <type>,<type>``: Override a default ``:linktotype:``
+  setting for the given types.
+
 Provides the following roles to link to the objects documented above:
 
 * ``:xml:schema:`<name>```: Link to an XML schema
@@ -759,6 +783,8 @@ class XMLDomain(Domain):
 
     def resolve_xref(self, env, fromdocname, builder, typ, target, node,
                      contnode):
+        if typ in ['complexType', 'simpleType']:
+            typ = 'type'
         if target in self.data[typ]:
             docname, labelid = self.data[typ][target]
         else:
