@@ -6,6 +6,7 @@ import subprocess
 from mock import Mock, MagicMock, patch
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Tools.POSIXUsers import *
+from Bcfg2.Utils import PackedDigitRange
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4
@@ -17,33 +18,6 @@ while path != "/":
         break
     path = os.path.dirname(path)
 from common import *
-
-
-class TestIDRangeSet(Bcfg2TestCase):
-    def test_ranges(self):
-        # test cases.  tuples of (ranges, included numbers, excluded
-        # numbers)
-        # tuples of (range description, numbers that are included,
-        # numebrs that are excluded)
-        tests = [(["0-3"], ["0", 1, "2", 3], [4]),
-                 (["1"], [1], [0, "2"]),
-                 (["10-11"], [10, 11], [0, 1]),
-                 (["9-9"], [9], [8, 10]),
-                 (["0-100"], [0, 10, 99, 100], []),
-                 (["1", "3", "5"], [1, 3, 5], [0, 2, 4, 6]),
-                 (["1-5", "7"], [1, 3, 5, 7], [0, 6, 8]),
-                 (["1-5", 7, "9-11"], [1, 3, 5, 7, 9, 11], [0, 6, 8, 12]),
-                 (["852-855", "321-497", 763], [852, 855, 321, 400, 497, 763],
-                  [851, 320, 766, 999]),
-                 (["0-"], [0, 1, 100, 100000], []),
-                 ([1, "5-10", "1000-"], [1, 5, 10, 1000, 10000000],
-                  [4, 11, 999])]
-        for ranges, inc, exc in tests:
-            rng = IDRangeSet(*ranges)
-            for test in inc:
-                self.assertIn(test, rng)
-            for test in exc:
-                self.assertNotIn(test, rng)
 
 
 class TestExecutor(Bcfg2TestCase):
@@ -177,19 +151,19 @@ class TestPOSIXUsers(Bcfg2TestCase):
 
     def test__in_managed_range(self):
         users = self.get_obj()
-        users._whitelist = dict(POSIXGroup=IDRangeSet("1-10"))
-        users._blacklist = dict(POSIXGroup=IDRangeSet("8-100"))
+        users._whitelist = dict(POSIXGroup=PackedDigitRange("1-10"))
+        users._blacklist = dict(POSIXGroup=PackedDigitRange("8-100"))
         self.assertTrue(users._in_managed_range("POSIXGroup", "9"))
 
         users._whitelist = dict(POSIXGroup=None)
-        users._blacklist = dict(POSIXGroup=IDRangeSet("8-100"))
+        users._blacklist = dict(POSIXGroup=PackedDigitRange("8-100"))
         self.assertFalse(users._in_managed_range("POSIXGroup", "9"))
 
         users._whitelist = dict(POSIXGroup=None)
-        users._blacklist = dict(POSIXGroup=IDRangeSet("100-"))
+        users._blacklist = dict(POSIXGroup=PackedDigitRange("100-"))
         self.assertTrue(users._in_managed_range("POSIXGroup", "9"))
 
-        users._whitelist = dict(POSIXGroup=IDRangeSet("1-10"))
+        users._whitelist = dict(POSIXGroup=PackedDigitRange("1-10"))
         users._blacklist = dict(POSIXGroup=None)
         self.assertFalse(users._in_managed_range("POSIXGroup", "25"))
 
