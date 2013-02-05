@@ -197,15 +197,51 @@ useful results:
 
 .. code-block:: xml
 
-    <Groups version='3.0' xmlns:xi="http://www.w3.org/2001/XInclude">
-     <xi:include href="my-groups.xml" />
-     <xi:include href="their-groups.xml" />
+    <Groups xmlns:xi="http://www.w3.org/2001/XInclude">
+      <xi:include href="my-groups.xml" />
+      <xi:include href="their-groups.xml" />
     </Groups>
 
 Each of the included groups files has the same format. These files are
 properly validated by ``bcfg2-lint``. This mechanism is useful for
 composing group definitions from multiple sources, or setting
 different permissions in an svn repository.
+
+You can also optionally include a file that may or may not exist with
+the ``fallback`` tag:
+
+.. code-block:: xml
+
+    <Groups xmlns:xi="http://www.w3.org/2001/XInclude">
+      <xi:include href="my-groups.xml"/>
+      <xi:include href="their-groups.xml"><xi:fallback/></xi:include>
+    </Groups>
+
+In this case, if ``their-groups.xml`` does not exist, no error will be
+raised and everything will work fine.  (You can also use ``fallback``
+to include a different file, or explicit content in the case that the
+parent include does not exist.)
+
+Wildcard XInclude
+~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 1.3.1
+
+Bcfg2 supports an extension to XInclude that allows you to use shell
+globbing in the hrefs.  (Stock XInclude doesn't support this, since
+the href is supposed to be a URL.)
+
+For instance:
+
+    <Groups xmlns:xi="http://www.w3.org/2001/XInclude">
+      <xi:include href="groups/*.xml"/>
+    </Groups>
+
+This would include all ``*.xml`` files in the ``groups`` subdirectory.
+
+Note that if a glob finds no files, that is treated the same as if a
+single included file does not exist.  You should use the ``fallback``
+tag, described above, if a glob may potentially find no files.
 
 Probes
 ======

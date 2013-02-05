@@ -5,6 +5,7 @@ import re
 import sys
 import copy
 import time
+import glob
 import logging
 import operator
 import lxml.etree
@@ -503,13 +504,14 @@ class XMLFileBacked(FileBacked):
 
     def _follow_xincludes(self, fname=None, xdata=None):
         """ follow xincludes, adding included files to self.extras """
+        xinclude = '%sinclude' % Bcfg2.Server.XI_NAMESPACE
+
         if xdata is None:
             if fname is None:
                 xdata = self.xdata.getroottree()
             else:
                 xdata = lxml.etree.parse(fname)
-        included = [el for el in xdata.findall('//%sinclude' %
-                                               Bcfg2.Server.XI_NAMESPACE)]
+        included = [el for el in xdata.findall('//' + xinclude)]
         for el in included:
             name = el.get("href")
             if name.startswith("/"):
@@ -520,16 +522,23 @@ class XMLFileBacked(FileBacked):
                 else:
                     rel = self.name
                 fpath = os.path.join(os.path.dirname(rel), name)
-            if fpath not in self.extras:
-                if os.path.exists(fpath):
-                    self._follow_xincludes(fname=fpath)
-                    self.add_monitor(fpath)
+
+            # expand globs in xinclude, a bcfg2-specific extension
+            extras = glob.glob(fpath)
+            if not extras:
+                msg = "%s: %s does not exist, skipping" % (self.name, name)
+                if el.findall('./%sfallback' % Bcfg2.Server.XI_NAMESPACE):
+                    LOGGER.debug(msg)
                 else:
-                    msg = "%s: %s does not exist, skipping" % (self.name, name)
-                    if el.findall('./%sfallback' % Bcfg2.Server.XI_NAMESPACE):
-                        LOGGER.debug(msg)
-                    else:
-                        LOGGER.warning(msg)
+                    LOGGER.warning(msg)
+
+            parent = el.getparent()
+            parent.remove(el)
+            for extra in extras:
+                if extra != self.name and extra not in self.extras:
+                    self.add_monitor(extra)
+                    lxml.etree.SubElement(parent, xinclude, href=extra)
+                    self._follow_xincludes(fname=extra)
 
     def Index(self):
         self.xdata = lxml.etree.XML(self.data, base_url=self.name,
