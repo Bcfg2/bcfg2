@@ -5,44 +5,9 @@ import sys
 import pwd
 import grp
 import subprocess
+from Bcfg2.Utils import PackedDigitRange
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
-from Bcfg2.Compat import any  # pylint: disable=W0622
-
-
-class IDRangeSet(object):
-    """ Representation of a set of integer ranges.  Used to describe
-    which UID/GID ranges are managed or unmanaged. """
-
-    def __init__(self, *ranges):
-        self.ranges = []
-        self.ints = []
-        self.str = ",".join(str(r) for r in ranges)
-        for item in ranges:
-            item = str(item).strip()
-            if item.endswith("-"):
-                self.ranges.append((int(item[:-1]), None))
-            elif '-' in str(item):
-                self.ranges.append(tuple(int(x) for x in item.split('-')))
-            else:
-                self.ints.append(int(item))
-
-    def __contains__(self, other):
-        other = int(other)
-        if other in self.ints:
-            return True
-        return any((end is None and other >= start) or
-                   (end is not None and other >= start and other <= end)
-                   for start, end in self.ranges)
-
-    def __repr__(self):
-        return "%s:%s" % (self.__class__.__name__, str(self))
-
-    def __str__(self):
-        return "[%s]" % self.str
-
-    def __len__(self):
-        return len(self.ranges) + len(self.ints)
 
 
 class ExecutionError(Exception):
@@ -124,16 +89,16 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
         self._blacklist = dict(POSIXUser=None, POSIXGroup=None)
         if self.setup['posix_uid_whitelist']:
             self._whitelist['POSIXUser'] = \
-                IDRangeSet(*self.setup['posix_uid_whitelist'])
+                PackedDigitRange(*self.setup['posix_uid_whitelist'])
         else:
             self._blacklist['POSIXUser'] = \
-                IDRangeSet(*self.setup['posix_uid_blacklist'])
+                PackedDigitRange(*self.setup['posix_uid_blacklist'])
         if self.setup['posix_gid_whitelist']:
             self._whitelist['POSIXGroup'] = \
-                IDRangeSet(*self.setup['posix_gid_whitelist'])
+                PackedDigitRange(*self.setup['posix_gid_whitelist'])
         else:
             self._blacklist['POSIXGroup'] = \
-                IDRangeSet(*self.setup['posix_gid_blacklist'])
+                PackedDigitRange(*self.setup['posix_gid_blacklist'])
 
     @property
     def existing(self):
