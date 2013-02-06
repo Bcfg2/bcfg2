@@ -807,7 +807,11 @@ class YumCollection(Collection):
                 initial_names.append(pkg)
         new = []
         for pkg in complete:
-            if pkg[0] not in initial_names:
+            if isinstance(pkg, tuple):
+                name = pkg[0]
+            else:
+                name = pkg
+            if name not in initial_names:
                 new.append(pkg)
         return new
 
