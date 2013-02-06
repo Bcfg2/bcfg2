@@ -14,7 +14,6 @@ LOGGER = logging.getLogger(__name__)
 
 class NagiosGenConfig(Bcfg2.Server.Plugin.StructFile):
     """ NagiosGen config file handler """
-
     encryption = False
 
     def __init__(self, filename):

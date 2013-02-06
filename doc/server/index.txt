@@ -32,4 +32,4 @@ clients.
    database
    caching
    encryption
-   genshi-xml
+   xml-common

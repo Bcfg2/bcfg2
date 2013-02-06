@@ -1,0 +1,199 @@
+.. -*- mode: rst -*-
+
+.. _xml-features:
+
+=====================
+ Common XML Features
+=====================
+
+Most of the XML files in Bcfg2 have a common set of features that are
+supported.  These are described in some detail below, and a precise
+rundown of which features are supported by which files is provided.
+
+.. _xml-group-client-tags:
+
+Group and Client tags
+=====================
+
+These allow the portions of an XML document inside a Client or Group
+tag to only apply to the given client group.  See
+:ref:`server-plugins-structures-bundler-index` for examples and more
+details.
+
+.. _xml-genshi-templating:
+
+Genshi templating
+=================
+
+Genshi XML templates allow you to use the `Genshi
+<http://genshi.edgewall.org>`_ templating system to dynamically
+generate XML file content for a given client.  Genshi templating can
+be enabled on a file by adding the Genshi namespace to the top-level
+tag, e.g.:
+
+.. code-block:: xml
+
+    <Bundle xmlns:py="http://genshi.edgewall.org/">
+
+Several variables are pre-defined inside Genshi XML templates:
+
++-------------+--------------------------------------------------------+
+| Name        | Description                                            |
++=============+========================================================+
+| metadata    | :ref:`Client metadata                                  |
+|             | <server-plugins-grouping-metadata-clientmetadata>`     |
++-------------+--------------------------------------------------------+
+| repo        | The path to the Bcfg2 repository on the filesystem     |
++-------------+--------------------------------------------------------+
+
+.. note::
+
+    ``<Group>`` and ``<Client>`` tags can be used inside templates as
+    of Bcfg2 1.2, but they do not behave the same as using a Genshi
+    conditional, e.g.::
+
+        <py:if test="'groupname' in metadata.groups">
+	</py:if>
+
+    The conditional is evaluated when the template is rendered, so
+    code inside the conditional is not executed if the conditional
+    fails.  A ``<Group>`` tag is evaluated *after* the template is
+    rendered, so code inside the tag is always executed.  This is an
+    important distinction: if you have code that will fail on some
+    groups, you *must* use a Genshi conditional, not a ``<Group>``
+    tag.  The same caveats apply to ``<Client>`` tags.
+
+.. _xml-genshi-reference:
+
+Genshi XML Template Reference
+-----------------------------
+
+The Genshi XML templating language is described in depth at `Genshi
+<http://genshi.edgewall.org>`_.  The XML schema reference follows.
+
+Genshi Tags
+~~~~~~~~~~~
+
+.. xml:group:: genshiElements
+   :namespace: py
+
+Genshi Attributes
+~~~~~~~~~~~~~~~~~
+
+.. xml:attributegroup:: genshiAttrs
+   :namespace: py
+
+.. _xml-encryption:
+
+Encryption
+==========
+
+You can encrypt data in XML files to protect that data from other
+people who need access to the repository.  The data is decrypted
+transparently on-the-fly by the server.
+
+.. note::
+
+    This feature is *not* intended to secure the files against a
+    malicious attacker who has gained access to your Bcfg2 server, as
+    the encryption passphrases are held in plaintext in
+    ``bcfg2.conf``.  This is only intended to make it easier to use a
+    single Bcfg2 repository with multiple admins who should not
+    necessarily have access to each other's sensitive data.
+
+XML files are encrypted on a per-element basis; that is, rather than
+encrypting the whole file, only the character content of individual
+elements is encrypted.  This makes it easier to track changes to the
+file in a VCS, and also lets unprivileged users work with the other
+data in the file.  Only character content of an element can be
+encrypted; attribute content and XML elements themselves cannot be
+encrypted.
+
+By default, decryption is *strict*; that is, if any element cannot be
+decrypted, parsing of the file is aborted.  See
+:ref:`server-encryption-lax-strict` for information on changing this
+on a global or per-file basis.
+
+To encrypt or decrypt a file, use :ref:`bcfg2-crypt`.
+
+See :ref:`server-encryption` for more details on encryption in Bcfg2
+in general.
+
+XInclude
+========
+
+.. versionadded:: 0.9.0
+
+`XInclude <http://www.w3.org/TR/xinclude/>`_ is a W3C specification
+for the inclusion of external XML documents into XML source files,
+allowing complex definitions to be split into smaller, more manageable
+pieces.  For instance, in the :ref:`server-plugins-grouping-metadata`
+``groups.xml`` file, you might do:
+
+.. code-block:: xml
+
+    <Groups xmlns:xi="http://www.w3.org/2001/XInclude">
+      <xi:include href="my-groups.xml" />
+      <xi:include href="their-groups.xml" />
+    </Groups>
+
+To enable XInclude on a file, you need only add the XInclude namespace
+to the top-level tag.
+
+XInclude can only include whole, well-formed XML files.  In many
+cases, if a file type does not support XInclude it is because the XML
+schema lacks support.
+
+Feature Matrix
+==============
+
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| File                                                         | Group/Client | Genshi | Encryption | XInclude |
++==============================================================+==============+========+============+==========+
+| :ref:`Bundles <server-plugins-structures-bundler-index>`     | Yes          | Yes    | Yes        | Yes      |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| :ref:`info.xml <server-info>`                                | Yes [#f1]_   | Yes    | No         | No       |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| :ref:`authorizedkeys.xml, privkey.xml, and pubkey.xml        | Yes          | Yes    | Yes        | No       |
+| <server-plugins-generators-cfg-sshkeys>`                     |              |        |            |          |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| :ref:`Decisions <server-plugins-generators-decisions>`       | Yes          | Yes    | Yes        | Yes      |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| :ref:`Defaults <server-plugins-structures-defaults>`         | Yes          | Yes    | Yes        | Yes      |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| :ref:`FileProbes <server-plugins-probes-fileprobes>`         | Yes          | Yes    | No         | Yes      |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| :ref:`GroupPatterns <server-plugins-grouping-grouppatterns>` | No           | No     | No         | Yes      |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| :ref:`Metadata clients.xml                                   | No           | No     | No         | Yes      |
+| <server-plugins-grouping-metadata-clients-xml>`              |              |        |            |          |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| :ref:`Metadata clients.xml                                   | Yes [#f2]_   | No     | No         | Yes      |
+| <server-plugins-grouping-metadata-groups-xml>`               |              |        |            |          |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| :ref:`NagiosGen <server-plugins-generators-nagiosgen>`       | Yes          | Yes    | No         | Yes      |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| :ref:`Pkgmgr <server-plugins-generators-pkgmgr>`             | Yes          | No     | No         | No       |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| :ref:`Properties <server-plugins-connectors-properties>`     | Yes [#f3]_   | Yes    | Yes        | Yes      |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| :ref:`Rules <server-plugins-generators-rules>`               | Yes          | Yes    | Yes        | Yes      |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+| :ref:`SSLCA cert.xml and key.xml                             | Yes          | Yes    | Yes        | No       |
+| <server-plugins-generators-sslca>`                           |              |        |            |          |
++--------------------------------------------------------------+--------------+--------+------------+----------+
+
+.. rubric:: Footnotes
+
+.. [#f1] ``info.xml`` also supports conditional Path tags; see
+         :ref:`server-info` for more.
+.. [#f2] The semantics of Group tags in ``groups.xml`` is slightly
+         different; see
+         :ref:`server-plugins-grouping-metadata-groups-xml` for
+         details.
+.. [#f3] Group and Client tags in XML Properties are not automatic by
+         default; they can be resolved by use of either the
+         ``Match()`` or ``XMLMatch()`` methods, or by use of the
+         :ref:`server-plugins-connectors-properties-automatch`
+         feature. See :ref:`server-plugins-connectors-properties-xml`
+         for details.

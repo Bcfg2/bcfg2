@@ -210,6 +210,8 @@ get a list of valid algorithms, you can run::
     openssl list-cipher-algorithms | grep -v ' => ' | \
         tr 'A-Z-' 'a-z_' | sort -u
 
+.. _server-encryption-lax-strict:
+
 Lax vs. Strict decryption
 -------------------------
 
@@ -229,6 +231,9 @@ This causes a failed decrypt to produce a warning only, not an error.
 This can be overridden by individual XML files by setting
 ``decrypt="strict"`` on the top-level tag (or, vice-versa; if strict
 is the default an XML file can specify ``decrypt="lax"``.
+
+Note that you could, for instance, set lax decryption by default, and
+then set strict decryption on individual files.
 
 Encryption API
 ==============

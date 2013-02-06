@@ -123,39 +123,7 @@ generate a bundle.  Genshi templates can be specified one of two ways:
 2. Add the Genshi namespace to your existing XML
    bundle.
 
-The top-level Bundle tag should look like the following::
-
-    <Bundle xmlns:py="http://genshi.edgewall.org/">
-
-Several variables are pre-defined inside templates:
-
-+-------------+--------------------------------------------------------+
-| Name        | Description                                            |
-+=============+========================================================+
-| metadata    | :ref:`Client metadata                                  |
-|             | <server-plugins-grouping-metadata-clientmetadata>`     |
-+-------------+--------------------------------------------------------+
-| repo        | The path to the Bcfg2 repository on the filesystem     |
-+-------------+--------------------------------------------------------+
-
-.. note::
-
-    ``<Group>`` and ``<Client>`` tags are allowed inside of Genshi
-    templates as of Bcfg2 1.2.  However, they do not behave the same
-    as using a Genshi conditional, e.g.::
-
-        <py:if test="'groupname' in metadata.groups">
-	</py:if>
-
-    The conditional is evaluated when the template is rendered, so
-    code inside the conditional is not executed if the conditional
-    fails.  A ``<Group>`` tag is evaluated *after* the template is
-    rendered, so code inside the tag is always executed.  This is an
-    important distinction: if you have code that will fail on some
-    groups, you *must* use a Genshi conditional, not a ``<Group>``
-    tag.  The same caveats apply to ``<Client>`` tags.
-
-See also the :ref:`xml-genshi-reference`.
+See :ref:`xml-genshi-templating` for details.
 
 Troubleshooting
 ---------------

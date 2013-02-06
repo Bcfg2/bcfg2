@@ -90,6 +90,8 @@ Database Settings <server-database>`.
 
 The `clients.xml`_-based model remains the default.
 
+.. _server-plugins-grouping-metadata-groups-xml:
+
 groups.xml
 ==========
 
@@ -180,38 +182,6 @@ groups:
     all new in 1.3.0.
 
 .. xml:schema:: metadata.xsd
-
-
-XInclude
-========
-
-.. versionadded:: 0.9.0
-
-`XInclude <http://www.w3.org/TR/xinclude/>`_ is a W3C specification
-for the inclusion of external XML documents into XML source files,
-allowing complex definitions to be split into smaller, more manageable
-pieces. The `Metadata`_ plugin supports the use of XInclude
-specifications to split the `clients.xml`_ and `groups.xml`_
-files. This mechanism allows the following specification to produce
-useful results:
-
-.. code-block:: xml
-
-    <Groups version='3.0' xmlns:xi="http://www.w3.org/2001/XInclude">
-     <xi:include href="my-groups.xml" />
-     <xi:include href="their-groups.xml" />
-    </Groups>
-
-Each of the included groups files has the same format. These files are
-properly validated by ``bcfg2-lint``. This mechanism is useful for
-composing group definitions from multiple sources, or setting
-different permissions in an svn repository.
-
-Probes
-======
-
-The metadata plugin includes client-side probing functionality. This
-is fully documented :ref:`here <server-plugins-probes-index>`.
 
 Metadata Caching
 ================

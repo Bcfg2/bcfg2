@@ -509,7 +509,7 @@ class StructFile(XMLFileBacked, Debuggable):
 
     .. -----
     .. autoattribute:: __identifier__
-    .. autofunction:: _include_element
+    .. automethod:: _include_element
     """
 
     #: If ``__identifier__`` is not None, then it must be the name of

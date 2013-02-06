@@ -97,6 +97,5 @@ Other Cfg Objects
 These other objects comprise the remainder of the Cfg plugin, and are
 included for completeness.
 
-.. autoattribute:: Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEntrySet
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.Cfg
