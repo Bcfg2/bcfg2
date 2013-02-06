@@ -47,47 +47,6 @@ class TestFunctions(Bcfg2TestCase):
                   data[1]]
         self.assertItemsEqual(list(removecomment(stream)), data)
 
-    def test_bind_info(self):
-        entry = lxml.etree.Element("Path", name="/test")
-        metadata = Mock()
-        default = dict(test1="test1", test2="test2")
-        # test without infoxml
-        bind_info(entry, metadata, default=default)
-        self.assertItemsEqual(entry.attrib,
-                              dict(test1="test1",
-                                   test2="test2",
-                                   name="/test"))
-
-        # test with bogus infoxml
-        entry = lxml.etree.Element("Path", name="/test")
-        infoxml = Mock()
-        self.assertRaises(PluginExecutionError,
-                          bind_info,
-                          entry, metadata, infoxml=infoxml)
-        infoxml.pnode.Match.assert_called_with(metadata, dict(), entry=entry)
-
-        # test with valid infoxml
-        entry = lxml.etree.Element("Path", name="/test")
-        infoxml.reset_mock()
-        infodata = {None: {"test3": "test3", "test4": "test4"}}
-        def infoxml_rv(metadata, rv, entry=None):
-            rv['Info'] = infodata
-        infoxml.pnode.Match.side_effect = infoxml_rv
-        bind_info(entry, metadata, infoxml=infoxml, default=default)
-        # mock objects don't properly track the called-with value of
-        # arguments whose value is changed by the function, so it
-        # thinks Match() was called with the final value of the mdata
-        # arg, not the initial value.  makes this test a little less
-        # worthwhile, TBH.
-        infoxml.pnode.Match.assert_called_with(metadata, dict(Info=infodata),
-                                               entry=entry)
-        self.assertItemsEqual(entry.attrib,
-                              dict(test1="test1",
-                                   test2="test2",
-                                   test3="test3",
-                                   test4="test4",
-                                   name="/test"))
-
 
 class TestDatabaseBacked(TestPlugin):
     test_obj = DatabaseBacked
@@ -652,7 +611,8 @@ class TestStructFile(TestXMLFileBacked):
         lxml.etree.SubElement(groups[1], "Child", name="c3")
         lxml.etree.SubElement(groups[1], "Child", name="c4")
 
-        standalone.append(lxml.etree.SubElement(xdata, "Standalone", name="s1"))
+        standalone.append(lxml.etree.SubElement(xdata,
+                                                "Standalone", name="s1"))
 
         groups[2] = lxml.etree.SubElement(xdata, "Client", name="client2",
                                           include="false")
@@ -674,10 +634,10 @@ class TestStructFile(TestXMLFileBacked):
         subchildren[3] = []
         lxml.etree.SubElement(children[3][-1], "SubChild", name="subchild")
 
-        standalone.append(lxml.etree.SubElement(xdata, "Standalone", name="s3"))
+        standalone.append(lxml.etree.SubElement(xdata,
+                                                "Standalone", name="s3"))
         lxml.etree.SubElement(standalone[-1], "SubStandalone", name="sub1")
 
-        children[4] = standalone
         return (xdata, groups, subgroups, children, subchildren, standalone)
 
     def _get_template_test_data(self):
@@ -860,7 +820,7 @@ class TestStructFile(TestXMLFileBacked):
             self._get_test_data()
 
         sf._include_element.side_effect = \
-            lambda x, _: (x.tag not in ['Client', 'Group'] or
+            lambda x, _: (x.tag not in sf._include_tests.keys() or
                           x.get("include") == "true")
 
         for i, group in groups.items():
@@ -879,7 +839,7 @@ class TestStructFile(TestXMLFileBacked):
         for el in standalone:
             self.assertXMLEqual(el, sf._match(el, metadata)[0])
 
-    def test_Match(self):
+    def test_do_match(self):
         sf = self.get_obj()
         sf._match = Mock()
         metadata = Mock()
@@ -892,19 +852,17 @@ class TestStructFile(TestXMLFileBacked):
             sf.Index()
 
             def match_rv(el, _):
-                if el.tag not in ['Client', 'Group']:
+                if el.tag not in sf._include_tests.keys():
                     return [el]
                 elif el.get("include") == "true":
                     return el.getchildren()
                 else:
                     return []
             sf._match.side_effect = match_rv
-            actual = sf.Match(metadata)
+            actual = sf._do_match(metadata)
             expected = reduce(lambda x, y: x + y,
-                              list(children.values()) + list(subgroups.values()))
-            print "doc: %s" % lxml.etree.tostring(xdata, pretty_print=True)
-            print "actual: %s" % [lxml.etree.tostring(el) for el in actual]
-            print "expected: %s" % [lxml.etree.tostring(el) for el in expected]
+                              list(children.values()) + \
+                                  list(subgroups.values())) + standalone
             self.assertEqual(len(actual), len(expected))
             # easiest way to compare the values is actually to make
             # them into an XML document and let assertXMLEqual compare
@@ -924,7 +882,7 @@ class TestStructFile(TestXMLFileBacked):
             self._get_test_data()
 
         sf._include_element.side_effect = \
-            lambda x, _: (x.tag not in ['Client', 'Group'] or
+            lambda x, _: (x.tag not in sf._include_tests.keys() or
                           x.get("include") == "true")
 
         actual = copy.deepcopy(xdata)
@@ -937,7 +895,7 @@ class TestStructFile(TestXMLFileBacked):
         expected.extend(standalone)
         self.assertXMLEqual(actual, expected)
 
-    def test_XMLMatch(self):
+    def test_do_xmlmatch(self):
         sf = self.get_obj()
         sf._xml_match = Mock()
         metadata = Mock()
@@ -945,7 +903,7 @@ class TestStructFile(TestXMLFileBacked):
         (sf.xdata, groups, subgroups, children, subchildren, standalone) = \
             self._get_test_data()
 
-        sf.XMLMatch(metadata)
+        sf._do_xmlmatch(metadata)
         actual = []
         for call in sf._xml_match.call_args_list:
             actual.append(call[0][0])
@@ -1193,49 +1151,6 @@ class TestINode(Bcfg2TestCase):
         inode.predicate.assert_called_with(metadata, child)
 
 
-class TestInfoNode(TestINode):
-    __test__ = True
-    test_obj = InfoNode
-
-    def test_raw_predicates(self):
-        TestINode.test_raw_predicates(self)
-        metadata = Mock()
-        entry = lxml.etree.Element("Path", name="/tmp/foo",
-                                   realname="/tmp/bar")
-
-        parent_predicate = lambda m, d: True
-        pred = eval(self.test_obj.raw['Path'] % dict(name="/tmp/foo"),
-                    dict(predicate=parent_predicate))
-        self.assertTrue(pred(metadata, entry))
-        pred = eval(InfoNode.raw['Path'] % dict(name="/tmp/bar"),
-                    dict(predicate=parent_predicate))
-        self.assertTrue(pred(metadata, entry))
-        pred = eval(InfoNode.raw['Path'] % dict(name="/tmp/bogus"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-
-        pred = eval(self.test_obj.nraw['Path'] % dict(name="/tmp/foo"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-        pred = eval(InfoNode.nraw['Path'] % dict(name="/tmp/bar"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-        pred = eval(InfoNode.nraw['Path'] % dict(name="/tmp/bogus"),
-                    dict(predicate=parent_predicate))
-        self.assertTrue(pred(metadata, entry))
-
-        parent_predicate = lambda m, d: False
-        pred = eval(self.test_obj.raw['Path'] % dict(name="/tmp/foo"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-        pred = eval(InfoNode.raw['Path'] % dict(name="/tmp/bar"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-        pred = eval(InfoNode.nraw['Path'] % dict(name="/tmp/bogus"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-
-
 class TestXMLSrc(TestXMLFileBacked):
     test_obj = XMLSrc
 
@@ -1301,8 +1216,77 @@ class TestXMLSrc(TestXMLFileBacked):
         self.assertEqual(xsrc.cache[0], metadata)
 
 
-class TestInfoXML(TestXMLSrc):
+class TestInfoXML(TestStructFile):
     test_obj = InfoXML
+
+    def _get_test_data(self):
+        (xdata, groups, subgroups, children, subchildren, standalone) = \
+            TestStructFile._get_test_data(self)
+        idx = max(groups.keys()) + 1
+        groups[idx] = lxml.etree.SubElement(
+            xdata, "Path", name="path1", include="true")
+        children[idx] = [lxml.etree.SubElement(groups[idx], "Child",
+                                               name="pc1")]
+        subgroups[idx] = [lxml.etree.SubElement(groups[idx], "Group",
+                                                name="pg1", include="true"),
+                          lxml.etree.SubElement(groups[idx], "Client",
+                                                name="pc1", include="false")]
+        subchildren[idx] = [lxml.etree.SubElement(subgroups[idx][0],
+                                                  "SubChild", name="sc1")]
+
+        idx += 1
+        groups[idx] = lxml.etree.SubElement(
+            xdata, "Path", name="path2", include="false")
+        children[idx] = []
+        subgroups[idx] = []
+        subchildren[idx] = []
+
+        path2 = lxml.etree.SubElement(groups[0], "Path", name="path2",
+                                      include="true")
+        subgroups[0].append(path2)
+        subchildren[0].append(lxml.etree.SubElement(path2, "SubChild",
+                                                    name="sc2"))
+        return xdata, groups, subgroups, children, subchildren, standalone
+
+    def test_include_element(self):
+        TestStructFile.test_include_element(self)
+
+        ix = self.get_obj()
+        metadata = Mock()
+        entry = lxml.etree.Element("Path", name="/etc/foo.conf")
+        inc = lambda tag, **attrs: \
+            ix._include_element(lxml.etree.Element(tag, **attrs),
+                                metadata, entry)
+
+        self.assertFalse(inc("Path", name="/etc/bar.conf"))
+        self.assertFalse(inc("Path", name="/etc/foo.conf", negate="true"))
+        self.assertFalse(inc("Path", name="/etc/foo.conf", negate="tRuE"))
+        self.assertTrue(inc("Path", name="/etc/foo.conf"))
+        self.assertTrue(inc("Path", name="/etc/foo.conf", negate="false"))
+        self.assertTrue(inc("Path", name="/etc/foo.conf", negate="faLSe"))
+        self.assertTrue(inc("Path", name="/etc/bar.conf", negate="true"))
+        self.assertTrue(inc("Path", name="/etc/bar.conf", negate="tRUe"))
+
+    def test_BindEntry(self):
+        ix = self.get_obj()
+        entry = lxml.etree.Element("Path", name=self.path)
+        metadata = Mock()
+
+        # test with bogus infoxml
+        ix.Match = Mock()
+        ix.Match.return_value = []
+        self.assertRaises(PluginExecutionError,
+                          ix.BindEntry, entry, metadata)
+        ix.Match.assert_called_with(metadata, entry)
+
+        # test with valid infoxml
+        ix.Match.reset_mock()
+        ix.Match.return_value = [lxml.etree.Element("Info",
+                                                    mode="0600", owner="root")]
+        ix.BindEntry(entry, metadata)
+        ix.Match.assert_called_with(metadata, entry)
+        self.assertItemsEqual(entry.attrib,
+                              dict(name=self.path, mode="0600", owner="root"))
 
 
 class TestXMLDirectoryBacked(TestDirectoryBacked):
@@ -1348,32 +1332,17 @@ class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
 
     def test__matches(self):
         pd = self.get_obj()
-        self.assertTrue(pd._matches(lxml.etree.Element("Test",
-                                                       name="/etc/foo.conf"),
-                                    Mock(),
-                                    {"/etc/foo.conf": pd.BindEntry,
-                                     "/etc/bar.conf": pd.BindEntry}))
-        self.assertFalse(pd._matches(lxml.etree.Element("Test",
-                                                        name="/etc/baz.conf"),
-                                     Mock(),
-                                     {"/etc/foo.conf": pd.BindEntry,
-                                      "/etc/bar.conf": pd.BindEntry}))
+        entry = lxml.etree.Element("Test", name="/etc/foo.conf")
+        self.assertTrue(pd._matches(entry, Mock(),
+                                    lxml.etree.Element("Test",
+                                                       name="/etc/foo.conf")))
+        self.assertFalse(pd._matches(entry, Mock(),
+                                     lxml.etree.Element("Test",
+                                                        name="/etc/baz.conf")))
 
     def test_BindEntry(self):
         pd = self.get_obj()
-        pd.get_attrs = Mock(return_value=dict(test1="test1", test2="test2"))
-        entry = lxml.etree.Element("Path", name="/etc/foo.conf", test1="bogus")
-        metadata = Mock()
-        pd.BindEntry(entry, metadata)
-        pd.get_attrs.assert_called_with(entry, metadata)
-        self.assertItemsEqual(entry.attrib,
-                              dict(name="/etc/foo.conf",
-                                   test1="test1", test2="test2"))
-
-    def test_get_attrs(self):
-        pd = self.get_obj()
-        entry = lxml.etree.Element("Path", name="/etc/foo.conf")
-        children = [lxml.etree.Element("Child")]
+        children = [lxml.etree.Element("Child", name="child")]
         metadata = Mock()
         pd.entries = dict()
 
@@ -1381,58 +1350,59 @@ class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
             metadata.reset_mock()
             for src in pd.entries.values():
                 src.reset_mock()
-                src.cache = None
 
         # test with no matches
-        self.assertRaises(PluginExecutionError,
-                          pd.get_attrs, entry, metadata)
+        self.assertRaises(PluginExecutionError, pd.BindEntry, Mock(), metadata)
 
-        def add_entry(name, data, prio=10):
+        def add_entry(name, data):
             path = os.path.join(pd.data, name)
             pd.entries[path] = Mock()
-            pd.entries[path].priority = prio
-            def do_Cache(metadata):
-                pd.entries[path].cache = (metadata, data)
-            pd.entries[path].Cache.side_effect = do_Cache
+            pd.entries[path].priority = data.get("priority")
+            pd.entries[path].XMLMatch.return_value = data
 
-        add_entry('test1.xml',
-                  dict(Path={'/etc/foo.conf': dict(attr="attr1",
-                                                   __children__=children),
-                             '/etc/bar.conf': dict()}))
-        add_entry('test2.xml',
-                  dict(Path={'/etc/bar.conf': dict(__text__="text",
-                                                   attr="attr1")},
-                       Package={'quux': dict(),
-                                'xyzzy': dict()}),
-                  prio=20)
-        add_entry('test3.xml',
-                  dict(Path={'/etc/baz.conf': dict()},
-                       Package={'xyzzy': dict()}),
-                  prio=20)
+        test1 = lxml.etree.Element("Rules", priority="10")
+        path1 = lxml.etree.SubElement(test1, "Path", name="/etc/foo.conf",
+                                      attr="attr1")
+        path1.extend(children)
+        lxml.etree.SubElement(test1, "Path", name="/etc/bar.conf")
+        add_entry('test1.xml', test1)
 
-        # test with exactly one match, __children__
+        test2 = lxml.etree.Element("Rules", priority="20")
+        path2 = lxml.etree.SubElement(test2, "Path", name="/etc/bar.conf",
+                                      attr="attr1")
+        path2.text = "text"
+        lxml.etree.SubElement(test2, "Package", name="quux")
+        lxml.etree.SubElement(test2, "Package", name="xyzzy")
+        add_entry('test2.xml', test2)
+
+        test3 = lxml.etree.Element("Rules", priority="20")
+        lxml.etree.SubElement(test3, "Path", name="/etc/baz.conf")
+        lxml.etree.SubElement(test3, "Package", name="xyzzy")
+        add_entry('test3.xml', test3)
+
+        # test with exactly one match, children
         reset()
-        self.assertItemsEqual(pd.get_attrs(entry, metadata),
-                              dict(attr="attr1"))
+        entry = lxml.etree.Element("Path", name="/etc/foo.conf")
+        pd.BindEntry(entry, metadata)
+        self.assertXMLEqual(entry, path1)
+        self.assertIsNot(entry, path1)
         for src in pd.entries.values():
-            src.Cache.assert_called_with(metadata)
-        self.assertEqual(len(entry.getchildren()), 1)
-        self.assertXMLEqual(entry.getchildren()[0], children[0])
+            src.XMLMatch.assert_called_with(metadata)
 
-        # test with multiple matches with different priorities, __text__
+        # test with multiple matches with different priorities, text
         reset()
         entry = lxml.etree.Element("Path", name="/etc/bar.conf")
-        self.assertItemsEqual(pd.get_attrs(entry, metadata),
-                              dict(attr="attr1"))
+        pd.BindEntry(entry, metadata)
+        self.assertXMLEqual(entry, path2)
+        self.assertIsNot(entry, path2)
         for src in pd.entries.values():
-            src.Cache.assert_called_with(metadata)
-        self.assertEqual(entry.text, "text")
+            src.XMLMatch.assert_called_with(metadata)
 
         # test with multiple matches with identical priorities
         reset()
         entry = lxml.etree.Element("Package", name="xyzzy")
         self.assertRaises(PluginExecutionError,
-                          pd.get_attrs, entry, metadata)
+                          pd.BindEntry, entry, metadata)
 
 
 class TestSpecificity(Bcfg2TestCase):
@@ -1866,22 +1836,22 @@ class TestEntrySet(TestDebuggable):
         eset.reset_metadata(event)
         self.assertIsNone(eset.infoxml)
 
-    @patch("Bcfg2.Server.Plugin.helpers.bind_info")
-    def test_bind_info_to_entry(self, mock_bind_info):
-        # There's a strange scoping issue in py3k that prevents this
-        # test from working as expected on sub-classes of EntrySet.
-        # No idea what's going on, but until I can figure it out we
-        # skip this test on subclasses
-        if inPy3k and self.test_obj != EntrySet:
-            return skip("Skipping this test for py3k scoping issues")
-
+    def test_bind_info_to_entry(self):
         eset = self.get_obj()
-        entry = Mock()
+        eset.metadata = dict(owner="root", group="root")
+        entry = lxml.etree.Element("Path", name="/test")
         metadata = Mock()
+        eset.infoxml = None
         eset.bind_info_to_entry(entry, metadata)
-        mock_bind_info.assert_called_with(entry, metadata,
-                                          infoxml=eset.infoxml,
-                                          default=eset.metadata)
+        self.assertItemsEqual(entry.attrib,
+                              dict(name="/test", owner="root", group="root"))
+
+        entry = lxml.etree.Element("Path", name="/test")
+        eset.infoxml = Mock()
+        eset.bind_info_to_entry(entry, metadata)
+        self.assertItemsEqual(entry.attrib,
+                              dict(name="/test", owner="root", group="root"))
+        eset.infoxml.BindEntry.assert_called_with(entry, metadata)
 
     def test_bind_entry(self):
         eset = self.get_obj()

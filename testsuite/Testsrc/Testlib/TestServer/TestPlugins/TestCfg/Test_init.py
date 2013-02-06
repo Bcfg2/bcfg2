@@ -159,21 +159,6 @@ class TestCfgInfo(TestCfgBaseFileMatcher):
         self.assertRaises(NotImplementedError,
                           ci.bind_info_to_entry, Mock(), Mock())
 
-    def test__set_info(self):
-        ci = self.get_obj()
-        entry = Mock()
-        entry.attrib = dict()
-
-        info = {"foo": "foo",
-                "_bar": "bar",
-                "bar:baz=quux": "quux",
-                "baz__": "baz",
-                "__quux": "quux"}
-        ci._set_info(entry, info)
-        self.assertItemsEqual(entry.attrib,
-                              dict([(k, v) for k, v in info.items()
-                                    if not k.startswith("__")]))
-
 
 class TestCfgVerifier(TestCfgBaseFileMatcher):
     test_obj = CfgVerifier
@@ -259,29 +244,26 @@ class TestCfgCreator(TestCfgBaseFileMatcher):
 class TestCfgDefaultInfo(TestCfgInfo):
     test_obj = CfgDefaultInfo
 
-    def get_obj(self, defaults=None):
-        if defaults is None:
-            defaults = dict()
-        return self.test_obj(defaults)
+    def get_obj(self, *_):
+        return self.test_obj()
 
-    @patch("Bcfg2.Server.Plugins.Cfg.CfgInfo.__init__")
-    def test__init(self, mock__init):
-        defaults = Mock()
-        cdi = self.get_obj(defaults=defaults)
-        mock__init.assert_called_with(cdi, '')
-        self.assertEqual(defaults, cdi.defaults)
+    def test__init(self):
+        pass
 
     def test_handle_event(self):
         # this CfgInfo handler doesn't handle any events -- it's not
         # file-driven, but based on the built-in defaults
         pass
 
-    def test_bind_info_to_entry(self):
+    @patch("Bcfg2.Server.Plugin.default_path_metadata")
+    def test_bind_info_to_entry(self, mock_default_path_metadata):
         cdi = self.get_obj()
-        cdi._set_info = Mock()
-        entry = Mock()
+        entry = lxml.etree.Element("Test", name="test")
+        mock_default_path_metadata.return_value = \
+            dict(owner="root", mode="0600")
         cdi.bind_info_to_entry(entry, Mock())
-        cdi._set_info.assert_called_with(entry, cdi.defaults)
+        self.assertItemsEqual(entry.attrib,
+                              dict(owner="root", mode="0600", name="test"))
 
 
 class TestCfgEntrySet(TestEntrySet):
@@ -599,24 +581,24 @@ class TestCfgEntrySet(TestEntrySet):
             if entry.specific is not None:
                 self.assertFalse(entry.specific.matches.called)
 
-    def test_bind_info_to_entry(self):
-        default_info = Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO
+    @patch("Bcfg2.Server.Plugins.Cfg.CfgDefaultInfo")
+    def test_bind_info_to_entry(self, mock_DefaultInfo):
         eset = self.get_obj()
         eset.get_handlers = Mock()
         eset.get_handlers.return_value = []
-        Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO = Mock()
         metadata = Mock()
 
         def reset():
             eset.get_handlers.reset_mock()
-            Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO.reset_mock()
+            mock_DefaultInfo.reset_mock()
             return lxml.etree.Element("Path", name="/test.txt")
 
         # test with no info handlers
         entry = reset()
         eset.bind_info_to_entry(entry, metadata)
         eset.get_handlers.assert_called_with(metadata, CfgInfo)
-        Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO.bind_info_to_entry.assert_called_with(entry, metadata)
+        mock_DefaultInfo.return_value.bind_info_to_entry.assert_called_with(
+            entry, metadata)
         self.assertEqual(entry.get("type"), "file")
 
         # test with one info handler
@@ -625,7 +607,8 @@ class TestCfgEntrySet(TestEntrySet):
         eset.get_handlers.return_value = [handler]
         eset.bind_info_to_entry(entry, metadata)
         eset.get_handlers.assert_called_with(metadata, CfgInfo)
-        Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO.bind_info_to_entry.assert_called_with(entry, metadata)
+        mock_DefaultInfo.return_value.bind_info_to_entry.assert_called_with(
+            entry, metadata)
         handler.bind_info_to_entry.assert_called_with(entry, metadata)
         self.assertEqual(entry.get("type"), "file")
 
@@ -635,7 +618,8 @@ class TestCfgEntrySet(TestEntrySet):
         eset.get_handlers.return_value = handlers
         eset.bind_info_to_entry(entry, metadata)
         eset.get_handlers.assert_called_with(metadata, CfgInfo)
-        Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO.bind_info_to_entry.assert_called_with(entry, metadata)
+        mock_DefaultInfo.return_value.bind_info_to_entry.assert_called_with(
+            entry, metadata)
         # we don't care which handler gets called as long as exactly
         # one of them does
         called = 0
@@ -645,8 +629,6 @@ class TestCfgEntrySet(TestEntrySet):
                 called += 1
         self.assertEqual(called, 1)
         self.assertEqual(entry.get("type"), "file")
-
-        Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO = default_info
 
     def test_create_data(self):
         eset = self.get_obj()

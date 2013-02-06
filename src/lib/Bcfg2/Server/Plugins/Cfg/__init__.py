@@ -218,10 +218,7 @@ class CfgFilter(CfgBaseFileMatcher):
 
 class CfgInfo(CfgBaseFileMatcher):
     """ CfgInfo handlers provide metadata (owner, group, paranoid,
-    etc.) for a file entry.
-
-    .. private-include: _set_info
-    """
+    etc.) for a file entry. """
 
     #: Whether or not the files handled by this handler are permitted
     #: to have specificity indicators in their filenames -- e.g.,
@@ -250,20 +247,6 @@ class CfgInfo(CfgBaseFileMatcher):
         :returns: None
         """
         raise NotImplementedError
-
-    def _set_info(self, entry, info):
-        """ Helper function to assign a dict of info attributes to an
-        entry object.  ``entry`` is modified in-place.
-
-        :param entry: The abstract entry to bind the info to
-        :type entry: lxml.etree._Element
-        :param info: A dict of attribute: value pairs
-        :type info: dict
-        :returns: None
-        """
-        for key, value in list(info.items()):
-            if not key.startswith("__"):
-                entry.attrib[key] = value
 
 
 class CfgVerifier(CfgBaseFileMatcher):
@@ -422,21 +405,14 @@ class CfgDefaultInfo(CfgInfo):
     """ :class:`Bcfg2.Server.Plugins.Cfg.Cfg` handler that supplies a
     default set of file metadata """
 
-    def __init__(self, defaults):
+    def __init__(self):
         CfgInfo.__init__(self, '')
-        self.defaults = defaults
     __init__.__doc__ = CfgInfo.__init__.__doc__.split(".. -----")[0]
 
-    def bind_info_to_entry(self, entry, metadata):
-        self._set_info(entry, self.defaults)
+    def bind_info_to_entry(self, entry, _):
+        for key, value in Bcfg2.Server.Plugin.default_path_metadata().items():
+            entry.attrib[key] = value
     bind_info_to_entry.__doc__ = CfgInfo.bind_info_to_entry.__doc__
-
-#: A :class:`CfgDefaultInfo` object instantiated with
-#: :func:`Bcfg2.Server.Plugin.helper.default_path_metadata` as its
-#: default metadata.  This is used to set a default file metadata set
-#: on an entry before a "real" :class:`CfgInfo` handler applies its
-#: metadata to the entry.
-DEFAULT_INFO = CfgDefaultInfo(Bcfg2.Server.Plugin.default_path_metadata())
 
 
 class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
@@ -646,7 +622,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         :returns: None
         """
         info_handlers = self.get_handlers(metadata, CfgInfo)
-        DEFAULT_INFO.bind_info_to_entry(entry, metadata)
+        CfgDefaultInfo().bind_info_to_entry(entry, metadata)
         if len(info_handlers) > 1:
             self.logger.error("More than one info supplier found for %s: %s" %
                               (entry.get("name"), info_handlers))

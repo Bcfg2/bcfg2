@@ -60,38 +60,6 @@ def default_path_metadata():
     return dict([(k, setup[k]) for k in attrs])
 
 
-def bind_info(entry, metadata, infoxml=None, default=None):
-    """ Bind the file metadata in the given
-    :class:`Bcfg2.Server.Plugin.helpers.InfoXML` object to the given
-    entry.
-
-    :param entry: The abstract entry to bind the info to
-    :type entry: lxml.etree._Element
-    :param metadata: The client metadata to get info for
-    :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-    :param infoxml: The info.xml file to pull file metadata from
-    :type infoxml: Bcfg2.Server.Plugin.helpers.InfoXML
-    :param default: Default metadata to supply when the info.xml file
-                    does not include a particular attribute
-    :type default: dict
-    :returns: None
-    :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
-    """
-    if default is None:
-        default = default_path_metadata()
-    for attr, val in list(default.items()):
-        entry.set(attr, val)
-    if infoxml:
-        mdata = dict()
-        infoxml.pnode.Match(metadata, mdata, entry=entry)
-        if 'Info' not in mdata:
-            msg = "Failed to set metadata for file %s" % entry.get('name')
-            LOGGER.error(msg)
-            raise PluginExecutionError(msg)
-        for attr, val in list(mdata['Info'][None].items()):
-            entry.set(attr, val)
-
-
 class DatabaseBacked(Plugin):
     """ Provides capabilities for a plugin to read and write to a
     database.
@@ -541,6 +509,7 @@ class StructFile(XMLFileBacked, Debuggable):
 
     .. -----
     .. autoattribute:: __identifier__
+    .. autofunction:: _include_element
     """
 
     #: If ``__identifier__`` is not None, then it must be the name of
@@ -550,6 +519,20 @@ class StructFile(XMLFileBacked, Debuggable):
 
     #: Whether or not encryption support is enabled in this file
     encryption = True
+
+    #: Callbacks used to determine if children of items with the given
+    #: tags should be included in the return value of
+    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` and
+    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch`.  Each
+    #: callback is passed the same arguments as
+    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile._include_element`.
+    #: It should return True if children of the element should be
+    #: included in the match, False otherwise.  The callback does
+    #: *not* need to consider negation; that will be handled in
+    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile._include_element`
+    _include_tests = \
+        dict(Group=lambda el, md, *args: el.get('name') in md.groups,
+             Client=lambda el, md, *args: el.get('name') == md.hostname)
 
     def __init__(self, filename, should_monitor=False):
         XMLFileBacked.__init__(self, filename, should_monitor=should_monitor)
@@ -621,15 +604,25 @@ class StructFile(XMLFileBacked, Debuggable):
             return Bcfg2.Server.Encryption.bruteforce_decrypt(element.text)
         raise Bcfg2.Server.Encryption.EVPError("Failed to decrypt")
 
-    def _include_element(self, item, metadata):
-        """ determine if an XML element matches the metadata """
+    def _include_element(self, item, metadata, *args):
+        """ Determine if an XML element matches the other arguments.
+
+        The first argument is always the XML element to match, and the
+        second will always be a single
+        :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata` object
+        representing the metadata to match against.  Subsequent
+        arguments are as given to
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` or
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch`.  In
+        the base StructFile implementation, there are no additional
+        arguments; in classes that inherit from StructFile, see the
+        :func:`Match` and :func:`XMLMatch` method signatures."""
         if isinstance(item, lxml.etree._Comment):  # pylint: disable=W0212
             return False
-        negate = item.get('negate', 'false').lower() == 'true'
-        if item.tag == 'Group':
-            return negate == (item.get('name') not in metadata.groups)
-        elif item.tag == 'Client':
-            return negate == (item.get('name') != metadata.hostname)
+        if item.tag in self._include_tests:
+            negate = item.get('negate', 'false').lower() == 'true'
+            return negate != self._include_tests[item.tag](item, metadata,
+                                                           *args)
         else:
             return True
 
@@ -648,24 +641,41 @@ class StructFile(XMLFileBacked, Debuggable):
                                             strip_whitespace=False),
                               parser=Bcfg2.Server.XMLParser)
 
-    def _match(self, item, metadata):
-        """ recursive helper for Match() """
-        if self._include_element(item, metadata):
-            if item.tag == 'Group' or item.tag == 'Client':
+    def _match(self, item, metadata, *args):
+        """ recursive helper for
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` """
+        if self._include_element(item, metadata, *args):
+            if item.tag in self._include_tests.keys():
                 rv = []
-                if self._include_element(item, metadata):
+                if self._include_element(item, metadata, *args):
                     for child in item.iterchildren():
-                        rv.extend(self._match(child, metadata))
+                        rv.extend(self._match(child, metadata, *args))
                 return rv
             else:
                 rv = copy.deepcopy(item)
                 for child in rv.iterchildren():
                     rv.remove(child)
                 for child in item.iterchildren():
-                    rv.extend(self._match(child, metadata))
+                    rv.extend(self._match(child, metadata, *args))
                 return [rv]
         else:
             return []
+
+    def _do_match(self, metadata, *args):
+        """ Helper for
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` that lets
+        a subclass of StructFile easily redefine the public Match()
+        interface to accept a different number of arguments.  This
+        provides a sane prototype for the Match() function while
+        keeping the internals consistent. """
+        rv = []
+        if self.template is None:
+            entries = self.entries
+        else:
+            entries = self._render(metadata).getchildren()
+        for child in entries:
+            rv.extend(self._match(child, metadata, *args))
+        return rv
 
     def Match(self, metadata):
         """ Return matching fragments of the data in this file.  A tag
@@ -680,25 +690,17 @@ class StructFile(XMLFileBacked, Debuggable):
         :param metadata: Client metadata to match against.
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: list of lxml.etree._Element objects """
-        rv = []
-        if self.template is None:
-            entries = self.entries
-        else:
-            entries = self._render(metadata).getchildren()
-            print "rendered: %s" % lxml.etree.tostring(self._render(metadata),
-                                                       pretty_print=True)
-        for child in entries:
-            rv.extend(self._match(child, metadata))
-        return rv
+        return self._do_match(metadata)
 
-    def _xml_match(self, item, metadata):
-        """ recursive helper for XMLMatch """
-        if self._include_element(item, metadata):
-            if item.tag == 'Group' or item.tag == 'Client':
+    def _xml_match(self, item, metadata, *args):
+        """ recursive helper for
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch` """
+        if self._include_element(item, metadata, *args):
+            if item.tag in self._include_tests.keys():
                 for child in item.iterchildren():
                     item.remove(child)
                     item.getparent().append(child)
-                    self._xml_match(child, metadata)
+                    self._xml_match(child, metadata, *args)
                 if item.text:
                     if item.getparent().text is None:
                         item.getparent().text = item.text
@@ -707,9 +709,24 @@ class StructFile(XMLFileBacked, Debuggable):
                 item.getparent().remove(item)
             else:
                 for child in item.iterchildren():
-                    self._xml_match(child, metadata)
+                    self._xml_match(child, metadata, *args)
         else:
             item.getparent().remove(item)
+
+    def _do_xmlmatch(self, metadata, *args):
+        """ Helper for
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch` that lets
+        a subclass of StructFile easily redefine the public Match()
+        interface to accept a different number of arguments.  This
+        provides a sane prototype for the Match() function while
+        keeping the internals consistent. """
+        if self.template is None:
+            rv = copy.deepcopy(self.xdata)
+        else:
+            rv = self._render(metadata)
+        for child in rv.iterchildren():
+            self._xml_match(child, metadata, *args)
+        return rv
 
     def XMLMatch(self, metadata):
         """ Return a rebuilt XML document that only contains the
@@ -723,14 +740,7 @@ class StructFile(XMLFileBacked, Debuggable):
         :param metadata: Client metadata to match against.
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: lxml.etree._Element """
-        if self.template is None:
-            rv = copy.deepcopy(self.xdata)
-        else:
-            rv = self._render(metadata)
-        for child in rv.iterchildren():
-            self._xml_match(child, metadata)
-        return rv
-
+        return self._do_xmlmatch(metadata)
 
 class INode(object):
     """ INodes provide lists of things available at a particular group
@@ -804,26 +814,6 @@ class INode(object):
                 child.Match(metadata, data, entry=entry)
 
 
-class InfoNode (INode):
-    """ :class:`Bcfg2.Server.Plugin.helpers.INode` implementation that
-    includes ``<Path>`` tags, suitable for use with :file:`info.xml`
-    files."""
-
-    raw = dict(
-        Client="lambda m, e: '%(name)s' == m.hostname and predicate(m, e)",
-        Group="lambda m, e: '%(name)s' in m.groups and predicate(m, e)",
-        Path="lambda m, e: ('%(name)s' == e.get('name') or " +
-                           "'%(name)s' == e.get('realname')) and " +
-                          "predicate(m, e)")
-    nraw = dict(
-        Client="lambda m, e: '%(name)s' != m.hostname and predicate(m, e)",
-        Group="lambda m, e: '%(name)s' not in m.groups and predicate(m, e)",
-        Path="lambda m, e: '%(name)s' != e.get('name') and " +
-                          "'%(name)s' != e.get('realname') and " +
-                          "predicate(m, e)")
-    containers = ['Group', 'Client', 'Path']
-
-
 class XMLSrc(XMLFileBacked):
     """ XMLSrc files contain a
     :class:`Bcfg2.Server.Plugin.helpers.INode` hierarchy that returns
@@ -886,13 +876,49 @@ class XMLSrc(XMLFileBacked):
         return str(self.items)
 
 
-class InfoXML(XMLSrc):
-    """ InfoXML files contain a
-    :class:`Bcfg2.Server.Plugin.helpers.InfoNode` hierarchy that
-    returns matching entries, suitable for use with :file:`info.xml`
-    files."""
-    __node__ = InfoNode
-    __priority_required__ = False
+class InfoXML(StructFile):
+    """ InfoXML files contain Group, Client, and Path tags to set the
+    metadata (permissions, owner, etc.) of files. """
+    encryption = False
+
+    _include_tests = StructFile._include_tests
+    _include_tests['Path'] = lambda el, md, entry, *args: \
+        entry.get("name") == el.get("name")
+
+    def Match(self, metadata, entry):  # pylint: disable=W0221
+        """ Implementation of
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` that
+        considers Path tags to allow ``info.xml`` files to set
+        different file metadata for different file paths. """
+        return self._do_match(metadata, entry)
+
+    def XMLMatch(self, metadata, entry):  # pylint: disable=W0221
+        """ Implementation of
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch` that
+        considers Path tags to allow ``info.xml`` files to set
+        different file metadata for different file paths. """
+        return self._do_xmlmatch(metadata, entry)
+
+    def BindEntry(self, entry, metadata):
+        """ Bind the matching file metadata for this client and entry
+        to the entry.
+
+        :param entry: The abstract entry to bind the info to. This
+                      will be modified in place
+        :type entry: lxml.etree._Element
+        :param metadata: The client metadata to get info for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: None
+        """
+        fileinfo = self.Match(metadata, entry)
+        if len(fileinfo) == 0:
+            raise PluginExecutionError("No metadata found in %s for %s" %
+                                       (self.name, entry.get('name')))
+        elif len(fileinfo) > 1:
+            self.logger.warning("Multiple file metadata found in %s for %s" %
+                                (self.name, entry.get('name')))
+        for attr, val in fileinfo[0].attrib.items():
+            entry.set(attr, val)
 
 
 class XMLDirectoryBacked(DirectoryBacked):
@@ -908,6 +934,24 @@ class XMLDirectoryBacked(DirectoryBacked):
     __child__ = XMLFileBacked
 
 
+class PriorityStructFile(StructFile):
+    """ A StructFile where each file has a priority, given as a
+    top-level XML attribute. """
+
+    def __init__(self, filename, should_monitor=False):
+        StructFile.__init__(self, filename, should_monitor=should_monitor)
+        self.priority = -1
+    __init__.__doc__ = StructFile.__init__.__doc__
+
+    def Index(self):
+        try:
+            self.priority = int(self.xdata.get('priority'))
+        except (ValueError, TypeError):
+            raise PluginExecutionError("Got bogus priority %s for file %s" %
+                                       (self.xdata.get('priority'), self.name))
+    Index.__doc__ = StructFile.Index.__doc__
+
+
 class PrioDir(Plugin, Generator, XMLDirectoryBacked):
     """ PrioDir handles a directory of XML files where each file has a
     set priority.
@@ -918,8 +962,8 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
 
     #: The type of child objects to create for files contained within
     #: the directory that is tracked.  Default is
-    #: :class:`Bcfg2.Server.Plugin.helpers.XMLSrc`
-    __child__ = XMLSrc
+    #: :class:`Bcfg2.Server.Plugin.helpers.PriorityStructFile`
+    __child__ = PriorityStructFile
 
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
@@ -939,21 +983,22 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
                         self.Entries[itype] = {child: self.BindEntry}
     HandleEvent.__doc__ = XMLDirectoryBacked.HandleEvent.__doc__
 
-    def _matches(self, entry, metadata, rules):  # pylint: disable=W0613
-        """ Whether or not a given entry has a matching entry in this
-        PrioDir.  By default this does strict matching (i.e., the
-        entry name is in ``rules.keys()``), but this can be overridden
-        to provide regex matching, etc.
+    def _matches(self, entry, metadata, candidate):  # pylint: disable=W0613
+        """ Whether or not a given candidate matches the abstract
+        entry given.  By default this does strict matching (i.e., the
+        entry name matches the candidate name), but this can be
+        overridden to provide regex matching, etc.
 
         :param entry: The entry to find a match for
         :type entry: lxml.etree._Element
         :param metadata: The metadata to get attributes for
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-        :rules: A dict of rules to look in for a matching rule
-        :type rules: dict
+        :candidate: A candidate concrete entry to match with
+        :type candidate: lxml.etree._Element
         :returns: bool
         """
-        return entry.get('name') in rules
+        return (entry.tag == candidate.tag and
+                entry.get('name') == candidate.get('name'))
 
     def BindEntry(self, entry, metadata):
         """ Bind the attributes that apply to an entry to it.  The
@@ -965,71 +1010,40 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: None
         """
-        attrs = self.get_attrs(entry, metadata)
-        for key, val in list(attrs.items()):
-            entry.attrib[key] = val
-
-    def get_attrs(self, entry, metadata):
-        """ Get a list of attributes to add to the entry during the
-        bind.  This is a complex method, in that it both modifies the
-        entry, and returns attributes that need to be added to the
-        entry.  That seems sub-optimal, and should probably be changed
-        at some point.  Namely:
-
-        * The return value includes all XML attributes that need to be
-          added to the entry, but it does not add them.
-        * If text contents or child tags need to be added to the
-          entry, they are added to the entry in place.
-
-        :param entry: The entry to add attributes to.
-        :type entry: lxml.etree._Element
-        :param metadata: The metadata to get attributes for
-        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-        :returns: dict of <attr name>:<attr value>
-        :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
-        """
+        matching = []
         for src in self.entries.values():
-            src.Cache(metadata)
-
-        matching = [src for src in list(self.entries.values())
-                    if (src.cache and
-                        entry.tag in src.cache[1] and
-                        self._matches(entry, metadata,
-                                      src.cache[1][entry.tag]))]
+            for candidate in src.XMLMatch(metadata).xpath("//%s" % entry.tag):
+                if self._matches(entry, metadata, candidate):
+                    matching.append((src, candidate))
         if len(matching) == 0:
             raise PluginExecutionError("No matching source for entry when "
-                                       "retrieving attributes for %s(%s)" %
-                                       (entry.tag, entry.attrib.get('name')))
+                                       "retrieving attributes for %s:%s" %
+                                       (entry.tag, entry.get('name')))
         elif len(matching) == 1:
-            index = 0
+            data = matching[0][1]
         else:
-            prio = [int(src.priority) for src in matching]
-            if prio.count(max(prio)) > 1:
-                msg = "Found conflicting sources with same priority for " + \
-                    "%s:%s for %s" % (entry.tag, entry.get("name"),
-                                      metadata.hostname)
+            prio = [int(m[0].priority) for m in matching]
+            priority = max(prio)
+            if prio.count(priority) > 1:
+                msg = "Found conflicting sources with same priority (%s) " \
+                    "for %s:%s for %s" % (priority, entry.tag,
+                                          entry.get("name"), metadata.hostname)
                 self.logger.error(msg)
-                self.logger.error([item.name for item in matching])
-                self.logger.error("Priority was %s" % max(prio))
+                self.logger.error([m[0].name for m in matching])
                 raise PluginExecutionError(msg)
-            index = prio.index(max(prio))
 
-        for rname in list(matching[index].cache[1][entry.tag].keys()):
-            if self._matches(entry, metadata, [rname]):
-                data = matching[index].cache[1][entry.tag][rname]
-                break
-        else:
-            # Fall back on __getitem__. Required if override used
-            data = matching[index].cache[1][entry.tag][entry.get('name')]
-        if '__text__' in data:
-            entry.text = data['__text__']
-        if '__children__' in data:
-            for item in data['__children__']:
-                entry.append(copy.copy(item))
+            for src, candidate in matching:
+                if int(src.priority) == priority:
+                    data = candidate
+                    break
 
-        return dict([(key, data[key])
-                     for key in list(data.keys())
-                     if not key.startswith('__')])
+        entry.text = data.text
+        for item in data.getchildren():
+            entry.append(copy.copy(item))
+
+        for key, val in list(data.attrib.items()):
+            if key not in entry.attrib:
+                entry.attrib[key] = val
 
 
 class Specificity(CmpMixin):
@@ -1312,8 +1326,8 @@ class EntrySet(Debuggable):
             self.entry_init(event)
         else:
             if event.filename not in self.entries:
-                LOGGER.warning("Got %s event for unknown file %s" %
-                               (action, event.filename))
+                self.logger.warning("Got %s event for unknown file %s" %
+                                    (action, event.filename))
                 if action == 'changed':
                     # received a bogus changed event; warn, but treat
                     # it like a created event
@@ -1349,7 +1363,7 @@ class EntrySet(Debuggable):
             entry_type = self.entry_type
 
         if event.filename in self.entries:
-            LOGGER.warn("Got duplicate add for %s" % event.filename)
+            self.logger.warn("Got duplicate add for %s" % event.filename)
         else:
             fpath = os.path.join(self.path, event.filename)
             try:
@@ -1357,8 +1371,8 @@ class EntrySet(Debuggable):
                                                       specific=specific)
             except SpecificityError:
                 if not self.ignore.match(event.filename):
-                    LOGGER.error("Could not process filename %s; ignoring" %
-                                 fpath)
+                    self.logger.error("Could not process filename %s; ignoring"
+                                      % fpath)
                 return
             self.entries[event.filename] = entry_type(fpath, spec,
                                                       self.encoding)
@@ -1432,8 +1446,8 @@ class EntrySet(Debuggable):
             self.infoxml = None
 
     def bind_info_to_entry(self, entry, metadata):
-        """ Shortcut to call :func:`bind_info` with the base
-        info/info.xml for this EntrySet.
+        """ Bind the metadata for the given client in the base
+        info.xml for this EntrySet to the entry.
 
         :param entry: The abstract entry to bind the info to. This
                       will be modified in place
@@ -1442,7 +1456,10 @@ class EntrySet(Debuggable):
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: None
         """
-        bind_info(entry, metadata, infoxml=self.infoxml, default=self.metadata)
+        for attr, val in list(self.metadata.items()):
+            entry.set(attr, val)
+        if self.infoxml is not None:
+            self.infoxml.BindEntry(entry, metadata)
 
     def bind_entry(self, entry, metadata):
         """ Return the single best fully-bound entry from the set of

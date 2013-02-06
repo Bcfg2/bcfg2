@@ -300,19 +300,16 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
         if collection is None:
             collection = self.get_collection(metadata)
-        # initial is the set of packages that are explicitly specified
-        # in the configuration
-        initial = set()
-        # base is the set of initial packages with groups expanded
+        # base is the set of initial packages -- explicitly
+        # given in the specification, from expanded package groups,
+        # and essential to the distribution
         base = set()
-        # essential pkgs are those marked as such by the distribution
-        essential = collection.get_essential()
         to_remove = []
         groups = []
         for struct in structures:
             for pkg in struct.xpath('//Package | //BoundPackage'):
                 if pkg.get("name"):
-                    initial.update(collection.packages_from_entry(pkg))
+                    base.update(collection.packages_from_entry(pkg))
                 elif pkg.get("group"):
                     groups.append((pkg.get("group"),
                                    pkg.get("type")))
@@ -324,21 +321,24 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                             pkg,
                             xml_declaration=False).decode('UTF-8'))
 
+        # remove package groups
+        for el in to_remove:
+            el.getparent().remove(el)
+
         gpkgs = collection.get_groups(groups)
         for pkgs in gpkgs.values():
             base.update(pkgs)
 
-        base.update(initial | essential)
-        for el in to_remove:
-            el.getparent().remove(el)
+        # essential pkgs are those marked as such by the distribution
+        base.update(collection.get_essential())
 
         packages, unknown = collection.complete(base)
         if unknown:
             self.logger.info("Packages: Got %d unknown entries" % len(unknown))
             self.logger.info("Packages: %s" % list(unknown))
-        newpkgs = collection.get_new_packages(initial, packages)
-        self.debug_log("Packages: %d initial, %d complete, %d new" %
-                       (len(initial), len(packages), len(newpkgs)))
+        newpkgs = collection.get_new_packages(base, packages)
+        self.debug_log("Packages: %d base, %d complete, %d new" %
+                       (len(base), len(packages), len(newpkgs)))
         newpkgs.sort()
         collection.packages_to_entry(newpkgs, independent)
 
