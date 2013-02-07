@@ -92,6 +92,7 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice minOccurs='1' maxOccurs='1'>
+      <xsd:element name='FileInfo' type="FileInfoType"/>
       <xsd:element name='Info' type='InfoType'/>
       <xsd:element name='Group' type='InfoGroupType' minOccurs='0'
                    maxOccurs='unbounded'/>
@@ -121,19 +122,20 @@
     </xsd:attribute>
   </xsd:complexType>
 
-  <xsd:element name='FileInfo'>
+  <xsd:complexType name="FileInfoType">
     <xsd:annotation>
       <xsd:documentation>
         Top-level tag for ``info.xml``.
       </xsd:documentation>
     </xsd:annotation>
-    <xsd:complexType>
-      <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-        <xsd:element name='Group' type='InfoGroupType'/>
-        <xsd:element name='Client' type='InfoGroupType'/>
-        <xsd:element name='Path' type='InfoGroupType'/>
-        <xsd:element name='Info' type='InfoType'/>
-      </xsd:choice>
-    </xsd:complexType>
-  </xsd:element>
+    <xsd:choice minOccurs='0' maxOccurs='unbounded'>
+      <xsd:element name='FileInfo' type="FileInfoType"/>
+      <xsd:element name='Group' type='InfoGroupType'/>
+      <xsd:element name='Client' type='InfoGroupType'/>
+      <xsd:element name='Path' type='InfoGroupType'/>
+      <xsd:element name='Info' type='InfoType'/>
+    </xsd:choice>
+  </xsd:complexType>
+
+  <xsd:element name='FileInfo' type="FileInfoType"/>
 </xsd:schema>

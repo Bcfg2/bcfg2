@@ -140,58 +140,77 @@ pieces.  For instance, in the :ref:`server-plugins-grouping-metadata`
 To enable XInclude on a file, you need only add the XInclude namespace
 to the top-level tag.
 
-XInclude can only include whole, well-formed XML files.  In many
-cases, if a file type does not support XInclude it is because the XML
-schema lacks support.
+XInclude can only include complete, well-formed XML files.  In some
+cases, it may not be entirely obvious or intuitive how to structure
+such an included file to conform to the schema, although in general
+the included files should be structure exactly like the parent file.
 
 Feature Matrix
 ==============
 
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| File                                                         | Group/Client | Genshi | Encryption | XInclude |
-+==============================================================+==============+========+============+==========+
-| :ref:`Bundles <server-plugins-structures-bundler-index>`     | Yes          | Yes    | Yes        | Yes      |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| :ref:`info.xml <server-info>`                                | Yes [#f1]_   | Yes    | No         | No       |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| :ref:`authorizedkeys.xml, privkey.xml, and pubkey.xml        | Yes          | Yes    | Yes        | No       |
-| <server-plugins-generators-cfg-sshkeys>`                     |              |        |            |          |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| :ref:`Decisions <server-plugins-generators-decisions>`       | Yes          | Yes    | Yes        | Yes      |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| :ref:`Defaults <server-plugins-structures-defaults>`         | Yes          | Yes    | Yes        | Yes      |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| :ref:`FileProbes <server-plugins-probes-fileprobes>`         | Yes          | Yes    | No         | Yes      |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| :ref:`GroupPatterns <server-plugins-grouping-grouppatterns>` | No           | No     | No         | Yes      |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| :ref:`Metadata clients.xml                                   | No           | No     | No         | Yes      |
-| <server-plugins-grouping-metadata-clients-xml>`              |              |        |            |          |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| :ref:`Metadata clients.xml                                   | Yes [#f2]_   | No     | No         | Yes      |
-| <server-plugins-grouping-metadata-groups-xml>`               |              |        |            |          |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| :ref:`NagiosGen <server-plugins-generators-nagiosgen>`       | Yes          | Yes    | No         | Yes      |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| :ref:`Pkgmgr <server-plugins-generators-pkgmgr>`             | Yes          | No     | No         | No       |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| :ref:`Properties <server-plugins-connectors-properties>`     | Yes [#f3]_   | Yes    | Yes        | Yes      |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| :ref:`Rules <server-plugins-generators-rules>`               | Yes          | Yes    | Yes        | Yes      |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
-| :ref:`SSLCA cert.xml and key.xml                             | Yes          | Yes    | Yes        | No       |
-| <server-plugins-generators-sslca>`                           |              |        |            |          |
-+--------------------------------------------------------------+--------------+--------+------------+----------+
++-------------------------------------------------+--------------+--------+------------+------------+
+| File                                            | Group/Client | Genshi | Encryption | XInclude   |
++=================================================+==============+========+============+============+
+| :ref:`Bundler                                   | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-structures-bundler-index>`      |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`info.xml <server-info>`                   | Yes [#f1]_   | Yes    | Yes        | Yes        |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`privkey.xml and pubkey.xml                | Yes          | Yes    | Yes        | Yes [#f2]_ |
+| <server-plugins-generators-cfg-sshkeys>`        |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`authorizedkeys.xml                        | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-cfg-sshkeys>`        |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Decisions                                 | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-decisions>`          |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Defaults                                  | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-structures-defaults>`           |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`FileProbes                                | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-probes-fileprobes>`             |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`GroupPatterns                             | No           | No     | No         | Yes        |
+| <server-plugins-grouping-grouppatterns>`        |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Metadata clients.xml                      | No           | No     | No         | Yes        |
+| <server-plugins-grouping-metadata-clients-xml>` |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Metadata groups.xml                       | Yes [#f3]_   | No     | No         | Yes        |
+| <server-plugins-grouping-metadata-groups-xml>`  |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`NagiosGen                                 | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-nagiosgen>`          |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Packages                                  | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-packages>`           |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Pkgmgr                                    | Yes          | No     | No         | No         |
+| <server-plugins-generators-pkgmgr>`             |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Properties                                | Yes [#f4]_   | Yes    | Yes        | Yes        |
+| <server-plugins-connectors-properties>`         |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Rules <server-plugins-generators-rules>`  | Yes          | Yes    | Yes        | Yes        |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`SSLCA cert.xml and key.xml                | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-sslca>`              |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
 
 .. rubric:: Footnotes
 
 .. [#f1] ``info.xml`` also supports conditional Path tags; see
          :ref:`server-info` for more.
-.. [#f2] The semantics of Group tags in ``groups.xml`` is slightly
+.. [#f2] XInclude is supported, but the schema has not been modified
+         to allow including files that are structured exactly like the
+         parent.  You may need to read the schema to understand how to
+         use XInclude properly.
+.. [#f3] The semantics of Group tags in ``groups.xml`` is slightly
          different; see
          :ref:`server-plugins-grouping-metadata-groups-xml` for
          details.
-.. [#f3] Group and Client tags in XML Properties are not automatic by
+.. [#f4] Group and Client tags in XML Properties are not automatic by
          default; they can be resolved by use of either the
          ``Match()`` or ``XMLMatch()`` methods, or by use of the
          :ref:`server-plugins-connectors-properties-automatch`

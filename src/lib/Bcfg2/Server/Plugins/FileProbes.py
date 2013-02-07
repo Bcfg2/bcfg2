@@ -52,11 +52,6 @@ print(Bcfg2.Client.XML.tostring(data, xml_declaration=False).decode('UTF-8'))
 """
 
 
-class FileProbesConfig(Bcfg2.Server.Plugin.StructFile):
-    """ Config file for FileProbes """
-    encryption = False
-
-
 class FileProbes(Bcfg2.Server.Plugin.Plugin,
                  Bcfg2.Server.Plugin.Probing):
     """ This module allows you to probe a client for a file, which is then
@@ -69,8 +64,10 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Probing.__init__(self)
-        self.config = FileProbesConfig(os.path.join(self.data, 'config.xml'),
-                                       should_monitor=True)
+        self.config = \
+            Bcfg2.Server.Plugin.StructFile(os.path.join(self.data,
+                                                        'config.xml'),
+                                           should_monitor=True)
         self.entries = dict()
         self.probes = dict()
 

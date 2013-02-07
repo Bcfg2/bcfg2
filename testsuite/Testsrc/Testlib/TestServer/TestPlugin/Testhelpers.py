@@ -685,10 +685,6 @@ class TestStructFile(TestXMLFileBacked):
 
     @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
     def test_Index_crypto(self):
-        if not self.test_obj.encryption:
-            return skip("Encryption disabled on %s objects, skipping" %
-                        self.test_obj.__name__)
-
         sf = self.get_obj()
         sf.setup = Mock()
         sf.setup.cfp.get.return_value = "strict"

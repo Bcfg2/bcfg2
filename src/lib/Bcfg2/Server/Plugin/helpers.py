@@ -517,9 +517,6 @@ class StructFile(XMLFileBacked, Debuggable):
     #: the file being cached
     __identifier__ = None
 
-    #: Whether or not encryption support is enabled in this file
-    encryption = True
-
     #: Callbacks used to determine if children of items with the given
     #: tags should be included in the return value of
     #: :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` and
@@ -564,7 +561,7 @@ class StructFile(XMLFileBacked, Debuggable):
                 self.logger.error('Genshi parse error in %s: %s' % (self.name,
                                                                     err))
 
-        if self.encryption and HAS_CRYPTO:
+        if HAS_CRYPTO:
             strict = self.xdata.get(
                 "decrypt",
                 self.setup.cfp.get(Bcfg2.Server.Encryption.CFG_SECTION,
@@ -879,7 +876,6 @@ class XMLSrc(XMLFileBacked):
 class InfoXML(StructFile):
     """ InfoXML files contain Group, Client, and Path tags to set the
     metadata (permissions, owner, etc.) of files. """
-    encryption = False
 
     _include_tests = StructFile._include_tests
     _include_tests['Path'] = lambda el, md, entry, *args: \

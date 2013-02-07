@@ -5,26 +5,7 @@ import re
 import sys
 import glob
 import socket
-import logging
-import Bcfg2.Server
 import Bcfg2.Server.Plugin
-
-LOGGER = logging.getLogger(__name__)
-
-
-class NagiosGenConfig(Bcfg2.Server.Plugin.StructFile):
-    """ NagiosGen config file handler """
-    encryption = False
-
-    def __init__(self, filename):
-        # create config.xml if missing
-        if not os.path.exists(filename):
-            LOGGER.warning("NagiosGen: %s missing. "
-                           "Creating empty one for you." % filename)
-            open(filename, "w").write("<NagiosGen/>")
-
-        Bcfg2.Server.Plugin.StructFile.__init__(self, filename,
-                                                should_monitor=True)
 
 
 class NagiosGen(Bcfg2.Server.Plugin.Plugin,
@@ -37,7 +18,10 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Generator.__init__(self)
-        self.config = NagiosGenConfig(os.path.join(self.data, 'config.xml'))
+        self.config = \
+            Bcfg2.Server.Plugin.StructFile(os.path.join(self.data,
+                                                        'config.xml'),
+                                           should_monitor=True)
         self.Entries = {'Path':
                         {'/etc/nagiosgen.status': self.createhostconfig,
                          '/etc/nagios/nagiosgen.cfg': self.createserverconfig}}

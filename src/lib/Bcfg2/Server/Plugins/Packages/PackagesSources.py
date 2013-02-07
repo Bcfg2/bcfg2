@@ -17,10 +17,6 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
     :class:`Bcfg2.Server.Plugins.Packages.Source.Source` object for
     each ``Source`` tag. """
 
-    __identifier__ = None
-
-    encryption = False
-
     def __init__(self, filename, cachepath, packages):
         """
         :param filename: The full path to ``sources.xml``
