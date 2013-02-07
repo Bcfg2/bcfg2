@@ -582,6 +582,11 @@ SERVER_UMASK = \
            default='0077',
            odesc='<Server umask>',
            cf=('server', 'umask'))
+SERVER_AUTHENTICATION = \
+    Option('Default client authentication method',
+           default='cert+password',
+           odesc='{cert|bootstrap|cert+password}',
+           cf=('communication', 'authentication'))
 
 # database options
 DB_ENGINE = \
@@ -1115,7 +1120,8 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
                              protocol=SERVER_PROTOCOL,
                              web_configfile=WEB_CFILE,
                              backend=SERVER_BACKEND,
-                             vcs_root=SERVER_VCS_ROOT)
+                             vcs_root=SERVER_VCS_ROOT,
+                             authentication=SERVER_AUTHENTICATION)
 
 CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
                      decrypt=DECRYPT,
