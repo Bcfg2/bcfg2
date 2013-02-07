@@ -15,6 +15,7 @@ import Bcfg2.Server
 import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
+from Bcfg2.Utils import locked
 from Bcfg2.Compat import MutableMapping, all, wraps  # pylint: disable=W0622
 from Bcfg2.version import Bcfg2VersionInfo
 
@@ -25,15 +26,6 @@ except ImportError:
     HAS_DJANGO = False
 
 LOGGER = logging.getLogger(__name__)
-
-
-def locked(fd):
-    """ Acquire a lock on a file """
-    try:
-        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        return True
-    return False
 
 
 if HAS_DJANGO:
@@ -195,7 +187,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
         newcontents = lxml.etree.tostring(dataroot, xml_declaration=False,
                                           pretty_print=True).decode('UTF-8')
 
-        while locked(fd) == True:
+        while locked(fd):
             pass
         try:
             datafile.write(newcontents)

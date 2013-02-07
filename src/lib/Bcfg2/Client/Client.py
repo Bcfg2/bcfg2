@@ -14,6 +14,7 @@ import Bcfg2.Options
 import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
+from Bcfg2.Utils import locked
 from Bcfg2.Compat import xmlrpclib
 from Bcfg2.version import __version__
 from subprocess import Popen, PIPE
@@ -288,11 +289,7 @@ class Client(object):
             #check lock here
             try:
                 lockfile = open(self.setup['lockfile'], 'w')
-                try:
-                    fcntl.lockf(lockfile.fileno(),
-                                fcntl.LOCK_EX | fcntl.LOCK_NB)
-                except IOError:
-                    # otherwise exit and give a warning to the user
+                if locked(lockfile.fileno()):
                     self.fatal_error("Another instance of Bcfg2 is running. "
                                      "If you want to bypass the check, run "
                                      "with the %s option" %
@@ -301,7 +298,8 @@ class Client(object):
                 raise
             except:
                 lockfile = None
-                self.logger.error("Failed to open lockfile")
+                self.logger.error("Failed to open lockfile %s: %s" %
+                                  (self.setup['lockfile'], sys.exc_info()[1]))
 
         # execute the configuration
         self.tools.Execute()

@@ -327,7 +327,7 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
                                                        "clients.xml"),
                                           "<test/>")
 
-    @patch('Bcfg2.Server.Plugins.Metadata.locked', Mock(return_value=False))
+    @patch('Bcfg2.Utils.locked', Mock(return_value=False))
     @patch('fcntl.lockf', Mock())
     @patch('os.open')
     @patch('os.fdopen')
