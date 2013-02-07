@@ -32,7 +32,7 @@ clients.xml
 ===========
 
 The ``clients.xml`` file contains the mappings of Profile Groups
-to clients. The file is just a series of *<Client />* tags, each of which
+to clients. The file is just a series of ``<Client />`` tags, each of which
 describe one host. A sample file is below:
 
 .. code-block:: xml
@@ -43,7 +43,7 @@ describe one host. A sample file is below:
       <Client profile="kerberos-master" name="kdc.example.com"/>
       <Client profile="mail-server" name="mail.example.com"/>
       <Client name='foo' address='10.0.0.1'>
-          <Alias name='foo-mgmt' address='10.1.0.1'/>
+        <Alias name='foo-mgmt' address='10.1.0.1'/>
       </Client>
     </Clients>
 

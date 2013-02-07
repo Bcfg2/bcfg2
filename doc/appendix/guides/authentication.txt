@@ -132,13 +132,26 @@ controlled through the use of the auth attribute in
 
 Allowed values are:
 
-    +---------------+------------------------------------------+
-    | **Auth Type** | **Meaning**                              |
-    +===============+==========================================+
-    | cert          | Certificates must be used                |
-    +---------------+------------------------------------------+
-    | cert+password | Certificate or password may be used      |
-    +---------------+------------------------------------------+
-    | bootstrap     | Password can be used for one client run, |
-    |               | after that certificate is required       |
-    +---------------+------------------------------------------+
++-------------------+------------------------------------------+
+| Auth Type         | Meaning                                  |
++===================+==========================================+
+| ``cert``          | Certificates must be used                |
++-------------------+------------------------------------------+
+| ``cert+password`` | Certificate or password may be used. If  |
+|                   | a certificate is used, the password must |
+|                   | also be used.                            |
++-------------------+------------------------------------------+
+| ``bootstrap``     | Password can be used for one client run, |
+|                   | after that only certificate is allowed   |
++-------------------+------------------------------------------+
+
+``cert+password`` is the default.  This can be changed by setting the
+``authentication`` parameter in the ``[communcation]`` section of
+``bcfg2.conf``.  For instance, to set ``bootstrap`` mode as the global
+default, you would add the following to ``bcfg2.conf``::
+
+    [communication]
+    authentication = bootstrap
+
+``bootstrap`` mode is currently incompatible with the
+:ref:`server-plugins-grouping-metadata-clients-database`.
