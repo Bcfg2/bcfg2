@@ -384,7 +384,7 @@ class MetadataGroup(tuple):
 
 
 class Metadata(Bcfg2.Server.Plugin.Metadata,
-               Bcfg2.Server.Plugin.Statistics,
+               Bcfg2.Server.Plugin.ClientRunHooks,
                Bcfg2.Server.Plugin.DatabaseBacked):
     """This class contains data for bcfg2 server metadata."""
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -392,7 +392,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
     def __init__(self, core, datastore, watch_clients=True):
         Bcfg2.Server.Plugin.Metadata.__init__(self)
-        Bcfg2.Server.Plugin.Statistics.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
         self.watch_clients = watch_clients
         self.states = dict()
@@ -1252,12 +1252,11 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         return True
     # pylint: enable=R0911,R0912
 
-    def process_statistics(self, meta, _):
-        """ Hook into statistics interface to toggle clients in
-        bootstrap mode """
-        client = meta.hostname
-        if client in self.auth and self.auth[client] == 'bootstrap':
-            self.update_client(client, dict(auth='cert'))
+    def end_statistics(self, metadata):
+        """ Hook to toggle clients in bootstrap mode """
+        if self.auth.get(metadata.hostname,
+                         self.core.setup('authentication')) == 'bootstrap':
+            self.update_client(metadata.hostname, dict(auth='cert'))
 
     def viz(self, hosts, bundles, key, only_client, colors):
         """Admin mode viz support."""
