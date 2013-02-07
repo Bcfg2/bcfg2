@@ -2,6 +2,7 @@
 used by both client and server.  Stuff that doesn't fit anywhere
 else. """
 
+import fcntl
 from Bcfg2.Compat import any  # pylint: disable=W0622
 
 
@@ -65,3 +66,12 @@ class PackedDigitRange(object):
 
     def __len__(self):
         return sum(r[1] - r[0] + 1 for r in self.ranges) + len(self.ints)
+
+
+def locked(fd):
+    """ Acquire a lock on a file """
+    try:
+        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        return True
+    return False
