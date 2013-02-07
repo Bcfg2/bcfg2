@@ -20,7 +20,7 @@ while path != "/":
     path = os.path.dirname(path)
 from common import *
 from TestPlugin import TestXMLFileBacked, TestMetadata as _TestMetadata, \
-    TestStatistics, TestDatabaseBacked
+    TestClientRunHooks, TestDatabaseBacked
 
 
 def get_clients_test_tree():
@@ -464,7 +464,7 @@ class TestClientMetadata(Bcfg2TestCase):
         self.assertFalse(cm.inGroup("group3"))
 
 
-class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
+class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     test_obj = Metadata
     use_db = False
 
@@ -497,7 +497,7 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
         metadata = self.get_obj(core=core)
         self.assertIsInstance(metadata, Bcfg2.Server.Plugin.Plugin)
         self.assertIsInstance(metadata, Bcfg2.Server.Plugin.Metadata)
-        self.assertIsInstance(metadata, Bcfg2.Server.Plugin.Statistics)
+        self.assertIsInstance(metadata, Bcfg2.Server.Plugin.ClientRunHooks)
         self.assertIsInstance(metadata.clients_xml, XMLMetadataConfig)
         self.assertIsInstance(metadata.groups_xml, XMLMetadataConfig)
         self.assertIsInstance(metadata.query, MetadataQuery)
@@ -1227,17 +1227,16 @@ class TestMetadata(_TestMetadata, TestStatistics, TestDatabaseBacked):
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     @patch("Bcfg2.Server.Plugins.Metadata.Metadata.update_client")
-    def test_process_statistics(self, mock_update_client):
+    def test_end_statistics(self, mock_update_client):
         metadata = self.load_clients_data(metadata=self.load_groups_data())
         md = Mock()
         md.hostname = "client6"
-        metadata.process_statistics(md, None)
-        mock_update_client.assert_called_with(md.hostname,
-                                              dict(auth='cert'))
+        metadata.end_statistics(md)
+        mock_update_client.assert_called_with(md.hostname, dict(auth='cert'))
 
         mock_update_client.reset_mock()
         md.hostname = "client5"
-        metadata.process_statistics(md, None)
+        metadata.end_statistics(md)
         self.assertFalse(mock_update_client.called)
 
     def test_viz(self):
@@ -1513,6 +1512,10 @@ class TestMetadata_NoClientsXML(TestMetadataBase):
     def test_handle_clients_xml_event(self):
         pass
 
+    def test_end_statistics(self):
+        # bootstrap mode, which is what is being tested here, doesn't
+        # work without clients.xml
+        pass
 
 class TestMetadata_ClientsXML(TestMetadataBase):
     """ test Metadata with a clients.xml.  """
