@@ -54,6 +54,9 @@ class ClientTest(TestCase):
         """ run this individual test """
         config = self.bcfg2_core.BuildConfiguration(self.client)
 
+        assert len(config.findall("Bundle")) > 0, \
+            "%s has no content" % self.client
+
         failures = []
         msg = ["Failures:"]
         for failure in config.xpath('//*[@failure]'):
