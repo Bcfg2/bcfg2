@@ -589,11 +589,10 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
             try:
                 self._validate_data(entry, metadata, data)
             except CfgVerificationError:
-                msg = "Data for %s for %s failed to verify: %s" % \
-                    (entry.get('name'), metadata.hostname,
-                     sys.exc_info()[1])
-                self.logger.error(msg)
-                raise PluginExecutionError(msg)
+                raise PluginExecutionError("Failed to verify %s for %s: %s" %
+                                           (entry.get('name'),
+                                            metadata.hostname,
+                                            sys.exc_info()[1]))
 
         if entry.get('encoding') == 'base64':
             data = b64encode(data)
