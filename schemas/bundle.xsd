@@ -256,12 +256,22 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute type='xsd:boolean' name='independent'>
+      <xsd:annotation>
+        <xsd:documentation>
+          If set to ``true``, indicates that the bundle is a
+          collection of independent entries, and that service restarts
+          and modified actions should not be performed.  See
+          :ref:`server-plugins-structures-bundler-magic` for more.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute type='xsd:string' name='name'>
       <xsd:annotation>
         <xsd:documentation>
-          The name of the bundle.  If present, this must match the
-          bundle filename, minus the extension.  Specifying the name
-          explicitly is deprecated.
+          **Deprecated.** The name of the bundle.  If present, this
+          must match the bundle filename, minus the extension.
+          Specifying the name explicitly is deprecated.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

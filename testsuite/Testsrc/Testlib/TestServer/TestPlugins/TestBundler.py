@@ -61,7 +61,7 @@ class TestBundler(TestPlugin, TestStructure, TestXMLDirectoryBacked):
     def test_BuildStructures(self):
         b = self.get_obj()
         b.bundles = dict(error=Mock(), skip=Mock(), xinclude=Mock(),
-                         has_dep=Mock(), is_dep=Mock())
+                         has_dep=Mock(), is_dep=Mock(), indep=Mock())
         expected = dict()
 
         b.bundles['error'].XMLMatch.side_effect = TemplateError(None)
@@ -86,11 +86,17 @@ class TestBundler(TestPlugin, TestStructure, TestXMLDirectoryBacked):
         expected['is_dep'] = lxml.etree.Element("Bundle", name="is_dep")
         lxml.etree.SubElement(expected['is_dep'], "Package", name="bar")
 
+        indep = lxml.etree.Element("Bundle", independent="true")
+        lxml.etree.SubElement(indep, "Service", name="baz")
+        b.bundles['indep'].XMLMatch.return_value = indep
+        expected['indep'] = lxml.etree.Element("Independent", name="indep")
+        lxml.etree.SubElement(expected['indep'], "Service", name="baz")
+
         metadata = Mock()
-        metadata.bundles = ["error", "xinclude", "has_dep"]
+        metadata.bundles = ["error", "xinclude", "has_dep", "indep"]
 
         rv = b.BuildStructures(metadata)
-        self.assertEqual(len(rv), 3)
+        self.assertEqual(len(rv), 4)
         for bundle in rv:
             name = bundle.get("name")
             self.assertIsNotNone(name,

@@ -75,6 +75,89 @@ Or, more compactly:
     Else
         Manage the abstract service "bar"
 
+As an example, consider the following :ref:`bundle
+<server-plugins-structures-bundler-index>`:
+
+.. code-block:: xml
+
+    <Bundle>
+      <Path name='/etc/ssh/ssh_host_dsa_key'/>
+      <Path name='/etc/ssh/ssh_host_rsa_key'/>
+      <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>
+      <Path name='/etc/ssh/ssh_host_rsa_key.pub'/>
+      <Path name='/etc/ssh/ssh_host_key'/>
+      <Path name='/etc/ssh/ssh_host_key.pub'/>
+      <Path name='/etc/ssh/sshd_config'/>
+      <Path name='/etc/ssh/ssh_config'/>
+      <Path name='/etc/ssh/ssh_known_hosts'/>
+      <Group name='rpm'>
+        <Package name='openssh'/>
+        <Package name='openssh-askpass'/>
+        <Service name='sshd'/>
+        <Group name='fedora' >
+           <Group name='fedora14' negate='true'>
+             <Package name='openssh-clients'/>
+           </Group>
+           <Package name='openssh-server'/>
+        </Group>
+      </Group>
+      <Group name='deb'>
+        <Package name='ssh'/>
+        <Service name='ssh'/>
+      </Group>
+      <Client name='trust.example.com'>
+        <Path name='/etc/ssh/shosts.equiv'/>
+      </Client>
+    </Bundle>
+
+In this bundle, most of the entries are common to all systems. Clients
+in group ``deb`` get one extra package and service, while clients in
+group ``rpm`` get two extra packages and an extra service. In
+addition, clients in group ``fedora`` *and* group ``rpm`` get one
+extra package entries, unless they are not in the ``fedora14`` group,
+in which case, they get an extra package. The client
+``trust.example.com`` gets one extra file that is not distributed to
+any other clients.
+
++------------------------+-----------------------------------+
+| Group/Hostname         | Entry                             |
++========================+===================================+
+| all                    | ``/etc/ssh/ssh_host_dsa_key``     |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_host_rsa_key``     |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_host_dsa_key.pub`` |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_host_rsa_key.pub`` |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_host_key``         |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_host_key.pub``     |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/sshd_config``          |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_config``           |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_known_hosts``      |
++------------------------+-----------------------------------+
+| ``rpm``                | Package ``openssh``               |
++------------------------+-----------------------------------+
+| ``rpm``                | Package ``openssh-askpass``       |
++------------------------+-----------------------------------+
+| ``rpm``                | Service ``sshd``                  |
++------------------------+-----------------------------------+
+| ``rpm`` AND ``fedora`` | Package ``openssh-server``        |
++------------------------+-----------------------------------+
+| ``rpm`` AND ``fedora`` | Package ``openssh-clients``       |
+| AND NOT ``fedora14``   |                                   |
++------------------------+-----------------------------------+
+| ``deb``                | Package ``ssh``                   |
++------------------------+-----------------------------------+
+| ``deb``                | Service ``ssh``                   |
++------------------------+-----------------------------------+
+| ``trust.example.com``  | ``/etc/ssh/shosts.equiv``         |
++------------------------+-----------------------------------+
+
 .. _xml-genshi-templating:
 
 Genshi templating

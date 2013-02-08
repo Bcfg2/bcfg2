@@ -20,91 +20,94 @@ Group and Client tags can be used inside of bundles to differentiate
 which entries particular clients will recieve; this is useful for the
 case where entries are named differently across systems; for example,
 one Linux distro may have a package called ``openssh`` while another
-uses the name ``ssh``. See :ref:`xml-group-client-tags` for details.
+uses the name ``ssh``. See :ref:`xml-group-client-tags` for details
+and a longer example.
 
-The following is an annotated copy of a bundle:
+A brief example:
 
 .. code-block:: xml
 
     <Bundle>
-      <Path name='/etc/ssh/ssh_host_dsa_key'/>
-      <Path name='/etc/ssh/ssh_host_rsa_key'/>
-      <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>
-      <Path name='/etc/ssh/ssh_host_rsa_key.pub'/>
-      <Path name='/etc/ssh/ssh_host_key'/>
-      <Path name='/etc/ssh/ssh_host_key.pub'/>
-      <Path name='/etc/ssh/sshd_config'/>
       <Path name='/etc/ssh/ssh_config'/>
-      <Path name='/etc/ssh/ssh_known_hosts'/>
       <Group name='rpm'>
-        <Package name='openssh'/>
-        <Package name='openssh-askpass'/>
         <Service name='sshd'/>
-        <Group name='fedora' >
-           <Group name='fc14' negate='true'>
-             <Package name='openssh-clients'/>
-           </Group>
-           <Package name='openssh-server'/>
-        </Group>
+        <Package name='openssh-server'/>
       </Group>
       <Group name='deb'>
         <Package name='ssh'/>
         <Service name='ssh'/>
       </Group>
-      <Client name='trust.example.com'>
-        <Path name='/etc/ssh/shosts.equiv'/>
-      </Client>
     </Bundle>
 
-In this bundle, most of the entries are common to all systems. Clients
-in group **deb** get one extra package and service, while clients in
-group **rpm** get two extra packages and an extra service. In
-addition, clients in group **fedora** *and* group **rpm** get one
-extra package entries, unless they are not in the **fc14** group, in
-which case, they get an extra package. The client
-**trust.example.com** gets one extra file that is not distributed to
-any other clients.  Notice that this file doesn't describe which
-versions of these entries that clients should get, only that they
-should get them. (Admittedly, this example is slightly contrived, but
-demonstrates how group entries can be used in bundles)
+Note that we do not specify *how* a given entry should be managed,
+only that it should be.  The concrete specification of each entry will
+be provided by a different plugin such as
+:ref:`server-plugins-generators-cfg`,
+:ref:`server-plugins-generators-rules`, or
+:ref:`server-plugins-generators-packages`.
 
-+----------------------------+-------------------------------+
-| Group/Hostname             | Entry                         |
-+============================+===============================+
-| all                        | /etc/ssh/ssh_host_dsa_key     |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_host_rsa_key     |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_host_dsa_key.pub |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_host_rsa_key.pub |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_host_key         |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_host_key.pub     |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/sshd_config          |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_config           |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_known_hosts      |
-+----------------------------+-------------------------------+
-| rpm                        | Package openssh               |
-+----------------------------+-------------------------------+
-| rpm                        | Package openssh-askpass       |
-+----------------------------+-------------------------------+
-| rpm                        | Service sshd                  |
-+----------------------------+-------------------------------+
-| rpm and fedora             | Package openssh-server        |
-+----------------------------+-------------------------------+
-| rpm and fedora and not fc4 | Package openssh-clients       |
-+----------------------------+-------------------------------+
-| deb                        | Package ssh                   |
-+----------------------------+-------------------------------+
-| deb                        | Service ssh                   |
-+----------------------------+-------------------------------+
-| trust.example.com          | /etc/ssh/shosts.equiv         |
-+----------------------------+-------------------------------+
+Alternatively, you can use fully-bound entries in Bundler, which has
+various uses.  For instance:
+
+    <Bundle>
+      <Path name='/etc/ssh/ssh_config'/>
+      <Group name='rpm'>
+        <BoundService name='sshd' type="chkconfig" status="on"/>
+        <BoundPackage name='openssh-server' version='5.8p2' type="yum" />
+      </Group>
+      <Group name='deb'>
+        <Package name='ssh'/>
+        <BoundService name='ssh' type="chkconfig" status="on"/>
+      </Group>
+    </Bundle>
+
+In this example, both Service tags and one Package tag are fully bound
+-- i.e., all information required by the client to manage those
+entries is provided in the bundle itself.
+
+.. _server-plugins-structures-bundler-magic:
+
+Bundle "Magic"
+==============
+
+Bundles are collections of *related* entries.  That point is very,
+very important, because a bundle performs certain "magic" actions when
+one or more entries in it are modified:
+
+* :xml:type:`Service <ServiceType>` entries whose ``restart``
+  attribute is ``true`` (the default) will be restarted.
+* :xml:type:`Action <ActionType>` entries whose ``when`` attribute is
+  ``modified`` will be run.
+
+Because of these two magic actions, it's extremely important to
+structure your bundles around Service and Action entries, rather than
+around some loose idea of which entries are related.  For instance, in
+order to manage a Bcfg2 server, a number of packages, paths, services,
+etc. must be managed.  But not all of these entries would require
+``bcfg2-server`` to be restarted, so to limit restarts it's wise to
+split these entries into two bundles.  See
+:ref:`server-plugins-structures-bundler-bcfg2-server` for an example
+of this.
+
+Disabling Magic
+---------------
+
+Disabling magic bundler actions can be done in one of two ways:
+
+* On a per-entry basis.  Set ``restart="false"`` on a Service to
+  prevent it from being restarted when the bundle is modified.  Set
+  ``when="always"`` on an Action to cause it to run every time,
+  regardless of whether or not the bundle was modified.
+* On a per-bundle basis.  Set ``independent="true"`` on the top-level
+  ``Bundle`` tag to signify that the bundle is a collection of
+  independent (i.e., unrelated) entries, and to prevent any magic
+  actions from being performed.  (This is similar to the ``Base``
+  plugin in older versions of Bcfg2.)  This was added in Bcfg2 1.4.
+
+Service entries in independent bundles are never restarted, and Action
+entries in independent bundles are only executed if ``when="always"``.
+(I.e., an Action entry in an independent bundle with
+``when="modified"`` is useless.)
 
 Genshi templates
 ================

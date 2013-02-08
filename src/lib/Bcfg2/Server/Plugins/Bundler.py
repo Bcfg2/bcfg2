@@ -87,6 +87,10 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
                                   bundlename, exc_info=1)
                 continue
 
+            if data.get("independent", "false").lower() == "true":
+                data.tag = "Independent"
+                del data.attrib['independent']
+
             data.set("name", bundlename)
 
             for child in data.findall("Bundle"):
