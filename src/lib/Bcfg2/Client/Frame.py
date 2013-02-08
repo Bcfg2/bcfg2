@@ -323,10 +323,10 @@ class Frame(object):
             for bundle in self.setup['bundle']:
                 if bundle not in all_bundle_names:
                     self.logger.info("Warning: Bundle %s not found" % bundle)
-            bundles = filter(lambda b: b.get('name') in self.setup['bundle'],
-                             bundles)
+            bundles = [b for b in bundles
+                       if b.get('name') in self.setup['bundle']]
         elif self.setup['indep']:
-            bundles = filter(lambda b: b.tag != 'Bundle', bundles)
+            bundles = [b for b in bundles if b.tag != 'Bundle']
         if self.setup['skipbundle']:
             # warn if non-existent bundle given
             if not self.setup['bundle_quick']:
@@ -334,39 +334,41 @@ class Frame(object):
                     if bundle not in all_bundle_names:
                         self.logger.info("Warning: Bundle %s not found" %
                                          bundle)
-            bundles = filter(lambda b:
-                                 b.get('name') not in self.setup['skipbundle'],
-                             bundles)
+            bundles = [b for b in bundles
+                       if b.get('name') not in self.setup['skipbundle']]
         if self.setup['skipindep']:
-            bundles = filter(lambda b: b.tag == 'Bundle', bundles)
+            bundles = [b for b in bundles if b.tag == 'Bundle']
 
         self.whitelist = [e for e in self.whitelist
-                          if True in [e in b for b in bundles]]
+                          if any(e in b for b in bundles)]
 
         # first process prereq actions
         for bundle in bundles[:]:
-            if bundle.tag != 'Bundle':
-                continue
-            bmodified = len([item for item in bundle
-                             if item in self.whitelist])
+            if bundle.tag == 'Bundle':
+                bmodified = any(item in self.whitelist for item in bundle)
+            else:
+                bmodified = False
             actions = [a for a in bundle.findall('./Action')
-                       if (a.get('timing') != 'post' and
+                       if (a.get('timing') in ['pre', 'both'] and
                            (bmodified or a.get('when') == 'always'))]
             # now we process all "always actions"
             if self.setup['interactive']:
                 self.promptFilter(prompt, actions)
             self.DispatchInstallCalls(actions)
 
+            if bundle.tag != 'Bundle':
+                continue
+
             # need to test to fail entries in whitelist
-            if False in [self.states[a] for a in actions]:
+            if not all(self.states[a] for a in actions):
                 # then display bundles forced off with entries
-                self.logger.info("Bundle %s failed prerequisite action" %
-                                 (bundle.get('name')))
+                self.logger.info("%s %s failed prerequisite action" %
+                                 (bundle.tag, bundle.get('name')))
                 bundles.remove(bundle)
                 b_to_remv = [ent for ent in self.whitelist if ent in bundle]
                 if b_to_remv:
-                    self.logger.info("Not installing entries from Bundle %s" %
-                                     (bundle.get('name')))
+                    self.logger.info("Not installing entries from %s %s" %
+                                     (bundle.tag, bundle.get('name')))
                     self.logger.info(["%s:%s" % (e.tag, e.get('name'))
                                       for e in b_to_remv])
                     for ent in b_to_remv:
@@ -432,14 +434,26 @@ class Frame(object):
                 # prune out unspecified bundles when running with -b
                 continue
             for tool in self.tools:
+                if bundle in mbundles:
+                    func = tool.BundleUpdated
+                else:
+                    func = tool.BundleNotUpdated
                 try:
-                    if bundle in mbundles:
-                        tool.BundleUpdated(bundle, self.states)
-                    else:
-                        tool.BundleNotUpdated(bundle, self.states)
+                    func(bundle, self.states)
                 except:
-                    self.logger.error("%s.BundleNotUpdated() call failed:" %
-                                      tool.name, exc_info=1)
+                    self.logger.error("%s.%s(%s:%s) call failed:" %
+                                      (tool.name, func.im_func.func_name,
+                                       bundle.tag, bundle.get("name")),
+                                       exc_info=1)
+
+        for indep in self.config.findall('.//Independent'):
+            for tool in self.tools:
+                try:
+                    tool.BundleNotUpdated(indep, self.states)
+                except:
+                    self.logger.error("%s.BundleNotUpdated(%s:%s) call failed:"
+                                      % (tool.name, indep.tag,
+                                         indep.get("name")), exc_info=1)
 
     def Remove(self):
         """Remove extra entries."""

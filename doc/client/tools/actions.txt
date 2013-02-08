@@ -28,8 +28,7 @@ so they can be centrally observed. Actions look like:
 Note that the status attribute tells the bcfg2 client to ignore
 return status, causing failures to still not be centrally reported. If
 central reporting of action failure is desired, set this attribute to
-'check'. Also note that Action entries included in Base will not be
-executed.
+'check'.
 
 Actions are not completely defined inside of a bundle; they are an
 abstract entry. The Rules plugin can bind these entries. For example

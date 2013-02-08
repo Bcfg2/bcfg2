@@ -82,8 +82,8 @@ class Action(Bcfg2.Client.Tools.Tool):
     def BundleNotUpdated(self, bundle, states):
         """Run Actions when bundles have not been updated."""
         for action in bundle.findall("Action"):
-            if action.get('timing') in ['post', 'both'] and \
-               action.get('when') != 'modified':
+            if (action.get('timing') in ['post', 'both'] and
+                action.get('when') != 'modified'):
                 if not self._action_allowed(action):
                     continue
                 states[action] = self.RunAction(action)
