@@ -16,9 +16,64 @@ Group and Client tags
 =====================
 
 These allow the portions of an XML document inside a Client or Group
-tag to only apply to the given client group.  See
-:ref:`server-plugins-structures-bundler-index` for examples and more
-details.
+tag to only apply to the given client group.  That is, they can be
+thought of as conditionals, where the following are roughly equivalent:
+
+.. code-block:: xml
+
+    <Group name="group1">
+      <Path name="/etc/foo.conf"/>
+    </Group>
+
+And::
+
+    If client is a member of group1 then
+        Manage the abstract path "/etc/foo.conf"
+
+Nested Group and Client tags are conjunctive (logical ``AND``).  For
+instance, the following are roughly equivalent:
+
+.. code-block:: xml
+
+    <Group name="group1">
+      <Client name="foo.example.com">
+        <Package name="bar"/>
+      </Client>
+      <Package name="baz"/>
+    </Group>
+
+And::
+
+    If client is a member of group1 and has hostname "foo.example.com" then
+        Manage the abstract package "bar"
+    If client is a member of group1 then
+        Manage the abstract package "baz"
+
+There is no convenient ``else``; you must specify all conditions
+explicitly.  To do this, Group and Client tags may be negated, as in:
+
+.. code-block:: xml
+
+    <Group name="group1">
+      <Service name="foo"/>
+    </Group>
+    <Group name="group1" negate="true">
+      <Service name="bar"/>
+    </Group>
+
+This is roughly equivalent to::
+
+    If client is a member of group1 then
+        Manage the abstract service "foo"
+    If client is not a member of group 1 then
+        Manage the abstract service "bar"
+
+Or, more compactly:
+
+    If client is a member of group1 then
+        Manage the abstract service "foo"
+    Else
+        Manage the abstract service "bar"
 
 .. _xml-genshi-templating:
 

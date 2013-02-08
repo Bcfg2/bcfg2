@@ -19,12 +19,8 @@ will receive.
 Group and Client tags can be used inside of bundles to differentiate
 which entries particular clients will recieve; this is useful for the
 case where entries are named differently across systems; for example,
-one linux distro may have a package called openssh while another uses
-the name ssh. Configuration entries nested inside of Group elements
-only apply to clients who are a member of those groups; multiple
-nested groups must all apply. Also, groups may be negated; entries
-included in such groups will only apply to clients who are not a
-member of said group.  The same applies to Client elements.
+one Linux distro may have a package called ``openssh`` while another
+uses the name ``ssh``. See :ref:`xml-group-client-tags` for details.
 
 The following is an annotated copy of a bundle:
 
@@ -56,7 +52,7 @@ The following is an annotated copy of a bundle:
         <Service name='ssh'/>
       </Group>
       <Client name='trust.example.com'>
-          <Path name='/etc/ssh/shosts.equiv'/>
+        <Path name='/etc/ssh/shosts.equiv'/>
       </Client>
     </Bundle>
 
@@ -119,7 +115,7 @@ generate a bundle.  Genshi templates can be specified one of two ways:
 
 1. Add an XML-style genshi template to the Bundler directory with a
    ``.genshi`` and the associated namespace attribute.  *This is
-   deprecated as of Bcfg2 1.4.0.*
+   deprecated as of Bcfg2 1.4.*
 2. Add the Genshi namespace to your existing XML
    bundle.
 
