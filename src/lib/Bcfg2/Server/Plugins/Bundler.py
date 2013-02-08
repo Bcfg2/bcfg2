@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+import copy
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Lint
@@ -17,16 +18,17 @@ class BundleFile(Bcfg2.Server.Plugin.StructFile):
         Bcfg2.Server.Plugin.StructFile.__init__(self, filename,
                                                 should_monitor=should_monitor)
         if self.name.endswith(".genshi"):
-            self.logger.warning("Bundler: Bundle filenames ending with "
+            self.logger.warning("Bundler: %s: Bundle filenames ending with "
                                 ".genshi are deprecated; add the Genshi XML "
-                                "namespace to a .xml bundle instead")
+                                "namespace to a .xml bundle instead" %
+                                self.name)
     __init__.__doc__ = Bcfg2.Server.Plugin.StructFile.__init__.__doc__
 
     def Index(self):
         Bcfg2.Server.Plugin.StructFile.Index(self)
         if self.xdata.get("name"):
-            self.logger.warning("Bundler: Explicitly specifying bundle names "
-                                "is deprecated")
+            self.logger.warning("Bundler: %s: Explicitly specifying bundle "
+                                "names is deprecated" % self.name)
     Index.__doc__ = Bcfg2.Server.Plugin.StructFile.Index.__doc__
 
     @property
@@ -55,30 +57,65 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
     def HandleEvent(self, event):
         Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent(self, event)
 
-        self.bundles = dict()
-        for bundle in self.entries.values():
-            self.bundles[bundle.bundle_name] = bundle
+        self.bundles = dict([(b.bundle_name, b)
+                             for b in self.entries.values()])
     HandleEvent.__doc__ = \
         Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent.__doc__
 
     def BuildStructures(self, metadata):
         bundleset = []
-        for bundlename in metadata.bundles:
+        bundles = copy.copy(metadata.bundles)
+        bundles_added = set(bundles)
+        while bundles:
+            bundlename = bundles.pop()
             try:
                 bundle = self.bundles[bundlename]
             except KeyError:
                 self.logger.error("Bundler: Bundle %s does not exist" %
                                   bundlename)
                 continue
+
             try:
-                bundleset.append(bundle.XMLMatch(metadata))
+                data = bundle.XMLMatch(metadata)
             except TemplateError:
                 err = sys.exc_info()[1]
                 self.logger.error("Bundler: Failed to render templated bundle "
                                   "%s: %s" % (bundlename, err))
+                continue
             except:
                 self.logger.error("Bundler: Unexpected bundler error for %s" %
                                   bundlename, exc_info=1)
+                continue
+
+            data.set("name", bundlename)
+
+            for child in data.findall("Bundle"):
+                if child.getchildren():
+                    # XInclude'd bundle -- "flatten" it so there
+                    # aren't extra Bundle tags, since other bits in
+                    # Bcfg2 only handle the direct children of the
+                    # top-level Bundle tag
+                    if data.get("name"):
+                        self.logger.warning("Bundler: In file XIncluded from "
+                                            "%s: Explicitly specifying "
+                                            "bundle names is deprecated" %
+                                            self.name)
+                    for el in child.getchildren():
+                        data.append(el)
+                    data.remove(child)
+                elif child.get("name"):
+                    # dependent bundle -- add it to the list of
+                    # bundles for this client
+                    if child.get("name") not in bundles_added:
+                        bundles.append(child.get("name"))
+                        bundles_added.add(child.get("name"))
+                    data.remove(child)
+                else:
+                    # neither name or children -- wat
+                    self.logger.warning("Bundler: Useless empty Bundle tag "
+                                        "in %s" % self.name)
+                    data.remove(child)
+            bundleset.append(data)
         return bundleset
     BuildStructures.__doc__ = \
         Bcfg2.Server.Plugin.Structure.BuildStructures.__doc__

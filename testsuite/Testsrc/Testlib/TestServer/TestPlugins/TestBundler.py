@@ -60,12 +60,46 @@ class TestBundler(TestPlugin, TestStructure, TestXMLDirectoryBacked):
 
     def test_BuildStructures(self):
         b = self.get_obj()
-        b.bundles = dict(foo=Mock(), bar=Mock(), baz=Mock())
-        metadata = Mock()
-        metadata.bundles = ["foo", "baz"]
+        b.bundles = dict(error=Mock(), skip=Mock(), xinclude=Mock(),
+                         has_dep=Mock(), is_dep=Mock())
+        expected = dict()
 
-        self.assertItemsEqual(b.BuildStructures(metadata),
-                              [b.bundles[n].XMLMatch.return_value
-                               for n in metadata.bundles])
-        for bname in metadata.bundles:
-            b.bundles[bname].XMLMatch.assert_called_with(metadata)
+        b.bundles['error'].XMLMatch.side_effect = TemplateError(None)
+
+        xinclude = lxml.etree.Element("Bundle")
+        lxml.etree.SubElement(lxml.etree.SubElement(xinclude, "Bundle"),
+                              "Path", name="/test")
+        b.bundles['xinclude'].XMLMatch.return_value = xinclude
+        expected['xinclude'] = lxml.etree.Element("Bundle", name="xinclude")
+        lxml.etree.SubElement(expected['xinclude'], "Path", name="/test")
+
+        has_dep = lxml.etree.Element("Bundle")
+        lxml.etree.SubElement(has_dep, "Bundle", name="is_dep")
+        lxml.etree.SubElement(has_dep, "Package", name="foo")
+        b.bundles['has_dep'].XMLMatch.return_value = has_dep
+        expected['has_dep'] = lxml.etree.Element("Bundle", name="has_dep")
+        lxml.etree.SubElement(expected['has_dep'], "Package", name="foo")
+
+        is_dep = lxml.etree.Element("Bundle")
+        lxml.etree.SubElement(is_dep, "Package", name="bar")
+        b.bundles['is_dep'].XMLMatch.return_value = is_dep
+        expected['is_dep'] = lxml.etree.Element("Bundle", name="is_dep")
+        lxml.etree.SubElement(expected['is_dep'], "Package", name="bar")
+
+        metadata = Mock()
+        metadata.bundles = ["error", "xinclude", "has_dep"]
+
+        rv = b.BuildStructures(metadata)
+        self.assertEqual(len(rv), 3)
+        for bundle in rv:
+            name = bundle.get("name")
+            self.assertIsNotNone(name,
+                                "Bundle %s was not built" % name)
+            self.assertIn(name, expected,
+                          "Unexpected bundle %s was built" % name)
+            self.assertXMLEqual(bundle, expected[name],
+                                "Bundle %s was not built correctly" % name)
+            b.bundles[name].XMLMatch.assert_called_with(metadata)
+
+        b.bundles['error'].XMLMatch.assert_called_with(metadata)
+        self.assertFalse(b.bundles['skip'].XMLMatch.called)
