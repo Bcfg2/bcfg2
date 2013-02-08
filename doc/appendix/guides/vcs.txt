@@ -30,7 +30,7 @@ While running ``bcfg2-info`` the following line will show up::
 
    Initialized git plugin with git directory = /var/lib/bcfg2/.git
 
-Mercurial 
+Mercurial
 =========
 
 The :ref:`server-plugins-version-hg` plugin also allows you to store
@@ -59,7 +59,7 @@ While running ``bcfg2-info`` the following line will show up::
 
    Initialized hg plugin with hg directory = /var/lib/bcfg2/.hg
 
-Darcs 
+Darcs
 =====
 
 The :ref:`server-plugins-version-darcs` plugin also allows you to store
@@ -70,8 +70,8 @@ be initialized::
 
     darcs initialize
 
-To commit to the darcs repository an author must be added to the 
-``_darcs/prefs/author`` file.  If the ``author`` file is missing, 
+To commit to the darcs repository an author must be added to the
+``_darcs/prefs/author`` file.  If the ``author`` file is missing,
 darcs will ask you to enter your e-mail address.
 
 .. code-block:: sh
@@ -99,7 +99,7 @@ Cvs
 The :ref:`server-plugins-version-cvs` plugin also allows you to store
 version information in the statistics database.
 
-    plugins = Base,Bundler,Cfg,...,Cvs
+    plugins = Bundler,Cfg,...,Cvs
 
 The CVS repository must be initialized::
 

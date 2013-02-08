@@ -11,7 +11,7 @@ altsrc
 Altsrc is a generic, Bcfg2 server-side mechanism for performing
 configuration entry name remapping for the purpose of data binding.
 Altsrc can be used as a parameter for any entry type, and can be used
-in any structure, including Bundler and Base.
+in any structure.
 
 Use Cases
 =========

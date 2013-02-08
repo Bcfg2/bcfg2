@@ -138,9 +138,7 @@ processed. After this phase, but before entry binding, a list of packages
 and the client metadata instance is passed into Packages' resolver. This
 process determines a superset of packages that will fully satisfy
 dependencies of all package entries included in structures, and reports
-any prerequisites that cannot be satisfied. This facility should largely
-remove the need to use the :ref:`Base <server-plugins-structures-base>`
-plugin.
+any prerequisites that cannot be satisfied.
 
 Disabling dependency resolution
 -------------------------------

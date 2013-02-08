@@ -19,14 +19,14 @@ The Rules plugin resolves the following Abstract Configuration Entities:
 to literal configuration entries suitable for the client drivers to
 consume.
 
-For an entity specification to be included in the Literal configuration
-the name attribute from an Abstract Entity Tag (from Base or Bundler)
-must match the name attribute of an Entity tag in Rules, along with the
-appropriate group associations of course.
+For an entity specification to be included in the Literal
+configuration the name attribute from an abstract entity tag (from
+Bundler) must match the name attribute of an entity tag in Rules,
+along with the appropriate group associations of course.
 
 Each file in the Rules directory has a priority. This allows the same
 Entities to be served by multiple files. The priorities can be used to
-break ties in the case that multiple files serve data for the same Entity.
+break ties in the case that multiple files serve data for the same entity.
 
 Tag Attributes in Rules
 =======================

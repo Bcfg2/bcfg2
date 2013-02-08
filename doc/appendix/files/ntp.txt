@@ -88,8 +88,6 @@ Setup an ``etc/`` directory structure, and add it to the base::
      # cat Cfg/etc/ntp.conf/ntp.conf
      server ntp1.utexas.edu
 
-``Base/base.xml``:
-
 ``Bundler/ntp.xml``:
 
 .. code-block:: xml

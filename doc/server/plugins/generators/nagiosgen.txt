@@ -12,7 +12,7 @@ This page describes the installation and use of the `NagiosGen`_ plugin.
 
 Update ``/etc/bcfg2.conf``, adding NagiosGen to plugins::
 
-    plugins = Base,Bundler,Cfg,...,NagiosGen
+    plugins = Bundler,Cfg,...,NagiosGen
 
 Create the NagiosGen directory::
 

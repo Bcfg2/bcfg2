@@ -117,7 +117,7 @@ Replace Pkgmgr with Packages in the plugins line of ``bcfg2.conf``::
     root@lucid:~# cat /etc/bcfg2.conf
     [server]
     repository = /var/lib/bcfg2
-    plugins = SSHbase,Cfg,Packages,Rules,Metadata,Base,Bundler
+    plugins = SSHbase,Cfg,Packages,Rules,Metadata,Bundler
 
     [statistics]
     sendmailpath = /usr/lib/sendmail
@@ -224,7 +224,7 @@ Probes to your plugins line in ``bcfg2.conf`` and create the Probe.
 .. code-block:: sh
 
     root@lucid:~# grep plugins /etc/bcfg2.conf
-    plugins = Base,Bundler,Cfg,...,Probes
+    plugins = Bundler,Cfg,...,Probes
     root@lucid:~# mkdir /var/lib/bcfg2/Probes
     root@lucid:~# cat /var/lib/bcfg2/Probes/groups
     #!/bin/sh

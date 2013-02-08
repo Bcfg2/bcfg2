@@ -29,7 +29,6 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
              "Bundler/*.xml": "bundle.xsd",
              "Bundler/*.genshi": "bundle.xsd",
              "Pkgmgr/*.xml": "pkglist.xsd",
-             "Base/*.xml": "base.xsd",
              "Rules/*.xml": "rules.xsd",
              "Defaults/*.xml": "defaults.xsd",
              "etc/report-configuration.xml": "report-configuration.xsd",

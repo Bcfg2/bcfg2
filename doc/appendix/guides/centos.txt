@@ -236,7 +236,7 @@ arch group membership. For this, we will make use of the
 Probes to your plugins line in ``bcfg2.conf`` and create the Probe.::
 
     [root@centos ~]# grep plugins /etc/bcfg2.conf
-    plugins = Base,Bundler,Cfg,...,Probes
+    plugins = Bundler,Cfg,...,Probes
     [root@centos ~]# mkdir /var/lib/bcfg2/Probes
     [root@centos ~]# cat /var/lib/bcfg2/Probes/groups
     #!/bin/sh

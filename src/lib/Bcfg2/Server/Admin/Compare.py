@@ -26,10 +26,10 @@ class Compare(Bcfg2.Server.Admin.Mode):
                           }
 
     def compareStructures(self, new, old):
-        if new.tag == 'Independent':
-            bundle = 'Base'
-        else:
+        if new.get("name"):
             bundle = new.get('name')
+        else:
+            bundle = 'Independent'
 
         identical = True
 

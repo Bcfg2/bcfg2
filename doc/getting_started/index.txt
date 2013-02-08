@@ -107,7 +107,7 @@ After the above steps, you should have a toplevel repository structure
 that looks like::
 
     bcfg-server:~ # ls /var/lib/bcfg2
-    Base/  Bundler/  Cfg/  Metadata/  Pkgmgr/  Rules/  SSHbase/  etc/
+    Bundler/  Cfg/  Metadata/  Pkgmgr/  Rules/  SSHbase/  etc/
 
 The place to start is the Metadata directory, which contains two
 files: ``clients.xml`` and ``groups.xml``. Your current

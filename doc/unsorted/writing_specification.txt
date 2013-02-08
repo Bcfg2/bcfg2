@@ -30,8 +30,8 @@ that a client needs the Bcfg2 package with
 
 but this does not explicitly identify that an RPM package version
 0.9.2 should be loaded from http://rpm.repo.server/bcfg2-0.9.2-0.1.rpm.
-The abstract configuration is defined in the xml configuration files
-for the Base and Bundles plugins.
+The abstract configuration is defined in the XML configuration files
+for the Bundler plugin.
 
 A combination of a clients metadata (group memberships) and abstract
 configuration is then used to generate the clients literal configuration.
@@ -57,17 +57,12 @@ Abstract Configuration (Structures)
 ===================================
 
 A clients Abstract Configuration is the inventory of configuration
-entities that should be installed on a client. Two plugins provide the
-basis for the abstract configuration, the Bundler and Base.
+entities that should be installed on a client. The Bundler plugin
+usually provides the abstract configuration.
 
 The plugin Bundler builds descriptions of interrelated configuration
 entities. These are typically used for the representation of services,
 or other complex groups of entities.
-
-The Base provides a laundry list of configuration entities that need to
-be installed on hosts. These entities are independent from one another,
-and can be installed individually without worrying about the impact on
-other entities.
 
 Configuration Entity Types
 --------------------------
