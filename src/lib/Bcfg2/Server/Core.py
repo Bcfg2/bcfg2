@@ -552,18 +552,16 @@ class BaseCore(object):
                 continue
             try:
                 self.Bind(entry, metadata)
-            except PluginExecutionError:
+            except:
                 exc = sys.exc_info()[1]
                 if 'failure' not in entry.attrib:
                     entry.set('failure', 'bind error: %s' % exc)
-                self.logger.error("Failed to bind entry %s:%s: %s" %
-                                  (entry.tag, entry.get('name'), exc))
-            except Exception:
-                exc = sys.exc_info()[1]
-                if 'failure' not in entry.attrib:
-                    entry.set('failure', 'bind error: %s' % exc)
-                self.logger.error("Unexpected failure in BindStructure: %s %s"
-                                  % (entry.tag, entry.get('name')), exc_info=1)
+                if isinstance(exc, PluginExecutionError):
+                    msg = "Failed to bind entry"
+                else:
+                    msg = "Unexpected failure binding entry"
+                self.logger.error("%s %s:%s: %s" %
+                                  (msg, entry.tag, entry.get('name'), exc))
 
     def Bind(self, entry, metadata):
         """ Bind a single entry using the appropriate generator.
