@@ -744,6 +744,48 @@ class BaseCore(object):
         return result
 
     @Bcfg2.Server.Statistics.track_statistics()
+    def check_acls(self, address, rmi):
+        """ Check client IP address and metadata object against all
+        :class:`Bcfg2.Server.Plugin.interfaces.ClientACLs` plugins.
+        If any ACL plugin denies access, then access is denied.  ACLs
+        are checked in two phases: First, with the client IP address;
+        and second, with the client metadata object.  This lets an ACL
+        interface do a quick rejection based on IP before metadata is
+        ever built.
+
+        :param address: The address pair of the client to check ACLs for
+        :type address: tuple of (<ip address>, <port>)
+        :param rmi: The fully-qualified name of the RPC call
+        :param rmi: string
+        :returns: bool
+        """
+        plugins = self.plugins_by_type(Bcfg2.Server.Plugin.ClientACLs)
+        try:
+            ip_checks = [p.check_acl_ip(address, rmi) for p in plugins]
+        except:
+            self.logger.error("Unexpected error checking ACLs for %s for %s: "
+                              "%s" % (address[0], rmi, sys.exc_info()[1]))
+            return False  # failsafe
+
+        if all(ip_checks):
+            # if all ACL plugins return True (allow), then allow
+            return True
+        elif False in ip_checks:
+            # if any ACL plugin returned False (deny), then deny
+            return False
+        # else, no plugins returned False, but not all plugins
+        # returned True, so some plugin returned None (defer), so
+        # defer.
+
+        client, metadata = self.resolve_client(address)
+        try:
+            return all(p.check_acl_metadata(metadata, rmi) for p in plugins)
+        except:
+            self.logger.error("Unexpected error checking ACLs for %s for %s: "
+                              "%s" % (client, rmi, sys.exc_info()[1]))
+            return False  # failsafe
+
+    @Bcfg2.Server.Statistics.track_statistics()
     def build_metadata(self, client_name):
         """ Build initial client metadata for a client
 
@@ -804,7 +846,7 @@ class BaseCore(object):
 
         :param address: The address pair of the client to get the
                         canonical hostname for.
-        :type address: tuple of (<ip address>, <hostname>)
+        :type address: tuple of (<ip address>, <port>)
         :param cleanup_cache: Tell the
                               :class:`Bcfg2.Server.Plugin.interfaces.Metadata`
                               plugin in :attr:`metadata` to clean up
@@ -881,21 +923,23 @@ class BaseCore(object):
     def listMethods(self, address):  # pylint: disable=W0613
         """ List all exposed methods, including plugin RMI.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: list of exposed method names
         """
         methods = [name
                    for name, func in inspect.getmembers(self, callable)
-                   if getattr(func, "exposed", False)]
-        methods.extend(self._get_rmi().keys())
+                   if (getattr(func, "exposed", False) and
+                       self.check_acls(address, name))]
+        methods.extend([m for m in self._get_rmi().keys()
+                        if self.check_acls(address, m)])
         return methods
 
     @exposed
     def methodHelp(self, address, method_name):  # pylint: disable=W0613
         """ Get help from the docstring of an exposed method
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :param method_name: The name of the method to get help on
         :type method_name: string
@@ -911,7 +955,7 @@ class BaseCore(object):
     def DeclareVersion(self, address, version):
         """ Declare the client version.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :param version: The client's declared version
         :type version: string
@@ -932,7 +976,7 @@ class BaseCore(object):
     def GetProbes(self, address):
         """ Fetch probes for the client.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: lxml.etree._Element - XML tree describing probes for
                   this client
@@ -955,7 +999,7 @@ class BaseCore(object):
     def RecvProbeData(self, address, probedata):
         """ Receive probe data from clients.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: bool - True on success
         :raises: :exc:`xmlrpclib.Fault`
@@ -1001,7 +1045,7 @@ class BaseCore(object):
     def AssertProfile(self, address, profile):
         """ Set profile for a client.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: bool - True on success
         :raises: :exc:`xmlrpclib.Fault`
@@ -1021,7 +1065,7 @@ class BaseCore(object):
         """ Build config for a client by calling
         :func:`BuildConfiguration`.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: lxml.etree._Element - The full configuration
                   document for the client
@@ -1039,7 +1083,7 @@ class BaseCore(object):
     def RecvStats(self, address, stats):
         """ Act on statistics upload with :func:`process_statistics`.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: bool - True on success
         :raises: :exc:`xmlrpclib.Fault`
@@ -1060,7 +1104,7 @@ class BaseCore(object):
         :type user: string
         :param password: The password supplied by the client
         :type password: string
-        :param address: An address pair of ``(<ip address>, <hostname>)``
+        :param address: An address pair of ``(<ip address>, <port>)``
         :type address: tuple
         :return: bool - True if the authenticate succeeds, False otherwise
         """
@@ -1084,7 +1128,7 @@ class BaseCore(object):
     def GetDecisionList(self, address, mode):
         """ Get the decision list for the client with :func:`GetDecisions`.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: list of decision tuples
         :raises: :exc:`xmlrpclib.Fault`
@@ -1111,7 +1155,7 @@ class BaseCore(object):
     def toggle_debug(self, address):
         """ Toggle debug status of the FAM and all plugins
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: bool - The new debug state of the FAM
         """

@@ -812,32 +812,44 @@ class TestStructFile(TestXMLFileBacked):
         sf._include_element = Mock()
         metadata = Mock()
 
-        (xdata, groups, subgroups, children, subchildren, standalone) = \
-            self._get_test_data()
-
         sf._include_element.side_effect = \
             lambda x, _: (x.tag not in sf._include_tests.keys() or
                           x.get("include") == "true")
 
-        for i, group in groups.items():
-            actual = sf._match(group, metadata)
-            expected = children[i] + subchildren[i]
-            self.assertEqual(len(actual), len(expected))
-            # easiest way to compare the values is actually to make
-            # them into an XML document and let assertXMLEqual compare
-            # them
-            xactual = lxml.etree.Element("Container")
-            xactual.extend(actual)
-            xexpected = lxml.etree.Element("Container")
-            xexpected.extend(expected)
-            self.assertXMLEqual(xactual, xexpected)
+        for test_data in [self._get_test_data(),
+                          self._get_template_test_data()]:
+            (xdata, groups, subgroups, children, subchildren, standalone) = \
+                test_data
 
-        for el in standalone:
-            self.assertXMLEqual(el, sf._match(el, metadata)[0])
+            for i, group in groups.items():
+                actual = sf._match(group, metadata)
+                expected = children[i] + subchildren[i]
+                self.assertEqual(len(actual), len(expected))
+                # easiest way to compare the values is actually to make
+                # them into an XML document and let assertXMLEqual compare
+                # them
+                xactual = lxml.etree.Element("Container")
+                xactual.extend(actual)
+                xexpected = lxml.etree.Element("Container")
+                xexpected.extend(expected)
+                self.assertXMLEqual(xactual, xexpected)
+
+            for el in standalone:
+                self.assertXMLEqual(el, sf._match(el, metadata)[0])
 
     def test_do_match(self):
         sf = self.get_obj()
         sf._match = Mock()
+
+        def match_rv(el, _):
+            if el.tag not in sf._include_tests.keys():
+                return [el]
+            elif el.get("include") == "true":
+                return el.getchildren()
+            else:
+                return []
+        sf._match.side_effect = match_rv
+
         metadata = Mock()
 
         for test_data in [self._get_test_data(),
@@ -847,14 +859,6 @@ class TestStructFile(TestXMLFileBacked):
             sf.data = lxml.etree.tostring(xdata)
             sf.Index()
 
-            def match_rv(el, _):
-                if el.tag not in sf._include_tests.keys():
-                    return [el]
-                elif el.get("include") == "true":
-                    return el.getchildren()
-                else:
-                    return []
-            sf._match.side_effect = match_rv
             actual = sf._do_match(metadata)
             expected = reduce(lambda x, y: x + y,
                               list(children.values()) + \
@@ -874,45 +878,96 @@ class TestStructFile(TestXMLFileBacked):
         sf._include_element = Mock()
         metadata = Mock()
 
-        (xdata, groups, subgroups, children, subchildren, standalone) = \
-            self._get_test_data()
-
         sf._include_element.side_effect = \
             lambda x, _: (x.tag not in sf._include_tests.keys() or
                           x.get("include") == "true")
 
-        actual = copy.deepcopy(xdata)
-        for el in actual.getchildren():
-            sf._xml_match(el, metadata)
-        expected = lxml.etree.Element(xdata.tag, **dict(xdata.attrib))
-        expected.text = xdata.text
-        expected.extend(reduce(lambda x, y: x + y,
-                               list(children.values()) + list(subchildren.values())))
-        expected.extend(standalone)
-        self.assertXMLEqual(actual, expected)
+        for test_data in [self._get_test_data(),
+                          self._get_template_test_data()]:
+            (xdata, groups, subgroups, children, subchildren, standalone) = \
+                test_data
+
+            actual = copy.deepcopy(xdata)
+            for el in actual.getchildren():
+                sf._xml_match(el, metadata)
+            expected = lxml.etree.Element(xdata.tag, **dict(xdata.attrib))
+            expected.text = xdata.text
+            expected.extend(reduce(lambda x, y: x + y,
+                                   list(children.values()) + \
+                                       list(subchildren.values())))
+            expected.extend(standalone)
+            self.assertXMLEqual(actual, expected)
 
     def test_do_xmlmatch(self):
         sf = self.get_obj()
         sf._xml_match = Mock()
         metadata = Mock()
 
-        (sf.xdata, groups, subgroups, children, subchildren, standalone) = \
-            self._get_test_data()
+        for data_type, test_data in \
+                [("", self._get_test_data()),
+                 ("templated ", self._get_template_test_data())]:
+            (xdata, groups, subgroups, children, subchildren, standalone) = \
+                test_data
+            sf.xdata = xdata
+            sf._xml_match.reset_mock()
 
-        sf._do_xmlmatch(metadata)
-        actual = []
-        for call in sf._xml_match.call_args_list:
-            actual.append(call[0][0])
-            self.assertEqual(call[0][1], metadata)
-        expected = list(groups.values()) + standalone
-        # easiest way to compare the values is actually to make
-        # them into an XML document and let assertXMLEqual compare
-        # them
-        xactual = lxml.etree.Element("Container")
-        xactual.extend(actual)
-        xexpected = lxml.etree.Element("Container")
-        xexpected.extend(expected)
-        self.assertXMLEqual(xactual, xexpected)
+            sf._do_xmlmatch(metadata)
+            actual = []
+            for call in sf._xml_match.call_args_list:
+                actual.append(call[0][0])
+                self.assertEqual(call[0][1], metadata)
+            expected = list(groups.values()) + standalone
+            # easiest way to compare the values is actually to make
+            # them into an XML document and let assertXMLEqual compare
+            # them
+            xactual = lxml.etree.Element("Container")
+            xactual.extend(actual)
+            xexpected = lxml.etree.Element("Container")
+            xexpected.extend(expected)
+            self.assertXMLEqual(xactual, xexpected,
+                                "XMLMatch() calls were incorrect for "
+                                "%stest data" % data_type)
+
+    def test_match_ordering(self):
+        """ Match() returns elements in document order """
+        sf = self.get_obj()
+        sf._match = Mock()
+
+        def match_rv(el, _):
+            if el.tag not in sf._include_tests.keys():
+                return [el]
+            elif el.get("include") == "true":
+                return el.getchildren()
+            else:
+                return []
+        sf._match.side_effect = match_rv
+
+        metadata = Mock()
+
+        test_data = lxml.etree.Element("Test")
+        group = lxml.etree.SubElement(test_data, "Group", name="group",
+                                      include="true")
+        first = lxml.etree.SubElement(group, "Element", name="first")
+        second = lxml.etree.SubElement(test_data, "Element", name="second")
+
+        # sanity check to ensure that first and second are in the
+        # correct document order
+        if test_data.xpath("//Element") != [first, second]:
+            skip("lxml.etree does not construct documents in a reliable order")
+
+        sf.data = lxml.etree.tostring(test_data)
+        sf.Index()
+        rv = sf._do_match(metadata)
+        self.assertEqual(len(rv), 2,
+                         "Match() seems to be broken, cannot test ordering")
+        msg = "Match() does not return elements in document order:\n" + \
+            "Expected: [%s, %s]\n" % (first, second) + \
+            "Actual: %s" % rv
+        self.assertXMLEqual(rv[0], first, msg)
+        self.assertXMLEqual(rv[1], second, msg)
+
+        # TODO: add tests to ensure that XMLMatch() returns elements
+        # in document order
 
 
 class TestINode(Bcfg2TestCase):

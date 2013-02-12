@@ -27,8 +27,7 @@ class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
             # Python 2.4?
             SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
 
-        self.logger = logging.getLogger("%s.%s" % (self.__class__.__module__,
-                                                   self.__class__.__name__))
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.allow_none = allow_none
         self.encoding = encoding
 
@@ -95,8 +94,7 @@ class SSLServer(SocketServer.TCPServer, object):
         if ':' in server_address[0]:
             self.address_family = socket.AF_INET6
 
-        self.logger = logging.getLogger("%s.%s" % (self.__class__.__module__,
-                                                   self.__class__.__name__))
+        self.logger = logging.getLogger(self.__class__.__name__)
 
         try:
             SocketServer.TCPServer.__init__(self, listen_address,
@@ -185,10 +183,9 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
     """
 
     def __init__(self, *args, **kwargs):
+        self.logger = logging.getLogger(self.__class__.__name__)
         SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.__init__(self, *args,
                                                                **kwargs)
-        self.logger = logging.getLogger("%s.%s" % (self.__class__.__module__,
-                                                   self.__class__.__name__))
 
     def authenticate(self):
         try:
@@ -262,6 +259,12 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 raise
         else:
             # got a valid XML RPC response
+            # first, check ACLs
+            client_address = self.request.getpeername()
+            method = xmlrpclib.loads(data)[1]
+            if not self.server.instance.check_acls(client_address, method):
+                self.send_error(401, self.responses[401][0])
+                self.end_headers()
             try:
                 self.send_response(200)
                 self.send_header("Content-type", "text/xml")

@@ -67,10 +67,13 @@ class Core(BaseCore):
         cert = None
         address = (cherrypy.request.remote.ip, cherrypy.request.remote.port)
 
-        if not self.check_acls(address[0]):
-            raise cherrypy.HTTPError(401)
+        rpcmethod = xmlrpcutil.process_body()[1]
+        if rpcmethod == 'ERRORMETHOD':
+            raise Exception("Unknown error processing XML-RPC request body")
 
-        return self.authenticate(cert, username, password, address)
+        if (not self.check_acls(address[0], rpcmethod) or
+            not self.authenticate(cert, username, password, address)):
+            raise cherrypy.HTTPError(401)
 
     @cherrypy.expose
     def default(self, *args, **params):  # pylint: disable=W0613

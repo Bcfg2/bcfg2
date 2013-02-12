@@ -137,7 +137,7 @@ class PluginDatabaseModel(object):
         app_label = "Server"
 
 
-class FileBacked(object):
+class FileBacked(Debuggable):
     """ This object caches file data in memory. FileBacked objects are
     principally meant to be used as a part of
     :class:`Bcfg2.Server.Plugin.helpers.DirectoryBacked`. """
@@ -147,7 +147,7 @@ class FileBacked(object):
         :param name: The full path to the file to cache and monitor
         :type name: string
         """
-        object.__init__(self)
+        Debuggable.__init__(self)
 
         #: A string containing the raw data in this file
         self.data = ''
@@ -172,10 +172,10 @@ class FileBacked(object):
             self.Index()
         except IOError:
             err = sys.exc_info()[1]
-            LOGGER.error("Failed to read file %s: %s" % (self.name, err))
+            self.logger.error("Failed to read file %s: %s" % (self.name, err))
         except:
             err = sys.exc_info()[1]
-            LOGGER.error("Failed to parse file %s: %s" % (self.name, err))
+            self.logger.error("Failed to parse file %s: %s" % (self.name, err))
 
     def Index(self):
         """ Index() is called by :func:`HandleEvent` every time the
@@ -462,9 +462,9 @@ class XMLFileBacked(FileBacked):
                 else:
                     msg = "%s: %s does not exist, skipping" % (self.name, name)
                     if el.findall('./%sfallback' % Bcfg2.Server.XI_NAMESPACE):
-                        LOGGER.debug(msg)
+                        self.logger.debug(msg)
                     else:
-                        LOGGER.warning(msg)
+                        self.logger.warning(msg)
 
     def Index(self):
         self.xdata = lxml.etree.XML(self.data, base_url=self.name,
@@ -475,7 +475,8 @@ class XMLFileBacked(FileBacked):
                 self.xdata.getroottree().xinclude()
             except lxml.etree.XIncludeError:
                 err = sys.exc_info()[1]
-                LOGGER.error("XInclude failed on %s: %s" % (self.name, err))
+                self.logger.error("XInclude failed on %s: %s" % (self.name,
+                                                                 err))
 
         self.entries = self.xdata.getchildren()
         if self.__identifier__ is not None:
@@ -502,7 +503,7 @@ class XMLFileBacked(FileBacked):
         return "%s at %s" % (self.__class__.__name__, self.name)
 
 
-class StructFile(XMLFileBacked, Debuggable):
+class StructFile(XMLFileBacked):
     """ StructFiles are XML files that contain a set of structure file
     formatting logic for handling ``<Group>`` and ``<Client>``
     tags.
@@ -533,7 +534,6 @@ class StructFile(XMLFileBacked, Debuggable):
 
     def __init__(self, filename, should_monitor=False):
         XMLFileBacked.__init__(self, filename, should_monitor=should_monitor)
-        Debuggable.__init__(self)
         self.setup = Bcfg2.Options.get_option_parser()
         self.encoding = self.setup['encoding']
         self.template = None
@@ -684,6 +684,8 @@ class StructFile(XMLFileBacked, Debuggable):
         Match() (and *not* their descendents) should be considered to
         match the metadata.
 
+        Match() returns matching fragments in document order.
+
         :param metadata: Client metadata to match against.
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: list of lxml.etree._Element objects """
@@ -734,10 +736,14 @@ class StructFile(XMLFileBacked, Debuggable):
         All ``<Group>`` and ``<Client>`` tags will have been stripped
         out.
 
+        The new document produced by XMLMatch() is not necessarily in
+        the same order as the original document.
+
         :param metadata: Client metadata to match against.
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: lxml.etree._Element """
         return self._do_xmlmatch(metadata)
+
 
 class INode(object):
     """ INodes provide lists of things available at a particular group
@@ -834,7 +840,7 @@ class XMLSrc(XMLFileBacked):
             data = open(self.name).read()
         except IOError:
             msg = "Failed to read file %s: %s" % (self.name, sys.exc_info()[1])
-            LOGGER.error(msg)
+            self.logger.error(msg)
             raise PluginExecutionError(msg)
         self.items = {}
         try:
@@ -842,7 +848,7 @@ class XMLSrc(XMLFileBacked):
         except lxml.etree.XMLSyntaxError:
             msg = "Failed to parse file %s: %s" % (self.name,
                                                    sys.exc_info()[1])
-            LOGGER.error(msg)
+            self.logger.error(msg)
             raise PluginExecutionError(msg)
         self.pnode = self.__node__(xdata, self.items)
         self.cache = None
@@ -852,7 +858,7 @@ class XMLSrc(XMLFileBacked):
             if self.__priority_required__:
                 msg = "Got bogus priority %s for file %s" % \
                     (xdata.get('priority'), self.name)
-                LOGGER.error(msg)
+                self.logger.error(msg)
                 raise PluginExecutionError(msg)
 
         del xdata, data
@@ -862,8 +868,8 @@ class XMLSrc(XMLFileBacked):
         if self.cache is None or self.cache[0] != metadata:
             cache = (metadata, self.__cacheobj__())
             if self.pnode is None:
-                LOGGER.error("Cache method called early for %s; "
-                             "forcing data load" % self.name)
+                self.logger.error("Cache method called early for %s; "
+                                  "forcing data load" % self.name)
                 self.HandleEvent()
                 return
             self.pnode.Match(metadata, cache[1])
@@ -1165,7 +1171,7 @@ class SpecificData(object):
         except UnicodeDecodeError:
             self.data = open(self.name, mode='rb').read()
         except:  # pylint: disable=W0201
-            LOGGER.error("Failed to read file %s" % self.name)
+            self.logger.error("Failed to read file %s" % self.name)
 
 
 class EntrySet(Debuggable):
