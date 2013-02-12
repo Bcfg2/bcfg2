@@ -39,7 +39,8 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
 
         try:
             output = self.cmd.run('/usr/sbin/service %s status %s' %
-                                  (entry.get('name'), params))[1][0]
+                                  (entry.get('name'),
+                                   params)).stdout.splitlines()[0]
         except IndexError:
             self.logger.error("Service %s not an Upstart service" %
                               entry.get('name'))
@@ -71,11 +72,10 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
     def InstallService(self, entry):
         """Install Service for entry."""
         if entry.get('status') == 'on':
-            pstatus = self.cmd.run(self.get_svc_command(entry, 'start'))[0]
+            cmd = "start"
         elif entry.get('status') == 'off':
-            pstatus = self.cmd.run(self.get_svc_command(entry, 'stop'))[0]
-        # pstatus is true if command failed
-        return not pstatus
+            cmd = "stop"
+        return self.cmd.run(self.get_svc_command(entry, cmd)).success
 
     def FindExtra(self):
         """Locate extra Upstart services."""

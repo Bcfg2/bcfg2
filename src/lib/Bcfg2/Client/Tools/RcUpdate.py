@@ -23,8 +23,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
 
         # check if service is enabled
         cmd = '/sbin/rc-update show default | grep %s'
-        rv = self.cmd.run(cmd % entry.get('name'))[0]
-        is_enabled = (rv == 0)
+        is_enabled = self.cmd.run(cmd % entry.get('name')).success
 
         # check if init script exists
         try:
@@ -36,8 +35,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
 
         # check if service is enabled
         cmd = '/etc/init.d/%s status | grep started'
-        rv = self.cmd.run(cmd % entry.attrib['name'])[0]
-        is_running = (rv == 0)
+        is_running = self.cmd.run(cmd % entry.attrib['name']).success
 
         if entry.get('status') == 'on' and not (is_enabled and is_running):
             entry.set('current_status', 'off')
@@ -60,27 +58,25 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
                 self.start_service(entry)
             # make sure it's enabled
             cmd = '/sbin/rc-update add %s default'
-            rv = self.cmd.run(cmd % entry.get('name'))[0]
-            return (rv == 0)
-
+            return self.cmd.run(cmd % entry.get('name')).success
         elif entry.get('status') == 'off':
             if entry.get('current_status') == 'on':
                 self.stop_service(entry)
             # make sure it's disabled
             cmd = '/sbin/rc-update del %s default'
-            rv = self.cmd.run(cmd % entry.get('name'))[0]
-            return (rv == 0)
+            return self.cmd.run(cmd % entry.get('name')).success
 
         return False
 
     def FindExtra(self):
         """Locate extra rc-update services."""
-        cmd = '/bin/rc-status -s | grep started'
-        allsrv = [line.split()[0] for line in self.cmd.run(cmd)[1]]
+        cmd = '/bin/rc-status -s'
+        allsrv = [line.split()[0]
+                  for line in self.cmd.run(cmd).stdout.splitlines()
+                  if 'started' in line]
         self.logger.debug('Found active services:')
         self.logger.debug(allsrv)
         specified = [srv.get('name') for srv in self.getSupportedEntries()]
-        return [Bcfg2.Client.XML.Element('Service',
-                                         type='rc-update',
-                                         name=name) \
+        return [Bcfg2.Client.XML.Element('Service', type='rc-update',
+                                         name=name)
                 for name in allsrv if name not in specified]

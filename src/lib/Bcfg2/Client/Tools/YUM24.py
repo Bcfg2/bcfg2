@@ -237,8 +237,7 @@ class YUM24(RPM):
                     continue
                 key_arg = os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
                                        inst.get('simplefile'))
-                cmdrc, output = self.cmd.run("rpm --import %s" % key_arg)
-                if cmdrc != 0:
+                if self.cmd.run("rpm --import %s" % key_arg).success:
                     self.logger.debug("Unable to install %s-%s" % \
                                       (self.instance_status[inst].get('pkg').get('name'), \
                                        self.str_evra(inst)))
@@ -265,8 +264,7 @@ class YUM24(RPM):
                 pkg_arg = self.instance_status[inst].get('pkg').get('name')
                 install_args.append(build_yname(pkg_arg, inst))
 
-            cmdrc, output = self.cmd.run(pkgtool % " ".join(install_args))
-            if cmdrc == 0:
+            if self.cmd.run(pkgtool % " ".join(install_args)).success:
                 # The yum command succeeded.  All packages installed.
                 self.logger.info("Single Pass for Install Succeeded")
                 self.RefreshPackages()
@@ -278,12 +276,11 @@ class YUM24(RPM):
                 for inst in install_pkgs:
                     pkg_arg = build_yname(self.instance_status[inst].get('pkg').get('name'), inst)
 
-                    cmdrc, output = self.cmd.run(pkgtool % pkg_arg)
-                    if cmdrc == 0:
+                    if self.cmd.run(pkgtool % pkg_arg).success:
                         installed_instances.append(inst)
                     else:
-                        self.logger.debug("%s %s would not install." % \
-                                              (self.instance_status[inst].get('pkg').get('name'), \
+                        self.logger.debug("%s %s would not install." %
+                                          (self.instance_status[inst].get('pkg').get('name'),
                                                self.str_evra(inst)))
                 self.RefreshPackages()
 
@@ -301,8 +298,7 @@ class YUM24(RPM):
                 pkg_arg = build_yname(self.instance_status[inst].get('pkg').get('name'), inst)
                 upgrade_args.append(pkg_arg)
 
-            cmdrc, output = self.cmd.run(pkgtool % " ".join(upgrade_args))
-            if cmdrc == 0:
+            if self.cmd.run(pkgtool % " ".join(upgrade_args)).success:
                 # The yum command succeeded.  All packages installed.
                 self.logger.info("Single Pass for Install Succeeded")
                 self.RefreshPackages()
@@ -313,8 +309,7 @@ class YUM24(RPM):
                 installed_instances = []
                 for inst in upgrade_pkgs:
                     pkg_arg = build_yname(self.instance_status[inst].get('pkg').get('name'), inst)
-                    cmdrc, output = self.cmd.run(pkgtool % pkg_arg)
-                    if cmdrc == 0:
+                    if self.cmd.run(pkgtool % pkg_arg).success:
                         installed_instances.append(inst)
                     else:
                         self.logger.debug("%s %s would not install." % \
@@ -365,14 +360,14 @@ class YUM24(RPM):
                                                  % (pkgspec.get('name'), self.str_evra(pkgspec)))
                     self.logger.info("         This package will be deleted in a future version of the YUM24 driver.")
 
-        cmdrc, output = self.cmd.run(pkgtool % " ".join(erase_args))
-        if cmdrc == 0:
+        rv = self.cmd.run(pkgtool % " ".join(erase_args))
+        if rv.success:
             self.modified += packages
             for pkg in erase_args:
                 self.logger.info("Deleted %s" % (pkg))
         else:
             self.logger.info("Bulk erase failed with errors:")
-            self.logger.debug("Erase results = %s" % output)
+            self.logger.debug("Erase results: %s" % rv.error)
             self.logger.info("Attempting individual erase for each package.")
             for pkg in packages:
                 pkg_modified = False
@@ -390,13 +385,13 @@ class YUM24(RPM):
                         self.logger.info("         This package will be deleted in a future version of the YUM24 driver.")
                         continue
 
-                    cmdrc, output = self.cmd.run(self.pkgtool % pkg_arg)
-                    if cmdrc == 0:
+                    rv = self.cmd.run(self.pkgtool % pkg_arg)
+                    if rv.success:
                         pkg_modified = True
                         self.logger.info("Deleted %s" % pkg_arg)
                     else:
-                        self.logger.error("unable to delete %s" % pkg_arg)
-                        self.logger.debug("Failure = %s" % output)
+                        self.logger.error("Unable to delete %s" % pkg_arg)
+                        self.logger.debug("Failure: %s" % rv.error)
                 if pkg_modified == True:
                     self.modified.append(pkg)
 

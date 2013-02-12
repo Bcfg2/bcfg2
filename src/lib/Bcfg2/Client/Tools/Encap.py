@@ -33,14 +33,13 @@ class Encap(Bcfg2.Client.Tools.PkgTool):
             self.logger.info("Insufficient information of Package %s; "
                              "cannot Verify" % entry.get('name'))
             return False
-        cmdrc = self.cmd.run("/usr/local/bin/epkg -q -S -k %s-%s >/dev/null" %
-                            (entry.get('name'), entry.get('version')))[0]
-        if cmdrc != 0:
+        success = self.cmd.run("/usr/local/bin/epkg -q -S -k %s-%s" %
+                               (entry.get('name'),
+                                entry.get('version'))).success
+        if not success:
             self.logger.debug("Package %s version incorrect" %
                               entry.get('name'))
-        else:
-            return True
-        return False
+        return success
 
     def Remove(self, packages):
         """Deal with extra configuration detected."""

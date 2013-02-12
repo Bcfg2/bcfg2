@@ -49,14 +49,11 @@ class Action(Bcfg2.Client.Tools.Tool):
                                       "to build mode" % entry.get('command'))
                     return False
             self.logger.debug("Running Action %s" % (entry.get('name')))
-            rv = self.cmd.run(entry.get('command'))[0]
+            rv = self.cmd.run(entry.get('command'))
             self.logger.debug("Action: %s got return code %s" %
-                              (entry.get('command'), rv))
-            entry.set('rc', str(rv))
-            if entry.get('status', 'check') == 'ignore':
-                return True
-            else:
-                return rv == 0
+                              (entry.get('command'), rv.retval))
+            entry.set('rc', str(rv.retval))
+            return entry.get('status', 'check') == 'ignore' or rv.success
         else:
             self.logger.debug("In dryrun mode: not running action: %s" %
                               (entry.get('name')))
