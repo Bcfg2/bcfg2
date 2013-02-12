@@ -5,6 +5,7 @@
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
 
+
 class Systemd(Bcfg2.Client.Tools.SvcTool):
     """Systemd support for Bcfg2."""
     name = 'Systemd'
@@ -21,35 +22,25 @@ class Systemd(Bcfg2.Client.Tools.SvcTool):
             return True
 
         cmd = "/bin/systemctl status %s.service " % (entry.get('name'))
-        raw = ''.join(self.cmd.run(cmd)[1])
+        rv = self.cmd.run(cmd)
 
-        if raw.find('Loaded: error') >= 0:
+        if 'Loaded: error' in rv.stdout:
             entry.set('current_status', 'off')
-            status = False
-
-        elif raw.find('Active: active') >= 0:
+            return False
+        elif 'Active: active' in rv.stdout:
             entry.set('current_status', 'on')
-            if entry.get('status') == 'off':
-                status = False
-            else:
-                status = True
-
+            return entry.get('status') == 'on'
         else:
             entry.set('current_status', 'off')
-            if entry.get('status') == 'on':
-                status = False
-            else:
-                status = True
-
-        return status
+            return entry.get('status') == 'off'
 
     def InstallService(self, entry):
         """Install Service entry."""
         if entry.get('status') == 'on':
-            rv = self.cmd.run(self.get_svc_command(entry, 'enable'))[0] == 0
-            rv &= self.cmd.run(self.get_svc_command(entry, 'start'))[0] == 0
+            rv = self.cmd.run(self.get_svc_command(entry, 'enable')).success
+            rv &= self.cmd.run(self.get_svc_command(entry, 'start')).success
         else:
-            rv = self.cmd.run(self.get_svc_command(entry, 'stop'))[0] == 0
-            rv &= self.cmd.run(self.get_svc_command(entry, 'disable'))[0] == 0
+            rv = self.cmd.run(self.get_svc_command(entry, 'stop')).success
+            rv &= self.cmd.run(self.get_svc_command(entry, 'disable')).success
 
         return rv

@@ -59,7 +59,8 @@ class APT(Bcfg2.Client.Tools.Tool):
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
         if self.setup['kevlar'] and not self.setup['dryrun']:
-            self.cmd.run("%s --force-confold --configure --pending" % self.dpkg)
+            self.cmd.run("%s --force-confold --configure --pending" %
+                         self.dpkg)
             self.cmd.run("%s clean" % self.aptget)
             try:
                 self.pkg_cache = apt.cache.Cache()
@@ -88,13 +89,15 @@ class APT(Bcfg2.Client.Tools.Tool):
                                          for (name, version) in extras]
 
     def VerifyDebsums(self, entry, modlist):
-        output = self.cmd.run("%s -as %s" % (self.debsums,
-                                             entry.get('name')))[1]
+        output = \
+            self.cmd.run("%s -as %s" %
+                         (self.debsums, entry.get('name'))).stdout.splitlines()
         if len(output) == 1 and "no md5sums for" in output[0]:
             self.logger.info("Package %s has no md5sums. Cannot verify" % \
                              entry.get('name'))
-            entry.set('qtext', "Reinstall Package %s-%s to setup md5sums? (y/N) " \
-                      % (entry.get('name'), entry.get('version')))
+            entry.set('qtext',
+                      "Reinstall Package %s-%s to setup md5sums? (y/N) " %
+                      (entry.get('name'), entry.get('version')))
             return False
         files = []
         for item in output:
@@ -250,8 +253,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             self.logger.error(bad_pkgs)
         if not ipkgs:
             return
-        rc = self.cmd.run(self.pkgcmd % (" ".join(ipkgs)))[0]
-        if rc:
+        if not self.cmd.run(self.pkgcmd % (" ".join(ipkgs))):
             self.logger.error("APT command failed")
         self.pkg_cache = apt.cache.Cache()
         self.extra = self.FindExtra()

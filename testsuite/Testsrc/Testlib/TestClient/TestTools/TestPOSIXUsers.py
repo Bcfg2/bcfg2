@@ -20,78 +20,6 @@ while path != "/":
 from common import *
 
 
-class TestExecutor(Bcfg2TestCase):
-    test_obj = Executor
-
-    def get_obj(self, logger=None):
-        if not logger:
-            def print_msg(msg):
-                print(msg)
-            logger = Mock()
-            logger.error = Mock(side_effect=print_msg)
-            logger.warning = Mock(side_effect=print_msg)
-            logger.info = Mock(side_effect=print_msg)
-            logger.debug = Mock(side_effect=print_msg)
-        return self.test_obj(logger)
-
-    @patch("subprocess.Popen")
-    def test_run(self, mock_Popen):
-        exc = self.get_obj()
-        cmd = ["/bin/test", "-a", "foo"]
-        proc = Mock()
-        proc.wait = Mock()
-        proc.wait.return_value = 0
-        proc.communicate = Mock()
-        proc.communicate.return_value = (MagicMock(), MagicMock())
-        mock_Popen.return_value = proc
-
-        self.assertTrue(exc.run(cmd))
-        args = mock_Popen.call_args
-        self.assertEqual(args[0][0], cmd)
-        self.assertEqual(args[1]['shell'], False)
-        self.assertEqual(args[1]['stdin'], subprocess.PIPE)
-        self.assertEqual(args[1]['stdout'], subprocess.PIPE)
-        self.assertEqual(args[1]['stderr'], subprocess.PIPE)
-        proc.communicate.assert_called_with()
-        proc.wait.assert_called_with()
-        self.assertEqual(proc.communicate.return_value,
-                         (exc.stdout, exc.stderr))
-        self.assertEqual(proc.wait.return_value,
-                         exc.retval)
-
-        mock_Popen.reset_mock()
-        inputdata = "foo\n\nbar"
-        self.assertTrue(exc.run(cmd, inputdata=inputdata, shell=True))
-        args = mock_Popen.call_args
-        self.assertEqual(args[0][0], cmd)
-        self.assertEqual(args[1]['shell'], True)
-        self.assertEqual(args[1]['stdin'], subprocess.PIPE)
-        self.assertEqual(args[1]['stdout'], subprocess.PIPE)
-        self.assertEqual(args[1]['stderr'], subprocess.PIPE)
-        proc.communicate.assert_called_with(inputdata)
-        proc.wait.assert_called_with()
-        self.assertEqual(proc.communicate.return_value,
-                         (exc.stdout, exc.stderr))
-        self.assertEqual(proc.wait.return_value,
-                         exc.retval)
-
-        mock_Popen.reset_mock()
-        proc.wait.return_value = 1
-        self.assertRaises(ExecutionError, exc.run, cmd)
-        args = mock_Popen.call_args
-        self.assertEqual(args[0][0], cmd)
-        self.assertEqual(args[1]['shell'], False)
-        self.assertEqual(args[1]['stdin'], subprocess.PIPE)
-        self.assertEqual(args[1]['stdout'], subprocess.PIPE)
-        self.assertEqual(args[1]['stderr'], subprocess.PIPE)
-        proc.communicate.assert_called_with()
-        proc.wait.assert_called_with()
-        self.assertEqual(proc.communicate.return_value,
-                         (exc.stdout, exc.stderr))
-        self.assertEqual(proc.wait.return_value,
-                         exc.retval)
-
-
 class TestPOSIXUsers(Bcfg2TestCase):
     test_obj = POSIXUsers
 
@@ -419,6 +347,10 @@ class TestPOSIXUsers(Bcfg2TestCase):
                 setter.reset_mock()
             users.modified = []
 
+        cmd_rv = Mock()
+        cmd_rv.success = True
+        users.cmd.run.return_value = cmd_rv
+
         reset()
         entry = lxml.etree.Element("POSIXUser", name="test2")
         self.assertTrue(users._install(entry))
@@ -438,7 +370,7 @@ class TestPOSIXUsers(Bcfg2TestCase):
         self.assertIn(entry, users.modified)
 
         reset()
-        users.cmd.run.side_effect = ExecutionError(None)
+        cmd_rv.success = False
         self.assertFalse(users._install(entry))
         users.set_defaults[entry.tag].assert_called_with(entry)
         users._get_cmd.assert_called_with("mod",
@@ -536,11 +468,13 @@ class TestPOSIXUsers(Bcfg2TestCase):
         users = self.get_obj()
         users._get_cmd = Mock()
         users.cmd = Mock()
+        cmd_rv = Mock()
+        cmd_rv.success = True
+        users.cmd.run.return_value = cmd_rv
 
         def reset():
             users._get_cmd.reset_mock()
             users.cmd.reset_mock()
-
 
         entry = lxml.etree.Element("POSIXUser", name="test2")
         self.assertTrue(users._remove(entry))
@@ -548,7 +482,7 @@ class TestPOSIXUsers(Bcfg2TestCase):
         users.cmd.run.assert_called_with(users._get_cmd.return_value)
 
         reset()
-        users.cmd.run.side_effect = ExecutionError(None)
+        cmd_rv.success = False
         self.assertFalse(users._remove(entry))
         users._get_cmd.assert_called_with("del", entry)
         users.cmd.run.assert_called_with(users._get_cmd.return_value)

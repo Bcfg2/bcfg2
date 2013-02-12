@@ -24,16 +24,14 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         if entry.get('status') == 'ignore':
             return True
 
-        try:
-            cmd = "/sbin/chkconfig --list %s " % (entry.get('name'))
-            raw = self.cmd.run(cmd)[1]
-            patterns = ["error reading information", "unknown service"]
-            srvdata = [line.split() for line in raw for pattern in patterns \
-                       if pattern not in line][0]
-        except IndexError:
-            # Ocurrs when no lines are returned (service not installed)
+        rv = self.cmd.run("/sbin/chkconfig --list %s " % entry.get('name'))
+        if rv.success:
+            srvdata = rv.stdout.splitlines()[0].split()
+        else:
+            # service not installed
             entry.set('current_status', 'off')
             return False
+
         if len(srvdata) == 2:
             # This is an xinetd service
             if entry.get('status') == srvdata[1]:
@@ -43,7 +41,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
                 return False
 
         try:
-            onlevels = [level.split(':')[0] for level in srvdata[1:] \
+            onlevels = [level.split(':')[0] for level in srvdata[1:]
                         if level.split(':')[1] == 'on']
         except IndexError:
             onlevels = []
@@ -70,25 +68,25 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         if entry.get('status') == 'off':
             rv &= self.cmd.run((rcmd + " --level 0123456") %
                                (entry.get('name'),
-                                entry.get('status')))[0] == 0
+                                entry.get('status'))).success
             if entry.get("current_status") == "on":
-                rv &= self.stop_service(entry)
+                rv &= self.stop_service(entry).success
         else:
             rv &= self.cmd.run(rcmd % (entry.get('name'),
-                                       entry.get('status')))[0] == 0
+                                       entry.get('status'))).success
             if entry.get("current_status") == "off":
-                rv &= (self.start_service(entry) == 0)
+                rv &= self.start_service(entry).success
         return rv
 
     def FindExtra(self):
         """Locate extra chkconfig Services."""
         allsrv = [line.split()[0]
-                  for line in self.cmd.run("/sbin/chkconfig "
-                                           "--list 2>/dev/null|grep :on")[1]]
+                  for line in self.cmd.run("/sbin/chkconfig",
+                                           "--list").stdout.splitlines()
+                  if ":on" in line]
         self.logger.debug('Found active services:')
         self.logger.debug(allsrv)
         specified = [srv.get('name') for srv in self.getSupportedEntries()]
-        return [Bcfg2.Client.XML.Element('Service',
-                                         type='chkconfig',
-                                         name=name) \
+        return [Bcfg2.Client.XML.Element('Service', type='chkconfig',
+                                         name=name)
                 for name in allsrv if name not in specified]
