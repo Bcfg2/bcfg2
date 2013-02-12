@@ -20,10 +20,6 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
     #: Handle authorized keys XML files
     __basenames__ = ['authorizedkeys.xml', 'authorized_keys.xml']
 
-    #: This handler is experimental, in part because it depends upon
-    #: the (experimental) CfgPrivateKeyCreator handler
-    experimental = True
-
     def __init__(self, fname):
         CfgGenerator.__init__(self, fname, None, None)
         StructFile.__init__(self, fname)

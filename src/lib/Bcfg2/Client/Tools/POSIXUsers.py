@@ -102,7 +102,6 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                    ('POSIXGroup', None)]
     __req__ = dict(POSIXUser=['name'],
                    POSIXGroup=['name'])
-    experimental = True
 
     #: A mapping of XML entry attributes to the indexes of
     #: corresponding values in the get{pw|gr}all data structures

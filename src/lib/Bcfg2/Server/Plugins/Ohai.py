@@ -59,8 +59,6 @@ class Ohai(Bcfg2.Server.Plugin.Plugin,
     """The Ohai plugin is used to detect information
     about the client operating system.
     """
-    name = 'Ohai'
-    experimental = True
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)

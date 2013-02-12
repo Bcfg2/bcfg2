@@ -32,10 +32,7 @@ from guppy.heapy import Remote
 
 class Guppy(Bcfg2.Server.Plugin.Plugin):
     """Guppy is a debugging plugin to help trace memory leaks"""
-    name = 'Guppy'
     __author__ = 'bcfg-dev@mcs.anl.gov'
-
-    experimental = True
     __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Enable', 'Disable']
 
     def __init__(self, core, datastore):

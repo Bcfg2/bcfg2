@@ -28,7 +28,6 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
                 Bcfg2.Server.Plugin.DirectoryBacked):
     """ A plugin to run Puppet external node classifiers
     (http://docs.puppetlabs.com/guides/external_nodes.html) """
-    experimental = True
     __child__ = PuppetENCFile
 
     def __init__(self, core, datastore):

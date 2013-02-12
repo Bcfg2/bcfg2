@@ -290,9 +290,6 @@ class CfgCreator(CfgBaseFileMatcher):
     #: file, and are thus not specific
     __specific__ = False
 
-    #: The CfgCreator interface is experimental at this time
-    experimental = True
-
     def __init__(self, fname):
         """
         :param name: The full path to the file
