@@ -531,6 +531,8 @@ class Version(Plugin):
     #: be ".svn"
     __vcs_metadata_path__ = None
 
+    __rmi__ = Bcfg2.Server.Plugin.Version.__rmi__ + ['get_revision']
+
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
 
