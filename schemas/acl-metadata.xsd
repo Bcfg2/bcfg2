@@ -21,7 +21,7 @@
         negate the sense of the match.
       </xsd:documentation>
     </xsd:annotation>
-    <xsd:group ref="MetadataACLElements"/>
+    <xsd:group ref="MetadataACLElements" minOccurs="1" maxOccurs="unbounded"/>
     <xsd:attribute name='name' type='xsd:string'>
       <xsd:annotation>
         <xsd:documentation>
@@ -61,11 +61,11 @@
         Top-level tag for describing metadata-based client ACLs.
       </xsd:documentation>
     </xsd:annotation>
-    <xsd:group ref="MetadataACLElements"/>
+    <xsd:group ref="MetadataACLElements" minOccurs="1" maxOccurs="unbounded"/>
   </xsd:complexType>
 
   <xsd:group name="MetadataACLElements">
-    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+    <xsd:choice>
       <xsd:group ref="py:genshiElements"/>
       <xsd:element name="Allow" type="MetadataACLType"/>
       <xsd:element name="Deny" type="MetadataACLType"/>

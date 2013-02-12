@@ -209,7 +209,8 @@ class TestACL(TestPlugin, TestClientACLs):
     def test_check_acl_ip(self):
         acl = self.get_obj()
         acl.ip_acls = Mock()
-        self.assertEqual(acl.check_acl_ip("192.168.1.10", "ACL.test"),
+        self.assertEqual(acl.check_acl_ip(("192.168.1.10", "12345"),
+                                          "ACL.test"),
                          acl.ip_acls.check_acl.return_value)
         acl.ip_acls.check_acl.assert_called_with("192.168.1.10", "ACL.test")
 
