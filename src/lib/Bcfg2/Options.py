@@ -1168,20 +1168,22 @@ class OptionParser(OptionSet):
     def reparse(self, argv=None, do_getopt=None):
         """ parse the options again, taking any changes (e.g., to the
         config file) into account """
+        self.parse(argv=argv, do_getopt=do_getopt)
+
+    def parse(self, argv=None, do_getopt=None):
         for key, opt in self.optinfo.items():
             self[key] = opt
         if "args" not in self.optinfo and "args" in self:
             del self['args']
+        self.argv = argv or sys.argv[1:]
+        if self.do_getopt is None:
+            if do_getopt:
+                self.do_getopt = do_getopt
+            else:
+                self.do_getopt = True
         if do_getopt is None:
             do_getopt = self.do_getopt
-        if argv is None:
-            argv = self.argv
-        self.parse(argv, do_getopt)
-
-    def parse(self, argv=None, do_getopt=True):
-        self.argv = argv or sys.argv[1:]
-        self.do_getopt = do_getopt
-        OptionSet.parse(self, self.argv, do_getopt=self.do_getopt)
+        OptionSet.parse(self, self.argv, do_getopt=do_getopt)
 
     def add_option(self, name, opt):
         """ Add an option to the parser """

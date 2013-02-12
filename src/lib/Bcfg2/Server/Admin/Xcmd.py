@@ -36,7 +36,7 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
             return
         cmd = args[0]
         try:
-            data = getattr(proxy, cmd)(*setup['args'])
+            data = getattr(proxy, cmd)(*args[1:])
         except xmlrpclib.Fault:
             flt = sys.exc_info()[1]
             if flt.faultCode == 7:
