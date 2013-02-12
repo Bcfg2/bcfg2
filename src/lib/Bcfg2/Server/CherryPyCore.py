@@ -65,7 +65,7 @@ class Core(BaseCore):
 
         # FIXME: Get client cert
         cert = None
-        address = (cherrypy.request.remote.ip, cherrypy.request.remote.name)
+        address = (cherrypy.request.remote.ip, cherrypy.request.remote.port)
 
         if not self.check_acls(address[0]):
             raise cherrypy.HTTPError(401)
