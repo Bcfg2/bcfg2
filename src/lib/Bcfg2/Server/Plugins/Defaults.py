@@ -5,7 +5,7 @@ import Bcfg2.Server.Plugins.Rules
 
 
 class Defaults(Bcfg2.Server.Plugins.Rules.Rules,
-               Bcfg2.Server.Plugin.StructureValidator):
+               Bcfg2.Server.Plugin.GoalValidator):
     """Set default attributes on bound entries"""
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
@@ -22,27 +22,18 @@ class Defaults(Bcfg2.Server.Plugins.Rules.Rules,
     def HandleEvent(self, event):
         Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent(self, event)
 
-    def validate_structures(self, metadata, structures):
+    def validate_goals(self, metadata, config):
         """ Apply defaults """
-        for struct in structures:
+        for struct in config.getchildren():
             for entry in struct.getchildren():
-                if entry.tag.startswith("Bound"):
-                    is_bound = True
-                    entry.tag = entry.tag[5:]
-                else:
-                    is_bound = False
                 try:
-                    try:
-                        self.BindEntry(entry, metadata)
-                    except Bcfg2.Server.Plugin.PluginExecutionError:
-                        # either no matching defaults (which is okay),
-                        # or multiple matching defaults (which is not
-                        # okay, but is logged).  either way, we don't
-                        # care about the error.
-                        pass
-                finally:
-                    if is_bound:
-                        entry.tag = "Bound" + entry.tag
+                    self.BindEntry(entry, metadata)
+                except Bcfg2.Server.Plugin.PluginExecutionError:
+                    # either no matching defaults (which is okay),
+                    # or multiple matching defaults (which is not
+                    # okay, but is logged).  either way, we don't
+                    # care about the error.
+                    pass
 
     @property
     def _regex_enabled(self):
