@@ -26,13 +26,10 @@ class CfgExternalCommandVerifier(CfgVerifier):
             out, err = proc.communicate(input=data)
             rv = proc.wait()
             if rv != 0:
-                if not err:
-                    if out:
-                        # got nothing on stderr, try stdout
-                        err = out
-                    else:
-                        err = "Non-zero return value %s" % rv
-                raise CfgVerificationError(err.strip())
+                # pylint: disable=E1103
+                raise CfgVerificationError(err.strip() or out.strip() or
+                                           "Non-zero return value %s" % rv)
+                # pylint: enable=E1103
         except CfgVerificationError:
             raise
         except:
