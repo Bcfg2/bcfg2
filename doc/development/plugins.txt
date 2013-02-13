@@ -175,7 +175,7 @@ decorate functions that you would like to track execution times for:
 .. code-block:: python
 
     from Bcfg2.Server.Plugin import track_statistics
-    
+
     @track_statistics()
     def do_something(self, ...):
         ...
@@ -208,3 +208,9 @@ Plugin Exceptions
 -----------------
 
 .. automodule:: Bcfg2.Server.Plugin.exceptions
+
+See Also
+--------
+
+* :ref:`development-compat`
+* :ref:`development-utils
