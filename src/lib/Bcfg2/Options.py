@@ -334,6 +334,16 @@ def get_bool(val):
         raise ValueError("Not a boolean value", val)
 
 
+def get_timeout(val):
+    """ convert the timeout value into a float or None """
+    if val is None:
+        return val
+    timeout = float(val)  # pass ValueError up the stack
+    if timeout <= 0:
+        return None
+    return timeout
+
+
 def get_size(value):
     """ Given a number of bytes in a human-readable format (e.g.,
     '512m', '2g'), get the absolute number of bytes as an integer """
@@ -801,6 +811,16 @@ CLIENT_EXIT_ON_PROBE_FAILURE = \
            long_arg=True,
            cf=('client', 'exit_on_probe_failure'),
            cook=get_bool)
+CLIENT_PROBE_TIMEOUT = \
+    Option("Timeout when running client probes",
+           default=None,
+           cf=('client', 'probe_timeout'),
+           cook=get_timeout)
+CLIENT_COMMAND_TIMEOUT = \
+    Option("Timeout when client runs other external commands (not probes)",
+           default=None,
+           cf=('client', 'command_timeout'),
+           cook=get_timeout)
 
 # bcfg2-test and bcfg2-lint options
 TEST_NOSEOPTS = \
@@ -1131,7 +1151,9 @@ CLIENT_COMMON_OPTIONS = \
          serverCN=CLIENT_SCNS,
          timeout=CLIENT_TIMEOUT,
          decision_list=CLIENT_DECISION_LIST,
-         probe_exit=CLIENT_EXIT_ON_PROBE_FAILURE)
+         probe_exit=CLIENT_EXIT_ON_PROBE_FAILURE,
+         probe_timeout=CLIENT_PROBE_TIMEOUT,
+         command_timeout=CLIENT_COMMAND_TIMEOUT)
 CLIENT_COMMON_OPTIONS.update(DRIVER_OPTIONS)
 CLIENT_COMMON_OPTIONS.update(CLI_COMMON_OPTIONS)
 

@@ -37,6 +37,8 @@ def get_posix_object(logger=None, setup=None, config=None):
         logger.debug = Mock(side_effect=print_msg)
     if not setup:
         setup = MagicMock()
+    if 'command_timeout' not in setup:
+        setup['command_timeout'] = None
     return Bcfg2.Client.Tools.POSIX.POSIX(logger, setup, config)
 
 
