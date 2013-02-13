@@ -14,10 +14,9 @@ import Bcfg2.Options
 import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
-from Bcfg2.Utils import locked
+from Bcfg2.Utils import locked, Executor
 from Bcfg2.Compat import xmlrpclib
 from Bcfg2.version import __version__
-from subprocess import Popen, PIPE
 
 
 class Client(object):
@@ -42,6 +41,9 @@ class Client(object):
                                    to_file=self.setup['logging'])
         self.logger = logging.getLogger('bcfg2')
         self.logger.debug(self.setup)
+
+        self.cmd = Executor(self.setup['command_timeout'])
+
         if self.setup['bundle_quick']:
             if not self.setup['bundle'] and not self.setup['skipbundle']:
                 self.logger.error("-Q option requires -b or -B")
@@ -95,16 +97,14 @@ class Client(object):
                          stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
                          stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH |
                          stat.S_IWUSR)  # 0755
-                proc = Popen(scriptname, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-                ret.text, err = proc.communicate()
-                rv = proc.wait()
-                if err:
+                rv = self.cmd.run(scriptname, timeout=self.setup['timeout'])
+                if rv.stderr:
                     self.logger.warning("Probe %s has error output: %s" %
-                                        (name, err))
-                if rv:
+                                        (name, rv.stderr))
+                if not rv.success:
                     self._probe_failure(name, "Return value %s" % rv)
                 self.logger.info("Probe %s has result:" % name)
-                self.logger.info(ret.text)
+                self.logger.info(rv.stdout)
             finally:
                 os.unlink(scriptname)
         except SystemExit:

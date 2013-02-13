@@ -4,9 +4,8 @@ import os
 import sys
 import stat
 import select
-import logging
-import subprocess
 import Bcfg2.Client.XML
+from Bcfg2.Utils import Executor, ClassName
 from Bcfg2.Compat import input, walk_packages  # pylint: disable=W0622
 
 __all__ = [m[1] for m in walk_packages(path=__path__)]
@@ -24,103 +23,6 @@ default = drivers[:]
 class ToolInstantiationError(Exception):
     """ This error is raised if the toolset cannot be instantiated. """
     pass
-
-
-class ExecutorResult(object):
-    """ Returned as the result of a call to
-    :func:`Bcfg2.Client.Tools.Executor.run`. The result can be
-    accessed via the instance variables, documented below, as a
-    boolean (which is equivalent to
-    :attr:`Bcfg2.Client.Tools.ExecutorResult.success`), or as a tuple,
-    which, for backwards compatibility, is equivalent to
-    ``(result.retval, result.stdout.splitlines())``. """
-
-    def __init__(self, stdout, stderr, retval):
-        #: The output of the command
-        self.stdout = stdout
-
-        #: The error produced by the command
-        self.stderr = stderr
-
-        #: The return value of the command.
-        self.retval = retval
-
-        #: Whether or not the command was successful.  If the
-        #: ExecutorResult is used as a boolean, ``success`` is
-        #: returned.
-        self.success = retval == 0
-
-        #: A friendly error message
-        self.error = None
-        if self.retval:
-            if self.stderr:
-                self.error = "%s (rv: %s)" % (self.stderr, self.retval)
-            elif self.stdout:
-                self.error = "%s (rv: %s)" % (self.stdout, self.retval)
-            else:
-                self.error = "No output or error; return value %s" % \
-                    self.retval
-
-    def __repr__(self):
-        if self.error:
-            return "Errored command result: %s" % self.error
-        elif self.stdout:
-            return "Successful command result: %s" % self.stdout
-        else:
-            return "Successful command result: No output"
-
-    def __getitem__(self, idx):
-        """ This provides compatibility with the old Executor, which
-        returned a tuple of (return value, stdout split by lines). """
-        return (self.retval, self.stdout.splitlines())[idx]
-
-    def __nonzero__(self):
-        return self.__bool__()
-
-    def __bool__(self):
-        return self.success
-
-
-class Executor(object):
-    """ A better version of Bcfg2.Client.Tool.Executor, which captures
-    stderr, raises exceptions on error, and doesn't use the shell to
-    execute by default """
-
-    def __init__(self):
-        self.logger = logging.getLogger(self.__class__.__name__)
-
-    def run(self, command, inputdata=None, shell=False):
-        """ Run a command, given as a list, optionally giving it the
-        specified input data """
-        if isinstance(command, str):
-            cmdstr = command
-        else:
-            cmdstr = " ".join(command)
-        self.logger.debug("Running: %s" % cmdstr)
-        proc = subprocess.Popen(command, shell=shell, bufsize=16384,
-                                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, close_fds=True)
-        if inputdata:
-            for line in inputdata.splitlines():
-                self.logger.debug('> %s' % line)
-        (stdout, stderr) = proc.communicate(input=inputdata)
-        for line in stdout.splitlines():  # pylint: disable=E1103
-            self.logger.debug('< %s' % line)
-        for line in stderr.splitlines():  # pylint: disable=E1103
-            self.logger.info(line)
-        return ExecutorResult(stdout, stderr, proc.wait())
-
-
-class ClassName(object):
-    """ This very simple descriptor class exists only to get the name
-    of the owner class.  This is used because, for historical reasons,
-    we expect every tool to have a ``name`` attribute that is in
-    almost all cases the same as the ``__class__.__name__`` attribute
-    of the plugin object.  This makes that more dynamic so that each
-    plugin isn't repeating its own name."""
-
-    def __get__(self, inst, owner):
-        return owner.__name__
 
 
 class Tool(object):
@@ -197,9 +99,9 @@ class Tool(object):
         #: The XML configuration for this client
         self.config = config
 
-        #: An :class:`Bcfg2.Client.Tools.Executor` object for
+        #: An :class:`Bcfg2.Utils.Executor` object for
         #: running external commands.
-        self.cmd = Executor()
+        self.cmd = Executor(timeout=self.setup['command_timeout'])
 
         #: A list of entries that have been modified by this tool
         self.modified = []

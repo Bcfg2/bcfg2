@@ -12,7 +12,6 @@ import seobject
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Tools.POSIX.File import POSIXFile
-from subprocess import Popen, PIPE
 
 
 def pack128(int_val):
@@ -734,9 +733,7 @@ class SELinuxSemoduleHandler(SELinuxEntryHandler):
                 self._all = dict()
                 self.logger.debug("SELinux: Getting modules from semodule")
                 try:
-                    proc = Popen(['semodule', '-l'], stdout=PIPE, stderr=PIPE)
-                    out = proc.communicate()[0]
-                    rv = proc.wait()
+                    rv = self.tool.cmd.run(['semodule', '-l'])
                 except OSError:
                     # semanage failed; probably not in $PATH.  try to
                     # get the list of modules from the filesystem
@@ -745,13 +742,9 @@ class SELinuxSemoduleHandler(SELinuxEntryHandler):
                                       err)
                     self._all.update(self._all_records_from_filesystem())
                 else:
-                    if rv:
-                        self.logger.error("SELinux: Failed to run semodule: %s"
-                                          % err)
-                        self._all.update(self._all_records_from_filesystem())
-                    else:
+                    if rv.success:
                         # ran semodule successfully
-                        for line in out.splitlines():
+                        for line in rv.stdout.splitlines():
                             mod, version = line.split()
                             self._all[mod] = (version, 1)
 
@@ -759,6 +752,10 @@ class SELinuxSemoduleHandler(SELinuxEntryHandler):
                         for mod in self._all_records_from_filesystem().keys():
                             if mod not in self._all:
                                 self._all[mod] = ('', 0)
+                    else:
+                        self.logger.error("SELinux: Failed to run semodule: %s"
+                                          % rv.error)
+                        self._all.update(self._all_records_from_filesystem())
         return self._all
 
     def _all_records_from_filesystem(self):
@@ -870,26 +867,23 @@ class SELinuxSemoduleHandler(SELinuxEntryHandler):
         self.logger.debug("Install SELinux module %s with semodule -i %s" %
                           (entry.get('name'), self._filepath(entry)))
         try:
-            proc = Popen(['semodule', '-i', self._filepath(entry)],
-                         stdout=PIPE, stderr=PIPE)
-            err = proc.communicate()[1]
-            rv = proc.wait()
+            rv = self.tool.cmd.run(['semodule', '-i', self._filepath(entry)])
         except OSError:
             err = sys.exc_info()[1]
             self.logger.error("Failed to install SELinux module %s with "
                               "semodule: %s" % (entry.get("name"), err))
             return False
-        if rv:
-            self.logger.error("Failed to install SELinux module %s with "
-                              "semodule: %s" % (entry.get("name"), err))
-            return False
-        else:
+        if rv.success:
             if entry.get("disabled", "false").lower() == "true":
                 self.logger.warning("SELinux: Cannot disable modules with "
                                     "semodule")
                 return False
             else:
                 return True
+        else:
+            self.logger.error("Failed to install SELinux module %s with "
+                              "semodule: %s" % (entry.get("name"), rv.error))
+            return False
 
     def _addargs(self, entry):
         """ argument list for adding entries """
