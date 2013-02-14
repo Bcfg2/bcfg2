@@ -28,23 +28,13 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
         """ Check genshi templates in Cfg for syntax errors """
         for entryset in self.core.plugins['Cfg'].entries.values():
             for entry in entryset.entries.values():
-                if "hosts" in entry.name:
-                    print "checking %s" % entry.name
-                    print "  handles: %s" % self.HandlesFile(entry.name)
-                    print "  is genshi: %s" % isinstance(entry, CfgGenshiGenerator)
-                    if isinstance(entry, CfgGenshiGenerator):
-                        print "  has template: %s" % bool(entry.template)
                 if (self.HandlesFile(entry.name) and
                     isinstance(entry, CfgGenshiGenerator) and
                     not entry.template):
                     try:
                         entry.loader.load(entry.name,
                                           cls=NewTextTemplate)
-                        if "hosts" in entry.name:
-                            print "  loaded successfully"
                     except TemplateSyntaxError:
-                        if "hosts" in entry.name:
-                            print "  failed loading"
                         err = sys.exc_info()[1]
                         self.LintError("genshi-syntax-error",
                                        "Genshi syntax error: %s" % err)
