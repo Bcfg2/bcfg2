@@ -109,8 +109,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
         """ Add the correct child entry type to Bundler depending on
         whether the XML file in question is a plain XML file or a
         templated bundle """
-        bundle = lxml.etree.parse(name,
-                                  parser=Bcfg2.Server.XMLParser)
+        bundle = lxml.etree.parse(name, parser=Bcfg2.Server.XMLParser)
         nsmap = bundle.getroot().nsmap
         if (name.endswith('.genshi') or
             ('py' in nsmap and
