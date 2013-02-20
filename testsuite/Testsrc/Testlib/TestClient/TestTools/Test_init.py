@@ -1,9 +1,8 @@
 import os
 import sys
-import copy
 import lxml.etree
-import subprocess
 from mock import Mock, MagicMock, patch
+from Bcfg2.Compat import long
 from Bcfg2.Client.Tools import Tool, SvcTool, PkgTool, \
     ToolInstantiationError
 
@@ -82,16 +81,18 @@ class TestTool(Bcfg2TestCase):
 
         @patch("os.stat")
         def inner(mock_stat):
-            mock_stat.return_value = (33261, 2245040, 64770L, 1, 0, 0, 25552,
-                                      1360831382, 1352194410, 1354626626)
+            mock_stat.return_value = (33261, 2245040, long(64770), 1, 0, 0,
+                                      25552, 1360831382, 1352194410,
+                                      1354626626)
             t._check_execs()
             self.assertItemsEqual(mock_stat.call_args_list,
                                   [call(e) for e in t.__execs__])
 
             # not executable
             mock_stat.reset_mock()
-            mock_stat.return_value = (33188, 2245040, 64770L, 1, 0, 0, 25552,
-                                      1360831382, 1352194410, 1354626626)
+            mock_stat.return_value = (33188, 2245040, long(64770), 1, 0, 0,
+                                      25552, 1360831382, 1352194410,
+                                      1354626626)
             self.assertRaises(ToolInstantiationError, t._check_execs)
 
             # non-existant

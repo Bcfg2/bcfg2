@@ -260,3 +260,10 @@ def oct_mode(mode):
     :type mode: int
     :returns: string """
     return oct(mode).replace('o', '')
+
+
+try:
+    long = long
+except NameError:
+    # longs are just ints in py3k
+    long = int
