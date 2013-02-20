@@ -3,8 +3,10 @@
 import os
 import sys
 import stat
+import logging
 import Bcfg2.Client
 import Bcfg2.Client.XML
+from Bcfg2.Options import get_option_parser
 from Bcfg2.Utils import Executor, ClassName
 from Bcfg2.Compat import walk_packages  # pylint: disable=W0622
 
@@ -78,23 +80,19 @@ class Tool(object):
     #: runtime with a warning.
     conflicts = []
 
-    def __init__(self, logger, setup, config):
+    def __init__(self, config):
         """
-        :param logger: Logger that will be used for logging by this tool
-        :type logger: logging.Logger
-        :param setup: The option set Bcfg2 was invoked with
-        :type setup: Bcfg2.Options.OptionParser
         :param config: The XML configuration for this client
         :type config: lxml.etree._Element
         :raises: :exc:`Bcfg2.Client.Tools.ToolInstantiationError`
         """
         #: A :class:`Bcfg2.Options.OptionParser` object describing the
         #: option set Bcfg2 was invoked with
-        self.setup = setup
+        self.setup = get_option_parser()
 
         #: A :class:`logging.Logger` object that will be used by this
         #: tool for logging
-        self.logger = logger
+        self.logger = logging.getLogger(self.name)
 
         #: The XML configuration for this client
         self.config = config
@@ -397,8 +395,8 @@ class PkgTool(Tool):
     #: The ``type`` attribute of Packages handled by this tool.
     pkgtype = 'echo'
 
-    def __init__(self, logger, setup, config):
-        Tool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        Tool.__init__(self, config)
 
         #: A dict of installed packages; the keys should be package
         #: names and the values should be simple strings giving the
@@ -501,8 +499,8 @@ class PkgTool(Tool):
 class SvcTool(Tool):
     """ Base class for tools that handle Service entries """
 
-    def __init__(self, logger, setup, config):
-        Tool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        Tool.__init__(self, config)
         #: List of services that have been restarted
         self.restarted = []
     __init__.__doc__ = Tool.__init__.__doc__

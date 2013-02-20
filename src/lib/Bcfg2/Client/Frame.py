@@ -7,6 +7,7 @@ import logging
 import Bcfg2.Client.Tools
 from Bcfg2.Client import prompt
 from Bcfg2.Compat import any, all  # pylint: disable=W0622
+from Bcfg2.Options import get_option_parser
 
 
 def cmpent(ent1, ent2):
@@ -48,18 +49,19 @@ def passes_black_list(entry, blacklist):
 class Frame(object):
     """Frame is the container for all Tool objects and state information."""
 
-    def __init__(self, config, setup, times, drivers, dryrun):
+    def __init__(self, config, times):
+        self.setup = get_option_parser()
         self.config = config
         self.times = times
-        self.dryrun = dryrun
+        self.dryrun = self.setup['dryrun']
         self.times['initialization'] = time.time()
-        self.setup = setup
         self.tools = []
         self.states = {}
         self.whitelist = []
         self.blacklist = []
         self.removal = []
         self.logger = logging.getLogger(__name__)
+        drivers = self.setup['drivers']
         for driver in drivers[:]:
             if driver not in Bcfg2.Client.Tools.drivers and \
                    isinstance(driver, str):
@@ -83,7 +85,7 @@ class Frame(object):
 
         for tool in list(tclass.values()):
             try:
-                self.tools.append(tool(self.logger, setup, config))
+                self.tools.append(tool(config))
             except Bcfg2.Client.Tools.ToolInstantiationError:
                 continue
             except:

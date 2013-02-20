@@ -3,6 +3,7 @@
 import copy
 import os.path
 import sys
+import logging
 import yum
 import yum.packages
 import yum.rpmtrans
@@ -12,6 +13,7 @@ import yum.misc
 import rpmUtils.arch
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
+from Bcfg2.Options import get_option_parser
 
 
 def build_yname(pkgname, inst):
@@ -65,13 +67,13 @@ class RPMDisplay(yum.rpmtrans.RPMBaseCallback):
     """We subclass the default RPM transaction callback so that we
        can control Yum's verbosity and pipe it through the right logger."""
 
-    def __init__(self, logger):
+    def __init__(self):
         yum.rpmtrans.RPMBaseCallback.__init__(self)
         # we want to log events to *both* the Bcfg2 logger (which goes
         # to stderr or syslog or wherever the user wants it to go)
         # *and* the yum file logger, which will go to yum.log (ticket
         # #1103)
-        self.bcfg2_logger = logger
+        self.bcfg2_logger = logging.getLogger(self.__class__.__name__)
         self.state = None
         self.package = None
 
@@ -110,9 +112,9 @@ class YumDisplay(yum.callbacks.ProcessTransBaseCallback):
     """Class to handle display of what step we are in the Yum transaction
        such as downloading packages, etc."""
 
-    def __init__(self, logger):
+    def __init__(self):
         yum.callbacks.ProcessTransBaseCallback.__init__(self)
-        self.logger = logger
+        self.logger = logging.getLogger(self.__class__.__name__)
 
 
 class YUM(Bcfg2.Client.Tools.PkgTool):
@@ -128,9 +130,9 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
 
     conflicts = ['RPM']
 
-    def __init__(self, logger, setup, config):
-        self.yumbase = self._loadYumBase(setup=setup, logger=logger)
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        self.yumbase = self._loadYumBase()
+        Bcfg2.Client.Tools.PkgTool.__init__(self, config)
         self.ignores = [entry.get('name') for struct in config \
                         for entry in struct \
                         if entry.tag == 'Path' and \
@@ -190,22 +192,23 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         self.logger.debug("Yum: installonlypkgs: %s" % self.installonlypkgs)
         self.logger.debug("Yum: verify_flags: %s" % self.verify_flags)
 
-    def _loadYumBase(self, setup=None, logger=None):
+    def _loadYumBase(self):
         ''' this may be called before PkgTool.__init__() is called on
         this object (when the YUM object is first instantiated;
         PkgTool.__init__() calls RefreshPackages(), which requires a
         YumBase object already exist), or after __init__() has
         completed, when we reload the yum config before installing
-        packages. Consequently, we support both methods by allowing
-        setup and logger, the only object properties we use in this
-        function, to be passed as keyword arguments or to be omitted
-        and drawn from the object itself.'''
+        packages. '''
         rv = yum.YumBase()  # pylint: disable=C0103
 
-        if setup is None:
+        if hasattr(self, "setup"):
             setup = self.setup
-        if logger is None:
+        else:
+            setup = get_option_parser()
+        if hasattr(self, "logger"):
             logger = self.logger
+        else:
+            logger = logging.getLogger(self.name)
 
         if setup['debug']:
             debuglevel = 3
@@ -744,8 +747,8 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             self.yumbase.closeRpmDB()
             self.RefreshPackages()
 
-        rpm_display = RPMDisplay(self.logger)
-        yum_display = YumDisplay(self.logger)
+        rpm_display = RPMDisplay()
+        yum_display = YumDisplay()
         # Run the Yum Transaction
         try:
             rescode, restring = self.yumbase.buildTransaction()

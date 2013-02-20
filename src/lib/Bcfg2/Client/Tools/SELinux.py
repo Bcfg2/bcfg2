@@ -7,11 +7,13 @@ import copy
 import glob
 import struct
 import socket
+import logging
 import selinux
 import seobject
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Tools.POSIX.File import POSIXFile
+from Bcfg2.Options import get_option_parser
 
 
 def pack128(int_val):
@@ -76,14 +78,13 @@ class SELinux(Bcfg2.Client.Tools.Tool):
                    SEPort=['name', 'selinuxtype'],
                    SEUser=['name', 'roles', 'prefix'])
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        Bcfg2.Client.Tools.Tool.__init__(self, config)
         self.handlers = {}
         for handler in self.__handles__:
             etype = handler[0]
             self.handlers[etype] = \
-                globals()["SELinux%sHandler" % etype.title()](self, logger,
-                                                              setup, config)
+                globals()["SELinux%sHandler" % etype.title()](self, config)
         self.txn = False
         self.post_txn_queue = []
 
@@ -173,10 +174,10 @@ class SELinuxEntryHandler(object):
     custom_re = re.compile(' (?P<name>\S+)$')
     custom_format = None
 
-    def __init__(self, tool, logger, setup, config):
+    def __init__(self, tool, config):
         self.tool = tool
-        self.logger = logger
-        self.setup = setup
+        self.logger = logging.getLogger(self.__class__.__name__)
+        self.setup = get_option_parser()
         self.config = config
         self._records = None
         self._all = None
@@ -619,8 +620,8 @@ class SELinuxSeuserHandler(SELinuxEntryHandler):
     etype = "user"
     value_format = ("prefix", None, None, "roles")
 
-    def __init__(self, tool, logger, setup, config):
-        SELinuxEntryHandler.__init__(self, tool, logger, setup, config)
+    def __init__(self, tool, config):
+        SELinuxEntryHandler.__init__(self, tool, config)
         self.needs_prefix = False
 
     @property
@@ -711,9 +712,9 @@ class SELinuxSemoduleHandler(SELinuxEntryHandler):
     etype = "module"
     value_format = (None, "disabled")
 
-    def __init__(self, tool, logger, setup, config):
-        SELinuxEntryHandler.__init__(self, tool, logger, setup, config)
-        self.filetool = POSIXFile(logger, setup, config)
+    def __init__(self, tool, config):
+        SELinuxEntryHandler.__init__(self, tool, config)
+        self.filetool = POSIXFile(config)
         try:
             self.setype = selinux.selinux_getpolicytype()[1]
         except IndexError:

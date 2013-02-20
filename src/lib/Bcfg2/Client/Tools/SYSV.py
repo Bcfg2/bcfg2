@@ -32,8 +32,8 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'sysv'
     pkgtool = ("/usr/sbin/pkgadd %s -n -d %%s", (('%s %s', ['url', 'name'])))
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        Bcfg2.Client.Tools.PkgTool.__init__(self, config)
         # noaskfile needs to live beyond __init__ otherwise file is removed
         self.noaskfile = tempfile.NamedTemporaryFile()
         self.noaskname = self.noaskfile.name

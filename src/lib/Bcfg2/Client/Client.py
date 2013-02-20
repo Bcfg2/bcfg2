@@ -280,10 +280,7 @@ class Client(object):
                     newconfig.append(bundle)
             self.config = newconfig
 
-        self.tools = Bcfg2.Client.Frame.Frame(self.config,
-                                              self.setup,
-                                              times, self.setup['drivers'],
-                                              self.setup['dryrun'])
+        self.tools = Bcfg2.Client.Frame.Frame(self.config, times)
 
         if not self.setup['omit_lock_check']:
             #check lock here

@@ -18,12 +18,12 @@ class APT(Bcfg2.Client.Tools.Tool):
     __handles__ = [('Package', 'deb'), ('Path', 'ignore')]
     __req__ = {'Package': ['name', 'version'], 'Path': ['type']}
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        Bcfg2.Client.Tools.Tool.__init__(self, config)
 
-        self.install_path = setup.get('apt_install_path', '/usr')
-        self.var_path = setup.get('apt_var_path', '/var')
-        self.etc_path = setup.get('apt_etc_path', '/etc')
+        self.install_path = self.setup.get('apt_install_path', '/usr')
+        self.var_path = self.setup.get('apt_var_path', '/var')
+        self.etc_path = self.setup.get('apt_etc_path', '/etc')
         self.debsums = '%s/bin/debsums' % self.install_path
         self.aptget = '%s/bin/apt-get' % self.install_path
         self.dpkg = '%s/bin/dpkg' % self.install_path

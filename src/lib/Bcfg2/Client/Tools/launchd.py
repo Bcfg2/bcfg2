@@ -12,8 +12,8 @@ class launchd(Bcfg2.Client.Tools.Tool):  # pylint: disable=C0103
     __execs__ = ['/bin/launchctl', '/usr/bin/defaults']
     __req__ = {'Service': ['name', 'status']}
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        Bcfg2.Client.Tools.Tool.__init__(self, config)
 
         # Locate plist file that provides given reverse-fqdn name:
         #

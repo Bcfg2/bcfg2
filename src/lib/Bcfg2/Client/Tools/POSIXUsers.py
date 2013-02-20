@@ -29,8 +29,8 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
     #: user or group
     id_mapping = dict(POSIXUser="uid", POSIXGroup="gid")
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        Bcfg2.Client.Tools.Tool.__init__(self, config)
         self.set_defaults = dict(POSIXUser=self.populate_user_entry,
                                  POSIXGroup=lambda g: g)
         self._existing = None

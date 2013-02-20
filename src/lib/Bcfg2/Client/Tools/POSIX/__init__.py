@@ -14,10 +14,10 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     """POSIX File support code."""
     name = 'POSIX'
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
-        self.ppath = setup['ppath']
-        self.max_copies = setup['max_copies']
+    def __init__(self, config):
+        Bcfg2.Client.Tools.Tool.__init__(self, config)
+        self.ppath = self.setup['ppath']
+        self.max_copies = self.setup['max_copies']
         self._handlers = self._load_handlers()
         self.logger.debug("POSIX: Handlers loaded: %s" %
                           (", ".join(self._handlers.keys())))

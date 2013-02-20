@@ -29,8 +29,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'rpm'
     pkgtool = ("rpm --oldpackage --replacepkgs --quiet -U %s", ("%s", ["url"]))
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        Bcfg2.Client.Tools.PkgTool.__init__(self, config)
 
         # create a global ignore list used when ignoring particular
         # files during package verification

@@ -13,11 +13,6 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'pacman'
     pkgtool = ("/usr/bin/pacman --needed --noconfirm --noprogressbar")
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
-        self.installed = {}
-        self.RefreshPackages()
-
     def RefreshPackages(self):
         '''Refresh memory hashes of packages'''
         self.installed = {}
