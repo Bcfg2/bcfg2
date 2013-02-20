@@ -448,7 +448,7 @@ class PkgTool(Tool):
         self.logger.info("Trying single pass package install for pkgtype %s" %
                          self.pkgtype)
 
-        if self.cmd.run(self.pkgtool[0] % pkgargs):
+        if self.cmd.run(self._get_package_command(packages)):
             self.logger.info("Single Pass Succeded")
             # set all package states to true and flush workqueues
             pkgnames = [pkg.get('name') for pkg in packages]

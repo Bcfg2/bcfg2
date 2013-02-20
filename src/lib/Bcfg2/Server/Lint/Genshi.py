@@ -4,7 +4,6 @@ import sys
 import Bcfg2.Server.Lint
 from genshi.template import TemplateLoader, NewTextTemplate, MarkupTemplate, \
     TemplateSyntaxError
-from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
 
 
@@ -43,7 +42,7 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
 
         for entry in self.core.plugins['Bundler'].entries.values():
             if (self.HandlesFile(entry.name) and
-                isinstance(entry, BundleTemplateFile)):
+                entry.template is not None):
                 try:
                     loader.load(entry.name, cls=MarkupTemplate)
                 except TemplateSyntaxError:

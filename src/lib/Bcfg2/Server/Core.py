@@ -334,7 +334,7 @@ class BaseCore(object):
                 continue
             self._update_vcs_revision()
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
     def _update_vcs_revision(self):
         """ Update the revision of the current configuration on-disk
         from the VCS plugin """
