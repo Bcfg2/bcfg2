@@ -287,6 +287,25 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             return self.yumbase.rpmdb.returnGPGPubkeyPackages()
         return self.yumbase.rpmdb.searchNevra(name='gpg-pubkey')
 
+    def missing_attrs(self, entry):
+        """ Implementing from superclass to check for existence of either
+        name or group attribute for Package entry in the case of a YUM 
+        group. """
+        required = self.__req__[entry.tag]
+        if isinstance(required, dict):
+            required = ["type"]
+            try:
+                required.extend(self.__req__[entry.tag][entry.get("type")])
+            except KeyError:
+                pass
+
+        missing = [attr for attr in required
+                   if attr not in entry.attrib or not entry.attrib[attr]]
+        
+        if entry.get('name', None) == None and entry.get('group', None) == None:
+            missing += ['name', 'group']
+        return missing
+
     def _verifyHelper(self, pkg_obj):
         """ _verifyHelper primarly deals with a yum bug where the
         pkg_obj.verify() method does not properly take into count multilib
@@ -439,10 +458,8 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             instances = []
             if self.yumbase.comps.has_group(entry.get('group')):
                 group = self.yumbase.comps.return_group(entry.get('group'))
-                #group_type = getattr(group, '%s_packages' % 
-                #                     entry.get('type', 'default'))
-                # Breaks b/c server clobbers type attribute on Package tag
-                group_type = getattr(group, '%s_packages' % 'default')
+                group_type = getattr(group, '%s_packages' % 
+                                     entry.get('choose', 'default'))
                 group_packages = [p
                                   for p, d in group.mandatory_packages.items()
                                   if d] + \
