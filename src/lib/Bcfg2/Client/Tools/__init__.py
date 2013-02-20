@@ -3,10 +3,10 @@
 import os
 import sys
 import stat
-import select
 from subprocess import Popen, PIPE
+import Bcfg2.Client
 import Bcfg2.Client.XML
-from Bcfg2.Compat import input, walk_packages  # pylint: disable=W0622
+from Bcfg2.Compat import walk_packages  # pylint: disable=W0622
 
 __all__ = [m[1] for m in walk_packages(path=__path__)]
 
@@ -155,25 +155,34 @@ class Tool(object):
         #: A list of all entries handled by this tool
         self.handled = []
 
-        for struct in config:
+        self._analyze_config()
+        self._check_execs()
+
+    def _analyze_config(self):
+        """ Analyze the config at tool initialization-time for
+        important and handled entries """
+        for struct in self.config:
             for entry in struct:
                 if (entry.tag == 'Path' and
                     entry.get('important', 'false').lower() == 'true'):
                     self.__important__.append(entry.get('name'))
-                if self.handlesEntry(entry):
-                    self.handled.append(entry)
+        self.handled = self.getSupportedEntries()
+
+    def _check_execs(self):
+        """ Check all executables used by this tool to ensure that
+        they exist and are executable """
         for filename in self.__execs__:
             try:
                 mode = stat.S_IMODE(os.stat(filename)[stat.ST_MODE])
-                if mode & stat.S_IEXEC != stat.S_IEXEC:
-                    raise ToolInstantiationError("%s: %s not executable" %
-                                                 (self.name, filename))
             except OSError:
                 raise ToolInstantiationError(sys.exc_info()[1])
             except:
                 raise ToolInstantiationError("%s: Failed to stat %s" %
-                                             (self.name, filename),
-                                             exc_info=1)
+                                             (self.name, filename))
+            if not mode & stat.S_IEXEC:
+                raise ToolInstantiationError("%s: %s not executable" %
+                                             (self.name, filename))
+
 
     def BundleUpdated(self, bundle, states):  # pylint: disable=W0613
         """ Callback that is invoked when a bundle has been updated.
@@ -227,11 +236,13 @@ class Tool(object):
                 if self.canVerify(entry):
                     try:
                         func = getattr(self, "Verify%s" % entry.tag)
-                        states[entry] = func(entry, mods)
                     except AttributeError:
                         self.logger.error("%s: Cannot verify %s entries" %
                                           (self.name, entry.tag))
-                    except:
+                        continue
+                    try:
+                        states[entry] = func(entry, mods)
+                    except:  # pylint: disable=W0702
                         self.logger.error("%s: Unexpected failure verifying %s"
                                           % (self.name,
                                              self.primarykey(entry)),
@@ -255,14 +266,16 @@ class Tool(object):
         :returns: None """
         for entry in entries:
             try:
-                func = getattr(self, "Install%s" % (entry.tag))
-                states[entry] = func(entry)
-                if states[entry]:
-                    self.modified.append(entry)
+                func = getattr(self, "Install%s" % entry.tag)
             except AttributeError:
                 self.logger.error("%s: Cannot install %s entries" %
                                   (self.name, entry.tag))
-            except:
+                continue
+            try:
+                states[entry] = func(entry)
+                if states[entry]:
+                    self.modified.append(entry)
+            except:  # pylint: disable=W0702
                 self.logger.error("%s: Unexpected failure installing %s" %
                                   (self.name, self.primarykey(entry)),
                                   exc_info=1)
@@ -451,6 +464,19 @@ class PkgTool(Tool):
         """
         raise NotImplementedError
 
+    def _get_package_command(self, packages):
+        """ Get the command to install the given list of packages.
+
+        :param packages: The Package entries to install
+        :type packages: list of lxml.etree._Element
+        :returns: string - the command to run
+        """
+        pkgargs = " ".join(self.pkgtool[1][0] %
+                           tuple(pkg.get(field)
+                                 for field in self.pkgtool[1][1])
+                           for pkg in packages)
+        return self.pkgtool[0] % pkgargs
+
     def Install(self, packages, states):
         """ Run a one-pass install where all required packages are
         installed with a single command, followed by single package
@@ -464,14 +490,10 @@ class PkgTool(Tool):
         self.logger.info("Trying single pass package install for pkgtype %s" %
                          self.pkgtype)
 
-        data = [tuple([pkg.get(field) for field in self.pkgtool[1][1]])
-                for pkg in packages]
-        pkgargs = " ".join([self.pkgtool[1][0] % datum for datum in data])
+        pkgcmd = self._get_package_command(packages)
+        self.logger.debug("Running command: %s" % pkgcmd)
 
-        self.logger.debug("Installing packages: %s" % pkgargs)
-        self.logger.debug("Running command: %s" % (self.pkgtool[0] % pkgargs))
-
-        cmdrc = self.cmd.run(self.pkgtool[0] % pkgargs)[0]
+        cmdrc = self.cmd.run(pkgcmd)[0]
         if cmdrc == 0:
             self.logger.info("Single Pass Succeded")
             # set all package states to true and flush workqueues
@@ -481,7 +503,7 @@ class PkgTool(Tool):
                     and entry.get('type') == self.pkgtype
                     and entry.get('name') in pkgnames):
                     self.logger.debug('Setting state to true for pkg %s' %
-                                      (entry.get('name')))
+                                      entry.get('name'))
                     states[entry] = True
             self.RefreshPackages()
         else:
@@ -497,19 +519,13 @@ class PkgTool(Tool):
                 else:
                     self.logger.info("Installing pkg %s version %s" %
                                      (pkg.get('name'), pkg.get('version')))
-                    cmdrc = self.cmd.run(
-                        self.pkgtool[0] %
-                        (self.pkgtool[1][0] %
-                         tuple([pkg.get(field)
-                                for field in self.pkgtool[1][1]])))
-                    if cmdrc[0] == 0:
+                    if self.cmd.run(self._get_package_command([pkg]))[0] == 0:
                         states[pkg] = True
                     else:
                         self.logger.error("Failed to install package %s" %
-                                          (pkg.get('name')))
+                                          pkg.get('name'))
             self.RefreshPackages()
-        for entry in [ent for ent in packages if states[ent]]:
-            self.modified.append(entry)
+        self.modified.extend(entry for entry in packages if states[entry])
 
     def RefreshPackages(self):
         """ Refresh the internal representation of the package
@@ -603,11 +619,13 @@ class SvcTool(Tool):
         if self.setup['servicemode'] == 'disabled':
             return
 
-        for entry in [ent for ent in bundle if self.handlesEntry(ent)]:
-            restart = entry.get("restart", "true")
-            if (restart.lower() == "false" or
-                (restart.lower() == "interactive" and
-                 not self.setup['interactive'])):
+        for entry in bundle:
+            if not self.handlesEntry(entry):
+                continue
+
+            restart = entry.get("restart", "true").lower()
+            if (restart == "false" or
+                (restart == "interactive" and not self.setup['interactive'])):
                 continue
 
             rv = None
@@ -616,14 +634,8 @@ class SvcTool(Tool):
                     rv = self.stop_service(entry)
                 elif entry.get('name') not in self.restarted:
                     if self.setup['interactive']:
-                        prompt = ('Restart service %s?: (y/N): ' %
-                                  entry.get('name'))
-                        # flush input buffer
-                        while len(select.select([sys.stdin.fileno()], [], [],
-                                                0.0)[0]) > 0:
-                            os.read(sys.stdin.fileno(), 4096)
-                        ans = input(prompt)
-                        if ans not in ['y', 'Y']:
+                        if not Bcfg2.Client.prompt('Restart service %s? (y/N) '
+                                                   % entry.get('name')):
                             continue
                     rv = self.restart_service(entry)
                     if not rv:
@@ -639,8 +651,8 @@ class SvcTool(Tool):
         install_entries = []
         for entry in entries:
             if entry.get('install', 'true').lower() == 'false':
-                self.logger.info("Service %s installation is false. Skipping "
-                                 "installation." % (entry.get('name')))
+                self.logger.info("Installation is false for %s:%s, skipping" %
+                                 (entry.tag, entry.get('name')))
             else:
                 install_entries.append(entry)
         return Tool.Install(self, install_entries, states)

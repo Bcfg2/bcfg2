@@ -17,6 +17,7 @@ while path != "/":
         break
     path = os.path.dirname(path)
 from common import *
+from TestTools.Test_init import TestTool
 
 
 class TestIDRangeSet(Bcfg2TestCase):
@@ -118,26 +119,14 @@ class TestExecutor(Bcfg2TestCase):
                          exc.retval)
 
 
-class TestPOSIXUsers(Bcfg2TestCase):
+class TestPOSIXUsers(TestTool):
     test_obj = POSIXUsers
 
     def get_obj(self, logger=None, setup=None, config=None):
-        if config is None:
-            config = lxml.etree.Element("Configuration")
-
-        if logger is None:
-            def print_msg(msg):
-                print(msg)
-            logger = Mock()
-            logger.error = Mock(side_effect=print_msg)
-            logger.warning = Mock(side_effect=print_msg)
-            logger.info = Mock(side_effect=print_msg)
-            logger.debug = Mock(side_effect=print_msg)
-
         if setup is None:
             setup = MagicMock()
             setup.__getitem__.return_value = []
-        return self.test_obj(logger, setup, config)
+        return TestTool.get_obj(self, logger, setup, config)
 
     @patch("pwd.getpwall")
     @patch("grp.getgrall")
