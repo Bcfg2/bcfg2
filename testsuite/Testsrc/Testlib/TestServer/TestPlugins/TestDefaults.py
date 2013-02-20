@@ -15,10 +15,10 @@ while path != "/":
     path = os.path.dirname(path)
 from common import *
 from TestRules import TestRules
-from Testinterfaces import TestStructureValidator
+from Testinterfaces import TestGoalValidator
 
 
-class TestDefaults(TestRules, TestStructureValidator):
+class TestDefaults(TestRules, TestGoalValidator):
     test_obj = Defaults
 
     def get_obj(self, *args, **kwargs):
@@ -35,25 +35,22 @@ class TestDefaults(TestRules, TestStructureValidator):
         d.HandleEvent(evt)
         mock_HandleEvent.assert_called_with(d, evt)
 
-    def test_validate_structures(self):
+    def test_validate_goals(self):
         d = self.get_obj()
         d.BindEntry = Mock()
         metadata = Mock()
 
         entries = []
-        b1 = lxml.etree.Element("Bundle")
+        config = lxml.etree.Element("Configuration")
+        b1 = lxml.etree.SubElement(config, "Bundle")
         entries.append(lxml.etree.SubElement(b1, "Path", name="/foo"))
         entries.append(lxml.etree.SubElement(b1, "Path", name="/bar"))
-        b2 = lxml.etree.Element("Bundle")
-        bound = lxml.etree.SubElement(b2, "BoundPath", name="/baz")
-        entries.append(bound)
+        b2 = lxml.etree.SubElement(config, "Bundle")
         entries.append(lxml.etree.SubElement(b2, "Package", name="quux"))
 
-        d.validate_structures(metadata, [b1, b2])
+        d.validate_goals(metadata, config)
         self.assertItemsEqual(d.BindEntry.call_args_list,
                               [call(e, metadata) for e in entries])
-        # ensure that BoundEntries stay bound
-        self.assertTrue(bound.tag == "BoundPath")
 
     def test__matches_regex_disabled(self):
         """ cannot disable regex in Defaults plugin """

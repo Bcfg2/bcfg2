@@ -130,7 +130,7 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                          rtype)
 
     def check_plaintext(self, filename, data, rtype):
-        """ check generic plaintex files for required headers """
+        """ check generic plaintext files for required headers """
         self.check_lines(filename, data.splitlines(), rtype)
 
     def check_lines(self, filename, lines, rtype):

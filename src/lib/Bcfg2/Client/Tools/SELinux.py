@@ -360,7 +360,7 @@ class SELinuxEntryHandler(object):
         """ find extra entries of this entry type """
         specified = [self._key(e)
                      for e in self.tool.getSupportedEntries()
-                     if e.get("type") == self.etype]
+                     if e.tag == "SE%s" % self.etype.title()]
         try:
             records = self.custom_records
         except ValueError:

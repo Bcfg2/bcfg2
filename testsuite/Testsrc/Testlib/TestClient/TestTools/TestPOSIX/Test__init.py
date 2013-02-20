@@ -3,7 +3,7 @@ import sys
 import lxml.etree
 from mock import Mock, MagicMock, patch
 import Bcfg2.Client.Tools
-import Bcfg2.Client.Tools.POSIX
+from Bcfg2.Client.Tools.POSIX import *
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4
@@ -15,6 +15,7 @@ while path != "/":
         break
     path = os.path.dirname(path)
 from common import *
+from TestTools.Test_init import TestTool
 
 
 def get_config(entries):
@@ -24,37 +25,14 @@ def get_config(entries):
     return config
 
 
-def get_posix_object(logger=None, setup=None, config=None):
-    if config is None:
-        config = lxml.etree.Element("Configuration")
-    if not logger:
-        def print_msg(msg):
-            print(msg)
-        logger = Mock()
-        logger.error = Mock(side_effect=print_msg)
-        logger.warning = Mock(side_effect=print_msg)
-        logger.info = Mock(side_effect=print_msg)
-        logger.debug = Mock(side_effect=print_msg)
-    if not setup:
-        setup = MagicMock()
-    if 'command_timeout' not in setup:
-        setup['command_timeout'] = None
-    return Bcfg2.Client.Tools.POSIX.POSIX(logger, setup, config)
-
-
-class TestPOSIX(Bcfg2TestCase):
-    def setUp(self):
-        self.posix = get_posix_object()
-
-    def tearDown(self):
-        # just to guarantee that we start fresh each time
-        self.posix = None
+class TestPOSIX(TestTool):
+    test_obj = POSIX
 
     def test__init(self):
         entries = [lxml.etree.Element("Path", name="test", type="file")]
-        posix = get_posix_object(config=get_config(entries))
+        posix = self.get_obj(config=get_config(entries))
         self.assertIsInstance(posix, Bcfg2.Client.Tools.Tool)
-        self.assertIsInstance(posix, Bcfg2.Client.Tools.POSIX.POSIX)
+        self.assertIsInstance(posix, POSIX)
         self.assertIn('Path', posix.__req__)
         self.assertGreater(len(posix.__req__['Path']), 0)
         self.assertGreater(len(posix.__handles__), 0)
@@ -62,98 +40,102 @@ class TestPOSIX(Bcfg2TestCase):
 
     @patch("Bcfg2.Client.Tools.Tool.canVerify")
     def test_canVerify(self, mock_canVerify):
+        posix = self.get_obj()
         entry = lxml.etree.Element("Path", name="test", type="file")
 
         # first, test superclass canVerify failure
         mock_canVerify.return_value = False
-        self.assertFalse(self.posix.canVerify(entry))
-        mock_canVerify.assert_called_with(self.posix, entry)
+        self.assertFalse(posix.canVerify(entry))
+        mock_canVerify.assert_called_with(posix, entry)
 
         # next, test fully_specified failure
-        self.posix.logger.error.reset_mock()
+        posix.logger.error.reset_mock()
         mock_canVerify.reset_mock()
         mock_canVerify.return_value = True
         mock_fully_spec = Mock()
         mock_fully_spec.return_value = False
-        self.posix._handlers[entry.get("type")].fully_specified = \
+        posix._handlers[entry.get("type")].fully_specified = \
             mock_fully_spec
-        self.assertFalse(self.posix.canVerify(entry))
-        mock_canVerify.assert_called_with(self.posix, entry)
+        self.assertFalse(posix.canVerify(entry))
+        mock_canVerify.assert_called_with(posix, entry)
         mock_fully_spec.assert_called_with(entry)
-        self.assertTrue(self.posix.logger.error.called)
+        self.assertTrue(posix.logger.error.called)
 
         # finally, test success
-        self.posix.logger.error.reset_mock()
+        posix.logger.error.reset_mock()
         mock_canVerify.reset_mock()
         mock_fully_spec.reset_mock()
         mock_fully_spec.return_value = True
-        self.assertTrue(self.posix.canVerify(entry))
-        mock_canVerify.assert_called_with(self.posix, entry)
+        self.assertTrue(posix.canVerify(entry))
+        mock_canVerify.assert_called_with(posix, entry)
         mock_fully_spec.assert_called_with(entry)
-        self.assertFalse(self.posix.logger.error.called)
+        self.assertFalse(posix.logger.error.called)
 
     @patch("Bcfg2.Client.Tools.Tool.canInstall")
     def test_canInstall(self, mock_canInstall):
+        posix = self.get_obj()
         entry = lxml.etree.Element("Path", name="test", type="file")
 
         # first, test superclass canInstall failure
         mock_canInstall.return_value = False
-        self.assertFalse(self.posix.canInstall(entry))
-        mock_canInstall.assert_called_with(self.posix, entry)
+        self.assertFalse(posix.canInstall(entry))
+        mock_canInstall.assert_called_with(posix, entry)
 
         # next, test fully_specified failure
-        self.posix.logger.error.reset_mock()
+        posix.logger.error.reset_mock()
         mock_canInstall.reset_mock()
         mock_canInstall.return_value = True
         mock_fully_spec = Mock()
         mock_fully_spec.return_value = False
-        self.posix._handlers[entry.get("type")].fully_specified = \
+        posix._handlers[entry.get("type")].fully_specified = \
             mock_fully_spec
-        self.assertFalse(self.posix.canInstall(entry))
-        mock_canInstall.assert_called_with(self.posix, entry)
+        self.assertFalse(posix.canInstall(entry))
+        mock_canInstall.assert_called_with(posix, entry)
         mock_fully_spec.assert_called_with(entry)
-        self.assertTrue(self.posix.logger.error.called)
+        self.assertTrue(posix.logger.error.called)
 
         # finally, test success
-        self.posix.logger.error.reset_mock()
+        posix.logger.error.reset_mock()
         mock_canInstall.reset_mock()
         mock_fully_spec.reset_mock()
         mock_fully_spec.return_value = True
-        self.assertTrue(self.posix.canInstall(entry))
-        mock_canInstall.assert_called_with(self.posix, entry)
+        self.assertTrue(posix.canInstall(entry))
+        mock_canInstall.assert_called_with(posix, entry)
         mock_fully_spec.assert_called_with(entry)
-        self.assertFalse(self.posix.logger.error.called)
+        self.assertFalse(posix.logger.error.called)
 
     def test_InstallPath(self):
+        posix = self.get_obj()
         entry = lxml.etree.Element("Path", name="test", type="file")
 
         mock_install = Mock()
         mock_install.return_value = True
-        self.posix._handlers[entry.get("type")].install = mock_install
-        self.assertTrue(self.posix.InstallPath(entry))
+        posix._handlers[entry.get("type")].install = mock_install
+        self.assertTrue(posix.InstallPath(entry))
         mock_install.assert_called_with(entry)
 
     def test_VerifyPath(self):
+        posix = self.get_obj()
         entry = lxml.etree.Element("Path", name="test", type="file")
         modlist = []
 
         mock_verify = Mock()
         mock_verify.return_value = True
-        self.posix._handlers[entry.get("type")].verify = mock_verify
-        self.assertTrue(self.posix.VerifyPath(entry, modlist))
+        posix._handlers[entry.get("type")].verify = mock_verify
+        self.assertTrue(posix.VerifyPath(entry, modlist))
         mock_verify.assert_called_with(entry, modlist)
 
         mock_verify.reset_mock()
         mock_verify.return_value = False
-        self.posix.setup.__getitem__.return_value = True
-        self.assertFalse(self.posix.VerifyPath(entry, modlist))
+        posix.setup.__getitem__.return_value = True
+        self.assertFalse(posix.VerifyPath(entry, modlist))
         self.assertIsNotNone(entry.get('qtext'))
 
     @patch('os.remove')
     def test_prune_old_backups(self, mock_remove):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
         setup = dict(ppath='/', max_copies=5, paranoid=True)
-        posix = get_posix_object(setup=setup)
+        posix = self.get_obj(setup=setup)
 
         remove = ["_etc_foo_2012-07-20T04:13:22.364989",
                   "_etc_foo_2012-07-31T04:13:23.894958",
@@ -202,48 +184,55 @@ class TestPOSIX(Bcfg2TestCase):
 
     @patch("shutil.copy")
     @patch("os.path.isdir")
-    @patch("Bcfg2.Client.Tools.POSIX.POSIX._prune_old_backups")
-    def test_paranoid_backup(self, mock_prune, mock_isdir, mock_copy):
+    def test_paranoid_backup(self, mock_isdir, mock_copy):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
         setup = dict(ppath='/', max_copies=5, paranoid=False)
-        posix = get_posix_object(setup=setup)
+        posix = self.get_obj(setup=setup)
+        posix._prune_old_backups = Mock()
 
         # paranoid false globally
         posix._paranoid_backup(entry)
-        self.assertFalse(mock_prune.called)
+        self.assertFalse(posix._prune_old_backups.called)
         self.assertFalse(mock_copy.called)
 
         # paranoid false on the entry
-        mock_prune.reset_mock()
         setup['paranoid'] = True
-        posix = get_posix_object(setup=setup)
+        posix = self.get_obj(setup=setup)
+        posix._prune_old_backups = Mock()
+
+        def reset():
+            mock_isdir.reset_mock()
+            mock_copy.reset_mock()
+            posix._prune_old_backups.reset_mock()
+
+        reset()
         posix._paranoid_backup(entry)
-        self.assertFalse(mock_prune.called)
+        self.assertFalse(posix._prune_old_backups.called)
         self.assertFalse(mock_copy.called)
 
         # entry does not exist on filesystem
-        mock_prune.reset_mock()
+        reset()
         entry.set("paranoid", "true")
         entry.set("current_exists", "false")
         posix._paranoid_backup(entry)
-        self.assertFalse(mock_prune.called)
+        self.assertFalse(posix._prune_old_backups.called)
         self.assertFalse(mock_copy.called)
 
         # entry is a directory on the filesystem
-        mock_prune.reset_mock()
+        reset()
         entry.set("current_exists", "true")
         mock_isdir.return_value = True
         posix._paranoid_backup(entry)
-        self.assertFalse(mock_prune.called)
+        self.assertFalse(posix._prune_old_backups.called)
         self.assertFalse(mock_copy.called)
         mock_isdir.assert_called_with(entry.get("name"))
 
         # test the actual backup now
-        mock_prune.reset_mock()
+        reset()
         mock_isdir.return_value = False
         posix._paranoid_backup(entry)
         mock_isdir.assert_called_with(entry.get("name"))
-        mock_prune.assert_called_with(entry)
+        posix._prune_old_backups.assert_called_with(entry)
         # it's basically impossible to test the shutil.copy() call
         # exactly because the destination includes microseconds, so we
         # just test it good enough

@@ -1,16 +1,3 @@
-This package was debianized by Sami Haahtinen <ressu@debian.org>
-
-It was downloaded from http://trac.mcs.anl.gov/projects/bcfg2/
-
-Upstream Author: Narayan Desai <desai@mcs.anl.gov>
-
-Copyright:
- 2004 - 2013: University of Chicago
-
-License:
-
-Unless otherwise specified, files are copyright by the following:
-
 Copyright (c) 2004, University of Chicago.  See the COPYRIGHT file at
   the top-level directory of this distribution and at
   https://github.com/Bcfg2/bcfg2/blob/master/COPYRIGHT.

@@ -189,7 +189,7 @@ fi
 
 %files
 %defattr(-,root,root,-)
-%doc AUTHORS examples COPYRIGHT README
+%doc examples LICENSE COPYRIGHT README
 
 %ghost %attr(600,root,root) %config(noreplace) %{_sysconfdir}/bcfg2.conf
 
@@ -201,7 +201,12 @@ fi
 
 %{python_sitelib}/Bcfg2*.egg-info
 %dir %{python_sitelib}/Bcfg2
-%{python_sitelib}/Bcfg2/*.py*
+%{python_sitelib}/Bcfg2/Compat.py*
+%{python_sitelib}/Bcfg2/__init__.py*
+%{python_sitelib}/Bcfg2/Logger.py*
+%{python_sitelib}/Bcfg2/Options.py*
+%{python_sitelib}/Bcfg2/Proxy.py*
+%{python_sitelib}/Bcfg2/version.py*
 %{python_sitelib}/Bcfg2/Client
 
 %{_sbindir}/bcfg2
@@ -219,6 +224,13 @@ fi
 
 %{_initrddir}/bcfg2-server
 
+%dir %{python_sitelib}/Bcfg2
+%{python_sitelib}/Bcfg2/Cache.py*
+%{python_sitelib}/Bcfg2/Encryption.py*
+%{python_sitelib}/Bcfg2/SSLServer.py*
+%{python_sitelib}/Bcfg2/Statistics.py*
+%{python_sitelib}/Bcfg2/manage.py*
+%{python_sitelib}/Bcfg2/settings.py*
 %{python_sitelib}/Bcfg2/Server
 
 %{_datadir}/bcfg2
@@ -244,6 +256,9 @@ fi
 %doc %{_defaultdocdir}/bcfg2-doc-%{version}
 
 %changelog
+* Tue Jan 29 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0rc2
+- New upstream release
+
 * Wed Jan 09 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0rc1
 - New upstream release
 

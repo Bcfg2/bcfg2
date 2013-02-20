@@ -476,9 +476,10 @@ Package Groups
 --------------
 
 Yum package groups are supported by the native Yum libraries. To
-include a package group, use the :xml:attribute:`PackageType:group`
-attribute of the :xml:element:`Package` tag. You can use either the
-short group ID or the long group name:
+include a package group, use the
+:xml:attribute:`PackageStructure:group` attribute of the
+:xml:element:`Package` tag. You can use either the short group ID or
+the long group name:
 
 .. code-block:: xml
 
@@ -501,12 +502,21 @@ Valid values of "type" are:
 * ``optional`` or ``all``: Install all packages in the group,
   including mandatory, default, and optional packages.
 
-See :xml:element:`PackageStructure` for details.
+See :xml:type:`PackageStructure` for details.
 
 You can view the packages in a group by category with the ``yum
 groupinfo`` command. More information about the different levels can
 be found at
 http://fedoraproject.org/wiki/How_to_use_and_edit_comps.xml_for_package_groups#Installation
+
+Abstract Package Tags
+---------------------
+
+If you are using the native Yum libraries, the abstract Package tag
+supports several attributes in addition to the standard
+:xml:attribute:`PackageStructure:name`:
+
+.. xml:type:: PackageStructure
 
 .. _pulp-source-support:
 

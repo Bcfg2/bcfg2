@@ -26,7 +26,7 @@ class TestCfgExternalCommandVerifier(TestCfgVerifier):
         proc = Mock()
         mock_Popen.return_value = proc
         proc.wait.return_value = 0
-        proc.communicate.return_value = MagicMock()
+        proc.communicate.return_value = ("stdout", "stderr")
         entry = lxml.etree.Element("Path", name="/test.txt")
         metadata = Mock()
 

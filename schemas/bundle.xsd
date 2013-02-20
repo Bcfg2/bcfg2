@@ -55,14 +55,6 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element name='SELinux' type='SELinuxStructure'>
-        <xsd:annotation>
-          <xsd:documentation>
-            Abstract implementation of an SELinux entry.  The
-            full specification will be included in Rules.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
       <xsd:element name='POSIXUser' type='StructureEntry'>
         <xsd:annotation>
           <xsd:documentation>
@@ -74,6 +66,69 @@
         <xsd:annotation>
           <xsd:documentation>
             Abstract description of a POSIXGroup entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SEBoolean' type='SELinuxStructure'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract SELinux boolean entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SEPort' type='SELinuxStructure'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract SELinux port entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SEFcontext' type='SELinuxStructure'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract SELinux file context ("fcontext") entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SENode' type='SELinuxStructure'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract SELinux node entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SELogin' type='SELinuxStructure'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract SELinux login entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SEUser' type='SELinuxStructure'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract SELinux user entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SEInterface' type='SELinuxStructure'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract SELinux interface entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SEPermissive' type='SELinuxStructure'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract SELinux permissive domain entry.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='SEModule' type='SELinuxStructure'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Abstract SELinux module entry.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>

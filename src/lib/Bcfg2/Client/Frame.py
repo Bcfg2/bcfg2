@@ -1,14 +1,12 @@
 """ Frame is the Client Framework that verifies and installs entries,
 and generates statistics. """
 
-import os
-import sys
 import time
-import select
 import fnmatch
 import logging
 import Bcfg2.Client.Tools
-from Bcfg2.Compat import input, any, all  # pylint: disable=W0622
+from Bcfg2.Client import prompt
+from Bcfg2.Compat import any, all  # pylint: disable=W0622
 
 
 def cmpent(ent1, ent2):
@@ -154,7 +152,7 @@ class Frame(object):
             for entry in multi:
                 self.logger.debug(entry)
 
-    def promptFilter(self, prompt, entries):
+    def promptFilter(self, msg, entries):
         """Filter a supplied list based on user input."""
         ret = []
         entries.sort(cmpent)
@@ -165,20 +163,9 @@ class Frame(object):
             if 'qtext' in entry.attrib:
                 iprompt = entry.get('qtext')
             else:
-                iprompt = prompt % (entry.tag, entry.get('name'))
-            # flush input buffer
-            while len(select.select([sys.stdin.fileno()], [], [], 0.0)[0]) > 0:
-                os.read(sys.stdin.fileno(), 4096)
-            try:
-                ans = input(iprompt.encode(sys.stdout.encoding, 'replace'))
-                if ans in ['y', 'Y']:
-                    ret.append(entry)
-            except EOFError:
-                # python 2.4.3 on CentOS doesn't like ^C for some reason
-                break
-            except:
-                print("Error while reading input")
-                continue
+                iprompt = msg % (entry.tag, entry.get('name'))
+            if prompt(iprompt):
+                ret.append(entry)
         return ret
 
     def __getattr__(self, name):
@@ -281,7 +268,7 @@ class Frame(object):
 
     def Decide(self):  # pylint: disable=R0912
         """Set self.whitelist based on user interaction."""
-        prompt = "Install %s: %s? (y/N): "
+        iprompt = "Install %s: %s? (y/N): "
         rprompt = "Remove %s: %s? (y/N): "
         if self.setup['remove']:
             if self.setup['remove'] == 'all':
@@ -353,7 +340,7 @@ class Frame(object):
                            (bmodified or a.get('when') == 'always'))]
             # now we process all "always actions"
             if self.setup['interactive']:
-                self.promptFilter(prompt, actions)
+                self.promptFilter(iprompt, actions)
             self.DispatchInstallCalls(actions)
 
             if bundle.tag != 'Bundle':
@@ -379,7 +366,7 @@ class Frame(object):
                                              if b.get("name")))
 
         if self.setup['interactive']:
-            self.whitelist = self.promptFilter(prompt, self.whitelist)
+            self.whitelist = self.promptFilter(iprompt, self.whitelist)
             self.removal = self.promptFilter(rprompt, self.removal)
 
         for entry in candidates:

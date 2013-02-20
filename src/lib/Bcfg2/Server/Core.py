@@ -332,9 +332,23 @@ class BaseCore(object):
                 self.fam.handle_event_set(self.lock)
             except:
                 continue
-            # VCS plugin periodic updates
-            for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Version):
-                self.revision = plugin.get_revision()
+            self._update_vcs_revision()
+
+    @track_statistics()
+    def _update_vcs_revision(self):
+        """ Update the revision of the current configuration on-disk
+        from the VCS plugin """
+        for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Version):
+            try:
+                newrev = plugin.get_revision()
+                if newrev != self.revision:
+                    self.logger.debug("Updated to revision %s" % newrev)
+                self.revision = newrev
+                break
+            except:
+                self.logger.warning("Error getting revision from %s: %s" %
+                                    (plugin.name, sys.exc_info()[1]))
+                self.revision = '-1'
 
     def init_plugin(self, plugin):
         """ Import and instantiate a single plugin.  The plugin is
@@ -360,8 +374,8 @@ class BaseCore(object):
         try:
             plug = getattr(mod, plugin.split('.')[-1])
         except AttributeError:
-            self.logger.error("Failed to load plugin %s (AttributeError)" %
-                              plugin)
+            self.logger.error("Failed to load plugin %s: %s" %
+                              (plugin, sys.exc_info()[1]))
             return
         # Blacklist conflicting plugins
         cplugs = [conflict for conflict in plug.conflicts
@@ -536,18 +550,16 @@ class BaseCore(object):
                 continue
             try:
                 self.Bind(entry, metadata)
-            except PluginExecutionError:
+            except:
                 exc = sys.exc_info()[1]
                 if 'failure' not in entry.attrib:
                     entry.set('failure', 'bind error: %s' % exc)
-                self.logger.error("Failed to bind entry %s:%s: %s" %
-                                  (entry.tag, entry.get('name'), exc))
-            except Exception:
-                exc = sys.exc_info()[1]
-                if 'failure' not in entry.attrib:
-                    entry.set('failure', 'bind error: %s' % exc)
-                self.logger.error("Unexpected failure in BindStructure: %s %s"
-                                  % (entry.tag, entry.get('name')), exc_info=1)
+                if isinstance(exc, PluginExecutionError):
+                    msg = "Failed to bind entry"
+                else:
+                    msg = "Unexpected failure binding entry"
+                self.logger.error("%s %s:%s: %s" %
+                                  (msg, entry.tag, entry.get('name'), exc))
 
     def Bind(self, entry, metadata):
         """ Bind a single entry using the appropriate generator.

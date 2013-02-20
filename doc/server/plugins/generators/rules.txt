@@ -375,7 +375,7 @@ For example:
       <MemberOf>lp</MemberOf>
       <MemberOf>adm</MemberOf>
       <MemberOf>bin</MemberOf>
-    </BoundPOSIXUser>
+    </POSIXUser>
 
 The group specified will automatically be created if it does not
 exist, even if there is no :xml:type:`POSIXGroup tag <POSIXGroupType>`

@@ -533,7 +533,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
                 # should be resolved
                 current = pkgs.pop()
                 self.debug_log("Packages: handling package requirement %s" %
-                               current)
+                               (current,))
                 packages.add(current)
                 deps = self.get_deps(current)
                 newdeps = set(deps).difference(examined)

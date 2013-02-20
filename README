@@ -1,26 +1,26 @@
 Bcfg2 - A Configuration Management System
 -----------------------------------------
 
-Bcfg2 (bee-config two) helps system administrators produce a 
+Bcfg2 (bee-config two) helps system administrators produce a
 consistent, reproducible, and verifiable description of their
 environment, and offers visualization and reporting tools to aid
 in day-to-day administrative tasks. It is the fifth generation of
 configuration management tools developed in the Mathematics and
-Computer Science Division of Argonne National Laboratory. 
+Computer Science Division of Argonne National Laboratory.
 
 * Homepage: http://bcfg2.org
 
 Bcfg2 is fairly portable. It has been successfully run on:
 
 * AIX, FreeBSD, OpenBSD Mac OS X, OpenSolaris, Solaris
-* Many GNU/Linux distributions, including ArchLinux, Blag, CentOS, 
+* Many GNU/Linux distributions, including ArchLinux, Blag, CentOS,
   Debian, Fedora, Gentoo, gNewSense, Mandriva, openSUSE, Red Hat/RHEL,
   SuSE/SLES, Trisquel, and Ubuntu.
-  
+
 Installation
 ------------
 
-For details about the installation of Bcfg2 please refer to the 
+For details about the installation of Bcfg2 please refer to the
 following pages in the Bcfg2 wiki.
 
 * Prerequisites: http://bcfg2.org/wiki/Prereqs
@@ -46,5 +46,5 @@ Want to help
 * Wiki:            http://bcfg2.org/wiki/Contribute
 
 
-Bcfg2 is licensed under a Simplified (2-clause) BSD license, for more
-details check COPYRIGHT.
+Bcfg2 is licensed under a Simplified (2-clause) BSD license. For more
+details check LICENSE.

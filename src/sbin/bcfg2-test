@@ -3,7 +3,9 @@
 """This tool verifies that all clients known to the server build
 without failures"""
 
+import os
 import sys
+import signal
 import fnmatch
 import logging
 import Bcfg2.Logger
@@ -11,6 +13,7 @@ import Bcfg2.Server.Core
 from nose.core import TestProgram
 from nose.suite import LazySuite
 from unittest import TestCase
+
 
 class ClientTest(TestCase):
     """
@@ -20,7 +23,7 @@ class ClientTest(TestCase):
     files that we know will cause errors (because they are private
     files we don't have access to, for instance)
     """
-    __test__ = False # Do not collect
+    __test__ = False  # Do not collect
 
     def __init__(self, bcfg2_core, client, ignore=None):
         TestCase.__init__(self)
@@ -44,9 +47,15 @@ class ClientTest(TestCase):
                         return True
         return False
 
+    def shortDescription(self):
+        return "Building configuration for %s" % self.client
+
     def runTest(self):
         """ run this individual test """
         config = self.bcfg2_core.BuildConfiguration(self.client)
+
+        assert len(config.findall("Bundle")) > 0, \
+            "%s has no content" % self.client
 
         failures = []
         msg = ["Failures:"]
@@ -63,6 +72,20 @@ class ClientTest(TestCase):
 
     id = __str__
 
+
+def get_sigint_handler(core):
+    """ Get a function that handles SIGINT/Ctrl-C by shutting down the
+    core and exiting properly."""
+
+    def hdlr(sig, frame):  # pylint: disable=W0613
+        """ Handle SIGINT/Ctrl-C by shutting down the core and exiting
+        properly. """
+        core.shutdown()
+        os._exit(1)  # pylint: disable=W0212
+
+    return hdlr
+
+
 def main():
     optinfo = dict(noseopts=Bcfg2.Options.TEST_NOSEOPTS,
                    test_ignore=Bcfg2.Options.TEST_IGNORE,
@@ -75,10 +98,22 @@ def main():
         setup.buildHelpMessage()
     setup.parse(sys.argv[1:])
 
-    if setup['verbose']:
-        Bcfg2.Logger.setup_logging("bcfg2-test", to_syslog=setup['syslog'])
+    if setup['debug']:
+        level = logging.DEBUG
+    elif setup['verbose']:
+        level = logging.INFO
+    else:
+        level = logging.WARNING
+    Bcfg2.Logger.setup_logging("bcfg2-test",
+                               to_console=setup['verbose'] or setup['debug'],
+                               to_syslog=False,
+                               to_file=setup['logging'],
+                               level=level)
+    if (setup['debug'] or setup['verbose']) and "-v" not in setup['noseopts']:
+        setup['noseopts'].append("-v")
 
     core = Bcfg2.Server.Core.BaseCore()
+    signal.signal(signal.SIGINT, get_sigint_handler(core))
 
     ignore = dict()
     for entry in setup['test_ignore']:
@@ -88,21 +123,23 @@ def main():
         except KeyError:
             ignore[tag] = [name]
 
+    core.fam.handle_events_in_interval(0.1)
+
+    if setup['args']:
+        clients = setup['args']
+    else:
+        clients = core.metadata.clients
+
     def run_tests():
         """ Run the test suite """
-        core.fam.handle_events_in_interval(0.1)
-
-        if setup['args']:
-            clients = setup['args']
-        else:
-            clients = core.metadata.clients
-
         for client in clients:
-            logging.info("Building %s" % client)
             yield ClientTest(core, client, ignore)
 
     TestProgram(argv=sys.argv[0:1] + setup['noseopts'],
                 suite=LazySuite(run_tests))
+
+    core.shutdown()
+    os._exit(0)  # pylint: disable=W0212
 
 if __name__ == "__main__":
     sys.exit(main())

@@ -30,6 +30,9 @@
     {% endif %}
   {% endfor %}
   </table>
-{% else %}<p>No client records are available.</p>
+{% else %}
+  <div class='client_list_box'>
+  <p>No client records are available.</p>
+  </div>
 {% endif %}
 {% endblock %}

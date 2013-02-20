@@ -80,6 +80,9 @@ def _populate_interaction_entry_counts():
     cursor.close()
 
 
+def update_noop():
+    return True
+
 # be sure to test your upgrade query before reflecting the change in the models
 # the list of function and sql command to do should go here
 _fixes = [_merge_database_table_entries,
@@ -103,6 +106,8 @@ _fixes = [_merge_database_table_entries,
           _interactions_constraint_or_idx,
           'alter table reports_reason add is_binary bool NOT NULL default False;',
           'alter table reports_reason add is_sensitive bool NOT NULL default False;',
+          update_noop, #_remove_table_column('reports_interaction', 'client_version'),
+          "alter table reports_reason add unpruned varchar(1280) not null default 'N/A';",
 ]
 
 # this will calculate the last possible version of the database

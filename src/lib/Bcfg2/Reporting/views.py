@@ -213,8 +213,11 @@ def entry_status(request, entry_type, pk, timestamp=None, **kwargs):
 
     # There is no good way to do this...
     items = []
-    for it in cls.objects.filter(interaction__in=current_clients, name=item.name).distinct("id").select_related():
-        items.append((it, it.interaction_set.filter(pk__in=current_clients).order_by('client__name').select_related('client')))
+    seen = []
+    for it in cls.objects.filter(interaction__in=current_clients, name=item.name).select_related():
+        if it.pk not in seen:
+            items.append((it, it.interaction_set.filter(pk__in=current_clients).order_by('client__name').select_related('client')))
+            seen.append(it.pk)
     
     return render_to_response('config_items/entry_status.html',
                               {'entry': item,

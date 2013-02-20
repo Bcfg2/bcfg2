@@ -392,7 +392,13 @@ class BaseEntry(models.Model):
     @classmethod
     def prune_orphans(cls):
         '''Remove unused entries'''
-        cls.objects.filter(interaction__isnull=True).delete()
+        # yeat another sqlite hack
+        cls_orphans = [x['id'] \
+            for x in cls.objects.filter(interaction__isnull=True).values("id")]
+        i = 0
+        while i < len(cls_orphans):
+            cls.objects.filter(id__in=cls_orphans[i:i+100]).delete()
+            i += 100
 
 
 class SuccessEntry(BaseEntry):

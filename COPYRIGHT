@@ -1,37 +1,154 @@
+- Narayan Desai <desai@mcs.anl.gov> has written most of Bcfg2,
+  including all parts not explicitly mentioned in this file.
 
-				  COPYRIGHT
+- Sol Jerome <sol.jerome@gmail.com> squashes bugs, helps manage the
+  project roadmap, and implements various interesting features.
 
-The following is a notice of limited availability of the code, and disclaimer
-which must be included in the prologue of the code and in all source listings
-of the code.
+- Tim Laszlo <tim.laszlo@gmail.com> worked on the reporting system and
+  made plugins.
 
-Copyright Notice
- + 2004 University of Chicago
+- Fabian Affolter <mail@fabian-affolter.ch> made some patches, added
+  some new features and plugins, and restructured the manual for Bcfg2.
 
-Permission is hereby granted to use, reproduce, prepare derivative works, and
-to redistribute to others.  This software was authored by:
+- Andrew Brestick <brestick@mcs.anl.gov> fixed bugs and completed
+  plugins.
 
-Argonne National Laboratory 
-N. Desai: (630) 252-7587; FAX: (630) 252-5986; e-mail: desai@mcs.anl.gov
-Mathematics and Computer Science Division
-Argonne National Laboratory, Argonne IL 60439
+- James Yang <jjyang@mcs.anl.gov> worked on bcfg2-admin and
+  bcfg2-reports.
 
+- Robert Gogolok <gogo@cs.uni-sb.de> fixed bugs and made the code more
+  robust.
 
-			      GOVERNMENT LICENSE
+- Jack Neely <jjneely@ncsu.edu> worked on the YUM driver.
 
-Portions of this material resulted from work developed under a U.S.
-Government Contract and are subject to the following license: the Government
-is granted for itself and others acting on its behalf a paid-up, nonexclusive,
-irrevocable worldwide license in this computer software to reproduce, prepare
-derivative works, and perform publicly and display publicly.
+- Joey Hagedorn <hagedorn@mcs.anl.gov> has written the reporting
+  subsystem, including StatReports, GenerateHostinfo, and the xslt,
+  css and javascript associated with it.
 
-				  DISCLAIMER
+- Ed Smith <esmith4@inf.ed.ac.uk> has done substantial hardening of
+  the Bcfg2 client and server and implemented a common logging
+  infrastructure.
 
-This computer code material was prepared, in part, as an account of work
-sponsored by an agency of the United States Government.  Neither the United
-States, nor the University of Chicago, nor any of their employees, makes any
-warranty express or implied, or assumes any legal liability or responsibility
-for the accuracy, completeness, or usefulness of any information, apparatus,
-product, or process disclosed, or represents that its use would not infringe
-privately owned rights.
+- Rick Bradshaw <bradshaw@mcs.anl.gov> has written several of the
+  tools included in the tools/ subdirectory.
 
+- Ken Raffenetti <raffenet@mcs.anl.gov>, Rick Bradshaw, Rene Martin,
+  and David Dahl <dahl@mcs.anl.gov> have written the Hostbase plugin.
+
+- Scott Behrens <behrens@mcs.anl.gov> and Rick Bradshaw have written
+  the VHost plugin.
+
+- Cory Lueninghoener <cory@mcs.anl.gov> wrote the showentries function
+  in bcfg2-info.
+
+- Chris Vuletich <vuletich@mcs.anl.gov> wrote some SSL code and the
+  verification debugging code.
+
+- Daniel Clark <dclark@pobox.com> created encap packages for Bcfg2 and
+  deps, wrote fossil-scm dvcs support, and helps with debian packaging
+
+- Jason Pepas <cell@ices.utexas.edu> has written a rpm package list
+  creator has contributed patches to the Red Hat toolset.
+
+- Sami Haahtinen <ressu@ressukka.net> has writen debian packaging
+  logic.
+
+- Brian Pellin and Andrew Lusk did substantial work on Bcfg1, some of
+  which was used in the Bcfg2 client.
+
+- Michael Jinks <mjinks@uchicago.edu> wrote the gentoo tool drivers.
+
+- Chris St. Pierre <chris.a.st.pierre@gmail.com> has (re)written vast
+  swaths of more recent Bcfg2 releases.
+
+- Anatoly Techtonik <techtonik@gmail.com> has fixed various bugs.
+
+- Arto Jantunen <viiru@debian.org> maintains the Debian packages.
+
+- Asaf Ohaion <asaf@arch64.office.lingnu.com> added Pacman support.
+
+- Brent Bloxam <brent.bloxam@gmail.com> fixed bugs, particularly in
+  the documentation.
+
+- Calen Pennington <cpennington@wgen.net> write bcfg2-test and
+  contributed performance enhancements.
+
+- Calvin Cheng <calvin@calvinx.com> worked on Python packaging.
+
+- Carl Jackson <carl@avtok.com> fixed client-side bugs.
+
+- Chris Brinker <chris.brinker@gmail.com> added support for client
+  profile assertion to bcfg2.conf
+
+- Christopher 'm4z' Holm <them4z@googlemail.com> greatly improved the
+  RPM build logic.
+
+- Dan Foster <dan.foster@bristol.ac.uk> contributed Solaris 10 build
+  fixes.
+
+- David Strauss <david@fourkitchens.com> wrote the Bzr plugin and
+  contributed other various fixes.
+
+- Gordon Messmer <gordon@herald.private.dragonsdawn.net> contributed
+  documentation fixes.
+
+- Graham Hagger <g.hagger@gmail.com> wrote the SSLCA plugin.
+
+- Holger Weiß <holger@zedat.fu-berlin.de> has fixed a tremendous
+  number and variety of bugs, particularly with unicode handling,
+  SSHbase, and bcfg2-reports.
+
+- Jake Davis <jake@imapenguin.com> has fixed various bugs.
+
+- Jason Kincl <kincljc@ornl.gov> added conflict resolution to the Svn
+  plugin.
+
+- Jeffrey C. Ollie <jeff@ocjtech.us> wrote systemd support.
+
+- Jeroen Dekkers <jeroen@dekkers.ch> worked on the APT driver.
+
+- Joe Digilio <jgd-github@metajoe.com> worked on Cheetah support and
+  fixed other bugs.
+
+- John Morris <john@zultron.com> fixed bugs in the Chkconfig driver.
+
+- John 'Skip' Reddy <jreddy@alcf.anl.gov> worked on DBStats.
+
+- Jonathan Billings <jsbillin@umich.edu> worked on systemd support,
+  RPM builds, and fixed other bugs.
+
+- Kamil Kisiel <kamil@kamilkisiel.net> worked on documentation, Py3k
+  support, launchd support, and other bugs.
+
+- Kioob <ob.kioob@daevel.fr> fixed various bugs.
+
+- Luke Cyca <me@lukecyca.com> worked on MacPorts and launchd support.
+
+- Mike Brady <mike.brady@devnull.net.nz> worked on the YUM and RPM
+  drivers.
+
+- Mike McCallister <mike@mccllstr.com> worked on the Packages plugin.
+
+- Phillip Steinbachs <phil@steinbachs.org> wrote Solaris packaging
+  manifests.
+
+- Raul Cuza <raulcuza@gmail.com> worked on Python packaging,
+  documentation, and various bugs.
+
+- Remi Broemeling <remi@infinitewinter.com> worked on handling
+  restarts of Service entries.
+
+- Richard Connon <conan@irconan.co.uk> worked on handling of Apt
+  repositories.
+
+- Steve Tousignant <stousignant@revolutionlinux.com> worked on several
+  of the Debian package list tools and contributed bug fixes.
+
+- Ti Legget <leggett@mcs.anl.gov> worked on ebuild packaging and
+  bugfixes, RPM packaging.
+
+- Torsten Rehn <torsten@rehn.tel> wrote the Ldap plugin and fixed
+  bugs.
+
+- Zach Lowry <zach@mcs.anl.gov> wrote Solaris support and general
+  hardening.

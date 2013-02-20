@@ -144,13 +144,6 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:attribute>
-      <xsd:attribute name="priority" type="xsd:positiveInteger" default="50">
-        <xsd:annotation>
-          <xsd:documentation>
-            Create group-specific keys with the given priority.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:attribute>
       <xsd:attribute name="decrypt" type="EncryptStrictnessEnum">
         <xsd:annotation>
           <xsd:documentation>

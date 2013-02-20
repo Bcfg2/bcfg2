@@ -1452,7 +1452,7 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
         defaults = []
         for grp in self.metadata.groups_xml.xdata.xpath("//Groups/Group") + \
                 self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group"):
-            if grp.get("default"):
+            if grp.get("default", "false").lower() == "true":
                 defaults.append(self.RenderXML(grp))
         if len(defaults) > 1:
             self.LintError("multiple-default-groups",

@@ -6,7 +6,7 @@
 
 Name:             bcfg2
 Version:          1.3.0
-Release:          0.0rc1
+Release:          0.0rc2
 Summary:          Configuration management system
 
 %if 0%{?suse_version}
@@ -17,8 +17,8 @@ Group:            Applications/System
 %endif
 License:          BSD
 URL:              http://bcfg2.org
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}rc1.tar.gz
-BuildRoot:        %{_tmppath}/%{name}-%{version}rc1-%{release}-root-%(%{__id_u} -n)
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}rc2.tar.gz
+BuildRoot:        %{_tmppath}/%{name}-%{version}rc2-%{release}-root-%(%{__id_u} -n)
 BuildArch:        noarch
 
 BuildRequires:    python-devel
@@ -267,7 +267,7 @@ deployment strategies.
 This package includes the Bcfg2 reports web frontend.
 
 %prep
-%setup -q -n %{name}-%{version}rc1
+%setup -q -n %{name}-%{version}rc2
 
 %build
 %{__python}%{pythonversion} setup.py build
@@ -318,7 +318,8 @@ cp -r build/sphinx/html/* %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
 
 # mandriva and RHEL 5 cannot handle %ghost without the file existing,
 # so let's touch a bunch of empty config files
-touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web.conf
+touch %{buildroot}%{_sysconfdir}/bcfg2.conf \
+    %{buildroot}%{_sysconfdir}/bcfg2-web.conf
 
 %clean
 [ "%{buildroot}" != "/" ] && %{__rm} -rf %{buildroot} || exit 2
@@ -327,9 +328,13 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %defattr(-,root,root,-)
 %{_sbindir}/bcfg2
 %dir %{python_sitelib}/Bcfg2
-%{python_sitelib}/Bcfg2/*.py*
-%dir %{python_sitelib}/Bcfg2/Client
-%{python_sitelib}/Bcfg2/Client/*
+%{python_sitelib}/Bcfg2/Compat.py*
+%{python_sitelib}/Bcfg2/__init__.py*
+%{python_sitelib}/Bcfg2/Logger.py*
+%{python_sitelib}/Bcfg2/Options.py*
+%{python_sitelib}/Bcfg2/Proxy.py*
+%{python_sitelib}/Bcfg2/version.py*
+%{python_sitelib}/Bcfg2/Client
 %{_mandir}/man1/bcfg2.1*
 %{_mandir}/man5/bcfg2.conf.5*
 %{_initrddir}/bcfg2
@@ -350,6 +355,12 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf %{buildroot}%{_sysconfdir}/bcfg2-web
 %{_initrddir}/bcfg2-server
 %{_initrddir}/bcfg2-report-collector
 %dir %{python_sitelib}/Bcfg2
+%{python_sitelib}/Bcfg2/Cache.py*
+%{python_sitelib}/Bcfg2/Encryption.py*
+%{python_sitelib}/Bcfg2/SSLServer.py*
+%{python_sitelib}/Bcfg2/Statistics.py*
+%{python_sitelib}/Bcfg2/manage.py*
+%{python_sitelib}/Bcfg2/settings.py*
 %{python_sitelib}/Bcfg2/Server
 %{python_sitelib}/Bcfg2/Reporting
 %exclude %{python_sitelib}/Bcfg2/Server/CherryPyCore.py
@@ -442,6 +453,9 @@ fi
 %endif
 
 %changelog
+* Tue Jan 29 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0rc2
+- New upstream release
+
 * Wed Jan 09 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0rc1
 - New upstream release
 

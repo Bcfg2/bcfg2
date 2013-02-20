@@ -180,7 +180,7 @@ class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 self.logger.error("SSLCA: Failed to unlink temporary files: %s"
                                   % sys.exc_info()[1])
         if cert_spec['append_chain'] and 'chaincert' in ca:
-            cert += open(self.parent.get_ca(ca)['chaincert']).read()
+            cert += open(ca['chaincert']).read()
 
         open(os.path.join(self.path, filename), 'w').write(cert)
         return cert
@@ -363,7 +363,8 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
     """ The SSLCA generator handles the creation and management of ssl
     certificates and their keys. """
     __author__ = 'g.hagger@gmail.com'
-    es_cls = lambda self, *args: SSLCAEntrySet(*args, parent=self)
+    # python 2.5 doesn't support mixing *magic and keyword arguments
+    es_cls = lambda self, *args: SSLCAEntrySet(*args, **dict(parent=self))
     es_child_cls = SSLCADataFile
 
     def get_ca(self, name):

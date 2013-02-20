@@ -171,9 +171,8 @@ For instance::
 
 .. note::
 
-    The name of a passphrase **cannot** be "algorithm"; that
-    configuration option is reserved for configuring the cipher
-    algorithm.
+    The name of a passphrase **cannot** be ``algorithm`` or
+    ``decrypt``, which are reserved for other configuration options.
 
 This would define two separate encryption passphrases, presumably for
 use by two separate teams.  The passphrase names are completely
@@ -221,7 +220,7 @@ though, that may not be possible.  (For instance, if you use
 encryption to protect data for your production environment from your
 staging Bcfg2 server, then you would not expect the staging server to
 be able to decrypt everything.)  In this case, you want to enable lax
-decryption in the ``[encryption]`` section of ``bcfg2.conf``:
+decryption in the ``[encryption]`` section of ``bcfg2.conf``::
 
     [encryption]
     decrypt = lax

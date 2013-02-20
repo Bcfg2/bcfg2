@@ -23,10 +23,15 @@ class CfgExternalCommandVerifier(CfgVerifier):
     def verify_entry(self, entry, metadata, data):
         try:
             proc = Popen(self.cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-            err = proc.communicate(input=data)[1]
+            out, err = proc.communicate(input=data)
             rv = proc.wait()
             if rv != 0:
-                raise CfgVerificationError(err)
+                # pylint: disable=E1103
+                raise CfgVerificationError(err.strip() or out.strip() or
+                                           "Non-zero return value %s" % rv)
+                # pylint: enable=E1103
+        except CfgVerificationError:
+            raise
         except:
             err = sys.exc_info()[1]
             raise CfgVerificationError("Error running external command "

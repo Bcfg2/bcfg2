@@ -30,6 +30,9 @@ CFG_SECTION = "encryption"
 #: The config option used to store the algorithm
 CFG_ALGORITHM = "algorithm"
 
+#: The config option used to store the decryption strictness
+CFG_DECRYPT = "decrypt"
+
 #: Default cipher algorithm.  To get a full list of valid algorithms,
 #: you can run::
 #:
@@ -39,6 +42,7 @@ ALGORITHM = Bcfg2.Options.get_option_parser().cfp.get(  # pylint: disable=E1103
     CFG_SECTION,
     CFG_ALGORITHM,
     default="aes_256_cbc").lower().replace("-", "_")
+
 
 Rand.rand_seed(os.urandom(1024))
 
@@ -165,7 +169,7 @@ def get_passphrases():
     if setup.cfp.has_section(CFG_SECTION):
         return dict([(o, setup.cfp.get(CFG_SECTION, o))
                      for o in setup.cfp.options(CFG_SECTION)
-                     if o != CFG_ALGORITHM])
+                     if o not in [CFG_ALGORITHM, CFG_DECRYPT]])
     else:
         return dict()
 
