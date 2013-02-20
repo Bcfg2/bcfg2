@@ -310,6 +310,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         """
         if self.disableResolver:
             # Config requests no resolver
+            for struct in structures:
+                for pkg in struct.xpath('//Package | //BoundPackage'):
+                    if pkg.get("group"):
+                        if pkg.get("type"):
+                            pkg.set("choose", pkg.get("type"))
             return
 
         if collection is None:
