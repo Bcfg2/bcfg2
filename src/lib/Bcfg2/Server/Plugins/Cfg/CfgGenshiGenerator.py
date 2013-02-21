@@ -101,6 +101,10 @@ class CfgGenshiGenerator(CfgGenerator):
     __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def get_data(self, entry, metadata):
+        if self.template is None:
+            raise PluginExecutionError("Failed to load template %s" %
+                                       self.name)
+
         fname = entry.get('realname', entry.get('name'))
         stream = \
             self.template.generate(name=fname,
