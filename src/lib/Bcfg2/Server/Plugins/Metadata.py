@@ -147,7 +147,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
             self.logger.error('Failed to parse %s' % self.basefile)
             return
         self.extras = []
-        self.basedata = copy.copy(xdata)
+        self.basedata = copy.deepcopy(xdata)
         self._follow_xincludes(xdata=xdata)
         if self.extras:
             try:
