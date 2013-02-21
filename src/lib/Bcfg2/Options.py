@@ -9,8 +9,8 @@ import shlex
 import sys
 import grp
 import pwd
-import Bcfg2.Client.Tools
-from Bcfg2.Compat import ConfigParser
+from Bcfg2.Client.Tools import __path__ as toolpath
+from Bcfg2.Compat import ConfigParser, walk_packages
 from Bcfg2.version import __version__
 
 
@@ -723,7 +723,7 @@ CLIENT_PARANOID = \
            cook=get_bool)
 CLIENT_DRIVERS = \
     Option('Specify tool driver set',
-           default=Bcfg2.Client.Tools.default,
+           default=[m[1] for m in walk_packages(path=toolpath)],
            cmd='-D',
            odesc='<driver1,driver2>',
            cf=('client', 'drivers'),

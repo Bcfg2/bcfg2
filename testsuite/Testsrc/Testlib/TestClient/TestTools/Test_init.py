@@ -21,24 +21,23 @@ from common import *
 class TestTool(Bcfg2TestCase):
     test_obj = Tool
 
-    def get_obj(self, logger=None, setup=None, config=None):
+    def get_obj(self, setup=None, config=None):
         if config is None:
             config = lxml.etree.Element("Configuration")
-        if not logger:
-            def print_msg(msg):
-                print(msg)
-            logger = Mock()
-            logger.error = Mock(side_effect=print_msg)
-            logger.warning = Mock(side_effect=print_msg)
-            logger.info = Mock(side_effect=print_msg)
-            logger.debug = Mock(side_effect=print_msg)
         if not setup:
             setup = MagicMock()
         if 'command_timeout' not in setup:
             setup['command_timeout'] = None
+
         execs = self.test_obj.__execs__
         self.test_obj.__execs__ = []
-        rv = self.test_obj(logger, setup, config)
+
+        @patch("Bcfg2.Options.get_option_parser")
+        def inner(mock_option_parser):
+            mock_option_parser.return_value = setup
+            return self.test_obj(config)
+
+        rv = inner()
         self.test_obj.__execs__ = execs
         return rv
 
@@ -166,14 +165,12 @@ class TestTool(Bcfg2TestCase):
             self.assertItemsEqual(states, expected_states)
             self.assertEqual(t.extra, t.FindExtra.return_value)
 
-        actual_states = dict()
-        t.Inventory(actual_states, structures=[bundle1, bundle2])
+        actual_states = t.Inventory(structures=[bundle1, bundle2])
         perform_assertions(actual_states)
 
         reset()
-        actual_states = dict()
         t.config = config
-        t.Inventory(actual_states)
+        actual_states = t.Inventory()
         perform_assertions(actual_states)
 
     def test_Install(self):
@@ -199,9 +196,8 @@ class TestTool(Bcfg2TestCase):
         expected_states.update(dict([(e, t.InstallService.return_value)
                                      for e in entries if e.tag == "Service"]))
 
-        actual_states = dict()
         t.modified = []
-        t.Install(entries, actual_states)
+        actual_states = t.Install(entries)
         self.assertItemsEqual(t.InstallPath.call_args_list,
                               [call(e) for e in entries if e.tag == "Path"])
         self.assertItemsEqual(t.InstallPackage.call_args_list,
@@ -385,8 +381,7 @@ class TestPkgTool(TestTool):
         # test single-pass install success
         reset()
         pt.cmd.run.return_value = (0, '')
-        states = dict([(p, False) for p in packages])
-        pt.Install(packages, states)
+        states = pt.Install(packages)
         pt._get_package_command.assert_called_with(packages)
         pt.cmd.run.assert_called_with([p.get("name") for p in packages])
         self.assertItemsEqual(states,
@@ -406,8 +401,7 @@ class TestPkgTool(TestTool):
         pt.VerifyPackage.side_effect = lambda p, m: p.get("name") == "bar"
 
         pt.cmd.run.side_effect = run
-        states = dict([(p, False) for p in packages])
-        pt.Install(packages, states)
+        states = pt.Install(packages)
         pt._get_package_command.assert_any_call(packages)
         for pkg in packages:
             pt.VerifyPackage.assert_any_call(pkg, [])
@@ -592,8 +586,7 @@ class TestSvcTool(TestTool):
 
         # test in non-interactive mode
         reset()
-        states = dict()
-        st.BundleUpdated(bundle, states)
+        states = st.BundleUpdated(bundle)
         self.assertItemsEqual(st.handlesEntry.call_args_list,
                               [call(e) for e in entries])
         st.stop_service.assert_called_with(stop)
@@ -606,8 +599,7 @@ class TestSvcTool(TestTool):
         reset()
         mock_prompt.side_effect = lambda p: "interactive2" not in p
         st.setup['interactive'] = True
-        states = dict()
-        st.BundleUpdated(bundle, states)
+        states = st.BundleUpdated(bundle)
         self.assertItemsEqual(st.handlesEntry.call_args_list,
                               [call(e) for e in entries])
         st.stop_service.assert_called_with(stop)
@@ -621,8 +613,7 @@ class TestSvcTool(TestTool):
         reset()
         st.setup['interactive'] = False
         st.setup['servicemode'] = 'build'
-        states = dict()
-        st.BundleUpdated(bundle, states)
+        states = st.BundleUpdated(bundle)
         self.assertItemsEqual(st.handlesEntry.call_args_list,
                               [call(e) for e in entries])
         self.assertItemsEqual(st.stop_service.call_args_list,
@@ -638,10 +629,9 @@ class TestSvcTool(TestTool):
         services = install + [lxml.etree.Element("Service", type="test",
                                                  name="bar", install="false")]
         st = self.get_obj()
-        states = Mock()
-        self.assertEqual(st.Install(services, states),
+        self.assertEqual(st.Install(services),
                          mock_Install.return_value)
-        mock_Install.assert_called_with(st, install, states)
+        mock_Install.assert_called_with(st, install)
 
     def test_InstallService(self):
         st = self.get_obj()

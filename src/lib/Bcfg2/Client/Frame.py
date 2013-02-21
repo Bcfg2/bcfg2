@@ -56,6 +56,10 @@ class Frame(object):
         self.dryrun = self.setup['dryrun']
         self.times['initialization'] = time.time()
         self.tools = []
+
+        #: A dict of the state of each entry.  Keys are the entries.
+        #: Values are boolean: True means that the entry is good,
+        #: False means that the entry is bad.
         self.states = {}
         self.whitelist = []
         self.blacklist = []
@@ -63,7 +67,7 @@ class Frame(object):
         self.logger = logging.getLogger(__name__)
         drivers = self.setup['drivers']
         for driver in drivers[:]:
-            if driver not in Bcfg2.Client.Tools.drivers and \
+            if driver not in Bcfg2.Client.Tools.__all__ and \
                    isinstance(driver, str):
                 self.logger.error("Tool driver %s is not available" % driver)
                 drivers.remove(driver)
@@ -263,7 +267,7 @@ class Frame(object):
                 self.states[entry] = False
         for tool in self.tools:
             try:
-                tool.Inventory(self.states)
+                self.states.update(tool.Inventory())
             except:
                 self.logger.error("%s.Inventory() call failed:" % tool.name,
                                   exc_info=1)
@@ -382,7 +386,7 @@ class Frame(object):
             if not handled:
                 continue
             try:
-                tool.Install(handled, self.states)
+                self.states.update(tool.Install(handled))
             except:
                 self.logger.error("%s.Install() call failed:" % tool.name,
                                   exc_info=1)
@@ -402,7 +406,7 @@ class Frame(object):
             tbm = [(t, b) for t in self.tools for b in mbundles]
             for tool, bundle in tbm:
                 try:
-                    tool.Inventory(self.states, [bundle])
+                    self.states.update(tool.Inventory(structures=[bundle]))
                 except:
                     self.logger.error("%s.Inventory() call failed:" %
                                       tool.name,
@@ -428,7 +432,7 @@ class Frame(object):
                 else:
                     func = tool.BundleNotUpdated
                 try:
-                    func(bundle, self.states)
+                    self.states.update(func(bundle))
                 except:
                     self.logger.error("%s.%s(%s:%s) call failed:" %
                                       (tool.name, func.im_func.func_name,
@@ -438,7 +442,7 @@ class Frame(object):
         for indep in self.config.findall('.//Independent'):
             for tool in self.tools:
                 try:
-                    tool.BundleNotUpdated(indep, self.states)
+                    self.states.update(tool.BundleNotUpdated(indep))
                 except:
                     self.logger.error("%s.BundleNotUpdated(%s:%s) call failed:"
                                       % (tool.name, indep.tag,

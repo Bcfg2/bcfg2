@@ -86,7 +86,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
             return False
         return True
 
-    def Inventory(self, states, structures=None):
+    def Inventory(self, structures=None):
         if not structures:
             structures = self.config.getchildren()
         # we calculate a list of all POSIXUser and POSIXGroup entries,
@@ -106,7 +106,8 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                                       (group, entry.get("name")))
                     struct.append(Bcfg2.Client.XML.Element("POSIXGroup",
                                                            name=group))
-        return Bcfg2.Client.Tools.Tool.Inventory(self, states, structures)
+        return Bcfg2.Client.Tools.Tool.Inventory(self, structures)
+    Inventory.__doc__ = Bcfg2.Client.Tools.Tool.Inventory.__doc__
 
     def FindExtra(self):
         extra = []
@@ -206,7 +207,8 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
             entry.set('qtext', "\n".join([entry.get('qtext', '')] + errors))
         return len(errors) == 0
 
-    def Install(self, entries, states):
+    def Install(self, entries):
+        states = dict()
         for entry in entries:
             # install groups first, so that all groups exist for
             # users that might need them
@@ -216,6 +218,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
             if entry.tag == 'POSIXUser':
                 states[entry] = self._install(entry)
         self._existing = None
+        return states
 
     def _install(self, entry):
         """ add or modify a user or group using the appropriate command """

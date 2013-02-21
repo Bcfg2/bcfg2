@@ -217,7 +217,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             self.modified += packages
             self.extra = self.FindExtra()
 
-    def Install(self, packages, states):
+    def Install(self, packages):
         # it looks like you can't install arbitrary versions of software
         # out of the pkg cache, we will still need to call apt-get
         ipkgs = []
@@ -257,10 +257,12 @@ class APT(Bcfg2.Client.Tools.Tool):
             self.logger.error("APT command failed")
         self.pkg_cache = apt.cache.Cache()
         self.extra = self.FindExtra()
+        states = dict()
         for package in packages:
             states[package] = self.VerifyPackage(package, [], checksums=False)
             if states[package]:
                 self.modified.append(package)
+        return states
 
     def VerifyPath(self, entry, _):
         """Do nothing here since we only verify Path type=ignore."""

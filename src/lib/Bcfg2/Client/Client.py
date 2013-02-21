@@ -53,7 +53,7 @@ class Client(object):
                 raise SystemExit(1)
         if 'drivers' in self.setup and self.setup['drivers'] == 'help':
             self.logger.info("The following drivers are available:")
-            self.logger.info(Bcfg2.Client.Tools.drivers)
+            self.logger.info(Bcfg2.Client.Tools.__all__)
             raise SystemExit(0)
         if self.setup['remove'] and 'services' in self.setup['remove'].lower():
             self.logger.error("Service removal is nonsensical; "

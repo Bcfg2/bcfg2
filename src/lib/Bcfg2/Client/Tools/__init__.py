@@ -6,20 +6,11 @@ import stat
 import logging
 import Bcfg2.Client
 import Bcfg2.Client.XML
-from Bcfg2.Options import get_option_parser
 from Bcfg2.Utils import Executor, ClassName
 from Bcfg2.Compat import walk_packages  # pylint: disable=W0622
+import Bcfg2.Options
 
 __all__ = [m[1] for m in walk_packages(path=__path__)]
-
-# pylint: disable=C0103
-#: All available tools
-drivers = [item for item in __all__ if item not in ['rpmtools']]
-
-#: The default set of tools that will be used if "drivers" is not set
-#: in bcfg2.conf
-default = drivers[:]
-# pylint: enable=C0103
 
 
 class ToolInstantiationError(Exception):
@@ -88,7 +79,7 @@ class Tool(object):
         """
         #: A :class:`Bcfg2.Options.OptionParser` object describing the
         #: option set Bcfg2 was invoked with
-        self.setup = get_option_parser()
+        self.setup = Bcfg2.Options.get_option_parser()
 
         #: A :class:`logging.Logger` object that will be used by this
         #: tool for logging
@@ -140,27 +131,27 @@ class Tool(object):
                                              (self.name, filename))
 
 
-    def BundleUpdated(self, bundle, states):  # pylint: disable=W0613
+    def BundleUpdated(self, bundle):  # pylint: disable=W0613
         """ Callback that is invoked when a bundle has been updated.
 
         :param bundle: The bundle that has been updated
         :type bundle: lxml.etree._Element
-        :param states: The :attr:`Bcfg2.Client.Frame.Frame.states` dict
-        :type states: dict
-        :returns: None """
-        return
+        :returns: dict - A dict of the state of entries suitable for
+                  updating :attr:`Bcfg2.Client.Frame.Frame.states`
+        """
+        return dict()
 
-    def BundleNotUpdated(self, bundle, states):  # pylint: disable=W0613
+    def BundleNotUpdated(self, bundle):  # pylint: disable=W0613
         """ Callback that is invoked when a bundle has been updated.
 
         :param bundle: The bundle that has been updated
         :type bundle: lxml.etree._Element
-        :param states: The :attr:`Bcfg2.Client.Frame.Frame.states` dict
-        :type states: dict
-        :returns: None """
-        return
+        :returns: dict - A dict of the state of entries suitable for
+                  updating :attr:`Bcfg2.Client.Frame.Frame.states`
+        """
+        return dict()
 
-    def Inventory(self, states, structures=None):
+    def Inventory(self, structures=None):
         """ Take an inventory of the system as it exists.  This
         involves two steps:
 
@@ -175,18 +166,19 @@ class Tool(object):
         is the entry tag.  E.g., a Path entry would be verified by
         calling :func:`VerifyPath`.
 
-        :param states: The :attr:`Bcfg2.Client.Frame.Frame.states` dict
-        :type states: dict
         :param structures: The list of structures (i.e., bundles) to
                            get entries from.  If this is not given,
                            all children of
                            :attr:`Bcfg2.Client.Tools.Tool.config` will
                            be used.
         :type structures: list of lxml.etree._Element
-        :returns: None """
+        :returns: dict - A dict of the state of entries suitable for
+                  updating :attr:`Bcfg2.Client.Frame.Frame.states`
+        """
         if not structures:
             structures = self.config.getchildren()
         mods = self.buildModlist()
+        states = dict()
         for struct in structures:
             for entry in struct.getchildren():
                 if self.canVerify(entry):
@@ -204,8 +196,9 @@ class Tool(object):
                                              self.primarykey(entry)),
                                           exc_info=1)
         self.extra = self.FindExtra()
+        return states
 
-    def Install(self, entries, states):
+    def Install(self, entries):
         """ Install entries.  'Install' in this sense means either
         initially install, or update as necessary to match the
         specification.
@@ -217,9 +210,10 @@ class Tool(object):
 
         :param entries: The entries to install
         :type entries: list of lxml.etree._Element
-        :param states: The :attr:`Bcfg2.Client.Frame.Frame.states` dict
-        :type states: dict
-        :returns: None """
+        :returns: dict - A dict of the state of entries suitable for
+                  updating :attr:`Bcfg2.Client.Frame.Frame.states`
+        """
+        states = dict()
         for entry in entries:
             try:
                 func = getattr(self, "Install%s" % entry.tag)
@@ -235,6 +229,7 @@ class Tool(object):
                 self.logger.error("%s: Unexpected failure installing %s" %
                                   (self.name, self.primarykey(entry)),
                                   exc_info=1)
+        return states
 
     def Remove(self, entries):
         """ Remove specified extra entries.
@@ -433,30 +428,27 @@ class PkgTool(Tool):
                            for pkg in packages)
         return self.pkgtool[0] % pkgargs
 
-    def Install(self, packages, states):
+    def Install(self, packages):
         """ Run a one-pass install where all required packages are
         installed with a single command, followed by single package
         installs in case of failure.
 
         :param entries: The entries to install
         :type entries: list of lxml.etree._Element
-        :param states: The :attr:`Bcfg2.Client.Frame.Frame.states` dict
-        :type states: dict
-        :returns: None """
+        :returns: dict - A dict of the state of entries suitable for
+                  updating :attr:`Bcfg2.Client.Frame.Frame.states`
+        """
         self.logger.info("Trying single pass package install for pkgtype %s" %
                          self.pkgtype)
 
+        states = dict()
         if self.cmd.run(self._get_package_command(packages)):
             self.logger.info("Single Pass Succeded")
             # set all package states to true and flush workqueues
-            pkgnames = [pkg.get('name') for pkg in packages]
-            for entry in list(states.keys()):
-                if (entry.tag == 'Package'
-                    and entry.get('type') == self.pkgtype
-                    and entry.get('name') in pkgnames):
-                    self.logger.debug('Setting state to true for pkg %s' %
-                                      entry.get('name'))
-                    states[entry] = True
+            for entry in packages:
+                self.logger.debug('Setting state to true for %s' %
+                                  self.primarykey(entry))
+                states[entry] = True
             self.RefreshPackages()
         else:
             self.logger.error("Single Pass Failed")
@@ -474,10 +466,13 @@ class PkgTool(Tool):
                     if self.cmd.run(self._get_package_command([pkg])):
                         states[pkg] = True
                     else:
+                        states[pkg] = False
                         self.logger.error("Failed to install package %s" %
                                           pkg.get('name'))
             self.RefreshPackages()
-        self.modified.extend(entry for entry in packages if states[entry])
+        self.modified.extend(entry for entry in packages
+                             if entry in states and states[entry])
+        return states
 
     def RefreshPackages(self):
         """ Refresh the internal representation of the package
@@ -567,7 +562,7 @@ class SvcTool(Tool):
                 self.InstallService(entry)
     Remove.__doc__ = Tool.Remove.__doc__
 
-    def BundleUpdated(self, bundle, states):
+    def BundleUpdated(self, bundle):
         if self.setup['servicemode'] == 'disabled':
             return
 
@@ -597,9 +592,10 @@ class SvcTool(Tool):
             if not success:
                 self.logger.error("Failed to manipulate service %s" %
                                   (entry.get('name')))
+        return dict()
     BundleUpdated.__doc__ = Tool.BundleUpdated.__doc__
 
-    def Install(self, entries, states):
+    def Install(self, entries):
         install_entries = []
         for entry in entries:
             if entry.get('install', 'true').lower() == 'false':
@@ -607,7 +603,7 @@ class SvcTool(Tool):
                                  (entry.tag, entry.get('name')))
             else:
                 install_entries.append(entry)
-        return Tool.Install(self, install_entries, states)
+        return Tool.Install(self, install_entries)
     Install.__doc__ = Tool.Install.__doc__
 
     def InstallService(self, entry):

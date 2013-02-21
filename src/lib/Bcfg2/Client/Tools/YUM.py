@@ -13,7 +13,7 @@ import yum.misc
 import rpmUtils.arch
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
-from Bcfg2.Options import get_option_parser
+import Bcfg2.Options
 
 
 def build_yname(pkgname, inst):
@@ -204,7 +204,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         if hasattr(self, "setup"):
             setup = self.setup
         else:
-            setup = get_option_parser()
+            setup = Bcfg2.Options.get_option_parser()
         if hasattr(self, "logger"):
             logger = self.logger
         else:
@@ -797,7 +797,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
 
         cleanup()
 
-    def Install(self, packages, states):  # pylint: disable=R0912,R0914
+    def Install(self, packages):  # pylint: disable=R0912,R0914
         """ Try and fix everything that Yum.VerifyPackages() found
         wrong for each Package Entry.  This can result in individual
         RPMs being installed (for the first time), deleted, downgraded
@@ -815,6 +815,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
              entry is set to True. """
         self.logger.debug('Running Yum.Install()')
 
+        states = dict()
         install_pkgs = []
         gpg_keys = []
         upgrade_pkgs = []
@@ -944,8 +945,8 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                 states[pkg_entry] = self.VerifyPackage(pkg_entry,
                         self.modlists.get(pkg_entry, []))
 
-        for entry in [ent for ent in packages if states[ent]]:
-            self.modified.append(entry)
+        self.modified.extend(ent for ent in packages if states[ent])
+        return states
 
     def Remove(self, packages):
         """

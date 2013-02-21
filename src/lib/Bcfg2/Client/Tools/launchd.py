@@ -117,9 +117,11 @@ class launchd(Bcfg2.Client.Tools.Tool):  # pylint: disable=C0103
                                          status='on')
                 for name in allsrv]
 
-    def BundleUpdated(self, bundle, states):
+    def BundleUpdated(self, bundle):
         """Reload launchd plist."""
-        for entry in [entry for entry in bundle if self.handlesEntry(entry)]:
+        for entry in bundle:
+            if not self.handlesEntry(entry):
+                continue
             if not self.canInstall(entry):
                 self.logger.error("Insufficient information to restart "
                                   "service %s" % entry.get('name'))

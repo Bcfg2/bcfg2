@@ -61,7 +61,7 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
         self.RefreshPackages()
         self.extra = self.FindExtra()
 
-    def Install(self, packages, states):
+    def Install(self, packages):
         '''
         Pacman Install
         '''

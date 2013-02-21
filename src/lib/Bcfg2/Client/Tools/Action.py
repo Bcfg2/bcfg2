@@ -68,19 +68,23 @@ class Action(Bcfg2.Client.Tools.Tool):
             return self.RunAction(entry)
         return True
 
-    def BundleUpdated(self, bundle, states):
+    def BundleUpdated(self, bundle):
         """Run postinstalls when bundles have been updated."""
+        states = dict()
         for action in bundle.findall("Action"):
             if action.get('timing') in ['post', 'both']:
                 if not self._action_allowed(action):
                     continue
                 states[action] = self.RunAction(action)
+        return states
 
-    def BundleNotUpdated(self, bundle, states):
+    def BundleNotUpdated(self, bundle):
         """Run Actions when bundles have not been updated."""
+        states = dict()
         for action in bundle.findall("Action"):
             if (action.get('timing') in ['post', 'both'] and
                 action.get('when') != 'modified'):
                 if not self._action_allowed(action):
                     continue
                 states[action] = self.RunAction(action)
+        return states

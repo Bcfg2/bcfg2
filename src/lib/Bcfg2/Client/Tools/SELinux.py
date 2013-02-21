@@ -13,7 +13,6 @@ import seobject
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Tools.POSIX.File import POSIXFile
-from Bcfg2.Options import get_option_parser
 
 
 def pack128(int_val):
@@ -100,10 +99,6 @@ class SELinux(Bcfg2.Client.Tools.Tool):
         # http://docs.python.org/2/reference/datamodel.html#object.__getattr__
         # for details
 
-    def BundleUpdated(self, _, states):
-        for handler in self.handlers.values():
-            handler.BundleUpdated(states)
-
     def FindExtra(self):
         extra = []
         for handler in self.handlers.values():
@@ -119,7 +114,7 @@ class SELinux(Bcfg2.Client.Tools.Tool):
         in the specification """
         return self.handlers[entry.tag].primarykey(entry)
 
-    def Install(self, entries, states):
+    def Install(self, entries):
         # start a transaction
         semanage = seobject.semanageRecords("")
         if hasattr(semanage, "start"):
@@ -129,13 +124,14 @@ class SELinux(Bcfg2.Client.Tools.Tool):
         else:
             self.logger.debug("SELinux transactions not supported; this may "
                               "slow things down considerably")
-        Bcfg2.Client.Tools.Tool.Install(self, entries, states)
+        states = Bcfg2.Client.Tools.Tool.Install(self, entries)
         if hasattr(semanage, "finish"):
             self.logger.debug("Committing SELinux transaction")
             semanage.finish()
             self.txn = False
             for func, arg, kwargs in self.post_txn_queue:
                 states[arg] = func(*arg, **kwargs)
+        return states
 
     def GenericSEInstall(self, entry):
         """Dispatch install to the proper method according to entry tag"""
@@ -177,7 +173,7 @@ class SELinuxEntryHandler(object):
     def __init__(self, tool, config):
         self.tool = tool
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.setup = get_option_parser()
+        self.setup = tool.setup
         self.config = config
         self._records = None
         self._all = None
@@ -369,11 +365,6 @@ class SELinuxEntryHandler(object):
         return [self.key2entry(key)
                 for key in records.keys()
                 if key not in specified]
-
-    def BundleUpdated(self, states):
-        """ perform any additional magic tasks that need to be run
-        when a bundle is updated """
-        pass
 
 
 class SELinuxSebooleanHandler(SELinuxEntryHandler):

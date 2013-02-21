@@ -53,7 +53,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             if POSIXTool in hdlr.__mro__:
                 # figure out what entry type this handler handles
                 etype = hdlr.__name__[5:].lower()
-                rv[etype] = hdlr(self.logger, self.setup, self.config)
+                rv[etype] = hdlr(self.config)
         return rv
 
     def canVerify(self, entry):
