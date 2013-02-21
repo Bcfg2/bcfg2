@@ -461,7 +461,8 @@ class Frame(object):
                          len(list(self.states.values())))
         self.logger.info('Unmanaged entries:      %d' % len(self.extra))
         if phase == 'final' and self.setup['extra']:
-            for entry in self.extra:
+            for entry in sorted(self.extra, key=lambda e: e.tag + ":" +
+                                e.get('name')):
                 etype = entry.get('type')
                 if etype:
                     self.logger.info("%s:%s:%s" % (entry.tag, etype,
