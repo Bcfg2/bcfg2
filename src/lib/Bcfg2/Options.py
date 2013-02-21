@@ -1061,7 +1061,7 @@ CRYPT_STDOUT = \
            cmd='--stdout',
            long_arg=True)
 CRYPT_PASSPHRASE = \
-    Option('Encryption passphrase (name or passphrase)',
+    Option('Encryption passphrase name',
            default=None,
            cmd='-p',
            odesc='<passphrase>')
