@@ -319,16 +319,13 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
         if collection is None:
             collection = self.get_collection(metadata)
-        # base is the set of initial packages -- explicitly
-        # given in the specification, from expanded package groups,
-        # and essential to the distribution
-        base = set()
+        initial = set()
         to_remove = []
         groups = []
         for struct in structures:
             for pkg in struct.xpath('//Package | //BoundPackage'):
                 if pkg.get("name"):
-                    base.update(collection.packages_from_entry(pkg))
+                    initial.update(collection.packages_from_entry(pkg))
                 elif pkg.get("group"):
                     groups.append((pkg.get("group"),
                                    pkg.get("type")))
@@ -339,6 +336,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                         lxml.etree.tostring(
                             pkg,
                             xml_declaration=False).decode('UTF-8'))
+
+        # base is the set of initial packages explicitly given in the
+        # specification, packages from expanded package groups, and
+        # packages essential to the distribution
+        base = set(initial)
 
         # remove package groups
         for el in to_remove:
@@ -355,7 +357,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if unknown:
             self.logger.info("Packages: Got %d unknown entries" % len(unknown))
             self.logger.info("Packages: %s" % list(unknown))
-        newpkgs = collection.get_new_packages(base, packages)
+        newpkgs = collection.get_new_packages(initial, packages)
         self.debug_log("Packages: %d base, %d complete, %d new" %
                        (len(base), len(packages), len(newpkgs)))
         newpkgs.sort()
