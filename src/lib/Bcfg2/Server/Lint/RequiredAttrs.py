@@ -43,7 +43,7 @@ def is_octal_mode(val):
 def is_username(val):
     """ Return True if val is a string giving either a positive
     integer uid, or a valid Unix username """
-    return re.match(r'^([a-z][_-a-z0-9]{0,30}|\d+)$', val)
+    return re.match(r'^([a-z][-_a-z0-9]{0,30}|\d+)$', val)
 
 
 def is_device_mode(val):
