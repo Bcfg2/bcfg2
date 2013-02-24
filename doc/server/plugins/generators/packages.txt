@@ -383,9 +383,9 @@ will report information like::
     Packages: Updating http://mirror.centos.org/centos/5/extras/x86_64/repodata/filelists.xml.gz
     Packages: Updating http://mirror.centos.org/centos/5/extras/x86_64/repodata/primary.xml.gz
 
-Once line per file download needed. ``Packages/sources.xml`` will
-be reloaded at this time, so any source specification changes (new
-or modified sources in this file) will be reflected by the server at
+One line per file download needed. ``Packages/sources.xml`` will be
+reloaded at this time, so any source specification changes (new or
+modified sources in this file) will be reflected by the server at
 this point.
 
 This process is much, much faster if you use the :ref:`native yum
