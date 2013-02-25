@@ -334,6 +334,12 @@ def get_bool(val):
         raise ValueError("Not a boolean value", val)
 
 
+def get_int(val):
+    """ given a string value of an integer configuration option,
+    return an actual int """
+    return int(val)
+
+
 def get_timeout(val):
     """ convert the timeout value into a float or None """
     if val is None:
@@ -863,7 +869,7 @@ TEST_CHILDREN = \
            cmd='--children',
            odesc='<children>',
            cf=('bcfg2_test', 'children'),
-           cook=int,
+           cook=get_int,
            long_arg=True)
 TEST_XUNIT = \
     Option('Output an XUnit result file with --children',

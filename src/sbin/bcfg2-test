@@ -136,6 +136,7 @@ class ClientTest(TestCase):
             "Configuration contains unknown packages: %s" % \
             ", ".join(unknown_pkgs)
 
+        # check for render failures
         failures = []
         msg = output + ["Failures:"]
         for failure in config.xpath('//*[@failure]'):
