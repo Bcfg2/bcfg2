@@ -291,18 +291,10 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         """ Implementing from superclass to check for existence of either
         name or group attribute for Package entry in the case of a YUM 
         group. """
-        required = self.__req__[entry.tag]
-        if isinstance(required, dict):
-            required = ["type"]
-            try:
-                required.extend(self.__req__[entry.tag][entry.get("type")])
-            except KeyError:
-                pass
+        missing = Bcfg2.Client.Tools.PkgTool.missing_attrs(self, entry)
 
-        missing = [attr for attr in required
-                   if attr not in entry.attrib or not entry.attrib[attr]]
-        
-        if entry.get('name', None) == None and entry.get('group', None) == None:
+        if entry.get('name', None) == None and
+           entry.get('group', None) == None:
             missing += ['name', 'group']
         return missing
 
