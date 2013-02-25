@@ -334,6 +334,12 @@ def get_bool(val):
         raise ValueError("Not a boolean value", val)
 
 
+def get_int(val):
+    """ given a string value of an integer configuration option,
+    return an actual int """
+    return int(val)
+
+
 def get_timeout(val):
     """ convert the timeout value into a float or None """
     if val is None:
@@ -831,7 +837,7 @@ CLIENT_COMMAND_TIMEOUT = \
 
 # bcfg2-test and bcfg2-lint options
 TEST_NOSEOPTS = \
-    Option('Options to pass to nosetests',
+    Option('Options to pass to nosetests. Only honored with --children 0',
            default=[],
            cmd='--nose-options',
            odesc='<opts>',
@@ -845,6 +851,21 @@ TEST_IGNORE = \
            odesc='<Type>:<name>,<Type>:<name>',
            cf=('bcfg2_test', 'ignore_entries'),
            cook=list_split,
+           long_arg=True)
+TEST_CHILDREN = \
+    Option('Spawn this number of children for bcfg2-test (python 2.6+)',
+           default=0,
+           cmd='--children',
+           odesc='<children>',
+           cf=('bcfg2_test', 'children'),
+           cook=get_int,
+           long_arg=True)
+TEST_XUNIT = \
+    Option('Output an XUnit result file with --children',
+           default=None,
+           cmd='--xunit',
+           odesc='<xunit file>',
+           cf=('bcfg2_test', 'xunit'),
            long_arg=True)
 LINT_CONFIG = \
     Option('Specify bcfg2-lint configuration file',
@@ -1239,6 +1260,12 @@ DATABASE_COMMON_OPTIONS = dict(web_configfile=WEB_CFILE,
 
 REPORTING_COMMON_OPTIONS = dict(reporting_file_limit=REPORTING_FILE_LIMIT,
                                 reporting_transport=REPORTING_TRANSPORT)
+
+TEST_COMMON_OPTIONS = dict(noseopts=TEST_NOSEOPTS,
+                           test_ignore=TEST_IGNORE,
+                           children=TEST_CHILDREN,
+                           xunit=TEST_XUNIT,
+                           validate=CFG_VALIDATION)
 
 
 class OptionParser(OptionSet):
