@@ -679,7 +679,9 @@ class YumCollection(Collection):
         else:
             pkgs = dict()
             for gdict in gdicts:
-                pkgs[gdict['group']] = Collection.get_group(self, gdict['group'], gdict['type'])
+                pkgs[gdict['group']] = Collection.get_group(self, 
+                                                            gdict['group'],
+                                                            gdict['type'])
             return pkgs
 
     def _element_to_pkg(self, el, name):
@@ -1008,7 +1010,8 @@ class YumSource(Source):
         if not self.use_yum:
             cache = open(self.cachefile, 'wb')
             cPickle.dump((self.packages, self.deps, self.provides,
-                          self.filemap, self.url_map, self.yumgroups), cache, 2)
+                          self.filemap, self.url_map,
+                          self.yumgroups), cache, 2)
             cache.close()
 
     def load_state(self):
