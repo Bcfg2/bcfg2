@@ -5,7 +5,6 @@ without failures"""
 
 import os
 import sys
-import signal
 import fnmatch
 import logging
 import Bcfg2.Logger
@@ -73,19 +72,6 @@ class ClientTest(TestCase):
     id = __str__
 
 
-def get_sigint_handler(core):
-    """ Get a function that handles SIGINT/Ctrl-C by shutting down the
-    core and exiting properly."""
-
-    def hdlr(sig, frame):  # pylint: disable=W0613
-        """ Handle SIGINT/Ctrl-C by shutting down the core and exiting
-        properly. """
-        core.shutdown()
-        os._exit(1)  # pylint: disable=W0212
-
-    return hdlr
-
-
 def main():
     optinfo = dict(noseopts=Bcfg2.Options.TEST_NOSEOPTS,
                    test_ignore=Bcfg2.Options.TEST_IGNORE,
@@ -113,7 +99,6 @@ def main():
         setup['noseopts'].append("-v")
 
     core = Bcfg2.Server.Core.BaseCore(setup)
-    signal.signal(signal.SIGINT, get_sigint_handler(core))
 
     ignore = dict()
     for entry in setup['test_ignore']:

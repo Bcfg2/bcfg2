@@ -4,26 +4,12 @@
 import os
 import sys
 import time
-import signal
 import logging
 import operator
 import Bcfg2.Logger
 import Bcfg2.Server.Core
 
 LOGGER = None
-
-
-def get_sigint_handler(core):
-    """ Get a function that handles SIGINT/Ctrl-C by shutting down the
-    core and exiting properly."""
-
-    def hdlr(sig, frame):  # pylint: disable=W0613
-        """ Handle SIGINT/Ctrl-C by shutting down the core and exiting
-        properly. """
-        core.shutdown()
-        os._exit(1)  # pylint: disable=W0212
-
-    return hdlr
 
 
 def main():
@@ -53,7 +39,6 @@ def main():
     logger = logging.getLogger(sys.argv[0])
 
     core = Bcfg2.Server.Core.BaseCore(setup)
-    signal.signal(signal.SIGINT, get_sigint_handler(core))
     logger.info("Bcfg2 server core loaded")
     core.fam.handle_events_in_interval(0.1)
     logger.debug("Repository events processed")
