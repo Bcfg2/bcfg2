@@ -293,7 +293,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         group. """
         missing = Bcfg2.Client.Tools.PkgTool.missing_attrs(self, entry)
 
-        if entry.get('name', None) == None and
+        if entry.get('name', None) == None and \
            entry.get('group', None) == None:
             missing += ['name', 'group']
         return missing
@@ -450,14 +450,20 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             instances = []
             if self.yumbase.comps.has_group(entry.get('group')):
                 group = self.yumbase.comps.return_group(entry.get('group'))
-                group_type = getattr(group, '%s_packages' % 
-                                     entry.get('choose', 'default'))
                 group_packages = [p
                                   for p, d in group.mandatory_packages.items()
-                                  if d] + \
-                                 [p
-                                  for p, d in group_type.items()
                                   if d]
+                group_type = entry.get('choose', 'default')
+                if group_type in ['default', 'optional', 'all']:
+                    group_packages += [p
+                                       for p, d in 
+                                                 group.default_packages.items()
+                                       if d]
+                if group_type in ['optional', 'all']:
+                    group_packages += [p
+                                       for p, d in 
+                                                group.optional_packages.items()
+                                       if d]
                 if len(group_packages) == 0:
                     self.logger.error("No packages found for group %s" % 
                                       entry.get("group"))
