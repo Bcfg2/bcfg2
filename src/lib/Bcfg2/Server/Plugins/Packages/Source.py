@@ -295,6 +295,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
                 else:
                     setting['baseurl'] = self.rawurl
                 setting['url'] = baseurl % setting
+                setting['name'] = self.get_repo_name(setting)
             self.url_map.extend(usettings)
 
     @property
