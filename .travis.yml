@@ -4,6 +4,7 @@ python:
   - "2.6"
   - "2.7"
   - "3.2"
+  - "3.3"
 env:
   - WITH_OPTIONAL_DEPS=yes
   - WITH_OPTIONAL_DEPS=no
@@ -15,7 +16,7 @@ before_install:
   - testsuite/before_install.sh
 install:
   - testsuite/install.sh
-  - pip install -e .
+  - pip install --use-mirrors -e .
 script:
   - nosetests testsuite
 branches:
@@ -25,7 +26,7 @@ branches:
     - py3k
 notifications:
   email: chris.a.st.pierre@gmail.com
-  irc: 
+  irc:
     channels:
       - "irc.freenode.org#bcfg2"
     use_notice: true
