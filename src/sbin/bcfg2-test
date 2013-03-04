@@ -61,8 +61,7 @@ class ClientTest(TestCase):
         sbundles = [el.get('name') for el in config.findall("Bundle")]
         missing = [b for b in metadata.bundles if b not in sbundles]
         assert len(missing) == 0, \
-            "\n".join(output + ["Configuration is missing bundle(s): %s" %
-                                ':'.join(missing)])
+            "Configuration is missing bundle(s): %s" % ':'.join(missing)
 
         # check for unknown packages
         unknown_pkgs = config.xpath('//Package[@type="unknown"]')
