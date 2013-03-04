@@ -56,6 +56,20 @@ class ClientTest(TestCase):
         assert len(config.findall("Bundle")) > 0, \
             "%s has no content" % self.client
 
+        # check for missing bundles
+        metadata = self.bcfg2_core.build_metadata(self.client)
+        sbundles = [el.get('name') for el in config.findall("Bundle")]
+        missing = [b for b in metadata.bundles if b not in sbundles]
+        assert len(missing) == 0, \
+            "\n".join(output + ["Configuration is missing bundle(s): %s" %
+                                ':'.join(missing)])
+
+        # check for unknown packages
+        unknown_pkgs = config.xpath('//Package[@type="unknown"]')
+        assert len(unknown_pkgs) == 0, \
+            "Configuration contains unknown packages: %s" % \
+            ", ".join(unknown_pkgs)
+
         failures = []
         msg = ["Failures:"]
         for failure in config.xpath('//*[@failure]'):
