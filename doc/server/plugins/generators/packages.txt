@@ -279,7 +279,8 @@ something like this:
         <Source type="apt" recommended="true" ...>
 
     .. warning:: You must regenerate the Packages cache when adding or
-                 removing the recommended attribute.
+                 removing the recommended attribute (``bcfg2-admin xcmd
+		 Packages.Refresh``).
 
     .. [#f1] Bcfg2 will by default add **Essential** packages to the
              client specification. You can disable this behavior by
