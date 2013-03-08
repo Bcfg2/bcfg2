@@ -135,11 +135,14 @@ class Interaction(models.Model):
     seinterfaces = models.ManyToManyField("SEInterfaceEntry")
     sepermissives = models.ManyToManyField("SEPermissiveEntry")
     semodules = models.ManyToManyField("SEModuleEntry")
+    posixusers = models.ManyToManyField("POSIXUserEntry")
+    posixgroups = models.ManyToManyField("POSIXGroupEntry")
     failures = models.ManyToManyField("FailureEntry")
 
     entry_types = ('actions', 'packages', 'paths', 'services', 'sebooleans',
                    'seports', 'sefcontexts', 'senodes', 'selogins', 'seusers',
-                   'seinterfaces', 'sepermissives', 'semodules')
+                   'seinterfaces', 'sepermissives', 'semodules', 'posixusers',
+                   'posixgroups')
 
     # Formerly InteractionMetadata
     profile = models.ForeignKey("Group", related_name="+", null=True)
@@ -566,6 +569,30 @@ class SEModuleEntry(SuccessEntry):
     current_disabled = models.BooleanField(default=False)
 
     ENTRY_TYPE = r"SEModule"
+
+
+class POSIXUserEntry(SuccessEntry):
+    """ POSIX user """
+    uid = models.IntegerField(null=True)
+    current_uid = models.IntegerField(null=True)
+    group = models.CharField(max_length=64)
+    current_group = models.CharField(max_length=64, null=True)
+    gecos = models.CharField(max_length=1024)
+    current_gecos = models.CharField(max_length=1024, null=True)
+    home = models.CharField(max_length=1024)
+    current_home = models.CharField(max_length=1024, null=True)
+    shell = models.CharField(max_length=1024, default='/bin/bash')
+    current_shell = models.CharField(max_length=1024, null=True)
+
+    ENTRY_TYPE = r"POSIXUser"
+
+
+class POSIXGroupEntry(SuccessEntry):
+    """ POSIX group """
+    gid = models.IntegerField(null=True)
+    current_gid = models.IntegerField(null=True)
+
+    ENTRY_TYPE = r"POSIXGroup"
 
 
 class PackageEntry(SuccessEntry):

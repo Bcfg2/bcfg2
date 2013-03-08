@@ -232,6 +232,24 @@ class DjangoORM(StorageBase):
                                     defaults=dict(disabled='false'),
                                     boolean=['disabled', 'current_disabled'])
 
+    def _import_POSIXUser(self, entry, state):
+        defaults = dict(group=entry.get("name"),
+                        gecos=entry.get("name"),
+                        shell='/bin/bash',
+                        uid=entry.get("current_uid"))
+        if entry.get('name') == 'root':
+            defaults['home'] = '/root'
+        else:
+            defaults['home'] = '/home/%s' % entry.get('name')
+
+        # TODO: supplementary group membership
+        return self._import_default(entry, state, defaults=defaults)
+
+    def _import_POSIXGroup(self, entry, state):
+        return self._import_default(
+            entry, state,
+            defaults=dict(gid=entry.get("current_gid")))
+
     def _import_unknown(self, entry, _):
         self.logger.error("Unknown type %s not handled by reporting yet" %
                           entry.tag)
