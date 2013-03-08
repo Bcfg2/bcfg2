@@ -1255,7 +1255,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def end_statistics(self, metadata):
         """ Hook to toggle clients in bootstrap mode """
         if self.auth.get(metadata.hostname,
-                         self.core.setup('authentication')) == 'bootstrap':
+                         self.core.setup['authentication']) == 'bootstrap':
             self.update_client(metadata.hostname, dict(auth='cert'))
 
     def viz(self, hosts, bundles, key, only_client, colors):
