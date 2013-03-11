@@ -10,6 +10,7 @@ import Bcfg2.Options
 import Bcfg2.Server.Admin
 from Bcfg2.Compat import StringIO
 
+
 def mode_import(modename):
     """Load Bcfg2.Server.Admin.<mode>."""
     modname = modename.capitalize()

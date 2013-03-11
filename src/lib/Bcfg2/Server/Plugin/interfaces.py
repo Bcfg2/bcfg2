@@ -313,6 +313,7 @@ class Threaded(object):
         """
         raise NotImplementedError
 
+
 class ThreadedStatistics(Statistics, Threaded, threading.Thread):
     """ ThreadedStatistics plugins process client statistics in a
     separate thread. """

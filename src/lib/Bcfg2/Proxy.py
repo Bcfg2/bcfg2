@@ -51,12 +51,15 @@ class ProxyError(Exception):
             msg = str(err)
         Exception.__init__(self, msg)
 
+
 class CertificateError(Exception):
     def __init__(self, commonName):
         self.commonName = commonName
+
     def __str__(self):
         return ("Got unallowed commonName %s from server"
                 % self.commonName)
+
 
 _orig_Method = xmlrpclib._Method
 

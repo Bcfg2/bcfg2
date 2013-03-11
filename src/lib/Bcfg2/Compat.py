@@ -51,7 +51,8 @@ except ImportError:
 
 # xmlrpc imports
 try:
-    import xmlrpclib, SimpleXMLRPCServer
+    import xmlrpclib
+    import SimpleXMLRPCServer
 except ImportError:
     import xmlrpc.client as xmlrpclib
     import xmlrpc.server as SimpleXMLRPCServer
@@ -72,6 +73,7 @@ try:
     unicode = unicode
 except NameError:
     unicode = str
+
 
 def u_str(string, encoding=None):
     """ print to file compatibility """

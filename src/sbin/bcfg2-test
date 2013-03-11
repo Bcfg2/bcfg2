@@ -5,7 +5,6 @@ without failures"""
 
 import os
 import sys
-import signal
 import fnmatch
 import logging
 import Bcfg2.Logger
@@ -26,7 +25,7 @@ except ImportError:
 class CapturingLogger(object):
     """ Fake logger that captures logging output so that errors are
     only displayed for clients that fail tests """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # pylint: disable=W0613
         self.output = []
 
     def error(self, msg):
@@ -46,6 +45,7 @@ class CapturingLogger(object):
         self.output.append(msg)
 
     def reset_output(self):
+        """ Reset the captured output """
         self.output = []
 
 
@@ -182,7 +182,8 @@ def run_child(setup, clients, queue):
     core.shutdown()
 
 
-def main():
+def parse_args():
+    """ Parse command line arguments. """
     optinfo = dict(Bcfg2.Options.TEST_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
@@ -230,7 +231,12 @@ def main():
                 pass
         if xunitfile and not setup['xunit']:
             setup['xunit'] = xunitfile
+    return setup
 
+
+def main():
+    setup = parse_args()
+    logger = logging.getLogger(sys.argv[0])
     core = get_core(setup)
 
     if setup['args']:
