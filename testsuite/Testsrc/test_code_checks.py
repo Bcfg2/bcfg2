@@ -49,7 +49,7 @@ contingent_checks = {
 
 # perform only error checking on the listed files
 error_checks = {
-    "sbin": ["bcfg2-build-reports", "bcfg2-reports"],
+    "sbin": ["bcfg2-build-reports"],
     "lib/Bcfg2": ["Proxy.py", "SSLServer.py", "Reporting"],
     "lib/Bcfg2/Server": ["Reports", "SchemaUpdater"],
     "lib/Bcfg2/Server/Admin": ["Compare.py",
