@@ -6,9 +6,9 @@ import sys
 import logging
 import tempfile
 import lxml.etree
-from subprocess import Popen, PIPE, STDOUT
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
+from Bcfg2.Utils import Executor
 from Bcfg2.Compat import ConfigParser
 from Bcfg2.Server.Plugin import PluginExecutionError
 
@@ -90,6 +90,7 @@ class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
         self.parent = parent
         self.key = None
         self.cert = None
+        self.cmd = Executor(timeout=120)
 
     def handle_event(self, event):
         action = event.code2str()
@@ -123,14 +124,14 @@ class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
         elif ktype == 'dsa':
             cmd = ["openssl", "dsaparam", "-noout", "-genkey", bits]
         self.debug_log("SSLCA: Generating new key: %s" % " ".join(cmd))
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        key, err = proc.communicate()
-        if proc.wait():
+        result = self.cmd.run(cmd)
+        if not result.success:
             raise PluginExecutionError("SSLCA: Failed to generate key %s for "
                                        "%s: %s" % (entry.get("name"),
-                                                   metadata.hostname, err))
-        open(os.path.join(self.path, filename), 'w').write(key)
-        return key
+                                                   metadata.hostname,
+                                                   result.error))
+        open(os.path.join(self.path, filename), 'w').write(result.stdout)
+        return result.stdout
 
     def build_cert(self, entry, metadata, keyfile):
         """ generate a new cert """
@@ -163,13 +164,10 @@ class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
 
             self.debug_log("SSLCA: Generating new certificate: %s" %
                            " ".join(_scrub_pass(a) for a in cmd))
-            proc = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-            (cert, err) = proc.communicate()
-            if proc.wait():
-                # pylint: disable=E1103
+            result = self.cmd.run(cmd)
+            if not result.success:
                 raise PluginExecutionError("SSLCA: Failed to generate cert: %s"
-                                           % err.splitlines()[-1])
-                # pylint: enable=E1103
+                                           % result.error)
         finally:
             try:
                 if req_config and os.path.exists(req_config):
@@ -179,6 +177,7 @@ class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
             except OSError:
                 self.logger.error("SSLCA: Failed to unlink temporary files: %s"
                                   % sys.exc_info()[1])
+        cert = result.stdout
         if cert_spec['append_chain'] and 'chaincert' in ca:
             cert += open(ca['chaincert']).read()
 
@@ -242,11 +241,10 @@ class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
         cmd = ["openssl", "req", "-new", "-config", req_config,
                "-days", days, "-key", keyfile, "-text", "-out", req]
         self.debug_log("SSLCA: Generating new CSR: %s" % " ".join(cmd))
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-        err = proc.communicate()[1]
-        if proc.wait():
+        result = self.cmd.run(cmd)
+        if not result.success:
             raise PluginExecutionError("SSLCA: Failed to generate CSR: %s" %
-                                       err)
+                                       result.error)
         return req
 
     def verify_cert(self, filename, keyfile, entry, metadata):
@@ -277,34 +275,34 @@ class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
         cmd.extend([chaincert, cert])
         self.debug_log("SSLCA: Verifying %s against CA: %s" %
                        (entry.get("name"), " ".join(cmd)))
-        res = Popen(cmd, stdout=PIPE, stderr=STDOUT).stdout.read()
-        if res == cert + ": OK\n":
+        result = self.cmd.run(cmd)
+        if result.stdout == cert + ": OK\n":
             self.debug_log("SSLCA: %s verified successfully against CA" %
                            entry.get("name"))
             return True
         self.logger.warning("SSLCA: %s failed verification against CA: %s" %
-                            (entry.get("name"), res))
+                            (entry.get("name"), result.error))
         return False
+
+    def _get_modulus(self, fname, ftype="x509"):
+        """ get the modulus from the given file """
+        cmd = ["openssl", ftype, "-noout", "-modulus", "-in", fname]
+        self.debug_log("SSLCA: Getting modulus of %s for verification: %s" %
+                       (fname, " ".join(cmd)))
+        result = self.cmd.run(cmd)
+        if not result.success:
+            self.logger.warning("SSLCA: Failed to get modulus of %s: %s" %
+                                (fname, result.error))
+        return result.stdout.strip()
 
     def verify_cert_against_key(self, filename, keyfile):
         """
         check that a certificate validates against its private key.
         """
-        def _modulus(fname, ftype="x509"):
-            """ get the modulus from the given file """
-            cmd = ["openssl", ftype, "-noout", "-modulus", "-in", fname]
-            self.debug_log("SSLCA: Getting modulus of %s for verification: %s"
-                           % (fname, " ".join(cmd)))
-            proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-            rv, err = proc.communicate()
-            if proc.wait():
-                self.logger.warning("SSLCA: Failed to get modulus of %s: %s" %
-                                    (fname, err))
-            return rv.strip()  # pylint: disable=E1103
 
         certfile = os.path.join(self.path, filename)
-        cert = _modulus(certfile)
-        key = _modulus(keyfile, ftype="rsa")
+        cert = self._get_modulus(certfile)
+        key = self._get_modulus(keyfile, ftype="rsa")
         if cert == key:
             self.debug_log("SSLCA: %s verified successfully against key %s" %
                            (filename, keyfile))

@@ -3,7 +3,7 @@
 import os
 import shutil
 import tempfile
-import subprocess
+from Bcfg2.Utils import Executor
 from Bcfg2.Options import get_option_parser
 from Bcfg2.Server.Plugin import StructFile
 from Bcfg2.Server.Plugins.Cfg import CfgCreator, CfgCreationError
@@ -33,6 +33,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         pubkey_name = os.path.join(pubkey_path, os.path.basename(pubkey_path))
         self.pubkey_creator = CfgPublicKeyCreator(pubkey_name)
         self.setup = get_option_parser()
+        self.cmd = Executor()
     __init__.__doc__ = CfgCreator.__init__.__doc__
 
     @property
@@ -104,18 +105,17 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
                 log_cmd.append("''")
             self.debug_log("Cfg: Generating new SSH key pair: %s" %
                            " ".join(log_cmd))
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-            err = proc.communicate()[1]
-            if proc.wait():
+            result = self.cmd.run(cmd)
+            if not result.success:
                 raise CfgCreationError("Cfg: Failed to generate SSH key pair "
                                        "at %s for %s: %s" %
-                                       (filename, metadata.hostname, err))
-            elif err:
+                                       (filename, metadata.hostname,
+                                        result.error))
+            elif result.stderr:
                 self.logger.warning("Cfg: Generated SSH key pair at %s for %s "
                                     "with errors: %s" % (filename,
                                                          metadata.hostname,
-                                                         err))
+                                                         result.stderr))
             return filename
         except:
             shutil.rmtree(tempdir)

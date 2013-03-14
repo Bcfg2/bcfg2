@@ -8,8 +8,7 @@ import random
 import socket
 import string
 import getpass
-import subprocess
-
+from Bcfg2.Utils import Executor
 import Bcfg2.Server.Admin
 import Bcfg2.Server.Plugin
 import Bcfg2.Options
@@ -103,23 +102,26 @@ def gen_password(length):
 
 def create_key(hostname, keypath, certpath, country, state, location):
     """Creates a bcfg2.key at the directory specifed by keypath."""
-    kcstr = ("openssl req -batch -x509 -nodes -subj '/C=%s/ST=%s/L=%s/CN=%s' "
-             "-days 1000 -newkey rsa:2048 -keyout %s -noout" % (country,
-                                                                state,
-                                                                location,
-                                                                hostname,
-                                                                keypath))
-    subprocess.call((kcstr), shell=True)
-    ccstr = ("openssl req -batch -new  -subj '/C=%s/ST=%s/L=%s/CN=%s' -key %s "
-             "| openssl x509 -req -days 1000 -signkey %s -out %s" % (country,
-                                                                     state,
-                                                                     location,
-                                                                     hostname,
-                                                                     keypath,
-                                                                     keypath,
-                                                                     certpath))
-    subprocess.call((ccstr), shell=True)
+    cmd = Executor(timeout=120)
+    subject = "/C=%s/ST=%s/L=%s/CN=%s'" % (country, state, location, hostname)
+    key = cmd.run(["openssl", "req", "-batch", "-x509", "-nodes",
+                   "-subj", subject, "-days", "1000", "-newkey", "rsa:2048",
+                   "-keyout", keypath, "-noout"])
+    if not key.success:
+        print("Error generating key: %s" % key.error)
+        return
     os.chmod(keypath, stat.S_IRUSR | stat.S_IWUSR)  # 0600
+    csr = cmd.run(["openssl", "req", "-batch", "-new", "-subj", subject,
+                   "-key", keypath])
+    if not csr.success:
+        print("Error generating certificate signing request: %s" % csr.error)
+        return
+    cert = cmd.run(["openssl", "x509", "-req", "-days", "1000",
+                    "-signkey", keypath, "-out", certpath],
+                   inputdata=csr.stdout)
+    if not cert.success:
+        print("Error signing certificate: %s" % cert.error)
+        return
 
 
 def create_conf(confpath, confdata):

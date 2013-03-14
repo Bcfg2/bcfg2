@@ -58,9 +58,9 @@ import errno
 import socket
 import logging
 import lxml.etree
-from subprocess import Popen, PIPE
 import Bcfg2.Server.FileMonitor
 import Bcfg2.Server.Plugin
+from Bcfg2.Utils import Executor
 from Bcfg2.Options import get_option_parser
 # pylint: disable=W0622
 from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
@@ -104,10 +104,6 @@ FL = '{http://linux.duke.edu/metadata/filelists}'
 
 PULPSERVER = None
 PULPCONFIG = None
-
-#: The path to bcfg2-yum-helper
-HELPER = None
-
 
 def _setup_pulp():
     """ Connect to a Pulp server and pass authentication credentials.
@@ -278,6 +274,7 @@ class YumCollection(Collection):
                             debug=debug)
         self.keypath = os.path.join(self.cachepath, "keys")
 
+        self._helper = None
         if self.use_yum:
             #: Define a unique cache file for this collection to use
             #: for cached yum metadata
@@ -290,8 +287,10 @@ class YumCollection(Collection):
             #: resolving packages with the Python yum libraries
             self.cfgfile = os.path.join(self.cachefile, "yum.conf")
             self.write_config()
+            self.cmd = Executor()
         else:
             self.cachefile = None
+            self.cmd = None
 
         if HAS_PULP and self.has_pulp_sources:
             _setup_pulp()
@@ -326,20 +325,18 @@ class YumCollection(Collection):
         a call to it; I wish there was a way to do this without
         forking, but apparently not); finally we check in /usr/sbin,
         the default location. """
-        global HELPER
-        if not HELPER:
+        if not self._helper:
             try:
-                HELPER = self.setup.cfp.get("packages:yum", "helper")
+                self._helper = self.setup.cfp.get("packages:yum", "helper")
             except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
                 # first see if bcfg2-yum-helper is in PATH
                 try:
                     self.debug_log("Checking for bcfg2-yum-helper in $PATH")
-                    Popen(['bcfg2-yum-helper'],
-                          stdin=PIPE, stdout=PIPE, stderr=PIPE).wait()
-                    HELPER = 'bcfg2-yum-helper'
+                    self.cmd.run(['bcfg2-yum-helper'])
+                    self._helper = 'bcfg2-yum-helper'
                 except OSError:
-                    HELPER = "/usr/sbin/bcfg2-yum-helper"
-        return HELPER
+                    self._helper = "/usr/sbin/bcfg2-yum-helper"
+        return self._helper
 
     @property
     def use_yum(self):
@@ -879,28 +876,18 @@ class YumCollection(Collection):
             cmd.append("-v")
         cmd.append(command)
         self.debug_log("Packages: running %s" % " ".join(cmd), flag=verbose)
-        try:
-            helper = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-        except OSError:
-            err = sys.exc_info()[1]
-            self.logger.error("Packages: Failed to execute %s: %s" %
-                              (" ".join(cmd), err))
-            return None
-
         if inputdata:
-            idata = json.dumps(inputdata)
-            (stdout, stderr) = helper.communicate(idata)
+            result = self.cmd.run(cmd, inputdata=json.dumps(inputdata))
         else:
-            (stdout, stderr) = helper.communicate()
-        rv = helper.wait()
-        if rv:
-            self.logger.error("Packages: error running bcfg2-yum-helper "
-                              "(returned %d): %s" % (rv, stderr))
-        else:
+            result = self.cmd.run(cmd)
+        if not result.success:
+            self.logger.error("Packages: error running bcfg2-yum-helper: %s" %
+                              result.error)
+        elif result.stderr:
             self.debug_log("Packages: debug info from bcfg2-yum-helper: %s" %
-                           stderr, flag=verbose)
+                           result.stderr, flag=verbose)
         try:
-            return json.loads(stdout)
+            return json.loads(result.stdout)
         except ValueError:
             err = sys.exc_info()[1]
             self.logger.error("Packages: error reading bcfg2-yum-helper "

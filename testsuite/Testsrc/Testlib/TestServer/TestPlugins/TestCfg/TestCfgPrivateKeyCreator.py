@@ -98,24 +98,23 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
 
     @patch("shutil.rmtree")
     @patch("tempfile.mkdtemp")
-    @patch("subprocess.Popen")
-    def test__gen_keypair(self, mock_Popen, mock_mkdtemp, mock_rmtree):
+    def test__gen_keypair(self, mock_mkdtemp, mock_rmtree):
         pkc = self.get_obj()
+        pkc.cmd = Mock()
         pkc.XMLMatch = Mock()
         mock_mkdtemp.return_value = datastore
         metadata = Mock()
 
-        proc = Mock()
-        proc.wait.return_value = 0
-        proc.communicate.return_value = MagicMock()
-        mock_Popen.return_value = proc
+        exc = Mock()
+        exc.success = True
+        pkc.cmd.run.return_value = exc
 
         spec = lxml.etree.Element("PrivateKey")
         pkc.XMLMatch.return_value = spec
 
         def reset():
             pkc.XMLMatch.reset_mock()
-            mock_Popen.reset_mock()
+            pkc.cmd.reset_mock()
             mock_mkdtemp.reset_mock()
             mock_rmtree.reset_mock()
 
@@ -123,10 +122,9 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
                          os.path.join(datastore, "privkey"))
         pkc.XMLMatch.assert_called_with(metadata)
         mock_mkdtemp.assert_called_with()
-        self.assertItemsEqual(mock_Popen.call_args[0][0],
-                              ["ssh-keygen", "-f",
-                               os.path.join(datastore, "privkey"),
-                               "-t", "rsa", "-N", ""])
+        pkc.cmd.run.assert_called_with(["ssh-keygen", "-f",
+                                        os.path.join(datastore, "privkey"),
+                                        "-t", "rsa", "-N", ""])
 
         reset()
         lxml.etree.SubElement(spec, "Params", bits="768", type="dsa")
@@ -137,13 +135,12 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
                          os.path.join(datastore, "privkey"))
         pkc.XMLMatch.assert_called_with(metadata)
         mock_mkdtemp.assert_called_with()
-        self.assertItemsEqual(mock_Popen.call_args[0][0],
-                              ["ssh-keygen", "-f",
-                               os.path.join(datastore, "privkey"),
-                               "-t", "dsa", "-b", "768", "-N", "foo"])
+        pkc.cmd.run.assert_called_with(["ssh-keygen", "-f",
+                                        os.path.join(datastore, "privkey"),
+                                        "-t", "dsa", "-b", "768", "-N", "foo"])
 
         reset()
-        proc.wait.return_value = 1
+        pkc.cmd.run.return_value.success = False
         self.assertRaises(CfgCreationError, pkc._gen_keypair, metadata)
         mock_rmtree.assert_called_with(datastore)
 

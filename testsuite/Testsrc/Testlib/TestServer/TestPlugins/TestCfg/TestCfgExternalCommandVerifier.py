@@ -21,35 +21,32 @@ from TestServer.TestPlugins.TestCfg.Test_init import TestCfgVerifier
 class TestCfgExternalCommandVerifier(TestCfgVerifier):
     test_obj = CfgExternalCommandVerifier
 
-    @patch("Bcfg2.Server.Plugins.Cfg.CfgExternalCommandVerifier.Popen")
-    def test_verify_entry(self, mock_Popen):
-        proc = Mock()
-        mock_Popen.return_value = proc
-        proc.wait.return_value = 0
-        proc.communicate.return_value = ("stdout", "stderr")
+    def test_verify_entry(self):
         entry = lxml.etree.Element("Path", name="/test.txt")
         metadata = Mock()
 
         ecv = self.get_obj()
         ecv.cmd = ["/bin/bash", "-x", "foo"]
+        ecv.exc = Mock()
+        ecv.exc.run.return_value = Mock()
+        ecv.exc.run.return_value.success = True
+
         ecv.verify_entry(entry, metadata, "data")
-        self.assertEqual(mock_Popen.call_args[0], (ecv.cmd,))
-        proc.communicate.assert_called_with(input="data")
-        proc.wait.assert_called_with()
+        ecv.exc.run.assert_called_with(ecv.cmd, inputdata="data")
 
-        mock_Popen.reset_mock()
-        proc.wait.return_value = 13
+        ecv.exc.reset_mock()
+        ecv.exc.run.return_value.success = False
         self.assertRaises(CfgVerificationError,
                           ecv.verify_entry, entry, metadata, "data")
-        self.assertEqual(mock_Popen.call_args[0], (ecv.cmd,))
-        proc.communicate.assert_called_with(input="data")
-        proc.wait.assert_called_with()
+        ecv.exc.run.assert_called_with(ecv.cmd, inputdata="data")
 
-        mock_Popen.reset_mock()
-        mock_Popen.side_effect = OSError
+        ecv.exc.reset_mock()
+
+        ecv.exc.reset_mock()
+        ecv.exc.run.side_effect = OSError
         self.assertRaises(CfgVerificationError,
                           ecv.verify_entry, entry, metadata, "data")
-        self.assertEqual(mock_Popen.call_args[0], (ecv.cmd,))
+        ecv.exc.run.assert_called_with(ecv.cmd, inputdata="data")
 
     @patch("os.access")
     def test_handle_event(self, mock_access):

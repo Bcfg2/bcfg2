@@ -4,7 +4,7 @@ import os
 import sys
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
-from subprocess import Popen, PIPE
+from Bcfg2.Utils import Executor
 
 try:
     from syck import load as yaml_load, error as yaml_error
@@ -36,6 +36,7 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
         Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data)
         self.cache = dict()
+        self.cmd = Executor()
 
     def _run_encs(self, metadata):
         """ Run all Puppet ENCs """
@@ -44,20 +45,17 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
             epath = os.path.join(self.data, enc)
             self.debug_log("PuppetENC: Running ENC %s for %s" %
                            (enc, metadata.hostname))
-            proc = Popen([epath, metadata.hostname], stdin=PIPE, stdout=PIPE,
-                         stderr=PIPE)
-            (out, err) = proc.communicate()
-            rv = proc.wait()
-            if rv != 0:
-                msg = "PuppetENC: Error running ENC %s for %s (%s): %s" % \
-                    (enc, metadata.hostname, rv, err)
+            result = self.cmd.run([epath, metadata.hostname])
+            if not result.success:
+                msg = "PuppetENC: Error running ENC %s for %s: %s" % \
+                    (enc, metadata.hostname, result.error)
                 self.logger.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-            if err:
-                self.debug_log("ENC Error: %s" % err)
+            if result.stderr:
+                self.debug_log("ENC Error: %s" % result.stderr)
 
             try:
-                yaml = yaml_load(out)
+                yaml = yaml_load(result.stdout)
                 self.debug_log("Loaded data from %s for %s: %s" %
                                (enc, metadata.hostname, yaml))
             except yaml_error:
@@ -67,13 +65,7 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
                 self.logger.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
 
-            groups = dict()
-            if "classes" in yaml:
-                # stock Puppet ENC output format
-                groups = yaml['classes']
-            elif "groups" in yaml:
-                # more Bcfg2-ish output format
-                groups = yaml['groups']
+            groups = yaml.get("classes", yaml.get("groups", dict()))
             if groups:
                 if isinstance(groups, list):
                     self.debug_log("ENC %s adding groups to %s: %s" %
