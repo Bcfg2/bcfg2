@@ -212,7 +212,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         """Ask for the repository path."""
         while True:
             newrepo = safe_input("Location of Bcfg2 repository [%s]: " %
-                            self.data['repopath'])
+                                 self.data['repopath'])
             if newrepo != '':
                 self.data['repopath'] = os.path.abspath(newrepo)
             if os.path.isdir(self.data['repopath']):
@@ -221,7 +221,7 @@ class Init(Bcfg2.Server.Admin.Mode):
                 if response.lower().strip() == 'y':
                     break
             else:
-                os.makedirs(newrepo)
+                os.makedirs(self.data['repopath'])
                 break
 
     def _prompt_password(self):
