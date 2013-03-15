@@ -174,8 +174,6 @@ class Init(Bcfg2.Server.Admin.Mode):
             self.data['certpath'] = os.path.join(basepath, 'bcfg2.crt')
 
     def __call__(self, args):
-        Bcfg2.Server.Admin.Mode.__call__(self, args)
-
         # Parse options
         opts = Bcfg2.Options.OptionParser(self.options)
         opts.parse(args)
@@ -292,7 +290,7 @@ class Init(Bcfg2.Server.Admin.Mode):
                              "created [%s]: " % self.data['keypath'])
         if keypath:
             self.data['keypath'] = keypath
-        certpath = safe_input("Path where Bcfg2 server cert will be created"
+        certpath = safe_input("Path where Bcfg2 server cert will be created "
                               "[%s]: " % self.data['certpath'])
         if certpath:
             self.data['certpath'] = certpath
