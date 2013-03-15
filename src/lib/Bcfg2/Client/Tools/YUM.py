@@ -123,7 +123,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                    ('Package', 'rpm'),
                    ('Path', 'ignore')]
 
-    __req__ = {'Package': ['name'],
+    __req__ = {'Package': ['type'],
                'Path': ['type']}
 
     conflicts = ['YUM24', 'RPM', 'RPMng', 'YUMng']
@@ -287,6 +287,17 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             return self.yumbase.rpmdb.returnGPGPubkeyPackages()
         return self.yumbase.rpmdb.searchNevra(name='gpg-pubkey')
 
+    def missing_attrs(self, entry):
+        """ Implementing from superclass to check for existence of either
+        name or group attribute for Package entry in the case of a YUM 
+        group. """
+        missing = Bcfg2.Client.Tools.PkgTool.missing_attrs(self, entry)
+
+        if entry.get('name', None) == None and \
+           entry.get('group', None) == None:
+            missing += ['name', 'group']
+        return missing
+
     def _verifyHelper(self, pkg_obj):
         """ _verifyHelper primarly deals with a yum bug where the
         pkg_obj.verify() method does not properly take into count multilib
@@ -409,8 +420,12 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         if entry.get('version', False) == 'auto':
             self._fixAutoVersion(entry)
 
-        self.logger.debug("Verifying package instances for %s" %
-                          entry.get('name'))
+        if entry.get('group'):
+            self.logger.debug("Verifying packages for group %s" %
+                               entry.get('group'))
+        else:
+            self.logger.debug("Verifying package instances for %s" %
+                               entry.get('name'))
 
         self.verify_cache = dict()  # Used for checking multilib packages
         self.modlists[entry] = modlist
@@ -423,14 +438,58 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                 entry.get('pkg_checks', 'true').lower() == 'true'
         pkg_verify = self.pkg_verify and \
                 entry.get('pkg_verify', 'true').lower() == 'true'
+        yum_group = False
 
         if entry.get('name') == 'gpg-pubkey':
             all_pkg_objs = self._getGPGKeysAsPackages()
             pkg_verify = False  # No files here to verify
+        elif entry.get('group'):
+            entry.set('name', 'group:%s' % entry.get('group'))
+            yum_group = True
+            all_pkg_objs = []
+            instances = []
+            if self.yumbase.comps.has_group(entry.get('group')):
+                group = self.yumbase.comps.return_group(entry.get('group'))
+                group_packages = [p
+                                  for p, d in group.mandatory_packages.items()
+                                  if d]
+                group_type = entry.get('choose', 'default')
+                if group_type in ['default', 'optional', 'all']:
+                    group_packages += [p
+                                       for p, d in 
+                                                 group.default_packages.items()
+                                       if d]
+                if group_type in ['optional', 'all']:
+                    group_packages += [p
+                                       for p, d in 
+                                                group.optional_packages.items()
+                                       if d]
+                if len(group_packages) == 0:
+                    self.logger.error("No packages found for group %s" % 
+                                      entry.get("group"))
+                for pkg in group_packages:
+                    # create package instances for each package in yum group
+                    instance = Bcfg2.Client.XML.SubElement(entry, 'Package')
+                    instance.attrib['name'] = pkg
+                    instance.attrib['type'] = 'yum'
+                    try:
+                        newest = \
+                            self.yumbase.pkgSack.returnNewestByName(pkg)[0]
+                        instance.attrib['version'] = newest['version']
+                        instance.attrib['epoch'] = newest['epoch']
+                        instance.attrib['release'] = newest['release']
+                    except:
+                        self.logger.info("Error finding newest package "
+                                         "for %s" %
+                                         pkg)
+                        instance.attrib['version'] = 'any'
+                    instances.append(instance)
+            else:
+                self.logger.error("Group not found: %s" % entry.get("group"))
         else:
             all_pkg_objs = \
                 self.yumbase.rpmdb.searchNevra(name=entry.get('name'))
-        if len(all_pkg_objs) == 0:
+        if len(all_pkg_objs) == 0 and yum_group != True:
             # Some sort of virtual capability?  Try to resolve it
             all_pkg_objs = self.yumbase.rpmdb.searchProvides(entry.get('name'))
             if len(all_pkg_objs) > 0:
@@ -441,12 +500,18 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                     self.logger.info("  %s" % pkg)
 
         for inst in instances:
-            nevra = build_yname(entry.get('name'), inst)
+            if yum_group:
+                # the entry is not the name of the package
+                nevra = build_yname(inst.get('name'), inst)
+                all_pkg_objs = \
+                    self.yumbase.rpmdb.searchNevra(name=inst.get('name'))
+            else:
+                nevra = build_yname(entry.get('name'), inst)
             if nevra in pkg_cache:
                 continue  # Ignore duplicate instances
             else:
                 pkg_cache.append(nevra)
-
+             
             self.logger.debug("Verifying: %s" % nevra2string(nevra))
 
             # Set some defaults here
@@ -455,7 +520,10 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             stat['version_fail'] = False
             stat['verify'] = {}
             stat['verify_fail'] = False
-            stat['pkg'] = entry
+            if yum_group:
+                stat['pkg'] = inst
+            else:
+                stat['pkg'] = entry
             stat['modlist'] = modlist
             if inst.get('verify_flags'):
                 # this splits on either space or comma
@@ -624,7 +692,9 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         else:
             install_only = False
 
-        if virt_pkg or (install_only and not self.setup['kevlar']):
+        if virt_pkg or \
+           (install_only and not self.setup['kevlar']) or \
+           yum_group:
             # virtual capability supplied, we are probably dealing
             # with multiple packages of different names.  This check
             # doesn't make a lot of since in this case.

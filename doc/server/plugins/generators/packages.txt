@@ -489,7 +489,6 @@ Benefits to this include:
 * Much lower memory usage by the ``bcfg2-server`` process.
 * Much faster ``Packages.Refresh`` behavior.
 * More accurate dependency resolution.
-* Support for package groups.
 
 Drawbacks include:
 
@@ -538,9 +537,9 @@ generally be overridden:
 Package Groups
 --------------
 
-Yum package groups are supported by the native Yum libraries. To
-include a package group, use the
-:xml:attribute:`PackageStructure:group` attribute of the
+Yum package groups are supported by both the native Yum libraries and
+Bcfg2's internal dependency resolver. To include a package group, use
+the :xml:attribute:`PackageStructure:group` attribute of the
 :xml:element:`Package` tag. You can use either the short group ID or
 the long group name:
 

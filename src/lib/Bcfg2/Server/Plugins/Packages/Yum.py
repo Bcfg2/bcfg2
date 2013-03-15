@@ -313,9 +313,7 @@ class YumCollection(Collection):
 
     @property
     def __package_groups__(self):
-        """ YumCollections support package groups only if
-        :attr:`use_yum` is True """
-        return self.use_yum
+        return True
 
     @property
     def helper(self):
@@ -665,11 +663,6 @@ class YumCollection(Collection):
 
         In this implementation the packages may be strings or tuples.
         See :ref:`yum-pkg-objects` for more information. """
-        if not self.use_yum:
-            self.logger.warning("Packages: Package groups are not supported "
-                                "by Bcfg2's internal Yum dependency generator")
-            return dict()
-
         if not grouplist:
             return dict()
 
@@ -680,8 +673,16 @@ class YumCollection(Collection):
             if not ptype:
                 ptype = "default"
             gdicts.append(dict(group=group, type=ptype))
-
-        return self.call_helper("get_groups", inputdata=gdicts)
+        
+        if self.use_yum:
+            return self.call_helper("get_groups", inputdata=gdicts)
+        else:
+            pkgs = dict()
+            for gdict in gdicts:
+                pkgs[gdict['group']] = Collection.get_group(self, 
+                                                            gdict['group'],
+                                                            gdict['type'])
+            return pkgs
 
     def _element_to_pkg(self, el, name):
         """ Convert a Package or Instance element to a package tuple """
@@ -991,6 +992,7 @@ class YumSource(Source):
                              for x in ['global'] + self.arches])
         self.needed_paths = set()
         self.file_to_arch = dict()
+        self.yumgroups = dict()
     __init__.__doc__ = Source.__init__.__doc__
 
     @property
@@ -1008,7 +1010,8 @@ class YumSource(Source):
         if not self.use_yum:
             cache = open(self.cachefile, 'wb')
             cPickle.dump((self.packages, self.deps, self.provides,
-                          self.filemap, self.url_map), cache, 2)
+                          self.filemap, self.url_map,
+                          self.yumgroups), cache, 2)
             cache.close()
 
     def load_state(self):
@@ -1018,7 +1021,7 @@ class YumSource(Source):
         if not self.use_yum:
             data = open(self.cachefile)
             (self.packages, self.deps, self.provides,
-             self.filemap, self.url_map) = cPickle.load(data)
+             self.filemap, self.url_map, self.yumgroups) = cPickle.load(data)
 
     @property
     def urls(self):
@@ -1073,7 +1076,7 @@ class YumSource(Source):
 
         urls = []
         for elt in xdata.findall(RPO + 'data'):
-            if elt.get('type') in ['filelists', 'primary']:
+            if elt.get('type') in ['filelists', 'primary', 'group']:
                 floc = elt.find(RPO + 'location')
                 fullurl = url + floc.get('href')
                 urls.append(fullurl)
@@ -1090,11 +1093,14 @@ class YumSource(Source):
         # we have to read primary.xml first, and filelists.xml afterwards;
         primaries = list()
         filelists = list()
+        groups = list()
         for fname in self.files:
             if fname.endswith('primary.xml.gz'):
                 primaries.append(fname)
             elif fname.endswith('filelists.xml.gz'):
                 filelists.append(fname)
+            elif fname.find('comps'):
+                groups.append(fname)
 
         for fname in primaries:
             farch = self.file_to_arch[fname]
@@ -1104,6 +1110,9 @@ class YumSource(Source):
             farch = self.file_to_arch[fname]
             fdata = lxml.etree.parse(fname).getroot()
             self.parse_filelist(fdata, farch)
+        for fname in groups:
+            fdata = lxml.etree.parse(fname).getroot()
+            self.parse_group(fdata)
 
         # merge data
         sdata = list(self.packages.values())
@@ -1166,6 +1175,35 @@ class YumSource(Source):
                     if prov not in self.provides[arch]:
                         self.provides[arch][prov] = list()
                     self.provides[arch][prov].append(pkgname)
+
+    @Bcfg2.Server.Plugin.track_statistics()
+    def parse_group(self, data):
+        """ parse comps.xml.gz data """
+        for group in data.getchildren():
+            if not group.tag.endswith('group'):
+                continue
+            try:
+                groupid = group.xpath('id')[0].text
+                self.yumgroups[groupid] = {'mandatory': list(),
+                                        'default': list(),
+                                        'optional': list(),
+                                        'conditional': list()}
+            except IndexError:
+                continue
+            try:
+                packagelist = group.xpath('packagelist')[0]
+            except IndexError:
+                continue
+            for pkgreq in packagelist.getchildren():
+                pkgtype = pkgreq.get('type', None)
+                if pkgtype == 'mandatory':
+                    self.yumgroups[groupid]['mandatory'].append(pkgreq.text)
+                elif pkgtype == 'default':
+                    self.yumgroups[groupid]['default'].append(pkgreq.text)
+                elif pkgtype == 'optional':
+                    self.yumgroups[groupid]['optional'].append(pkgreq.text)
+                elif pkgtype == 'conditional':
+                    self.yumgroups[groupid]['conditional'].append(pkgreq.text)
 
     def is_package(self, metadata, package):
         arch = [a for a in self.arches if a in metadata.groups]
@@ -1246,3 +1284,27 @@ class YumSource(Source):
             return self.pulp_id
         else:
             return Source.get_repo_name(self, url_map)
+
+    def get_group(self, metadata, group, ptype=None):  # pylint: disable=W0613
+        """ Get the list of packages of the given type in a package
+        group.
+
+        :param group: The name of the group to query
+        :type group: string
+        :param ptype: The type of packages to get, for backends that
+                      support multiple package types in package groups
+                      (e.g., "recommended," "optional," etc.)
+        :type ptype: string
+        :returns: list of strings - package names
+        """
+        try:
+            yumgroup = self.yumgroups[group]
+        except KeyError:
+            return []
+        packages = yumgroup['conditional'] + yumgroup['mandatory'] 
+        if ptype in ['default', 'optional', 'all']:
+            packages += yumgroup['default']
+        if ptype in ['optional', 'all']:
+            packages += yumgroup['optional']
+        return packages
+
