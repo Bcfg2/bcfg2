@@ -6,7 +6,7 @@
 
 Name:             bcfg2
 Version:          1.3.0
-Release:          0.0rc2
+Release:          0.0
 Summary:          Configuration management system
 
 %if 0%{?suse_version}
@@ -17,8 +17,8 @@ Group:            Applications/System
 %endif
 License:          BSD
 URL:              http://bcfg2.org
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}rc2.tar.gz
-BuildRoot:        %{_tmppath}/%{name}-%{version}rc2-%{release}-root-%(%{__id_u} -n)
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}.tar.gz
+BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:        noarch
 
 BuildRequires:    python-devel
@@ -267,7 +267,7 @@ deployment strategies.
 This package includes the Bcfg2 reports web frontend.
 
 %prep
-%setup -q -n %{name}-%{version}rc2
+%setup -q -n %{name}-%{version}
 
 %build
 %{__python}%{pythonversion} setup.py build
@@ -454,6 +454,9 @@ fi
 %endif
 
 %changelog
+* Fri Mar 15 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0
+- New upstream release
+
 * Tue Jan 29 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0rc2
 - New upstream release
 
