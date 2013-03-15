@@ -221,6 +221,7 @@ class Init(Bcfg2.Server.Admin.Mode):
                 if response.lower().strip() == 'y':
                     break
             else:
+                os.makedirs(newrepo)
                 break
 
     def _prompt_password(self):
