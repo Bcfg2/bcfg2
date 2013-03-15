@@ -165,23 +165,19 @@ class Executor(object):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.timeout = timeout
 
-    def _timeout_callback(self, proc):
-        """ Get a callback (suitable for passing to
-        :class:`threading.Timer`) that kills the given process.
+    def _timeout(self, proc):
+        """ A function suitable for passing to
+        :class:`threading.Timer` that kills the given process.
 
         :param proc: The process to kill upon timeout.
         :type proc: subprocess.Popen
-        :returns: function """
-        def _timeout():
-            """ Callback that kills ``proc`` """
-            if proc.poll() == None:
-                try:
-                    proc.kill()
-                    self.logger.warning("Process exceeeded timeout, killing")
-                except OSError:
-                    pass
-
-        return _timeout
+        :returns: None """
+        if proc.poll() == None:
+            try:
+                proc.kill()
+                self.logger.warning("Process exceeeded timeout, killing")
+            except OSError:
+                pass
 
     def run(self, command, inputdata=None, shell=False, timeout=None):
         """ Run a command, given as a list, optionally giving it the
@@ -212,9 +208,7 @@ class Executor(object):
         if timeout is None:
             timeout = self.timeout
         if timeout is not None:
-            timer = threading.Timer(float(timeout),
-                                    self._timeout_callback(proc),
-                                    [proc])
+            timer = threading.Timer(float(timeout), self._timeout, [proc])
             timer.start()
         try:
             if inputdata:
