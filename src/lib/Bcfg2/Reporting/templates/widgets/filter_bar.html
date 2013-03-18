@@ -16,7 +16,7 @@
 <label for="id_group">Group filter:</label>
 <select id="id_group" name="group" onchange="javascript:url=document.forms['filter_form'].group.value; if(url) { location.href=url }">
   {% for group, group_url, selected in groups %}
-    <option label="{{group}}" value="{{group_url}}" {% if selected %}selected {% endif %}/>
+    <option value="{{group_url}}" {% if selected %}selected {% endif %}>{{group}}</option>
   {% endfor %}
 </select>
 {% endif %}

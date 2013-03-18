@@ -4,7 +4,8 @@ import os
 import sys
 import lxml.etree
 import Bcfg2.Options
-from Bcfg2.Server.Plugin import info_regex
+from Bcfg2.Server.Plugin import INFO_REGEX
+
 
 def convert(info_file):
     info_xml = os.path.join(os.path.dirname(info_file), "info.xml")
@@ -15,7 +16,7 @@ def convert(info_file):
     fileinfo = lxml.etree.Element("FileInfo")
     info = lxml.etree.SubElement(fileinfo, "Info")
     for line in open(info_file).readlines():
-        match = info_regex.match(line)
+        match = INFO_REGEX.match(line)
         if match:
             mgd = match.groupdict()
             for key, value in list(mgd.items()):
@@ -24,6 +25,7 @@ def convert(info_file):
 
     open(info_xml, "w").write(lxml.etree.tostring(fileinfo, pretty_print=True))
     os.unlink(info_file)
+
 
 def main():
     opts = dict(repo=Bcfg2.Options.SERVER_REPOSITORY,

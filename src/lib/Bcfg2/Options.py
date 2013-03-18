@@ -621,17 +621,19 @@ WEB_CFILE = \
            default="/etc/bcfg2-web.conf",
            cmd='-W',
            odesc='<conffile>',
-           cf=('statistics', 'config'),)
+           cf=('reporting', 'config'),
+           deprecated_cf=('statistics', 'web_prefix'),)
 DJANGO_TIME_ZONE = \
     Option('Django timezone',
            default=None,
-           cf=('statistics', 'time_zone'),)
+           cf=('reporting', 'time_zone'),
+           deprecated_cf=('statistics', 'web_prefix'),)
 DJANGO_DEBUG = \
     Option('Django debug',
            default=None,
-           cf=('statistics', 'web_debug'),
+           cf=('reporting', 'web_debug'),
+           deprecated_cf=('statistics', 'web_prefix'),
            cook=get_bool,)
-# Django options
 DJANGO_WEB_PREFIX = \
     Option('Web prefix',
            default=None,

@@ -88,10 +88,13 @@ Options
                   the constraints of correctness, and thus should only
                   be used in safe conditions.
 -r mode           Cause bcfg2 to remove extra configuration elements
-                  it detects. Mode is one of "all", "Services", or
-                  "Packages". "all" removes all entries. Likewise,
-                  "Services" and "Packages" remove only the extra
+                  it detects. Mode is one of "all", "Services",
+                  "Packages", or "Users". "all" removes all extra entries.
+                  "Services", "Packages", and "Users" remove only the extra
                   configuration elements of the respective type.
+                  ("Services" actually just disables extra services,
+                  since they can't be removed, and "Users" removes
+                  extra POSIXUser and POSIXUser entries.)
 -s servicemode    Set bcfg2 interaction level for services. Default
                   behavior is to modify all services affected by
                   reconfiguration. "build" mode attempts to stop all

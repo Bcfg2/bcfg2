@@ -64,7 +64,9 @@ class ClientTest(TestCase):
             "Configuration is missing bundle(s): %s" % ':'.join(missing)
 
         # check for unknown packages
-        unknown_pkgs = config.xpath('//Package[@type="unknown"]')
+        unknown_pkgs = [el.get("name")
+                        for el in config.xpath('//Package[@type="unknown"]')
+                        if not self.ignore_entry(el.tag, el.get("name"))]
         assert len(unknown_pkgs) == 0, \
             "Configuration contains unknown packages: %s" % \
             ", ".join(unknown_pkgs)

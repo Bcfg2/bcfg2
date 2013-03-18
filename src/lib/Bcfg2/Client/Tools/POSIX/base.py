@@ -687,7 +687,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         if path is None:
             path = entry.get("name")
         cur = path
-        while cur != '/':
+        while cur and cur != '/':
             if not os.path.exists(cur):
                 created.append(cur)
             cur = os.path.dirname(cur)

@@ -212,7 +212,7 @@ class Init(Bcfg2.Server.Admin.Mode):
         """Ask for the repository path."""
         while True:
             newrepo = safe_input("Location of Bcfg2 repository [%s]: " %
-                            self.data['repopath'])
+                                 self.data['repopath'])
             if newrepo != '':
                 self.data['repopath'] = os.path.abspath(newrepo)
             if os.path.isdir(self.data['repopath']):
@@ -318,6 +318,16 @@ class Init(Bcfg2.Server.Admin.Mode):
     def init_repo(self):
         """Setup a new repo and create the content of the
         configuration file."""
+        # Create the repository
+        path = os.path.join(self.data['repopath'], 'etc')
+        try:
+            os.makedirs(path)
+            self._init_plugins()
+            print("Repository created successfuly in %s" %
+                  self.data['repopath'])
+        except OSError:
+            print("Failed to create %s." % path)
+
         confdata = CONFIG % (self.data['repopath'],
                              ','.join(self.plugins),
                              self.data['sendmail'],
@@ -333,13 +343,3 @@ class Init(Bcfg2.Server.Admin.Mode):
         create_key(self.data['shostname'], self.data['keypath'],
                    self.data['certpath'], self.data['country'],
                    self.data['state'], self.data['location'])
-
-        # Create the repository
-        path = os.path.join(self.data['repopath'], 'etc')
-        try:
-            os.makedirs(path)
-            self._init_plugins()
-            print("Repository created successfuly in %s" %
-                  self.data['repopath'])
-        except OSError:
-            print("Failed to create %s." % path)

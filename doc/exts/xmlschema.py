@@ -76,6 +76,11 @@ from sphinx.util.nodes import make_refnode, split_explicit_title, \
 from sphinx.util.compat import Directive
 from sphinx.domains import ObjType, Domain
 
+try:
+    from new import classobj
+except ImportError:
+    classobj = type
+
 XS = "http://www.w3.org/2001/XMLSchema"
 XS_NS = "{%s}" % XS
 NSMAP = dict(xs=XS)
@@ -653,7 +658,7 @@ def append_node(parent, cls_or_node, *contents):
 
 
 def build_node(cls_or_node, *contents):
-    if isinstance(cls_or_node, type):
+    if isinstance(cls_or_node, (type, classobj)):
         rv = cls_or_node()
     else:
         rv = cls_or_node

@@ -729,10 +729,20 @@ control the database connection of the server.
     port
         Port for database connections. Not used for sqlite3.
 
+Reporting options
+-----------------
+
+    config
+        Specifies the location of the reporting configuration (default
+        is /etc/bcfg2-web.conf.
+
     time_zone
-        Specify a time zone other than that used on the system. (Note
+        Specifies a time zone other than that used on the system. (Note
         that this will cause the Bcfg2 server to log messages in this
         time zone as well).
+
+    web_debug
+        Turn on Django debugging.
 
 See Also
 --------

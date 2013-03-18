@@ -1,6 +1,6 @@
-import logging
 import re
 import socket
+import logging
 
 # The ssl module is provided by either Python 2.6 or a separate ssl
 # package that works on older versions of Python (see
@@ -20,7 +20,7 @@ import sys
 import time
 
 # Compatibility imports
-from Bcfg2.Compat import httplib, xmlrpclib, urlparse
+from Bcfg2.Compat import httplib, xmlrpclib, urlparse, quote_plus
 
 version = sys.version_info[:2]
 has_py26 = version >= (2, 6)
@@ -349,7 +349,8 @@ def ComponentProxy(url, user=None, password=None, key=None, cert=None, ca=None,
 
     if user and password:
         method, path = urlparse(url)[:2]
-        newurl = "%s://%s:%s@%s" % (method, user, password, path)
+        newurl = "%s://%s:%s@%s" % (method, quote_plus(user, ''),
+                                    quote_plus(password, ''), path)
     else:
         newurl = url
     ssl_trans = XMLRPCTransport(key, cert, ca,
