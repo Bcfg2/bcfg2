@@ -166,20 +166,22 @@ Upgrading
 2. Replace the DBStats plugin with the Reporting plugin.
 
 3. Migrate historic data.
-    Run `tools/upgrade/1.3/migrate_dbstats.py`
+    Run ``tools/upgrade/1.3/migrate_dbstats.py``
 
     The reporting schema is now managed using `South <http://south.aeracode.org>`_
     instead of a set of custom scripts. This creates the new schema and imports
     all of the historic data to the new format.
 
-.. Note:
+    .. note::
 
-    After the database is upgraded all of the old tables are left intact.  To
-    remove them any table starting with reports_ can be dropped.
+        After the database is upgraded all of the old tables are left
+        intact. To remove them any table starting with reports_ can
+        be dropped.
 
 4. `(Optional)` Run the :ref:`Report Collector <report_collector>`
-    Add "transport = LocalFilesystem" under "[reporting]" in `bcfg2.conf`.
-    Restart the bcfg2-server and start the bcfg2-report-collector.
+    Add "transport = LocalFilesystem" under "[reporting]" in
+    ``bcfg2.conf``.  Restart the bcfg2-server and start the
+    bcfg2-report-collector.
 
 Configuring
 ===========
