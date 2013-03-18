@@ -27,10 +27,7 @@ DATABASE_PASSWORD = None
 DATABASE_HOST = None
 DATABASE_PORT = None
 
-if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] < 2:
-    TIME_ZONE = 'America/Chicago'
-else:
-    TIME_ZONE = None
+TIME_ZONE = None
 
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
