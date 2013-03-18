@@ -19,12 +19,13 @@ except ImportError:
 
 # urllib imports
 try:
+    from urllib import quote_plus
     from urlparse import urljoin, urlparse
     from urllib2 import HTTPBasicAuthHandler, \
         HTTPPasswordMgrWithDefaultRealm, build_opener, install_opener, \
         urlopen, HTTPError, URLError
 except ImportError:
-    from urllib.parse import urljoin, urlparse
+    from urllib.parse import urljoin, urlparse, quote_plus
     from urllib.request import HTTPBasicAuthHandler, \
         HTTPPasswordMgrWithDefaultRealm, build_opener, install_opener, urlopen
     from urllib.error import HTTPError, URLError
