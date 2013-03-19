@@ -289,7 +289,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
 
     def missing_attrs(self, entry):
         """ Implementing from superclass to check for existence of either
-        name or group attribute for Package entry in the case of a YUM 
+        name or group attribute for Package entry in the case of a YUM
         group. """
         missing = Bcfg2.Client.Tools.PkgTool.missing_attrs(self, entry)
 
@@ -456,16 +456,16 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                 group_type = entry.get('choose', 'default')
                 if group_type in ['default', 'optional', 'all']:
                     group_packages += [p
-                                       for p, d in 
+                                       for p, d in
                                                  group.default_packages.items()
                                        if d]
                 if group_type in ['optional', 'all']:
                     group_packages += [p
-                                       for p, d in 
+                                       for p, d in
                                                 group.optional_packages.items()
                                        if d]
                 if len(group_packages) == 0:
-                    self.logger.error("No packages found for group %s" % 
+                    self.logger.error("No packages found for group %s" %
                                       entry.get("group"))
                 for pkg in group_packages:
                     # create package instances for each package in yum group
@@ -478,7 +478,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                         instance.attrib['version'] = newest['version']
                         instance.attrib['epoch'] = newest['epoch']
                         instance.attrib['release'] = newest['release']
-                    except:
+                    except:  # pylint: disable=W0702
                         self.logger.info("Error finding newest package "
                                          "for %s" %
                                          pkg)
@@ -511,7 +511,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                 continue  # Ignore duplicate instances
             else:
                 pkg_cache.append(nevra)
-             
+
             self.logger.debug("Verifying: %s" % nevra2string(nevra))
 
             # Set some defaults here

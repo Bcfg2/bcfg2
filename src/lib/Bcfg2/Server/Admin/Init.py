@@ -13,6 +13,7 @@ import subprocess
 import Bcfg2.Server.Admin
 import Bcfg2.Server.Plugin
 import Bcfg2.Options
+import Bcfg2.Server.Plugins.Metadata
 from Bcfg2.Compat import input  # pylint: disable=W0622
 
 # default config file
@@ -299,7 +300,6 @@ class Init(Bcfg2.Server.Admin.Mode):
         """Initialize each plugin-specific portion of the repository."""
         for plugin in self.plugins:
             if plugin == 'Metadata':
-                import Bcfg2.Server.Plugins.Metadata
                 Bcfg2.Server.Plugins.Metadata.Metadata.init_repo(
                     self.data['repopath'],
                     groups_xml=GROUPS % self.data['os_sel'],
