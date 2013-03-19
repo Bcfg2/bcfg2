@@ -1725,6 +1725,22 @@ class TestEntrySet(TestDebuggable):
             self.assertItemsEqual(eset.metadata,
                                   expected)
 
+            jdata = ["owner:owner",
+                     "group:             GROUP",
+                     "perms:\t664",
+                     "important:     true",
+                     "bogus: line"]
+            mock_open.return_value.readlines.return_value = jdata
+            eset.update_metadata(event)
+            expected = DEFAULT_FILE_METADATA.copy()
+            expected['owner'] = 'owner'
+            expected['group'] = 'GROUP'
+            expected['mode'] = '0664'
+            expected['important'] = 'true'
+            print "Ran perms test"
+            self.assertItemsEqual(eset.metadata,
+                                  expected)
+
     def test_reset_metadata(self):
         eset = self.get_obj()
 
