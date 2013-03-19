@@ -86,14 +86,6 @@ def read_config(cfile=DEFAULT_CONFIG, repo=None, quiet=False):
              HOST=setup['db_host'],
              PORT=setup['db_port'])
 
-    if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] < 2:
-        DATABASE_ENGINE = setup['db_engine']
-        DATABASE_NAME = DATABASES['default']['NAME']
-        DATABASE_USER = DATABASES['default']['USER']
-        DATABASE_PASSWORD = DATABASES['default']['PASSWORD']
-        DATABASE_HOST = DATABASES['default']['HOST']
-        DATABASE_PORT = DATABASES['default']['PORT']
-
     # dropping the version check.  This was added in 1.1.2
     TIME_ZONE = setup['time_zone']
 
@@ -159,16 +151,10 @@ else:
         }
     }
 
-if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] < 2:
-    TEMPLATE_LOADERS = (
-        'django.template.loaders.filesystem.load_template_source',
-        'django.template.loaders.app_directories.load_template_source',
-    )
-else:
-    TEMPLATE_LOADERS = (
-        'django.template.loaders.filesystem.Loader',
-        'django.template.loaders.app_directories.Loader',
-    )
+TEMPLATE_LOADERS = (
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
+)
 
 #TODO - review these.  auth and sessions aren't really used
 MIDDLEWARE_CLASSES = (
@@ -194,20 +180,10 @@ TEMPLATE_DIRS = (
     '/usr/share/python-support/python-django/django/contrib/admin/templates/',
 )
 
-# TODO - sanitize this
-if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] < 2:
-    TEMPLATE_CONTEXT_PROCESSORS = (
-        'django.core.context_processors.auth',
-        'django.core.context_processors.debug',
-        'django.core.context_processors.i18n',
-        'django.core.context_processors.media',
-        'django.core.context_processors.request'
-    )
-else:
-    TEMPLATE_CONTEXT_PROCESSORS = (
-        'django.contrib.auth.context_processors.auth',
-        'django.core.context_processors.debug',
-        'django.core.context_processors.i18n',
-        'django.core.context_processors.media',
-        'django.core.context_processors.request'
-    )
+TEMPLATE_CONTEXT_PROCESSORS = (
+    'django.contrib.auth.context_processors.auth',
+    'django.core.context_processors.debug',
+    'django.core.context_processors.i18n',
+    'django.core.context_processors.media',
+    'django.core.context_processors.request'
+)
