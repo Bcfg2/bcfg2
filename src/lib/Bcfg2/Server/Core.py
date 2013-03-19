@@ -99,9 +99,7 @@ class BaseCore(object):
         #: The Bcfg2 repository directory
         self.datastore = setup['repo']
 
-        if setup['debug']:
-            level = logging.DEBUG
-        elif setup['verbose']:
+        if setup['verbose']:
             level = logging.INFO
         else:
             level = logging.WARNING
@@ -118,6 +116,25 @@ class BaseCore(object):
 
         #: A :class:`logging.Logger` object for use by the core
         self.logger = logging.getLogger('bcfg2-server')
+
+        #: Log levels for the various logging handlers with debug True
+        #: and False.  Each loglevel dict is a dict of ``logger name
+        #: => log level``; the logger names are set in
+        #: :mod:`Bcfg2.Logger`.  The logger name ``default`` is
+        #: special, and will be used for any log handlers whose name
+        #: does not appear elsewhere in the dict.  At a minimum,
+        #: ``default`` must be provided.
+        self._loglevels = {True: dict(default=logging.DEBUG),
+                           False: dict(console=logging.INFO,
+                                       default=level)}
+
+        #: Used to keep track of the current debug state of the core.
+        self.debug_flag = False
+
+        # enable debugging on the core now.  debugging is enabled on
+        # everything else later
+        if setup['debug']:
+            self.set_core_debug(None, setup['debug'])
 
         try:
             filemonitor = \
@@ -298,6 +315,11 @@ class BaseCore(object):
         #: A :class:`Bcfg2.Cache.Cache` object for caching client
         #: metadata
         self.metadata_cache = Cache()
+
+        if self.debug_flag:
+            # enable debugging on everything else.
+            self.plugins[plugin].set_debug(self.debug_flag)
+
 
     def plugins_by_type(self, base_cls):
         """ Return a list of loaded plugins that match the passed type.
@@ -731,6 +753,7 @@ class BaseCore(object):
             self.shutdown()
             raise
 
+        self.set_debug(None, self.debug_flag)
         self._block()
 
     def _daemonize(self):
@@ -1141,9 +1164,17 @@ class BaseCore(object):
         :type address: tuple
         :returns: bool - The new debug state of the FAM
         """
-        for plugin in self.plugins.values():
-            plugin.toggle_debug()
-        return self.toggle_fam_debug(address)
+        return self.set_debug(address, not self.debug_flag)
+
+    @exposed
+    def toggle_core_debug(self, address):
+        """ Toggle debug status of the server core
+
+        :param address: Client (address, hostname) pair
+        :type address: tuple
+        :returns: bool - The new debug state of the FAM
+        """
+        return self.set_core_debug(address, not self.debug_flag)
 
     @exposed
     def toggle_fam_debug(self, _):
@@ -1157,6 +1188,8 @@ class BaseCore(object):
     def set_debug(self, address, debug):
         """ Explicitly set debug status of the FAM and all plugins
 
+        :param address: Client (address, hostname) pair
+        :type address: tuple
         :param debug: The new debug status.  This can either be a
                       boolean, or a string describing the state (e.g.,
                       "true" or "false"; case-insensitive)
@@ -1167,7 +1200,31 @@ class BaseCore(object):
             debug = debug.lower() == "true"
         for plugin in self.plugins.values():
             plugin.set_debug(debug)
-        return self.set_fam_debug(address, debug)
+        rv = self.set_core_debug(address, debug)
+        return self.set_fam_debug(address, debug) and rv
+
+    @exposed
+    def set_core_debug(self, _, debug):
+        """ Explicity set debug status of the server core
+
+        :param debug: The new debug status.  This can either be a
+                      boolean, or a string describing the state (e.g.,
+                      "true" or "false"; case-insensitive)
+        :type debug: bool or string
+        :returns: bool - The new debug state of the FAM
+        """
+        if debug not in [True, False]:
+            debug = debug.lower() == "true"
+        self.debug_flag = debug
+        self.logger.info("Core: debug = %s" % debug)
+        levels = self._loglevels[self.debug_flag]
+        for handler in logging.root.handlers:
+            level = levels.get(handler.get_name(), levels['default'])
+            self.logger.debug("Setting %s log handler to %s" %
+                              (handler.get_name(),
+                               logging.getLevelName(level)))
+            handler.setLevel(level)
+        return self.debug_flag
 
     @exposed
     def set_fam_debug(self, _, debug):

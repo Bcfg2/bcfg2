@@ -65,10 +65,13 @@ class Reporting(Statistics, Threaded, PullSource, Debuggable):
                 (self.name, traceback.format_exc().splitlines()[-1])
             self.logger.error(msg)
             raise PluginInitError(msg)
+        if self.debug_flag:
+            self.transport.set_debug(self.debug_flag)
 
     def set_debug(self, debug):
         rv = Debuggable.set_debug(self, debug)
-        self.transport.set_debug(debug)
+        if self.transport is not None:
+            self.transport.set_debug(debug)
         return rv
 
     def process_statistics(self, client, xdata):

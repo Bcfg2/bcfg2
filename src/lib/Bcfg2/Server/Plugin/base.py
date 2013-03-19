@@ -34,8 +34,8 @@ class Debuggable(object):
         :returns: bool - The new value of the debug flag
         """
         self.debug_flag = debug
-        self.debug_log("%s: debug_flag = %s" % (self.__class__.__name__,
-                                                self.debug_flag),
+        self.debug_log("%s: debug = %s" % (self.__class__.__name__,
+                                           self.debug_flag),
                        flag=True)
         return debug
 
