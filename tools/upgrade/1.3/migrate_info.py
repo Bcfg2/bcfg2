@@ -4,7 +4,7 @@ import os
 import sys
 import lxml.etree
 import Bcfg2.Options
-from Bcfg2.Server.Plugin import INFO_REGEX
+from Bcfg2.Server.Plugin import parse_info
 
 
 def convert(info_file):
@@ -15,13 +15,10 @@ def convert(info_file):
     print("Converting %s to %s" % (info_file, info_xml))
     fileinfo = lxml.etree.Element("FileInfo")
     info = lxml.etree.SubElement(fileinfo, "Info")
-    for line in open(info_file).readlines():
-        match = INFO_REGEX.match(line)
-        if match:
-            mgd = match.groupdict()
-            for key, value in list(mgd.items()):
-                if value:
-                    info.set(key, value)
+
+    for key, value in parse_info(open(info_file).readlines()):
+        if value:
+            info.set(key, value)
 
     open(info_xml, "w").write(lxml.etree.tostring(fileinfo, pretty_print=True))
     os.unlink(info_file)

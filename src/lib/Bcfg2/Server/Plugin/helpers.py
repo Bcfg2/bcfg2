@@ -43,6 +43,7 @@ LOGGER = logging.getLogger(__name__)
 INFO_REGEX = re.compile('owner:(\s)*(?P<owner>\S+)|' +
                         'group:(\s)*(?P<group>\S+)|' +
                         'mode:(\s)*(?P<mode>\w+)|' +
+                        'perms:(\s)*(?P<perms>\w+)|' +
                         'secontext:(\s)*(?P<secontext>\S+)|' +
                         'paranoid:(\s)*(?P<paranoid>\S+)|' +
                         'sensitive:(\s)*(?P<sensitive>\S+)|' +
@@ -50,6 +51,24 @@ INFO_REGEX = re.compile('owner:(\s)*(?P<owner>\S+)|' +
                         'important:(\s)*(?P<important>\S+)|' +
                         'mtime:(\s)*(?P<mtime>\w+)|')
 
+def parse_info(lines, logger=None):
+    attrs = dict()
+    for line in open(self.path).readlines():
+        match = INFO_REGEX.match(line)
+        if not match:
+            if logger is not None:
+                logger.warning("Failed to parse line in %s: %s" %
+                               (event.filename, line))
+            continue
+        else:
+            for key, value in list(match.groupdict().items()):
+                if key == 'perms':
+                    key = 'mode'
+                if value:
+                    attrs[key] = value
+    if ('mode' in attrs and len(attrs['mode']) == 3):
+        attrs['mode'] = "0%s" % attrs['mode']
+    return attrs
 
 def bind_info(entry, metadata, infoxml=None, default=DEFAULT_FILE_METADATA):
     """ Bind the file metadata in the given
@@ -1352,19 +1371,7 @@ class EntrySet(Debuggable):
                 self.infoxml = InfoXML(fpath)
             self.infoxml.HandleEvent(event)
         elif event.filename in [':info', 'info']:
-            for line in open(fpath).readlines():
-                match = INFO_REGEX.match(line)
-                if not match:
-                    LOGGER.warning("Failed to match line in %s: %s" % (fpath,
-                                                                       line))
-                    continue
-                else:
-                    mgd = match.groupdict()
-                    for key, value in list(mgd.items()):
-                        if value:
-                            self.metadata[key] = value
-                    if len(self.metadata['mode']) == 3:
-                        self.metadata['mode'] = "0%s" % self.metadata['mode']
+            self.metadata.update(parse_info(open(fpath).readlines(), LOGGER))
 
     def reset_metadata(self, event):
         """ Reset metadata to defaults if info. :info, or info.xml are
