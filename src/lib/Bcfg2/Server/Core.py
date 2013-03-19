@@ -396,6 +396,7 @@ class BaseCore(object):
 
     def shutdown(self):
         """ Perform plugin and FAM shutdown tasks. """
+        self.logger.debug("Shutting down core...")
         if not self.terminate.isSet():
             self.terminate.set()
             self.fam.shutdown()
@@ -429,6 +430,8 @@ class BaseCore(object):
                          hook.
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         """
+        self.logger.debug("Running %s hooks for %s" % (hook,
+                                                       metadata.hostname))
         start = time.time()
         try:
             for plugin in \
@@ -462,6 +465,7 @@ class BaseCore(object):
                      client
         :type data: list of lxml.etree._Element objects
         """
+        self.logger.debug("Validating structures for %s" % metadata.hostname)
         for plugin in \
                 self.plugins_by_type(Bcfg2.Server.Plugin.StructureValidator):
             try:
@@ -488,6 +492,7 @@ class BaseCore(object):
                      client
         :type data: list of lxml.etree._Element objects
         """
+        self.logger.debug("Validating goals for %s" % metadata.hostname)
         for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.GoalValidator):
             try:
                 plugin.validate_goals(metadata, data)
@@ -508,6 +513,7 @@ class BaseCore(object):
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: list of :class:`lxml.etree._Element` objects
         """
+        self.logger.debug("Getting structures for %s" % metadata.hostname)
         structures = list(chain(*[struct.BuildStructures(metadata)
                                   for struct in self.structures]))
         sbundles = [b.get('name') for b in structures if b.tag == 'Bundle']
@@ -530,6 +536,7 @@ class BaseCore(object):
                        structures to. Modified in-place.
         :type config: lxml.etree._Element
         """
+        self.logger.debug("Binding structures for %s" % metadata.hostname)
         for astruct in structures:
             try:
                 self.BindStructure(astruct, metadata)
@@ -546,6 +553,9 @@ class BaseCore(object):
         :param metadata: Client metadata to bind structure for
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         """
+        self.logger.debug("Binding structure %s for %s" %
+                          (structure.get("name", "unknown"),
+                           metadata.hostname))
         for entry in structure.getchildren():
             if entry.tag.startswith("Bound"):
                 entry.tag = entry.tag[5:]
@@ -621,6 +631,7 @@ class BaseCore(object):
         :type client: string
         :returns: :class:`lxml.etree._Element` - A complete Bcfg2
                   configuration document """
+        self.logger.debug("Building configuration for %s" % client)
         start = time.time()
         config = lxml.etree.Element("Configuration", version='2.0',
                                     revision=self.revision)
@@ -748,6 +759,7 @@ class BaseCore(object):
         :type mode: string
         :returns: list of Decision tuples ``(<entry tag>, <entry name>)``
         """
+        self.logger.debug("Getting decision list for %s" % metadata.hostname)
         result = []
         for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Decision):
             try:
@@ -776,6 +788,7 @@ class BaseCore(object):
         else:
             imd = self.metadata_cache.get(client_name, None)
         if not imd:
+            self.logger.debug("Building metadata for %s" % client_name)
             imd = self.metadata.get_initial_metadata(client_name)
             for conn in self.connectors:
                 grps = conn.get_additional_groups(imd)
@@ -797,6 +810,7 @@ class BaseCore(object):
         :param statistics: The statistics document to process
         :type statistics: lxml.etree._Element
         """
+        self.logger.debug("Processing statistics for %s" % client_name)
         meta = self.build_metadata(client_name)
         state = statistics.find(".//Statistics")
         if state.get('version') >= '2.0':
@@ -922,6 +936,7 @@ class BaseCore(object):
         return func.__doc__
 
     @exposed
+    @track_statistics()
     def DeclareVersion(self, address, version):
         """ Declare the client version.
 
@@ -932,7 +947,9 @@ class BaseCore(object):
         :returns: bool - True on success
         :raises: :exc:`xmlrpclib.Fault`
         """
-        client = self.resolve_client(address)[0]
+        client = self.resolve_client(address, metadata=False)[0]
+        self.logger.debug("%s is running Bcfg2 client version %s" % (client,
+                                                                     version))
         try:
             self.metadata.set_version(client, version)
         except (Bcfg2.Server.Plugin.MetadataConsistencyError,
@@ -954,6 +971,7 @@ class BaseCore(object):
         """
         resp = lxml.etree.Element('probes')
         client, metadata = self.resolve_client(address, cleanup_cache=True)
+        self.logger.debug("Getting probes for %s" % client)
         try:
             for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Probing):
                 for probe in plugin.GetProbes(metadata):
@@ -975,6 +993,7 @@ class BaseCore(object):
         :raises: :exc:`xmlrpclib.Fault`
         """
         client, metadata = self.resolve_client(address)
+        self.logger.debug("Receiving probe data from %s" % client)
         if self.metadata_cache_mode == 'cautious':
             # clear the metadata cache right after building the
             # metadata object; that way the cache is cleared for any
@@ -1021,6 +1040,7 @@ class BaseCore(object):
         :raises: :exc:`xmlrpclib.Fault`
         """
         client = self.resolve_client(address, metadata=False)[0]
+        self.logger.debug("%s sets its profile to %s" % (client, profile))
         try:
             self.metadata.set_profile(client, profile, address)
         except (Bcfg2.Server.Plugin.MetadataConsistencyError,

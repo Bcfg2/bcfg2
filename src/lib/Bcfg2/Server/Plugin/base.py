@@ -122,6 +122,7 @@ class Plugin(Debuggable):
         """ Perform shutdown tasks for the plugin
 
         :returns: None """
+        self.debug_log("Shutting down %s plugin" % self.name)
         self.running = False
 
     def __str__(self):
