@@ -23,9 +23,8 @@ script:
   - nosetests testsuite
 branches:
   except:
-    - maint
+    - maint-1.2
     - 1.1.0-stable
-    - py3k
 notifications:
   email: chris.a.st.pierre@gmail.com
   irc:
