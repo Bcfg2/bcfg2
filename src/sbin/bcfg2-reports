@@ -10,7 +10,7 @@ from Bcfg2.Compat import ConfigParser
 try:
     import Bcfg2.settings
 except ConfigParser.NoSectionError:
-    print("Your bcfg2.conf is currently missing the statistics section which "
+    print("Your bcfg2.conf is currently missing the [database] section which "
           "is necessary for the reporting interface. Please see bcfg2.conf(5) "
           "for more details.")
     sys.exit(1)
@@ -121,7 +121,7 @@ def main():
                             help="Show hosts that haven't run in the last 24 "
                             "hours")
     parser.add_option_group(allhostmodes)
-    
+
     # entry modes
     entrymodes = \
         OptionGroup(parser, "Entry Modes",
@@ -166,7 +166,7 @@ def main():
                              (mode.get_opt_string(), opt.get_opt_string()))
             mode = opt
             mode_family = parser.get_option_group(opt.get_opt_string())
-    
+
     # you can specify more than one of --bad, --extra, --modified, --show, so
     # consider single-host options separately
     if not mode_family:
@@ -174,7 +174,7 @@ def main():
             if getattr(options, opt.dest):
                 mode_family = parser.get_option_group(opt.get_opt_string())
                 break
-            
+
     if not mode_family:
         parser.error("You must specify a mode")
 
@@ -243,7 +243,7 @@ def main():
                 parser.error("%s require either a list of entries on the "
                              "command line or the --file options" %
                              mode_family.title)
-                
+
             if options.badentry:
                 result = hosts_by_entry_type(clients, "bad", entries)
             elif options.modifiedentry:
@@ -263,7 +263,7 @@ def main():
 
                 # todo batch fetch this.  sqlite could break
                 for client in clients:
-                    ents = entry_cls.objects.filter(name=entries[0][1], 
+                    ents = entry_cls.objects.filter(name=entries[0][1],
                             interaction=client.current_interaction)
                     if len(ents) == 0:
                         continue
