@@ -55,7 +55,7 @@ def main():
             for root, dirs, files in os.walk(os.path.join(repo, plugin)):
                 for fname in files:
                     convertstructure(os.path.join(root, fname))
-        if plugin not in ['Cfg', 'TGenshi', 'TCheetah']:
+        if plugin not in ['Cfg', 'TGenshi', 'TCheetah', 'SSHbase']:
             continue
         for root, dirs, files in os.walk(os.path.join(repo, plugin)):
             for fname in files:
