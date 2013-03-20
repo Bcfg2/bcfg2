@@ -36,7 +36,7 @@ def convertstructure(structfile):
     """Do perms -> mode conversion for structure files."""
     xdata = lxml.etree.parse(structfile)
     found = False
-    for path in xdata.xpath('//BoundPath|Path'):
+    for path in xdata.xpath('//BoundPath|//Path'):
         found = setmodeattr(path)
     if found:
         writefile(structfile, xdata)
