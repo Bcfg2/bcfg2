@@ -311,6 +311,7 @@ cp -r tools/* %{buildroot}%{_defaultdocdir}/bcfg2-server-%{version}
 cp -r build/sphinx/html/* %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
 
 %{__install} -d %{buildroot}%{apache_conf}/conf.d
+sed -i "s/apache2/httpd/g" misc/apache/bcfg2.conf
 %{__install} -m 644 misc/apache/bcfg2.conf %{buildroot}%{apache_conf}/conf.d/wsgi_bcfg2.conf
 
 %{__mkdir_p} %{buildroot}%{_localstatedir}/cache/%{name}
