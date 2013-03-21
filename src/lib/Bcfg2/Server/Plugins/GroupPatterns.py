@@ -6,28 +6,7 @@ import sys
 import logging
 import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import any  # pylint: disable=W0622
-
-
-class PackedDigitRange(object):
-    """ Helper object for NameRange entries """
-
-    def __init__(self, digit_range):
-        self.sparse = list()
-        self.ranges = list()
-        for item in digit_range.split(','):
-            if '-' in item:
-                self.ranges.append(tuple([int(x) for x in item.split('-')]))
-            else:
-                self.sparse.append(int(item))
-
-    def includes(self, other):
-        """ return True if other is included in this range """
-        iother = int(other)
-        if iother in self.sparse:
-            return True
-        return any(iother in range(start, end + 1)
-                   for start, end in self.ranges)
+from Bcfg2.Utils import PackedDigitRange
 
 
 class PatternMap(object):

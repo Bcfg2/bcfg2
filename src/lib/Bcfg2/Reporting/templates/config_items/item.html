@@ -45,35 +45,46 @@ div.entry_list h3 {
   {% endif %}
 
 {# Really need a better test here #}
-{% if item.mdoe_problem or item.status_problem or item.linkentry.link_problem or item.version_problem %}
+{% if item.mode_problem or item.status_problem or item.linkentry.link_problem or item.version_problem %}
   <table class='entry_list'>
       <tr id='table_list_header'>
           <td style='text-align: right;'>Problem Type</td><td>Expected</td><td style='border-bottom: 1px solid #98DBCC;'>Found</td></tr>
   {% if item.mode_problem %}
       {% if item.current_perms.owner %}
-      <tr><td style='text-align: right'><b>Owner</b></td><td>{{item.target_perms.owner}}</td>
+      <tr><td style='text-align: right'><b>Owner</b></td>
+          <td>{{item.target_perms.owner}}</td>
           <td>{{item.current_perms.owner}}</td></tr>
       {% endif %}
       {% if item.current_perms.group %}
-      <tr><td style='text-align: right'><b>Group</b></td><td>{{item.target_perms.group}}</td>
+      <tr><td style='text-align: right'><b>Group</b></td>
+          <td>{{item.target_perms.group}}</td>
           <td>{{item.current_perms.group}}</td></tr>
       {% endif %}
       {% if item.current_perms.mode%}
-      <tr><td style='text-align: right'><b>Mode</b></td><td>{{item.target_perms.mode}}</td>
+      <tr><td style='text-align: right'><b>Permissions</b>
+          </td><td>{{item.target_perms.mode}}</td>
           <td>{{item.current_perms.mode}}</td></tr>
       {% endif %}
   {% endif %}
   {% if item.status_problem %}
-  <tr><td style='text-align: right'><b>Status</b></td><td>{{item.target_status}}</td>
-          <td>{{item.current_status}}</td></tr>
+  <tr><td style='text-align: right'><b>Status</b></td>
+      <td>{{item.target_status}}</td>
+      <td>{{item.current_status}}</td></tr>
   {% endif %}
   {% if item.linkentry.link_problem %}
-  <tr><td style='text-align: right'><b>{{item.get_path_type_display}}</b></td><td>{{item.linkentry.target_path}}</td>
-          <td>{{item.linkentry.current_path}}</td></tr>
+  <tr><td style='text-align: right'><b>{{item.get_path_type_display}}</b></td>
+      <td>{{item.linkentry.target_path}}</td>
+      <td>{{item.linkentry.current_path}}</td></tr>
   {% endif %}
   {% if item.version_problem %}
-    <tr><td style='text-align: right'><b>Package Version</b></td><td>{{item.target_version|cut:"("|cut:")"}}</td>
+    <tr><td style='text-align: right'><b>Package Version</b></td>
+        <td>{{item.target_version|cut:"("|cut:")"}}</td>
         <td>{{item.current_version|cut:"("|cut:")"}}</td></tr>
+  {% endif %}
+  {% if item.selinuxtype_problem %}
+    <tr><td style='text-align: right'><b>SELinux Type</b></td>
+        <td>{{item.selinuxtype}}</td>
+        <td>{{item.current_selinuxtype}}</td></tr>
   {% endif %}
   </table>
 {% endif %}
@@ -92,7 +103,7 @@ div.entry_list h3 {
           {{ item.details|syntaxhilight }}
         </div>
       {% else %}
-          {{ item.details }}
+        {{ item.details }}
       {% endif %}
     </div>
   {% endif %}

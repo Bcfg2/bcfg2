@@ -80,13 +80,12 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
         # Many, if not most package verifies can be caused by out of
         # date prelinking.
         if os.path.isfile('/usr/sbin/prelink') and not self.setup['dryrun']:
-            cmdrc, output = self.cmd.run('/usr/sbin/prelink -a -mR')
-            if cmdrc == 0:
+            rv = self.cmd.run('/usr/sbin/prelink -a -mR')
+            if rv.success:
                 self.logger.debug('Pre-emptive prelink succeeded')
             else:
                 # FIXME : this is dumb - what if the output is huge?
-                self.logger.error('Pre-emptive prelink failed: %s' % output)
-
+                self.logger.error('Pre-emptive prelink failed: %s' % rv.error)
 
     def RefreshPackages(self):
         """
@@ -593,29 +592,26 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
         # Fix installOnlyPackages
         if len(install_only_pkgs) > 0:
             self.logger.info("Attempting to install 'install only packages'")
-            install_args = " ".join([os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
-                                                  inst.get('simplefile')) \
-                                           for inst in install_only_pkgs])
-            self.logger.debug("rpm --install --quiet --oldpackage %s" % install_args)
-            cmdrc, output = self.cmd.run("rpm --install --quiet --oldpackage --replacepkgs %s" % \
-                                                                                     install_args)
-            if cmdrc == 0:
+            install_args = \
+                " ".join(os.path.join(self.instance_status[inst].get('pkg').get('uri'),
+                                      inst.get('simplefile'))
+                         for inst in install_only_pkgs)
+            if self.cmd.run("rpm --install --quiet --oldpackage --replacepkgs "
+                            "%s" % install_args):
                 # The rpm command succeeded.  All packages installed.
                 self.logger.info("Single Pass for InstallOnlyPkgs Succeded")
                 self.RefreshPackages()
-
             else:
                 # The rpm command failed.  No packages installed.
                 # Try installing instances individually.
                 self.logger.error("Single Pass for InstallOnlyPackages Failed")
                 installed_instances = []
                 for inst in install_only_pkgs:
-                    install_args = os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
-                                                     inst.get('simplefile'))
-                    self.logger.debug("rpm --install --quiet --oldpackage %s" % install_args)
-                    cmdrc, output = self.cmd.run("rpm --install --quiet --oldpackage --replacepkgs %s" % \
-                                                                                      install_args)
-                    if cmdrc == 0:
+                    install_args = \
+                        os.path.join(self.instance_status[inst].get('pkg').get('uri'),
+                                     inst.get('simplefile'))
+                    if self.cmd.run("rpm --install --quiet --oldpackage "
+                                    "--replacepkgs %s" % install_args):
                         installed_instances.append(inst)
                     else:
                         self.logger.debug("InstallOnlyPackage %s %s would not install." % \
@@ -632,15 +628,15 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 self.logger.info("Installing GPG keys.")
                 key_arg = os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
                                                      inst.get('simplefile'))
-                cmdrc, output = self.cmd.run("rpm --import %s" % key_arg)
-                if cmdrc != 0:
-                    self.logger.debug("Unable to install %s-%s" % \
-                                              (self.instance_status[inst].get('pkg').get('name'), \
-                                               self.str_evra(inst)))
+                if not self.cmd.run("rpm --import %s" % key_arg):
+                    self.logger.debug("Unable to install %s-%s" %
+                                      (self.instance_status[inst].get('pkg').get('name'),
+                                       self.str_evra(inst)))
                 else:
-                    self.logger.debug("Installed %s-%s-%s" % \
-                                              (self.instance_status[inst].get('pkg').get('name'), \
-                                               inst.get('version'), inst.get('release')))
+                    self.logger.debug("Installed %s-%s-%s" %
+                                      (self.instance_status[inst].get('pkg').get('name'),
+                                       inst.get('version'),
+                                       inst.get('release')))
             self.RefreshPackages()
             self.gpg_keyids = self.getinstalledgpg()
             pkg = self.instance_status[gpg_keys[0]].get('pkg')
@@ -652,13 +648,12 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             upgrade_args = " ".join([os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
                                                   inst.get('simplefile')) \
                                            for inst in upgrade_pkgs])
-            cmdrc, output = self.cmd.run("rpm --upgrade --quiet --oldpackage --replacepkgs %s" % \
-                                                       upgrade_args)
-            if cmdrc == 0:
+            if self.cmd.run("rpm --upgrade --quiet --oldpackage --replacepkgs "
+                            "%s" % upgrade_args):
                 # The rpm command succeeded.  All packages upgraded.
                 self.logger.info("Single Pass for Upgraded Packages Succeded")
-                upgrade_pkg_set = set([self.instance_status[inst].get('pkg') \
-                                                      for inst in upgrade_pkgs])
+                upgrade_pkg_set = set([self.instance_status[inst].get('pkg')
+                                       for inst in upgrade_pkgs])
                 self.RefreshPackages()
             else:
                 # The rpm command failed.  No packages upgraded.
@@ -670,13 +665,13 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                                      inst.get('simplefile'))
                     #self.logger.debug("rpm --upgrade --quiet --oldpackage --replacepkgs %s" % \
                     #                                                      upgrade_args)
-                    cmdrc, output = self.cmd.run("rpm --upgrade --quiet --oldpackage --replacepkgs %s" % upgrade_args)
-                    if cmdrc == 0:
+                    if self.cmd.run("rpm --upgrade --quiet --oldpackage "
+                                    "--replacepkgs %s" % upgrade_args):
                         upgraded_instances.append(inst)
                     else:
-                        self.logger.debug("Package %s %s would not upgrade." % \
-                                              (self.instance_status[inst].get('pkg').get('name'), \
-                                               self.str_evra(inst)))
+                        self.logger.debug("Package %s %s would not upgrade." %
+                                          (self.instance_status[inst].get('pkg').get('name'),
+                                           self.str_evra(inst)))
 
                 upgrade_pkg_set = set([self.instance_status[inst].get('pkg') \
                                                       for inst in upgrade_pkgs])

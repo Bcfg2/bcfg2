@@ -3,9 +3,9 @@
 import os
 import sys
 import stat
-from subprocess import Popen, PIPE
 import Bcfg2.Client
 import Bcfg2.Client.XML
+from Bcfg2.Utils import Executor, ClassName
 from Bcfg2.Compat import walk_packages  # pylint: disable=W0622
 
 __all__ = [m[1] for m in walk_packages(path=__path__)]
@@ -23,48 +23,6 @@ default = drivers[:]
 class ToolInstantiationError(Exception):
     """ This error is raised if the toolset cannot be instantiated. """
     pass
-
-
-class Executor:
-    """ This class runs shell commands. """
-
-    def __init__(self, logger):
-        """
-        :param logger: The logger to use to produce debug logging
-        :type logger: logging.Logger
-        """
-        self.logger = logger
-
-    def run(self, command):
-        """ Run a command inside a shell.
-
-        :param command: The command to run, given as a list as to
-                        :class:`subprocess.Popen`.  Since the command
-                        will be run within a shell it is particularly
-                        important to pass it as a list.
-        :type command: list
-        :returns: tuple of return value (integer) and output (list of
-                  lines)
-        """
-        self.logger.debug("Running: %s" % command)
-        proc = Popen(command, shell=True, bufsize=16384,
-                     stdin=PIPE, stdout=PIPE, close_fds=True)
-        output = proc.communicate()[0].splitlines()
-        for line in output:
-            self.logger.debug('< %s' % line)
-        return (proc.wait(), output)
-
-
-class ClassName(object):
-    """ This very simple descriptor class exists only to get the name
-    of the owner class.  This is used because, for historical reasons,
-    we expect every tool to have a ``name`` attribute that is in
-    almost all cases the same as the ``__class__.__name__`` attribute
-    of the plugin object.  This makes that more dynamic so that each
-    plugin isn't repeating its own name."""
-
-    def __get__(self, inst, owner):
-        return owner.__name__
 
 
 class Tool(object):
@@ -141,9 +99,9 @@ class Tool(object):
         #: The XML configuration for this client
         self.config = config
 
-        #: An :class:`Bcfg2.Client.Tools.Executor` object for
+        #: An :class:`Bcfg2.Utils.Executor` object for
         #: running external commands.
-        self.cmd = Executor(logger)
+        self.cmd = Executor(timeout=self.setup['command_timeout'])
 
         #: A list of entries that have been modified by this tool
         self.modified = []
@@ -182,7 +140,6 @@ class Tool(object):
             if not mode & stat.S_IEXEC:
                 raise ToolInstantiationError("%s: %s not executable" %
                                              (self.name, filename))
-
 
     def BundleUpdated(self, bundle, states):  # pylint: disable=W0613
         """ Callback that is invoked when a bundle has been updated.
@@ -492,9 +449,7 @@ class PkgTool(Tool):
 
         pkgcmd = self._get_package_command(packages)
         self.logger.debug("Running command: %s" % pkgcmd)
-
-        cmdrc = self.cmd.run(pkgcmd)[0]
-        if cmdrc == 0:
+        if self.cmd.run(pkgcmd):
             self.logger.info("Single Pass Succeded")
             # set all package states to true and flush workqueues
             pkgnames = [pkg.get('name') for pkg in packages]
@@ -519,7 +474,7 @@ class PkgTool(Tool):
                 else:
                     self.logger.info("Installing pkg %s version %s" %
                                      (pkg.get('name'), pkg.get('version')))
-                    if self.cmd.run(self._get_package_command([pkg]))[0] == 0:
+                    if self.cmd.run(self._get_package_command([pkg])):
                         states[pkg] = True
                     else:
                         self.logger.error("Failed to install package %s" %
@@ -573,7 +528,7 @@ class SvcTool(Tool):
                   :class:`Bcfg2.Client.Tools.Executor.run`
         """
         self.logger.debug('Starting service %s' % service.get('name'))
-        return self.cmd.run(self.get_svc_command(service, 'start'))[0]
+        return self.cmd.run(self.get_svc_command(service, 'start'))
 
     def stop_service(self, service):
         """ Stop a service.
@@ -584,7 +539,7 @@ class SvcTool(Tool):
                   :class:`Bcfg2.Client.Tools.Executor.run`
         """
         self.logger.debug('Stopping service %s' % service.get('name'))
-        return self.cmd.run(self.get_svc_command(service, 'stop'))[0]
+        return self.cmd.run(self.get_svc_command(service, 'stop'))
 
     def restart_service(self, service):
         """ Restart a service.
@@ -596,7 +551,7 @@ class SvcTool(Tool):
         """
         self.logger.debug('Restarting service %s' % service.get('name'))
         restart_target = service.get('target', 'restart')
-        return self.cmd.run(self.get_svc_command(service, restart_target))[0]
+        return self.cmd.run(self.get_svc_command(service, restart_target))
 
     def check_service(self, service):
         """ Check the status a service.
@@ -606,7 +561,7 @@ class SvcTool(Tool):
         :returns: bool - True if the status command returned 0, False
                   otherwise
         """
-        return self.cmd.run(self.get_svc_command(service, 'status'))[0] == 0
+        return bool(self.cmd.run(self.get_svc_command(service, 'status')))
 
     def Remove(self, services):
         if self.setup['servicemode'] != 'disabled':
@@ -628,21 +583,21 @@ class SvcTool(Tool):
                 (restart == "interactive" and not self.setup['interactive'])):
                 continue
 
-            rv = None
+            success = False
             if entry.get('status') == 'on':
                 if self.setup['servicemode'] == 'build':
-                    rv = self.stop_service(entry)
+                    success = self.stop_service(entry)
                 elif entry.get('name') not in self.restarted:
                     if self.setup['interactive']:
                         if not Bcfg2.Client.prompt('Restart service %s? (y/N) '
                                                    % entry.get('name')):
                             continue
-                    rv = self.restart_service(entry)
-                    if not rv:
+                    success = self.restart_service(entry)
+                    if success:
                         self.restarted.append(entry.get('name'))
             else:
-                rv = self.stop_service(entry)
-            if rv:
+                success = self.stop_service(entry)
+            if not success:
                 self.logger.error("Failed to manipulate service %s" %
                                   (entry.get('name')))
     BundleUpdated.__doc__ = Tool.BundleUpdated.__doc__

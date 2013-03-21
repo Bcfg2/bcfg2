@@ -129,7 +129,7 @@ class DepSolver(object):
             err = sys.exc_info()[1]
             self.logger.warning(err)
             return []
-        
+
         if ptype == "default":
             return [p
                     for p, d in list(group.default_packages.items())
@@ -254,6 +254,6 @@ def main():
             rv[gdata['group']] = list(packages)
         print(json.dumps(rv))
 
-        
+
 if __name__ == '__main__':
     sys.exit(main())

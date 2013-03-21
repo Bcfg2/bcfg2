@@ -16,6 +16,7 @@ from Bcfg2.Reporting.Storage.base import StorageBase, StorageError
 from Bcfg2.Server.Plugin.exceptions import PluginExecutionError
 from django.core import management
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.db.models import FieldDoesNotExist
 from django.core.cache import cache
 from django.db import transaction
 
@@ -29,6 +30,230 @@ class DjangoORM(StorageBase):
     def __init__(self, setup):
         super(DjangoORM, self).__init__(setup)
         self.size_limit = setup.get('reporting_file_limit')
+
+    def _import_default(self, entry, state, entrytype=None, defaults=None,
+                        mapping=None, boolean=None, xforms=None):
+        """ Default entry importer.  Maps the entry (in state
+        ``state``) to an appropriate *Entry object; by default, this
+        is determined by the entry tag, e.g., from an Action entry an
+        ActionEntry object is created.  This can be overridden with
+        ``entrytype``, which should be the class to instantiate for
+        this entry.
+
+        ``defaults`` is an optional mapping of <attribute
+        name>:<value> that will be used to set the default values for
+        various attributes.
+
+        ``mapping`` is a mapping of <field name>:<attribute name> that
+        can be used to map fields that are named differently on the
+        XML entry and in the database model.
+
+        ``boolean`` is a list of attribute names that should be
+        treated as booleans.
+
+        ``xforms`` is a dict of <attribute name>:<function>, where the
+        given function will be applied to the value of the named
+        attribute before trying to store it in the database.
+        """
+        if entrytype is None:
+            entrytype = globals()["%sEntry" % entry.tag]
+        if defaults is None:
+            defaults = dict()
+        if mapping is None:
+            mapping = dict()
+        if boolean is None:
+            boolean = []
+        if xforms is None:
+            xforms = dict()
+        mapping['exists'] = 'current_exists'
+        defaults['current_exists'] = 'true'
+        boolean.append("current_exists")
+
+        def boolean_xform(val):
+            try:
+                return val.lower() == "true"
+            except AttributeError:
+                return False
+
+        for attr in boolean + ["current_exists"]:
+            xforms[attr] = boolean_xform
+        act_dict = dict(state=state)
+        for fieldname in entrytype._meta.get_all_field_names():
+            if fieldname in ['id', 'hash_key', 'state']:
+                continue
+            try:
+                field = entrytype._meta.get_field(fieldname)
+            except FieldDoesNotExist:
+                continue
+            attrname = mapping.get(fieldname, fieldname)
+            val = entry.get(fieldname, defaults.get(attrname))
+            act_dict[fieldname] = xforms.get(attrname, lambda v: v)(val)
+        self.logger.debug("Adding %s:%s" % (entry.tag, entry.get("name")))
+        return entrytype.entry_get_or_create(act_dict)
+
+    def _import_Action(self, entry, state):
+        return self._import_default(entry, state,
+                                    defaults=dict(status='check', rc=-1),
+                                    mapping=dict(output="rc"))
+
+    def _import_Package(self, entry, state):
+        name = entry.get('name')
+        exists = entry.get('current_exists', default="true").lower() == "true"
+        act_dict = dict(name=name, state=state, exists=exists,
+                        target_version=entry.get('version', default=''),
+                        current_version=entry.get('current_version',
+                                                  default=''))
+
+        # extra entries are a bit different.  They can have Instance
+        # objects
+        if not act_dict['target_version']:
+            for instance in entry.findall("Instance"):
+                # FIXME - this probably only works for rpms
+                release = instance.get('release', '')
+                arch = instance.get('arch', '')
+                act_dict['current_version'] = instance.get('version')
+                if release:
+                    act_dict['current_version'] += "-" + release
+                if arch:
+                    act_dict['current_version'] += "." + arch
+                self.logger.debug("Adding package %s %s" %
+                                  (name, act_dict['current_version']))
+                return PackageEntry.entry_get_or_create(act_dict)
+        else:
+            self.logger.debug("Adding package %s %s" %
+                              (name, act_dict['target_version']))
+
+            # not implemented yet
+            act_dict['verification_details'] = \
+                entry.get('verification_details', '')
+            return PackageEntry.entry_get_or_create(act_dict)
+
+    def _import_Path(self, entry, state):
+        name = entry.get('name')
+        exists = entry.get('current_exists', default="true").lower() == "true"
+        path_type = entry.get("type").lower()
+        act_dict = dict(name=name, state=state, exists=exists,
+                        path_type=path_type)
+
+        target_dict = dict(
+            owner=entry.get('owner', default="root"),
+            group=entry.get('group', default="root"),
+            mode=entry.get('mode', default=entry.get('perms',
+                                                     default=""))
+        )
+        fperm, created = FilePerms.objects.get_or_create(**target_dict)
+        act_dict['target_perms'] = fperm
+
+        current_dict = dict(
+            owner=entry.get('current_owner', default=""),
+            group=entry.get('current_group', default=""),
+            mode=entry.get('current_mode',
+                default=entry.get('current_perms', default=""))
+        )
+        fperm, created = FilePerms.objects.get_or_create(**current_dict)
+        act_dict['current_perms'] = fperm
+
+        if path_type in ('symlink', 'hardlink'):
+            act_dict['target_path'] = entry.get('to', default="")
+            act_dict['current_path'] = entry.get('current_to', default="")
+            self.logger.debug("Adding link %s" % name)
+            return LinkEntry.entry_get_or_create(act_dict)
+        elif path_type == 'device':
+            # TODO devices
+            self.logger.warn("device path types are not supported yet")
+            return
+
+        # TODO - vcs output
+        act_dict['detail_type'] = PathEntry.DETAIL_UNUSED
+        if path_type == 'directory' and entry.get('prune', 'false') == 'true':
+            unpruned_elist = [e.get('path') for e in entry.findall('Prune')]
+            if unpruned_elist:
+                act_dict['detail_type'] = PathEntry.DETAIL_PRUNED
+                act_dict['details'] = "\n".join(unpruned_elist)
+        elif entry.get('sensitive', 'false').lower() == 'true':
+            act_dict['detail_type'] = PathEntry.DETAIL_SENSITIVE
+        else:
+            cdata = None
+            if entry.get('current_bfile', None):
+                act_dict['detail_type'] = PathEntry.DETAIL_BINARY
+                cdata = entry.get('current_bfile')
+            elif entry.get('current_bdiff', None):
+                act_dict['detail_type'] = PathEntry.DETAIL_DIFF
+                cdata = b64decode(entry.get('current_bdiff'))
+            elif entry.get('current_diff', None):
+                act_dict['detail_type'] = PathEntry.DETAIL_DIFF
+                cdata = entry.get('current_bdiff')
+            if cdata:
+                if len(cdata) > self.size_limit:
+                    act_dict['detail_type'] = PathEntry.DETAIL_SIZE_LIMIT
+                    act_dict['details'] = md5(cdata).hexdigest()
+                else:
+                    act_dict['details'] = cdata
+        self.logger.debug("Adding path %s" % name)
+        return PathEntry.entry_get_or_create(act_dict)
+        # TODO - secontext
+        # TODO - acls
+
+    def _import_Service(self, entry, state):
+        return self._import_default(entry, state,
+                                    defaults=dict(status='',
+                                                  current_status=''),
+                                    mapping=dict(status='target_status'))
+
+    def _import_SEBoolean(self, entry, state):
+        return self._import_default(
+            entry, state,
+            xforms=dict(value=lambda v: v.lower() == "on"))
+
+    def _import_SEFcontext(self, entry, state):
+        return self._import_default(entry, state,
+                                    defaults=dict(filetype='all'))
+
+    def _import_SEInterface(self, entry, state):
+        return self._import_default(entry, state)
+
+    def _import_SEPort(self, entry, state):
+        return self._import_default(entry, state)
+
+    def _import_SENode(self, entry, state):
+        return self._import_default(entry, state)
+
+    def _import_SELogin(self, entry, state):
+        return self._import_default(entry, state)
+
+    def _import_SEUser(self, entry, state):
+        return self._import_default(entry, state)
+
+    def _import_SEPermissive(self, entry, state):
+        return self._import_default(entry, state)
+
+    def _import_SEModule(self, entry, state):
+        return self._import_default(entry, state,
+                                    defaults=dict(disabled='false'),
+                                    boolean=['disabled', 'current_disabled'])
+
+    def _import_POSIXUser(self, entry, state):
+        defaults = dict(group=entry.get("name"),
+                        gecos=entry.get("name"),
+                        shell='/bin/bash',
+                        uid=entry.get("current_uid"))
+        if entry.get('name') == 'root':
+            defaults['home'] = '/root'
+        else:
+            defaults['home'] = '/home/%s' % entry.get('name')
+
+        # TODO: supplementary group membership
+        return self._import_default(entry, state, defaults=defaults)
+
+    def _import_POSIXGroup(self, entry, state):
+        return self._import_default(
+            entry, state,
+            defaults=dict(gid=entry.get("current_gid")))
+
+    def _import_unknown(self, entry, _):
+        self.logger.error("Unknown type %s not handled by reporting yet" %
+                          entry.tag)
+        return None
 
     @transaction.commit_on_success
     def _import_interaction(self, interaction):
@@ -46,13 +271,15 @@ class DjangoORM(StorageBase):
             cache.set(hostname, client)
 
         timestamp = datetime(*strptime(stats.get('time'))[0:6])
-        if len(Interaction.objects.filter(client=client, timestamp=timestamp)) > 0:
+        if len(Interaction.objects.filter(client=client,
+                                          timestamp=timestamp)) > 0:
             self.logger.warn("Interaction for %s at %s already exists" %
                     (hostname, timestamp))
             return
 
         if 'profile' in metadata:
-            profile, created = Group.objects.get_or_create(name=metadata['profile'])
+            profile, created = \
+                Group.objects.get_or_create(name=metadata['profile'])
         else:
             profile = None
         inter = Interaction(client=client,
@@ -65,10 +292,10 @@ class DjangoORM(StorageBase):
                              server=server,
                              profile=profile)
         inter.save()
-        self.logger.debug("Interaction for %s at %s with INSERTED in to db" % 
+        self.logger.debug("Interaction for %s at %s with INSERTED in to db" %
                 (client.id, timestamp))
 
-        #FIXME - this should be more efficient
+        # FIXME - this should be more efficient
         for group_name in metadata['groups']:
             group = cache.get("GROUP_" + group_name)
             if not group:
@@ -76,12 +303,13 @@ class DjangoORM(StorageBase):
                 if created:
                     self.logger.debug("Added group %s" % group)
                 cache.set("GROUP_" + group_name, group)
-                
+
             inter.groups.add(group)
-        for bundle_name in metadata['bundles']:
+        for bundle_name in metadata.get('bundles', []):
             bundle = cache.get("BUNDLE_" + bundle_name)
             if not bundle:
-                bundle, created = Bundle.objects.get_or_create(name=bundle_name)
+                bundle, created = \
+                    Bundle.objects.get_or_create(name=bundle_name)
                 if created:
                     self.logger.debug("Added bundle %s" % bundle)
                 cache.set("BUNDLE_" + bundle_name, bundle)
@@ -94,130 +322,26 @@ class DjangoORM(StorageBase):
         pattern = [('Bad/*', TYPE_BAD),
                    ('Extra/*', TYPE_EXTRA),
                    ('Modified/*', TYPE_MODIFIED)]
-        updates = dict(failures=[], paths=[], packages=[], actions=[], services=[])
+        updates = dict([(etype, []) for etype in Interaction.entry_types])
         for (xpath, state) in pattern:
             for entry in stats.findall(xpath):
                 counter_fields[state] = counter_fields[state] + 1
 
-                entry_type = entry.tag
-                name = entry.get('name')
-                exists = entry.get('current_exists', default="true").lower() == "true"
-    
                 # handle server failures differently
                 failure = entry.get('failure', '')
                 if failure:
-                    act_dict = dict(name=name, entry_type=entry_type,
-                        message=failure)
+                    act_dict = dict(name=entry.get("name"),
+                                    entry_type=entry.tag,
+                                    message=failure)
                     newact = FailureEntry.entry_get_or_create(act_dict)
                     updates['failures'].append(newact)
                     continue
 
-                act_dict = dict(name=name, state=state, exists=exists)
-
-                if entry_type == 'Action':
-                    act_dict['status'] = entry.get('status', default="check")
-                    act_dict['output'] = entry.get('rc', default=-1)
-                    self.logger.debug("Adding action %s" % name)
-                    updates['actions'].append(ActionEntry.entry_get_or_create(act_dict))
-                elif entry_type == 'Package':
-                    act_dict['target_version'] = entry.get('version', default='')
-                    act_dict['current_version'] = entry.get('current_version', default='')
-
-                    # extra entries are a bit different.  They can have Instance objects
-                    if not act_dict['target_version']:
-                        for instance in entry.findall("Instance"):
-                            #TODO - this probably only works for rpms
-                            release = instance.get('release', '')
-                            arch = instance.get('arch', '')
-                            act_dict['current_version'] = instance.get('version')
-                            if release:
-                                act_dict['current_version'] += "-" + release
-                            if arch:
-                                act_dict['current_version'] += "." + arch
-                            self.logger.debug("Adding package %s %s" % (name, act_dict['current_version']))
-                            updates['packages'].append(PackageEntry.entry_get_or_create(act_dict))
-                    else:
-
-                        self.logger.debug("Adding package %s %s" % (name, act_dict['target_version']))
-
-                        # not implemented yet
-                        act_dict['verification_details'] = entry.get('verification_details', '')
-                        updates['packages'].append(PackageEntry.entry_get_or_create(act_dict))
-
-                elif entry_type == 'Path':
-                    path_type = entry.get("type").lower()
-                    act_dict['path_type'] = path_type
-    
-                    target_dict = dict(
-                        owner=entry.get('owner', default="root"),
-                        group=entry.get('group', default="root"),
-                        mode=entry.get('mode', default=entry.get('perms', default=""))
-                    )
-                    fperm, created = FilePerms.objects.get_or_create(**target_dict)
-                    act_dict['target_perms'] = fperm
-
-                    current_dict = dict(
-                        owner=entry.get('current_owner', default=""),
-                        group=entry.get('current_group', default=""),
-                        mode=entry.get('current_mode',
-                            default=entry.get('current_perms', default=""))
-                    )
-                    fperm, created = FilePerms.objects.get_or_create(**current_dict)
-                    act_dict['current_perms'] = fperm
-
-                    if path_type in ('symlink', 'hardlink'):
-                        act_dict['target_path'] = entry.get('to', default="")
-                        act_dict['current_path'] = entry.get('current_to', default="")
-                        self.logger.debug("Adding link %s" % name)
-                        updates['paths'].append(LinkEntry.entry_get_or_create(act_dict))
-                        continue
-                    elif path_type == 'device':
-                        #TODO devices
-                        self.logger.warn("device path types are not supported yet")
-                        continue
-
-                    # TODO - vcs output
-                    act_dict['detail_type'] = PathEntry.DETAIL_UNUSED
-                    if path_type == 'directory' and entry.get('prune', 'false') == 'true':
-                        unpruned_elist = [e.get('path') for e in entry.findall('Prune')]
-                        if unpruned_elist:
-                            act_dict['detail_type'] = PathEntry.DETAIL_PRUNED
-                            act_dict['details'] = "\n".join(unpruned_elist)
-                    elif entry.get('sensitive', 'false').lower() == 'true':
-                        act_dict['detail_type'] = PathEntry.DETAIL_SENSITIVE
-                    else:
-                        cdata = None
-                        if entry.get('current_bfile', None):
-                            act_dict['detail_type'] = PathEntry.DETAIL_BINARY
-                            cdata = entry.get('current_bfile')
-                        elif entry.get('current_bdiff', None):
-                            act_dict['detail_type'] = PathEntry.DETAIL_DIFF
-                            cdata = b64decode(entry.get('current_bdiff'))
-                        elif entry.get('current_diff', None):
-                            act_dict['detail_type'] = PathEntry.DETAIL_DIFF
-                            cdata = entry.get('current_bdiff')
-                        if cdata:
-                            if len(cdata) > self.size_limit:
-                                act_dict['detail_type'] = PathEntry.DETAIL_SIZE_LIMIT
-                                act_dict['details'] = md5(cdata).hexdigest()
-                            else:
-                                act_dict['details'] = cdata
-                    self.logger.debug("Adding path %s" % name)
-                    updates['paths'].append(PathEntry.entry_get_or_create(act_dict))
-
-
-                    #TODO - secontext
-                    #TODO - acls
-    
-                elif entry_type == 'Service':
-                    act_dict['target_status'] = entry.get('status', default='')
-                    act_dict['current_status'] = entry.get('current_status', default='')
-                    self.logger.debug("Adding service %s" % name)
-                    updates['services'].append(ServiceEntry.entry_get_or_create(act_dict))
-                elif entry_type == 'SELinux':
-                    self.logger.info("SELinux not implemented yet")
-                else:
-                    self.logger.error("Unknown type %s not handled by reporting yet" % entry_type)
+                updatetype = entry.tag.lower() + "s"
+                update = getattr(self, "_import_%s" % entry.tag,
+                                 self._import_unknown)(entry, state)
+                if update is not None:
+                    updates[updatetype].append(update)
 
         inter.bad_count = counter_fields[TYPE_BAD]
         inter.modified_count = counter_fields[TYPE_MODIFIED]
@@ -227,15 +351,16 @@ class DjangoORM(StorageBase):
             # batch this for sqlite
             i = 0
             while(i < len(updates[entry_type])):
-                getattr(inter, entry_type).add(*updates[entry_type][i:i+100])
+                getattr(inter, entry_type).add(*updates[entry_type][i:i + 100])
                 i += 100
 
         # performance metrics
         for times in stats.findall('OpStamps'):
             for metric, value in list(times.items()):
-                Performance(interaction=inter, metric=metric, value=value).save()
+                Performance(interaction=inter,
+                            metric=metric,
+                            value=value).save()
 
-            
     def import_interaction(self, interaction):
         """Import the data into the backend"""
 
@@ -244,7 +369,6 @@ class DjangoORM(StorageBase):
         except:
             self.logger.error("Failed to import interaction: %s" %
                     traceback.format_exc().splitlines()[-1])
-
 
     def validate(self):
         """Validate backend storage.  Should be called once when loaded"""

@@ -19,8 +19,8 @@ class APK(Bcfg2.Client.Tools.PkgTool):
 
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
-        names = self.cmd.run("/sbin/apk info")[1]
-        nameversions = self.cmd.run("/sbin/apk info -v")[1]
+        names = self.cmd.run("/sbin/apk info").stdout.splitlines()
+        nameversions = self.cmd.run("/sbin/apk info -v").stdout.splitlines()
         for pkg in zip(names, nameversions):
             pkgname = pkg[0]
             version = pkg[1][len(pkgname) + 1:]
@@ -56,7 +56,6 @@ class APK(Bcfg2.Client.Tools.PkgTool):
         """Remove extra packages."""
         names = [pkg.get('name') for pkg in packages]
         self.logger.info("Removing packages: %s" % " ".join(names))
-        self.cmd.run("/sbin/apk del %s" % \
-                     " ".join(names))
+        self.cmd.run("/sbin/apk del %s" % " ".join(names))
         self.RefreshPackages()
         self.extra = self.FindExtra()

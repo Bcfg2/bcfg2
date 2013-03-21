@@ -100,9 +100,7 @@ class BaseCore(object):
         #: The Bcfg2 repository directory
         self.datastore = setup['repo']
 
-        if setup['debug']:
-            level = logging.DEBUG
-        elif setup['verbose']:
+        if setup['verbose']:
             level = logging.INFO
         else:
             level = logging.WARNING
@@ -119,6 +117,25 @@ class BaseCore(object):
 
         #: A :class:`logging.Logger` object for use by the core
         self.logger = logging.getLogger('bcfg2-server')
+
+        #: Log levels for the various logging handlers with debug True
+        #: and False.  Each loglevel dict is a dict of ``logger name
+        #: => log level``; the logger names are set in
+        #: :mod:`Bcfg2.Logger`.  The logger name ``default`` is
+        #: special, and will be used for any log handlers whose name
+        #: does not appear elsewhere in the dict.  At a minimum,
+        #: ``default`` must be provided.
+        self._loglevels = {True: dict(default=logging.DEBUG),
+                           False: dict(console=logging.INFO,
+                                       default=level)}
+
+        #: Used to keep track of the current debug state of the core.
+        self.debug_flag = False
+
+        # enable debugging on the core now.  debugging is enabled on
+        # everything else later
+        if setup['debug']:
+            self.set_core_debug(None, setup['debug'])
 
         try:
             filemonitor = \
@@ -308,6 +325,10 @@ class BaseCore(object):
         #: metadata
         self.metadata_cache = Cache()
 
+        if self.debug_flag:
+            # enable debugging on everything else.
+            self.plugins[plugin].set_debug(self.debug_flag)
+
     def plugins_by_type(self, base_cls):
         """ Return a list of loaded plugins that match the passed type.
 
@@ -405,6 +426,7 @@ class BaseCore(object):
 
     def shutdown(self):
         """ Perform plugin and FAM shutdown tasks. """
+        self.logger.debug("Shutting down core...")
         if not self.terminate.isSet():
             self.terminate.set()
             self.fam.shutdown()
@@ -438,6 +460,8 @@ class BaseCore(object):
                          hook.
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         """
+        self.logger.debug("Running %s hooks for %s" % (hook,
+                                                       metadata.hostname))
         start = time.time()
         try:
             for plugin in \
@@ -471,6 +495,7 @@ class BaseCore(object):
                      client
         :type data: list of lxml.etree._Element objects
         """
+        self.logger.debug("Validating structures for %s" % metadata.hostname)
         for plugin in \
                 self.plugins_by_type(Bcfg2.Server.Plugin.StructureValidator):
             try:
@@ -497,6 +522,7 @@ class BaseCore(object):
                      client
         :type data: list of lxml.etree._Element objects
         """
+        self.logger.debug("Validating goals for %s" % metadata.hostname)
         for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.GoalValidator):
             try:
                 plugin.validate_goals(metadata, data)
@@ -517,6 +543,7 @@ class BaseCore(object):
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: list of :class:`lxml.etree._Element` objects
         """
+        self.logger.debug("Getting structures for %s" % metadata.hostname)
         structures = list(chain(*[struct.BuildStructures(metadata)
                                   for struct in self.structures]))
         sbundles = [b.get('name') for b in structures if b.tag == 'Bundle']
@@ -539,6 +566,7 @@ class BaseCore(object):
                        structures to. Modified in-place.
         :type config: lxml.etree._Element
         """
+        self.logger.debug("Binding structures for %s" % metadata.hostname)
         for astruct in structures:
             try:
                 self.BindStructure(astruct, metadata)
@@ -555,6 +583,9 @@ class BaseCore(object):
         :param metadata: Client metadata to bind structure for
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         """
+        self.logger.debug("Binding structure %s for %s" %
+                          (structure.get("name", "unknown"),
+                           metadata.hostname))
         for entry in structure.getchildren():
             if entry.tag.startswith("Bound"):
                 entry.tag = entry.tag[5:]
@@ -630,6 +661,7 @@ class BaseCore(object):
         :type client: string
         :returns: :class:`lxml.etree._Element` - A complete Bcfg2
                   configuration document """
+        self.logger.debug("Building configuration for %s" % client)
         start = time.time()
         config = lxml.etree.Element("Configuration", version='2.0',
                                     revision=self.revision)
@@ -729,6 +761,7 @@ class BaseCore(object):
             self.shutdown()
             raise
 
+        self.set_debug(None, self.debug_flag)
         self._block()
 
     def _daemonize(self):
@@ -757,6 +790,7 @@ class BaseCore(object):
         :type mode: string
         :returns: list of Decision tuples ``(<entry tag>, <entry name>)``
         """
+        self.logger.debug("Getting decision list for %s" % metadata.hostname)
         result = []
         for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Decision):
             try:
@@ -785,6 +819,7 @@ class BaseCore(object):
         else:
             imd = self.metadata_cache.get(client_name, None)
         if not imd:
+            self.logger.debug("Building metadata for %s" % client_name)
             imd = self.metadata.get_initial_metadata(client_name)
             for conn in self.connectors:
                 grps = conn.get_additional_groups(imd)
@@ -806,6 +841,7 @@ class BaseCore(object):
         :param statistics: The statistics document to process
         :type statistics: lxml.etree._Element
         """
+        self.logger.debug("Processing statistics for %s" % client_name)
         meta = self.build_metadata(client_name)
         state = statistics.find(".//Statistics")
         if state.get('version') >= '2.0':
@@ -876,10 +912,12 @@ class BaseCore(object):
     def _get_rmi(self):
         """ Get a list of RMI calls exposed by plugins """
         rmi = dict()
-        if self.plugins:
-            for pname, pinst in list(self.plugins.items()):
-                for mname in pinst.__rmi__:
-                    rmi["%s.%s" % (pname, mname)] = getattr(pinst, mname)
+        for pname, pinst in list(self.plugins.items()):
+            for mname in pinst.__rmi__:
+                rmi["%s.%s" % (pname, mname)] = getattr(pinst, mname)
+        famname = self.fam.__class__.__name__
+        for mname in self.fam.__rmi__:
+            rmi["%s.%s" % (famname, mname)] = getattr(self.fam, mname)
         return rmi
 
     def _resolve_exposed_method(self, method_name):
@@ -931,6 +969,7 @@ class BaseCore(object):
         return func.__doc__
 
     @exposed
+    @track_statistics()
     def DeclareVersion(self, address, version):
         """ Declare the client version.
 
@@ -941,7 +980,9 @@ class BaseCore(object):
         :returns: bool - True on success
         :raises: :exc:`xmlrpclib.Fault`
         """
-        client = self.resolve_client(address)[0]
+        client = self.resolve_client(address, metadata=False)[0]
+        self.logger.debug("%s is running Bcfg2 client version %s" % (client,
+                                                                     version))
         try:
             self.metadata.set_version(client, version)
         except (Bcfg2.Server.Plugin.MetadataConsistencyError,
@@ -963,6 +1004,7 @@ class BaseCore(object):
         """
         resp = lxml.etree.Element('probes')
         client, metadata = self.resolve_client(address, cleanup_cache=True)
+        self.logger.debug("Getting probes for %s" % client)
         try:
             for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Probing):
                 for probe in plugin.GetProbes(metadata):
@@ -984,6 +1026,7 @@ class BaseCore(object):
         :raises: :exc:`xmlrpclib.Fault`
         """
         client, metadata = self.resolve_client(address)
+        self.logger.debug("Receiving probe data from %s" % client)
         if self.metadata_cache_mode == 'cautious':
             # clear the metadata cache right after building the
             # metadata object; that way the cache is cleared for any
@@ -1030,6 +1073,7 @@ class BaseCore(object):
         :raises: :exc:`xmlrpclib.Fault`
         """
         client = self.resolve_client(address, metadata=False)[0]
+        self.logger.debug("%s sets its profile to %s" % (client, profile))
         try:
             self.metadata.set_profile(client, profile, address)
         except (Bcfg2.Server.Plugin.MetadataConsistencyError,
@@ -1130,22 +1174,35 @@ class BaseCore(object):
         :type address: tuple
         :returns: bool - The new debug state of the FAM
         """
-        for plugin in self.plugins.values():
-            plugin.toggle_debug()
-        return self.toggle_fam_debug(address)
+        return self.set_debug(address, not self.debug_flag)
 
     @exposed
-    def toggle_fam_debug(self, _):
+    def toggle_core_debug(self, address):
+        """ Toggle debug status of the server core
+
+        :param address: Client (address, hostname) pair
+        :type address: tuple
+        :returns: bool - The new debug state of the FAM
+        """
+        return self.set_core_debug(address, not self.debug_flag)
+
+    @exposed
+    def toggle_fam_debug(self, address):
         """ Toggle debug status of the FAM
 
         :returns: bool - The new debug state of the FAM
         """
-        return self.fam.toggle_debug()
+        self.logger.warning("Deprecated method set_fam_debug called by %s" %
+                            address[0])
+        return "This method is deprecated and will be removed in a future " + \
+            "release\n%s" % self.fam.toggle_debug()
 
     @exposed
     def set_debug(self, address, debug):
         """ Explicitly set debug status of the FAM and all plugins
 
+        :param address: Client (address, hostname) pair
+        :type address: tuple
         :param debug: The new debug status.  This can either be a
                       boolean, or a string describing the state (e.g.,
                       "true" or "false"; case-insensitive)
@@ -1156,10 +1213,34 @@ class BaseCore(object):
             debug = debug.lower() == "true"
         for plugin in self.plugins.values():
             plugin.set_debug(debug)
-        return self.set_fam_debug(address, debug)
+        rv = self.set_core_debug(address, debug)
+        return self.set_fam_debug(address, debug) and rv
 
     @exposed
-    def set_fam_debug(self, _, debug):
+    def set_core_debug(self, _, debug):
+        """ Explicity set debug status of the server core
+
+        :param debug: The new debug status.  This can either be a
+                      boolean, or a string describing the state (e.g.,
+                      "true" or "false"; case-insensitive)
+        :type debug: bool or string
+        :returns: bool - The new debug state of the FAM
+        """
+        if debug not in [True, False]:
+            debug = debug.lower() == "true"
+        self.debug_flag = debug
+        self.logger.info("Core: debug = %s" % debug)
+        levels = self._loglevels[self.debug_flag]
+        for handler in logging.root.handlers:
+            level = levels.get(handler.get_name(), levels['default'])
+            self.logger.debug("Setting %s log handler to %s" %
+                              (handler.get_name(),
+                               logging.getLevelName(level)))
+            handler.setLevel(level)
+        return self.debug_flag
+
+    @exposed
+    def set_fam_debug(self, address, debug):
         """ Explicitly set debug status of the FAM
 
         :param debug: The new debug status of the FAM.  This can
@@ -1171,4 +1252,7 @@ class BaseCore(object):
         """
         if debug not in [True, False]:
             debug = debug.lower() == "true"
-        return self.fam.set_debug(debug)
+        self.logger.warning("Deprecated method set_fam_debug called by %s" %
+                            address[0])
+        return "This method is deprecated and will be removed in a future " + \
+            "release\n%s" % self.fam.set_debug(debug)

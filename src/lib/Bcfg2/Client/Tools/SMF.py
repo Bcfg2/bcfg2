@@ -26,21 +26,20 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
     def GetFMRI(self, entry):
         """Perform FMRI resolution for service."""
         if not 'FMRI' in entry.attrib:
-            name = self.cmd.run("/usr/bin/svcs -H -o FMRI %s 2>/dev/null" % \
-                                entry.get('name'))[1]
-            if name:
-                entry.set('FMRI', name[0])
-                return True
+            rv = self.cmd.run(["/usr/bin/svcs", "-H", "-o", "FMRI",
+                               entry.get('name')])
+            if rv.success:
+                entry.set('FMRI', rv.stdout.splitlines()[0])
             else:
-                self.logger.info('Failed to locate FMRI for service %s' % \
+                self.logger.info('Failed to locate FMRI for service %s' %
                                  entry.get('name'))
-                return False
+            return rv.success
         return True
 
     def VerifyService(self, entry, _):
         """Verify SMF Service entry."""
         if not self.GetFMRI(entry):
-            self.logger.error("smf service %s doesn't have FMRI set" % \
+            self.logger.error("smf service %s doesn't have FMRI set" %
                               entry.get('name'))
             return False
         if entry.get('FMRI').startswith('lrc'):
@@ -57,8 +56,9 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
                                   (entry.get("FMRI")))
                 return entry.get('status') == 'off'
         try:
-            srvdata = self.cmd.run("/usr/bin/svcs -H -o STA %s" % \
-                                   entry.get('FMRI'))[1][0].split()
+            srvdata = \
+                self.cmd.run("/usr/bin/svcs -H -o STA %s" %
+                             entry.get('FMRI')).stdout.splitlines()[0].split()
         except IndexError:
             # Occurs when no lines are returned (service not installed)
             return False
@@ -85,31 +85,30 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
                                       (loc))
                     return False
             else:
-                cmdrc = self.cmd.run("/usr/sbin/svcadm disable %s" % \
-                                     (entry.get('FMRI')))[0]
+                return self.cmd.run("/usr/sbin/svcadm disable %s" %
+                                    entry.get('FMRI')).success
+        elif entry.get('FMRI').startswith('lrc'):
+            loc = entry.get("FMRI")[4:].replace('_', '.')
+            try:
+                os.stat(loc.replace('/S', '/Disabled.'))
+                self.logger.debug("Renaming file %s to %s" %
+                                  (loc.replace('/S', '/DISABLED.S'), loc))
+                os.rename(loc.replace('/S', '/DISABLED.S'), loc)
+                return True
+            except OSError:
+                self.logger.debug("Failed to rename %s to %s" %
+                                  (loc.replace('/S', '/DISABLED.S'), loc))
+                return False
         else:
-            if entry.get('FMRI').startswith('lrc'):
-                loc = entry.get("FMRI")[4:].replace('_', '.')
-                try:
-                    os.stat(loc.replace('/S', '/Disabled.'))
-                    self.logger.debug("Renaming file %s to %s" % \
-                                      (loc.replace('/S', '/DISABLED.S'), loc))
-                    os.rename(loc.replace('/S', '/DISABLED.S'), loc)
-                    cmdrc = 0
-                except OSError:
-                    self.logger.debug("Failed to rename %s to %s" % \
-                                      (loc.replace('/S', '/DISABLED.S'), loc))
-                    cmdrc = 1
+            srvdata = \
+                self.cmd.run("/usr/bin/svcs -H -o STA %s" %
+                             entry.get('FMRI'))[1].splitlines()[0].split()
+            if srvdata[0] == 'MNT':
+                cmdarg = 'clear'
             else:
-                srvdata = self.cmd.run("/usr/bin/svcs -H -o STA %s" %
-                                       entry.get('FMRI'))[1][0].split()
-                if srvdata[0] == 'MNT':
-                    cmdarg = 'clear'
-                else:
-                    cmdarg = 'enable'
-                cmdrc = self.cmd.run("/usr/sbin/svcadm %s -r %s" % \
-                                     (cmdarg, entry.get('FMRI')))[0]
-        return cmdrc == 0
+                cmdarg = 'enable'
+            return self.cmd.run("/usr/sbin/svcadm %s -r %s" %
+                                (cmdarg, entry.get('FMRI'))).success
 
     def Remove(self, svcs):
         """Remove Extra SMF entries."""
@@ -120,12 +119,14 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
     def FindExtra(self):
         """Find Extra SMF Services."""
         allsrv = [name for name, version in \
-                  [srvc.split() for srvc in
-                   self.cmd.run("/usr/bin/svcs -a -H -o FMRI,STATE")[1]]
+                  [srvc.split()
+                   for srvc in self.cmd.run([
+                        "/usr/bin/svcs", "-a", "-H",
+                        "-o", "FMRI,STATE"]).stdout.splitlines()]
                   if version != 'disabled']
 
         for svc in self.getSupportedEntries():
             if svc.get("FMRI") in allsrv:
                 allsrv.remove(svc.get('FMRI'))
-        return [Bcfg2.Client.XML.Element("Service", type='smf', name=name) \
+        return [Bcfg2.Client.XML.Element("Service", type='smf', name=name)
                 for name in allsrv]

@@ -143,6 +143,7 @@ def add_console_handler(level=logging.DEBUG):
     console.setLevel(level)
     # tell the handler to use this format
     console.setFormatter(TermiosFormatter())
+    console.set_name("console")
     logging.root.addHandler(console)
 
 
@@ -157,6 +158,7 @@ def add_syslog_handler(procname, syslog_facility, level=logging.DEBUG):
             syslog = FragmentingSysLogHandler(procname,
                                               ('localhost', 514),
                                               syslog_facility)
+        syslog.set_name("syslog")
         syslog.setLevel(level)
         syslog.setFormatter(
             logging.Formatter('%(name)s[%(process)d]: %(message)s'))
@@ -170,6 +172,7 @@ def add_syslog_handler(procname, syslog_facility, level=logging.DEBUG):
 def add_file_handler(to_file, level=logging.DEBUG):
     """Add a logging handler that logs to to_file."""
     filelog = logging.FileHandler(to_file)
+    filelog.set_name("file")
     filelog.setLevel(level)
     filelog.setFormatter(
         logging.Formatter('%(asctime)s %(name)s[%(process)d]: %(message)s'))

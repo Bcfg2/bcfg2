@@ -15,6 +15,7 @@ import Bcfg2.Server
 import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
+from Bcfg2.Utils import locked
 from Bcfg2.Compat import MutableMapping, all, wraps  # pylint: disable=W0622
 from Bcfg2.version import Bcfg2VersionInfo
 
@@ -25,15 +26,6 @@ except ImportError:
     HAS_DJANGO = False
 
 LOGGER = logging.getLogger(__name__)
-
-
-def locked(fd):
-    """ Acquire a lock on a file """
-    try:
-        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        return True
-    return False
 
 
 if HAS_DJANGO:
@@ -195,7 +187,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
         newcontents = lxml.etree.tostring(dataroot, xml_declaration=False,
                                           pretty_print=True).decode('UTF-8')
 
-        while locked(fd) == True:
+        while locked(fd):
             pass
         try:
             datafile.write(newcontents)
@@ -392,7 +384,7 @@ class MetadataGroup(tuple):
 
 
 class Metadata(Bcfg2.Server.Plugin.Metadata,
-               Bcfg2.Server.Plugin.Statistics,
+               Bcfg2.Server.Plugin.ClientRunHooks,
                Bcfg2.Server.Plugin.DatabaseBacked):
     """This class contains data for bcfg2 server metadata."""
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -400,7 +392,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
     def __init__(self, core, datastore, watch_clients=True):
         Bcfg2.Server.Plugin.Metadata.__init__(self)
-        Bcfg2.Server.Plugin.Statistics.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
         self.watch_clients = watch_clients
         self.states = dict()
@@ -685,8 +677,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                     self.raddresses[clname] = set()
                 self.raddresses[clname].add(caddr)
             if 'auth' in client.attrib:
-                self.auth[client.get('name')] = client.get('auth',
-                                                           'cert+password')
+                self.auth[client.get('name')] = client.get('auth')
             if 'uuid' in client.attrib:
                 self.uuid[client.get('uuid')] = clname
             if client.get('secure', 'false').lower() == 'true':
@@ -1200,7 +1191,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             # look at cert.cN
             client = certinfo['commonName']
             self.debug_log("Got cN %s; using as client name" % client)
-            auth_type = self.auth.get(client, 'cert+password')
+            auth_type = self.auth.get(client,
+                                      self.core.setup['authentication'])
         elif user == 'root':
             id_method = 'address'
             try:
@@ -1223,12 +1215,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.debug_log("Authenticating client %s" % client)
 
         # next we validate the address
-        if id_method == 'uuid':
-            addr_is_valid = True
-        else:
-            addr_is_valid = self.validate_client_address(client, address)
-
-        if not addr_is_valid:
+        if (id_method != 'uuid' and
+            not self.validate_client_address(client, address)):
             return False
 
         if id_method == 'cert' and auth_type != 'cert+password':
@@ -1238,23 +1226,19 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             # we are done if cert+password not required
             return True
 
-        if client not in self.passwords:
-            if client in self.secure:
-                self.logger.error("Client %s in secure mode but has no "
-                                  "password" % address[0])
-                return False
-            if password != self.password:
-                self.logger.error("Client %s used incorrect global password" %
-                                  address[0])
-                return False
+        if client not in self.passwords and client in self.secure:
+            self.logger.error("Client %s in secure mode but has no password" %
+                              address[0])
+            return False
+
         if client not in self.secure:
             if client in self.passwords:
                 plist = [self.password, self.passwords[client]]
             else:
                 plist = [self.password]
             if password not in plist:
-                self.logger.error("Client %s failed to use either allowed "
-                                  "password" % address[0])
+                self.logger.error("Client %s failed to use an allowed password"
+                                  % address[0])
                 return False
         else:
             # client in secure mode and has a client password
@@ -1268,12 +1252,11 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         return True
     # pylint: enable=R0911,R0912
 
-    def process_statistics(self, meta, _):
-        """ Hook into statistics interface to toggle clients in
-        bootstrap mode """
-        client = meta.hostname
-        if client in self.auth and self.auth[client] == 'bootstrap':
-            self.update_client(client, dict(auth='cert'))
+    def end_statistics(self, metadata):
+        """ Hook to toggle clients in bootstrap mode """
+        if self.auth.get(metadata.hostname,
+                         self.core.setup['authentication']) == 'bootstrap':
+            self.update_client(metadata.hostname, dict(auth='cert'))
 
     def viz(self, hosts, bundles, key, only_client, colors):
         """Admin mode viz support."""

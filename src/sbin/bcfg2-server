@@ -11,6 +11,7 @@ from Bcfg2.Server.Core import CoreInitError
 
 LOGGER = logging.getLogger('bcfg2-server')
 
+
 def main():
     optinfo = dict()
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
@@ -22,7 +23,7 @@ def main():
     if not os.path.exists(setup['configfile']):
         print("Could not read %s" % setup['configfile'])
         sys.exit(1)
-    
+
     if setup['backend'] not in ['best', 'cherrypy', 'builtin']:
         print("Unknown server backend %s, using 'best'" % setup['backend'])
         setup['backend'] = 'best'

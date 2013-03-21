@@ -1,0 +1,15 @@
+.. -*- mode: rst -*-
+
+.. _development-utils:
+
+================
+Common Utilities
+================
+
+Some helper functions, classes, etc., are useful to both the client
+and server.  Some of these are used to maintain
+:ref:`development-compat`, and should go in ``Bcfg2.Compat``.  Those
+that aren't strictly for Python compatibility go in ``Bcfg2.Utils``,
+which is documented below.
+
+.. automodule:: Bcfg2.Utils

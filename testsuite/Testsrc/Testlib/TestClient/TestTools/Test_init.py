@@ -384,7 +384,7 @@ class TestPkgTool(TestTool):
 
         # test single-pass install success
         reset()
-        pt.cmd.run.return_value = (0, '')
+        pt.cmd.run.return_value = True
         states = dict([(p, False) for p in packages])
         pt.Install(packages, states)
         pt._get_package_command.assert_called_with(packages)
@@ -399,9 +399,9 @@ class TestPkgTool(TestTool):
         def run(cmd):
             if "foo" in cmd:
                 # fail when installing all packages, and when installing foo
-                return (1, '')
+                return False
             # succeed otherwise
-            return (0, '')
+            return True
 
         pt.VerifyPackage.side_effect = lambda p, m: p.get("name") == "bar"
 
@@ -480,7 +480,7 @@ class TestSvcTool(TestTool):
         st.cmd = MagicMock()
         service = lxml.etree.Element("Service", name="foo", type="test")
         self.assertEqual(st.start_service(service),
-                         st.cmd.run.return_value[0])
+                         st.cmd.run.return_value)
         st.get_svc_command.assert_called_with(service, "start")
         st.cmd.run.assert_called_with(st.get_svc_command.return_value)
 
@@ -490,7 +490,7 @@ class TestSvcTool(TestTool):
         st.cmd = MagicMock()
         service = lxml.etree.Element("Service", name="foo", type="test")
         self.assertEqual(st.stop_service(service),
-                         st.cmd.run.return_value[0])
+                         st.cmd.run.return_value)
         st.get_svc_command.assert_called_with(service, "stop")
         st.cmd.run.assert_called_with(st.get_svc_command.return_value)
 
@@ -505,14 +505,14 @@ class TestSvcTool(TestTool):
 
         service = lxml.etree.Element("Service", name="foo", type="test")
         self.assertEqual(st.restart_service(service),
-                         st.cmd.run.return_value[0])
+                         st.cmd.run.return_value)
         st.get_svc_command.assert_called_with(service, "restart")
         st.cmd.run.assert_called_with(st.get_svc_command.return_value)
 
         reset()
         service.set('target', 'reload')
         self.assertEqual(st.restart_service(service),
-                         st.cmd.run.return_value[0])
+                         st.cmd.run.return_value)
         st.get_svc_command.assert_called_with(service, "reload")
         st.cmd.run.assert_called_with(st.get_svc_command.return_value)
 
@@ -526,13 +526,13 @@ class TestSvcTool(TestTool):
             st.get_svc_command.reset_mock()
             st.cmd.reset_mock()
 
-        st.cmd.run.return_value = (0, '')
+        st.cmd.run.return_value = True
         self.assertEqual(st.check_service(service), True)
         st.get_svc_command.assert_called_with(service, "status")
         st.cmd.run.assert_called_with(st.get_svc_command.return_value)
 
         reset()
-        st.cmd.run.return_value = (11, '')
+        st.cmd.run.return_value = False
         self.assertEqual(st.check_service(service), False)
         st.get_svc_command.assert_called_with(service, "status")
         st.cmd.run.assert_called_with(st.get_svc_command.return_value)
@@ -559,7 +559,7 @@ class TestSvcTool(TestTool):
         st.stop_service.return_value = 0
         st.restart_service = Mock()
         st.restart_service.side_effect = lambda e: \
-            int(e.get("name") == "failed")
+            int(e.get("name") != "failed")
 
         def reset():
             st.handlesEntry.reset_mock()

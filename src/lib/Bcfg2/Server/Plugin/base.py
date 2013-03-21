@@ -2,6 +2,7 @@
 
 import os
 import logging
+from Bcfg2.Utils import ClassName
 
 
 class Debuggable(object):
@@ -33,8 +34,8 @@ class Debuggable(object):
         :returns: bool - The new value of the debug flag
         """
         self.debug_flag = debug
-        self.debug_log("%s: debug_flag = %s" % (self.__class__.__name__,
-                                                self.debug_flag),
+        self.debug_log("%s: debug = %s" % (self.__class__.__name__,
+                                           self.debug_flag),
                        flag=True)
         return debug
 
@@ -57,18 +58,6 @@ class Debuggable(object):
         """
         if (flag is None and self.debug_flag) or flag:
             self.logger.error(message)
-
-
-class ClassName(object):
-    """ This very simple descriptor class exists only to get the name
-    of the owner class.  This is used because, for historical reasons,
-    we expect every plugin to have a ``name`` attribute that is in
-    almost all cases the same as the ``__class__.__name__`` attribute
-    of the plugin object.  This makes that more dynamic so that each
-    plugin isn't repeating its own name. """
-
-    def __get__(self, inst, owner):
-        return owner.__name__
 
 
 class Plugin(Debuggable):
@@ -133,6 +122,7 @@ class Plugin(Debuggable):
         """ Perform shutdown tasks for the plugin
 
         :returns: None """
+        self.debug_log("Shutting down %s plugin" % self.name)
         self.running = False
 
     def __str__(self):

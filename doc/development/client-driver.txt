@@ -65,6 +65,11 @@ Base Classes
 Helper Classes
 --------------
 
-.. autoclass:: Bcfg2.Client.Tools.ClassName
-.. autoclass:: Bcfg2.Client.Tools.Executor
 .. autoclass:: Bcfg2.Client.Tools.ToolInstantiationError
+
+See Also
+--------
+
+* :ref:`development-compat`
+* :ref:`development-utils`
+

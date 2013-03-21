@@ -1,11 +1,11 @@
 """This provides bcfg2 support for Solaris SYSV packages."""
 
 import tempfile
-
+from Bcfg2.Compat import any  # pylint: disable=W0622
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
 
-
+# pylint: disable=C0103
 noask = '''
 mail=
 instance=overwrite
@@ -19,6 +19,7 @@ conflict=nocheck
 action=nocheck
 basedir=default
 '''
+# pylint: enable=C0103
 
 
 class SYSV(Bcfg2.Client.Tools.PkgTool):
@@ -42,14 +43,14 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
             self.noaskfile.flush()
             self.pkgtool = (self.pkgtool[0] % ("-a %s" % (self.noaskname)), \
                             self.pkgtool[1])
-        except:
-            self.pkgtool = (self.pkgtool[0] % (""), self.pkgtool[1])
+        except:  # pylint: disable=W0702
+            self.pkgtool = (self.pkgtool[0] % "", self.pkgtool[1])
 
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
         self.installed = {}
         # Build list of packages
-        lines = self.cmd.run("/usr/bin/pkginfo -x")[1]
+        lines = self.cmd.run("/usr/bin/pkginfo -x").stdout.splitlines()
         while lines:
             # Splitting on whitespace means that packages with spaces in
             # their version numbers don't work right.  Found this with
@@ -62,35 +63,36 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
 
     def VerifyPackage(self, entry, modlist):
         """Verify Package status for entry."""
-        if not entry.get('version'):
-            self.logger.info("Insufficient information of Package %s; cannot Verify" % entry.get('name'))
-            return False
+        desired_version = entry.get('version')
+        if desired_version == 'any':
+            desired_version = self.installed.get(entry.get('name'),
+                                                desired_version)
 
-        desiredVersion = entry.get('version')
-        if desiredVersion == 'any':
-            desiredVersion = self.installed.get(entry.get('name'), desiredVersion)
-
-        cmdrc = self.cmd.run("/usr/bin/pkginfo -q -v \"%s\" %s" % \
-                             (desiredVersion, entry.get('name')))[0]
-
-        if cmdrc != 0:
+        if not self.cmd.run(["/usr/bin/pkginfo", "-q", "-v",
+                             desired_version, entry.get('name')]):
             if entry.get('name') in self.installed:
-                self.logger.debug("Package %s version incorrect: have %s want %s" \
-                                  % (entry.get('name'), self.installed[entry.get('name')],
-                                     desiredVersion))
+                self.logger.debug("Package %s version incorrect: "
+                                  "have %s want %s" %
+                                  (entry.get('name'),
+                                   self.installed[entry.get('name')],
+                                   desired_version))
             else:
-                self.logger.debug("Package %s not installed" % (entry.get("name")))
+                self.logger.debug("Package %s not installed" %
+                                  entry.get("name"))
         else:
-            if self.setup['quick'] or entry.attrib.get('verify', 'true') == 'false':
+            if (self.setup['quick'] or
+                entry.attrib.get('verify', 'true') == 'false'):
                 return True
-            (vstat, odata) = self.cmd.run("/usr/sbin/pkgchk -n %s" % (entry.get('name')))
-            if vstat == 0:
+            rv = self.cmd.run("/usr/sbin/pkgchk -n %s" % entry.get('name'))
+            if rv.success:
                 return True
             else:
-                output = [line for line in odata if line[:5] == 'ERROR']
-                if len([name for name in output if name.split()[-1] not in modlist]):
-                    self.logger.debug("Package %s content verification failed" % \
-                                      (entry.get('name')))
+                output = [line for line in rv.stdout.splitlines()
+                          if line[:5] == 'ERROR']
+                if any(name for name in output
+                       if name.split()[-1] not in modlist):
+                    self.logger.debug("Package %s content verification failed"
+                                      % entry.get('name'))
                 else:
                     return True
         return False
@@ -99,7 +101,7 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
         """Remove specified Sysv packages."""
         names = [pkg.get('name') for pkg in packages]
         self.logger.info("Removing packages: %s" % (names))
-        self.cmd.run("/usr/sbin/pkgrm -a %s -n %s" % \
+        self.cmd.run("/usr/sbin/pkgrm -a %s -n %s" %
                      (self.noaskname, names))
         self.RefreshPackages()
         self.extra = self.FindExtra()

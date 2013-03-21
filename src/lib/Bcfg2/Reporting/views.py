@@ -161,7 +161,7 @@ def config_item(request, pk, entry_type, interaction=None):
     ts_end = ts_start + timedelta(days=1)
     associated_list = item.interaction_set.select_related('client').filter(\
         timestamp__gte=ts_start, timestamp__lt=ts_end)
-        
+
     if item.is_failure():
         template = 'config_items/item-failure.html'
     else:
@@ -184,7 +184,7 @@ def config_item_list(request, item_state, timestamp=None, **kwargs):
     current_clients = [q['id'] for q in _handle_filters(current_clients, **kwargs).values('id')]
 
     lists = []
-    for etype in ActionEntry, PackageEntry, PathEntry, ServiceEntry:
+    for etype in ENTRY_TYPES:
         ldata = etype.objects.filter(state=state, interaction__in=current_clients)\
             .annotate(num_entries=Count('id')).select_related('linkentry', 'target_perms', 'current_perms')
         if len(ldata) > 0:
@@ -218,7 +218,7 @@ def entry_status(request, entry_type, pk, timestamp=None, **kwargs):
         if it.pk not in seen:
             items.append((it, it.interaction_set.filter(pk__in=current_clients).order_by('client__name').select_related('client')))
             seen.append(it.pk)
-    
+
     return render_to_response('config_items/entry_status.html',
                               {'entry': item,
                                'items': items,
@@ -254,8 +254,8 @@ def common_problems(request, timestamp=None, threshold=None, group=None):
     else:
         current_clients = Interaction.objects.recent_ids(timestamp)
     lists = []
-    for etype in ActionEntry, PackageEntry, PathEntry, ServiceEntry:
-        ldata = etype.objects.exclude(state=TYPE_GOOD).filter( 
+    for etype in ENTRY_TYPES:
+        ldata = etype.objects.exclude(state=TYPE_GOOD).filter(
             interaction__in=current_clients).annotate(num_entries=Count('id')).filter(num_entries__gte=threshold)\
                 .order_by('-num_entries', 'name')
         if len(ldata) > 0:
@@ -315,7 +315,8 @@ def client_detailed_list(request, timestamp=None, **kwargs):
         kwargs['orderby'] = "client__name"
         kwargs['sort'] = "client"
 
-    kwargs['interaction_base'] = Interaction.objects.recent(timestamp).select_related()
+    kwargs['interaction_base'] = \
+        Interaction.objects.recent(timestamp).select_related()
     kwargs['page_limit'] = 0
     return render_history_view(request, 'clients/detailed-list.html', **kwargs)
 
@@ -330,16 +331,18 @@ def client_detail(request, hostname=None, pk=None):
         inter = client.interactions.get(pk=pk)
         maxdate = inter.timestamp
 
-    etypes = { TYPE_BAD: 'bad', TYPE_MODIFIED: 'modified', TYPE_EXTRA: 'extra' }
+    etypes = {TYPE_BAD: 'bad',
+              TYPE_MODIFIED: 'modified',
+              TYPE_EXTRA: 'extra'}
     edict = dict()
     for label in etypes.values():
         edict[label] = []
-    for ekind in ('actions', 'packages', 'paths', 'services'):
+    for ekind in inter.entry_types:
         for ent in getattr(inter, ekind).all():
             edict[etypes[ent.state]].append(ent)
     context['entry_types'] = edict
 
-    context['interaction']=inter
+    context['interaction'] = inter
     return render_history_view(request, 'clients/detail.html', page_limit=5,
         client=client, maxdate=maxdate, context=context)
 
@@ -356,7 +359,8 @@ def client_manage(request):
                 client.expiration = datetime.now()
                 client.save()
                 message = "Expiration for %s set to %s." % \
-                    (client_name, client.expiration.strftime("%Y-%m-%d %H:%M:%S"))
+                    (client_name,
+                     client.expiration.strftime("%Y-%m-%d %H:%M:%S"))
             elif client_action == 'unexpire':
                 client.expiration = None
                 client.save()

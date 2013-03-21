@@ -3,6 +3,7 @@
 import re
 import Bcfg2.Client.Tools
 
+
 class Portage(Bcfg2.Client.Tools.PkgTool):
     """The Gentoo toolset implements package and service operations and
     inherits the rest from Toolset.Toolset."""
@@ -35,9 +36,8 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         if not self._initialised:
             return
         self.logger.info('Getting list of installed packages')
-        cache = self.cmd.run("equery -q list '*'")[1]
         self.installed = {}
-        for pkg in cache:
+        for pkg in self.cmd.run("equery -q list '*'").stdout.splitlines():
             if self._pkg_pattern.match(pkg):
                 name = self._pkg_pattern.match(pkg).group(1)
                 version = self._pkg_pattern.match(pkg).group(2)
@@ -73,12 +73,12 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
 
                 self.logger.debug('Running equery check on %s' %
                                   entry.get('name'))
-                output = self.cmd.run("/usr/bin/equery -N check '=%s-%s' "
-                                      "2>&1 | grep '!!!' | awk '{print $2}'"
-                                      % ((entry.get('name'), version)))[1]
-                if [filename for filename in output \
-                    if filename not in modlist]:
-                    return False
+                for line in self.cmd.run(["/usr/bin/equery", "-N", "check",
+                                          '=%s-%s' %
+                                          (entry.get('name'),
+                                           version)]).stdout.splitlines():
+                    if '!!!' in line and line.split()[1] not in modlist:
+                        return False
 
         # By now the package must be in one of the following states:
         # - Not require checking

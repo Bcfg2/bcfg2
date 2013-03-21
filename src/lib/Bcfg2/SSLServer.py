@@ -403,12 +403,9 @@ class XMLRPCServer(SocketServer.ThreadingMixIn, SSLServer,
             name = instance.name
         except AttributeError:
             name = "unknown"
-        if hasattr(instance, 'plugins'):
-            for pname, pinst in list(instance.plugins.items()):
-                for mname in pinst.__rmi__:
-                    xmname = "%s.%s" % (pname, mname)
-                    fn = getattr(pinst, mname)
-                    self.register_function(fn, name=xmname)
+        if hasattr(instance, '_get_rmi'):
+            for fname, func in instance._get_rmi().items():
+                self.register_function(func, name=fname)
         self.logger.info("serving %s at %s" % (name, self.url))
 
     def serve_forever(self):
