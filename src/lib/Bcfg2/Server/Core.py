@@ -329,7 +329,6 @@ class BaseCore(object):
             # enable debugging on everything else.
             self.plugins[plugin].set_debug(self.debug_flag)
 
-
     def plugins_by_type(self, base_cls):
         """ Return a list of loaded plugins that match the passed type.
 

@@ -141,7 +141,6 @@ class Tool(object):
                 raise ToolInstantiationError("%s: %s not executable" %
                                              (self.name, filename))
 
-
     def BundleUpdated(self, bundle, states):  # pylint: disable=W0613
         """ Callback that is invoked when a bundle has been updated.
 
@@ -562,7 +561,7 @@ class SvcTool(Tool):
         :returns: bool - True if the status command returned 0, False
                   otherwise
         """
-        return self.cmd.run(self.get_svc_command(service, 'status'))
+        return bool(self.cmd.run(self.get_svc_command(service, 'status')))
 
     def Remove(self, services):
         if self.setup['servicemode'] != 'disabled':

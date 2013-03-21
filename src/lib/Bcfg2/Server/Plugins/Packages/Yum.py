@@ -673,13 +673,13 @@ class YumCollection(Collection):
             if not ptype:
                 ptype = "default"
             gdicts.append(dict(group=group, type=ptype))
-        
+
         if self.use_yum:
             return self.call_helper("get_groups", inputdata=gdicts)
         else:
             pkgs = dict()
             for gdict in gdicts:
-                pkgs[gdict['group']] = Collection.get_group(self, 
+                pkgs[gdict['group']] = Collection.get_group(self,
                                                             gdict['group'],
                                                             gdict['type'])
             return pkgs
@@ -1301,10 +1301,9 @@ class YumSource(Source):
             yumgroup = self.yumgroups[group]
         except KeyError:
             return []
-        packages = yumgroup['conditional'] + yumgroup['mandatory'] 
+        packages = yumgroup['conditional'] + yumgroup['mandatory']
         if ptype in ['default', 'optional', 'all']:
             packages += yumgroup['default']
         if ptype in ['optional', 'all']:
             packages += yumgroup['optional']
         return packages
-
