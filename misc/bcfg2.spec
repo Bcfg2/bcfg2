@@ -5,8 +5,8 @@
 %{!?_initrddir: %global _initrddir %{_sysconfdir}/rc.d/init.d}
 
 Name:             bcfg2
-Version:          1.3.0
-Release:          0.0
+Version:          1.3.1
+Release:          1
 Summary:          Configuration management system
 
 %if 0%{?suse_version}
@@ -87,7 +87,7 @@ deployment strategies.
 This package includes the Bcfg2 client software.
 
 %package server
-Version:          1.3.0
+Version:          1.3.1
 Summary:          Bcfg2 Server
 %if 0%{?suse_version}
 Group:            System/Management
@@ -140,7 +140,7 @@ deployment strategies.
 This package includes the Bcfg2 server software.
 
 %package server-cherrypy
-Version:          1.3.0
+Version:          1.3.1
 Summary:          Bcfg2 Server - CherryPy backend
 %if 0%{?suse_version}
 Group:            System/Management
@@ -220,7 +220,7 @@ deployment strategies.
 This package includes the Bcfg2 documentation.
 
 %package web
-Version:          1.3.0
+Version:          1.3.1
 Summary:          Bcfg2 Web Reporting Interface
 %if 0%{?suse_version}
 Group:            System/Management
@@ -454,6 +454,9 @@ fi
 %endif
 
 %changelog
+* Thu Mar 21 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.1-1
+- New upstream release
+
 * Fri Mar 15 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0
 - New upstream release
 

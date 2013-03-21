@@ -13,12 +13,6 @@ reporting purposes. Once the plugin is enabled, every time a client
 checks in, it will include the current repository revision in the
 reports/statistics.
 
-As with the other Version plugins, the Git plugin enables you to get
-revision information out of your repository for reporting
-purposes. Once the plugin is enabled, every time a client checks in,
-it will include the current repository revision in the
-reports/statistics.
-
 Additionally, if the ``GitPython`` library is installed, the Git
 plugin exposes an additional XML-RPC method call, ``Git.Update``.
 With no arguments, ``Git.Update`` updates the working copy to the

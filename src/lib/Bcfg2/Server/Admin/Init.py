@@ -13,6 +13,7 @@ import subprocess
 import Bcfg2.Server.Admin
 import Bcfg2.Server.Plugin
 import Bcfg2.Options
+import Bcfg2.Server.Plugins.Metadata
 from Bcfg2.Compat import input  # pylint: disable=W0622
 
 # default config file

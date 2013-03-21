@@ -24,7 +24,12 @@ def writefile(f, xdata):
 
 def convertinfo(ifile):
     """Do perms -> mode conversion for info.xml files."""
-    xdata = lxml.etree.parse(ifile)
+    try:
+        xdata = lxml.etree.parse(ifile)
+    except lxml.etree.XMLSyntaxError:
+        err = sys.exc_info()[1]
+        print("Could not parse %s, skipping: %s" % (ifile, err))
+        return
     found = False
     for i in xdata.findall('//Info'):
         found = setmodeattr(i)
@@ -34,9 +39,14 @@ def convertinfo(ifile):
 
 def convertstructure(structfile):
     """Do perms -> mode conversion for structure files."""
-    xdata = lxml.etree.parse(structfile)
+    try:
+        xdata = lxml.etree.parse(structfile)
+    except lxml.etree.XMLSyntaxError:
+        err = sys.exc_info()[1]
+        print("Could not parse %s, skipping: %s" % (structfile, err))
+        return
     found = False
-    for path in xdata.xpath('//BoundPath|Path'):
+    for path in xdata.xpath('//BoundPath|//Path'):
         found = setmodeattr(path)
     if found:
         writefile(structfile, xdata)
@@ -55,7 +65,7 @@ def main():
             for root, dirs, files in os.walk(os.path.join(repo, plugin)):
                 for fname in files:
                     convertstructure(os.path.join(root, fname))
-        if plugin not in ['Cfg', 'TGenshi', 'TCheetah']:
+        if plugin not in ['Cfg', 'TGenshi', 'TCheetah', 'SSHbase', 'SSLCA']:
             continue
         for root, dirs, files in os.walk(os.path.join(repo, plugin)):
             for fname in files:

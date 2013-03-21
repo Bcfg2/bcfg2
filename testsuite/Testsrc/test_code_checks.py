@@ -159,12 +159,14 @@ class TestPylint(Bcfg2TestCase):
         blacklist
 
     def get_env(self):
-        env = copy.copy(os.environ)
-        if 'PYTHONPATH' in os.environ:
-            env['PYTHONPATH'] = '%s:%s' % (env['PYTHONPATH'], testdir)
+        if ('PYTHONPATH' not in os.environ or
+            testdir not in os.environ['PYTHONPATH'].split(":")):
+            env = copy.copy(os.environ)
+            env['PYTHONPATH'] = ':'.join([env.get("PYTHONPATH", ""),
+                                          testdir])
+            return env
         else:
-            env['PYTHONPATH'] = testdir
-        return env
+            return os.environ
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)

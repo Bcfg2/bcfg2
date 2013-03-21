@@ -105,7 +105,11 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                 (self.encodePriority(self.facility, newrec.levelname.lower()),
                  self.format(newrec))
             try:
-                self.socket.send(msg.encode('ascii'))
+                try:
+                    encoded = msg.encode('utf-8')
+                except UnicodeDecodeError:
+                    encoded = msg
+                self.socket.send(encoded)
             except socket.error:
                 for i in range(10):  # pylint: disable=W0612
                     try:

@@ -8,8 +8,8 @@
 %global selinux_variants %([ -z "%{selinux_types}" ] && echo mls strict targeted || echo %{selinux_types})
 
 Name:             bcfg2-selinux
-Version:          1.3.0
-Release:          0.0
+Version:          1.3.1
+Release:          1
 Summary:          Bcfg2 Client and Server SELinux policy
 
 %if 0%{?suse_version}
@@ -120,6 +120,9 @@ if [ $1 -eq 0 ] ; then
 fi
 
 %changelog
+* Thu Mar 21 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.1-1
+- New upstream release
+
 * Fri Mar 15 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0
 - New upstream release
 

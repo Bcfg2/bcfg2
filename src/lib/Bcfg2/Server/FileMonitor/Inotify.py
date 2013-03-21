@@ -2,6 +2,7 @@
 support. """
 
 import os
+import errno
 import logging
 import pyinotify
 from Bcfg2.Compat import reduce  # pylint: disable=W0622
@@ -182,6 +183,9 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
         try:
             watchdir = self.watches_by_path[watch_path]
         except KeyError:
+            if not os.path.exists(watch_path):
+                raise OSError(errno.ENOENT,
+                              "No such file or directory: '%s'" % path)
             watchdir = self.watchmgr.add_watch(watch_path, self.mask,
                                                quiet=False)[watch_path]
             self.watches_by_path[watch_path] = watchdir
