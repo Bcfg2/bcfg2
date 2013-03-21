@@ -1137,12 +1137,15 @@ class BaseCore(object):
         return self.toggle_fam_debug(address)
 
     @exposed
-    def toggle_fam_debug(self, _):
+    def toggle_fam_debug(self, address):
         """ Toggle debug status of the FAM
 
         :returns: bool - The new debug state of the FAM
         """
-        return self.fam.toggle_debug()
+        self.logger.warning("Deprecated method set_fam_debug called by %s" %
+                            address[0])
+        return "This method is deprecated and will be removed in a future " + \
+            "release\n%s" % self.fam.toggle_debug()
 
     @exposed
     def set_debug(self, address, debug):
@@ -1161,7 +1164,7 @@ class BaseCore(object):
         return self.set_fam_debug(address, debug)
 
     @exposed
-    def set_fam_debug(self, _, debug):
+    def set_fam_debug(self, address, debug):
         """ Explicitly set debug status of the FAM
 
         :param debug: The new debug status of the FAM.  This can
@@ -1173,4 +1176,7 @@ class BaseCore(object):
         """
         if debug not in [True, False]:
             debug = debug.lower() == "true"
-        return self.fam.set_debug(debug)
+        self.logger.warning("Deprecated method set_fam_debug called by %s" %
+                            address[0])
+        return "This method is deprecated and will be removed in a future " + \
+            "release\n%s" % self.fam.set_debug(debug)

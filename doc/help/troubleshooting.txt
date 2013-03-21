@@ -56,8 +56,8 @@ the debug level individually on a given plugin, e.g.::
 Finally, the File Activity Monitor has its own analogue to these two
 methods, for setting the debug level of the FAM:
 
-    bcfg2-admin xcmd toggle_fam_debug
-    bcfg2-admin xcmd set_fam_debug false
+    bcfg2-admin xcmd Inotify.toggle_debug
+    bcfg2-admin xcmd Inotify.set_debug false
 
 Check if all repository XML files conform to schemas
 ====================================================
