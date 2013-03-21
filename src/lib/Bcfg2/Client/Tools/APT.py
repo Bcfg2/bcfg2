@@ -228,8 +228,13 @@ class APT(Bcfg2.Client.Tools.Tool):
                 continue
             if pkg.get('version') in ['auto', 'any']:
                 if self._newapi:
-                    ipkgs.append("%s=%s" % (pkg.get('name'),
-                                            self.pkg_cache[pkg.get('name')].candidate.version))
+                    try:
+                        ipkgs.append("%s=%s" % (pkg.get('name'),
+                                                self.pkg_cache[pkg.get('name')].candidate.version))
+                    except AttributeError:
+                        self.logger.error("Failed to find %s in apt package cache" %
+                                          pkg.get('name'))
+                        continue
                 else:
                     ipkgs.append("%s=%s" % (pkg.get('name'),
                                             self.pkg_cache[pkg.get('name')].candidateVersion))
