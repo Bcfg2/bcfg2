@@ -22,8 +22,8 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
             return True
 
         # check if service is enabled
-        cmd = '/sbin/rc-update show default | grep %s'
-        is_enabled = self.cmd.run(cmd % entry.get('name')).success
+        result = self.cmd.run(["/sbin/rc-update", "show", "default"])
+        is_enabled = entry.get("name") in result.stdout
 
         # check if init script exists
         try:
@@ -34,8 +34,8 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
             return False
 
         # check if service is enabled
-        cmd = '/etc/init.d/%s status | grep started'
-        is_running = self.cmd.run(cmd % entry.attrib['name']).success
+        result = self.cmd.run(self.get_svc_command(entry, "status"))
+        is_running = "started" in result.stdout
 
         if entry.get('status') == 'on' and not (is_enabled and is_running):
             entry.set('current_status', 'off')
@@ -70,9 +70,9 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
 
     def FindExtra(self):
         """Locate extra rc-update services."""
-        cmd = '/bin/rc-status -s'
         allsrv = [line.split()[0]
-                  for line in self.cmd.run(cmd).stdout.splitlines()
+                  for line in self.cmd.run(['/bin/rc-status',
+                                            '-s']).stdout.splitlines()
                   if 'started' in line]
         self.logger.debug('Found active services:')
         self.logger.debug(allsrv)

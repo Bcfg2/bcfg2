@@ -29,7 +29,10 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         self._binpkgonly = self.setup.get('portage_binpkgonly', False)
         if self._binpkgonly:
             self.pkgtool = self._binpkgtool
-        self.RefreshPackages()
+        try:
+            self.RefreshPackages()
+        except OSError:
+            raise Bcfg2.Client.Tools.ToolInstantiationError("equery not found")
 
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
@@ -37,7 +40,8 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
             return
         self.logger.info('Getting list of installed packages')
         self.installed = {}
-        for pkg in self.cmd.run("equery -q list '*'").stdout.splitlines():
+        for pkg in self.cmd.run(["equery", "-q",
+                                 "list", "*"]).stdout.splitlines():
             if self._pkg_pattern.match(pkg):
                 name = self._pkg_pattern.match(pkg).group(1)
                 version = self._pkg_pattern.match(pkg).group(2)
