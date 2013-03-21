@@ -36,7 +36,8 @@ class LocalFilesystem(TransportBase):
 
     def set_debug(self, debug):
         rv = TransportBase.set_debug(self, debug)
-        self.fmon.set_debug(debug)
+        if self.fmon is not None:
+            self.fmon.set_debug(debug)
         return rv
 
     def start_monitor(self, collector):
@@ -48,7 +49,8 @@ class LocalFilesystem(TransportBase):
             self.logger.error("File monitor driver %s not available; "
                               "forcing to default" % setup['filemonitor'])
             fmon = Bcfg2.Server.FileMonitor.available['default']
-
+        if self.debug_flag:
+            self.fmon.set_debug(self.debug_flag)
         try:
             self.fmon = fmon(debug=self.debug_flag)
             self.logger.info("Using the %s file monitor" %

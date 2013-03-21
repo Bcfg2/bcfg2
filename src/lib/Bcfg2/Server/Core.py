@@ -1214,7 +1214,7 @@ class BaseCore(object):
         for plugin in self.plugins.values():
             plugin.set_debug(debug)
         rv = self.set_core_debug(address, debug)
-        return self.set_fam_debug(address, debug) and rv
+        return self.fam.set_debug(address, debug) and rv
 
     @exposed
     def set_core_debug(self, _, debug):
