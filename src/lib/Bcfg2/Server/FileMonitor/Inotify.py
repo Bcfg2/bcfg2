@@ -16,6 +16,8 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
     """ File monitor backend with `inotify
     <http://inotify.aiken.cz/>`_ support. """
 
+    __rmi__ = Pseudo.__rmi__ + ["list_watches", "list_paths"]
+
     #: Inotify is the best FAM backend, so it gets a very high
     #: priority
     __priority__ = 99
@@ -215,3 +217,20 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
         if self.notifier:
             self.notifier.stop()
     shutdown.__doc__ = Pseudo.shutdown.__doc__
+
+    def list_watches(self):
+        """ XML-RPC that returns a list of current inotify watches for
+        debugging purposes. """
+        return list(self.watches_by_path.keys())
+
+    def list_paths(self):
+        """ XML-RPC that returns a list of paths that are handled for
+        debugging purposes. Because inotify doesn't like watching
+        files, but prefers to watch directories, this will be
+        different from
+        :func:`Bcfg2.Server.FileMonitor.Inotify.Inotify.ListWatches`. For
+        instance, if a plugin adds a monitor to
+        ``/var/lib/bcfg2/Plugin/foo.xml``, :func:`ListPaths` will
+        return ``/var/lib/bcfg2/Plugin/foo.xml``, while
+        :func:`ListWatches` will return ``/var/lib/bcfg2/Plugin``. """
+        return list(self.handles.keys())
