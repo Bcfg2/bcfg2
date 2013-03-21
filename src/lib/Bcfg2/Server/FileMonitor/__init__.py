@@ -116,6 +116,9 @@ class FileMonitor(Debuggable):
     #: should have higher priorities.
     __priority__ = -1
 
+    #: List of names of methods to be exposed as XML-RPC functions
+    __rmi__ = Debuggable.__rmi__ + ["list_event_handlers"]
+
     def __init__(self, ignore=None, debug=False):
         """
         :param ignore: A list of filename globs describing events that
@@ -309,6 +312,15 @@ class FileMonitor(Debuggable):
                   monitor
         """
         raise NotImplementedError
+
+    def list_event_handlers(self):
+        """ XML-RPC that returns
+        :attr:`Bcfg2.Server.FileMonitor.FileMonitor.handles` for
+        debugging purposes. """
+        rv = dict()
+        for watch, handler in self.handles.items():
+            rv[watch] = getattr(handler, "name", handler.__class__.__name__)
+        return rv
 
 
 #: A dict of all available FAM backends.  Keys are the human-readable
