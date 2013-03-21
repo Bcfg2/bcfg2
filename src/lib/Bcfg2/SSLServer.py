@@ -417,7 +417,9 @@ class XMLRPCServer(SocketServer.ThreadingMixIn, SSLServer,
     def serve_forever(self):
         """Serve single requests until (self.serve == False)."""
         self.serve = True
-        self.task_thread = threading.Thread(target=self._tasks_thread)
+        self.task_thread = \
+            threading.Thread(name="%sThread" % self.__class__.__name__,
+                             target=self._tasks_thread)
         self.task_thread.start()
         self.logger.info("serve_forever() [start]")
         signal.signal(signal.SIGINT, self._handle_shutdown_signal)
