@@ -20,9 +20,8 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
 
     def RefreshPackages(self):
         '''Refresh memory hashes of packages'''
-        pkgcache = self.cmd.run("/usr/bin/pacman -Q")[1]
         self.installed = {}
-        for pkg in pkgcache:
+        for pkg in self.cmd.run("/usr/bin/pacman -Q").stdout.splitlines():
             pkgname = pkg.split(' ')[0].strip()
             version = pkg.split(' ')[1].strip()
             #self.logger.info(" pkgname: %s, version: %s" % (pkgname, version))
@@ -62,7 +61,7 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
         '''Remove extra packages'''
         names = [pkg.get('name') for pkg in packages]
         self.logger.info("Removing packages: %s" % " ".join(names))
-        self.cmd.run("%s --noconfirm --noprogressbar -R %s" % \
+        self.cmd.run("%s --noconfirm --noprogressbar -R %s" %
                      (self.pkgtool, " ".join(names)))
         self.RefreshPackages()
         self.extra = self.FindExtra()

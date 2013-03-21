@@ -19,7 +19,8 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
 
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
-        pkgcache = self.cmd.run("/opt/local/bin/port installed")[1]
+        pkgcache = self.cmd.run(["/opt/local/bin/port",
+                                 "installed"]).stdout.splitlines()
         self.installed = {}
         for pkg in pkgcache:
             if pkg.startswith("Warning:"):
@@ -65,7 +66,7 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
         """Remove extra packages."""
         names = [pkg.get('name') for pkg in packages]
         self.logger.info("Removing packages: %s" % " ".join(names))
-        self.cmd.run("/opt/local/bin/port uninstall %s" % \
+        self.cmd.run("/opt/local/bin/port uninstall %s" %
                      " ".join(names))
         self.RefreshPackages()
         self.extra = self.FindExtra()

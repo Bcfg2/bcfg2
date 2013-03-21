@@ -6,6 +6,7 @@ import subprocess
 from mock import Mock, MagicMock, patch
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Tools.POSIXUsers import *
+from Bcfg2.Utils import PackedDigitRange
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4
@@ -18,105 +19,6 @@ while path != "/":
     path = os.path.dirname(path)
 from common import *
 from TestTools.Test_init import TestTool
-
-
-class TestIDRangeSet(Bcfg2TestCase):
-    def test_ranges(self):
-        # test cases.  tuples of (ranges, included numbers, excluded
-        # numbers)
-        # tuples of (range description, numbers that are included,
-        # numebrs that are excluded)
-        tests = [(["0-3"], ["0", 1, "2", 3], [4]),
-                 (["1"], [1], [0, "2"]),
-                 (["10-11"], [10, 11], [0, 1]),
-                 (["9-9"], [9], [8, 10]),
-                 (["0-100"], [0, 10, 99, 100], []),
-                 (["1", "3", "5"], [1, 3, 5], [0, 2, 4, 6]),
-                 (["1-5", "7"], [1, 3, 5, 7], [0, 6, 8]),
-                 (["1-5", 7, "9-11"], [1, 3, 5, 7, 9, 11], [0, 6, 8, 12]),
-                 (["852-855", "321-497", 763], [852, 855, 321, 400, 497, 763],
-                  [851, 320, 766, 999]),
-                 (["0-"], [0, 1, 100, 100000], []),
-                 ([1, "5-10", "1000-"], [1, 5, 10, 1000, 10000000],
-                  [4, 11, 999])]
-        for ranges, inc, exc in tests:
-            rng = IDRangeSet(*ranges)
-            for test in inc:
-                self.assertIn(test, rng)
-            for test in exc:
-                self.assertNotIn(test, rng)
-
-
-class TestExecutor(Bcfg2TestCase):
-    test_obj = Executor
-
-    def get_obj(self, logger=None):
-        if not logger:
-            def print_msg(msg):
-                print(msg)
-            logger = Mock()
-            logger.error = Mock(side_effect=print_msg)
-            logger.warning = Mock(side_effect=print_msg)
-            logger.info = Mock(side_effect=print_msg)
-            logger.debug = Mock(side_effect=print_msg)
-        return self.test_obj(logger)
-
-    @patch("subprocess.Popen")
-    def test_run(self, mock_Popen):
-        exc = self.get_obj()
-        cmd = ["/bin/test", "-a", "foo"]
-        proc = Mock()
-        proc.wait = Mock()
-        proc.wait.return_value = 0
-        proc.communicate = Mock()
-        proc.communicate.return_value = (MagicMock(), MagicMock())
-        mock_Popen.return_value = proc
-
-        self.assertTrue(exc.run(cmd))
-        args = mock_Popen.call_args
-        self.assertEqual(args[0][0], cmd)
-        self.assertEqual(args[1]['shell'], False)
-        self.assertEqual(args[1]['stdin'], subprocess.PIPE)
-        self.assertEqual(args[1]['stdout'], subprocess.PIPE)
-        self.assertEqual(args[1]['stderr'], subprocess.PIPE)
-        proc.communicate.assert_called_with()
-        proc.wait.assert_called_with()
-        self.assertEqual(proc.communicate.return_value,
-                         (exc.stdout, exc.stderr))
-        self.assertEqual(proc.wait.return_value,
-                         exc.retval)
-
-        mock_Popen.reset_mock()
-        inputdata = "foo\n\nbar"
-        self.assertTrue(exc.run(cmd, inputdata=inputdata, shell=True))
-        args = mock_Popen.call_args
-        self.assertEqual(args[0][0], cmd)
-        self.assertEqual(args[1]['shell'], True)
-        self.assertEqual(args[1]['stdin'], subprocess.PIPE)
-        self.assertEqual(args[1]['stdout'], subprocess.PIPE)
-        self.assertEqual(args[1]['stderr'], subprocess.PIPE)
-        proc.communicate.assert_called_with(inputdata)
-        proc.wait.assert_called_with()
-        self.assertEqual(proc.communicate.return_value,
-                         (exc.stdout, exc.stderr))
-        self.assertEqual(proc.wait.return_value,
-                         exc.retval)
-
-        mock_Popen.reset_mock()
-        proc.wait.return_value = 1
-        self.assertRaises(ExecutionError, exc.run, cmd)
-        args = mock_Popen.call_args
-        self.assertEqual(args[0][0], cmd)
-        self.assertEqual(args[1]['shell'], False)
-        self.assertEqual(args[1]['stdin'], subprocess.PIPE)
-        self.assertEqual(args[1]['stdout'], subprocess.PIPE)
-        self.assertEqual(args[1]['stderr'], subprocess.PIPE)
-        proc.communicate.assert_called_with()
-        proc.wait.assert_called_with()
-        self.assertEqual(proc.communicate.return_value,
-                         (exc.stdout, exc.stderr))
-        self.assertEqual(proc.wait.return_value,
-                         exc.retval)
 
 
 class TestPOSIXUsers(TestTool):
@@ -166,19 +68,19 @@ class TestPOSIXUsers(TestTool):
 
     def test__in_managed_range(self):
         users = self.get_obj()
-        users._whitelist = dict(POSIXGroup=IDRangeSet("1-10"))
-        users._blacklist = dict(POSIXGroup=IDRangeSet("8-100"))
+        users._whitelist = dict(POSIXGroup=PackedDigitRange("1-10"))
+        users._blacklist = dict(POSIXGroup=PackedDigitRange("8-100"))
         self.assertTrue(users._in_managed_range("POSIXGroup", "9"))
 
         users._whitelist = dict(POSIXGroup=None)
-        users._blacklist = dict(POSIXGroup=IDRangeSet("8-100"))
+        users._blacklist = dict(POSIXGroup=PackedDigitRange("8-100"))
         self.assertFalse(users._in_managed_range("POSIXGroup", "9"))
 
         users._whitelist = dict(POSIXGroup=None)
-        users._blacklist = dict(POSIXGroup=IDRangeSet("100-"))
+        users._blacklist = dict(POSIXGroup=PackedDigitRange("100-"))
         self.assertTrue(users._in_managed_range("POSIXGroup", "9"))
 
-        users._whitelist = dict(POSIXGroup=IDRangeSet("1-10"))
+        users._whitelist = dict(POSIXGroup=PackedDigitRange("1-10"))
         users._blacklist = dict(POSIXGroup=None)
         self.assertFalse(users._in_managed_range("POSIXGroup", "25"))
 
@@ -434,6 +336,10 @@ class TestPOSIXUsers(TestTool):
                 setter.reset_mock()
             users.modified = []
 
+        cmd_rv = Mock()
+        cmd_rv.success = True
+        users.cmd.run.return_value = cmd_rv
+
         reset()
         entry = lxml.etree.Element("POSIXUser", name="test2")
         self.assertTrue(users._install(entry))
@@ -453,7 +359,7 @@ class TestPOSIXUsers(TestTool):
         self.assertIn(entry, users.modified)
 
         reset()
-        users.cmd.run.side_effect = ExecutionError(None)
+        cmd_rv.success = False
         self.assertFalse(users._install(entry))
         users.set_defaults[entry.tag].assert_called_with(entry)
         users._get_cmd.assert_called_with("mod",
@@ -551,11 +457,13 @@ class TestPOSIXUsers(TestTool):
         users = self.get_obj()
         users._get_cmd = Mock()
         users.cmd = Mock()
+        cmd_rv = Mock()
+        cmd_rv.success = True
+        users.cmd.run.return_value = cmd_rv
 
         def reset():
             users._get_cmd.reset_mock()
             users.cmd.reset_mock()
-
 
         entry = lxml.etree.Element("POSIXUser", name="test2")
         self.assertTrue(users._remove(entry))
@@ -563,7 +471,7 @@ class TestPOSIXUsers(TestTool):
         users.cmd.run.assert_called_with(users._get_cmd.return_value)
 
         reset()
-        users.cmd.run.side_effect = ExecutionError(None)
+        cmd_rv.success = False
         self.assertFalse(users._remove(entry))
         users._get_cmd.assert_called_with("del", entry)
         users.cmd.run.assert_called_with(users._get_cmd.return_value)

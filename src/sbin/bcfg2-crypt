@@ -261,7 +261,7 @@ class Encryptor(object):
                                     (self.pname, pname))
         return (passphrase, pname)
 
-    def _get_passphrase(self, chunk): #  pylint: disable=W0613
+    def _get_passphrase(self, chunk):  # pylint: disable=W0613
         """ get the passphrase for a chunk of a file """
         return None
 

@@ -11,21 +11,9 @@ except ImproperlyConfigured:
 
 from django.core.cache import cache
 from datetime import datetime, timedelta
+from Bcfg2.Compat import cPickle
 
-try:
-    import cPickle as pickle
-except:
-    import pickle
 
-KIND_CHOICES = (
-    #These are the kinds of config elements
-    ('Package', 'Package'),
-    ('Path', 'directory'),
-    ('Path', 'file'),
-    ('Path', 'permissions'),
-    ('Path', 'symlink'),
-    ('Service', 'Service'),
-)
 TYPE_GOOD = 0
 TYPE_BAD = 1
 TYPE_MODIFIED = 2
@@ -57,8 +45,8 @@ def hash_entry(entry_dict):
     for key in sorted(entry_dict.keys()):
         if key in ('id', 'hash_key') or key.startswith('_'):
             continue
-        dataset.append( (key, entry_dict[key]) )
-    return hash(pickle.dumps(dataset))
+        dataset.append((key, entry_dict[key]))
+    return hash(cPickle.dumps(dataset))
 
 
 class Client(models.Model):
@@ -121,7 +109,8 @@ class InteractionManager(models.Manager):
 
 
 class Interaction(models.Model):
-    """Models each reconfiguration operation interaction between client and server."""
+    """ Models each reconfiguration operation interaction between
+    client and server. """
     client = models.ForeignKey(Client, related_name="interactions")
     timestamp = models.DateTimeField(db_index=True)  # Timestamp for this record
     state = models.CharField(max_length=32)  # good/bad/modified/etc
@@ -137,7 +126,23 @@ class Interaction(models.Model):
     packages = models.ManyToManyField("PackageEntry")
     paths = models.ManyToManyField("PathEntry")
     services = models.ManyToManyField("ServiceEntry")
+    sebooleans = models.ManyToManyField("SEBooleanEntry")
+    seports = models.ManyToManyField("SEPortEntry")
+    sefcontexts = models.ManyToManyField("SEFcontextEntry")
+    senodes = models.ManyToManyField("SENodeEntry")
+    selogins = models.ManyToManyField("SELoginEntry")
+    seusers = models.ManyToManyField("SEUserEntry")
+    seinterfaces = models.ManyToManyField("SEInterfaceEntry")
+    sepermissives = models.ManyToManyField("SEPermissiveEntry")
+    semodules = models.ManyToManyField("SEModuleEntry")
+    posixusers = models.ManyToManyField("POSIXUserEntry")
+    posixgroups = models.ManyToManyField("POSIXGroupEntry")
     failures = models.ManyToManyField("FailureEntry")
+
+    entry_types = ('actions', 'packages', 'paths', 'services', 'sebooleans',
+                   'seports', 'sefcontexts', 'senodes', 'selogins', 'seusers',
+                   'seinterfaces', 'sepermissives', 'semodules', 'posixusers',
+                   'posixgroups')
 
     # Formerly InteractionMetadata
     profile = models.ForeignKey("Group", related_name="+", null=True)
@@ -157,7 +162,8 @@ class Interaction(models.Model):
 
     def percentbad(self):
         if not self.total_count == 0:
-            return ((self.total_count - self.good_count) / (float(self.total_count))) * 100
+            return ((self.total_count - self.good_count) /
+                    (float(self.total_count))) * 100
         else:
             return 0
 
@@ -189,7 +195,8 @@ class Interaction(models.Model):
         self.client.save()  # save again post update
 
     def delete(self):
-        '''Override the default delete.  Allows us to remove Performance items'''
+        '''Override the default delete.  Allows us to remove
+        Performance items '''
         pitems = list(self.performance_items.all())
         super(Interaction, self).delete()
         for perf in pitems:
@@ -201,19 +208,19 @@ class Interaction(models.Model):
 
     def bad(self):
         rv = []
-        for entry in ('actions', 'packages', 'paths', 'services'):
+        for entry in self.entry_types:
             rv.extend(getattr(self, entry).filter(state=TYPE_BAD))
         return rv
 
     def modified(self):
         rv = []
-        for entry in ('actions', 'packages', 'paths', 'services'):
+        for entry in self.entry_types:
             rv.extend(getattr(self, entry).filter(state=TYPE_MODIFIED))
         return rv
 
     def extra(self):
         rv = []
-        for entry in ('actions', 'packages', 'paths', 'services'):
+        for entry in self.entry_types:
             rv.extend(getattr(self, entry).filter(state=TYPE_EXTRA))
         return rv
 
@@ -325,14 +332,12 @@ class BaseEntry(models.Model):
             self.hash_key = hash_entry(self.__dict__)
         super(BaseEntry, self).save(*args, **kwargs)
 
-
     def class_name(self):
         return self.__class__.__name__
 
     def short_list(self):
         """todo"""
         return []
-
 
     @classmethod
     def entry_from_name(cls, name):
@@ -344,28 +349,26 @@ class BaseEntry(models.Model):
         except KeyError:
             raise ValueError("Invalid type %s" % name)
 
-
     @classmethod
     def entry_from_type(cls, etype):
-        for entry_cls in (ActionEntry, PackageEntry, PathEntry, ServiceEntry):
+        for entry_cls in ENTRY_CLASSES:
             if etype == entry_cls.ENTRY_TYPE:
                 return entry_cls
         else:
             raise ValueError("Invalid type %s" % etype)
-
 
     @classmethod
     def entry_get_or_create(cls, act_dict):
         """Helper to quickly lookup an object"""
         cls_name = cls().__class__.__name__
         act_hash = hash_entry(act_dict)
-    
+
         # TODO - get form cache and validate
         act_key = "%s_%s" % (cls_name, act_hash)
         newact = cache.get(act_key)
         if newact:
             return newact
-    
+
         acts = cls.objects.filter(hash_key=act_hash)
         if len(acts) > 0:
             for act in acts:
@@ -375,19 +378,17 @@ class BaseEntry(models.Model):
                     #match found
                     newact = act
                     break
-    
+
         # worst case, its new
         if not newact:
             newact = cls(**act_dict)
             newact.save(hash_key=act_hash)
-    
+
         cache.set(act_key, newact, 60 * 60)
         return newact
 
-
     def is_failure(self):
         return isinstance(self, FailureEntry)
-
 
     @classmethod
     def prune_orphans(cls):
@@ -397,7 +398,7 @@ class BaseEntry(models.Model):
             for x in cls.objects.filter(interaction__isnull=True).values("id")]
         i = 0
         while i < len(cls_orphans):
-            cls.objects.filter(id__in=cls_orphans[i:i+100]).delete()
+            cls.objects.filter(id__in=cls_orphans[i:i + 100]).delete()
             i += 100
 
 
@@ -439,11 +440,159 @@ class FailureEntry(BaseEntry):
 
 
 class ActionEntry(SuccessEntry):
-    """ The new model for package information """
+    """ Action entry """
     status = models.CharField(max_length=128, default="check")
     output = models.IntegerField(default=0)
 
     ENTRY_TYPE = r"Action"
+
+
+class SEBooleanEntry(SuccessEntry):
+    """ SELinux boolean """
+    value = models.BooleanField(default=True)
+
+    ENTRY_TYPE = r"SEBoolean"
+
+
+class SEPortEntry(SuccessEntry):
+    """ SELinux port """
+    selinuxtype = models.CharField(max_length=128)
+    current_selinuxtype = models.CharField(max_length=128, null=True)
+
+    ENTRY_TYPE = r"SEPort"
+
+    def selinuxtype_problem(self):
+        """Check for an selinux type problem."""
+        if not self.current_selinuxtype:
+            return True
+        return self.selinuxtype != self.current_selinuxtype
+
+    def short_list(self):
+        """Return a list of problems"""
+        rv = super(SEPortEntry, self).short_list()
+        if self.selinuxtype_problem():
+            rv.append("Wrong SELinux type")
+        return rv
+
+
+class SEFcontextEntry(SuccessEntry):
+    """ SELinux file context """
+    selinuxtype = models.CharField(max_length=128)
+    current_selinuxtype = models.CharField(max_length=128, null=True)
+    filetype = models.CharField(max_length=16)
+
+    ENTRY_TYPE = r"SEFcontext"
+
+    def selinuxtype_problem(self):
+        """Check for an selinux type problem."""
+        if not self.current_selinuxtype:
+            return True
+        return self.selinuxtype != self.current_selinuxtype
+
+    def short_list(self):
+        """Return a list of problems"""
+        rv = super(SEFcontextEntry, self).short_list()
+        if self.selinuxtype_problem():
+            rv.append("Wrong SELinux type")
+        return rv
+
+
+class SENodeEntry(SuccessEntry):
+    """ SELinux node """
+    selinuxtype = models.CharField(max_length=128)
+    current_selinuxtype = models.CharField(max_length=128, null=True)
+    proto = models.CharField(max_length=4)
+
+    ENTRY_TYPE = r"SENode"
+
+    def selinuxtype_problem(self):
+        """Check for an selinux type problem."""
+        if not self.current_selinuxtype:
+            return True
+        return self.selinuxtype != self.current_selinuxtype
+
+    def short_list(self):
+        """Return a list of problems"""
+        rv = super(SENodeEntry, self).short_list()
+        if self.selinuxtype_problem():
+            rv.append("Wrong SELinux type")
+        return rv
+
+
+class SELoginEntry(SuccessEntry):
+    """ SELinux login """
+    selinuxuser = models.CharField(max_length=128)
+    current_selinuxuser = models.CharField(max_length=128, null=True)
+
+    ENTRY_TYPE = r"SELogin"
+
+
+class SEUserEntry(SuccessEntry):
+    """ SELinux user """
+    roles = models.CharField(max_length=128)
+    current_roles = models.CharField(max_length=128, null=True)
+    prefix = models.CharField(max_length=128)
+    current_prefix = models.CharField(max_length=128, null=True)
+
+    ENTRY_TYPE = r"SEUser"
+
+
+class SEInterfaceEntry(SuccessEntry):
+    """ SELinux interface """
+    selinuxtype = models.CharField(max_length=128)
+    current_selinuxtype = models.CharField(max_length=128, null=True)
+
+    ENTRY_TYPE = r"SEInterface"
+
+    def selinuxtype_problem(self):
+        """Check for an selinux type problem."""
+        if not self.current_selinuxtype:
+            return True
+        return self.selinuxtype != self.current_selinuxtype
+
+    def short_list(self):
+        """Return a list of problems"""
+        rv = super(SEInterfaceEntry, self).short_list()
+        if self.selinuxtype_problem():
+            rv.append("Wrong SELinux type")
+        return rv
+
+
+class SEPermissiveEntry(SuccessEntry):
+    """ SELinux permissive domain """
+    ENTRY_TYPE = r"SEPermissive"
+
+
+class SEModuleEntry(SuccessEntry):
+    """ SELinux module """
+    disabled = models.BooleanField(default=False)
+    current_disabled = models.BooleanField(default=False)
+
+    ENTRY_TYPE = r"SEModule"
+
+
+class POSIXUserEntry(SuccessEntry):
+    """ POSIX user """
+    uid = models.IntegerField(null=True)
+    current_uid = models.IntegerField(null=True)
+    group = models.CharField(max_length=64)
+    current_group = models.CharField(max_length=64, null=True)
+    gecos = models.CharField(max_length=1024)
+    current_gecos = models.CharField(max_length=1024, null=True)
+    home = models.CharField(max_length=1024)
+    current_home = models.CharField(max_length=1024, null=True)
+    shell = models.CharField(max_length=1024, default='/bin/bash')
+    current_shell = models.CharField(max_length=1024, null=True)
+
+    ENTRY_TYPE = r"POSIXUser"
+
+
+class POSIXGroupEntry(SuccessEntry):
+    """ POSIX group """
+    gid = models.IntegerField(null=True)
+    current_gid = models.IntegerField(null=True)
+
+    ENTRY_TYPE = r"POSIXGroup"
 
 
 class PackageEntry(SuccessEntry):
@@ -455,7 +604,7 @@ class PackageEntry(SuccessEntry):
     verification_details = models.TextField(default="")
 
     ENTRY_TYPE = r"Package"
-    #TODO - prune
+    # TODO - prune
 
     def version_problem(self):
         """Check for a version problem."""
@@ -612,3 +761,7 @@ class ServiceEntry(SuccessEntry):
         return rv
 
 
+ENTRY_TYPES = (ActionEntry, PackageEntry, PathEntry, ServiceEntry,
+               SEBooleanEntry, SEPortEntry, SEFcontextEntry, SENodeEntry,
+               SELoginEntry, SEUserEntry, SEInterfaceEntry, SEPermissiveEntry,
+               SEModuleEntry)

@@ -25,14 +25,6 @@ srcpath = os.path.abspath(os.path.join(testdir, "..", "src"))
 # path to pylint rc file
 rcfile = os.path.join(testdir, "pylintrc.conf")
 
-# test for pylint existence
-try:
-    Popen(['pylint'], stdout=PIPE, stderr=STDOUT).wait()
-    HAS_PYLINT = True
-except OSError:
-    HAS_PYLINT = False
-
-
 # perform checks on the listed files only if the module listed in the
 # keys can be imported
 contingent_checks = {
@@ -57,18 +49,14 @@ contingent_checks = {
 
 # perform only error checking on the listed files
 error_checks = {
-    "sbin": ["bcfg2-build-reports", "bcfg2-reports"],
+    "sbin": ["bcfg2-build-reports"],
     "lib/Bcfg2": ["Proxy.py", "SSLServer.py", "Reporting"],
     "lib/Bcfg2/Server": ["Reports", "SchemaUpdater"],
     "lib/Bcfg2/Server/Admin": ["Compare.py",
                                "Snapshots.py"],
-    "lib/Bcfg2/Client/Tools": ["launchd.py",
-                               "OpenCSW.py",
+    "lib/Bcfg2/Client/Tools": ["OpenCSW.py",
                                "Blast.py",
-                               "SYSV.py",
                                "FreeBSDInit.py",
-                               "DebInit.py",
-                               "RcUpdate.py",
                                "VCS.py",
                                "YUM24.py"],
     "lib/Bcfg2/Server/Plugins": ["Deps.py",
@@ -140,13 +128,8 @@ def blacklist_filter(filelist, blacklist):
     return rv
 
 
-class TestPylint(Bcfg2TestCase):
-    pylint_cmd = ["pylint", "--rcfile", rcfile, "--init-hook",
-                  "import sys;sys.path.append('%s')" %
-                  os.path.join(srcpath, "lib")]
-
-    # regex to find errors and fatal errors
-    error_re = re.compile(r':\d+:\s+\[[EF]\d{4}')
+class CodeTestCase(Bcfg2TestCase):
+    __test__ = False
 
     # build the blacklists
     blacklist = expand_path_dict(no_checks)
@@ -158,6 +141,34 @@ class TestPylint(Bcfg2TestCase):
     full_blacklist = expand_path_dict(error_checks) + contingent_blacklist + \
         blacklist
 
+    command = [None]
+
+    has_command = None
+
+    # extra arguments when running tests on sbin/*
+    sbin_args = []
+
+    # extra arguments when running tests on lib/*
+    lib_args = []
+
+    # extra arguments for full tests
+    full_args = []
+
+    # extra arguments for error tests
+    error_args = []
+
+    def has_exec(self):
+        if self.has_command is None:
+            try:
+                proc = Popen(self.command,
+                             stdin=PIPE, stdout=PIPE, stderr=STDOUT)
+                proc.communicate(input="\n")
+                proc.wait()
+                self.has_command = True
+            except OSError:
+                self.has_command = False
+        return self.has_command
+
     def get_env(self):
         if ('PYTHONPATH' not in os.environ or
             testdir not in os.environ['PYTHONPATH'].split(":")):
@@ -168,110 +179,149 @@ class TestPylint(Bcfg2TestCase):
         else:
             return os.environ
 
+    def _test_full(self, files, extra_args=None):
+        """ test select files for all problems """
+        if not len(files):
+            return
+        if extra_args is None:
+            extra_args = []
+        cmd = self.command + self.full_args + extra_args + \
+            [os.path.join(srcpath, f) for f in files]
+        proc = Popen(cmd, stdout=PIPE, stderr=STDOUT, env=self.get_env())
+        print(proc.communicate()[0])
+        self.assertEqual(proc.wait(), 0)
+
+    def _test_errors(self, files, extra_args=None):
+        """ test select files for errors """
+        if not len(files):
+            return
+        if extra_args is None:
+            extra_args = []
+        cmd = self.command + self.error_args + extra_args + \
+            [os.path.join(srcpath, f) for f in files]
+        proc = Popen(cmd, stdout=PIPE, stderr=STDOUT, env=self.get_env())
+        print(proc.communicate()[0])
+        self.assertEqual(proc.wait(), 0)
+
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
-    @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_lib_full(self):
-        full_list = []
-        for root, _, files in os.walk(os.path.join(srcpath, "lib")):
-            full_list.extend(blacklist_filter([os.path.join(root, f)
-                                               for f in files
-                                               if f.endswith(".py")],
-                                              self.full_blacklist))
-        self._pylint_full(full_list)
+        @skipUnless(self.has_exec(),
+                    "%s not found, skipping" % self.command[0])
+        def inner():
+            full_list = []
+            for root, _, files in os.walk(os.path.join(srcpath, "lib")):
+                full_list.extend(blacklist_filter([os.path.join(root, f)
+                                                   for f in files
+                                                   if f.endswith(".py")],
+                                                  self.full_blacklist))
+            self._test_full(full_list, extra_args=self.lib_args)
+
+        inner()
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
-    @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_contingent_full(self):
-        blacklist = set(expand_path_dict(error_checks) + self.blacklist)
-        for (mods, filedict) in contingent_checks.items():
-            if "django" in mods:
-                # there's some issue with running pylint on modules
-                # that use django in Travis CI (but not elsewhere), so
-                # skip these for now
-                continue
-            try:
-                for mod in mods:
-                    __import__(mod)
-            except ImportError:
-                continue
-            self._pylint_full(blacklist_filter(expand_path_dict(filedict),
-                                               blacklist))
+        @skipUnless(self.has_exec(),
+                    "%s not found, skipping" % self.command[0])
+        def inner():
+            filelist = []
+            blacklist = set(expand_path_dict(error_checks) + self.blacklist)
+            for (mods, filedict) in contingent_checks.items():
+                try:
+                    for mod in mods:
+                        __import__(mod)
+                except ImportError:
+                    continue
+                filelist.extend(expand_path_dict(filedict))
+            self._test_full(blacklist_filter(filelist, blacklist),
+                            extra_args=self.lib_args)
+
+        inner()
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
-    @skipUnless(HAS_PYLINT, "pylint not found, skipping")
-    def test_sbin_full(self):
-        all_sbin = [os.path.join(srcpath, "sbin", f)
-                    for f in glob.glob(os.path.join(srcpath, "sbin", "*"))]
-        sbin_list = blacklist_filter([f for f in all_sbin
-                                      if not os.path.islink(f)],
-                                     self.full_blacklist)
-        self._pylint_full(sbin_list,
-                          extra_args=["--module-rgx",
-                                      "[a-z_-][a-z0-9_-]*$"])
+    def test_sbin(self):
+        @skipUnless(self.has_exec(),
+                    "%s not found, skipping" % self.command[0])
+        def inner():
+            all_sbin = [os.path.join(srcpath, "sbin", f)
+                        for f in glob.glob(os.path.join(srcpath, "sbin", "*"))]
+            full_list = blacklist_filter([f for f in all_sbin
+                                          if not os.path.islink(f)],
+                                         self.full_blacklist)
+            self._test_full(full_list, extra_args=self.sbin_args)
 
-    def _pylint_full(self, paths, extra_args=None):
-        """ test select files for all pylint errors """
-        if extra_args is None:
-            extra_args = []
-        args = self.pylint_cmd + extra_args + \
-            [os.path.join(srcpath, p) for p in paths]
-        pylint = Popen(args, stdout=PIPE, stderr=STDOUT, env=self.get_env())
-        print(pylint.communicate()[0])
-        self.assertEqual(pylint.wait(), 0)
+            errors_list = blacklist_filter([f for f in all_sbin
+                                            if not os.path.islink(f)],
+                                           self.contingent_blacklist)
+            self._test_errors(errors_list, extra_args=self.sbin_args)
+
+        inner()
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
     @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
-    @skipUnless(HAS_PYLINT, "pylint not found, skipping")
-    def test_sbin_errors(self):
-        all_sbin = [os.path.join(srcpath, "sbin", f)
-                    for f in glob.glob(os.path.join(srcpath, "sbin", "*"))]
-        sbin_list = blacklist_filter([f for f in all_sbin
-                                      if not os.path.islink(f)],
-                                     self.contingent_blacklist)
-        self._pylint_errors(sbin_list,
-                            extra_args=["--module-rgx",
-                                        "[a-z_-][a-z0-9_-]*$"])
-
-    @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
-    @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
-    @skipUnless(HAS_PYLINT, "pylint not found, skipping")
     def test_contingent_errors(self):
-        whitelist = expand_path_dict(error_checks)
-        for (mods, filedict) in contingent_checks.items():
+        @skipUnless(self.has_exec(),
+                    "%s not found, skipping" % self.command[0])
+        def inner():
+            filelist = []
+            whitelist = expand_path_dict(error_checks)
+            for (mods, filedict) in contingent_checks.items():
+                try:
+                    for mod in mods:
+                        __import__(mod)
+                except ImportError:
+                    continue
+                filelist.extend(expand_path_dict(filedict))
+            flist = blacklist_filter(whitelist_filter(filelist, whitelist),
+                                     self.blacklist)
+            self._test_errors(flist, extra_args=self.lib_args)
+
+        inner()
+
+    @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
+    @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
+    def test_lib_errors(self):
+        @skipUnless(self.has_exec(),
+                    "%s not found, skipping" % self.command[0])
+        def inner():
+            filelist = blacklist_filter(expand_path_dict(error_checks),
+                                        self.contingent_blacklist)
+            return self._test_errors(filelist, extra_args=self.lib_args)
+
+        inner()
+
+
+class TestPylint(CodeTestCase):
+    __test__ = True
+    command = ["pylint", "--rcfile", rcfile, "--init-hook",
+               "import sys;sys.path.append('%s')" %
+               os.path.join(srcpath, "lib")]
+
+    sbin_args = ["--module-rgx", "[a-z_-][a-z0-9_-]*$"]
+    error_args = ["-f", "parseable", "-d", "R0801,E1103"]
+
+    # regex to find errors and fatal errors
+    error_re = re.compile(r':\d+:\s+\[[EF]\d{4}')
+
+    def __init__(self, *args, **kwargs):
+        CodeTestCase.__init__(self, *args, **kwargs)
+        for mods, filedict in contingent_checks.items():
             if "django" in mods:
                 # there's some issue with running pylint on modules
                 # that use django in Travis CI (but not elsewhere), so
                 # skip these for now
-                continue
-            try:
-                for mod in mods:
-                    __import__(mod)
-            except ImportError:
-                continue
-            flist = \
-                blacklist_filter(whitelist_filter(expand_path_dict(filedict),
-                                                  whitelist),
-                                     self.blacklist)
-            self._pylint_errors(flist)
+                self.blacklist += expand_path_dict(filedict)
 
-    @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
-    @skipIf(not os.path.exists(rcfile), "%s does not exist" % rcfile)
-    @skipUnless(HAS_PYLINT, "pylint not found, skipping")
-    def test_lib_errors(self):
-        filelist = blacklist_filter(expand_path_dict(error_checks),
-                                    self.contingent_blacklist)
-        return self._pylint_errors(filelist)
-
-    def _pylint_errors(self, paths, extra_args=None):
+    def _test_errors(self, files, extra_args=None):
         """ test all files for fatals and errors """
+        if not len(files):
+            return
         if extra_args is None:
             extra_args = []
-        args = self.pylint_cmd + extra_args + \
-            ["-f", "parseable", "-d", "R0801,E1103"] + \
-            [os.path.join(srcpath, p) for p in paths]
+        args = self.command + self.error_args + extra_args + \
+            [os.path.join(srcpath, p) for p in files]
         pylint = Popen(args, stdout=PIPE, stderr=STDOUT, env=self.get_env())
         output = pylint.communicate()[0]
         rv = pylint.wait()
@@ -282,3 +332,11 @@ class TestPylint(Bcfg2TestCase):
         # pylint returns a bitmask, where 1 means fatal errors
         # were encountered and 2 means errors were encountered.
         self.assertEqual(rv & 3, 0)
+
+
+class TestPEP8(CodeTestCase):
+    __test__ = True
+    command = ["pep8", "--ignore=E125,E501"]
+
+    def _test_errors(self, files, extra_args=None):
+        pass

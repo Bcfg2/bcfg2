@@ -291,6 +291,8 @@ class FileMonitor(Debuggable):
 
     def shutdown(self):
         """ Handle any tasks required to shut down the monitor. """
+        self.debug_log("Shutting down %s file monitor" %
+                       self.__class__.__name__)
         self.started = False
 
     def AddMonitor(self, path, obj, handleID=None):

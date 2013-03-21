@@ -474,7 +474,7 @@ Bcfg2 client itself.""")
                 ('Password', self.setup['password']),
                 ('Server Metadata Connector', self.setup['mconnect']),
                 ('Filemonitor', self.setup['filemonitor']),
-                ('Server address',    self.setup['location']),
+                ('Server address', self.setup['location']),
                 ('Path to key', self.setup['key']),
                 ('Path to SSL certificate', self.setup['cert']),
                 ('Path to SSL CA certificate', self.setup['ca']),
@@ -725,7 +725,6 @@ Bcfg2 client itself.""")
 
     def _block(self):
         pass
-
 
 
 def build_usage():

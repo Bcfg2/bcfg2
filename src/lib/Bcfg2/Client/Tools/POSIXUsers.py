@@ -1,95 +1,11 @@
 """ A tool to handle creating users and groups with useradd/mod/del
 and groupadd/mod/del """
 
-import sys
 import pwd
 import grp
-import subprocess
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
-from Bcfg2.Compat import any  # pylint: disable=W0622
-
-
-class IDRangeSet(object):
-    """ Representation of a set of integer ranges.  Used to describe
-    which UID/GID ranges are managed or unmanaged. """
-
-    def __init__(self, *ranges):
-        self.ranges = []
-        self.ints = []
-        self.str = ",".join(str(r) for r in ranges)
-        for item in ranges:
-            item = str(item).strip()
-            if item.endswith("-"):
-                self.ranges.append((int(item[:-1]), None))
-            elif '-' in str(item):
-                self.ranges.append(tuple(int(x) for x in item.split('-')))
-            else:
-                self.ints.append(int(item))
-
-    def __contains__(self, other):
-        other = int(other)
-        if other in self.ints:
-            return True
-        return any((end is None and other >= start) or
-                   (end is not None and other >= start and other <= end)
-                   for start, end in self.ranges)
-
-    def __repr__(self):
-        return "%s:%s" % (self.__class__.__name__, str(self))
-
-    def __str__(self):
-        return "[%s]" % self.str
-
-    def __len__(self):
-        return len(self.ranges) + len(self.ints)
-
-
-class ExecutionError(Exception):
-    """ Raised when running an external command fails """
-
-    def __init__(self, msg, retval=None):
-        Exception.__init__(self, msg)
-        self.retval = retval
-
-    def __str__(self):
-        return "%s (rv: %s)" % (Exception.__str__(self),
-                                          self.retval)
-
-
-class Executor(object):
-    """ A better version of Bcfg2.Client.Tool.Executor, which captures
-    stderr, raises exceptions on error, and doesn't use the shell to
-    execute by default """
-
-    def __init__(self, logger):
-        self.logger = logger
-        self.stdout = None
-        self.stderr = None
-        self.retval = None
-
-    def run(self, command, inputdata=None, shell=False):
-        """ Run a command, given as a list, optionally giving it the
-        specified input data """
-        self.logger.debug("Running: %s" % " ".join(command))
-        proc = subprocess.Popen(command, shell=shell, bufsize=16384,
-                                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, close_fds=True)
-        if inputdata:
-            for line in inputdata.splitlines():
-                self.logger.debug('> %s' % line)
-            (self.stdout, self.stderr) = proc.communicate(inputdata)
-        else:
-            (self.stdout, self.stderr) = proc.communicate()
-        for line in self.stdout.splitlines():  # pylint: disable=E1103
-            self.logger.debug('< %s' % line)
-        self.retval = proc.wait()
-        if self.retval == 0:
-            for line in self.stderr.splitlines():  # pylint: disable=E1103
-                self.logger.warning(line)
-            return True
-        else:
-            raise ExecutionError(self.stderr, self.retval)
+from Bcfg2.Utils import PackedDigitRange
 
 
 class POSIXUsers(Bcfg2.Client.Tools.Tool):
@@ -118,22 +34,21 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
         Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
         self.set_defaults = dict(POSIXUser=self.populate_user_entry,
                                  POSIXGroup=lambda g: g)
-        self.cmd = Executor(logger)
         self._existing = None
         self._whitelist = dict(POSIXUser=None, POSIXGroup=None)
         self._blacklist = dict(POSIXUser=None, POSIXGroup=None)
         if self.setup['posix_uid_whitelist']:
             self._whitelist['POSIXUser'] = \
-                IDRangeSet(*self.setup['posix_uid_whitelist'])
+                PackedDigitRange(*self.setup['posix_uid_whitelist'])
         else:
             self._blacklist['POSIXUser'] = \
-                IDRangeSet(*self.setup['posix_uid_blacklist'])
+                PackedDigitRange(*self.setup['posix_uid_blacklist'])
         if self.setup['posix_gid_whitelist']:
             self._whitelist['POSIXGroup'] = \
-                IDRangeSet(*self.setup['posix_gid_whitelist'])
+                PackedDigitRange(*self.setup['posix_gid_whitelist'])
         else:
             self._blacklist['POSIXGroup'] = \
-                IDRangeSet(*self.setup['posix_gid_blacklist'])
+                PackedDigitRange(*self.setup['posix_gid_blacklist'])
 
     @property
     def existing(self):
@@ -309,16 +224,14 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
             action = "add"
         else:
             action = "mod"
-        try:
-            self.cmd.run(self._get_cmd(action,
-                                       self.set_defaults[entry.tag](entry)))
+        rv = self.cmd.run(self._get_cmd(action,
+                                        self.set_defaults[entry.tag](entry)))
+        if rv.success:
             self.modified.append(entry)
-            return True
-        except ExecutionError:
+        else:
             self.logger.error("POSIXUsers: Error creating %s %s: %s" %
-                              (entry.tag, entry.get("name"),
-                               sys.exc_info()[1]))
-            return False
+                              (entry.tag, entry.get("name"), rv.error))
+        return rv.success
 
     def _get_cmd(self, action, entry):
         """ Get a command to perform the appropriate action (add, mod,
@@ -373,11 +286,8 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
 
     def _remove(self, entry):
         """ Remove an entry """
-        try:
-            self.cmd.run(self._get_cmd("del", entry))
-            return True
-        except ExecutionError:
+        rv = self.cmd.run(self._get_cmd("del", entry))
+        if not rv.success:
             self.logger.error("POSIXUsers: Error deleting %s %s: %s" %
-                              (entry.tag, entry.get("name"),
-                               sys.exc_info()[1]))
-            return False
+                              (entry.tag, entry.get("name"), rv.error))
+        return rv.success
