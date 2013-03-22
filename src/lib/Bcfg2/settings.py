@@ -32,7 +32,7 @@ TIME_ZONE = None
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
-MEDIA_URL = '/site_media'
+MEDIA_URL = '/site_media/'
 
 
 def _default_config():
@@ -144,7 +144,7 @@ MEDIA_ROOT = ''
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
-ADMIN_MEDIA_PREFIX = '/media/'
+STATIC_URL = '/media/'
 
 #TODO - make this unique
 # Make this unique, and don't share it with anybody.
