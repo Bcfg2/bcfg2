@@ -641,21 +641,24 @@ Bcfg2 client itself.""")
         if 'Packages' not in self.plugins:
             print("Packages plugin not enabled")
             return
-        hostname = arglist[0]
-        initial = arglist[1:]
-        metadata = self.build_metadata(hostname)
         self.plugins['Packages'].toggle_debug()
-        collection = self.plugins['Packages'].get_collection(metadata)
-        packages, unknown = collection.complete(initial)
-        newpkgs = list(packages.difference(initial))
-        print("%d initial packages" % len(initial))
-        print("    %s" % "\n    ".join(initial))
-        print("%d new packages added" % len(newpkgs))
-        if newpkgs:
-            print("    %s" % "\n    ".join(newpkgs))
-        print("%d unknown packages" % len(unknown))
-        if unknown:
-            print("    %s" % "\n    ".join(unknown))
+
+        indep = lxml.etree.Element("Independent")
+        structures = [lxml.etree.Element("Bundle", name="packages")]
+        for arg in arglist[1:]:
+            lxml.etree.SubElement(structures[0], "Package", name=arg)
+
+        hostname = arglist[0]
+        metadata = self.build_metadata(hostname)
+
+        # pylint: disable=W0212
+        self.plugins['Packages']._build_packages(metadata, indep, structures)
+        # pylint: enable=W0212
+
+        print("%d new packages added" % len(indep.getchildren()))
+        if len(indep.getchildren()):
+            print("    %s" % "\n    ".join(lxml.etree.tostring(p)
+                                           for p in indep.getchildren()))
 
     def do_packagesources(self, args):
         """ packagesources <hostname> - Show package sources """
