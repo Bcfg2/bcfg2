@@ -543,6 +543,7 @@ class XMLFileBacked(FileBacked):
     def Index(self):
         self.xdata = lxml.etree.XML(self.data, base_url=self.name,
                                     parser=Bcfg2.Server.XMLParser)
+        self.extras = []
         self._follow_xincludes()
         if self.extras:
             try:
