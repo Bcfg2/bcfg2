@@ -29,10 +29,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         self._binpkgonly = self.setup.get('portage_binpkgonly', False)
         if self._binpkgonly:
             self.pkgtool = self._binpkgtool
-        try:
-            self.RefreshPackages()
-        except OSError:
-            raise Bcfg2.Client.Tools.ToolInstantiationError("equery not found")
+        self.RefreshPackages()
 
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""

@@ -202,9 +202,15 @@ class Executor(object):
         else:
             cmdstr = " ".join(command)
         self.logger.debug("Running: %s" % cmdstr)
-        proc = subprocess.Popen(command, shell=shell, bufsize=16384,
-                                stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                stderr=subprocess.PIPE, close_fds=True)
+        try:
+            proc = subprocess.Popen(command, shell=shell, bufsize=16384,
+                                    close_fds=True,
+                                    stdin=subprocess.PIPE,
+                                    stdout=subprocess.PIPE,
+                                    stderr=subprocess.PIPE)
+        except OSError:
+            return ExecutorResult('', 'No such command: %s' % cmdstr,
+                                  127)
         if timeout is None:
             timeout = self.timeout
         if timeout is not None:
