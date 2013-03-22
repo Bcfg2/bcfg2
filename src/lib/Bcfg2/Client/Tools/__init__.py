@@ -524,8 +524,8 @@ class SvcTool(Tool):
 
         :param service: The service entry to modify
         :type service: lxml.etree._Element
-        :returns: tuple - The return value from
-                  :class:`Bcfg2.Client.Tools.Executor.run`
+        :returns: Bcfg2.Utils.ExecutorResult - The return value from
+                  :class:`Bcfg2.Utils.Executor.run`
         """
         self.logger.debug('Starting service %s' % service.get('name'))
         return self.cmd.run(self.get_svc_command(service, 'start'))
@@ -535,8 +535,8 @@ class SvcTool(Tool):
 
         :param service: The service entry to modify
         :type service: lxml.etree._Element
-        :returns: tuple - The return value from
-                  :class:`Bcfg2.Client.Tools.Executor.run`
+        :returns: Bcfg2.Utils.ExecutorResult - The return value from
+                  :class:`Bcfg2.Utils.Executor.run`
         """
         self.logger.debug('Stopping service %s' % service.get('name'))
         return self.cmd.run(self.get_svc_command(service, 'stop'))
@@ -546,8 +546,8 @@ class SvcTool(Tool):
 
         :param service: The service entry to modify
         :type service: lxml.etree._Element
-        :returns: tuple - The return value from
-                  :class:`Bcfg2.Client.Tools.Executor.run`
+        :returns: Bcfg2.Utils.ExecutorResult - The return value from
+                  :class:`Bcfg2.Utils.Executor.run`
         """
         self.logger.debug('Restarting service %s' % service.get('name'))
         restart_target = service.get('target', 'restart')
@@ -561,7 +561,7 @@ class SvcTool(Tool):
         :returns: bool - True if the status command returned 0, False
                   otherwise
         """
-        return self.cmd.run(self.get_svc_command(service, 'status')).success
+        return bool(self.cmd.run(self.get_svc_command(service, 'status')))
 
     def Remove(self, services):
         if self.setup['servicemode'] != 'disabled':
