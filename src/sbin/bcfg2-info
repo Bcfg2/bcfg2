@@ -736,10 +736,13 @@ def build_usage():
     usage = dict()
     for attrname in dir(InfoCore):
         attr = getattr(InfoCore, attrname)
-        if (hasattr(attr, "__func__") and
-            attr.__func__.func_name not in cmd_blacklist and
-            attr.__func__.func_name.startswith("do_") and
-            attr.__func__.func_doc):
+
+        # shim for python 2.4, __func__ is im_func
+        funcattr = getattr(attr, "__func__", getattr(attr, "im_func", None))
+        if (funcattr != None and
+            funcattr.func_name not in cmd_blacklist and
+            funcattr.func_name.startswith("do_") and
+            funcattr.func_doc):
             usage[attr.__name__] = re.sub(r'\s+', ' ', attr.__doc__)
     return "Commands:\n" + "\n".join(usage[k] for k in sorted(usage.keys()))
 
