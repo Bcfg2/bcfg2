@@ -561,7 +561,10 @@ class SvcTool(Tool):
         :returns: bool - True if the status command returned 0, False
                   otherwise
         """
-        return bool(self.cmd.run(self.get_svc_command(service, 'status')))
+        try:
+            return bool(self.cmd.run(self.get_svc_command(service, 'status')))
+        except OSError:
+            return False
 
     def Remove(self, services):
         if self.setup['servicemode'] != 'disabled':
