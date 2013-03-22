@@ -246,6 +246,9 @@ def _restructure():
 
     failures = []
     int_count = legacy_models.Interaction.objects.count()
+    if int_count == 0:
+        logger.error("Found no legacy interactions")
+        return False
     int_ctr = 0
     start_time = 0
     for inter in BatchFetch(legacy_models.Interaction.objects.\
