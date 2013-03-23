@@ -106,7 +106,7 @@ def read_config(cfile=DEFAULT_CONFIG, repo=None, quiet=False):
     if setup['web_prefix']:
         MEDIA_URL = setup['web_prefix'].rstrip('/') + MEDIA_URL
     else:
-        MEDIA_URL = '/site_media'
+        MEDIA_URL = '/site_media/'
 
 # initialize settings from /etc/bcfg2-web.conf or /etc/bcfg2.conf, or
 # set up basic defaults.  this lets manage.py work in all cases
