@@ -160,10 +160,8 @@ class CodeTestCase(Bcfg2TestCase):
     def has_exec(self):
         if self.has_command is None:
             try:
-                proc = Popen(self.command,
-                             stdin=PIPE, stdout=PIPE, stderr=STDOUT)
-                proc.communicate(input="\n")
-                proc.wait()
+                Popen(self.command,
+                      stdin=PIPE, stdout=PIPE, stderr=STDOUT).wait()
                 self.has_command = True
             except OSError:
                 self.has_command = False

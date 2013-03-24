@@ -1214,7 +1214,7 @@ class BaseCore(object):
         for plugin in self.plugins.values():
             plugin.set_debug(debug)
         rv = self.set_core_debug(address, debug)
-        return self.set_fam_debug(address, debug) and rv
+        return self.fam.set_debug(debug) and rv
 
     @exposed
     def set_core_debug(self, _, debug):
@@ -1232,10 +1232,9 @@ class BaseCore(object):
         self.logger.info("Core: debug = %s" % debug)
         levels = self._loglevels[self.debug_flag]
         for handler in logging.root.handlers:
-            level = levels.get(handler.get_name(), levels['default'])
+            level = levels.get(handler.name, levels['default'])
             self.logger.debug("Setting %s log handler to %s" %
-                              (handler.get_name(),
-                               logging.getLevelName(level)))
+                              (handler.name, logging.getLevelName(level)))
             handler.setLevel(level)
         return self.debug_flag
 

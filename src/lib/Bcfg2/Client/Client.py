@@ -105,6 +105,7 @@ class Client(object):
                     self._probe_failure(name, "Return value %s" % rv)
                 self.logger.info("Probe %s has result:" % name)
                 self.logger.info(rv.stdout)
+                ret.text = rv.stdout
             finally:
                 os.unlink(scriptname)
         except SystemExit:

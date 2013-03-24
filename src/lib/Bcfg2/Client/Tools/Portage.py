@@ -37,7 +37,8 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
             return
         self.logger.info('Getting list of installed packages')
         self.installed = {}
-        for pkg in self.cmd.run("equery -q list '*'").stdout.splitlines():
+        for pkg in self.cmd.run(["equery", "-q",
+                                 "list", "*"]).stdout.splitlines():
             if self._pkg_pattern.match(pkg):
                 name = self._pkg_pattern.match(pkg).group(1)
                 version = self._pkg_pattern.match(pkg).group(2)

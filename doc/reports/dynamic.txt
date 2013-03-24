@@ -56,7 +56,7 @@ Install
 Be sure to include the specified fields included in the example
 ``bcfg2.conf`` file. These can be specified in either ``/etc/bcfg2.conf``,
 if it is readable by the webserver user, or ``/etc/bcfg2-web.conf``. Any
-database supported by `Django <http://www.djangoproject.com>`_ can be used. 
+database supported by `Django <http://www.djangoproject.com>`_ can be used.
 As of version 1.3, `South <http://south.aeracode.org>`_ is used to control
 schema changes.  If your database is not supported by South, any updates
 will need to be applied manually.  Sqlite is configured by default.
@@ -78,11 +78,11 @@ databases.
 After configuring your database be sure to run `bcfg2-admin reports init`
 to create the schema.
 
-To enable statistics collection in the bcfg2-server, add 
+To enable statistics collection in the bcfg2-server, add
 :ref:`server-plugins-statistics-reporting` to the **plugins**
 line in your ``bcfg2.conf`` and restart the bcfg2-server.  A report collecting
-daemon should be run to import the collected statistics into the backend.  
-Please see the section :ref:`Report Collector <report_collector>` for more 
+daemon should be run to import the collected statistics into the backend.
+Please see the section :ref:`Report Collector <report_collector>` for more
 information.
 
 Detailed installation instructions can be found :ref:`here
@@ -155,7 +155,7 @@ http://localhost/bcfg2 and see the new reports.
 Upgrading
 ============
 
-1. Convert database config 
+1. Convert database config
 
     Run `tools/upgrade/1.3/migrate_configs.py`
 
@@ -186,14 +186,14 @@ Upgrading
 Configuring
 ===========
 
-Most of the configuration is handled through the ``/etc/bcfg2.conf`` or alternatively 
-``/etc/bcfg2-web.conf``.
+Most of the configuration is handled through the ``/etc/bcfg2.conf``
+or alternatively ``/etc/bcfg2-web.conf``.
 
 An example using the defaults is listed below::
 
     [database]
     engine = sqlite3
-    name = '/var/lib/bcfg2/etc/bcfg2.sqlite'
+    name = /var/lib/bcfg2/etc/bcfg2.sqlite
     user =
     password =
     host =
@@ -262,7 +262,7 @@ reporting
 Statistics Transports
 ---------------------
 
-A transport is required to pass the data collected from the bcfg2-server 
+A transport is required to pass the data collected from the bcfg2-server
 to the bcfg2-report-collector.  At the time of this writing two transports
 are available:
 
@@ -273,7 +273,7 @@ are available:
 
 Future transports will allow multiple servers to pass data to a single or multiple
 bcfg2-report-collector processes.  New installations default to and should use the
-LocalFilesystem transport.  Upgrades will use DirectStore by default in the 1.3 
+LocalFilesystem transport.  Upgrades will use DirectStore by default in the 1.3
 release.
 
 .. Note::
@@ -295,7 +295,7 @@ An example configuration with the default values::
     redis_port = 6379
     redis_db = 0
 
-bcfg2-admin commands operate slightly differently in this mode.  Instead of querying the 
+bcfg2-admin commands operate slightly differently in this mode.  Instead of querying the
 database directly, rpc commands are issued to the report collectors.  This only affects
 the minestruct and pull commands.
 

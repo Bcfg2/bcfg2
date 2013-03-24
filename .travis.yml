@@ -4,7 +4,6 @@ python:
   - "2.6"
   - "2.7"
   - "3.2"
-  - "3.3"
 env:
   - WITH_OPTIONAL_DEPS=yes
   - WITH_OPTIONAL_DEPS=no
