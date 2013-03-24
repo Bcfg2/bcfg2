@@ -233,6 +233,8 @@ the href is supposed to be a URL.)
 
 For instance:
 
+.. code-block:: xml
+
     <Groups xmlns:xi="http://www.w3.org/2001/XInclude">
       <xi:include href="groups/*.xml"/>
     </Groups>
@@ -270,74 +272,9 @@ A special client metadata class is available to
 :ref:`server-plugins-generators-cfg-genshi` and
 :ref:`server-plugins-generators-cfg-cheetah`.
 
-+------------+------------------------------------------------+---------------+
-| Attribute  | Description                                    | Value         |
-+============+================================================+===============+
-| hostname   | Client hostname                                | String        |
-+------------+------------------------------------------------+---------------+
-| profile    | Client profile                                 | String        |
-+------------+------------------------------------------------+---------------+
-| aliases    | Client aliases                                 | List          |
-+------------+------------------------------------------------+---------------+
-| addresses  | Adresses this client is known by               | List          |
-+------------+------------------------------------------------+---------------+
-| groups     | Groups this client is a member of              | List          |
-+------------+------------------------------------------------+---------------+
-| categories | Categories of this clients groups              | List          |
-+------------+------------------------------------------------+---------------+
-| uuid       | uuid identifier for this client                | String        |
-+------------+------------------------------------------------+---------------+
-| password   | bcfg password for this client                  | String        |
-+------------+------------------------------------------------+---------------+
-| connectors | connector plugins known to this client         | List          |
-+------------+------------------------------------------------+---------------+
-| query      | `MetadataQuery`_ object                        | MetadataQuery |
-+------------+------------------------------------------------+---------------+
-
-
-+-----------------------------+------------------------------------------------+-------------------+
-| Method                      | Description                                    | Value             |
-+=============================+================================================+===================+
-| inGroup(group)              | True if this client is a memnber of 'group'    | Boolean           |
-+-----------------------------+------------------------------------------------+-------------------+
-| group_in_category(category) | Returns the group in 'category' if the client  | String            |
-|                             | is a member of 'category', otherwise ''        |                   |
-+-----------------------------+------------------------------------------------+-------------------+
+.. autoclass:: Bcfg2.Server.Plugins.Metadata.ClientMetadata
 
 MetadataQuery
 -------------
 
-This class provides query methods for the metadata of all clients
-known to the Bcfg2 server.  Note that ``*by_groups()`` and
-``*by_profiles()`` behave differently; for a client to be included in
-the return value of a ``by_groups()`` method, it must be a member of
-*all* groups listed in the argument; for a client to be included in
-the return value of a ``by_profiles()`` method, it must have any group
-listed as its profile group.
-
-+------------------------------+------------------------------------------------+-------------------+
-| Method                       | Description                                    | Value             |
-+==============================+================================================+===================+
-| by_name(client)              | Get ClientMetadata object for 'client'         | ClientMetadata    |
-+------------------------------+------------------------------------------------+-------------------+
-| by_groups(groups)            | Get ClientMetadata object for clients in all   | List of           |
-|                              | listed groups                                  | ClientMetadata    |
-+------------------------------+------------------------------------------------+-------------------+
-| by_profiles(client)          | Get ClientMetadata objects for clients whose   | List of           |
-|                              | profile matches any listed profile group       | ClientMetadata    |
-+------------------------------+------------------------------------------------+-------------------+
-| names_by_groups(groups)      | Get the names of all clients in all listed     | List of strings   |
-|                              | groups                                         |                   |
-+------------------------------+------------------------------------------------+-------------------+
-| names_by_profiles(profiles)  | Get the names of clients whose profile matches | List of strings   |
-|                              | any listed profile group                       |                   |
-+------------------------------+------------------------------------------------+-------------------+
-| all_clients()                | All known client hostnames                     | List of strings   |
-+------------------------------+------------------------------------------------+-------------------+
-| all_groups()                 | All known group names                          | List of strings   |
-+------------------------------+------------------------------------------------+-------------------+
-| all_groups_in_category(cat)  | The names of all groups in category 'cat'      | List of strings   |
-+------------------------------+------------------------------------------------+-------------------+
-| all()                        | Get ClientMetadata for all clients             | List of           |
-|                              |                                                | ClientMetadata    |
-+------------------------------+------------------------------------------------+-------------------+
+.. autoclass:: Bcfg2.Server.Plugins.Metadata.MetadataQuery

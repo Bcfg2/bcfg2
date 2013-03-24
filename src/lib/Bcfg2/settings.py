@@ -32,7 +32,7 @@ TIME_ZONE = None
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
-MEDIA_URL = '/site_media'
+MEDIA_URL = '/site_media/'
 
 
 def _default_config():
@@ -98,7 +98,7 @@ def read_config(cfile=DEFAULT_CONFIG, repo=None, quiet=False):
     if setup['web_prefix']:
         MEDIA_URL = setup['web_prefix'].rstrip('/') + MEDIA_URL
     else:
-        MEDIA_URL = '/site_media'
+        MEDIA_URL = '/site_media/'
 
 # initialize settings from /etc/bcfg2-web.conf or /etc/bcfg2.conf, or
 # set up basic defaults.  this lets manage.py work in all cases
@@ -136,7 +136,7 @@ MEDIA_ROOT = ''
 
 # URL prefix for admin media -- CSS, JavaScript and images. Make sure to use a
 # trailing slash.
-ADMIN_MEDIA_PREFIX = '/media/'
+STATIC_URL = '/media/'
 
 #TODO - make this unique
 # Make this unique, and don't share it with anybody.

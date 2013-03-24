@@ -264,31 +264,63 @@ class ClientMetadata(object):
     # pylint: disable=R0913
     def __init__(self, client, profile, groups, bundles, aliases, addresses,
                  categories, uuid, password, version, query):
+        #: The client hostname (as a string)
         self.hostname = client
+
+        #: The client profile (as a string)
         self.profile = profile
+
+        #: The set of all bundles this client gets
         self.bundles = bundles
+
+        #: A list of all client aliases
         self.aliases = aliases
+
+        #: A list of all addresses this client is known by
         self.addresses = addresses
+
+        #: A list of groups this client is a member of
         self.groups = groups
+
+        #: A dict of categories of this client's groups.  Keys are
+        #: category names, values are corresponding group names.
         self.categories = categories
+
+        #: The UUID identifier for this client
         self.uuid = uuid
+
+        #: The Bcfg2 password for this client
         self.password = password
+
+        #: Connector plugins known to this client
         self.connectors = []
+
+        #: The version of the Bcfg2 client this client is running, as
+        #: a string
         self.version = version
         try:
+            #: The version of the Bcfg2 client this client is running,
+            #: as a :class:`Bcfg2.version.Bcfg2VersionInfo` object.
             self.version_info = Bcfg2VersionInfo(version)
         except (ValueError, AttributeError):
             self.version_info = None
+
+        #: A :class:`Bcfg2.Server.Plugins.Metadata.MetadataQuery`
+        #: object for this client.
         self.query = query
     # pylint: enable=R0913
 
     def inGroup(self, group):
-        """Test to see if client is a member of group."""
+        """Test to see if client is a member of group.
+
+        :returns: bool """
         return group in self.groups
 
     def group_in_category(self, category):
-        """ return the group in the given category that the client is
-        a member of, or the empty string """
+        """ Return the group in the given category that the client is
+        a member of, or an empty string.
+
+        :returns: string """
         for grp in self.query.all_groups_in_category(category):
             if grp in self.groups:
                 return grp
@@ -296,17 +328,59 @@ class ClientMetadata(object):
 
 
 class MetadataQuery(object):
-    """ object supplied to client metadata to allow client metadata
-    objects to query metadata without being able to modify it """
+    """ This class provides query methods for the metadata of all
+    clients known to the Bcfg2 server, without being able to modify
+    that data.
+
+    Note that ``*by_groups()`` and ``*by_profiles()`` behave
+    differently; for a client to be included in the return value of a
+    ``*by_groups()`` method, it must be a member of *all* groups
+    listed in the argument; for a client to be included in the return
+    value of a ``*by_profiles()`` method, it must have *any* group
+    listed as its profile group. """
 
     def __init__(self, by_name, get_clients, by_groups, by_profiles,
                  all_groups, all_groups_in_category):
-        # resolver is set later
+        #: Get :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata`
+        #: object for the given hostname.
+        #:
+        #: :returns: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         self.by_name = by_name
+
+        #: Get a list of hostnames of clients that are in all given
+        #: groups.
+        #:
+        #: :param groups: The groups to check clients for membership in
+        #: :type groups: list
+        #:
+        #: :returns: list of strings
         self.names_by_groups = self._warn_string(by_groups)
+
+        #: Get a list of hostnames of clients whose profile matches
+        #: any given profile group.
+        #:
+        #: :param profiles: The profiles to check clients for
+        #:                  membership in.
+        #: :type profiles: list
+        #: :returns: list of strings
         self.names_by_profiles = self._warn_string(by_profiles)
+
+        #: Get all known client hostnames.
+        #:
+        #: :returns: list of strings
         self.all_clients = get_clients
+
+        #: Get all known group names.
+        #:
+        #: :returns: list of strings
         self.all_groups = all_groups
+
+        #: Get the names of all groups in the given category.
+        #:
+        #: :param category: The category to query for groups that
+        #:                  belong to it.
+        #: :type category: string
+        #: :returns: list of strings
         self.all_groups_in_category = all_groups_in_category
 
     def _warn_string(self, func):
@@ -327,22 +401,41 @@ class MetadataQuery(object):
         return inner
 
     def by_groups(self, groups):
-        """ get a list of ClientMetadata objects that are in all given
-        groups """
+        """ Get a list of
+        :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata` objects
+        that are in all given groups.
+
+        :param groups: The groups to check clients for membership in.
+        :type groups: list
+        :returns: list of Bcfg2.Server.Plugins.Metadata.ClientMetadata
+                  objects
+        """
         # don't need to decorate this with _warn_string because
         # names_by_groups is decorated
         return [self.by_name(name) for name in self.names_by_groups(groups)]
 
     def by_profiles(self, profiles):
-        """ get a list of ClientMetadata objects that are in any of
-        the given profiles """
+        """ Get a list of
+        :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata` objects
+        that have any of the given groups as their profile.
+
+        :param profiles: The profiles to check clients for membership
+                         in.
+        :type profiles: list
+        :returns: list of Bcfg2.Server.Plugins.Metadata.ClientMetadata
+                  objects
+        """
         # don't need to decorate this with _warn_string because
         # names_by_profiles is decorated
         return [self.by_name(name)
                 for name in self.names_by_profiles(profiles)]
 
     def all(self):
-        """ get a list of all ClientMetadata objects """
+        """ Get a list of all
+        :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata` objects.
+
+        :returns: list of Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        """
         return [self.by_name(name) for name in self.all_clients()]
 
 
