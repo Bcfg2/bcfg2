@@ -120,8 +120,9 @@ class VCS(Bcfg2.Client.Tools.Tool):
     def Installsvn(self, entry):
         """Checkout contents from a svn repository"""
         # pylint: disable=E1101
+        client = pysvn.Client()
         try:
-            client = pysvn.Client.update(entry.get('name'), recurse=True)
+            client.update(entry.get('name'), recurse=True)
         except pysvn.ClientError:
             self.logger.error("Failed to update repository", exc_info=1)
             return False
