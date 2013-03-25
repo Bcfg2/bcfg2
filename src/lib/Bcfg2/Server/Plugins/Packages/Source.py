@@ -92,7 +92,8 @@ class SourceInitError(Exception):
 REPO_RE = re.compile(r'(?:pulp/repos/|/RPMS\.|/)([^/]+)/?$')
 
 
-class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
+class Source(Bcfg2.Server.Plugin.Debuggable,  # pylint: disable=R0902
+             Bcfg2.Server.Plugin.DeepcopyMixin):
     """ ``Source`` objects represent a single <Source> tag in
     ``sources.xml``.  Note that a single Source tag can itself
     describe multiple repositories (if it uses the "url" attribute
@@ -128,6 +129,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         :raises: :class:`Bcfg2.Server.Plugins.Packages.Source.SourceInitError`
         """
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
+        Bcfg2.Server.Plugin.DeepcopyMixin.__init__(self)
 
         #: The base filesystem path under which cache data for this
         #: source should be stored
@@ -738,3 +740,6 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
                 if group in metadata.groups:
                     return True
             return False
+
+    def _deepcopy_constructor_args(self):
+        return (self.basepath, self.xsource, dict(self.setup))

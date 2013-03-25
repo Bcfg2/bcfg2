@@ -8,12 +8,16 @@ from Bcfg2.Server.Plugins.Packages.Source import SourceInitError
 
 
 class PackagesSources(Bcfg2.Server.Plugin.StructFile,
-                      Bcfg2.Server.Plugin.Debuggable):
+                      Bcfg2.Server.Plugin.Debuggable,
+                      Bcfg2.Server.Plugin.DeepcopyMixin):
     """ PackagesSources handles parsing of the
     :mod:`Bcfg2.Server.Plugins.Packages` ``sources.xml`` file, and the
     creation of the appropriate
     :class:`Bcfg2.Server.Plugins.Packages.Source.Source` object for
     each ``Source`` tag. """
+
+    _deepcopy_exclude = Bcfg2.Server.Plugin.DeepcopyMixin._deepcopy_exclude + \
+        ['pkg_obj']
 
     __identifier__ = None
 
@@ -39,6 +43,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
                  If ``sources.xml`` cannot be read
         """
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
+        Bcfg2.Server.Plugin.DeepcopyMixin.__init__(self)
         try:
             Bcfg2.Server.Plugin.StructFile.__init__(self, filename, fam=fam,
                                                     should_monitor=True)
@@ -129,7 +134,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
         """ Create a
         :class:`Bcfg2.Server.Plugins.Packages.Source.Source` subclass
         object from XML representation of a source in ``sources.xml``.
-        ``source_from-xml`` determines the appropriate subclass of
+        ``source_from_xml`` determines the appropriate subclass of
         ``Source`` to instantiate according to the ``type`` attribute
         of the ``Source`` tag.
 
@@ -176,3 +181,6 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
 
     def __len__(self):
         return len(self.entries)
+
+    def _deepcopy_constructor_args(self):
+        return (self.name, self.cachepath, None, None, dict(self.setup))

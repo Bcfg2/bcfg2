@@ -1601,3 +1601,36 @@ class GroupSpool(Plugin, Generator):
                 return
             reqid = self.core.fam.AddMonitor(name, self)
             self.handles[reqid] = relative
+
+
+class DeepcopyMixin(object):
+    """ Mixin that adds a __deepcopy__() function that tries to do the
+    right thing by:
+
+    #. Creating a new object of the same type by calling the
+       constructor with the arguments returned by
+       :func:`Bcfg2.Server.Plugin.helpers.DeepcopyMixin._deepcopy_constructor_args`;
+    #. Individually copying each attribute of the original object that
+       a) is not magical (``__whatever__``); b) is not callable; c) is
+       not a property; and d) is not in
+       :attr:`Bcfg2.Server.Plugin.helpers.DeepcopyMixin._deepcopy_exclude`.
+    """
+
+    #: Exclude the named attributes from the copy.
+    _deepcopy_exclude = ["fam", "logger", "setup"]
+
+    def _deepcopy_constructor_args(self):
+        """ Get a tuple of arguments that will be passed to the
+        constructor of this class to create a base object before the
+        individual attributes are deepcopied. """
+        raise NotImplementedError
+
+    def __deepcopy__(self, memo):
+        rv = self.__class__(*self._deepcopy_constructor_args())
+        for attr in dir(self):
+            if (not callable(getattr(self, attr)) and
+                (not attr.startswith("__") or not attr.endswith("__")) and
+                attr not in self._deepcopy_exclude and
+                not isinstance(getattr(self.__class__, attr, None), property)):
+                setattr(rv, attr, copy.deepcopy(getattr(self, attr), memo))
+        return rv
