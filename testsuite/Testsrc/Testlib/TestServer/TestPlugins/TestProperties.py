@@ -418,8 +418,8 @@ class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
         self.assertFalse(mock_copy.called)
 
 
-class TestPropDirectoryBacked(TestDirectoryBacked):
-    test_obj = PropDirectoryBacked
+class TestProperties(TestPlugin, TestConnector, TestDirectoryBacked):
+    test_obj = Properties
     testfiles = ['foo.xml', 'bar.baz.xml']
     if HAS_JSON:
         testfiles.extend(["foo.json", "foo.xml.json"])
@@ -428,17 +428,13 @@ class TestPropDirectoryBacked(TestDirectoryBacked):
     ignore = ['foo.xsd', 'bar.baz.xsd', 'quux.xml.xsd']
     badevents = ['bogus.txt']
 
-
-class TestProperties(TestPlugin, TestConnector):
-    test_obj = Properties
-
-    def test__init(self):
-        TestPlugin.test__init(self)
-
-        core = Mock()
-        p = self.get_obj(core=core)
-        self.assertIsInstance(p.store, PropDirectoryBacked)
-        self.assertEqual(Bcfg2.Server.Plugins.Properties.SETUP, core.setup)
+    def get_obj(self, core=None):
+        @patch("%s.%s.add_directory_monitor" % (self.test_obj.__module__,
+                                                self.test_obj.__name__),
+               Mock())
+        def inner():
+            return TestPlugin.get_obj(self, core=core)
+        return inner()
 
     @patch("copy.copy")
     def test_get_additional_data(self, mock_copy):
@@ -446,11 +442,11 @@ class TestProperties(TestPlugin, TestConnector):
 
         p = self.get_obj()
         metadata = Mock()
-        p.store.entries = {"foo.xml": Mock(),
-                           "foo.yml": Mock()}
+        p.entries = {"foo.xml": Mock(),
+                     "foo.yml": Mock()}
         rv = p.get_additional_data(metadata)
         expected = dict()
-        for name, entry in p.store.entries.items():
+        for name, entry in p.entries.items():
             entry.get_additional_data.assert_called_with(metadata)
             expected[name] = entry.get_additional_data.return_value
         self.assertItemsEqual(rv, expected)

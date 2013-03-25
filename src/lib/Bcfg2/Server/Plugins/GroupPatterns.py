@@ -3,7 +3,6 @@
 import os
 import re
 import sys
-import logging
 import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 from Bcfg2.Utils import PackedDigitRange
@@ -67,6 +66,7 @@ class PatternMap(object):
 class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
     """ representation of GroupPatterns config.xml """
     __identifier__ = None
+    create = 'GroupPatterns'
 
     def __init__(self, filename, core=None):
         try:
@@ -77,7 +77,6 @@ class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
                                                    should_monitor=True)
         self.core = core
         self.patterns = []
-        self.logger = logging.getLogger(self.__class__.__name__)
 
     def Index(self):
         Bcfg2.Server.Plugin.XMLFileBacked.Index(self)

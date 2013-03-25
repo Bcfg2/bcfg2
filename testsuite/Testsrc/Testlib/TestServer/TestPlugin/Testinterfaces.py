@@ -97,11 +97,6 @@ class TestProbing(Bcfg2TestCase):
 class TestStatistics(TestPlugin):
     test_obj = Statistics
 
-    def get_obj(self, core=None):
-        if core is None:
-            core = Mock()
-        return self.test_obj(core, datastore)
-
     def test_process_statistics(self):
         s = self.get_obj()
         self.assertRaises(NotImplementedError,
@@ -353,12 +348,6 @@ class TestGoalValidator(Bcfg2TestCase):
 
 class TestVersion(TestPlugin):
     test_obj = Version
-
-    def get_obj(self, core=None):
-        if core is None:
-            core = Mock()
-            core.setup = MagicMock()
-        return self.test_obj(core, datastore)
 
     def test_get_revision(self):
         d = self.get_obj()

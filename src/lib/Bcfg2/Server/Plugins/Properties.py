@@ -266,8 +266,13 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
         return repr(self.xdata)
 
 
-class PropDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):
-    """ A collection of properties files. """
+class Properties(Bcfg2.Server.Plugin.Plugin,
+                 Bcfg2.Server.Plugin.Connector,
+                 Bcfg2.Server.Plugin.DirectoryBacked):
+    """ The properties plugin maps property files into client metadata
+    instances. """
+
+    #: Extensions that are understood by Properties.
     extensions = ["xml"]
     if HAS_JSON:
         extensions.append("json")
@@ -284,14 +289,18 @@ class PropDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):
     #: Ignore XML schema (``.xsd``) files
     ignore = re.compile(r'.*\.xsd$')
 
-    def __init__(self, data, fam):
-        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, data, fam)
+    def __init__(self, core, datastore):
+        global SETUP  # pylint: disable=W0603
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Connector.__init__(self)
+        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, core.fam)
+        SETUP = core.setup
 
         #: Instead of creating children of this object with a static
         #: object, we use :func:`property_dispatcher` to create a
         #: child of the appropriate subclass of :class:`PropertyFile`
         self.__child__ = self.property_dispatcher
-    __init__.__doc__ = Bcfg2.Server.Plugin.DirectoryBacked.__init__.__doc__
+    __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
 
     def property_dispatcher(self, fname, fam):
         """ Dispatch an event on a Properties file to the
@@ -314,30 +323,9 @@ class PropDirectoryBacked(Bcfg2.Server.Plugin.DirectoryBacked):
             raise Bcfg2.Server.Plugin.PluginExecutionError(
                 "Properties: Unknown extension %s" % fname)
 
-
-class Properties(Bcfg2.Server.Plugin.Plugin,
-                 Bcfg2.Server.Plugin.Connector):
-    """ The properties plugin maps property files into client metadata
-    instances. """
-
-    def __init__(self, core, datastore):
-        global SETUP  # pylint: disable=W0603
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        Bcfg2.Server.Plugin.Connector.__init__(self)
-        SETUP = core.setup
-        try:
-            self.store = PropDirectoryBacked(self.data, core.fam)
-        except OSError:
-            err = sys.exc_info()[1]
-            self.logger.error("Error while creating Properties store: %s" %
-                              err)
-            raise Bcfg2.Server.Plugin.PluginInitError
-
-    __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
-
     def get_additional_data(self, metadata):
         rv = dict()
-        for fname, pfile in self.store.entries.items():
+        for fname, pfile in self.entries.items():
             rv[fname] = pfile.get_additional_data(metadata)
         return rv
     get_additional_data.__doc__ = \

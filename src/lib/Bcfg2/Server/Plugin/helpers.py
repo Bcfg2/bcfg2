@@ -193,7 +193,7 @@ class PluginDatabaseModel(object):
         app_label = "Server"
 
 
-class FileBacked(object):
+class FileBacked(Debuggable):
     """ This object caches file data in memory. FileBacked objects are
     principally meant to be used as a part of
     :class:`Bcfg2.Server.Plugin.helpers.DirectoryBacked`. """
@@ -206,7 +206,7 @@ class FileBacked(object):
                     changes
         :type fam: Bcfg2.Server.FileMonitor.FileMonitor
         """
-        object.__init__(self)
+        Debuggable.__init__(self)
 
         #: A string containing the raw data in this file
         self.data = ''
@@ -246,7 +246,7 @@ class FileBacked(object):
         return "%s: %s" % (self.__class__.__name__, self.name)
 
 
-class DirectoryBacked(object):
+class DirectoryBacked(Debuggable):
     """ DirectoryBacked objects represent a directory that contains
     files, represented by objects of the type listed in
     :attr:`__child__`, and other directories recursively.  It monitors
@@ -280,7 +280,7 @@ class DirectoryBacked(object):
         .. -----
         .. autoattribute:: __child__
         """
-        object.__init__(self)
+        Debuggable.__init__(self)
 
         self.data = os.path.normpath(data)
         self.fam = fam
@@ -299,7 +299,16 @@ class DirectoryBacked(object):
         self.handles = {}
 
         # Monitor everything in the plugin's directory
+        if not os.path.exists(self.data):
+            self.logger.warning("%s does not exist, creating" % self.data)
+            os.makedirs(self.data)
         self.add_directory_monitor('')
+
+    def set_debug(self, debug):
+        for entry in self.entries.values():
+            if isinstance(entry, Debuggable):
+                entry.set_debug(debug)
+        return Debuggable.set_debug(self, debug)
 
     def __getitem__(self, key):
         return self.entries[key]
@@ -459,7 +468,11 @@ class XMLFileBacked(FileBacked):
     #: behavior, set ``__identifier__`` to ``None``.
     __identifier__ = 'name'
 
-    def __init__(self, filename, fam=None, should_monitor=False):
+    #: If ``create`` is set, then it overrides the ``create`` argument
+    #: to the constructor.
+    create = None
+
+    def __init__(self, filename, fam=None, should_monitor=False, create=None):
         """
         :param filename: The full path to the file to cache and monitor
         :type filename: string
@@ -474,6 +487,13 @@ class XMLFileBacked(FileBacked):
                                :class:`Bcfg2.Server.Plugin.helpers.XMLDirectoryBacked`
                                object).
         :type should_monitor: bool
+        :param create: Create the file if it doesn't exist.
+                       ``create`` can be either an
+                       :class:`lxml.etree._Element` object, which will
+                       be used as initial content, or a string, which
+                       will be used as the name of the (empty) tag
+                       that will be the initial content of the file.
+        :type create: lxml.etree._Element or string
 
         .. -----
         .. autoattribute:: __identifier__
@@ -496,6 +516,17 @@ class XMLFileBacked(FileBacked):
 
         #: "Extra" files included in this file by XInclude.
         self.extras = []
+
+        if ((create or (self.create is not None and self.create))
+            and not os.path.exists(self.name)):
+            toptag = create or self.create
+            self.logger.warning("%s does not exist, creating" % self.name)
+            if hasattr(toptag, "getroottree"):
+                el = toptag
+            else:
+                el = lxml.etree.Element(toptag)
+            el.getroottree().write(self.name, xml_declaration=False,
+                                   pretty_print=True)
 
         #: Whether or not to monitor this file for changes.
         self.should_monitor = should_monitor
@@ -776,8 +807,8 @@ class XMLSrc(XMLFileBacked):
     __cacheobj__ = dict
     __priority_required__ = True
 
-    def __init__(self, filename, fam=None, should_monitor=False):
-        XMLFileBacked.__init__(self, filename, fam, should_monitor)
+    def __init__(self, filename, fam=None, should_monitor=False, create=None):
+        XMLFileBacked.__init__(self, filename, fam, should_monitor, create)
         self.items = {}
         self.cache = None
         self.pnode = None
@@ -1450,8 +1481,6 @@ class GroupSpool(Plugin, Generator):
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
         Generator.__init__(self)
-        if self.data[-1] == '/':
-            self.data = self.data[:-1]
 
         #: See :class:`Bcfg2.Server.Plugins.interfaces.Generator` for
         #: details on the Entries attribute.

@@ -94,7 +94,13 @@ def get_metadata_object(core=None, watch_clients=False, use_db=False):
         core.setup = MagicMock()
         core.metadata_cache = MagicMock()
     core.setup.cfp.getboolean = Mock(return_value=use_db)
-    return Metadata(core, datastore, watch_clients=watch_clients)
+
+    @patchIf(not isinstance(os.makedirs, Mock), "os.makedirs", Mock())
+    @patchIf(not isinstance(lxml.etree.Element, Mock),
+             "lxml.etree.Element", Mock())
+    def inner():
+        return Metadata(core, datastore, watch_clients=watch_clients)
+    return inner()
 
 
 class TestMetadataDB(DBModelTestCase):
@@ -203,7 +209,11 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
     def get_obj(self, basefile="clients.xml", core=None, watch_clients=False):
         self.metadata = get_metadata_object(core=core,
                                             watch_clients=watch_clients)
-        return XMLMetadataConfig(self.metadata, watch_clients, basefile)
+        @patchIf(not isinstance(lxml.etree.Element, Mock),
+                 "lxml.etree.Element", Mock())
+        def inner():
+            return XMLMetadataConfig(self.metadata, watch_clients, basefile)
+        return inner()
 
     def test__init(self):
         xmc = self.get_obj()
@@ -1521,7 +1531,11 @@ class TestMetadata_ClientsXML(TestMetadataBase):
         if metadata is None:
             metadata = self.get_obj()
         metadata.core.fam = Mock()
-        metadata.clients_xml = metadata._handle_file("clients.xml")
+        @patchIf(not isinstance(lxml.etree.Element, Mock),
+                 "lxml.etree.Element", Mock())
+        def inner():
+            metadata.clients_xml = metadata._handle_file("clients.xml")
+        inner()
         metadata = TestMetadata.load_clients_data(self, metadata=metadata,
                                                   xdata=xdata)
         return TestMetadataBase.load_clients_data(self, metadata=metadata,

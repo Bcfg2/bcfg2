@@ -92,16 +92,8 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Structure.__init__(self)
         self.encoding = core.setup['encoding']
         self.__child__ = self.template_dispatch
-        try:
-            Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self,
-                                                            self.data,
-                                                            self.core.fam)
-        except OSError:
-            err = sys.exc_info()[1]
-            msg = "Failed to load Bundle repository %s: %s" % (self.data, err)
-            self.logger.error(msg)
-            raise Bcfg2.Server.Plugin.PluginInitError(msg)
-
+        Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data,
+                                                        self.core.fam)
         global SETUP
         SETUP = core.setup
 

@@ -20,13 +20,8 @@ class Base(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Structure.__init__(self)
-        try:
-            Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self,
-                                                            self.data,
-                                                            self.core.fam)
-        except OSError:
-            self.logger.error("Failed to load Base repository")
-            raise Bcfg2.Server.Plugin.PluginInitError
+        Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data,
+                                                        self.core.fam)
 
     def BuildStructures(self, metadata):
         """Build structures for client described by metadata."""

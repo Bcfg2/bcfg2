@@ -16,6 +16,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
     each ``Source`` tag. """
 
     __identifier__ = None
+    create = "Sources"
 
     def __init__(self, filename, cachepath, fam, packages, setup):
         """
@@ -39,14 +40,8 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
                  If ``sources.xml`` cannot be read
         """
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
-        try:
-            Bcfg2.Server.Plugin.StructFile.__init__(self, filename, fam=fam,
-                                                    should_monitor=True)
-        except OSError:
-            err = sys.exc_info()[1]
-            msg = "Packages: Failed to read configuration file: %s" % err
-            self.logger.error(msg)
-            raise Bcfg2.Server.Plugin.PluginInitError(msg)
+        Bcfg2.Server.Plugin.StructFile.__init__(self, filename, fam=fam,
+                                                should_monitor=True)
 
         #: The full path to the directory where
         #: :class:`Bcfg2.Server.Plugins.Packages.Source.Source` data

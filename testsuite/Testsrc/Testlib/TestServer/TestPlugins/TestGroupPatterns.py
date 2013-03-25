@@ -92,7 +92,12 @@ class TestPatternFile(TestXMLFileBacked):
             core.fam = fam
         elif not core:
             core = Mock()
-        return self.test_obj(path, core=core)
+
+        @patchIf(not isinstance(lxml.etree.Element, Mock),
+                 "lxml.etree.Element", Mock())
+        def inner():
+            return self.test_obj(path, core=core)
+        return inner()
 
     @patch("Bcfg2.Server.Plugins.GroupPatterns.PatternMap")
     def test_Index(self, mock_PatternMap):
@@ -134,6 +139,14 @@ class TestPatternFile(TestXMLFileBacked):
 
 class TestGroupPatterns(TestPlugin, TestConnector):
     test_obj = GroupPatterns
+
+    def get_obj(self, core=None):
+        @patchIf(not isinstance(lxml.etree.Element, Mock),
+                 "lxml.etree.Element", Mock())
+        def inner():
+            return TestPlugin.get_obj(self, core=core)
+        return inner()
+
 
     def test_get_additional_groups(self):
         gp = self.get_obj()

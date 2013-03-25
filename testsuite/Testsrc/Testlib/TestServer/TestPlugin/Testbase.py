@@ -72,14 +72,32 @@ class TestPlugin(TestDebuggable):
         if core is None:
             core = Mock()
             core.setup = MagicMock()
-        return self.test_obj(core, datastore)
+        @patchIf(not isinstance(os.makedirs, Mock), "os.makedirs", Mock())
+        def inner():
+            return self.test_obj(core, datastore)
+        return inner()
 
-    def test__init(self):
+    @patch("os.makedirs")
+    @patch("os.path.exists")
+    def test__init(self, mock_exists, mock_makedirs):
         core = Mock()
         core.setup = MagicMock()
+
+        mock_exists.return_value = True
         p = self.get_obj(core=core)
         self.assertEqual(p.data, os.path.join(datastore, p.name))
         self.assertEqual(p.core, core)
+        mock_exists.assert_any_call(p.data)
+        self.assertFalse(mock_makedirs.called)
+
+        mock_exists.reset_mock()
+        mock_makedirs.reset_mock()
+        mock_exists.return_value = False
+        p = self.get_obj(core=core)
+        self.assertEqual(p.data, os.path.join(datastore, p.name))
+        self.assertEqual(p.core, core)
+        mock_exists.assert_any_call(p.data)
+        mock_makedirs.assert_any_call(p.data)
 
     @patch("os.makedirs")
     def test_init_repo(self, mock_makedirs):

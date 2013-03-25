@@ -420,6 +420,10 @@ class BaseCore(object):
         except PluginInitError:
             self.logger.error("Failed to instantiate plugin %s" % plugin,
                               exc_info=1)
+        except OSError:
+            err = sys.exc_info()[1]
+            self.logger.error("Failed to add a file monitor while "
+                              "instantiating plugin %s: %s" % (plugin, err))
         except:
             self.logger.error("Unexpected instantiation failure for plugin %s"
                               % plugin, exc_info=1)

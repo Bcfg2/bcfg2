@@ -94,9 +94,11 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
         # then we immediately set should_monitor to the proper value,
         # so that XInclude'd files get properly watched
         fpath = os.path.join(metadata.data, basefile)
+        toptag = os.path.splitext(basefile)[0].title()
         Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, fpath,
                                                    fam=metadata.core.fam,
-                                                   should_monitor=False)
+                                                   should_monitor=False,
+                                                   create=toptag)
         self.should_monitor = watch_clients
         self.metadata = metadata
         self.basefile = basefile

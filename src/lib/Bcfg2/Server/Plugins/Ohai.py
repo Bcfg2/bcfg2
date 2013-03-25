@@ -69,10 +69,6 @@ class Ohai(Bcfg2.Server.Plugin.Plugin,
         self.probe = lxml.etree.Element('probe', name='Ohai', source='Ohai',
                                         interpreter='/bin/sh')
         self.probe.text = PROBECODE
-        try:
-            os.stat(self.data)
-        except OSError:
-            os.makedirs(self.data)
         self.cache = OhaiCache(self.data)
 
     def GetProbes(self, _):

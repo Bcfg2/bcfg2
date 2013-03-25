@@ -2,7 +2,6 @@
 blacklist certain entries. """
 
 import os
-import sys
 import lxml.etree
 import Bcfg2.Server.Plugin
 
@@ -40,18 +39,10 @@ class Decisions(Bcfg2.Server.Plugin.EntrySet,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Decision.__init__(self)
-
         Bcfg2.Server.Plugin.EntrySet.__init__(self, '(white|black)list',
-                                              self.data,
-                                              DecisionFile,
+                                              self.data, DecisionFile,
                                               core.setup['encoding'])
-        try:
-            core.fam.AddMonitor(self.data, self)
-        except OSError:
-            err = sys.exc_info()[1]
-            msg = 'Adding filemonitor for %s failed: %s' % (self.data, err)
-            self.logger.error(msg)
-            raise Bcfg2.Server.Plugin.PluginInitError(msg)
+        core.fam.AddMonitor(self.data, self)
 
     def HandleEvent(self, event):
         """ Handle events on Decision files by passing them off to

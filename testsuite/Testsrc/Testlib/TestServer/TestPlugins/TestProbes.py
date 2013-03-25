@@ -201,9 +201,7 @@ class TestProbes(TestProbing, TestConnector, TestDatabaseBacked):
     test_obj = Probes
 
     def get_obj(self, core=None):
-        if core is None:
-            core = MagicMock()
-        return self.test_obj(core, datastore)
+        return TestDatabaseBacked.get_obj(self, core=core)
 
     def get_test_probedata(self):
         test_xdata = lxml.etree.Element("test")
@@ -247,9 +245,10 @@ text
         # test__init(), which relies on being able to check the calls
         # of load_data(), and thus on load_data() being consistently
         # mocked)
-        @patch("Bcfg2.Server.Plugins.Probes.Probes.load_data", new=load_data)
+        @patch("%s.%s.load_data" % (self.test_obj.__module__,
+                                    self.test_obj.__name__), new=load_data)
         def inner():
-            return Probes(core, datastore)
+            return self.get_obj(core)
 
         return inner()
 

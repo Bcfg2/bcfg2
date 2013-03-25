@@ -158,6 +158,7 @@ class TestDirectoryBacked(Bcfg2TestCase):
         """ ensure that the child object has the correct interface """
         self.assertTrue(hasattr(self.test_obj.__child__, "HandleEvent"))
 
+    @patch("os.makedirs", Mock())
     def get_obj(self, fam=None):
         if fam is None:
             fam = Mock()
@@ -171,12 +172,26 @@ class TestDirectoryBacked(Bcfg2TestCase):
                                  fam)
         return inner()
 
-    def test__init(self):
+    @patch("os.makedirs")
+    @patch("os.path.exists")
+    def test__init(self, mock_exists, mock_makedirs):
         @patch("%s.%s.add_directory_monitor" % (self.test_obj.__module__,
                                                 self.test_obj.__name__))
         def inner(mock_add_monitor):
+            mock_exists.return_value = True
             db = self.test_obj(datastore, Mock())
             mock_add_monitor.assert_called_with('')
+            mock_exists.assert_called_with(db.data)
+            self.assertFalse(mock_makedirs.called)
+
+            mock_add_monitor.reset_mock()
+            mock_exists.reset_mock()
+            mock_makedirs.reset_mock()
+            mock_exists.return_value = False
+            db = self.test_obj(datastore, Mock())
+            mock_add_monitor.assert_called_with('')
+            mock_exists.assert_called_with(db.data)
+            mock_makedirs.assert_called_with(db.data)
 
         inner()
 
@@ -220,6 +235,7 @@ class TestDirectoryBacked(Bcfg2TestCase):
         mock_isdir.return_value = True
         for path in self.testpaths.values():
             reset()
+            print "testing %s" % path
             db.add_directory_monitor(path)
             db.fam.AddMonitor.assert_called_with(os.path.join(db.data, path),
                                                  db)
@@ -395,10 +411,14 @@ class TestXMLFileBacked(TestFileBacked):
     should_monitor = None
     path = os.path.join(datastore, "test", "test1.xml")
 
+    @patch("os.makedirs", Mock())
     def get_obj(self, path=None, fam=None, should_monitor=False):
         if path is None:
             path = self.path
-        return self.test_obj(path, fam=fam, should_monitor=should_monitor)
+        @patchIf(not isinstance(os.makedirs, Mock), "os.makedirs", Mock())
+        def inner():
+            return self.test_obj(path, fam=fam, should_monitor=should_monitor)
+        return inner()
 
     def test__init(self):
         fam = Mock()
@@ -1186,13 +1206,18 @@ class TestXMLDirectoryBacked(TestDirectoryBacked):
 class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
     test_obj = PrioDir
 
-    @patch("Bcfg2.Server.Plugin.helpers.%s.add_directory_monitor" %
-           test_obj.__name__,
-           Mock())
     def get_obj(self, core=None):
         if core is None:
             core = Mock()
-        return self.test_obj(core, datastore)
+
+        @patch("%s.%s.add_directory_monitor" %
+               (self.test_obj.__module__, self.test_obj.__name__),
+               Mock())
+        @patchIf(not isinstance(os.makedirs, Mock), "os.makedirs", Mock())
+        def inner():
+            return self.test_obj(core, datastore)
+
+        return inner()
 
     def test_HandleEvent(self):
         TestXMLDirectoryBacked.test_HandleEvent(self)
@@ -1816,6 +1841,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
         return inner()
 
     def test__init(self):
+        @patchIf(not isinstance(os.makedirs, Mock), "os.makedirs", Mock())
         @patch("%s.%s.AddDirectoryMonitor" % (self.test_obj.__module__,
                                               self.test_obj.__name__))
         def inner(mock_Add):

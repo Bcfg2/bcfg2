@@ -67,7 +67,8 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             Bcfg2.Server.Plugin.StructFile(os.path.join(self.data,
                                                         'config.xml'),
                                            fam=core.fam,
-                                           should_monitor=True)
+                                           should_monitor=True,
+                                           create=self.name)
         self.entries = dict()
         self.probes = dict()
 
