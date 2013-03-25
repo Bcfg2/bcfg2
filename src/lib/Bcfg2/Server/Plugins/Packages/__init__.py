@@ -5,6 +5,7 @@ determine the completeness of the client configuration. """
 import os
 import sys
 import glob
+import copy
 import shutil
 import lxml.etree
 import Bcfg2.Logger
@@ -536,7 +537,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :return: dict of lists of ``url_map`` data
         """
         collection = self.get_collection(metadata)
-        return dict(sources=collection.get_additional_data())
+        return dict(sources=collection.get_additional_data(),
+                    allsources=copy.deepcopy(self.sources))
 
     def end_client_run(self, metadata):
         """ Hook to clear the cache for this client in
