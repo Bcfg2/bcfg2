@@ -3,3 +3,5 @@ nose
 mock
 sphinx
 daemon
+pylint
+pep8

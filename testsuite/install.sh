@@ -7,12 +7,14 @@ pip install -r testsuite/requirements.txt --use-mirrors
 PYVER=$(python -c 'import sys;print(".".join(str(v) for v in sys.version_info[0:2]))')
 
 if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
+    pip install --use-mirrors genshi PyYAML pyinotify
     if [[ $PYVER == "2.5" ]]; then
-        # markdown 2.2.0 is broken on py2.5, so until 2.2.1 is released use 2.1
-        pip install --use-mirrors 'markdown<2.2'
         pip install --use-mirrors simplejson
+    if [[ ${PYVER:0:1} == "2" ]]; then
+        # django supports py3k, but South doesn't, and the django bits
+        # in bcfg2 require South
+        pip install cheetah django South M2Crypto
     fi
-    pip install --use-mirrors genshi cheetah 'django<1.4' South M2Crypto
 else
     # python < 2.6 requires M2Crypto for SSL communication, not just
     # for encryption support
