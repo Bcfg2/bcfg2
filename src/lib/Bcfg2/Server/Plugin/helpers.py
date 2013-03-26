@@ -313,6 +313,15 @@ class DirectoryBacked(Debuggable):
     def __getitem__(self, key):
         return self.entries[key]
 
+    def __len__(self):
+        return len(self.entries)
+
+    def __delitem__(self, key):
+        del self.entries[key]
+
+    def __setitem__(self, key, val):
+        self.entries[key] = val
+
     def __iter__(self):
         return iter(list(self.entries.items()))
 

@@ -22,7 +22,7 @@ class ClassName(object):
         return owner.__name__
 
 
-class PackedDigitRange(object):
+class PackedDigitRange(object):  # pylint: disable=E0012,R0924
     """ Representation of a set of integer ranges. A range is
     described by a comma-delimited string of integers and ranges,
     e.g.::
@@ -144,6 +144,19 @@ class ExecutorResult(object):
         """ This provides compatibility with the old Executor, which
         returned a tuple of (return value, stdout split by lines). """
         return (self.retval, self.stdout.splitlines())[idx]
+
+    def __len__(self):
+        """ This provides compatibility with the old Executor, which
+        returned a tuple of (return value, stdout split by lines). """
+        return 2
+
+    def __delitem__(self, _):
+        raise TypeError("'%s' object doesn't support item deletion" %
+                        self.__class__.__name__)
+
+    def __setitem__(self, idx, val):
+        raise TypeError("'%s' object does not support item assignment" %
+                        self.__class__.__name__)
 
     def __nonzero__(self):
         return self.__bool__()
