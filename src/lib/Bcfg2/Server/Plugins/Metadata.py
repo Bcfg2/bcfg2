@@ -1482,6 +1482,7 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
         self.duplicate_groups()
         self.duplicate_default_groups()
         self.duplicate_clients()
+        self.default_is_profile()
 
     @classmethod
     def Errors(cls):
@@ -1491,7 +1492,8 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                 "non-profile-set-as-profile": "error",
                 "duplicate-group": "error",
                 "duplicate-client": "error",
-                "multiple-default-groups": "error"}
+                "multiple-default-groups": "error",
+                "default-is-not-profile": "error"}
 
     def deprecated_options(self):
         """ check for the location='floating' option, which has been
@@ -1581,3 +1583,13 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                 self.LintError("duplicate-%s" % etype,
                                "%s %s is defined multiple times:\n%s" %
                                (etype.title(), ename, "\n".join(els)))
+
+    def default_is_profile(self):
+        if (self.metadata.default and
+            not self.metadata.groups[self.metadata.default].is_profile):
+            xdata = \
+                self.metadata.groups_xml.xdata.xpath("//Group[@name='%s']" %
+                                                     self.metadata.default)[0]
+            self.LintError("default-is-not-profile",
+                           "Default group is not a profile group:\n%s" %
+                           self.RenderXML(xdata))
