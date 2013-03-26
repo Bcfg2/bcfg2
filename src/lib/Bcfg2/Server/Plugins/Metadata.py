@@ -1092,7 +1092,6 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             raise Bcfg2.Server.Plugin.MetadataRuntimeError("Metadata has not "
                                                            "been read yet")
         client = client.lower()
-
         if client in self.core.metadata_cache:
             return self.core.metadata_cache[client]
 
@@ -1103,6 +1102,29 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         categories = dict()
         profile = None
 
+        def _add_group(grpname):
+            """ Add a group to the set of groups for this client.
+            Handles setting categories and category suppression.
+            Returns the new profile for the client (which might be
+            unchanged). """
+            groups.add(grpname)
+            if grpname in self.groups:
+                group = self.groups[grpname]
+                category = group.category
+                if category:
+                    if category in categories:
+                        self.logger.warning("%s: Group %s suppressed by "
+                                            "category %s; %s already a member "
+                                            "of %s" %
+                                            (self.name, grpname, category,
+                                             client, categories[category]))
+                        return
+                    categories[category] = grpname
+                if not profile and group.is_profile:
+                    return grpname
+                else:
+                    return profile
+
         if client not in self.clients:
             pgroup = None
             if client in self.clientgroups:
@@ -1112,45 +1134,27 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
             if pgroup:
                 self.set_profile(client, pgroup, (None, None))
-                groups.add(pgroup)
-                category = self.groups[pgroup].category
-                if category:
-                    categories[category] = pgroup
-                if (pgroup in self.groups and self.groups[pgroup].is_profile):
-                    profile = pgroup
+                profile = _add_group(pgroup)
             else:
                 msg = "Cannot add new client %s; no default group set" % client
                 self.logger.error(msg)
                 raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
 
-        if client in self.clientgroups:
-            for cgroup in self.clientgroups[client]:
-                if cgroup in groups:
-                    continue
-                if cgroup not in self.groups:
-                    self.groups[cgroup] = MetadataGroup(cgroup)
-                category = self.groups[cgroup].category
-                if category and category in categories:
-                    self.logger.warning("%s: Group %s suppressed by "
-                                        "category %s; %s already a member "
-                                        "of %s" %
-                                        (self.name, cgroup, category,
-                                         client, categories[category]))
-                    continue
-                if category:
-                    categories[category] = cgroup
-                groups.add(cgroup)
-                # favor client groups for setting profile
-                if not profile and self.groups[cgroup].is_profile:
-                    profile = cgroup
-
-        if not len(groups) and self.default:
-            # no initial groups; add the default profile
-            profile = self.default
-            groups.add(self.default)
+        for cgroup in self.clientgroups.get(client, []):
+            if cgroup in groups:
+                continue
+            if cgroup not in self.groups:
+                self.groups[cgroup] = MetadataGroup(cgroup)
+            profile = _add_group(cgroup)
 
         groups, categories = self._merge_groups(client, groups,
                                                 categories=categories)
+
+        if len(groups) == 0 and self.default:
+            # no initial groups; add the default profile
+            profile = _add_group(self.default)
+            groups, categories = self._merge_groups(client, groups,
+                                                    categories=categories)
 
         bundles = set()
         for group in groups:
