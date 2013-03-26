@@ -197,7 +197,7 @@ def setup_logging(procname, to_console=True, to_syslog=True,
     params = []
 
     if to_console:
-        if to_console == True:
+        if to_console is True:
             to_console = logging.WARNING
         if level == 0:
             clvl = to_console

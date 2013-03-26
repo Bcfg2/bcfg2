@@ -65,7 +65,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         for plugin in self.bcore.pull_sources:
             try:
                 (owner, group, mode, contents) = \
-                        plugin.GetCurrentEntry(client, etype, ename)
+                    plugin.GetCurrentEntry(client, etype, ename)
                 break
             except Bcfg2.Server.Plugin.PluginExecutionError:
                 if plugin == self.bcore.pull_sources[-1]:

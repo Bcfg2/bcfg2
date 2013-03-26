@@ -48,12 +48,12 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
             gname = "/etc/rc*.d/%s" % filename
             files = glob.glob(gname.replace('_', '.'))
             if files:
-                self.logger.debug("Matched %s with %s" % \
+                self.logger.debug("Matched %s with %s" %
                                   (entry.get("FMRI"), ":".join(files)))
                 return entry.get('status') == 'on'
             else:
-                self.logger.debug("No service matching %s" % \
-                                  (entry.get("FMRI")))
+                self.logger.debug("No service matching %s" %
+                                  entry.get("FMRI"))
                 return entry.get('status') == 'off'
         try:
             srvdata = \
@@ -81,8 +81,7 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
                     os.rename(loc, loc.replace('/S', '/DISABLED.S'))
                     return True
                 except OSError:
-                    self.logger.error("Failed to rename init script %s" % \
-                                      (loc))
+                    self.logger.error("Failed to rename init script %s" % loc)
                     return False
             else:
                 return self.cmd.run("/usr/sbin/svcadm disable %s" %
@@ -118,12 +117,12 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
 
     def FindExtra(self):
         """Find Extra SMF Services."""
-        allsrv = [name for name, version in \
-                  [srvc.split()
-                   for srvc in self.cmd.run([
-                        "/usr/bin/svcs", "-a", "-H",
-                        "-o", "FMRI,STATE"]).stdout.splitlines()]
-                  if version != 'disabled']
+        allsrv = []
+        for srvc in self.cmd.run(["/usr/bin/svcs", "-a", "-H",
+                                  "-o", "FMRI,STATE"]).stdout.splitlines():
+            name, version = srvc.split()
+            if version != 'disabled':
+                allsrv.append(name)
 
         for svc in self.getSupportedEntries():
             if svc.get("FMRI") in allsrv:

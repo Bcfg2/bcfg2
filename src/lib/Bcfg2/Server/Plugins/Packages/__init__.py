@@ -247,14 +247,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 return True
         elif entry.tag == 'Path':
             # managed entries for yum/apt configs
-            if (entry.get("name") == \
-                    self.core.setup.cfp.get("packages",
-                                            "yum_config",
-                                            default=YUM_CONFIG_DEFAULT) or
-                entry.get("name") == \
-                    self.core.setup.cfp.get("packages",
-                                            "apt_config",
-                                            default=APT_CONFIG_DEFAULT)):
+            if (entry.get("name") ==
+                self.core.setup.cfp.get("packages",
+                                        "yum_config",
+                                        default=YUM_CONFIG_DEFAULT) or
+                entry.get("name") ==
+                self.core.setup.cfp.get("packages",
+                                        "apt_config",
+                                        default=APT_CONFIG_DEFAULT)):
                 return True
         return False
 

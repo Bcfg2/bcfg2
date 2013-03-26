@@ -20,9 +20,9 @@ class Fossil(Bcfg2.Server.Plugin.Version):
         """Read fossil revision information for the Bcfg2 repository."""
         try:
             data = Popen("env LC_ALL=C fossil info",
-                        shell=True,
-                        cwd=self.vcs_root,
-                        stdout=PIPE).stdout.readlines()
+                         shell=True,
+                         cwd=self.vcs_root,
+                         stdout=PIPE).stdout.readlines()
             revline = [line.split(': ')[1].strip() for line in data if \
                        line.split(': ')[0].strip() == 'checkout'][-1]
             return revline.split(' ')[0]

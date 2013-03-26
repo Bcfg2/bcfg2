@@ -25,15 +25,15 @@ except ImportError:
     HAS_DJANGO = False
 
 #: A dict containing default metadata for Path entries from bcfg2.conf
-DEFAULT_FILE_METADATA = Bcfg2.Options.OptionParser(dict(
-        configfile=Bcfg2.Options.CFILE,
-        owner=Bcfg2.Options.MDATA_OWNER,
-        group=Bcfg2.Options.MDATA_GROUP,
-        mode=Bcfg2.Options.MDATA_MODE,
-        secontext=Bcfg2.Options.MDATA_SECONTEXT,
-        important=Bcfg2.Options.MDATA_IMPORTANT,
-        paranoid=Bcfg2.Options.MDATA_PARANOID,
-        sensitive=Bcfg2.Options.MDATA_SENSITIVE))
+DEFAULT_FILE_METADATA = Bcfg2.Options.OptionParser(
+    dict(configfile=Bcfg2.Options.CFILE,
+         owner=Bcfg2.Options.MDATA_OWNER,
+         group=Bcfg2.Options.MDATA_GROUP,
+         mode=Bcfg2.Options.MDATA_MODE,
+         secontext=Bcfg2.Options.MDATA_SECONTEXT,
+         important=Bcfg2.Options.MDATA_IMPORTANT,
+         paranoid=Bcfg2.Options.MDATA_PARANOID,
+         sensitive=Bcfg2.Options.MDATA_SENSITIVE))
 DEFAULT_FILE_METADATA.parse([Bcfg2.Options.CFILE.cmd, Bcfg2.Options.CFILE])
 del DEFAULT_FILE_METADATA['args']
 del DEFAULT_FILE_METADATA['configfile']
@@ -786,14 +786,14 @@ class InfoNode (INode):
         Client="lambda m, e: '%(name)s' == m.hostname and predicate(m, e)",
         Group="lambda m, e: '%(name)s' in m.groups and predicate(m, e)",
         Path="lambda m, e: ('%(name)s' == e.get('name') or " +
-                           "'%(name)s' == e.get('realname')) and " +
-                          "predicate(m, e)")
+            "'%(name)s' == e.get('realname')) and " +
+            "predicate(m, e)")
     nraw = dict(
         Client="lambda m, e: '%(name)s' != m.hostname and predicate(m, e)",
         Group="lambda m, e: '%(name)s' not in m.groups and predicate(m, e)",
         Path="lambda m, e: '%(name)s' != e.get('name') and " +
-                          "'%(name)s' != e.get('realname') and " +
-                          "predicate(m, e)")
+            "'%(name)s' != e.get('realname') and " +
+            "predicate(m, e)")
     containers = ['Group', 'Client', 'Path']
 
 

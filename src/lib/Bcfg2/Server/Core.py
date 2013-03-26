@@ -397,7 +397,7 @@ class BaseCore(object):
         self.logger.debug("Loading plugin %s" % plugin)
         try:
             mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
-                                (plugin)).Server.Plugins, plugin)
+                                     (plugin)).Server.Plugins, plugin)
         except ImportError:
             try:
                 mod = __import__(plugin, globals(), locals(),
@@ -1084,7 +1084,7 @@ class BaseCore(object):
                 Bcfg2.Server.Plugin.MetadataRuntimeError):
             err = sys.exc_info()[1]
             self.critical_error("Unable to assert profile for %s: %s" %
-                           (client, err))
+                                (client, err))
         return True
 
     @exposed

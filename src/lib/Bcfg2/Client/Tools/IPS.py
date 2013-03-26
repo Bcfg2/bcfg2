@@ -51,9 +51,9 @@ class IPS(Bcfg2.Client.Tools.PkgTool):
             pass
         else:
             if entry.get('version') != self.installed[pname]:
-                self.logger.debug("IPS: Package %s: have %s want %s" \
-                                  % (pname, self.installed[pname],
-                                     entry.get('version')))
+                self.logger.debug("IPS: Package %s: have %s want %s" %
+                                  (pname, self.installed[pname],
+                                   entry.get('version')))
                 return False
 
         # need to implement pkg chksum validation

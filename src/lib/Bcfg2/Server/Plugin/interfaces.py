@@ -337,12 +337,11 @@ class ThreadedStatistics(Statistics, Threaded, threading.Thread):
         pending_data = []
         try:
             while not self.work_queue.empty():
-                (metadata, data) = self.work_queue.get_nowait()
-                pending_data.append(
-                    (metadata.hostname,
-                     lxml.etree.tostring(
-                            data,
-                            xml_declaration=False).decode("UTF-8")))
+                (metadata, xdata) = self.work_queue.get_nowait()
+                data = \
+                    lxml.etree.tostring(xdata,
+                                        xml_declaration=False).decode("UTF-8")
+                pending_data.append((metadata.hostname, data))
         except Empty:
             pass
 
@@ -409,7 +408,7 @@ class ThreadedStatistics(Statistics, Threaded, threading.Thread):
     def run(self):
         if not self._load():
             return
-        while not self.terminate.isSet() and self.work_queue != None:
+        while not self.terminate.isSet() and self.work_queue is not None:
             try:
                 (client, xdata) = self.work_queue.get(block=True, timeout=2)
             except Empty:
@@ -419,7 +418,7 @@ class ThreadedStatistics(Statistics, Threaded, threading.Thread):
                 self.logger.error("ThreadedStatistics: %s" % err)
                 continue
             self.handle_statistic(client, xdata)
-        if self.work_queue != None and not self.work_queue.empty():
+        if self.work_queue is not None and not self.work_queue.empty():
             self._save()
 
     def process_statistics(self, metadata, data):

@@ -20,9 +20,9 @@ class Cvs(Bcfg2.Server.Plugin.Version):
         """Read cvs revision information for the Bcfg2 repository."""
         try:
             data = Popen("env LC_ALL=C cvs log",
-                        shell=True,
-                        cwd=self.vcs_root,
-                        stdout=PIPE).stdout.readlines()
+                         shell=True,
+                         cwd=self.vcs_root,
+                         stdout=PIPE).stdout.readlines()
             return data[3].strip('\n')
         except IndexError:
             msg = "Failed to read CVS log"

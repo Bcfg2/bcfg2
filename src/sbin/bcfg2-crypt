@@ -161,8 +161,8 @@ class Encryptor(object):
                         continue
                 except TypeError:
                     pchunk = None
-                    for pname, passphrase in \
-                          Bcfg2.Encryption.get_passphrases(self.setup).items():
+                    passphrases = Bcfg2.Encryption.get_passphrases(self.setup)
+                    for pname, passphrase in passphrases.items():
                         self.logger.debug("Trying passphrase %s" % pname)
                         try:
                             pchunk = self._decrypt(chunk, passphrase)
@@ -341,7 +341,7 @@ class PropertiesEncryptor(Encryptor):
         # actually need to unchunk anything
         xdata = data[0]
         # find root element
-        while xdata.getparent() != None:
+        while xdata.getparent() is not None:
             xdata = xdata.getparent()
         return lxml.etree.tostring(xdata,
                                    xml_declaration=False,

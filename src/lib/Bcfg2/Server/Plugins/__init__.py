@@ -1,7 +1,6 @@
 """Imports for Bcfg2.Server.Plugins."""
 
-__all__ = [
-           'Account',
+__all__ = ['Account',
            'Base',
            'Bundler',
            'Bzr',
@@ -28,5 +27,4 @@ __all__ = [
            'Svn',
            'TCheetah',
            'Trigger',
-           'TGenshi',
-          ]
+           'TGenshi']

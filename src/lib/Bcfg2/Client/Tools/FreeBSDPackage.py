@@ -31,7 +31,7 @@ class FreeBSDPackage(Bcfg2.Client.Tools.PkgTool):
     def VerifyPackage(self, entry, _):
         if not 'version' in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
-               (entry.attrib['name']))
+                             entry.attrib['name'])
             return False
         if entry.attrib['name'] in self.installed:
             if self.installed[entry.attrib['name']] == entry.attrib['version']:

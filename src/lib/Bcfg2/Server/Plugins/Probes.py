@@ -214,10 +214,9 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             for group in sorted(self.cgroups[client]):
                 lxml.etree.SubElement(ctag, "Group", name=group)
         try:
-            datafile = open(os.path.join(self.data, 'probed.xml'), 'w')
-            datafile.write(lxml.etree.tostring(
-                    top, xml_declaration=False,
-                    pretty_print='true').decode('UTF-8'))
+            top.getroottree().write(os.path.join(self.data, 'probed.xml'),
+                                    xml_declaration=False,
+                                    pretty_print='true')
         except IOError:
             err = sys.exc_info()[1]
             self.logger.error("Failed to write probed.xml: %s" % err)
@@ -246,7 +245,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 grp.save()
         ProbesGroupsModel.objects.filter(
             hostname=client.hostname).exclude(
-            group__in=self.cgroups[client.hostname]).delete()
+                group__in=self.cgroups[client.hostname]).delete()
 
     def load_data(self):
         """ Load probe data from the appropriate backend (probed.xml
@@ -320,7 +319,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
 
     def ReceiveDataItem(self, client, data, cgroups, cprobedata):
         """Receive probe results pertaining to client."""
-        if data.text == None:
+        if data.text is None:
             self.logger.info("Got null response to probe %s from %s" %
                              (data.get('name'), client.hostname))
             cprobedata[data.get('name')] = ProbeData('')

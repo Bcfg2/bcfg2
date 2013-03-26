@@ -87,7 +87,7 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData,
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
         self.encoding = encoding
     __init__.__doc__ = Bcfg2.Server.Plugin.SpecificData.__init__.__doc__ + \
-"""
+        """
 .. -----
 .. autoattribute:: CfgBaseFileMatcher.__basenames__
 .. autoattribute:: CfgBaseFileMatcher.__extensions__
@@ -758,8 +758,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
             pass
 
         if not rv or not rv[0].hostname:
-            rv.append(Bcfg2.Server.Plugin.Specificity(
-                    hostname=metadata.hostname))
+            rv.append(
+                Bcfg2.Server.Plugin.Specificity(hostname=metadata.hostname))
         return rv
 
     def build_filename(self, specific):

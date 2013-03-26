@@ -24,6 +24,6 @@ class Pseudo(FileMonitor):
                 self.events.append(Event(handleID, fname, 'exists'))
             self.events.append(Event(handleID, path, 'endExist'))
 
-        if obj != None:
+        if obj is not None:
             self.handles[handleID] = obj
         return handleID

@@ -48,9 +48,8 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         if (HAS_CRYPTO and
             SETUP.cfp.has_section("sshkeys") and
             SETUP.cfp.has_option("sshkeys", "passphrase")):
-            return Bcfg2.Encryption.get_passphrases(SETUP)[SETUP.cfp.get(
-                    "sshkeys",
-                    "passphrase")]
+            return Bcfg2.Encryption.get_passphrases(SETUP)[
+                SETUP.cfp.get("sshkeys", "passphrase")]
         return None
 
     def handle_event(self, event):

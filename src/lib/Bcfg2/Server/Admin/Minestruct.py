@@ -44,7 +44,7 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
                     extra.add(item)
         except:
             self.log.error("Failed to find extra entry info for client %s" %
-                            client)
+                           client)
             raise SystemExit(1)
         root = lxml.etree.Element("Base")
         self.log.info("Found %d extra entries" % (len(extra)))

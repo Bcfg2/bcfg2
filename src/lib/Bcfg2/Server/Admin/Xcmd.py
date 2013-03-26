@@ -19,8 +19,7 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
             'key': Bcfg2.Options.SERVER_KEY,
             'certificate': Bcfg2.Options.CLIENT_CERT,
             'ca': Bcfg2.Options.CLIENT_CA,
-            'timeout': Bcfg2.Options.CLIENT_TIMEOUT,
-            }
+            'timeout': Bcfg2.Options.CLIENT_TIMEOUT}
         setup = Bcfg2.Options.OptionParser(optinfo)
         setup.parse(args)
         Bcfg2.Proxy.RetryMethod.max_retries = 1
@@ -54,5 +53,5 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
             print("Proxy Error: %s" % err)
             return
 
-        if data != None:
+        if data is not None:
             print(data)

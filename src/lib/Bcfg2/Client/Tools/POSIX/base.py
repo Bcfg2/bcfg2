@@ -712,8 +712,8 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         tmpentry.set('mode', oct_mode(newmode))
         for acl in tmpentry.findall('ACL'):
             acl.set('perms',
-                    oct_mode(self._norm_acl_perms(acl.get('perms')) | \
-                                 ACL_MAP['x']))
+                    oct_mode(self._norm_acl_perms(acl.get('perms')) |
+                             ACL_MAP['x']))
         for cpath in created:
             rv &= self._set_perms(tmpentry, path=cpath)
         return rv

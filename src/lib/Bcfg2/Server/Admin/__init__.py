@@ -1,23 +1,21 @@
 """ Base classes for admin modes """
 
-__all__ = [
-        'Backup',
-        'Bundle',
-        'Client',
-        'Compare',
-        'Group',
-        'Init',
-        'Minestruct',
-        'Perf',
-        'Pull',
-        'Query',
-        'Reports',
-        'Snapshots',
-        'Syncdb',
-        'Tidy',
-        'Viz',
-        'Xcmd'
-        ]
+__all__ = ['Backup',
+           'Bundle',
+           'Client',
+           'Compare',
+           'Group',
+           'Init',
+           'Minestruct',
+           'Perf',
+           'Pull',
+           'Query',
+           'Reports',
+           'Snapshots',
+           'Syncdb',
+           'Tidy',
+           'Viz',
+           'Xcmd']
 
 import re
 import sys
@@ -105,15 +103,15 @@ class Mode(object):
         # Calculate column widths (longest item in each column
         # plus padding on both sides)
         cols = list(zip(*rows))
-        col_widths = [max([len(str(item)) + 2 * padding for \
-                          item in col]) for col in cols]
+        col_widths = [max([len(str(item)) + 2 * padding
+                           for item in col]) for col in cols]
         borderline = vdelim.join([w * hdelim for w in col_widths])
 
         # Print out the table
         print(borderline)
         for row in rows:
-            print(vdelim.join([justify(str(item), width) for \
-                               (item, width) in zip(row, col_widths)]))
+            print(vdelim.join([justify(str(item), width)
+                               for (item, width) in zip(row, col_widths)]))
             if hdr:
                 print(borderline)
                 hdr = False

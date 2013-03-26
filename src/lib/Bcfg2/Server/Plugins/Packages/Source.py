@@ -52,8 +52,8 @@ import re
 import sys
 import Bcfg2.Server.Plugin
 from Bcfg2.Compat import HTTPError, HTTPBasicAuthHandler, \
-     HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, \
-     urlopen, cPickle, md5
+    HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, urlopen, \
+    cPickle, md5
 
 
 def fetch_url(url):

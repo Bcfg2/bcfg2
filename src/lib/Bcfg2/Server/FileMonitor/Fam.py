@@ -51,7 +51,7 @@ class Fam(FileMonitor):
         else:
             handle = self.filemonitor.monitorFile(path, None)
         self.handles[handle.requestID()] = handle
-        if obj != None:
+        if obj is not None:
             self.users[handle.requestID()] = obj
         return handle.requestID()
     AddMonitor.__doc__ = FileMonitor.AddMonitor.__doc__

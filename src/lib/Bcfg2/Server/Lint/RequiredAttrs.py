@@ -61,7 +61,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             Path=dict(
                 device=dict(name=is_filename, owner=is_username,
                             group=is_username,
-                            dev_type=lambda v: \
+                            dev_type=lambda v:
                                 v in Bcfg2.Client.Tools.POSIX.base.device_map),
                 directory=dict(name=is_filename, owner=is_username,
                                group=is_username, mode=is_octal_mode),
@@ -98,10 +98,10 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             SEBoolean={None: dict(name=None,
                                   value=lambda v: v in ['on', 'off'])},
             SEModule={None: dict(name=None, __text__=None)},
-            SEPort={None:
-                        dict(name=lambda v: re.match(r'^\d+(-\d+)?/(tcp|udp)',
-                                                     v),
-                             selinuxtype=is_selinux_type)},
+            SEPort={
+                None: dict(name=lambda v: re.match(r'^\d+(-\d+)?/(tcp|udp)',
+                                                   v),
+                           selinuxtype=is_selinux_type)},
             SEFcontext={None: dict(name=None, selinuxtype=is_selinux_type)},
             SENode={None: dict(name=lambda v: "/" in v,
                                selinuxtype=is_selinux_type,
@@ -116,8 +116,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             SEPermissive={None: dict(name=is_selinux_type)},
             POSIXGroup={None: dict(name=is_username)},
             POSIXUser={None: dict(name=is_username)},
-            MemberOf={None: dict(__text__=is_username)},
-            )
+            MemberOf={None: dict(__text__=is_username)})
 
     def Run(self):
         self.check_packages()

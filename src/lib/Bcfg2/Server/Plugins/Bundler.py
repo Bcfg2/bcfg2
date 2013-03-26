@@ -13,7 +13,7 @@ import Bcfg2.Server.Lint
 
 try:
     import genshi.template.base
-    import Bcfg2.Server.Plugins.TGenshi
+    from Bcfg2.Server.Plugins.TGenshi import removecomment, TemplateFile
     HAS_GENSHI = True
 except ImportError:
     HAS_GENSHI = False
@@ -34,14 +34,12 @@ class BundleFile(Bcfg2.Server.Plugin.StructFile):
 
 
 if HAS_GENSHI:
-    class BundleTemplateFile(Bcfg2.Server.Plugins.TGenshi.TemplateFile,
+    class BundleTemplateFile(TemplateFile,
                              Bcfg2.Server.Plugin.StructFile):
         """ Representation of a Genshi-templated bundle XML file """
 
         def __init__(self, name, specific, encoding):
-            Bcfg2.Server.Plugins.TGenshi.TemplateFile.__init__(self, name,
-                                                               specific,
-                                                               encoding)
+            TemplateFile.__init__(self, name, specific, encoding)
             Bcfg2.Server.Plugin.StructFile.__init__(self, name)
             self.logger = logging.getLogger(name)
 
@@ -52,9 +50,9 @@ if HAS_GENSHI:
                 msg = "No parsed template information for %s" % self.name
                 self.logger.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-            stream = self.template.generate(metadata=metadata,
-                                            repo=SETUP['repo']).filter(
-                Bcfg2.Server.Plugins.TGenshi.removecomment)
+            stream = self.template.generate(
+                metadata=metadata,
+                repo=SETUP['repo']).filter(removecomment)
             data = lxml.etree.XML(stream.render('xml',
                                                 strip_whitespace=False),
                                   parser=Bcfg2.Server.XMLParser)

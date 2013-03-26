@@ -18,8 +18,7 @@ class Perf(Bcfg2.Server.Admin.Mode):
             'password': Bcfg2.Options.SERVER_PASSWORD,
             'server': Bcfg2.Options.SERVER_LOCATION,
             'user': Bcfg2.Options.CLIENT_USER,
-            'timeout': Bcfg2.Options.CLIENT_TIMEOUT,
-            }
+            'timeout': Bcfg2.Options.CLIENT_TIMEOUT}
         setup = Bcfg2.Options.OptionParser(optinfo)
         setup.parse(sys.argv[1:])
         proxy = Bcfg2.Proxy.ComponentProxy(setup['server'],
@@ -31,8 +30,8 @@ class Perf(Bcfg2.Server.Admin.Mode):
                                            timeout=setup['timeout'])
         data = proxy.get_statistics()
         for key in sorted(data.keys()):
-            output.append((key, ) +
-                          tuple(["%.06f" % item
-                                 for item in data[key][:-1]] + \
-                                    [data[key][-1]]))
+            output.append(
+                (key, ) +
+                tuple(["%.06f" % item
+                       for item in data[key][:-1]] + [data[key][-1]]))
         self.print_table(output)

@@ -30,8 +30,8 @@ class AptCollection(Collection):
         """ Get an APT configuration file (i.e., ``sources.list``).
 
         :returns: string """
-        lines = ["# This config was generated automatically by the Bcfg2 " \
-                     "Packages plugin", '']
+        lines = ["# This config was generated automatically by the Bcfg2 "
+                 "Packages plugin", '']
 
         for source in self:
             if source.rawurl:

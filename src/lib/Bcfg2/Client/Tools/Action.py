@@ -20,12 +20,12 @@ class Action(Bcfg2.Client.Tools.Tool):
         the whitelist or blacklist """
         if self.setup['decision'] == 'whitelist' and \
            not matches_white_list(action, self.setup['decision_list']):
-            self.logger.info("In whitelist mode: suppressing Action:" + \
+            self.logger.info("In whitelist mode: suppressing Action: %s" %
                              action.get('name'))
             return False
         if self.setup['decision'] == 'blacklist' and \
            not passes_black_list(action, self.setup['decision_list']):
-            self.logger.info("In blacklist mode: suppressing Action:" + \
+            self.logger.info("In blacklist mode: suppressing Action: %s" %
                              action.get('name'))
             return False
         return True

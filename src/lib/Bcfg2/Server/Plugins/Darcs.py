@@ -20,9 +20,9 @@ class Darcs(Bcfg2.Server.Plugin.Version):
         """Read Darcs changeset information for the Bcfg2 repository."""
         try:
             data = Popen("env LC_ALL=C darcs changes",
-                        shell=True,
-                        cwd=self.vcs_root,
-                        stdout=PIPE).stdout.readlines()
+                         shell=True,
+                         cwd=self.vcs_root,
+                         stdout=PIPE).stdout.readlines()
             revision = data[0].strip('\n')
         except:
             msg = "Failed to read darcs repository"

@@ -61,8 +61,8 @@ class Frame(object):
         self.removal = []
         self.logger = logging.getLogger(__name__)
         for driver in drivers[:]:
-            if driver not in Bcfg2.Client.Tools.drivers and \
-                   isinstance(driver, str):
+            if (driver not in Bcfg2.Client.Tools.drivers and
+                isinstance(driver, str)):
                 self.logger.error("Tool driver %s is not available" % driver)
                 drivers.remove(driver)
 
@@ -128,7 +128,7 @@ class Frame(object):
                 if entry.tag == 'Package']
         if pkgs:
             self.logger.debug("The following packages are specified in bcfg2:")
-            self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == None])
+            self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] is None])
             self.logger.debug("The following packages are prereqs added by "
                               "Packages:")
             self.logger.debug([pkg[0] for pkg in pkgs if pkg[1] == 'Packages'])
@@ -187,19 +187,19 @@ class Frame(object):
         """
         # Need to process decision stuff early so that dryrun mode
         # works with it
-        self.whitelist = [entry for entry in self.states \
+        self.whitelist = [entry for entry in self.states
                           if not self.states[entry]]
         if not self.setup['file']:
             if self.setup['decision'] == 'whitelist':
                 dwl = self.setup['decision_list']
-                w_to_rem = [e for e in self.whitelist \
+                w_to_rem = [e for e in self.whitelist
                             if not matches_white_list(e, dwl)]
                 if w_to_rem:
                     self.logger.info("In whitelist mode: "
                                      "suppressing installation of:")
                     self.logger.info(["%s:%s" % (e.tag, e.get('name'))
                                       for e in w_to_rem])
-                    self.whitelist = [x for x in self.whitelist \
+                    self.whitelist = [x for x in self.whitelist
                                       if x not in w_to_rem]
             elif self.setup['decision'] == 'blacklist':
                 b_to_rem = \
@@ -230,7 +230,7 @@ class Frame(object):
                         cfile not in self.whitelist):
                         continue
                     tools = [t for t in self.tools
-                            if t.handlesEntry(cfile) and t.canVerify(cfile)]
+                             if t.handlesEntry(cfile) and t.canVerify(cfile)]
                     if not tools:
                         continue
                     if (self.setup['interactive'] and not
@@ -321,7 +321,7 @@ class Frame(object):
                     if bundle not in all_bundle_names:
                         self.logger.info("Warning: Bundle %s not found" %
                                          bundle)
-            bundles = filter(lambda b:
+            bundles = filter(lambda b: \
                                  b.get('name') not in self.setup['skipbundle'],
                              bundles)
         if self.setup['skipindep']:
@@ -387,8 +387,8 @@ class Frame(object):
         """Install all entries."""
         self.DispatchInstallCalls(self.whitelist)
         mods = self.modified
-        mbundles = [struct for struct in self.config.findall('Bundle') if \
-                    [mod for mod in mods if mod in struct]]
+        mbundles = [struct for struct in self.config.findall('Bundle')
+                    if any(True for mod in mods if mod in struct)]
 
         if self.modified:
             # Handle Bundle interdeps
@@ -403,19 +403,19 @@ class Frame(object):
                     self.logger.error("%s.Inventory() call failed:" %
                                       tool.name,
                                       exc_info=1)
-            clobbered = [entry for bundle in mbundles for entry in bundle \
+            clobbered = [entry for bundle in mbundles for entry in bundle
                          if (not self.states[entry] and
                              entry not in self.blacklist)]
             if clobbered:
                 self.logger.debug("Found clobbered entries:")
-                self.logger.debug(["%s:%s" % (entry.tag, entry.get('name')) \
+                self.logger.debug(["%s:%s" % (entry.tag, entry.get('name'))
                                    for entry in clobbered])
                 if not self.setup['interactive']:
                     self.DispatchInstallCalls(clobbered)
 
         for bundle in self.config.findall('.//Bundle'):
-            if self.setup['bundle'] and \
-                   bundle.get('name') not in self.setup['bundle']:
+            if (self.setup['bundle'] and
+                bundle.get('name') not in self.setup['bundle']):
                 # prune out unspecified bundles when running with -b
                 continue
             for tool in self.tools:

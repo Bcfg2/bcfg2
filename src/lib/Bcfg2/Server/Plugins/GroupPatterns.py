@@ -15,10 +15,10 @@ class PatternMap(object):
         self.pattern = pattern
         self.rangestr = rangestr
         self.groups = groups
-        if pattern != None:
+        if pattern is not None:
             self.re = re.compile(pattern)
             self.process = self.process_re
-        elif rangestr != None:
+        elif rangestr is not None:
             if '\\' in rangestr:
                 raise Exception("Backslashes are not allowed in NameRanges")
             range_finder = r'\[\[[\d\-,]+\]\]'

@@ -164,7 +164,8 @@ class Client(object):
         if len(probes.findall(".//probe")) > 0:
             try:
                 # upload probe responses
-                self.proxy.RecvProbeData(Bcfg2.Client.XML.tostring(
+                self.proxy.RecvProbeData(
+                    Bcfg2.Client.XML.tostring(
                         probedata,
                         xml_declaration=False).decode('UTF-8'))
             except Bcfg2.Proxy.ProxyError:
@@ -320,7 +321,8 @@ class Client(object):
             feedback = self.tools.GenerateStats()
 
             try:
-                self.proxy.RecvStats(Bcfg2.Client.XML.tostring(
+                self.proxy.RecvStats(
+                    Bcfg2.Client.XML.tostring(
                         feedback,
                         xml_declaration=False).decode('UTF-8'))
             except Bcfg2.Proxy.ProxyError:

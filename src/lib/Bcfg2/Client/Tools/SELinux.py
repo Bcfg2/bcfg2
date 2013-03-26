@@ -512,14 +512,14 @@ class SELinuxSefcontextHandler(SELinuxEntryHandler):
                         char="-c",
                         door="-D")
     filetypenames = dict(all="all files",
-                        regular="regular file",
-                        directory="directory",
-                        symlink="symbolic link",
-                        pipe="named pipe",
-                        socket="socket",
-                        block="block device",
-                        char="character device",
-                        door="door")
+                         regular="regular file",
+                         directory="directory",
+                         symlink="symbolic link",
+                         pipe="named pipe",
+                         socket="socket",
+                         block="block device",
+                         char="character device",
+                         door="door")
     filetypeattrs = dict([v, k] for k, v in filetypenames.iteritems())
     custom_re = re.compile(r'-f \'(?P<filetype>[a-z ]+)\'.*? \'(?P<name>.*)\'')
 

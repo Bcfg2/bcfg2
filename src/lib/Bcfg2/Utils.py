@@ -172,7 +172,7 @@ class Executor(object):
         :param proc: The process to kill upon timeout.
         :type proc: subprocess.Popen
         :returns: None """
-        if proc.poll() == None:
+        if proc.poll() is None:
             try:
                 proc.kill()
                 self.logger.warning("Process exceeeded timeout, killing")

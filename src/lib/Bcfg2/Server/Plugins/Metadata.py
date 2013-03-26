@@ -602,7 +602,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def _add_xdata(self, config, tag, name, attribs=None, alias=False):
         """ Generic method to add XML data (group, client, etc.) """
         node = self._search_xdata(tag, name, config.xdata, alias=alias)
-        if node != None:
+        if node is not None:
             raise Bcfg2.Server.Plugin.MetadataConsistencyError("%s \"%s\" "
                                                                "already exists"
                                                                % (tag, name))
@@ -662,7 +662,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def _update_xdata(self, config, tag, name, attribs, alias=False):
         """ Generic method to modify XML data (group, client, etc.) """
         node = self._search_xdata(tag, name, config.xdata, alias=alias)
-        if node == None:
+        if node is None:
             self.logger.error("%s \"%s\" does not exist" % (tag, name))
             raise Bcfg2.Server.Plugin.MetadataConsistencyError
         xdict = config.find_xml_for_xpath('.//%s[@name="%s"]' %
@@ -679,7 +679,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         """Update a groups attributes."""
         if self._use_db:
             msg = "Metadata does not support updating groups with " + \
-            "use_database enabled"
+                "use_database enabled"
             self.logger.error(msg)
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         else:
@@ -707,7 +707,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def _remove_xdata(self, config, tag, name):
         """ Generic method to remove XML data (group, client, etc.) """
         node = self._search_xdata(tag, name, config.xdata)
-        if node == None:
+        if node is None:
             self.logger.error("%s \"%s\" does not exist" % (tag, name))
             raise Bcfg2.Server.Plugin.MetadataConsistencyError
         xdict = config.find_xml_for_xpath('.//%s[@name="%s"]' %
@@ -1557,8 +1557,8 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
         tag as a definition if it a) has profile or public set; or b)
         has any children. """
         self.duplicate_entries(
-            self.metadata.groups_xml.xdata.xpath("//Groups/Group") + \
-                self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group"),
+            self.metadata.groups_xml.xdata.xpath("//Groups/Group") +
+            self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group"),
             "group",
             include=lambda g: (g.get("profile") or
                                g.get("public") or
