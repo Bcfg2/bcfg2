@@ -111,7 +111,7 @@ class ProbeData(str):
 
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     """ Handle universal and group- and host-specific probe files """
-    ignore = re.compile(r'^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|probed\\.xml)$')
+    ignore = re.compile(r'^(\.#.*|.*~|\..*\.(tmp|sw[px])|probed\.xml)$')
     probename = \
         re.compile(r'(.*/)?(?P<basename>\S+?)(\.(?P<mode>(?:G\d\d)|H)_\S+)?$')
     bangline = re.compile(r'^#!\s*(?P<interpreter>.*)$')

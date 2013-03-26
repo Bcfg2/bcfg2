@@ -1152,7 +1152,7 @@ class EntrySet(Debuggable):
     #: file is encountered that does not match the ``basename``
     #: argument passed to the constructor or ``ignore``, then a
     #: warning will be produced.
-    ignore = re.compile(r'^(\.#.*|.*~|\\..*\\.(sw[px])|.*\\.genshi_include)$')
+    ignore = re.compile(r'^(\.#.*|.*~|\..*\.(sw[px])|.*\.genshi_include)$')
 
     # The ``basename`` argument passed to the constructor will be
     #: processed as a string that contains a regular expression (i.e.,
@@ -1215,8 +1215,8 @@ class EntrySet(Debuggable):
             base_pat = basename
         else:
             base_pat = re.escape(basename)
-        pattern = r'(.*/)?%s(\.((H_(?P<hostname>\S+))|' % base_pat
-        pattern += r'(G(?P<prio>\d+)_(?P<group>\S+))))?$'
+        pattern = r'(.*/)?' + base_pat + \
+            r'(\.((H_(?P<hostname>\S+))|(G(?P<prio>\d+)_(?P<group>\S+))))?$'
 
         #: ``specific`` is a regular expression that is used to
         #: determine the specificity of a file in this entry set.  It

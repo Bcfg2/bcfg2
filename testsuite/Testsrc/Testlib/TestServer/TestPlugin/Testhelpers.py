@@ -1477,7 +1477,8 @@ class TestEntrySet(TestDebuggable):
                                                                   bogus)))
 
             for ignore in self.ignore:
-                self.assertTrue(eset.ignore.match(ignore))
+                self.assertTrue(eset.ignore.match(ignore),
+                                "%s should be ignored but wasn't" % ignore)
 
             self.assertFalse(eset.ignore.match(basename))
             self.assertFalse(eset.ignore.match(basename + ".G20_foo"))
