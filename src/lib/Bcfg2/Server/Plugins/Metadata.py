@@ -1603,6 +1603,7 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                                (etype.title(), ename, "\n".join(els)))
 
     def default_is_profile(self):
+        """ ensure that the default group is a profile group """
         if (self.metadata.default and
             not self.metadata.groups[self.metadata.default].is_profile):
             xdata = \

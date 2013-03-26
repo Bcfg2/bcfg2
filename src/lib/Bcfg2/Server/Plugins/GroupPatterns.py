@@ -23,8 +23,8 @@ class PatternMap(object):
                 raise Exception("Backslashes are not allowed in NameRanges")
             range_finder = r'\[\[[\d\-,]+\]\]'
             self.process = self.process_range
-            self.re = re.compile('^' + re.sub(range_finder, '(\d+)',
-                                              rangestr))
+            self.re = re.compile(r'^' + re.sub(range_finder, r'(\d+)',
+                                               rangestr))
             dmatcher = re.compile(re.sub(range_finder,
                                          r'\[\[([\d\-,]+)\]\]',
                                          rangestr))

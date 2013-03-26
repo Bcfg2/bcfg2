@@ -65,7 +65,7 @@ def fetch_url(url):
     :raises: URLError - Failure fetching URL
     :returns: string - the content of the page at the given URL """
     if '@' in url:
-        mobj = re.match('(\w+://)([^:]+):([^@]+)@(.*)$', url)
+        mobj = re.match(r'(\w+://)([^:]+):([^@]+)@(.*)$', url)
         if not mobj:
             raise ValueError("Invalid URL")
         user = mobj.group(2)

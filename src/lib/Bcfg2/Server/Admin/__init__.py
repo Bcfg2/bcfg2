@@ -1,29 +1,14 @@
 """ Base classes for admin modes """
 
-__all__ = ['Backup',
-           'Bundle',
-           'Client',
-           'Compare',
-           'Group',
-           'Init',
-           'Minestruct',
-           'Perf',
-           'Pull',
-           'Query',
-           'Reports',
-           'Snapshots',
-           'Syncdb',
-           'Tidy',
-           'Viz',
-           'Xcmd']
-
 import re
 import sys
 import logging
 import lxml.etree
 import Bcfg2.Server.Core
 import Bcfg2.Options
-from Bcfg2.Compat import ConfigParser
+from Bcfg2.Compat import ConfigParser, walk_packages
+
+__all__ = [m[1] for m in walk_packages(path=__path__)]
 
 
 class Mode(object):

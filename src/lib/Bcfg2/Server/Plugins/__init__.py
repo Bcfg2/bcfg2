@@ -1,30 +1,5 @@
 """Imports for Bcfg2.Server.Plugins."""
 
-__all__ = ['Account',
-           'Base',
-           'Bundler',
-           'Bzr',
-           'Cfg',
-           'Cvs',
-           'Darcs',
-           'Decisions',
-           'Fossil',
-           'Git',
-           'GroupPatterns',
-           'Hg',
-           'Hostbase',
-           'Metadata',
-           'NagiosGen',
-           'Ohai',
-           'Packages',
-           'Properties',
-           'Probes',
-           'Pkgmgr',
-           'Rules',
-           'SSHbase',
-           'Snapshots',
-           'Statistics',
-           'Svn',
-           'TCheetah',
-           'Trigger',
-           'TGenshi']
+from Bcfg2.Compat import walk_packages
+
+__all__ = [m[1] for m in walk_packages(path=__path__)]

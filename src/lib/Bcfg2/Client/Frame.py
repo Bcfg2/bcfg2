@@ -310,10 +310,10 @@ class Frame(object):
             for bundle in self.setup['bundle']:
                 if bundle not in all_bundle_names:
                     self.logger.info("Warning: Bundle %s not found" % bundle)
-            bundles = filter(lambda b: b.get('name') in self.setup['bundle'],
-                             bundles)
+            bundles = [b for b in bundles
+                       if b.get('name') in self.setup['bundle']]
         elif self.setup['indep']:
-            bundles = filter(lambda b: b.tag != 'Bundle', bundles)
+            bundles = [b for b in bundles if b.tag != 'Bundle']
         if self.setup['skipbundle']:
             # warn if non-existent bundle given
             if not self.setup['bundle_quick']:
@@ -321,14 +321,13 @@ class Frame(object):
                     if bundle not in all_bundle_names:
                         self.logger.info("Warning: Bundle %s not found" %
                                          bundle)
-            bundles = filter(lambda b: \
-                                 b.get('name') not in self.setup['skipbundle'],
-                             bundles)
+            bundles = [b for b in bundles
+                       if b.get('name') not in self.setup['skipbundle']]
         if self.setup['skipindep']:
-            bundles = filter(lambda b: b.tag == 'Bundle', bundles)
+            bundles = [b for b in bundles if b.tag == 'Bundle']
 
         self.whitelist = [e for e in self.whitelist
-                          if True in [e in b for b in bundles]]
+                          if any(e in b for b in bundles)]
 
         # first process prereq actions
         for bundle in bundles[:]:

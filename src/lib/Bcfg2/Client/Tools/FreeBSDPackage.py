@@ -21,7 +21,7 @@ class FreeBSDPackage(Bcfg2.Client.Tools.PkgTool):
     def RefreshPackages(self):
         self.installed = {}
         packages = self.cmd.run("/usr/sbin/pkg_info -a -E").stdout.splitlines()
-        pattern = re.compile('(.*)-(\d.*)')
+        pattern = re.compile(r'(.*)-(\d.*)')
         for pkg in packages:
             if pattern.match(pkg):
                 name = pattern.match(pkg).group(1)

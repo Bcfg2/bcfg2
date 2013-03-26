@@ -83,7 +83,7 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
     """ The bundler creates dependent clauses based on the
     bundle/translation scheme from Bcfg1. """
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    patterns = re.compile('^(?P<name>.*)\.(xml|genshi)$')
+    patterns = re.compile(r'^(?P<name>.*)\.(xml|genshi)$')
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)

@@ -22,7 +22,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup)
         self._initialised = True
         self.__important__ = self.__important__ + ['/etc/make.conf']
-        self._pkg_pattern = re.compile('(.*)-(\d.*)')
+        self._pkg_pattern = re.compile(r'(.*)-(\d.*)')
         self._ebuild_pattern = re.compile('(ebuild|binary)')
         self.cfg = cfg
         self.installed = {}

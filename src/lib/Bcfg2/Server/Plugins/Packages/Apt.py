@@ -104,8 +104,8 @@ class AptSource(Source):
                     vindex = 0
                     for dep in words[1].split(','):
                         if '|' in dep:
-                            cdeps = [re.sub('\s+', '',
-                                            re.sub('\(.*\)', '', cdep))
+                            cdeps = [re.sub(r'\s+', '',
+                                            re.sub(r'\(.*\)', '', cdep))
                                      for cdep in dep.split('|')]
                             dyn_dname = "choice-%s-%s-%s" % (pkgname,
                                                              barch,
@@ -114,7 +114,7 @@ class AptSource(Source):
                             bdeps[barch][pkgname].append(dyn_dname)
                             bprov[barch][dyn_dname] = set(cdeps)
                         else:
-                            raw_dep = re.sub('\(.*\)', '', dep)
+                            raw_dep = re.sub(r'\(.*\)', '', dep)
                             raw_dep = raw_dep.rstrip().strip()
                             bdeps[barch][pkgname].append(raw_dep)
                 elif words[0] == 'Provides':

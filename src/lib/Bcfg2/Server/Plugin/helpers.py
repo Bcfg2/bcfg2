@@ -41,15 +41,15 @@ del DEFAULT_FILE_METADATA['configfile']
 LOGGER = logging.getLogger(__name__)
 
 #: a compiled regular expression for parsing info and :info files
-INFO_REGEX = re.compile('owner:(\s)*(?P<owner>\S+)|' +
-                        'group:(\s)*(?P<group>\S+)|' +
-                        'mode:(\s)*(?P<mode>\w+)|' +
-                        'secontext:(\s)*(?P<secontext>\S+)|' +
-                        'paranoid:(\s)*(?P<paranoid>\S+)|' +
-                        'sensitive:(\s)*(?P<sensitive>\S+)|' +
-                        'encoding:(\s)*(?P<encoding>\S+)|' +
-                        'important:(\s)*(?P<important>\S+)|' +
-                        'mtime:(\s)*(?P<mtime>\w+)|')
+INFO_REGEX = re.compile(r'owner:(\s)*(?P<owner>\S+)|' +
+                        r'group:(\s)*(?P<group>\S+)|' +
+                        r'mode:(\s)*(?P<mode>\w+)|' +
+                        r'secontext:(\s)*(?P<secontext>\S+)|' +
+                        r'paranoid:(\s)*(?P<paranoid>\S+)|' +
+                        r'sensitive:(\s)*(?P<sensitive>\S+)|' +
+                        r'encoding:(\s)*(?P<encoding>\S+)|' +
+                        r'important:(\s)*(?P<important>\S+)|' +
+                        r'mtime:(\s)*(?P<mtime>\w+)|')
 
 
 def bind_info(entry, metadata, infoxml=None, default=DEFAULT_FILE_METADATA):
@@ -873,7 +873,7 @@ class XMLDirectoryBacked(DirectoryBacked):
 
     #: Only track and include files whose names (not paths) match this
     #: compiled regex.
-    patterns = re.compile('^.*\.xml$')
+    patterns = re.compile(r'^.*\.xml$')
 
     #: The type of child objects to create for files contained within
     #: the directory that is tracked.  Default is
@@ -1142,7 +1142,7 @@ class EntrySet(Debuggable):
     #: file is encountered that does not match the ``basename``
     #: argument passed to the constructor or ``ignore``, then a
     #: warning will be produced.
-    ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\\.genshi_include)$")
+    ignore = re.compile(r'^(\.#.*|.*~|\\..*\\.(sw[px])|.*\\.genshi_include)$')
 
     # The ``basename`` argument passed to the constructor will be
     #: processed as a string that contains a regular expression (i.e.,
@@ -1205,8 +1205,8 @@ class EntrySet(Debuggable):
             base_pat = basename
         else:
             base_pat = re.escape(basename)
-        pattern = '(.*/)?%s(\.((H_(?P<hostname>\S+))|' % base_pat
-        pattern += '(G(?P<prio>\d+)_(?P<group>\S+))))?$'
+        pattern = r'(.*/)?%s(\.((H_(?P<hostname>\S+))|' % base_pat
+        pattern += r'(G(?P<prio>\d+)_(?P<group>\S+))))?$'
 
         #: ``specific`` is a regular expression that is used to
         #: determine the specificity of a file in this entry set.  It

@@ -308,14 +308,14 @@ def list_split(c_string):
     """ split an option string on commas, optionally surrounded by
     whitespace, returning a list """
     if c_string:
-        return re.split("\s*,\s*", c_string)
+        return re.split(r'\s*,\s*', c_string)
     return []
 
 
 def colon_split(c_string):
     """ split an option string on colons, returning a list """
     if c_string:
-        return c_string.split(':')
+        return c_string.split(r':')
     return []
 
 
@@ -355,7 +355,7 @@ def get_size(value):
     '512m', '2g'), get the absolute number of bytes as an integer """
     if value == -1:
         return value
-    mat = re.match("(\d+)([KkMmGg])?", value)
+    mat = re.match(r'(\d+)([KkMmGg])?', value)
     if not mat:
         raise ValueError("Not a valid size", value)
     rvalue = int(mat.group(1))

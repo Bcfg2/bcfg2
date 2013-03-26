@@ -90,7 +90,7 @@ class CfgGenshiGenerator(CfgGenerator):
     #: exception in a Genshi template so we can provide a decent error
     #: message that actually tells the end user where an error
     #: occurred.
-    pyerror_re = re.compile('<\w+ u?[\'"](.*?)\s*\.\.\.[\'"]>')
+    pyerror_re = re.compile(r'<\w+ u?[\'"](.*?)\s*\.\.\.[\'"]>')
 
     def __init__(self, fname, spec, encoding):
         CfgGenerator.__init__(self, fname, spec, encoding)

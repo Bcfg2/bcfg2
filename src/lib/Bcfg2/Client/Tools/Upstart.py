@@ -46,7 +46,7 @@ class Upstart(Bcfg2.Client.Tools.SvcTool):
                               entry.get('name'))
             return False
 
-        match = re.compile("%s( \(.*\))? (start|stop)/(running|waiting)" %
+        match = re.compile(r'%s( \(.*\))? (start|stop)/(running|waiting)' %
                            entry.get('name')).match(output)
         if match is None:
             # service does not exist

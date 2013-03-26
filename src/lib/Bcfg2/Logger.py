@@ -144,9 +144,9 @@ def add_console_handler(level=logging.DEBUG):
     # tell the handler to use this format
     console.setFormatter(TermiosFormatter())
     try:
-        console.set_name("console")
+        console.set_name("console")  # pylint: disable=E1101
     except AttributeError:
-        console.name = "console"
+        console.name = "console"  # pylint: disable=W0201
     logging.root.addHandler(console)
 
 
@@ -162,9 +162,9 @@ def add_syslog_handler(procname, syslog_facility, level=logging.DEBUG):
                                               ('localhost', 514),
                                               syslog_facility)
         try:
-            syslog.set_name("syslog")
+            syslog.set_name("syslog")  # pylint: disable=E1101
         except AttributeError:
-            syslog.name = "syslog"
+            syslog.name = "syslog"  # pylint: disable=W0201
         syslog.setLevel(level)
         syslog.setFormatter(
             logging.Formatter('%(name)s[%(process)d]: %(message)s'))
@@ -179,9 +179,9 @@ def add_file_handler(to_file, level=logging.DEBUG):
     """Add a logging handler that logs to to_file."""
     filelog = logging.FileHandler(to_file)
     try:
-        filelog.set_name("file")
+        filelog.set_name("file")  # pylint: disable=E1101
     except AttributeError:
-        filelog.name = "file"
+        filelog.name = "file"  # pylint: disable=W0201
     filelog.setLevel(level)
     filelog.setFormatter(
         logging.Formatter('%(asctime)s %(name)s[%(process)d]: %(message)s'))

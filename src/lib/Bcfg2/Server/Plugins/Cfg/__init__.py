@@ -111,12 +111,12 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData,
         components = ['^(?P<basename>%s)' % '|'.join(re.escape(b)
                                                      for b in basenames)]
         if cls.__specific__:
-            components.append('(|\\.H_(?P<hostname>\S+?)|' +
-                              '\.G(?P<prio>\d+)_(?P<group>\S+?))')
+            components.append(r'(|\\.H_(?P<hostname>\S+?)|' +
+                              r'\.G(?P<prio>\d+)_(?P<group>\S+?))')
         if cls.__extensions__:
-            components.append('\\.(?P<extension>%s)' %
-                              '|'.join(cls.__extensions__))
-        components.append('$')
+            components.append(r'\\.(?P<extension>%s)' %
+                              r'|'.join(cls.__extensions__))
+        components.append(r'$')
         return re.compile("".join(components))
 
     @classmethod

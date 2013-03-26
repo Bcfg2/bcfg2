@@ -1,11 +1,11 @@
 """This contains all Bcfg2 Client modules"""
 
-__all__ = ["Frame", "Tools", "XML", "Client"]
-
 import os
 import sys
 import select
-from Bcfg2.Compat import input  # pylint: disable=W0622
+from Bcfg2.Compat import input, walk_packages  # pylint: disable=W0622
+
+__all__ = [m[1] for m in walk_packages(path=__path__)]
 
 
 def prompt(msg):

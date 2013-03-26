@@ -13,7 +13,7 @@ class Encap(Bcfg2.Client.Tools.PkgTool):
     __req__ = {'Package': ['version', 'url']}
     pkgtype = 'encap'
     pkgtool = ("/usr/local/bin/epkg -l -f -q %s", ("%s", ["url"]))
-    splitter = re.compile('.*/(?P<name>[\w-]+)\-(?P<version>[\w\.+-]+)')
+    splitter = re.compile(r'.*/(?P<name>[\w-]+)\-(?P<version>[\w\.+-]+)')
 
     def RefreshPackages(self):
         """Try to find encap packages."""

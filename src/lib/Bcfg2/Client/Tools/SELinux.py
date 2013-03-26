@@ -170,7 +170,7 @@ class SELinuxEntryHandler(object):
     key_format = ("name",)
     value_format = ()
     str_format = '%(name)s'
-    custom_re = re.compile(' (?P<name>\S+)$')
+    custom_re = re.compile(r' (?P<name>\S+)$')
     custom_format = None
 
     def __init__(self, tool, logger, setup, config):

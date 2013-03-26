@@ -111,15 +111,15 @@ class ProbeData(str):
 
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     """ Handle universal and group- and host-specific probe files """
-    ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|probed\\.xml)$")
+    ignore = re.compile(r'^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|probed\\.xml)$')
     probename = \
-        re.compile("(.*/)?(?P<basename>\S+?)(\.(?P<mode>(?:G\d\d)|H)_\S+)?$")
-    bangline = re.compile('^#!\s*(?P<interpreter>.*)$')
+        re.compile(r'(.*/)?(?P<basename>\S+?)(\.(?P<mode>(?:G\d\d)|H)_\S+)?$')
+    bangline = re.compile(r'^#!\s*(?P<interpreter>.*)$')
     basename_is_regex = True
 
     def __init__(self, path, fam, encoding, plugin_name):
         self.plugin_name = plugin_name
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, '[0-9A-Za-z_\-]+', path,
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, r'[0-9A-Za-z_\-]+', path,
                                               Bcfg2.Server.Plugin.SpecificData,
                                               encoding)
         fam.AddMonitor(path, self)
