@@ -328,6 +328,11 @@ class ClientMetadata(object):
                 return grp
         return ''
 
+    def __repr__(self):
+        return "%s(%s, profile=%s, groups=%s)" % (self.__class__.__name__,
+                                                  self.hostname,
+                                                  self.profile, self.groups)
+
 
 class MetadataQuery(object):
     """ This class provides query methods for the metadata of all
