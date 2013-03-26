@@ -10,6 +10,7 @@ if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
     pip install --use-mirrors genshi PyYAML pyinotify
     if [[ $PYVER == "2.5" ]]; then
         pip install --use-mirrors simplejson
+    fi
     if [[ ${PYVER:0:1} == "2" ]]; then
         # django supports py3k, but South doesn't, and the django bits
         # in bcfg2 require South
