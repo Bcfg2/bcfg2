@@ -1498,6 +1498,9 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
     def deprecated_options(self):
         """ check for the location='floating' option, which has been
         deprecated in favor of floating='true' """
+        if not hasattr(self.metadata, "clients_xml"):
+            # using metadata database
+            return
         clientdata = self.metadata.clients_xml.xdata
         for el in clientdata.xpath("//Client"):
             loc = el.get("location")
@@ -1523,6 +1526,9 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
     def bogus_profiles(self):
         """ check for clients that have profiles that are either not
         flagged as public groups in groups.xml, or don't exist """
+        if not hasattr(self.metadata, "clients_xml"):
+            # using metadata database
+            return
         for client in self.metadata.clients_xml.xdata.findall('.//Client'):
             profile = client.get("profile")
             if profile not in self.metadata.groups:
@@ -1563,6 +1569,9 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
 
     def duplicate_clients(self):
         """ check for clients that are defined twice. """
+        if not hasattr(self.metadata, "clients_xml"):
+            # using metadata database
+            return
         self.duplicate_entries(
             self.metadata.clients_xml.xdata.xpath("//Client"),
             "client")
