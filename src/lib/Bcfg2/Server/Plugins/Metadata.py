@@ -1144,6 +1144,11 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 if not profile and self.groups[cgroup].is_profile:
                     profile = cgroup
 
+        if not len(groups) and self.default:
+            # no initial groups; add the default profile
+            profile = self.default
+            groups.add(self.default)
+
         groups, categories = self._merge_groups(client, groups,
                                                 categories=categories)
 
