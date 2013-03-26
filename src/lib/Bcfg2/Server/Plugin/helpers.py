@@ -231,10 +231,10 @@ class FileBacked(Debuggable):
             self.Index()
         except IOError:
             err = sys.exc_info()[1]
-            LOGGER.error("Failed to read file %s: %s" % (self.name, err))
+            self.logger.error("Failed to read file %s: %s" % (self.name, err))
         except:
             err = sys.exc_info()[1]
-            LOGGER.error("Failed to parse file %s: %s" % (self.name, err))
+            self.logger.error("Failed to parse file %s: %s" % (self.name, err))
 
     def Index(self):
         """ Index() is called by :func:`HandleEvent` every time the
@@ -329,7 +329,7 @@ class DirectoryBacked(Debuggable):
         dirpathname = os.path.join(self.data, relative)
         if relative not in self.handles.values():
             if not os.path.isdir(dirpathname):
-                LOGGER.error("%s is not a directory" % dirpathname)
+                self.logger.error("%s is not a directory" % dirpathname)
                 return
             reqid = self.fam.AddMonitor(dirpathname, self)
             self.handles[reqid] = relative
@@ -374,8 +374,8 @@ class DirectoryBacked(Debuggable):
             return
 
         if event.requestID not in self.handles:
-            LOGGER.warn("Got %s event with unknown handle (%s) for %s" %
-                        (action, event.requestID, event.filename))
+            self.logger.warn("Got %s event with unknown handle (%s) for %s" %
+                             (action, event.requestID, event.filename))
             return
 
         # Clean up path names
@@ -385,7 +385,7 @@ class DirectoryBacked(Debuggable):
             event.filename = event.filename[len(self.data) + 1:]
 
         if self.ignore and self.ignore.search(event.filename):
-            LOGGER.debug("Ignoring event %s" % event.filename)
+            self.logger.debug("Ignoring event %s" % event.filename)
             return
 
         # Calculate the absolute and relative paths this event refers to
@@ -420,19 +420,20 @@ class DirectoryBacked(Debuggable):
                     # class doesn't support canceling, so at least let
                     # the user know that a restart might be a good
                     # idea.
-                    LOGGER.warn("Directory properties for %s changed, please "
-                                " consider restarting the server" % abspath)
+                    self.logger.warn("Directory properties for %s changed, "
+                                     "please consider restarting the server" %
+                                     abspath)
                 else:
                     # Got a "changed" event for a directory that we
                     # didn't know about. Go ahead and treat it like a
                     # "created" event, but log a warning, because this
                     # is unexpected.
-                    LOGGER.warn("Got %s event for unexpected dir %s" %
-                                (action, abspath))
+                    self.logger.warn("Got %s event for unexpected dir %s" %
+                                     (action, abspath))
                     self.add_directory_monitor(relpath)
             else:
-                LOGGER.warn("Got unknown dir event %s %s %s" %
-                            (event.requestID, event.code2str(), abspath))
+                self.logger.warn("Got unknown dir event %s %s %s" %
+                                 (event.requestID, event.code2str(), abspath))
         elif self.patterns.search(event.filename):
             if action in ['exists', 'created']:
                 self.add_entry(relpath, event)
@@ -444,16 +445,15 @@ class DirectoryBacked(Debuggable):
                     # know about. Go ahead and treat it like a
                     # "created" event, but log a warning, because this
                     # is unexpected.
-                    LOGGER.warn("Got %s event for unexpected file %s" %
-                                (action,
-                                 abspath))
+                    self.logger.warn("Got %s event for unexpected file %s" %
+                                     (action, abspath))
                     self.add_entry(relpath, event)
             else:
-                LOGGER.warn("Got unknown file event %s %s %s" %
-                            (event.requestID, event.code2str(), abspath))
+                self.logger.warn("Got unknown file event %s %s %s" %
+                                 (event.requestID, event.code2str(), abspath))
         else:
-            LOGGER.warn("Could not process filename %s; ignoring" %
-                        event.filename)
+            self.logger.warn("Could not process filename %s; ignoring" %
+                             event.filename)
 
 
 class XMLFileBacked(FileBacked):
@@ -559,9 +559,9 @@ class XMLFileBacked(FileBacked):
             if not extras:
                 msg = "%s: %s does not exist, skipping" % (self.name, name)
                 if el.findall('./%sfallback' % Bcfg2.Server.XI_NAMESPACE):
-                    LOGGER.debug(msg)
+                    self.logger.debug(msg)
                 else:
-                    LOGGER.warning(msg)
+                    self.logger.warning(msg)
 
             parent = el.getparent()
             parent.remove(el)
@@ -581,7 +581,8 @@ class XMLFileBacked(FileBacked):
                 self.xdata.getroottree().xinclude()
             except lxml.etree.XIncludeError:
                 err = sys.exc_info()[1]
-                LOGGER.error("XInclude failed on %s: %s" % (self.name, err))
+                self.logger.error("XInclude failed on %s: %s" % (self.name,
+                                                                 err))
 
         self.entries = self.xdata.getchildren()
         if self.__identifier__ is not None:
@@ -820,7 +821,7 @@ class XMLSrc(XMLFileBacked):
             data = open(self.name).read()
         except IOError:
             msg = "Failed to read file %s: %s" % (self.name, sys.exc_info()[1])
-            LOGGER.error(msg)
+            self.logger.error(msg)
             raise PluginExecutionError(msg)
         self.items = {}
         try:
@@ -828,7 +829,7 @@ class XMLSrc(XMLFileBacked):
         except lxml.etree.XMLSyntaxError:
             msg = "Failed to parse file %s: %s" % (self.name,
                                                    sys.exc_info()[1])
-            LOGGER.error(msg)
+            self.logger.error(msg)
             raise PluginExecutionError(msg)
         self.pnode = self.__node__(xdata, self.items)
         self.cache = None
@@ -838,7 +839,7 @@ class XMLSrc(XMLFileBacked):
             if self.__priority_required__:
                 msg = "Got bogus priority %s for file %s" % \
                     (xdata.get('priority'), self.name)
-                LOGGER.error(msg)
+                self.logger.error(msg)
                 raise PluginExecutionError(msg)
 
         del xdata, data
@@ -848,8 +849,8 @@ class XMLSrc(XMLFileBacked):
         if self.cache is None or self.cache[0] != metadata:
             cache = (metadata, self.__cacheobj__())
             if self.pnode is None:
-                LOGGER.error("Cache method called early for %s; "
-                             "forcing data load" % self.name)
+                self.logger.error("Cache method called early for %s; "
+                                  "forcing data load" % self.name)
                 self.HandleEvent()
                 return
             self.pnode.Match(metadata, cache[1])
@@ -1285,8 +1286,8 @@ class EntrySet(Debuggable):
             self.entry_init(event)
         else:
             if event.filename not in self.entries:
-                LOGGER.warning("Got %s event for unknown file %s" %
-                               (action, event.filename))
+                self.logger.warning("Got %s event for unknown file %s" %
+                                    (action, event.filename))
                 if action == 'changed':
                     # received a bogus changed event; warn, but treat
                     # it like a created event
@@ -1322,7 +1323,7 @@ class EntrySet(Debuggable):
             entry_type = self.entry_type
 
         if event.filename in self.entries:
-            LOGGER.warn("Got duplicate add for %s" % event.filename)
+            self.logger.warn("Got duplicate add for %s" % event.filename)
         else:
             fpath = os.path.join(self.path, event.filename)
             try:
@@ -1330,8 +1331,8 @@ class EntrySet(Debuggable):
                                                       specific=specific)
             except SpecificityError:
                 if not self.ignore.match(event.filename):
-                    LOGGER.error("Could not process filename %s; ignoring" %
-                                 fpath)
+                    self.logger.error("Could not process filename %s; ignoring"
+                                      % fpath)
                 return
             self.entries[event.filename] = entry_type(fpath, spec,
                                                       self.encoding)
@@ -1396,8 +1397,8 @@ class EntrySet(Debuggable):
             for line in open(fpath).readlines():
                 match = INFO_REGEX.match(line)
                 if not match:
-                    LOGGER.warning("Failed to match line in %s: %s" % (fpath,
-                                                                       line))
+                    self.logger.warning("Failed to match line in %s: %s" %
+                                        (fpath, line))
                     continue
                 else:
                     mgd = match.groupdict()
