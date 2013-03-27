@@ -15,7 +15,7 @@ class POSIXCompat(Bcfg2.Server.Plugin.Plugin,
 
     def validate_goals(self, metadata, goals):
         """Verify that we are generating correct old POSIX entries."""
-        if metadata.version_info and metadata.version_info > (1, 3, 0, '', 0):
+        if metadata.version_info and metadata.version_info >= (1, 3, 0, '', 0):
             # do not care about a client that is _any_ 1.3.0 release
             # (including prereleases and RCs)
             return
