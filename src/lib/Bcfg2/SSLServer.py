@@ -52,10 +52,11 @@ class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
         except:
+            err = sys.exc_info()
             self.logger.error("Unexpected handler error", exc_info=1)
             # report exception back to server
             raw_response = xmlrpclib.dumps(
-                xmlrpclib.Fault(1, "%s:%s" % (sys.exc_type, sys.exc_value)),
+                xmlrpclib.Fault(1, "%s:%s" % (err[0].__name__, err[1])
                 allow_none=self.allow_none, encoding=self.encoding)
         return raw_response
 

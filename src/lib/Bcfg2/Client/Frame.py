@@ -6,7 +6,7 @@ import fnmatch
 import logging
 import Bcfg2.Client.Tools
 from Bcfg2.Client import prompt
-from Bcfg2.Compat import any, all  # pylint: disable=W0622
+from Bcfg2.Compat import any, all, cmp  # pylint: disable=W0622
 
 
 def cmpent(ent1, ent2):

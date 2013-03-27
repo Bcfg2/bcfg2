@@ -75,6 +75,7 @@ if HAS_DJANGO:
                 yield client.hostname
 
         def keys(self):
+            """ Get keys for the mapping """
             return [c.hostname for c in MetadataClientModel.objects.all()]
 
         def __contains__(self, key):

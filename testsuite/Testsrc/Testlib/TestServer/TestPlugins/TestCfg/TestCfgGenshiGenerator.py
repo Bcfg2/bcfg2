@@ -2,6 +2,7 @@ import os
 import sys
 import lxml.etree
 from mock import Mock, MagicMock, patch
+import Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import *
 from Bcfg2.Server.Plugin import PluginExecutionError
 

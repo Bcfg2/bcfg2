@@ -210,7 +210,7 @@ class Executor(object):
         :type timeout: float
         :returns: :class:`Bcfg2.Utils.ExecutorResult`
         """
-        if isinstance(command, basestring):
+        if isinstance(command, str):
             cmdstr = command
         else:
             cmdstr = " ".join(command)

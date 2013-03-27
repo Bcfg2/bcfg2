@@ -12,6 +12,7 @@ import seobject
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Tools.POSIX.File import POSIXFile
+from Bcfg2.Compat import long
 
 
 def pack128(int_val):
@@ -47,7 +48,7 @@ def netmask_itoa(netmask, proto="ipv4"):
     if netmask > size:
         raise ValueError("Netmask too large: %s" % netmask)
 
-    res = 0L
+    res = long(0)
     for i in range(netmask):
         res |= 1 << (size - i - 1)
     netmask = socket.inet_ntop(family, pack128(res))

@@ -33,20 +33,22 @@ class OhaiCache(object):
         self.dirname = dirname
         self.cache = dict()
 
-    def itempath(self, item):
-        return os.path.join(self.dirname, "%s.json" % item)
+    def hostpath(self, host):
+        """ Get the path to the file that contains Ohai data for the
+        given host """
+        return os.path.join(self.dirname, "%s.json" % host)
 
     def __setitem__(self, item, value):
         if value is None:
             # simply return if the client returned nothing
             return
         self.cache[item] = json.loads(value)
-        open(self.itempath(item), 'w').write(value)
+        open(self.hostpath(item), 'w').write(value)
 
     def __getitem__(self, item):
         if item not in self.cache:
             try:
-                data = open(self.itempath(item)).read()
+                data = open(self.hostpath(item)).read()
             except:
                 raise KeyError(item)
             self.cache[item] = json.loads(data)
@@ -56,13 +58,13 @@ class OhaiCache(object):
         if item in self.cache:
             del self.cache[item]
         try:
-            os.unlink(self.itempath(item))
+            os.unlink(self.hostpath(item))
         except:
-            raise IndexError("Could not unlink %s: %s" % (self.itempath(item),
+            raise IndexError("Could not unlink %s: %s" % (self.hostpath(item),
                                                           sys.exc_info()[1]))
 
     def __len__(self):
-        return len(glob.glob(self.itempath('*')))
+        return len(glob.glob(self.hostpath('*')))
 
     def __iter__(self):
         data = list(self.cache.keys())
