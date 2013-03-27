@@ -944,16 +944,11 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                     if group not in self.groups:
                         self.debug_log("Client %s set as nonexistent group %s"
                                        % (client, group))
-            for gname, ginfo in list(self.groups.items()):
-                for group in ginfo.groups:
-                    if group not in self.groups:
-                        self.debug_log("Group %s set as nonexistent group %s" %
-                                       (gname, group))
 
     def set_profile(self, client, profile, addresspair):
         """Set group parameter for provided client."""
-        self.logger.info("Asserting client %s profile to %s" %
-                         (client, profile))
+        self.logger.info("Asserting client %s profile to %s" % (client,
+                                                                profile))
         if False in list(self.states.values()):
             raise Bcfg2.Server.Plugin.MetadataRuntimeError("Metadata has not "
                                                            "been read yet")
@@ -1004,19 +999,18 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             self.clients_xml.write()
 
     def set_version(self, client, version):
-        """Set group parameter for provided client."""
-        if client in self.clients:
-            if client not in self.versions or version != self.versions[client]:
-                self.logger.info("Setting client %s version to %s" %
-                                 (client, version))
-                if not self._use_db:
-                    self.update_client(client, dict(version=version))
-                    self.clients_xml.write()
-                self.versions[client] = version
-        else:
-            msg = "Cannot set version on non-existent client %s" % client
-            self.logger.error(msg)
-            raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
+        """Set version for provided client."""
+        if client not in self.clients:
+            # this creates the client as a side effect
+            self.get_initial_metadata(client)
+
+        if client not in self.versions or version != self.versions[client]:
+            self.logger.info("Setting client %s version to %s" % (client,
+                                                                  version))
+            if not self._use_db:
+                self.update_client(client, dict(version=version))
+                self.clients_xml.write()
+            self.versions[client] = version
 
     def resolve_client(self, addresspair, cleanup_cache=False):
         """Lookup address locally or in DNS to get a hostname."""
