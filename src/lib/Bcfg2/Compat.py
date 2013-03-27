@@ -273,7 +273,7 @@ except NameError:
 
 
 try:
-    cmp
+    cmp = cmp
 except NameError:
     def cmp(a, b):
         """ Py3k implementation of cmp() """
