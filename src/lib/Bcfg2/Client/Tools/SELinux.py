@@ -12,7 +12,7 @@ import seobject
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Tools.POSIX.File import POSIXFile
-from Bcfg2.Compat import long
+from Bcfg2.Compat import long  # pylint: disable=W0622
 
 
 def pack128(int_val):
