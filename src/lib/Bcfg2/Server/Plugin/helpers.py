@@ -526,6 +526,10 @@ class XMLFileBacked(FileBacked):
         #: "Extra" files included in this file by XInclude.
         self.extras = []
 
+        #: Extra FAM monitors set by this object for files included by
+        #: XInclude.
+        self.extra_monitors = []
+
         if ((create or (self.create is not None and self.create))
             and not os.path.exists(self.name)):
             toptag = create or self.create
@@ -576,9 +580,11 @@ class XMLFileBacked(FileBacked):
             parent.remove(el)
             for extra in extras:
                 if extra != self.name and extra not in self.extras:
-                    self.add_monitor(extra)
+                    self.extras.append(extra)
                     lxml.etree.SubElement(parent, xinclude, href=extra)
                     self._follow_xincludes(fname=extra)
+                    if extra not in self.extra_monitors:
+                        self.add_monitor(extra)
 
     def Index(self):
         self.xdata = lxml.etree.XML(self.data, base_url=self.name,
@@ -607,7 +613,7 @@ class XMLFileBacked(FileBacked):
         :type fpath: string
         :returns: None
         """
-        self.extras.append(fpath)
+        self.extra_monitors.append(fpath)
         if self.fam and self.should_monitor:
             self.fam.AddMonitor(fpath, self)
 
