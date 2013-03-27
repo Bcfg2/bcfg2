@@ -198,8 +198,10 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             try:
                 username, password = auth_content.split(":")
             except TypeError:
+                # pylint: disable=E0602
                 username, pw = auth_content.split(bytes(":", encoding='utf-8'))
                 password = pw.decode('utf-8')
+                # pylint: enable=E0602
         except ValueError:
             username = auth_content
             password = ""
