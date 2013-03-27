@@ -58,7 +58,7 @@ class ClientProbeDataSet(dict):
         dict.__init__(self, *args, **kwargs)
 
 
-class ProbeData(str):
+class ProbeData(str):  # pylint: disable=E0012,R0924
     """ a ProbeData object emulates a str object, but also has .xdata,
     .json, and .yaml properties to provide convenient ways to use
     ProbeData objects as XML, JSON, or YAML data """
@@ -231,9 +231,10 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             if pdata.data != data:
                 pdata.data = data
                 pdata.save()
+
         ProbesDataModel.objects.filter(
             hostname=client.hostname).exclude(
-            probe__in=self.probedata[client.hostname]).delete()
+                probe__in=self.probedata[client.hostname]).delete()
 
         for group in self.cgroups[client.hostname]:
             try:

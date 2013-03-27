@@ -82,7 +82,7 @@ class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
                      Bcfg2.Server.Plugin.DirectoryBacked):
     """ A plugin to provide helper classes and functions to templates """
     __author__ = 'chris.a.st.pierre@gmail.com'
-    ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\.py[co])$")
+    ignore = re.compile(r'^(\.#.*|.*~|\..*\.(sw[px])|.*\.py[co])$')
     patterns = MODULE_RE
     __child__ = HelperModule
 

@@ -76,7 +76,7 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
             if entry.get("FMRI").startswith('lrc'):
                 try:
                     loc = entry.get("FMRI")[4:].replace('_', '.')
-                    self.logger.debug("Renaming file %s to %s" % \
+                    self.logger.debug("Renaming file %s to %s" %
                                       (loc, loc.replace('/S', '/DISABLED.S')))
                     os.rename(loc, loc.replace('/S', '/DISABLED.S'))
                     return True

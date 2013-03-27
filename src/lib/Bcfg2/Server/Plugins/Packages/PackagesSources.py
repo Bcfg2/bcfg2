@@ -7,6 +7,7 @@ import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError
 
 
+# pylint: disable=E0012,R0924
 class PackagesSources(Bcfg2.Server.Plugin.StructFile,
                       Bcfg2.Server.Plugin.Debuggable):
     """ PackagesSources handles parsing of the

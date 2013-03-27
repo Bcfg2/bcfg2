@@ -205,7 +205,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                             chain(
                                 *[names[cmeta.hostname]
                                   for cmeta in
-                                      mquery.by_groups([specific.group])]))
+                                  mquery.by_groups([specific.group])]))
                     elif specific.all:
                         # a generic key for all hosts?  really?
                         hostnames = list(chain(*list(names.values())))

@@ -23,8 +23,8 @@ class Fossil(Bcfg2.Server.Plugin.Version):
                          shell=True,
                          cwd=self.vcs_root,
                          stdout=PIPE).stdout.readlines()
-            revline = [line.split(': ')[1].strip() for line in data if \
-                       line.split(': ')[0].strip() == 'checkout'][-1]
+            revline = [line.split(': ')[1].strip() for line in data
+                       if line.split(': ')[0].strip() == 'checkout'][-1]
             return revline.split(' ')[0]
         except IndexError:
             msg = "Failed to read fossil info"

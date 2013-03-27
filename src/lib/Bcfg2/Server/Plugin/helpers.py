@@ -796,14 +796,14 @@ class InfoNode (INode):
         Client="lambda m, e: '%(name)s' == m.hostname and predicate(m, e)",
         Group="lambda m, e: '%(name)s' in m.groups and predicate(m, e)",
         Path="lambda m, e: ('%(name)s' == e.get('name') or " +
-            "'%(name)s' == e.get('realname')) and " +
-            "predicate(m, e)")
+        "'%(name)s' == e.get('realname')) and " +
+        "predicate(m, e)")
     nraw = dict(
         Client="lambda m, e: '%(name)s' != m.hostname and predicate(m, e)",
         Group="lambda m, e: '%(name)s' not in m.groups and predicate(m, e)",
         Path="lambda m, e: '%(name)s' != e.get('name') and " +
-            "'%(name)s' != e.get('realname') and " +
-            "predicate(m, e)")
+        "'%(name)s' != e.get('realname') and " +
+        "predicate(m, e)")
     containers = ['Group', 'Client', 'Path']
 
 

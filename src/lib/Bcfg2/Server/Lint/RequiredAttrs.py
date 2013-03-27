@@ -5,9 +5,9 @@ import os
 import re
 import lxml.etree
 import Bcfg2.Server.Lint
-import Bcfg2.Client.Tools.POSIX
 import Bcfg2.Client.Tools.VCS
 from Bcfg2.Server.Plugins.Packages import Apt, Yum
+from Bcfg2.Client.Tools.POSIX.base import device_map
 try:
     from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
     HAS_GENSHI = True
@@ -59,10 +59,10 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         Bcfg2.Server.Lint.ServerPlugin.__init__(self, *args, **kwargs)
         self.required_attrs = dict(
             Path=dict(
-                device=dict(name=is_filename, owner=is_username,
+                device=dict(name=is_filename,
+                            owner=is_username,
                             group=is_username,
-                            dev_type=lambda v:
-                                v in Bcfg2.Client.Tools.POSIX.base.device_map),
+                            dev_type=lambda v: v in device_map),
                 directory=dict(name=is_filename, owner=is_username,
                                group=is_username, mode=is_octal_mode),
                 file=dict(name=is_filename, owner=is_username,

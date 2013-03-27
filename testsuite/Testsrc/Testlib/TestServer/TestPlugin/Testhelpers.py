@@ -235,7 +235,6 @@ class TestDirectoryBacked(Bcfg2TestCase):
         mock_isdir.return_value = True
         for path in self.testpaths.values():
             reset()
-            print "testing %s" % path
             db.add_directory_monitor(path)
             db.fam.AddMonitor.assert_called_with(os.path.join(db.data, path),
                                                  db)

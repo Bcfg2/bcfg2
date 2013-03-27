@@ -9,7 +9,8 @@ PYVER=$(python -c 'import sys;print(".".join(str(v) for v in sys.version_info[0:
 if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
     pip install --use-mirrors genshi PyYAML pyinotify
     if [[ $PYVER == "2.5" ]]; then
-        pip install --use-mirrors simplejson
+        # markdown 2.2+ doesn't work on py2.5
+        pip install --use-mirrors simplejson 'markdown<2.2'
     fi
     if [[ ${PYVER:0:1} == "2" ]]; then
         # django supports py3k, but South doesn't, and the django bits

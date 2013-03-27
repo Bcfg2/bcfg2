@@ -446,7 +446,7 @@ class MetadataQuery(object):
         return [self.by_name(name) for name in self.all_clients()]
 
 
-class MetadataGroup(tuple):
+class MetadataGroup(tuple):  # pylint: disable=E0012,R0924
     """ representation of a metadata group.  basically just a named tuple """
 
     # pylint: disable=R0913,W0613
