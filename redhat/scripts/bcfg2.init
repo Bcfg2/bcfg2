@@ -54,12 +54,14 @@ start () {
 case "$1" in
     start)
         start
+        RETVAL=$?
         ;;
     stop|status)
-        exit 0
+        RETVAL=0
         ;;
     restart|force-reload)
 	start
+        RETVAL=$?
         ;;
     *)
         echo "Usage: $0 {start|stop|status|restart|force-reload}"
