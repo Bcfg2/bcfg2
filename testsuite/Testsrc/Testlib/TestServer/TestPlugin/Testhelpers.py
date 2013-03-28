@@ -410,11 +410,12 @@ class TestXMLFileBacked(TestFileBacked):
     should_monitor = None
     path = os.path.join(datastore, "test", "test1.xml")
 
-    @patch("os.makedirs", Mock())
     def get_obj(self, path=None, fam=None, should_monitor=False):
         if path is None:
             path = self.path
-        @patchIf(not isinstance(os.makedirs, Mock), "os.makedirs", Mock())
+
+        @patchIf(not isinstance(os.path.exists, Mock),
+                 "os.path.exists", Mock())
         def inner():
             return self.test_obj(path, fam=fam, should_monitor=should_monitor)
         return inner()
@@ -422,19 +423,15 @@ class TestXMLFileBacked(TestFileBacked):
     def test__init(self):
         fam = Mock()
         xfb = self.get_obj()
-        if self.should_monitor is True:
+        if self.should_monitor:
             self.assertIsNotNone(xfb.fam)
-        else:
-            self.assertIsNone(xfb.fam)
-
-        if self.should_monitor is not True:
-            xfb = self.get_obj(fam=fam)
-            self.assertFalse(fam.AddMonitor.called)
-
-        if self.should_monitor is not False:
             fam.reset_mock()
             xfb = self.get_obj(fam=fam, should_monitor=True)
             fam.AddMonitor.assert_called_with(self.path, xfb)
+        else:
+            self.assertIsNone(xfb.fam)
+            xfb = self.get_obj(fam=fam)
+            self.assertFalse(fam.AddMonitor.called)
 
     @patch("glob.glob")
     @patch("lxml.etree.parse")
@@ -623,7 +620,7 @@ class TestXMLFileBacked(TestFileBacked):
     def test_add_monitor(self):
         xfb = self.get_obj()
         xfb.add_monitor("/test/test2.xml")
-        self.assertIn("/test/test2.xml", xfb.extras)
+        self.assertIn("/test/test2.xml", xfb.extra_monitors)
 
         fam = Mock()
         if self.should_monitor is not True:
@@ -632,14 +629,14 @@ class TestXMLFileBacked(TestFileBacked):
             fam.reset_mock()
             xfb.add_monitor("/test/test3.xml")
             self.assertFalse(fam.AddMonitor.called)
-            self.assertIn("/test/test3.xml", xfb.extras)
+            self.assertIn("/test/test3.xml", xfb.extra_monitors)
 
         if self.should_monitor is not False:
             fam.reset_mock()
             xfb = self.get_obj(fam=fam, should_monitor=True)
             xfb.add_monitor("/test/test4.xml")
             fam.AddMonitor.assert_called_with("/test/test4.xml", xfb)
-            self.assertIn("/test/test4.xml", xfb.extras)
+            self.assertIn("/test/test4.xml", xfb.extra_monitors)
 
 
 class TestStructFile(TestXMLFileBacked):
@@ -2036,6 +2033,3 @@ class TestGroupSpool(TestPlugin, TestGenerator):
         gs.event_id.assert_called_with(event)
         self.assertNotIn("/baz/quux", gs.entries)
         self.assertNotIn("/baz/quux", gs.Entries[gs.entry_type])
-
-
-

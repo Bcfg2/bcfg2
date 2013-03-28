@@ -27,7 +27,7 @@ ALGORITHM = "aes_256_cbc"
 #: Default initialization vector.  For best security, you should use a
 #: unique IV for each message.  :func:`ssl_encrypt` does this in an
 #: automated fashion.
-IV = '\0' * 16
+IV = r'\0' * 16
 
 #: The config file section encryption options and passphrases are
 #: stored in
@@ -116,9 +116,11 @@ def ssl_decrypt(data, passwd, algorithm=ALGORITHM):
     # base64-decode the data
     data = b64decode(data)
     salt = data[8:16]
+    # pylint: disable=E1101
     hashes = [md5(passwd + salt).digest()]
     for i in range(1, 3):
         hashes.append(md5(hashes[i - 1] + passwd + salt).digest())
+    # pylint: enable=E1101
     key = hashes[0] + hashes[1]
     iv = hashes[2]
 
@@ -144,9 +146,11 @@ def ssl_encrypt(plaintext, passwd, algorithm=ALGORITHM, salt=None):
     if salt is None:
         salt = Rand.rand_bytes(8)
 
+    # pylint: disable=E1101
     hashes = [md5(passwd + salt).digest()]
     for i in range(1, 3):
         hashes.append(md5(hashes[i - 1] + passwd + salt).digest())
+    # pylint: enable=E1101
     key = hashes[0] + hashes[1]
     iv = hashes[2]
 
