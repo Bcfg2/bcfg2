@@ -40,7 +40,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
              "NagiosGen/config.xml": "nagiosgen.xsd",
              "FileProbes/config.xml": "fileprobes.xsd",
              "SSLCA/**/cert.xml": "sslca-cert.xsd",
-             "SSLCA/**/key.xml": "sslca-key.xsd"
+             "SSLCA/**/key.xml": "sslca-key.xsd",
+             "GroupLogic/groups.xml": "grouplogic.xsd"
              }
 
         self.filelists = {}
