@@ -32,6 +32,7 @@ test -x $DAEMON || exit 5
 
 # Internal variables
 BINARY=$(basename $DAEMON)
+RETVAL=0
 
 start () {
     echo -n "Starting Configuration Report Collector: "
@@ -79,22 +80,26 @@ status () {
 case "$1" in
     start)
         start
+        RETVAL=$?
     ;;
     stop)
         stop
+        RETVAL=$?
     ;;
     status)
         status
+        RETVAL=$?
     ;;
     restart|reload|force-reload)
         stop
         sleep 5
         start
+        RETVAL=$?
     ;;
     *)
         echo "Usage: $0 {start|stop|status|reload|restart|force-reload}"
-        exit 1
+        RETVAL=1
     ;;
 esac
 
-exit 0
+exit $RETVAL
