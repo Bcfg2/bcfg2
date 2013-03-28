@@ -47,6 +47,7 @@ fi
 
 # Internal variables
 BINARY=$(basename $BCFG2)
+RETVAL=0
 
 # Include lsb functions
 . /lib/lsb/init-functions
@@ -70,17 +71,19 @@ start () {
 case "$1" in
     start)
         start
+        RETVAL=$?
         ;;
     stop|status)
-        exit 0
+        RETVAL=0
         ;;
     restart|force-reload)
 	start
+        RETVAL=$?
         ;;
     *)
         echo "Usage: $0 {start|stop|status|restart|force-reload}"
-        exit 1
+        RETVAL=1
         ;;
 esac
 
-exit 0
+exit $RETVAL
