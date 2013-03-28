@@ -1,3 +1,6 @@
+""" GroupLogic is a connector plugin that lets you use an XML Genshi
+template to dynamically set additional groups for clients. """
+
 import os
 import lxml.etree
 import Bcfg2.Server.Plugin
@@ -10,6 +13,7 @@ except ImportError:
 
 
 class GroupLogicConfig(BundleTemplateFile):
+    """ Representation of the GroupLogic groups.xml file """
     create = lxml.etree.Element("GroupLogic",
                                 nsmap=dict(py="http://genshi.edgewall.org/"))
 
@@ -28,6 +32,10 @@ class GroupLogicConfig(BundleTemplateFile):
 
 class GroupLogic(Bcfg2.Server.Plugin.Plugin,
                  Bcfg2.Server.Plugin.Connector):
+    """ GroupLogic is a connector plugin that lets you use an XML
+    Genshi template to dynamically set additional groups for
+    clients. """
+
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)

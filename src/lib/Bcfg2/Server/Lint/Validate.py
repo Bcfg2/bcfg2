@@ -88,6 +88,9 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                 self.parse(filename)
 
     def parse(self, filename):
+        """ Parse an XML file, raising the appropriate LintErrors if
+        it can't be parsed or read.  Return the
+        lxml.etree._ElementTree parsed from the file. """
         try:
             return lxml.etree.parse(filename)
         except SyntaxError:
