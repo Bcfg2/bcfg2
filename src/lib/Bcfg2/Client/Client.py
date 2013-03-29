@@ -91,7 +91,7 @@ class Client(object):
             try:
                 script.write("#!%s\n" %
                              (probe.attrib.get('interpreter', '/bin/sh')))
-                script.write(probe.text)
+                script.write(probe.text.encode('utf-8'))
                 script.close()
                 os.chmod(scriptname,
                          stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
@@ -105,7 +105,7 @@ class Client(object):
                     self._probe_failure(name, "Return value %s" % rv)
                 self.logger.info("Probe %s has result:" % name)
                 self.logger.info(rv.stdout)
-                ret.text = rv.stdout
+                ret.text = rv.stdout.decode('utf-8')
             finally:
                 os.unlink(scriptname)
         except SystemExit:
@@ -167,7 +167,7 @@ class Client(object):
                 self.proxy.RecvProbeData(
                     Bcfg2.Client.XML.tostring(
                         probedata,
-                        xml_declaration=False).decode('UTF-8'))
+                        xml_declaration=False).decode('utf-8'))
             except Bcfg2.Proxy.ProxyError:
                 err = sys.exc_info()[1]
                 self.fatal_error("Failed to upload probe data: %s" % err)
@@ -229,7 +229,7 @@ class Client(object):
                     self.fatal_error("Failed to get decision list: %s" % err)
 
             try:
-                rawconfig = self.proxy.GetConfig().encode('UTF-8')
+                rawconfig = self.proxy.GetConfig().encode('utf-8')
             except Bcfg2.Proxy.ProxyError:
                 err = sys.exc_info()[1]
                 self.fatal_error("Failed to download configuration from "
@@ -324,7 +324,7 @@ class Client(object):
                 self.proxy.RecvStats(
                     Bcfg2.Client.XML.tostring(
                         feedback,
-                        xml_declaration=False).decode('UTF-8'))
+                        xml_declaration=False).decode('utf-8'))
             except Bcfg2.Proxy.ProxyError:
                 err = sys.exc_info()[1]
                 self.logger.error("Failed to upload configuration statistics: "

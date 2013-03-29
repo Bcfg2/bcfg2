@@ -63,7 +63,7 @@ class ProbeData(str):  # pylint: disable=E0012,R0924
     .json, and .yaml properties to provide convenient ways to use
     ProbeData objects as XML, JSON, or YAML data """
     def __new__(cls, data):
-        return str.__new__(cls, data)
+        return str.__new__(cls, data.encode('utf-8'))
 
     def __init__(self, data):  # pylint: disable=W0613
         str.__init__(self)
@@ -153,7 +153,17 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
             probe = lxml.etree.Element('probe')
             probe.set('name', os.path.basename(name))
             probe.set('source', self.plugin_name)
-            probe.text = entry.data
+            if metadata.version_info and metadata.version_info > (1, 3, 1, '', 0):
+                probe.text = entry.data.decode('utf-8')
+            else:
+                #    msg = "Client unable to handle unicode probes."
+                #    raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
+                try:
+                    probe.text = entry.data
+                except:
+                    self.logger.error("Client unable to handle unicode probes. "
+                                      "Skipping %s" %  probe.get('name'))
+                    continue
             match = self.bangline.match(entry.data.split('\n')[0])
             if match:
                 probe.set('interpreter', match.group('interpreter'))
@@ -210,7 +220,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                                       timestamp=str(int(probedata.timestamp)))
             for probe in sorted(probedata):
                 lxml.etree.SubElement(ctag, 'Probe', name=probe,
-                                      value=str(self.probedata[client][probe]))
+                                      value=str(self.probedata[client][probe]).decode('utf-8'))
             for group in sorted(self.cgroups[client]):
                 lxml.etree.SubElement(ctag, "Group", name=group)
         try:
