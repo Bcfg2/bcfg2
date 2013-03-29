@@ -3,9 +3,7 @@
 import os
 import sys
 import select
-from Bcfg2.Compat import input, walk_packages  # pylint: disable=W0622
-
-__all__ = [m[1] for m in walk_packages(path=__path__)]
+from Bcfg2.Compat import input  # pylint: disable=W0622
 
 
 def prompt(msg):
