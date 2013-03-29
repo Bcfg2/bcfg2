@@ -417,15 +417,18 @@ class Frame(object):
                 bundle.get('name') not in self.setup['bundle']):
                 # prune out unspecified bundles when running with -b
                 continue
+            if bundle in mbundles:
+                self.logger.debug("Bundle %s was modified" % bundle)
+                func = "BundleUpdated"
+            else:
+                self.logger.debug("Bundle %s was not modified" % bundle)
+                func = "BundleNotUpdated"
             for tool in self.tools:
                 try:
-                    if bundle in mbundles:
-                        tool.BundleUpdated(bundle, self.states)
-                    else:
-                        tool.BundleNotUpdated(bundle, self.states)
+                    getattr(tool, func)(bundle, self.states)
                 except:
-                    self.logger.error("%s.BundleNotUpdated() call failed:" %
-                                      tool.name, exc_info=1)
+                    self.logger.error("%s.%s() call failed:" %
+                                      (tool.name, func), exc_info=1)
 
     def Remove(self):
         """Remove extra entries."""
