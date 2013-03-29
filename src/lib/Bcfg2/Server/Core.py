@@ -96,6 +96,7 @@ class BaseCore(object):
         .. automethod:: _block
         .. -----
         .. automethod:: _file_monitor_thread
+        .. automethod:: _perflog_thread
         """
         #: The Bcfg2 repository directory
         self.datastore = setup['repo']
@@ -317,6 +318,12 @@ class BaseCore(object):
             threading.Thread(name="%sFAMThread" % setup['filemonitor'],
                              target=self._file_monitor_thread)
 
+        self.perflog_thread = None
+        if self.setup['perflog']:
+            self.perflog_thread = \
+                threading.Thread(name="PerformanceLoggingThread",
+                                 target=self._perflog_thread)
+
         #: A :func:`threading.Lock` for use by
         #: :func:`Bcfg2.Server.FileMonitor.FileMonitor.handle_event_set`
         self.lock = threading.Lock()
@@ -349,11 +356,23 @@ class BaseCore(object):
                        if isinstance(plugin, base_cls)],
                       key=lambda p: (p.sort_order, p.name))
 
+    def _perflog_thread(self):
+        """ The thread that periodically logs performance statistics
+        to syslog. """
+        self.logger.debug("Performance logging thread starting")
+        while not self.terminate.isSet():
+            self.terminate.wait(self.setup['perflog_interval'])
+            for name, stats in self.get_statistics(None).items():
+                self.logger.info("Performance statistics: "
+                                 "%s min=%.06f, max=%.06f, average=%.06f, "
+                                 "count=%d" % ((name, ) + stats))
+
     def _file_monitor_thread(self):
         """ The thread that runs the
         :class:`Bcfg2.Server.FileMonitor.FileMonitor`. This also
         queries :class:`Bcfg2.Server.Plugin.interfaces.Version`
         plugins for the current revision of the Bcfg2 repo. """
+        self.logger.debug("File monitor thread starting")
         famfd = self.fam.fileno()
         terminate = self.terminate
         while not terminate.isSet():
@@ -718,7 +737,8 @@ class BaseCore(object):
         :type event: Bcfg2.Server.FileMonitor.Event
         """
         if event.filename != self.cfile:
-            print("Got event for unknown file: %s" % event.filename)
+            self.logger.error("Got event for unknown file: %s" %
+                              event.filename)
             return
         if event.code2str() == 'deleted':
             return
@@ -758,6 +778,8 @@ class BaseCore(object):
             self.fam.start()
             self.fam_thread.start()
             self.fam.AddMonitor(self.cfile, self)
+            if self.perflog_thread is not None:
+                self.perflog_thread.start()
 
             for plug in self.plugins_by_type(Bcfg2.Server.Plugin.Threaded):
                 plug.start_threads()

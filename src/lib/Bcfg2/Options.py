@@ -1082,6 +1082,15 @@ VERBOSE = \
            cmd='-v',
            cook=get_bool,
            cf=('logging', 'verbose'))
+LOG_PERFORMANCE = \
+    Option("Periodically log performance statistics",
+           default=False,
+           cf=('logging', 'performance'))
+PERFLOG_INTERVAL = \
+    Option("Performance statistics logging interval in seconds",
+           default=300.0,
+           cook=get_timeout,
+           cf=('logging', 'performance_interval'))
 
 # Plugin-specific options
 CFG_VALIDATION = \
@@ -1164,7 +1173,9 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
                              web_configfile=WEB_CFILE,
                              backend=SERVER_BACKEND,
                              vcs_root=SERVER_VCS_ROOT,
-                             authentication=SERVER_AUTHENTICATION)
+                             authentication=SERVER_AUTHENTICATION,
+                             perflog=LOG_PERFORMANCE,
+                             perflog_interval=PERFLOG_INTERVAL)
 
 CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
                      decrypt=DECRYPT,
