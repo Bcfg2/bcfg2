@@ -30,8 +30,8 @@ class Statistic(object):
         """
         self.min = min(self.min, value)
         self.max = max(self.max, value)
-        self.ave = (((self.ave * (self.count - 1)) + value) / self.count)
         self.count += 1
+        self.ave = (((self.ave * (self.count - 1)) + value) / self.count)
 
     def get_value(self):
         """ Get a tuple of all the stats tracked on this named item.
@@ -45,6 +45,11 @@ class Statistic(object):
         :returns: tuple
         """
         return (self.name, (self.min, self.max, self.ave, self.count))
+
+    def __repr__(self):
+        return "%s(%s, (min=%s, avg=%s, max=%s, count=%s))" % (
+            self.__class__.__name__,
+            self.name, self.min, self.ave, self.max, self.count)
 
 
 class Statistics(object):
