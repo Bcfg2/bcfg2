@@ -753,8 +753,7 @@ def main():
     optinfo = dict(profile=Bcfg2.Options.CORE_PROFILE,
                    interactive=Bcfg2.Options.INTERACTIVE,
                    interpreter=Bcfg2.Options.INTERPRETER)
-    optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
-    optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
+    optinfo.update(Bcfg2.Options.INFO_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.hm = "\n".join(["     bcfg2-info [options] [command <command args>]",
                           "Options:",

@@ -1280,6 +1280,10 @@ TEST_COMMON_OPTIONS = dict(noseopts=TEST_NOSEOPTS,
                            xunit=TEST_XUNIT,
                            validate=CFG_VALIDATION)
 
+INFO_COMMON_OPTIONS = dict(ppath=PARANOID_PATH,
+                           max_copies=PARANOID_MAX_COPIES)
+INFO_COMMON_OPTIONS.update(CLI_COMMON_OPTIONS)
+INFO_COMMON_OPTIONS.update(SERVER_COMMON_OPTIONS)
 
 class OptionParser(OptionSet):
     """
