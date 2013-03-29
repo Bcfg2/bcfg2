@@ -153,16 +153,16 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
             probe = lxml.etree.Element('probe')
             probe.set('name', os.path.basename(name))
             probe.set('source', self.plugin_name)
-            if metadata.version_info and metadata.version_info > (1, 3, 1, '', 0):
+            if (metadata.version_info and
+                metadata.version_info > (1, 3, 1, '', 0)):
                 probe.text = entry.data.decode('utf-8')
             else:
-                #    msg = "Client unable to handle unicode probes."
-                #    raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
                 try:
                     probe.text = entry.data
-                except:
-                    self.logger.error("Client unable to handle unicode probes. "
-                                      "Skipping %s" %  probe.get('name'))
+                except:  # pylint: disable=W0702
+                    self.logger.error("Client unable to handle unicode "
+                                      "probes. Skipping %s" %
+                                      probe.get('name'))
                     continue
             match = self.bangline.match(entry.data.split('\n')[0])
             if match:
@@ -219,8 +219,9 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 lxml.etree.SubElement(top, 'Client', name=client,
                                       timestamp=str(int(probedata.timestamp)))
             for probe in sorted(probedata):
-                lxml.etree.SubElement(ctag, 'Probe', name=probe,
-                                      value=str(self.probedata[client][probe]).decode('utf-8'))
+                lxml.etree.SubElement(
+                    ctag, 'Probe', name=probe,
+                    value=str(self.probedata[client][probe]).decode('utf-8'))
             for group in sorted(self.cgroups[client]):
                 lxml.etree.SubElement(ctag, "Group", name=group)
         try:
