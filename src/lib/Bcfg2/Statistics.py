@@ -28,8 +28,8 @@ class Statistic(object):
         :param value: The value to add to this statistic
         :type value: int or float
         """
-        self.min = min(self.min, value)
-        self.max = max(self.max, value)
+        self.min = min(self.min, float(value))
+        self.max = max(self.max, float(value))
         self.count += 1
         self.ave = (((self.ave * (self.count - 1)) + value) / self.count)
 
