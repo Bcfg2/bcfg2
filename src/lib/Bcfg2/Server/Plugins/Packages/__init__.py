@@ -18,7 +18,7 @@ from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
 YUM_CONFIG_DEFAULT = "/etc/yum.repos.d/bcfg2.repo"
 
 #: The default path for generated apt configs
-APT_CONFIG_DEFAULT = "/etc/apt/sources.d/bcfg2"
+APT_CONFIG_DEFAULT = "/etc/apt/sources.list.d/bcfg2-packages-generated-sources.list"
 
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
