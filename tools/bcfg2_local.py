@@ -68,7 +68,8 @@ def main():
         # CLIENT_BUNDLEQUICK option uses -Q, just like the server repo
         # option.  the server repo is more important for this
         # application.
-        del optinfo['bundle_quick']
+        optinfo['bundle_quick'] = Bcfg2.Options.Option('bundlequick',
+                                                       default=False)
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
 
