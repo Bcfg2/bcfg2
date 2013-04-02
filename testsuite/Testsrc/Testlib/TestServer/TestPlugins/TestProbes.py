@@ -3,6 +3,7 @@ import sys
 import copy
 import time
 import lxml.etree
+import Bcfg2.version
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 from mock import Mock, MagicMock, patch
@@ -217,6 +218,8 @@ group-specific"""
         ps.get_matching.return_value = matching
 
         metadata = Mock()
+        metadata.version_info = \
+            Bcfg2.version.Bcfg2VersionInfo(Bcfg2.version.__version__)
         pdata = ps.get_probe_data(metadata)
         ps.get_matching.assert_called_with(metadata)
         # we can't create a matching operator.attrgetter object, and I
@@ -621,5 +624,3 @@ text
         metadata.hostname = "nonexistent"
         self.assertEqual(probes.get_additional_data(metadata),
                          ClientProbeDataSet())
-
-
