@@ -450,7 +450,8 @@ class Frame(object):
         self.logger.info('Incorrect entries:      %d' %
                          list(self.states.values()).count(False))
         if phase == 'final' and list(self.states.values()).count(False):
-            for entry in self.states.keys():
+            for entry in sorted(self.states.keys(), key=lambda e: e.tag + ":" +
+                                e.get('name')):
                 if not self.states[entry]:
                     etype = entry.get('type')
                     if etype:
