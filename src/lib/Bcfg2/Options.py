@@ -1285,6 +1285,7 @@ INFO_COMMON_OPTIONS = dict(ppath=PARANOID_PATH,
 INFO_COMMON_OPTIONS.update(CLI_COMMON_OPTIONS)
 INFO_COMMON_OPTIONS.update(SERVER_COMMON_OPTIONS)
 
+
 class OptionParser(OptionSet):
     """
        OptionParser bootstraps option parsing,
