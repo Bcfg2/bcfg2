@@ -68,7 +68,7 @@ class SSLCACertSpec(SSLCAXMLSpec):
     def get_spec(self, metadata):
         rv = SSLCAXMLSpec.get_spec(self, metadata)
         rv['subjectaltname'] = [e.text for e in self.Match(metadata)
-                                if e.tag == "SubjectAltName"]
+                                if e.tag == "subjectAltName"]
         return rv
 
 
