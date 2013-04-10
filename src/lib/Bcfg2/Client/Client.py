@@ -15,7 +15,7 @@ import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
 from Bcfg2.Utils import locked, Executor
-from Bcfg2.Compat import xmlrpclib, u_str
+from Bcfg2.Compat import xmlrpclib
 from Bcfg2.version import __version__
 
 
