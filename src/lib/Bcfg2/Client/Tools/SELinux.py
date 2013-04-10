@@ -204,7 +204,16 @@ class SELinuxEntryHandler(object):
         type, if the records object supports the customized() method
         """
         if hasattr(self.records, "customized") and self.custom_re:
-            return dict([(k, self.all_records[k]) for k in self.custom_keys])
+            rv = dict()
+            for key in self.custom_keys:
+                if key in self.all_records:
+                    rv[key] = self.all_records[key]
+                else:
+                    self.logger.warning("SELinux %s %s customized, but no "
+                                        "record found. This may indicate an "
+                                        "error in your SELinux policy." %
+                                        (self.etype, key))
+            return rv
         else:
             # ValueError is really a pretty dumb exception to raise,
             # but that's what the seobject customized() method raises
