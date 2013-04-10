@@ -155,7 +155,10 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
             probe.set('source', self.plugin_name)
             if (metadata.version_info and
                 metadata.version_info > (1, 3, 1, '', 0)):
-                probe.text = entry.data.decode('utf-8')
+                try:
+                    probe.text = entry.data.decode('utf-8')
+                except AttributeError:
+                    probe.text = entry.data
             else:
                 try:
                     probe.text = entry.data
@@ -219,9 +222,14 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 lxml.etree.SubElement(top, 'Client', name=client,
                                       timestamp=str(int(probedata.timestamp)))
             for probe in sorted(probedata):
-                lxml.etree.SubElement(
-                    ctag, 'Probe', name=probe,
-                    value=str(self.probedata[client][probe]).decode('utf-8'))
+                try:
+                    lxml.etree.SubElement(
+                        ctag, 'Probe', name=probe,
+                        value=str(self.probedata[client][probe]).decode('utf-8'))
+                except AttributeError:
+                    lxml.etree.SubElement(
+                        ctag, 'Probe', name=probe,
+                        value=str(self.probedata[client][probe]))
             for group in sorted(self.cgroups[client]):
                 lxml.etree.SubElement(ctag, "Group", name=group)
         try:

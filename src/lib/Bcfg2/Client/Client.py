@@ -15,7 +15,7 @@ import Bcfg2.Client.XML
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
 from Bcfg2.Utils import locked, Executor
-from Bcfg2.Compat import xmlrpclib
+from Bcfg2.Compat import xmlrpclib, u_str
 from Bcfg2.version import __version__
 
 
@@ -91,7 +91,10 @@ class Client(object):
             try:
                 script.write("#!%s\n" %
                              (probe.attrib.get('interpreter', '/bin/sh')))
-                script.write(probe.text.encode('utf-8'))
+                if sys.hexversion >= 0x03000000:
+                    script.write(probe.text)
+                else:
+                    script.write(probe.text.encode('utf-8'))
                 script.close()
                 os.chmod(scriptname,
                          stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
@@ -105,7 +108,10 @@ class Client(object):
                     self._probe_failure(name, "Return value %s" % rv)
                 self.logger.info("Probe %s has result:" % name)
                 self.logger.info(rv.stdout)
-                ret.text = rv.stdout.decode('utf-8')
+                if sys.hexversion >= 0x03000000:
+                    ret.text = rv.stdout
+                else:
+                    ret.text = rv.stdout.decode('utf-8')
             finally:
                 os.unlink(scriptname)
         except SystemExit:
@@ -247,7 +253,7 @@ class Client(object):
 
         self.logger.info("Starting Bcfg2 client run at %s" % times['start'])
 
-        rawconfig = self.get_config(times=times)
+        rawconfig = self.get_config(times=times).decode('utf-8')
 
         if self.setup['cache']:
             try:
