@@ -12,7 +12,7 @@ from Bcfg2.SSLServer import XMLRPCServer
 from lockfile import LockFailed
 # pylint: disable=E0611
 try:
-    from daemon.pidfile import PIDLockFile
+    from lockfile.pidlockfile import PIDLockFile
 except ImportError:
     from daemon.pidlockfile import PIDLockFile
 # pylint: enable=E0611

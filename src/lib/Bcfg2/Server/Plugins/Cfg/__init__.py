@@ -599,6 +599,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         else:
             try:
                 if not isinstance(data, unicode):
+                    if not isinstance(data, str):
+                        data = data.decode('utf-8')
                     data = u_str(data, self.encoding)
             except UnicodeDecodeError:
                 msg = "Failed to decode %s: %s" % (entry.get('name'),
