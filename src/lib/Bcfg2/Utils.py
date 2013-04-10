@@ -108,10 +108,16 @@ class ExecutorResult(object):
 
     def __init__(self, stdout, stderr, retval):
         #: The output of the command
-        self.stdout = stdout
+        if isinstance(stdout, str):
+            self.stdout = stdout
+        else:
+            self.stdout = stdout.decode('utf-8')
 
         #: The error produced by the command
-        self.stderr = stderr
+        if isinstance(stdout, str):
+            self.stderr = stderr
+        else:
+            self.stderr = stderr.decode('utf-8')
 
         #: The return value of the command.
         self.retval = retval
@@ -234,6 +240,13 @@ class Executor(object):
                 for line in inputdata.splitlines():
                     self.logger.debug('> %s' % line)
             (stdout, stderr) = proc.communicate(input=inputdata)
+
+            # py3k fixes
+            if not isinstance(stdout, str):
+                stdout = stdout.decode('utf-8')
+            if not isinstance(stderr, str):
+                stderr = stderr.decode('utf-8')
+
             for line in stdout.splitlines():  # pylint: disable=E1103
                 self.logger.debug('< %s' % line)
             for line in stderr.splitlines():  # pylint: disable=E1103
