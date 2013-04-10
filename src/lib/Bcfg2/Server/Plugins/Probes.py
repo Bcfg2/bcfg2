@@ -225,7 +225,8 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 try:
                     lxml.etree.SubElement(
                         ctag, 'Probe', name=probe,
-                        value=str(self.probedata[client][probe]).decode('utf-8'))
+                        value=str(self.probedata[client][probe])
+                                      .decode('utf-8'))
                 except AttributeError:
                     lxml.etree.SubElement(
                         ctag, 'Probe', name=probe,
