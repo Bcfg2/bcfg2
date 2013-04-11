@@ -275,7 +275,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         if path is None:
             path = entry.get("name")
         context = entry.get("secontext")
-        if context is None:
+        if not context:
             # no context listed
             return True
 
@@ -520,13 +520,19 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                               "Current mtime is %s but should be %s" %
                               (path, mtime, entry.get('mtime')))
 
-        if HAS_SELINUX and entry.get("secontext"):
+        if HAS_SELINUX:
+            wanted_secontext = None
             if entry.get("secontext") == "__default__":
-                wanted_secontext = \
-                    selinux.matchpathcon(path, 0)[1].split(":")[2]
+                try:
+                    wanted_secontext = \
+                        selinux.matchpathcon(path, 0)[1].split(":")[2]
+                except OSError:
+                    errors.append("%s has no default SELinux context" %
+                                  entry.get("name"))
             else:
                 wanted_secontext = entry.get("secontext")
-            if attrib['current_secontext'] != wanted_secontext:
+            if (wanted_secontext and
+                attrib['current_secontext'] != wanted_secontext):
                 errors.append("SELinux context for path %s is incorrect. "
                               "Current context is %s but should be %s" %
                               (path, attrib['current_secontext'],
