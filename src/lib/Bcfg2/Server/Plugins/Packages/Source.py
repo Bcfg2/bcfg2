@@ -615,7 +615,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
             self.logger.info("Packages: Updating %s" % url)
             fname = self.escape_url(url)
             try:
-                open(fname, 'w').write(fetch_url(url))
+                open(fname, 'wb').write(fetch_url(url))
             except ValueError:
                 self.logger.error("Packages: Bad url string %s" % url)
                 raise
