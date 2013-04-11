@@ -315,7 +315,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
 
         :raises: OSError - If the saved data cannot be read
         :raises: cPickle.UnpicklingError - If the saved data is corrupt """
-        data = open(self.cachefile)
+        data = open(self.cachefile, 'rb')
         (self.pkgnames, self.deps, self.provides,
          self.essentialpkgs) = cPickle.load(data)
 
