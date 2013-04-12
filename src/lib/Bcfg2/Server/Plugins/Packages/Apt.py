@@ -93,6 +93,8 @@ class AptSource(Source):
                 self.logger.error("Packages: Failed to read file %s" % fname)
                 raise
             for line in reader.readlines():
+                if not isinstance(line, str):
+                    line = line.decode('utf-8')
                 words = str(line.strip()).split(':', 1)
                 if words[0] == 'Package':
                     pkgname = words[1].strip().rstrip()
