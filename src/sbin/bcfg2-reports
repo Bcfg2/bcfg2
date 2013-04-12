@@ -233,7 +233,8 @@ def main():
                 try:
                     entries = [l.strip().split(":")
                                for l in open(options.file)]
-                except IOError, err:
+                except IOError:
+                    err = sys.exc_info()[1]
                     print("Cannot read entries from %s: %s" % (options.file,
                                                                err))
                     return 2
