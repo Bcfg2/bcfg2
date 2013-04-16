@@ -200,11 +200,6 @@ An example using the defaults is listed below::
     host =
     port =
 
-    [statistics]
-    config = /etc/bcfg2-web.conf
-    time_zone =
-    web_debug = False
-
     [reporting]
     transport = DirectStore
     web_prefix =
@@ -241,6 +236,8 @@ section:
 
 statistics
 ^^^^^^^^^^
+
+.. deprecated: 1.3.0
 
 * config: The config file to be read for additional reporting
   data.  This is used to restrict what can be read by the web
