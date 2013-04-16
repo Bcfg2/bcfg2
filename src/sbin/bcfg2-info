@@ -606,7 +606,7 @@ Bcfg2 client itself.""")
         # Dump all mappings unless type specified
         data = [('Plugin', 'Type', 'Name')]
         arglen = len(args.split())
-        for generator in self.generators:
+        for generator in self.plugins_by_type(Bcfg2.Server.Plugin.Generator):
             if arglen == 0:
                 etypes = list(generator.Entries.keys())
             else:

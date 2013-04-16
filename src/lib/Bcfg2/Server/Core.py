@@ -19,8 +19,9 @@ from Bcfg2.Cache import Cache
 import Bcfg2.Statistics
 from itertools import chain
 from Bcfg2.Compat import xmlrpclib  # pylint: disable=W0622
-from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError, \
-    track_statistics
+from Bcfg2.Server.Plugin.exceptions import *
+from Bcfg2.Server.Plugin.interfaces import *
+from Bcfg2.Server.Plugin import track_statistics
 
 try:
     import psyco
@@ -175,6 +176,9 @@ class BaseCore(object):
         #: the first one loaded wins.
         self.plugin_blacklist = {}
 
+        #: The Metadata plugin
+        self.metadata = None
+
         #: Revision of the Bcfg2 specification.  This will be sent to
         #: the client in the configuration, and can be set by a
         #: :class:`Bcfg2.Server.Plugin.interfaces.Version` plugin.
@@ -236,71 +240,6 @@ class BaseCore(object):
                     self.logger.error("Failed to set ownership of database "
                                       "at %s: %s" % (db_settings['NAME'], err))
 
-        if '' in setup['plugins']:
-            setup['plugins'].remove('')
-
-        for plugin in setup['plugins']:
-            if not plugin in self.plugins:
-                self.init_plugin(plugin)
-        # Remove blacklisted plugins
-        for plugin, blacklist in list(self.plugin_blacklist.items()):
-            if len(blacklist) > 0:
-                self.logger.error("The following plugins conflict with %s;"
-                                  "Unloading %s" % (plugin, blacklist))
-            for plug in blacklist:
-                del self.plugins[plug]
-
-        # Log experimental plugins
-        expl = [plug for plug in list(self.plugins.values())
-                if plug.experimental]
-        if expl:
-            self.logger.info("Loading experimental plugin(s): %s" %
-                             (" ".join([x.name for x in expl])))
-            self.logger.info("NOTE: Interfaces subject to change")
-
-        # Log deprecated plugins
-        depr = [plug for plug in list(self.plugins.values())
-                if plug.deprecated]
-        if depr:
-            self.logger.info("Loading deprecated plugin(s): %s" %
-                             (" ".join([x.name for x in depr])))
-
-        # Find the metadata plugin and set self.metadata
-        mlist = self.plugins_by_type(Bcfg2.Server.Plugin.Metadata)
-        if len(mlist) >= 1:
-            #: The Metadata plugin
-            self.metadata = mlist[0]
-            if len(mlist) > 1:
-                self.logger.error("Multiple Metadata plugins loaded; "
-                                  "using %s" % self.metadata)
-        else:
-            self.logger.error("No Metadata plugin loaded; "
-                              "failed to instantiate Core")
-            raise CoreInitError("No Metadata Plugin")
-
-        #: The list of plugins that handle
-        #: :class:`Bcfg2.Server.Plugin.interfaces.Statistics`
-        self.statistics = self.plugins_by_type(Bcfg2.Server.Plugin.Statistics)
-
-        #: The list of plugins that implement the
-        #: :class:`Bcfg2.Server.Plugin.interfaces.PullSource`
-        #: interface
-        self.pull_sources = \
-            self.plugins_by_type(Bcfg2.Server.Plugin.PullSource)
-
-        #: The list of
-        #: :class:`Bcfg2.Server.Plugin.interfaces.Generator` plugins
-        self.generators = self.plugins_by_type(Bcfg2.Server.Plugin.Generator)
-
-        #: The list of plugins that handle
-        #: :class:`Bcfg2.Server.Plugin.interfaces.Structure`
-        #: generation
-        self.structures = self.plugins_by_type(Bcfg2.Server.Plugin.Structure)
-
-        #: The list of plugins that implement the
-        #: :class:`Bcfg2.Server.Plugin.interfaces.Connector` interface
-        self.connectors = self.plugins_by_type(Bcfg2.Server.Plugin.Connector)
-
         #: The CA that signed the server cert
         self.ca = setup['ca']
 
@@ -331,10 +270,6 @@ class BaseCore(object):
         #: A :class:`Bcfg2.Cache.Cache` object for caching client
         #: metadata
         self.metadata_cache = Cache()
-
-        if self.debug_flag:
-            # enable debugging on everything else.
-            self.plugins[plugin].set_debug(self.debug_flag)
 
     def plugins_by_type(self, base_cls):
         """ Return a list of loaded plugins that match the passed type.
@@ -391,7 +326,7 @@ class BaseCore(object):
     def _update_vcs_revision(self):
         """ Update the revision of the current configuration on-disk
         from the VCS plugin """
-        for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Version):
+        for plugin in self.plugins_by_type(Version):
             try:
                 newrev = plugin.get_revision()
                 if newrev != self.revision:
@@ -402,6 +337,53 @@ class BaseCore(object):
                 self.logger.warning("Error getting revision from %s: %s" %
                                     (plugin.name, sys.exc_info()[1]))
                 self.revision = '-1'
+
+    def load_plugins(self):
+        while '' in self.setup['plugins']:
+            self.setup['plugins'].remove('')
+
+        for plugin in self.setup['plugins']:
+            if not plugin in self.plugins:
+                self.init_plugin(plugin)
+
+        # Remove blacklisted plugins
+        for plugin, blacklist in list(self.plugin_blacklist.items()):
+            if len(blacklist) > 0:
+                self.logger.error("The following plugins conflict with %s;"
+                                  "Unloading %s" % (plugin, blacklist))
+            for plug in blacklist:
+                del self.plugins[plug]
+
+        # Log experimental plugins
+        expl = [plug for plug in list(self.plugins.values())
+                if plug.experimental]
+        if expl:
+            self.logger.info("Loading experimental plugin(s): %s" %
+                             (" ".join([x.name for x in expl])))
+            self.logger.info("NOTE: Interfaces subject to change")
+
+        # Log deprecated plugins
+        depr = [plug for plug in list(self.plugins.values())
+                if plug.deprecated]
+        if depr:
+            self.logger.info("Loading deprecated plugin(s): %s" %
+                             (" ".join([x.name for x in depr])))
+
+        # Find the metadata plugin and set self.metadata
+        mlist = self.plugins_by_type(Metadata)
+        if len(mlist) >= 1:
+            self.metadata = mlist[0]
+            if len(mlist) > 1:
+                self.logger.error("Multiple Metadata plugins loaded; using %s"
+                                  % self.metadata)
+        else:
+            self.logger.error("No Metadata plugin loaded; "
+                              "failed to instantiate Core")
+            raise CoreInitError("No Metadata Plugin")
+
+        if self.debug_flag:
+            # enable debugging on plugins
+            self.plugins[plugin].set_debug(self.debug_flag)
 
     def init_plugin(self, plugin):
         """ Import and instantiate a single plugin.  The plugin is
@@ -487,8 +469,7 @@ class BaseCore(object):
                                                        metadata.hostname))
         start = time.time()
         try:
-            for plugin in \
-                    self.plugins_by_type(Bcfg2.Server.Plugin.ClientRunHooks):
+            for plugin in self.plugins_by_type(ClientRunHooks):
                 try:
                     getattr(plugin, hook)(metadata)
                 except AttributeError:
@@ -519,11 +500,10 @@ class BaseCore(object):
         :type data: list of lxml.etree._Element objects
         """
         self.logger.debug("Validating structures for %s" % metadata.hostname)
-        for plugin in \
-                self.plugins_by_type(Bcfg2.Server.Plugin.StructureValidator):
+        for plugin in self.plugins_by_type(StructureValidator):
             try:
                 plugin.validate_structures(metadata, data)
-            except Bcfg2.Server.Plugin.ValidationError:
+            except ValidationError:
                 err = sys.exc_info()[1]
                 self.logger.error("Plugin %s structure validation failed: %s" %
                                   (plugin.name, err))
@@ -546,10 +526,10 @@ class BaseCore(object):
         :type data: list of lxml.etree._Element objects
         """
         self.logger.debug("Validating goals for %s" % metadata.hostname)
-        for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.GoalValidator):
+        for plugin in self.plugins_by_type(GoalValidator):
             try:
                 plugin.validate_goals(metadata, data)
-            except Bcfg2.Server.Plugin.ValidationError:
+            except ValidationError:
                 err = sys.exc_info()[1]
                 self.logger.error("Plugin %s goal validation failed: %s" %
                                   (plugin.name, err.message))
@@ -567,8 +547,9 @@ class BaseCore(object):
         :returns: list of :class:`lxml.etree._Element` objects
         """
         self.logger.debug("Getting structures for %s" % metadata.hostname)
-        structures = list(chain(*[struct.BuildStructures(metadata)
-                                  for struct in self.structures]))
+        structures = list(
+            chain(*[struct.BuildStructures(metadata)
+                    for struct in self.plugins_by_type(Structure)]))
         sbundles = [b.get('name') for b in structures if b.tag == 'Bundle']
         missing = [b for b in metadata.bundles if b not in sbundles]
         if missing:
@@ -653,8 +634,9 @@ class BaseCore(object):
                 self.logger.error("Falling back to %s:%s" %
                                   (entry.tag, entry.get('name')))
 
-        glist = [gen for gen in self.generators if
-                 entry.get('name') in gen.Entries.get(entry.tag, {})]
+        generators = self.plugins_by_type(Generator)
+        glist = [gen for gen in generators
+                 if entry.get('name') in gen.Entries.get(entry.tag, {})]
         if len(glist) == 1:
             return glist[0].Entries[entry.tag][entry.get('name')](entry,
                                                                   metadata)
@@ -662,8 +644,8 @@ class BaseCore(object):
             generators = ", ".join([gen.name for gen in glist])
             self.logger.error("%s %s served by multiple generators: %s" %
                               (entry.tag, entry.get('name'), generators))
-        g2list = [gen for gen in self.generators if
-                  gen.HandlesEntry(entry, metadata)]
+        g2list = [gen for gen in generators
+                  if gen.HandlesEntry(entry, metadata)]
         try:
             if len(g2list) == 1:
                 return g2list[0].HandleEntry(entry, metadata)
@@ -690,7 +672,7 @@ class BaseCore(object):
                                     revision=self.revision)
         try:
             meta = self.build_metadata(client)
-        except Bcfg2.Server.Plugin.MetadataConsistencyError:
+        except MetadataConsistencyError:
             self.logger.error("Metadata consistency error for client %s" %
                               client)
             return lxml.etree.Element("error", type='metadata error')
@@ -775,13 +757,15 @@ class BaseCore(object):
             return False
 
         try:
+            self.load_plugins()
+
             self.fam.start()
             self.fam_thread.start()
             self.fam.AddMonitor(self.cfile, self)
             if self.perflog_thread is not None:
                 self.perflog_thread.start()
 
-            for plug in self.plugins_by_type(Bcfg2.Server.Plugin.Threaded):
+            for plug in self.plugins_by_type(Threaded):
                 plug.start_threads()
         except:
             self.shutdown()
@@ -818,7 +802,7 @@ class BaseCore(object):
         """
         self.logger.debug("Getting decision list for %s" % metadata.hostname)
         result = []
-        for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Decision):
+        for plugin in self.plugins_by_type(Decision):
             try:
                 result.extend(plugin.GetDecisions(metadata, mode))
             except:
@@ -837,7 +821,7 @@ class BaseCore(object):
         """
         if not hasattr(self, 'metadata'):
             # some threads start before metadata is even loaded
-            raise Bcfg2.Server.Plugin.MetadataRuntimeError
+            raise MetadataRuntimeError("Metadata not loaded yet")
         if self.metadata_cache_mode == 'initial':
             # the Metadata plugin handles loading the cached data if
             # we're only caching the initial metadata object
@@ -847,10 +831,11 @@ class BaseCore(object):
         if not imd:
             self.logger.debug("Building metadata for %s" % client_name)
             imd = self.metadata.get_initial_metadata(client_name)
-            for conn in self.connectors:
+            connectors = self.plugins_by_type(Connector)
+            for conn in connectors:
                 grps = conn.get_additional_groups(imd)
                 self.metadata.merge_additional_groups(imd, grps)
-            for conn in self.connectors:
+            for conn in connectors:
                 data = conn.get_additional_data(imd)
                 self.metadata.merge_additional_data(imd, conn.name, data)
             imd.query.by_name = self.build_metadata
@@ -871,7 +856,7 @@ class BaseCore(object):
         meta = self.build_metadata(client_name)
         state = statistics.find(".//Statistics")
         if state.get('version') >= '2.0':
-            for plugin in self.statistics:
+            for plugin in self.plugins_by_type(Statistics):
                 try:
                     plugin.process_statistics(meta, statistics)
                 except:
@@ -913,11 +898,11 @@ class BaseCore(object):
                 meta = self.build_metadata(client)
             else:
                 meta = None
-        except Bcfg2.Server.Plugin.MetadataConsistencyError:
+        except MetadataConsistencyError:
             err = sys.exc_info()[1]
             self.critical_error("Client metadata resolution error for %s: %s" %
                                 (address[0], err))
-        except Bcfg2.Server.Plugin.MetadataRuntimeError:
+        except MetadataRuntimeError:
             err = sys.exc_info()[1]
             self.critical_error('Metadata system runtime failure for %s: %s' %
                                 (address[0], err))
@@ -1011,8 +996,7 @@ class BaseCore(object):
                                                                      version))
         try:
             self.metadata.set_version(client, version)
-        except (Bcfg2.Server.Plugin.MetadataConsistencyError,
-                Bcfg2.Server.Plugin.MetadataRuntimeError):
+        except (MetadataConsistencyError, MetadataRuntimeError):
             err = sys.exc_info()[1]
             self.critical_error("Unable to set version for %s: %s" %
                                 (client, err))
@@ -1032,7 +1016,7 @@ class BaseCore(object):
         client, metadata = self.resolve_client(address, cleanup_cache=True)
         self.logger.debug("Getting probes for %s" % client)
         try:
-            for plugin in self.plugins_by_type(Bcfg2.Server.Plugin.Probing):
+            for plugin in self.plugins_by_type(Probing):
                 for probe in plugin.GetProbes(metadata):
                     resp.append(probe)
             return lxml.etree.tostring(resp,
@@ -1102,8 +1086,7 @@ class BaseCore(object):
         self.logger.debug("%s sets its profile to %s" % (client, profile))
         try:
             self.metadata.set_profile(client, profile, address)
-        except (Bcfg2.Server.Plugin.MetadataConsistencyError,
-                Bcfg2.Server.Plugin.MetadataRuntimeError):
+        except (MetadataConsistencyError, MetadataRuntimeError):
             err = sys.exc_info()[1]
             self.critical_error("Unable to assert profile for %s: %s" %
                                 (client, err))
@@ -1125,7 +1108,7 @@ class BaseCore(object):
             config = self.BuildConfiguration(client)
             return lxml.etree.tostring(config,
                                        xml_declaration=False).decode('UTF-8')
-        except Bcfg2.Server.Plugin.MetadataConsistencyError:
+        except MetadataConsistencyError:
             self.critical_error("Metadata consistency failure for %s" % client)
 
     @exposed
