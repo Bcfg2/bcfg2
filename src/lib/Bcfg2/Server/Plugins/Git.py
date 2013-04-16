@@ -44,7 +44,7 @@ class Git(Version):
             else:
                 cmd = ["git", "--git-dir", self.vcs_path,
                        "--work-tree", self.vcs_root, "rev-parse", "HEAD"]
-                self.debug_log("Git: Running cmd")
+                self.debug_log("Git: Running %s" % cmd)
                 proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
                 rv, err = proc.communicate()
                 if proc.wait():
