@@ -19,8 +19,8 @@ from Bcfg2.Cache import Cache
 import Bcfg2.Statistics
 from itertools import chain
 from Bcfg2.Compat import xmlrpclib  # pylint: disable=W0622
-from Bcfg2.Server.Plugin.exceptions import *
-from Bcfg2.Server.Plugin.interfaces import *
+from Bcfg2.Server.Plugin.exceptions import *  # pylint: disable=W0401,W0614
+from Bcfg2.Server.Plugin.interfaces import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin import track_statistics
 
 try:
