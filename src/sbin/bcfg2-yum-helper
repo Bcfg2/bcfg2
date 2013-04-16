@@ -9,32 +9,12 @@ import os
 import sys
 import yum
 import logging
+import Bcfg2.Logger
 from optparse import OptionParser
 try:
     import json
 except ImportError:
     import simplejson as json
-
-LOGGER = None
-
-
-def get_logger(verbose=0):
-    """ set up logging according to the verbose level given on the
-    command line """
-    global LOGGER
-    if LOGGER is None:
-        LOGGER = logging.getLogger(sys.argv[0])
-        stderr = logging.StreamHandler()
-        if verbose:
-            level = logging.DEBUG
-        else:
-            level = logging.WARNING
-        LOGGER.setLevel(level)
-        LOGGER.addHandler(stderr)
-        syslog = logging.handlers.SysLogHandler("/dev/log")
-        syslog.setFormatter(logging.Formatter("%(name)s: %(message)s"))
-        LOGGER.addHandler(syslog)
-    return LOGGER
 
 
 def pkg_to_tuple(package):
@@ -76,7 +56,7 @@ class DepSolver(object):
         except AttributeError:
             self.yumbase._getConfig(cfgfile, debuglevel=verbose)
         # pylint: enable=E1121,W0212
-        self.logger = get_logger(verbose)
+        self.logger = logging.getLogger(self.__class__.__name__)
         self._groups = None
 
     def get_groups(self):
@@ -220,7 +200,17 @@ def main():
     parser.add_option("-v", "--verbose", help="Verbosity level",
                       action="count")
     (options, args) = parser.parse_args()
-    logger = get_logger(options.verbose)
+
+    if options.verbose:
+        level = logging.DEBUG
+        clevel = logging.DEBUG
+    else:
+        level = logging.WARNING
+        clevel = logging.INFO
+    Bcfg2.Logger.setup_logging('bcfg2-yum-helper', to_syslog=True,
+                               to_console=clevel, level=level)
+    logger = logging.getLogger('bcfg2-yum-helper')
+
     try:
         cmd = args[0]
     except IndexError:
