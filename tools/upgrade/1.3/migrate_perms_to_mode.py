@@ -13,6 +13,7 @@ def setmodeattr(elem):
         elem.set('mode', elem.get('perms'))
         del elem.attrib['perms']
         return True
+    return False
 
 
 def writefile(f, xdata):
@@ -32,7 +33,7 @@ def convertinfo(ifile):
         return
     found = False
     for i in xdata.findall('//Info'):
-        found = setmodeattr(i)
+        found |= setmodeattr(i)
     if found:
         writefile(ifile, xdata)
 
@@ -47,7 +48,7 @@ def convertstructure(structfile):
         return
     found = False
     for path in xdata.xpath('//BoundPath|//Path'):
-        found = setmodeattr(path)
+        found |= setmodeattr(path)
     if found:
         writefile(structfile, xdata)
 
