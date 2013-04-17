@@ -339,6 +339,11 @@ class BaseCore(object):
                 self.revision = '-1'
 
     def load_plugins(self):
+        """ Load all plugins, setting
+        :attr:`Bcfg2.Server.Core.BaseCore.plugins` and
+        :attr:`Bcfg2.Server.Core.BaseCore.metadata` as side effects.
+        This does not start plugin threads; that is done later, in
+        :func:`Bcfg2.Server.Core.BaseCore.run` """
         while '' in self.setup['plugins']:
             self.setup['plugins'].remove('')
 
