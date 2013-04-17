@@ -761,6 +761,11 @@ class BaseCore(object):
             self.shutdown()
             raise
 
+        if setup['fam_blocking']:
+            time.sleep(1)
+            while self.fam.pending() != 0:
+                time.sleep(1)
+
         self.set_debug(None, self.debug_flag)
         self._block()
 
