@@ -120,7 +120,6 @@ class InfoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
         Bcfg2.Server.Core.BaseCore.__init__(self, setup=setup)
         self.prompt = '> '
         self.cont = True
-        self.fam.handle_events_in_interval(4)
 
     def _get_client_list(self, hostglobs):
         """ given a host glob, get a list of clients that match it """
@@ -712,6 +711,8 @@ Bcfg2 client itself.""")
 
     def run(self, args):  # pylint: disable=W0221
         try:
+            self.load_plugins()
+            self.fam.handle_events_in_interval(1)
             if args:
                 self.onecmd(" ".join(args))
             else:
