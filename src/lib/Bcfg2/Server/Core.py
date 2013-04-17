@@ -776,7 +776,7 @@ class BaseCore(object):
             self.shutdown()
             raise
 
-        if setup['fam_blocking']:
+        if self.setup['fam_blocking']:
             time.sleep(1)
             while self.fam.pending() != 0:
                 time.sleep(1)
