@@ -54,11 +54,11 @@ DEFAULT_CONFIG = _default_config()
 
 def read_config(cfile=DEFAULT_CONFIG, repo=None, quiet=False):
     """ read the config file and set django settings based on it """
-    # pylint: disable=W0603
+    # pylint: disable=W0602,W0603
     global DATABASE_ENGINE, DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, \
         DATABASE_HOST, DATABASE_PORT, DEBUG, TEMPLATE_DEBUG, TIME_ZONE, \
         MEDIA_URL
-    # pylint: enable=W0603
+    # pylint: enable=W0602,W0603
 
     if not os.path.exists(cfile) and os.path.exists(DEFAULT_CONFIG):
         print("%s does not exist, using %s for database configuration" %
