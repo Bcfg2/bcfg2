@@ -535,6 +535,11 @@ SERVER_FAM_IGNORE = \
                     'SCCS', '.svn', '4913', '.gitignore'],
            cf=('server', 'ignore_files'),
            cook=list_split)
+SERVER_FAM_BLOCK = \
+    Option('FAM blocks on startup until all events are processed',
+           default=False,
+           cook=get_bool,
+           cf=('server', 'fam_blocking'))
 SERVER_LISTEN_ALL = \
     Option('Listen on all interfaces',
            default=False,
