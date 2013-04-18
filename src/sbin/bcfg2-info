@@ -457,9 +457,7 @@ Bcfg2 client itself.""")
     def do_clients(self, _):
         """ clients - Print out client/profile info """
         data = [('Client', 'Profile')]
-        clist = self.metadata.clients
-        clist.sort()
-        for client in clist:
+        for client in sorted(self.metadata.list_clients()):
             imd = self.metadata.get_initial_metadata(client)
             data.append((client, imd.profile))
         print_tabular(data)
