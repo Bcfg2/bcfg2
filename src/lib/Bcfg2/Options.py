@@ -401,7 +401,8 @@ CFILE = \
     Option('Specify configuration file',
            default=DEFAULT_CONFIG_LOCATION,
            cmd='-C',
-           odesc='<conffile>')
+           odesc='<conffile>',
+           env="BCFG2_CONFIG")
 LOCKFILE = \
     Option('Specify lockfile',
            default='/var/lock/bcfg2.run',
