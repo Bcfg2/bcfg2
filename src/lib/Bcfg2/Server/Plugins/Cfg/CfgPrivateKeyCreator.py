@@ -69,7 +69,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
                      the given client metadata, and may be obtained by
                      doing ``self.XMLMatch(metadata)``
         :type spec: lxml.etree._Element
-        :returns: None
+        :returns: string - The filename of the private key
         """
         if spec is None:
             spec = self.XMLMatch(metadata)
@@ -140,7 +140,6 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         if spec is None:
             spec = self.XMLMatch(metadata)
         category = spec.get("category", self.category)
-        print("category=%s" % category)
         if category is None:
             per_host_default = "true"
         else:
