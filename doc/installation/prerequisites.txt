@@ -50,9 +50,9 @@ Bcfg2 Server
 +-------------------------------+----------+--------------------------------+
 | lxml                          | 0.9+     | lxml: libxml2, libxslt, python |
 +-------------------------------+----------+--------------------------------+
-| gamin or fam                  | Any      |                                |
+| gamin or inotify              | Any      |                                |
 +-------------------------------+----------+--------------------------------+
-| python-gamin or python-fam    | Any      | gamin or fam, python           |
+| python-gamin or pyinotify     | Any      | gamin or inotify, python       |
 +-------------------------------+----------+--------------------------------+
 | M2crypto or python-ssl (note  | Any      | python, openssl                |
 | that the ssl module is        |          |                                |

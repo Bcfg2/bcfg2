@@ -208,12 +208,6 @@ fi
 %{python_sitelib}/Bcfg2/Proxy.py*
 %{python_sitelib}/Bcfg2/version.py*
 %{python_sitelib}/Bcfg2/Client
-%{python_sitelib}/Bcfg2/Component.*
-%{python_sitelib}/Bcfg2/Logger.*
-%{python_sitelib}/Bcfg2/Options.*
-%{python_sitelib}/Bcfg2/Proxy.*
-%{python_sitelib}/Bcfg2/SSLServer.*
-%{python_sitelib}/Bcfg2/Statistics.*
 
 %{_sbindir}/bcfg2
 %{_mandir}/man1/bcfg2.1*

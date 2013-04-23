@@ -532,6 +532,8 @@ class Version(Plugin):
     #: be ".svn"
     __vcs_metadata_path__ = None
 
+    __rmi__ = Plugin.__rmi__ + ['get_revision']
+
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
 
@@ -595,3 +597,33 @@ class ClientRunHooks(object):
         :returns: None
         """
         pass
+
+
+class ClientACLs(object):
+    """ ClientACLs are used to grant or deny access to different
+    XML-RPC calls based on client IP or metadata. """
+
+    def check_acl_ip(self, address, rmi):  # pylint: disable=W0613
+        """ Check if the given IP address is authorized to make the
+        named XML-RPC call.
+
+        :param address: The address pair of the client to check ACLs for
+        :type address: tuple of (<ip address>, <port>)
+        :param rmi: The fully-qualified name of the RPC call
+        :param rmi: string
+        :returns: bool or None - True to allow, False to deny, None to
+                  defer to metadata ACLs
+        """
+        return True
+
+    def check_acl_metadata(self, metadata, rmi):  # pylint: disable=W0613
+        """ Check if the given client is authorized to make the named
+        XML-RPC call.
+
+        :param metadata: The client metadata
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :param rmi: The fully-qualified name of the RPC call
+        :param rmi: string
+        :returns: bool
+        """
+        return True

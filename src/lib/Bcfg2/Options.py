@@ -9,8 +9,8 @@ import shlex
 import sys
 import grp
 import pwd
-import Bcfg2.Client.Tools
-from Bcfg2.Compat import ConfigParser
+from Bcfg2.Client.Tools import __path__ as toolpath
+from Bcfg2.Compat import ConfigParser, walk_packages
 from Bcfg2.version import __version__
 
 
@@ -334,12 +334,6 @@ def get_bool(val):
         raise ValueError("Not a boolean value", val)
 
 
-def get_int(val):
-    """ given a string value of an integer configuration option,
-    return an actual int """
-    return int(val)
-
-
 def get_timeout(val):
     """ convert the timeout value into a float or None """
     if val is None:
@@ -613,33 +607,27 @@ SERVER_AUTHENTICATION = \
 DB_ENGINE = \
     Option('Database engine',
            default='sqlite3',
-           cf=('database', 'engine'),
-           deprecated_cf=('statistics', 'database_engine'))
+           cf=('database', 'engine'))
 DB_NAME = \
     Option('Database name',
            default=os.path.join(SERVER_REPOSITORY.default, "etc/bcfg2.sqlite"),
-           cf=('database', 'name'),
-           deprecated_cf=('statistics', 'database_name'))
+           cf=('database', 'name'))
 DB_USER = \
     Option('Database username',
            default=None,
-           cf=('database', 'user'),
-           deprecated_cf=('statistics', 'database_user'))
+           cf=('database', 'user'))
 DB_PASSWORD = \
     Option('Database password',
            default=None,
-           cf=('database', 'password'),
-           deprecated_cf=('statistics', 'database_password'))
+           cf=('database', 'password'))
 DB_HOST = \
     Option('Database host',
            default='localhost',
-           cf=('database', 'host'),
-           deprecated_cf=('statistics', 'database_host'))
+           cf=('database', 'host'))
 DB_PORT = \
     Option('Database port',
            default='',
-           cf=('database', 'port'),
-           deprecated_cf=('statistics', 'database_port'))
+           cf=('database', 'port'))
 
 # Django options
 WEB_CFILE = \
@@ -663,8 +651,7 @@ DJANGO_DEBUG = \
 DJANGO_WEB_PREFIX = \
     Option('Web prefix',
            default=None,
-           cf=('reporting', 'web_prefix'),
-           deprecated_cf=('statistics', 'web_prefix'),)
+           cf=('reporting', 'web_prefix'))
 
 # Reporting options
 REPORTING_FILE_LIMIT = \
@@ -743,7 +730,7 @@ CLIENT_PARANOID = \
            cook=get_bool)
 CLIENT_DRIVERS = \
     Option('Specify tool driver set',
-           default=Bcfg2.Client.Tools.default,
+           default=[m[1] for m in walk_packages(path=toolpath)],
            cmd='-D',
            odesc='<driver1,driver2>',
            cf=('client', 'drivers'),
@@ -865,7 +852,7 @@ TEST_CHILDREN = \
            cmd='--children',
            odesc='<children>',
            cf=('bcfg2_test', 'children'),
-           cook=get_int,
+           cook=int,
            long_arg=True)
 TEST_XUNIT = \
     Option('Output an XUnit result file with --children',
@@ -922,125 +909,65 @@ CLIENT_RPM_INSTALLONLY = \
                     'kernel-default', 'kernel-largesmp-devel',
                     'kernel-largesmp', 'kernel-xen', 'gpg-pubkey'],
            cf=('RPM', 'installonlypackages'),
-           deprecated_cf=('RPMng', 'installonlypackages'),
            cook=list_split)
 CLIENT_RPM_PKG_CHECKS = \
     Option("Perform RPM package checks",
            default=True,
            cf=('RPM', 'pkg_checks'),
-           deprecated_cf=('RPMng', 'pkg_checks'),
            cook=get_bool)
 CLIENT_RPM_PKG_VERIFY = \
     Option("Perform RPM package verify",
            default=True,
            cf=('RPM', 'pkg_verify'),
-           deprecated_cf=('RPMng', 'pkg_verify'),
            cook=get_bool)
 CLIENT_RPM_INSTALLED_ACTION = \
     Option("RPM installed action",
            default="install",
-           cf=('RPM', 'installed_action'),
-           deprecated_cf=('RPMng', 'installed_action'))
+           cf=('RPM', 'installed_action'))
 CLIENT_RPM_ERASE_FLAGS = \
     Option("RPM erase flags",
            default=["allmatches"],
            cf=('RPM', 'erase_flags'),
-           deprecated_cf=('RPMng', 'erase_flags'),
            cook=list_split)
 CLIENT_RPM_VERSION_FAIL_ACTION = \
     Option("RPM version fail action",
            default="upgrade",
-           cf=('RPM', 'version_fail_action'),
-           deprecated_cf=('RPMng', 'version_fail_action'))
+           cf=('RPM', 'version_fail_action'))
 CLIENT_RPM_VERIFY_FAIL_ACTION = \
     Option("RPM verify fail action",
            default="reinstall",
-           cf=('RPM', 'verify_fail_action'),
-           deprecated_cf=('RPMng', 'verify_fail_action'))
+           cf=('RPM', 'verify_fail_action'))
 CLIENT_RPM_VERIFY_FLAGS = \
     Option("RPM verify flags",
            default=[],
            cf=('RPM', 'verify_flags'),
-           deprecated_cf=('RPMng', 'verify_flags'),
            cook=list_split)
-CLIENT_YUM24_INSTALLONLY = \
-    Option('YUM24 install-only packages',
-           default=['kernel', 'kernel-bigmem', 'kernel-enterprise',
-                    'kernel-smp', 'kernel-modules', 'kernel-debug',
-                    'kernel-unsupported', 'kernel-devel', 'kernel-source',
-                    'kernel-default', 'kernel-largesmp-devel',
-                    'kernel-largesmp', 'kernel-xen', 'gpg-pubkey'],
-           cf=('YUM24', 'installonlypackages'),
-           cook=list_split)
-CLIENT_YUM24_PKG_CHECKS = \
-    Option("Perform YUM24 package checks",
-           default=True,
-           cf=('YUM24', 'pkg_checks'),
-           cook=get_bool)
-CLIENT_YUM24_PKG_VERIFY = \
-    Option("Perform YUM24 package verify",
-           default=True,
-           cf=('YUM24', 'pkg_verify'),
-           cook=get_bool)
-CLIENT_YUM24_INSTALLED_ACTION = \
-    Option("YUM24 installed action",
-           default="install",
-           cf=('YUM24', 'installed_action'))
-CLIENT_YUM24_ERASE_FLAGS = \
-    Option("YUM24 erase flags",
-           default=["allmatches"],
-           cf=('YUM24', 'erase_flags'),
-           cook=list_split)
-CLIENT_YUM24_VERSION_FAIL_ACTION = \
-    Option("YUM24 version fail action",
-           cf=('YUM24', 'version_fail_action'),
-           default="upgrade")
-CLIENT_YUM24_VERIFY_FAIL_ACTION = \
-    Option("YUM24 verify fail action",
-           default="reinstall",
-           cf=('YUM24', 'verify_fail_action'))
-CLIENT_YUM24_VERIFY_FLAGS = \
-    Option("YUM24 verify flags",
-           default=[],
-           cf=('YUM24', 'verify_flags'),
-           cook=list_split)
-CLIENT_YUM24_AUTODEP = \
-    Option("YUM24 autodependency processing",
-           default=True,
-           cf=('YUM24', 'autodep'),
-           cook=get_bool)
 CLIENT_YUM_PKG_CHECKS = \
     Option("Perform YUM package checks",
            default=True,
            cf=('YUM', 'pkg_checks'),
-           deprecated_cf=('YUMng', 'pkg_checks'),
            cook=get_bool)
 CLIENT_YUM_PKG_VERIFY = \
     Option("Perform YUM package verify",
            default=True,
            cf=('YUM', 'pkg_verify'),
-           deprecated_cf=('YUMng', 'pkg_verify'),
            cook=get_bool)
 CLIENT_YUM_INSTALLED_ACTION = \
     Option("YUM installed action",
            default="install",
-           cf=('YUM', 'installed_action'),
-           deprecated_cf=('YUMng', 'installed_action'))
+           cf=('YUM', 'installed_action'))
 CLIENT_YUM_VERSION_FAIL_ACTION = \
     Option("YUM version fail action",
            default="upgrade",
-           cf=('YUM', 'version_fail_action'),
-           deprecated_cf=('YUMng', 'version_fail_action'))
+           cf=('YUM', 'version_fail_action'))
 CLIENT_YUM_VERIFY_FAIL_ACTION = \
     Option("YUM verify fail action",
            default="reinstall",
-           cf=('YUM', 'verify_fail_action'),
-           deprecated_cf=('YUMng', 'verify_fail_action'))
+           cf=('YUM', 'verify_fail_action'))
 CLIENT_YUM_VERIFY_FLAGS = \
     Option("YUM verify flags",
            default=[],
            cf=('YUM', 'verify_flags'),
-           deprecated_cf=('YUMng', 'verify_flags'),
            cook=list_split)
 CLIENT_POSIX_UID_WHITELIST = \
     Option("UID ranges the POSIXUsers tool will manage",
@@ -1181,6 +1108,14 @@ CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
                      cfg=CRYPT_CFG,
                      remove=CRYPT_REMOVE)
 
+PATH_METADATA_OPTIONS = dict(owner=MDATA_OWNER,
+                             group=MDATA_GROUP,
+                             mode=MDATA_MODE,
+                             secontext=MDATA_SECONTEXT,
+                             important=MDATA_IMPORTANT,
+                             paranoid=MDATA_PARANOID,
+                             sensitive=MDATA_SENSITIVE)
+
 DRIVER_OPTIONS = \
     dict(apt_install_path=CLIENT_APT_TOOLS_INSTALL_PATH,
          apt_var_path=CLIENT_APT_TOOLS_VAR_PATH,
@@ -1194,15 +1129,6 @@ DRIVER_OPTIONS = \
          rpm_version_fail_action=CLIENT_RPM_VERSION_FAIL_ACTION,
          rpm_verify_fail_action=CLIENT_RPM_VERIFY_FAIL_ACTION,
          rpm_verify_flags=CLIENT_RPM_VERIFY_FLAGS,
-         yum24_installonly=CLIENT_YUM24_INSTALLONLY,
-         yum24_pkg_checks=CLIENT_YUM24_PKG_CHECKS,
-         yum24_pkg_verify=CLIENT_YUM24_PKG_VERIFY,
-         yum24_installed_action=CLIENT_YUM24_INSTALLED_ACTION,
-         yum24_erase_flags=CLIENT_YUM24_ERASE_FLAGS,
-         yum24_version_fail_action=CLIENT_YUM24_VERSION_FAIL_ACTION,
-         yum24_verify_fail_action=CLIENT_YUM24_VERIFY_FAIL_ACTION,
-         yum24_verify_flags=CLIENT_YUM24_VERIFY_FLAGS,
-         yum24_autodep=CLIENT_YUM24_AUTODEP,
          yum_pkg_checks=CLIENT_YUM_PKG_CHECKS,
          yum_pkg_verify=CLIENT_YUM_PKG_VERIFY,
          yum_installed_action=CLIENT_YUM_INSTALLED_ACTION,
@@ -1281,10 +1207,11 @@ INFO_COMMON_OPTIONS.update(CLI_COMMON_OPTIONS)
 INFO_COMMON_OPTIONS.update(SERVER_COMMON_OPTIONS)
 
 class OptionParser(OptionSet):
-    """
-       OptionParser bootstraps option parsing,
-       getting the value of the config file
-    """
+    """ OptionParser bootstraps option parsing, getting the value of
+    the config file.  This should only be instantiated by
+    :func:`get_option_parser`, below, not by individual plugins or
+    scripts. """
+
     def __init__(self, args, argv=None, quiet=False):
         if argv is None:
             argv = sys.argv[1:]
@@ -1299,25 +1226,73 @@ class OptionParser(OptionSet):
         self.argv = []
         self.do_getopt = True
 
-    def reparse(self):
+    def reparse(self, argv=None, do_getopt=None):
         """ parse the options again, taking any changes (e.g., to the
         config file) into account """
+        self.parse(argv=argv, do_getopt=do_getopt)
+
+    def parse(self, argv=None, do_getopt=None):
         for key, opt in self.optinfo.items():
             self[key] = opt
-        if "args" not in self.optinfo:
+        if "args" not in self.optinfo and "args" in self:
             del self['args']
-        self.parse(self.argv, self.do_getopt)
-
-    def parse(self, argv, do_getopt=True):
-        self.argv = argv
-        self.do_getopt = do_getopt
-        OptionSet.parse(self, self.argv, do_getopt=self.do_getopt)
+        self.argv = argv or sys.argv[1:]
+        if self.do_getopt is None:
+            if do_getopt:
+                self.do_getopt = do_getopt
+            else:
+                self.do_getopt = True
+        if do_getopt is None:
+            do_getopt = self.do_getopt
+        OptionSet.parse(self, self.argv, do_getopt=do_getopt)
 
     def add_option(self, name, opt):
         """ Add an option to the parser """
         self[name] = opt
         self.optinfo[name] = opt
 
+    def add_options(self, options):
+        """ Add a set of options to the parser """
+        self.update(options)
+        self.optinfo.update(options)
+
     def update(self, optdict):
         dict.update(self, optdict)
         self.optinfo.update(optdict)
+
+
+#: A module-level OptionParser object that all plugins, etc., can use.
+#: This should not be used directly, but retrieved via
+#: :func:`get_option_parser`.
+_PARSER = None
+
+
+def load_option_parser(args, argv=None, quiet=False):
+    """ Load an :class:`Bcfg2.Options.OptionParser` object, caching it
+    in :attr:`_PARSER` for later retrieval via
+    :func:`get_option_parser`.
+
+    :param args: The argument set to parse.
+    :type args: dict of :class:`Bcfg2.Options.Option` objects
+    :param argv: The command-line argument list.  If this is not
+                 provided, :attr:`sys.argv` will be used.
+    :type argv: list of strings
+    :param quiet: Be quiet when bootstrapping the argument parser.
+    :type quiet: bool
+    :returns: :class:`Bcfg2.Options.OptionParser`
+    """
+    global _PARSER  # pylint: disable=W0603
+    _PARSER = OptionParser(args, argv=argv, quiet=quiet)
+    return _PARSER
+
+
+def get_option_parser():
+    """ Get an already-created :class:`Bcfg2.Options.OptionParser` object.  If
+    :attr:`_PARSER` has not been populated, then a new OptionParser
+    will be created with basic arguments.
+
+    :returns: :class:`Bcfg2.Options.OptionParser`
+    """
+    if _PARSER is None:
+        return load_option_parser(CLI_COMMON_OPTIONS)
+    return _PARSER

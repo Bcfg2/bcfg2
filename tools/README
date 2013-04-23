@@ -3,9 +3,6 @@ This directory contains repository maintenance tools.
 basebuilder.py <image directory>
     - builds v2 base.xml from bcfg1 repo
 
-batchadd.py <filename>
-    - Add records to Hostbase
-
 bcfg2-completion.bash
     - Bash tab completion for bcfg2-admin
 
@@ -60,15 +57,6 @@ export.sh
 
 generate-manpages.bash
     - Generate man pages from the Sphinx source
-
-hostbasepush.py
-    - Call the Hostbase.rebuildState XML-RPC method
-
-hostbase.py {-l|-c} <hostname>
-    - Display or create host information for Hostbase
-
-hostinfo.py {-q <query>|--showfields}
-    - Query the hostbase databse
 
 pkgmgr_gen.py
     - Generate Pkgmgr XML files from a list of directories that

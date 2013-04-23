@@ -20,8 +20,8 @@ def main():
         )
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.REPORTING_COMMON_OPTIONS)
-    setup = Bcfg2.Options.OptionParser(optinfo)
-    setup.parse(sys.argv[1:])
+    setup = Bcfg2.Options.load_option_parser(optinfo)
+    setup.parse()
 
     # run collector
     try:

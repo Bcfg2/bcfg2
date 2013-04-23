@@ -42,27 +42,25 @@ class TestCfgAuthorizedKeysGenerator(TestCfgGenerator, TestStructFile):
 
     def test_category(self):
         akg = self.get_obj()
-        cfp = Mock()
-        cfp.has_section.return_value = False
-        cfp.has_option.return_value = False
-        Bcfg2.Server.Plugins.Cfg.CfgAuthorizedKeysGenerator.SETUP = Mock()
-        Bcfg2.Server.Plugins.Cfg.CfgAuthorizedKeysGenerator.SETUP.cfp = cfp
+        akg.setup = Mock()
+        akg.setup.cfp.has_section.return_value = False
+        akg.setup.cfp.has_option.return_value = False
 
         self.assertIsNone(akg.category)
-        cfp.has_section.assert_called_with("sshkeys")
+        akg.setup.cfp.has_section.assert_called_with("sshkeys")
 
-        cfp.reset_mock()
-        cfp.has_section.return_value = True
+        akg.setup.reset_mock()
+        akg.setup.cfp.has_section.return_value = True
         self.assertIsNone(akg.category)
-        cfp.has_section.assert_called_with("sshkeys")
-        cfp.has_option.assert_called_with("sshkeys", "category")
+        akg.setup.cfp.has_section.assert_called_with("sshkeys")
+        akg.setup.cfp.has_option.assert_called_with("sshkeys", "category")
 
-        cfp.reset_mock()
-        cfp.has_option.return_value = True
-        self.assertEqual(akg.category, cfp.get.return_value)
-        cfp.has_section.assert_called_with("sshkeys")
-        cfp.has_option.assert_called_with("sshkeys", "category")
-        cfp.get.assert_called_with("sshkeys", "category")
+        akg.setup.reset_mock()
+        akg.setup.cfp.has_option.return_value = True
+        self.assertEqual(akg.category, akg.setup.cfp.get.return_value)
+        akg.setup.cfp.has_section.assert_called_with("sshkeys")
+        akg.setup.cfp.has_option.assert_called_with("sshkeys", "category")
+        akg.setup.cfp.get.assert_called_with("sshkeys", "category")
 
     @patch("Bcfg2.Server.Plugins.Cfg.CfgAuthorizedKeysGenerator.ClientMetadata")
     @patch("Bcfg2.Server.Plugins.Cfg.CfgAuthorizedKeysGenerator.CfgAuthorizedKeysGenerator.category", "category")

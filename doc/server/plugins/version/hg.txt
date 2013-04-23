@@ -22,4 +22,4 @@ You will need to install Mercurial on the Bcfg2 server first.
 Simply add Hg to your plugins line in ``/etc/bcfg2.conf``::
 
     [server]
-    plugins = Base,Bundler,Cfg,...,Hg
+    plugins = Bundler,Cfg,...,Hg

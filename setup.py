@@ -18,7 +18,7 @@ version = sys.version_info[:2]
 if version < (2, 6):
     need_m2crypto = True
 
-inst_reqs = ['lxml']
+inst_reqs = ['lxml', 'genshi']
 if need_m2crypto:
     inst_reqs.append('M2Crypto')
 
@@ -41,8 +41,6 @@ setup(name="Bcfg2",
                 'Bcfg2.Server',
                 "Bcfg2.Server.Admin",
                 "Bcfg2.Server.FileMonitor",
-                "Bcfg2.Server.Hostbase",
-                "Bcfg2.Server.Hostbase.hostbase",
                 "Bcfg2.Server.Lint",
                 "Bcfg2.Server.Plugin",
                 "Bcfg2.Server.Plugins",
@@ -50,7 +48,6 @@ setup(name="Bcfg2",
                 "Bcfg2.Server.Plugins.Cfg",
                 "Bcfg2.Server.Reports",
                 "Bcfg2.Server.Reports.reports",
-                "Bcfg2.Server.Snapshots",
                 ],
       install_requires=inst_reqs,
       tests_require=['mock', 'nose', 'sqlalchemy'],
@@ -69,12 +66,6 @@ setup(name="Bcfg2",
                   ('share/man/man1', glob("man/bcfg2.1")),
                   ('share/man/man5', glob("man/*.5")),
                   ('share/man/man8', glob("man/*.8")),
-                  ('share/bcfg2/Hostbase/templates',
-                   glob('src/lib/Bcfg2/Server/Hostbase/hostbase/webtemplates/*.*')),
-                  ('share/bcfg2/Hostbase/templates/hostbase',
-                   glob('src/lib/Bcfg2/Server/Hostbase/hostbase/webtemplates/hostbase/*')),
-                  ('share/bcfg2/Hostbase/repo',
-                   glob('src/lib/Bcfg2/Server/Hostbase/templates/*')),
                   ('share/bcfg2/site_media',
                    glob('reports/site_media/*')),
                   ]

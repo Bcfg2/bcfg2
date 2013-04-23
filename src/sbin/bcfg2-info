@@ -115,9 +115,9 @@ def load_interpreters():
 
 class InfoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
     """Main class for bcfg2-info."""
-    def __init__(self, setup):
+    def __init__(self):
         cmd.Cmd.__init__(self)
-        Bcfg2.Server.Core.BaseCore.__init__(self, setup=setup)
+        Bcfg2.Server.Core.BaseCore.__init__(self)
         self.prompt = '> '
         self.cont = True
         self.fam.handle_events_in_interval(4)
@@ -281,9 +281,8 @@ Bcfg2 client itself.""")
             posix = Bcfg2.Client.Tools.POSIX.POSIX(MockLog(),
                                                    self.setup,
                                                    client_config)
-            states = dict()
-            posix.Inventory(states)
-            posix.Install(list(states.keys()), states)
+            states = posix.Inventory()
+            posix.Install(list(states.keys()))
         else:
             print('Error: Incorrect number of parameters.')
             self.help_builddir()
@@ -776,12 +775,12 @@ def main():
         sys.exit(0)
     elif setup['profile'] and HAS_PROFILE:
         prof = profile.Profile()
-        loop = prof.runcall(InfoCore, setup)
+        loop = prof.runcall(InfoCore)
         display_trace(prof)
     else:
         if setup['profile']:
             print("Profiling functionality not available.")
-        loop = InfoCore(setup)
+        loop = InfoCore()
 
     loop.run(setup['args'])
 

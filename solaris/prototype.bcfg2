@@ -4,8 +4,6 @@ d none lib/PYVERSION 0755 root bin
 d none lib/PYVERSION/site-packages 0755 root bin
 d none lib/PYVERSION/site-packages/Bcfg2 0755 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/__init__.py 0644 bin bin
-f none lib/PYVERSION/site-packages/Bcfg2/Statistics.py 0644 bin bin
-f none lib/PYVERSION/site-packages/Bcfg2/SSLServer.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Component.py 0644 bin bin
 d none lib/PYVERSION/site-packages/Bcfg2/Client 0755 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/XML.py 0644 bin bin
@@ -13,7 +11,7 @@ d none lib/PYVERSION/site-packages/Bcfg2/Client/Tools 0755 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/Action.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/IPS.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/FreeBSDInit.py 0644 bin bin
-f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/RPMng.py 0644 bin bin
+f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/RPM.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/Chkconfig.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/RcUpdate.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/APT.py 0644 bin bin
@@ -24,15 +22,15 @@ f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/rpmtools.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/launchd.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/FreeBSDPackage.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/Blast.py 0644 bin bin
-f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/YUMng.py 0644 bin bin
+f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/YUM.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/Portage.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/DebInit.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/Encap.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Tools/SMF.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/__init__.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Client/Frame.py 0644 bin bin
+f none lib/PYVERSION/site-packages/Bcfg2/Client/Proxy.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Logger.py 0644 bin bin
-f none lib/PYVERSION/site-packages/Bcfg2/Proxy.py 0644 bin bin
 f none lib/PYVERSION/site-packages/Bcfg2/Options.py 0644 bin bin
 d none bin 0755 root bin
 f none bin/bcfg2 0755 bin bin

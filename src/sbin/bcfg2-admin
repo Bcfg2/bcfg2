@@ -42,7 +42,7 @@ def main():
     optinfo = dict()
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
-    setup = Bcfg2.Options.OptionParser(optinfo)
+    setup = Bcfg2.Options.load_option_parser(optinfo)
     # override default help message to include description of all modes
     setup.hm = "Usage:\n\n%s\n%s" % (setup.buildHelpMessage(),
                                      create_description())
@@ -81,7 +81,7 @@ def main():
             err = sys.exc_info()[1]
             log.error("Failed to load admin mode %s: %s" % (modname, err))
             raise SystemExit(1)
-        mode = mode_cls(setup)
+        mode = mode_cls()
         try:
             mode(setup['args'][1:])
         finally:

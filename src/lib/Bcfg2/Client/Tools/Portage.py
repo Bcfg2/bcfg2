@@ -17,14 +17,13 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
                                      ['name', 'version']))
     pkgtool = ('emerge %s', ('=%s-%s', ['name', 'version']))
 
-    def __init__(self, logger, cfg, setup):
+    def __init__(self, config):
         self._initialised = False
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup)
+        Bcfg2.Client.Tools.PkgTool.__init__(self, config)
         self._initialised = True
         self.__important__ = self.__important__ + ['/etc/make.conf']
         self._pkg_pattern = re.compile('(.*)-(\d.*)')
         self._ebuild_pattern = re.compile('(ebuild|binary)')
-        self.cfg = cfg
         self.installed = {}
         self._binpkgonly = self.setup.get('portage_binpkgonly', False)
         if self._binpkgonly:

@@ -12,8 +12,8 @@ class launchd(Bcfg2.Client.Tools.Tool):  # pylint: disable=C0103
     __execs__ = ['/bin/launchctl', '/usr/bin/defaults']
     __req__ = {'Service': ['name', 'status']}
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        Bcfg2.Client.Tools.Tool.__init__(self, config)
 
         # Locate plist file that provides given reverse-fqdn name:
         #
@@ -117,9 +117,11 @@ class launchd(Bcfg2.Client.Tools.Tool):  # pylint: disable=C0103
                                          status='on')
                 for name in allsrv]
 
-    def BundleUpdated(self, bundle, states):
+    def BundleUpdated(self, bundle):
         """Reload launchd plist."""
-        for entry in [entry for entry in bundle if self.handlesEntry(entry)]:
+        for entry in bundle:
+            if not self.handlesEntry(entry):
+                continue
             if not self.canInstall(entry):
                 self.logger.error("Insufficient information to restart "
                                   "service %s" % entry.get('name'))

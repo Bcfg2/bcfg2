@@ -10,8 +10,7 @@ try:
     import pysvn
     HAS_SVN = True
 except ImportError:
-    import pipes
-    from subprocess import Popen, PIPE
+    from Bcfg2.Utils import Executor
     HAS_SVN = False
 
 
@@ -29,10 +28,12 @@ class Svn(Bcfg2.Server.Plugin.Version):
 
         self.revision = None
         self.svn_root = None
+        self.client = None
+        self.cmd = None
         if not HAS_SVN:
             self.logger.debug("Svn: PySvn not found, using CLI interface to "
                               "SVN")
-            self.client = None
+            self.cmd = Executor()
         else:
             self.client = pysvn.Client()
             # pylint: disable=E1101
@@ -84,15 +85,16 @@ class Svn(Bcfg2.Server.Plugin.Version):
             except pysvn.ClientError:  # pylint: disable=E1101
                 msg = "Svn: Failed to get revision: %s" % sys.exc_info()[1]
         else:
-            try:
-                data = Popen("env LC_ALL=C svn info %s" %
-                             pipes.quote(self.vcs_root), shell=True,
-                             stdout=PIPE).communicate()[0].split('\n')
-                return [line.split(': ')[1] for line in data
-                        if line[:9] == 'Revision:'][-1]
-            except IndexError:
-                msg = "Failed to read svn info"
-                self.logger.error('Ran command "svn info %s"' % self.vcs_root)
+            result = self.cmd.run(["env LC_ALL=C", "svn", "info",
+                                   self.vcs_root],
+                                  shell=True)
+            if result.success:
+                self.revision = [line.split(': ')[1]
+                                 for line in result.stdout.splitlines()
+                                 if line.startswith('Revision:')][-1]
+                return self.revision
+            else:
+                msg = "Failed to read svn info: %s" % result.error
         self.revision = None
         raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
 

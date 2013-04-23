@@ -325,6 +325,45 @@ class FileMonitor(Debuggable):
         return rv
 
 
+#: A module-level FAM object that all plugins, etc., can use.  This
+#: should not be used directly, but retrieved via :func:`get_fam`.
+_FAM = None
+
+
+def load_fam(filemonitor='default', ignore=None, debug=False):
+    """ Load a new :class:`Bcfg2.Server.FileMonitor.FileMonitor`
+    object, caching it in :attr:`_FAM` for later retrieval via
+    :func:`get_fam`.
+
+    :param filemonitor: Which filemonitor backend to use
+    :type filemonitor: string
+    :param ignore: A list of filenames to ignore
+    :type ignore: list of strings (filename globs)
+    :param debug: Produce debugging information
+    :type debug: bool
+    :returns: :class:`Bcfg2.Server.FileMonitor.FileMonitor`
+    """
+    global _FAM  # pylint: disable=W0603
+    if _FAM is None:
+        if ignore is None:
+            ignore = []
+        _FAM = available[filemonitor](ignore=ignore, debug=debug)
+    return _FAM
+
+
+def get_fam():
+    """ Get an already-created
+    :class:`Bcfg2.Server.FileMonitor.FileMonitor` object.  If
+    :attr:`_FAM` has not been populated, then a new default
+    FileMonitor will be created.
+
+    :returns: :class:`Bcfg2.Server.FileMonitor.FileMonitor`
+    """
+    if _FAM is None:
+        return load_fam('default')
+    return _FAM
+
+
 #: A dict of all available FAM backends.  Keys are the human-readable
 #: names of the backends, which are used in bcfg2.conf to select a
 #: backend; values are the backend classes.  In addition, the
@@ -335,12 +374,6 @@ available = dict()  # pylint: disable=C0103
 # TODO: loading the monitor drivers should be automatic
 from Bcfg2.Server.FileMonitor.Pseudo import Pseudo
 available['pseudo'] = Pseudo
-
-try:
-    from Bcfg2.Server.FileMonitor.Fam import Fam
-    available['fam'] = Fam
-except ImportError:
-    pass
 
 try:
     from Bcfg2.Server.FileMonitor.Gamin import Gamin

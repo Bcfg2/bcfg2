@@ -1,4 +1,0 @@
-{% if fileorigin %}$ORIGIN {{ fileorigin }}.in-addr.arpa.{% endif %}
-$ORIGIN {{ inaddr }}.in-addr.arpa.
-{% for host in hosts %}{{ host.0.3 }}			PTR	{{ host.1 }}.
-{% endfor %}

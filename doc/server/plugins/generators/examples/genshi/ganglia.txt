@@ -33,7 +33,7 @@ Bundler/ganglia.xml
 
 .. code-block:: xml
 
-    <Bundle name='ganglia'>
+    <Bundle>
         <Package name='ganglia-gmond' />
         <Package name='ganglia-gmond-modules-python' />
         <Path name='/etc/ganglia/gmond.conf' />

@@ -23,9 +23,8 @@ def safe_module_name(module):
 class HelperModule(object):
     """ Representation of a TemplateHelper module """
 
-    def __init__(self, name, fam=None):
+    def __init__(self, name):
         self.name = name
-        self.fam = fam
 
         #: The name of the module as used by get_additional_data().
         #: the name of the file with .py stripped off.
@@ -89,7 +88,7 @@ class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
-        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, core.fam)
+        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data)
 
     def get_additional_data(self, _):
         return dict([(h._module_name, h)  # pylint: disable=W0212

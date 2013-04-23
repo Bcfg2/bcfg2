@@ -18,32 +18,25 @@ class Rules(Bcfg2.Server.Plugin.PrioDir):
                                  self.Entries[entry.tag].keys())
         return False
 
-    def BindEntry(self, entry, metadata):
-        attrs = self.get_attrs(entry, metadata)
-        for key, val in list(attrs.items()):
-            if key not in entry.attrib:
-                entry.attrib[key] = val
+    HandleEntry = Bcfg2.Server.Plugin.PrioDir.BindEntry
 
-    HandleEntry = BindEntry
-
-    def _matches(self, entry, metadata, rules):
-        if Bcfg2.Server.Plugin.PrioDir._matches(self, entry, metadata, rules):
+    def _matches(self, entry, metadata, candidate):
+        if Bcfg2.Server.Plugin.PrioDir._matches(self, entry, metadata,
+                                                candidate):
             return True
         elif (entry.tag == "Path" and
-              ((entry.get('name').endswith("/") and
-                entry.get('name').rstrip("/") in rules) or
-               (not entry.get('name').endswith("/") and
-                entry.get('name') + '/' in rules))):
+              entry.get('name').rstrip("/") == \
+                  candidate.get("name").rstrip("/")):
             # special case for Path tags:
             # http://trac.mcs.anl.gov/projects/bcfg2/ticket/967
             return True
         elif self._regex_enabled:
             # attempt regular expression matching
-            for rule in rules:
-                if rule not in self._regex_cache:
-                    self._regex_cache[rule] = re.compile("%s$" % rule)
-                if self._regex_cache[rule].match(entry.get('name')):
-                    return True
+            rule = candidate.get("name")
+            if rule not in self._regex_cache:
+                self._regex_cache[rule] = re.compile("%s$" % rule)
+            if self._regex_cache[rule].match(entry.get('name')):
+                return True
         return False
 
     @property

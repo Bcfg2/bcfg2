@@ -4,14 +4,14 @@ import os
 import re
 import sys
 import copy
-import time
 import glob
+import genshi
 import logging
 import operator
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Options
-import Bcfg2.Statistics
+import Bcfg2.Server.FileMonitor
 from Bcfg2.Compat import CmpMixin, wraps
 from Bcfg2.Server.Plugin.base import Debuggable, Plugin
 from Bcfg2.Server.Plugin.interfaces import Generator
@@ -19,101 +19,46 @@ from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
     PluginExecutionError
 
 try:
+    import Bcfg2.Server.Encryption
+    HAS_CRYPTO = True
+except ImportError:
+    HAS_CRYPTO = False
+
+try:
     import django  # pylint: disable=W0611
     HAS_DJANGO = True
 except ImportError:
     HAS_DJANGO = False
 
-#: A dict containing default metadata for Path entries from bcfg2.conf
-DEFAULT_FILE_METADATA = Bcfg2.Options.OptionParser(dict(
-        configfile=Bcfg2.Options.CFILE,
-        owner=Bcfg2.Options.MDATA_OWNER,
-        group=Bcfg2.Options.MDATA_GROUP,
-        mode=Bcfg2.Options.MDATA_MODE,
-        secontext=Bcfg2.Options.MDATA_SECONTEXT,
-        important=Bcfg2.Options.MDATA_IMPORTANT,
-        paranoid=Bcfg2.Options.MDATA_PARANOID,
-        sensitive=Bcfg2.Options.MDATA_SENSITIVE))
-DEFAULT_FILE_METADATA.parse([Bcfg2.Options.CFILE.cmd, Bcfg2.Options.CFILE])
-del DEFAULT_FILE_METADATA['args']
-del DEFAULT_FILE_METADATA['configfile']
-
 LOGGER = logging.getLogger(__name__)
 
-#: a compiled regular expression for parsing info and :info files
-INFO_REGEX = re.compile('owner:(\s)*(?P<owner>\S+)|' +
-                        'group:(\s)*(?P<group>\S+)|' +
-                        'mode:(\s)*(?P<mode>\w+)|' +
-                        'secontext:(\s)*(?P<secontext>\S+)|' +
-                        'paranoid:(\s)*(?P<paranoid>\S+)|' +
-                        'sensitive:(\s)*(?P<sensitive>\S+)|' +
-                        'encoding:(\s)*(?P<encoding>\S+)|' +
-                        'important:(\s)*(?P<important>\S+)|' +
-                        'mtime:(\s)*(?P<mtime>\w+)|')
 
+def removecomment(stream):
+    """ A Genshi filter that removes comments from the stream.  This
+    function is a generator.
 
-def bind_info(entry, metadata, infoxml=None, default=DEFAULT_FILE_METADATA):
-    """ Bind the file metadata in the given
-    :class:`Bcfg2.Server.Plugin.helpers.InfoXML` object to the given
-    entry.
-
-    :param entry: The abstract entry to bind the info to
-    :type entry: lxml.etree._Element
-    :param metadata: The client metadata to get info for
-    :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-    :param infoxml: The info.xml file to pull file metadata from
-    :type infoxml: Bcfg2.Server.Plugin.helpers.InfoXML
-    :param default: Default metadata to supply when the info.xml file
-                    does not include a particular attribute
-    :type default: dict
-    :returns: None
-    :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
+    :param stream: The Genshi stream to remove comments from
+    :type stream: genshi.core.Stream
+    :returns: tuple of ``(kind, data, pos)``, as when iterating
+              through a Genshi stream
     """
-    for attr, val in list(default.items()):
-        entry.set(attr, val)
-    if infoxml:
-        mdata = dict()
-        infoxml.pnode.Match(metadata, mdata, entry=entry)
-        if 'Info' not in mdata:
-            msg = "Failed to set metadata for file %s" % entry.get('name')
-            LOGGER.error(msg)
-            raise PluginExecutionError(msg)
-        for attr, val in list(mdata['Info'][None].items()):
-            entry.set(attr, val)
+    for kind, data, pos in stream:
+        if kind is genshi.core.COMMENT:
+            continue
+        yield kind, data, pos
 
 
-class track_statistics(object):  # pylint: disable=C0103
-    """ Decorator that tracks execution time for the given
-    :class:`Plugin` method with :mod:`Bcfg2.Statistics` for reporting
-    via ``bcfg2-admin perf`` """
+def default_path_metadata():
+    """ Get the default Path entry metadata from the config.
 
-    def __init__(self, name=None):
-        """
-        :param name: The name under which statistics for this function
-                     will be tracked.  By default, the name will be
-                     the name of the function concatenated with the
-                     name of the class the function is a member of.
-        :type name: string
-        """
-        # if this is None, it will be set later during __call_
-        self.name = name
-
-    def __call__(self, func):
-        if self.name is None:
-            self.name = func.__name__
-
-        @wraps(func)
-        def inner(obj, *args, **kwargs):
-            """ The decorated function """
-            name = "%s:%s" % (obj.__class__.__name__, self.name)
-
-            start = time.time()
-            try:
-                return func(obj, *args, **kwargs)
-            finally:
-                Bcfg2.Statistics.stats.add_value(name, time.time() - start)
-
-        return inner
+    :returns: dict of metadata attributes and their default values
+    """
+    attrs = Bcfg2.Options.PATH_METADATA_OPTIONS.keys()
+    setup = Bcfg2.Options.get_option_parser()
+    if not set(attrs).issubset(setup.keys()):
+        setup.add_options(Bcfg2.Options.PATH_METADATA_OPTIONS)
+        setup.reparse(argv=[Bcfg2.Options.CFILE.cmd, Bcfg2.Options.CFILE])
+    return dict([(k, setup[k]) for k in attrs])
 
 
 class DatabaseBacked(Plugin):
@@ -193,20 +138,17 @@ class PluginDatabaseModel(object):
         app_label = "Server"
 
 
-class FileBacked(object):
+class FileBacked(Debuggable):
     """ This object caches file data in memory. FileBacked objects are
     principally meant to be used as a part of
     :class:`Bcfg2.Server.Plugin.helpers.DirectoryBacked`. """
 
-    def __init__(self, name, fam=None):
+    def __init__(self, name):
         """
         :param name: The full path to the file to cache and monitor
         :type name: string
-        :param fam: The FAM object used to receive notifications of
-                    changes
-        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
         """
-        object.__init__(self)
+        Debuggable.__init__(self)
 
         #: A string containing the raw data in this file
         self.data = ''
@@ -215,7 +157,7 @@ class FileBacked(object):
         self.name = name
 
         #: The FAM object used to receive notifications of changes
-        self.fam = fam
+        self.fam = Bcfg2.Server.FileMonitor.get_fam()
 
     def HandleEvent(self, event=None):
         """ HandleEvent is called whenever the FAM registers an event.
@@ -231,10 +173,10 @@ class FileBacked(object):
             self.Index()
         except IOError:
             err = sys.exc_info()[1]
-            LOGGER.error("Failed to read file %s: %s" % (self.name, err))
+            self.logger.error("Failed to read file %s: %s" % (self.name, err))
         except:
             err = sys.exc_info()[1]
-            LOGGER.error("Failed to parse file %s: %s" % (self.name, err))
+            self.logger.error("Failed to parse file %s: %s" % (self.name, err))
 
     def Index(self):
         """ Index() is called by :func:`HandleEvent` every time the
@@ -268,14 +210,11 @@ class DirectoryBacked(object):
     #: :attr:`patterns` or ``ignore``, then a warning will be produced.
     ignore = None
 
-    def __init__(self, data, fam):
+    def __init__(self, data):
         """
         :param data: The path to the data directory that will be
                      monitored
         :type data: string
-        :param fam: The FAM object used to receive notifications of
-                    changes
-        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
 
         .. -----
         .. autoattribute:: __child__
@@ -283,7 +222,7 @@ class DirectoryBacked(object):
         object.__init__(self)
 
         self.data = os.path.normpath(data)
-        self.fam = fam
+        self.fam = Bcfg2.Server.FileMonitor.get_fam()
 
         #: self.entries contains information about the files monitored
         #: by this object. The keys of the dict are the relative
@@ -337,8 +276,7 @@ class DirectoryBacked(object):
         :returns: None
         """
         self.entries[relative] = self.__child__(os.path.join(self.data,
-                                                             relative),
-                                                self.fam)
+                                                             relative))
         self.entries[relative].HandleEvent(event)
 
     def HandleEvent(self, event):  # pylint: disable=R0912
@@ -459,13 +397,10 @@ class XMLFileBacked(FileBacked):
     #: behavior, set ``__identifier__`` to ``None``.
     __identifier__ = 'name'
 
-    def __init__(self, filename, fam=None, should_monitor=False):
+    def __init__(self, filename, should_monitor=False):
         """
         :param filename: The full path to the file to cache and monitor
         :type filename: string
-        :param fam: The FAM object used to receive notifications of
-                    changes
-        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
         :param should_monitor: Whether or not to monitor this file for
                                changes. It may be useful to disable
                                monitoring when, for instance, the file
@@ -478,7 +413,7 @@ class XMLFileBacked(FileBacked):
         .. -----
         .. autoattribute:: __identifier__
         """
-        FileBacked.__init__(self, filename, fam=fam)
+        FileBacked.__init__(self, filename)
 
         #: The raw XML data contained in the file as an
         #: :class:`lxml.etree.ElementTree` object, with XIncludes
@@ -499,7 +434,7 @@ class XMLFileBacked(FileBacked):
 
         #: Whether or not to monitor this file for changes.
         self.should_monitor = should_monitor
-        if fam and should_monitor:
+        if should_monitor:
             self.fam.AddMonitor(filename, self)
 
     def _follow_xincludes(self, fname=None, xdata=None):
@@ -528,9 +463,9 @@ class XMLFileBacked(FileBacked):
             if not extras:
                 msg = "%s: %s does not exist, skipping" % (self.name, name)
                 if el.findall('./%sfallback' % Bcfg2.Server.XI_NAMESPACE):
-                    LOGGER.debug(msg)
+                    self.logger.debug(msg)
                 else:
-                    LOGGER.warning(msg)
+                    self.logger.warning(msg)
 
             parent = el.getparent()
             parent.remove(el)
@@ -550,7 +485,8 @@ class XMLFileBacked(FileBacked):
                 self.xdata.getroottree().xinclude()
             except lxml.etree.XIncludeError:
                 err = sys.exc_info()[1]
-                LOGGER.error("XInclude failed on %s: %s" % (self.name, err))
+                self.logger.error("XInclude failed on %s: %s" % (self.name,
+                                                                 err))
 
         self.entries = self.xdata.getchildren()
         if self.__identifier__ is not None:
@@ -567,7 +503,7 @@ class XMLFileBacked(FileBacked):
         :returns: None
         """
         self.extras.append(fpath)
-        if self.fam and self.should_monitor:
+        if self.should_monitor:
             self.fam.AddMonitor(fpath, self)
 
     def __iter__(self):
@@ -580,43 +516,173 @@ class XMLFileBacked(FileBacked):
 class StructFile(XMLFileBacked):
     """ StructFiles are XML files that contain a set of structure file
     formatting logic for handling ``<Group>`` and ``<Client>``
-    tags. """
+    tags.
+
+    .. -----
+    .. autoattribute:: __identifier__
+    .. automethod:: _include_element
+    """
 
     #: If ``__identifier__`` is not None, then it must be the name of
     #: an XML attribute that will be required on the top-level tag of
     #: the file being cached
     __identifier__ = None
 
-    def _include_element(self, item, metadata):
-        """ determine if an XML element matches the metadata """
+    #: Callbacks used to determine if children of items with the given
+    #: tags should be included in the return value of
+    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` and
+    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch`.  Each
+    #: callback is passed the same arguments as
+    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile._include_element`.
+    #: It should return True if children of the element should be
+    #: included in the match, False otherwise.  The callback does
+    #: *not* need to consider negation; that will be handled in
+    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile._include_element`
+    _include_tests = \
+        dict(Group=lambda el, md, *args: el.get('name') in md.groups,
+             Client=lambda el, md, *args: el.get('name') == md.hostname)
+
+    def __init__(self, filename, should_monitor=False):
+        XMLFileBacked.__init__(self, filename, should_monitor=should_monitor)
+        self.setup = Bcfg2.Options.get_option_parser()
+        self.encoding = self.setup['encoding']
+        self.template = None
+
+    def Index(self):
+        XMLFileBacked.Index(self)
+        if (self.name.endswith('.genshi') or
+            ('py' in self.xdata.nsmap and
+             self.xdata.nsmap['py'] == 'http://genshi.edgewall.org/')):
+            try:
+                loader = genshi.template.TemplateLoader()
+                self.template = loader.load(self.name,
+                                            cls=genshi.template.MarkupTemplate,
+                                            encoding=self.encoding)
+            except LookupError:
+                err = sys.exc_info()[1]
+                self.logger.error('Genshi lookup error in %s: %s' % (self.name,
+                                                                     err))
+            except genshi.template.TemplateError:
+                err = sys.exc_info()[1]
+                self.logger.error('Genshi template error in %s: %s' %
+                                  (self.name, err))
+            except genshi.input.ParseError:
+                err = sys.exc_info()[1]
+                self.logger.error('Genshi parse error in %s: %s' % (self.name,
+                                                                    err))
+
+        if HAS_CRYPTO:
+            strict = self.xdata.get(
+                "decrypt",
+                self.setup.cfp.get(Bcfg2.Server.Encryption.CFG_SECTION,
+                                   "decrypt", default="strict")) == "strict"
+            for el in self.xdata.xpath("//*[@encrypted]"):
+                try:
+                    el.text = self._decrypt(el).encode('ascii',
+                                                       'xmlcharrefreplace')
+                except UnicodeDecodeError:
+                    self.logger.info("%s: Decrypted %s to gibberish, skipping"
+                                     % (self.name, el.tag))
+                except Bcfg2.Server.Encryption.EVPError:
+                    msg = "Failed to decrypt %s element in %s" % (el.tag,
+                                                                  self.name)
+                    if strict:
+                        raise PluginExecutionError(msg)
+                    else:
+                        self.logger.warning(msg)
+    Index.__doc__ = XMLFileBacked.Index.__doc__
+
+    def _decrypt(self, element):
+        """ Decrypt a single encrypted properties file element """
+        if not element.text or not element.text.strip():
+            return
+        passes = Bcfg2.Server.Encryption.get_passphrases()
+        try:
+            passphrase = passes[element.get("encrypted")]
+            try:
+                return Bcfg2.Server.Encryption.ssl_decrypt(element.text,
+                                                           passphrase)
+            except Bcfg2.Server.Encryption.EVPError:
+                # error is raised below
+                pass
+        except KeyError:
+            # bruteforce_decrypt raises an EVPError with a sensible
+            # error message, so we just let it propagate up the stack
+            return Bcfg2.Server.Encryption.bruteforce_decrypt(element.text)
+        raise Bcfg2.Server.Encryption.EVPError("Failed to decrypt")
+
+    def _include_element(self, item, metadata, *args):
+        """ Determine if an XML element matches the other arguments.
+
+        The first argument is always the XML element to match, and the
+        second will always be a single
+        :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata` object
+        representing the metadata to match against.  Subsequent
+        arguments are as given to
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` or
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch`.  In
+        the base StructFile implementation, there are no additional
+        arguments; in classes that inherit from StructFile, see the
+        :func:`Match` and :func:`XMLMatch` method signatures."""
         if isinstance(item, lxml.etree._Comment):  # pylint: disable=W0212
             return False
-        negate = item.get('negate', 'false').lower() == 'true'
-        if item.tag == 'Group':
-            return negate == (item.get('name') not in metadata.groups)
-        elif item.tag == 'Client':
-            return negate == (item.get('name') != metadata.hostname)
+        if item.tag in self._include_tests:
+            negate = item.get('negate', 'false').lower() == 'true'
+            return negate != self._include_tests[item.tag](item, metadata,
+                                                           *args)
         else:
             return True
 
-    def _match(self, item, metadata):
-        """ recursive helper for Match() """
-        if self._include_element(item, metadata):
-            if item.tag == 'Group' or item.tag == 'Client':
+    def _render(self, metadata):
+        """ Render the template for the given client metadata
+
+        :param metadata: Client metadata to match against.
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: lxml.etree._Element object representing the rendered
+                  XML data
+        """
+        stream = self.template.generate(
+            metadata=metadata,
+            repo=self.setup['repo']).filter(removecomment)
+        return lxml.etree.XML(stream.render('xml',
+                                            strip_whitespace=False),
+                              parser=Bcfg2.Server.XMLParser)
+
+    def _match(self, item, metadata, *args):
+        """ recursive helper for
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` """
+        if self._include_element(item, metadata, *args):
+            if item.tag in self._include_tests.keys():
                 rv = []
-                if self._include_element(item, metadata):
+                if self._include_element(item, metadata, *args):
                     for child in item.iterchildren():
-                        rv.extend(self._match(child, metadata))
+                        rv.extend(self._match(child, metadata, *args))
                 return rv
             else:
                 rv = copy.deepcopy(item)
                 for child in rv.iterchildren():
                     rv.remove(child)
                 for child in item.iterchildren():
-                    rv.extend(self._match(child, metadata))
+                    rv.extend(self._match(child, metadata, *args))
                 return [rv]
         else:
             return []
+
+    def _do_match(self, metadata, *args):
+        """ Helper for
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` that lets
+        a subclass of StructFile easily redefine the public Match()
+        interface to accept a different number of arguments.  This
+        provides a sane prototype for the Match() function while
+        keeping the internals consistent. """
+        rv = []
+        if self.template is None:
+            entries = self.entries
+        else:
+            entries = self._render(metadata).getchildren()
+        for child in entries:
+            rv.extend(self._match(child, metadata, *args))
+        return rv
 
     def Match(self, metadata):
         """ Return matching fragments of the data in this file.  A tag
@@ -628,22 +694,22 @@ class StructFile(XMLFileBacked):
         Match() (and *not* their descendents) should be considered to
         match the metadata.
 
+        Match() returns matching fragments in document order.
+
         :param metadata: Client metadata to match against.
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: list of lxml.etree._Element objects """
-        rv = []
-        for child in self.entries:
-            rv.extend(self._match(child, metadata))
-        return rv
+        return self._do_match(metadata)
 
-    def _xml_match(self, item, metadata):
-        """ recursive helper for XMLMatch """
-        if self._include_element(item, metadata):
-            if item.tag == 'Group' or item.tag == 'Client':
+    def _xml_match(self, item, metadata, *args):
+        """ recursive helper for
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch` """
+        if self._include_element(item, metadata, *args):
+            if item.tag in self._include_tests.keys():
                 for child in item.iterchildren():
                     item.remove(child)
                     item.getparent().append(child)
-                    self._xml_match(child, metadata)
+                    self._xml_match(child, metadata, *args)
                 if item.text:
                     if item.getparent().text is None:
                         item.getparent().text = item.text
@@ -652,9 +718,24 @@ class StructFile(XMLFileBacked):
                 item.getparent().remove(item)
             else:
                 for child in item.iterchildren():
-                    self._xml_match(child, metadata)
+                    self._xml_match(child, metadata, *args)
         else:
             item.getparent().remove(item)
+
+    def _do_xmlmatch(self, metadata, *args):
+        """ Helper for
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch` that lets
+        a subclass of StructFile easily redefine the public Match()
+        interface to accept a different number of arguments.  This
+        provides a sane prototype for the Match() function while
+        keeping the internals consistent. """
+        if self.template is None:
+            rv = copy.deepcopy(self.xdata)
+        else:
+            rv = self._render(metadata)
+        for child in rv.iterchildren():
+            self._xml_match(child, metadata, *args)
+        return rv
 
     def XMLMatch(self, metadata):
         """ Return a rebuilt XML document that only contains the
@@ -665,13 +746,13 @@ class StructFile(XMLFileBacked):
         All ``<Group>`` and ``<Client>`` tags will have been stripped
         out.
 
+        The new document produced by XMLMatch() is not necessarily in
+        the same order as the original document.
+
         :param metadata: Client metadata to match against.
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: lxml.etree._Element """
-        rv = copy.deepcopy(self.xdata)
-        for child in rv.iterchildren():
-            self._xml_match(child, metadata)
-        return rv
+        return self._do_xmlmatch(metadata)
 
 
 class INode(object):
@@ -746,26 +827,6 @@ class INode(object):
                 child.Match(metadata, data, entry=entry)
 
 
-class InfoNode (INode):
-    """ :class:`Bcfg2.Server.Plugin.helpers.INode` implementation that
-    includes ``<Path>`` tags, suitable for use with :file:`info.xml`
-    files."""
-
-    raw = dict(
-        Client="lambda m, e: '%(name)s' == m.hostname and predicate(m, e)",
-        Group="lambda m, e: '%(name)s' in m.groups and predicate(m, e)",
-        Path="lambda m, e: ('%(name)s' == e.get('name') or " +
-                           "'%(name)s' == e.get('realname')) and " +
-                          "predicate(m, e)")
-    nraw = dict(
-        Client="lambda m, e: '%(name)s' != m.hostname and predicate(m, e)",
-        Group="lambda m, e: '%(name)s' not in m.groups and predicate(m, e)",
-        Path="lambda m, e: '%(name)s' != e.get('name') and " +
-                          "'%(name)s' != e.get('realname') and " +
-                          "predicate(m, e)")
-    containers = ['Group', 'Client', 'Path']
-
-
 class XMLSrc(XMLFileBacked):
     """ XMLSrc files contain a
     :class:`Bcfg2.Server.Plugin.helpers.INode` hierarchy that returns
@@ -776,8 +837,8 @@ class XMLSrc(XMLFileBacked):
     __cacheobj__ = dict
     __priority_required__ = True
 
-    def __init__(self, filename, fam=None, should_monitor=False):
-        XMLFileBacked.__init__(self, filename, fam, should_monitor)
+    def __init__(self, filename, should_monitor=False):
+        XMLFileBacked.__init__(self, filename, should_monitor)
         self.items = {}
         self.cache = None
         self.pnode = None
@@ -789,7 +850,7 @@ class XMLSrc(XMLFileBacked):
             data = open(self.name).read()
         except IOError:
             msg = "Failed to read file %s: %s" % (self.name, sys.exc_info()[1])
-            LOGGER.error(msg)
+            self.logger.error(msg)
             raise PluginExecutionError(msg)
         self.items = {}
         try:
@@ -797,7 +858,7 @@ class XMLSrc(XMLFileBacked):
         except lxml.etree.XMLSyntaxError:
             msg = "Failed to parse file %s: %s" % (self.name,
                                                    sys.exc_info()[1])
-            LOGGER.error(msg)
+            self.logger.error(msg)
             raise PluginExecutionError(msg)
         self.pnode = self.__node__(xdata, self.items)
         self.cache = None
@@ -807,7 +868,7 @@ class XMLSrc(XMLFileBacked):
             if self.__priority_required__:
                 msg = "Got bogus priority %s for file %s" % \
                     (xdata.get('priority'), self.name)
-                LOGGER.error(msg)
+                self.logger.error(msg)
                 raise PluginExecutionError(msg)
 
         del xdata, data
@@ -817,8 +878,8 @@ class XMLSrc(XMLFileBacked):
         if self.cache is None or self.cache[0] != metadata:
             cache = (metadata, self.__cacheobj__())
             if self.pnode is None:
-                LOGGER.error("Cache method called early for %s; "
-                             "forcing data load" % self.name)
+                self.logger.error("Cache method called early for %s; "
+                                  "forcing data load" % self.name)
                 self.HandleEvent()
                 return
             self.pnode.Match(metadata, cache[1])
@@ -828,13 +889,48 @@ class XMLSrc(XMLFileBacked):
         return str(self.items)
 
 
-class InfoXML(XMLSrc):
-    """ InfoXML files contain a
-    :class:`Bcfg2.Server.Plugin.helpers.InfoNode` hierarchy that
-    returns matching entries, suitable for use with :file:`info.xml`
-    files."""
-    __node__ = InfoNode
-    __priority_required__ = False
+class InfoXML(StructFile):
+    """ InfoXML files contain Group, Client, and Path tags to set the
+    metadata (permissions, owner, etc.) of files. """
+
+    _include_tests = StructFile._include_tests
+    _include_tests['Path'] = lambda el, md, entry, *args: \
+        entry.get("name") == el.get("name")
+
+    def Match(self, metadata, entry):  # pylint: disable=W0221
+        """ Implementation of
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` that
+        considers Path tags to allow ``info.xml`` files to set
+        different file metadata for different file paths. """
+        return self._do_match(metadata, entry)
+
+    def XMLMatch(self, metadata, entry):  # pylint: disable=W0221
+        """ Implementation of
+        :func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch` that
+        considers Path tags to allow ``info.xml`` files to set
+        different file metadata for different file paths. """
+        return self._do_xmlmatch(metadata, entry)
+
+    def BindEntry(self, entry, metadata):
+        """ Bind the matching file metadata for this client and entry
+        to the entry.
+
+        :param entry: The abstract entry to bind the info to. This
+                      will be modified in place
+        :type entry: lxml.etree._Element
+        :param metadata: The client metadata to get info for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: None
+        """
+        fileinfo = self.Match(metadata, entry)
+        if len(fileinfo) == 0:
+            raise PluginExecutionError("No metadata found in %s for %s" %
+                                       (self.name, entry.get('name')))
+        elif len(fileinfo) > 1:
+            self.logger.warning("Multiple file metadata found in %s for %s" %
+                                (self.name, entry.get('name')))
+        for attr, val in fileinfo[0].attrib.items():
+            entry.set(attr, val)
 
 
 class XMLDirectoryBacked(DirectoryBacked):
@@ -850,6 +946,24 @@ class XMLDirectoryBacked(DirectoryBacked):
     __child__ = XMLFileBacked
 
 
+class PriorityStructFile(StructFile):
+    """ A StructFile where each file has a priority, given as a
+    top-level XML attribute. """
+
+    def __init__(self, filename, should_monitor=False):
+        StructFile.__init__(self, filename, should_monitor=should_monitor)
+        self.priority = -1
+    __init__.__doc__ = StructFile.__init__.__doc__
+
+    def Index(self):
+        try:
+            self.priority = int(self.xdata.get('priority'))
+        except (ValueError, TypeError):
+            raise PluginExecutionError("Got bogus priority %s for file %s" %
+                                       (self.xdata.get('priority'), self.name))
+    Index.__doc__ = StructFile.Index.__doc__
+
+
 class PrioDir(Plugin, Generator, XMLDirectoryBacked):
     """ PrioDir handles a directory of XML files where each file has a
     set priority.
@@ -860,13 +974,13 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
 
     #: The type of child objects to create for files contained within
     #: the directory that is tracked.  Default is
-    #: :class:`Bcfg2.Server.Plugin.helpers.XMLSrc`
-    __child__ = XMLSrc
+    #: :class:`Bcfg2.Server.Plugin.helpers.PriorityStructFile`
+    __child__ = PriorityStructFile
 
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
         Generator.__init__(self)
-        XMLDirectoryBacked.__init__(self, self.data, self.core.fam)
+        XMLDirectoryBacked.__init__(self, self.data)
     __init__.__doc__ = Plugin.__init__.__doc__
 
     def HandleEvent(self, event):
@@ -881,21 +995,22 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
                         self.Entries[itype] = {child: self.BindEntry}
     HandleEvent.__doc__ = XMLDirectoryBacked.HandleEvent.__doc__
 
-    def _matches(self, entry, metadata, rules):  # pylint: disable=W0613
-        """ Whether or not a given entry has a matching entry in this
-        PrioDir.  By default this does strict matching (i.e., the
-        entry name is in ``rules.keys()``), but this can be overridden
-        to provide regex matching, etc.
+    def _matches(self, entry, metadata, candidate):  # pylint: disable=W0613
+        """ Whether or not a given candidate matches the abstract
+        entry given.  By default this does strict matching (i.e., the
+        entry name matches the candidate name), but this can be
+        overridden to provide regex matching, etc.
 
         :param entry: The entry to find a match for
         :type entry: lxml.etree._Element
         :param metadata: The metadata to get attributes for
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-        :rules: A dict of rules to look in for a matching rule
-        :type rules: dict
+        :candidate: A candidate concrete entry to match with
+        :type candidate: lxml.etree._Element
         :returns: bool
         """
-        return entry.get('name') in rules
+        return (entry.tag == candidate.tag and
+                entry.get('name') == candidate.get('name'))
 
     def BindEntry(self, entry, metadata):
         """ Bind the attributes that apply to an entry to it.  The
@@ -907,71 +1022,40 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: None
         """
-        attrs = self.get_attrs(entry, metadata)
-        for key, val in list(attrs.items()):
-            entry.attrib[key] = val
-
-    def get_attrs(self, entry, metadata):
-        """ Get a list of attributes to add to the entry during the
-        bind.  This is a complex method, in that it both modifies the
-        entry, and returns attributes that need to be added to the
-        entry.  That seems sub-optimal, and should probably be changed
-        at some point.  Namely:
-
-        * The return value includes all XML attributes that need to be
-          added to the entry, but it does not add them.
-        * If text contents or child tags need to be added to the
-          entry, they are added to the entry in place.
-
-        :param entry: The entry to add attributes to.
-        :type entry: lxml.etree._Element
-        :param metadata: The metadata to get attributes for
-        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-        :returns: dict of <attr name>:<attr value>
-        :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
-        """
+        matching = []
         for src in self.entries.values():
-            src.Cache(metadata)
-
-        matching = [src for src in list(self.entries.values())
-                    if (src.cache and
-                        entry.tag in src.cache[1] and
-                        self._matches(entry, metadata,
-                                      src.cache[1][entry.tag]))]
+            for candidate in src.XMLMatch(metadata).xpath("//%s" % entry.tag):
+                if self._matches(entry, metadata, candidate):
+                    matching.append((src, candidate))
         if len(matching) == 0:
             raise PluginExecutionError("No matching source for entry when "
-                                       "retrieving attributes for %s(%s)" %
-                                       (entry.tag, entry.attrib.get('name')))
+                                       "retrieving attributes for %s:%s" %
+                                       (entry.tag, entry.get('name')))
         elif len(matching) == 1:
-            index = 0
+            data = matching[0][1]
         else:
-            prio = [int(src.priority) for src in matching]
-            if prio.count(max(prio)) > 1:
-                msg = "Found conflicting sources with same priority for " + \
-                    "%s:%s for %s" % (entry.tag, entry.get("name"),
-                                      metadata.hostname)
+            prio = [int(m[0].priority) for m in matching]
+            priority = max(prio)
+            if prio.count(priority) > 1:
+                msg = "Found conflicting sources with same priority (%s) " \
+                    "for %s:%s for %s" % (priority, entry.tag,
+                                          entry.get("name"), metadata.hostname)
                 self.logger.error(msg)
-                self.logger.error([item.name for item in matching])
-                self.logger.error("Priority was %s" % max(prio))
+                self.logger.error([m[0].name for m in matching])
                 raise PluginExecutionError(msg)
-            index = prio.index(max(prio))
 
-        for rname in list(matching[index].cache[1][entry.tag].keys()):
-            if self._matches(entry, metadata, [rname]):
-                data = matching[index].cache[1][entry.tag][rname]
-                break
-        else:
-            # Fall back on __getitem__. Required if override used
-            data = matching[index].cache[1][entry.tag][entry.get('name')]
-        if '__text__' in data:
-            entry.text = data['__text__']
-        if '__children__' in data:
-            for item in data['__children__']:
-                entry.append(copy.copy(item))
+            for src, candidate in matching:
+                if int(src.priority) == priority:
+                    data = candidate
+                    break
 
-        return dict([(key, data[key])
-                     for key in list(data.keys())
-                     if not key.startswith('__')])
+        entry.text = data.text
+        for item in data.getchildren():
+            entry.append(copy.copy(item))
+
+        for key, val in list(data.attrib.items()):
+            if key not in entry.attrib:
+                entry.attrib[key] = val
 
 
 class Specificity(CmpMixin):
@@ -1166,7 +1250,7 @@ class EntrySet(Debuggable):
         self.path = path
         self.entry_type = entry_type
         self.entries = {}
-        self.metadata = DEFAULT_FILE_METADATA.copy()
+        self.metadata = default_path_metadata()
         self.infoxml = None
         self.encoding = encoding
 
@@ -1243,7 +1327,7 @@ class EntrySet(Debuggable):
         """
         action = event.code2str()
 
-        if event.filename in ['info', 'info.xml', ':info']:
+        if event.filename == 'info.xml':
             if action in ['exists', 'created', 'changed']:
                 self.update_metadata(event)
             elif action == 'deleted':
@@ -1254,8 +1338,8 @@ class EntrySet(Debuggable):
             self.entry_init(event)
         else:
             if event.filename not in self.entries:
-                LOGGER.warning("Got %s event for unknown file %s" %
-                               (action, event.filename))
+                self.logger.warning("Got %s event for unknown file %s" %
+                                    (action, event.filename))
                 if action == 'changed':
                     # received a bogus changed event; warn, but treat
                     # it like a created event
@@ -1291,7 +1375,7 @@ class EntrySet(Debuggable):
             entry_type = self.entry_type
 
         if event.filename in self.entries:
-            LOGGER.warn("Got duplicate add for %s" % event.filename)
+            self.logger.warn("Got duplicate add for %s" % event.filename)
         else:
             fpath = os.path.join(self.path, event.filename)
             try:
@@ -1299,8 +1383,8 @@ class EntrySet(Debuggable):
                                                       specific=specific)
             except SpecificityError:
                 if not self.ignore.match(event.filename):
-                    LOGGER.error("Could not process filename %s; ignoring" %
-                                 fpath)
+                    self.logger.error("Could not process filename %s; ignoring"
+                                      % fpath)
                 return
             self.entries[event.filename] = entry_type(fpath, spec,
                                                       self.encoding)
@@ -1348,8 +1432,8 @@ class EntrySet(Debuggable):
         return Specificity(**kwargs)
 
     def update_metadata(self, event):
-        """ Process changes to or creation of info, :info, and
-        info.xml files for the EntrySet.
+        """ Process changes to or creation of info.xml files for the
+        EntrySet.
 
         :param event: An event that applies to an info handled by this
                       EntrySet
@@ -1361,24 +1445,9 @@ class EntrySet(Debuggable):
             if not self.infoxml:
                 self.infoxml = InfoXML(fpath)
             self.infoxml.HandleEvent(event)
-        elif event.filename in [':info', 'info']:
-            for line in open(fpath).readlines():
-                match = INFO_REGEX.match(line)
-                if not match:
-                    LOGGER.warning("Failed to match line in %s: %s" % (fpath,
-                                                                       line))
-                    continue
-                else:
-                    mgd = match.groupdict()
-                    for key, value in list(mgd.items()):
-                        if value:
-                            self.metadata[key] = value
-                    if len(self.metadata['mode']) == 3:
-                        self.metadata['mode'] = "0%s" % self.metadata['mode']
 
     def reset_metadata(self, event):
-        """ Reset metadata to defaults if info. :info, or info.xml are
-        removed.
+        """ Reset metadata to defaults if info.xml is removed.
 
         :param event: An event that applies to an info handled by this
                       EntrySet
@@ -1387,12 +1456,10 @@ class EntrySet(Debuggable):
         """
         if event.filename == 'info.xml':
             self.infoxml = None
-        elif event.filename in [':info', 'info']:
-            self.metadata = DEFAULT_FILE_METADATA.copy()
 
     def bind_info_to_entry(self, entry, metadata):
-        """ Shortcut to call :func:`bind_info` with the base
-        info/info.xml for this EntrySet.
+        """ Bind the metadata for the given client in the base
+        info.xml for this EntrySet to the entry.
 
         :param entry: The abstract entry to bind the info to. This
                       will be modified in place
@@ -1401,7 +1468,10 @@ class EntrySet(Debuggable):
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: None
         """
-        bind_info(entry, metadata, infoxml=self.infoxml, default=self.metadata)
+        for attr, val in list(self.metadata.items()):
+            entry.set(attr, val)
+        if self.infoxml is not None:
+            self.infoxml.BindEntry(entry, metadata)
 
     def bind_entry(self, entry, metadata):
         """ Return the single best fully-bound entry from the set of
@@ -1452,6 +1522,8 @@ class GroupSpool(Plugin, Generator):
         Generator.__init__(self)
         if self.data[-1] == '/':
             self.data = self.data[:-1]
+
+        self.fam = Bcfg2.Server.FileMonitor.get_fam()
 
         #: See :class:`Bcfg2.Server.Plugins.interfaces.Generator` for
         #: details on the Entries attribute.
@@ -1599,5 +1671,5 @@ class GroupSpool(Plugin, Generator):
             if not os.path.isdir(name):
                 self.logger.error("Failed to open directory %s" % name)
                 return
-            reqid = self.core.fam.AddMonitor(name, self)
+            reqid = self.fam.AddMonitor(name, self)
             self.handles[reqid] = relative

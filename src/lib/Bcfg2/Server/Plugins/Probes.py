@@ -9,6 +9,8 @@ import operator
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
+import Bcfg2.Server.FileMonitor
+from Bcfg2.Server.Statistics import track_statistics
 
 try:
     from django.db import models
@@ -117,12 +119,12 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     bangline = re.compile('^#!\s*(?P<interpreter>.*)$')
     basename_is_regex = True
 
-    def __init__(self, path, fam, encoding, plugin_name):
+    def __init__(self, path, encoding, plugin_name):
         self.plugin_name = plugin_name
         Bcfg2.Server.Plugin.EntrySet.__init__(self, '[0-9A-Za-z_\-]+', path,
                                               Bcfg2.Server.Plugin.SpecificData,
                                               encoding)
-        fam.AddMonitor(path, self)
+        Bcfg2.Server.FileMonitor.get_fam().AddMonitor(path, self)
 
     def HandleEvent(self, event):
         """ handle events on everything but probed.xml """
@@ -178,7 +180,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
 
         try:
-            self.probes = ProbeSet(self.data, core.fam, core.setup['encoding'],
+            self.probes = ProbeSet(self.data, core.setup['encoding'],
                                    self.name)
         except:
             err = sys.exc_info()[1]
@@ -189,7 +191,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         self.load_data()
     __init__.__doc__ = Bcfg2.Server.Plugin.DatabaseBacked.__init__.__doc__
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def write_data(self, client):
         """ Write probe data out for use with bcfg2-info """
         if self._use_db:
@@ -292,12 +294,12 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 self.cgroups[pgroup.hostname] = []
             self.cgroups[pgroup.hostname].append(pgroup.group)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def GetProbes(self, meta):
         return self.probes.get_probe_data(meta)
     GetProbes.__doc__ = Bcfg2.Server.Plugin.Probing.GetProbes.__doc__
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def ReceiveData(self, client, datalist):
         if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
             if client.hostname in self.cgroups:

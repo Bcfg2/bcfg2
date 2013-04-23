@@ -49,7 +49,6 @@ class TestPOSIX(TestTool):
         mock_canVerify.assert_called_with(posix, entry)
 
         # next, test fully_specified failure
-        posix.logger.error.reset_mock()
         mock_canVerify.reset_mock()
         mock_canVerify.return_value = True
         mock_fully_spec = Mock()
@@ -59,17 +58,14 @@ class TestPOSIX(TestTool):
         self.assertFalse(posix.canVerify(entry))
         mock_canVerify.assert_called_with(posix, entry)
         mock_fully_spec.assert_called_with(entry)
-        self.assertTrue(posix.logger.error.called)
 
         # finally, test success
-        posix.logger.error.reset_mock()
         mock_canVerify.reset_mock()
         mock_fully_spec.reset_mock()
         mock_fully_spec.return_value = True
         self.assertTrue(posix.canVerify(entry))
         mock_canVerify.assert_called_with(posix, entry)
         mock_fully_spec.assert_called_with(entry)
-        self.assertFalse(posix.logger.error.called)
 
     @patch("Bcfg2.Client.Tools.Tool.canInstall")
     def test_canInstall(self, mock_canInstall):
@@ -82,7 +78,6 @@ class TestPOSIX(TestTool):
         mock_canInstall.assert_called_with(posix, entry)
 
         # next, test fully_specified failure
-        posix.logger.error.reset_mock()
         mock_canInstall.reset_mock()
         mock_canInstall.return_value = True
         mock_fully_spec = Mock()
@@ -92,17 +87,14 @@ class TestPOSIX(TestTool):
         self.assertFalse(posix.canInstall(entry))
         mock_canInstall.assert_called_with(posix, entry)
         mock_fully_spec.assert_called_with(entry)
-        self.assertTrue(posix.logger.error.called)
 
         # finally, test success
-        posix.logger.error.reset_mock()
         mock_canInstall.reset_mock()
         mock_fully_spec.reset_mock()
         mock_fully_spec.return_value = True
         self.assertTrue(posix.canInstall(entry))
         mock_canInstall.assert_called_with(posix, entry)
         mock_fully_spec.assert_called_with(entry)
-        self.assertFalse(posix.logger.error.called)
 
     def test_InstallPath(self):
         posix = self.get_obj()
@@ -152,7 +144,6 @@ class TestPOSIX(TestTool):
         def inner(mock_listdir):
             mock_listdir.side_effect = OSError
             posix._prune_old_backups(entry)
-            self.assertTrue(posix.logger.error.called)
             self.assertFalse(mock_remove.called)
             mock_listdir.assert_called_with(setup['ppath'])
 
@@ -170,7 +161,6 @@ class TestPOSIX(TestTool):
             mock_listdir.reset_mock()
             mock_remove.reset_mock()
             mock_remove.side_effect = OSError
-            posix.logger.error.reset_mock()
             # test to ensure that we call os.remove() for all files that
             # need to be removed even if we get an error
             posix._prune_old_backups(entry)
@@ -178,7 +168,6 @@ class TestPOSIX(TestTool):
             self.assertItemsEqual(mock_remove.call_args_list,
                                   [call(os.path.join(setup['ppath'], p))
                                    for p in remove])
-            self.assertTrue(posix.logger.error.called)
 
         inner()
 

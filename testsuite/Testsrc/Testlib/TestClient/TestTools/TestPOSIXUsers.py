@@ -24,11 +24,11 @@ from TestTools.Test_init import TestTool
 class TestPOSIXUsers(TestTool):
     test_obj = POSIXUsers
 
-    def get_obj(self, logger=None, setup=None, config=None):
+    def get_obj(self, setup=None, config=None):
         if setup is None:
             setup = MagicMock()
             setup.__getitem__.return_value = []
-        return TestTool.get_obj(self, logger, setup, config)
+        return TestTool.get_obj(self, setup, config)
 
     @patch("pwd.getpwall")
     @patch("grp.getgrall")
@@ -134,10 +134,9 @@ class TestPOSIXUsers(TestTool):
         users.set_defaults['POSIXUser'] = Mock()
         users.set_defaults['POSIXUser'].side_effect = lambda e: e
 
-        states = dict()
-        self.assertEqual(users.Inventory(states),
+        self.assertEqual(users.Inventory(),
                          mock_Inventory.return_value)
-        mock_Inventory.assert_called_with(users, states, config.getchildren())
+        mock_Inventory.assert_called_with(users, config.getchildren())
         lxml.etree.SubElement(orig_bundle, "POSIXGroup", name="test")
         self.assertXMLEqual(orig_bundle, bundle)
 
@@ -301,9 +300,8 @@ class TestPOSIXUsers(TestTool):
         entries = [lxml.etree.Element("POSIXUser", name="test"),
                    lxml.etree.Element("POSIXGroup", name="test"),
                    lxml.etree.Element("POSIXUser", name="test2")]
-        states = dict()
 
-        users.Install(entries, states)
+        states = users.Install(entries)
         self.assertItemsEqual(entries, states.keys())
         for state in states.values():
             self.assertEqual(state, users._install.return_value)

@@ -29,18 +29,23 @@ client's whitelists or blacklists.
     is not used.  See `Decision Mode`_ below.
 
 The Decisions plugin uses a directory in the Bcfg2 repository called
-Decisions. Files in the Decisions subdirectory are named similarly to
-files managed by Cfg and Probes, so you can use host- and
-group-specific files and the like after their basename. File basenames
-are either ``whitelist`` or ``blacklist``. These files have a simple
-format; the following is an example.
+Decisions, which may contain two files: ``whitelist.xml`` and
+``blacklist.xml``. These files have a simple format:
+
+.. xml:type:: DecisionsType
+   :linktotype:
+   :noautodep: py:genshiElements
+
+For example:
 
 .. code-block:: xml
 
-    $ cat Decisions/whitelist
+    $ cat Decisions/whitelist.xml
     <Decisions>
       <Decision type='Service' name='*'/>
-      <Decision type='Path' name='/etc/apt/apt.conf'/>
+      <Group name="debian">
+        <Decision type='Path' name='/etc/apt/apt.conf'/>
+      </Group>
     </Decisions>
 
 This example, included as a whitelist due to its name, enables all services,
@@ -59,12 +64,6 @@ list. This list is sent to the client.
           safety nets to the administrator running the client, you have to
           control these via their respective options (``-I`` or ``-n``, for
           example).
-
-To add syntax highlighting to Decisions files in vim and emacs, you
-can add comments such as this::
-
-    <Decisions><!--*- mode: xml; -*-->
-      <!-- vim: set ft=xml : -->
 
 
 Decision Mode

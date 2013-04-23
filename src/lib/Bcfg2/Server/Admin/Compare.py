@@ -9,8 +9,8 @@ class Compare(Bcfg2.Server.Admin.Mode):
     __usage__ = ("<old> <new>\n\n"
                  "     -r\trecursive")
 
-    def __init__(self, setup):
-        Bcfg2.Server.Admin.Mode.__init__(self, setup)
+    def __init__(self):
+        Bcfg2.Server.Admin.Mode.__init__(self)
         self.important = {'Path': ['name', 'type', 'owner', 'group', 'mode',
                                    'important', 'paranoid', 'sensitive',
                                    'dev_type', 'major', 'minor', 'prune',
@@ -22,15 +22,14 @@ class Compare(Bcfg2.Server.Admin.Mode):
                           'Service': ['name', 'type', 'status', 'mode',
                                       'target', 'sequence', 'parameters'],
                           'Action': ['name', 'timing', 'when', 'status',
-                                     'command'],
-                          'PostInstall': ['name']
+                                     'command']
                           }
 
     def compareStructures(self, new, old):
-        if new.tag == 'Independent':
-            bundle = 'Base'
-        else:
+        if new.get("name"):
             bundle = new.get('name')
+        else:
+            bundle = 'Independent'
 
         identical = True
 

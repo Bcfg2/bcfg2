@@ -1,10 +1,14 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
   <xsd:annotation>
     <xsd:documentation>
       Schema for :ref:`server-plugins-generators-cfg-sshkeys`
       ``authorizedkeys.xml``
     </xsd:documentation>
   </xsd:annotation>
+
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
 
   <xsd:complexType name="AuthorizedKeysGroupType">
     <xsd:annotation>
@@ -18,9 +22,11 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
       <xsd:element name="Allow" type="AllowType"/>
       <xsd:element name="Group" type="AuthorizedKeysGroupType"/>
       <xsd:element name="Client" type="AuthorizedKeysGroupType"/>
+      <xsd:element name="AuthorizedKeys" type="AuthorizedKeysType"/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string'>
       <xsd:annotation>
@@ -40,6 +46,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:complexType name="AllowType" mixed="true">
@@ -50,6 +57,7 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice minOccurs="0" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
       <xsd:element name="Params" type="AuthorizedKeysParamsType"/>
     </xsd:choice>
     <xsd:attribute name="from" type="xsd:string">
@@ -75,6 +83,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:complexType name="AuthorizedKeysParamsType">
@@ -85,21 +94,25 @@
         parameters.
       </xsd:documentation>
     </xsd:annotation>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
     <xsd:anyAttribute processContents="lax"/>
   </xsd:complexType>
 
-  <xsd:element name="AuthorizedKeys">
+  <xsd:complexType name="AuthorizedKeysType">
     <xsd:annotation>
       <xsd:documentation>
         Top-level tag for describing a generated SSH key pair.
       </xsd:documentation>
     </xsd:annotation>
-    <xsd:complexType>
-      <xsd:choice minOccurs="1" maxOccurs="unbounded">
-        <xsd:element name="Allow" type="AllowType"/>
-        <xsd:element name="Group" type="AuthorizedKeysGroupType"/>
-        <xsd:element name="Client" type="AuthorizedKeysGroupType"/>
-      </xsd:choice>
-    </xsd:complexType>
-  </xsd:element>
+    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
+      <xsd:element name="Allow" type="AllowType"/>
+      <xsd:element name="Group" type="AuthorizedKeysGroupType"/>
+      <xsd:element name="Client" type="AuthorizedKeysGroupType"/>
+      <xsd:element name="AuthorizedKeys" type="AuthorizedKeysType"/>
+    </xsd:choice>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:element name="AuthorizedKeys" type="AuthorizedKeysType"/>
 </xsd:schema>

@@ -71,7 +71,6 @@ plugins
     available plugins are::
 
         Account
-	Base
 	Bundler
 	Bzr
 	Cfg
@@ -162,15 +161,6 @@ The account plugin manages authentication data, including the following.
 * ``/etc/security/limits.conf``
 * ``/etc/sudoers``
 * ``/root/.ssh/authorized_keys``
-
-Base Plugin
-+++++++++++
-
-The Base plugin is a structure plugin that provides the ability
-to add lists of unrelated entries into client configuration entry
-inventories. Base works much like Bundler in its file format. This
-structure plugin is good for the pile of independent configs needed for
-most actual systems.
 
 Bundler Plugin
 ++++++++++++++
@@ -367,10 +357,10 @@ dynamic reporting system.
 Rules Plugin
 ++++++++++++
 
-The Rules plugin provides literal configuration entries that resolve the
-abstract configuration entries normally found in the Bundler and Base
-plugins. The literal entries in Rules are suitable for consumption by
-the appropriate client drivers.
+The Rules plugin provides literal configuration entries that resolve
+the abstract configuration entries normally found in Bundler. The
+literal entries in Rules are suitable for consumption by the
+appropriate client drivers.
 
 SEModules Plugin
 ++++++++++++++++

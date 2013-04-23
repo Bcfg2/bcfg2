@@ -1,0 +1,56 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+  <xsd:annotation>
+    <xsd:documentation>
+      Schema for IP-based client ACLs:
+      :ref:`server-plugins-misc-acl` ``ip.xml``
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:complexType name="IPACLType">
+    <xsd:attribute type="xsd:string" name="method" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the XML-RPC method to allow or deny.  Limited
+          wildcards are supported.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="address">
+      <xsd:annotation>
+        <xsd:documentation>
+          The IP address to match against.  This is an exact match
+          unless :xml:attribute:`IPACLType:netmask` is defined.  If
+          this is not defined, all addresses match the given rule.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="netmask">
+      <xsd:annotation>
+        <xsd:documentation>
+          If this is defined, then it is combined with
+          :xml:attribute:`IPACLType:address` to produce a CIDR range,
+          which is used for matching instead of exact matching based
+          only on IP address.  This can be either an integer netmask
+          (e.g., ``netmask="24"``) or a dotted-quad (e.g.,
+          ``netmask="255.255.255.0"``).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="IPACLContainerType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Top-level tag for describing metadata-based client ACLs.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:element name="Allow" type="IPACLType"/>
+      <xsd:element name="Deny" type="IPACLType"/>
+      <xsd:element name="Defer" type="IPACLType"/>
+      <xsd:element name="ACL" type="IPACLContainerType"/>
+    </xsd:choice>
+  </xsd:complexType>
+
+  <xsd:element name="ACL" type="IPACLContainerType"/>
+</xsd:schema>

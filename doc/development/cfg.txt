@@ -58,7 +58,6 @@ exceptions:
 Global Variables
 ================
 
-.. autodata:: Bcfg2.Server.Plugins.Cfg.SETUP
 .. autodata:: Bcfg2.Server.Plugins.Cfg.CFG
 
 Existing Cfg Handlers
@@ -81,18 +80,11 @@ Creators
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator.CfgPrivateKeyCreator
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator.CfgPublicKeyCreator
 
-Filters
--------
-
-.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgCatFilter.CfgCatFilter
-.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgDiffFilter.CfgDiffFilter
-
 Info Handlers
 -------------
 
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgDefaultInfo
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgInfoXML.CfgInfoXML
-.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgLegacyInfo.CfgLegacyInfo
 
 Verifiers
 ---------
@@ -105,6 +97,5 @@ Other Cfg Objects
 These other objects comprise the remainder of the Cfg plugin, and are
 included for completeness.
 
-.. autoattribute:: Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEntrySet
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.Cfg

@@ -1,5 +1,0 @@
-##########################################################################
-#  Hosts on subnet: {{ subnet.0 }}
-#    total hosts: {{ subnet.1 }}
-{% for ip in ips %}{{ ip.0 }}       	{{ ip.1 }}{% if ip.4 and not ip.3 %} # {{ ip.5 }}{% else %}{% for name in ip.2 %} {{ name }}{% endfor %}{% for cname in ip.3 %} {{ cname }}{% endfor %} # {{ ip.5 }}{% endif %}
-{% endfor %}

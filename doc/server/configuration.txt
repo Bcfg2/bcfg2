@@ -52,9 +52,7 @@ itself, which would prevent the ``bcfg2`` user from enabling a new
 plugin.  If you depend on this capability (e.g., if your specification
 is stored in a VCS and checked out onto the Bcfg2 server by a script
 running as the ``bcfg2`` user), then you would want to ``chown`` and
-``chmod`` ``/var/lib/bcfg2`` rather than ``/var/lib/bcfg2/*``.  Note
-also that the recursive ``chmod`` will change permissions on any files
-that are using ``mode="inherit"`` in :ref:`server-info`.
+``chmod`` ``/var/lib/bcfg2`` rather than ``/var/lib/bcfg2/*``.
 
 The Bcfg2 server also needs to be able to read its SSL certificate,
 key and the SSL CA certificate:

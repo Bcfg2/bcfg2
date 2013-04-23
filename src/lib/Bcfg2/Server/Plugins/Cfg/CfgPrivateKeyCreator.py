@@ -3,12 +3,13 @@
 import os
 import shutil
 import tempfile
-import subprocess
-from Bcfg2.Server.Plugin import PluginExecutionError, StructFile
-from Bcfg2.Server.Plugins.Cfg import CfgCreator, CfgCreationError, SETUP
+from Bcfg2.Utils import Executor
+from Bcfg2.Options import get_option_parser
+from Bcfg2.Server.Plugin import StructFile
+from Bcfg2.Server.Plugins.Cfg import CfgCreator, CfgCreationError
 from Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator import CfgPublicKeyCreator
 try:
-    import Bcfg2.Encryption
+    from Bcfg2.Server.Encryption import get_passphrases, ssl_encrypt
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
@@ -31,26 +32,27 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         pubkey_path = os.path.dirname(self.name) + ".pub"
         pubkey_name = os.path.join(pubkey_path, os.path.basename(pubkey_path))
         self.pubkey_creator = CfgPublicKeyCreator(pubkey_name)
+        self.setup = get_option_parser()
+        self.cmd = Executor()
     __init__.__doc__ = CfgCreator.__init__.__doc__
 
     @property
     def category(self):
         """ The name of the metadata category that generated keys are
         specific to """
-        if (SETUP.cfp.has_section("sshkeys") and
-            SETUP.cfp.has_option("sshkeys", "category")):
-            return SETUP.cfp.get("sshkeys", "category")
+        if (self.setup.cfp.has_section("sshkeys") and
+            self.setup.cfp.has_option("sshkeys", "category")):
+            return self.setup.cfp.get("sshkeys", "category")
         return None
 
     @property
     def passphrase(self):
         """ The passphrase used to encrypt private keys """
         if (HAS_CRYPTO and
-            SETUP.cfp.has_section("sshkeys") and
-            SETUP.cfp.has_option("sshkeys", "passphrase")):
-            return Bcfg2.Encryption.get_passphrases(SETUP)[SETUP.cfp.get(
-                    "sshkeys",
-                    "passphrase")]
+            self.setup.cfp.has_section("sshkeys") and
+            self.setup.cfp.has_option("sshkeys", "passphrase")):
+            return get_passphrases()[self.setup.cfp.get("sshkeys",
+                                                        "passphrase")]
         return None
 
     def handle_event(self, event):
@@ -103,18 +105,17 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
                 log_cmd.append("''")
             self.debug_log("Cfg: Generating new SSH key pair: %s" %
                            " ".join(log_cmd))
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-            err = proc.communicate()[1]
-            if proc.wait():
+            result = self.cmd.run(cmd)
+            if not result.success:
                 raise CfgCreationError("Cfg: Failed to generate SSH key pair "
                                        "at %s for %s: %s" %
-                                       (filename, metadata.hostname, err))
-            elif err:
+                                       (filename, metadata.hostname,
+                                        result.error))
+            elif result.stderr:
                 self.logger.warning("Cfg: Generated SSH key pair at %s for %s "
                                     "with errors: %s" % (filename,
                                                          metadata.hostname,
-                                                         err))
+                                                         result.stderr))
             return filename
         except:
             shutil.rmtree(tempdir)
@@ -196,10 +197,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
             privkey = open(filename).read()
             if HAS_CRYPTO and self.passphrase:
                 self.debug_log("Cfg: Encrypting key data at %s" % filename)
-                privkey = Bcfg2.Encryption.ssl_encrypt(
-                    privkey,
-                    self.passphrase,
-                    algorithm=Bcfg2.Encryption.get_algorithm(SETUP))
+                privkey = ssl_encrypt(privkey, self.passphrase)
                 specificity['ext'] = '.crypt'
 
             self.write_data(privkey, **specificity)
@@ -211,50 +209,3 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         finally:
             shutil.rmtree(os.path.dirname(filename))
     # pylint: enable=W0221
-
-    def Index(self):
-        StructFile.Index(self)
-        if HAS_CRYPTO:
-            strict = self.xdata.get(
-                "decrypt",
-                SETUP.cfp.get(Bcfg2.Encryption.CFG_SECTION, "decrypt",
-                              default="strict")) == "strict"
-            for el in self.xdata.xpath("//*[@encrypted]"):
-                try:
-                    el.text = self._decrypt(el).encode('ascii',
-                                                       'xmlcharrefreplace')
-                except UnicodeDecodeError:
-                    self.logger.info("Cfg: Decrypted %s to gibberish, skipping"
-                                     % el.tag)
-                except Bcfg2.Encryption.EVPError:
-                    msg = "Cfg: Failed to decrypt %s element in %s" % \
-                        (el.tag, self.name)
-                    if strict:
-                        raise PluginExecutionError(msg)
-                    else:
-                        self.logger.warning(msg)
-    Index.__doc__ = StructFile.Index.__doc__
-
-    def _decrypt(self, element):
-        """ Decrypt a single encrypted element """
-        if not element.text or not element.text.strip():
-            return
-        passes = Bcfg2.Encryption.get_passphrases(SETUP)
-        try:
-            passphrase = passes[element.get("encrypted")]
-            try:
-                return Bcfg2.Encryption.ssl_decrypt(
-                    element.text,
-                    passphrase,
-                    algorithm=Bcfg2.Encryption.get_algorithm(SETUP))
-            except Bcfg2.Encryption.EVPError:
-                # error is raised below
-                pass
-        except KeyError:
-            # bruteforce_decrypt raises an EVPError with a sensible
-            # error message, so we just let it propagate up the stack
-            return Bcfg2.Encryption.bruteforce_decrypt(
-                element.text,
-                passphrases=passes.values(),
-                algorithm=Bcfg2.Encryption.get_algorithm(SETUP))
-        raise Bcfg2.Encryption.EVPError("Failed to decrypt")

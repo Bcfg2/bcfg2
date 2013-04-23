@@ -3,7 +3,7 @@ server. """
 
 import sys
 import time
-import Bcfg2.Statistics
+import Bcfg2.Server.Statistics
 from Bcfg2.Compat import urlparse, xmlrpclib, b64decode
 from Bcfg2.Server.Core import BaseCore
 import cherrypy
@@ -36,8 +36,8 @@ class Core(BaseCore):
     _cp_config = {'tools.xmlrpc_error.on': True,
                   'tools.bcfg2_authn.on': True}
 
-    def __init__(self, setup):
-        BaseCore.__init__(self, setup)
+    def __init__(self):
+        BaseCore.__init__(self)
 
         cherrypy.tools.bcfg2_authn = cherrypy.Tool('on_start_resource',
                                                    self.do_authn)
@@ -65,8 +65,15 @@ class Core(BaseCore):
 
         # FIXME: Get client cert
         cert = None
-        address = (cherrypy.request.remote.ip, cherrypy.request.remote.name)
-        return self.authenticate(cert, username, password, address)
+        address = (cherrypy.request.remote.ip, cherrypy.request.remote.port)
+
+        rpcmethod = xmlrpcutil.process_body()[1]
+        if rpcmethod == 'ERRORMETHOD':
+            raise Exception("Unknown error processing XML-RPC request body")
+
+        if (not self.check_acls(address[0], rpcmethod) or
+            not self.authenticate(cert, username, password, address)):
+            raise cherrypy.HTTPError(401)
 
     @cherrypy.expose
     def default(self, *args, **params):  # pylint: disable=W0613
@@ -96,8 +103,8 @@ class Core(BaseCore):
         try:
             body = handler(*rpcparams, **params)
         finally:
-            Bcfg2.Statistics.stats.add_value(rpcmethod,
-                                             time.time() - method_start)
+            Bcfg2.Server.Statistics.stats.add_value(rpcmethod,
+                                                    time.time() - method_start)
 
         xmlrpcutil.respond(body, 'utf-8', True)
         return cherrypy.serving.response.body

@@ -11,16 +11,16 @@ import logging
 import inspect
 import threading
 import lxml.etree
-import Bcfg2.settings
 import Bcfg2.Server
 import Bcfg2.Logger
+import Bcfg2.settings
+import Bcfg2.Server.Statistics
 import Bcfg2.Server.FileMonitor
-from Bcfg2.Cache import Cache
-import Bcfg2.Statistics
 from itertools import chain
+from Bcfg2.Server.Cache import Cache
+from Bcfg2.Options import get_option_parser, SERVER_FAM_IGNORE
 from Bcfg2.Compat import xmlrpclib  # pylint: disable=W0622
-from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError, \
-    track_statistics
+from Bcfg2.Server.Plugin import PluginInitError, PluginExecutionError
 
 try:
     import psyco
@@ -86,21 +86,23 @@ class BaseCore(object):
     and modules. All core implementations must inherit from
     ``BaseCore``. """
 
-    def __init__(self, setup):  # pylint: disable=R0912,R0915
+    def __init__(self):  # pylint: disable=R0912,R0915
         """
-        :param setup: A Bcfg2 options dict
-        :type setup: Bcfg2.Options.OptionParser
-
         .. automethod:: _daemonize
         .. automethod:: _run
         .. automethod:: _block
         .. -----
         .. automethod:: _file_monitor_thread
         """
-        #: The Bcfg2 repository directory
-        self.datastore = setup['repo']
+        #: The Bcfg2 options dict
+        self.setup = get_option_parser()
 
-        if setup['verbose']:
+        #: The Bcfg2 repository directory
+        self.datastore = self.setup['repo']
+
+        if self.setup['debug']:
+            level = logging.DEBUG
+        elif self.setup['verbose']:
             level = logging.INFO
         else:
             level = logging.WARNING
@@ -111,8 +113,8 @@ class BaseCore(object):
         # setup_logging and the console will get DEBUG output.
         Bcfg2.Logger.setup_logging('bcfg2-server',
                                    to_console=logging.INFO,
-                                   to_syslog=setup['syslog'],
-                                   to_file=setup['logging'],
+                                   to_syslog=self.setup['syslog'],
+                                   to_file=self.setup['logging'],
                                    level=level)
 
         #: A :class:`logging.Logger` object for use by the core
@@ -134,34 +136,37 @@ class BaseCore(object):
 
         # enable debugging on the core now.  debugging is enabled on
         # everything else later
-        if setup['debug']:
+        if self.setup['debug']:
             self.set_core_debug(None, setup['debug'])
 
+        if 'ignore' not in self.setup:
+            self.setup.add_option('ignore', SERVER_FAM_IGNORE)
+            self.setup.reparse()
+
+        famargs = dict(filemonitor=self.setup['filemonitor'],
+                       debug=self.setup['debug'],
+                       ignore=self.setup['ignore'])
         try:
             filemonitor = \
                 Bcfg2.Server.FileMonitor.available[setup['filemonitor']]
         except KeyError:
             self.logger.error("File monitor driver %s not available; "
-                              "forcing to default" % setup['filemonitor'])
-            filemonitor = Bcfg2.Server.FileMonitor.available['default']
-        famargs = dict(ignore=[], debug=False)
-        if 'ignore' in setup:
-            famargs['ignore'] = setup['ignore']
-        if 'debug' in setup:
-            famargs['debug'] = setup['debug']
+                              "forcing to default" % self.setup['filemonitor'])
+            famargs['filemonitor'] = 'default'
 
         try:
             #: The :class:`Bcfg2.Server.FileMonitor.FileMonitor`
             #: object used by the core to monitor for Bcfg2 data
             #: changes.
-            self.fam = filemonitor(**famargs)
+            self.fam = Bcfg2.Server.FileMonitor.load_fam(**famargs)
         except IOError:
-            msg = "Failed to instantiate fam driver %s" % setup['filemonitor']
+            msg = "Failed to instantiate fam driver %s" % \
+                self.setup['filemonitor']
             self.logger.error(msg, exc_info=1)
             raise CoreInitError(msg)
 
         #: Path to bcfg2.conf
-        self.cfile = setup['configfile']
+        self.cfile = self.setup['configfile']
 
         #: Dict of plugins that are enabled.  Keys are the plugin
         #: names (just the plugin name, in the correct case; e.g.,
@@ -178,9 +183,6 @@ class BaseCore(object):
         #: the client in the configuration, and can be set by a
         #: :class:`Bcfg2.Server.Plugin.interfaces.Version` plugin.
         self.revision = '-1'
-
-        #: The Bcfg2 options dict
-        self.setup = setup
 
         atexit.register(self.shutdown)
 
@@ -235,10 +237,10 @@ class BaseCore(object):
                     self.logger.error("Failed to set ownership of database "
                                       "at %s: %s" % (db_settings['NAME'], err))
 
-        if '' in setup['plugins']:
-            setup['plugins'].remove('')
+        if '' in self.setup['plugins']:
+            self.setup['plugins'].remove('')
 
-        for plugin in setup['plugins']:
+        for plugin in self.setup['plugins']:
             if not plugin in self.plugins:
                 self.init_plugin(plugin)
         # Remove blacklisted plugins
@@ -301,7 +303,7 @@ class BaseCore(object):
         self.connectors = self.plugins_by_type(Bcfg2.Server.Plugin.Connector)
 
         #: The CA that signed the server cert
-        self.ca = setup['ca']
+        self.ca = self.setup['ca']
 
         def hdlr(sig, frame):  # pylint: disable=W0613
             """ Handle SIGINT/Ctrl-C by shutting down the core and exiting
@@ -314,14 +316,14 @@ class BaseCore(object):
         #: The FAM :class:`threading.Thread`,
         #: :func:`_file_monitor_thread`
         self.fam_thread = \
-            threading.Thread(name="%sFAMThread" % setup['filemonitor'],
+            threading.Thread(name="%sFAMThread" % self.setup['filemonitor'],
                              target=self._file_monitor_thread)
 
         #: A :func:`threading.Lock` for use by
         #: :func:`Bcfg2.Server.FileMonitor.FileMonitor.handle_event_set`
         self.lock = threading.Lock()
 
-        #: A :class:`Bcfg2.Cache.Cache` object for caching client
+        #: A :class:`Bcfg2.Server.Cache.Cache` object for caching client
         #: metadata
         self.metadata_cache = Cache()
 
@@ -368,7 +370,7 @@ class BaseCore(object):
                 continue
             self._update_vcs_revision()
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
     def _update_vcs_revision(self):
         """ Update the revision of the current configuration on-disk
         from the VCS plugin """
@@ -438,8 +440,10 @@ class BaseCore(object):
         """ Get the client :attr:`metadata_cache` mode.  Options are
         off, initial, cautious, aggressive, on (synonym for
         cautious). See :ref:`server-caching` for more details. """
+        # pylint: disable=E1103
         mode = self.setup.cfp.get("caching", "client_metadata",
                                   default="off").lower()
+        # pylint: enable=E1103
         if mode == "on":
             return "cautious"
         else:
@@ -477,11 +481,11 @@ class BaseCore(object):
                     self.logger.error("%s: Error invoking hook %s: %s" %
                                       (plugin, hook, err))
         finally:
-            Bcfg2.Statistics.stats.add_value("%s:client_run_hook:%s" %
+            Bcfg2.Server.Statistics.stats.add_value("%s:client_run_hook:%s" %
                                              (self.__class__.__name__, hook),
                                              time.time() - start)
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
     def validate_structures(self, metadata, data):
         """ Checks the data structures by calling the
         :func:`Bcfg2.Server.Plugin.interfaces.StructureValidator.validate_structures`
@@ -509,7 +513,7 @@ class BaseCore(object):
                 self.logger.error("Plugin %s: unexpected structure validation "
                                   "failure" % plugin.name, exc_info=1)
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
     def validate_goals(self, metadata, data):
         """ Checks that the config matches the goals enforced by
         :class:`Bcfg2.Server.Plugin.interfaces.GoalValidator` plugins
@@ -535,7 +539,7 @@ class BaseCore(object):
                 self.logger.error("Plugin %s: unexpected goal validation "
                                   "failure" % plugin.name, exc_info=1)
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
     def GetStructures(self, metadata):
         """ Get all structures (i.e., bundles) for the given client
 
@@ -553,7 +557,7 @@ class BaseCore(object):
                               (metadata.hostname, ':'.join(missing)))
         return structures
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
     def BindStructures(self, structures, metadata, config):
         """ Given a list of structures (i.e. bundles), bind all the
         entries in them and add the structures to the config.
@@ -574,7 +578,7 @@ class BaseCore(object):
             except:
                 self.logger.error("error in BindStructure", exc_info=1)
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
     def BindStructure(self, structure, metadata):
         """ Bind all elements in a single structure (i.e., bundle).
 
@@ -648,7 +652,7 @@ class BaseCore(object):
             raise PluginExecutionError("No matching generator: %s:%s" %
                                        (entry.tag, entry.get('name')))
         finally:
-            Bcfg2.Statistics.stats.add_value("%s:Bind:%s" %
+            Bcfg2.Server.Statistics.stats.add_value("%s:Bind:%s" %
                                              (self.__class__.__name__,
                                               entry.tag),
                                              time.time() - start)
@@ -805,7 +809,49 @@ class BaseCore(object):
                                   % plugin.name, exc_info=1)
         return result
 
-    @track_statistics()
+    @Bcfg2.Server.Statistics.track_statistics()
+    def check_acls(self, address, rmi):
+        """ Check client IP address and metadata object against all
+        :class:`Bcfg2.Server.Plugin.interfaces.ClientACLs` plugins.
+        If any ACL plugin denies access, then access is denied.  ACLs
+        are checked in two phases: First, with the client IP address;
+        and second, with the client metadata object.  This lets an ACL
+        interface do a quick rejection based on IP before metadata is
+        ever built.
+
+        :param address: The address pair of the client to check ACLs for
+        :type address: tuple of (<ip address>, <port>)
+        :param rmi: The fully-qualified name of the RPC call
+        :param rmi: string
+        :returns: bool
+        """
+        plugins = self.plugins_by_type(Bcfg2.Server.Plugin.ClientACLs)
+        try:
+            ip_checks = [p.check_acl_ip(address, rmi) for p in plugins]
+        except:
+            self.logger.error("Unexpected error checking ACLs for %s for %s: "
+                              "%s" % (address[0], rmi, sys.exc_info()[1]))
+            return False  # failsafe
+
+        if all(ip_checks):
+            # if all ACL plugins return True (allow), then allow
+            return True
+        elif False in ip_checks:
+            # if any ACL plugin returned False (deny), then deny
+            return False
+        # else, no plugins returned False, but not all plugins
+        # returned True, so some plugin returned None (defer), so
+        # defer.
+
+        client, metadata = self.resolve_client(address)
+        try:
+            return all(p.check_acl_metadata(metadata, rmi) for p in plugins)
+        except:
+            self.logger.error("Unexpected error checking ACLs for %s for %s: "
+                              "%s" % (client, rmi, sys.exc_info()[1]))
+            return False  # failsafe
+
+    @Bcfg2.Server.Statistics.track_statistics()
     def build_metadata(self, client_name):
         """ Build initial client metadata for a client
 
@@ -868,7 +914,7 @@ class BaseCore(object):
 
         :param address: The address pair of the client to get the
                         canonical hostname for.
-        :type address: tuple of (<ip address>, <hostname>)
+        :type address: tuple of (<ip address>, <port>)
         :param cleanup_cache: Tell the
                               :class:`Bcfg2.Server.Plugin.interfaces.Metadata`
                               plugin in :attr:`metadata` to clean up
@@ -947,21 +993,23 @@ class BaseCore(object):
     def listMethods(self, address):  # pylint: disable=W0613
         """ List all exposed methods, including plugin RMI.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: list of exposed method names
         """
         methods = [name
                    for name, func in inspect.getmembers(self, callable)
-                   if getattr(func, "exposed", False)]
-        methods.extend(self._get_rmi().keys())
+                   if (getattr(func, "exposed", False) and
+                       self.check_acls(address, name))]
+        methods.extend([m for m in self._get_rmi().keys()
+                        if self.check_acls(address, m)])
         return methods
 
     @exposed
     def methodHelp(self, address, method_name):  # pylint: disable=W0613
         """ Get help from the docstring of an exposed method
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :param method_name: The name of the method to get help on
         :type method_name: string
@@ -978,7 +1026,7 @@ class BaseCore(object):
     def DeclareVersion(self, address, version):
         """ Declare the client version.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :param version: The client's declared version
         :type version: string
@@ -1001,7 +1049,7 @@ class BaseCore(object):
     def GetProbes(self, address):
         """ Fetch probes for the client.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: lxml.etree._Element - XML tree describing probes for
                   this client
@@ -1025,7 +1073,7 @@ class BaseCore(object):
     def RecvProbeData(self, address, probedata):
         """ Receive probe data from clients.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: bool - True on success
         :raises: :exc:`xmlrpclib.Fault`
@@ -1072,7 +1120,7 @@ class BaseCore(object):
     def AssertProfile(self, address, profile):
         """ Set profile for a client.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: bool - True on success
         :raises: :exc:`xmlrpclib.Fault`
@@ -1093,7 +1141,7 @@ class BaseCore(object):
         """ Build config for a client by calling
         :func:`BuildConfiguration`.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: lxml.etree._Element - The full configuration
                   document for the client
@@ -1111,7 +1159,7 @@ class BaseCore(object):
     def RecvStats(self, address, stats):
         """ Act on statistics upload with :func:`process_statistics`.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: bool - True on success
         :raises: :exc:`xmlrpclib.Fault`
@@ -1132,7 +1180,7 @@ class BaseCore(object):
         :type user: string
         :param password: The password supplied by the client
         :type password: string
-        :param address: An address pair of ``(<ip address>, <hostname>)``
+        :param address: An address pair of ``(<ip address>, <port>)``
         :type address: tuple
         :return: bool - True if the authenticate succeeds, False otherwise
         """
@@ -1144,11 +1192,19 @@ class BaseCore(object):
         return self.metadata.AuthenticateConnection(acert, user, password,
                                                     address)
 
+    def check_acls(self, client_ip):
+        """ Check if client IP is in list of accepted IPs """
+        try:
+            return self.plugins['Acl'].config.check_acl(client_ip)
+        except KeyError:
+            # No ACL means accept all incoming ips
+            return True
+
     @exposed
     def GetDecisionList(self, address, mode):
         """ Get the decision list for the client with :func:`GetDecisions`.
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: list of decision tuples
         :raises: :exc:`xmlrpclib.Fault`
@@ -1165,17 +1221,17 @@ class BaseCore(object):
     @exposed
     def get_statistics(self, _):
         """ Get current statistics about component execution from
-        :attr:`Bcfg2.Statistics.stats`.
+        :attr:`Bcfg2.Server.Statistics.stats`.
 
         :returns: dict - The statistics data as returned by
-                  :func:`Bcfg2.Statistics.Statistics.display` """
-        return Bcfg2.Statistics.stats.display()
+                  :func:`Bcfg2.Server.Statistics.Statistics.display` """
+        return Bcfg2.Server.Statistics.stats.display()
 
     @exposed
     def toggle_debug(self, address):
         """ Toggle debug status of the FAM and all plugins
 
-        :param address: Client (address, hostname) pair
+        :param address: Client (address, port) pair
         :type address: tuple
         :returns: bool - The new debug state of the FAM
         """

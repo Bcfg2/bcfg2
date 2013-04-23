@@ -23,6 +23,9 @@ class CfgPublicKeyCreator(CfgCreator, StructFile):
     #: Handle XML specifications of private keys
     __basenames__ = ['pubkey.xml']
 
+    #: No text content on any tags, so encryption support disabled
+    encryption = False
+
     def __init__(self, fname):
         CfgCreator.__init__(self, fname)
         StructFile.__init__(self, fname)

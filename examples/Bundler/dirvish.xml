@@ -1,0 +1,20 @@
+<Bundle xmlns:py="http://genshi.edgewall.org/">
+  <py:for each="user in metadata.Properties['dirvish.xml'].xdata.find('users')">
+    <!-- Generate configs for all users in dirvish.xml -->
+    <BoundPath
+        name='/backup/homes/${user.tag}/dirvish/default.conf'
+        owner='root'
+        group='root'
+        perms='0644'>client: nfs-host
+tree: /export/homes/${user.text}
+exclude:
+	*~
+	.nfs*
+    </BoundPath>
+  </py:for>
+
+  <Package name='dirvish'/>
+  <Path name='/etc/cron.d/dirvish'/>
+  <Path name='/etc/dirvish/dirvish-cronjob'/>
+  <Path name='/etc/dirvish/master.conf'/>
+</Bundle>

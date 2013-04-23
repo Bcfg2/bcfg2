@@ -44,10 +44,10 @@ class ConfigFile(Bcfg2.Server.Plugin.FileBacked):
     The approach implemented here is having the user call a registering
     decorator that updates a global variable in this module.
     """
-    def __init__(self, filename, fam):
+    def __init__(self, filename):
         self.filename = filename
         Bcfg2.Server.Plugin.FileBacked.__init__(self, self.filename)
-        fam.AddMonitor(self.filename, self)
+        self.fam.AddMonitor(self.filename, self)
 
     def Index(self):
         """
@@ -72,7 +72,7 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
-        self.config = ConfigFile(self.data + "/config.py", core.fam)
+        self.config = ConfigFile(self.data + "/config.py")
 
     def debug_log(self, message, flag = None):
         if (flag is None) and self.debug_flag or flag:

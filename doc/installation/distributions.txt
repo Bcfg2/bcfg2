@@ -73,7 +73,7 @@ to get it marked as stable.
 If you don't use portage to install Bcfg2, you'll want to make sure you
 have all the prerequisites installed first. For a server, you'll need:
 
-* ``app-admin/gamin`` or ``app-admin/fam``
+* ``app-admin/gamin``
 * ``dev-python/lxml``
 
 Clients will need at least:

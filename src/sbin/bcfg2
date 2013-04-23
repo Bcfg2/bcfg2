@@ -3,8 +3,8 @@
 
 import sys
 import signal
-import Bcfg2.Options
 from Bcfg2.Client.Client import Client
+from Bcfg2.Options import load_option_parser, CLIENT_COMMON_OPTIONS
 
 
 def cb_sigint_handler(signum, frame):
@@ -13,8 +13,7 @@ def cb_sigint_handler(signum, frame):
 
 
 def main():
-    optinfo = Bcfg2.Options.CLIENT_COMMON_OPTIONS
-    setup = Bcfg2.Options.OptionParser(optinfo)
+    setup = load_option_parser(CLIENT_COMMON_OPTIONS)
     setup.parse(sys.argv[1:])
 
     if setup['args']:
@@ -23,7 +22,7 @@ def main():
         raise SystemExit(1)
 
     signal.signal(signal.SIGINT, cb_sigint_handler)
-    return Client(setup).run()
+    return Client().run()
 
 if __name__ == '__main__':
     sys.exit(main())

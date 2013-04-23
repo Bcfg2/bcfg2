@@ -5,6 +5,7 @@ import copy
 import logging
 import Bcfg2.Options
 import Bcfg2.Server.Plugins
+from Bcfg2.Compat import walk_packages
 from django.db import models
 
 LOGGER = logging.getLogger('Bcfg2.Server.models')
@@ -21,13 +22,22 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
         # namely, _all_ plugins, so that the database is guaranteed to
         # work, even if /etc/bcfg2.conf isn't set up properly
         plugin_opt = copy.deepcopy(Bcfg2.Options.SERVER_PLUGINS)
-        plugin_opt.default = Bcfg2.Server.Plugins.__all__
+        all_plugins = []
+        for submodule in walk_packages(path=Bcfg2.Server.Plugins.__path__,
+                                       prefix="Bcfg2.Server.Plugins."):
+            module = submodule[1].rsplit('.', 1)[-1]
+            if submodule[1] == "Bcfg2.Server.Plugins.%s" % module:
+                # we only include direct children of
+                # Bcfg2.Server.Plugins -- e.g., all_plugins should
+                # include Bcfg2.Server.Plugins.Cfg, but not
+                # Bcfg2.Server.Plugins.Cfg.CfgInfoXML
+                all_plugins.append(module)
+        plugin_opt.default = all_plugins
 
-        setup = \
-            Bcfg2.Options.OptionParser(dict(plugins=plugin_opt,
-                                            configfile=Bcfg2.Options.CFILE),
-                                       quiet=quiet)
-        setup.parse([Bcfg2.Options.CFILE.cmd, cfile])
+        setup = Bcfg2.Options.get_option_parser()
+        setup.add_option("plugins", plugin_opt)
+        setup.add_option("configfile", Bcfg2.Options.CFILE)
+        setup.reparse(argv=[Bcfg2.Options.CFILE.cmd, cfile])
         plugins = setup['plugins']
 
     if MODELS:
@@ -48,7 +58,7 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
                 err = sys.exc_info()[1]
                 mod = __import__(plugin)
             except:  # pylint: disable=W0702
-                if plugins != Bcfg2.Server.Plugins.__all__:
+                if plugins != plugin_opt.default:
                     # only produce errors if the default plugin list
                     # was not used -- i.e., if the config file was set
                     # up.  don't produce errors when trying to load
