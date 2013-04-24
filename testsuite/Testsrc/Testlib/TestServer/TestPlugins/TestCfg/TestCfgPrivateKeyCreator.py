@@ -66,8 +66,7 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
         pkc.setup.cfp.get.assert_called_with("sshkeys", "category")
 
     @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
-    @patchIf(HAS_CRYPTO,
-             "Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator.get_passphrases")
+    @patchIf(HAS_CRYPTO, "Bcfg2.Server.Encryption.get_passphrases")
     def test_passphrase(self, mock_get_passphrases):
         pkc = self.get_obj()
         pkc.setup = Mock()
@@ -279,7 +278,7 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
 
         if HAS_CRYPTO:
             @patch(passphrase, "foo")
-            @patch("Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator.ssl_encrypt")
+            @patch("Bcfg2.Server.Encryption.ssl_encrypt")
             def inner2(mock_ssl_encrypt):
                 reset()
                 mock_ssl_encrypt.return_value = "encryptedprivatekey"
@@ -303,4 +302,3 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
                 mock_rmtree.assert_called_with(datastore)
 
             inner2()
-

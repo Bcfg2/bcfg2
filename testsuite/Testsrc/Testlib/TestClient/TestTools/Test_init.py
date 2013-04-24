@@ -520,14 +520,14 @@ class TestSvcTool(TestTool):
             st.get_svc_command.reset_mock()
             st.cmd.reset_mock()
 
-        self.assertEqual(st.check_service(service),
-                         st.cmd.run.return_value)
+        st.cmd.run.return_value = True
+        self.assertEqual(st.check_service(service), True)
         st.get_svc_command.assert_called_with(service, "status")
         st.cmd.run.assert_called_with(st.get_svc_command.return_value)
 
         reset()
-        self.assertEqual(st.check_service(service),
-                         st.cmd.run.return_value)
+        st.cmd.run.return_value = False
+        self.assertEqual(st.check_service(service), False)
         st.get_svc_command.assert_called_with(service, "status")
         st.cmd.run.assert_called_with(st.get_svc_command.return_value)
 

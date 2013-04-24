@@ -25,8 +25,8 @@ class Rules(Bcfg2.Server.Plugin.PrioDir):
                                                 candidate):
             return True
         elif (entry.tag == "Path" and
-              entry.get('name').rstrip("/") == \
-                  candidate.get("name").rstrip("/")):
+              entry.get('name').rstrip("/") ==
+              candidate.get("name").rstrip("/")):
             # special case for Path tags:
             # http://trac.mcs.anl.gov/projects/bcfg2/ticket/967
             return True

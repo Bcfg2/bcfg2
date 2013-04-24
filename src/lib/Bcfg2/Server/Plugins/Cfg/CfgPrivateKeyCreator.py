@@ -51,7 +51,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         if (HAS_CRYPTO and
             self.setup.cfp.has_section("sshkeys") and
             self.setup.cfp.has_option("sshkeys", "passphrase")):
-            return Bcfg2.Encrypption.get_passphrases()[
+            return Bcfg2.Server.Encryption.get_passphrases()[
                 self.setup.cfp.get("sshkeys", "passphrase")]
         return None
 
@@ -196,7 +196,8 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
             privkey = open(filename).read()
             if HAS_CRYPTO and self.passphrase:
                 self.debug_log("Cfg: Encrypting key data at %s" % filename)
-                privkey = ssl_encrypt(privkey, self.passphrase)
+                privkey = Bcfg2.Server.Encryption.ssl_encrypt(privkey,
+                                                              self.passphrase)
                 specificity['ext'] = '.crypt'
 
             self.write_data(privkey, **specificity)

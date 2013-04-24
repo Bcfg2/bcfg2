@@ -105,6 +105,7 @@ FL = '{http://linux.duke.edu/metadata/filelists}'
 PULPSERVER = None
 PULPCONFIG = None
 
+
 def _setup_pulp():
     """ Connect to a Pulp server and pass authentication credentials.
     This only needs to be called once, but multiple calls won't hurt

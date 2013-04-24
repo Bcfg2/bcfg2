@@ -4,6 +4,7 @@ import getopt
 import Bcfg2.Server.Admin
 from Bcfg2.Utils import Executor
 
+
 class Viz(Bcfg2.Server.Admin.MetadataCore):
     """ Produce graphviz diagrams of metadata structures """
     __usage__ = ("[options]\n\n"
@@ -79,16 +80,16 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
                  self.metadata.viz(hosts, bundles,
                                    key, only_client, self.colors)]
         if key:
-            idata.extend([
-                    "\tsubgraph cluster_key {",
-                    '\tstyle="filled";',
-                    '\tcolor="lightblue";',
-                    '\tBundle [ shape="septagon" ];',
-                    '\tGroup [shape="ellipse"];',
-                    '\tProfile [style="bold", shape="ellipse"];',
-                    '\tHblock [label="Host1|Host2|Host3",shape="record"];',
-                    '\tlabel="Key";',
-                    "\t}"])
+            idata.extend(
+                ["\tsubgraph cluster_key {",
+                 '\tstyle="filled";',
+                 '\tcolor="lightblue";',
+                 '\tBundle [ shape="septagon" ];',
+                 '\tGroup [shape="ellipse"];',
+                 '\tProfile [style="bold", shape="ellipse"];',
+                 '\tHblock [label="Host1|Host2|Host3",shape="record"];',
+                 '\tlabel="Key";',
+                 "\t}"])
         idata.append("}")
         try:
             result = exc.run(cmd, inputdata=idata)

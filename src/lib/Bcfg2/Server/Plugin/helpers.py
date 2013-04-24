@@ -6,7 +6,6 @@ import sys
 import copy
 import glob
 import genshi
-import logging
 import operator
 import lxml.etree
 import Bcfg2.Server
@@ -29,6 +28,7 @@ try:
     HAS_DJANGO = True
 except ImportError:
     HAS_DJANGO = False
+
 
 class track_statistics(object):  # pylint: disable=C0103
     """ Decorator that tracks execution time for the given
@@ -1221,7 +1221,7 @@ class Specificity(CmpMixin):
         return "".join(rv)
 
 
-class SpecificData(object):
+class SpecificData(Debuggable):
     """ A file that is specific to certain clients, groups, or all
     clients. """
 
@@ -1237,6 +1237,7 @@ class SpecificData(object):
         :param encoding: The encoding to use for data in this file
         :type encoding: string
         """
+        Debuggable.__init__(self)
         self.name = name
         self.specific = specific
         self.data = None
@@ -1258,7 +1259,7 @@ class SpecificData(object):
         except UnicodeDecodeError:
             self.data = open(self.name, mode='rb').read()
         except:  # pylint: disable=W0201
-            LOGGER.error("Failed to read file %s" % self.name)
+            self.logger.error("Failed to read file %s" % self.name)
 
 
 class EntrySet(Debuggable):

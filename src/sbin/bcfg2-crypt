@@ -160,7 +160,7 @@ class Encryptor(object):
                 except TypeError:
                     pchunk = None
                     for pname, passphrase in \
-                          Bcfg2.Server.Encryption.get_passphrases().items():
+                            Bcfg2.Server.Encryption.get_passphrases().items():
                         self.logger.debug("Trying passphrase %s" % pname)
                         try:
                             pchunk = self._decrypt(chunk, passphrase)

@@ -246,7 +246,8 @@ class Executor(object):
                 self.logger.debug('< %s' % line)
             for line in stderr.splitlines():  # pylint: disable=E1103
                 self.logger.info(line)
-            return ExecutorResult(stdout, stderr, proc.wait())
+            return ExecutorResult(stdout, stderr,
+                                  proc.wait())  # pylint: disable=E1101
         finally:
             if timeout is not None:
                 timer.cancel()

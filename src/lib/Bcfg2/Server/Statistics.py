@@ -5,6 +5,7 @@ server core.  This data is exposed by
 import time
 from Bcfg2.Compat import wraps
 
+
 class Statistic(object):
     """ A single named statistic, tracking minimum, maximum, and
     average execution time, and number of invocations. """

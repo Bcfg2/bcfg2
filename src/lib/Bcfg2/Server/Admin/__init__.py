@@ -116,10 +116,10 @@ class MetadataCore(Mode):
         Mode.__init__(self)
         if self.__plugin_whitelist__ is not None:
             self.setup['plugins'] = [p for p in self.setup['plugins']
-                                if p in self.__plugin_whitelist__]
+                                     if p in self.__plugin_whitelist__]
         elif self.__plugin_blacklist__ is not None:
             self.setup['plugins'] = [p for p in self.setup['plugins']
-                                if p not in self.__plugin_blacklist__]
+                                     if p not in self.__plugin_blacklist__]
 
         # admin modes don't need to watch for changes.  one shot is fine here.
         self.setup['filemonitor'] = 'pseudo'

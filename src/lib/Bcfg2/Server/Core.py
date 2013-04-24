@@ -492,9 +492,10 @@ class BaseCore(object):
                     self.logger.error("%s: Error invoking hook %s: %s" %
                                       (plugin, hook, err))
         finally:
-            Bcfg2.Server.Statistics.stats.add_value("%s:client_run_hook:%s" %
-                                             (self.__class__.__name__, hook),
-                                             time.time() - start)
+            Bcfg2.Server.Statistics.stats.add_value(
+                "%s:client_run_hook:%s" %
+                (self.__class__.__name__, hook),
+                time.time() - start)
 
     @Bcfg2.Server.Statistics.track_statistics()
     def validate_structures(self, metadata, data):
@@ -665,9 +666,9 @@ class BaseCore(object):
                                        (entry.tag, entry.get('name')))
         finally:
             Bcfg2.Server.Statistics.stats.add_value("%s:Bind:%s" %
-                                             (self.__class__.__name__,
-                                              entry.tag),
-                                             time.time() - start)
+                                                    (self.__class__.__name__,
+                                                     entry.tag),
+                                                    time.time() - start)
 
     def BuildConfiguration(self, client):
         """ Build the complete configuration for a client.
