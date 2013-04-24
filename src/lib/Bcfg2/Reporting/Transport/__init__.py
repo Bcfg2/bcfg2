@@ -3,7 +3,8 @@ Public transport routines
 """
 
 import sys
-from Bcfg2.Reporting.Transport.base import TransportImportError
+from Bcfg2.Reporting.Transport.base import TransportError, \
+    TransportImportError
 
 
 def load_transport(transport_name, setup):
