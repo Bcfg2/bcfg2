@@ -3,7 +3,6 @@
 import os
 import re
 import sys
-import logging
 import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 from Bcfg2.Utils import PackedDigitRange
@@ -16,16 +15,16 @@ class PatternMap(object):
         self.pattern = pattern
         self.rangestr = rangestr
         self.groups = groups
-        if pattern != None:
+        if pattern is not None:
             self.re = re.compile(pattern)
             self.process = self.process_re
-        elif rangestr != None:
+        elif rangestr is not None:
             if '\\' in rangestr:
                 raise Exception("Backslashes are not allowed in NameRanges")
             range_finder = r'\[\[[\d\-,]+\]\]'
             self.process = self.process_range
-            self.re = re.compile('^' + re.sub(range_finder, '(\d+)',
-                                              rangestr))
+            self.re = re.compile(r'^' + re.sub(range_finder, r'(\d+)',
+                                               rangestr))
             dmatcher = re.compile(re.sub(range_finder,
                                          r'\[\[([\d\-,]+)\]\]',
                                          rangestr))
@@ -67,13 +66,13 @@ class PatternMap(object):
 class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
     """ representation of GroupPatterns config.xml """
     __identifier__ = None
+    create = 'GroupPatterns'
 
     def __init__(self, filename, core=None):
         Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, filename,
                                                    should_monitor=True)
         self.core = core
         self.patterns = []
-        self.logger = logging.getLogger(self.__class__.__name__)
 
     def Index(self):
         Bcfg2.Server.Plugin.XMLFileBacked.Index(self)

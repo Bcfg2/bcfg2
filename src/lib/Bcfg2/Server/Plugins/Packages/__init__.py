@@ -5,7 +5,6 @@ determine the completeness of the client configuration. """
 import os
 import sys
 import glob
-import copy
 import shutil
 import lxml.etree
 import Bcfg2.Logger
@@ -20,7 +19,8 @@ from Bcfg2.Server.Statistics import track_statistics
 YUM_CONFIG_DEFAULT = "/etc/yum.repos.d/bcfg2.repo"
 
 #: The default path for generated apt configs
-APT_CONFIG_DEFAULT = "/etc/apt/sources.d/bcfg2"
+APT_CONFIG_DEFAULT = \
+    "/etc/apt/sources.list.d/bcfg2-packages-generated-sources.list"
 
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
@@ -177,6 +177,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         for (key, value) in list(attrib.items()):
             entry.attrib.__setitem__(key, value)
 
+    def get_config(self, metadata):
+        """ Get yum/apt config, as a string, for the specified client.
+
+        :param metadata: The client to create the config for.
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        """
+        return self.get_collection(metadata).get_config()
+
     def HandleEntry(self, entry, metadata):
         """ Bind configuration entries.  ``HandleEntry`` handles
         entries two different ways:
@@ -226,14 +234,14 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             return True
         elif entry.tag == 'Path':
             # managed entries for yum/apt configs
-            if (entry.get("name") == \
-                    self.core.setup.cfp.get("packages",
-                                            "yum_config",
-                                            default=YUM_CONFIG_DEFAULT) or
-                entry.get("name") == \
-                    self.core.setup.cfp.get("packages",
-                                            "apt_config",
-                                            default=APT_CONFIG_DEFAULT)):
+            if (entry.get("name") ==
+                self.core.setup.cfp.get("packages",
+                                        "yum_config",
+                                        default=YUM_CONFIG_DEFAULT) or
+                entry.get("name") ==
+                self.core.setup.cfp.get("packages",
+                                        "apt_config",
+                                        default=APT_CONFIG_DEFAULT)):
                 return True
         return False
 
@@ -523,7 +531,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         """
         collection = self.get_collection(metadata)
         return dict(sources=collection.get_additional_data(),
-                    allsources=copy.deepcopy(self.sources))
+                    get_config=self.get_config)
 
     def end_client_run(self, metadata):
         """ Hook to clear the cache for this client in

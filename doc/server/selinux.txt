@@ -142,13 +142,13 @@ necessary.
 Duplicate Entries
 -----------------
 
-It may be necessary to use `BoundSELinux` tags if a single fcontext
+It may be necessary to use `BoundSEFcontext` tags if a single fcontext
 needs two different SELinux types depending on whether it's a symlink
 or a plain file.  For instance:
 
 .. code-block:: xml
 
-    <BoundSELinux type="fcontext" filetype="symlink"
-                  name="/etc/localtime" selinuxtype="etc_t"/>
-    <BoundSELinux type="fcontext" filetype="regular"
-                  name="/etc/localtime" selinuxtype="locale_t"/>
+    <BoundSEFcontext filetype="symlink"
+                     name="/etc/localtime" selinuxtype="etc_t"/>
+    <BoundSEFcontext filetype="regular"
+                     name="/etc/localtime" selinuxtype="locale_t"/>

@@ -34,13 +34,11 @@ class POSIXFile(POSIXTool):
 
     def _get_data(self, entry):
         """ Get a tuple of (<file data>, <is binary>) for the given entry """
-        is_binary = False
-        if entry.get('encoding', 'ascii') == 'base64':
-            tempdata = b64decode(entry.text)
-            is_binary = True
-
-        elif entry.get('empty', 'false') == 'true':
+        is_binary = entry.get('encoding', 'ascii') == 'base64'
+        if entry.get('empty', 'false') == 'true' or not entry.text:
             tempdata = ''
+        elif is_binary:
+            tempdata = b64decode(entry.text)
         else:
             tempdata = entry.text
             if isinstance(tempdata, unicode) and unicode != str:

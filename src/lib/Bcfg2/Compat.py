@@ -10,7 +10,7 @@ Python 2.4 and such-like """
 
 import sys
 
-# pylint: disable=E0611,W0611,W0622,C0103
+# pylint: disable=E0601,E0602,E0611,W0611,W0622,C0103
 
 try:
     from email.Utils import formatdate
@@ -270,3 +270,11 @@ try:
 except NameError:
     # longs are just ints in py3k
     long = int
+
+
+try:
+    cmp = cmp
+except NameError:
+    def cmp(a, b):
+        """ Py3k implementation of cmp() """
+        return (a > b) - (a < b)

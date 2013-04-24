@@ -60,12 +60,12 @@ class ClientProbeDataSet(dict):
         dict.__init__(self, *args, **kwargs)
 
 
-class ProbeData(str):
+class ProbeData(str):  # pylint: disable=E0012,R0924
     """ a ProbeData object emulates a str object, but also has .xdata,
     .json, and .yaml properties to provide convenient ways to use
     ProbeData objects as XML, JSON, or YAML data """
     def __new__(cls, data):
-        return str.__new__(cls, data)
+        return str.__new__(cls, data.encode('utf-8'))
 
     def __init__(self, data):  # pylint: disable=W0613
         str.__init__(self)
@@ -113,15 +113,15 @@ class ProbeData(str):
 
 class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     """ Handle universal and group- and host-specific probe files """
-    ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|probed\\.xml)$")
+    ignore = re.compile(r'^(\.#.*|.*~|\..*\.(tmp|sw[px])|probed\.xml)$')
     probename = \
-        re.compile("(.*/)?(?P<basename>\S+?)(\.(?P<mode>(?:G\d\d)|H)_\S+)?$")
-    bangline = re.compile('^#!\s*(?P<interpreter>.*)$')
+        re.compile(r'(.*/)?(?P<basename>\S+?)(\.(?P<mode>(?:G\d\d)|H)_\S+)?$')
+    bangline = re.compile(r'^#!\s*(?P<interpreter>.*)$')
     basename_is_regex = True
 
     def __init__(self, path, encoding, plugin_name):
         self.plugin_name = plugin_name
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, '[0-9A-Za-z_\-]+', path,
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, r'[0-9A-Za-z_\-]+', path,
                                               Bcfg2.Server.Plugin.SpecificData,
                                               encoding)
         Bcfg2.Server.FileMonitor.get_fam().AddMonitor(path, self)
@@ -155,7 +155,20 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
             probe = lxml.etree.Element('probe')
             probe.set('name', os.path.basename(name))
             probe.set('source', self.plugin_name)
-            probe.text = entry.data
+            if (metadata.version_info and
+                metadata.version_info > (1, 3, 1, '', 0)):
+                try:
+                    probe.text = entry.data.decode('utf-8')
+                except AttributeError:
+                    probe.text = entry.data
+            else:
+                try:
+                    probe.text = entry.data
+                except:  # pylint: disable=W0702
+                    self.logger.error("Client unable to handle unicode "
+                                      "probes. Skipping %s" %
+                                      probe.get('name'))
+                    continue
             match = self.bangline.match(entry.data.split('\n')[0])
             if match:
                 probe.set('interpreter', match.group('interpreter'))
@@ -211,15 +224,21 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 lxml.etree.SubElement(top, 'Client', name=client,
                                       timestamp=str(int(probedata.timestamp)))
             for probe in sorted(probedata):
-                lxml.etree.SubElement(ctag, 'Probe', name=probe,
-                                      value=str(self.probedata[client][probe]))
+                try:
+                    lxml.etree.SubElement(
+                        ctag, 'Probe', name=probe,
+                        value=str(
+                            self.probedata[client][probe]).decode('utf-8'))
+                except AttributeError:
+                    lxml.etree.SubElement(
+                        ctag, 'Probe', name=probe,
+                        value=str(self.probedata[client][probe]))
             for group in sorted(self.cgroups[client]):
                 lxml.etree.SubElement(ctag, "Group", name=group)
         try:
-            datafile = open(os.path.join(self.data, 'probed.xml'), 'w')
-            datafile.write(lxml.etree.tostring(
-                    top, xml_declaration=False,
-                    pretty_print='true').decode('UTF-8'))
+            top.getroottree().write(os.path.join(self.data, 'probed.xml'),
+                                    xml_declaration=False,
+                                    pretty_print='true')
         except IOError:
             err = sys.exc_info()[1]
             self.logger.error("Failed to write probed.xml: %s" % err)
@@ -234,9 +253,10 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             if pdata.data != data:
                 pdata.data = data
                 pdata.save()
+
         ProbesDataModel.objects.filter(
             hostname=client.hostname).exclude(
-            probe__in=self.probedata[client.hostname]).delete()
+                probe__in=self.probedata[client.hostname]).delete()
 
         for group in self.cgroups[client.hostname]:
             try:
@@ -248,7 +268,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 grp.save()
         ProbesGroupsModel.objects.filter(
             hostname=client.hostname).exclude(
-            group__in=self.cgroups[client.hostname]).delete()
+                group__in=self.cgroups[client.hostname]).delete()
 
     def load_data(self):
         """ Load probe data from the appropriate backend (probed.xml
@@ -322,7 +342,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
 
     def ReceiveDataItem(self, client, data, cgroups, cprobedata):
         """Receive probe results pertaining to client."""
-        if data.text == None:
+        if data.text is None:
             self.logger.info("Got null response to probe %s from %s" %
                              (data.get('name'), client.hostname))
             cprobedata[data.get('name')] = ProbeData('')

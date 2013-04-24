@@ -13,8 +13,8 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
     __req__ = {'Package': ['name', 'version']}
     pkgtype = 'ebuild'
     # requires a working PORTAGE_BINHOST in make.conf
-    _binpkgtool = ('emerge --getbinpkgonly %s', ('=%s-%s', \
-                                     ['name', 'version']))
+    _binpkgtool = ('emerge --getbinpkgonly %s', ('=%s-%s', ['name',
+                                                            'version']))
     pkgtool = ('emerge %s', ('=%s-%s', ['name', 'version']))
 
     def __init__(self, config):
@@ -22,7 +22,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         Bcfg2.Client.Tools.PkgTool.__init__(self, config)
         self._initialised = True
         self.__important__ = self.__important__ + ['/etc/make.conf']
-        self._pkg_pattern = re.compile('(.*)-(\d.*)')
+        self._pkg_pattern = re.compile(r'(.*)-(\d.*)')
         self._ebuild_pattern = re.compile('(ebuild|binary)')
         self.installed = {}
         self._binpkgonly = self.setup.get('portage_binpkgonly', False)

@@ -52,8 +52,8 @@ import sys
 import Bcfg2.Server.Plugin
 from Bcfg2.Options import get_option_parser
 from Bcfg2.Compat import HTTPError, HTTPBasicAuthHandler, \
-     HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, \
-     urlopen, cPickle, md5
+    HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, urlopen, \
+    cPickle, md5
 from Bcfg2.Server.Statistics import track_statistics
 
 
@@ -66,7 +66,7 @@ def fetch_url(url):
     :raises: URLError - Failure fetching URL
     :returns: string - the content of the page at the given URL """
     if '@' in url:
-        mobj = re.match('(\w+://)([^:]+):([^@]+)@(.*)$', url)
+        mobj = re.match(r'(\w+://)([^:]+):([^@]+)@(.*)$', url)
         if not mobj:
             raise ValueError("Invalid URL")
         user = mobj.group(2)
@@ -308,7 +308,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
 
         :raises: OSError - If the saved data cannot be read
         :raises: cPickle.UnpicklingError - If the saved data is corrupt """
-        data = open(self.cachefile)
+        data = open(self.cachefile, 'rb')
         (self.pkgnames, self.deps, self.provides,
          self.essentialpkgs) = cPickle.load(data)
 
@@ -608,7 +608,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
             self.logger.info("Packages: Updating %s" % url)
             fname = self.escape_url(url)
             try:
-                open(fname, 'w').write(fetch_url(url))
+                open(fname, 'wb').write(fetch_url(url))
             except ValueError:
                 self.logger.error("Packages: Bad url string %s" % url)
                 raise

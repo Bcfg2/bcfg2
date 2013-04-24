@@ -46,7 +46,7 @@ class Git(Version):
             else:
                 cmd = ["git", "--git-dir", self.vcs_path,
                        "--work-tree", self.vcs_root, "rev-parse", "HEAD"]
-                self.debug_log("Git: Running cmd")
+                self.debug_log("Git: Running %s" % cmd)
                 result = self.cmd.run(cmd)
                 if not result.success:
                     raise Exception(result.stderr)

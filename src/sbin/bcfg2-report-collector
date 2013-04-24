@@ -12,12 +12,10 @@ from Bcfg2.Reporting.Collector import ReportingCollector, ReportingError
 
 def main():
     logger = logging.getLogger('bcfg2-report-collector')
-    optinfo = dict(
-            daemon=Bcfg2.Options.DAEMON,
-            repo=Bcfg2.Options.SERVER_REPOSITORY,
-            filemonitor=Bcfg2.Options.SERVER_FILEMONITOR,
-            web_configfile=Bcfg2.Options.WEB_CFILE,
-        )
+    optinfo = dict(daemon=Bcfg2.Options.DAEMON,
+                   repo=Bcfg2.Options.SERVER_REPOSITORY,
+                   filemonitor=Bcfg2.Options.SERVER_FILEMONITOR,
+                   web_configfile=Bcfg2.Options.WEB_CFILE)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.REPORTING_COMMON_OPTIONS)
     setup = Bcfg2.Options.load_option_parser(optinfo)

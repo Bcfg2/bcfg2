@@ -64,7 +64,15 @@ class TestPOSIXFile(TestPOSIXTool):
         self.assertEqual(ptool._get_data(entry), ("test", True))
 
         entry = copy.deepcopy(orig_entry)
+        entry.set("encoding", "base64")
         entry.set("empty", "true")
+        self.assertEqual(ptool._get_data(entry), ("", True))
+
+        entry = copy.deepcopy(orig_entry)
+        entry.set("empty", "true")
+        self.assertEqual(ptool._get_data(entry), ("", False))
+
+        entry = copy.deepcopy(orig_entry)
         self.assertEqual(ptool._get_data(entry), ("", False))
 
         entry = copy.deepcopy(orig_entry)

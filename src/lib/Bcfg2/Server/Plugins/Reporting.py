@@ -92,10 +92,11 @@ class Reporting(Statistics, Threaded, PullSource, Debuggable):
         # try 3 times to store the data
         for i in [1, 2, 3]:
             try:
-                self.transport.store(client.hostname, cdata,
-                                     lxml.etree.tostring(
+                self.transport.store(
+                    client.hostname, cdata,
+                    lxml.etree.tostring(
                         stats,
-                        xml_declaration=False).decode('UTF-8'))
+                        xml_declaration=False))
                 self.debug_log("%s: Queued statistics data for %s" %
                                (self.__class__.__name__, client.hostname))
                 return

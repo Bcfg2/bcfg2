@@ -6,6 +6,7 @@ import sys
 import getopt
 import select
 import Bcfg2.Server.Admin
+from Bcfg2.Server.Plugin import PullSource, Generator
 from Bcfg2.Compat import input  # pylint: disable=W0622
 
 
@@ -62,13 +63,14 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         given client/entry from statistics.
         """
         new_entry = {'type': etype, 'name': ename}
-        for plugin in self.bcore.pull_sources:
+        pull_sources = self.bcore.plugins_by_type(PullSource)
+        for plugin in pull_sources:
             try:
                 (owner, group, mode, contents) = \
-                        plugin.GetCurrentEntry(client, etype, ename)
+                    plugin.GetCurrentEntry(client, etype, ename)
                 break
             except Bcfg2.Server.Plugin.PluginExecutionError:
-                if plugin == self.bcore.pull_sources[-1]:
+                if plugin == pull_sources[-1]:
                     print("Pull Source failure; could not fetch current state")
                     raise SystemExit(1)
 
@@ -121,8 +123,8 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
 
         meta = self.bcore.build_metadata(client)
         # Find appropriate plugin in bcore
-        glist = [gen for gen in self.bcore.generators if
-                 ename in gen.Entries.get(etype, {})]
+        glist = [gen for gen in self.bcore.plugins_by_type(Generator)
+                 if ename in gen.Entries.get(etype, {})]
         if len(glist) != 1:
             self.errExit("Got wrong numbers of matching generators for entry:"
                          "%s" % ([g.name for g in glist]))

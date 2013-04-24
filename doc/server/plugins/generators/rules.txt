@@ -99,8 +99,13 @@ describe the attributes available for various Path types.
 Note that ``secontext`` below expects a full context, not just the
 type.  For instance, "``system_u:object_r:etc_t:s0``", not just
 ``etc_t``.  You can also specify "``__default__``", which will restore
-the context of the file to the default set by policy.  See
-:ref:`server-selinux` for more information.
+the context of the file to the default set by policy.  If a file has
+no default context rule, and you don't wish to set one, you can
+specify ``secontext=''`` (i.e., an empty ``secontext``), in which case
+the client will not try to manage the SELinux context of the file at
+all.
+
+See :ref:`server-selinux` for more information.
 
 Attributes common to all Path tags:
 

@@ -9,12 +9,12 @@ from Bcfg2.Server.Core import BaseCore, NoExposedMethod
 from Bcfg2.Compat import xmlrpclib, urlparse
 from Bcfg2.Server.SSLServer import XMLRPCServer
 
-from lockfile import LockFailed
+from lockfile import LockFailed, LockTimeout
 # pylint: disable=E0611
 try:
-    from daemon.pidfile import PIDLockFile
+    from daemon.pidfile import TimeoutPIDLockFile
 except ImportError:
-    from daemon.pidlockfile import PIDLockFile
+    from daemon.pidlockfile import TimeoutPIDLockFile
 # pylint: enable=E0611
 
 
@@ -33,7 +33,8 @@ class Core(BaseCore):
                            gid=self.setup['daemon_gid'],
                            umask=int(self.setup['umask'], 8))
         if self.setup['daemon']:
-            daemon_args['pidfile'] = PIDLockFile(self.setup['daemon'])
+            daemon_args['pidfile'] = TimeoutPIDLockFile(self.setup['daemon'],
+                                                        acquire_timeout=5)
         #: The :class:`daemon.DaemonContext` used to drop
         #: privileges, write the PID file (with :class:`PidFile`),
         #: and daemonize this core.
@@ -89,6 +90,11 @@ class Core(BaseCore):
         except LockFailed:
             err = sys.exc_info()[1]
             self.logger.error("Failed to daemonize %s: %s" % (self.name, err))
+            return False
+        except LockTimeout:
+            err = sys.exc_info()[1]
+            self.logger.error("Failed to daemonize %s: Failed to acquire lock "
+                              "on %s" % (self.name, self.setup['daemon']))
             return False
 
     def _run(self):

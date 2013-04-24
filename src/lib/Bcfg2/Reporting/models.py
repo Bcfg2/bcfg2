@@ -139,9 +139,11 @@ class Interaction(models.Model):
     posixgroups = models.ManyToManyField("POSIXGroupEntry")
     failures = models.ManyToManyField("FailureEntry")
 
-    entry_types = ('actions', 'packages', 'paths', 'services', 'sebooleans',
-                   'seports', 'sefcontexts', 'senodes', 'selogins', 'seusers',
-                   'seinterfaces', 'sepermissives', 'semodules', 'posixusers',
+    entry_types = ('actions', 'failures', 'packages',
+                   'paths', 'services', 'sebooleans',
+                   'seports', 'sefcontexts', 'senodes',
+                   'selogins', 'seusers', 'seinterfaces',
+                   'sepermissives', 'semodules', 'posixusers',
                    'posixgroups')
 
     # Formerly InteractionMetadata

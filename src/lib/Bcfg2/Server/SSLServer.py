@@ -51,10 +51,11 @@ class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
         except:
+            err = sys.exc_info()
             self.logger.error("Unexpected handler error", exc_info=1)
             # report exception back to server
             raw_response = xmlrpclib.dumps(
-                xmlrpclib.Fault(1, "%s:%s" % (sys.exc_type, sys.exc_value)),
+                xmlrpclib.Fault(1, "%s:%s" % (err[0].__name__, err[1])),
                 allow_none=self.allow_none, encoding=self.encoding)
         return raw_response
 
@@ -199,8 +200,10 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             try:
                 username, password = auth_content.split(":")
             except TypeError:
+                # pylint: disable=E0602
                 username, pw = auth_content.split(bytes(":", encoding='utf-8'))
                 password = pw.decode('utf-8')
+                # pylint: enable=E0602
         except ValueError:
             username = auth_content
             password = ""

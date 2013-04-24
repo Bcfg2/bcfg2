@@ -120,7 +120,6 @@ class InfoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
         Bcfg2.Server.Core.BaseCore.__init__(self)
         self.prompt = '> '
         self.cont = True
-        self.fam.handle_events_in_interval(4)
 
     def _get_client_list(self, hostglobs):
         """ given a host glob, get a list of clients that match it """
@@ -379,7 +378,7 @@ Bcfg2 client itself.""")
                                        xml_declaration=False).decode('UTF-8')
         except Exception:
             print("Failed to build entry %s for host %s: %s" %
-                (fname, client, traceback.format_exc().splitlines()[-1]))
+                  (fname, client, traceback.format_exc().splitlines()[-1]))
             raise
         try:
             if outfile:
@@ -457,9 +456,7 @@ Bcfg2 client itself.""")
     def do_clients(self, _):
         """ clients - Print out client/profile info """
         data = [('Client', 'Profile')]
-        clist = self.metadata.clients
-        clist.sort()
-        for client in clist:
+        for client in sorted(self.metadata.list_clients()):
             imd = self.metadata.get_initial_metadata(client)
             data.append((client, imd.profile))
         print_tabular(data)
@@ -467,19 +464,18 @@ Bcfg2 client itself.""")
     def do_config(self, _):
         """ config - Print out the current configuration of Bcfg2"""
         output = [
-                ('Description', 'Value'),
-                ('Path Bcfg2 repository', self.setup['repo']),
-                ('Plugins', self.setup['plugins']),
-                ('Password', self.setup['password']),
-                ('Server Metadata Connector', self.setup['mconnect']),
-                ('Filemonitor', self.setup['filemonitor']),
-                ('Server address', self.setup['location']),
-                ('Path to key', self.setup['key']),
-                ('Path to SSL certificate', self.setup['cert']),
-                ('Path to SSL CA certificate', self.setup['ca']),
-                ('Protocol', self.setup['protocol']),
-                ('Logging', self.setup['logging'])
-                ]
+            ('Description', 'Value'),
+            ('Path Bcfg2 repository', self.setup['repo']),
+            ('Plugins', self.setup['plugins']),
+            ('Password', self.setup['password']),
+            ('Server Metadata Connector', self.setup['mconnect']),
+            ('Filemonitor', self.setup['filemonitor']),
+            ('Server address', self.setup['location']),
+            ('Path to key', self.setup['key']),
+            ('Path to SSL certificate', self.setup['cert']),
+            ('Path to SSL CA certificate', self.setup['ca']),
+            ('Protocol', self.setup['protocol']),
+            ('Logging', self.setup['logging'])]
         print_tabular(output)
 
     def do_probes(self, args):
@@ -606,7 +602,7 @@ Bcfg2 client itself.""")
         # Dump all mappings unless type specified
         data = [('Plugin', 'Type', 'Name')]
         arglen = len(args.split())
-        for generator in self.generators:
+        for generator in self.plugins_by_type(Bcfg2.Server.Plugin.Generator):
             if arglen == 0:
                 etypes = list(generator.Entries.keys())
             else:
@@ -712,6 +708,8 @@ Bcfg2 client itself.""")
 
     def run(self, args):  # pylint: disable=W0221
         try:
+            self.load_plugins()
+            self.fam.handle_events_in_interval(1)
             if args:
                 self.onecmd(" ".join(args))
             else:
@@ -738,7 +736,7 @@ def build_usage():
 
         # shim for python 2.4, __func__ is im_func
         funcattr = getattr(attr, "__func__", getattr(attr, "im_func", None))
-        if (funcattr != None and
+        if (funcattr is not None and
             funcattr.func_name not in cmd_blacklist and
             funcattr.func_name.startswith("do_") and
             funcattr.func_doc):

@@ -337,7 +337,7 @@ class PropertiesEncryptor(Encryptor):
         # actually need to unchunk anything
         xdata = data[0]
         # find root element
-        while xdata.getparent() != None:
+        while xdata.getparent() is not None:
             xdata = xdata.getparent()
         return lxml.etree.tostring(xdata,
                                    xml_declaration=False,

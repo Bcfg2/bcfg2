@@ -156,7 +156,7 @@ Example
 .. code-block:: xml
 
     <CertInfo>
-      <SubjectAltName>test.example.com</SubjectAltName>
+      <subjectAltName>test.example.com</subjectAltName>
       <Group name="apache">
         <Cert key="/etc/pki/tls/private/foo.key" days="730"/>
       </Group>

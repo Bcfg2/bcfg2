@@ -75,6 +75,7 @@ if HAS_DJANGO:
                 yield client.hostname
 
         def keys(self):
+            """ Get keys for the mapping """
             return [c.hostname for c in MetadataClientModel.objects.all()]
 
         def __contains__(self, key):
@@ -94,8 +95,10 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
         # then we immediately set should_monitor to the proper value,
         # so that XInclude'd files get properly watched
         fpath = os.path.join(metadata.data, basefile)
+        toptag = os.path.splitext(basefile)[0].title()
         Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, fpath,
-                                                   should_monitor=False)
+                                                   should_monitor=False,
+                                                   create=toptag)
         self.should_monitor = watch_clients
         self.metadata = metadata
         self.basefile = basefile
@@ -325,6 +328,11 @@ class ClientMetadata(object):
                 return grp
         return ''
 
+    def __repr__(self):
+        return "%s(%s, profile=%s, groups=%s)" % (self.__class__.__name__,
+                                                  self.hostname,
+                                                  self.profile, self.groups)
+
 
 class MetadataQuery(object):
     """ This class provides query methods for the metadata of all
@@ -438,7 +446,7 @@ class MetadataQuery(object):
         return [self.by_name(name) for name in self.all_clients()]
 
 
-class MetadataGroup(tuple):
+class MetadataGroup(tuple):  # pylint: disable=E0012,R0924
     """ representation of a metadata group.  basically just a named tuple """
 
     # pylint: disable=R0913,W0613
@@ -595,7 +603,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def _add_xdata(self, config, tag, name, attribs=None, alias=False):
         """ Generic method to add XML data (group, client, etc.) """
         node = self._search_xdata(tag, name, config.xdata, alias=alias)
-        if node != None:
+        if node is not None:
             raise Bcfg2.Server.Plugin.MetadataConsistencyError("%s \"%s\" "
                                                                "already exists"
                                                                % (tag, name))
@@ -655,7 +663,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def _update_xdata(self, config, tag, name, attribs, alias=False):
         """ Generic method to modify XML data (group, client, etc.) """
         node = self._search_xdata(tag, name, config.xdata, alias=alias)
-        if node == None:
+        if node is None:
             self.logger.error("%s \"%s\" does not exist" % (tag, name))
             raise Bcfg2.Server.Plugin.MetadataConsistencyError
         xdict = config.find_xml_for_xpath('.//%s[@name="%s"]' %
@@ -672,7 +680,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         """Update a groups attributes."""
         if self._use_db:
             msg = "Metadata does not support updating groups with " + \
-            "use_database enabled"
+                "use_database enabled"
             self.logger.error(msg)
             raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         else:
@@ -700,7 +708,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def _remove_xdata(self, config, tag, name):
         """ Generic method to remove XML data (group, client, etc.) """
         node = self._search_xdata(tag, name, config.xdata)
-        if node == None:
+        if node is None:
             self.logger.error("%s \"%s\" does not exist" % (tag, name))
             raise Bcfg2.Server.Plugin.MetadataConsistencyError
         xdict = config.find_xml_for_xpath('.//%s[@name="%s"]' %
@@ -936,16 +944,11 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                     if group not in self.groups:
                         self.debug_log("Client %s set as nonexistent group %s"
                                        % (client, group))
-            for gname, ginfo in list(self.groups.items()):
-                for group in ginfo.groups:
-                    if group not in self.groups:
-                        self.debug_log("Group %s set as nonexistent group %s" %
-                                       (gname, group))
 
     def set_profile(self, client, profile, addresspair):
         """Set group parameter for provided client."""
-        self.logger.info("Asserting client %s profile to %s" %
-                         (client, profile))
+        self.logger.info("Asserting client %s profile to %s" % (client,
+                                                                profile))
         if False in list(self.states.values()):
             raise Bcfg2.Server.Plugin.MetadataRuntimeError("Metadata has not "
                                                            "been read yet")
@@ -996,19 +999,18 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             self.clients_xml.write()
 
     def set_version(self, client, version):
-        """Set group parameter for provided client."""
-        if client in self.clients:
-            if client not in self.versions or version != self.versions[client]:
-                self.logger.info("Setting client %s version to %s" %
-                                 (client, version))
-                if not self._use_db:
-                    self.update_client(client, dict(version=version))
-                    self.clients_xml.write()
-                self.versions[client] = version
-        else:
-            msg = "Cannot set version on non-existent client %s" % client
-            self.logger.error(msg)
-            raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
+        """Set version for provided client."""
+        if client not in self.clients:
+            # this creates the client as a side effect
+            self.get_initial_metadata(client)
+
+        if client not in self.versions or version != self.versions[client]:
+            self.logger.info("Setting client %s version to %s" % (client,
+                                                                  version))
+            if not self._use_db:
+                self.update_client(client, dict(version=version))
+                self.clients_xml.write()
+            self.versions[client] = version
 
     def resolve_client(self, addresspair, cleanup_cache=False):
         """Lookup address locally or in DNS to get a hostname."""
@@ -1085,7 +1087,6 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             raise Bcfg2.Server.Plugin.MetadataRuntimeError("Metadata has not "
                                                            "been read yet")
         client = client.lower()
-
         if client in self.core.metadata_cache:
             return self.core.metadata_cache[client]
 
@@ -1096,6 +1097,29 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         categories = dict()
         profile = None
 
+        def _add_group(grpname):
+            """ Add a group to the set of groups for this client.
+            Handles setting categories and category suppression.
+            Returns the new profile for the client (which might be
+            unchanged). """
+            groups.add(grpname)
+            if grpname in self.groups:
+                group = self.groups[grpname]
+                category = group.category
+                if category:
+                    if category in categories:
+                        self.logger.warning("%s: Group %s suppressed by "
+                                            "category %s; %s already a member "
+                                            "of %s" %
+                                            (self.name, grpname, category,
+                                             client, categories[category]))
+                        return
+                    categories[category] = grpname
+                if not profile and group.is_profile:
+                    return grpname
+                else:
+                    return profile
+
         if client not in self.clients:
             pgroup = None
             if client in self.clientgroups:
@@ -1105,40 +1129,27 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
             if pgroup:
                 self.set_profile(client, pgroup, (None, None))
-                groups.add(pgroup)
-                category = self.groups[pgroup].category
-                if category:
-                    categories[category] = pgroup
-                if (pgroup in self.groups and self.groups[pgroup].is_profile):
-                    profile = pgroup
+                profile = _add_group(pgroup)
             else:
                 msg = "Cannot add new client %s; no default group set" % client
                 self.logger.error(msg)
                 raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
 
-        if client in self.clientgroups:
-            for cgroup in self.clientgroups[client]:
-                if cgroup in groups:
-                    continue
-                if cgroup not in self.groups:
-                    self.groups[cgroup] = MetadataGroup(cgroup)
-                category = self.groups[cgroup].category
-                if category and category in categories:
-                    self.logger.warning("%s: Group %s suppressed by "
-                                        "category %s; %s already a member "
-                                        "of %s" %
-                                        (self.name, cgroup, category,
-                                         client, categories[category]))
-                    continue
-                if category:
-                    categories[category] = cgroup
-                groups.add(cgroup)
-                # favor client groups for setting profile
-                if not profile and self.groups[cgroup].is_profile:
-                    profile = cgroup
+        for cgroup in self.clientgroups.get(client, []):
+            if cgroup in groups:
+                continue
+            if cgroup not in self.groups:
+                self.groups[cgroup] = MetadataGroup(cgroup)
+            profile = _add_group(cgroup)
 
         groups, categories = self._merge_groups(client, groups,
                                                 categories=categories)
+
+        if len(groups) == 0 and self.default:
+            # no initial groups; add the default profile
+            profile = _add_group(self.default)
+            groups, categories = self._merge_groups(client, groups,
+                                                    categories=categories)
 
         bundles = set()
         for group in groups:
@@ -1475,6 +1486,7 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
         self.duplicate_groups()
         self.duplicate_default_groups()
         self.duplicate_clients()
+        self.default_is_profile()
 
     @classmethod
     def Errors(cls):
@@ -1484,11 +1496,15 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                 "non-profile-set-as-profile": "error",
                 "duplicate-group": "error",
                 "duplicate-client": "error",
-                "multiple-default-groups": "error"}
+                "multiple-default-groups": "error",
+                "default-is-not-profile": "error"}
 
     def deprecated_options(self):
         """ check for the location='floating' option, which has been
         deprecated in favor of floating='true' """
+        if not hasattr(self.metadata, "clients_xml"):
+            # using metadata database
+            return
         clientdata = self.metadata.clients_xml.xdata
         for el in clientdata.xpath("//Client"):
             loc = el.get("location")
@@ -1514,6 +1530,9 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
     def bogus_profiles(self):
         """ check for clients that have profiles that are either not
         flagged as public groups in groups.xml, or don't exist """
+        if not hasattr(self.metadata, "clients_xml"):
+            # using metadata database
+            return
         for client in self.metadata.clients_xml.xdata.findall('.//Client'):
             profile = client.get("profile")
             if profile not in self.metadata.groups:
@@ -1533,8 +1552,8 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
         tag as a definition if it a) has profile or public set; or b)
         has any children. """
         self.duplicate_entries(
-            self.metadata.groups_xml.xdata.xpath("//Groups/Group") + \
-                self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group"),
+            self.metadata.groups_xml.xdata.xpath("//Groups/Group") +
+            self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group"),
             "group",
             include=lambda g: (g.get("profile") or
                                g.get("public") or
@@ -1554,6 +1573,9 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
 
     def duplicate_clients(self):
         """ check for clients that are defined twice. """
+        if not hasattr(self.metadata, "clients_xml"):
+            # using metadata database
+            return
         self.duplicate_entries(
             self.metadata.clients_xml.xdata.xpath("//Client"),
             "client")
@@ -1574,3 +1596,14 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                 self.LintError("duplicate-%s" % etype,
                                "%s %s is defined multiple times:\n%s" %
                                (etype.title(), ename, "\n".join(els)))
+
+    def default_is_profile(self):
+        """ ensure that the default group is a profile group """
+        if (self.metadata.default and
+            not self.metadata.groups[self.metadata.default].is_profile):
+            xdata = \
+                self.metadata.groups_xml.xdata.xpath("//Group[@name='%s']" %
+                                                     self.metadata.default)[0]
+            self.LintError("default-is-not-profile",
+                           "Default group is not a profile group:\n%s" %
+                           self.RenderXML(xdata))

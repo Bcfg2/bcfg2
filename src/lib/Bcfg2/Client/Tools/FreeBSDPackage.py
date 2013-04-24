@@ -21,7 +21,7 @@ class FreeBSDPackage(Bcfg2.Client.Tools.PkgTool):
     def RefreshPackages(self):
         self.installed = {}
         packages = self.cmd.run("/usr/sbin/pkg_info -a -E").stdout.splitlines()
-        pattern = re.compile('(.*)-(\d.*)')
+        pattern = re.compile(r'(.*)-(\d.*)')
         for pkg in packages:
             if pattern.match(pkg):
                 name = pattern.match(pkg).group(1)
@@ -31,7 +31,7 @@ class FreeBSDPackage(Bcfg2.Client.Tools.PkgTool):
     def VerifyPackage(self, entry, _):
         if not 'version' in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
-               (entry.attrib['name']))
+                             entry.attrib['name'])
             return False
         if entry.attrib['name'] in self.installed:
             if self.installed[entry.attrib['name']] == entry.attrib['version']:

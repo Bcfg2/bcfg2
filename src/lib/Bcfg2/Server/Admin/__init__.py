@@ -1,30 +1,14 @@
 """ Base classes for admin modes """
 
-__all__ = [
-        'Backup',
-        'Bundle',
-        'Client',
-        'Compare',
-        'Group',
-        'Init',
-        'Minestruct',
-        'Perf',
-        'Pull',
-        'Query',
-        'Reports',
-        'Syncdb',
-        'Tidy',
-        'Viz',
-        'Xcmd'
-        ]
-
 import re
 import sys
 import logging
 import lxml.etree
 import Bcfg2.Server.Core
 import Bcfg2.Options
-from Bcfg2.Compat import ConfigParser
+from Bcfg2.Compat import ConfigParser, walk_packages
+
+__all__ = [m[1] for m in walk_packages(path=__path__)]
 
 
 class Mode(object):
@@ -104,15 +88,15 @@ class Mode(object):
         # Calculate column widths (longest item in each column
         # plus padding on both sides)
         cols = list(zip(*rows))
-        col_widths = [max([len(str(item)) + 2 * padding for \
-                          item in col]) for col in cols]
+        col_widths = [max([len(str(item)) + 2 * padding
+                           for item in col]) for col in cols]
         borderline = vdelim.join([w * hdelim for w in col_widths])
 
         # Print out the table
         print(borderline)
         for row in rows:
-            print(vdelim.join([justify(str(item), width) for \
-                               (item, width) in zip(row, col_widths)]))
+            print(vdelim.join([justify(str(item), width)
+                               for (item, width) in zip(row, col_widths)]))
             if hdr:
                 print(borderline)
                 hdr = False

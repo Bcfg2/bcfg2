@@ -3,13 +3,10 @@ support. """
 
 import os
 import errno
-import logging
 import pyinotify
 from Bcfg2.Compat import reduce  # pylint: disable=W0622
 from Bcfg2.Server.FileMonitor import Event
 from Bcfg2.Server.FileMonitor.Pseudo import Pseudo
-
-LOGGER = logging.getLogger(__name__)
 
 
 class Inotify(Pseudo, pyinotify.ProcessEvent):
@@ -123,8 +120,9 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
         try:
             watch = self.watchmgr.watches[ievent.wd]
         except KeyError:
-            LOGGER.error("Error handling event %s for %s: Watch %s not found" %
-                         (action, ievent.pathname, ievent.wd))
+            self.logger.error("Error handling event %s for %s: "
+                              "Watch %s not found" %
+                              (action, ievent.pathname, ievent.wd))
             return
         # FAM-style file monitors return the full path to the parent
         # directory that is being watched, relative paths to anything

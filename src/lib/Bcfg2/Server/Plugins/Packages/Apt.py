@@ -29,8 +29,8 @@ class AptCollection(Collection):
         """ Get an APT configuration file (i.e., ``sources.list``).
 
         :returns: string """
-        lines = ["# This config was generated automatically by the Bcfg2 " \
-                     "Packages plugin", '']
+        lines = ["# This config was generated automatically by the Bcfg2 "
+                 "Packages plugin", '']
 
         for source in self:
             if source.rawurl:
@@ -88,6 +88,8 @@ class AptSource(Source):
                 self.logger.error("Packages: Failed to read file %s" % fname)
                 raise
             for line in reader.readlines():
+                if not isinstance(line, str):
+                    line = line.decode('utf-8')
                 words = str(line.strip()).split(':', 1)
                 if words[0] == 'Package':
                     pkgname = words[1].strip().rstrip()
@@ -99,8 +101,8 @@ class AptSource(Source):
                     vindex = 0
                     for dep in words[1].split(','):
                         if '|' in dep:
-                            cdeps = [re.sub('\s+', '',
-                                            re.sub('\(.*\)', '', cdep))
+                            cdeps = [re.sub(r'\s+', '',
+                                            re.sub(r'\(.*\)', '', cdep))
                                      for cdep in dep.split('|')]
                             dyn_dname = "choice-%s-%s-%s" % (pkgname,
                                                              barch,
@@ -109,7 +111,7 @@ class AptSource(Source):
                             bdeps[barch][pkgname].append(dyn_dname)
                             bprov[barch][dyn_dname] = set(cdeps)
                         else:
-                            raw_dep = re.sub('\(.*\)', '', dep)
+                            raw_dep = re.sub(r'\(.*\)', '', dep)
                             raw_dep = raw_dep.rstrip().strip()
                             bdeps[barch][pkgname].append(raw_dep)
                 elif words[0] == 'Provides':

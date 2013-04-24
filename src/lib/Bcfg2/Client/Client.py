@@ -91,7 +91,10 @@ class Client(object):
             try:
                 script.write("#!%s\n" %
                              (probe.attrib.get('interpreter', '/bin/sh')))
-                script.write(probe.text)
+                if sys.hexversion >= 0x03000000:
+                    script.write(probe.text)
+                else:
+                    script.write(probe.text.encode('utf-8'))
                 script.close()
                 os.chmod(scriptname,
                          stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
@@ -105,7 +108,10 @@ class Client(object):
                     self._probe_failure(name, "Return value %s" % rv)
                 self.logger.info("Probe %s has result:" % name)
                 self.logger.info(rv.stdout)
-                ret.text = rv.stdout
+                if sys.hexversion >= 0x03000000:
+                    ret.text = rv.stdout
+                else:
+                    ret.text = rv.stdout.decode('utf-8')
             finally:
                 os.unlink(scriptname)
         except SystemExit:
@@ -164,10 +170,11 @@ class Client(object):
         if len(probes.findall(".//probe")) > 0:
             try:
                 # upload probe responses
-                self.proxy.RecvProbeData(Bcfg2.Client.XML.tostring(
+                self.proxy.RecvProbeData(
+                    Bcfg2.Client.XML.tostring(
                         probedata,
-                        xml_declaration=False).decode('UTF-8'))
-            except Bcfg2.Client.Proxy.ProxyError:
+                        xml_declaration=False).decode('utf-8'))
+            except Bcfg2.Proxy.ProxyError:
                 err = sys.exc_info()[1]
                 self.fatal_error("Failed to upload probe data: %s" % err)
 
@@ -228,7 +235,7 @@ class Client(object):
                     self.fatal_error("Failed to get decision list: %s" % err)
 
             try:
-                rawconfig = self.proxy.GetConfig().encode('UTF-8')
+                rawconfig = self.proxy.GetConfig().encode('utf-8')
             except Bcfg2.Client.Proxy.ProxyError:
                 err = sys.exc_info()[1]
                 self.fatal_error("Failed to download configuration from "
@@ -246,7 +253,7 @@ class Client(object):
 
         self.logger.info("Starting Bcfg2 client run at %s" % times['start'])
 
-        rawconfig = self.get_config(times=times)
+        rawconfig = self.get_config(times=times).decode('utf-8')
 
         if self.setup['cache']:
             try:
@@ -317,9 +324,10 @@ class Client(object):
             feedback = self.tools.GenerateStats()
 
             try:
-                self.proxy.RecvStats(Bcfg2.Client.XML.tostring(
+                self.proxy.RecvStats(
+                    Bcfg2.Client.XML.tostring(
                         feedback,
-                        xml_declaration=False).decode('UTF-8'))
+                        xml_declaration=False).decode('utf-8'))
             except Bcfg2.Client.Proxy.ProxyError:
                 err = sys.exc_info()[1]
                 self.logger.error("Failed to upload configuration statistics: "

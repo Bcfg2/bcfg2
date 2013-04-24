@@ -327,6 +327,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
         return self.parse_response(response)
 
     if sys.hexversion < 0x03000000:
+        # pylint: disable=E1101
         def send_request(self, host, handler, request_body, debug):
             """ send_request() changed significantly in py3k."""
             conn = self.make_connection(host)
@@ -335,6 +336,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
             self.send_user_agent(conn)
             self.send_content(conn, request_body)
             return conn
+        # pylint: enable=E1101
 
 
 def ComponentProxy(url, user=None, password=None, key=None, cert=None, ca=None,

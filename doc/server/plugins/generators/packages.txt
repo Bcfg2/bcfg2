@@ -372,7 +372,7 @@ configs.  Simply add entries like these to the appropriate bundles:
 .. code-block:: xml
 
     <Path name="/etc/yum.repos.d/bcfg2.repo"/>
-    <Path name="/etc/apt/sources.d/bcfg2"/>
+    <Path name="/etc/apt/sources.list.d/bcfg2-packages-generated-sources.list"/>
 
 If you want to change the path to either of those files, you can set
 ``yum_config`` or ``apt_config`` in ``bcfg2.conf`` to the path to the
@@ -640,25 +640,25 @@ It understands the following directives:
 [packages] section
 ------------------
 
-+-------------+------------------------------------------------------+----------+-----------------------------+
-| Name        | Description                                          | Values   | Default                     |
-+=============+======================================================+==========+=============================+
-| resolver    | Enable dependency resolution                         | Boolean  | True                        |
-+-------------+------------------------------------------------------+----------+-----------------------------+
-| metadata    | Enable metadata processing. Disabling ``metadata``   | Boolean  | True                        |
-|             | implies disabling ``resolver`` as well.              |          |                             |
-+-------------+------------------------------------------------------+----------+-----------------------------+
-| yum_config  | The path at which to generate Yum configs.           | String   | /etc/yum.repos.d/bcfg2.repo |
-+-------------+------------------------------------------------------+----------+-----------------------------+
-| apt_config  | The path at which to generate APT configs.           | String   | /etc/apt/sources.d/bcfg2    |
-+-------------+------------------------------------------------------+----------+-----------------------------+
-| gpg_keypath | The path on the client RPM GPG keys will be copied   | String   | /etc/pki/rpm-gpg            |
-|             | to before they are imported on the client.           |          |                             |
-+-------------+------------------------------------------------------+----------+-----------------------------+
-| version     | Set the version attribute used when binding Packages | any|auto | auto                        |
-+-------------+------------------------------------------------------+----------+-----------------------------+
-| cache       | Path where Packages will store its cache             | String   | <repo>/Packages/cache       |
-+-------------+------------------------------------------------------+----------+-----------------------------+
++-------------+------------------------------------------------------+----------+-------------------------------------------------------------------+
+| Name        | Description                                          | Values   | Default                                                           |
++=============+======================================================+==========+===================================================================+
+| resolver    | Enable dependency resolution                         | Boolean  | True                                                              |
++-------------+------------------------------------------------------+----------+-------------------------------------------------------------------+
+| metadata    | Enable metadata processing. Disabling ``metadata``   | Boolean  | True                                                              |
+|             | implies disabling ``resolver`` as well.              |          |                                                                   |
++-------------+------------------------------------------------------+----------+-------------------------------------------------------------------+
+| yum_config  | The path at which to generate Yum configs.           | String   | /etc/yum.repos.d/bcfg2.repo                                       |
++-------------+------------------------------------------------------+----------+-------------------------------------------------------------------+
+| apt_config  | The path at which to generate APT configs.           | String   | /etc/apt/sources.list.d/bcfg2-packages-generated-sources.list     |
++-------------+------------------------------------------------------+----------+-------------------------------------------------------------------+
+| gpg_keypath | The path on the client RPM GPG keys will be copied   | String   | /etc/pki/rpm-gpg                                                  |
+|             | to before they are imported on the client.           |          |                                                                   |
++-------------+------------------------------------------------------+----------+-------------------------------------------------------------------+
+| version     | Set the version attribute used when binding Packages | any|auto | auto                                                              |
++-------------+------------------------------------------------------+----------+-------------------------------------------------------------------+
+| cache       | Path where Packages will store its cache             | String   | <repo>/Packages/cache                                             |
++-------------+------------------------------------------------------+----------+-------------------------------------------------------------------+
 
 
 [packages:yum] section

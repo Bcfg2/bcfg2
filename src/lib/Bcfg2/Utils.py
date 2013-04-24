@@ -22,7 +22,7 @@ class ClassName(object):
         return owner.__name__
 
 
-class PackedDigitRange(object):
+class PackedDigitRange(object):  # pylint: disable=E0012,R0924
     """ Representation of a set of integer ranges. A range is
     described by a comma-delimited string of integers and ranges,
     e.g.::
@@ -108,10 +108,16 @@ class ExecutorResult(object):
 
     def __init__(self, stdout, stderr, retval):
         #: The output of the command
-        self.stdout = stdout
+        if isinstance(stdout, str):
+            self.stdout = stdout
+        else:
+            self.stdout = stdout.decode('utf-8')
 
         #: The error produced by the command
-        self.stderr = stderr
+        if isinstance(stdout, str):
+            self.stderr = stderr
+        else:
+            self.stderr = stderr.decode('utf-8')
 
         #: The return value of the command.
         self.retval = retval
@@ -145,6 +151,19 @@ class ExecutorResult(object):
         returned a tuple of (return value, stdout split by lines). """
         return (self.retval, self.stdout.splitlines())[idx]
 
+    def __len__(self):
+        """ This provides compatibility with the old Executor, which
+        returned a tuple of (return value, stdout split by lines). """
+        return 2
+
+    def __delitem__(self, _):
+        raise TypeError("'%s' object doesn't support item deletion" %
+                        self.__class__.__name__)
+
+    def __setitem__(self, idx, val):
+        raise TypeError("'%s' object does not support item assignment" %
+                        self.__class__.__name__)
+
     def __nonzero__(self):
         return self.__bool__()
 
@@ -172,7 +191,7 @@ class Executor(object):
         :param proc: The process to kill upon timeout.
         :type proc: subprocess.Popen
         :returns: None """
-        if proc.poll() == None:
+        if proc.poll() is None:
             try:
                 proc.kill()
                 self.logger.warning("Process exceeeded timeout, killing")
@@ -216,6 +235,13 @@ class Executor(object):
                 for line in inputdata.splitlines():
                     self.logger.debug('> %s' % line)
             (stdout, stderr) = proc.communicate(input=inputdata)
+
+            # py3k fixes
+            if not isinstance(stdout, str):
+                stdout = stdout.decode('utf-8')
+            if not isinstance(stderr, str):
+                stderr = stderr.decode('utf-8')
+
             for line in stdout.splitlines():  # pylint: disable=E1103
                 self.logger.debug('< %s' % line)
             for line in stderr.splitlines():  # pylint: disable=E1103

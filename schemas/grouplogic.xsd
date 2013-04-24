@@ -1,0 +1,110 @@
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      GroupLogic schema for bcfg2
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
+
+  <xsd:complexType name="GroupLogicDeclarationType">
+    <xsd:annotation>
+      <xsd:documentation>
+        A **GroupLogicDeclarationType** declares a Group to be added
+        to a client.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type='xsd:string' name='name' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The group name
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="GroupLogicType">
+    <xsd:annotation>
+      <xsd:documentation>
+        The top-level tag of a GroupLogic configuration file.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
+      <xsd:element name='Group' type='GroupLogicDeclarationType'/>
+      <xsd:element name='Group' type='GroupLogicContainerType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Elements within Group tags only apply to clients that are
+            members of that group (or vice-versa; see #element_negate
+            below)
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='Client' type='GroupLogicContainerType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Elements within Client tags only apply to the named client
+            (or vice-versa; see #element_negate below)
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name='GroupLogic' type='GroupLogicType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Nesting GroupLogic tags is allowed in order to support
+            XInclude.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:choice>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="GroupLogicContainerType">
+    <xsd:annotation>
+      <xsd:documentation>
+        A **GroupLogicContainerType** is a tag used to provide logic.
+        Child entries of a GroupLogicContainerType tag only apply to
+        machines that match the condition specified -- either
+        membership in a group, or a matching client name.
+        :xml:attribute:`GroupLogicContainerType:negate` can be set to
+        negate the sense of the match.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:complexContent>
+      <xsd:extension base="GroupLogicType">
+        <xsd:attribute type='xsd:string' name='name' use='required'>
+          <xsd:annotation>
+            <xsd:documentation>
+              The group name
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+        <xsd:attribute type='xsd:string' name='negate'>
+          <xsd:annotation>
+            <xsd:documentation>
+              Negate the sense of this group or client; i.e., entries
+              within this tag are only used on clients that are not
+              members of the group, or that have hostnames that do not
+              match.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:complexContent>
+  </xsd:complexType>
+
+  <xsd:element name='GroupLogic' type='GroupLogicType'>
+    <xsd:annotation>
+      <xsd:documentation>
+        A GroupLogic file is a genshi file that can be used to
+        dynamically add additional groups to a client.
+      </xsd:documentation>
+    </xsd:annotation>
+  </xsd:element>
+</xsd:schema>

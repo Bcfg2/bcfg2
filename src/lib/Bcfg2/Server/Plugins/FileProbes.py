@@ -67,7 +67,8 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
         self.config = \
             Bcfg2.Server.Plugin.StructFile(os.path.join(self.data,
                                                         'config.xml'),
-                                           should_monitor=True)
+                                           should_monitor=True,
+                                           create=self.name)
         self.entries = dict()
         self.probes = dict()
 
@@ -225,11 +226,8 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
         root = lxml.etree.Element("FileInfo")
         root.append(info)
         try:
-            open(infoxml,
-                 "w").write(
-                lxml.etree.tostring(root,
-                                    xml_declaration=False,
-                                    pretty_print=True).decode('UTF-8'))
+            root.getroottree().write(infoxml, xml_declaration=False,
+                                     pretty_print=True)
         except IOError:
             err = sys.exc_info()[1]
             self.logger.error("Could not write %s: %s" % (infoxml, err))

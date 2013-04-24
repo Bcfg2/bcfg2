@@ -87,7 +87,7 @@ class LocalFilesystem(TransportBase):
 
         # using a tmpfile to hopefully avoid the file monitor from grabbing too
         # soon
-        saved = open(tmp_file, 'w')
+        saved = open(tmp_file, 'wb')
         try:
             saved.write(payload)
         except IOError:
@@ -123,7 +123,7 @@ class LocalFilesystem(TransportBase):
             self.debug_log("Handling event %s" % event.filename)
             payload = os.path.join(self.work_path, event.filename)
             try:
-                payloadfd = open(payload, "r")
+                payloadfd = open(payload, "rb")
                 interaction = cPickle.load(payloadfd)
                 payloadfd.close()
                 os.unlink(payload)

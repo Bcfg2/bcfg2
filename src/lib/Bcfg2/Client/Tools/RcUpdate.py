@@ -12,6 +12,15 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
     __handles__ = [('Service', 'rc-update')]
     __req__ = {'Service': ['name', 'status']}
 
+    def get_enabled_svcs(self):
+        """
+        Return a list of all enabled services.
+        """
+        return [line.split()[0]
+                for line in self.cmd.run(['/bin/rc-status',
+                                          '-s']).stdout.splitlines()
+                if 'started' in line]
+
     def VerifyService(self, entry, _):
         """
         Verify Service status for entry.
@@ -21,9 +30,12 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
         if entry.get('status') == 'ignore':
             return True
 
+        # get a list of all started services
+        allsrv = self.get_enabled_svcs()
+
         # check if service is enabled
-        result = self.cmd.run(["/sbin/rc-update", "show", "default"])
-        is_enabled = entry.get("name") in result.stdout
+        result = self.cmd.run(["/sbin/rc-update", "show", "default"]).stdout
+        is_enabled = entry.get("name") in result
 
         # check if init script exists
         try:
@@ -34,8 +46,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
             return False
 
         # check if service is enabled
-        result = self.cmd.run(self.get_svc_command(entry, "status"))
-        is_running = "started" in result.stdout
+        is_running = entry.get('name') in allsrv
 
         if entry.get('status') == 'on' and not (is_enabled and is_running):
             entry.set('current_status', 'off')
@@ -70,10 +81,7 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
 
     def FindExtra(self):
         """Locate extra rc-update services."""
-        allsrv = [line.split()[0]
-                  for line in self.cmd.run(['/bin/rc-status',
-                                            '-s']).stdout.splitlines()
-                  if 'started' in line]
+        allsrv = self.get_enabled_svcs()
         self.logger.debug('Found active services:')
         self.logger.debug(allsrv)
         specified = [srv.get('name') for srv in self.getSupportedEntries()]

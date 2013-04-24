@@ -77,7 +77,7 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData,
         self.encoding = encoding
         self.setup = Bcfg2.Options.get_option_parser()
     __init__.__doc__ = Bcfg2.Server.Plugin.SpecificData.__init__.__doc__ + \
-"""
+        """
 .. -----
 .. autoattribute:: CfgBaseFileMatcher.__basenames__
 .. autoattribute:: CfgBaseFileMatcher.__extensions__
@@ -101,12 +101,12 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData,
         components = ['^(?P<basename>%s)' % '|'.join(re.escape(b)
                                                      for b in basenames)]
         if cls.__specific__:
-            components.append('(|\\.H_(?P<hostname>\S+?)|' +
-                              '\.G(?P<prio>\d+)_(?P<group>\S+?))')
+            components.append(r'(|\.H_(?P<hostname>\S+?)|' +
+                              r'\.G(?P<prio>\d+)_(?P<group>\S+?))')
         if cls.__extensions__:
-            components.append('\\.(?P<extension>%s)' %
-                              '|'.join(cls.__extensions__))
-        components.append('$')
+            components.append(r'\.(?P<extension>%s)' %
+                              r'|'.join(cls.__extensions__))
+        components.append(r'$')
         return re.compile("".join(components))
 
     @classmethod
@@ -563,6 +563,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         else:
             try:
                 if not isinstance(data, unicode):
+                    if not isinstance(data, str):
+                        data = data.decode('utf-8')
                     data = u_str(data, self.encoding)
             except UnicodeDecodeError:
                 msg = "Failed to decode %s: %s" % (entry.get('name'),
@@ -715,8 +717,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
             pass
 
         if not rv or not rv[0].hostname:
-            rv.append(Bcfg2.Server.Plugin.Specificity(
-                    hostname=metadata.hostname))
+            rv.append(
+                Bcfg2.Server.Plugin.Specificity(hostname=metadata.hostname))
         return rv
 
     def build_filename(self, specific):

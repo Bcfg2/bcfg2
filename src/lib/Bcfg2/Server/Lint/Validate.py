@@ -39,7 +39,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
              "NagiosGen/config.xml": "nagiosgen.xsd",
              "FileProbes/config.xml": "fileprobes.xsd",
              "SSLCA/**/cert.xml": "sslca-cert.xsd",
-             "SSLCA/**/key.xml": "sslca-key.xsd"
+             "SSLCA/**/key.xml": "sslca-key.xsd",
+             "GroupLogic/groups.xml": "grouplogic.xsd"
              }
 
         self.filelists = {}
@@ -83,17 +84,15 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             else:
                 self.LintError("properties-schema-not-found",
                                "No schema found for %s" % filename)
+                # ensure that it at least parses
+                self.parse(filename)
 
-    def validate(self, filename, schemafile, schema=None):
-        """validate a file against the given lxml.etree.Schema.
-        return True on success, False on failure """
-        if schema is None:
-            # if no schema object was provided, instantiate one
-            schema = self._load_schema(schemafile)
-            if not schema:
-                return False
+    def parse(self, filename):
+        """ Parse an XML file, raising the appropriate LintErrors if
+        it can't be parsed or read.  Return the
+        lxml.etree._ElementTree parsed from the file. """
         try:
-            datafile = lxml.etree.parse(filename)
+            return lxml.etree.parse(filename)
         except SyntaxError:
             result = self.cmd.run(["xmllint", filename])
             self.LintError("xml-failed-to-parse",
@@ -105,6 +104,15 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                            "Failed to open file %s" % filename)
             return False
 
+    def validate(self, filename, schemafile, schema=None):
+        """validate a file against the given lxml.etree.Schema.
+        return True on success, False on failure """
+        if schema is None:
+            # if no schema object was provided, instantiate one
+            schema = self._load_schema(schemafile)
+            if not schema:
+                return False
+        datafile = self.parse(filename)
         if not schema.validate(datafile):
             cmd = ["xmllint"]
             if self.files is None:

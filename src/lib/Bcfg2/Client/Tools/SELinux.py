@@ -13,6 +13,7 @@ import seobject
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Tools.POSIX.File import POSIXFile
+from Bcfg2.Compat import long  # pylint: disable=W0622
 
 
 def pack128(int_val):
@@ -48,7 +49,7 @@ def netmask_itoa(netmask, proto="ipv4"):
     if netmask > size:
         raise ValueError("Netmask too large: %s" % netmask)
 
-    res = 0L
+    res = long(0)
     for i in range(netmask):
         res |= 1 << (size - i - 1)
     netmask = socket.inet_ntop(family, pack128(res))
@@ -167,7 +168,7 @@ class SELinuxEntryHandler(object):
     key_format = ("name",)
     value_format = ()
     str_format = '%(name)s'
-    custom_re = re.compile(' (?P<name>\S+)$')
+    custom_re = re.compile(r' (?P<name>\S+)$')
     custom_format = None
 
     def __init__(self, tool, config):
@@ -200,7 +201,16 @@ class SELinuxEntryHandler(object):
         type, if the records object supports the customized() method
         """
         if hasattr(self.records, "customized") and self.custom_re:
-            return dict([(k, self.all_records[k]) for k in self.custom_keys])
+            rv = dict()
+            for key in self.custom_keys:
+                if key in self.all_records:
+                    rv[key] = self.all_records[key]
+                else:
+                    self.logger.warning("SELinux %s %s customized, but no "
+                                        "record found. This may indicate an "
+                                        "error in your SELinux policy." %
+                                        (self.etype, key))
+            return rv
         else:
             # ValueError is really a pretty dumb exception to raise,
             # but that's what the seobject customized() method raises
@@ -504,14 +514,14 @@ class SELinuxSefcontextHandler(SELinuxEntryHandler):
                         char="-c",
                         door="-D")
     filetypenames = dict(all="all files",
-                        regular="regular file",
-                        directory="directory",
-                        symlink="symbolic link",
-                        pipe="named pipe",
-                        socket="socket",
-                        block="block device",
-                        char="character device",
-                        door="door")
+                         regular="regular file",
+                         directory="directory",
+                         symlink="symbolic link",
+                         pipe="named pipe",
+                         socket="socket",
+                         block="block device",
+                         char="character device",
+                         door="door")
     filetypeattrs = dict([v, k] for k, v in filetypenames.iteritems())
     custom_re = re.compile(r'-f \'(?P<filetype>[a-z ]+)\'.*? \'(?P<name>.*)\'')
 

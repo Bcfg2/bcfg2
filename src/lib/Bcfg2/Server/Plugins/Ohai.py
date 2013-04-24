@@ -2,8 +2,10 @@
 operating system using ohai
 (http://wiki.opscode.com/display/chef/Ohai) """
 
-import lxml.etree
 import os
+import sys
+import glob
+import lxml.etree
 import Bcfg2.Server.Plugin
 
 try:
@@ -31,21 +33,38 @@ class OhaiCache(object):
         self.dirname = dirname
         self.cache = dict()
 
+    def hostpath(self, host):
+        """ Get the path to the file that contains Ohai data for the
+        given host """
+        return os.path.join(self.dirname, "%s.json" % host)
+
     def __setitem__(self, item, value):
-        if value == None:
+        if value is None:
             # simply return if the client returned nothing
             return
         self.cache[item] = json.loads(value)
-        open("%s/%s.json" % (self.dirname, item), 'w').write(value)
+        open(self.hostpath(item), 'w').write(value)
 
     def __getitem__(self, item):
         if item not in self.cache:
             try:
-                data = open("%s/%s.json" % (self.dirname, item)).read()
+                data = open(self.hostpath(item)).read()
             except:
                 raise KeyError(item)
             self.cache[item] = json.loads(data)
         return self.cache[item]
+
+    def __delitem__(self, item):
+        if item in self.cache:
+            del self.cache[item]
+        try:
+            os.unlink(self.hostpath(item))
+        except:
+            raise IndexError("Could not unlink %s: %s" % (self.hostpath(item),
+                                                          sys.exc_info()[1]))
+
+    def __len__(self):
+        return len(glob.glob(self.hostpath('*')))
 
     def __iter__(self):
         data = list(self.cache.keys())
@@ -67,10 +86,6 @@ class Ohai(Bcfg2.Server.Plugin.Plugin,
         self.probe = lxml.etree.Element('probe', name='Ohai', source='Ohai',
                                         interpreter='/bin/sh')
         self.probe.text = PROBECODE
-        try:
-            os.stat(self.data)
-        except OSError:
-            os.makedirs(self.data)
         self.cache = OhaiCache(self.data)
 
     def GetProbes(self, _):

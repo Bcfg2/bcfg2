@@ -9,7 +9,7 @@ from Bcfg2.Server.Plugin import StructFile
 from Bcfg2.Server.Plugins.Cfg import CfgCreator, CfgCreationError
 from Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator import CfgPublicKeyCreator
 try:
-    from Bcfg2.Server.Encryption import get_passphrases, ssl_encrypt
+    import Bcfg2.Server.Encryption
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
@@ -51,8 +51,8 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         if (HAS_CRYPTO and
             self.setup.cfp.has_section("sshkeys") and
             self.setup.cfp.has_option("sshkeys", "passphrase")):
-            return get_passphrases()[self.setup.cfp.get("sshkeys",
-                                                        "passphrase")]
+            return Bcfg2.Encrypption.get_passphrases()[
+                self.setup.cfp.get("sshkeys", "passphrase")]
         return None
 
     def handle_event(self, event):
@@ -72,7 +72,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
                      the given client metadata, and may be obtained by
                      doing ``self.XMLMatch(metadata)``
         :type spec: lxml.etree._Element
-        :returns: None
+        :returns: string - The filename of the private key
         """
         if spec is None:
             spec = self.XMLMatch(metadata)
@@ -142,7 +142,6 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         if spec is None:
             spec = self.XMLMatch(metadata)
         category = spec.get("category", self.category)
-        print("category=%s" % category)
         if category is None:
             per_host_default = "true"
         else:

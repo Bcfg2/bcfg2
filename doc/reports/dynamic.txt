@@ -53,40 +53,41 @@ Prerequisites
 Install
 -------
 
-Be sure to include the specified fields included in the example
-``bcfg2.conf`` file. These can be specified in either ``/etc/bcfg2.conf``,
-if it is readable by the webserver user, or ``/etc/bcfg2-web.conf``. Any
-database supported by `Django <http://www.djangoproject.com>`_ can be used.
-As of version 1.3, `South <http://south.aeracode.org>`_ is used to control
-schema changes.  If your database is not supported by South, any updates
-will need to be applied manually.  Sqlite is configured by default.
-Please see the :ref:`reporting-databases` section to configure alternative
-databases.
 
-.. warning::
+1. Be sure to include the specified fields included in the example
+   ``bcfg2.conf`` file. These can be specified in either
+   ``/etc/bcfg2.conf``, if it is readable by the webserver user,
+   or ``/etc/bcfg2-web.conf``. Any database supported by `Django
+   <http://www.djangoproject.com>`_ can be used.  As of version 1.3,
+   `South <http://south.aeracode.org>`_ is used to control schema changes.
+   If your database is not supported by South, any updates will need to
+   be applied manually.  Sqlite is configured by default.  Please see the
+   :ref:`reporting-databases` section to configure alternative databases.
 
-    If you are using an sqlite database, the directory containing the
-    database file will need to be writable by the web server. The reason
-    for this is that sqlite will create another file for its journal
-    when it tries to update the database file.
+   .. warning::
 
-.. note::
+       If you are using an sqlite database, the directory containing the
+       database file will need to be writable by the web server. The reason
+       for this is that sqlite will create another file for its journal
+       when it tries to update the database file.
 
-    Distributed environments can share a single remote database for
-    reporting.
+   .. note::
 
-After configuring your database be sure to run `bcfg2-admin reports init`
-to create the schema.
+       Distributed environments can share a single remote database for
+       reporting.
 
-To enable statistics collection in the bcfg2-server, add
-:ref:`server-plugins-statistics-reporting` to the **plugins**
-line in your ``bcfg2.conf`` and restart the bcfg2-server.  A report collecting
-daemon should be run to import the collected statistics into the backend.
-Please see the section :ref:`Report Collector <report_collector>` for more
-information.
+2. After configuring your database be sure to run ``bcfg2-admin reports
+   init`` to create the schema.
 
-Detailed installation instructions can be found :ref:`here
-<appendix-guides-web-reports-install>`.
+3. To enable statistics collection in the bcfg2-server, add
+   :ref:`server-plugins-statistics-reporting` to the **plugins**
+   line in your ``bcfg2.conf`` and restart the bcfg2-server.  A report
+   collecting daemon should be run to import the collected statistics
+   into the backend.  Please see the section :ref:`Report Collector
+   <report_collector>` for more information.
+
+   Detailed installation instructions can be found :ref:`here
+   <appendix-guides-web-reports-install>`.
 
 .. _dynamic-http-install:
 
@@ -175,7 +176,7 @@ Upgrading
     .. note::
 
         After the database is upgraded all of the old tables are left
-        intact. To remove them any table starting with reports_ can
+        intact. To remove them any table starting with **reports\_** can
         be dropped.
 
 4. `(Optional)` Run the :ref:`Report Collector <report_collector>`
@@ -198,11 +199,6 @@ An example using the defaults is listed below::
     password =
     host =
     port =
-
-    [statistics]
-    config = /etc/bcfg2-web.conf
-    time_zone =
-    web_debug = False
 
     [reporting]
     transport = DirectStore
@@ -240,6 +236,8 @@ section:
 
 statistics
 ^^^^^^^^^^
+
+.. deprecated: 1.3.0
 
 * config: The config file to be read for additional reporting
   data.  This is used to restrict what can be read by the web

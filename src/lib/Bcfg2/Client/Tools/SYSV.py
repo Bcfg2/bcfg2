@@ -41,7 +41,7 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
             self.noaskfile.write(noask)
             # flush admin file contents to disk
             self.noaskfile.flush()
-            self.pkgtool = (self.pkgtool[0] % ("-a %s" % (self.noaskname)), \
+            self.pkgtool = (self.pkgtool[0] % ("-a %s" % (self.noaskname)),
                             self.pkgtool[1])
         except:  # pylint: disable=W0702
             self.pkgtool = (self.pkgtool[0] % "", self.pkgtool[1])
@@ -66,7 +66,7 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
         desired_version = entry.get('version')
         if desired_version == 'any':
             desired_version = self.installed.get(entry.get('name'),
-                                                desired_version)
+                                                 desired_version)
 
         if not self.cmd.run(["/usr/bin/pkginfo", "-q", "-v",
                              desired_version, entry.get('name')]):

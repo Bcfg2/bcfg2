@@ -30,7 +30,38 @@ try:
 except ImportError:
     HAS_DJANGO = False
 
-LOGGER = logging.getLogger(__name__)
+class track_statistics(object):  # pylint: disable=C0103
+    """ Decorator that tracks execution time for the given
+    :class:`Plugin` method with :mod:`Bcfg2.Statistics` for reporting
+    via ``bcfg2-admin perf`` """
+
+    def __init__(self, name=None):
+        """
+        :param name: The name under which statistics for this function
+                     will be tracked.  By default, the name will be
+                     the name of the function concatenated with the
+                     name of the class the function is a member of.
+        :type name: string
+        """
+        # if this is None, it will be set later during __call_
+        self.name = name
+
+    def __call__(self, func):
+        if self.name is None:
+            self.name = func.__name__
+
+        @wraps(func)
+        def inner(obj, *args, **kwargs):
+            """ The decorated function """
+            name = "%s:%s" % (obj.__class__.__name__, self.name)
+
+            start = time.time()
+            try:
+                return func(obj, *args, **kwargs)
+            finally:
+                Bcfg2.Statistics.stats.add_value(name, time.time() - start)
+
+        return inner
 
 
 def removecomment(stream):
@@ -188,7 +219,7 @@ class FileBacked(Debuggable):
         return "%s: %s" % (self.__class__.__name__, self.name)
 
 
-class DirectoryBacked(object):
+class DirectoryBacked(Debuggable):
     """ DirectoryBacked objects represent a directory that contains
     files, represented by objects of the type listed in
     :attr:`__child__`, and other directories recursively.  It monitors
@@ -219,7 +250,7 @@ class DirectoryBacked(object):
         .. -----
         .. autoattribute:: __child__
         """
-        object.__init__(self)
+        Debuggable.__init__(self)
 
         self.data = os.path.normpath(data)
         self.fam = Bcfg2.Server.FileMonitor.get_fam()
@@ -238,10 +269,28 @@ class DirectoryBacked(object):
         self.handles = {}
 
         # Monitor everything in the plugin's directory
+        if not os.path.exists(self.data):
+            self.logger.warning("%s does not exist, creating" % self.data)
+            os.makedirs(self.data)
         self.add_directory_monitor('')
+
+    def set_debug(self, debug):
+        for entry in self.entries.values():
+            if isinstance(entry, Debuggable):
+                entry.set_debug(debug)
+        return Debuggable.set_debug(self, debug)
 
     def __getitem__(self, key):
         return self.entries[key]
+
+    def __len__(self):
+        return len(self.entries)
+
+    def __delitem__(self, key):
+        del self.entries[key]
+
+    def __setitem__(self, key, val):
+        self.entries[key] = val
 
     def __iter__(self):
         return iter(list(self.entries.items()))
@@ -259,7 +308,7 @@ class DirectoryBacked(object):
         dirpathname = os.path.join(self.data, relative)
         if relative not in self.handles.values():
             if not os.path.isdir(dirpathname):
-                LOGGER.error("%s is not a directory" % dirpathname)
+                self.logger.error("%s is not a directory" % dirpathname)
                 return
             reqid = self.fam.AddMonitor(dirpathname, self)
             self.handles[reqid] = relative
@@ -303,8 +352,8 @@ class DirectoryBacked(object):
             return
 
         if event.requestID not in self.handles:
-            LOGGER.warn("Got %s event with unknown handle (%s) for %s" %
-                        (action, event.requestID, event.filename))
+            self.logger.warn("Got %s event with unknown handle (%s) for %s" %
+                             (action, event.requestID, event.filename))
             return
 
         # Clean up path names
@@ -314,7 +363,7 @@ class DirectoryBacked(object):
             event.filename = event.filename[len(self.data) + 1:]
 
         if self.ignore and self.ignore.search(event.filename):
-            LOGGER.debug("Ignoring event %s" % event.filename)
+            self.logger.debug("Ignoring event %s" % event.filename)
             return
 
         # Calculate the absolute and relative paths this event refers to
@@ -349,19 +398,20 @@ class DirectoryBacked(object):
                     # class doesn't support canceling, so at least let
                     # the user know that a restart might be a good
                     # idea.
-                    LOGGER.warn("Directory properties for %s changed, please "
-                                " consider restarting the server" % abspath)
+                    self.logger.warn("Directory properties for %s changed, "
+                                     "please consider restarting the server" %
+                                     abspath)
                 else:
                     # Got a "changed" event for a directory that we
                     # didn't know about. Go ahead and treat it like a
                     # "created" event, but log a warning, because this
                     # is unexpected.
-                    LOGGER.warn("Got %s event for unexpected dir %s" %
-                                (action, abspath))
+                    self.logger.warn("Got %s event for unexpected dir %s" %
+                                     (action, abspath))
                     self.add_directory_monitor(relpath)
             else:
-                LOGGER.warn("Got unknown dir event %s %s %s" %
-                            (event.requestID, event.code2str(), abspath))
+                self.logger.warn("Got unknown dir event %s %s %s" %
+                                 (event.requestID, event.code2str(), abspath))
         elif self.patterns.search(event.filename):
             if action in ['exists', 'created']:
                 self.add_entry(relpath, event)
@@ -373,16 +423,15 @@ class DirectoryBacked(object):
                     # know about. Go ahead and treat it like a
                     # "created" event, but log a warning, because this
                     # is unexpected.
-                    LOGGER.warn("Got %s event for unexpected file %s" %
-                                (action,
-                                 abspath))
+                    self.logger.warn("Got %s event for unexpected file %s" %
+                                     (action, abspath))
                     self.add_entry(relpath, event)
             else:
-                LOGGER.warn("Got unknown file event %s %s %s" %
-                            (event.requestID, event.code2str(), abspath))
+                self.logger.warn("Got unknown file event %s %s %s" %
+                                 (event.requestID, event.code2str(), abspath))
         else:
-            LOGGER.warn("Could not process filename %s; ignoring" %
-                        event.filename)
+            self.logger.warn("Could not process filename %s; ignoring" %
+                             event.filename)
 
 
 class XMLFileBacked(FileBacked):
@@ -397,7 +446,11 @@ class XMLFileBacked(FileBacked):
     #: behavior, set ``__identifier__`` to ``None``.
     __identifier__ = 'name'
 
-    def __init__(self, filename, should_monitor=False):
+    #: If ``create`` is set, then it overrides the ``create`` argument
+    #: to the constructor.
+    create = None
+
+    def __init__(self, filename, should_monitor=False, create=None):
         """
         :param filename: The full path to the file to cache and monitor
         :type filename: string
@@ -409,6 +462,13 @@ class XMLFileBacked(FileBacked):
                                :class:`Bcfg2.Server.Plugin.helpers.XMLDirectoryBacked`
                                object).
         :type should_monitor: bool
+        :param create: Create the file if it doesn't exist.
+                       ``create`` can be either an
+                       :class:`lxml.etree._Element` object, which will
+                       be used as initial content, or a string, which
+                       will be used as the name of the (empty) tag
+                       that will be the initial content of the file.
+        :type create: lxml.etree._Element or string
 
         .. -----
         .. autoattribute:: __identifier__
@@ -431,6 +491,21 @@ class XMLFileBacked(FileBacked):
 
         #: "Extra" files included in this file by XInclude.
         self.extras = []
+
+        #: Extra FAM monitors set by this object for files included by
+        #: XInclude.
+        self.extra_monitors = []
+
+        if ((create is not None or self.create not in [None, False]) and
+            not os.path.exists(self.name)):
+            toptag = create or self.create
+            self.logger.warning("%s does not exist, creating" % self.name)
+            if hasattr(toptag, "getroottree"):
+                el = toptag
+            else:
+                el = lxml.etree.Element(toptag)
+            el.getroottree().write(self.name, xml_declaration=False,
+                                   pretty_print=True)
 
         #: Whether or not to monitor this file for changes.
         self.should_monitor = should_monitor
@@ -471,9 +546,11 @@ class XMLFileBacked(FileBacked):
             parent.remove(el)
             for extra in extras:
                 if extra != self.name and extra not in self.extras:
-                    self.add_monitor(extra)
+                    self.extras.append(extra)
                     lxml.etree.SubElement(parent, xinclude, href=extra)
                     self._follow_xincludes(fname=extra)
+                    if extra not in self.extra_monitors:
+                        self.add_monitor(extra)
 
     def Index(self):
         self.xdata = lxml.etree.XML(self.data, base_url=self.name,
@@ -502,7 +579,7 @@ class XMLFileBacked(FileBacked):
         :type fpath: string
         :returns: None
         """
-        self.extras.append(fpath)
+        self.extra_monitors.append(fpath)
         if self.should_monitor:
             self.fam.AddMonitor(fpath, self)
 
@@ -837,8 +914,8 @@ class XMLSrc(XMLFileBacked):
     __cacheobj__ = dict
     __priority_required__ = True
 
-    def __init__(self, filename, should_monitor=False):
-        XMLFileBacked.__init__(self, filename, should_monitor)
+    def __init__(self, filename, should_monitor=False, create=None):
+        XMLFileBacked.__init__(self, filename, should_monitor, create)
         self.items = {}
         self.cache = None
         self.pnode = None
@@ -938,7 +1015,7 @@ class XMLDirectoryBacked(DirectoryBacked):
 
     #: Only track and include files whose names (not paths) match this
     #: compiled regex.
-    patterns = re.compile('^.*\.xml$')
+    patterns = re.compile(r'^.*\.xml$')
 
     #: The type of child objects to create for files contained within
     #: the directory that is tracked.  Default is
@@ -1195,7 +1272,7 @@ class EntrySet(Debuggable):
     #: file is encountered that does not match the ``basename``
     #: argument passed to the constructor or ``ignore``, then a
     #: warning will be produced.
-    ignore = re.compile("^(\.#.*|.*~|\\..*\\.(sw[px])|.*\\.genshi_include)$")
+    ignore = re.compile(r'^(\.#.*|.*~|\..*\.(sw[px])|.*\.genshi_include)$')
 
     # The ``basename`` argument passed to the constructor will be
     #: processed as a string that contains a regular expression (i.e.,
@@ -1258,8 +1335,8 @@ class EntrySet(Debuggable):
             base_pat = basename
         else:
             base_pat = re.escape(basename)
-        pattern = '(.*/)?%s(\.((H_(?P<hostname>\S+))|' % base_pat
-        pattern += '(G(?P<prio>\d+)_(?P<group>\S+))))?$'
+        pattern = r'(.*/)?' + base_pat + \
+            r'(\.((H_(?P<hostname>\S+))|(G(?P<prio>\d+)_(?P<group>\S+))))?$'
 
         #: ``specific`` is a regular expression that is used to
         #: determine the specificity of a file in this entry set.  It
@@ -1520,8 +1597,6 @@ class GroupSpool(Plugin, Generator):
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
         Generator.__init__(self)
-        if self.data[-1] == '/':
-            self.data = self.data[:-1]
 
         self.fam = Bcfg2.Server.FileMonitor.get_fam()
 

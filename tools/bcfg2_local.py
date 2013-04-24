@@ -64,6 +64,12 @@ class LocalClient(Client):
 def main():
     optinfo = Bcfg2.Options.CLIENT_COMMON_OPTIONS
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
+    if 'bundle_quick' in optinfo:
+        # CLIENT_BUNDLEQUICK option uses -Q, just like the server repo
+        # option.  the server repo is more important for this
+        # application.
+        optinfo['bundle_quick'] = Bcfg2.Options.Option('bundlequick',
+                                                       default=False)
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.parse(sys.argv[1:])
 

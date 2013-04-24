@@ -121,20 +121,19 @@ a simple ``groups.xml`` file:
       <Group name='oracle-server'>
         <Group name='selinux-enabled' negate='true'/>
       </Group>
-      <Client name='foo.eample.com'>
+      <Client name='foo.example.com'>
         <Group name='oracle-server'/>
         <Group name='apache-server'/>
       </Client>
     </Groups>
 
-A Group or Client tag that does not contain any child tags is a
-declaration of membership; a Group or Client tag that does contain
-children is a conditional.  So the example above does not assign
-either the ``rhel5`` or ``rhel6`` groups to machines in the
-``mail-server`` group, but conditionally assigns the
-``sendmail-server`` or ``postfix-server`` groups depending on the OS
-of the client.  (Presumably in this example the OS groups are set by a
-probe.)
+A Group tag that does not contain any child tags is a declaration of
+membership; a Group or Client tag that does contain children is a
+conditional.  So the example above does not assign either the
+``rhel5`` or ``rhel6`` groups to machines in the ``mail-server``
+group, but conditionally assigns the ``sendmail-server`` or
+``postfix-server`` groups depending on the OS of the client.
+(Presumably in this example the OS groups are set by a probe.)
 
 Consequently, a client that is RHEL 5 and a member of the
 ``mail-server`` profile group would also be a member of the

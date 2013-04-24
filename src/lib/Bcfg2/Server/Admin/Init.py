@@ -231,8 +231,8 @@ class Init(Bcfg2.Server.Admin.Mode):
     def _prompt_password(self):
         """Ask for a password or generate one if none is provided."""
         newpassword = getpass.getpass(
-                "Input password used for communication verification "
-                "(without echoing; leave blank for a random): ").strip()
+            "Input password used for communication verification "
+            "(without echoing; leave blank for a random): ").strip()
         if len(newpassword) != 0:
             self.data['password'] = newpassword
 

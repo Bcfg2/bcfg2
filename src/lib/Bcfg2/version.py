@@ -5,7 +5,7 @@ import re
 __version__ = "1.3.1"
 
 
-class Bcfg2VersionInfo(tuple):
+class Bcfg2VersionInfo(tuple):  # pylint: disable=E0012,R0924
     """ object to make granular version operations (particularly
     comparisons) easier """
 

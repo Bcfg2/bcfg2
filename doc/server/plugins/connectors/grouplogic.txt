@@ -1,0 +1,122 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-connectors-grouplogic:
+
+==========
+GroupLogic
+==========
+
+.. versionadded:: 1.3.2
+
+GroupLogic is a connector plugin that lets you use an XML Genshi
+template to dynamically set additional groups for clients.
+
+Usage
+=====
+
+To use the GroupLogic plugin, first do ``mkdir
+/var/lib/bcfg2/GroupLogic``.  Add ``GroupLogic`` to your ``plugins``
+line in ``/etc/bcfg2.conf``.  Next, create
+``/var/lib/bcfg2/GroupLogic/groups.xml``:
+
+.. code-block:: xml
+
+    <GroupLogic xmlns:py="http://genshi.edgewall.org/">
+    </GroupLogic>
+
+``groups.xml`` is structured very similarly to the
+:ref:`server-plugins-grouping-metadata` ``groups.xml``.  A Group tag
+that contains no children is a declaration of membership; a Group or
+Client tag that does contain children is a conditional.
+
+Unlike ``Metadata/groups.xml``, GroupLogic supports genshi templating,
+so you can dynamically create groups.  ``GroupLogic/groups.xml`` is
+rendered for each client, and the groups set in it are added to the
+client metadata.
+
+.. note::
+
+    Also unlike ``Metadata/groups.xml``, GroupLogic can not be used to
+    associate bundles with clients directly, or to negate groups.  But
+    you can use GroupLogic to assign a group that is associated with a
+    bundle in Metadata.
+
+Consider the case where you have four environments -- dev, test,
+staging, and production -- and four components to a web application --
+the frontend, the API, the database server, and the caching proxy.  In
+order to make files specific to the component *and* to the
+environment, you need groups to describe each combination:
+webapp-frontend-dev, webapp-frontend-test, and so on.  You *could* do
+this in ``Metadata/groups.xml``:
+
+.. code-block:: xml
+
+    <Groups>
+      <Group name="webapp-frontend">
+        <Group name="dev">
+          <Group name="webapp-frontend-dev"/>
+        </Group>
+        <Group name="test">
+          <Group name="webapp-frontend-test"/>
+        </Group>
+        ...
+      </Group>
+      <Group name="webapp-api">
+        ...
+      </Group>
+      ...
+    </Groups>
+
+Creating the sixteen groups this way is incredibly tedious, and this
+is a quite *small* site.  GroupLogic can automate this process.
+
+Assume that we've declared the groups thusly in
+``Metadata/groups.xml``:
+
+.. code-block:: xml
+
+    <Groups>
+      <Group name="webapp-frontend" category="webapp-component"/>
+      <Group name="webapp-api" category="webapp-component"/>
+      <Group name="webapp-db" category="webapp-component"/>
+      <Group name="webapp-proxy" category="webapp-component"/>
+      <Group name="dev" category="environment"/>
+      <Group name="test" category="environment"/>
+      <Group name="staging" category="environment"/>
+      <Group name="prod" category="environment"/>
+    </Groups>
+
+One way to automate the creation of the groups would be to simply
+generate the tedious config:
+
+.. code-block:: xml
+
+    <GroupLogic xmlns:py="http://genshi.edgewall.org/">
+      <py:for each="component in metadata.query.all_groups_in_category("webapp-component")>
+        <Group name="${component}">
+          <py:for each="env in metadata.query.all_groups_in_category("environment")>
+            <Group name="${env}">
+              <Group name="${component}-${env}"/>
+            </Group>
+          </py:for>
+        </Group>
+      </py:for>
+    </GroupLogic>
+
+But, since ``GroupLogic/groups.xml`` is rendered for each client
+individually, there's a more elegant way to accomplish the same thing:
+
+.. code-block:: xml
+
+    <GroupLogic xmlns:py="http://genshi.edgewall.org/">
+      <?python
+component = metadata.group_in_category("webapp-component")
+env = metadata.group_in_category("environment")
+      ?>
+      <py:if test="component and env">
+        <Group name="${component}-${env}"/>
+      </py:if>
+    </GroupLogic>
+
+This gets only the component and environment for the current client,
+and, if both are set, sets the single appropriate group.

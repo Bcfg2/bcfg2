@@ -4,9 +4,14 @@ verified with an XML schema alone"""
 import os
 import re
 import Bcfg2.Server.Lint
-import Bcfg2.Client.Tools.POSIX
 import Bcfg2.Client.Tools.VCS
 from Bcfg2.Server.Plugins.Packages import Apt, Yum
+from Bcfg2.Client.Tools.POSIX.base import device_map
+try:
+    from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
+    HAS_GENSHI = True
+except ImportError:
+    HAS_GENSHI = False
 
 
 # format verifying functions
@@ -53,10 +58,10 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         Bcfg2.Server.Lint.ServerPlugin.__init__(self, *args, **kwargs)
         self.required_attrs = dict(
             Path=dict(
-                device=dict(name=is_filename, owner=is_username,
+                device=dict(name=is_filename,
+                            owner=is_username,
                             group=is_username,
-                            dev_type=lambda v: \
-                                v in Bcfg2.Client.Tools.POSIX.base.device_map),
+                            dev_type=lambda v: v in device_map),
                 directory=dict(name=is_filename, owner=is_username,
                                group=is_username, mode=is_octal_mode),
                 file=dict(name=is_filename, owner=is_username,
@@ -81,21 +86,21 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                command=None)},
             ACL=dict(
                 default=dict(scope=lambda v: v in ['user', 'group'],
-                             perms=lambda v: re.match('^([0-7]|[rwx\-]{0,3}',
+                             perms=lambda v: re.match(r'^([0-7]|[rwx\-]{0,3}',
                                                       v)),
                 access=dict(scope=lambda v: v in ['user', 'group'],
-                            perms=lambda v: re.match('^([0-7]|[rwx\-]{0,3}',
+                            perms=lambda v: re.match(r'^([0-7]|[rwx\-]{0,3}',
                                                      v)),
-                mask=dict(perms=lambda v: re.match('^([0-7]|[rwx\-]{0,3}',
+                mask=dict(perms=lambda v: re.match(r'^([0-7]|[rwx\-]{0,3}',
                                                    v))),
             Package={"__any__": dict(name=None)},
             SEBoolean={None: dict(name=None,
                                   value=lambda v: v in ['on', 'off'])},
             SEModule={None: dict(name=None, __text__=None)},
-            SEPort={None:
-                        dict(name=lambda v: re.match(r'^\d+(-\d+)?/(tcp|udp)',
-                                                     v),
-                             selinuxtype=is_selinux_type)},
+            SEPort={
+                None: dict(name=lambda v: re.match(r'^\d+(-\d+)?/(tcp|udp)',
+                                                   v),
+                           selinuxtype=is_selinux_type)},
             SEFcontext={None: dict(name=None, selinuxtype=is_selinux_type)},
             SENode={None: dict(name=lambda v: "/" in v,
                                selinuxtype=is_selinux_type,
@@ -110,8 +115,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             SEPermissive={None: dict(name=is_selinux_type)},
             POSIXGroup={None: dict(name=is_username)},
             POSIXUser={None: dict(name=is_username)},
-            MemberOf={None: dict(__text__=is_username)},
-            )
+            MemberOf={None: dict(__text__=is_username)})
 
     def Run(self):
         self.check_packages()

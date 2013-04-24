@@ -3,6 +3,7 @@ import getopt
 import lxml.etree
 import sys
 import Bcfg2.Server.Admin
+from Bcfg2.Server.Plugin import PullSource
 
 
 class Minestruct(Bcfg2.Server.Admin.StructureMode):
@@ -39,12 +40,12 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
 
         try:
             extra = set()
-            for source in self.bcore.pull_sources:
+            for source in self.bcore.plugins_by_type(PullSource):
                 for item in source.GetExtra(client):
                     extra.add(item)
         except:
             self.log.error("Failed to find extra entry info for client %s" %
-                            client)
+                           client)
             raise SystemExit(1)
         root = lxml.etree.Element("Base")
         self.log.info("Found %d extra entries" % (len(extra)))

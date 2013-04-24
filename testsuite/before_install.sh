@@ -2,9 +2,12 @@
 
 # before_install script for Travis-CI
 
+PYVER=$(python -c 'import sys;print(".".join(str(v) for v in sys.version_info[0:2]))')
+
 sudo apt-get update -qq
-sudo apt-get install -qq swig pylint libxml2-utils
+sudo apt-get install -qq swig libxml2-utils
 if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
-    sudo apt-get install -qq python-selinux python-pylibacl python-pyinotify \
-        python-yaml yum
+    if [[ ${PYVER:0:1} == "2" ]]; then
+        sudo apt-get install -qq python-selinux python-pylibacl yum
+    fi
 fi

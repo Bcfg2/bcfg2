@@ -68,7 +68,7 @@ from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
 # pylint: enable=W0622
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
-     fetch_url
+    fetch_url
 from Bcfg2.Server.Statistics import track_statistics
 
 LOGGER = logging.getLogger(__name__)
@@ -279,7 +279,7 @@ class YumCollection(Collection):
             #: Define a unique cache file for this collection to use
             #: for cached yum metadata
             self.cachefile = os.path.join(self.cachepath,
-                                         "cache-%s" % self.cachekey)
+                                          "cache-%s" % self.cachekey)
             if not os.path.exists(self.cachefile):
                 os.mkdir(self.cachefile)
 
@@ -420,7 +420,7 @@ class YumCollection(Collection):
                         config.add_section(reponame)
                         added = True
                     except ConfigParser.DuplicateSectionError:
-                        match = re.search("-(\d+)", reponame)
+                        match = re.search(r'-(\d+)', reponame)
                         if match:
                             rid = int(match.group(1)) + 1
                         else:
@@ -1153,7 +1153,7 @@ class YumSource(Source):
                     if entry.get('name').startswith('/'):
                         self.needed_paths.add(entry.get('name'))
             pro = pdata.find(RP + 'provides')
-            if pro != None:
+            if pro is not None:
                 for entry in pro.getchildren():
                     prov = entry.get('name')
                     if prov not in self.provides[arch]:
@@ -1169,9 +1169,9 @@ class YumSource(Source):
             try:
                 groupid = group.xpath('id')[0].text
                 self.yumgroups[groupid] = {'mandatory': list(),
-                                        'default': list(),
-                                        'optional': list(),
-                                        'conditional': list()}
+                                           'default': list(),
+                                           'optional': list(),
+                                           'conditional': list()}
             except IndexError:
                 continue
             try:

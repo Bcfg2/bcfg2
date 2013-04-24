@@ -51,5 +51,5 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
             print("Proxy Error: %s" % err)
             return
 
-        if data != None:
+        if data is not None:
             print(data)

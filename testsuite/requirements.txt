@@ -2,4 +2,6 @@ lxml
 nose
 mock
 sphinx
-daemon
+pylint
+pep8
+python-daemon

@@ -16,7 +16,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
     __handles__ = [('Service', 'deb')]
     __req__ = {'Service': ['name', 'status']}
     svcre = \
-        re.compile("/etc/.*/(?P<action>[SK])(?P<sequence>\d+)(?P<name>\S+)")
+        re.compile(r'/etc/.*/(?P<action>[SK])(?P<sequence>\d+)(?P<name>\S+)')
 
     # implement entry (Verify|Install) ops
     def VerifyService(self, entry, _):

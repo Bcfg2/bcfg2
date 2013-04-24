@@ -97,15 +97,21 @@ class Plugin(Debuggable):
         :param datastore: The path to the Bcfg2 repository on the
                           filesystem
         :type datastore: string
-        :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginInitError`
+        :raises: :exc:`OSError` if adding a file monitor failed;
+                 :class:`Bcfg2.Server.Plugin.exceptions.PluginInitError`
+                 on other errors
 
         .. autoattribute:: Bcfg2.Server.Plugin.base.Debuggable.__rmi__
         """
+        Debuggable.__init__(self, name=self.name)
         self.Entries = {}
         self.core = core
         self.data = os.path.join(datastore, self.name)
+        if not os.path.exists(self.data):
+            self.logger.warning("%s: %s does not exist, creating" %
+                                (self.name, self.data))
+            os.makedirs(self.data)
         self.running = True
-        Debuggable.__init__(self, name=self.name)
 
     @classmethod
     def init_repo(cls, repo):
@@ -124,6 +130,12 @@ class Plugin(Debuggable):
         :returns: None """
         self.debug_log("Shutting down %s plugin" % self.name)
         self.running = False
+
+    def set_debug(self, debug):
+        for entry in self.Entries.values():
+            if isinstance(entry, Debuggable):
+                entry.set_debug(debug)
+        return Debuggable.set_debug(self, debug)
 
     def __str__(self):
         return "%s Plugin" % self.__class__.__name__

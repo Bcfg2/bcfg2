@@ -308,14 +308,14 @@ def list_split(c_string):
     """ split an option string on commas, optionally surrounded by
     whitespace, returning a list """
     if c_string:
-        return re.split("\s*,\s*", c_string)
+        return re.split(r'\s*,\s*', c_string)
     return []
 
 
 def colon_split(c_string):
     """ split an option string on colons, returning a list """
     if c_string:
-        return c_string.split(':')
+        return c_string.split(r':')
     return []
 
 
@@ -349,7 +349,7 @@ def get_size(value):
     '512m', '2g'), get the absolute number of bytes as an integer """
     if value == -1:
         return value
-    mat = re.match("(\d+)([KkMmGg])?", value)
+    mat = re.match(r'(\d+)([KkMmGg])?', value)
     if not mat:
         raise ValueError("Not a valid size", value)
     rvalue = int(mat.group(1))
@@ -395,7 +395,8 @@ CFILE = \
     Option('Specify configuration file',
            default=DEFAULT_CONFIG_LOCATION,
            cmd='-C',
-           odesc='<conffile>')
+           odesc='<conffile>',
+           env="BCFG2_CONFIG")
 LOCKFILE = \
     Option('Specify lockfile',
            default='/var/lock/bcfg2.run',
@@ -1014,6 +1015,15 @@ VERBOSE = \
            cmd='-v',
            cook=get_bool,
            cf=('logging', 'verbose'))
+LOG_PERFORMANCE = \
+    Option("Periodically log performance statistics",
+           default=False,
+           cf=('logging', 'performance'))
+PERFLOG_INTERVAL = \
+    Option("Performance statistics logging interval in seconds",
+           default=300.0,
+           cook=get_timeout,
+           cf=('logging', 'performance_interval'))
 
 # Plugin-specific options
 CFG_VALIDATION = \
@@ -1097,7 +1107,9 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
                              web_configfile=WEB_CFILE,
                              backend=SERVER_BACKEND,
                              vcs_root=SERVER_VCS_ROOT,
-                             authentication=SERVER_AUTHENTICATION)
+                             authentication=SERVER_AUTHENTICATION,
+                             perflog=LOG_PERFORMANCE,
+                             perflog_interval=PERFLOG_INTERVAL)
 
 CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
                      decrypt=DECRYPT,
@@ -1205,6 +1217,7 @@ INFO_COMMON_OPTIONS = dict(ppath=PARANOID_PATH,
                            max_copies=PARANOID_MAX_COPIES)
 INFO_COMMON_OPTIONS.update(CLI_COMMON_OPTIONS)
 INFO_COMMON_OPTIONS.update(SERVER_COMMON_OPTIONS)
+
 
 class OptionParser(OptionSet):
     """ OptionParser bootstraps option parsing, getting the value of
