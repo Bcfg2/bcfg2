@@ -458,8 +458,8 @@ class Frame(object):
                         self.logger.info("%s:%s:%s" % (entry.tag, etype,
                                                        entry.get('name')))
                     else:
-                        self.logger.info("    %s:%s" % (entry.tag,
-                                                        entry.get('name')))
+                        self.logger.info("%s:%s" % (entry.tag,
+                                                    entry.get('name')))
         self.logger.info('Total managed entries:  %d' %
                          len(list(self.states.values())))
         self.logger.info('Unmanaged entries:      %d' % len(self.extra))
@@ -471,8 +471,8 @@ class Frame(object):
                     self.logger.info("%s:%s:%s" % (entry.tag, etype,
                                                    entry.get('name')))
                 else:
-                    self.logger.info("    %s:%s" % (entry.tag,
-                                                    entry.get('name')))
+                    self.logger.info("%s:%s" % (entry.tag,
+                                                entry.get('name')))
 
         if ((list(self.states.values()).count(False) == 0) and not self.extra):
             self.logger.info('All entries correct.')
