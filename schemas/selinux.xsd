@@ -80,6 +80,13 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="mlsrange">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux MLS range to apply to this port
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
@@ -127,6 +134,13 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="mlsrange">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux MLS range to apply to files matching this specification
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
@@ -154,6 +168,13 @@
       <xsd:annotation>
         <xsd:documentation>
           Protocol
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="mlsrange">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux MLS range to apply to this node
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -205,6 +226,13 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="mlsrange">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux MLS range to apply to this user
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
@@ -235,6 +263,13 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="mlsrange">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux MLS range to apply to this user
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
@@ -255,6 +290,13 @@
       <xsd:annotation>
         <xsd:documentation>
           SELinux type to apply to this interface
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="mlsrange">
+      <xsd:annotation>
+        <xsd:documentation>
+          SELinux MLS range to apply to this interface
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

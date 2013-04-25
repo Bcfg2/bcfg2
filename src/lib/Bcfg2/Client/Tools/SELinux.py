@@ -500,7 +500,8 @@ class SELinuxSeportHandler(SELinuxEntryHandler):
     def _defaultargs(self, entry):
         """ argument list for adding and modifying entries """
         (port, proto) = entry.get("name").split("/")
-        return (port, proto, '', entry.get("selinuxtype"))
+        return (port, proto, entry.get("mlsrange", ""),
+                entry.get("selinuxtype"))
 
     def _deleteargs(self, entry):
         return tuple(entry.get("name").split("/"))
@@ -573,7 +574,7 @@ class SELinuxSefcontextHandler(SELinuxEntryHandler):
         """ argument list for adding, modifying, and deleting entries """
         return (entry.get("name"), entry.get("selinuxtype"),
                 self.filetypeargs[entry.get("filetype", "all")],
-                '', '')
+                entry.get("mlsrange", ""), '')
 
     def primarykey(self, entry):
         return ":".join([entry.tag, entry.get("name"),
@@ -608,7 +609,7 @@ class SELinuxSenodeHandler(SELinuxEntryHandler):
     def _defaultargs(self, entry):
         """ argument list for adding, modifying, and deleting entries """
         (addr, netmask) = entry.get("name").split("/")
-        return (addr, netmask, entry.get("proto"), "",
+        return (addr, netmask, entry.get("proto"), entry.get("mlsrange", ""),
                 entry.get("selinuxtype"))
 
 
@@ -620,7 +621,8 @@ class SELinuxSeloginHandler(SELinuxEntryHandler):
 
     def _defaultargs(self, entry):
         """ argument list for adding, modifying, and deleting entries """
-        return (entry.get("name"), entry.get("selinuxuser"), "")
+        return (entry.get("name"), entry.get("selinuxuser"),
+                entry.get("mlsrange", ""))
 
 
 class SELinuxSeuserHandler(SELinuxEntryHandler):
@@ -660,15 +662,16 @@ class SELinuxSeuserHandler(SELinuxEntryHandler):
         # prefix.  see the comment in Install() above for more
         # details.
         rv = [entry.get("name"),
-              entry.get("roles", "").replace(" ", ",").split(",")]
+              entry.get("roles", "").replace(" ", ",").split(","),
+              '', entry.get("mlsrange", "")]
         if self.needs_prefix:
-            rv.extend(['', '', entry.get("prefix")])
+            rv.append(entry.get("prefix"))
         else:
             key = self._key(entry)
             if key in self.all_records:
                 attrs = self._key2attrs(key)
                 if attrs['prefix'] != entry.get("prefix"):
-                    rv.extend(['', '', entry.get("prefix")])
+                    rv.append(entry.get("prefix"))
         return tuple(rv)
 
 
@@ -680,7 +683,8 @@ class SELinuxSeinterfaceHandler(SELinuxEntryHandler):
 
     def _defaultargs(self, entry):
         """ argument list for adding, modifying, and deleting entries """
-        return (entry.get("name"), '', entry.get("selinuxtype"))
+        return (entry.get("name"), entry.get("mlsrange", ""),
+                entry.get("selinuxtype"))
 
 
 class SELinuxSepermissiveHandler(SELinuxEntryHandler):
