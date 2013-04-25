@@ -8,13 +8,14 @@
 
 There are two parts of documentation in the Bcfg2 project:
 
-* The wiki
-* The manual
+* The Wiki_
+* The Manual_
 
 
 The wiki
 ========
 .. _Wiki: http://bcfg2.org
+.. _Manual: http://docs.bcfg2.org
 .. _Trac: http://trac.edgewall.org/
 .. _OpenID: https://openid.org/
 .. _MCS: http://www.mcs.anl.gov/
@@ -31,9 +32,9 @@ The manual
 ==========
 .. _rst: http://en.wikipedia.org/wiki/ReStructuredText
 .. _Sphinx: http://sphinx.pocoo.org
-.. _Docutils:
+.. _Docutils: http://docutils.sourceforge.net
 
-The source for the manual is located in the ``doc/`` directory in the
+The source for the Manual_ is located in the ``doc/`` directory in the
 git repository or in the source tarball. All files are written in
 rst_ (ReStructuredText) format. Sphinx_ is used to build the
 documentation from the restructured text sources.
@@ -49,11 +50,20 @@ Building the Manual
 
     apt-get -t lenny-backports install python-sphinx
 
- * The needed tools for Fedora based systems are in the `Fedora
+ * The tools for Fedora based systems are in the `Fedora
    Package Collection <https://admin.fedoraproject.org/pkgdb>`_;
    installation can be done easily with Yum::
 
     yum -y install python-sphinx python-docutils
+ 
+ * The tools for RHEL6-based systems are in the base distribution;  you can install them with Yum::
+
+    yum -y install python-sphinx python-docutils
+
+ * The tools for RHEL5-based systems are in the `Extra Packages for Enterprise Linux(EPEL) <https://fedoraproject.org/wiki/EPEL>`_ repository; if your system is configured for EPEL, you can install them with Yum::
+
+    yum -y install python-sphinx python-docutils
+
 
  * Additionally, to build the PDF version:
 
@@ -80,14 +90,14 @@ Documentation Style Guide for Bcfg2
 ===================================
 
 This is a style guide to use when creating documentation for Bcfg2. It
-is meant to be helpful, not a hinderence.
+is meant to be helpful, not a hindrance.
 
 Basics
 ------
 
 **Bcfg2**
 
-    When referring to project, Bcfg2 is the preferred use of cases.
+    When referring to project, Bcfg2 is the preferred use of case.
 
 **Monospace fonts**
 
@@ -97,8 +107,7 @@ Basics
 **Repository**
 
     When used alone this refers to a Bcfg2 :term:`repository`. When there
-    is a chance for confusion, for instance in documents also talking
-    about :term:`VCS`, be sure to use the longer Bcfg2 :term:`repository`.
+    is a chance for confusion, for instance in documents that also discuss :term:`VCS`, be sure to use the longer phrase "Bcfg2 :term:`repository`".
 
 Sections
 --------
