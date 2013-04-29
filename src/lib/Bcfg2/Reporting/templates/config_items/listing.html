@@ -21,9 +21,9 @@
         <tr style='text-align: left' ><th>Name</th><th>Count</th><th>Reason</th></tr>
         {% for entry in type_data %}
           <tr class='{% cycle listview,listview_alt %}'>
-            <td><a href="{% url reports_entry entry.class_name entry.pk %}">{{entry.name}}</a></td>
+            <td><a href='{% url "reports_entry" entry.class_name entry.pk %}'>{{entry.name}}</a></td>
             <td>{{entry.num_entries}}</td>
-            <td><a href="{% url reports_item entry.class_name entry.pk %}">{{entry.short_list|join:","}}</a></td>
+            <td><a href='{% url "reports_item" entry.class_name entry.pk %}'>{{entry.short_list|join:","}}</a></td>
           </tr>
         {% endfor %}
       </table>

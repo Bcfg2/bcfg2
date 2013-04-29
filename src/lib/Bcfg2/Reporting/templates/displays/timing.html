@@ -12,7 +12,7 @@
 <div class='client_list_box'>
   {% if metrics %}
       <table cellpadding="3">
-	  <tr id='table_list_header' class='listview'>
+          <tr id='table_list_header' class='listview'>
               <td>Name</td>
               <td>Parse</td>
               <td>Probe</td>
@@ -21,15 +21,15 @@
               <td>Config</td>
               <td>Total</td>
           </tr>
-	  {% for metric in metrics|dictsort:"name" %}
+          {% for metric in metrics|dictsort:"name" %}
           <tr class='{% cycle listview,listview_alt %}'>
               <td><a style='font-size: 100%'
-                   href="{% url reports_client_detail hostname=metric.name %}">{{ metric.name }}</a></td>
+                   href='{% url "reports_client_detail" hostname=metric.name %}'>{{ metric.name }}</a></td>
               {% for mitem in metric|build_metric_list %}
               <td>{{ mitem }}</td>
               {% endfor %}
-	  </tr>
-	  {% endfor %}
+          </tr>
+          {% endfor %}
       </table>
   {% else %}
     <p>No metric data available</p>

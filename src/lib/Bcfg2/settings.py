@@ -32,6 +32,8 @@ TIME_ZONE = None
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
+ALLOWED_HOSTS = ['*']
+
 MEDIA_URL = '/site_media/'
 
 
@@ -130,6 +132,7 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.admin',
     'Bcfg2.Server',
+    'Bcfg2.Reporting',
 )
 if HAS_SOUTH:
     INSTALLED_APPS = INSTALLED_APPS + (
