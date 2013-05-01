@@ -945,7 +945,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                         self.debug_log("Client %s set as nonexistent group %s"
                                        % (client, group))
 
-    def set_profile(self, client, profile, addresspair, require_public=True):
+    def set_profile(self, client, profile,  # pylint: disable=W0221
+                    addresspair, require_public=True):
         """Set group parameter for provided client."""
         self.logger.info("Asserting client %s profile to %s" % (client,
                                                                 profile))
