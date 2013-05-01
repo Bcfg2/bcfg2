@@ -1,25 +1,35 @@
 #!/usr/bin/python -Ott
+# -*- coding: utf-8 -*-
 """ Benchmark template rendering times """
 
-import os
 import sys
 import time
+import math
 import logging
 import operator
 import Bcfg2.Logger
+import Bcfg2.Options
 import Bcfg2.Server.Core
 
-LOGGER = None
+
+def stdev(nums):
+    mean = float(sum(nums)) / len(nums)
+    return math.sqrt(sum((n - mean)**2 for n in nums) / float(len(nums)))
 
 
 def main():
-    optinfo = \
-        dict(client=Bcfg2.Options.Option("Benchmark templates for one client",
-                                         cmd="--client",
-                                         odesc="<client>",
-                                         long_arg=True,
-                                         default=None),
-             )
+    optinfo = dict(
+        client=Bcfg2.Options.Option("Benchmark templates for one client",
+                                    cmd="--client",
+                                    odesc="<client>",
+                                    long_arg=True,
+                                    default=None),
+        runs=Bcfg2.Options.Option("Number of rendering passes per template",
+                                  cmd="--runs",
+                                  odesc="<runs>",
+                                  long_arg=True,
+                                  default=5,
+                                  cook=int))
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
@@ -40,11 +50,10 @@ def main():
 
     core = Bcfg2.Server.Core.BaseCore(setup)
     logger.info("Bcfg2 server core loaded")
+    core.load_plugins()
+    logger.debug("Plugins loaded")
     core.fam.handle_events_in_interval(0.1)
     logger.debug("Repository events processed")
-
-    # how many times to render each template for each client
-    runs = 5
 
     if setup['args']:
         templates = setup['args']
@@ -57,41 +66,57 @@ def main():
         clients = [core.build_metadata(setup['client'])]
 
     times = dict()
+    client_count = 0
     for metadata in clients:
-        for struct in core.GetStructures(metadata):
-            logger.info("Rendering templates from structure %s:%s" %
-                        (struct.tag, struct.get("name")))
-            for entry in struct.xpath("//Path"):
-                path = entry.get("name")
-                logger.info("Rendering %s..." % path)
-                times[path] = dict()
-                avg = 0.0
-                for i in range(runs):
+        client_count += 1
+        logger.info("Rendering templates for client %s (%s/%s)" %
+                    (metadata.hostname, client_count, len(clients)))
+        structs = core.GetStructures(metadata)
+        struct_count = 0
+        for struct in structs:
+            struct_count += 1
+            logger.info("Rendering templates from structure %s:%s (%s/%s)" %
+                        (struct.tag, struct.get("name"), struct_count,
+                         len(structs)))
+            entries = struct.xpath("//Path")
+            entry_count = 0
+            for entry in entries:
+                entry_count += 1
+                if templates and entry.get("name") not in templates:
+                    continue
+                logger.info("Rendering Path:%s (%s/%s)..." %
+                            (entry.get("name"), entry_count, len(entries)))
+                ptimes = times.setdefault(entry.get("name"), [])
+                for i in range(setup['runs']):
                     start = time.time()
                     try:
                         core.Bind(entry, metadata)
-                        avg += (time.time() - start) / runs
+                        ptimes.append(time.time() - start)
                     except:
                         break
-                if avg:
-                    logger.debug("   %s: %.02f sec" % (metadata.hostname, avg))
-                    times[path][metadata.hostname] = avg
+                if ptimes:
+                    avg = sum(ptimes) / len(ptimes)
+                    if avg:
+                        logger.debug("   %s: %.02f sec" %
+                                     (metadata.hostname, avg))
 
     # print out per-file results
     tmpltimes = []
-    for tmpl, clients in times.items():
+    for tmpl, ptimes in times.items():
         try:
-            avg = sum(clients.values()) / len(clients)
+            mean = float(sum(ptimes)) / len(ptimes)
         except ZeroDivisionError:
             continue
-        if avg > 0.01 or templates:
-            tmpltimes.append((tmpl, avg))
-    print("%-50s %s" % ("Template", "Average Render Time"))
-    for tmpl, avg in reversed(sorted(tmpltimes, key=operator.itemgetter(1))):
-        print("%-50s %.02f" % (tmpl, avg))
-
-    # TODO: complain about templates that on average were quick but
-    # for which some clients were slow
+        ptimes.sort()
+        median = ptimes[len(ptimes) / 2]
+        std = stdev(ptimes)
+        if mean > 0.01 or median > 0.01 or std > 1 or templates:
+            tmpltimes.append((tmpl, mean, median, std))
+    print("%-50s %-9s  %-11s  %6s" %
+          ("Template", "Mean Time", "Median Time", "σ"))
+    for info in reversed(sorted(tmpltimes, key=operator.itemgetter(1))):
+        print("%-50s %9.02f  %11.02f  %6.02f" % info)
+    core.shutdown()
 
 
 if __name__ == "__main__":
