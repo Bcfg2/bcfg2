@@ -945,7 +945,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                         self.debug_log("Client %s set as nonexistent group %s"
                                        % (client, group))
 
-    def set_profile(self, client, profile, addresspair):
+    def set_profile(self, client, profile, addresspair, require_public=True):
         """Set group parameter for provided client."""
         self.logger.info("Asserting client %s profile to %s" % (client,
                                                                 profile))
@@ -957,7 +957,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             self.logger.error(msg)
             raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
         group = self.groups[profile]
-        if not group.is_public:
+        if require_public and not group.is_public:
             msg = "Cannot set client %s to private group %s" % (client,
                                                                 profile)
             self.logger.error(msg)
@@ -1128,7 +1128,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 pgroup = self.default
 
             if pgroup:
-                self.set_profile(client, pgroup, (None, None))
+                self.set_profile(client, pgroup, (None, None),
+                                 require_public=False)
                 profile = _add_group(pgroup)
             else:
                 msg = "Cannot add new client %s; no default group set" % client
