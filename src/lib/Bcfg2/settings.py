@@ -132,7 +132,6 @@ INSTALLED_APPS = (
     'django.contrib.sites',
     'django.contrib.admin',
     'Bcfg2.Server',
-    'Bcfg2.Reporting',
 )
 if HAS_SOUTH:
     INSTALLED_APPS = INSTALLED_APPS + (
