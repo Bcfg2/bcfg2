@@ -24,6 +24,7 @@ from Bcfg2.Compat import httplib, xmlrpclib, urlparse, quote_plus
 
 version = sys.version_info[:2]
 has_py26 = version >= (2, 6)
+has_py32 = version >= (3, 2)
 
 __all__ = ["ComponentProxy",
            "RetryMethod",
@@ -173,8 +174,12 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         """
         if not has_py26:
             httplib.HTTPConnection.__init__(self, host, port, strict)
-        else:
+        elif not has_py32:
             httplib.HTTPConnection.__init__(self, host, port, strict, timeout)
+        else:
+            # the strict parameter is deprecated.
+            # HTTP 0.9-style “Simple Responses” are not supported anymore.
+            httplib.HTTPConnection.__init__(self, host, port, timeout=timeout)
         self.key = key
         self.cert = cert
         self.ca = ca
