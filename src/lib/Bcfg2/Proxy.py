@@ -178,7 +178,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             httplib.HTTPConnection.__init__(self, host, port, strict, timeout)
         else:
             # the strict parameter is deprecated.
-            # HTTP 0.9-style “Simple Responses” are not supported anymore.
+            # HTTP 0.9-style "Simple Responses" are not supported anymore.
             httplib.HTTPConnection.__init__(self, host, port, timeout=timeout)
         self.key = key
         self.cert = cert
