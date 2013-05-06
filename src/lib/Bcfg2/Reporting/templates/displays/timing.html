@@ -1,5 +1,9 @@
 {% extends "base-timeview.html" %}
 {% load bcfg2_tags %}
+{% comment %}
+This is needed for Django versions less than 1.5
+{% endcomment %}
+{% load url from future %}
 
 {% block title %}Bcfg2 - Performance Metrics{% endblock %}
 {% block pagebanner %}Performance Metrics{% endblock %}

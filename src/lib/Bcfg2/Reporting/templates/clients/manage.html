@@ -1,4 +1,8 @@
 {% extends "base.html" %}
+{% comment %}
+This is needed for Django versions less than 1.5
+{% endcomment %}
+{% load url from future %}
 
 {% block extra_header_info %}
 {% endblock%}

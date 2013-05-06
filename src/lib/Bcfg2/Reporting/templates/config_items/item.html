@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load split %}
 {% load syntax_coloring %}
+{% comment %}
+This is needed for Django versions less than 1.5
+{% endcomment %}
+{% load url from future %}
 
 
 {% block title %}Bcfg2 - Element Details{% endblock %}
