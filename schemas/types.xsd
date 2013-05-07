@@ -381,6 +381,27 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <xsd:complexType name="MemberOfType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Specify additional supplementary groups for the POSIXUser
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:simpleContent>
+      <xsd:extension base="xsd:token">
+        <xsd:attribute name="group" type="xsd:token">
+          <xsd:annotation>
+            <xsd:documentation>
+              The name of the supplementary group.  This can also be
+              specified as content of the tag, although that is
+              deprecated.
+            </xsd:documentation>
+          </xsd:annotation>
+        </xsd:attribute>
+      </xsd:extension>
+    </xsd:simpleContent>
+  </xsd:complexType>
+
   <xsd:complexType name="POSIXUserType">
     <xsd:annotation>
       <xsd:documentation>
@@ -388,13 +409,7 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
-      <xsd:element name='MemberOf' type='xsd:token'>
-        <xsd:annotation>
-          <xsd:documentation>
-            Specify additional supplementary groups for the POSIXUser
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
+      <xsd:element name='MemberOf' type='MemberOfType'/>
     </xsd:choice>
     <xsd:attribute type="xsd:token" name="name" use="required">
       <xsd:annotation>

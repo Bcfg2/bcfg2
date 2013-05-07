@@ -115,8 +115,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             SEInterface={None: dict(name=None, selinuxtype=is_selinux_type)},
             SEPermissive={None: dict(name=is_selinux_type)},
             POSIXGroup={None: dict(name=is_username)},
-            POSIXUser={None: dict(name=is_username)},
-            MemberOf={None: dict(__text__=is_username)})
+            POSIXUser={None: dict(name=is_username)})
 
     def Run(self):
         self.check_packages()

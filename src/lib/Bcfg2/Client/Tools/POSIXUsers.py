@@ -154,7 +154,8 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
         if entry.get("current_exists", "true") == "true":
             # verify supplemental groups
             actual = [g[0] for g in self.user_supplementary_groups(entry)]
-            expected = [e.text.strip() for e in entry.findall("MemberOf")]
+            expected = [e.get("group", e.text).strip()
+                        for e in entry.findall("MemberOf")]
             if set(expected) != set(actual):
                 entry.set('qtext',
                           "\n".join([entry.get('qtext', '')] +
@@ -252,7 +253,8 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                 if entry.get('uid'):
                     cmd.extend(['-u', entry.get('uid')])
                 cmd.extend(['-g', entry.get('group')])
-                extras = [e.text.strip() for e in entry.findall("MemberOf")]
+                extras = [e.get("group", e.text).strip()
+                          for e in entry.findall("MemberOf")]
                 if extras:
                     cmd.extend(['-G', ",".join(extras)])
                 cmd.extend(['-d', entry.get('home')])
