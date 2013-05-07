@@ -627,30 +627,34 @@ Bcfg2 client itself.""")
         self.fam.debug = True
 
     def do_packageresolve(self, args):
-        """ packageresolve <hostname> <package> [<package>...] -
-        Resolve the specified set of packages """
+        """ packageresolve <hostname> [<package> [<package>...]] -
+        Resolve packages for the given host, optionally specifying a
+        set of packages """
         arglist = args.split(" ")
-        if len(arglist) < 2:
+        if len(arglist) < 1:
             print(self._get_usage(self.do_packageresolve))
             return
 
-        if 'Packages' not in self.plugins:
+        try:
+            pkgs = self.plugins['Packages']
+        except KeyError:
             print("Packages plugin not enabled")
             return
-        self.plugins['Packages'].toggle_debug()
-
-        indep = lxml.etree.Element("Independent")
-        structures = [lxml.etree.Element("Bundle", name="packages")]
-        for arg in arglist[1:]:
-            lxml.etree.SubElement(structures[0], "Package", name=arg)
+        pkgs.toggle_debug()
 
         hostname = arglist[0]
         metadata = self.build_metadata(hostname)
 
-        # pylint: disable=W0212
-        self.plugins['Packages']._build_packages(metadata, indep, structures)
-        # pylint: enable=W0212
+        indep = lxml.etree.Element("Independent")
+        if len(arglist) > 1:
+            structures = [lxml.etree.Element("Bundle", name="packages")]
+            for arg in arglist[1:]:
+                lxml.etree.SubElement(structures[0], "Package", name=arg)
+        else:
+            structures = self.GetStructures(metadata)
 
+        pkgs._build_packages(metadata, indep,  # pylint: disable=W0212
+                             structures)
         print("%d new packages added" % len(indep.getchildren()))
         if len(indep.getchildren()):
             print("    %s" % "\n    ".join(lxml.etree.tostring(p)
