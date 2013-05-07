@@ -288,7 +288,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         else:
             # need to add entry
             try:
-                ipaddr = set([addr[0] for (_, _, _, _, addr) in socket.getaddrinfo(client, None)])
+                ipaddr = set([info[4][0]
+                              for info in socket.getaddrinfo(client, None)])
                 self.ipcache[client] = (ipaddr, client)
                 return (ipaddr, client)
             except socket.gaierror:
