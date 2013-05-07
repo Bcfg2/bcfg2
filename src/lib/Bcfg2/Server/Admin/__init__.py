@@ -128,6 +128,7 @@ class MetadataCore(Mode):
         except Bcfg2.Server.Core.CoreInitError:
             msg = sys.exc_info()[1]
             self.errExit("Core load failed: %s" % msg)
+        self.bcore.load_plugins()
         self.bcore.fam.handle_event_set()
         self.metadata = self.bcore.metadata
 

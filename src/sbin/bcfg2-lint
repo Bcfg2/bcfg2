@@ -67,7 +67,8 @@ def get_errorhandler(setup):
 def load_server(setup):
     """ load server """
     core = Bcfg2.Server.Core.BaseCore(setup)
-    core.fam.handle_events_in_interval(4)
+    core.load_plugins()
+    core.fam.handle_events_in_interval(0.1)
     return core
 
 
