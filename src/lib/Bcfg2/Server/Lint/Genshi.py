@@ -30,7 +30,7 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
             for entry in entryset.entries.values():
                 if (self.HandlesFile(entry.name) and
                     isinstance(entry, CfgGenshiGenerator) and
-                    not entry.template):
+                        not entry.template):
                     try:
                         entry.loader.load(entry.name,
                                           cls=NewTextTemplate)
@@ -59,7 +59,7 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
 
         for entry in self.core.plugins['Bundler'].entries.values():
             if (self.HandlesFile(entry.name) and
-                isinstance(entry, BundleTemplateFile)):
+                    isinstance(entry, BundleTemplateFile)):
                 try:
                     loader.load(entry.name, cls=MarkupTemplate)
                 except TemplateSyntaxError:
