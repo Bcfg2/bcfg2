@@ -16,9 +16,9 @@ def _merge_database_table_entries():
     find_cursor = connection.cursor()
     cursor.execute("""
     Select name, kind from reports_bad
-    union 
+    union
     select name, kind from reports_modified
-    union 
+    union
     select name, kind from reports_extra
     """)
     # this fetch could be better done
