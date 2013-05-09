@@ -136,10 +136,10 @@ def filter_navigator(context):
         filters.sort(lambda x, y: cmp(x[0], y[0]))
 
         myargs = kwargs.copy()
-        selected=True
+        selected = True
         if 'group' in myargs:
             del myargs['group']
-            selected=False
+            selected = False
         groups = [('---', reverse(view, args=args, kwargs=myargs) + qs, selected)]
         for group in Group.objects.values('name'):
             myargs['group'] = group['name']
