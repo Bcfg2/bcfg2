@@ -366,7 +366,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                     hosts.append(hostdata)
                     count = 0
                     hostdata = [dhcphosts[x][0], dhcphosts[x][1], dhcphosts[x][2]]
-        #makes sure the last of the data gets written out
+        # makes sure the last of the data gets written out
         if hostdata not in hosts:
             hosts.append(hostdata)
 
