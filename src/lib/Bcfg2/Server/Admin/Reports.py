@@ -34,8 +34,8 @@ def printStats(fn):
     """
     def print_stats(self, *data):
         classes = (Client, Interaction, Performance,
-            FailureEntry, ActionEntry, PathEntry, PackageEntry,
-            ServiceEntry, Group, Bundle)
+                   FailureEntry, ActionEntry, PathEntry, PackageEntry,
+                   ServiceEntry, Group, Bundle)
 
         starts = {}
         for cls in classes:
@@ -45,7 +45,7 @@ def printStats(fn):
 
         for cls in classes:
             print("%s removed: %s" % (cls().__class__.__name__,
-                starts[cls] - cls.objects.count()))
+                                      starts[cls] - cls.objects.count()))
 
     return print_stats
 
@@ -152,7 +152,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
                 start_count = cls.objects.count()
                 cls.prune_orphans()
                 self.log.info("Pruned %d %s records" %
-                    (start_count - cls.objects.count(), cls.__class__.__name__))
+                             (start_count - cls.objects.count(), cls.__class__.__name__))
             except:
                 print("Failed to prune %s: %s" %
                       (cls.__class__.__name__,
@@ -225,9 +225,9 @@ class Reports(Bcfg2.Server.Admin.Mode):
 
         # Prune any orphaned ManyToMany relations
         for m2m in (ActionEntry, PackageEntry, PathEntry, ServiceEntry,
-                FailureEntry, Group, Bundle):
+                    FailureEntry, Group, Bundle):
             self.log.debug("Pruning any orphaned %s objects" %
-                m2m().__class__.__name__)
+                           m2m().__class__.__name__)
             m2m.prune_orphans()
 
         if client and not filtered:
@@ -261,9 +261,9 @@ class Reports(Bcfg2.Server.Admin.Mode):
 
     def stats(self):
         classes = (Client, Interaction, Performance,
-            FailureEntry, ActionEntry, PathEntry, PackageEntry,
-            ServiceEntry, Group, Bundle)
+                   FailureEntry, ActionEntry, PathEntry, PackageEntry,
+                   ServiceEntry, Group, Bundle)
 
         for cls in classes:
             print("%s has %s records" % (cls().__class__.__name__,
-                cls.objects.count()))
+                                         cls.objects.count()))
