@@ -851,8 +851,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                         self.logger.info("Extra Package %s %s." % \
                                          (name, self.str_evra(installed_inst)))
                     tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance', \
-                                     version = installed_inst.get('version'), \
-                                     release = installed_inst.get('release'))
+                                     version=installed_inst.get('version'), \
+                                     release=installed_inst.get('release'))
                     if installed_inst.get('epoch', None) != None:
                         tmp_entry.set('epoch', str(installed_inst.get('epoch')))
                     if installed_inst.get('arch', None) != None:
@@ -883,8 +883,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                     self.logger.info("Extra InstallOnlyPackage %s %s." % \
                                      (name, self.str_evra(installed_inst)))
                     tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance', \
-                                     version = installed_inst.get('version'), \
-                                     release = installed_inst.get('release'))
+                                     version=installed_inst.get('version'), \
+                                     release=installed_inst.get('release'))
                     if installed_inst.get('epoch', None) != None:
                         tmp_entry.set('epoch', str(installed_inst.get('epoch')))
                     if installed_inst.get('arch', None) != None:
@@ -902,8 +902,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                     self.logger.info("Extra Normal Package Instance %s %s" % \
                                      (name, self.str_evra(installed_inst)))
                     tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance', \
-                                     version = installed_inst.get('version'), \
-                                     release = installed_inst.get('release'))
+                                     version=installed_inst.get('version'), \
+                                     release=installed_inst.get('release'))
                     if installed_inst.get('epoch', None) != None:
                         tmp_entry.set('epoch', str(installed_inst.get('epoch')))
                     if installed_inst.get('arch', None) != None:
