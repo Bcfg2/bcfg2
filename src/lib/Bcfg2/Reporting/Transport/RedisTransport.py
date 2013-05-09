@@ -192,5 +192,3 @@ class RedisTransport(TransportBase):
                 self.logger.error("Unhandled exception in command thread: %s" %
                     traceback.format_exc().splitlines()[-1])
         self.logger.info("Command thread shutdown")
-
-
