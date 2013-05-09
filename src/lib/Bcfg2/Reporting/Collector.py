@@ -28,7 +28,7 @@ class ReportingCollector(object):
     """The collecting process for reports"""
 
     def __init__(self, setup):
-        """Setup the collector.  This may be called by the daemon or though 
+        """Setup the collector.  This may be called by the daemon or though
         bcfg2-admin"""
         self.setup = setup
         self.datastore = setup['repo']
@@ -69,12 +69,12 @@ class ReportingCollector(object):
             raise ReportingError
 
         try:
-            self.logger.debug("Validating storage %s" % 
+            self.logger.debug("Validating storage %s" %
                 self.storage.__class__.__name__)
             self.storage.validate()
         except:
             self.logger.error("Storage backed %s failed to validate: %s" %
-                (self.storage.__class__.__name__, 
+                (self.storage.__class__.__name__,
                     traceback.format_exc().splitlines()[-1]))
 
 
