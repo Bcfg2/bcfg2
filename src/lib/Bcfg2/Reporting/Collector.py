@@ -111,7 +111,7 @@ class ReportingCollector(object):
                         (interaction.get('hostname', '<unknown>'),
                             time.time() - start))
                 except:
-                    #TODO requeue?
+                    # TODO requeue?
                     raise
             except (SystemExit, KeyboardInterrupt):
                 self.logger.info("Shutting down")
