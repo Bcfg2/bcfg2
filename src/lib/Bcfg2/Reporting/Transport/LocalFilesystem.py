@@ -30,8 +30,8 @@ class LocalFilesystem(TransportBase):
                 os.makedirs(self.work_path)
             except:
                 self.logger.error("%s: Unable to create storage: %s" %
-                    (self.__class__.__name__,
-                        traceback.format_exc().splitlines()[-1]))
+                                 (self.__class__.__name__,
+                                  traceback.format_exc().splitlines()[-1]))
                 raise TransportError
 
     def set_debug(self, debug):
@@ -82,7 +82,7 @@ class LocalFilesystem(TransportBase):
         tmp_file = os.path.join(self.work_path, "." + fname)
         if os.path.exists(save_file):
             self.logger.error("%s: Oops.. duplicate statistic in directory." %
-                self.__class__.__name__)
+                              self.__class__.__name__)
             raise TransportError
 
         # using a tmpfile to hopefully avoid the file monitor from grabbing too
@@ -92,7 +92,7 @@ class LocalFilesystem(TransportBase):
             saved.write(payload)
         except IOError:
             self.logger.error("Failed to store interaction for %s: %s" %
-                (hostname, traceback.format_exc().splitlines()[-1]))
+                             (hostname, traceback.format_exc().splitlines()[-1]))
             os.unlink(tmp_file)
         saved.close()
         os.rename(tmp_file, save_file)
@@ -130,10 +130,10 @@ class LocalFilesystem(TransportBase):
                 return interaction
             except IOError:
                 self.logger.error("Failed to read payload: %s" %
-                    traceback.format_exc().splitlines()[-1])
+                                  traceback.format_exc().splitlines()[-1])
             except cPickle.UnpicklingError:
                 self.logger.error("Failed to unpickle payload: %s" %
-                    traceback.format_exc().splitlines()[-1])
+                                  traceback.format_exc().splitlines()[-1])
                 payloadfd.close()
                 raise TransportError
         return None
@@ -159,13 +159,13 @@ class LocalFilesystem(TransportBase):
             raise TransportError
         except:
             self.logger.error("Failed to load collector: %s" %
-                traceback.format_exc().splitlines()[-1])
+                              traceback.format_exc().splitlines()[-1])
             raise TransportError
 
         if not method in self._phony_collector.storage.__class__.__rmi__ or \
                 not hasattr(self._phony_collector.storage, method):
             self.logger.error("Unknown method %s called on storage engine %s" %
-                (method, self._phony_collector.storage.__class__.__name__))
+                             (method, self._phony_collector.storage.__class__.__name__))
             raise TransportError
 
         try:
@@ -173,5 +173,5 @@ class LocalFilesystem(TransportBase):
             return cls_method(*args, **kwargs)
         except:
             self.logger.error("RPC method %s failed: %s" %
-                (method, traceback.format_exc().splitlines()[-1]))
+                             (method, traceback.format_exc().splitlines()[-1]))
             raise TransportError
