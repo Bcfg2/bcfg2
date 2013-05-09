@@ -483,7 +483,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
         if prelink_md5 == False:
             file_results.append('RPMVERIFY_MD5')
             file_results.append('RPMVERIFY_READFAIL')
-        elif  prelink_md5 != fmd5:
+        elif prelink_md5 != fmd5:
             file_results.append('RPMVERIFY_MD5')
 
     if flags & RPMVERIFY_LINKTO:
@@ -762,7 +762,7 @@ class Rpmtscallback(object):
         """
             Generic rpmts call back.
         """
-        if   reason == rpm.RPMCALLBACK_INST_OPEN_FILE:
+        if reason == rpm.RPMCALLBACK_INST_OPEN_FILE:
             pass
         elif reason == rpm.RPMCALLBACK_INST_CLOSE_FILE:
             pass
