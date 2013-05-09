@@ -57,11 +57,11 @@ class ReportingCollector(object):
             self.storage = load_storage_from_config(setup)
         except TransportError:
             self.logger.error("Failed to load transport: %s" %
-                traceback.format_exc().splitlines()[-1])
+                              traceback.format_exc().splitlines()[-1])
             raise ReportingError
         except StorageError:
             self.logger.error("Failed to load storage: %s" %
-                traceback.format_exc().splitlines()[-1])
+                              traceback.format_exc().splitlines()[-1])
             raise ReportingError
 
         if isinstance(self.transport, DirectStore):
@@ -72,12 +72,12 @@ class ReportingCollector(object):
 
         try:
             self.logger.debug("Validating storage %s" %
-                self.storage.__class__.__name__)
+                              self.storage.__class__.__name__)
             self.storage.validate()
         except:
             self.logger.error("Storage backed %s failed to validate: %s" %
-                (self.storage.__class__.__name__,
-                    traceback.format_exc().splitlines()[-1]))
+                             (self.storage.__class__.__name__,
+                              traceback.format_exc().splitlines()[-1]))
 
     def run(self):
         """Startup the processing and go!"""
@@ -92,7 +92,7 @@ class ReportingCollector(object):
                 self.context.open()
             except PIDFileError:
                 self.logger.error("Error writing pid file: %s" %
-                    traceback.format_exc().splitlines()[-1])
+                                  traceback.format_exc().splitlines()[-1])
                 self.shutdown()
                 return
             self.logger.info("Starting daemon")
@@ -108,8 +108,8 @@ class ReportingCollector(object):
                     start = time.time()
                     self.storage.import_interaction(interaction)
                     self.logger.info("Imported interaction for %s in %ss" %
-                        (interaction.get('hostname', '<unknown>'),
-                            time.time() - start))
+                                    (interaction.get('hostname', '<unknown>'),
+                                     time.time() - start))
                 except:
                     # TODO requeue?
                     raise
@@ -118,7 +118,7 @@ class ReportingCollector(object):
                 self.shutdown()
             except:
                 self.logger.error("Unhandled exception in main loop %s" %
-                    traceback.format_exc().splitlines()[-1])
+                                  traceback.format_exc().splitlines()[-1])
 
     def shutdown(self):
         """Cleanup and go"""
