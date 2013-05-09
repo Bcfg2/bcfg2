@@ -39,7 +39,7 @@ class YUM24(RPM):
 
     __new_req__ = {'Package': ['name'],
                    'Instance': ['version', 'release', 'arch']}
-    __new_ireq__ = {'Package': ['name'], \
+    __new_ireq__ = {'Package': ['name'],
                     'Instance': []}
     # __new_ireq__ = {'Package': ['name', 'uri'], \
     #                'Instance': ['simplefile', 'version', 'release', 'arch']}
@@ -55,11 +55,11 @@ class YUM24(RPM):
     def __init__(self, logger, setup, config):
         RPM.__init__(self, logger, setup, config)
         self.__important__ = self.__important__ + \
-                             [entry.get('name') for struct in config \
-                              for entry in struct \
-                              if entry.tag in ['Path', 'ConfigFile'] and \
-                              (entry.get('name').startswith('/etc/yum.d') \
-                              or entry.get('name').startswith('/etc/yum.repos.d')) \
+                             [entry.get('name') for struct in config
+                              for entry in struct
+                              if entry.tag in ['Path', 'ConfigFile'] and
+                              (entry.get('name').startswith('/etc/yum.d')
+                              or entry.get('name').startswith('/etc/yum.repos.d'))
                               or entry.get('name') == '/etc/yum.conf']
         self.autodep = setup.get("yum24_autodep")
         self.yum_avail = dict()
@@ -126,11 +126,11 @@ class YUM24(RPM):
                 # If the package name matches something installed
                 # or available the that's the correct package.
                 try:
-                    pkgDict = dict([(i.name, i) for i in \
+                    pkgDict = dict([(i.name, i) for i in
                                    self.yb.returnPackagesByDep(entry.get('name'))])
                 except yum.Errors.YumBaseError:
                     e = sys.exc_info()[1]
-                    self.logger.error('Yum Error Depsolving for %s: %s' % \
+                    self.logger.error('Yum Error Depsolving for %s: %s' %
                                       (entry.get('name'), str(e)))
                     pkgDict = {}
 
@@ -195,20 +195,20 @@ class YUM24(RPM):
         # Remove extra instances.
         # Can not reverify because we don't have a package entry.
         if len(self.extra_instances) > 0:
-            if (self.setup.get('remove') == 'all' or \
+            if (self.setup.get('remove') == 'all' or
                 self.setup.get('remove') == 'packages'):
                 self.Remove(self.extra_instances)
             else:
                 self.logger.info("The following extra package instances will be removed by the '-r' option:")
                 for pkg in self.extra_instances:
                     for inst in pkg:
-                        self.logger.info("    %s %s" % \
+                        self.logger.info("    %s %s" %
                                          ((pkg.get('name'), self.str_evra(inst))))
 
         # Figure out which instances of the packages actually need something
         # doing to them and place in the appropriate work 'queue'.
         for pkg in packages:
-            insts = [pinst for pinst in pkg \
+            insts = [pinst for pinst in pkg
                      if pinst.tag in ['Instance', 'Package']]
             if insts:
                 for inst in insts:
@@ -219,7 +219,7 @@ class YUM24(RPM):
                                 gpg_keys.append(inst)
                             else:
                                 install_pkgs.append(inst)
-                        elif self.instance_status[inst].get('version_fail', \
+                        elif self.instance_status[inst].get('version_fail',
                                                             False) == True:
                             upgrade_pkgs.append(inst)
             else:
@@ -235,15 +235,15 @@ class YUM24(RPM):
                 if inst.get('simplefile') is None:
                     self.logger.error("GPG key has no simplefile attribute")
                     continue
-                key_arg = os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
+                key_arg = os.path.join(self.instance_status[inst].get('pkg').get('uri'),
                                        inst.get('simplefile'))
                 if self.cmd.run("rpm --import %s" % key_arg).success:
-                    self.logger.debug("Unable to install %s-%s" % \
-                                      (self.instance_status[inst].get('pkg').get('name'), \
+                    self.logger.debug("Unable to install %s-%s" %
+                                      (self.instance_status[inst].get('pkg').get('name'),
                                        self.str_evra(inst)))
                 else:
-                    self.logger.debug("Installed %s-%s-%s" % \
-                                      (self.instance_status[inst].get('pkg').get('name'), \
+                    self.logger.debug("Installed %s-%s-%s" %
+                                      (self.instance_status[inst].get('pkg').get('name'),
                                        inst.get('version'), inst.get('release')))
             self.RefreshPackages()
             self.gpg_keyids = self.getinstalledgpg()
@@ -312,8 +312,8 @@ class YUM24(RPM):
                     if self.cmd.run(pkgtool % pkg_arg).success:
                         installed_instances.append(inst)
                     else:
-                        self.logger.debug("%s %s would not install." % \
-                                              (self.instance_status[inst].get('pkg').get('name'), \
+                        self.logger.debug("%s %s would not install." %
+                                              (self.instance_status[inst].get('pkg').get('name'),
                                                self.str_evra(inst)))
 
                 self.RefreshPackages()
@@ -321,7 +321,7 @@ class YUM24(RPM):
         if not self.setup['kevlar']:
             for pkg_entry in [p for p in packages if self.canVerify(p)]:
                 self.logger.debug("Reverifying Failed Package %s" % (pkg_entry.get('name')))
-                states[pkg_entry] = self.VerifyPackage(pkg_entry, \
+                states[pkg_entry] = self.VerifyPackage(pkg_entry,
                                                        self.modlists.get(pkg_entry, []))
 
         for entry in [ent for ent in packages if states[ent]]:
@@ -356,7 +356,7 @@ class YUM24(RPM):
                     pkgspec = {'name': pkg.get('name'),
                                'version': inst.get('version'),
                                'release': inst.get('release')}
-                    self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
+                    self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"
                                                  % (pkgspec.get('name'), self.str_evra(pkgspec)))
                     self.logger.info("         This package will be deleted in a future version of the YUM24 driver.")
 
@@ -380,7 +380,7 @@ class YUM24(RPM):
                         if 'arch' in inst.attrib:
                             pkg_arg = pkg_arg + '.' + inst.get('arch')
                     else:
-                        self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
+                        self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"
                                                  % (pkg.get('name'), self.str_evra(pkg)))
                         self.logger.info("         This package will be deleted in a future version of the YUM24 driver.")
                         continue
