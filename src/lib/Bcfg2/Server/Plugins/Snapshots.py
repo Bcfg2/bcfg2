@@ -15,12 +15,12 @@ logger = logging.getLogger('Snapshots')
 
 ftypes = ['ConfigFile', 'SymLink', 'Directory']
 datafields = {
-              'Package': ['version'],
-              'Path': ['type'],
-              'Service': ['status'],
-              'ConfigFile': ['owner', 'group', 'mode'],
-              'Directory': ['owner', 'group', 'mode'],
-              'SymLink': ['to'],
+    'Package': ['version'],
+    'Path': ['type'],
+    'Service': ['status'],
+    'ConfigFile': ['owner', 'group', 'mode'],
+    'Directory': ['owner', 'group', 'mode'],
+    'SymLink': ['to'],
              }
 
 
@@ -94,7 +94,7 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics):
         revision = u_str(state.get('revision', '-1'))
         for entry in state.find('.//Bad'):
             data = [False, False, u_str(entry.get('name'))] \
-                   + build_snap_ent(entry)
+                + build_snap_ent(entry)
             if entry.tag in ftypes:
                 etag = 'Path'
             else:
@@ -107,10 +107,10 @@ class Snapshots(Bcfg2.Server.Plugin.Statistics):
                 etag = entry.tag
             if entry.get('name') in entries[etag]:
                 data = [True, False, u_str(entry.get('name'))] + \
-                       build_snap_ent(entry)
+                    build_snap_ent(entry)
             else:
                 data = [True, False, u_str(entry.get('name'))] + \
-                       build_snap_ent(entry)
+                    build_snap_ent(entry)
         for entry in state.find('.//Extra'):
             if entry.tag in datafields:
                 data = build_snap_ent(entry)[1]
