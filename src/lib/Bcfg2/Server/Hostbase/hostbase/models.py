@@ -1,6 +1,8 @@
 from django.db import models
 
 # Create your models here.
+
+
 class Host(models.Model):
     NETGROUP_CHOICES = (
         ('none', 'none'),('cave', 'cave'),('ccst', 'ccst'),('mcs', 'mcs'),
@@ -68,6 +70,7 @@ class Host(models.Model):
         """
         return Log.objects.filter(hostname=self.hostname)
 
+
 class Interface(models.Model):
     TYPE_CHOICES = (
         ('eth', 'ethernet'), ('wl', 'wireless'), ('virtual', 'virtual'), ('myr', 'myr'),
@@ -91,6 +94,7 @@ class Interface(models.Model):
         list_display = ('mac_addr', 'host')
         search_fields = ['mac_addr']
 
+
 class IP(models.Model):
     interface = models.ForeignKey(Interface)
     # FIXME: The new admin interface has change a lot.
@@ -107,6 +111,7 @@ class IP(models.Model):
     class Meta:
         ordering = ('ip_addr', )
 
+
 class MX(models.Model):
     priority = models.IntegerField(blank=True)
     # FIXME: The new admin interface has change a lot.
@@ -118,6 +123,7 @@ class MX(models.Model):
 
     class Admin:
         pass
+
 
 class Name(models.Model):
     DNS_CHOICES = (
@@ -140,6 +146,7 @@ class Name(models.Model):
     class Admin:
         pass
 
+
 class CName(models.Model):
     # FIXME: The new admin interface has change a lot.
     #name = models.ForeignKey(Name, edit_inline=models.TABULAR, num_in_admin=1)
@@ -154,6 +161,7 @@ class CName(models.Model):
     class Admin:
         pass
 
+
 class Nameserver(models.Model):
     name = models.CharField(max_length=64, blank=True)
 
@@ -163,6 +171,7 @@ class Nameserver(models.Model):
     class Admin:
         pass
 
+
 class ZoneAddress(models.Model):
     ip_addr = models.IPAddressField(blank=True)
 
@@ -171,6 +180,7 @@ class ZoneAddress(models.Model):
 
     class Admin:
         pass
+
 
 class Zone(models.Model):
     zone = models.CharField(max_length=64)
@@ -192,6 +202,7 @@ class Zone(models.Model):
     class Admin:
         pass
 
+
 class Log(models.Model):
     # FIXME: Proposal hostname = models.ForeignKey(Host)
     hostname = models.CharField(max_length=64)
@@ -200,6 +211,7 @@ class Log(models.Model):
 
     def __str__(self):
         return self.hostname
+
 
 class ZoneLog(models.Model):
     zone = models.CharField(max_length=64)
