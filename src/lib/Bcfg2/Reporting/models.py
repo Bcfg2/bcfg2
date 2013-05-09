@@ -394,7 +394,7 @@ class BaseEntry(models.Model):
         '''Remove unused entries'''
         # yeat another sqlite hack
         cls_orphans = [x['id']
-            for x in cls.objects.filter(interaction__isnull=True).values("id")]
+                       for x in cls.objects.filter(interaction__isnull=True).values("id")]
         i = 0
         while i < len(cls_orphans):
             cls.objects.filter(id__in=cls_orphans[i:i + 100]).delete()
@@ -668,7 +668,7 @@ class PathEntry(SuccessEntry):
     acls = models.ManyToManyField(FileAcl)
 
     detail_type = models.IntegerField(default=0,
-        choices=DETAIL_CHOICES)
+                                      choices=DETAIL_CHOICES)
     details = models.TextField(default='')
 
     ENTRY_TYPE = r"Path"
