@@ -1,6 +1,6 @@
 import sys
 from sqlalchemy import Table, Column, Integer, Unicode, ForeignKey, Boolean, \
-                       DateTime, UnicodeText, desc
+    DateTime, UnicodeText, desc
 import datetime
 import sqlalchemy.exceptions
 from sqlalchemy.orm import relation, backref
