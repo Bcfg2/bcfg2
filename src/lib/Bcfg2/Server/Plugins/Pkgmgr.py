@@ -100,7 +100,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
                         archs = pkg.get('multiarch').split()
                         srcs = pkg.get('srcs', pkg.get('multiarch')).split()
                         url = ' '.join(["%s/%s" % (pkg.get('uri'),
-                                                   pkg.get('file') % {'src':srcs[idx],
+                                                   pkg.get('file') % {'src': srcs[idx],
                                                                       'arch':archs[idx]})
                                         for idx in range(len(archs))])
                         pkg.set('url', url)
@@ -210,4 +210,4 @@ class PkgmgrLint(Bcfg2.Server.Lint.ServerlessPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"duplicate-packages":"error"}
+        return {"duplicate-packages": "error"}
