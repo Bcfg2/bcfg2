@@ -492,7 +492,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
             file_results.append('RPMVERIFY_READLINKFAIL')
             file_results.append('RPMVERIFY_LINKTO')
         else:
-            if len(rpmlinktos) == 0  or linkto != rpmlinktos:
+            if len(rpmlinktos) == 0 or linkto != rpmlinktos:
                 file_results.append('RPMVERIFY_LINKTO')
 
     if flags & RPMVERIFY_FILESIZE:
