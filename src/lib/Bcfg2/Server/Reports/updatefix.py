@@ -108,7 +108,7 @@ _fixes = [_merge_database_table_entries,
           'alter table reports_reason add is_sensitive bool NOT NULL default False;',
           update_noop,  # _remove_table_column('reports_interaction', 'client_version'),
           "alter table reports_reason add unpruned varchar(1280) not null default 'N/A';",
-]
+          ]
 
 # this will calculate the last possible version of the database
 lastversion = len(_fixes)
