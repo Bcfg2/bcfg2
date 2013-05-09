@@ -56,7 +56,6 @@ class Migration(SchemaMigration):
         ))
         db.create_unique('Reporting_interaction_posixgroups', ['interaction_id', 'posixgroupentry_id'])
 
-
     def backwards(self, orm):
         # Deleting model 'POSIXGroupEntry'
         db.delete_table('Reporting_posixgroupentry')
@@ -69,7 +68,6 @@ class Migration(SchemaMigration):
 
         # Removing M2M table for field posixgroups on 'Interaction'
         db.delete_table('Reporting_interaction_posixgroups')
-
 
     models = {
         'Reporting.actionentry': {
