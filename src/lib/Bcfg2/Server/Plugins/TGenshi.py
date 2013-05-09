@@ -81,7 +81,7 @@ class TemplateFile(object):
         if entry.tag == 'Path':
             entry.set('type', 'file')
         try:
-            stream = self.template.generate( \
+            stream = self.template.generate(
                 name=fname, metadata=metadata,
                 path=self.name).filter(removecomment)
             if have_ntt:
