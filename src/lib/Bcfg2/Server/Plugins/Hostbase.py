@@ -146,7 +146,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                 'nameservers': nameservers,
                 'addresses': addresses,
                 'mxs': mxs
-                })
+            })
             zonefile.write(self.templates['zone'].render(context))
             externalzonefile.write(self.templates['zone'].render(context))
 
@@ -244,7 +244,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                 'inaddr': reversezone[1].rstrip('.rev'),
                 'zone': reversezone,
                 'nameservers': reverse_nameservers,
-                })
+            })
 
             self.filedata[reversezone[1]] = self.templates['reversesoa'].render(context)
             self.filedata[reversezone[1] + '.external'] = self.templates['reversesoa'].render(context)
@@ -285,13 +285,13 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                         'hosts': hosts,
                         'inaddr': origin[0],
                         'fileorigin': filename[0],
-                        })
+                    })
                     zonefile.write(self.templates['reverseapp'].render(context))
                     context = Context({
                         'hosts': hosts_external,
                         'inaddr': origin[0],
                         'fileorigin': filename[0],
-                        })
+                    })
                     externalzonefile.write(self.templates['reverseapp'].render(context))
             else:
                 originlist = [filename[0]]
@@ -306,13 +306,13 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                     'hosts': hosts,
                     'inaddr': filename[0],
                     'fileorigin': None,
-                    })
+                })
                 zonefile.write(self.templates['reverseapp'].render(context))
                 context = Context({
                     'hosts': hosts_external,
                     'inaddr': filename[0],
                     'fileorigin': None,
-                    })
+                })
                 externalzonefile.write(self.templates['reverseapp'].render(context))
             self.filedata['%s.rev' % filename[0]] += zonefile.getvalue()
             self.filedata['%s.rev.external' % filename[0]] += externalzonefile.getvalue()
@@ -325,7 +325,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
         context = Context({
             'zones': zones,
             'reverses': reversenames,
-            })
+        })
         self.filedata['named.conf'] = self.templates['named'].render(context)
         self.Entries['ConfigFile']['/my/adm/hostbase/files/named.conf'] = self.FetchFile
         self.filedata['named.conf.views'] = self.templates['namedviews'].render(context)
@@ -373,7 +373,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
         context = Context({
             'hosts': hosts,
             'numips': len(hosts),
-            })
+        })
 
         self.filedata['dhcpd.conf'] = self.templates['dhcp'].render(context)
         self.Entries['ConfigFile']['/my/adm/hostbase/files/dhcpd.conf'] = self.FetchFile
@@ -429,7 +429,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
             'two_octets_data': two_octets_data,
             'three_octets': three_octets,
             'num_ips': len(three_octets),
-            })
+        })
 
         self.filedata['hosts'] = self.templates['hosts'].render(context)
 
@@ -466,7 +466,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
             context = Context({
                 'subnet': subnet[0],
                 'ips': ips,
-                })
+            })
             self.filedata['hosts'] += self.templates['hostsapp'].render(context)
         self.Entries['ConfigFile']['/mcs/etc/hosts'] = self.FetchFile
 
