@@ -5,21 +5,21 @@ from django.db import models
 
 class Host(models.Model):
     NETGROUP_CHOICES = (
-        ('none', 'none'),('cave', 'cave'),('ccst', 'ccst'),('mcs', 'mcs'),
-        ('mmlab', 'mmlab'),('sp', 'sp'),('red', 'red'),('virtual', 'virtual'),
-        ('win', 'win'),('xterm', 'xterm'),('lcrc', 'lcrc'),('anlext', 'anlext'),
+        ('none', 'none'), ('cave', 'cave'), ('ccst', 'ccst'), ('mcs', 'mcs'),
+        ('mmlab', 'mmlab'), ('sp', 'sp'), ('red', 'red'), ('virtual', 'virtual'),
+        ('win', 'win'), ('xterm', 'xterm'), ('lcrc', 'lcrc'), ('anlext', 'anlext'),
         ('teragrid', 'teragrid')
         )
     STATUS_CHOICES = (
-        ('active','active'),('dormant','dormant')
+        ('active', 'active'), ('dormant', 'dormant')
         )
     SUPPORT_CHOICES = (
-        ('green','green'),('yellow','yellow'),('red','red')
+        ('green', 'green'), ('yellow', 'yellow'), ('red', 'red')
         )
     CLASS_CHOICES = (
-        ('scientific','scientific'),
-        ('operations','operations'),('guest','guest'),
-        ('confidential','confidential'),('public','public')
+        ('scientific', 'scientific'),
+        ('operations', 'operations'), ('guest', 'guest'),
+        ('confidential', 'confidential'), ('public', 'public')
         )
     WHATAMI_CHOICES = (
         ('aix-3', 'aix-3'), ('aix-4', 'aix-4'),
@@ -127,8 +127,8 @@ class MX(models.Model):
 
 class Name(models.Model):
     DNS_CHOICES = (
-        ('global','global'),('internal','ANL internal'),
-        ('private','private')
+        ('global', 'global'), ('internal', 'ANL internal'),
+        ('private', 'private')
         )
     # FIXME: The new admin interface has change a lot.
     #ip = models.ForeignKey(IP, edit_inline=models.TABULAR, num_in_admin=1)
