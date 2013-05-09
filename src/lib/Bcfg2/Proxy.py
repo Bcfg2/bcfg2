@@ -64,6 +64,7 @@ class CertificateError(Exception):
 
 _orig_Method = xmlrpclib._Method
 
+
 class RetryMethod(xmlrpclib._Method):
     """Method with error handling and retries built in."""
     log = logging.getLogger('xmlrpc')
