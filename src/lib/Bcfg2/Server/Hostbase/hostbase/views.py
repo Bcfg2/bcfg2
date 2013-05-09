@@ -846,7 +846,7 @@ def copy(request, host_id):
                                    context_instance = RequestContext(request))
 
 # FIXME: delete all this things in a signal handler "pre_delete"
-#def remove(request, host_id):
+# def remove(request, host_id):
 #    host = Host.objects.get(id=host_id)
 #    if 'sub' in request:
 #        for interface in host.interface_set.all():
@@ -965,9 +965,9 @@ confirm = login_required(confirm)
 dnsedit = login_required(dnsedit)
 new = login_required(new)
 copy = login_required(copy)
-#remove = login_required(remove)
-#zoneedit = login_required(zoneedit)
-#zonenew = login_required(zonenew)
+# remove = login_required(remove)
+# zoneedit = login_required(zoneedit)
+# zonenew = login_required(zonenew)
 
 ## uncomment the lines below this point to restrict access to all of hostbase
 
