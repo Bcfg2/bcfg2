@@ -2,7 +2,7 @@
 The base for all Storage backends
 """
 
-import logging 
+import logging
 
 class StorageError(Exception):
     """Generic StorageError"""
