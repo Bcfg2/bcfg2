@@ -167,7 +167,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 instance.set('release', release)
                 if entry.get('verify', 'true') == 'false':
                     instance.set('verify', 'false')
-            instances = [ instance ]
+            instances = [instance ]
 
         self.logger.debug("Verifying package instances for %s" % entry.get('name'))
         package_fail = False
@@ -227,7 +227,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                     else:
                                         vp_ts = rpmtools.rpmtransactionset()
                                         self.instance_status[inst]['verify'] = \
-                                                                             rpmtools.rpm_verify( vp_ts, pkg, flags)
+                                                                             rpmtools.rpm_verify(vp_ts, pkg, flags)
                                         vp_ts.closeDB()
                                         del vp_ts
 
@@ -286,7 +286,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                         else:
                                             vp_ts = rpmtools.rpmtransactionset()
                                             self.instance_status[inst]['verify'] = \
-                                                                                 rpmtools.rpm_verify( vp_ts, pkg, flags )
+                                                                                 rpmtools.rpm_verify(vp_ts, pkg, flags )
                                             vp_ts.closeDB()
                                             del vp_ts
 
@@ -422,14 +422,14 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
         for pkg in packages:
             for inst in pkg:
                 if pkg.get('name') != 'gpg-pubkey':
-                    pkgspec = { 'name': pkg.get('name'),
+                    pkgspec = {'name': pkg.get('name'),
                             'epoch': inst.get('epoch', None),
                             'version': inst.get('version'),
                             'release': inst.get('release'),
                             'arch': inst.get('arch') }
                     pkgspec_list.append(pkgspec)
                 else:
-                    pkgspec = { 'name': pkg.get('name'),
+                    pkgspec = {'name': pkg.get('name'),
                             'version': inst.get('version'),
                             'release': inst.get('release')}
                     self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
@@ -451,14 +451,14 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 pkg_modified = False
                 for inst in pkg:
                     if pkg.get('name') != 'gpg-pubkey':
-                        pkgspec = { 'name': pkg.get('name'),
+                        pkgspec = {'name': pkg.get('name'),
                                 'epoch': inst.get('epoch', None),
                                 'version': inst.get('version'),
                                 'release': inst.get('release'),
                                 'arch': inst.get('arch') }
                         pkgspec_list.append(pkgspec)
                     else:
-                        pkgspec = { 'name': pkg.get('name'),
+                        pkgspec = {'name': pkg.get('name'),
                                 'version': inst.get('version'),
                                 'release': inst.get('release')}
                         self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
@@ -968,7 +968,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
         init_ts = rpmtools.rpmtransactionset()
         init_ts.setVSFlags(rpm._RPMVSF_NODIGESTS |rpm._RPMVSF_NOSIGNATURES)
         gpg_hdrs = rpmtools.getheadersbykeyword(init_ts, **{'name': 'gpg-pubkey'})
-        keyids = [ header[rpm.RPMTAG_VERSION] for header in gpg_hdrs]
+        keyids = [header[rpm.RPMTAG_VERSION] for header in gpg_hdrs]
         keyids.append('None')
         init_ts.closeDB()
         del init_ts
