@@ -259,7 +259,7 @@ class Reason(models.Model):
     version = models.CharField(max_length=1024, blank=True)
     current_version = models.CharField(max_length=1024, blank=True)
     current_exists = models.BooleanField()  # False means its missing. Default True
-    current_diff = models.TextField(max_length=1024*1024, blank=True)
+    current_diff = models.TextField(max_length=1024 *1024, blank=True)
     is_binary = models.BooleanField(default=False)
     is_sensitive = models.BooleanField(default=False)
     unpruned = models.TextField(max_length=4096, blank=True, default='')
