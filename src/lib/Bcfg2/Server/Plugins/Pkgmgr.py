@@ -191,7 +191,7 @@ class PkgmgrLint(Bcfg2.Server.Lint.ServerlessPlugin):
                     if pkg.getparent().tag == 'Group':
                         grp = pkg.getparent().get('name')
                         if (type(grp) is not str and
-                            grp.getparent().tag == 'Group'):
+                                grp.getparent().tag == 'Group'):
                             pgrp = grp.getparent().get('name')
                         else:
                             pgrp = 'none'
