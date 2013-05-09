@@ -160,6 +160,7 @@ def s_isdev(mode):
     """
     return stat.S_ISBLK(mode) | stat.S_ISCHR(mode)
 
+
 def rpmpackagelist(rts):
     """
         Equivalent of rpm -qa.  Intended for RefreshPackages() in the RPM Driver.
@@ -177,6 +178,7 @@ def rpmpackagelist(rts):
              'arch':header[rpm.RPMTAG_ARCH],
              'gpgkeyid':header.sprintf("%|SIGGPG?{%{SIGGPG:pgpsig}}:{None}|").split()[-1]}
              for header in rts.dbMatch()]
+
 
 def getindexbykeyword(index_ts, **kwargs):
     """
@@ -212,6 +214,7 @@ def getindexbykeyword(index_ts, **kwargs):
             lst.append(index_mi.instance())
     del index_mi
     return lst
+
 
 def getheadersbykeyword(header_ts, **kwargs):
     """
@@ -250,6 +253,7 @@ def getheadersbykeyword(header_ts, **kwargs):
             lst.append(hdr)
     del header_mi
     return lst
+
 
 def prelink_md5_check(filename):
     """
@@ -300,6 +304,7 @@ def prelink_md5_check(filename):
     else:
         return file_md5, 0
 
+
 def prelink_size_check(filename):
     """
        This check is only done if the prelink_md5_check() is not done first.
@@ -347,6 +352,7 @@ def prelink_size_check(filename):
 
     return fsize
 
+
 def debug_verify_flags(vflags):
     """
         Decodes the verify flags bits.
@@ -377,6 +383,7 @@ def debug_verify_flags(vflags):
         print('RPMVERIFY_LSTATFAIL')
     if vflags & RPMVERIFY_LGETFILECONFAIL:
         print('RPMVERIFY_LGETFILECONFAIL')
+
 
 def debug_file_flags(fflags):
     """
@@ -414,6 +421,7 @@ def debug_file_flags(fflags):
 
     if fflags & rpm.RPMFILE_PUBKEY:
         print('rpm.RPMFILE_PUBKEY')
+
 
 def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
     """
@@ -540,6 +548,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
 
     return file_results
 
+
 def rpm_verify_dependencies(header):
     """
         Check package dependencies. Header is an rpm.hdr.
@@ -562,6 +571,7 @@ def rpm_verify_dependencies(header):
     dep_errors = _ts1.check()
     _ts1.closeDB()
     return dep_errors
+
 
 def rpm_verify_package(vp_ts, header, verify_options):
     """
@@ -673,6 +683,7 @@ def rpm_verify_package(vp_ts, header, verify_options):
 
     return package_results
 
+
 def rpm_verify(verify_ts, verify_pkgspec, verify_options=[]):
     """
        Requires rpmtransactionset() to be run first to get a ts.
@@ -723,6 +734,7 @@ def rpm_verify(verify_ts, verify_pkgspec, verify_options=[]):
 
     return verify_results
 
+
 def rpmtransactionset():
     """
         A simple wrapper for rpm.TransactionSet() to keep everthiing together.
@@ -731,6 +743,7 @@ def rpmtransactionset():
     """
     ts = rpm.TransactionSet()
     return ts
+
 
 class Rpmtscallback(object):
     """
@@ -830,6 +843,7 @@ def rpm_erase(erase_pkgspecs, erase_flags):
     erase_ts.closeDB()
     del erase_ts
     return erase_problems
+
 
 def display_verify_file(file_results):
     '''
