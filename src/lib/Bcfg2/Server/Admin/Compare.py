@@ -50,12 +50,12 @@ class Compare(Bcfg2.Server.Admin.Mode):
             if child.tag == 'Path' and child.get('type') == 'file' and \
                child.text != equiv[0].text:
                 diff.append('contents')
-            attrdiff = [field for field in self.important[child.tag] if \
+            attrdiff = [field for field in self.important[child.tag] if
                         child.get(field) != equiv[0].get(field)]
             if attrdiff:
                 diff.append('attributes (%s)' % ', '.join(attrdiff))
             if diff:
-                print("  %s %s in bundle %s:\n   %s differ" % (child.tag, \
+                print("  %s %s in bundle %s:\n   %s differ" % (child.tag,
                       child.get('name'), bundle, ' and '.join(diff)))
                 identical = False
 
