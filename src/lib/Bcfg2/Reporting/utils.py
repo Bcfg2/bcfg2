@@ -31,7 +31,7 @@ class BatchFetch(object):
             raise StopIteration
         if self.block_count == 0 or self.count == self.step:
             # Without list() this turns into LIMIT 1 OFFSET x queries
-            self.data = list(self.obj.all()[self.block_count: \
+            self.data = list(self.obj.all()[self.block_count:
                                    (self.block_count + self.step)])
             self.block_count += self.step
             self.count = 0
@@ -121,7 +121,7 @@ def timeviewUrls(pattern, view, kwargs=None, name=None):
     if mtail:
         tail = mtail.group(1)
     pattern = pattern[:len(pattern) - len(tail)]
-    for filter in ('/(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})/' + \
+    for filter in ('/(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})/' +
                        '(?P<hour>\d\d)-(?P<minute>\d\d)',
                    '/(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})'):
         results += [(pattern + filter + tail, view, kwargs)]
