@@ -176,4 +176,3 @@ class LocalFilesystem(TransportBase):
             self.logger.error("RPC method %s failed: %s" %
                 (method, traceback.format_exc().splitlines()[-1]))
             raise TransportError
-
