@@ -420,4 +420,3 @@ class SortLinkNode(template.Node):
                 raise
             raise
             return ''
-
