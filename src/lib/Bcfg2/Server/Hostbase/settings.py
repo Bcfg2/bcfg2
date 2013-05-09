@@ -93,7 +93,7 @@ SECRET_KEY = '*%=fv=yh9zur&gvt4&*d#84o(cy^-*$ox-v1e9%32pzf2*qu#s'
 TEMPLATE_LOADERS = (
     'django.template.loaders.filesystem.load_template_source',
     'django.template.loaders.app_directories.load_template_source',
-#     'django.template.loaders.eggs.load_template_source',
+    #     'django.template.loaders.eggs.load_template_source',
 )
 
 TEMPLATE_CONTEXT_PROCESSORS = (
@@ -102,8 +102,8 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.i18n",
     "django.core.context_processors.request",
     "django.core.context_processors.media",
-# Django development version.
-#    "django.core.context_processors.csrf",
+    # Django development version.
+    #    "django.core.context_processors.csrf",
 )
 
 
