@@ -143,7 +143,7 @@ def filter_navigator(context):
         groups = [('---', reverse(view, args=args, kwargs=myargs) + qs, selected)]
         for group in Group.objects.values('name'):
             myargs['group'] = group['name']
-            groups.append((group['name'], reverse(view, args=args, kwargs=myargs) + qs, 
+            groups.append((group['name'], reverse(view, args=args, kwargs=myargs) + qs,
                 group['name'] == kwargs.get('group', '')))
             
         return {'filters': filters, 'groups': groups}
