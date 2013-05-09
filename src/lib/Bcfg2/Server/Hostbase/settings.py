@@ -5,7 +5,7 @@ from Bcfg2.Compat import ConfigParser
 PROJECT_ROOT = os.path.abspath(os.path.dirname(__file__))
 
 c = ConfigParser.ConfigParser()
-#This needs to be configurable one day somehow
+# This needs to be configurable one day somehow
 c.read(['./bcfg2.conf'])
 
 defaults = {'database_engine': 'sqlite3',
@@ -66,7 +66,7 @@ AUTHENTICATION_BACKENDS = ('django.contrib.auth.backends.ModelBackend',
 # enter an NIS group name you'd like to give access to edit hostbase records
 AUTHORIZED_GROUP = options['authorized_group']
 
-#create login url area:
+# create login url area:
 import django.contrib.auth
 django.contrib.auth.LOGIN_URL = '/login'
 # Absolute path to the directory that holds media.
