@@ -193,7 +193,7 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                                    ('', 'MX', host[4], host[5]))
                     if host[6] == 'global':
                         externalzonefile.write("%-32s%-10s%-3s%s.\n" %
-                                         ('', 'MX', host[4], host[5]))
+                                              ('', 'MX', host[4], host[5]))
 
                 if host[3]:
                     try:
@@ -278,9 +278,9 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
                              for host in reversehosts
                              if host[1].rstrip('0123456789').rstrip('.') == origin[1]]
                     hosts_external = [(host[1].split("."), host[0])
-                                     for host in reversehosts
-                                     if (host[1].rstrip('0123456789').rstrip('.') == origin[1]
-                                         and host[2] == 'global')]
+                                      for host in reversehosts
+                                      if (host[1].rstrip('0123456789').rstrip('.') == origin[1]
+                                      and host[2] == 'global')]
                     context = Context({
                         'hosts': hosts,
                         'inaddr': origin[0],
