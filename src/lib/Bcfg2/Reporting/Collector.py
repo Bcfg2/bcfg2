@@ -128,4 +128,3 @@ class ReportingCollector(object):
             self.transport.shutdown()
         if self.storage:
             self.storage.shutdown()
-
