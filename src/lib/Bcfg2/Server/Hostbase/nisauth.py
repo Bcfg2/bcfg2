@@ -18,9 +18,9 @@ class nisauth(object):
     telephoneNumber = None
     title = None
     memberOf = None
-    department = None #this will be a list
+    department = None  # this will be a list
     mail = None
-    extensionAttribute1 = None #badgenumber
+    extensionAttribute1 = None  # badgenumber
     badge_no = None
     uid = None
 
