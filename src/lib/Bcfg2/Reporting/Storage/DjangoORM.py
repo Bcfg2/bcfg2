@@ -283,14 +283,14 @@ class DjangoORM(StorageBase):
         else:
             profile = None
         inter = Interaction(client=client,
-                             timestamp=timestamp,
-                             state=stats.get('state', default="unknown"),
-                             repo_rev_code=stats.get('revision',
-                                                          default="unknown"),
-                             good_count=stats.get('good', default="0"),
-                             total_count=stats.get('total', default="0"),
-                             server=server,
-                             profile=profile)
+                           timestamp=timestamp,
+                           state=stats.get('state', default="unknown"),
+                           repo_rev_code=stats.get('revision',
+                           default="unknown"),
+                           good_count=stats.get('good', default="0"),
+                           total_count=stats.get('total', default="0"),
+                           server=server,
+                           profile=profile)
         inter.save()
         self.logger.debug("Interaction for %s at %s with INSERTED in to db" %
                 (client.id, timestamp))
