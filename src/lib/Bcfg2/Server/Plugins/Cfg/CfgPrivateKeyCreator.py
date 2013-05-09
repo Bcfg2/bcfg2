@@ -38,7 +38,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         """ The name of the metadata category that generated keys are
         specific to """
         if (SETUP.cfp.has_section("sshkeys") and
-            SETUP.cfp.has_option("sshkeys", "category")):
+                SETUP.cfp.has_option("sshkeys", "category")):
             return SETUP.cfp.get("sshkeys", "category")
         return None
 
@@ -47,7 +47,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         """ The passphrase used to encrypt private keys """
         if (HAS_CRYPTO and
             SETUP.cfp.has_section("sshkeys") and
-            SETUP.cfp.has_option("sshkeys", "passphrase")):
+                SETUP.cfp.has_option("sshkeys", "passphrase")):
             return Bcfg2.Encryption.get_passphrases(SETUP)[
                 SETUP.cfp.get("sshkeys", "passphrase")]
         return None
