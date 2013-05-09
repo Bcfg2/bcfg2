@@ -23,6 +23,7 @@ try:
 except:
     have_ntt = False
 
+
 def removecomment(stream):
     """A genshi filter that removes comments from the stream."""
     for kind, data, pos in stream:
