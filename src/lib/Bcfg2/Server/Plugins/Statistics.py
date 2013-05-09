@@ -50,7 +50,7 @@ class StatisticsStore(object):
             self.element = lxml.etree.XML(data)
             self.dirty = 0
         except (IOError, lxml.etree.XMLSyntaxError):
-            self.logger.error("Creating new statistics file %s"%(self.filename))
+            self.logger.error("Creating new statistics file %s" %(self.filename))
             self.element = lxml.etree.Element('ConfigStatistics')
             self.WriteBack()
             self.dirty = 0
@@ -91,7 +91,7 @@ class StatisticsStore(object):
                  and self.isOlderThan24h(elem.get('time')))]
         else:
             # Shouldn't be reached
-            self.logger.error("Duplicate node entry for %s"%(client))
+            self.logger.error("Duplicate node entry for %s" %(client))
 
         # Set current time for stats
         newstat.set('time', asctime(localtime()))
