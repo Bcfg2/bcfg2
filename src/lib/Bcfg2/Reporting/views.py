@@ -22,6 +22,7 @@ from Bcfg2.Reporting.models import *
 __SORT_FIELDS__ = ( 'client', 'state', 'good', 'bad', 'modified', 'extra', \
             'timestamp', 'server' )
 
+
 class PaginationError(Exception):
     """This error is raised when pagination cannot be completed."""
     pass
