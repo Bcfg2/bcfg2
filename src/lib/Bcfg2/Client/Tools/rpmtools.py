@@ -177,7 +177,7 @@ def rpmpackagelist(rts):
              'release':header[rpm.RPMTAG_RELEASE],
              'arch':header[rpm.RPMTAG_ARCH],
              'gpgkeyid':header.sprintf("%|SIGGPG?{%{SIGGPG:pgpsig}}:{None}|").split()[-1]}
-             for header in rts.dbMatch()]
+           for header in rts.dbMatch()]
 
 
 def getindexbykeyword(index_ts, **kwargs):
@@ -203,7 +203,7 @@ def getindexbykeyword(index_ts, **kwargs):
             del(kwargs['epoch'])
 
     keywords = [key for key in list(kwargs.keys())
-                         if key in ('name', 'epoch', 'version', 'release', 'arch')]
+                if key in ('name', 'epoch', 'version', 'release', 'arch')]
     keywords_len = len(keywords)
     for hdr in index_mi:
         match = 0
@@ -242,7 +242,7 @@ def getheadersbykeyword(header_ts, **kwargs):
             del(kwargs['epoch'])
 
     keywords = [key for key in list(kwargs.keys())
-                         if key in ('name', 'epoch', 'version', 'release', 'arch')]
+                if key in ('name', 'epoch', 'version', 'release', 'arch')]
     keywords_len = len(keywords)
     for hdr in header_mi:
         match = 0
@@ -276,13 +276,13 @@ def prelink_md5_check(filename):
             if isprelink(plfd):
                 plf.close()
                 cmd = '/usr/sbin/prelink -y %s 2> /dev/null' \
-                                            % (re.escape(filename))
+                    % (re.escape(filename))
                 plf = os.popen(cmd, 'rb')
                 prelink = True
         elif whitelist_re.search(filename) and not blacklist_re.search(filename):
             plf.close()
             cmd = '/usr/sbin/prelink -y %s 2> /dev/null' \
-                                        % (re.escape(filename))
+                % (re.escape(filename))
             plf = os.popen(cmd, 'rb')
             prelink = True
 
@@ -327,7 +327,7 @@ def prelink_size_check(filename):
             if isprelink(plfd):
                 plf.close()
                 cmd = '/usr/sbin/prelink -y %s 2> /dev/null' \
-                                            % (re.escape(filename))
+                    % (re.escape(filename))
                 plf = os.popen(cmd, 'rb')
 
                 while 1:
@@ -339,7 +339,7 @@ def prelink_size_check(filename):
         elif whitelist_re.search(filename) and not blacklist_re.search(filename):
             plf.close()
             cmd = '/usr/sbin/prelink -y %s 2> /dev/null' \
-                                        % (re.escape(filename))
+                % (re.escape(filename))
             plf = os.popen(cmd, 'rb')
 
             while 1:
@@ -433,7 +433,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
 
     """
     (fname, fsize, fmode, fmtime, fflags, frdev, finode, fnlink, fstate,
-            vflags, fuser, fgroup, fmd5) = fileinfo
+    vflags, fuser, fgroup, fmd5) = fileinfo
 
     # 1. rpmtsRootDir stuff.  What does it do and where to I get it from?
 
@@ -769,7 +769,7 @@ class Rpmtscallback(object):
         elif reason == rpm.RPMCALLBACK_INST_START:
             pass
         elif reason == rpm.RPMCALLBACK_TRANS_PROGRESS or \
-             reason == rpm.RPMCALLBACK_INST_PROGRESS:
+            reason == rpm.RPMCALLBACK_INST_PROGRESS:
             pass
             #       rpm.RPMCALLBACK_INST_PROGRESS'
         elif reason == rpm.RPMCALLBACK_TRANS_START:
