@@ -74,7 +74,7 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
         Bcfg2.Server.Plugin.Connector.__init__(self)
         self.config = ConfigFile(self.data + "/config.py", core.fam)
 
-    def debug_log(self, message, flag = None):
+    def debug_log(self, message, flag=None):
         if (flag is None) and self.debug_flag or flag:
             self.logger.error(message)
 
@@ -113,8 +113,8 @@ class LdapConnection(object):
     """
     Connection to an LDAP server.
     """
-    def __init__(self, host = "localhost", port = 389,
-                       binddn = None, bindpw = None):
+    def __init__(self, host="localhost", port=389,
+                       binddn=None, bindpw=None):
         self.host = host
         self.port = port
         self.binddn = binddn
