@@ -306,6 +306,7 @@ def to_media_url(parser, token):
 
     return MediaTag(filter_value)
 
+
 @register.filter
 def determine_client_state(entry):
     """
@@ -341,6 +342,7 @@ def do_qs(parser, token):
         raise template.TemplateSyntaxError, "%r tag requires exactly two arguments" \
             % token.contents.split()[0]
     return QsNode(name, value)
+
 
 class QsNode(template.Node):
     def __init__(self, name, value):
@@ -379,6 +381,7 @@ def sort_link(parser, token):
             % token.split_contents()[0])
 
     return SortLinkNode(sort_key, text)
+
 
 class SortLinkNode(template.Node):
     __TMPL__ = "{% load bcfg2_tags %}<a href='{% qs 'sort' key %}'>{{ text }}</a>"
