@@ -397,10 +397,10 @@ class Hostbase(Bcfg2.Server.Plugin.Plugin,
         SELECT ip_addr FROM hostbase_ip ORDER BY ip_addr
         """)
         ips = cursor.fetchall()
-        three_octets = [ip[0].rstrip('0123456789').rstrip('.') \
+        three_octets = [ip[0].rstrip('0123456789').rstrip('.')
                         for ip in ips]
         three_octets_set = set(three_octets)
-        three_octets_data = [(octet, three_octets.count(octet)) \
+        three_octets_data = [(octet, three_octets.count(octet))
                              for octet in three_octets_set]
         three_octets_data.sort()
 
