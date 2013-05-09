@@ -389,5 +389,3 @@ class InteractionMetadata(models.Model):
     profile = models.ForeignKey(Group, related_name="+")
     groups = models.ManyToManyField(Group)
     bundles = models.ManyToManyField(Bundle)
-
-
