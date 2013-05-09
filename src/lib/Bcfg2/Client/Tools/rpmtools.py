@@ -519,7 +519,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
 
     if flags & RPMVERIFY_RDEV:
         if (stat.S_ISCHR(fmode) != stat.S_ISCHR(lstat.st_mode) or
-            stat.S_ISBLK(fmode) != stat.S_ISBLK(lstat.st_mode)):
+                stat.S_ISBLK(fmode) != stat.S_ISBLK(lstat.st_mode)):
             file_results.append('RPMVERIFY_RDEV')
         elif (s_isdev(fmode) & s_isdev(lstat.st_mode)):
             st_rdev = lstat.st_rdev
