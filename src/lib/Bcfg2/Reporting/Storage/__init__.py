@@ -7,6 +7,7 @@ import traceback
 from Bcfg2.Reporting.Storage.base import StorageError, \
     StorageImportError
 
+
 def load_storage(storage_name, setup):
     """
     Try to load the storage.  Raise StorageImportError on failure
@@ -25,6 +26,7 @@ def load_storage(storage_name, setup):
     except:
         raise StorageImportError("Storage unavailable: %s" %
             traceback.format_exc().splitlines()[-1])
+
 
 def load_storage_from_config(setup):
     """Load the storage in the config... eventually"""
