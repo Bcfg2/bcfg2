@@ -33,8 +33,8 @@ def printStats(fn):
     Decorator for purging.  Prints database statistics after a run.
     """
     def print_stats(self, *data):
-        classes = (Client, Interaction, Performance, \
-            FailureEntry, ActionEntry, PathEntry, PackageEntry, \
+        classes = (Client, Interaction, Performance,
+            FailureEntry, ActionEntry, PathEntry, PackageEntry,
             ServiceEntry, Group, Bundle)
 
         starts = {}
@@ -66,7 +66,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
                  "    update               Apply any updates to the reporting "
                  "database\n"
                  "\n"
-                 "  Django commands:\n    " \
+                 "  Django commands:\n    "
                  + "\n    ".join(django_commands))
 
     def __init__(self, setup):
@@ -151,7 +151,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
             try:
                 start_count = cls.objects.count()
                 cls.prune_orphans()
-                self.log.info("Pruned %d %s records" % \
+                self.log.info("Pruned %d %s records" %
                     (start_count - cls.objects.count(), cls.__class__.__name__))
             except:
                 print("Failed to prune %s: %s" %
@@ -224,9 +224,9 @@ class Reports(Bcfg2.Server.Admin.Mode):
             self.log.error(msg)
 
         # Prune any orphaned ManyToMany relations
-        for m2m in (ActionEntry, PackageEntry, PathEntry, ServiceEntry, \
+        for m2m in (ActionEntry, PackageEntry, PathEntry, ServiceEntry,
                 FailureEntry, Group, Bundle):
-            self.log.debug("Pruning any orphaned %s objects" % \
+            self.log.debug("Pruning any orphaned %s objects" %
                 m2m().__class__.__name__)
             m2m.prune_orphans()
 
@@ -260,8 +260,8 @@ class Reports(Bcfg2.Server.Admin.Mode):
             client.delete()
 
     def stats(self):
-        classes = (Client, Interaction, Performance, \
-            FailureEntry, ActionEntry, PathEntry, PackageEntry, \
+        classes = (Client, Interaction, Performance,
+            FailureEntry, ActionEntry, PathEntry, PackageEntry,
             ServiceEntry, Group, Bundle)
 
         for cls in classes:
