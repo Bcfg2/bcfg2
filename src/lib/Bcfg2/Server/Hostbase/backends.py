@@ -41,10 +41,10 @@ class NISBackend(object):
                             )
 
             user_session_obj = dict(
-                email = username + "@mcs.anl.gov",
-                first_name = None,
-                last_name = None,
-                uid = n.uid
+                email=username + "@mcs.anl.gov",
+                first_name=None,
+                last_name=None,
+                uid=n.uid
                 )
             user, created = User.objects.get_or_create(username=username)
 
