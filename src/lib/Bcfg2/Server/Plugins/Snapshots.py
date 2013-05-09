@@ -31,7 +31,7 @@ def build_snap_ent(entry):
     desired = dict([(key, u_str(entry.get(key))) for key in basefields])
     state = dict([(key, u_str(entry.get(key))) for key in basefields])
     desired.update([(key, u_str(entry.get(key))) for key in
-                 datafields[entry.tag]])
+                    datafields[entry.tag]])
     if entry.tag == 'ConfigFile' or \
        ((entry.tag == 'Path') and (entry.get('type') == 'file')):
         if entry.text == None:
