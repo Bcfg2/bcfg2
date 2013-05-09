@@ -422,16 +422,16 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
         for pkg in packages:
             for inst in pkg:
                 if pkg.get('name') != 'gpg-pubkey':
-                    pkgspec = { 'name':pkg.get('name'),
-                            'epoch':inst.get('epoch', None),
-                            'version':inst.get('version'),
-                            'release':inst.get('release'),
-                            'arch':inst.get('arch') }
+                    pkgspec = { 'name': pkg.get('name'),
+                            'epoch': inst.get('epoch', None),
+                            'version': inst.get('version'),
+                            'release': inst.get('release'),
+                            'arch': inst.get('arch') }
                     pkgspec_list.append(pkgspec)
                 else:
-                    pkgspec = { 'name':pkg.get('name'),
-                            'version':inst.get('version'),
-                            'release':inst.get('release')}
+                    pkgspec = { 'name': pkg.get('name'),
+                            'version': inst.get('version'),
+                            'release': inst.get('release')}
                     self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
                                                  % (pkgspec.get('name'), self.str_evra(pkgspec)))
                     self.logger.info("         This package will be deleted in a future version of the RPM driver.")
@@ -451,16 +451,16 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 pkg_modified = False
                 for inst in pkg:
                     if pkg.get('name') != 'gpg-pubkey':
-                        pkgspec = { 'name':pkg.get('name'),
-                                'epoch':inst.get('epoch', None),
-                                'version':inst.get('version'),
-                                'release':inst.get('release'),
-                                'arch':inst.get('arch') }
+                        pkgspec = { 'name': pkg.get('name'),
+                                'epoch': inst.get('epoch', None),
+                                'version': inst.get('version'),
+                                'release': inst.get('release'),
+                                'arch': inst.get('arch') }
                         pkgspec_list.append(pkgspec)
                     else:
-                        pkgspec = { 'name':pkg.get('name'),
-                                'version':inst.get('version'),
-                                'release':inst.get('release')}
+                        pkgspec = { 'name': pkg.get('name'),
+                                'version': inst.get('version'),
+                                'release': inst.get('release')}
                         self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
                                                    % (pkgspec.get('name'), self.str_evra(pkgspec)))
                         self.logger.info("         This package will be deleted in a future version of the RPM driver.")
@@ -967,7 +967,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
         """
         init_ts = rpmtools.rpmtransactionset()
         init_ts.setVSFlags(rpm._RPMVSF_NODIGESTS |rpm._RPMVSF_NOSIGNATURES)
-        gpg_hdrs = rpmtools.getheadersbykeyword(init_ts, **{'name':'gpg-pubkey'})
+        gpg_hdrs = rpmtools.getheadersbykeyword(init_ts, **{'name': 'gpg-pubkey'})
         keyids = [ header[rpm.RPMTAG_VERSION] for header in gpg_hdrs]
         keyids.append('None')
         init_ts.closeDB()
