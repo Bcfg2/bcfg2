@@ -43,7 +43,7 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
 
         if entry.attrib['name'] in self.installed:
             if (self.installed[entry.attrib['name']] == entry.attrib['version']
-                or entry.attrib['version'] == 'any'):
+                    or entry.attrib['version'] == 'any'):
                 # if not self.setup['quick'] and \
                 #                entry.get('verify', 'true') == 'true':
                 # FIXME: We should be able to check this once
