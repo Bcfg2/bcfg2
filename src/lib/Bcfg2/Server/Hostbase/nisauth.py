@@ -24,7 +24,7 @@ class nisauth(object):
     badge_no = None
     uid = None
 
-    def __init__(self,login,passwd=None):
+    def __init__(self, login, passwd=None):
         """get user profile from NIS"""
         try:
             p = nis.match(login, 'passwd.byname').split(":")
