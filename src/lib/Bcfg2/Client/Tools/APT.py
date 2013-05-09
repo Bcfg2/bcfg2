@@ -47,16 +47,16 @@ class APT(Bcfg2.Client.Tools.Tool):
                         if entry.tag == 'Path' and
                         entry.get('type') == 'ignore']
         self.__important__ = self.__important__ + \
-                             ["%s/cache/debconf/config.dat" % self.var_path,
-                              "%s/cache/debconf/templates.dat" % self.var_path,
-                              '/etc/passwd', '/etc/group',
-                              '%s/apt/apt.conf' % self.etc_path,
-                              '%s/dpkg/dpkg.cfg' % self.etc_path] + \
-                             [entry.get('name') for struct in config for entry in struct
-                              if entry.tag == 'Path' and
-                              entry.get('name').startswith('%s/apt/sources.list' % self.etc_path)]
+            ["%s/cache/debconf/config.dat" % self.var_path,
+            "%s/cache/debconf/templates.dat" % self.var_path,
+            '/etc/passwd', '/etc/group',
+            '%s/apt/apt.conf' % self.etc_path,
+            '%s/dpkg/dpkg.cfg' % self.etc_path] + \
+            [entry.get('name') for struct in config for entry in struct
+            if entry.tag == 'Path' and
+            entry.get('name').startswith('%s/apt/sources.list' % self.etc_path)]
         self.nonexistent = [entry.get('name') for struct in config for entry in struct
-                              if entry.tag == 'Path' and entry.get('type') == 'nonexistent']
+                            if entry.tag == 'Path' and entry.get('type') == 'nonexistent']
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
         if self.setup['kevlar'] and not self.setup['dryrun']:
@@ -87,7 +87,7 @@ class APT(Bcfg2.Client.Tools.Tool):
                       if p.isInstalled and p.name not in packages]
         return [Bcfg2.Client.XML.Element('Package', name=name,
                                          type='deb', version=version)
-                                         for (name, version) in extras]
+                for (name, version) in extras]
 
     def VerifyDebsums(self, entry, modlist):
         output = \
