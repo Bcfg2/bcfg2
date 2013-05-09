@@ -19,7 +19,7 @@ from django.db.models import Q, Count
 from Bcfg2.Reporting.models import *
 
 
-__SORT_FIELDS__ = ( 'client', 'state', 'good', 'bad', 'modified', 'extra', \
+__SORT_FIELDS__ = ( 'client', 'state', 'good', 'bad', 'modified', 'extra',
             'timestamp', 'server')
 
 
@@ -44,7 +44,7 @@ def _in_bulk(model, ids):
 
     # if objects.in_bulk fails so will obejcts.filter(pk__in=ids)
     bulk_dict = {}
-    [bulk_dict.__setitem__(i.id, i) \
+    [bulk_dict.__setitem__(i.id, i)
         for i in model.objects.all() if i.id in ids]
     return bulk_dict
 
@@ -160,7 +160,7 @@ def config_item(request, pk, entry_type, interaction=None):
 
     ts_start = timestamp.replace(hour=1, minute=0, second=0, microsecond=0)
     ts_end = ts_start + timedelta(days=1)
-    associated_list = item.interaction_set.select_related('client').filter(\
+    associated_list = item.interaction_set.select_related('client').filter(
         timestamp__gte=ts_start, timestamp__lt=ts_end)
 
     if item.is_failure():
@@ -249,8 +249,8 @@ def common_problems(request, timestamp=None, threshold=None, group=None):
 
     if group:
         group_obj = get_object_or_404(Group, name=group)
-        current_clients = [inter[0] for inter in \
-            Interaction.objects.recent(timestamp)\
+        current_clients = [inter[0] for inter in
+            Interaction.objects.recent(timestamp)
                 .filter(groups=group_obj).values_list('id')]
     else:
         current_clients = Interaction.objects.recent_ids(timestamp)
