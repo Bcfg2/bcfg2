@@ -83,29 +83,29 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
         try:
             data = {}
             self.debug_log("LdapPlugin debug: found queries " +
-                          str(LDAP_QUERIES))
+                           str(LDAP_QUERIES))
             for QueryClass in LDAP_QUERIES:
                 query = QueryClass()
                 if query.is_applicable(metadata):
                     self.debug_log("LdapPlugin debug: processing query '" +
-                                  query.name + "'")
+                                   query.name + "'")
                     data[query.name] = query.get_result(metadata)
                 else:
                     self.debug_log("LdapPlugin debug: query '" + query.name +
-                        "' not applicable to host '" + metadata.hostname + "'")
+                                   "' not applicable to host '" + metadata.hostname + "'")
             return data
         except Exception:
             if hasattr(query, "name"):
                 logger.error("LdapPlugin error: " +
-                       "Exception during processing of query named '" +
-                            str(query.name) +
-                            "', query results will be empty" +
-                            " and may cause bind failures")
+                             "Exception during processing of query named '" +
+                             str(query.name) +
+                             "', query results will be empty" +
+                             " and may cause bind failures")
             for line in traceback.format_exception(sys.exc_info()[0],
                                                    sys.exc_info()[1],
                                                    sys.exc_info()[2]):
                 logger.error("LdapPlugin error: " +
-                            line.replace("\n", ""))
+                             line.replace("\n", ""))
             return {}
 
 
@@ -114,7 +114,7 @@ class LdapConnection(object):
     Connection to an LDAP server.
     """
     def __init__(self, host="localhost", port=389,
-                binddn=None, bindpw=None):
+                 binddn=None, bindpw=None):
         self.host = host
         self.port = port
         self.binddn = binddn
@@ -135,8 +135,8 @@ class LdapConnection(object):
         for attempt in range(RETRY_COUNT + 1):
             if attempt >= 1:
                 logger.error("LdapPlugin error: " +
-                    "LDAP server down (retry " + str(attempt) + "/" +
-                    str(RETRY_COUNT) + ")")
+                             "LDAP server down (retry " + str(attempt) + "/" +
+                             str(RETRY_COUNT) + ")")
             try:
                 if not self.conn:
                     self.init_conn()
@@ -213,7 +213,7 @@ class LdapQuery(object):
             return self.result
         else:
             logger.error("LdapPlugin error: " +
-              "No valid connection defined for query " + str(self))
+                         "No valid connection defined for query " + str(self))
             return None
 
 
@@ -247,5 +247,5 @@ class LdapSubQuery(LdapQuery):
             return self.process_result(metadata, **kwargs)
         else:
             logger.error("LdapPlugin error: " +
-              "No valid connection defined for query " + str(self))
+                         "No valid connection defined for query " + str(self))
             return None
