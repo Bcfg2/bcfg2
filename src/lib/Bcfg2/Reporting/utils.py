@@ -122,7 +122,7 @@ def timeviewUrls(pattern, view, kwargs=None, name=None):
         tail = mtail.group(1)
     pattern = pattern[:len(pattern) - len(tail)]
     for filter in ('/(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})/' +
-                       '(?P<hour>\d\d)-(?P<minute>\d\d)',
+                  '(?P<hour>\d\d)-(?P<minute>\d\d)',
                    '/(?P<year>\d{4})-(?P<month>\d{2})-(?P<day>\d{2})'):
         results += [(pattern + filter + tail, view, kwargs)]
     return results
