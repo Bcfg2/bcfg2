@@ -339,8 +339,8 @@ def do_qs(parser, token):
     try:
         tag, name, value = token.split_contents()
     except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires exactly two arguments" \
-            % token.contents.split()[0]
+        raise template.TemplateSyntaxError("%r tag requires exactly two arguments" \
+            % token.contents.split()[0])
     return QsNode(name, value)
 
 
@@ -361,7 +361,7 @@ class QsNode(template.Node):
             return ''
         except KeyError:
             if settings.TEMPLATE_DEBUG:
-                raise Exception, "'qs' tag requires context['request']"
+                raise Exception("'qs' tag requires context['request']")
             return ''
         except:
             return ''
