@@ -185,7 +185,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 rpmProvides = [ h['provides'] for h in
                             rpmTs.dbMatch(rpm.RPMTAG_NAME, entry.get('name'))]
                 rpmIntersection = set(rpmHeader['provides']) & \
-                                  set(self.installOnlyPkgs)
+                    set(self.installOnlyPkgs)
                 if len(rpmIntersection) > 0:
                     # Packages that should only be installed or removed.
                     # e.g. kernels.
@@ -211,8 +211,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                        entry.get('name') != 'gpg-pubkey':
                                         flags += ['nosignature', 'nodigest']
                                         self.logger.debug('WARNING: Package %s %s requires GPG Public key with ID %s'
-                                                           % (pkg.get('name'), self.str_evra(pkg),
-                                                              pkg.get('gpgkeyid', '')))
+                                                         % (pkg.get('name'), self.str_evra(pkg),
+                                                         pkg.get('gpgkeyid', '')))
                                         self.logger.debug('         Disabling signature check.')
 
                                     if self.setup.get('quick', False):
@@ -227,7 +227,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                     else:
                                         vp_ts = rpmtools.rpmtransactionset()
                                         self.instance_status[inst]['verify'] = \
-                                                                             rpmtools.rpm_verify(vp_ts, pkg, flags)
+                                            rpmtools.rpm_verify(vp_ts, pkg, flags)
                                         vp_ts.closeDB()
                                         del vp_ts
 
@@ -249,11 +249,11 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                             arch_match = self.installed[entry.get('name')]
                         else:
                             arch_match = [pkg for pkg in self.installed[entry.get('name')]
-                                              if pkg.get('arch', None) == inst.get('arch', None)]
+                                          if pkg.get('arch', None) == inst.get('arch', None)]
 
                         if len(arch_match) > 1:
                             self.logger.error("Multiple instances of package %s installed with the same achitecture." %
-                                                  (entry.get('name')))
+                                             (entry.get('name')))
                         elif len(arch_match) == 1:
                             # There is only one installed like there should be.
                             # Check that it is the right version.
@@ -286,7 +286,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                         else:
                                             vp_ts = rpmtools.rpmtransactionset()
                                             self.instance_status[inst]['verify'] = \
-                                                                                 rpmtools.rpm_verify(vp_ts, pkg, flags)
+                                                rpmtools.rpm_verify(vp_ts, pkg, flags)
                                             vp_ts.closeDB()
                                             del vp_ts
 
@@ -297,7 +297,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                                     % (self.str_evra(inst), self.str_evra(pkg)))
 
                                     qtext_versions = qtext_versions + 'U(%s -> %s) ' % \
-                                                          (self.str_evra(pkg), self.str_evra(inst))
+                                        (self.str_evra(pkg), self.str_evra(inst))
                         elif len(arch_match) == 0:
                             # This instance is not installed.
                             self.instance_status[inst]['installed'] = False
@@ -333,14 +333,14 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                             # and entry and per Instance Ignores.
                             ignores = [ig.get('name') for ig in entry.findall('Ignore')] + \
                                       [ig.get('name') for ig in inst.findall('Ignore')] + \
-                                      self.ignores
+                                self.ignores
                             for file_result in result.get('files', []):
                                 if file_result[-1] not in modlist + ignores:
                                     instance_fail = True
                                     self.instance_status[inst]['verify_fail'] = True
                                 else:
                                     self.logger.debug("        Modlist/Ignore match: %s" %
-                                                                                 (file_result[-1]))
+                                                     (file_result[-1]))
 
                         if instance_fail == True:
                             self.logger.debug("*** Instance %s failed RPM verification ***" %
@@ -369,9 +369,9 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
 
                 if package_fail == True:
                     self.logger.info("        Package %s failed verification." %
-                                                              (entry.get('name')))
+                                    (entry.get('name')))
                     qtext = 'Install/Upgrade/delete Package %s instance(s) - %s (y/N) ' % \
-                                                  (entry.get('name'), qtext_versions)
+                        (entry.get('name'), qtext_versions)
                     entry.set('qtext', qtext)
 
                     bcfg2_versions = ''
@@ -433,7 +433,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                             'version': inst.get('version'),
                             'release': inst.get('release')}
                     self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"
-                                                 % (pkgspec.get('name'), self.str_evra(pkgspec)))
+                                    % (pkgspec.get('name'), self.str_evra(pkgspec)))
                     self.logger.info("         This package will be deleted in a future version of the RPM driver.")
                 # pkgspec_list.append(pkg_spec)
 
@@ -462,17 +462,17 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                 'version': inst.get('version'),
                                 'release': inst.get('release')}
                         self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"
-                                                   % (pkgspec.get('name'), self.str_evra(pkgspec)))
+                                        % (pkgspec.get('name'), self.str_evra(pkgspec)))
                         self.logger.info("         This package will be deleted in a future version of the RPM driver.")
                         continue  # Don't delete the gpg-pubkey packages for now.
                     erase_results = rpmtools.rpm_erase([pkgspec], self.erase_flags)
                     if erase_results == []:
                         pkg_modified = True
                         self.logger.info("Deleted %s %s" %
-                                                   (pkgspec.get('name'), self.str_evra(pkgspec)))
+                                        (pkgspec.get('name'), self.str_evra(pkgspec)))
                     else:
                         self.logger.error("unable to delete %s %s" %
-                                                   (pkgspec.get('name'), self.str_evra(pkgspec)))
+                                         (pkgspec.get('name'), self.str_evra(pkgspec)))
                         self.logger.debug("Failure = %s" % erase_results)
                 if pkg_modified == True:
                     self.modified.append(pkg)
@@ -534,8 +534,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                         fix = False
             else:
                 self.logger.debug('Verify Fail Action for %s %s is to not reinstall' %
-                                                     (inst_status.get('pkg').get('name'),
-                                                      self.str_evra(instance)))
+                                 (inst_status.get('pkg').get('name'),
+                                 self.str_evra(instance)))
 
         return fix
 
@@ -616,11 +616,11 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                         installed_instances.append(inst)
                     else:
                         self.logger.debug("InstallOnlyPackage %s %s would not install." %
-                                              (self.instance_status[inst].get('pkg').get('name'),
-                                               self.str_evra(inst)))
+                                         (self.instance_status[inst].get('pkg').get('name'),
+                                         self.str_evra(inst)))
 
                 install_pkg_set = set([self.instance_status[inst].get('pkg')
-                                                      for inst in install_only_pkgs])
+                                     for inst in install_only_pkgs])
                 self.RefreshPackages()
 
         # Install GPG keys.
@@ -628,7 +628,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             for inst in gpg_keys:
                 self.logger.info("Installing GPG keys.")
                 key_arg = os.path.join(self.instance_status[inst].get('pkg').get('uri'),
-                                                     inst.get('simplefile'))
+                                      inst.get('simplefile'))
                 if not self.cmd.run("rpm --import %s" % key_arg):
                     self.logger.debug("Unable to install %s-%s" %
                                       (self.instance_status[inst].get('pkg').get('name'),
@@ -648,7 +648,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             self.logger.info("Attempting to upgrade packages")
             upgrade_args = " ".join([os.path.join(self.instance_status[inst].get('pkg').get('uri'),
                                                   inst.get('simplefile'))
-                                           for inst in upgrade_pkgs])
+                                   for inst in upgrade_pkgs])
             if self.cmd.run("rpm --upgrade --quiet --oldpackage --replacepkgs "
                             "%s" % upgrade_args):
                 # The rpm command succeeded.  All packages upgraded.
@@ -663,7 +663,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 upgraded_instances = []
                 for inst in upgrade_pkgs:
                     upgrade_args = os.path.join(self.instance_status[inst].get('pkg').get('uri'),
-                                                     inst.get('simplefile'))
+                                               inst.get('simplefile'))
                     # self.logger.debug("rpm --upgrade --quiet --oldpackage --replacepkgs %s" % \
                     #                                                      upgrade_args)
                     if self.cmd.run("rpm --upgrade --quiet --oldpackage "
@@ -675,7 +675,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                            self.str_evra(inst)))
 
                 upgrade_pkg_set = set([self.instance_status[inst].get('pkg')
-                                                      for inst in upgrade_pkgs])
+                                     for inst in upgrade_pkgs])
                 self.RefreshPackages()
 
         if not self.setup['kevlar']:
@@ -703,7 +703,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
         # that we don't know is broken.
         if not self.canVerify(entry):
             self.logger.debug("WARNING: Package %s was not verifiable, not passing to Install()"
-                                           % entry.get('name'))
+                             % entry.get('name'))
             return False
 
         if not instances:
@@ -733,7 +733,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 # Check that the Instance Level has what we need for verification.
                 for inst in instances:
                     if [attr for attr in self.__new_gpg_ireq__[inst.tag]
-                                 if attr not in inst.attrib]:
+                       if attr not in inst.attrib]:
                         self.logger.error("Incomplete information for entry %s:%s; cannot install"
                                           % (inst.tag, entry.get('name')))
                         return False
@@ -750,7 +750,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 for inst in instances:
                     if inst.tag == 'Instance':
                         if [attr for attr in self.__new_ireq__[inst.tag]
-                                     if attr not in inst.attrib]:
+                           if attr not in inst.attrib]:
                             self.logger.error("Incomplete information for %s of package %s; cannot install"
                                               % (inst.tag, entry.get('name')))
                             self.logger.error("         Required attributes that may not be present are %s"
@@ -817,7 +817,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 # Check that the Instance Level has what we need for verification.
                 for inst in instances:
                     if [attr for attr in self.__new_gpg_req__[inst.tag]
-                                 if attr not in inst.attrib]:
+                       if attr not in inst.attrib]:
                         self.logger.error("Incomplete information for entry %s:%s; cannot verify"
                                           % (inst.tag, inst.get('name')))
                         return False
@@ -832,7 +832,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 for inst in instances:
                     if inst.tag == 'Instance':
                         if [attr for attr in self.__new_req__[inst.tag]
-                                     if attr not in inst.attrib]:
+                           if attr not in inst.attrib]:
                             self.logger.error("Incomplete information for entry %s:%s; cannot verify"
                                               % (inst.tag, inst.get('name')))
                             return False
