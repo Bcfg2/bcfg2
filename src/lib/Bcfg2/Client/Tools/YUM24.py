@@ -35,13 +35,13 @@ class YUM24(RPM):
 
     __req__ = {'Package': ['name', 'version']}
     __ireq__ = {'Package': ['name']}
-    #__ireq__ = {'Package': ['name', 'version']}
+    # __ireq__ = {'Package': ['name', 'version']}
 
     __new_req__ = {'Package': ['name'],
                    'Instance': ['version', 'release', 'arch']}
     __new_ireq__ = {'Package': ['name'], \
                     'Instance': []}
-    #__new_ireq__ = {'Package': ['name', 'uri'], \
+    # __new_ireq__ = {'Package': ['name', 'uri'], \
     #                'Instance': ['simplefile', 'version', 'release', 'arch']}
 
     __gpg_req__ = {'Package': ['name', 'version']}
