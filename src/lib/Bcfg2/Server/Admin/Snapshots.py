@@ -11,6 +11,7 @@ from Bcfg2.Server.Snapshots.model import Snapshot, Client, Metadata, Base, \
 # Compatibility import
 from Bcfg2.Compat import u_str
 
+
 class Snapshots(Bcfg2.Server.Admin.Mode):
     """ Interact with the Snapshots system """
     __usage__ = "[init|query qtype]"
