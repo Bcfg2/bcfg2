@@ -453,7 +453,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 if localfile not in keyfiles:
                     keyfiles.append(localfile)
                 if ((force_update and key not in keys) or
-                    not os.path.exists(localfile)):
+                        not os.path.exists(localfile)):
                     self.logger.info("Packages: Downloading and parsing %s" %
                                      key)
                     try:
