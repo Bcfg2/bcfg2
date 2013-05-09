@@ -108,6 +108,7 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
                                                  line.replace("\n", ""))
             return {}
 
+
 class LdapConnection(object):
     """
     Connection to an LDAP server.
@@ -154,6 +155,7 @@ class LdapConnection(object):
     @property
     def url(self):
         return "ldap://" + self.host + ":" + str(self.port)
+
 
 class LdapQuery(object):
     """
@@ -213,6 +215,7 @@ class LdapQuery(object):
             logger.error("LdapPlugin error: " +
               "No valid connection defined for query " + str(self))
             return None
+
 
 class LdapSubQuery(LdapQuery):
     """
