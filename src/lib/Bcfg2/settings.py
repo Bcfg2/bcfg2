@@ -146,7 +146,7 @@ MEDIA_ROOT = ''
 # trailing slash.
 STATIC_URL = '/media/'
 
-#TODO - make this unique
+# TODO - make this unique
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'eb5+y%oy-qx*2+62vv=gtnnxg1yig_odu0se5$h0hh#pc*lmo7'
 
@@ -170,7 +170,7 @@ else:
         'django.template.loaders.app_directories.Loader',
     )
 
-#TODO - review these.  auth and sessions aren't really used
+# TODO - review these.  auth and sessions aren't really used
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
