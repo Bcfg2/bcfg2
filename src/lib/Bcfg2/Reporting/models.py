@@ -393,7 +393,7 @@ class BaseEntry(models.Model):
     def prune_orphans(cls):
         '''Remove unused entries'''
         # yeat another sqlite hack
-        cls_orphans = [x['id'] \
+        cls_orphans = [x['id']
             for x in cls.objects.filter(interaction__isnull=True).values("id")]
         i = 0
         while i < len(cls_orphans):
