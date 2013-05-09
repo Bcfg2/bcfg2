@@ -284,7 +284,7 @@ class MediaTag(template.Node):
                 if request.path != request.META['PATH_INFO']:
                     offset = request.path.find(request.META['PATH_INFO'])
                     if offset > 0:
-                        base = "%s/%s" % (request.path[:offset], \
+                        base = "%s/%s" % (request.path[:offset],
                                 context['MEDIA_URL'].strip('/'))
         except:
             pass
@@ -377,7 +377,7 @@ def sort_link(parser, token):
     try:
         tag, sort_key, text = token.split_contents()
     except ValueError:
-        raise template.TemplateSyntaxError("%r tag requires at least four arguments" \
+        raise template.TemplateSyntaxError("%r tag requires at least four arguments"
             % token.split_contents()[0])
 
     return SortLinkNode(sort_key, text)
