@@ -531,7 +531,7 @@ class XMLFileBacked(FileBacked):
         self.extra_monitors = []
 
         if ((create is not None or self.create not in [None, False]) and
-            not os.path.exists(self.name)):
+                not os.path.exists(self.name)):
             toptag = create or self.create
             self.logger.warning("%s does not exist, creating" % self.name)
             if hasattr(toptag, "getroottree"):
