@@ -159,7 +159,7 @@ class RedisTransport(TransportBase):
                         message)
 
                 if not message.method in collector.storage.__class__.__rmi__ or\
-                    not hasattr(collector.storage, message.method):
+                        not hasattr(collector.storage, message.method):
                     self.logger.error(
                         "Unknown method %s called on storage engine %s" %
                         (message.method, collector.storage.__class__.__name__))
