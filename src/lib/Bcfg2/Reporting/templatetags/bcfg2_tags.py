@@ -101,7 +101,7 @@ def page_navigator(context):
         path = "NoReverseMatch: %s" % nr
     except ValueError:
         path = "ValueError"
-    #FIXME - Handle these
+    # FIXME - Handle these
 
     fragment['path'] = path
     return fragment
@@ -173,15 +173,15 @@ def build_metric_list(mdict):
     td_list = []
     # parse
     td_list.append(_subtract_or_na(mdict, 'config_parse', 'config_download'))
-    #probe
+    # probe
     td_list.append(_subtract_or_na(mdict, 'probe_upload', 'start'))
-    #inventory
+    # inventory
     td_list.append(_subtract_or_na(mdict, 'inventory', 'initialization'))
-    #install
+    # install
     td_list.append(_subtract_or_na(mdict, 'install', 'inventory'))
-    #cfg download & parse
+    # cfg download & parse
     td_list.append(_subtract_or_na(mdict, 'config_parse', 'probe_upload'))
-    #total
+    # total
     td_list.append(_subtract_or_na(mdict, 'finished', 'start'))
     return td_list
 
@@ -395,7 +395,7 @@ class SortLinkNode(template.Node):
             try:
                 sort = context['request'].GET['sort']
             except KeyError:
-                #fall back on this
+                # fall back on this
                 sort = context.get('sort', '')
             sort_key = self.sort_key.resolve(context)
             text = self.text.resolve(context)
