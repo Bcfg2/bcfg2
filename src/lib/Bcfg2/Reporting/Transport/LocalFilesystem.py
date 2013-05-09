@@ -168,7 +168,6 @@ class LocalFilesystem(TransportBase):
                 (method, self._phony_collector.storage.__class__.__name__))
             raise TransportError
 
-
         try:
             cls_method = getattr(self._phony_collector.storage, method)
             return cls_method(*args, **kwargs)
