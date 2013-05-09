@@ -52,7 +52,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
     particular group intersection.
     """
     splitters = {'rpm': re.compile('^(.*/)?(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' +
-                                  '(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\S+)\.rpm$'),
+                                   '(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\S+)\.rpm$'),
                  'encap': re.compile('^(?P<name>[\w-]+)-(?P<version>[\w\d\.+-]+).encap.*$')}
     ignore = ['Package']
 
