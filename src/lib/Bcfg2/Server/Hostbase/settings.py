@@ -28,7 +28,7 @@ else:
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 ADMINS = (
-     ('Root', 'root'),
+    ('Root', 'root'),
 )
 MANAGERS = ADMINS
 
