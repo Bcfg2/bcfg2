@@ -9,18 +9,18 @@ class Host(models.Model):
         ('mmlab', 'mmlab'), ('sp', 'sp'), ('red', 'red'), ('virtual', 'virtual'),
         ('win', 'win'), ('xterm', 'xterm'), ('lcrc', 'lcrc'), ('anlext', 'anlext'),
         ('teragrid', 'teragrid')
-        )
+    )
     STATUS_CHOICES = (
         ('active', 'active'), ('dormant', 'dormant')
-        )
+    )
     SUPPORT_CHOICES = (
         ('green', 'green'), ('yellow', 'yellow'), ('red', 'red')
-        )
+    )
     CLASS_CHOICES = (
         ('scientific', 'scientific'),
         ('operations', 'operations'), ('guest', 'guest'),
         ('confidential', 'confidential'), ('public', 'public')
-        )
+    )
     WHATAMI_CHOICES = (
         ('aix-3', 'aix-3'), ('aix-4', 'aix-4'),
         ('aix-5', 'aix-5'), ('baytech', 'baytech'),
@@ -39,7 +39,7 @@ class Host(models.Model):
         ('win31', 'win31'), ('win95', 'win95'),
         ('winNTs', 'winNTs'), ('winNTw', 'winNTw'),
         ('win2k', 'win2k'), ('winXP', 'winXP'), ('xterm', 'xterm')
-        )
+    )
     hostname = models.CharField(max_length=64)
     whatami = models.CharField(max_length=16)
     netgroup = models.CharField(max_length=32, choices=NETGROUP_CHOICES)
@@ -75,7 +75,7 @@ class Interface(models.Model):
     TYPE_CHOICES = (
         ('eth', 'ethernet'), ('wl', 'wireless'), ('virtual', 'virtual'), ('myr', 'myr'),
         ('mgmt', 'mgmt'), ('tape', 'tape'), ('fe', 'fe'), ('ge', 'ge'),
-        )
+    )
     # FIXME: The new admin interface has change a lot.
     # host = models.ForeignKey(Host, edit_inline=models.TABULAR, num_in_admin=2)
     host = models.ForeignKey(Host)
@@ -129,7 +129,7 @@ class Name(models.Model):
     DNS_CHOICES = (
         ('global', 'global'), ('internal', 'ANL internal'),
         ('private', 'private')
-        )
+    )
     # FIXME: The new admin interface has change a lot.
     # ip = models.ForeignKey(IP, edit_inline=models.TABULAR, num_in_admin=1)
     ip = models.ForeignKey(IP)
