@@ -183,7 +183,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                     if rpmHeader is None or rpm.versionCompare(h, rpmHeader) > 0:
                         rpmHeader = h
                 rpmProvides = [ h['provides'] for h in
-                            rpmTs.dbMatch(rpm.RPMTAG_NAME, entry.get('name'))]
+                                rpmTs.dbMatch(rpm.RPMTAG_NAME, entry.get('name'))]
                 rpmIntersection = set(rpmHeader['provides']) & \
                     set(self.installOnlyPkgs)
                 if len(rpmIntersection) > 0:
@@ -211,8 +211,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                        entry.get('name') != 'gpg-pubkey':
                                         flags += ['nosignature', 'nodigest']
                                         self.logger.debug('WARNING: Package %s %s requires GPG Public key with ID %s'
-                                                         % (pkg.get('name'), self.str_evra(pkg),
-                                                         pkg.get('gpgkeyid', '')))
+                                                          % (pkg.get('name'), self.str_evra(pkg),
+                                                             pkg.get('gpgkeyid', '')))
                                         self.logger.debug('         Disabling signature check.')
 
                                     if self.setup.get('quick', False):
@@ -233,7 +233,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
 
                         if self.instance_status[inst]['installed'] == False:
                             self.logger.info("        Package %s %s not installed." %
-                                         (entry.get('name'), self.str_evra(inst)))
+                                            (entry.get('name'), self.str_evra(inst)))
 
                             qtext_versions = qtext_versions + 'I(%s) ' % self.str_evra(inst)
                             entry.set('current_exists', 'false')
@@ -270,8 +270,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                            'nosignature' not in flags:
                                             flags += ['nosignature', 'nodigest']
                                             self.logger.info('WARNING: Package %s %s requires GPG Public key with ID %s'
-                                                         % (pkg.get('name'), self.str_evra(pkg),
-                                                            pkg.get('gpgkeyid', '')))
+                                                             % (pkg.get('name'), self.str_evra(pkg),
+                                                                pkg.get('gpgkeyid', '')))
                                             self.logger.info('         Disabling signature check.')
 
                                         if self.setup.get('quick', False):
@@ -294,7 +294,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                     # Wrong version installed.
                                     self.instance_status[inst]['version_fail'] = True
                                     self.logger.info("        Wrong version installed.  Want %s, but have %s"
-                                                    % (self.str_evra(inst), self.str_evra(pkg)))
+                                                     % (self.str_evra(inst), self.str_evra(pkg)))
 
                                     qtext_versions = qtext_versions + 'U(%s -> %s) ' % \
                                         (self.str_evra(pkg), self.str_evra(inst))
@@ -423,17 +423,17 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             for inst in pkg:
                 if pkg.get('name') != 'gpg-pubkey':
                     pkgspec = {'name': pkg.get('name'),
-                            'epoch': inst.get('epoch', None),
-                            'version': inst.get('version'),
-                            'release': inst.get('release'),
-                            'arch': inst.get('arch')}
+                                              'epoch': inst.get('epoch', None),
+                                              'version': inst.get('version'),
+                                              'release': inst.get('release'),
+                                              'arch': inst.get('arch')}
                     pkgspec_list.append(pkgspec)
                 else:
                     pkgspec = {'name': pkg.get('name'),
-                            'version': inst.get('version'),
-                            'release': inst.get('release')}
+                                              'version': inst.get('version'),
+                                              'release': inst.get('release')}
                     self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"
-                                    % (pkgspec.get('name'), self.str_evra(pkgspec)))
+                                     % (pkgspec.get('name'), self.str_evra(pkgspec)))
                     self.logger.info("         This package will be deleted in a future version of the RPM driver.")
                 # pkgspec_list.append(pkg_spec)
 
@@ -452,17 +452,17 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 for inst in pkg:
                     if pkg.get('name') != 'gpg-pubkey':
                         pkgspec = {'name': pkg.get('name'),
-                                'epoch': inst.get('epoch', None),
-                                'version': inst.get('version'),
-                                'release': inst.get('release'),
-                                'arch': inst.get('arch')}
+                                                  'epoch': inst.get('epoch', None),
+                                                  'version': inst.get('version'),
+                                                  'release': inst.get('release'),
+                                                  'arch': inst.get('arch')}
                         pkgspec_list.append(pkgspec)
                     else:
                         pkgspec = {'name': pkg.get('name'),
-                                'version': inst.get('version'),
-                                'release': inst.get('release')}
+                                                  'version': inst.get('version'),
+                                                  'release': inst.get('release')}
                         self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"
-                                        % (pkgspec.get('name'), self.str_evra(pkgspec)))
+                                         % (pkgspec.get('name'), self.str_evra(pkgspec)))
                         self.logger.info("         This package will be deleted in a future version of the RPM driver.")
                         continue  # Don't delete the gpg-pubkey packages for now.
                     erase_results = rpmtools.rpm_erase([pkgspec], self.erase_flags)
@@ -535,7 +535,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             else:
                 self.logger.debug('Verify Fail Action for %s %s is to not reinstall' %
                                  (inst_status.get('pkg').get('name'),
-                                 self.str_evra(instance)))
+                                  self.str_evra(instance)))
 
         return fix
 
@@ -617,10 +617,10 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                     else:
                         self.logger.debug("InstallOnlyPackage %s %s would not install." %
                                          (self.instance_status[inst].get('pkg').get('name'),
-                                         self.str_evra(inst)))
+                                          self.str_evra(inst)))
 
                 install_pkg_set = set([self.instance_status[inst].get('pkg')
-                                     for inst in install_only_pkgs])
+                                       for inst in install_only_pkgs])
                 self.RefreshPackages()
 
         # Install GPG keys.
@@ -628,7 +628,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             for inst in gpg_keys:
                 self.logger.info("Installing GPG keys.")
                 key_arg = os.path.join(self.instance_status[inst].get('pkg').get('uri'),
-                                      inst.get('simplefile'))
+                                       inst.get('simplefile'))
                 if not self.cmd.run("rpm --import %s" % key_arg):
                     self.logger.debug("Unable to install %s-%s" %
                                       (self.instance_status[inst].get('pkg').get('name'),
@@ -648,7 +648,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             self.logger.info("Attempting to upgrade packages")
             upgrade_args = " ".join([os.path.join(self.instance_status[inst].get('pkg').get('uri'),
                                                   inst.get('simplefile'))
-                                   for inst in upgrade_pkgs])
+                                     for inst in upgrade_pkgs])
             if self.cmd.run("rpm --upgrade --quiet --oldpackage --replacepkgs "
                             "%s" % upgrade_args):
                 # The rpm command succeeded.  All packages upgraded.
@@ -663,7 +663,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 upgraded_instances = []
                 for inst in upgrade_pkgs:
                     upgrade_args = os.path.join(self.instance_status[inst].get('pkg').get('uri'),
-                                               inst.get('simplefile'))
+                                                inst.get('simplefile'))
                     # self.logger.debug("rpm --upgrade --quiet --oldpackage --replacepkgs %s" % \
                     #                                                      upgrade_args)
                     if self.cmd.run("rpm --upgrade --quiet --oldpackage "
@@ -675,7 +675,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                            self.str_evra(inst)))
 
                 upgrade_pkg_set = set([self.instance_status[inst].get('pkg')
-                                     for inst in upgrade_pkgs])
+                                       for inst in upgrade_pkgs])
                 self.RefreshPackages()
 
         if not self.setup['kevlar']:
@@ -703,7 +703,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
         # that we don't know is broken.
         if not self.canVerify(entry):
             self.logger.debug("WARNING: Package %s was not verifiable, not passing to Install()"
-                             % entry.get('name'))
+                              % entry.get('name'))
             return False
 
         if not instances:
@@ -851,8 +851,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                         self.logger.info("Extra Package %s %s." %
                                          (name, self.str_evra(installed_inst)))
                     tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance',
-                                     version=installed_inst.get('version'),
-                                     release=installed_inst.get('release'))
+                                                            version=installed_inst.get('version'),
+                                                            release=installed_inst.get('release'))
                     if installed_inst.get('epoch', None) != None:
                         tmp_entry.set('epoch', str(installed_inst.get('epoch')))
                     if installed_inst.get('arch', None) != None:
@@ -883,8 +883,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                     self.logger.info("Extra InstallOnlyPackage %s %s." %
                                      (name, self.str_evra(installed_inst)))
                     tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance',
-                                     version=installed_inst.get('version'),
-                                     release=installed_inst.get('release'))
+                                                            version=installed_inst.get('version'),
+                                                            release=installed_inst.get('release'))
                     if installed_inst.get('epoch', None) != None:
                         tmp_entry.set('epoch', str(installed_inst.get('epoch')))
                     if installed_inst.get('arch', None) != None:
@@ -902,8 +902,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                     self.logger.info("Extra Normal Package Instance %s %s" %
                                      (name, self.str_evra(installed_inst)))
                     tmp_entry = Bcfg2.Client.XML.SubElement(extra_entry, 'Instance',
-                                     version=installed_inst.get('version'),
-                                     release=installed_inst.get('release'))
+                                                            version=installed_inst.get('version'),
+                                                            release=installed_inst.get('release'))
                     if installed_inst.get('epoch', None) != None:
                         tmp_entry.set('epoch', str(installed_inst.get('epoch')))
                     if installed_inst.get('arch', None) != None:
