@@ -79,7 +79,6 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
                 self.logger.error("Failed to add dep entry for %s:%s" % (tag, name))
         structures.append(newstruct)
 
-
     def calculate_prereqs(self, metadata, entries):
         """Calculate the prerequisites defined in Deps for the passed
         set of entries.
