@@ -116,7 +116,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             for name, instances in list(self.installed.items()):
                 self.logger.debug("    " + name)
                 for inst in instances:
-                    self.logger.debug("        %s" %self.str_evra(inst))
+                    self.logger.debug("        %s" % self.str_evra(inst))
         refresh_ts.closeDB()
         del refresh_ts
 
@@ -352,7 +352,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                             inst.set('verify_status', str(self.instance_status[inst]))
 
                     if self.instance_status[inst]['installed'] == False or \
-                       self.instance_status[inst].get('version_fail', False)== True or \
+                       self.instance_status[inst].get('version_fail', False) == True or \
                        self.instance_status[inst].get('verify_fail', False) == True:
                         package_fail = True
                         self.instance_status[inst]['pkg'] = entry
