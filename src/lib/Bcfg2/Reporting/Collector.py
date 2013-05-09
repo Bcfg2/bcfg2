@@ -79,7 +79,6 @@ class ReportingCollector(object):
                 (self.storage.__class__.__name__,
                     traceback.format_exc().splitlines()[-1]))
 
-
     def run(self):
         """Startup the processing and go!"""
         self.terminate = threading.Event()
