@@ -32,14 +32,14 @@ class ldapauth(object):
         apache env var REMOTE_USER should be used)
         from username get user profile from AD/LDAP
         """
-        #p = self.user_profile(login,passwd)
+        # p = self.user_profile(login,passwd)
         d = self.user_dn(login)  # success, distname
         print(d[1])
         if d[0] == 'success':
             pass
             p = self.user_bind(d[1], passwd)
             if p[0] == 'success':
-                #parse results
+                # parse results
                 parsed = self.parse_results(p[2])
                 print(self.department)
                 self.group_test = self.member_of()
@@ -55,8 +55,8 @@ class ldapauth(object):
         ldap_login = "CN=%s" % login
         svc_acct = os.environ['LDAP_SVC_ACCT_NAME']
         svc_pass = os.environ['LDAP_SVC_ACCT_PASS']
-        #svc_acct = 'CN=%s,DC=anl,DC=gov' % login
-        #svc_pass = passwd
+        # svc_acct = 'CN=%s,DC=anl,DC=gov' % login
+        # svc_pass = passwd
 
         search_pth = os.environ['LDAP_SEARCH_PTH']
 
@@ -71,7 +71,7 @@ class ldapauth(object):
             return ('success', 'User profile found', result_data,)
         except ldap.LDAPError:
             e = sys.exc_info()[1]
-            #connection failed
+            # connection failed
             return ('error', 'LDAP connect failed', e,)
 
     def user_bind(self, distinguishedName, passwd):
@@ -89,7 +89,7 @@ class ldapauth(object):
             return ('success', 'User profile found', result_data,)
         except ldap.LDAPError:
             e = sys.exc_info()[1]
-            #connection failed
+            # connection failed
             return ('error', 'LDAP connect failed', e,)
 
     def user_dn(self, cn):
@@ -112,12 +112,12 @@ class ldapauth(object):
             return ('success', distinguishedName[0],)
         except ldap.LDAPError:
             e = sys.exc_info()[1]
-            #connection failed
+            # connection failed
             return ('error', 'LDAP connect failed', e,)
 
     def parse_results(self, user_obj):
         """Clean up the huge ugly object handed to us in the LDAP query"""
-        #user_obj is a list formatted like this:
+        # user_obj is a list formatted like this:
         #[('LDAP_DN',{user_dict},),]
         try:
             raw_obj = user_obj[0][1]
