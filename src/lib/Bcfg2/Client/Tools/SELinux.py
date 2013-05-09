@@ -229,7 +229,7 @@ class SELinuxEntryHandler(object):
             match = self.custom_re.search(cmd)
             if match:
                 if (len(self.custom_format) == 1 and
-                    self.custom_format[0] == "name"):
+                        self.custom_format[0] == "name"):
                     keys.append(match.group("name"))
                 else:
                     keys.append(tuple([match.group(k)
