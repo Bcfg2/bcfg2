@@ -20,7 +20,7 @@ from django.db.models import FieldDoesNotExist
 from django.core.cache import cache
 from django.db import transaction
 
-#Used by GetCurrentEntry
+# Used by GetCurrentEntry
 import difflib
 from Bcfg2.Compat import b64decode
 from Bcfg2.Reporting.models import *
