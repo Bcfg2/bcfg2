@@ -443,7 +443,7 @@ def display_timing(request, timestamp=None):
     for perf in perfs:
         client = perf.interaction.client.name
         if client not in mdict:
-            mdict[client] = { 'name': client }
+            mdict[client] = {'name': client }
         mdict[client][perf.metric] = perf.value
 
     return render_to_response('displays/timing.html',
