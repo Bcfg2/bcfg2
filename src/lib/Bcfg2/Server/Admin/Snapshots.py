@@ -2,7 +2,8 @@ from datetime import date
 import sys
 
 # Prereq issues can be signaled with ImportError, so no try needed
-import sqlalchemy, sqlalchemy.orm
+import sqlalchemy
+import sqlalchemy.orm
 import Bcfg2.Server.Admin
 import Bcfg2.Server.Snapshots
 import Bcfg2.Server.Snapshots.model
