@@ -20,7 +20,7 @@ from Bcfg2.Reporting.models import *
 
 
 __SORT_FIELDS__ = ( 'client', 'state', 'good', 'bad', 'modified', 'extra',
-            'timestamp', 'server')
+                    'timestamp', 'server')
 
 
 class PaginationError(Exception):
@@ -98,8 +98,8 @@ def timeview(fn):
         try:
             timestamp = datetime(int(kwargs.pop('year')),
                                  int(kwargs.pop('month')),
-                int(kwargs.pop('day')), int(kwargs.pop('hour', 0)),
-                int(kwargs.pop('minute', 0)), 0)
+                                 int(kwargs.pop('day')), int(kwargs.pop('hour', 0)),
+                                 int(kwargs.pop('minute', 0)), 0)
             kwargs['timestamp'] = timestamp
         except KeyError:
             pass
@@ -196,7 +196,7 @@ def config_item_list(request, item_state, timestamp=None, **kwargs):
                               {'item_list': lists,
                                'item_state': item_state,
                                'timestamp': timestamp},
-        context_instance=RequestContext(request))
+                              context_instance=RequestContext(request))
 
 
 @timeview
@@ -224,7 +224,7 @@ def entry_status(request, entry_type, pk, timestamp=None, **kwargs):
                               {'entry': item,
                                'items': items,
                                'timestamp': timestamp},
-        context_instance=RequestContext(request))
+                              context_instance=RequestContext(request))
 
 
 @timeview
@@ -250,8 +250,8 @@ def common_problems(request, timestamp=None, threshold=None, group=None):
     if group:
         group_obj = get_object_or_404(Group, name=group)
         current_clients = [inter[0] for inter in
-            Interaction.objects.recent(timestamp)
-                .filter(groups=group_obj).values_list('id')]
+                           Interaction.objects.recent(timestamp)
+                           .filter(groups=group_obj).values_list('id')]
     else:
         current_clients = Interaction.objects.recent_ids(timestamp)
     lists = []
@@ -267,7 +267,7 @@ def common_problems(request, timestamp=None, threshold=None, group=None):
                               {'lists': lists,
                                'timestamp': timestamp,
                                'threshold': threshold},
-        context_instance=RequestContext(request))
+                              context_instance=RequestContext(request))
 
 
 @timeview
@@ -345,7 +345,7 @@ def client_detail(request, hostname=None, pk=None):
 
     context['interaction'] = inter
     return render_history_view(request, 'clients/detail.html', page_limit=5,
-        client=client, maxdate=maxdate, context=context)
+                               client=client, maxdate=maxdate, context=context)
 
 
 def client_manage(request):
@@ -374,8 +374,8 @@ def client_manage(request):
             message = "Couldn't find client \"%s\"" % client_name
 
     return render_to_response('clients/manage.html',
-        {'clients': Client.objects.order_by('name').all(), 'message': message},
-        context_instance=RequestContext(request))
+                              {'clients': Client.objects.order_by('name').all(), 'message': message},
+                              context_instance=RequestContext(request))
 
 
 @timeview
@@ -429,9 +429,9 @@ def display_summary(request, timestamp=None):
                                      'nodes did not run within the last 24 hours.'))
 
     return render_to_response('displays/summary.html',
-        {'summary_data': summary_data, 'node_count': node_count,
-         'timestamp': timestamp},
-        context_instance=RequestContext(request))
+                              {'summary_data': summary_data, 'node_count': node_count,
+                               'timestamp': timestamp},
+                              context_instance=RequestContext(request))
 
 
 @timeview
@@ -525,7 +525,7 @@ def render_history_view(request, template='clients/history.html', **kwargs):
         context['entry_list'] = iquery.all()
 
     return render_to_response(template, context,
-                context_instance=RequestContext(request))
+                              context_instance=RequestContext(request))
 
 
 def prepare_paginated_list(request, context, paged_list, page=1, max_results=25):
