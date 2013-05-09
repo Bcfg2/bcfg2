@@ -77,10 +77,10 @@ class Interface(models.Model):
         ('mgmt', 'mgmt'), ('tape', 'tape'), ('fe', 'fe'), ('ge', 'ge'),
         )
     # FIXME: The new admin interface has change a lot.
-    #host = models.ForeignKey(Host, edit_inline=models.TABULAR, num_in_admin=2)
+    # host = models.ForeignKey(Host, edit_inline=models.TABULAR, num_in_admin=2)
     host = models.ForeignKey(Host)
     # FIXME: The new admin interface has change a lot.
-    #mac_addr = models.CharField(max_length=32, core=True)
+    # mac_addr = models.CharField(max_length=32, core=True)
     mac_addr = models.CharField(max_length=32)
     hdwr_type = models.CharField('type', max_length=16, choices=TYPE_CHOICES, blank=True)
     # FIXME: The new admin interface has change a lot.
@@ -99,7 +99,7 @@ class IP(models.Model):
     interface = models.ForeignKey(Interface)
     # FIXME: The new admin interface has change a lot.
     #                              edit_inline=models.TABULAR, num_in_admin=1)
-    #ip_addr = models.IPAddressField(core=True)
+    # ip_addr = models.IPAddressField(core=True)
     ip_addr = models.IPAddressField()
 
     def __str__(self):
@@ -115,7 +115,7 @@ class IP(models.Model):
 class MX(models.Model):
     priority = models.IntegerField(blank=True)
     # FIXME: The new admin interface has change a lot.
-    #mx = models.CharField(max_length=64, blank=True, core=True)
+    # mx = models.CharField(max_length=64, blank=True, core=True)
     mx = models.CharField(max_length=64, blank=True)
 
     def __str__(self):
@@ -131,10 +131,10 @@ class Name(models.Model):
         ('private', 'private')
         )
     # FIXME: The new admin interface has change a lot.
-    #ip = models.ForeignKey(IP, edit_inline=models.TABULAR, num_in_admin=1)
+    # ip = models.ForeignKey(IP, edit_inline=models.TABULAR, num_in_admin=1)
     ip = models.ForeignKey(IP)
     # FIXME: The new admin interface has change a lot.
-    #name = models.CharField(max_length=64, core=True)
+    # name = models.CharField(max_length=64, core=True)
     name = models.CharField(max_length=64)
     dns_view = models.CharField(max_length=16, choices=DNS_CHOICES)
     only = models.BooleanField(blank=True)
@@ -149,10 +149,10 @@ class Name(models.Model):
 
 class CName(models.Model):
     # FIXME: The new admin interface has change a lot.
-    #name = models.ForeignKey(Name, edit_inline=models.TABULAR, num_in_admin=1)
+    # name = models.ForeignKey(Name, edit_inline=models.TABULAR, num_in_admin=1)
     name = models.ForeignKey(Name)
     # FIXME: The new admin interface has change a lot.
-    #cname = models.CharField(max_length=64, core=True)
+    # cname = models.CharField(max_length=64, core=True)
     cname = models.CharField(max_length=64)
 
     def __str__(self):
