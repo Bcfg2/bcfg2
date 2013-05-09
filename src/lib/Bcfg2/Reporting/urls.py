@@ -60,4 +60,3 @@ urlpatterns += patterns('Bcfg2.Reporting',
 #                        (r'^logout/$', 'django.contrib.auth.views.logout',
 #                         {'template_name': 'auth/logout.html'})
 #                        )
-
