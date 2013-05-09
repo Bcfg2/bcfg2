@@ -24,7 +24,7 @@ class LocalFilesystem(TransportBase):
         self.fmon = None
         self._phony_collector = None
 
-        #setup our local paths or die
+        # setup our local paths or die
         if not os.path.exists(self.work_path):
             try:
                 os.makedirs(self.work_path)
@@ -114,7 +114,7 @@ class LocalFilesystem(TransportBase):
         if not event or event.filename == self.work_path:
             return None
 
-        #deviate from the normal routines here we only want one event
+        # deviate from the normal routines here we only want one event
         etype = event.code2str()
         self.debug_log("Recieved event %s for %s" % (etype, event.filename))
         if os.path.basename(event.filename)[0] == '.':
