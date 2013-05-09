@@ -53,7 +53,7 @@ def search(request):
             if request.POST[field] and field == 'hostname':
                 if _and:
                     querystring += ' AND '
-                querystring +=  'n.name LIKE \'%%%%%s%%%%\' or c.cname LIKE \'%%%%%s%%%%\'' % (request.POST[field], request.POST[field])
+                querystring += 'n.name LIKE \'%%%%%s%%%%\' or c.cname LIKE \'%%%%%s%%%%\'' % (request.POST[field], request.POST[field])
                 _and = True
             elif request.POST[field] and field in dispatch:
                 if _and:
