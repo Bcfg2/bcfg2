@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from time import strptime
 
 KIND_CHOICES = (
-    #These are the kinds of config elements
+    # These are the kinds of config elements
     ('Package', 'Package'),
     ('Path', 'directory'),
     ('Path', 'file'),
@@ -176,8 +176,8 @@ class Interaction(models.Model):
             else:
                 return False
         else:
-            #Search for subsequent Interaction for this client
-            #Check if it happened more than 25 hrs ago.
+            # Search for subsequent Interaction for this client
+            # Check if it happened more than 25 hrs ago.
             if (self.client.interactions.filter(timestamp__gt=self.timestamp)
                     .order_by('timestamp')[0].timestamp -
                     self.timestamp > timedelta(hours=25)):
