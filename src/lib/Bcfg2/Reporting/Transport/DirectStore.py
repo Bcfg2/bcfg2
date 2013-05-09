@@ -31,9 +31,9 @@ class DirectStore(TransportBase, threading.Thread):
     def store(self, hostname, metadata, stats):
         try:
             self.queue.put_nowait(dict(
-                    hostname=hostname,
-                    metadata=metadata,
-                    stats=stats))
+                hostname=hostname,
+                metadata=metadata,
+                stats=stats))
         except Full:
             self.logger.warning("Reporting: Queue is full, "
                                 "dropping statistics")
