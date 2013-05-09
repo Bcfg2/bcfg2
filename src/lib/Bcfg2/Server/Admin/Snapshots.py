@@ -112,17 +112,17 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                     sys.exit(1)
                 print("Bad entries:")
                 bad_pkgs = [self.session.query(Package)
-                                .filter(Package.id == p.start_id).one().name \
+                                .filter(Package.id == p.start_id).one().name
                             for p in snap.packages if p.correct == False]
                 for p in bad_pkgs:
                     print(" Package:%s" % p)
                 bad_files = [self.session.query(File)
-                                .filter(File.id == f.start_id).one().name \
+                                .filter(File.id == f.start_id).one().name
                              for f in snap.files if f.correct == False]
                 for filename in bad_files:
                     print(" File:%s" % filename)
                 bad_svcs = [self.session.query(Service)
-                                .filter(Service.id == s.start_id).one().name \
+                                .filter(Service.id == s.start_id).one().name
                             for s in snap.services if s.correct == False]
                 for svc in bad_svcs:
                     print(" Service:%s" % svc)
