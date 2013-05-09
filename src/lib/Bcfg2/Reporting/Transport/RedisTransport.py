@@ -131,13 +131,13 @@ class RedisTransport(TransportBase):
         resp = pubsub.listen()
         signal.signal(signal.SIGALRM, self.shutdown)
         signal.alarm(10)
-        resp.next() # clear subscribe message
+        resp.next()  # clear subscribe message
         response = resp.next()
         pubsub.unsubscribe()
 
         try:
             return cPickle.loads(response['data'])
-        except: # pylint: disable=W0702
+        except:  # pylint: disable=W0702
             msg = "%s: Failed to receive response: %s" % \
                 (self.__class__.__name__,
                  traceback.format_exc().splitlines()[-1])
@@ -183,7 +183,7 @@ class RedisTransport(TransportBase):
                     traceback.format_exc().splitlines()[-1])
             except TransportError:
                 pass
-            except: # pylint: disable=W0702
+            except:  # pylint: disable=W0702
                 self.logger.error("Unhandled exception in command thread: %s" %
                     traceback.format_exc().splitlines()[-1])
         self.logger.info("Command thread shutdown")
