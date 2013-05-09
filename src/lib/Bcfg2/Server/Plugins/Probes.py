@@ -127,7 +127,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     def HandleEvent(self, event):
         """ handle events on everything but probed.xml """
         if (event.filename != self.path and
-            not event.filename.endswith("probed.xml")):
+                not event.filename.endswith("probed.xml")):
             return self.handle_event(event)
 
     def get_probe_data(self, metadata):
@@ -154,7 +154,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
             probe.set('name', os.path.basename(name))
             probe.set('source', self.plugin_name)
             if (metadata.version_info and
-                metadata.version_info > (1, 3, 1, '', 0)):
+                    metadata.version_info > (1, 3, 1, '', 0)):
                 try:
                     probe.text = entry.data.decode('utf-8')
                 except AttributeError:
@@ -333,7 +333,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         self.probedata[client.hostname] = cprobedata
 
         if (self.core.metadata_cache_mode in ['cautious', 'aggressive'] and
-            olddata != self.cgroups[client.hostname]):
+                olddata != self.cgroups[client.hostname]):
             self.core.metadata_cache.expire(client.hostname)
         self.write_data(client)
     ReceiveData.__doc__ = Bcfg2.Server.Plugin.Probing.ReceiveData.__doc__
