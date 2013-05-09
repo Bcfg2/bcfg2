@@ -148,7 +148,7 @@ class DjangoORM(StorageBase):
             owner=entry.get('current_owner', default=""),
             group=entry.get('current_group', default=""),
             mode=entry.get('current_mode',
-                default=entry.get('current_perms', default=""))
+                           default=entry.get('current_perms', default=""))
         )
         fperm, created = FilePerms.objects.get_or_create(**current_dict)
         act_dict['current_perms'] = fperm
@@ -274,7 +274,7 @@ class DjangoORM(StorageBase):
         if len(Interaction.objects.filter(client=client,
                                           timestamp=timestamp)) > 0:
             self.logger.warn("Interaction for %s at %s already exists" %
-                    (hostname, timestamp))
+                            (hostname, timestamp))
             return
 
         if 'profile' in metadata:
@@ -283,17 +283,17 @@ class DjangoORM(StorageBase):
         else:
             profile = None
         inter = Interaction(client=client,
-                           timestamp=timestamp,
-                           state=stats.get('state', default="unknown"),
-                           repo_rev_code=stats.get('revision',
-                           default="unknown"),
-                           good_count=stats.get('good', default="0"),
-                           total_count=stats.get('total', default="0"),
-                           server=server,
-                           profile=profile)
+                            timestamp=timestamp,
+                            state=stats.get('state', default="unknown"),
+                            repo_rev_code=stats.get('revision',
+                                                    default="unknown"),
+                            good_count=stats.get('good', default="0"),
+                            total_count=stats.get('total', default="0"),
+                            server=server,
+                            profile=profile)
         inter.save()
         self.logger.debug("Interaction for %s at %s with INSERTED in to db" %
-                (client.id, timestamp))
+                         (client.id, timestamp))
 
         # FIXME - this should be more efficient
         for group_name in metadata['groups']:
@@ -368,7 +368,7 @@ class DjangoORM(StorageBase):
             self._import_interaction(interaction)
         except:
             self.logger.error("Failed to import interaction: %s" %
-                    traceback.format_exc().splitlines()[-1])
+                              traceback.format_exc().splitlines()[-1])
 
     def validate(self):
         """Validate backend storage.  Should be called once when loaded"""
@@ -387,7 +387,7 @@ class DjangoORM(StorageBase):
             management.call_command("migrate", verbosity=vrb, interactive=False)
         except:
             self.logger.error("Failed to update database schema: %s" %
-                traceback.format_exc().splitlines()[-1])
+                              traceback.format_exc().splitlines()[-1])
             raise StorageError
 
     def GetExtra(self, client):
@@ -403,7 +403,7 @@ class DjangoORM(StorageBase):
             return []
         except MultipleObjectsReturned:
             self.logger.error("%s Inconsistency: Multiple entries for %s." %
-                (self.__class__.__name__, client))
+                             (self.__class__.__name__, client))
             return []
 
     def GetCurrentEntry(self, client, e_type, e_name):
@@ -415,12 +415,12 @@ class DjangoORM(StorageBase):
             raise PluginExecutionError
         except MultipleObjectsReturned:
             self.logger.error("%s Inconsistency: Multiple entries for %s." %
-                (self.__class__.__name__, client))
+                             (self.__class__.__name__, client))
             raise PluginExecutionError
         try:
             cls = BaseEntry.entry_from_name(e_type + "Entry")
             result = cls.objects.filter(name=e_name, state=TYPE_BAD,
-                interaction=c_inst.current_interaction)
+                                        interaction=c_inst.current_interaction)
         except ValueError:
             self.logger.error("Unhandled type %s" % e_type)
             raise PluginExecutionError
