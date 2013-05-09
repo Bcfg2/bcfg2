@@ -94,8 +94,8 @@ RPMVERIFY_RDEV = 128        # 1 << 7    #  /*!< from %verify(rdev) */
 RPMVERIFY_CONTEXTS = 32768      # (1 << 15) #  /*!< from --nocontexts */
 RPMVERIFY_READLINKFAIL = 268435456  # (1 << 28) #  /*!< readlink failed */
 RPMVERIFY_READFAIL = 536870912  # (1 << 29) #  /*!< file read failed */
-RPMVERIFY_LSTATFAIL = 1073741824 # (1 << 30) #  /*!< lstat failed */
-RPMVERIFY_LGETFILECONFAIL = 2147483648 # (1 << 31) #  /*!< lgetfilecon failed */
+RPMVERIFY_LSTATFAIL = 1073741824  # (1 << 30) #  /*!< lstat failed */
+RPMVERIFY_LGETFILECONFAIL = 2147483648  # (1 << 31) #  /*!< lgetfilecon failed */
 
 RPMVERIFY_FAILURES =    \
  (RPMVERIFY_LSTATFAIL |RPMVERIFY_READFAIL |RPMVERIFY_READLINKFAIL | \
@@ -451,7 +451,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
     except OSError:
         if not (fflags & (rpm.RPMFILE_MISSINGOK |rpm.RPMFILE_GHOST)):
             file_results.append('RPMVERIFY_LSTATFAIL')
-            #file_results.append(fname)
+            # file_results.append(fname)
         return file_results
 
     # 5. Contexts?  SELinux stuff?
@@ -496,7 +496,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
                 file_results.append('RPMVERIFY_LINKTO')
 
     if flags & RPMVERIFY_FILESIZE:
-        if not (flags & RPMVERIFY_MD5): # prelink check hasn't been done.
+        if not (flags & RPMVERIFY_MD5):  # prelink check hasn't been done.
             prelink_size = prelink_size_check(fname)
         if (prelink_size != 0):         # This is a prelinked file.
             if (prelink_size != fsize):
@@ -640,7 +640,7 @@ def rpm_verify_package(vp_ts, header, verify_options):
 
             file_stat = rpm_verify_file(fileinfo, linktos, omitmask)
 
-            #if len(file_stat) > 0 or options.verbose:
+            # if len(file_stat) > 0 or options.verbose:
             if len(file_stat) > 0:
                 fflags = fileinfo[4]
                 if fflags & rpm.RPMFILE_CONFIG:
@@ -658,12 +658,12 @@ def rpm_verify_package(vp_ts, header, verify_options):
                 else:
                     file_stat.append(' ')
 
-                file_stat.append(fileinfo[0]) # The filename.
+                file_stat.append(fileinfo[0])  # The filename.
                 package_results.setdefault('files', []).append(file_stat)
 
     # Run the verify script if there is one.
     # Do we want this?
-    #if 'noscripts' not in verify_options:
+    # if 'noscripts' not in verify_options:
     #    script_stat = rpmVerifyscript()
     #    if script_stat:
     #        package_results['script'] = script_stat
@@ -822,13 +822,13 @@ def rpm_erase(erase_pkgspecs, erase_flags):
     for pkgspec in erase_pkgspecs:
         idx_list = getindexbykeyword(erase_ts, **pkgspec)
         if len(idx_list) > 1 and not 'allmatches' in erase_flags:
-            #pass
+            # pass
             print('ERROR - Multiple package match for erase', pkgspec)
         else:
             for idx in idx_list:
                 erase_ts.addErase(idx)
 
-    #for te in erase_ts:
+    # for te in erase_ts:
 
     erase_problems = []
     if 'nodeps' not in erase_flags:
@@ -838,7 +838,7 @@ def rpm_erase(erase_pkgspecs, erase_flags):
         erase_ts.order()
         erase_callback = Rpmtscallback()
         erase_ts.run(erase_callback.callback, 'Erase')
-    #else:
+    # else:
 
     erase_ts.closeDB()
     del erase_ts
