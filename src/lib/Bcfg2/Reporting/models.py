@@ -95,7 +95,6 @@ class InteractionManager(models.Manager):
             pass
         return []
 
-
     def recent(self, maxdate=None):
         """
         Returns the most recent interactions for clients as of a date
@@ -267,7 +266,6 @@ class Group(models.Model):
     class Meta:
         ordering = ('name',)
 
-
     @staticmethod
     def prune_orphans():
         '''Prune unused groups'''
@@ -288,7 +286,6 @@ class Bundle(models.Model):
 
     class Meta:
         ordering = ('name',)
-
 
     @staticmethod
     def prune_orphans():
