@@ -181,8 +181,8 @@ class Interaction(models.Model):
             else:
                 return False
         else:
-            #Search for subsequent Interaction for this client
-            #Check if it happened more than 25 hrs ago.
+            # Search for subsequent Interaction for this client
+            # Check if it happened more than 25 hrs ago.
             if (self.client.interactions.filter(timestamp__gt=self.timestamp)
                     .order_by('timestamp')[0].timestamp -
                     self.timestamp > timedelta(hours=25)):
@@ -374,7 +374,7 @@ class BaseEntry(models.Model):
                 for key in act_dict:
                     if act_dict[key] != getattr(act, key):
                         continue
-                    #match found
+                    # match found
                     newact = act
                     break
 
@@ -747,7 +747,7 @@ class ServiceEntry(SuccessEntry):
     current_status = models.CharField(max_length=128, default='')
 
     ENTRY_TYPE = r"Service"
-    #TODO - prune
+    # TODO - prune
 
     def status_problem(self):
         return self.target_status != self.current_status
