@@ -144,7 +144,7 @@ def filter_navigator(context):
         for group in Group.objects.values('name'):
             myargs['group'] = group['name']
             groups.append((group['name'], reverse(view, args=args, kwargs=myargs) + qs,
-                group['name'] == kwargs.get('group', '')))
+                           group['name'] == kwargs.get('group', '')))
 
         return {'filters': filters, 'groups': groups}
     except (Resolver404, NoReverseMatch, ValueError, KeyError):
@@ -234,7 +234,7 @@ class AddUrlFilter(template.Node):
                     link = reverse(view, args=args, kwargs=kwargs)
                 except NoReverseMatch:
                     link = reverse(self.fallback_view, args=None,
-                        kwargs={filter_name: filter_value})
+                                   kwargs={filter_name: filter_value})
                 qs = context['request'].GET.urlencode()
                 if qs:
                     link += "?" + qs
@@ -285,7 +285,7 @@ class MediaTag(template.Node):
                     offset = request.path.find(request.META['PATH_INFO'])
                     if offset > 0:
                         base = "%s/%s" % (request.path[:offset],
-                                context['MEDIA_URL'].strip('/'))
+                                          context['MEDIA_URL'].strip('/'))
         except:
             pass
         return "%s/%s" % (base, self.filter_value)
@@ -340,7 +340,7 @@ def do_qs(parser, token):
         tag, name, value = token.split_contents()
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires exactly two arguments" \
-            % token.contents.split()[0])
+                                           % token.contents.split()[0])
     return QsNode(name, value)
 
 
@@ -378,7 +378,7 @@ def sort_link(parser, token):
         tag, sort_key, text = token.split_contents()
     except ValueError:
         raise template.TemplateSyntaxError("%r tag requires at least four arguments"
-            % token.split_contents()[0])
+                                           % token.split_contents()[0])
 
     return SortLinkNode(sort_key, text)
 
