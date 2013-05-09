@@ -13,7 +13,7 @@ try:
     import genshi.core
     import genshi.input
     from genshi.template import TemplateLoader, \
-                                TextTemplate, MarkupTemplate, TemplateError
+        TextTemplate, MarkupTemplate, TemplateError
 except ImportError:
     logger.error("TGenshi: Failed to import Genshi. Is it installed?")
     raise
