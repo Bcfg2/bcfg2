@@ -237,20 +237,20 @@ extra_pkg_snap = Table('extra_pkg_snap', Base.metadata,
                               ForeignKey('snapshot.id')))
 
 extra_file_snap = Table('extra_file_snap', Base.metadata,
-                       Column('file_id',
-                              Integer,
-                              ForeignKey('file.id')),
-                       Column('snapshot_id',
-                              Integer,
-                              ForeignKey('snapshot.id')))
+                        Column('file_id',
+                               Integer,
+                               ForeignKey('file.id')),
+                        Column('snapshot_id',
+                               Integer,
+                               ForeignKey('snapshot.id')))
 
 extra_service_snap = Table('extra_service_snap', Base.metadata,
-                       Column('service_id',
-                              Integer,
-                              ForeignKey('service.id')),
-                       Column('snapshot_id',
-                              Integer,
-                              ForeignKey('snapshot.id')))
+                           Column('service_id',
+                                  Integer,
+                                  ForeignKey('service.id')),
+                           Column('snapshot_id',
+                                  Integer,
+                                  ForeignKey('snapshot.id')))
 
 
 class Action(Base):
