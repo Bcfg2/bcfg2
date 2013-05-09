@@ -62,7 +62,7 @@ class Frame(object):
         self.logger = logging.getLogger(__name__)
         for driver in drivers[:]:
             if (driver not in Bcfg2.Client.Tools.drivers and
-                isinstance(driver, str)):
+                    isinstance(driver, str)):
                 self.logger.error("Tool driver %s is not available" % driver)
                 drivers.remove(driver)
 
@@ -227,14 +227,14 @@ class Frame(object):
                 for cfile in parent.findall("./Path"):
                     if (cfile.get('name') not in self.__important__ or
                         cfile.get('type') != 'file' or
-                        cfile not in self.whitelist):
+                            cfile not in self.whitelist):
                         continue
                     tools = [t for t in self.tools
                              if t.handlesEntry(cfile) and t.canVerify(cfile)]
                     if not tools:
                         continue
                     if (self.setup['interactive'] and not
-                        self.promptFilter("Install %s: %s? (y/N):", [cfile])):
+                            self.promptFilter("Install %s: %s? (y/N):", [cfile])):
                         self.whitelist.remove(cfile)
                         continue
                     try:
@@ -414,7 +414,7 @@ class Frame(object):
 
         for bundle in self.config.findall('.//Bundle'):
             if (self.setup['bundle'] and
-                bundle.get('name') not in self.setup['bundle']):
+                    bundle.get('name') not in self.setup['bundle']):
                 # prune out unspecified bundles when running with -b
                 continue
             if bundle in mbundles:
