@@ -29,4 +29,3 @@ def load_storage(storage_name, setup):
 def load_storage_from_config(setup):
     """Load the storage in the config... eventually"""
     return load_storage('DjangoORM', setup)
-
