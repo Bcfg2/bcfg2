@@ -44,7 +44,7 @@ def _default_config():
     setup = Bcfg2.Options.OptionParser(optinfo, quiet=True)
     setup.parse(sys.argv[1:], do_getopt=False)
     if (not os.path.exists(setup['web_cfile']) and
-        os.path.exists(setup['cfile'])):
+            os.path.exists(setup['cfile'])):
         return setup['cfile']
     else:
         return setup['web_cfile']
