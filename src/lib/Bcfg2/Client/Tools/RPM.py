@@ -153,7 +153,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             for attrib in list(entry.attrib.keys()):
                 instance.attrib[attrib] = entry.attrib[attrib]
             if (self.pkg_checks and
-                entry.get('pkg_checks', 'true').lower() == 'true'):
+                    entry.get('pkg_checks', 'true').lower() == 'true'):
                 if 'any' in [entry.get('version'), pinned_version]:
                     version, release = 'any', 'any'
                 elif entry.get('version') == 'auto':
@@ -176,7 +176,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
         if entry.get('name') in self.installed:
             # There is at least one instance installed.
             if (self.pkg_checks and
-                entry.get('pkg_checks', 'true').lower() == 'true'):
+                    entry.get('pkg_checks', 'true').lower() == 'true'):
                 rpmTs = rpm.TransactionSet()
                 rpmHeader = None
                 for h in rpmTs.dbMatch(rpm.RPMTAG_NAME, entry.get('name')):
@@ -205,7 +205,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                 self.instance_status[inst]['installed'] = True
 
                                 if (self.pkg_verify and
-                                    inst.get('pkg_verify', 'true').lower() == 'true'):
+                                        inst.get('pkg_verify', 'true').lower() == 'true'):
                                     flags = inst.get('verify_flags', '').split(',') + self.verify_flags
                                     if pkg.get('gpgkeyid', '')[-8:] not in self.gpg_keyids and \
                                        entry.get('name') != 'gpg-pubkey':
@@ -259,12 +259,12 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                             # Check that it is the right version.
                             for pkg in arch_match:
                                 if inst.get('version') == 'any' or self.pkg_vr_equal(inst, pkg) or \
-                                    self.inst_evra_equal(inst, pkg):
+                                        self.inst_evra_equal(inst, pkg):
                                     self.logger.debug("        %s" % self.str_evra(inst))
                                     self.instance_status[inst]['installed'] = True
 
                                     if (self.pkg_verify and
-                                        inst.get('pkg_verify', 'true').lower() == 'true'):
+                                            inst.get('pkg_verify', 'true').lower() == 'true'):
                                         flags = inst.get('verify_flags', '').split(',') + self.verify_flags
                                         if pkg.get('gpgkeyid', '')[-8:] not in self.gpg_keyids and \
                                            'nosignature' not in flags:
@@ -501,7 +501,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
 
         elif inst_status.get('version_fail', False) == True:
             if instance.get('version_fail_action', 'upgrade') == "upgrade" and \
-                self.version_fail_action == "upgrade":
+                    self.version_fail_action == "upgrade":
                 fix = True
             else:
                 self.logger.debug('Version Fail Action for %s %s is to not upgrade' %
@@ -569,7 +569,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
         if len(self.extra_instances) > 0:
             if (self.setup.get('remove') == 'all' or
                 self.setup.get('remove') == 'packages') and\
-                not self.setup.get('dryrun'):
+                    not self.setup.get('dryrun'):
                 self.Remove(self.extra_instances)
             else:
                 self.logger.info("The following extra package instances will be removed by the '-r' option:")
@@ -781,7 +781,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
 
         # We don't want to do any checks so we don't care what the entry has in it.
         if (not self.pkg_checks or
-            entry.get('pkg_checks', 'true').lower() == 'false'):
+                entry.get('pkg_checks', 'true').lower() == 'false'):
             return True
 
         instances = entry.findall('Instance')
@@ -933,7 +933,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
         '''
         if (config_entry.tag == 'Package' and
             config_entry.get('version') == installed_entry.get('version') and
-            config_entry.get('release') == installed_entry.get('release')):
+                config_entry.get('release') == installed_entry.get('release')):
             return True
         else:
             return False
