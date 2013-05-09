@@ -174,7 +174,7 @@ class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
                 xmlbundle = "%s.xml" % bundle
                 genshibundle = "%s.genshi" % bundle
                 if (xmlbundle not in allbundles and
-                    genshibundle not in allbundles):
+                        genshibundle not in allbundles):
                     self.LintError("bundle-not-found",
                                    "Bundle %s referenced, but does not exist" %
                                    bundle)
