@@ -54,7 +54,6 @@ class NISBackend(object):
             e = sys.exc_info()[1]
             return None
 
-
     def get_user(self, user_id):
         try:
             return User.objects.get(pk=user_id)
