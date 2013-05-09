@@ -100,7 +100,7 @@ class YUM24(RPM):
         if entry.get('version', False) == 'auto':
             # old style entry; synthesize Instances from current installed
             if entry.get('name') not in self.yum_installed and \
-                   entry.get('name') not in self.yum_avail:
+                entry.get('name') not in self.yum_avail:
                 # new entry; fall back to default
                 entry.set('version', 'any')
             else:
@@ -214,7 +214,7 @@ class YUM24(RPM):
                 for inst in insts:
                     if self.FixInstance(inst, self.instance_status[inst]):
                         if self.instance_status[inst].get('installed', False) \
-                               == False:
+                            == False:
                             if pkg.get('name') == 'gpg-pubkey':
                                 gpg_keys.append(inst)
                             else:
