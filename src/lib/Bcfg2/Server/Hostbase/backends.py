@@ -45,7 +45,7 @@ class NISBackend(object):
                 first_name=None,
                 last_name=None,
                 uid=n.uid
-                )
+            )
             user, created = User.objects.get_or_create(username=username)
 
             return user
