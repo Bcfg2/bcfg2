@@ -78,7 +78,7 @@ class InteractionManager(models.Manager):
         cfilter = "expiration is null"
 
         sql = 'select ri.id, x.client_id from (select client_id, MAX(timestamp) ' + \
-                    'as timer from Reporting_interaction'
+            'as timer from Reporting_interaction'
         if maxdate:
             if not isinstance(maxdate, datetime):
                 raise ValueError('Expected a datetime object')
