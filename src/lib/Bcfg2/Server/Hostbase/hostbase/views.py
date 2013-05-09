@@ -22,15 +22,15 @@ attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
 zoneattribs = ['zone', 'admin', 'primary_master', 'expire', 'retry',
                'refresh', 'ttl', 'aux']
 
-dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
-            'ip_addr':'p.ip_addr LIKE \'%%%%%s%%%%\'',
-            'name':'n.name LIKE \'%%%%%s%%%%\'',
+dispatch = {'mac_addr': 'i.mac_addr LIKE \'%%%%%s%%%%\'',
+            'ip_addr': 'p.ip_addr LIKE \'%%%%%s%%%%\'',
+            'name': 'n.name LIKE \'%%%%%s%%%%\'',
 ##             'hostname':'n.name LIKE \'%%%%%s%%%%\'',
 ##             'cname':'n.name LIKE \'%%%%%s%%%%\'',
-            'mx':'m.mx LIKE \'%%%%%s%%%%\'',
-            'dns_view':'n.dns_view = \'%s\'',
-            'hdwr_type':'i.hdwr_type = \'%s\'',
-            'dhcp':'i.dhcp = \'%s\''}
+            'mx': 'm.mx LIKE \'%%%%%s%%%%\'',
+            'dns_view': 'n.dns_view = \'%s\'',
+            'hdwr_type': 'i.hdwr_type = \'%s\'',
+            'dhcp': 'i.dhcp = \'%s\''}
 
 
 def search(request):
@@ -166,7 +166,7 @@ def edit(request, host_id):
                 ips = IP.objects.filter(interface=inter.id)
                 if inter.mac_addr != request.POST['mac_addr%d' % inter.id]:
                     text = do_log(text, 'mac_addr', inter.mac_addr, request.POST['mac_addr%d' % inter.id])
-                    inter.mac_addr = request.POST['mac_addr%d' % inter.id].lower().replace('-',':')
+                    inter.mac_addr = request.POST['mac_addr%d' % inter.id].lower().replace('-', ':')
                 if inter.hdwr_type != request.POST['hdwr_type%d' % inter.id]:
                     oldtype = inter.hdwr_type
                     text = do_log(text, 'hdwr_type', oldtype, request.POST['hdwr_type%d' % inter.id])
@@ -226,7 +226,7 @@ def edit(request, host_id):
                 inter.save()
             if request.POST['mac_addr_new']:
                 new_inter = Interface(host=host,
-                                      mac_addr=request.POST['mac_addr_new'].lower().replace('-',':'),
+                                      mac_addr=request.POST['mac_addr_new'].lower().replace('-', ':'),
                                       hdwr_type=request.POST['hdwr_type_new'],
                                       dhcp=request.POST['dhcp_new'])
                 text = do_log(text, '*new*', 'mac_addr', new_inter.mac_addr)
@@ -545,7 +545,7 @@ def new(request):
 
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
-                                  mac_addr = request.POST['mac_addr_new'].lower().replace('-',':'),
+                                  mac_addr = request.POST['mac_addr_new'].lower().replace('-', ':'),
                                   hdwr_type = request.POST['hdwr_type_new'],
                                   dhcp = 'dhcp_new' in request.POST)
             new_inter.save()
@@ -605,7 +605,7 @@ def new(request):
             name.mxs.add(mx)
         if request.POST['mac_addr_new2']:
             new_inter = Interface(host=host,
-                                  mac_addr = request.POST['mac_addr_new2'].lower().replace('-',':'),
+                                  mac_addr = request.POST['mac_addr_new2'].lower().replace('-', ':'),
                                   hdwr_type = request.POST['hdwr_type_new2'],
                                   dhcp = 'dhcp_new2' in request.POST)
             new_inter.save()
@@ -716,7 +716,7 @@ def copy(request, host_id):
 
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
-                                  mac_addr = request.POST['mac_addr_new'].lower().replace('-',':'),
+                                  mac_addr = request.POST['mac_addr_new'].lower().replace('-', ':'),
                                   hdwr_type = request.POST['hdwr_type_new'],
                                   dhcp = 'dhcp_new' in request.POST)
             new_inter.save()
@@ -774,7 +774,7 @@ def copy(request, host_id):
             name.mxs.add(mx)
         if request.POST['mac_addr_new2']:
             new_inter = Interface(host=host,
-                                  mac_addr = request.POST['mac_addr_new2'].lower().replace('-',':'),
+                                  mac_addr = request.POST['mac_addr_new2'].lower().replace('-', ':'),
                                   hdwr_type = request.POST['hdwr_type_new2'],
                                   dhcp = 'dhcp_new2' in request.POST)
             new_inter.save()
