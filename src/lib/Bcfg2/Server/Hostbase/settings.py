@@ -8,15 +8,15 @@ c = ConfigParser.ConfigParser()
 #This needs to be configurable one day somehow
 c.read(['./bcfg2.conf'])
 
-defaults = {'database_engine':'sqlite3',
-            'database_name':'./dev.db',
-            'database_user':'',
-            'database_password':'',
-            'database_host':'',
-            'database_port':3306,
-            'default_mx':'localhost',
-            'priority':10,
-            'authorized_group':'admins',
+defaults = {'database_engine': 'sqlite3',
+            'database_name': './dev.db',
+            'database_user': '',
+            'database_password': '',
+            'database_host': '',
+            'database_port': 3306,
+            'default_mx': 'localhost',
+            'priority': 10,
+            'authorized_group': 'admins',
             }
 
 if c.has_section('hostbase'):
