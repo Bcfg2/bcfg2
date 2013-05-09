@@ -361,7 +361,7 @@ class QsNode(template.Node):
             return ''
         except KeyError:
             if settings.TEMPLATE_DEBUG:
-                raise Exception,  "'qs' tag requires context['request']"
+                raise Exception, "'qs' tag requires context['request']"
             return ''
         except:
             return ''
