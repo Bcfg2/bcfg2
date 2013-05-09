@@ -48,4 +48,3 @@ class StorageBase(object):
     def GetCurrentEntry(self, client, e_type, e_name):
         """Get the current status of an entry on the client"""
         raise NotImplementedError
-
