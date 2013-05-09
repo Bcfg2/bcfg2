@@ -16,10 +16,10 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
     """ Interact with the Snapshots system """
     __usage__ = "[init|query qtype]"
 
-    q_dispatch = {'client':   Client,
-                  'group':    Group,
+    q_dispatch = {'client': Client,
+                  'group': Group,
                   'metadata': Metadata,
-                  'package':  Package,
+                  'package': Package,
                   'snapshot': Snapshot}
 
     def __init__(self, setup):
