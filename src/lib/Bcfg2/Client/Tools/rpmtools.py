@@ -98,7 +98,7 @@ RPMVERIFY_LSTATFAIL = 1073741824 # (1 << 30) #  /*!< lstat failed */
 RPMVERIFY_LGETFILECONFAIL = 2147483648 # (1 << 31) #  /*!< lgetfilecon failed */
 
 RPMVERIFY_FAILURES =    \
- (RPMVERIFY_LSTATFAIL|RPMVERIFY_READFAIL|RPMVERIFY_READLINKFAIL | \
+ (RPMVERIFY_LSTATFAIL |RPMVERIFY_READFAIL |RPMVERIFY_READLINKFAIL | \
   RPMVERIFY_LGETFILECONFAIL)
 
 # Bit(s) to control rpm_verify() operation.
@@ -449,7 +449,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
     try:
         lstat = os.lstat(fname)
     except OSError:
-        if not (fflags & (rpm.RPMFILE_MISSINGOK|rpm.RPMFILE_GHOST)):
+        if not (fflags & (rpm.RPMFILE_MISSINGOK |rpm.RPMFILE_GHOST)):
             file_results.append('RPMVERIFY_LSTATFAIL')
             #file_results.append(fname)
         return file_results
