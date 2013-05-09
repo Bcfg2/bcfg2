@@ -74,7 +74,7 @@ class RedisTransport(TransportBase):
 
     def start_monitor(self, collector):
         """Start the monitor. Eventaully start the command thread"""
-        self._commands = threading.Thread(target=self.monitor_thread, 
+        self._commands = threading.Thread(target=self.monitor_thread,
             args=(self._redis, collector))
         self._commands.start()
 
@@ -129,7 +129,7 @@ class RedisTransport(TransportBase):
 
         channel = "%s%s" % (platform.node(), int(time.time()))
         pubsub.subscribe(channel)
-        self._redis.rpush(RedisTransport.COMMAND_KEY, 
+        self._redis.rpush(RedisTransport.COMMAND_KEY,
             cPickle.dumps(RedisMessage(channel, method, args, kwargs)))
 
         resp = pubsub.listen()
@@ -160,7 +160,7 @@ class RedisTransport(TransportBase):
                     continue
                 message = cPickle.loads(payload[1])
                 if not isinstance(message, RedisMessage):
-                    self.logger.error("Message \"%s\" is not a RedisMessage" % 
+                    self.logger.error("Message \"%s\" is not a RedisMessage" %
                         message)
 
                 if not message.method in collector.storage.__class__.__rmi__ or\
