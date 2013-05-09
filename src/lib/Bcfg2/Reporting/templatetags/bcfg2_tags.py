@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.urlresolvers import resolve, reverse, \
                                      Resolver404, NoReverseMatch
 from django.template.loader import get_template, \
-        get_template_from_string,TemplateDoesNotExist
+        get_template_from_string, TemplateDoesNotExist
 from django.utils.encoding import smart_unicode, smart_str
 from django.utils.safestring import mark_safe
 from datetime import datetime, timedelta
