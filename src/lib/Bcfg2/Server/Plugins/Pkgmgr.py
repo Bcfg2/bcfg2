@@ -18,7 +18,7 @@ logger = logging.getLogger('Bcfg2.Plugins.Pkgmgr')
 
 
 class FuzzyDict(dict):
-    fuzzy = re.compile('(?P<name>.*):(?P<alist>\S+(,\S+)*)')
+    fuzzy = re.compile(r'(?P<name>.*):(?P<alist>\S+(,\S+)*)')
 
     def __getitem__(self, key):
         if isinstance(key, str):
@@ -51,9 +51,9 @@ class PNode(Bcfg2.Server.Plugin.INode):
     """PNode has a list of packages available at a
     particular group intersection.
     """
-    splitters = {'rpm': re.compile('^(.*/)?(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' +
-                                   '(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\S+)\.rpm$'),
-                 'encap': re.compile('^(?P<name>[\w-]+)-(?P<version>[\w\d\.+-]+).encap.*$')}
+    splitters = {'rpm': re.compile(r'^(.*/)?(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' +
+                                   r'(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\S+)\.rpm$'),
+                 'encap': re.compile(r'^(?P<name>[\w-]+)-(?P<version>[\w\d\.+-]+).encap.*$')}
     ignore = ['Package']
 
     def Match(self, metadata, data, entry=lxml.etree.Element("None")):

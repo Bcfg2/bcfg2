@@ -134,7 +134,7 @@ class TGenshi(Bcfg2.Server.Plugin.GroupSpool):
     """
     name = 'TGenshi'
     __author__ = 'jeff@ocjtech.us'
-    filename_pattern = 'template\.(txt|newtxt|xml)'
+    filename_pattern = r'template\.(txt|newtxt|xml)'
     es_cls = TemplateEntrySet
     es_child_cls = TemplateFile
     deprecated = True

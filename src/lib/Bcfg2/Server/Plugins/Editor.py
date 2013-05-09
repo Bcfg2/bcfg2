@@ -27,7 +27,7 @@ class EditDirectives(Bcfg2.Server.Plugin.SpecificData):
 
 class EditEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, basename, path, entry_type, encoding):
-        self.ignore = re.compile("^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|%s\.H_.*)$" % path.split('/')[-1])
+        self.ignore = re.compile(r"^(\.#.*|.*~|\\..*\\.(tmp|sw[px])|%s\.H_.*)$" % path.split('/')[-1])
         Bcfg2.Server.Plugin.EntrySet.__init__(self,
                                               basename,
                                               path,
