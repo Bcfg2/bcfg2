@@ -58,7 +58,7 @@ def search(request):
             elif request.POST[field] and field in dispatch:
                 if _and:
                     querystring += ' AND '
-                querystring += dispatch[field]  % request.POST[field]
+                querystring += dispatch[field] % request.POST[field]
                 _and = True
             elif request.POST[field]:
                 if _and:
