@@ -51,7 +51,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
     """PNode has a list of packages available at a
     particular group intersection.
     """
-    splitters = {'rpm': re.compile('^(.*/)?(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' + \
+    splitters = {'rpm': re.compile('^(.*/)?(?P<name>[\w\+\d\.]+(-[\w\+\d\.]+)*)-' +
                                   '(?P<version>[\w\d\.]+-([\w\d\.]+))\.(?P<arch>\S+)\.rpm$'),
                  'encap': re.compile('^(?P<name>[\w-]+)-(?P<version>[\w\d\.+-]+).encap.*$')}
     ignore = ['Package']
@@ -165,8 +165,8 @@ class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
             mdata = FuzzyDict.fuzzy.match(pname)
             if mdata:
                 arches = mdata.group('alist').split(',')
-                [entry.remove(inst) for inst in \
-                 entry.findall('Instance') \
+                [entry.remove(inst) for inst in
+                 entry.findall('Instance')
                  if inst.get('arch') not in arches]
 
     def HandlesEntry(self, entry, metadata):
