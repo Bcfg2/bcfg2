@@ -108,7 +108,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
         refresh_ts = rpmtools.rpmtransactionset()
         # Don't bother with signature checks at this stage. The GPG keys might
         # not be installed.
-        refresh_ts.setVSFlags(rpm._RPMVSF_NODIGESTS|rpm._RPMVSF_NOSIGNATURES)
+        refresh_ts.setVSFlags(rpm._RPMVSF_NODIGESTS |rpm._RPMVSF_NOSIGNATURES)
         for nevra in rpmtools.rpmpackagelist(refresh_ts):
             self.installed.setdefault(nevra['name'], []).append(nevra)
         if self.setup['debug']:
@@ -966,7 +966,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
 
         """
         init_ts = rpmtools.rpmtransactionset()
-        init_ts.setVSFlags(rpm._RPMVSF_NODIGESTS|rpm._RPMVSF_NOSIGNATURES)
+        init_ts.setVSFlags(rpm._RPMVSF_NODIGESTS |rpm._RPMVSF_NOSIGNATURES)
         gpg_hdrs = rpmtools.getheadersbykeyword(init_ts, **{'name':'gpg-pubkey'})
         keyids = [ header[rpm.RPMTAG_VERSION] for header in gpg_hdrs]
         keyids.append('None')
