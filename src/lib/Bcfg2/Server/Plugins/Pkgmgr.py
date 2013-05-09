@@ -207,7 +207,7 @@ class PkgmgrLint(Bcfg2.Server.Lint.ServerlessPlugin):
                                          (pkg.get('name'), priority, ptype))
                     else:
                         pset.add(ptuple)
-    
+
     @classmethod
     def Errors(cls):
         return {"duplicate-packages":"error"}
