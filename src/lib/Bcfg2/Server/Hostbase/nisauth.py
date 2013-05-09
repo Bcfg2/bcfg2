@@ -8,6 +8,7 @@ class NISAUTHError(Exception):
     """NISAUTHError is raised when somehting goes boom."""
     pass
 
+
 class nisauth(object):
     group_test = False
 #    check_member_of = os.environ['LDAP_CHECK_MBR_OF_GRP']
