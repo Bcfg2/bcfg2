@@ -98,7 +98,7 @@ RPMVERIFY_LSTATFAIL = 1073741824  # (1 << 30) #  /*!< lstat failed */
 RPMVERIFY_LGETFILECONFAIL = 2147483648  # (1 << 31) #  /*!< lgetfilecon failed */
 
 RPMVERIFY_FAILURES =    \
- (RPMVERIFY_LSTATFAIL |RPMVERIFY_READFAIL |RPMVERIFY_READLINKFAIL | \
+ (RPMVERIFY_LSTATFAIL |RPMVERIFY_READFAIL |RPMVERIFY_READLINKFAIL |
   RPMVERIFY_LGETFILECONFAIL)
 
 # Bit(s) to control rpm_verify() operation.
@@ -130,24 +130,24 @@ VERIFY_FOR_DUMPFILES = 1 << 27  # /*!< query:  from --dump */
 
 # Comes from C cource.  lib/rpmcli.h
 VERIFY_ATTRS =   \
-  (VERIFY_MD5 | VERIFY_SIZE | VERIFY_LINKTO | VERIFY_USER | VERIFY_GROUP | \
+  (VERIFY_MD5 | VERIFY_SIZE | VERIFY_LINKTO | VERIFY_USER | VERIFY_GROUP |
    VERIFY_MTIME | VERIFY_MODE | VERIFY_RDEV | VERIFY_CONTEXTS)
 
 VERIFY_ALL =     \
-  (VERIFY_ATTRS | VERIFY_FILES | VERIFY_DEPS | VERIFY_SCRIPT | VERIFY_DIGEST |\
+  (VERIFY_ATTRS | VERIFY_FILES | VERIFY_DEPS | VERIFY_SCRIPT | VERIFY_DIGEST |
    VERIFY_SIGNATURE | VERIFY_HDRCHK)
 
 
 # Some masks for what checks to NOT do on these file types.
 # The C code actiually resets these up for every file.
-DIR_FLAGS = ~(RPMVERIFY_MD5 | RPMVERIFY_FILESIZE | RPMVERIFY_MTIME | \
+DIR_FLAGS = ~(RPMVERIFY_MD5 | RPMVERIFY_FILESIZE | RPMVERIFY_MTIME |
               RPMVERIFY_LINKTO)
 
 # These file types all have the same mask, but hopefully this will make the
 # code more readable.
 FIFO_FLAGS = CHR_FLAGS = BLK_FLAGS = GHOST_FLAGS = DIR_FLAGS
 
-LINK_FLAGS = ~(RPMVERIFY_MD5 | RPMVERIFY_FILESIZE | RPMVERIFY_MTIME | \
+LINK_FLAGS = ~(RPMVERIFY_MD5 | RPMVERIFY_FILESIZE | RPMVERIFY_MTIME |
                RPMVERIFY_MODE | RPMVERIFY_USER | RPMVERIFY_GROUP)
 
 REG_FLAGS = ~(RPMVERIFY_LINKTO)
@@ -202,7 +202,7 @@ def getindexbykeyword(index_ts, **kwargs):
         else:
             del(kwargs['epoch'])
 
-    keywords = [key for key in list(kwargs.keys()) \
+    keywords = [key for key in list(kwargs.keys())
                          if key in ('name', 'epoch', 'version', 'release', 'arch')]
     keywords_len = len(keywords)
     for hdr in index_mi:
@@ -241,7 +241,7 @@ def getheadersbykeyword(header_ts, **kwargs):
         else:
             del(kwargs['epoch'])
 
-    keywords = [key for key in list(kwargs.keys()) \
+    keywords = [key for key in list(kwargs.keys())
                          if key in ('name', 'epoch', 'version', 'release', 'arch')]
     keywords_len = len(keywords)
     for hdr in header_mi:
@@ -432,7 +432,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
         flags used in the C code.
 
     """
-    (fname, fsize, fmode, fmtime, fflags, frdev, finode, fnlink, fstate, \
+    (fname, fsize, fmode, fmtime, fflags, frdev, finode, fnlink, fstate,
             vflags, fuser, fgroup, fmd5) = fileinfo
 
     # 1. rpmtsRootDir stuff.  What does it do and where to I get it from?
@@ -670,10 +670,10 @@ def rpm_verify_package(vp_ts, header, verify_options):
 
     # If there have been any errors, add the package nevra to the result.
     if len(package_results) > 0:
-        package_results.setdefault('nevra', (header[rpm.RPMTAG_NAME], \
-                                             header[rpm.RPMTAG_EPOCH], \
-                                             header[rpm.RPMTAG_VERSION], \
-                                             header[rpm.RPMTAG_RELEASE], \
+        package_results.setdefault('nevra', (header[rpm.RPMTAG_NAME],
+                                             header[rpm.RPMTAG_EPOCH],
+                                             header[rpm.RPMTAG_VERSION],
+                                             header[rpm.RPMTAG_RELEASE],
                                              header[rpm.RPMTAG_ARCH]))
     else:
         package_results = None
@@ -913,8 +913,8 @@ if __name__ == "__main__":
 
     p = optparse.OptionParser()
 
-    p.add_option('--name', action='store', \
-                 default=None, \
+    p.add_option('--name', action='store',
+                 default=None,
                  help='''Package name to verify.
 
                          ******************************************
@@ -925,24 +925,24 @@ if __name__ == "__main__":
                          instances of packages that match the package specification
                          (name, epoch, version, release, arch).''')
 
-    p.add_option('--epoch', action='store', \
-                 default=None, \
+    p.add_option('--epoch', action='store',
+                 default=None,
                  help='''Package epoch.''')
 
-    p.add_option('--version', action='store', \
-                 default=None, \
+    p.add_option('--version', action='store',
+                 default=None,
                  help='''Package version.''')
 
-    p.add_option('--release', action='store', \
-                 default=None, \
+    p.add_option('--release', action='store',
+                 default=None,
                  help='''Package release.''')
 
-    p.add_option('--arch', action='store', \
-                 default=None, \
+    p.add_option('--arch', action='store',
+                 default=None,
                  help='''Package arch.''')
 
-    p.add_option('--erase', '-e', action='store_true', \
-                 default=None, \
+    p.add_option('--erase', '-e', action='store_true',
+                 default=None,
                  help='''****************************************************
                          REMOVE PACKAGES.  THERE ARE NO WARNINGS.  MULTIPLE
                          PACKAGES WILL BE REMOVED IF A FULL PACKAGE SPEC IS NOT
@@ -952,68 +952,68 @@ if __name__ == "__main__":
                          ALL PACKAGE INSTANCES WITH THAT EPOCH WILL BE REMOVED.
                          ****************************************************''')
 
-    p.add_option('--list', '-l', action='store_true', \
+    p.add_option('--list', '-l', action='store_true',
                  help='''List package identity info. rpm -qa ish equivalent
                          intended for use in RefreshPackages().''')
 
-    p.add_option('--verify', action='store_true', \
+    p.add_option('--verify', action='store_true',
                  help='''Verify Package(s).  Output is only produced after all
                          packages has been verified. Be patient.''')
 
-    p.add_option('--verbose', '-v', action='store_true', \
+    p.add_option('--verbose', '-v', action='store_true',
                  help='''Verbose output for --verify option.  Output is the
                          same as rpm -v --verify.''')
 
-    p.add_option('--nodeps', action='store_true', \
-                 default=False, \
+    p.add_option('--nodeps', action='store_true',
+                 default=False,
                  help='Do not do dependency testing.')
 
-    p.add_option('--nodigest', action='store_true', \
+    p.add_option('--nodigest', action='store_true',
                  help='Do not check package digests.')
 
-    p.add_option('--nofiles', action='store_true', \
+    p.add_option('--nofiles', action='store_true',
                  help='Do not do file checks.')
 
-    p.add_option('--noscripts', action='store_true', \
+    p.add_option('--noscripts', action='store_true',
                  help='Do not run verification scripts.')
 
-    p.add_option('--nosignature', action='store_true', \
+    p.add_option('--nosignature', action='store_true',
                  help='Do not do package signature verification.')
 
-    p.add_option('--nolinkto', action='store_true', \
+    p.add_option('--nolinkto', action='store_true',
                  help='Do not do symlink tests.')
 
-    p.add_option('--nomd5', action='store_true', \
+    p.add_option('--nomd5', action='store_true',
                  help='''Do not do MD5 checksums on files.  Note that this does
                                             not work for prelink files yet.''')
 
-    p.add_option('--nosize', action='store_true', \
+    p.add_option('--nosize', action='store_true',
                  help='''Do not do file size tests. Note that this does not work
                                             for prelink files yet.''')
 
-    p.add_option('--nouser', action='store_true', \
+    p.add_option('--nouser', action='store_true',
                  help='Do not check file user ownership.')
 
-    p.add_option('--nogroup', action='store_true', \
+    p.add_option('--nogroup', action='store_true',
                  help='Do not check file group ownership.')
 
-    p.add_option('--nomtime', action='store_true', \
+    p.add_option('--nomtime', action='store_true',
                  help='Do not check file modification times.')
 
-    p.add_option('--nomode', action='store_true', \
+    p.add_option('--nomode', action='store_true',
                  help='Do not check file modes (permissions).')
 
-    p.add_option('--nordev', action='store_true', \
+    p.add_option('--nordev', action='store_true',
                  help='Do not check device node.')
 
-    p.add_option('--notriggers', action='store_true', \
+    p.add_option('--notriggers', action='store_true',
                  help='Do not do not generate triggers on erase.')
 
-    p.add_option('--repackage', action='store_true', \
+    p.add_option('--repackage', action='store_true',
                  help='''Do repackage on erase.i Packages are put
                                             in /var/spool/repackage.''')
 
-    p.add_option('--allmatches', action='store_true', \
+    p.add_option('--allmatches', action='store_true',
                  help='''Remove all package instances that match the
                          pkgspec.
 
