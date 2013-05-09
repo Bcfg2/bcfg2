@@ -1,6 +1,7 @@
 """Checks with NIS to see if the current user is in the support group"""
 import os
-import crypt, nis
+import crypt
+import nis
 from Bcfg2.Server.Hostbase.settings import AUTHORIZED_GROUP
 
 
