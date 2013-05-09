@@ -32,7 +32,7 @@ urlpatterns += patterns('Bcfg2.Reporting',
         (r'^common/group/(?P<group>[^/]+)+/?$', 'views.common_problems', None, 'reports_common_problems'),
         (r'^common/(?P<threshold>\d+)/?$', 'views.common_problems', None, 'reports_common_problems'),
         (r'^common/?$', 'views.common_problems', None, 'reports_common_problems'),
-))
+    ))
 
 urlpatterns += patterns('Bcfg2.Reporting',
     *filteredUrls(*timeviewUrls(
@@ -40,7 +40,7 @@ urlpatterns += patterns('Bcfg2.Reporting',
         (r'^detailed/?$',
             'views.client_detailed_list', None, 'reports_detailed_list'),
         (r'^elements/(?P<item_state>\w+)/?$', 'views.config_item_list', None, 'reports_item_list'),
-)))
+    )))
 
 urlpatterns += patterns('Bcfg2.Reporting',
     *paginatedUrls(*filteredUrls(
@@ -48,7 +48,7 @@ urlpatterns += patterns('Bcfg2.Reporting',
             'views.render_history_view', None, 'reports_history'),
         (r'^history/(?P<hostname>[^/|]+)/?$',
             'views.render_history_view', None, 'reports_client_history'),
-)))
+    )))
 
     # Uncomment this for admin:
     #(r'^admin/', include('django.contrib.admin.urls')),
