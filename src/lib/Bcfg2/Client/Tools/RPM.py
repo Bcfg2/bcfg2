@@ -697,7 +697,6 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                               (entry.tag, entry.get('name')))
             return False
 
-
         instances = entry.findall('Instance')
 
         # If the entry wasn't verifiable, then we really don't want to try and fix something
@@ -860,7 +859,6 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                         tmp_entry.set('arch', installed_inst.get('arch'))
                 extras.append(extra_entry)
         return extras
-
 
     def FindExtraInstances(self, pkg_entry, installed_entry):
         """
