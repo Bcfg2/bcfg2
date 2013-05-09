@@ -21,7 +21,7 @@ datafields = {
     'ConfigFile': ['owner', 'group', 'mode'],
     'Directory': ['owner', 'group', 'mode'],
     'SymLink': ['to'],
-             }
+}
 
 
 def build_snap_ent(entry):
