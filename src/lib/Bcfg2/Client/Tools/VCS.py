@@ -93,12 +93,12 @@ class VCS(Bcfg2.Client.Tools.Tool):
             os.chmod(os.path.join(destname, fname), mode)
         return True
         # FIXME: figure out how to write the git index properly
-        #iname = "%s/.git/index" % entry.get('name')
-        #f = open(iname, 'w+')
-        #entries = obj_store[sha].iteritems()
-        #try:
+        # iname = "%s/.git/index" % entry.get('name')
+        # f = open(iname, 'w+')
+        # entries = obj_store[sha].iteritems()
+        # try:
         #    dulwich.index.write_index(f, entries)
-        #finally:
+        # finally:
         #    f.close()
 
     def Verifysvn(self, entry, _):
