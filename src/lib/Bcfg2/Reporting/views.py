@@ -9,10 +9,10 @@ from time import strptime
 
 from django.template import Context, RequestContext
 from django.http import \
-        HttpResponse, HttpResponseRedirect, HttpResponseServerError, Http404
+    HttpResponse, HttpResponseRedirect, HttpResponseServerError, Http404
 from django.shortcuts import render_to_response, get_object_or_404
 from django.core.urlresolvers import \
-        resolve, reverse, Resolver404, NoReverseMatch
+    resolve, reverse, Resolver404, NoReverseMatch
 from django.db import connection, DatabaseError
 from django.db.models import Q, Count
 
@@ -258,7 +258,7 @@ def common_problems(request, timestamp=None, threshold=None, group=None):
     for etype in ENTRY_TYPES:
         ldata = etype.objects.exclude(state=TYPE_GOOD).filter(
             interaction__in=current_clients).annotate(num_entries=Count('id')).filter(num_entries__gte=threshold)\
-                .order_by('-num_entries', 'name')
+            .order_by('-num_entries', 'name')
         if len(ldata) > 0:
             # Property doesn't render properly..
             lists.append((etype.ENTRY_TYPE, ldata))
