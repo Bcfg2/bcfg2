@@ -6,6 +6,7 @@ from django.db import models
 
 from Bcfg2 import settings
 
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
