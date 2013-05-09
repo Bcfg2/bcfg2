@@ -259,7 +259,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                             # Check that it is the right version.
                             for pkg in arch_match:
                                 if inst.get('version') == 'any' or self.pkg_vr_equal(inst, pkg) or \
-                                       self.inst_evra_equal(inst, pkg):
+                                    self.inst_evra_equal(inst, pkg):
                                     self.logger.debug("        %s" % self.str_evra(inst))
                                     self.instance_status[inst]['installed'] = True
 
@@ -383,7 +383,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
 
                     for installed_inst in self.installed[entry.get('name')]:
                         installed_versions = installed_versions + '(%s) ' % \
-                                                                      self.str_evra(installed_inst)
+                            self.str_evra(installed_inst)
 
                     entry.set('current_version', installed_versions)
                     return False
