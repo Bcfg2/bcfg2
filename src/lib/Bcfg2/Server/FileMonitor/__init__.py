@@ -185,7 +185,7 @@ class FileMonitor(Debuggable):
         """
         for pattern in self.ignore:
             if (fnmatch.fnmatch(event.filename, pattern) or
-                fnmatch.fnmatch(os.path.split(event.filename)[-1], pattern)):
+                    fnmatch.fnmatch(os.path.split(event.filename)[-1], pattern)):
                 self.debug_log("Ignoring %s" % event)
                 return True
         return False
