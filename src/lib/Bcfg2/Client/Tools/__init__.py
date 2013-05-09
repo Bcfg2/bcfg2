@@ -122,7 +122,7 @@ class Tool(object):
         for struct in self.config:
             for entry in struct:
                 if (entry.tag == 'Path' and
-                    entry.get('important', 'false').lower() == 'true'):
+                        entry.get('important', 'false').lower() == 'true'):
                     self.__important__.append(entry.get('name'))
         self.handled = self.getSupportedEntries()
 
@@ -456,7 +456,7 @@ class PkgTool(Tool):
             for entry in list(states.keys()):
                 if (entry.tag == 'Package'
                     and entry.get('type') == self.pkgtype
-                    and entry.get('name') in pkgnames):
+                        and entry.get('name') in pkgnames):
                     self.logger.debug('Setting state to true for pkg %s' %
                                       entry.get('name'))
                     states[entry] = True
@@ -580,7 +580,7 @@ class SvcTool(Tool):
 
             restart = entry.get("restart", "true").lower()
             if (restart == "false" or
-                (restart == "interactive" and not self.setup['interactive'])):
+                    (restart == "interactive" and not self.setup['interactive'])):
                 continue
 
             success = False
