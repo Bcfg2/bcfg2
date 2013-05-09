@@ -145,7 +145,7 @@ def filter_navigator(context):
             myargs['group'] = group['name']
             groups.append((group['name'], reverse(view, args=args, kwargs=myargs) + qs,
                 group['name'] == kwargs.get('group', '')))
-            
+
         return {'filters': filters, 'groups': groups}
     except (Resolver404, NoReverseMatch, ValueError, KeyError):
         pass
