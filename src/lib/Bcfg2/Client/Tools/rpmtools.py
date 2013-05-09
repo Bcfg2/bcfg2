@@ -99,7 +99,7 @@ RPMVERIFY_LGETFILECONFAIL = 2147483648  # (1 << 31) #  /*!< lgetfilecon failed *
 
 RPMVERIFY_FAILURES =    \
     (RPMVERIFY_LSTATFAIL |RPMVERIFY_READFAIL |RPMVERIFY_READLINKFAIL |
-  RPMVERIFY_LGETFILECONFAIL)
+     RPMVERIFY_LGETFILECONFAIL)
 
 # Bit(s) to control rpm_verify() operation.
 #
@@ -131,11 +131,11 @@ VERIFY_FOR_DUMPFILES = 1 << 27  # /*!< query:  from --dump */
 # Comes from C cource.  lib/rpmcli.h
 VERIFY_ATTRS =   \
     (VERIFY_MD5 | VERIFY_SIZE | VERIFY_LINKTO | VERIFY_USER | VERIFY_GROUP |
-   VERIFY_MTIME | VERIFY_MODE | VERIFY_RDEV | VERIFY_CONTEXTS)
+     VERIFY_MTIME | VERIFY_MODE | VERIFY_RDEV | VERIFY_CONTEXTS)
 
 VERIFY_ALL =     \
     (VERIFY_ATTRS | VERIFY_FILES | VERIFY_DEPS | VERIFY_SCRIPT | VERIFY_DIGEST |
-   VERIFY_SIGNATURE | VERIFY_HDRCHK)
+     VERIFY_SIGNATURE | VERIFY_HDRCHK)
 
 
 # Some masks for what checks to NOT do on these file types.
@@ -177,7 +177,7 @@ def rpmpackagelist(rts):
              'release':header[rpm.RPMTAG_RELEASE],
              'arch':header[rpm.RPMTAG_ARCH],
              'gpgkeyid':header.sprintf("%|SIGGPG?{%{SIGGPG:pgpsig}}:{None}|").split()[-1]}
-           for header in rts.dbMatch()]
+            for header in rts.dbMatch()]
 
 
 def getindexbykeyword(index_ts, **kwargs):
@@ -433,7 +433,7 @@ def rpm_verify_file(fileinfo, rpmlinktos, omitmask):
 
     """
     (fname, fsize, fmode, fmtime, fflags, frdev, finode, fnlink, fstate,
-    vflags, fuser, fgroup, fmd5) = fileinfo
+     vflags, fuser, fgroup, fmd5) = fileinfo
 
     # 1. rpmtsRootDir stuff.  What does it do and where to I get it from?
 
