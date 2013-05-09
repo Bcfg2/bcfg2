@@ -20,7 +20,6 @@ class Migration(SchemaMigration):
             # Adding unique constraint on 'FilePerms', fields ['owner', 'group', 'mode']
             db.create_unique('Reporting_fileperms', ['owner', 'group', 'mode'])
 
-
     def backwards(self, orm):
         # Removing unique constraint on 'FilePerms', fields ['owner', 'group', 'mode']
         db.delete_unique('Reporting_fileperms', ['owner', 'group', 'mode'])
@@ -31,7 +30,6 @@ class Migration(SchemaMigration):
         if not settings.DATABASES['default']['ENGINE'] == 'django.db.backends.sqlite3':
             # Adding unique constraint on 'FilePerms', fields ['owner', 'perms', 'group']
             db.create_unique('Reporting_fileperms', ['owner', 'perms', 'group'])
-
 
     models = {
         'Reporting.actionentry': {
