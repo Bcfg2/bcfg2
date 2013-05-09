@@ -38,9 +38,9 @@ class APK(Bcfg2.Client.Tools.PkgTool):
         if entry.attrib['name'] in self.installed:
             if entry.attrib['version'] in \
                     ['auto', self.installed[entry.attrib['name']]]:
-                #if not self.setup['quick'] and \
+                # if not self.setup['quick'] and \
                 #                entry.get('verify', 'true') == 'true':
-                #FIXME: Does APK have any sort of verification mechanism?
+                # FIXME: Does APK have any sort of verification mechanism?
                 return True
             else:
                 self.logger.info(" pkg %s at version %s, not %s" %
