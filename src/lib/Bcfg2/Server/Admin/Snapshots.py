@@ -8,7 +8,7 @@ import Bcfg2.Server.Admin
 import Bcfg2.Server.Snapshots
 import Bcfg2.Server.Snapshots.model
 from Bcfg2.Server.Snapshots.model import Snapshot, Client, Metadata, Base, \
-     File, Group, Package, Service
+    File, Group, Package, Service
 # Compatibility import
 from Bcfg2.Compat import u_str
 
@@ -89,8 +89,8 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                                        Snapshot.correct,
                                        Snapshot.revision,
                                        Snapshot.timestamp)\
-                                       .filter(Client.id == Snapshot.client_id)\
-                                       .group_by(Client.id)
+                    .filter(Client.id == Snapshot.client_id)\
+                    .group_by(Client.id)
                 rows = []
                 labels = ('Client', 'Correct', 'Revision', 'Time')
                 for item in q.all():
