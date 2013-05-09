@@ -107,9 +107,9 @@ class StatisticsStore(object):
         """Helper function to determine if <time> string is older than 24 hours."""
         now = time()
         utime = mktime(strptime(testTime))
-        secondsPerDay = 60*60*24
+        secondsPerDay = 60 *60 *24
 
-        return (now-utime) > secondsPerDay
+        return (now -utime) > secondsPerDay
 
 
 class Statistics(Bcfg2.Server.Plugin.ThreadedStatistics,
