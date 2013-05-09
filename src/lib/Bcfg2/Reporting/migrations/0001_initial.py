@@ -245,7 +245,6 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal('Reporting', ['ServiceEntry'])
 
-
     def backwards(self, orm):
         # Removing unique constraint on 'FilePerms', fields ['owner', 'group', 'perms']
         db.delete_unique('Reporting_fileperms', ['owner', 'group', 'perms'])
@@ -324,7 +323,6 @@ class Migration(SchemaMigration):
 
         # Deleting model 'ServiceEntry'
         db.delete_table('Reporting_serviceentry')
-
 
     models = {
         'Reporting.actionentry': {
