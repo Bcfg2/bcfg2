@@ -1,3 +1,4 @@
+import sys
 from django.contrib.auth.models import User
 # from ldapauth import *
 from nisauth import *

@@ -5,6 +5,7 @@ to set user level privleges in Django
 """
 
 import os
+import sys
 import ldap
 
 

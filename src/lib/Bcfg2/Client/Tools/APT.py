@@ -4,6 +4,7 @@
 import warnings
 warnings.filterwarnings("ignore", "apt API not stable yet",
                         FutureWarning)
+import sys
 import apt.cache
 import os
 import Bcfg2.Client.Tools
