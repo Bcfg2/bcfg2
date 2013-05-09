@@ -42,9 +42,9 @@ class APT(Bcfg2.Client.Tools.Tool):
         if not self.setup['debug']:
             self.pkgcmd += '-q=2 '
         self.pkgcmd += '-y install %s'
-        self.ignores = [entry.get('name') for struct in config \
-                        for entry in struct \
-                        if entry.tag == 'Path' and \
+        self.ignores = [entry.get('name') for struct in config
+                        for entry in struct
+                        if entry.tag == 'Path' and
                         entry.get('type') == 'ignore']
         self.__important__ = self.__important__ + \
                              ["%s/cache/debconf/config.dat" % self.var_path,
@@ -52,10 +52,10 @@ class APT(Bcfg2.Client.Tools.Tool):
                               '/etc/passwd', '/etc/group',
                               '%s/apt/apt.conf' % self.etc_path,
                               '%s/dpkg/dpkg.cfg' % self.etc_path] + \
-                             [entry.get('name') for struct in config for entry in struct \
-                              if entry.tag == 'Path' and \
+                             [entry.get('name') for struct in config for entry in struct
+                              if entry.tag == 'Path' and
                               entry.get('name').startswith('%s/apt/sources.list' % self.etc_path)]
-        self.nonexistent = [entry.get('name') for struct in config for entry in struct \
+        self.nonexistent = [entry.get('name') for struct in config for entry in struct
                               if entry.tag == 'Path' and entry.get('type') == 'nonexistent']
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
@@ -85,8 +85,8 @@ class APT(Bcfg2.Client.Tools.Tool):
         else:
             extras = [(p.name, p.installedVersion) for p in self.pkg_cache
                       if p.isInstalled and p.name not in packages]
-        return [Bcfg2.Client.XML.Element('Package', name=name, \
-                                         type='deb', version=version) \
+        return [Bcfg2.Client.XML.Element('Package', name=name,
+                                         type='deb', version=version)
                                          for (name, version) in extras]
 
     def VerifyDebsums(self, entry, modlist):
@@ -94,7 +94,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             self.cmd.run("%s -as %s" %
                          (self.debsums, entry.get('name'))).stdout.splitlines()
         if len(output) == 1 and "no md5sums for" in output[0]:
-            self.logger.info("Package %s has no md5sums. Cannot verify" % \
+            self.logger.info("Package %s has no md5sums. Cannot verify" %
                              entry.get('name'))
             entry.set('qtext',
                       "Reinstall Package %s-%s to setup md5sums? (y/N) " %
@@ -114,10 +114,10 @@ class APT(Bcfg2.Client.Tools.Tool):
                 # these files should not exist
                 continue
             elif "is not installed" in item or "missing file" in item:
-                self.logger.error("Package %s is not fully installed" \
+                self.logger.error("Package %s is not fully installed"
                                   % entry.get('name'))
             else:
-                self.logger.error("Got Unsupported pattern %s from debsums" \
+                self.logger.error("Got Unsupported pattern %s from debsums"
                                   % item)
                 files.append(item)
         files = list(set(files) - set(self.ignores))
@@ -131,11 +131,11 @@ class APT(Bcfg2.Client.Tools.Tool):
                 self.logger.debug("It is suggested that you either manage these "
                                   "files, revert the changes, or ignore false "
                                   "failures:")
-                self.logger.info("Package %s failed validation. Bad files are:" % \
+                self.logger.info("Package %s failed validation. Bad files are:" %
                                  entry.get('name'))
                 self.logger.info(bad)
                 entry.set('qtext',
-                          "Reinstall Package %s-%s to fix failing files? (y/N) " % \
+                          "Reinstall Package %s-%s to fix failing files? (y/N) " %
                           (entry.get('name'), entry.get('version')))
                 return False
         return True
@@ -179,7 +179,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             desiredVersion = entry.get('version')
         if desiredVersion != installed_version:
             entry.set('current_version', installed_version)
-            entry.set('qtext', "Modify Package %s (%s -> %s)? (y/N) " % \
+            entry.set('qtext', "Modify Package %s (%s -> %s)? (y/N) " %
                       (entry.get('name'), entry.get('current_version'),
                        desiredVersion))
             return False
@@ -241,16 +241,16 @@ class APT(Bcfg2.Client.Tools.Tool):
                                             self.pkg_cache[pkg.get('name')].candidateVersion))
                 continue
             if self._newapi:
-                avail_vers = [x.ver_str for x in \
+                avail_vers = [x.ver_str for x in
                               self.pkg_cache[pkg.get('name')]._pkg.version_list]
             else:
-                avail_vers = [x.VerStr for x in \
+                avail_vers = [x.VerStr for x in
                               self.pkg_cache[pkg.get('name')]._pkg.VersionList]
             if pkg.get('version') in avail_vers:
                 ipkgs.append("%s=%s" % (pkg.get('name'), pkg.get('version')))
                 continue
             else:
-                self.logger.error("Package %s: desired version %s not in %s" \
+                self.logger.error("Package %s: desired version %s not in %s"
                                   % (pkg.get('name'), pkg.get('version'),
                                      avail_vers))
             bad_pkgs.append(pkg.get('name'))
