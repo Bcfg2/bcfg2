@@ -127,7 +127,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         if (entry.get("paranoid", 'false').lower() == 'true' and
             self.setup.get("paranoid", False) and
             entry.get('current_exists', 'true') == 'true' and
-            not os.path.isdir(entry.get("name"))):
+                not os.path.isdir(entry.get("name"))):
             self._prune_old_backups(entry)
             bkupnam = "%s_%s" % (entry.get('name').replace('/', '_'),
                                  datetime.isoformat(datetime.now()))
