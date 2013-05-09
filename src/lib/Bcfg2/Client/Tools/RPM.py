@@ -5,6 +5,7 @@ import rpm
 import rpmtools
 import Bcfg2.Client.Tools
 
+
 class RPM(Bcfg2.Client.Tools.PkgTool):
     """Support for RPM packages."""
     __execs__ = ['/bin/rpm', '/var/lib/rpm']
