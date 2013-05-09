@@ -204,7 +204,7 @@ class PkgmgrLint(Bcfg2.Server.Lint.ServerlessPlugin):
                     if ptuple in pset:
                         self.LintError("duplicate-package",
                                        "Duplicate Package %s, priority:%s, type:%s" %
-                                         (pkg.get('name'), priority, ptype))
+                                      (pkg.get('name'), priority, ptype))
                     else:
                         pset.add(ptuple)
 
