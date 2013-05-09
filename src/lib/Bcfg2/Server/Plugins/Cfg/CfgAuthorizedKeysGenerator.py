@@ -36,7 +36,7 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
         """ The name of the metadata category that generated keys are
         specific to """
         if (SETUP.cfp.has_section("sshkeys") and
-            SETUP.cfp.has_option("sshkeys", "category")):
+                SETUP.cfp.has_option("sshkeys", "category")):
             return SETUP.cfp.get("sshkeys", "category")
         return None
 
