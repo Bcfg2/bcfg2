@@ -4,7 +4,7 @@ from copy import copy
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import resolve, reverse, \
-                                     Resolver404, NoReverseMatch
+    Resolver404, NoReverseMatch
 from django.template.loader import get_template, \
         get_template_from_string, TemplateDoesNotExist
 from django.utils.encoding import smart_unicode, smart_str
