@@ -20,7 +20,7 @@ from Bcfg2.Reporting.models import *
 
 
 __SORT_FIELDS__ = ( 'client', 'state', 'good', 'bad', 'modified', 'extra', \
-            'timestamp', 'server' )
+            'timestamp', 'server')
 
 
 class PaginationError(Exception):
@@ -443,7 +443,7 @@ def display_timing(request, timestamp=None):
     for perf in perfs:
         client = perf.interaction.client.name
         if client not in mdict:
-            mdict[client] = {'name': client }
+            mdict[client] = {'name': client}
         mdict[client][perf.metric] = perf.value
 
     return render_to_response('displays/timing.html',
