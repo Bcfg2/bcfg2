@@ -149,7 +149,7 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
         evt = Event(handleID, path, action)
 
         if (ievent.wd not in self.event_filter or
-            ievent.pathname in self.event_filter[ievent.wd]):
+                ievent.pathname in self.event_filter[ievent.wd]):
             self.events.append(evt)
 
     def AddMonitor(self, path, obj, handleID=None):
