@@ -208,7 +208,7 @@ class BaseCore(object):
             if ('daemon' in self.setup and 'daemon_uid' in self.setup and
                 self.setup['daemon'] and self.setup['daemon_uid'] and
                 db_settings['ENGINE'].endswith(".sqlite3") and
-                not os.path.exists(db_settings['NAME'])):
+                    not os.path.exists(db_settings['NAME'])):
                 # syncdb will create the sqlite database, and we're
                 # going to daemonize, dropping privs to a non-root
                 # user, so we need to chown the database after
