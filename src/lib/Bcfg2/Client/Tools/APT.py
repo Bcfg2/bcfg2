@@ -8,6 +8,7 @@ import apt.cache
 import os
 import Bcfg2.Client.Tools
 
+
 class APT(Bcfg2.Client.Tools.Tool):
     """The Debian toolset implements package and service operations and inherits
     the rest from Toolset.Toolset.
