@@ -68,7 +68,7 @@ def _populate_interaction_entry_counts():
 
     for type in list(count_field.keys()):
         cursor.execute("select count(type), interaction_id " +
-                "from reports_entries_interactions where type = %s group by interaction_id" % type)
+                       "from reports_entries_interactions where type = %s group by interaction_id" % type)
         updates = []
         for row in cursor.fetchall():
             updates.append(row)
