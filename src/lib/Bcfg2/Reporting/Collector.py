@@ -20,9 +20,11 @@ from Bcfg2.Reporting.Transport.DirectStore import DirectStore
 from Bcfg2.Reporting.Storage import load_storage_from_config, \
     StorageError, StorageImportError
 
+
 class ReportingError(Exception):
     """Generic reporting exception"""
     pass
+
 
 class ReportingCollector(object):
     """The collecting process for reports"""
