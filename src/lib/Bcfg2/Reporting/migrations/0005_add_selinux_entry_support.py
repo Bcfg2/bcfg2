@@ -189,7 +189,6 @@ class Migration(SchemaMigration):
         ))
         db.create_unique('Reporting_interaction_semodules', ['interaction_id', 'semoduleentry_id'])
 
-
     def backwards(self, orm):
         # Deleting model 'SELoginEntry'
         db.delete_table('Reporting_seloginentry')
@@ -244,7 +243,6 @@ class Migration(SchemaMigration):
 
         # Removing M2M table for field semodules on 'Interaction'
         db.delete_table('Reporting_interaction_semodules')
-
 
     models = {
         'Reporting.actionentry': {
