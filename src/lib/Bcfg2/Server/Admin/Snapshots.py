@@ -45,7 +45,7 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                     for host in \
                        self.session.query(q_obj).filter(q_obj.active == True):
                         rows.append([host.name, 'Yes'])
-                    self.print_table([labels]+rows,
+                    self.print_table([labels] +rows,
                                      justify='left',
                                      hdr=True,
                                      vdelim=" ",
@@ -95,7 +95,7 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                 for item in q.all():
                     cli, cor, time, rev = item
                     rows.append([cli, cor, time, rev])
-                self.print_table([labels]+rows,
+                self.print_table([labels] +rows,
                                  justify='left',
                                  hdr=True, vdelim=" ",
                                  padding=1)
@@ -155,7 +155,7 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                                  snap.correct,
                                  snap.revision,
                                  snap.timestamp])
-                self.print_table([labels]+rows,
+                self.print_table([labels] +rows,
                                  justify='left',
                                  hdr=True,
                                  vdelim=" ",
