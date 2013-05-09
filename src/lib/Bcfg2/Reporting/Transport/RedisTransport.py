@@ -22,11 +22,11 @@ except ImportError:
 
 class RedisMessage(object):
     """An rpc message"""
-    def __init__(self, channel, method, args=[], kwargs=dict()):
+    def __init__(self, channel, method, args=None, kwargs=None):
         self.channel = channel
         self.method = method
-        self.args = args
-        self.kwargs = kwargs
+        self.args = args or []
+        self.kwargs = kwargs or {}
 
 
 class RedisTransport(TransportBase):

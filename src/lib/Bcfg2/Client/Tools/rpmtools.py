@@ -684,7 +684,7 @@ def rpm_verify_package(vp_ts, header, verify_options):
     return package_results
 
 
-def rpm_verify(verify_ts, verify_pkgspec, verify_options=[]):
+def rpm_verify(verify_ts, verify_pkgspec, verify_options=None):
     """
        Requires rpmtransactionset() to be run first to get a ts.
 
@@ -725,6 +725,7 @@ def rpm_verify(verify_ts, verify_pkgspec, verify_options=[]):
            'nevra': ['name2', 'epoch2', 'version2', 'release2', 'arch2'] } ]
 
     """
+    verify_options = verify_options or []
     verify_results = []
     headers = getheadersbykeyword(verify_ts, **verify_pkgspec)
     for header in headers:
