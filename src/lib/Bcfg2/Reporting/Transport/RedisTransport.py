@@ -71,13 +71,11 @@ class RedisTransport(TransportBase):
         self._redis = redis.Redis(host=self._redis_host,
             port=self._redis_port, db=self._redis_db)
 
-
     def start_monitor(self, collector):
         """Start the monitor. Eventaully start the command thread"""
         self._commands = threading.Thread(target=self.monitor_thread,
             args=(self._redis, collector))
         self._commands.start()
-
 
     def store(self, hostname, metadata, stats):
         """Store the file to disk"""
@@ -99,7 +97,6 @@ class RedisTransport(TransportBase):
             self.logger.error("Failed to store interaction for %s: %s" %
                 (hostname, traceback.format_exc().splitlines()[-1]))
 
-
     def fetch(self):
         """Fetch the next object"""
         try:
@@ -119,7 +116,6 @@ class RedisTransport(TransportBase):
     def shutdown(self):
         """Called at program exit"""
         self._redis = None
-
 
     def rpc(self, method, *args, **kwargs):
         """
@@ -147,7 +143,6 @@ class RedisTransport(TransportBase):
                  traceback.format_exc().splitlines()[-1])
             self.logger.error(msg)
         return None
-
 
     def monitor_thread(self, rclient, collector):
         """Watch the COMMAND_KEY queue for rpc commands"""
