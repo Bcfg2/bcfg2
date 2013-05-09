@@ -80,14 +80,14 @@ def search(request):
         return render_to_response('results.html',
                                   {'hosts': results,
                                    'logged_in': request.session.get('_auth_user_id', False)},
-                                   context_instance = RequestContext(request))
+                                   context_instance=RequestContext(request))
     else:
         return render_to_response('search.html',
                                   {'TYPE_CHOICES': Interface.TYPE_CHOICES,
                                    'DNS_CHOICES': Name.DNS_CHOICES,
                                    'yesno': [(1, 'yes'), (0, 'no')],
                                    'logged_in': request.session.get('_auth_user_id', False)},
-                                   context_instance = RequestContext(request))
+                                   context_instance=RequestContext(request))
 
 
 def gethostdata(host_id, dnsdata=False):
@@ -294,7 +294,7 @@ def edit(request, host_id):
             return render_to_response('errors.html',
                                       {'failures': errors,
                                        'logged_in': request.session.get('_auth_user_id', False)},
-                                       context_instance = RequestContext(request))
+                                       context_instance=RequestContext(request))
     else:
         host = Host.objects.get(id=host_id)
         interfaces = []
@@ -305,7 +305,7 @@ def edit(request, host_id):
                                    'interfaces': interfaces,
                                    'TYPE_CHOICES': Interface.TYPE_CHOICES,
                                    'logged_in': request.session.get('_auth_user_id', False)},
-                                   context_instance = RequestContext(request))
+                                   context_instance=RequestContext(request))
 
 
 def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
@@ -403,7 +403,7 @@ def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
                                    'address': address,
                                    'zone_id': zone_id,
                                    'logged_in': request.session.get('_auth_user_id', False)},
-                                   context_instance = RequestContext(request))
+                                   context_instance=RequestContext(request))
 
 
 def dnsedit(request, host_id):
@@ -501,7 +501,7 @@ def dnsedit(request, host_id):
                                    'interfaces': interfaces,
                                    'DNS_CHOICES': Name.DNS_CHOICES,
                                    'logged_in': request.session.get('_auth_user_id', False)},
-                                   context_instance = RequestContext(request))
+                                   context_instance=RequestContext(request))
 
 
 def new(request):
@@ -513,7 +513,7 @@ def new(request):
             return render_to_response('errors.html',
                                       {'failures': ['%s already exists in hostbase' % request.POST['hostname']],
                                        'logged_in': request.session.get('_auth_user_id', False)},
-                                       context_instance = RequestContext(request))
+                                       context_instance=RequestContext(request))
         except:
             pass
         if not validate(request, True):
@@ -521,7 +521,7 @@ def new(request):
                 return render_to_response('errors.html',
                                           {'failures': ['ip_addr: You must enter an ip address'],
                                           'logged_in': request.session.get('_auth_user_id', False)},
-                                          context_instance = RequestContext(request))
+                                          context_instance=RequestContext(request))
             host = Host()
             # this is the stuff that validate() should take care of
             # examine the check boxes for any changes
@@ -541,13 +541,13 @@ def new(request):
             return render_to_response('errors.html',
                                       {'failures': validate(request, True),
                                        'logged_in': request.session.get('_auth_user_id', False)},
-                                       context_instance = RequestContext(request))
+                                       context_instance=RequestContext(request))
 
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
-                                  mac_addr = request.POST['mac_addr_new'].lower().replace('-', ':'),
-                                  hdwr_type = request.POST['hdwr_type_new'],
-                                  dhcp = 'dhcp_new' in request.POST)
+                                  mac_addr=request.POST['mac_addr_new'].lower().replace('-', ':'),
+                                  hdwr_type=request.POST['hdwr_type_new'],
+                                  dhcp='dhcp_new' in request.POST)
             new_inter.save()
         if request.POST['mac_addr_new'] and request.POST['ip_addr_new']:
             new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new'])
@@ -605,9 +605,9 @@ def new(request):
             name.mxs.add(mx)
         if request.POST['mac_addr_new2']:
             new_inter = Interface(host=host,
-                                  mac_addr = request.POST['mac_addr_new2'].lower().replace('-', ':'),
-                                  hdwr_type = request.POST['hdwr_type_new2'],
-                                  dhcp = 'dhcp_new2' in request.POST)
+                                  mac_addr=request.POST['mac_addr_new2'].lower().replace('-', ':'),
+                                  hdwr_type=request.POST['hdwr_type_new2'],
+                                  dhcp='dhcp_new2' in request.POST)
             new_inter.save()
         if request.POST['mac_addr_new2'] and request.POST['ip_addr_new2']:
             new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new2'])
@@ -672,7 +672,7 @@ def new(request):
                                    'SUPPORT_CHOICES': Host.SUPPORT_CHOICES,
                                    'WHATAMI_CHOICES': Host.WHATAMI_CHOICES,
                                    'logged_in': request.session.get('_auth_user_id', False)},
-                                   context_instance = RequestContext(request))
+                                   context_instance=RequestContext(request))
 
 
 def copy(request, host_id):
@@ -684,7 +684,7 @@ def copy(request, host_id):
             return render_to_response('errors.html',
                                       {'failures': ['%s already exists in hostbase' % request.POST['hostname']],
                                        'logged_in': request.session.get('_auth_user_id', False)},
-                                       context_instance = RequestContext(request))
+                                       context_instance=RequestContext(request))
         except:
             pass
         if not validate(request, True):
@@ -692,7 +692,7 @@ def copy(request, host_id):
                 return render_to_response('errors.html',
                                           {'failures': ['ip_addr: You must enter an ip address'],
                                           'logged_in': request.session.get('_auth_user_id', False)},
-                                          context_instance = RequestContext(request))
+                                          context_instance=RequestContext(request))
             host = Host()
             # this is the stuff that validate() should take care of
             # examine the check boxes for any changes
@@ -712,13 +712,13 @@ def copy(request, host_id):
             return render_to_response('errors.html',
                                       {'failures': validate(request, True),
                                        'logged_in': request.session.get('_auth_user_id', False)},
-                                       context_instance = RequestContext(request))
+                                       context_instance=RequestContext(request))
 
         if request.POST['mac_addr_new']:
             new_inter = Interface(host=host,
-                                  mac_addr = request.POST['mac_addr_new'].lower().replace('-', ':'),
-                                  hdwr_type = request.POST['hdwr_type_new'],
-                                  dhcp = 'dhcp_new' in request.POST)
+                                  mac_addr=request.POST['mac_addr_new'].lower().replace('-', ':'),
+                                  hdwr_type=request.POST['hdwr_type_new'],
+                                  dhcp='dhcp_new' in request.POST)
             new_inter.save()
         if request.POST['mac_addr_new'] and request.POST['ip_addr_new']:
             new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new'])
@@ -774,9 +774,9 @@ def copy(request, host_id):
             name.mxs.add(mx)
         if request.POST['mac_addr_new2']:
             new_inter = Interface(host=host,
-                                  mac_addr = request.POST['mac_addr_new2'].lower().replace('-', ':'),
-                                  hdwr_type = request.POST['hdwr_type_new2'],
-                                  dhcp = 'dhcp_new2' in request.POST)
+                                  mac_addr=request.POST['mac_addr_new2'].lower().replace('-', ':'),
+                                  hdwr_type=request.POST['hdwr_type_new2'],
+                                  dhcp='dhcp_new2' in request.POST)
             new_inter.save()
         if request.POST['mac_addr_new2'] and request.POST['ip_addr_new2']:
             new_ip = IP(interface=new_inter, ip_addr=request.POST['ip_addr_new2'])
@@ -843,7 +843,7 @@ def copy(request, host_id):
                                    'SUPPORT_CHOICES': Host.SUPPORT_CHOICES,
                                    'WHATAMI_CHOICES': Host.WHATAMI_CHOICES,
                                    'logged_in': request.session.get('_auth_user_id', False)},
-                                   context_instance = RequestContext(request))
+                                   context_instance=RequestContext(request))
 
 # FIXME: delete all this things in a signal handler "pre_delete"
 # def remove(request, host_id):
