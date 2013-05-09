@@ -13,7 +13,8 @@ from django.db import connection
 from django.shortcuts import render_to_response
 from django import forms
 from Bcfg2.Server.Hostbase import settings, regex
-import re, copy
+import re
+import copy
 
 attribs = ['hostname', 'whatami', 'netgroup', 'security_class', 'support',
            'csi', 'printq', 'primary_user', 'administrator', 'location',
