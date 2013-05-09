@@ -56,11 +56,11 @@ class YUM24(RPM):
         RPM.__init__(self, logger, setup, config)
         self.__important__ = self.__important__ + \
             [entry.get('name') for struct in config
-            for entry in struct
-            if entry.tag in ['Path', 'ConfigFile'] and
-            (entry.get('name').startswith('/etc/yum.d')
-            or entry.get('name').startswith('/etc/yum.repos.d'))
-            or entry.get('name') == '/etc/yum.conf']
+             for entry in struct
+             if entry.tag in ['Path', 'ConfigFile'] and
+             (entry.get('name').startswith('/etc/yum.d')
+              or entry.get('name').startswith('/etc/yum.repos.d'))
+             or entry.get('name') == '/etc/yum.conf']
         self.autodep = setup.get("yum24_autodep")
         self.yum_avail = dict()
         self.yum_installed = dict()
@@ -281,7 +281,7 @@ class YUM24(RPM):
                     else:
                         self.logger.debug("%s %s would not install." %
                                           (self.instance_status[inst].get('pkg').get('name'),
-                                         self.str_evra(inst)))
+                                           self.str_evra(inst)))
                 self.RefreshPackages()
 
         # Fix upgradeable packages.
@@ -314,7 +314,7 @@ class YUM24(RPM):
                     else:
                         self.logger.debug("%s %s would not install." %
                                          (self.instance_status[inst].get('pkg').get('name'),
-                                         self.str_evra(inst)))
+                                          self.str_evra(inst)))
 
                 self.RefreshPackages()
 
@@ -357,7 +357,7 @@ class YUM24(RPM):
                                'version': inst.get('version'),
                                'release': inst.get('release')}
                     self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"
-                                    % (pkgspec.get('name'), self.str_evra(pkgspec)))
+                                     % (pkgspec.get('name'), self.str_evra(pkgspec)))
                     self.logger.info("         This package will be deleted in a future version of the YUM24 driver.")
 
         rv = self.cmd.run(pkgtool % " ".join(erase_args))
@@ -381,7 +381,7 @@ class YUM24(RPM):
                             pkg_arg = pkg_arg + '.' + inst.get('arch')
                     else:
                         self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"
-                                        % (pkg.get('name'), self.str_evra(pkg)))
+                                         % (pkg.get('name'), self.str_evra(pkg)))
                         self.logger.info("         This package will be deleted in a future version of the YUM24 driver.")
                         continue
 
