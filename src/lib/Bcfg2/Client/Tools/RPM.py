@@ -435,7 +435,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                     self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
                                                  % (pkgspec.get('name'), self.str_evra(pkgspec)))
                     self.logger.info("         This package will be deleted in a future version of the RPM driver.")
-                #pkgspec_list.append(pkg_spec)
+                # pkgspec_list.append(pkg_spec)
 
         erase_results = rpmtools.rpm_erase(pkgspec_list, self.erase_flags)
         if erase_results == []:
@@ -464,7 +464,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                         self.logger.info("WARNING: gpg-pubkey package not in configuration %s %s"\
                                                    % (pkgspec.get('name'), self.str_evra(pkgspec)))
                         self.logger.info("         This package will be deleted in a future version of the RPM driver.")
-                        continue # Don't delete the gpg-pubkey packages for now.
+                        continue  # Don't delete the gpg-pubkey packages for now.
                     erase_results = rpmtools.rpm_erase([pkgspec], self.erase_flags)
                     if erase_results == []:
                         pkg_modified = True
@@ -664,7 +664,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 for inst in upgrade_pkgs:
                     upgrade_args = os.path.join(self.instance_status[inst].get('pkg').get('uri'), \
                                                      inst.get('simplefile'))
-                    #self.logger.debug("rpm --upgrade --quiet --oldpackage --replacepkgs %s" % \
+                    # self.logger.debug("rpm --upgrade --quiet --oldpackage --replacepkgs %s" % \
                     #                                                      upgrade_args)
                     if self.cmd.run("rpm --upgrade --quiet --oldpackage "
                                     "--replacepkgs %s" % upgrade_args):
