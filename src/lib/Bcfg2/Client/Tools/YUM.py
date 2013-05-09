@@ -242,7 +242,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         to the newest available """
         # old style entry; synthesize Instances from current installed
         if (entry.get('name') not in self.yum_installed and
-            entry.get('name') not in self.yum_avail):
+                entry.get('name') not in self.yum_avail):
             # new entry; fall back to default
             entry.set('version', 'any')
         else:
@@ -296,7 +296,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         missing = Bcfg2.Client.Tools.PkgTool.missing_attrs(self, entry)
 
         if (entry.get('name', None) is None and
-            entry.get('group', None) is None):
+                entry.get('group', None) is None):
             missing += ['name', 'group']
         return missing
 
@@ -901,7 +901,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         # Can not reverify because we don't have a package entry.
         if self.extra_instances is not None and len(self.extra_instances) > 0:
             if (self.setup.get('remove') == 'all' or
-                self.setup.get('remove') == 'packages'):
+                    self.setup.get('remove') == 'packages'):
                 self.Remove(self.extra_instances)
             else:
                 self.logger.info("The following extra package instances will "
