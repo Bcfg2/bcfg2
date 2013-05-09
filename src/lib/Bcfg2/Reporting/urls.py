@@ -14,18 +14,18 @@ def newRoot(request):
     return HttpResponsePermanentRedirect(grid_view)
 
 urlpatterns = patterns('Bcfg2.Reporting',
-    (r'^$', newRoot),
+                      (r'^$', newRoot),
 
-    url(r'^manage/?$', 'views.client_manage', name='reports_client_manage'),
-    url(r'^client/(?P<hostname>[^/]+)/(?P<pk>\d+)/?$', 'views.client_detail', name='reports_client_detail_pk'),
-    url(r'^client/(?P<hostname>[^/]+)/?$', 'views.client_detail', name='reports_client_detail'),
-    url(r'^element/(?P<entry_type>\w+)/(?P<pk>\d+)/(?P<interaction>\d+)?/?$', 'views.config_item', name='reports_item'),
-    url(r'^element/(?P<entry_type>\w+)/(?P<pk>\d+)/?$', 'views.config_item', name='reports_item'),
-    url(r'^entry/(?P<entry_type>\w+)/(?P<pk>\w+)/?$', 'views.entry_status', name='reports_entry'),
+                       url(r'^manage/?$', 'views.client_manage', name='reports_client_manage'),
+                       url(r'^client/(?P<hostname>[^/]+)/(?P<pk>\d+)/?$', 'views.client_detail', name='reports_client_detail_pk'),
+                       url(r'^client/(?P<hostname>[^/]+)/?$', 'views.client_detail', name='reports_client_detail'),
+                       url(r'^element/(?P<entry_type>\w+)/(?P<pk>\d+)/(?P<interaction>\d+)?/?$', 'views.config_item', name='reports_item'),
+                       url(r'^element/(?P<entry_type>\w+)/(?P<pk>\d+)/?$', 'views.config_item', name='reports_item'),
+                       url(r'^entry/(?P<entry_type>\w+)/(?P<pk>\w+)/?$', 'views.entry_status', name='reports_entry'),
 )
 
 urlpatterns += patterns('Bcfg2.Reporting',
-    *timeviewUrls(
+                        *timeviewUrls(
         (r'^summary/?$', 'views.display_summary', None, 'reports_summary'),
         (r'^timing/?$', 'views.display_timing', None, 'reports_timing'),
         (r'^common/group/(?P<group>[^/]+)/(?P<threshold>\d+)/?$', 'views.common_problems', None, 'reports_common_problems'),
@@ -35,7 +35,7 @@ urlpatterns += patterns('Bcfg2.Reporting',
     ))
 
 urlpatterns += patterns('Bcfg2.Reporting',
-    *filteredUrls(*timeviewUrls(
+                        *filteredUrls(*timeviewUrls(
         (r'^grid/?$', 'views.client_index', None, 'reports_grid_view'),
         (r'^detailed/?$',
             'views.client_detailed_list', None, 'reports_detailed_list'),
@@ -43,7 +43,7 @@ urlpatterns += patterns('Bcfg2.Reporting',
     )))
 
 urlpatterns += patterns('Bcfg2.Reporting',
-    *paginatedUrls(*filteredUrls(
+                        *paginatedUrls(*filteredUrls(
         (r'^history/?$',
             'views.render_history_view', None, 'reports_history'),
         (r'^history/(?P<hostname>[^/|]+)/?$',
