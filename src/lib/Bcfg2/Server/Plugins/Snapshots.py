@@ -30,7 +30,7 @@ def build_snap_ent(entry):
         basefields += ['type']
     desired = dict([(key, u_str(entry.get(key))) for key in basefields])
     state = dict([(key, u_str(entry.get(key))) for key in basefields])
-    desired.update([(key, u_str(entry.get(key))) for key in \
+    desired.update([(key, u_str(entry.get(key))) for key in
                  datafields[entry.tag]])
     if entry.tag == 'ConfigFile' or \
        ((entry.tag == 'Path') and (entry.get('type') == 'file')):
@@ -46,10 +46,10 @@ def build_snap_ent(entry):
             state['contents'] = u_str(b64decode(entry.get('current_bfile')))
         elif 'current_bdiff' in entry.attrib:
             diff = b64decode(entry.get('current_bdiff'))
-            state['contents'] = u_str( \
+            state['contents'] = u_str(
                 '\n'.join(difflib.restore(diff.split('\n'), 1)))
 
-    state.update([(key, u_str(entry.get('current_' + key, entry.get(key)))) \
+    state.update([(key, u_str(entry.get('current_' + key, entry.get(key))))
                   for key in datafields[entry.tag]])
     if entry.tag in ['ConfigFile', 'Path'] and entry.get('exists', 'true') == 'false':
         state = None
