@@ -28,7 +28,7 @@ def syntaxhilight(value, arg="diff", autoescape=None):
 
     if autoescape:
         # Seems to cause a double escape
-        #value = conditional_escape(value)
+        # value = conditional_escape(value)
         arg = conditional_escape(arg)
 
     if colorize:
