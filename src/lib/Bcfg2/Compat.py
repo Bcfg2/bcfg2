@@ -212,7 +212,7 @@ except ImportError:
                 for fname in os.listdir(mpath):
                     fpath = os.path.join(mpath, fname)
                     if (os.path.isfile(fpath) and fname.endswith(".py") and
-                        fname != '__init__.py'):
+                            fname != '__init__.py'):
                         yield None, prefix + fname[:-3], False
                     elif os.path.isdir(fpath):
                         mname = prefix + fname
