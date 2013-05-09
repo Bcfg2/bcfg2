@@ -90,7 +90,7 @@ class PNode(Bcfg2.Server.Plugin.INode):
                 self.contents['Package'][pkg.get('name')] = {}
                 if pkg.getchildren():
                     self.contents['Package'][pkg.get('name')]['__children__'] \
-                                                                          = pkg.getchildren()
+                        = pkg.getchildren()
             if 'simplefile' in pkg.attrib:
                 pkg.set('url', "%s/%s" % (pkg.get('uri'), pkg.get('simplefile')))
                 self.contents['Package'][pkg.get('name')].update(pkg.attrib)
