@@ -72,7 +72,7 @@ class StatisticsStore(object):
         # Find correct node entry in stats data
         # The following list comprehension should be guarenteed to return at
         # most one result
-        nodes = [elem for elem in self.element.findall('Node') \
+        nodes = [elem for elem in self.element.findall('Node')
                  if elem.get('name') == client]
         nummatch = len(nodes)
         if nummatch == 0:
@@ -81,13 +81,13 @@ class StatisticsStore(object):
         elif nummatch == 1 and not node_dirty:
             # Delete old instance
             node = nodes[0]
-            [node.remove(elem) for elem in node.findall('Statistics') \
+            [node.remove(elem) for elem in node.findall('Statistics')
              if self.isOlderThan24h(elem.get('time'))]
         elif nummatch == 1 and node_dirty:
             # Delete old dirty statistics entry
             node = nodes[0]
-            [node.remove(elem) for elem in node.findall('Statistics') \
-             if (elem.get('state') == 'dirty' \
+            [node.remove(elem) for elem in node.findall('Statistics')
+             if (elem.get('state') == 'dirty'
                  and self.isOlderThan24h(elem.get('time')))]
         else:
             # Shouldn't be reached
@@ -128,13 +128,13 @@ class Statistics(Bcfg2.Server.Plugin.ThreadedStatistics,
 
     def FindCurrent(self, client):
         rt = self.data_file.element.xpath('//Node[@name="%s"]' % client)[0]
-        maxtime = max([strptime(stat.get('time')) for stat \
+        maxtime = max([strptime(stat.get('time')) for stat
                        in rt.findall('Statistics')])
-        return [stat for stat in rt.findall('Statistics') \
+        return [stat for stat in rt.findall('Statistics')
                 if strptime(stat.get('time')) == maxtime][0]
 
     def GetExtra(self, client):
-        return [(entry.tag, entry.get('name')) for entry \
+        return [(entry.tag, entry.get('name')) for entry
                 in self.FindCurrent(client).xpath('.//Extra/*')]
 
     def GetCurrentEntry(self, client, e_type, e_name):
