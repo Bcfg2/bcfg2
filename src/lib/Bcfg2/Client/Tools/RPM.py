@@ -167,7 +167,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                 instance.set('release', release)
                 if entry.get('verify', 'true') == 'false':
                     instance.set('verify', 'false')
-            instances = [instance ]
+            instances = [instance]
 
         self.logger.debug("Verifying package instances for %s" % entry.get('name'))
         package_fail = False
@@ -183,7 +183,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                     if rpmHeader is None or rpm.versionCompare(h, rpmHeader) > 0:
                         rpmHeader = h
                 rpmProvides = [ h['provides'] for h in \
-                            rpmTs.dbMatch(rpm.RPMTAG_NAME, entry.get('name')) ]
+                            rpmTs.dbMatch(rpm.RPMTAG_NAME, entry.get('name'))]
                 rpmIntersection = set(rpmHeader['provides']) & \
                                   set(self.installOnlyPkgs)
                 if len(rpmIntersection) > 0:
@@ -286,7 +286,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                         else:
                                             vp_ts = rpmtools.rpmtransactionset()
                                             self.instance_status[inst]['verify'] = \
-                                                                                 rpmtools.rpm_verify(vp_ts, pkg, flags )
+                                                                                 rpmtools.rpm_verify(vp_ts, pkg, flags)
                                             vp_ts.closeDB()
                                             del vp_ts
 
@@ -426,7 +426,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                             'epoch': inst.get('epoch', None),
                             'version': inst.get('version'),
                             'release': inst.get('release'),
-                            'arch': inst.get('arch') }
+                            'arch': inst.get('arch')}
                     pkgspec_list.append(pkgspec)
                 else:
                     pkgspec = {'name': pkg.get('name'),
@@ -455,7 +455,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
                                 'epoch': inst.get('epoch', None),
                                 'version': inst.get('version'),
                                 'release': inst.get('release'),
-                                'arch': inst.get('arch') }
+                                'arch': inst.get('arch')}
                         pkgspec_list.append(pkgspec)
                     else:
                         pkgspec = {'name': pkg.get('name'),
