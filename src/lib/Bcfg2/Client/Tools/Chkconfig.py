@@ -66,7 +66,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         self.logger.info("Installing Service %s" % (entry.get('name')))
         rv = True
         if (entry.get('status') == 'off' or
-            self.setup["servicemode"] == "build"):
+                self.setup["servicemode"] == "build"):
             rv &= self.cmd.run((rcmd + " --level 0123456") %
                                (entry.get('name'),
                                 entry.get('status'))).success
