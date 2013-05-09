@@ -74,10 +74,10 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
 
                 self.logger.debug('Running equery check on %s' %
                                   entry.get('name'))
-                for line in self.cmd.run(["/usr/bin/equery", "-N", "check",
-                                          '=%s-%s' %
-                                          (entry.get('name'),
-                                           version)]).stdout.splitlines():
+                for line in self.cmd.run(
+                    ["/usr/bin/equery", "-N", "check",
+                     '=%s-%s' % (entry.get('name'),
+                                 entry.get('version'))]).stdout.splitlines():
                     if '!!!' in line and line.split()[1] not in modlist:
                         return False
 
