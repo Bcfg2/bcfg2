@@ -186,7 +186,7 @@ class APT(Bcfg2.Client.Tools.Tool):
         else:
             # version matches
             if not self.setup['quick'] and entry.get('verify', 'true') == 'true' \
-                   and checksums:
+                and checksums:
                 pkgsums = self.VerifyDebsums(entry, modlist)
                 return pkgsums
             return True
