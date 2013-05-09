@@ -69,12 +69,12 @@ class RedisTransport(TransportBase):
             raise TransportError
         self._redis_db = setup.get('reporting_redis_db', 0)
         self._redis = redis.Redis(host=self._redis_host,
-            port=self._redis_port, db=self._redis_db)
+                                  port=self._redis_port, db=self._redis_db)
 
     def start_monitor(self, collector):
         """Start the monitor. Eventaully start the command thread"""
         self._commands = threading.Thread(target=self.monitor_thread,
-            args=(self._redis, collector))
+                                          args=(self._redis, collector))
         self._commands.start()
 
     def store(self, hostname, metadata, stats):
@@ -95,7 +95,7 @@ class RedisTransport(TransportBase):
             self._redis.rpush(RedisTransport.STATS_KEY, payload)
         except redis.RedisError:
             self.logger.error("Failed to store interaction for %s: %s" %
-                (hostname, traceback.format_exc().splitlines()[-1]))
+                             (hostname, traceback.format_exc().splitlines()[-1]))
 
     def fetch(self):
         """Fetch the next object"""
@@ -105,10 +105,10 @@ class RedisTransport(TransportBase):
                 return cPickle.loads(payload[1])
         except redis.RedisError:
             self.logger.error("Failed to fetch an interaction: %s" %
-                (traceback.format_exc().splitlines()[-1]))
+                             (traceback.format_exc().splitlines()[-1]))
         except cPickle.UnpicklingError:
             self.logger.error("Failed to unpickle payload: %s" %
-                    traceback.format_exc().splitlines()[-1])
+                              traceback.format_exc().splitlines()[-1])
             raise TransportError
 
         return None
@@ -126,7 +126,7 @@ class RedisTransport(TransportBase):
         channel = "%s%s" % (platform.node(), int(time.time()))
         pubsub.subscribe(channel)
         self._redis.rpush(RedisTransport.COMMAND_KEY,
-            cPickle.dumps(RedisMessage(channel, method, args, kwargs)))
+                          cPickle.dumps(RedisMessage(channel, method, args, kwargs)))
 
         resp = pubsub.listen()
         signal.signal(signal.SIGALRM, self.shutdown)
@@ -156,7 +156,7 @@ class RedisTransport(TransportBase):
                 message = cPickle.loads(payload[1])
                 if not isinstance(message, RedisMessage):
                     self.logger.error("Message \"%s\" is not a RedisMessage" %
-                        message)
+                                      message)
 
                 if not message.method in collector.storage.__class__.__rmi__ or\
                         not hasattr(collector.storage, message.method):
@@ -171,19 +171,19 @@ class RedisTransport(TransportBase):
                     response = cPickle.dumps(response)
                 except:
                     self.logger.error("RPC method %s failed: %s" %
-                        (message.method, traceback.format_exc().splitlines()[-1]))
+                                     (message.method, traceback.format_exc().splitlines()[-1]))
                     raise TransportError
                 rclient.publish(message.channel, response)
 
             except redis.RedisError:
                 self.logger.error("Failed to fetch an interaction: %s" %
-                    (traceback.format_exc().splitlines()[-1]))
+                                 (traceback.format_exc().splitlines()[-1]))
             except cPickle.UnpicklingError:
                 self.logger.error("Failed to unpickle payload: %s" %
-                    traceback.format_exc().splitlines()[-1])
+                                  traceback.format_exc().splitlines()[-1])
             except TransportError:
                 pass
             except:  # pylint: disable=W0702
                 self.logger.error("Unhandled exception in command thread: %s" %
-                    traceback.format_exc().splitlines()[-1])
+                                  traceback.format_exc().splitlines()[-1])
         self.logger.info("Command thread shutdown")
