@@ -450,4 +450,3 @@ class DjangoORM(StorageBase):
             else:
                 ret.append(None)
         return ret
-
