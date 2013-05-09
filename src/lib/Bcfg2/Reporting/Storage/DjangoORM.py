@@ -386,7 +386,7 @@ class DjangoORM(StorageBase):
             management.call_command("syncdb", verbosity=vrb, interactive=False)
             management.call_command("migrate", verbosity=vrb, interactive=False)
         except:
-            self.logger.error("Failed to update database schema: %s" % \
+            self.logger.error("Failed to update database schema: %s" %
                 traceback.format_exc().splitlines()[-1])
             raise StorageError
 
@@ -442,7 +442,7 @@ class DjangoORM(StorageBase):
             elif entry.is_binary():
                 ret.append(b64decode(entry.details))
             elif entry.is_diff():
-                ret.append('\n'.join(difflib.restore(\
+                ret.append('\n'.join(difflib.restore(
                     entry.details.split('\n'), 1)))
             elif entry.is_too_large():
                 # If len is zero the object was too large to store
