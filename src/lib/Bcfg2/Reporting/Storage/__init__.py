@@ -25,7 +25,7 @@ def load_storage(storage_name, setup):
         return cls(setup)
     except:
         raise StorageImportError("Storage unavailable: %s" %
-            traceback.format_exc().splitlines()[-1])
+                                 traceback.format_exc().splitlines()[-1])
 
 
 def load_storage_from_config(setup):
