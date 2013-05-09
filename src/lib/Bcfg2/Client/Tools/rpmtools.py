@@ -171,7 +171,7 @@ def rpmpackagelist(rts):
                {'name':'bar', 'epoch':'10', 'version':'5.2', 'release':'2', 'arch':'x86_64' } ]
 
     """
-    return [{'name':header[rpm.RPMTAG_NAME],
+    return [{'name': header[rpm.RPMTAG_NAME],
              'epoch':header[rpm.RPMTAG_EPOCH],
              'version':header[rpm.RPMTAG_VERSION],
              'release':header[rpm.RPMTAG_RELEASE],
