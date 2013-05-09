@@ -555,7 +555,7 @@ class YumCollection(Collection):
                 # each pulp source can only have one arch, so we don't
                 # have to check the arch in url_map
                 if (source.pulp_id and
-                    source.pulp_id not in consumer['repoids']):
+                        source.pulp_id not in consumer['repoids']):
                     try:
                         consumerapi.bind(self.metadata.hostname,
                                          source.pulp_id)
