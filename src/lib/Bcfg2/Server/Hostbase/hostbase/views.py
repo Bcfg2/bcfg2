@@ -32,6 +32,7 @@ dispatch = {'mac_addr':'i.mac_addr LIKE \'%%%%%s%%%%\'',
             'hdwr_type':'i.hdwr_type = \'%s\'',
             'dhcp':'i.dhcp = \'%s\''}
 
+
 def search(request):
     """Search for hosts in the database
     If more than one field is entered, logical AND is used
@@ -109,6 +110,7 @@ def gethostdata(host_id, dnsdata=False):
                     hostdata['mxs'][name.id] = name.mxs.all()
     return hostdata
 
+
 def fill(template, hostdata, dnsdata=False):
     """Fills a generic template
     Replaces a lot of repeated code"""
@@ -120,6 +122,7 @@ def fill(template, hostdata, dnsdata=False):
     template.interfaces = hostdata['interfaces']
     template.ips = hostdata['ips']
     return template
+
 
 def edit(request, host_id):
     """edit general host information"""
@@ -304,6 +307,7 @@ def edit(request, host_id):
                                    'logged_in': request.session.get('_auth_user_id', False)},
                                    context_instance = RequestContext(request))
 
+
 def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
     """Asks if the user is sure he/she wants to remove an item"""
     if 'sub' in request.GET:
@@ -401,6 +405,7 @@ def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
                                    'logged_in': request.session.get('_auth_user_id', False)},
                                    context_instance = RequestContext(request))
 
+
 def dnsedit(request, host_id):
     """Edits specific DNS information
     Data is validated before committed to the database"""
@@ -497,6 +502,7 @@ def dnsedit(request, host_id):
                                    'DNS_CHOICES': Name.DNS_CHOICES,
                                    'logged_in': request.session.get('_auth_user_id', False)},
                                    context_instance = RequestContext(request))
+
 
 def new(request):
     """Function for creating a new host in hostbase
@@ -667,6 +673,7 @@ def new(request):
                                    'WHATAMI_CHOICES': Host.WHATAMI_CHOICES,
                                    'logged_in': request.session.get('_auth_user_id', False)},
                                    context_instance = RequestContext(request))
+
 
 def copy(request, host_id):
     """Function for creating a new host in hostbase
@@ -851,6 +858,7 @@ def copy(request, host_id):
 #            interface.delete()
 #        host.delete()
 
+
 def validate(request, new=False, host_id=None):
     """Function for checking form data"""
     failures = []
@@ -939,6 +947,7 @@ def validate(request, new=False, host_id=None):
     if not failures:
         return 0
     return failures
+
 
 def do_log(text, attribute, previous, new):
     if previous != new:
