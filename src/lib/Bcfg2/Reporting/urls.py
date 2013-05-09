@@ -55,7 +55,7 @@ urlpatterns += patterns('Bcfg2.Reporting',
 
 
 ## Uncomment this section if using authentication
-#urlpatterns += patterns('',
+# urlpatterns += patterns('',
 #                        (r'^login/$', 'django.contrib.auth.views.login',
 #                         {'template_name': 'auth/login.html'}),
 #                        (r'^logout/$', 'django.contrib.auth.views.logout',
