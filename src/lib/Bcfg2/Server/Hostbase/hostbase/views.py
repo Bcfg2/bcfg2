@@ -318,26 +318,26 @@ def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
                 ip.name_set.all().delete()
             Interface.objects.get(id=item_id).ip_set.all().delete()
             Interface.objects.get(id=item_id).delete()
-        elif item=='ip':
+        elif item == 'ip':
             for name in IP.objects.get(id=item_id).name_set.all():
                 name.cname_set.all().delete()
             IP.objects.get(id=item_id).name_set.all().delete()
             IP.objects.get(id=item_id).delete()
-        elif item=='cname':
+        elif item == 'cname':
             CName.objects.get(id=item_id).delete()
-        elif item=='mx':
+        elif item == 'mx':
             mx = MX.objects.get(id=item_id)
             Name.objects.get(id=name_id).mxs.remove(mx)
-        elif item=='name':
+        elif item == 'name':
             Name.objects.get(id=item_id).cname_set.all().delete()
             Name.objects.get(id=item_id).delete()
-        elif item=='nameserver':
+        elif item == 'nameserver':
             nameserver = Nameserver.objects.get(id=item_id)
             Zone.objects.get(id=zone_id).nameservers.remove(nameserver)
-        elif item=='zonemx':
+        elif item == 'zonemx':
             mx = MX.objects.get(id=item_id)
             Zone.objects.get(id=zone_id).mxs.remove(mx)
-        elif item=='address':
+        elif item == 'address':
             address = ZoneAddress.objects.get(id=item_id)
             Zone.objects.get(id=zone_id).addresses.remove(address)
         if item == 'cname' or item == 'mx' or item == 'name':
@@ -365,7 +365,7 @@ def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
                         cnames.append((name.id, cname))
                     for mx in name.mxs.all():
                         mxs.append((name.id, mx))
-        elif item=='ip':
+        elif item == 'ip':
             ips = [IP.objects.get(id=item_id)]
             for name in ips[0].name_set.all():
                 names.append((ips[0].id, name))
@@ -373,21 +373,21 @@ def confirm(request, item, item_id, host_id=None, name_id=None, zone_id=None):
                     cnames.append((name.id, cname))
                 for mx in name.mxs.all():
                     mxs.append((name.id, mx))
-        elif item=='name':
+        elif item == 'name':
             names = [Name.objects.get(id=item_id)]
             for cname in names[0].cname_set.all():
                 cnames.append((names[0].id, cname))
             for mx in names[0].mxs.all():
                 mxs.append((names[0].id, mx))
-        elif item=='cname':
+        elif item == 'cname':
             cnames = [CName.objects.get(id=item_id)]
-        elif item=='mx':
+        elif item == 'mx':
             mxs = [MX.objects.get(id=item_id)]
-        elif item=='zonemx':
+        elif item == 'zonemx':
             zonemx = MX.objects.get(id=item_id)
-        elif item=='nameserver':
+        elif item == 'nameserver':
             nameserver = Nameserver.objects.get(id=item_id)
-        elif item=='address':
+        elif item == 'address':
             address = ZoneAddress.objects.get(id=item_id)
         return render_to_response('confirm.html',
                                   {'interface': interface,
