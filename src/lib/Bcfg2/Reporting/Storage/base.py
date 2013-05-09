@@ -4,13 +4,16 @@ The base for all Storage backends
 
 import logging
 
+
 class StorageError(Exception):
     """Generic StorageError"""
     pass
 
+
 class StorageImportError(StorageError):
     """Raised when a storage module fails to import"""
     pass
+
 
 class StorageBase(object):
     """The base for all storages"""
