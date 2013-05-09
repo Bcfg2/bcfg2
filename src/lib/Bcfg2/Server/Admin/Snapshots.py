@@ -41,10 +41,10 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                     rows = []
                     labels = ('Client', 'Active')
                     for host in \
-                       self.session.query(q_obj).filter(q_obj.active == False):
+                        self.session.query(q_obj).filter(q_obj.active == False):
                         rows.append([host.name, 'No'])
                     for host in \
-                       self.session.query(q_obj).filter(q_obj.active == True):
+                        self.session.query(q_obj).filter(q_obj.active == True):
                         rows.append([host.name, 'Yes'])
                     self.print_table([labels] +rows,
                                      justify='left',
@@ -117,7 +117,7 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
                 for p in bad_pkgs:
                     print(" Package:%s" % p)
                 bad_files = [self.session.query(File)
-                                .filter(File.id == f.start_id).one().name
+                             .filter(File.id == f.start_id).one().name
                              for f in snap.files if f.correct == False]
                 for filename in bad_files:
                     print(" File:%s" % filename)
