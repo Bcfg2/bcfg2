@@ -4,26 +4,27 @@ from setuptools import setup
 from glob import glob
 import sys
 
-vfile = 'src/lib/Bcfg2/version.py'
+version_file = 'src/lib/Bcfg2/version.py'
 try:
     # python 2
-    execfile(vfile)
+    execfile(version_file)
 except NameError:
     # py3k
-    exec(compile(open(vfile).read(), vfile, 'exec'))
+    exec(compile(open(version_file).read(), version_file, 'exec'))
+
+inst_reqs = [
+    'genshi',
+    'lockfile',
+    'lxml',
+    'python-daemon',
+]
 
 # we only need m2crypto on < python2.6
-need_m2crypto = False
-version = sys.version_info[:2]
-if version < (2, 6):
-    need_m2crypto = True
-
-inst_reqs = ['lxml']
-if need_m2crypto:
+if sys.version_info[:2] < (2, 6):
     inst_reqs.append('M2Crypto')
 
 setup(name="Bcfg2",
-      version="1.3.1",
+      version=__version__,  # Defined in src/lib/Bcfg2/version.py
       description="Bcfg2 Server",
       author="Narayan Desai",
       author_email="desai@mcs.anl.gov",
@@ -55,9 +56,9 @@ setup(name="Bcfg2",
       install_requires=inst_reqs,
       tests_require=['mock', 'nose', 'sqlalchemy'],
       package_dir={'': 'src/lib', },
-      package_data={'Bcfg2.Reporting': [ 'templates/*.html',
-                                         'templates/*/*.html',
-                                         'templates/*/*.inc']},
+      package_data={'Bcfg2.Reporting': ['templates/*.html',
+                                        'templates/*/*.html',
+                                        'templates/*/*.inc']},
       scripts=glob('src/sbin/*'),
       data_files=[('share/bcfg2/schemas',
                    glob('schemas/*.xsd')),
