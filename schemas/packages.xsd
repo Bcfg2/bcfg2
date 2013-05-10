@@ -167,6 +167,15 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute type="xsd:boolean" name="debsrc">
+      <xsd:annotation>
+        <xsd:documentation>
+          Include ``deb-src`` lines in the generated APT
+          configuration. This only applies to sources with
+          :xml:attribute:`SourceType:type` = ``apt``.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute type="xsd:string" name="url">
       <xsd:annotation>
         <xsd:documentation>
