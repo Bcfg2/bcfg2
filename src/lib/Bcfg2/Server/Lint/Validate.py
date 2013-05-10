@@ -121,6 +121,9 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             cmd.extend(["--noout", "--schema", schemafile, filename])
             lint = Popen(cmd, stdout=PIPE, stderr=STDOUT)
             output = lint.communicate()[0]
+            # py3k fix
+            if not isinstance(output, str):
+                output = output.decode('utf-8')
             if lint.wait():
                 self.LintError("xml-failed-to-verify",
                                "%s fails to verify:\n%s" % (filename, output))
