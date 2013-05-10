@@ -2,6 +2,7 @@
 used by both client and server.  Stuff that doesn't fit anywhere
 else. """
 
+import shlex
 import fcntl
 import logging
 import threading
@@ -218,6 +219,7 @@ class Executor(object):
         """
         if isinstance(command, str):
             cmdstr = command
+            command = shlex.split(cmdstr)
         else:
             cmdstr = " ".join(command)
         self.logger.debug("Running: %s" % cmdstr)
