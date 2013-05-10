@@ -418,10 +418,11 @@ class Frame(object):
                 # prune out unspecified bundles when running with -b
                 continue
             if bundle in mbundles:
-                self.logger.debug("Bundle %s was modified" % bundle)
+                self.logger.debug("Bundle %s was modified" % bundle.get('name'))
                 func = "BundleUpdated"
             else:
-                self.logger.debug("Bundle %s was not modified" % bundle)
+                self.logger.debug("Bundle %s was not modified" %
+                                  bundle.get('name'))
                 func = "BundleNotUpdated"
             for tool in self.tools:
                 try:
