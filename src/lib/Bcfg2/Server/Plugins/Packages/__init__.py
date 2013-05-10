@@ -9,7 +9,7 @@ import shutil
 import lxml.etree
 import Bcfg2.Logger
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import ConfigParser, urlopen, HTTPError
+from Bcfg2.Compat import ConfigParser, urlopen, HTTPError, URLError
 from Bcfg2.Server.Plugins.Packages.Collection import Collection, \
     get_collection_class
 from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
@@ -459,7 +459,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                     try:
                         open(localfile, 'w').write(urlopen(key).read())
                         keys.append(key)
-                    except HTTPError:
+                    except (URLError, HTTPError):
                         err = sys.exc_info()[1]
                         self.logger.error("Packages: Error downloading %s: %s"
                                           % (key, err))
