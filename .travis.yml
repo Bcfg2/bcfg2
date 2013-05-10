@@ -18,9 +18,9 @@ branches:
   except:
     - maint-1.2
     - 1.1.0-stable
-notifications:
-  email: chris.a.st.pierre@gmail.com
-  irc:
-    channels:
-      - "irc.freenode.org#bcfg2"
-    use_notice: true
+#notifications:
+#  email: chris.a.st.pierre@gmail.com
+#  irc:
+#    channels:
+#      - "irc.freenode.org#bcfg2"
+#    use_notice: true
