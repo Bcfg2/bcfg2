@@ -1,3 +1,7 @@
+This file contains a list of copyright holders.  Anyone who
+contributes more than trivial fixes (typos, etc.) to Bcfg2 should also
+add themselves to this file.  See LICENSE for the full license.
+
 - Narayan Desai <desai@mcs.anl.gov> has written most of Bcfg2,
   including all parts not explicitly mentioned in this file.
 
