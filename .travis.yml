@@ -15,9 +15,12 @@ install:
 script:
   - nosetests testsuite
 branches:
-  except:
-    - maint-1.2
-    - 1.1.0-stable
+#  except:
+#    - maint-1.2
+#    - 1.1.0-stable
+  only:
+    - pep8
+    - pylint
 #notifications:
 #  email: chris.a.st.pierre@gmail.com
 #  irc:
