@@ -334,6 +334,7 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf \
 %{python_sitelib}/Bcfg2/Logger.py*
 %{python_sitelib}/Bcfg2/Options.py*
 %{python_sitelib}/Bcfg2/Proxy.py*
+%{python_sitelib}/Bcfg2/Utils.py*
 %{python_sitelib}/Bcfg2/version.py*
 %{python_sitelib}/Bcfg2/Client
 %{_mandir}/man1/bcfg2.1*
