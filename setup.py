@@ -13,7 +13,6 @@ except NameError:
     exec(compile(open(version_file).read(), version_file, 'exec'))
 
 inst_reqs = [
-    'genshi',
     'lockfile',
     'lxml',
     'python-daemon',
