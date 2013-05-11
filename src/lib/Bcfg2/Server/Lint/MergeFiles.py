@@ -57,7 +57,7 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
         else:
             threshold = 0.75
         rv = []
-        elist = entries.items()
+        elist = list(entries.items())
         while elist:
             result = self._find_similar(elist.pop(0), copy.copy(elist),
                                         threshold)
