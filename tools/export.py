@@ -227,9 +227,6 @@ E.G. 1.2.0pre1 is a valid version.
                      'VERSION="%s"\n' % version,
                      startswith=True,
                      dryrun=options.dryrun)
-    # set new version in setup.py
-    find_and_replace('setup.py', 'version=', '      version="%s",\n' % version,
-                     dryrun=options.dryrun)
     # set new version in Bcfg2/version.py
     find_and_replace('src/lib/Bcfg2/version.py',
                      '__version__ =',
