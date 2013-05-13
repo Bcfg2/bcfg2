@@ -81,7 +81,7 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
         """ check properties files for required headers """
         if 'Properties' in self.core.plugins:
             props = self.core.plugins['Properties']
-            for propfile, pdata in props.store.entries.items():
+            for propfile, pdata in props.entries.items():
                 if os.path.splitext(propfile)[1] == ".xml":
                     self.check_xml(pdata.name, pdata.xdata, 'properties')
 
