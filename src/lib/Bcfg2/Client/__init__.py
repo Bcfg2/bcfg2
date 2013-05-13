@@ -19,7 +19,7 @@ def prompt(msg):
     while len(select.select([sys.stdin.fileno()], [], [], 0.0)[0]) > 0:
         os.read(sys.stdin.fileno(), 4096)
     try:
-        ans = input(msg.encode(sys.stdout.encoding, 'replace'))
+        ans = input(msg)
         return ans in ['y', 'Y']
     except EOFError:
         # python 2.4.3 on CentOS doesn't like ^C for some reason

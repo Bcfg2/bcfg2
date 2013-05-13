@@ -9,14 +9,6 @@ from Bcfg2.Client import prompt
 from Bcfg2.Compat import any, all, cmp  # pylint: disable=W0622
 
 
-def cmpent(ent1, ent2):
-    """Sort entries."""
-    if ent1.tag != ent2.tag:
-        return cmp(ent1.tag, ent2.tag)
-    else:
-        return cmp(ent1.get('name'), ent2.get('name'))
-
-
 def matches_entry(entryspec, entry):
     """ Determine if the Decisions-style entry specification matches
     the entry.  Both are tuples of (tag, name).  The entryspec can
@@ -155,7 +147,7 @@ class Frame(object):
     def promptFilter(self, msg, entries):
         """Filter a supplied list based on user input."""
         ret = []
-        entries.sort(cmpent)
+        entries.sort(key=lambda e: e.tag + ":" + e.get('name'))
         for entry in entries[:]:
             if entry in self.unhandled:
                 # don't prompt for entries that can't be installed
