@@ -9,6 +9,9 @@ import lxml.etree
 import fcntl
 import termios
 import struct
+from Bcfg2.Compat import walk_packages
+
+plugins = [m[1] for m in walk_packages(path=__path__)]
 
 
 def _ioctl_GWINSZ(fd):  # pylint: disable=C0103
@@ -253,14 +256,14 @@ class ErrorHandler(object):
                     logfunc(line)
 
 
-class ServerlessPlugin(Plugin):
+class ServerlessPlugin(Plugin):  # pylint: disable=W0223
     """ Base class for bcfg2-lint plugins that are run before the
     server starts up (i.e., plugins that check things that may prevent
     the server from starting up). """
     pass
 
 
-class ServerPlugin(Plugin):
+class ServerPlugin(Plugin):  # pylint: disable=W0223
     """ Base class for bcfg2-lint plugins that check things that
     require the running Bcfg2 server. """
 

@@ -93,7 +93,7 @@ def load_plugins(setup):
     elif setup['lint_plugins']:
         plugin_list = setup['lint_plugins']
     else:
-        plugin_list = Bcfg2.Server.Lint.__all__
+        plugin_list = Bcfg2.Server.Lint.plugins
 
     allplugins = dict()
     for plugin in plugin_list:
