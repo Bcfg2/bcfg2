@@ -11,7 +11,7 @@ import termios
 import struct
 from Bcfg2.Compat import walk_packages
 
-plugins = [m[1] for m in walk_packages(path=__path__)]
+plugins = [m[1] for m in walk_packages(path=__path__)]  # pylint: disable=C0103
 
 
 def _ioctl_GWINSZ(fd):  # pylint: disable=C0103
