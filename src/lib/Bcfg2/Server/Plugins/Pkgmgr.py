@@ -177,7 +177,10 @@ class Pkgmgr(Bcfg2.Server.Plugin.PrioDir):
 
 
 class PkgmgrLint(Bcfg2.Server.Lint.ServerlessPlugin):
-    """ find duplicate Pkgmgr entries with the same priority """
+    """ Find duplicate :ref:`Pkgmgr
+    <server-plugins-generators-pkgmgr>` entries with the same
+    priority. """
+
     def Run(self):
         pset = set()
         for pfile in glob.glob(os.path.join(self.config['repo'], 'Pkgmgr',
@@ -202,12 +205,13 @@ class PkgmgrLint(Bcfg2.Server.Lint.ServerlessPlugin):
                     # check if package is already listed with same
                     # priority, type, grp
                     if ptuple in pset:
-                        self.LintError("duplicate-package",
-                                       "Duplicate Package %s, priority:%s, type:%s" %
-                                         (pkg.get('name'), priority, ptype))
+                        self.LintError(
+                            "duplicate-package",
+                            "Duplicate Package %s, priority:%s, type:%s" %
+                            (pkg.get('name'), priority, ptype))
                     else:
                         pset.add(ptuple)
-    
+
     @classmethod
     def Errors(cls):
-        return {"duplicate-packages":"error"}
+        return {"duplicate-packages": "error"}

@@ -129,7 +129,12 @@ class GroupPatterns(Bcfg2.Server.Plugin.Plugin,
 
 
 class GroupPatternsLint(Bcfg2.Server.Lint.ServerPlugin):
-    """ bcfg2-lint plugin for GroupPatterns """
+    """ ``bcfg2-lint`` plugin to check all given :ref:`GroupPatterns
+    <server-plugins-grouping-grouppatterns>` patterns for validity.
+    This is simply done by trying to create a
+    :class:`Bcfg2.Server.Plugins.GroupPatterns.PatternMap` object for
+    each pattern, and catching exceptions and presenting them as
+    ``bcfg2-lint`` errors."""
 
     def Run(self):
         cfg = self.core.plugins['GroupPatterns'].config

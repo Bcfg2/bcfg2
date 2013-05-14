@@ -1,4 +1,5 @@
-""" Ensure that the repo validates """
+""" Ensure that all XML files in the Bcfg2 repository validate
+according to their respective schemas. """
 
 import os
 import sys
@@ -10,10 +11,19 @@ import Bcfg2.Server.Lint
 
 
 class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
-    """ Ensure that the repo validates """
+    """ Ensure that all XML files in the Bcfg2 repository validate
+    according to their respective schemas. """
 
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerlessPlugin.__init__(self, *args, **kwargs)
+
+        #: A dict of <file glob>: <schema file> that maps files in the
+        #: Bcfg2 specification to their schemas.  The globs are
+        #: extended :mod:`fnmatch` globs that also support ``**``,
+        #: which matches any number of any characters, including
+        #: forward slashes.  The schema files are relative to the
+        #: schema directory, which can be controlled by the
+        #: ``bcfg2-lint --schema`` option.
         self.filesets = \
             {"Metadata/groups.xml": "metadata.xsd",
              "Metadata/clients.xml": "clients.xsd",
@@ -76,7 +86,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                 "input-output-error": "error"}
 
     def check_properties(self):
-        """ check Properties files against their schemas """
+        """ Check Properties files against their schemas. """
         for filename in self.filelists['props']:
             schemafile = "%s.xsd" % os.path.splitext(filename)[0]
             if os.path.exists(schemafile):
@@ -90,7 +100,11 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
     def parse(self, filename):
         """ Parse an XML file, raising the appropriate LintErrors if
         it can't be parsed or read.  Return the
-        lxml.etree._ElementTree parsed from the file. """
+        lxml.etree._ElementTree parsed from the file.
+
+        :param filename: The full path to the file to parse
+        :type filename: string
+        :returns: lxml.etree._ElementTree - the parsed data"""
         try:
             return lxml.etree.parse(filename)
         except SyntaxError:
@@ -106,8 +120,20 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             return False
 
     def validate(self, filename, schemafile, schema=None):
-        """validate a file against the given lxml.etree.Schema.
-        return True on success, False on failure """
+        """ Validate a file against the given schema.
+
+        :param filename: The full path to the file to validate
+        :type filename: string
+        :param schemafile: The full path to the schema file to
+                           validate against
+        :type schemafile: string
+        :param schema: The loaded schema to validate against.  This
+                       can be used to avoid parsing a single schema
+                       file for every file that needs to be validate
+                       against it.
+        :type schema: lxml.etree.Schema
+        :returns: bool - True if the file validates, false otherwise
+        """
         if schema is None:
             # if no schema object was provided, instantiate one
             schema = self._load_schema(schemafile)
@@ -131,7 +157,14 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         return True
 
     def get_filelists(self):
-        """ get lists of different kinds of files to validate """
+        """ Get lists of different kinds of files to validate.  This
+        doesn't return anything, but it sets
+        :attr:`Bcfg2.Server.Lint.Validate.Validate.filelists` to a
+        dict whose keys are path globs given in
+        :attr:`Bcfg2.Server.Lint.Validate.Validate.filesets` and whose
+        values are lists of the full paths to all files in the Bcfg2
+        repository (or given with ``bcfg2-lint --stdin``) that match
+        the glob."""
         if self.files is not None:
             listfiles = lambda p: fnmatch.filter(self.files,
                                                  os.path.join('*', p))
@@ -158,7 +191,13 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         self.filelists['props'] = listfiles("Properties/*.xml")
 
     def _load_schema(self, filename):
-        """ load an XML schema document, returning the Schema object """
+        """ Load an XML schema document, returning the Schema object
+        and raising appropriate lint errors on failure.
+
+        :param filename: The full path to the schema file to load.
+        :type filename: string
+        :returns: lxml.etree.Schema - The loaded schema data
+        """
         try:
             return lxml.etree.XMLSchema(lxml.etree.parse(filename))
         except IOError:

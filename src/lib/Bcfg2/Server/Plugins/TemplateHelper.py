@@ -97,7 +97,18 @@ class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
 
 
 class TemplateHelperLint(Bcfg2.Server.Lint.ServerPlugin):
-    """ find duplicate Pkgmgr entries with the same priority """
+    """ ``bcfg2-lint`` plugin to ensure that all :ref:`TemplateHelper
+    <server-plugins-connectors-templatehelper>` modules are valid.
+    This can check for:
+
+    * A TemplateHelper module that cannot be imported due to syntax or
+      other compile-time errors;
+    * A TemplateHelper module that does not have an ``__export__``
+      attribute, or whose ``__export__`` is not a list;
+    * Bogus symbols listed in ``__export__``, including symbols that
+      don't exist, that are reserved, or that start with underscores.
+    """
+
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerPlugin.__init__(self, *args, **kwargs)
         self.reserved_keywords = dir(HelperModule("foo.py"))
@@ -108,7 +119,11 @@ class TemplateHelperLint(Bcfg2.Server.Lint.ServerPlugin):
                 self.check_helper(helper.name)
 
     def check_helper(self, helper):
-        """ check a helper module for export errors """
+        """ Check a single helper module.
+
+        :param helper: The filename of the helper module
+        :type helper: string
+        """
         module_name = MODULE_RE.search(helper).group(1)
 
         try:

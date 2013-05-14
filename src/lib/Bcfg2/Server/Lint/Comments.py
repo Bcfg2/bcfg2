@@ -1,8 +1,9 @@
-""" check files for various required comments """
+""" Check files for various required comments. """
 
 import os
 import lxml.etree
 import Bcfg2.Server.Lint
+from Bcfg2.Server import XI_NAMESPACE
 from Bcfg2.Server.Plugins.Cfg.CfgPlaintextGenerator \
     import CfgPlaintextGenerator
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
@@ -11,7 +12,10 @@ from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
 
 
 class Comments(Bcfg2.Server.Lint.ServerPlugin):
-    """ check files for various required headers """
+    """ The Comments lint plugin checks files for header comments that
+    give information about the files.  For instance, you can require
+    SVN keywords in a comment, or require the name of the maintainer
+    of a Genshi template, and so on. """
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerPlugin.__init__(self, *args, **kwargs)
         self.config_cache = {}
@@ -27,21 +31,43 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
     def Errors(cls):
         return {"unexpanded-keywords": "warning",
                 "keywords-not-found": "warning",
-                "comments-not-found": "warning"}
+                "comments-not-found": "warning",
+                "broken-xinclude-chain": "warning"}
 
     def required_keywords(self, rtype):
-        """ given a file type, fetch the list of required VCS keywords
-        from the bcfg2-lint config """
+        """ Given a file type, fetch the list of required VCS keywords
+        from the bcfg2-lint config.  Valid file types are documented
+        in :manpage:`bcfg2-lint.conf(5)`.
+
+        :param rtype: The file type
+        :type rtype: string
+        :returns: list - the required items
+        """
         return self.required_items(rtype, "keyword")
 
     def required_comments(self, rtype):
-        """ given a file type, fetch the list of required comments
-        from the bcfg2-lint config """
+        """ Given a file type, fetch the list of required comments
+        from the bcfg2-lint config.  Valid file types are documented
+        in :manpage:`bcfg2-lint.conf(5)`.
+
+        :param rtype: The file type
+        :type rtype: string
+        :returns: list - the required items
+        """
         return self.required_items(rtype, "comment")
 
     def required_items(self, rtype, itype):
-        """ given a file type and item type (comment or keyword),
-        fetch the list of required items from the bcfg2-lint config """
+        """ Given a file type and item type (``comment`` or
+        ``keyword``), fetch the list of required items from the
+        bcfg2-lint config.  Valid file types are documented in
+        :manpage:`bcfg2-lint.conf(5)`.
+
+        :param rtype: The file type
+        :type rtype: string
+        :param itype: The item type (``comment`` or ``keyword``)
+        :type itype: string
+        :returns: list - the required items
+        """
         if itype not in self.config_cache:
             self.config_cache[itype] = {}
 
@@ -62,7 +88,7 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
         return self.config_cache[itype][rtype]
 
     def check_bundles(self):
-        """ check bundle files for required headers """
+        """ Check bundle files for required comments. """
         if 'Bundler' in self.core.plugins:
             for bundle in self.core.plugins['Bundler'].entries.values():
                 xdata = None
@@ -78,15 +104,41 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                 self.check_xml(bundle.name, xdata, rtype)
 
     def check_properties(self):
-        """ check properties files for required headers """
+        """ Check Properties files for required comments. """
         if 'Properties' in self.core.plugins:
             props = self.core.plugins['Properties']
             for propfile, pdata in props.entries.items():
                 if os.path.splitext(propfile)[1] == ".xml":
                     self.check_xml(pdata.name, pdata.xdata, 'properties')
 
+    def has_all_xincludes(self, mfile):
+        """ Return True if :attr:`Bcfg2.Server.Lint.Plugin.files`
+        includes all XIncludes listed in the specified metadata type,
+        false otherwise. In other words, this returns True if
+        bcfg2-lint is dealing with complete metadata.
+
+        :param mfile: The metadata file ("clients.xml" or
+                      "groups.xml") to check for XIncludes
+        :type mfile: string
+        :returns: bool
+        """
+        if self.files is None:
+            return True
+        else:
+            path = os.path.join(self.metadata.data, mfile)
+            if path in self.files:
+                xdata = lxml.etree.parse(path)
+                for el in xdata.findall('./%sinclude' % XI_NAMESPACE):
+                    if not self.has_all_xincludes(el.get('href')):
+                        self.LintError("broken-xinclude-chain",
+                                       "Broken XInclude chain: could not "
+                                       "include %s" % path)
+                        return False
+
+                return True
+
     def check_metadata(self):
-        """ check metadata files for required headers """
+        """ Check Metadata files for required comments. """
         if self.has_all_xincludes("groups.xml"):
             self.check_xml(os.path.join(self.metadata.data, "groups.xml"),
                            self.metadata.groups_xml.data,
@@ -97,7 +149,8 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                            "metadata")
 
     def check_cfg(self):
-        """ check Cfg files and info.xml files for required headers """
+        """ Check Cfg files and ``info.xml`` files for required
+        comments. """
         if 'Cfg' in self.core.plugins:
             for entryset in self.core.plugins['Cfg'].entries.values():
                 for entry in entryset.entries.values():
@@ -117,29 +170,57 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                         self.check_plaintext(entry.name, entry.data, rtype)
 
     def check_probes(self):
-        """ check probes for required headers """
+        """ Check Probes for required comments """
         if 'Probes' in self.core.plugins:
             for probe in self.core.plugins['Probes'].probes.entries.values():
                 self.check_plaintext(probe.name, probe.data, "probes")
 
     def check_xml(self, filename, xdata, rtype):
-        """ check generic XML files for required headers """
+        """ Generic check to check an XML file for required comments.
+
+        :param filename: The filename
+        :type filename: string
+        :param xdata: The file data
+        :type xdata: lxml.etree._Element
+        :param rtype: The type of file.  Available types are
+                      documented in :manpage:`bcfg2-lint.conf(5)`.
+        :type rtype: string
+        """
         self.check_lines(filename,
                          [str(el)
                           for el in xdata.getiterator(lxml.etree.Comment)],
                          rtype)
 
     def check_plaintext(self, filename, data, rtype):
-        """ check generic plaintext files for required headers """
+        """ Generic check to check a plain text file for required
+        comments.
+
+        :param filename: The filename
+        :type filename: string
+        :param data: The file data
+        :type data: string
+        :param rtype: The type of file.  Available types are
+                      documented in :manpage:`bcfg2-lint.conf(5)`.
+        :type rtype: string
+        """
         self.check_lines(filename, data.splitlines(), rtype)
 
     def check_lines(self, filename, lines, rtype):
-        """ generic header check for a set of lines """
+        """ Generic header check for a set of lines.
+
+        :param filename: The filename
+        :type filename: string
+        :param lines: The data to check
+        :type lines: list of strings
+        :param rtype: The type of file.  Available types are
+                      documented in :manpage:`bcfg2-lint.conf(5)`.
+        :type rtype: string
+        """
         if self.HandlesFile(filename):
             # found is trivalent:
-            # False == not found
-            # None == found but not expanded
-            # True == found and expanded
+            # False == keyword not found
+            # None == keyword found but not expanded
+            # True == keyword found and expanded
             found = dict((k, False) for k in self.required_keywords(rtype))
 
             for line in lines:

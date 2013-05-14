@@ -144,10 +144,10 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
 
 
 class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
-    """ Perform various bundle checks """
+    """ Perform various :ref:`Bundler
+    <server-plugins-structures-bundler-index>` checks. """
 
     def Run(self):
-        """ run plugin """
         self.missing_bundles()
         for bundle in self.core.plugins['Bundler'].entries.values():
             if (self.HandlesFile(bundle.name) and
@@ -161,7 +161,8 @@ class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
                 "inconsistent-bundle-name": "warning"}
 
     def missing_bundles(self):
-        """ find bundles listed in Metadata but not implemented in Bundler """
+        """ Find bundles listed in Metadata but not implemented in
+        Bundler. """
         if self.files is None:
             # when given a list of files on stdin, this check is
             # useless, so skip it
@@ -180,7 +181,11 @@ class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
                                    bundle)
 
     def bundle_names(self, bundle):
-        """ verify bundle name attribute matches filename """
+        """ Verify bundle name attribute matches filename.
+
+        :param bundle: The bundle to verify
+        :type bundle: Bcfg2.Server.Plugins.Bundler.BundleFile
+        """
         try:
             xdata = lxml.etree.XML(bundle.data)
         except AttributeError:

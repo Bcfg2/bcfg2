@@ -9,10 +9,6 @@ import lxml.etree
 import fcntl
 import termios
 import struct
-from Bcfg2.Server import XI_NAMESPACE
-from Bcfg2.Compat import walk_packages
-
-__all__ = [m[1] for m in walk_packages(path=__path__)]
 
 
 def _ioctl_GWINSZ(fd):  # pylint: disable=C0103
@@ -45,30 +41,56 @@ def get_termsize():
 
 
 class Plugin(object):
-    """ base class for ServerlessPlugin and ServerPlugin """
+    """ Base class for all bcfg2-lint plugins """
 
     def __init__(self, config, errorhandler=None, files=None):
+        """
+        :param config: A :mod:`Bcfg2.Options` setup dict
+        :type config: dict
+        :param errorhandler: A :class:`Bcfg2.Server.Lint.ErrorHandler`
+                             that will be used to handle lint errors.
+                             If one is not provided, a new one will be
+                             instantiated.
+        :type errorhandler: Bcfg2.Server.Lint.ErrorHandler
+        :param files: A list of files to run bcfg2-lint against.  (See
+                      the bcfg2-lint ``--stdin`` option.)
+        :type files: list of strings
+        """
+
+        #: The list of files that bcfg2-lint should be run against
         self.files = files
+
+        #: The Bcfg2.Options setup dict
         self.config = config
+
         self.logger = logging.getLogger('bcfg2-lint')
         if errorhandler is None:
+            #: The error handler
             self.errorhandler = ErrorHandler()
         else:
             self.errorhandler = errorhandler
         self.errorhandler.RegisterErrors(self.Errors())
 
     def Run(self):
-        """ run the plugin.  must be overloaded by child classes """
-        pass
+        """ Run the plugin.  Must be overloaded by child classes. """
+        raise NotImplementedError
 
     @classmethod
     def Errors(cls):
-        """ returns a dict of errors the plugin supplies.  must be
-        overloaded by child classes """
+        """ Returns a dict of errors the plugin supplies, in a format
+        suitable for passing to
+        :func:`Bcfg2.Server.Lint.ErrorHandler.RegisterErrors`.
+
+        Must be overloaded by child classes.
+
+        :returns: dict
+        """
+        raise NotImplementedError
 
     def HandlesFile(self, fname):
-        """ returns true if the given file should be handled by the
-        plugin according to the files list, false otherwise """
+        """ Returns True if the given file should be handled by the
+        plugin according to :attr:`Bcfg2.Server.Lint.Plugin.files`,
+        False otherwise. """
         return (self.files is None or
                 fname in self.files or
                 os.path.join(self.config['repo'], fname) in self.files or
@@ -77,12 +99,27 @@ class Plugin(object):
                                              fname)) in self.files)
 
     def LintError(self, err, msg):
-        """ record an error in the lint process """
+        """ Raise an error from the lint process.
+
+        :param err: The name of the error being raised.  This name
+                    must be a key in the dict returned by
+                    :func:`Bcfg2.Server.Lint.Plugin.Errors`.
+        :type err: string
+        :param msg: The freeform message to display to the end user.
+        :type msg: string
+        """
         self.errorhandler.dispatch(err, msg)
 
     def RenderXML(self, element, keep_text=False):
-        """render an XML element for error output -- line number
-        prefixed, no children"""
+        """ Render an XML element for error output.  This prefixes the
+        line number and removes children for nicer display.
+
+        :param element: The element to render
+        :type element: lxml.etree._Element
+        :param keep_text: Do not discard text content from the element
+                          for display
+        :type keep_text: boolean
+        """
         xml = None
         if len(element) or element.text:
             el = copy(element)
@@ -100,11 +137,18 @@ class Plugin(object):
         return "   line %s: %s" % (element.sourceline, xml)
 
 
-class ErrorHandler (object):
-    """ a class to handle errors for bcfg2-lint plugins """
+class ErrorHandler(object):
+    """ A class to handle errors for bcfg2-lint plugins """
 
-    def __init__(self, config=None):
+    def __init__(self, errors=None):
+        """
+        :param config: An initial dict of errors to register
+        :type config: dict
+        """
+        #: The number of errors passed to this error handler
         self.errors = 0
+
+        #: The number of warnings passed to this error handler
         self.warnings = 0
 
         self.logger = logging.getLogger('bcfg2-lint')
@@ -114,17 +158,25 @@ class ErrorHandler (object):
             twrap = textwrap.TextWrapper(initial_indent="  ",
                                          subsequent_indent="  ",
                                          width=termsize[0])
+            #: A function to wrap text to the width of the terminal
             self._wrapper = twrap.wrap
         else:
             self._wrapper = lambda s: [s]
 
+        #: A dict of registered errors
         self.errortypes = dict()
-        if config is not None:
-            self.RegisterErrors(dict(config.items()))
+        if errors is not None:
+            self.RegisterErrors(dict(errors.items()))
 
     def RegisterErrors(self, errors):
-        """ Register a dict of errors (name: default level) that a
-        plugin may raise """
+        """ Register a dict of errors that a plugin may raise.  The
+        keys of the dict are short strings that describe each error;
+        the values are the default error handling for that error
+        ("error", "warning", or "silent").
+
+        :param errors: The error dict
+        :type errors: dict
+        """
         for err, action in errors.items():
             if err not in self.errortypes:
                 if "warn" in action:
@@ -135,7 +187,16 @@ class ErrorHandler (object):
                     self.errortypes[err] = self.debug
 
     def dispatch(self, err, msg):
-        """ Dispatch an error to the correct handler """
+        """ Dispatch an error to the correct handler.
+
+        :param err: The name of the error being raised.  This name
+                    must be a key in
+                    :attr:`Bcfg2.Server.Lint.ErrorHandler.errortypes`,
+                    the dict of registered errors.
+        :type err: string
+        :param msg: The freeform message to display to the end user.
+        :type msg: string
+        """
         if err in self.errortypes:
             self.errortypes[err](msg)
             self.logger.debug("    (%s)" % err)
@@ -145,22 +206,34 @@ class ErrorHandler (object):
             self.logger.warning("Unknown error %s" % err)
 
     def error(self, msg):
-        """ log an error condition """
+        """ Log an error condition.
+
+        :param msg: The freeform message to display to the end user.
+        :type msg: string
+        """
         self.errors += 1
         self._log(msg, self.logger.error, prefix="ERROR: ")
 
     def warn(self, msg):
-        """ log a warning condition """
+        """ Log a warning condition.
+
+        :param msg: The freeform message to display to the end user.
+        :type msg: string
+        """
         self.warnings += 1
         self._log(msg, self.logger.warning, prefix="WARNING: ")
 
     def debug(self, msg):
-        """ log a silent/debug condition """
+        """ Log a silent/debug condition.
+
+        :param msg: The freeform message to display to the end user.
+        :type msg: string
+        """
         self._log(msg, self.logger.debug)
 
     def _log(self, msg, logfunc, prefix=""):
         """ Generic log function that logs a message with the given
-        function after wrapping it for the terminal width """
+        function after wrapping it for the terminal width. """
         # a message may itself consist of multiple lines.  wrap() will
         # elide them all into a single paragraph, which we don't want.
         # so we split the message into its paragraphs and wrap each
@@ -180,37 +253,37 @@ class ErrorHandler (object):
                     logfunc(line)
 
 
-class ServerlessPlugin (Plugin):
-    """ base class for plugins that are run before the server starts
-    up (i.e., plugins that check things that may prevent the server
-    from starting up) """
+class ServerlessPlugin(Plugin):
+    """ Base class for bcfg2-lint plugins that are run before the
+    server starts up (i.e., plugins that check things that may prevent
+    the server from starting up). """
     pass
 
 
-class ServerPlugin (Plugin):
-    """ base class for plugins that check things that require the
-    running Bcfg2 server """
-    def __init__(self, core, config, **kwargs):
-        Plugin.__init__(self, config, **kwargs)
+class ServerPlugin(Plugin):
+    """ Base class for bcfg2-lint plugins that check things that
+    require the running Bcfg2 server. """
+
+    def __init__(self, core, config, errorhandler=None, files=None):
+        """
+        :param core: The Bcfg2 server core
+        :type core: Bcfg2.Server.Core.BaseCore
+        :param config: A :mod:`Bcfg2.Options` setup dict
+        :type config: dict
+        :param errorhandler: A :class:`Bcfg2.Server.Lint.ErrorHandler`
+                             that will be used to handle lint errors.
+                             If one is not provided, a new one will be
+                             instantiated.
+        :type errorhandler: Bcfg2.Server.Lint.ErrorHandler
+        :param files: A list of files to run bcfg2-lint against.  (See
+                      the bcfg2-lint ``--stdin`` option.)
+        :type files: list of strings
+        """
+        Plugin.__init__(self, config, errorhandler=errorhandler, files=files)
+
+        #: The server core
         self.core = core
         self.logger = self.core.logger
+
+        #: The metadata plugin
         self.metadata = self.core.metadata
-        self.errorhandler.RegisterErrors({"broken-xinclude-chain": "warning"})
-
-    def has_all_xincludes(self, mfile):
-        """ return true if self.files includes all XIncludes listed in
-        the specified metadata type, false otherwise"""
-        if self.files is None:
-            return True
-        else:
-            path = os.path.join(self.metadata.data, mfile)
-            if path in self.files:
-                xdata = lxml.etree.parse(path)
-                for el in xdata.findall('./%sinclude' % XI_NAMESPACE):
-                    if not self.has_all_xincludes(el.get('href')):
-                        self.LintError("broken-xinclude-chain",
-                                       "Broken XInclude chain: could not "
-                                       "include %s" % path)
-                        return False
-
-                return True

@@ -58,10 +58,10 @@ def run_plugin(plugin, plugin_name, setup=None, errorhandler=None,
 def get_errorhandler(setup):
     """ get a Bcfg2.Server.Lint.ErrorHandler object """
     if setup.cfp.has_section("errors"):
-        conf = dict(setup.cfp.items("errors"))
+        errors = dict(setup.cfp.items("errors"))
     else:
-        conf = None
-    return Bcfg2.Server.Lint.ErrorHandler(config=conf)
+        errors = None
+    return Bcfg2.Server.Lint.ErrorHandler(errors=errors)
 
 
 def load_server(setup):
