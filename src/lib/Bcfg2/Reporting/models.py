@@ -211,18 +211,24 @@ class Interaction(models.Model):
     def bad(self):
         rv = []
         for entry in self.entry_types:
+            if entry == 'failures':
+              continue
             rv.extend(getattr(self, entry).filter(state=TYPE_BAD))
         return rv
 
     def modified(self):
         rv = []
         for entry in self.entry_types:
+            if entry == 'failures':
+              continue
             rv.extend(getattr(self, entry).filter(state=TYPE_MODIFIED))
         return rv
 
     def extra(self):
         rv = []
         for entry in self.entry_types:
+            if entry == 'failures':
+              continue
             rv.extend(getattr(self, entry).filter(state=TYPE_EXTRA))
         return rv
 
