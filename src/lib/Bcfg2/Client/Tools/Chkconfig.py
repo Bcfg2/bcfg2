@@ -65,16 +65,19 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         self.cmd.run("/sbin/chkconfig --add %s" % (entry.attrib['name']))
         self.logger.info("Installing Service %s" % (entry.get('name')))
         rv = True
-        if entry.get('status') == 'off':
+        if (entry.get('status') == 'off' or
+            self.setup["servicemode"] == "build"):
             rv &= self.cmd.run((rcmd + " --level 0123456") %
                                (entry.get('name'),
                                 entry.get('status'))).success
-            if entry.get("current_status") == "on":
+            if entry.get("current_status") == "on" and \
+               self.setup["servicemode"] != "disabled":
                 rv &= self.stop_service(entry).success
         else:
             rv &= self.cmd.run(rcmd % (entry.get('name'),
                                        entry.get('status'))).success
-            if entry.get("current_status") == "off":
+            if entry.get("current_status") == "off" and \
+               self.setup["servicemode"] != "disabled":
                 rv &= self.start_service(entry).success
         return rv
 

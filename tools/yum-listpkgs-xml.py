@@ -39,5 +39,5 @@ try:
     sys.argv = [sys.argv[0], '-d', '0', 'list']
     yummain.main(sys.argv[1:])
 except KeyboardInterrupt:
-    print("\n\nExiting on user cancel.", file=sys.stderr)
+    sys.stderr.write("\n\nExiting on user cancel.")
     sys.exit(1)

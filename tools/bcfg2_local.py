@@ -19,7 +19,8 @@ class LocalCore(BaseCore):
         setup['logging'] = None
         Bcfg2.Server.Core.BaseCore.__init__(self, setup=setup)
         setup['syslog'], setup['logging'] = saved
-        self.fam.handle_events_in_interval(4)
+        self.load_plugins()
+        self.fam.handle_events_in_interval(0.1)
 
     def _daemonize(self):
         return True

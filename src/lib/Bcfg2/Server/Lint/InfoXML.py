@@ -1,4 +1,4 @@
-""" ensure that all config files have an info.xml file"""
+""" Ensure that all config files have a valid info.xml file. """
 
 import os
 import Bcfg2.Options
@@ -7,7 +7,14 @@ from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
 
 
 class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
-    """ ensure that all config files have an info.xml file"""
+    """ Ensure that all config files have a valid info.xml file. This
+    plugin can check for:
+
+    * Missing ``info.xml`` files;
+    * Use of deprecated ``info``/``:info`` files;
+    * Paranoid mode disabled in an ``info.xml`` file;
+    * Required attributes missing from ``info.xml``
+    """
     def Run(self):
         if 'Cfg' not in self.core.plugins:
             return
@@ -29,11 +36,10 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
     def Errors(cls):
         return {"no-infoxml": "warning",
                 "paranoid-false": "warning",
-                "broken-xinclude-chain": "warning",
                 "required-infoxml-attrs-missing": "error"}
 
     def check_infoxml(self, fname, xdata):
-        """ verify that info.xml contains everything it should """
+        """ Verify that info.xml contains everything it should. """
         for info in xdata.getroottree().findall("//Info"):
             required = []
             if "required_attrs" in self.config:

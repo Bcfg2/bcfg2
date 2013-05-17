@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 _our_backend = None
 
+
 def _quote(value):
     """
     Quote a string to use as a table name or column
@@ -44,12 +45,12 @@ def _migrate_perms():
     fperms = {}
 
     logger.info("Creating FilePerms objects")
-    for data in ( ('owner', 'group', 'perms'), 
+    for data in (('owner', 'group', 'perms'),
             ('current_owner', 'current_group', 'current_perms')):
         for grp in legacy_models.Reason.objects.values_list(*data).distinct():
             if grp in fperms:
                 continue
-            fp =  new_models.FilePerms(owner=grp[0], group=grp[1], mode=grp[2])
+            fp = new_models.FilePerms(owner=grp[0], group=grp[1], mode=grp[2])
             fp.save()
             fperms[grp] = fp
 
@@ -60,7 +61,7 @@ def _migrate_perms():
 def _migrate_transaction(inter, entries, fperms):
     """helper"""
 
-    logger.debug("Migrating interaction %s for %s" % 
+    logger.debug("Migrating interaction %s for %s" %
         (inter.id, inter.client.name))
 
     newint = new_models.Interaction(id=inter.id,
@@ -107,7 +108,7 @@ def _migrate_transaction(inter, entries, fperms):
         elif ent.kind == 'Package':
             act_dict['target_version'] = ei.reason.version
             act_dict['current_version'] = ei.reason.current_version
-            logger.debug("Adding package %s %s" % 
+            logger.debug("Adding package %s %s" %
                 (name, act_dict['target_version']))
             updates['packages'].append(new_models.PackageEntry.entry_get_or_create(act_dict))
         elif ent.kind == 'Path':
@@ -116,7 +117,7 @@ def _migrate_transaction(inter, entries, fperms):
 
             act_dict['target_perms'] = fperms[(
                 ei.reason.owner,
-                ei.reason.group, 
+                ei.reason.group,
                 ei.reason.perms
             )]
 
@@ -141,7 +142,6 @@ def _migrate_transaction(inter, entries, fperms):
                 act_dict['detail_type'] = new_models.PathEntry.DETAIL_PRUNED
                 act_dict['details'] = ei.reason.unpruned
 
-            
             if ei.reason.is_sensitive:
                 act_dict['detail_type'] = new_models.PathEntry.DETAIL_SENSITIVE
             elif ei.reason.is_binary:
@@ -164,7 +164,7 @@ def _migrate_transaction(inter, entries, fperms):
     for entry_type in updates.keys():
         i = 0
         while(i < len(updates[entry_type])):
-            getattr(newint, entry_type).add(*updates[entry_type][i:i+100])
+            getattr(newint, entry_type).add(*updates[entry_type][i:i + 100])
             i += 100
 
     for perf in inter.performance_items.all():
@@ -220,8 +220,8 @@ def _restructure():
 
     # run any migrations from the previous schema
     try:
-      from Bcfg2.Server.Reports.updatefix import update_database
-      update_database()
+        from Bcfg2.Server.Reports.updatefix import update_database
+        update_database()
     except:
         logger.error("Failed to run legacy schema updates", exc_info=1)
         return False
@@ -295,4 +295,3 @@ if __name__ == '__main__':
     Reports(setup).__call__(['update'])
 
     _restructure()
-

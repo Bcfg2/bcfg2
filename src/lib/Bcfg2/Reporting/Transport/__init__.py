@@ -2,10 +2,10 @@
 Public transport routines
 """
 
-import traceback
-
+import sys
 from Bcfg2.Reporting.Transport.base import TransportError, \
     TransportImportError
+
 
 def load_transport(transport_name, setup):
     """
@@ -18,13 +18,14 @@ def load_transport(transport_name, setup):
         try:
             mod = __import__(transport_name)
         except:
-            raise TransportImportError("Unavailable")
+            raise TransportImportError("Error importing transport %s: %s" %
+                                       (transport_name, sys.exc_info()[1]))
     try:
-        cls = getattr(mod, transport_name)
-        return cls(setup)
+        return getattr(mod, transport_name)(setup)
     except:
-        raise TransportImportError("Transport unavailable: %s" %
-            traceback.format_exc().splitlines()[-1])
+        raise TransportImportError("Error instantiating transport %s: %s" %
+                                   (transport_name, sys.exc_info()[1]))
+
 
 def load_transport_from_config(setup):
     """Load the transport in the config... eventually"""
@@ -32,4 +33,3 @@ def load_transport_from_config(setup):
         return load_transport(setup['reporting_transport'], setup)
     except KeyError:
         raise TransportImportError('Transport missing in config')
-

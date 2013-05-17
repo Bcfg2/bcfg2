@@ -89,11 +89,28 @@ def u_str(string, encoding=None):
         else:
             return unicode(string)
 
+try:
+    from functools import wraps
+except ImportError:
+    def wraps(wrapped):  # pylint: disable=W0613
+        """ implementation of functools.wraps() for python 2.4 """
+        return lambda f: f
+
+
 # base64 compat
 if sys.hexversion >= 0x03000000:
     from base64 import b64encode as _b64encode, b64decode as _b64decode
-    b64encode = lambda s: _b64encode(s.encode('UTF-8')).decode('UTF-8')
-    b64decode = lambda s: _b64decode(s.encode('UTF-8')).decode('UTF-8')
+
+    @wraps(_b64encode)
+    def b64encode(val, **kwargs):  # pylint: disable=C0111
+        try:
+            return _b64encode(val, **kwargs)
+        except TypeError:
+            return _b64encode(val.encode('UTF-8'), **kwargs).decode('UTF-8')
+
+    @wraps(_b64decode)
+    def b64decode(val, **kwargs):  # pylint: disable=C0111
+        return _b64decode(val.encode('UTF-8'), **kwargs).decode('UTF-8')
 else:
     from base64 import b64encode, b64decode
 
@@ -240,14 +257,6 @@ try:
     from hashlib import md5
 except ImportError:
     from md5 import md5
-
-
-try:
-    from functools import wraps
-except ImportError:
-    def wraps(wrapped):  # pylint: disable=W0613
-        """ implementation of functools.wraps() for python 2.4 """
-        return lambda f: f
 
 
 def oct_mode(mode):

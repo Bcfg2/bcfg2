@@ -42,7 +42,10 @@ def main():
         baseline.append(lxml.etree.Comment("%s entries" % etype))
         extra = handler.FindExtra()
         for entry in extra:
-            entry.tag = "Bound%s" % etype
+            if etype != "SEModule":
+                entry.tag = "Bound%s" % etype
+            else:
+                entry.tag = "%s" % etype
         baseline.extend(extra)
 
     print(lxml.etree.tostring(baseline, pretty_print=True))

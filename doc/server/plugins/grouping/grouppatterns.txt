@@ -8,7 +8,7 @@ GroupPatterns
 
 The GroupPatterns plugin is a connector that can assign clients
 group membership pased on patterns in client hostnames. Two basic
-methods are supported: 
+methods are supported:
 
 - regular expressions (NamePatterns)
 - ranges (NameRange)
@@ -20,7 +20,7 @@ Setup
 =====
 
 #. Enable the GroupPatterns plugin
-#. Create the GroupPatterns/config.xml file (similar to the example below).
+#. Create the ``GroupPatterns/config.xml`` file (similar to the example below).
 #. Client groups will be augmented based on the specification
 
 Pattern Types
@@ -52,7 +52,7 @@ Examples
       </GroupPattern>
       <GroupPattern>
         <NamePattern>(.*)</NamePattern>
-        <Group>group-$1'</Group>
+        <Group>group-$1</Group>
       </GroupPattern>
       <GroupPattern>
         <NameRange>node[[1-32]]</NameRange>
@@ -82,15 +82,14 @@ GroupPatterns configuration:
 
     <GroupPatterns>
       <GroupPattern>
-        <NamePattern>^x(\w[^\d|\.]+)\d*\..*</NamePattern>
+        <NamePattern>x(\w[^\d\.]+)\d*\.</NamePattern>
         <Group>$1-server</Group>
       </GroupPattern>
     </GroupPatterns>
 
 Regex explanation:
 
-#. !^x Match any hostname that begins with "x"
-#. (\w[!^\d|\.]+) followed by one or more word characters that are not a decimal digit or "." and save the string to $1
-#. \d* followed by 0 or more decimal digit(s)
-#. \..* followed by a "."
-#. .* followed by 1 or more of anything else.
+#. ``x`` Match any hostname that begins with "x"
+#. ``(\w[!^\d|\.]+)`` followed by one or more word characters that are not a decimal digit or "." and save the string to $1
+#. ``\d*`` followed by 0 or more decimal digit(s)
+#. ``\.`` followed by a literal "."

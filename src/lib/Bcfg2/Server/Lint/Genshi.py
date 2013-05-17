@@ -1,4 +1,4 @@
-""" Check Genshi templates for syntax errors """
+""" Check Genshi templates for syntax errors. """
 
 import sys
 import Bcfg2.Server.Lint
@@ -8,10 +8,9 @@ from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
 
 
 class Genshi(Bcfg2.Server.Lint.ServerPlugin):
-    """ Check Genshi templates for syntax errors """
+    """ Check Genshi templates for syntax errors. """
 
     def Run(self):
-        """ run plugin """
         if 'Cfg' in self.core.plugins:
             self.check_cfg()
         if 'Bundler' in self.core.plugins:
@@ -22,7 +21,7 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
         return {"genshi-syntax-error": "error"}
 
     def check_cfg(self):
-        """ Check genshi templates in Cfg for syntax errors """
+        """ Check genshi templates in Cfg for syntax errors. """
         for entryset in self.core.plugins['Cfg'].entries.values():
             for entry in entryset.entries.values():
                 if (self.HandlesFile(entry.name) and
@@ -37,7 +36,7 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
                                        "Genshi syntax error: %s" % err)
 
     def check_bundler(self):
-        """ Check templates in Bundler for syntax errors """
+        """ Check templates in Bundler for syntax errors. """
         loader = TemplateLoader()
 
         for entry in self.core.plugins['Bundler'].entries.values():

@@ -118,11 +118,11 @@ class Core(BaseCore):
             self.logger.error("Server startup failed: %s" % err)
             self.context.close()
             return False
-        self.server.register_instance(self)
         return True
 
     def _block(self):
         """ Enter the blocking infinite loop. """
+        self.server.register_instance(self)
         try:
             self.server.serve_forever()
         finally:

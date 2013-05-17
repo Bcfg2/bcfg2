@@ -155,6 +155,7 @@ class ClientTest(TestCase):
 def get_core(setup):
     """ Get a server core, with events handled """
     core = Bcfg2.Server.Core.BaseCore(setup)
+    core.load_plugins()
     core.fam.handle_events_in_interval(0.1)
     return core
 

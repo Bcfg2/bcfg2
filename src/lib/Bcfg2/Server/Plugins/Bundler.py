@@ -126,10 +126,10 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
 
 
 class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
-    """ Perform various bundle checks """
+    """ Perform various :ref:`Bundler
+    <server-plugins-structures-bundler-index>` checks. """
 
     def Run(self):
-        """ run plugin """
         self.missing_bundles()
         for bundle in self.core.plugins['Bundler'].entries.values():
             if self.HandlesFile(bundle.name):
@@ -143,7 +143,8 @@ class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
                 "genshi-extension-bundle": "error"}
 
     def missing_bundles(self):
-        """ find bundles listed in Metadata but not implemented in Bundler """
+        """ Find bundles listed in Metadata but not implemented in
+        Bundler. """
         if self.files is None:
             # when given a list of files on stdin, this check is
             # useless, so skip it

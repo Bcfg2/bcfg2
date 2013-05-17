@@ -152,6 +152,10 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         #: this source
         self.whitelist = [item.text for item in xsource.findall('Whitelist')]
 
+        #: Whether or not to include deb-src lines in the generated APT
+        #: configuration
+        self.debsrc = xsource.get('debsrc', 'false') == 'true'
+
         #: A dict of repository options that will be included in the
         #: configuration generated on the server side (if such is
         #: applicable; most backends do not generate any sort of

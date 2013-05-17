@@ -226,8 +226,7 @@ class TestPOSIXUsers(TestTool):
         users.user_supplementary_groups.assert_called_with(entry)
 
         reset()
-        m1 = lxml.etree.SubElement(entry, "MemberOf")
-        m1.text = "wheel"
+        m1 = lxml.etree.SubElement(entry, "MemberOf", group="wheel")
         m2 = lxml.etree.SubElement(entry, "MemberOf")
         m2.text = "users"
         self.assertTrue(users.VerifyPOSIXUser(entry, []))
@@ -236,8 +235,7 @@ class TestPOSIXUsers(TestTool):
         users.user_supplementary_groups.assert_called_with(entry)
 
         reset()
-        m3 = lxml.etree.SubElement(entry, "MemberOf")
-        m3.text = "extra"
+        m3 = lxml.etree.SubElement(entry, "MemberOf", group="extra")
         self.assertFalse(users.VerifyPOSIXUser(entry, []))
         users.populate_user_entry.assert_called_with(entry)
         users._verify.assert_called_with(users.populate_user_entry.return_value)
@@ -371,8 +369,7 @@ class TestPOSIXUsers(TestTool):
         entry = lxml.etree.Element("POSIXUser", name="test", group="test",
                                    home="/home/test", shell="/bin/zsh",
                                    gecos="Test McTest")
-        m1 = lxml.etree.SubElement(entry, "MemberOf")
-        m1.text = "wheel"
+        m1 = lxml.etree.SubElement(entry, "MemberOf", group="wheel")
         m2 = lxml.etree.SubElement(entry, "MemberOf")
         m2.text = "users"
 

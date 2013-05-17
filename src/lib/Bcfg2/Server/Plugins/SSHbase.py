@@ -173,8 +173,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 for name in names[cmeta.hostname]:
                     newnames.add(name.split('.')[0])
                     try:
-                        newips.add(self.get_ipcache_entry(name)[0])
-                    except PluginExecutionError:
+                        newips.update(self.get_ipcache_entry(name)[0])
+                    except:  # pylint: disable=W0702
                         continue
                 names[cmeta.hostname].update(newnames)
                 names[cmeta.hostname].update(cmeta.addresses)
@@ -290,7 +290,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         else:
             # need to add entry
             try:
-                ipaddr = socket.gethostbyname(client)
+                ipaddr = set([info[4][0]
+                              for info in socket.getaddrinfo(client, None)])
                 self.ipcache[client] = (ipaddr, client)
                 return (ipaddr, client)
             except socket.gaierror:

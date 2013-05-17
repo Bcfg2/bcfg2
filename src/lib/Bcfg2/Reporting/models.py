@@ -3,7 +3,7 @@ import sys
 
 from django.core.exceptions import ImproperlyConfigured
 try:
-    from django.db import models
+    from django.db import models, backend, connection
 except ImproperlyConfigured:
     e = sys.exc_info()[1]
     print("Reports: unable to import django models: %s" % e)
@@ -49,6 +49,20 @@ def hash_entry(entry_dict):
     return hash(cPickle.dumps(dataset))
 
 
+_our_backend = None
+def _quote(value):
+    """
+    Quote a string to use as a table name or column
+
+    Newer versions and various drivers require an argument
+    https://code.djangoproject.com/ticket/13630
+    """
+    global _our_backend
+    if not _our_backend:
+        _our_backend = backend.DatabaseOperations(connection)
+    return _our_backend.quote_name(value)
+
+
 class Client(models.Model):
     """Object representing every client we have seen stats for."""
     creation = models.DateTimeField(auto_now_add=True)
@@ -77,16 +91,20 @@ class InteractionManager(models.Manager):
         cursor = connection.cursor()
         cfilter = "expiration is null"
 
-        sql = 'select ri.id, x.client_id from (select client_id, MAX(timestamp) ' + \
-                    'as timer from Reporting_interaction'
+        sql = 'select ri.id, x.client_id from ' + \
+              '(select client_id, MAX(timestamp) as timer from ' + \
+              _quote('Reporting_interaction')
         if maxdate:
             if not isinstance(maxdate, datetime):
                 raise ValueError('Expected a datetime object')
             sql = sql + " where timestamp <= '%s' " % maxdate
             cfilter = "(expiration is null or expiration > '%s') and creation <= '%s'" % (maxdate, maxdate)
-        sql = sql + ' GROUP BY client_id) x, Reporting_interaction ri where ' + \
-                    'ri.client_id = x.client_id AND ri.timestamp = x.timer'
-        sql = sql + " and x.client_id in (select id from Reporting_client where %s)" % cfilter
+        sql = sql + ' GROUP BY client_id) x, ' + \
+                    _quote('Reporting_interaction') + \
+                    ' ri where ri.client_id = x.client_id AND' + \
+                    ' ri.timestamp = x.timer and x.client_id in' + \
+                    ' (select id from %s where %s)' % \
+                    (_quote('Reporting_client'), cfilter)
         try:
             cursor.execute(sql)
             return [item[0] for item in cursor.fetchall()]

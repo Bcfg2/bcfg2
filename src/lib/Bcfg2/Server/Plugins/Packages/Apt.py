@@ -39,6 +39,11 @@ class AptCollection(Collection):
             else:
                 lines.append("deb %s %s %s" % (source.url, source.version,
                                                " ".join(source.components)))
+                if source.debsrc:
+                    lines.append("deb-src %s %s %s" %
+                                 (source.url,
+                                  source.version,
+                                  " ".join(source.components)))
                 lines.append("")
 
         return "\n".join(lines)

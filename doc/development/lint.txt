@@ -1,0 +1,167 @@
+.. -*- mode: rst -*-
+
+.. _development-lint:
+
+===============================
+ bcfg2-lint Plugin Development
+===============================
+
+``bcfg2-lint``, like most parts of Bcfg2, has a pluggable backend that
+lets you easily write your own plugins to verify various parts of your
+Bcfg2 specification.
+
+Plugins are loaded in one of two ways:
+
+* They may be included in a module of the same name as the plugin
+  class in :mod:`Bcfg2.Server.Lint`, e.g.,
+  :mod:`Bcfg2.Server.Lint.Validate`.
+* They may be included directly in a Bcfg2 server plugin, called
+  "<plugin>Lint", e.g.,
+  :class:`Bcfg2.Server.Plugins.Metadata.MetadataLint`.
+
+Plugin Types
+============
+
+There are two types of ``bcfg2-lint`` plugins:
+
+Serverless plugins
+------------------
+
+Serverless plugins are run before ``bcfg2-lint`` starts up a local
+Bcfg2 server, so the amount of introspection they can do is fairly
+limited.  They can directly examine the Bcfg2 specification, of
+course, but they can't examine the entries handled by a given plugin
+or anything that requires a running server.
+
+If a serverless plugin raises a lint error, however, the server will
+not be started and no `Server plugins`_ will be run.  This makes them
+useful to check for the sorts of errors that might prevent the Bcfg2
+server from starting properly.
+
+Serverless plugins must subclass
+:class:`Bcfg2.Server.Lint.ServerlessPlugin`.
+
+:mod:`Bcfg2.Server.Lint.Validate` is an example of a serverless
+plugin.
+
+Server plugins
+--------------
+
+Server plugins are run after a local Bcfg2 server has been started,
+and have full access to all of the parsed data and so on.  Because of
+this, they tend to be easier to use than `Serverless plugins`_, and
+thus are more common.
+
+Server plugins are only run if all `Serverless plugins`_ run
+successfully (i.e., raise no errors).
+
+Server plugins must subclass :class:`Bcfg2.Server.Lint.ServerPlugin`.
+
+:mod:`Bcfg2.Server.Lint.Genshi` is an example of a server plugin.
+
+Error Handling
+==============
+
+The job of a ``bcfg2-lint`` plugin is to find errors.  Each error that
+a plugin may produce must have a name, a short string that briefly
+describes the error and will be used to configure error levels in
+``bcfg2.conf``.  It must also have a default reporting level.
+Possible reporting levels are "error", "warning", or "silent".  All of
+the errors that may be produced by a plugin must be returned as a dict
+by :func:`Bcfg2.Server.Lint.Plugin.Errors`.  For instance, consider
+:func:`Bcfg2.Server.Lint.InfoXML.InfoXML.Errors`:
+
+.. code-block:: python
+
+    @classmethod
+    def Errors(cls):
+        return {"no-infoxml": "warning",
+                "deprecated-info-file": "warning",
+                "paranoid-false": "warning",
+                "required-infoxml-attrs-missing": "error"}
+
+This means that the :class:`Bcfg2.Server.Lint.InfoXML.InfoXML` lint
+plugin can produce five lint errors, although four of them are just
+warnings by default.
+
+The errors returned by each plugin's ``Errors()`` method will be
+passed to :func:`Bcfg2.Server.Lint.ErrorHandler.RegisterErrors`, which
+will use that information and the information in the config file to
+determine how to display (or not display) each error to the end user.
+
+Errors are produced in a plugin with
+:func:`Bcfg2.Server.Lint.Plugin.LintError`, which takes two arguments:
+the name of the error, which must correspond to a key in the dict
+returned by :func:`Bcfg2.Server.Lint.Plugin.Errors`, and a freeform
+string that will be displayed to the end user.  Note that the error
+name and its display are thus only tied together when the error is
+produced; that is, a single error (by name) can have two completely
+different outputs.
+
+Basics
+======
+
+.. automodule:: Bcfg2.Server.Lint
+
+Existing ``bcfg2-lint`` Plugins
+===============================
+
+BundlerLint
+-----------
+
+.. autoclass:: Bcfg2.Server.Plugins.Bundler.BundlerLint
+
+Comments
+--------
+
+.. automodule:: Bcfg2.Server.Lint.Comments
+
+Genshi
+------
+
+.. automodule:: Bcfg2.Server.Lint.Genshi
+
+GroupNames
+----------
+
+.. automodule:: Bcfg2.Server.Lint.GroupNames
+
+GroupPatternsLint
+-----------------
+
+.. autoclass:: Bcfg2.Server.Plugins.GroupPatterns.GroupPatternsLint
+
+InfoXML
+-------
+
+.. automodule:: Bcfg2.Server.Lint.InfoXML
+
+MergeFiles
+----------
+
+.. automodule:: Bcfg2.Server.Lint.MergeFiles
+
+MetadataLint
+------------
+
+.. autoclass:: Bcfg2.Server.Plugins.Metadata.MetadataLint
+
+PkgmgrLint
+----------
+
+.. autoclass:: Bcfg2.Server.Plugins.Pkgmgr.PkgmgrLint
+
+RequiredAttrs
+-------------
+
+.. automodule:: Bcfg2.Server.Lint.RequiredAttrs
+
+TemplateHelperLint
+------------------
+
+.. autoclass:: Bcfg2.Server.Plugins.TemplateHelper.TemplateHelperLint
+
+Validate
+--------
+
+.. automodule:: Bcfg2.Server.Lint.Validate

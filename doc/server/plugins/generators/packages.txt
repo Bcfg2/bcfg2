@@ -190,7 +190,8 @@ something like this:
       <Group name="ubuntu-intrepid">
         <Source type="apt"
                 url="http://us.archive.ubuntu.com/ubuntu"
-                version="intrepid">
+                version="intrepid"
+                debsrc="true">
           <Component>main</Component>
           <Component>universe</Component>
           <Arch>i386</Arch>
@@ -218,7 +219,7 @@ something like this:
 
     .. warning:: You must regenerate the Packages cache when adding or
                  removing the recommended attribute (``bcfg2-admin xcmd
-		 Packages.Refresh``).
+                 Packages.Refresh``).
 
     .. [#f1] Bcfg2 will by default add **Essential** packages to the
              client specification. You can disable this behavior by

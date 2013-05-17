@@ -346,7 +346,7 @@ class XMLRPCServer(SocketServer.ThreadingMixIn, SSLServer,
         :param register: Presence should be reported to service-location
         :type register: bool
         :param allow_none: Allow None values in XML-RPC
-        :type allow_non: bool
+        :type allow_none: bool
         :param encoding: Encoding to use for XML-RPC
         """
 

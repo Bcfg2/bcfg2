@@ -1,4 +1,4 @@
-""" ensure that all named groups are valid group names """
+""" Ensure that all named groups are valid group names. """
 
 import os
 import re
@@ -6,8 +6,15 @@ import Bcfg2.Server.Lint
 
 
 class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
-    """ ensure that all named groups are valid group names """
+    """ Ensure that all named groups are valid group names. """
+
+    #: A string regex that matches only valid group names.  Currently,
+    #: a group name is considered valid if it contains only
+    #: non-whitespace characters.
     pattern = r'\S+$'
+
+    #: A compiled regex for
+    #: :attr:`Bcfg2.Server.Lint.GroupNames.GroupNames.pattern`
     valid = re.compile(r'^' + pattern)
 
     def Run(self):
@@ -26,7 +33,7 @@ class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
         return {"invalid-group-name": "error"}
 
     def check_rules(self):
-        """ Check groups used in the Rules plugin for validity """
+        """ Check groups used in the Rules plugin for validity. """
         for rules in self.core.plugins['Rules'].entries.values():
             if not self.HandlesFile(rules.name):
                 continue
@@ -35,7 +42,7 @@ class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
                                os.path.join(self.config['repo'], rules.name))
 
     def check_bundles(self):
-        """ Check groups used in the Bundler plugin for validity """
+        """ Check groups used in the Bundler plugin for validity. """
         for bundle in self.core.plugins['Bundler'].entries.values():
             if self.HandlesFile(bundle.name) and bundle.template is None:
                 self.check_entries(bundle.xdata.xpath("//Group"),
@@ -43,7 +50,7 @@ class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
 
     def check_metadata(self):
         """ Check groups used or declared in the Metadata plugin for
-        validity """
+        validity. """
         self.check_entries(self.metadata.groups_xml.xdata.xpath("//Group"),
                            os.path.join(self.config['repo'],
                                         self.metadata.groups_xml.name))
@@ -61,7 +68,7 @@ class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
 
     def check_cfg(self):
         """ Check groups used in group-specific files in the Cfg
-        plugin for validity """
+        plugin for validity. """
         for root, _, files in os.walk(self.core.plugins['Cfg'].data):
             for fname in files:
                 basename = os.path.basename(root)
@@ -74,7 +81,14 @@ class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
 
     def check_entries(self, entries, fname):
         """ Check a generic list of XML entries for <Group> tags with
-        invalid name attributes """
+        invalid name attributes.
+
+        :param entries: A list of XML <Group> tags whose ``name``
+                        attributes will be validated.
+        :type entries: list of lxml.etree._Element
+        :param fname: The filename the entry list came from
+        :type fname: string
+        """
         for grp in entries:
             if not self.valid.search(grp.get("name")):
                 self.LintError("invalid-group-name",

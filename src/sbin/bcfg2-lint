@@ -58,16 +58,17 @@ def get_errorhandler():
     """ get a Bcfg2.Server.Lint.ErrorHandler object """
     setup = Bcfg2.Options.get_option_parser()
     if setup.cfp.has_section("errors"):
-        conf = dict(setup.cfp.items("errors"))
+        errors = dict(setup.cfp.items("errors"))
     else:
-        conf = None
-    return Bcfg2.Server.Lint.ErrorHandler(config=conf)
+        errors = None
+    return Bcfg2.Server.Lint.ErrorHandler(errors=errors)
 
 
 def load_server():
     """ load server """
     core = Bcfg2.Server.Core.BaseCore()
-    core.fam.handle_events_in_interval(4)
+    core.load_plugins()
+    core.fam.handle_events_in_interval(0.1)
     return core
 
 
@@ -93,7 +94,7 @@ def load_plugins():
     elif setup['lint_plugins']:
         plugin_list = setup['lint_plugins']
     else:
-        plugin_list = Bcfg2.Server.Lint.__all__
+        plugin_list = Bcfg2.Server.Lint.plugins
 
     allplugins = dict()
     for plugin in plugin_list:

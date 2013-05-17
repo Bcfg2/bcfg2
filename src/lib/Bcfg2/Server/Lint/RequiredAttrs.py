@@ -1,5 +1,5 @@
-""" verify attributes for configuration entries that cannot be
-verified with an XML schema alone"""
+""" Verify attributes for configuration entries that cannot be
+verified with an XML schema alone. """
 
 import os
 import re
@@ -14,7 +14,8 @@ except ImportError:
     HAS_GENSHI = False
 
 
-# format verifying functions
+# format verifying functions.  TODO: These should be moved into XML
+# schemas where possible.
 def is_filename(val):
     """ Return True if val is a string describing a valid full path
     """
@@ -52,8 +53,8 @@ def is_device_mode(val):
 
 
 class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
-    """ verify attributes for configuration entries that cannot be
-    verified with an XML schema alone """
+    """ Verify attributes for configuration entries that cannot be
+    verified with an XML schema alone. """
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerPlugin.__init__(self, *args, **kwargs)
         self.required_attrs = dict(
@@ -114,8 +115,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             SEInterface={None: dict(name=None, selinuxtype=is_selinux_type)},
             SEPermissive={None: dict(name=is_selinux_type)},
             POSIXGroup={None: dict(name=is_username)},
-            POSIXUser={None: dict(name=is_username)},
-            MemberOf={None: dict(__text__=is_username)})
+            POSIXUser={None: dict(name=is_username)})
 
     def Run(self):
         self.check_packages()
@@ -135,7 +135,8 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 "extra-attrs": "warning"}
 
     def check_packages(self):
-        """ check package sources for Source entries with missing attrs """
+        """ Check Packages sources for Source entries with missing
+        attributes. """
         if 'Packages' not in self.core.plugins:
             return
 
@@ -175,7 +176,8 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                                     rules.name))
 
     def check_bundles(self):
-        """ check bundles for BoundPath entries with missing attrs """
+        """ Check bundles for BoundPath entries with missing
+        attrs. """
         if 'Bundler' not in self.core.plugins:
             return
 
@@ -186,7 +188,13 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                     self.check_entry(path, bundle.name)
 
     def check_entry(self, entry, filename):
-        """ generic entry check """
+        """ Generic entry check.
+
+        :param entry: The XML entry to check for missing attributes.
+        :type entry: lxml.etree._Element
+        :param filename: The filename the entry came from
+        :type filename: string
+        """
         if self.HandlesFile(filename):
             name = entry.get('name')
             tag = entry.tag

@@ -161,7 +161,7 @@ class Frame(object):
     def promptFilter(self, msg, entries):
         """Filter a supplied list based on user input."""
         ret = []
-        entries.sort(cmpent)
+        entries.sort(key=lambda e: e.tag + ":" + e.get('name'))
         for entry in entries[:]:
             if entry in self.unhandled:
                 # don't prompt for entries that can't be installed
@@ -427,10 +427,12 @@ class Frame(object):
                 # prune out unspecified bundles when running with -b
                 continue
             if bundle in mbundles:
-                self.logger.debug("Bundle %s was modified" % bundle)
+                self.logger.debug("Bundle %s was modified" %
+                                  bundle.get('name'))
                 func = "BundleUpdated"
             else:
-                self.logger.debug("Bundle %s was not modified" % bundle)
+                self.logger.debug("Bundle %s was not modified" %
+                                  bundle.get('name'))
                 func = "BundleNotUpdated"
             for tool in self.tools:
                 try:
@@ -477,8 +479,8 @@ class Frame(object):
                         self.logger.info("%s:%s:%s" % (entry.tag, etype,
                                                        entry.get('name')))
                     else:
-                        self.logger.info("    %s:%s" % (entry.tag,
-                                                        entry.get('name')))
+                        self.logger.info("%s:%s" % (entry.tag,
+                                                    entry.get('name')))
         self.logger.info('Total managed entries:  %d' %
                          len(list(self.states.values())))
         self.logger.info('Unmanaged entries:      %d' % len(self.extra))
@@ -490,8 +492,8 @@ class Frame(object):
                     self.logger.info("%s:%s:%s" % (entry.tag, etype,
                                                    entry.get('name')))
                 else:
-                    self.logger.info("    %s:%s" % (entry.tag,
-                                                    entry.get('name')))
+                    self.logger.info("%s:%s" % (entry.tag,
+                                                entry.get('name')))
 
         if ((list(self.states.values()).count(False) == 0) and not self.extra):
             self.logger.info('All entries correct.')

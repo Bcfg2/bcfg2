@@ -945,7 +945,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                         self.debug_log("Client %s set as nonexistent group %s"
                                        % (client, group))
 
-    def set_profile(self, client, profile, addresspair):
+    def set_profile(self, client, profile,  # pylint: disable=W0221
+                    addresspair, require_public=True):
         """Set group parameter for provided client."""
         self.logger.info("Asserting client %s profile to %s" % (client,
                                                                 profile))
@@ -957,7 +958,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             self.logger.error(msg)
             raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
         group = self.groups[profile]
-        if not group.is_public:
+        if require_public and not group.is_public:
             msg = "Cannot set client %s to private group %s" % (client,
                                                                 profile)
             self.logger.error(msg)
@@ -1128,7 +1129,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 pgroup = self.default
 
             if pgroup:
-                self.set_profile(client, pgroup, (None, None))
+                self.set_profile(client, pgroup, (None, None),
+                                 require_public=False)
                 profile = _add_group(pgroup)
             else:
                 msg = "Cannot add new client %s; no default group set" % client
@@ -1477,7 +1479,16 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
 
 class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
-    """ bcfg2-lint plugin for Metadata """
+    """ ``bcfg2-lint`` plugin for :ref:`Metadata
+    <server-plugins-grouping-metadata>`.  This checks for several things:
+
+    * ``<Client>`` tags nested inside other ``<Client>`` tags;
+    * Deprecated options (like ``location="floating"``);
+    * Profiles that don't exist, or that aren't profile groups;
+    * Groups or clients that are defined multiple times;
+    * Multiple default groups or a default group that isn't a profile
+      group.
+    """
 
     def Run(self):
         self.nested_clients()
@@ -1500,8 +1511,8 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                 "default-is-not-profile": "error"}
 
     def deprecated_options(self):
-        """ check for the location='floating' option, which has been
-        deprecated in favor of floating='true' """
+        """ Check for the ``location='floating'`` option, which has
+        been deprecated in favor of ``floating='true'``. """
         if not hasattr(self.metadata, "clients_xml"):
             # using metadata database
             return
@@ -1519,8 +1530,8 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                                (loc, floating, self.RenderXML(el)))
 
     def nested_clients(self):
-        """ check for a Client tag inside a Client tag, which doesn't
-        make any sense """
+        """ Check for a ``<Client/>`` tag inside a ``<Client/>`` tag,
+        which is either redundant or will never match. """
         groupdata = self.metadata.groups_xml.xdata
         for el in groupdata.xpath("//Client//Client"):
             self.LintError("nested-client-tags",
@@ -1528,8 +1539,8 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                            (el.get("name"), self.RenderXML(el)))
 
     def bogus_profiles(self):
-        """ check for clients that have profiles that are either not
-        flagged as public groups in groups.xml, or don't exist """
+        """ Check for clients that have profiles that are either not
+        flagged as profile groups in ``groups.xml``, or don't exist. """
         if not hasattr(self.metadata, "clients_xml"):
             # using metadata database
             return
@@ -1547,20 +1558,8 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                                (profile, client.get("name"), profile,
                                 self.RenderXML(client)))
 
-    def duplicate_groups(self):
-        """ check for groups that are defined twice.  We count a group
-        tag as a definition if it a) has profile or public set; or b)
-        has any children. """
-        self.duplicate_entries(
-            self.metadata.groups_xml.xdata.xpath("//Groups/Group") +
-            self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group"),
-            "group",
-            include=lambda g: (g.get("profile") or
-                               g.get("public") or
-                               g.getchildren()))
-
     def duplicate_default_groups(self):
-        """ check for multiple default groups """
+        """ Check for multiple default groups. """
         defaults = []
         for grp in self.metadata.groups_xml.xdata.xpath("//Groups/Group") + \
                 self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group"):
@@ -1572,7 +1571,7 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                            "\n".join(defaults))
 
     def duplicate_clients(self):
-        """ check for clients that are defined twice. """
+        """ Check for clients that are defined more than once. """
         if not hasattr(self.metadata, "clients_xml"):
             # using metadata database
             return
@@ -1580,17 +1579,34 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
             self.metadata.clients_xml.xdata.xpath("//Client"),
             "client")
 
-    def duplicate_entries(self, allentries, etype, include=None):
-        """ generic duplicate entry finder """
-        if include is None:
-            include = lambda e: True
+    def duplicate_groups(self):
+        """ Check for groups that are defined more than once.  We
+        count a group tag as a definition if it a) has profile or
+        public set; or b) has any children."""
+        allgroups = [
+            g
+            for g in self.metadata.groups_xml.xdata.xpath("//Groups/Group") +
+            self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group")
+            if g.get("profile") or g.get("public") or g.getchildren()]
+        self.duplicate_entries(allgroups, "group")
+
+    def duplicate_entries(self, allentries, etype):
+        """ Generic duplicate entry finder.
+
+        :param allentries: A list of all entries to check for
+                           duplicates.
+        :type allentries: list of lxml.etree._Element
+        :param etype: The entry type. This will be used to determine
+                      the error name (``duplicate-<etype>``) and for
+                      display to the end user.
+        :type etype: string
+        """
         entries = dict()
         for el in allentries:
-            if include(el):
-                if el.get("name") in entries:
-                    entries[el.get("name")].append(self.RenderXML(el))
-                else:
-                    entries[el.get("name")] = [self.RenderXML(el)]
+            if el.get("name") in entries:
+                entries[el.get("name")].append(self.RenderXML(el))
+            else:
+                entries[el.get("name")] = [self.RenderXML(el)]
         for ename, els in entries.items():
             if len(els) > 1:
                 self.LintError("duplicate-%s" % etype,
@@ -1598,7 +1614,7 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
                                (etype.title(), ename, "\n".join(els)))
 
     def default_is_profile(self):
-        """ ensure that the default group is a profile group """
+        """ Ensure that the default group is a profile group. """
         if (self.metadata.default and
             not self.metadata.groups[self.metadata.default].is_profile):
             xdata = \

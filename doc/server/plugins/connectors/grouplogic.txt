@@ -110,8 +110,8 @@ individually, there's a more elegant way to accomplish the same thing:
 
     <GroupLogic xmlns:py="http://genshi.edgewall.org/">
       <?python
-component = metadata.group_in_category("webapp-component")
-env = metadata.group_in_category("environment")
+    component = metadata.group_in_category("webapp-component")
+    env = metadata.group_in_category("environment")
       ?>
       <py:if test="component and env">
         <Group name="${component}-${env}"/>

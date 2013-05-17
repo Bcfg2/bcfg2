@@ -377,9 +377,9 @@ For example:
 
     <POSIXUser name="daemon" home="/sbin" shell="/sbin/nologin"
                gecos="daemon" uid="2" group="daemon">
-      <MemberOf>lp</MemberOf>
-      <MemberOf>adm</MemberOf>
-      <MemberOf>bin</MemberOf>
+      <MemberOf group="lp"/>
+      <MemberOf group="adm"/>
+      <MemberOf group="bin/>
     </POSIXUser>
 
 The group specified will automatically be created if it does not
