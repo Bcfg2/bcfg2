@@ -281,7 +281,10 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                         raise
             except socket.error:
                 err = sys.exc_info()[1]
-                if err[0] == 32:
+                if isinstance(err, socket.timeout):
+                    self.logger.warning("Connection timed out for %s" %
+                                        self.client_address[0])
+                elif err[0] == 32:
                     self.logger.warning("Connection dropped from %s" %
                                         self.client_address[0])
                 elif err[0] == 104:
