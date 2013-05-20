@@ -121,11 +121,11 @@ def ssl_decrypt(data, passwd, algorithm=ALGORITHM):
     # base64-decode the data
     data = b64decode(data)
     salt = data[8:16]
-    # pylint: disable=E1101
+    # pylint: disable=E1101,E1121
     hashes = [md5(passwd + salt).digest()]
     for i in range(1, 3):
         hashes.append(md5(hashes[i - 1] + passwd + salt).digest())
-    # pylint: enable=E1101
+    # pylint: enable=E1101,E1121
     key = hashes[0] + hashes[1]
     iv = hashes[2]
 
@@ -151,11 +151,11 @@ def ssl_encrypt(plaintext, passwd, algorithm=ALGORITHM, salt=None):
     if salt is None:
         salt = Rand.rand_bytes(8)
 
-    # pylint: disable=E1101
+    # pylint: disable=E1101,E1121
     hashes = [md5(passwd + salt).digest()]
     for i in range(1, 3):
         hashes.append(md5(hashes[i - 1] + passwd + salt).digest())
-    # pylint: enable=E1101
+    # pylint: enable=E1101,E1121
     key = hashes[0] + hashes[1]
     iv = hashes[2]
 
