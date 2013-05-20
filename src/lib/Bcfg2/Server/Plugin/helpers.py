@@ -619,6 +619,20 @@ class StructFile(XMLFileBacked):
         dict(Group=lambda el, md, *args: el.get('name') in md.groups,
              Client=lambda el, md, *args: el.get('name') == md.hostname)
 
+    #: Callbacks used to determine if children of items with the given
+    #: tags should be included in the return value of
+    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` and
+    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch`.  Each
+    #: callback is passed the same arguments as
+    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile._include_element`.
+    #: It should return True if children of the element should be
+    #: included in the match, False otherwise.  The callback does
+    #: *not* need to consider negation; that will be handled in
+    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile._include_element`
+    _include_tests = \
+        dict(Group=lambda el, md, *args: el.get('name') in md.groups,
+             Client=lambda el, md, *args: el.get('name') == md.hostname)
+
     def __init__(self, filename, should_monitor=False):
         XMLFileBacked.__init__(self, filename, should_monitor=should_monitor)
         self.setup = Bcfg2.Options.get_option_parser()
@@ -832,143 +846,10 @@ class StructFile(XMLFileBacked):
         return self._do_xmlmatch(metadata)
 
 
-class INode(object):
-    """ INodes provide lists of things available at a particular group
-    intersection.  INodes are deprecated; new plugins should use
-    :class:`Bcfg2.Server.Plugin.helpers.StructFile` instead. """
-
-    raw = dict(
-        Client="lambda m, e:'%(name)s' == m.hostname and predicate(m, e)",
-        Group="lambda m, e:'%(name)s' in m.groups and predicate(m, e)")
-    nraw = dict(
-        Client="lambda m, e:'%(name)s' != m.hostname and predicate(m, e)",
-        Group="lambda m, e:'%(name)s' not in m.groups and predicate(m, e)")
-    containers = ['Group', 'Client']
-    ignore = []
-
-    def __init__(self, data, idict, parent=None):
-        self.data = data
-        self.contents = {}
-        if parent is None:
-            self.predicate = lambda m, e: True
-        else:
-            predicate = parent.predicate
-            if data.get('negate', 'false').lower() == 'true':
-                psrc = self.nraw
-            else:
-                psrc = self.raw
-            if data.tag in list(psrc.keys()):
-                self.predicate = eval(psrc[data.tag] %
-                                      {'name': data.get('name')},
-                                      {'predicate': predicate})
-            else:
-                raise PluginExecutionError("Unknown tag: %s" % data.tag)
-        self.children = []
-        self._load_children(data, idict)
-
-    def _load_children(self, data, idict):
-        """ load children """
-        for item in data.getchildren():
-            if item.tag in self.ignore:
-                continue
-            elif item.tag in self.containers:
-                self.children.append(self.__class__(item, idict, self))
-            else:
-                try:
-                    self.contents[item.tag][item.get('name')] = \
-                        dict(item.attrib)
-                except KeyError:
-                    self.contents[item.tag] = \
-                        {item.get('name'): dict(item.attrib)}
-                if item.text:
-                    self.contents[item.tag][item.get('name')]['__text__'] = \
-                        item.text
-                if item.getchildren():
-                    self.contents[item.tag][item.get('name')]['__children__'] \
-                        = item.getchildren()
-                try:
-                    idict[item.tag].append(item.get('name'))
-                except KeyError:
-                    idict[item.tag] = [item.get('name')]
-
-    def Match(self, metadata, data, entry=lxml.etree.Element("None")):
-        """Return a dictionary of package mappings."""
-        if self.predicate(metadata, entry):
-            for key in self.contents:
-                try:
-                    data[key].update(self.contents[key])
-                except:  # pylint: disable=W0702
-                    data[key] = {}
-                    data[key].update(self.contents[key])
-            for child in self.children:
-                child.Match(metadata, data, entry=entry)
-
-
-class XMLSrc(XMLFileBacked):
-    """ XMLSrc files contain a
-    :class:`Bcfg2.Server.Plugin.helpers.INode` hierarchy that returns
-    matching entries. XMLSrc objects are deprecated and
-    :class:`Bcfg2.Server.Plugin.helpers.StructFile` should be
-    preferred where possible."""
-    __node__ = INode
-    __cacheobj__ = dict
-    __priority_required__ = True
-
-    def __init__(self, filename, should_monitor=False, create=None):
-        XMLFileBacked.__init__(self, filename, should_monitor, create)
-        self.items = {}
-        self.cache = None
-        self.pnode = None
-        self.priority = -1
-
-    def HandleEvent(self, _=None):
-        """Read file upon update."""
-        try:
-            data = open(self.name).read()
-        except IOError:
-            msg = "Failed to read file %s: %s" % (self.name, sys.exc_info()[1])
-            self.logger.error(msg)
-            raise PluginExecutionError(msg)
-        self.items = {}
-        try:
-            xdata = lxml.etree.XML(data, parser=Bcfg2.Server.XMLParser)
-        except lxml.etree.XMLSyntaxError:
-            msg = "Failed to parse file %s: %s" % (self.name,
-                                                   sys.exc_info()[1])
-            self.logger.error(msg)
-            raise PluginExecutionError(msg)
-        self.pnode = self.__node__(xdata, self.items)
-        self.cache = None
-        try:
-            self.priority = int(xdata.get('priority'))
-        except (ValueError, TypeError):
-            if self.__priority_required__:
-                msg = "Got bogus priority %s for file %s" % \
-                    (xdata.get('priority'), self.name)
-                self.logger.error(msg)
-                raise PluginExecutionError(msg)
-
-        del xdata, data
-
-    def Cache(self, metadata):
-        """Build a package dict for a given host."""
-        if self.cache is None or self.cache[0] != metadata:
-            cache = (metadata, self.__cacheobj__())
-            if self.pnode is None:
-                self.logger.error("Cache method called early for %s; "
-                                  "forcing data load" % self.name)
-                self.HandleEvent()
-                return
-            self.pnode.Match(metadata, cache[1])
-            self.cache = cache
-
-    def __str__(self):
-        return str(self.items)
-
-
 class InfoXML(StructFile):
     """ InfoXML files contain Group, Client, and Path tags to set the
     metadata (permissions, owner, etc.) of files. """
+    encryption = False
 
     _include_tests = StructFile._include_tests
     _include_tests['Path'] = lambda el, md, entry, *args: \

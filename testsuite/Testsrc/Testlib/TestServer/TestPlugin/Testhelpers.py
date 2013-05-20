@@ -1013,305 +1013,77 @@ class TestStructFile(TestXMLFileBacked):
         # in document order
 
 
-class TestINode(Bcfg2TestCase):
-    test_obj = INode
-
-    # INode.__init__ and INode._load_children() call each other
-    # recursively, which makes this class kind of a nightmare to test.
-    # we have to first patch INode._load_children so that we can
-    # create an INode object with no children loaded, then we unpatch
-    # INode._load_children and patch INode.__init__ so that child
-    # objects aren't actually created.  but in order to test things
-    # atomically, we do this umpteen times in order to test with
-    # different data.  this convenience method makes this a little
-    # easier.  fun fun fun.
-    @patch("Bcfg2.Server.Plugin.helpers.%s._load_children" %
-           test_obj.__name__, Mock())
-    def _get_inode(self, data, idict):
-        return self.test_obj(data, idict)
-
-    def test_raw_predicates(self):
-        metadata = Mock()
-        metadata.groups = ["group1", "group2"]
-        metadata.hostname = "foo.example.com"
-        entry = None
-
-        parent_predicate = lambda m, e: True
-        pred = eval(self.test_obj.raw['Client'] % dict(name="foo.example.com"),
-                    dict(predicate=parent_predicate))
-        self.assertTrue(pred(metadata, entry))
-        pred = eval(self.test_obj.raw['Client'] % dict(name="bar.example.com"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-
-        pred = eval(self.test_obj.raw['Group'] % dict(name="group1"),
-                    dict(predicate=parent_predicate))
-        self.assertTrue(pred(metadata, entry))
-        pred = eval(self.test_obj.raw['Group'] % dict(name="group3"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-
-        pred = eval(self.test_obj.nraw['Client'] % dict(name="foo.example.com"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-        pred = eval(self.test_obj.nraw['Client'] % dict(name="bar.example.com"),
-                    dict(predicate=parent_predicate))
-        self.assertTrue(pred(metadata, entry))
-
-        pred = eval(self.test_obj.nraw['Group'] % dict(name="group1"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-        pred = eval(self.test_obj.nraw['Group'] % dict(name="group3"),
-                    dict(predicate=parent_predicate))
-        self.assertTrue(pred(metadata, entry))
-
-        parent_predicate = lambda m, e: False
-        pred = eval(self.test_obj.raw['Client'] % dict(name="foo.example.com"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-        pred = eval(self.test_obj.raw['Group'] % dict(name="group1"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-        pred = eval(self.test_obj.nraw['Client'] % dict(name="bar.example.com"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-        pred = eval(self.test_obj.nraw['Group'] % dict(name="group3"),
-                    dict(predicate=parent_predicate))
-        self.assertFalse(pred(metadata, entry))
-
-        self.assertItemsEqual(self.test_obj.containers,
-                              self.test_obj.raw.keys())
-        self.assertItemsEqual(self.test_obj.containers,
-                              self.test_obj.nraw.keys())
-
-    @patch("Bcfg2.Server.Plugin.helpers.INode._load_children")
-    def test__init(self, mock_load_children):
-        data = lxml.etree.Element("Bogus")
-        # called with no parent, should not raise an exception; it's a
-        # top-level tag in an XML file and so is not expected to be a
-        # proper predicate
-        INode(data, dict())
-        self.assertRaises(PluginExecutionError,
-                          INode, data, dict(), Mock())
-
-        data = lxml.etree.Element("Client", name="foo.example.com")
-        idict = dict()
-        inode = INode(data, idict)
-        mock_load_children.assert_called_with(data, idict)
-        self.assertTrue(inode.predicate(Mock(), Mock()))
-
-        parent = Mock()
-        parent.predicate = lambda m, e: True
-        metadata = Mock()
-        metadata.groups = ["group1", "group2"]
-        metadata.hostname = "foo.example.com"
-        entry = None
-
-        # test setting predicate with parent object
-        mock_load_children.reset_mock()
-        inode = INode(data, idict, parent=parent)
-        mock_load_children.assert_called_with(data, idict)
-        self.assertTrue(inode.predicate(metadata, entry))
-
-        # test negation
-        data = lxml.etree.Element("Client", name="foo.example.com",
-                                  negate="true")
-        mock_load_children.reset_mock()
-        inode = INode(data, idict, parent=parent)
-        mock_load_children.assert_called_with(data, idict)
-        self.assertFalse(inode.predicate(metadata, entry))
-
-        # test failure of a matching predicate (client names do not match)
-        data = lxml.etree.Element("Client", name="foo.example.com")
-        metadata.hostname = "bar.example.com"
-        mock_load_children.reset_mock()
-        inode = INode(data, idict, parent=parent)
-        mock_load_children.assert_called_with(data, idict)
-        self.assertFalse(inode.predicate(metadata, entry))
-
-        # test that parent predicate is AND'ed in correctly
-        parent.predicate = lambda m, e: False
-        metadata.hostname = "foo.example.com"
-        mock_load_children.reset_mock()
-        inode = INode(data, idict, parent=parent)
-        mock_load_children.assert_called_with(data, idict)
-        self.assertFalse(inode.predicate(metadata, entry))
-
-    def test_load_children(self):
-        data = lxml.etree.Element("Parent")
-        child1 = lxml.etree.SubElement(data, "Client", name="foo.example.com")
-        child2 = lxml.etree.SubElement(data, "Group", name="bar", negate="true")
-        idict = dict()
-
-        inode = self._get_inode(data, idict)
-
-        @patch("Bcfg2.Server.Plugin.helpers.%s.__init__" %
-               inode.__class__.__name__)
-        def inner(mock_init):
-            mock_init.return_value = None
-            inode._load_children(data, idict)
-            self.assertItemsEqual(mock_init.call_args_list,
-                                  [call(child1, idict, inode),
-                                   call(child2, idict, inode)])
-            self.assertEqual(idict, dict())
-            self.assertItemsEqual(inode.contents, dict())
-
-        inner()
-
-        data = lxml.etree.Element("Parent")
-        child1 = lxml.etree.SubElement(data, "Data", name="child1",
-                                       attr="some attr")
-        child1.text = "text"
-        subchild1 = lxml.etree.SubElement(child1, "SubChild", name="subchild")
-        child2 = lxml.etree.SubElement(data, "Group", name="bar", negate="true")
-        idict = dict()
-
-        inode = self._get_inode(data, idict)
-        inode.ignore = []
-
-        @patch("Bcfg2.Server.Plugin.helpers.%s.__init__" %
-               inode.__class__.__name__)
-        def inner2(mock_init):
-            mock_init.return_value = None
-            inode._load_children(data, idict)
-            mock_init.assert_called_with(child2, idict, inode)
-            tag = child1.tag
-            name = child1.get("name")
-            self.assertEqual(idict, dict(Data=[name]))
-            self.assertIn(tag, inode.contents)
-            self.assertIn(name, inode.contents[tag])
-            self.assertItemsEqual(inode.contents[tag][name],
-                                  dict(name=name,
-                                       attr=child1.get('attr'),
-                                       __text__=child1.text,
-                                       __children__=[subchild1]))
-
-        inner2()
-
-        # test ignore.  no ignore is set on INode by default, so we
-        # have to set one
-        old_ignore = copy.copy(self.test_obj.ignore)
-        self.test_obj.ignore.append("Data")
-        idict = dict()
-
-        inode = self._get_inode(data, idict)
-
-        @patch("Bcfg2.Server.Plugin.helpers.%s.__init__" %
-               inode.__class__.__name__)
-        def inner3(mock_init):
-            mock_init.return_value = None
-            inode._load_children(data, idict)
-            mock_init.assert_called_with(child2, idict, inode)
-            self.assertEqual(idict, dict())
-            self.assertItemsEqual(inode.contents, dict())
-
-        inner3()
-        self.test_obj.ignore = old_ignore
-
-    def test_Match(self):
-        idata = lxml.etree.Element("Parent")
-        contents = lxml.etree.SubElement(idata, "Data", name="contents",
-                                         attr="some attr")
-        child = lxml.etree.SubElement(idata, "Group", name="bar", negate="true")
-
-        inode = INode(idata, dict())
-        inode.predicate = Mock()
-        inode.predicate.return_value = False
-
-        metadata = Mock()
-        metadata.groups = ['foo']
-        data = dict()
-        entry = child
-
-        inode.Match(metadata, data, entry=child)
-        self.assertEqual(data, dict())
-        inode.predicate.assert_called_with(metadata, child)
-
-        inode.predicate.reset_mock()
-        inode.Match(metadata, data)
-        self.assertEqual(data, dict())
-        # can't easily compare XML args without the original
-        # object, and we're testing that Match() works without an
-        # XML object passed in, so...
-        self.assertEqual(inode.predicate.call_args[0][0],
-                         metadata)
-        self.assertXMLEqual(inode.predicate.call_args[0][1],
-                            lxml.etree.Element("None"))
-
-        inode.predicate.reset_mock()
-        inode.predicate.return_value = True
-        inode.Match(metadata, data, entry=child)
-        self.assertEqual(data, inode.contents)
-        inode.predicate.assert_called_with(metadata, child)
-
-
-class TestXMLSrc(TestXMLFileBacked):
-    test_obj = XMLSrc
-
-    def test_node_interface(self):
-        # ensure that the node object has the necessary interface
-        self.assertTrue(hasattr(self.test_obj.__node__, "Match"))
-
-    @patch("%s.open" % builtins)
-    def test_HandleEvent(self, mock_open):
-        xdata = lxml.etree.Element("Test")
-        lxml.etree.SubElement(xdata, "Path", name="path", attr="whatever")
-
-        xsrc = self.get_obj("/test/foo.xml")
-        xsrc.__node__ = Mock()
-        mock_open.return_value.read.return_value = tostring(xdata)
-
-        if xsrc.__priority_required__:
-            # test with no priority at all
-            self.assertRaises(PluginExecutionError,
-                              xsrc.HandleEvent, Mock())
-
-            # test with bogus priority
-            xdata.set("priority", "cow")
-            mock_open.return_value.read.return_value = tostring(xdata)
-            self.assertRaises(PluginExecutionError,
-                               xsrc.HandleEvent, Mock())
-
-            # assign a priority to use in future tests
-            xdata.set("priority", "10")
-            mock_open.return_value.read.return_value = tostring(xdata)
-
-        mock_open.reset_mock()
-        xsrc = self.get_obj("/test/foo.xml")
-        xsrc.__node__ = Mock()
-        xsrc.HandleEvent(Mock())
-        mock_open.assert_called_with("/test/foo.xml")
-        mock_open.return_value.read.assert_any_call()
-        self.assertXMLEqual(xsrc.__node__.call_args[0][0], xdata)
-        self.assertEqual(xsrc.__node__.call_args[0][1], dict())
-        self.assertEqual(xsrc.pnode, xsrc.__node__.return_value)
-        self.assertEqual(xsrc.cache, None)
-
-    @patch("Bcfg2.Server.Plugin.helpers.XMLSrc.HandleEvent")
-    def test_Cache(self, mock_HandleEvent):
-        xsrc = self.get_obj("/test/foo.xml")
-        metadata = Mock()
-        xsrc.Cache(metadata)
-        mock_HandleEvent.assert_any_call()
-
-        xsrc.pnode = Mock()
-        xsrc.Cache(metadata)
-        xsrc.pnode.Match.assert_called_with(metadata, xsrc.__cacheobj__())
-        self.assertEqual(xsrc.cache[0], metadata)
-
-        xsrc.pnode.reset_mock()
-        xsrc.Cache(metadata)
-        self.assertFalse(xsrc.pnode.Mock.called)
-        self.assertEqual(xsrc.cache[0], metadata)
-
-        xsrc.cache = ("bogus")
-        xsrc.Cache(metadata)
-        xsrc.pnode.Match.assert_called_with(metadata, xsrc.__cacheobj__())
-        self.assertEqual(xsrc.cache[0], metadata)
-
-
 class TestInfoXML(TestStructFile):
     test_obj = InfoXML
+
+    def _get_test_data(self):
+        (xdata, groups, subgroups, children, subchildren, standalone) = \
+            TestStructFile._get_test_data(self)
+        idx = max(groups.keys()) + 1
+        groups[idx] = lxml.etree.SubElement(
+            xdata, "Path", name="path1", include="true")
+        children[idx] = [lxml.etree.SubElement(groups[idx], "Child",
+                                               name="pc1")]
+        subgroups[idx] = [lxml.etree.SubElement(groups[idx], "Group",
+                                                name="pg1", include="true"),
+                          lxml.etree.SubElement(groups[idx], "Client",
+                                                name="pc1", include="false")]
+        subchildren[idx] = [lxml.etree.SubElement(subgroups[idx][0],
+                                                  "SubChild", name="sc1")]
+
+        idx += 1
+        groups[idx] = lxml.etree.SubElement(
+            xdata, "Path", name="path2", include="false")
+        children[idx] = []
+        subgroups[idx] = []
+        subchildren[idx] = []
+
+        path2 = lxml.etree.SubElement(groups[0], "Path", name="path2",
+                                      include="true")
+        subgroups[0].append(path2)
+        subchildren[0].append(lxml.etree.SubElement(path2, "SubChild",
+                                                    name="sc2"))
+        return xdata, groups, subgroups, children, subchildren, standalone
+
+    def test_include_element(self):
+        TestStructFile.test_include_element(self)
+
+        ix = self.get_obj()
+        metadata = Mock()
+        entry = lxml.etree.Element("Path", name="/etc/foo.conf")
+        inc = lambda tag, **attrs: \
+            ix._include_element(lxml.etree.Element(tag, **attrs),
+                                metadata, entry)
+
+        self.assertFalse(inc("Path", name="/etc/bar.conf"))
+        self.assertFalse(inc("Path", name="/etc/foo.conf", negate="true"))
+        self.assertFalse(inc("Path", name="/etc/foo.conf", negate="tRuE"))
+        self.assertTrue(inc("Path", name="/etc/foo.conf"))
+        self.assertTrue(inc("Path", name="/etc/foo.conf", negate="false"))
+        self.assertTrue(inc("Path", name="/etc/foo.conf", negate="faLSe"))
+        self.assertTrue(inc("Path", name="/etc/bar.conf", negate="true"))
+        self.assertTrue(inc("Path", name="/etc/bar.conf", negate="tRUe"))
+
+    def test_BindEntry(self):
+        ix = self.get_obj()
+        entry = lxml.etree.Element("Path", name=self.path)
+        metadata = Mock()
+
+        # test with bogus infoxml
+        ix.Match = Mock()
+        ix.Match.return_value = []
+        self.assertRaises(PluginExecutionError,
+                          ix.BindEntry, entry, metadata)
+        ix.Match.assert_called_with(metadata, entry)
+
+        # test with valid infoxml
+        ix.Match.reset_mock()
+        ix.Match.return_value = [lxml.etree.Element("Info",
+                                                    mode="0600", owner="root")]
+        ix.BindEntry(entry, metadata)
+        ix.Match.assert_called_with(metadata, entry)
+        self.assertItemsEqual(entry.attrib,
+                              dict(name=self.path, mode="0600", owner="root"))
 
     def _get_test_data(self):
         (xdata, groups, subgroups, children, subchildren, standalone) = \
