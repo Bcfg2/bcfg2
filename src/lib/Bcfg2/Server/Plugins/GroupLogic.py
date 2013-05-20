@@ -4,22 +4,17 @@ template to dynamically set additional groups for clients. """
 import os
 import lxml.etree
 import Bcfg2.Server.Plugin
-try:
-    from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
-except ImportError:
-    # BundleTemplateFile missing means that genshi is missing.  we
-    # import genshi to get the _real_ error
-    import genshi  # pylint: disable=W0611
+from Bcfg2.Server.Plugins.Bundler import BundleFile
 
 
-class GroupLogicConfig(BundleTemplateFile):
+class GroupLogicConfig(BundleFile):
     """ Representation of the GroupLogic groups.xml file """
     create = lxml.etree.Element("GroupLogic",
                                 nsmap=dict(py="http://genshi.edgewall.org/"))
 
     def __init__(self, name, fam):
-        BundleTemplateFile.__init__(self, name,
-                                    Bcfg2.Server.Plugin.Specificity(), None)
+        BundleFile.__init__(self, name,
+                            Bcfg2.Server.Plugin.Specificity(), None)
         self.fam = fam
         self.should_monitor = True
         self.fam.AddMonitor(self.name, self)
@@ -27,7 +22,7 @@ class GroupLogicConfig(BundleTemplateFile):
     def _match(self, item, metadata):
         if item.tag == 'Group' and not len(item.getchildren()):
             return [item]
-        return BundleTemplateFile._match(self, item, metadata)
+        return BundleFile._match(self, item, metadata)
 
 
 class GroupLogic(Bcfg2.Server.Plugin.Plugin,
@@ -44,4 +39,4 @@ class GroupLogic(Bcfg2.Server.Plugin.Plugin,
 
     def get_additional_groups(self, metadata):
         return [el.get("name")
-                for el in self.config.get_xml_value(metadata).findall("Group")]
+                for el in self.config.XMLMatch(metadata).findall("Group")]

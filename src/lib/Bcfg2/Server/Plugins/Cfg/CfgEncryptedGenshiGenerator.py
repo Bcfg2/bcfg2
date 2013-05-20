@@ -1,6 +1,7 @@
 """ Handle encrypted Genshi templates (.crypt.genshi or .genshi.crypt
 files) """
 
+from genshi.template import TemplateLoader
 from Bcfg2.Compat import StringIO
 from Bcfg2.Server.Plugin import PluginExecutionError
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
@@ -10,12 +11,6 @@ try:
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
-
-try:
-    from genshi.template import TemplateLoader
-except ImportError:
-    # CfgGenshiGenerator will raise errors if genshi doesn't exist
-    TemplateLoader = object  # pylint: disable=C0103
 
 
 class EncryptedTemplateLoader(TemplateLoader):

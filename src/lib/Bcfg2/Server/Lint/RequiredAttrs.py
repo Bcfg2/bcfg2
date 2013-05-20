@@ -7,11 +7,6 @@ import Bcfg2.Server.Lint
 import Bcfg2.Client.Tools.VCS
 from Bcfg2.Server.Plugins.Packages import Apt, Yum
 from Bcfg2.Client.Tools.POSIX.base import device_map
-try:
-    from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
-    HAS_GENSHI = True
-except ImportError:
-    HAS_GENSHI = False
 
 
 # format verifying functions.  TODO: These should be moved into XML
