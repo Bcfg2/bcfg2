@@ -12,7 +12,7 @@ from genshi.template import TemplateError
 
 class BundleFile(Bcfg2.Server.Plugin.StructFile):
     """ Representation of a bundle XML file """
-    bundle_name_re = re.compile('^(?P<name>.*)\.(xml|genshi)$')
+    bundle_name_re = re.compile(r'^(?P<name>.*)\.(xml|genshi)$')
 
     def __init__(self, filename, should_monitor=False):
         Bcfg2.Server.Plugin.StructFile.__init__(self, filename,

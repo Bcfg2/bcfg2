@@ -174,7 +174,7 @@ class Client(object):
                     Bcfg2.Client.XML.tostring(
                         probedata,
                         xml_declaration=False).decode('utf-8'))
-            except Bcfg2.Proxy.ProxyError:
+            except Bcfg2.Client.Proxy.ProxyError:
                 err = sys.exc_info()[1]
                 self.fatal_error("Failed to upload probe data: %s" % err)
 

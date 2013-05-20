@@ -3,6 +3,7 @@
 import os
 import re
 import sys
+import time
 import copy
 import glob
 import genshi
@@ -59,7 +60,8 @@ class track_statistics(object):  # pylint: disable=C0103
             try:
                 return func(obj, *args, **kwargs)
             finally:
-                Bcfg2.Statistics.stats.add_value(name, time.time() - start)
+                Bcfg2.Server.Statistics.stats.add_value(name,
+                                                        time.time() - start)
 
         return inner
 

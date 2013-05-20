@@ -320,7 +320,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         for struct in structures:
             for pkg in struct.xpath('//Package | //BoundPackage'):
                 if pkg.get("name"):
-                    base.update(collection.packages_from_entry(pkg))
+                    initial.update(collection.packages_from_entry(pkg))
                 elif pkg.get("group"):
                     groups.append((pkg.get("group"),
                                    pkg.get("type")))

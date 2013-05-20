@@ -140,7 +140,7 @@ class BaseCore(object):
         # enable debugging on the core now.  debugging is enabled on
         # everything else later
         if self.setup['debug']:
-            self.set_core_debug(None, setup['debug'])
+            self.set_core_debug(None, self.setup['debug'])
 
         if 'ignore' not in self.setup:
             self.setup.add_option('ignore', SERVER_FAM_IGNORE)
@@ -149,10 +149,7 @@ class BaseCore(object):
         famargs = dict(filemonitor=self.setup['filemonitor'],
                        debug=self.setup['debug'],
                        ignore=self.setup['ignore'])
-        try:
-            filemonitor = \
-                Bcfg2.Server.FileMonitor.available[setup['filemonitor']]
-        except KeyError:
+        if self.setup['filemonitor'] not in Bcfg2.Server.FileMonitor.available:
             self.logger.error("File monitor driver %s not available; "
                               "forcing to default" % self.setup['filemonitor'])
             famargs['filemonitor'] = 'default'
