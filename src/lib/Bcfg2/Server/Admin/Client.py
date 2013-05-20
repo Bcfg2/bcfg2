@@ -8,6 +8,7 @@ from Bcfg2.Server.Plugin import MetadataConsistencyError
 class Client(Bcfg2.Server.Admin.MetadataCore):
     """ Create, delete, or list client entries """
     __usage__ = "[options] [add|del|list] [attr=val]"
+    __plugin_whitelist__ = ["Metadata"]
 
     def __call__(self, args):
         if len(args) == 0:
