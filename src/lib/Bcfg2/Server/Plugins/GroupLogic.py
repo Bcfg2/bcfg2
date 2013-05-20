@@ -4,25 +4,17 @@ template to dynamically set additional groups for clients. """
 import os
 import lxml.etree
 import Bcfg2.Server.Plugin
-from Bcfg2.Server.Plugins.Bundler import BundleFile
 
 
-class GroupLogicConfig(BundleFile):
+class GroupLogicConfig(Bcfg2.Server.Plugin.StructFile):
     """ Representation of the GroupLogic groups.xml file """
     create = lxml.etree.Element("GroupLogic",
                                 nsmap=dict(py="http://genshi.edgewall.org/"))
 
-    def __init__(self, name, fam):
-        BundleFile.__init__(self, name,
-                            Bcfg2.Server.Plugin.Specificity(), None)
-        self.fam = fam
-        self.should_monitor = True
-        self.fam.AddMonitor(self.name, self)
-
     def _match(self, item, metadata):
         if item.tag == 'Group' and not len(item.getchildren()):
             return [item]
-        return BundleFile._match(self, item, metadata)
+        return Bcfg2.Server.Plugin.StructFile._match(self, item, metadata)
 
 
 class GroupLogic(Bcfg2.Server.Plugin.Plugin,
@@ -35,7 +27,7 @@ class GroupLogic(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         self.config = GroupLogicConfig(os.path.join(self.data, "groups.xml"),
-                                       core.fam)
+                                       should_monitor=True)
 
     def get_additional_groups(self, metadata):
         return [el.get("name")
