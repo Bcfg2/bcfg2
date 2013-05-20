@@ -5,3 +5,4 @@ sphinx
 pylint
 pep8
 python-daemon
+genshi
