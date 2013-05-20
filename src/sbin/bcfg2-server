@@ -24,18 +24,29 @@ def main():
         print("Could not read %s" % setup['configfile'])
         sys.exit(1)
 
-    if setup['backend'] not in ['best', 'cherrypy', 'builtin']:
+    # TODO: normalize case of various core modules so we can add a new
+    # core without modifying this script
+    backends = dict(cherrypy='CherryPyCore',
+                    builtin='BuiltinCore',
+                    best='BuiltinCore',
+                    multiprocessing='MultiprocessingCore')
+
+    if setup['backend'] not in backends:
         print("Unknown server backend %s, using 'best'" % setup['backend'])
         setup['backend'] = 'best'
-    if setup['backend'] == 'cherrypy':
-        try:
-            from Bcfg2.Server.CherryPyCore import Core
-        except ImportError:
-            err = sys.exc_info()[1]
-            print("Unable to import CherryPy server core: %s" % err)
-            raise
-    elif setup['backend'] == 'builtin' or setup['backend'] == 'best':
-        from Bcfg2.Server.BuiltinCore import Core
+
+    coremodule = backends[setup['backend']]
+    try:
+        Core = getattr(__import__("Bcfg2.Server.%s" % coremodule).Server,
+                       coremodule).Core
+    except ImportError:
+        err = sys.exc_info()[1]
+        print("Unable to import %s server core: %s" % (setup['backend'], err))
+        raise
+    except AttributeError:
+        err = sys.exc_info()[1]
+        print("Unable to load %s server core: %s" % (setup['backend'], err))
+        raise
 
     try:
         core = Core(setup)

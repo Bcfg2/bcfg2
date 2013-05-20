@@ -71,6 +71,11 @@ XML-RPC Server
 
 .. automodule:: Bcfg2.SSLServer
 
+Multiprocessing Core
+--------------------
+
+.. automodule:: Bcfg2.Server.MultiprocessingCore
+
 CherryPy Core
 -------------
 

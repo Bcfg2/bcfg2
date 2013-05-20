@@ -20,6 +20,9 @@ Bcfg2, although it has become easier in 1.3.0.  The steps to do so are
 described in three sections below:  Common steps for all versions;
 steps for older versions only; and steps for 1.3.0.
 
+Many of the steps below may have already been performed by your OS
+packages.
+
 Common Steps
 ------------
 
@@ -131,7 +134,7 @@ is even invoked.
 Restart ``bcfg2-server`` and you should see it running as non-root in
 ``ps`` output::
 
-    % ps -ef | grep '[b]cfg2-server'   
+    % ps -ef | grep '[b]cfg2-server'
     1000     11581     1  0 07:55 ?        00:00:15 python usr/sbin/bcfg2-server -C /etc/bcfg2.conf -D /var/run/bcfg2-server/bcfg2-server.pid
 
 Steps on Bcfg2 1.3.0
@@ -159,7 +162,7 @@ natively in 1.3.  Simply add the following lines to ``bcfg2.conf``::
 Restart ``bcfg2-server`` and you should see it running as non-root in
 ``ps`` output::
 
-    % ps -ef | grep '[b]cfg2-server'   
+    % ps -ef | grep '[b]cfg2-server'
     1000     11581     1  0 07:55 ?        00:00:15 python usr/sbin/bcfg2-server -C /etc/bcfg2.conf -D /var/run/bcfg2-server/bcfg2-server.pid
 
 .. _server-backends:
@@ -169,10 +172,11 @@ Server Backends
 
 .. versionadded:: 1.3.0
 
-Bcfg2 supports two different server backends: a builtin server
-based on the Python SimpleXMLRPCServer object, and a server that uses
-CherryPy (http://www.cherrypy.org).  Each one has advantages and
-disadvantages.
+Bcfg2 supports three different server backends: a builtin server based
+on the Python SimpleXMLRPCServer object; a server that uses CherryPy
+(http://www.cherrypy.org); and a version of the builtin server that
+uses the Python :mod:`multiprocessing` module.  Each one has
+advantages and disadvantages.
 
 The builtin server:
 
@@ -181,27 +185,36 @@ The builtin server:
 * Works on Python 2.4;
 * Is slow with larger numbers of clients.
 
+The multiprocessing server:
+
+* Leverages most of the stability and maturity of the builtin server,
+  but does have some new bits;
+* Introduces concurrent processing to Bcfg2, which may break in
+  various edge cases;
+* Supports certificate authentication;
+* Requires Python 2.6;
+* Is faster with large numbers of concurrent runs.
+
 The CherryPy server:
 
 * Is very new and potentially buggy;
 * Does not support certificate authentication yet, only password
   authentication;
-* Requires CherryPy 3.2, which requires Python 2.5;
+* Requires CherryPy 3.3, which requires Python 2.5;
 * Is smarter about daemonization, particularly if you are
   :ref:`server-dropping-privs`;
 * Is faster with large numbers of clients.
 
 Basically, the builtin server should be used unless you have a
-particular need for performance, and can sacrifice certificate
-authentication.
+particular need for performance.  The CherryPy server is purely
+experimental at this point.
 
 To select which backend to use, set the ``backend`` option in the
 ``[server]`` section of ``/etc/bcfg2.conf``.  Options are:
 
 * ``cherrypy``
 * ``builtin``
+* ``multiprocessing``
 * ``best`` (the default; currently the same as ``builtin``)
 
-If the certificate authentication issues (a limitation in CherryPy
-itself) can be resolved and the CherryPy server proves to be stable,
-it will likely become the default (and ``best``) in a future release.
+``best`` may change in future releases.
