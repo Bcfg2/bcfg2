@@ -13,7 +13,7 @@ while path != "/":
     path = os.path.dirname(path)
 from common import *
 
-from Bcfg2.Statistics import *
+from Bcfg2.Server.Statistics import *
 
 
 class TestStatistic(Bcfg2TestCase):
