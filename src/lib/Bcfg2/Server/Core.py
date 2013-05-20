@@ -301,6 +301,7 @@ class BaseCore(object):
                 self.logger.info("Performance statistics: "
                                  "%s min=%.06f, max=%.06f, average=%.06f, "
                                  "count=%d" % ((name, ) + stats))
+        self.logger.debug("Performance logging thread terminated")
 
     def _file_monitor_thread(self):
         """ The thread that runs the
@@ -321,6 +322,7 @@ class BaseCore(object):
             except:
                 continue
             self._update_vcs_revision()
+        self.logger.debug("File monitor thread terminated")
 
     @track_statistics()
     def _update_vcs_revision(self):
@@ -440,8 +442,10 @@ class BaseCore(object):
         if not self.terminate.isSet():
             self.terminate.set()
             self.fam.shutdown()
+            self.logger.debug("FAM shut down")
             for plugin in list(self.plugins.values()):
                 plugin.shutdown()
+            self.logger.debug("All plugins shut down")
 
     @property
     def metadata_cache_mode(self):

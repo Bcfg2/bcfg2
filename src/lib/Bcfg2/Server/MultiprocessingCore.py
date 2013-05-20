@@ -190,6 +190,7 @@ class Core(BuiltinCore):
                 child.terminate()
             else:
                 self.logger.debug("Child %s shut down" % child.name)
+        self.logger.debug("All children shut down")
 
     @exposed
     def GetConfig(self, address):
