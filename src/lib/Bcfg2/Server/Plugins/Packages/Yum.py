@@ -1120,9 +1120,9 @@ class YumSource(Source):
             self.packages['global'] = copy.deepcopy(sdata.pop())
         except IndexError:
             self.logger.error("Packages: No packages in repo")
+            self.packages['global'] = set()
         while sdata:
-            self.packages['global'] = \
-                self.packages['global'].intersection(sdata.pop())
+            self.packages['global'].update(sdata.pop())
 
         for key in self.packages:
             if key == 'global':
