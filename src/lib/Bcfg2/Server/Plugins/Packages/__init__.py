@@ -527,8 +527,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         collection = cclass(metadata, relevant, self.cachepath, self.data,
                             self.core.fam, debug=self.debug_flag)
         ckey = collection.cachekey
-        self.clients[metadata.hostname] = ckey
-        self.collections[ckey] = collection
+        if cclass != Collection:
+            self.clients[metadata.hostname] = ckey
+            self.collections[ckey] = collection
         return collection
 
     def get_additional_data(self, metadata):
