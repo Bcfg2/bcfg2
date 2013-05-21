@@ -43,7 +43,7 @@ class POSIXDirectory(POSIXTool):
         return POSIXTool.verify(self, entry, modlist) and prune
 
     def install(self, entry):
-        """Install device entries."""
+        """Install directory entries."""
         fmode = self._exists(entry)
 
         if fmode and not stat.S_ISDIR(fmode[stat.ST_MODE]):
