@@ -4,25 +4,24 @@ Priority: optional
 Maintainer: Arto Jantunen <viiru@debian.org>
 Uploaders: Sami Haahtinen <ressu@debian.org>
 Build-Depends: debhelper (>= 7.0.50~),
-               python (>= 2.3.5-7),
+	       python (>= 2.6),
 	       python-setuptools,
 	       python-sphinx (>= 1.0.7+dfsg) | python3-sphinx,
 	       python-lxml,
 	       python-daemon,
 	       python-cherrypy,
+	       python-gamin,
 	       python-pyinotify,
 	       python-m2crypto,
 	       python-doc,
 	       python-mock-doc
 Build-Depends-Indep: python-support (>= 0.5.3)
 Standards-Version: 3.8.0.0
-XS-Python-Version: >= 2.3
 Homepage: http://bcfg2.org/
 
 Package: bcfg2
 Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}, debsums, python-apt, ucf, lsb-base (>= 3.1-9), python-m2crypto | python-ssl | python2.6 | python3.0 | python3.1 | python3.2
-XB-Python-Version: >= 2.3
+Depends: ${python:Depends}, ${misc:Depends}, debsums, python-apt, ucf, lsb-base (>= 3.1-9), python (>= 2.6)
 Description: Configuration management client
  Bcfg2 is a configuration management system that generates configuration sets
  for clients bound by client profiles.
@@ -31,8 +30,7 @@ Description: Configuration management client
 
 Package: bcfg2-server
 Architecture: all
-Depends: ${python:Depends}, ${misc:Depends}, python-lxml (>= 0.9), libxml2-utils (>= 2.6.23), lsb-base (>= 3.1-9), ucf, bcfg2 (= ${binary:Version}), openssl, python-ssl | python2.6 | python3.0 | python3.1 | python3.2, python-pyinotify | python-gamin, python-daemon
-XB-Python-Version: >= 2.4
+Depends: ${python:Depends}, ${misc:Depends}, python-lxml (>= 0.9), libxml2-utils (>= 2.6.23), lsb-base (>= 3.1-9), ucf, bcfg2 (= ${binary:Version}), openssl, python (>= 2.6), python-pyinotify | python-gamin, python-daemon
 Recommends: graphviz, patch
 Suggests: python-cheetah, python-genshi (>= 0.4.4), python-profiler, python-sqlalchemy (>= 0.5.0), python-django, mail-transport-agent, bcfg2-doc (= ${binary:Version})
 Description: Configuration management server
@@ -45,7 +43,6 @@ Package: bcfg2-web
 Architecture: all
 Depends: ${python:Depends}, ${misc:Depends}, bcfg2-server (= ${binary:Version}), python-django,
 Suggests: python-mysqldb, python-psycopg2, python-sqlite, libapache2-mod-wsgi
-XB-Python-Version: >= 2.4
 Description: Configuration management web interface
  Bcfg2 is a configuration management system that generates configuration sets
  for clients bound by client profiles.

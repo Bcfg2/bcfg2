@@ -556,6 +556,12 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 open(os.path.join(repo, cls.name, fname),
                      "w").write(kwargs[aname])
 
+    @property
+    def use_database(self):
+        """ Expose self._use_db publicly for use in
+        :class:`Bcfg2.Server.MultiprocessingCore.ChildCore` """
+        return self._use_db
+
     def _handle_file(self, fname):
         """ set up the necessary magic for handling a metadata file
         (clients.xml or groups.xml, e.g.) """

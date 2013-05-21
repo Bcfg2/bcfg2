@@ -603,6 +603,16 @@ SERVER_AUTHENTICATION = \
            default='cert+password',
            odesc='{cert|bootstrap|cert+password}',
            cf=('communication', 'authentication'))
+SERVER_CHILDREN = \
+    Option('Spawn this number of children for the multiprocessing core. '
+           'By default spawns children equivalent to the number of processors '
+           'in the machine.',
+           default=None,
+           cmd='--children',
+           odesc='<children>',
+           cf=('server', 'children'),
+           cook=get_int,
+           long_arg=True)
 
 # database options
 DB_ENGINE = \
@@ -1109,7 +1119,8 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
                              vcs_root=SERVER_VCS_ROOT,
                              authentication=SERVER_AUTHENTICATION,
                              perflog=LOG_PERFORMANCE,
-                             perflog_interval=PERFLOG_INTERVAL)
+                             perflog_interval=PERFLOG_INTERVAL,
+                             children=SERVER_CHILDREN)
 
 CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
                      decrypt=DECRYPT,
