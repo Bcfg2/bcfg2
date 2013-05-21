@@ -24,7 +24,11 @@ import sys
 import pwd
 import grp
 import Bcfg2.Client.XML
-from Bcfg2.Compat import b64encode, oct_mode
+try:
+    from Bcfg2.Compat import b64encode, oct_mode
+except ImportError:
+    from base64 import b64encode
+    oct_mode = oct
 
 path = "%s"
 
