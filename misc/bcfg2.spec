@@ -191,6 +191,27 @@ Group:            Documentation/HTML
 %else
 Group:            Documentation
 %endif
+%if 0%{?suse_version}
+BuildRequires:    python-M2Crypto
+BuildRequires:    python-Genshi
+BuildRequires:    python-gamin
+BuildRequires:    python-pyinotify
+BuildRequires:    python-python-daemon
+BuildRequires:    python-CherryPy >= 3
+%else
+BuildRequires:    m2crypto
+BuildRequires:    python-genshi
+BuildRequires:    gamin-python
+BuildRequires:    python-inotify
+BuildRequires:    python-daemon
+%endif
+
+%if "%{_vendor}" == "redhat" && 0%{?rhel} < 6 && 0%{?fedora} == 0
+BuildRequires:         python-ssl
+%else
+BuildRequires:    python-cherrypy >= 3
+BuildRequires:    python-mock
+%endif
 
 %description doc
 Bcfg2 helps system administrators produce a consistent, reproducible,
