@@ -41,15 +41,15 @@ del DEFAULT_FILE_METADATA['configfile']
 LOGGER = logging.getLogger(__name__)
 
 #: a compiled regular expression for parsing info and :info files
-INFO_REGEX = re.compile(r'owner:(\s)*(?P<owner>\S+)|' +
-                        r'group:(\s)*(?P<group>\S+)|' +
-                        r'mode:(\s)*(?P<mode>\w+)|' +
-                        r'secontext:(\s)*(?P<secontext>\S+)|' +
-                        r'paranoid:(\s)*(?P<paranoid>\S+)|' +
-                        r'sensitive:(\s)*(?P<sensitive>\S+)|' +
-                        r'encoding:(\s)*(?P<encoding>\S+)|' +
-                        r'important:(\s)*(?P<important>\S+)|' +
-                        r'mtime:(\s)*(?P<mtime>\w+)|')
+INFO_REGEX = re.compile(r'owner:\s*(?P<owner>\S+)|' +
+                        r'group:\s*(?P<group>\S+)|' +
+                        r'mode:\s*(?P<mode>\w+)|' +
+                        r'secontext:\s*(?P<secontext>\S+)|' +
+                        r'paranoid:\s*(?P<paranoid>\S+)|' +
+                        r'sensitive:\s*(?P<sensitive>\S+)|' +
+                        r'encoding:\s*(?P<encoding>\S+)|' +
+                        r'important:\s*(?P<important>\S+)|' +
+                        r'mtime:\s*(?P<mtime>\w+)')
 
 
 def bind_info(entry, metadata, infoxml=None, default=DEFAULT_FILE_METADATA):

@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
 import os
+import re
 import sys
 import lxml.etree
 import Bcfg2.Options
 from Bcfg2.Server.Plugin import INFO_REGEX
+
+
+PERMS_REGEX = re.compile(r'perms:\s*(?P<perms>\w+)')
 
 
 def convert(info_file):
@@ -16,7 +20,7 @@ def convert(info_file):
     fileinfo = lxml.etree.Element("FileInfo")
     info = lxml.etree.SubElement(fileinfo, "Info")
     for line in open(info_file).readlines():
-        match = INFO_REGEX.match(line)
+        match = INFO_REGEX.match(line) or PERMS_REGEX.match(line)
         if match:
             mgd = match.groupdict()
             for key, value in list(mgd.items()):
