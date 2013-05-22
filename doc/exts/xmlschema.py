@@ -115,6 +115,7 @@ class _XMLDirective(Directive):
     def run(self):
         name = self.arguments[0]
         env = self.state.document.settings.env
+        reporter = self.state.memo.reporter
         ns_name = self.options.get('namespace')
         try:
             ns_uri = env.xmlschema_namespaces[ns_name]
@@ -129,8 +130,8 @@ class _XMLDirective(Directive):
             except KeyError:
                 pass
         else:
-            env.app.error("No XML %s %s found" %
-                          (" or ".join(self.types), name))
+            reporter.error("No XML %s %s found" %
+                           (" or ".join(self.types), name))
         documentor = XMLDocumentor(entity, env, self.state, name=name,
                                    ns_uri=ns_uri,
                                    include=self.process_include(),
@@ -172,6 +173,7 @@ class XMLDocumentor(object):
         self.include = include
         self.options = options
         self.app = self.env.app
+        self.reporter = self.state.memo.reporter
 
         if name is None:
             self.ns_uri = ns_uri
@@ -312,7 +314,7 @@ class XMLDocumentor(object):
                 rv.extend(doc.document_complexType())
                 return rv
             else:
-                self.app.error("Unknown element type %s" % fqtype)
+                self.reporter.error("Unknown element type %s" % fqtype)
         else:
             rv = []
             typespec = self.entity.xpath("xs:complexType", namespaces=NSMAP)[0]
