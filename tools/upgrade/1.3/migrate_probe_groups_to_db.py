@@ -1,4 +1,7 @@
 #!/bin/env python
+""" Migrate Probe host and group data from XML to DB backend for Metadata
+and Probe plugins. Does not migrate individual probe return data. Assumes
+migration to BOTH Metadata and Probe to database backends. """
 
 import os
 os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
@@ -11,6 +14,7 @@ from Bcfg2.Server.Plugins.Metadata import MetadataClientModel
 from Bcfg2.Server.Plugins.Probes import ProbesGroupsModel
 
 def migrate(xclient):
+    """ Helper to do the migration given a <Client/> XML element """
     client_name = xclient.get('name')
     try:
         try:
@@ -43,6 +47,7 @@ def migrate(xclient):
     return True
 
 def main():
+    """ Main """
     opts = dict(repo=Bcfg2.Options.SERVER_REPOSITORY)
     setup = Bcfg2.Options.OptionParser(opts)
     setup.parse(sys.argv[1:])
