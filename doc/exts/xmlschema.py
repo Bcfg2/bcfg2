@@ -132,6 +132,7 @@ class _XMLDirective(Directive):
         else:
             reporter.error("No XML %s %s found" %
                            (" or ".join(self.types), name))
+            return []
         documentor = XMLDocumentor(entity, env, self.state, name=name,
                                    ns_uri=ns_uri,
                                    include=self.process_include(),
@@ -315,6 +316,7 @@ class XMLDocumentor(object):
                 return rv
             else:
                 self.reporter.error("Unknown element type %s" % fqtype)
+                return []
         else:
             rv = []
             typespec = self.entity.xpath("xs:complexType", namespaces=NSMAP)[0]
