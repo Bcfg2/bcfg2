@@ -15,7 +15,7 @@ if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
     if [[ ${PYVER:0:1} == "2" ]]; then
         # django supports py3k, but South doesn't, and the django bits
         # in bcfg2 require South
-        pip install cheetah 'django<1.5' South M2Crypto
+        pip install cheetah 'django<1.5' 'South<0.8' M2Crypto
     fi
 else
     # python < 2.6 requires M2Crypto for SSL communication, not just
