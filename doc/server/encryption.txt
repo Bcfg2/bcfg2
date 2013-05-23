@@ -12,7 +12,8 @@ Bcfg2 supports encrypting some data on the disk, which can help
 protect sensitive data from other people who need access to the Bcfg2
 repository but are perhaps not authorized to see all data.  It
 supports multiple passphrases, which can be used to enforce
-separations between teams, environments, etc.
+separations between teams, environments, etc.  Use of the encryption
+feature requires M2Crypto 0.18 or newer.
 
 .. note::
 
