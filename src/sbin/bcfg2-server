@@ -37,9 +37,8 @@ def main():
 
     coremodule = backends[setup['backend']]
     try:
-        Core = getattr(  # pylint: disable=C0103
-            __import__("Bcfg2.Server.%s" % coremodule).Server,
-                       coremodule).Core
+        corecls = getattr(__import__("Bcfg2.Server.%s" % coremodule).Server,
+                          coremodule).Core
     except ImportError:
         err = sys.exc_info()[1]
         print("Unable to import %s server core: %s" % (setup['backend'], err))
@@ -50,7 +49,7 @@ def main():
         raise
 
     try:
-        core = Core(setup)
+        core = corecls(setup)
         core.run()
     except CoreInitError:
         msg = sys.exc_info()[1]
