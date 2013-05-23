@@ -579,7 +579,7 @@ SERVER_PASSWORD = \
 SERVER_PROTOCOL = \
     Option('Server Protocol',
            default='xmlrpc/ssl',
-           cf=('communication', 'procotol'))
+           cf=('communication', 'protocol'))
 SERVER_BACKEND = \
     Option('Server Backend',
            default='best',
