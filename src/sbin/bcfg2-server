@@ -37,7 +37,8 @@ def main():
 
     coremodule = backends[setup['backend']]
     try:
-        Core = getattr(__import__("Bcfg2.Server.%s" % coremodule).Server,
+        Core = getattr(  # pylint: disable=C0103
+            __import__("Bcfg2.Server.%s" % coremodule).Server,
                        coremodule).Core
     except ImportError:
         err = sys.exc_info()[1]
