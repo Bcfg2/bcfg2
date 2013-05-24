@@ -197,7 +197,8 @@ class DjangoORM(StorageBase):
     def _import_Service(self, entry, state):
         return self._import_default(entry, state,
                                     defaults=dict(status='',
-                                                  current_status=''),
+                                                  current_status='',
+                                                  target_status=''),
                                     mapping=dict(status='target_status'))
 
     def _import_SEBoolean(self, entry, state):
