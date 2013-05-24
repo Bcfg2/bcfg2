@@ -21,6 +21,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
 
     def VerifyService(self, entry, _):
         """Verify Service status for entry."""
+        entry.set('target_status', entry.get('status'))
         if entry.get('status') == 'ignore':
             return True
 
