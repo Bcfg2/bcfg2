@@ -19,3 +19,8 @@ migrate_dbstats.py
 migrate_perms_to_mode.py
     - Convert perms attribute to mode (note that if you have info/:info
       files, you should run migrate_info.py first)
+
+migrate_probe_groups_to_db.py
+    - Migrate Probe host and group data from XML to DB backend for Metadata 
+      and Probe plugins. Does not migrate individual probe return data. Assumes 
+      migration to BOTH Metadata and Probe to database backends. 
