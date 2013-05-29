@@ -143,8 +143,8 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
             self.check_xml(os.path.join(self.metadata.data, "groups.xml"),
                            self.metadata.groups_xml.data,
                            "metadata")
-        if self.has_all_xincludes("clients.xml"):
-            if hasattr(self.metadata, "clients_xml"):
+        if hasattr(self.metadata, "clients_xml"):
+            if self.has_all_xincludes("clients.xml"):
                 self.check_xml(os.path.join(self.metadata.data, "clients.xml"),
                                self.metadata.clients_xml.data,
                                "metadata")
