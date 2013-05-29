@@ -144,9 +144,10 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                            self.metadata.groups_xml.data,
                            "metadata")
         if self.has_all_xincludes("clients.xml"):
-            self.check_xml(os.path.join(self.metadata.data, "clients.xml"),
-                           self.metadata.clients_xml.data,
-                           "metadata")
+            if hasattr(self.metadata, "clients_xml"):
+                self.check_xml(os.path.join(self.metadata.data, "clients.xml"),
+                               self.metadata.clients_xml.data,
+                               "metadata")
 
     def check_cfg(self):
         """ Check Cfg files and ``info.xml`` files for required
