@@ -26,6 +26,8 @@ TYPE_CHOICES = (
     (TYPE_EXTRA, 'Extra'),
 )
 
+_our_backend = None
+
 
 def convert_entry_type_to_id(type_name):
     """Convert a entry type to its entry id"""
@@ -49,7 +51,6 @@ def hash_entry(entry_dict):
     return hash(cPickle.dumps(dataset))
 
 
-_our_backend = None
 def _quote(value):
     """
     Quote a string to use as a table name or column
@@ -59,7 +60,10 @@ def _quote(value):
     """
     global _our_backend
     if not _our_backend:
-        _our_backend = backend.DatabaseOperations(connection)
+        try:
+            _our_backend = backend.DatabaseOperations(connection)
+        except TypeError:
+            _our_backend = backend.DatabaseOperations()
     return _our_backend.quote_name(value)
 
 
@@ -113,7 +117,6 @@ class InteractionManager(models.Manager):
             pass
         return []
 
-
     def recent(self, maxdate=None):
         """
         Returns the most recent interactions for clients as of a date
@@ -133,7 +136,7 @@ class Interaction(models.Model):
     timestamp = models.DateTimeField(db_index=True)  # Timestamp for this record
     state = models.CharField(max_length=32)  # good/bad/modified/etc
     repo_rev_code = models.CharField(max_length=64)  # repo revision at time of interaction
-    server = models.CharField(max_length=256)  # Name of the server used for the interaction
+    server = models.CharField(max_length=256)  # server used for interaction
     good_count = models.IntegerField()  # of good config-items
     total_count = models.IntegerField()  # of total config-items
     bad_count = models.IntegerField(default=0)
@@ -230,7 +233,7 @@ class Interaction(models.Model):
         rv = []
         for entry in self.entry_types:
             if entry == 'failures':
-              continue
+                continue
             rv.extend(getattr(self, entry).filter(state=TYPE_BAD))
         return rv
 
@@ -238,7 +241,7 @@ class Interaction(models.Model):
         rv = []
         for entry in self.entry_types:
             if entry == 'failures':
-              continue
+                continue
             rv.extend(getattr(self, entry).filter(state=TYPE_MODIFIED))
         return rv
 
@@ -246,7 +249,7 @@ class Interaction(models.Model):
         rv = []
         for entry in self.entry_types:
             if entry == 'failures':
-              continue
+                continue
             rv.extend(getattr(self, entry).filter(state=TYPE_EXTRA))
         return rv
 
@@ -258,7 +261,8 @@ class Interaction(models.Model):
 
 class Performance(models.Model):
     """Object representing performance data for any interaction."""
-    interaction = models.ForeignKey(Interaction, related_name="performance_items")
+    interaction = models.ForeignKey(Interaction,
+                                    related_name="performance_items")
     metric = models.CharField(max_length=128)
     value = models.DecimalField(max_digits=32, decimal_places=16)
 
@@ -291,11 +295,11 @@ class Group(models.Model):
     class Meta:
         ordering = ('name',)
 
-
     @staticmethod
     def prune_orphans():
         '''Prune unused groups'''
-        Group.objects.filter(interaction__isnull=True, group__isnull=True).delete()
+        Group.objects.filter(interaction__isnull=True,
+                             group__isnull=True).delete()
 
 
 class Bundle(models.Model):
@@ -313,11 +317,11 @@ class Bundle(models.Model):
     class Meta:
         ordering = ('name',)
 
-
     @staticmethod
     def prune_orphans():
         '''Prune unused bundles'''
-        Bundle.objects.filter(interaction__isnull=True, group__isnull=True).delete()
+        Bundle.objects.filter(interaction__isnull=True,
+                              group__isnull=True).delete()
 
 
 # new interaction models
@@ -420,7 +424,7 @@ class BaseEntry(models.Model):
     def prune_orphans(cls):
         '''Remove unused entries'''
         # yeat another sqlite hack
-        cls_orphans = [x['id'] \
+        cls_orphans = [x['id']
             for x in cls.objects.filter(interaction__isnull=True).values("id")]
         i = 0
         while i < len(cls_orphans):
@@ -695,7 +699,7 @@ class PathEntry(SuccessEntry):
     acls = models.ManyToManyField(FileAcl)
 
     detail_type = models.IntegerField(default=0,
-        choices=DETAIL_CHOICES)
+                                      choices=DETAIL_CHOICES)
     details = models.TextField(default='')
 
     ENTRY_TYPE = r"Path"
