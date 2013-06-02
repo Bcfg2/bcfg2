@@ -227,6 +227,15 @@ E.G. 1.2.0pre1 is a valid version.
                      'VERSION="%s"\n' % version,
                      startswith=True,
                      dryrun=options.dryrun)
+    # update solaris IPS version
+    find_and_replace('solaris-ips/MANIFEST.bcfg2.header', 'set name=pkg.fmri value="pkg://bcfg2/bcfg2@',
+                     'set name=pkg.fmri value="pkg://bcfg2/bcfg2@%s"' % version,
+                      startswith=True,
+                      dryrun=options.dryrun)
+    find_and_replace('solaris-ips/MANIFEST.bcfg2-server.header', 'set name=pkg.fmri value="pkg://bcfg2/bcfg2-server@',
+                     'set name=pkg.fmri value="pkg://bcfg2/bcfg2-server@%s"' % version,
+                      startswith=True,
+                      dryrun=options.dryrun)
     # set new version in Bcfg2/version.py
     find_and_replace('src/lib/Bcfg2/version.py',
                      '__version__ =',
