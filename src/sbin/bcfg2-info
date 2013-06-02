@@ -231,10 +231,14 @@ class InfoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                 print("Refusing to write files outside of /tmp without -f "
                       "option")
                 return
-            lxml.etree.ElementTree(self.BuildConfiguration(client)).write(
-                ofile,
-                encoding='UTF-8', xml_declaration=True,
-                pretty_print=True)
+            try:
+                lxml.etree.ElementTree(self.BuildConfiguration(client)).write(
+                    ofile,
+                    encoding='UTF-8', xml_declaration=True,
+                    pretty_print=True)
+            except IOError:
+                err = sys.exc_info()[1]
+                print("Failed to write File %s: %s" % (ofile, err))
         else:
             print(self._get_usage(self.do_build))
 
