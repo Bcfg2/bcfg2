@@ -34,12 +34,21 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="bootstatus" type="BootStatusEnum" default="off">
+      <xsd:annotation>
+        <xsd:documentation>
+          Whether the service should start at boot. The default value
+          corresponds to the value of the status attribute.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="status" type="StatusEnum" default="off">
       <xsd:annotation>
         <xsd:documentation>
-          Whether the service should start at boot.  If this is set to
-          "ignore", then the boot-time status of the service will not
-          be checked.
+          Whether the service should be on or off when the bcfg2 client
+          is run. This attribute may have different behavior depending
+          on the characteristics of the client tool. If set to "ignore",
+          then the status of the service will not be checked.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

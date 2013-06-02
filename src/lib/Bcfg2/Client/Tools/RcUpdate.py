@@ -21,21 +21,38 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
                                           '-s']).stdout.splitlines()
                 if 'started' in line]
 
+    def get_default_svcs(self):
+        """Return a list of services in the 'default' runlevel."""
+        return [line.split()[0]
+                for line in self.cmd.run(['/sbin/rc-update',
+                                          'show']).stdout.splitlines()
+                if 'default' in line]
+
+    def verify_bootstatus(self, entry, bootstatus):
+        """Verify bootstatus for entry."""
+        # get a list of all started services
+        allsrv = self.get_default_svcs()
+        # set current_bootstatus attribute
+        if entry.get('name') in allsrv:
+            entry.set('current_bootstatus', 'on')
+        else:
+            entry.set('current_bootstatus', 'off')
+        if bootstatus == 'on':
+            return entry.get('name') in allsrv
+        else:
+            return entry.get('name') not in allsrv
+
     def VerifyService(self, entry, _):
         """
         Verify Service status for entry.
         Assumes we run in the "default" runlevel.
 
         """
-        if entry.get('status') == 'ignore':
+        entry.set('target_status', entry.get('status'))  # for reporting
+        bootstatus = self.get_bootstatus(entry)
+        if bootstatus is None:
             return True
-
-        # get a list of all started services
-        allsrv = self.get_enabled_svcs()
-
-        # check if service is enabled
-        result = self.cmd.run(["/sbin/rc-update", "show", "default"]).stdout
-        is_enabled = entry.get("name") in result
+        current_bootstatus = self.verify_bootstatus(entry, bootstatus)
 
         # check if init script exists
         try:
@@ -45,39 +62,56 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
                               entry.get('name'))
             return False
 
-        # check if service is enabled
-        is_running = entry.get('name') in allsrv
+        svcstatus = self.check_service(entry)
+        if entry.get('status') == 'on':
+            if svcstatus:
+                current_srvstatus = True
+            else:
+                current_srvstatus = False
+        elif entry.get('status') == 'off':
+            if svcstatus:
+                current_srvstatus = False
+            else:
+                current_srvstatus = True
+        else:
+            # 'ignore' should verify
+            current_srvstatus = True
 
-        if entry.get('status') == 'on' and not (is_enabled and is_running):
-            entry.set('current_status', 'off')
-            return False
-
-        elif entry.get('status') == 'off' and (is_enabled or is_running):
+        if svcstatus:
             entry.set('current_status', 'on')
-            return False
+        else:
+            entry.set('current_status', 'off')
 
-        return True
+        return current_bootstatus and current_srvstatus
 
     def InstallService(self, entry):
-        """
-        Install Service entry
-
-        """
+        """Install Service entry."""
         self.logger.info('Installing Service %s' % entry.get('name'))
-        if entry.get('status') == 'on':
-            if entry.get('current_status') == 'off':
-                self.start_service(entry)
-            # make sure it's enabled
-            cmd = '/sbin/rc-update add %s default'
-            return self.cmd.run(cmd % entry.get('name')).success
-        elif entry.get('status') == 'off':
-            if entry.get('current_status') == 'on':
-                self.stop_service(entry)
-            # make sure it's disabled
-            cmd = '/sbin/rc-update del %s default'
-            return self.cmd.run(cmd % entry.get('name')).success
-
-        return False
+        bootstatus = entry.get('bootstatus')
+        if bootstatus is not None:
+            if bootstatus == 'on':
+                # make sure service is enabled on boot
+                bootcmd = '/sbin/rc-update add %s default'
+            elif bootstatus == 'off':
+                # make sure service is disabled on boot
+                bootcmd = '/sbin/rc-update del %s default'
+            bootcmdrv = self.cmd.run(bootcmd % entry.get('name')).success
+            if self.setup['servicemode'] == 'disabled':
+                # 'disabled' means we don't attempt to modify running svcs
+                return bootcmdrv
+            buildmode = self.setup['servicemode'] == 'build'
+            if (entry.get('status') == 'on' and not buildmode) and \
+               entry.get('current_status') == 'off':
+                svccmdrv = self.start_service(entry)
+            elif (entry.get('status') == 'off' or buildmode) and \
+                    entry.get('current_status') == 'on':
+                svccmdrv = self.stop_service(entry)
+            else:
+                svccmdrv = True  # ignore status attribute
+            return bootcmdrv and svccmdrv
+        else:
+            # when bootstatus is 'None', status == 'ignore'
+            return True
 
     def FindExtra(self):
         """Locate extra rc-update services."""

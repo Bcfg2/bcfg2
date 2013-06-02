@@ -53,6 +53,13 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <xsd:simpleType name='BootStatusEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='on'/>
+      <xsd:enumeration value='off'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
   <xsd:simpleType name='StatusEnum'>
     <xsd:restriction base='xsd:string'>
       <xsd:enumeration value='on'/>
