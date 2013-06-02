@@ -6,6 +6,7 @@ import sys
 import time
 import copy
 import glob
+import logging
 import genshi
 import operator
 import lxml.etree
