@@ -314,7 +314,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
             errcode = response.status
             errmsg = response.reason
             headers = response.msg
-        except (socket.error, SSL_ERROR):
+        except (socket.error, SSL_ERROR, httplib.BadStatusLine):
             err = sys.exc_info()[1]
             raise ProxyError(xmlrpclib.ProtocolError(host + handler,
                                                      408,

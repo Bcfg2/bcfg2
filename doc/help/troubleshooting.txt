@@ -54,7 +54,7 @@ the debug level individually on a given plugin, e.g.::
     bcfg2-admin xcmd Probes.toggle_debug
 
 Finally, the File Activity Monitor has its own analogue to these two
-methods, for setting the debug level of the FAM:
+methods, for setting the debug level of the FAM::
 
     bcfg2-admin xcmd Inotify.toggle_debug
     bcfg2-admin xcmd Inotify.set_debug false

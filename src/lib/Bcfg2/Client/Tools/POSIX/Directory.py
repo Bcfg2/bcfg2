@@ -36,14 +36,14 @@ class POSIXDirectory(POSIXTool):
                     self.logger.info("POSIX: " + msg)
                     entry.set('qtext', entry.get('qtext', '') + '\n' + msg)
                     for extra in extras:
-                        Bcfg2.Client.XML.SubElement(entry, 'Prune', path=extra)
+                        Bcfg2.Client.XML.SubElement(entry, 'Prune', name=extra)
             except OSError:
                 prune = True
 
         return POSIXTool.verify(self, entry, modlist) and prune
 
     def install(self, entry):
-        """Install device entries."""
+        """Install directory entries."""
         fmode = self._exists(entry)
 
         if fmode and not stat.S_ISDIR(fmode[stat.ST_MODE]):
@@ -67,7 +67,7 @@ class POSIXDirectory(POSIXTool):
 
         if entry.get('prune', 'false') == 'true':
             for pent in entry.findall('Prune'):
-                pname = pent.get('path')
+                pname = pent.get('name')
                 try:
                     self.logger.debug("POSIX: Removing %s" % pname)
                     self._remove(pent)

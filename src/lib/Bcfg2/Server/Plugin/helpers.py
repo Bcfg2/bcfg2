@@ -30,6 +30,63 @@ try:
 except ImportError:
     HAS_DJANGO = False
 
+#: A dict containing default metadata for Path entries from bcfg2.conf
+DEFAULT_FILE_METADATA = Bcfg2.Options.OptionParser(
+    dict(configfile=Bcfg2.Options.CFILE,
+         owner=Bcfg2.Options.MDATA_OWNER,
+         group=Bcfg2.Options.MDATA_GROUP,
+         mode=Bcfg2.Options.MDATA_MODE,
+         secontext=Bcfg2.Options.MDATA_SECONTEXT,
+         important=Bcfg2.Options.MDATA_IMPORTANT,
+         paranoid=Bcfg2.Options.MDATA_PARANOID,
+         sensitive=Bcfg2.Options.MDATA_SENSITIVE))
+DEFAULT_FILE_METADATA.parse([Bcfg2.Options.CFILE.cmd, Bcfg2.Options.CFILE])
+del DEFAULT_FILE_METADATA['args']
+del DEFAULT_FILE_METADATA['configfile']
+
+LOGGER = logging.getLogger(__name__)
+
+#: a compiled regular expression for parsing info and :info files
+INFO_REGEX = re.compile(r'owner:\s*(?P<owner>\S+)|' +
+                        r'group:\s*(?P<group>\S+)|' +
+                        r'mode:\s*(?P<mode>\w+)|' +
+                        r'secontext:\s*(?P<secontext>\S+)|' +
+                        r'paranoid:\s*(?P<paranoid>\S+)|' +
+                        r'sensitive:\s*(?P<sensitive>\S+)|' +
+                        r'encoding:\s*(?P<encoding>\S+)|' +
+                        r'important:\s*(?P<important>\S+)|' +
+                        r'mtime:\s*(?P<mtime>\w+)')
+
+
+def bind_info(entry, metadata, infoxml=None, default=DEFAULT_FILE_METADATA):
+    """ Bind the file metadata in the given
+    :class:`Bcfg2.Server.Plugin.helpers.InfoXML` object to the given
+    entry.
+
+    :param entry: The abstract entry to bind the info to
+    :type entry: lxml.etree._Element
+    :param metadata: The client metadata to get info for
+    :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+    :param infoxml: The info.xml file to pull file metadata from
+    :type infoxml: Bcfg2.Server.Plugin.helpers.InfoXML
+    :param default: Default metadata to supply when the info.xml file
+                    does not include a particular attribute
+    :type default: dict
+    :returns: None
+    :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
+    """
+    for attr, val in list(default.items()):
+        entry.set(attr, val)
+    if infoxml:
+        mdata = dict()
+        infoxml.pnode.Match(metadata, mdata, entry=entry)
+        if 'Info' not in mdata:
+            msg = "Failed to set metadata for file %s" % entry.get('name')
+            LOGGER.error(msg)
+            raise PluginExecutionError(msg)
+        for attr, val in list(mdata['Info'][None].items()):
+            entry.set(attr, val)
+
 
 class track_statistics(object):  # pylint: disable=C0103
     """ Decorator that tracks execution time for the given

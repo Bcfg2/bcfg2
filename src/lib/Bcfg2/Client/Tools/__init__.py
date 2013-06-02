@@ -510,6 +510,22 @@ class SvcTool(Tool):
         """
         return '/etc/init.d/%s %s' % (service.get('name'), action)
 
+    def get_bootstatus(self, service):
+        """ Return the bootstatus attribute if it exists.
+
+        :param service: The service entry
+        :type service: lxml.etree._Element
+        :returns: string or None - Value of bootstatus if it exists. If
+                  bootstatus is unspecified and status is not *ignore*,
+                  return value of status. If bootstatus is unspecified
+                  and status is *ignore*, return None.
+        """
+        if service.get('bootstatus') is not None:
+            return service.get('bootstatus')
+        elif service.get('status') != 'ignore':
+            return service.get('status')
+        return None
+
     def start_service(self, service):
         """ Start a service.
 

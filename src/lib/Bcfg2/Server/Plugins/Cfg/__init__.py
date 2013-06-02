@@ -484,7 +484,9 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
                     return
                 elif hdlr.ignore(event, basename=self.path):
                     return
-        elif action == 'changed':
+        # we only get here if event.filename in self.entries, so handle
+        # created event like changed
+        elif action == 'changed' or action == 'created':
             self.entries[event.filename].handle_event(event)
             return
         elif action == 'deleted':

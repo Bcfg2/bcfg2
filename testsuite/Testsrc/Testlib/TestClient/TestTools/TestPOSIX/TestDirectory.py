@@ -70,7 +70,7 @@ class TestPOSIXDirectory(TestPOSIXTool):
         expected = [os.path.join(entry.get("name"), e)
                     for e in entries
                     if os.path.join(entry.get("name"), e) not in modlist]
-        actual = [e.get("path") for e in entry.findall("Prune")]
+        actual = [e.get("name") for e in entry.findall("Prune")]
         self.assertItemsEqual(expected, actual)
 
         mock_verify.reset_mock()
@@ -137,7 +137,7 @@ class TestPOSIXDirectory(TestPOSIXTool):
         entry.set("prune", "true")
         prune = ["/test/foo/bar/prune1", "/test/foo/bar/prune2"]
         for path in prune:
-            lxml.etree.SubElement(entry, "Prune", path=path)
+            lxml.etree.SubElement(entry, "Prune", name=path)
 
         reset()
         mock_install.return_value = True
@@ -145,6 +145,6 @@ class TestPOSIXDirectory(TestPOSIXTool):
         self.assertTrue(ptool.install(entry))
         ptool._exists.assert_called_with(entry)
         mock_install.assert_called_with(ptool, entry)
-        self.assertItemsEqual([c[0][0].get("path")
+        self.assertItemsEqual([c[0][0].get("name")
                                for c in ptool._remove.call_args_list],
                               prune)
