@@ -55,7 +55,8 @@ def run_plugin(plugin, plugin_name, setup=None, errorhandler=None,
     # python 2.5 doesn't support mixing *magic and keyword arguments
     start = time.time()
     rv = plugin(*args, **dict(files=files, errorhandler=errorhandler)).Run()
-    LOGGER.debug("  Ran %s in %0.2f seconds" % (plugin_name, time.time() - start))
+    LOGGER.debug("  Ran %s in %0.2f seconds" % (plugin_name,
+                                                time.time() - start))
     return rv
 
 

@@ -32,7 +32,7 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         use_stdin = False
         try:
             opts, gargs = getopt.getopt(args, 'vfIs')
-        except:
+        except getopt.GetoptError:
             self.errExit(self.__doc__)
         for opt in opts:
             if opt[0] == '-v':

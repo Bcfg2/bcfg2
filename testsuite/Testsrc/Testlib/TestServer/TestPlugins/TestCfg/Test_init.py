@@ -298,21 +298,20 @@ class TestCfgEntrySet(TestEntrySet):
         for submodule in walk_packages(path=Bcfg2.Server.Plugins.Cfg.__path__,
                                        prefix="Bcfg2.Server.Plugins.Cfg."):
             expected.append(submodule[1].rsplit('.', 1)[-1])
-        eset = self.get_obj()
-        self.assertItemsEqual(expected,
-                              [h.__name__ for h in eset.handlers])
+        self.assertItemsEqual(expected, [h.__name__ for h in handlers()])
 
-    def test_handle_event(self):
+    @patch("Bcfg2.Server.Plugins.Cfg.handlers")
+    def test_handle_event(self, mock_handlers):
         eset = self.get_obj()
         eset.entry_init = Mock()
-        eset._handlers = [Mock(), Mock(), Mock()]
-        for hdlr in eset.handlers:
+        mock_handlers.return_value = [Mock(), Mock(), Mock()]
+        for hdlr in mock_handlers.return_value:
             hdlr.__name__ = "handler"
         eset.entries = dict()
 
         def reset():
             eset.entry_init.reset_mock()
-            for hdlr in eset.handlers:
+            for hdlr in mock_handlers.return_value:
                 hdlr.reset_mock()
 
         # test that a bogus deleted event is discarded
@@ -322,7 +321,7 @@ class TestCfgEntrySet(TestEntrySet):
         eset.handle_event(evt)
         self.assertFalse(eset.entry_init.called)
         self.assertItemsEqual(eset.entries, dict())
-        for hdlr in eset.handlers:
+        for hdlr in mock_handlers.return_value:
             self.assertFalse(hdlr.handles.called)
             self.assertFalse(hdlr.ignore.called)
 
@@ -333,7 +332,7 @@ class TestCfgEntrySet(TestEntrySet):
             evt.filename = os.path.join(datastore, "test.txt")
 
             # test with no handler that handles
-            for hdlr in eset.handlers:
+            for hdlr in mock_handlers.return_value:
                 hdlr.handles.return_value = False
                 hdlr.ignore.return_value = False
 
@@ -341,16 +340,16 @@ class TestCfgEntrySet(TestEntrySet):
             eset.handle_event(evt)
             self.assertFalse(eset.entry_init.called)
             self.assertItemsEqual(eset.entries, dict())
-            for hdlr in eset.handlers:
+            for hdlr in mock_handlers.return_value:
                 hdlr.handles.assert_called_with(evt, basename=eset.path)
                 hdlr.ignore.assert_called_with(evt, basename=eset.path)
 
             # test with a handler that handles the entry
             reset()
-            eset.handlers[-1].handles.return_value = True
+            mock_handlers.return_value[-1].handles.return_value = True
             eset.handle_event(evt)
-            eset.entry_init.assert_called_with(evt, eset.handlers[-1])
-            for hdlr in eset.handlers:
+            eset.entry_init.assert_called_with(evt, mock_handlers.return_value[-1])
+            for hdlr in mock_handlers.return_value:
                 hdlr.handles.assert_called_with(evt, basename=eset.path)
                 if not hdlr.return_value:
                     hdlr.ignore.assert_called_with(evt, basename=eset.path)
@@ -358,14 +357,14 @@ class TestCfgEntrySet(TestEntrySet):
             # test with a handler that ignores the entry before one
             # that handles it
             reset()
-            eset.handlers[0].ignore.return_value = True
+            mock_handlers.return_value[0].ignore.return_value = True
             eset.handle_event(evt)
             self.assertFalse(eset.entry_init.called)
-            eset.handlers[0].handles.assert_called_with(evt,
+            mock_handlers.return_value[0].handles.assert_called_with(evt,
                                                         basename=eset.path)
-            eset.handlers[0].ignore.assert_called_with(evt,
+            mock_handlers.return_value[0].ignore.assert_called_with(evt,
                                                        basename=eset.path)
-            for hdlr in eset.handlers[1:]:
+            for hdlr in mock_handlers.return_value[1:]:
                 self.assertFalse(hdlr.handles.called)
                 self.assertFalse(hdlr.ignore.called)
 
@@ -377,7 +376,7 @@ class TestCfgEntrySet(TestEntrySet):
         eset.entries[evt.filename] = Mock()
         eset.handle_event(evt)
         self.assertFalse(eset.entry_init.called)
-        for hdlr in eset.handlers:
+        for hdlr in mock_handlers.return_value:
             self.assertFalse(hdlr.handles.called)
             self.assertFalse(hdlr.ignore.called)
         eset.entries[evt.filename].handle_event.assert_called_with(evt)
@@ -387,7 +386,7 @@ class TestCfgEntrySet(TestEntrySet):
         evt.code2str.return_value = "deleted"
         eset.handle_event(evt)
         self.assertFalse(eset.entry_init.called)
-        for hdlr in eset.handlers:
+        for hdlr in mock_handlers.return_value:
             self.assertFalse(hdlr.handles.called)
             self.assertFalse(hdlr.ignore.called)
         self.assertItemsEqual(eset.entries, dict())

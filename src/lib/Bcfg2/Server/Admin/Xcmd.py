@@ -4,7 +4,6 @@ import sys
 import Bcfg2.Options
 import Bcfg2.Proxy
 import Bcfg2.Server.Admin
-from Bcfg2.Compat import xmlrpclib
 
 
 class Xcmd(Bcfg2.Server.Admin.Mode):
