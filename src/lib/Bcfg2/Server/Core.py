@@ -785,7 +785,8 @@ class BaseCore(object):
             while self.fam.pending() != 0:
                 time.sleep(1)
 
-        self.set_debug(None, self.debug_flag)
+        if self.debug_flag:
+            self.set_debug(None, self.debug_flag)
         self._block()
 
     def _daemonize(self):
