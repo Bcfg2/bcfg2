@@ -18,6 +18,9 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
     svcre = \
         re.compile(r'/etc/.*/(?P<action>[SK])(?P<sequence>\d+)(?P<name>\S+)')
 
+    def get_svc_command(self, service, action):
+        return '/usr/sbin/invoke-rc.d %s %s' % (service.get('name'), action)
+
     def verify_bootstatus(self, entry, bootstatus):
         """Verify bootstatus for entry."""
         rawfiles = glob.glob("/etc/rc*.d/[SK]*%s" % (entry.get('name')))
@@ -78,27 +81,29 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
             return True
         current_bootstatus = self.verify_bootstatus(entry, bootstatus)
 
-        svcstatus = self.check_service(entry)
-        if entry.get('status') == 'on':
-            if svcstatus:
-                current_srvstatus = True
-            else:
-                current_srvstatus = False
-        elif entry.get('status') == 'off':
-            if svcstatus:
-                current_srvstatus = False
-            else:
-                current_srvstatus = True
-        else:
+        if entry.get('status') == 'ignore':
             # 'ignore' should verify
-            current_srvstatus = True
+            current_svcstatus = True
+            svcstatus = True
+        else:
+            svcstatus = self.check_service(entry)
+            if entry.get('status') == 'on':
+                if svcstatus:
+                    current_svcstatus = True
+                else:
+                    current_svcstatus = False
+            elif entry.get('status') == 'off':
+                if svcstatus:
+                    current_svcstatus = False
+                else:
+                    current_svcstatus = True
 
         if svcstatus:
             entry.set('current_status', 'on')
         else:
             entry.set('current_status', 'off')
 
-        return current_bootstatus and current_srvstatus
+        return current_bootstatus and current_svcstatus
 
     def InstallService(self, entry):
         """Install Service entry."""
@@ -165,6 +170,3 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
         # Extra service removal is nonsensical
         # Extra services need to be reflected in the config
         return
-
-    def get_svc_command(self, service, action):
-        return '/usr/sbin/invoke-rc.d %s %s' % (service.get('name'), action)
