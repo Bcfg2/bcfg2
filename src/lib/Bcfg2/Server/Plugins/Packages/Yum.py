@@ -675,7 +675,10 @@ class YumCollection(Collection):
             gdicts.append(dict(group=group, type=ptype))
 
         if self.use_yum:
-            return self.call_helper("get_groups", inputdata=gdicts)
+            try:
+                return self.call_helper("get_groups", inputdata=gdicts)
+            except ValueError:
+                return dict()
         else:
             pkgs = dict()
             for gdict in gdicts:
@@ -838,12 +841,13 @@ class YumCollection(Collection):
             return Collection.complete(self, packagelist)
 
         if packagelist:
-            result = \
-                self.call_helper("complete",
-                                 dict(packages=list(packagelist),
-                                      groups=list(self.get_relevant_groups())))
-            if not result:
-                # some sort of error, reported by call_helper()
+            try:
+                result = self.call_helper(
+                    "complete",
+                    dict(packages=list(packagelist),
+                         groups=list(self.get_relevant_groups())))
+            except ValueError:
+                # error reported by call_helper()
                 return set(), packagelist
             # json doesn't understand sets or tuples, so we get back a
             # lists of lists (packages) and a list of unicode strings
@@ -905,7 +909,7 @@ class YumCollection(Collection):
             err = sys.exc_info()[1]
             self.logger.error("Packages: error reading bcfg2-yum-helper "
                               "output: %s" % err)
-            return None
+            raise
 
     def setup_data(self, force_update=False):
         """ Do any collection-level data setup tasks. This is called
@@ -931,13 +935,21 @@ class YumCollection(Collection):
         if force_update:
             # we call this twice: one to clean up data from the old
             # config, and once to clean up data from the new config
-            self.call_helper("clean")
+            try:
+                self.call_helper("clean")
+            except ValueError:
+                # error reported by call_helper
+                pass
 
         os.unlink(self.cfgfile)
         self.write_config()
 
         if force_update:
-            self.call_helper("clean")
+            try:
+                self.call_helper("clean")
+            except ValueError:
+                # error reported by call_helper
+                pass
 
 
 class YumSource(Source):
