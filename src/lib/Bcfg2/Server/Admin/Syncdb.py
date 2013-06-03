@@ -22,7 +22,10 @@ class Syncdb(Bcfg2.Server.Admin.Mode):
             call_command("syncdb", interactive=False, verbosity=0)
             self._database_available = True
         except ImproperlyConfigured:
-            self.errExit("Django configuration problem: %s" %
-                         sys.exc_info()[1])
+            err = sys.exc_info()[1]
+            self.log.error("Django configuration problem: %s" % err)
+            raise SystemExit(1)
         except:
-            self.errExit("Database update failed: %s" % sys.exc_info()[1])
+            err = sys.exc_info()[1]
+            self.log.error("Database update failed: %s" % err)
+            raise SystemExit(1)

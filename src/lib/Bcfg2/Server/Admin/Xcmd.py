@@ -31,15 +31,27 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
                                            ca=setup['ca'],
                                            timeout=setup['timeout'])
         if len(setup['args']) == 0:
-            self.errExit("Usage: xcmd <xmlrpc method> <optional arguments>")
+            print("Usage: xcmd <xmlrpc method> <optional arguments>")
+            return
         cmd = setup['args'][0]
         args = ()
         if len(setup['args']) > 1:
             args = tuple(setup['args'][1:])
         try:
             data = getattr(proxy, cmd)(*args)
+        except xmlrpclib.Fault:
+            flt = sys.exc_info()[1]
+            if flt.faultCode == 7:
+                print("Unknown method %s" % cmd)
+                return
+            elif flt.faultCode == 20:
+                return
+            else:
+                raise
         except Bcfg2.Proxy.ProxyError:
-            self.errExit("Proxy Error: %s" % sys.exc_info()[1])
+            err = sys.exc_info()[1]
+            print("Proxy Error: %s" % err)
+            return
 
         if data is not None:
             print(data)

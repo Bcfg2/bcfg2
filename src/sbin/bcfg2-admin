@@ -83,7 +83,7 @@ def main():
             raise SystemExit(1)
         mode = mode_cls(setup)
         try:
-            return mode(setup['args'][1:])
+            mode(setup['args'][1:])
         finally:
             mode.shutdown()
     else:
@@ -93,6 +93,6 @@ def main():
 
 if __name__ == '__main__':
     try:
-        sys.exit(main())
+        main()
     except KeyboardInterrupt:
         raise SystemExit(1)

@@ -21,7 +21,8 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
         try:
             (opts, args) = getopt.getopt(args, 'f:g:h')
         except:
-            self.errExit(self.__doc__)
+            self.log.error(self.__doc__)
+            raise SystemExit(1)
 
         client = args[0]
         output = sys.stdout
@@ -32,7 +33,8 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
                 try:
                     output = open(optarg, 'w')
                 except IOError:
-                    self.errExit("Failed to open file: %s" % (optarg))
+                    self.log.error("Failed to open file: %s" % (optarg))
+                    raise SystemExit(1)
             elif opt == '-g':
                 groups = optarg.split(':')
 
@@ -42,8 +44,9 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
                 for item in source.GetExtra(client):
                     extra.add(item)
         except:
-            self.errExit("Failed to find extra entry info for client %s" %
-                         client)
+            self.log.error("Failed to find extra entry info for client %s" %
+                           client)
+            raise SystemExit(1)
         root = lxml.etree.Element("Base")
         self.log.info("Found %d extra entries" % (len(extra)))
         add_point = root

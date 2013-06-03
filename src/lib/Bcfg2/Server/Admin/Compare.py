@@ -145,4 +145,5 @@ class Compare(Bcfg2.Server.Admin.Mode):
             (old, new) = args
             return self.compareSpecifications(new, old)
         except IndexError:
-            self.errExit(self.__call__.__doc__)
+            print(self.__call__.__doc__)
+            raise SystemExit(1)
