@@ -136,8 +136,7 @@ E.G. 1.2.0pre1 is a valid version.
 
     tarname = '/tmp/%s-%s.tar.gz' % (pkgname, version)
 
-    newchangelog = \
-"""bcfg2 (%s-0.0) unstable; urgency=low
+    newchangelog = """bcfg2 (%s-0.0) unstable; urgency=low
 
   * New upstream release
 
@@ -177,7 +176,9 @@ E.G. 1.2.0pre1 is a valid version.
                         "- New upstream release\n", "\n"]
 
     # write out the new RPM changelog
-    specs = ["misc/bcfg2.spec", "misc/bcfg2-selinux.spec", "redhat/bcfg2.spec.in"]
+    specs = ["misc/bcfg2.spec",
+             "misc/bcfg2-selinux.spec",
+             "redhat/bcfg2.spec.in"]
     if options.dryrun:
         print("*** Add the following to the top of the %%changelog section in %s:\n%s\n"
               % (rpmchangelog, " and ".join(specs)))
@@ -228,14 +229,28 @@ E.G. 1.2.0pre1 is a valid version.
                      startswith=True,
                      dryrun=options.dryrun)
     # update solaris IPS version
-    find_and_replace('solaris-ips/MANIFEST.bcfg2.header', 'set name=pkg.fmri value="pkg://bcfg2/bcfg2@',
+    find_and_replace('solaris-ips/Makefile', 'VERS=',
+                     'VERS=%s-1\n' % version,
+                     startswith=True,
+                     dryrun=options.dryrun)
+    find_and_replace('solaris-ips/MANIFEST.bcfg2.header',
+                     'set name=pkg.fmri value="pkg://bcfg2/bcfg2@',
                      'set name=pkg.fmri value="pkg://bcfg2/bcfg2@%s"' % version,
-                      startswith=True,
-                      dryrun=options.dryrun)
-    find_and_replace('solaris-ips/MANIFEST.bcfg2-server.header', 'set name=pkg.fmri value="pkg://bcfg2/bcfg2-server@',
+                     startswith=True,
+                     dryrun=options.dryrun)
+    find_and_replace('solaris-ips/MANIFEST.bcfg2-server.header',
+                     'set name=pkg.fmri value="pkg://bcfg2/bcfg2-server@',
                      'set name=pkg.fmri value="pkg://bcfg2/bcfg2-server@%s"' % version,
-                      startswith=True,
-                      dryrun=options.dryrun)
+                     startswith=True,
+                     dryrun=options.dryrun)
+    find_and_replace('solaris-ips/pkginfo.bcfg2', 'VERSION=',
+                     'VERSION="%s"\n' % version,
+                     startswith=True,
+                     dryrun=options.dryrun)
+    find_and_replace('solaris-ips/pkginfo.bcfg2-server', 'VERSION=',
+                     'VERSION="%s"\n' % version,
+                     startswith=True,
+                     dryrun=options.dryrun)
     # set new version in Bcfg2/version.py
     find_and_replace('src/lib/Bcfg2/version.py',
                      '__version__ =',
@@ -258,30 +273,30 @@ E.G. 1.2.0pre1 is a valid version.
     else:
         find_and_replace('misc/bcfg2.spec', 'Release: ',
                          'Release:          0.%s.%s\n' %
-                            (version_info['build'][-1], version_info['build']),
+                         (version_info['build'][-1], version_info['build']),
                          dryrun=options.dryrun)
         find_and_replace('misc/bcfg2-selinux.spec', 'Release: ',
                          'Release:          0.%s.%s\n' %
-                            (version_info['build'][-1], version_info['build']),
+                         (version_info['build'][-1], version_info['build']),
                          dryrun=options.dryrun)
     find_and_replace('misc/bcfg2.spec', '%setup',
                      '%%setup -q -n %%{name}-%%{version}%s\n' %
-                         version_info['build'],
+                     version_info['build'],
                      startswith=True,
                      dryrun=options.dryrun)
     find_and_replace('misc/bcfg2-selinux.spec', '%setup',
                      '%%setup -q -n %%{name}-%%{version}%s\n' %
-                         version_info['build'],
+                     version_info['build'],
                      startswith=True,
                      dryrun=options.dryrun)
     find_and_replace('misc/bcfg2.spec', 'BuildRoot',
                      'BuildRoot:        %%{_tmppath}/%%{name}-%%{version}%s-%%{release}-root-%%(%%{__id_u} -n)\n' %
-                         version_info['build'],
+                     version_info['build'],
                      startswith=True,
                      dryrun=options.dryrun)
     find_and_replace('misc/bcfg2-selinux.spec', 'BuildRoot',
                      'BuildRoot:        %%{_tmppath}/%%{name}-%%{version}%s-%%{release}-root-%%(%%{__id_u} -n)\n' %
-                         version_info['build'],
+                     version_info['build'],
                      startswith=True,
                      dryrun=options.dryrun)
     # fix pre problem noted in
