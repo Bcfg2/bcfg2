@@ -1,5 +1,9 @@
 {% extends "base-timeview.html" %}
 {% load bcfg2_tags %}
+{% comment %}
+This is needed for Django versions less than 1.5
+{% endcomment %}
+{% load url from future %}
 
 {% block title %}Bcfg2 - Client Summary{% endblock %}
 {% block pagebanner %}Clients - Summary{% endblock %}
@@ -30,7 +34,7 @@ hide_tables[{{ forloop.counter0 }}] = "table_{{ summary.name }}";
       <table id='table_{{ summary.name }}' class='entry_list'>
         {% for node in summary.nodes|sort_interactions_by_name %}
           <tr class='{% cycle listview,listview_alt %}'>
-              <td><a href="{% url reports_client_detail_pk hostname=node.client.name,pk=node.id %}">{{ node.client.name }}</a></td>
+              <td><a href='{% url "reports_client_detail_pk" hostname=node.client.name pk=node.id %}'>{{ node.client.name }}</a></td>
           </tr>
         {% endfor %}
       </table>
