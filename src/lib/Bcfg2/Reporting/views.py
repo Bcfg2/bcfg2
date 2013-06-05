@@ -338,6 +338,8 @@ def client_detail(request, hostname=None, pk=None):
     for label in etypes.values():
         edict[label] = []
     for ekind in inter.entry_types:
+        if ekind == 'failures':
+            continue
         for ent in getattr(inter, ekind).all():
             edict[etypes[ent.state]].append(ent)
     context['entry_types'] = edict
