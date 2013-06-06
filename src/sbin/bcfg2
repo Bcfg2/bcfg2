@@ -18,6 +18,7 @@ import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
 # Compatibility imports
 from Bcfg2.Bcfg2Py3k import xmlrpclib
+from Bcfg2.version import __version__
 
 import Bcfg2.Proxy
 import Bcfg2.Logger
@@ -195,6 +196,24 @@ class Client:
                     self.logger.error(str(err))
                     raise SystemExit(1)
 
+
+            try:
+                probe_data = proxy.DeclareVersion(__version__)
+            except xmlrpclib.Fault:
+                err = sys.exc_info()[1]
+                if (err.faultCode == xmlrpclib.METHOD_NOT_FOUND or
+                    (err.faultCode == 7 and
+                     err.faultString.startswith("Unknown method"))):
+                     self.logger.debug("Server does not support declaring "
+                                  "client version")
+                else:
+                    self.logger.error("Failed to declare version: %s" % err)
+            except (Bcfg2.Proxy.ProxyError,
+                    Bcfg2.Proxy.CertificateError,
+                    socket.gaierror,
+                    socket.error):
+                err = sys.exc_info()[1]
+                self.logger.error("Failed to declare version: %s" % err)
             try:
                 probe_data = proxy.GetProbes()
             except (Bcfg2.Proxy.ProxyError,
