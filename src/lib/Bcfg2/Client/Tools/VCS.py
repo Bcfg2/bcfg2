@@ -71,7 +71,8 @@ class VCS(Bcfg2.Client.Tools.Tool):
                                  destname)
                 return False
 
-        destr = dulwich.repo.Repo.init(destname, mkdir=True)
+        dulwich.file.ensure_dir_exists(destname)
+        destr = dulwich.repo.Repo.init(destname)
         cl, host_path = dulwich.client.get_transport_and_path(entry.get('sourceurl'))
         remote_refs = cl.fetch(host_path,
                                destr,
