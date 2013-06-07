@@ -6,6 +6,7 @@
 #   * integrate properly with reports
 missing = []
 
+import errno
 import os
 import shutil
 import sys
@@ -102,10 +103,22 @@ class VCS(Bcfg2.Client.Tools.Tool):
             full_path = os.path.join(destname, fname)
             dulwich.file.ensure_dir_exists(os.path.dirname(full_path))
 
-            file = open(full_path, 'wb')
-            file.write(destr[sha].as_raw_string())
-            file.close()
-            os.chmod(full_path, mode)
+            if dulwich.objects.S_ISGITLINK(mode):
+                src_path = destr[sha].as_raw_string()
+                try:
+                    os.symlink(src_path, full_path)
+                except OSError:
+                    e = sys.exc_info()[1]
+                    if e.errno == errno.EEXIST:
+                        os.unlink(full_path)
+                        os.symlink(src_path, full_path)
+                    else:
+                        raise
+            else:
+                file = open(full_path, 'wb')
+                file.write(destr[sha].as_raw_string())
+                file.close()
+                os.chmod(full_path, mode)
 
         return True
         # FIXME: figure out how to write the git index properly
