@@ -47,11 +47,24 @@ class VCS(Bcfg2.Client.Tools.Tool):
             self.logger.info("Repository %s does not exist" %
                              entry.get('name'))
             return False
-        cur_rev = repo.head()
 
-        if cur_rev != entry.get('revision'):
+        try:
+            expected_rev = entry.get('revision')
+            cur_rev = repo.head()
+        except:
+            return False
+
+        try:
+            client, path = dulwich.client.get_transport_and_path(entry.get('sourceurl'))
+            remote_refs = client.fetch_pack(path, (lambda x: None), None, None, None)
+            if expected_rev in remote_refs:
+                expected_rev = remote_refs[expected_rev]
+        except:
+            pass
+
+        if cur_rev != expected_rev:
             self.logger.info("At revision %s need to go to revision %s" %
-                             (cur_rev, entry.get('revision')))
+                             (cur_rev.strip(), expected_rev.strip()))
             return False
 
         return True
@@ -78,8 +91,13 @@ class VCS(Bcfg2.Client.Tools.Tool):
                                destr,
                                determine_wants=destr.object_store.determine_wants_all,
                                progress=sys.stdout.write)
-        destr.refs['refs/heads/master'] = entry.get('revision')
-        dtree = destr[entry.get('revision')].tree
+
+        if entry.get('revision') in remote_refs:
+            destr.refs['HEAD'] = remote_refs[entry.get('revision')]
+        else:
+            destr.refs['HEAD'] = entry.get('revision')
+
+        dtree = destr['HEAD'].tree
         obj_store = destr.object_store
         for fname, mode, sha in obj_store.iter_tree_contents(dtree):
             fullpath = os.path.join(destname, fname)
@@ -92,6 +110,7 @@ class VCS(Bcfg2.Client.Tools.Tool):
             f.write(destr[sha].data)
             f.close()
             os.chmod(os.path.join(destname, fname), mode)
+
         return True
         # FIXME: figure out how to write the git index properly
         #iname = "%s/.git/index" % entry.get('name')
