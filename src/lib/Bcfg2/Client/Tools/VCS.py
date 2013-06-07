@@ -98,18 +98,14 @@ class VCS(Bcfg2.Client.Tools.Tool):
             destr.refs['HEAD'] = entry.get('revision')
 
         dtree = destr['HEAD'].tree
-        obj_store = destr.object_store
-        for fname, mode, sha in obj_store.iter_tree_contents(dtree):
-            fullpath = os.path.join(destname, fname)
-            try:
-                f = open(os.path.join(destname, fname), 'wb')
-            except IOError:
-                dir = os.path.split(fullpath)[0]
-                os.makedirs(dir)
-                f = open(os.path.join(destname, fname), 'wb')
-            f.write(destr[sha].data)
-            f.close()
-            os.chmod(os.path.join(destname, fname), mode)
+        for fname, mode, sha in destr.object_store.iter_tree_contents(dtree):
+            full_path = os.path.join(destname, fname)
+            dulwich.file.ensure_dir_exists(os.path.dirname(full_path))
+
+            file = open(full_path, 'wb')
+            file.write(destr[sha].as_raw_string())
+            file.close()
+            os.chmod(full_path, mode)
 
         return True
         # FIXME: figure out how to write the git index properly
