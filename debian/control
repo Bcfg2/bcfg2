@@ -14,6 +14,7 @@ Build-Depends: debhelper (>= 7.0.50~),
 	       python-pyinotify,
 	       python-m2crypto,
 	       python-doc,
+	       python-mock,
 	       python-mock-doc
 Build-Depends-Indep: python-support (>= 0.5.3)
 Standards-Version: 3.8.0.0
