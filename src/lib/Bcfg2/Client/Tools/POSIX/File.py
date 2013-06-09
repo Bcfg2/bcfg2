@@ -163,6 +163,8 @@ class POSIXFile(POSIXTool):
             # prompts for -I and the reports
             try:
                 content = open(entry.get('name')).read()
+            except UnicodeDecodeError:
+                content = open(entry.get('name'), encoding='utf-8').read()
             except IOError:
                 self.logger.error("POSIX: Failed to read %s: %s" %
                                   (entry.get("name"), sys.exc_info()[1]))
