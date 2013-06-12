@@ -54,6 +54,15 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="recommended" type="xsd:boolean">
+      <xsd:annotation>
+        <xsd:documentation>
+          Whether also th recommended packages should be installed.
+          This is currently only used with the :ref:`APT
+          &lt;client-tools-apt&gt;` driver.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
