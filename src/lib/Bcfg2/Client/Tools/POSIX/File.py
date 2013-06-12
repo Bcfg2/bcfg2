@@ -146,8 +146,8 @@ class POSIXFile(POSIXTool):
 
         return POSIXTool.install(self, entry) and rv
 
-    def _get_diffs(self, entry, interactive=False, sensitive=False,
-                   is_binary=False, content=None):
+    def _get_diffs(self, entry, interactive=False,  # pylint: disable=R0912
+                   sensitive=False, is_binary=False, content=None):
         """ generate the necessary diffs for entry """
         if not interactive and sensitive:
             return
