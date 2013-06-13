@@ -80,7 +80,7 @@ class TestPlugin(TestDebuggable):
     @patch("os.makedirs")
     @patch("os.path.exists")
     def test__init(self, mock_exists, mock_makedirs):
-        if test_obj.create:
+        if self.test_obj.create:
             core = Mock()
             core.setup = MagicMock()
 
