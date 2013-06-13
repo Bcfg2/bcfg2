@@ -910,7 +910,7 @@ class YumCollection(Collection):
                 self.logger.error("Packages: %s" % line)
         else:
             self.debug_log("Packages: debug info from bcfg2-yum-helper: %s" %
-                           lines[0])
+                           errlines[0])
             for line in errlines[1:]:
                 self.debug_log("Packages: %s" % line)
 
