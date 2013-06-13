@@ -252,12 +252,15 @@ class Probes(Bcfg2.Server.Plugin.Probing,
 
         for group in self.cgroups[client.hostname]:
             try:
-                ProbesGroupsModel.objects.get(hostname=client.hostname,
-                                              group=group)
-            except ProbesGroupsModel.DoesNotExist:
-                grp = ProbesGroupsModel(hostname=client.hostname,
-                                        group=group)
-                grp.save()
+                ProbesGroupsModel.objects.get_or_create(
+                    hostname=client.hostname,
+                    group=group).save()
+            except ProbesGroupsModel.MultipleObjectsReturned:
+                ProbesGroupsModel.objects.filter(hostname=client.hostname,
+                                                 group=group).delete()
+                ProbesGroupsModel.objects.get_or_create(
+                    hostname=client.hostname,
+                    group=group).save()
         ProbesGroupsModel.objects.filter(
             hostname=client.hostname).exclude(
                 group__in=self.cgroups[client.hostname]).delete()
