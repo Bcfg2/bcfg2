@@ -17,7 +17,8 @@
 ### END INIT INFO
 
 # Include lsb functions
-. /lib/lsb/init-functions
+test -f "/lib/lsb/init-functions" && . /lib/lsb/init-functions  # debian
+test -f "/etc/init.d/functions" && . /etc/init.d/functions  # redhat
 
 # Commonly used stuff
 DAEMON=/usr/sbin/bcfg2-server

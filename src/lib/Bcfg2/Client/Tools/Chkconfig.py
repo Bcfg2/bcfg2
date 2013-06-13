@@ -19,26 +19,22 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
     def get_svc_command(self, service, action):
         return "/sbin/service %s %s" % (service.get('name'), action)
 
-    def VerifyService(self, entry, _):
-        """Verify Service status for entry."""
-        entry.set('target_status', entry.get('status'))
-        if entry.get('status') == 'ignore':
-            return True
-
+    def verify_bootstatus(self, entry, bootstatus):
+        """Verify bootstatus for entry."""
         rv = self.cmd.run("/sbin/chkconfig --list %s " % entry.get('name'))
         if rv.success:
             srvdata = rv.stdout.splitlines()[0].split()
         else:
             # service not installed
-            entry.set('current_status', 'off')
+            entry.set('current_bootstatus', 'service not installed')
             return False
 
         if len(srvdata) == 2:
             # This is an xinetd service
-            if entry.get('status') == srvdata[1]:
+            if bootstatus == srvdata[1]:
                 return True
             else:
-                entry.set('current_status', srvdata[1])
+                entry.set('current_bootstatus', srvdata[1])
                 return False
 
         try:
@@ -47,40 +43,74 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         except IndexError:
             onlevels = []
 
-        pstatus = self.check_service(entry)
-        if entry.get('status') == 'on':
-            status = (len(onlevels) > 0 and pstatus)
+        if bootstatus == 'on':
+            current_bootstatus = (len(onlevels) > 0)
         else:
-            status = (len(onlevels) == 0 and not pstatus)
+            current_bootstatus = (len(onlevels) == 0)
+        return current_bootstatus
 
-        if not status:
+    def VerifyService(self, entry, _):
+        """Verify Service status for entry."""
+        entry.set('target_status', entry.get('status'))  # for reporting
+        bootstatus = self.get_bootstatus(entry)
+        if bootstatus is None:
+            return True
+        current_bootstatus = self.verify_bootstatus(entry, bootstatus)
+
+        if entry.get('status') == 'ignore':
+            # 'ignore' should verify
+            current_svcstatus = True
+        else:
+            svcstatus = self.check_service(entry)
             if entry.get('status') == 'on':
-                entry.set('current_status', 'off')
-            else:
-                entry.set('current_status', 'on')
-        return status
+                if svcstatus:
+                    current_svcstatus = True
+                else:
+                    current_svcstatus = False
+            elif entry.get('status') == 'off':
+                if svcstatus:
+                    current_svcstatus = False
+                else:
+                    current_svcstatus = True
+
+        if svcstatus:
+            entry.set('current_status', 'on')
+        else:
+            entry.set('current_status', 'off')
+
+        return current_bootstatus and current_svcstatus
 
     def InstallService(self, entry):
         """Install Service entry."""
-        rcmd = "/sbin/chkconfig %s %s"
-        self.cmd.run("/sbin/chkconfig --add %s" % (entry.attrib['name']))
+        self.cmd.run("/sbin/chkconfig --add %s" % (entry.get('name')))
         self.logger.info("Installing Service %s" % (entry.get('name')))
-        rv = True
-        if (entry.get('status') == 'off' or
-            self.setup["servicemode"] == "build"):
-            rv &= self.cmd.run((rcmd + " --level 0123456") %
-                               (entry.get('name'),
-                                entry.get('status'))).success
-            if entry.get("current_status") == "on" and \
-               self.setup["servicemode"] != "disabled":
-                rv &= self.stop_service(entry).success
+        bootstatus = entry.get('bootstatus')
+        if bootstatus is not None:
+            if bootstatus == 'on':
+                # make sure service is enabled on boot
+                bootcmd = '/sbin/chkconfig %s %s --level 0123456' % \
+                          (entry.get('name'), entry.get('bootstatus'))
+            elif bootstatus == 'off':
+                # make sure service is disabled on boot
+                bootcmd = '/sbin/chkconfig %s %s' % (entry.get('name'),
+                                                     entry.get('bootstatus'))
+            bootcmdrv = self.cmd.run(bootcmd).success
+            if self.setup['servicemode'] == 'disabled':
+                # 'disabled' means we don't attempt to modify running svcs
+                return bootcmdrv
+            buildmode = self.setup['servicemode'] == 'build'
+            if (entry.get('status') == 'on' and not buildmode) and \
+               entry.get('current_status') == 'off':
+                svccmdrv = self.start_service(entry)
+            elif (entry.get('status') == 'off' or buildmode) and \
+                    entry.get('current_status') == 'on':
+                svccmdrv = self.stop_service(entry)
+            else:
+                svccmdrv = True  # ignore status attribute
+            return bootcmdrv and svccmdrv
         else:
-            rv &= self.cmd.run(rcmd % (entry.get('name'),
-                                       entry.get('status'))).success
-            if entry.get("current_status") == "off" and \
-               self.setup["servicemode"] != "disabled":
-                rv &= self.start_service(entry).success
-        return rv
+            # when bootstatus is 'None', status == 'ignore'
+            return True
 
     def FindExtra(self):
         """Locate extra chkconfig Services."""

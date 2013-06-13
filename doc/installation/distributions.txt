@@ -66,19 +66,7 @@ This way is not recommended on production systems. Only for testing.
 Gentoo
 ======
 
-Early in July 2008, Bcfg2 was added to the Gentoo portage tree. So far
-it's still keyworded for all architectures, but we are actively working
-to get it marked as stable.
-
-If you don't use portage to install Bcfg2, you'll want to make sure you
-have all the prerequisites installed first. For a server, you'll need:
-
-* ``app-admin/gamin`` or ``app-admin/fam``
-* ``dev-python/lxml``
-
-Clients will need at least:
-
-* ``app-portage/gentoolkit``
+Bcfg2 can be installed via portage.
 
 OS X
 ====

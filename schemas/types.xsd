@@ -53,6 +53,13 @@
     </xsd:restriction>
   </xsd:simpleType>
 
+  <xsd:simpleType name='BootStatusEnum'>
+    <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='on'/>
+      <xsd:enumeration value='off'/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
   <xsd:simpleType name='StatusEnum'>
     <xsd:restriction base='xsd:string'>
       <xsd:enumeration value='on'/>
@@ -112,14 +119,14 @@
       </xsd:documentation>
     </xsd:annotation>
 
-    <xsd:attribute type='ActionTimingEnum' name='timing' use='required'>
+    <xsd:attribute type='ActionTimingEnum' name='timing'>
       <xsd:annotation>
         <xsd:documentation>
           When the action is run.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute type='ActionWhenEnum' name='when' use='required'>
+    <xsd:attribute type='ActionWhenEnum' name='when'>
       <xsd:annotation>
         <xsd:documentation>
           If the action is always run, or is only run when a bundle
@@ -129,7 +136,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute type='ActionStatusEnum' name='status' use='required'>
+    <xsd:attribute type='ActionStatusEnum' name='status'>
       <xsd:annotation>
         <xsd:documentation>
           Whether or not to check the return code of the action.  If

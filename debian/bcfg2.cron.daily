@@ -10,4 +10,4 @@ else
     echo "No bcfg2-cron command found"
     exit 1
 fi
-$BCFG2CRON --daily 2>&1 | logger -t bcfg2-cron -p daemon.info
+$BCFG2CRON --daily 2>&1 | logger -t bcfg2-cron -p daemon.info -i

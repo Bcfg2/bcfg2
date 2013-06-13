@@ -10,6 +10,7 @@ import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Lint
+from itertools import chain
 from Bcfg2.Server.Plugin import PluginExecutionError
 # pylint: disable=W0622
 from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages, \
@@ -34,6 +35,24 @@ SETUP = None
 #: :class:`Bcfg2.Server.Plugin.helpers.EntrySet` classes have no
 #: facility for passing it otherwise.
 CFG = None
+
+_HANDLERS = []
+
+
+def handlers():
+    """ A list of Cfg handler classes. Loading the handlers must
+    be done at run-time, not at compile-time, or it causes a
+    circular import and Bad Things Happen."""
+    if not _HANDLERS:
+        for submodule in walk_packages(path=__path__, prefix=__name__ + "."):
+            mname = submodule[1].rsplit('.', 1)[-1]
+            module = getattr(__import__(submodule[1]).Server.Plugins.Cfg,
+                             mname)
+            hdlr = getattr(module, mname)
+            if issubclass(hdlr, CfgBaseFileMatcher):
+                _HANDLERS.append(hdlr)
+        _HANDLERS.sort(key=operator.attrgetter("__priority__"))
+    return _HANDLERS
 
 
 class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData,
@@ -459,7 +478,6 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
                                               entry_type, encoding)
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
         self.specific = None
-        self._handlers = None
     __init__.__doc__ = Bcfg2.Server.Plugin.EntrySet.__doc__
 
     def set_debug(self, debug):
@@ -467,24 +485,6 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         for entry in self.entries.values():
             entry.set_debug(debug)
         return rv
-
-    @property
-    def handlers(self):
-        """ A list of Cfg handler classes. Loading the handlers must
-        be done at run-time, not at compile-time, or it causes a
-        circular import and Bad Things Happen."""
-        if self._handlers is None:
-            self._handlers = []
-            for submodule in walk_packages(path=__path__,
-                                           prefix=__name__ + "."):
-                mname = submodule[1].rsplit('.', 1)[-1]
-                module = getattr(__import__(submodule[1]).Server.Plugins.Cfg,
-                                 mname)
-                hdlr = getattr(module, mname)
-                if CfgBaseFileMatcher in hdlr.__mro__:
-                    self._handlers.append(hdlr)
-            self._handlers.sort(key=operator.attrgetter("__priority__"))
-        return self._handlers
 
     def handle_event(self, event):
         """ Dispatch a FAM event to :func:`entry_init` or the
@@ -502,7 +502,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
                 # process a bogus changed event like a created
                 return
 
-            for hdlr in self.handlers:
+            for hdlr in handlers():
                 if hdlr.handles(event, basename=self.path):
                     if action == 'changed':
                         # warn about a bogus 'changed' event, but
@@ -888,12 +888,15 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
         for basename, entry in list(self.core.plugins['Cfg'].entries.items()):
             self.check_delta(basename, entry)
             self.check_pubkey(basename, entry)
+        self.check_missing_files()
 
     @classmethod
     def Errors(cls):
         return {"cat-file-used": "warning",
                 "diff-file-used": "warning",
-                "no-pubkey-xml": "warning"}
+                "no-pubkey-xml": "warning",
+                "unknown-cfg-files": "error",
+                "extra-cfg-files": "error"}
 
     def check_delta(self, basename, entry):
         """ check that no .cat or .diff files are in use """
@@ -927,3 +930,41 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
                 self.LintError("no-pubkey-xml",
                                "%s has no corresponding pubkey.xml at %s" %
                                (basename, pubkey))
+
+    def check_missing_files(self):
+        """ check that all files on the filesystem are known to Cfg """
+        cfg = self.core.plugins['Cfg']
+
+        # first, collect ignore patterns from handlers
+        ignore = []
+        for hdlr in handlers():
+            ignore.extend(hdlr.__ignore__)
+
+        # next, get a list of all non-ignored files on the filesystem
+        all_files = set()
+        for root, _, files in os.walk(cfg.data):
+            all_files.update(os.path.join(root, fname)
+                             for fname in files
+                             if not any(fname.endswith("." + i)
+                                        for i in ignore))
+
+        # next, get a list of all files known to Cfg
+        cfg_files = set()
+        for root, eset in cfg.entries.items():
+            cfg_files.update(os.path.join(cfg.data, root.lstrip("/"), fname)
+                             for fname in eset.entries.keys())
+
+        # finally, compare the two
+        unknown_files = all_files - cfg_files
+        extra_files = cfg_files - all_files
+        if unknown_files:
+            self.LintError(
+                "unknown-cfg-files",
+                "Files on the filesystem could not be understood by Cfg: %s" %
+                "; ".join(unknown_files))
+        if extra_files:
+            self.LintError(
+                "extra-cfg-files",
+                "Cfg has entries for files that do not exist on the "
+                "filesystem: %s\nThis is probably a bug." %
+                "; ".join(extra_files))

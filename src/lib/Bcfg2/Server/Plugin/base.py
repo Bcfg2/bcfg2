@@ -87,6 +87,10 @@ class Plugin(Debuggable):
     #: alphabetically by their name.
     sort_order = 500
 
+    #: Whether or not to automatically create a data directory for
+    #: this plugin
+    create = True
+
     #: List of names of methods to be exposed as XML-RPC functions
     __rmi__ = Debuggable.__rmi__
 
@@ -107,7 +111,7 @@ class Plugin(Debuggable):
         self.Entries = {}
         self.core = core
         self.data = os.path.join(datastore, self.name)
-        if not os.path.exists(self.data):
+        if self.create and not os.path.exists(self.data):
             self.logger.warning("%s: %s does not exist, creating" %
                                 (self.name, self.data))
             os.makedirs(self.data)

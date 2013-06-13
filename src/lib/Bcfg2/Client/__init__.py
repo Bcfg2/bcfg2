@@ -22,8 +22,5 @@ def prompt(msg):
         ans = input(msg)
         return ans in ['y', 'Y']
     except EOFError:
-        # python 2.4.3 on CentOS doesn't like ^C for some reason
-        return False
-    except:
-        print("Error while reading input: %s" % sys.exc_info()[1])
-        return False
+        # handle ^C on rhel-based platforms
+        raise SystemExit(1)

@@ -1,7 +1,12 @@
 #!/usr/bin/make -f
 
+# Lucid does not have dh_python2, but we would like to be able to use
+# this rules file to build on lucid as well.
+WITH_PYTHON2 = $(shell test -f /usr/bin/dh_python2 && echo "--with python2")
+WITH_SPHINXDOC = $(shell test -f /usr/bin/dh_sphinxdoc && echo "--with sphinxdoc")
+
 %:
-	dh $@ --with python-support,sphinxdoc
+	dh $@ ${WITH_PYTHON2} ${WITH_SPHINXDOC}
 
 override_dh_installinit:
 	# Install bcfg2 initscript without starting it on postinst

@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 {% load split %}
 {% load syntax_coloring %}
+{% comment %}
+This is needed for Django versions less than 1.5
+{% endcomment %}
+{% load url from future %}
 
 
 {% block title %}Bcfg2 - Element Details{% endblock %}
@@ -9,20 +13,20 @@
 {% block extra_header_info %}
 <style type="text/css">
 #table_list_header {
-	font-size: 100%;
+    font-size: 100%;
 }
 table.entry_list {
-        width: auto;
+    width: auto;
 }
 div.information_wrapper {
-	margin: 15px;
+    margin: 15px;
 }
 div.diff_wrapper {
-	overflow: auto;
+    overflow: auto;
 }
 div.entry_list h3 {
-	font-size: 90%;
-	padding: 5px;
+    font-size: 90%;
+    padding: 5px;
 }
 </style>
 {% endblock%}
@@ -131,9 +135,9 @@ div.entry_list h3 {
     {% if associated_list %}
       <table class="entry_list" cellpadding="3">
         {% for inter in associated_list %}
-          <tr><td><a href="{% url reports_client_detail inter.client.name %}"
+          <tr><td><a href='{% url "reports_client_detail" inter.client.name %}'
               >{{inter.client.name}}</a></td>
-          <td><a href="{% url reports_client_detail_pk hostname=inter.client.name,pk=inter.id %}"
+          <td><a href='{% url "reports_client_detail_pk" hostname=inter.client.name pk=inter.id %}'
               >{{inter.timestamp}}</a></td>
           </tr>
         {% endfor %}

@@ -1,4 +1,8 @@
 {% extends "base.html" %}
+{% comment %}
+This is needed for Django versions less than 1.5
+{% endcomment %}
+{% load url from future %}
 
 {% block extra_header_info %}
 {% endblock%}
@@ -24,10 +28,10 @@
       <td><span id="{{ client.name }}"> </span>
           <span id="ttag-{{ client.name }}"> </span>
           <span id="s-ttag-{{ client.name }}"> </span>
-          <a href="{% url reports_client_detail client.name %}">{{ client.name }}</a></td>
+          <a href='{% url "reports_client_detail" client.name %}'>{{ client.name }}</a></td>
       <td>{% firstof client.expiration 'Active' %}</td>
       <td>
-          <form method="post" action="{% url reports_client_manage %}">
+          <form method="post" action='{% url "reports_client_manage" %}'>
             <div> {# here for no reason other then to validate #}
               <input type="hidden" name="client_name" value="{{ client.name }}" />
               <input type="hidden" name="client_action" value="{% if client.expiration %}unexpire{% else %}expire{% endif %}" />

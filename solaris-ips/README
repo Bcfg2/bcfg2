@@ -1,0 +1,22 @@
+BUILDING
+--------
+
+Dependancies:
+	gmake
+
+Usage:
+	gmake
+
+
+PUBLISHING
+----------
+
+Modify MANIFEST.bcfg2 and MANIFEST.bcfg2-server to set your publisher name in the fmri, e.g.  Change
+	set name=pkg.fmri value="pkg://bcfg2/bcfg2@1.2.4"	
+to
+	set name=pkg.fmri value="pkg://example.com/bcfg2@1.2.4"	
+
+
+Then run the pkgsend publish, i.e.
+	 pkgsend publish -s http://example.com/path/to/repo -d build MANIFEST.bcfg2
+	 pkgsend publish -s http://example.com/path/to/repo -d build MANIFEST.bcfg2-server

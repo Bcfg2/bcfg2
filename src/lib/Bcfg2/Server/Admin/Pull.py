@@ -32,9 +32,8 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
         use_stdin = False
         try:
             opts, gargs = getopt.getopt(args, 'vfIs')
-        except:
-            print(self.__doc__)
-            raise SystemExit(1)
+        except getopt.GetoptError:
+            self.errExit(self.__doc__)
         for opt in opts:
             if opt[0] == '-v':
                 self.log = True

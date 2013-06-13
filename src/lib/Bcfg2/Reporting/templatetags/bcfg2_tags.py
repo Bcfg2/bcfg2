@@ -5,9 +5,8 @@ from django import template
 from django.conf import settings
 from django.core.urlresolvers import resolve, reverse, \
                                      Resolver404, NoReverseMatch
-from django.template.loader import get_template, \
-        get_template_from_string,TemplateDoesNotExist
-from django.utils.encoding import smart_unicode, smart_str
+from django.template.loader import get_template_from_string
+from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
 from datetime import datetime, timedelta
 from Bcfg2.Reporting.utils import filter_list
@@ -133,19 +132,22 @@ def filter_navigator(context):
                 del myargs[filter]
                 filters.append((filter,
                                 reverse(view, args=args, kwargs=myargs) + qs))
-        filters.sort(lambda x, y: cmp(x[0], y[0]))
+        filters.sort(key=lambda x: x[0])
 
         myargs = kwargs.copy()
-        selected=True
+        selected = True
         if 'group' in myargs:
             del myargs['group']
-            selected=False
-        groups = [('---', reverse(view, args=args, kwargs=myargs) + qs, selected)]
+            selected = False
+        groups = [('---',
+                   reverse(view, args=args, kwargs=myargs) + qs,
+                   selected)]
         for group in Group.objects.values('name'):
             myargs['group'] = group['name']
-            groups.append((group['name'], reverse(view, args=args, kwargs=myargs) + qs, 
-                group['name'] == kwargs.get('group', '')))
-            
+            groups.append((group['name'],
+                           reverse(view, args=args, kwargs=myargs) + qs,
+                           group['name'] == kwargs.get('group', '')))
+
         return {'filters': filters, 'groups': groups}
     except (Resolver404, NoReverseMatch, ValueError, KeyError):
         pass
@@ -205,7 +207,7 @@ def sort_interactions_by_name(value):
     Sort an interaction list by client name
     """
     inters = list(value)
-    inters.sort(lambda a, b: cmp(a.client.name, b.client.name))
+    inters.sort(key=lambda a: a.client.name)
     return inters
 
 
@@ -223,7 +225,7 @@ class AddUrlFilter(template.Node):
             filter_value = self.filter_value.resolve(context, True)
             if filter_value:
                 filter_name = smart_str(self.filter_name)
-                filter_value = smart_unicode(filter_value)
+                filter_value = smart_str(filter_value)
                 kwargs[filter_name] = filter_value
                 # These two don't make sense
                 if filter_name == 'server' and 'hostname' in kwargs:
@@ -306,6 +308,7 @@ def to_media_url(parser, token):
 
     return MediaTag(filter_value)
 
+
 @register.filter
 def determine_client_state(entry):
     """
@@ -338,9 +341,10 @@ def do_qs(parser, token):
     try:
         tag, name, value = token.split_contents()
     except ValueError:
-        raise template.TemplateSyntaxError, "%r tag requires exactly two arguments" \
-            % token.contents.split()[0]
+        raise template.TemplateSyntaxError("%r tag requires exactly two arguments"
+                                           % token.contents.split()[0])
     return QsNode(name, value)
+
 
 class QsNode(template.Node):
     def __init__(self, name, value):
@@ -359,7 +363,7 @@ class QsNode(template.Node):
             return ''
         except KeyError:
             if settings.TEMPLATE_DEBUG:
-                raise Exception,  "'qs' tag requires context['request']"
+                raise Exception("'qs' tag requires context['request']")
             return ''
         except:
             return ''
@@ -379,6 +383,7 @@ def sort_link(parser, token):
             % token.split_contents()[0])
 
     return SortLinkNode(sort_key, text)
+
 
 class SortLinkNode(template.Node):
     __TMPL__ = "{% load bcfg2_tags %}<a href='{% qs 'sort' key %}'>{{ text }}</a>"
@@ -420,4 +425,3 @@ class SortLinkNode(template.Node):
                 raise
             raise
             return ''
-

@@ -3,6 +3,7 @@
 """This tool examines your Bcfg2 specifications for errors."""
 
 import sys
+import time
 import inspect
 import logging
 import Bcfg2.Logger
@@ -52,7 +53,11 @@ def run_plugin(plugin, plugin_name, setup=None, errorhandler=None,
         args.append(setup)
 
     # python 2.5 doesn't support mixing *magic and keyword arguments
-    return plugin(*args, **dict(files=files, errorhandler=errorhandler)).Run()
+    start = time.time()
+    rv = plugin(*args, **dict(files=files, errorhandler=errorhandler)).Run()
+    LOGGER.debug("  Ran %s in %0.2f seconds" % (plugin_name,
+                                                time.time() - start))
+    return rv
 
 
 def get_errorhandler(setup):
