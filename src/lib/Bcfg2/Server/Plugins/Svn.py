@@ -59,8 +59,36 @@ class Svn(Bcfg2.Server.Plugin.Version):
             self.client.callback_conflict_resolver = \
                 self.get_conflict_resolver(choice)
 
+            try:
+                if self.core.setup.cfp.get(
+                        "svn", 
+                        "always_trust").lower() == "true":
+                    self.logger.info("Svn: Trust subversion SSL certificate")
+                    self.client.callback_ssl_server_trust_prompt = \
+                        self.ssl_server_trust_prompt
+            except:
+                pass
+
+            try:
+                if self.core.setup.cfp.get("svn", "user") and \
+                   self.core.setup.cfp.get("svn", "password"):
+                    self.logger.info("Svn: Using user and password")
+                    self.client.callback_get_login = \
+                        self.get_login
+            except:
+                pass
+
         self.logger.debug("Svn: Initialized svn plugin with SVN directory %s" %
                           self.vcs_path)
+
+    def get_login(self, realm, username, may_save):
+        return True, \
+               self.core.setup.cfp.get("svn", "user"), \
+               self.core.setup.cfp.get("svn", "password"), \
+               False
+
+    def ssl_server_trust_prompt(self, trust_dict):
+        return True, trust_dict['failures'], False
 
     def get_conflict_resolver(self, choice):
         """ Get a PySvn conflict resolution callback """
