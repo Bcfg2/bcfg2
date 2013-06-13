@@ -878,11 +878,16 @@ class YumCollection(Collection):
                   ``bcfg2-yum-helper`` command.
         """
         cmd = [self.helper, "-c", self.cfgfile]
-        verbose = self.debug_flag or self.setup['verbose']
-        if verbose:
+        if self.setup['verbose']:
+            cmd.append("-v")
+        if self.debug_flag:
+            if not self.setup['verbose']:
+                # ensure that running in debug gets -vv, even if
+                # verbose is not enabled
+                cmd.append("-v")
             cmd.append("-v")
         cmd.append(command)
-        self.debug_log("Packages: running %s" % " ".join(cmd), flag=verbose)
+        self.debug_log("Packages: running %s" % " ".join(cmd))
         try:
             helper = Popen(cmd, stdin=PIPE, stdout=PIPE, stderr=PIPE)
         except OSError:
@@ -897,12 +902,18 @@ class YumCollection(Collection):
         else:
             (stdout, stderr) = helper.communicate()
         rv = helper.wait()
+        errlines = stderr.splitlines()
         if rv:
             self.logger.error("Packages: error running bcfg2-yum-helper "
-                              "(returned %d): %s" % (rv, stderr))
+                              "(returned %d): %s" % (rv, errlines[0]))
+            for line in errlines[1:]:
+                self.logger.error("Packages: %s" % line)
         else:
             self.debug_log("Packages: debug info from bcfg2-yum-helper: %s" %
-                           stderr, flag=verbose)
+                           lines[0], flag=verbose)
+            for line in errlines[1:]:
+                self.debug_log("Packages: %s" % line)
+
         try:
             return json.loads(stdout)
         except ValueError:
