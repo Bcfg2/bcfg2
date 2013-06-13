@@ -316,7 +316,7 @@ mkdir -p %{buildroot}%{_defaultdocdir}/bcfg2-server-%{version}
 %{__mv} %{buildroot}%{_bindir}/bcfg2* %{buildroot}%{_sbindir}
 %{__install} -m 755 debian/bcfg2.init %{buildroot}%{_initrddir}/bcfg2
 %{__install} -m 755 debian/bcfg2-server.init %{buildroot}%{_initrddir}/bcfg2-server
-%{__install} -m 755 debian/bcfg2-report-collector.init %{buildroot}%{_initrddir}/bcfg2-report-collector
+%{__install} -m 755 debian/bcfg2-server.bcfg2-report-collector.init %{buildroot}%{_initrddir}/bcfg2-report-collector
 %{__install} -m 755 debian/bcfg2.default %{buildroot}%{_sysconfdir}/default/bcfg2
 %{__install} -m 755 debian/bcfg2-server.default %{buildroot}%{_sysconfdir}/default/bcfg2-server
 %{__install} -m 755 debian/bcfg2.cron.daily %{buildroot}%{_sysconfdir}/cron.daily/bcfg2

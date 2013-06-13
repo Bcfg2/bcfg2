@@ -13,6 +13,8 @@ override_dh_installinit:
 	dh_installinit --package=bcfg2 --no-start
 	# Install bcfg2-server initscript without starting it on postinst
 	dh_installinit --package=bcfg2-server --no-start
+	# Install bcfg2-report-collector initscript without starting it on postinst
+	dh_installinit --package=bcfg2-server --name=bcfg2-report-collector --no-start
 
 override_dh_auto_build:
 	dh_auto_build
