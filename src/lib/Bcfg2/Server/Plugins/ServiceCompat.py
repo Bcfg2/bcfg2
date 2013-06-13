@@ -6,7 +6,9 @@ import Bcfg2.Server.Plugin
 class ServiceCompat(Bcfg2.Server.Plugin.Plugin,
                     Bcfg2.Server.Plugin.GoalValidator):
     """ Use old-style service modes for older clients """
-    name = 'ServiceCompat'
+
+    create = False
+
     __author__ = 'bcfg-dev@mcs.anl.gov'
     mode_map = {('true', 'true'): 'default',
                 ('interactive', 'true'): 'interactive_only',
