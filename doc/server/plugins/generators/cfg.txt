@@ -596,6 +596,11 @@ Deltas
     cat file functionality.  ``bcfg2-lint`` checks for deltas and
     warns about them.
 
+.. warning::
+
+    In Bcfg2 1.3, deltas **do not** work with `SSH key or
+    authorized_keys generation <SSH Keys>`_.
+
 Bcfg2 has finer grained control over how to deliver configuration
 files to a host. Let's say we have a Group named file-server. Members
 of this group need the exact same ``/etc/motd`` as all other hosts except
@@ -632,23 +637,35 @@ server and we have the following configuration files::
     motd.G01_web-server
     motd.G01_mail-server.cat
     motd.G02_file-server.cat
+    motd.H_bar.example.com
     motd.H_foo.example.com.cat
 
-If our machine **isn't** *foo.example.com* then here's what would happen:
+If our machine isn't *foo.example.com* or *bar.example.com*, but
+is a web server, then Bcfg2 would choose ``motd.G01_web-server`` as
+the base file. It is the most specific base file for this host. Bcfg2
+would apply the ``motd.G01_mail-server.cat`` delta to the
+``motd.G01_web-server`` base file. It is the least specific
+delta. Bcfg2 would then apply the ``motd.G02_file-server.cat`` delta
+to the result of the delta before it.
 
-Bcfg2 would choose ``motd.G01_web-server`` as the base file. It is
-the most specific base file for this host. Bcfg2 would apply the
-``motd.G01_mail-server.cat`` delta to the ``motd.G01_web-server``
-base file. It is the least specific delta. Bcfg2 would then apply the
-``motd.G02_file-server.cat`` delta to the result of the delta before
-it. If our machine **is** *foo.example.com* then here's what would happen:
+If our machine is *foo.example.com* and a web server, then Bcfg2 would
+choose ``motd.G01_web-server`` as the base file. It is the most
+specific base file for this host. Bcfg2 would apply the
+``motd.H_foo.example.com.cat`` delta to the ``motd.G01_web-server``
+base file. The reason the other deltas aren't applied to
+*foo.example.com* is because a **.H_** delta is more specific than a
+**.G##_** delta. Bcfg2 applies all the deltas at the most specific
+level.
 
-Bcfg2 would choose ``motd.G01_web-server`` as the base file. It
-is the most specific base file for this host. Bcfg2 would apply the
-``motd.H_foo.example.com.cat`` delta to the ``motd.G01_web-server`` base
-file. The reason the other deltas aren't applied to *foo.example.com*
-is because a **.H_** delta is more specific than a **.G##_** delta. Bcfg2
-applies all the deltas at the most specific level.
+If our machine is *bar.example.com*, then Bcfg2 would chose
+``motd.H_foo.example.com`` as the base file because it is the most
+specific base file for this host.  Regardless of the groups
+*bar.example.com* is a member of, **no cat files** would be applied,
+because only cat files as specific or more specific than the base file
+are applied.  (In other words, if a group-specific base file is
+selected, only group- or host-specific cat files can be applied; if a
+host-specific base file is selected, only host-specific cat files can
+be applied.)
 
 .. _server-plugins-generators-cfg-validation:
 

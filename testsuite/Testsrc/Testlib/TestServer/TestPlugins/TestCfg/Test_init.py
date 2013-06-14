@@ -6,7 +6,7 @@ import Bcfg2.Options
 from Bcfg2.Compat import walk_packages
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugins.Cfg import *
-from Bcfg2.Server.Plugin import PluginExecutionError
+from Bcfg2.Server.Plugin import PluginExecutionError, Specificity
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4
@@ -461,7 +461,7 @@ class TestCfgEntrySet(TestEntrySet):
         metadata = Mock()
 
         # test basic entry, no validation, no filters, etc.
-        eset._generate_data.return_value = "data"
+        eset._generate_data.return_value = ("data", None)
         eset.get_handlers.return_value = []
         bound = eset.bind_entry(entry, metadata)
         eset.bind_info_to_entry.assert_called_with(entry, metadata)
@@ -474,7 +474,7 @@ class TestCfgEntrySet(TestEntrySet):
 
         # test empty entry
         entry = reset()
-        eset._generate_data.return_value = ""
+        eset._generate_data.return_value = ("", None)
         bound = eset.bind_entry(entry, metadata)
         eset.bind_info_to_entry.assert_called_with(entry, metadata)
         eset._generate_data.assert_called_with(entry, metadata)
@@ -485,7 +485,9 @@ class TestCfgEntrySet(TestEntrySet):
 
         # test filters
         entry = reset()
-        eset._generate_data.return_value = "initial data"
+        generator = Mock()
+        generator.specific = Specificity(all=True)
+        eset._generate_data.return_value = ("initial data", generator)
         filters = [Mock(), Mock()]
         filters[0].modify_data.return_value = "modified data"
         filters[1].modify_data.return_value = "final data"
@@ -507,7 +509,7 @@ class TestCfgEntrySet(TestEntrySet):
         entry.set("encoding", "base64")
         mock_b64encode.return_value = "base64 data"
         eset.get_handlers.return_value = []
-        eset._generate_data.return_value = "data"
+        eset._generate_data.return_value = ("data", None)
         bound = eset.bind_entry(entry, metadata)
         eset.bind_info_to_entry.assert_called_with(entry, metadata)
         eset._generate_data.assert_called_with(entry, metadata)
@@ -691,7 +693,7 @@ class TestCfgEntrySet(TestEntrySet):
             eset._create_data.reset_mock()
 
         # test success
-        self.assertEqual(eset._generate_data(entry, metadata),
+        self.assertEqual(eset._generate_data(entry, metadata)[0],
                          "data")
         eset.get_handlers.assert_called_with(metadata, CfgGenerator)
         eset.best_matching.assert_called_with(metadata,
@@ -708,7 +710,7 @@ class TestCfgEntrySet(TestEntrySet):
         reset()
         eset.best_matching.side_effect = PluginExecutionError
         self.assertEqual(eset._generate_data(entry, metadata),
-                         eset._create_data.return_value)
+                         (eset._create_data.return_value, None))
         eset.get_handlers.assert_called_with(metadata, CfgGenerator)
         eset.best_matching.assert_called_with(metadata,
                                               eset.get_handlers.return_value)

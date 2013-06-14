@@ -10,7 +10,6 @@ import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Lint
-from itertools import chain
 from Bcfg2.Server.Plugin import PluginExecutionError
 # pylint: disable=W0622
 from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages, \
@@ -582,10 +581,18 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
 
     def bind_entry(self, entry, metadata):
         self.bind_info_to_entry(entry, metadata)
-        data = self._generate_data(entry, metadata)
+        data, generator = self._generate_data(entry, metadata)
 
-        for fltr in self.get_handlers(metadata, CfgFilter):
-            data = fltr.modify_data(entry, metadata, data)
+        if generator is not None:
+            # apply no filters if the data was created by a CfgCreator
+            for fltr in self.get_handlers(metadata, CfgFilter):
+                if fltr.specific <= generator.specific:
+                    # only apply filters that are as specific or more
+                    # specific than the generator used for this entry.
+                    # Note that specificity comparison is backwards in
+                    # this sense, since it's designed to sort from
+                    # most specific to least specific.
+                    data = fltr.modify_data(entry, metadata, data)
 
         if SETUP['validate']:
             try:
@@ -694,7 +701,9 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         :type entry: lxml.etree._Element
         :param metadata: The client metadata to generate data for
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-        :returns: string - the data for the entry
+        :returns: tuple of (string, generator) - the data for the
+                  entry and the generator used to generate it (or
+                  None, if data was created)
         """
         try:
             generator = self.best_matching(metadata,
@@ -703,7 +712,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         except PluginExecutionError:
             # if no creators or generators exist, _create_data()
             # raises an appropriate exception
-            return self._create_data(entry, metadata)
+            return (self._create_data(entry, metadata), None)
 
         if entry.get('mode').lower() == 'inherit':
             # use on-disk permissions
@@ -713,7 +722,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
             entry.set('mode',
                       oct_mode(stat.S_IMODE(os.stat(fname).st_mode)))
         try:
-            return generator.get_data(entry, metadata)
+            return (generator.get_data(entry, metadata), generator)
         except:
             msg = "Cfg: Error rendering %s: %s" % (entry.get("name"),
                                                    sys.exc_info()[1])
