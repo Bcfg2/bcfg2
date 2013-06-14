@@ -254,7 +254,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             try:
                 ProbesGroupsModel.objects.get_or_create(
                     hostname=client.hostname,
-                    group=group).save()
+                    group=group)
             except ProbesGroupsModel.MultipleObjectsReturned:
                 ProbesGroupsModel.objects.filter(hostname=client.hostname,
                                                  group=group).delete()
