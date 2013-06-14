@@ -32,10 +32,17 @@ class Action(Bcfg2.Client.Tools.Tool):
 
     def RunAction(self, entry):
         """This method handles command execution and status return."""
+        shell = False
+        shell_string = ''
+        if entry.get('shell', 'false') == 'true':
+            shell = True
+            shell_string = '(in shell) '
+
         if not self.setup['dryrun']:
             if self.setup['interactive']:
-                prompt = ('Run Action %s, %s: (y/N): ' %
-                          (entry.get('name'), entry.get('command')))
+                prompt = ('Run Action %s%s, %s: (y/N): ' %
+                          (shell_string, entry.get('name'),
+                           entry.get('command')))
                 # flush input buffer
                 while len(select.select([sys.stdin.fileno()], [], [],
                                         0.0)[0]) > 0:
@@ -48,8 +55,9 @@ class Action(Bcfg2.Client.Tools.Tool):
                     self.logger.debug("Action: Deferring execution of %s due "
                                       "to build mode" % entry.get('command'))
                     return False
-            self.logger.debug("Running Action %s" % (entry.get('name')))
-            rv = self.cmd.run(entry.get('command'))
+            self.logger.debug("Running Action %s %s" %
+                              (shell_string, entry.get('name')))
+            rv = self.cmd.run(entry.get('command'), shell=shell)
             self.logger.debug("Action: %s got return code %s" %
                               (entry.get('command'), rv.retval))
             entry.set('rc', str(rv.retval))

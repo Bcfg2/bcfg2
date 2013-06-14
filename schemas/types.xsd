@@ -162,8 +162,16 @@
     <xsd:attribute type='xsd:string' name='command' use='required'>
       <xsd:annotation>
         <xsd:documentation>
-          The command to run.  The command is executed within a shell,
-          so flow control and other shell-specific things can be used.
+          The command to run.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:boolean' name='shell'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Whether the command string should be executeed within a shell.
+          If enabled flow control and other shell-specific things can
+          be used.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
