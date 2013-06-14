@@ -63,31 +63,38 @@ class Svn(Bcfg2.Server.Plugin.Version):
                 if self.core.setup.cfp.get(
                         "svn", 
                         "always_trust").lower() == "true":
-                    self.logger.info("Svn: Trust subversion SSL certificate")
                     self.client.callback_ssl_server_trust_prompt = \
                         self.ssl_server_trust_prompt
-            except:
-                pass
+            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+                self.logger.debug("Svn: Using subversion cache for SSL "
+                                  "certificate trust")
 
             try:
-                if self.core.setup.cfp.get("svn", "user") and \
-                   self.core.setup.cfp.get("svn", "password"):
-                    self.logger.info("Svn: Using user and password")
+                if (self.core.setup.cfp.get("svn", "user") and 
+                    self.core.setup.cfp.get("svn", "password")):
                     self.client.callback_get_login = \
                         self.get_login
-            except:
-                pass
+            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+                self.logger.info("Svn: Using subversion cache for " 
+                                 "password-based authetication")
 
         self.logger.debug("Svn: Initialized svn plugin with SVN directory %s" %
                           self.vcs_path)
 
     def get_login(self, realm, username, may_save):
+        self.logger.debug("Svn: Logging in with username: %s" % 
+                          self.core.setup.cfp.get("svn", "user"))
         return True, \
                self.core.setup.cfp.get("svn", "user"), \
                self.core.setup.cfp.get("svn", "password"), \
                False
 
     def ssl_server_trust_prompt(self, trust_dict):
+        self.logger.debug("Svn: Trusting SSL certificate from %s, " 
+                          "issued by %s for realm %s" %
+                          (trust_dict['hostname'], 
+                           trust_dict['issuer_dname'],
+                           trust_dict['realm']))
         return True, trust_dict['failures'], False
 
     def get_conflict_resolver(self, choice):
