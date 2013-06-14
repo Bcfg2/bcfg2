@@ -221,6 +221,8 @@ def main():
         logger.error("Config file %s not found" % options.config)
         return 1
 
+    # pylint: disable=W0702
+    rv = 0
     depsolver = DepSolver(options.config, options.verbose)
     if cmd == "clean":
         try:
@@ -230,14 +232,14 @@ def main():
             logger.error("Unexpected error cleaning cache: %s" %
                          sys.exc_info()[1], exc_info=1)
             print(json.dumps(False))
-            return 2
+            rv = 2
     elif cmd == "complete":
         try:
             data = json.loads(sys.stdin.read())
         except:
             logger.error("Unexpected error decoding JSON input: %s" %
                          sys.exc_info()[1])
-            return 2
+            rv = 2
         try:
             depsolver.groups = data['groups']
             (packages, unknown) = depsolver.complete(
@@ -248,7 +250,7 @@ def main():
             logger.error("Unexpected error completing package set: %s" %
                          sys.exc_info()[1], exc_info=1)
             print(json.dumps(dict(packages=[], unknown=data['packages'])))
-            return 2
+            rv = 2
     elif cmd == "get_groups":
         try:
             data = json.loads(sys.stdin.read())
@@ -265,11 +267,12 @@ def main():
             logger.error("Unexpected error getting groups: %s" %
                          sys.exc_info()[1], exc_info=1)
             print(json.dumps(dict()))
-            return 2
+            rv = 2
     else:
         logger.error("Unknown command %s" % cmd)
         print(json.dumps(None))
-        return 2
+        rv = 2
+    return rv
 
 if __name__ == '__main__':
     sys.exit(main())
