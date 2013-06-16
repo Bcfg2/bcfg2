@@ -79,10 +79,7 @@ except NameError:
 def u_str(string, encoding=None):
     """ print to file compatibility """
     if sys.hexversion >= 0x03000000:
-        if encoding is not None:
-            return string.encode(encoding)
-        else:
-            return string
+        return string
     else:
         if encoding is not None:
             return unicode(string, encoding)
