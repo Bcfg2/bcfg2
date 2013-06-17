@@ -80,6 +80,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
 
         self.logger.debug("Svn: Initialized svn plugin with SVN directory %s" %
                           self.vcs_path)
+
     # pylint: disable=W0613
     def get_login(self, realm, username, may_save):
         """ PySvn callback to get credentials for HTTP basic authentication """
