@@ -260,7 +260,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                                                  group=group).delete()
                 ProbesGroupsModel.objects.get_or_create(
                     hostname=client.hostname,
-                    group=group).save()
+                    group=group)
         ProbesGroupsModel.objects.filter(
             hostname=client.hostname).exclude(
                 group__in=self.cgroups[client.hostname]).delete()
