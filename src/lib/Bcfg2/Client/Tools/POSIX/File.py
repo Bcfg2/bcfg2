@@ -33,7 +33,8 @@ class POSIXFile(POSIXTool):
             return False
 
     def _get_data(self, entry):
-        """ Get a tuple of (<file data>, <is binary>) for the given entry """
+        """ Get a tuple of (<file data>, <entry length>, <is binary>)
+        for the given entry """
         is_binary = entry.get('encoding', 'ascii') == 'base64'
         if entry.get('empty', 'false') == 'true' or not entry.text:
             tempdata = ''
@@ -41,18 +42,25 @@ class POSIXFile(POSIXTool):
             tempdata = b64decode(entry.text)
         else:
             tempdata = entry.text
-            if isinstance(tempdata, unicode) and unicode != str:
+            # non-ascii strings will have a different length
+            # once they are encoded and written to disk
+            try:
+                tempdata.decode('ascii')
+                tempdatalen = len(tempdata)
+            except AttributeError:
+                tempdatalen = len(tempdata.encode(self.setup['encoding']))
+            if (isinstance(tempdata, unicode) and unicode != str):
                 try:
                     tempdata = tempdata.encode(self.setup['encoding'])
                 except UnicodeEncodeError:
                     err = sys.exc_info()[1]
                     self.logger.error("POSIX: Error encoding file %s: %s" %
                                       (entry.get('name'), err))
-        return (tempdata, is_binary)
+        return (tempdata, tempdatalen, is_binary)
 
     def verify(self, entry, modlist):
         ondisk = self._exists(entry)
-        tempdata, is_binary = self._get_data(entry)
+        tempdata, tempdatalen, is_binary = self._get_data(entry)
 
         different = False
         content = None
@@ -61,7 +69,7 @@ class POSIXFile(POSIXTool):
             # they're clearly different
             different = True
             content = ""
-        elif len(tempdata) != ondisk[stat.ST_SIZE]:
+        elif tempdatalen != ondisk[stat.ST_SIZE]:
             # next, see if the size of the target file is different
             # from the size of the desired content
             different = True
@@ -71,7 +79,7 @@ class POSIXFile(POSIXTool):
             # which might be faster for big binary files, but slower
             # for everything else
             try:
-                content = open(entry.get('name')).read()
+                content = open(entry.get('name'), 'rb').read().decode(self.setup['encoding'])
             except IOError:
                 self.logger.error("POSIX: Failed to read %s: %s" %
                                   (entry.get("name"), sys.exc_info()[1]))
@@ -105,7 +113,7 @@ class POSIXFile(POSIXTool):
                               (os.path.dirname(entry.get('name')), err))
             return False
         try:
-            os.fdopen(newfd, 'w').write(filedata)
+            os.fdopen(newfd, 'wb').write(filedata.encode(self.setup['encoding']))
         except (OSError, IOError):
             err = sys.exc_info()[1]
             self.logger.error("POSIX: Failed to open temp file %s for writing "
@@ -190,7 +198,7 @@ class POSIXFile(POSIXTool):
                         prompt.append("Could not encode diff")
                 elif entry.get("empty", "true"):
                     # the file doesn't exist on disk, but there's no
-                    # expected content
+                    # expected content <- HUH?
                     prompt.append("%s does not exist" % entry.get("name"))
                 else:
                     prompt.append("Diff took too long to compute, no "
