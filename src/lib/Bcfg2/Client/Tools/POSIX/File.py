@@ -38,8 +38,10 @@ class POSIXFile(POSIXTool):
         is_binary = entry.get('encoding', 'ascii') == 'base64'
         if entry.get('empty', 'false') == 'true' or not entry.text:
             tempdata = ''
+            tempdatalen = 0
         elif is_binary:
             tempdata = b64decode(entry.text)
+            tempdatalen = len(tempdata)
         else:
             tempdata = entry.text
             # non-ascii strings will have a different length
@@ -79,7 +81,11 @@ class POSIXFile(POSIXTool):
             # which might be faster for big binary files, but slower
             # for everything else
             try:
-                content = open(entry.get('name'), 'rb').read().decode(self.setup['encoding'])
+                content = open(entry.get('name'), 'rb').read()
+                content = content.decode(self.setup['encoding'])
+            except UnicodeDecodeError:
+                # could not decode content, but (hopefully) that's okay
+                pass
             except IOError:
                 self.logger.error("POSIX: Failed to read %s: %s" %
                                   (entry.get("name"), sys.exc_info()[1]))
@@ -97,7 +103,7 @@ class POSIXFile(POSIXTool):
 
     def _write_tmpfile(self, entry):
         """ Write the file data to a temp file """
-        filedata, _ = self._get_data(entry)
+        filedata = self._get_data(entry)[0]
         # get a temp file to write to that is in the same directory as
         # the existing file in order to preserve any permissions
         # protections on that directory, and also to avoid issues with
@@ -113,13 +119,19 @@ class POSIXFile(POSIXTool):
                               (os.path.dirname(entry.get('name')), err))
             return False
         try:
-            os.fdopen(newfd, 'wb').write(filedata.encode(self.setup['encoding']))
+            ofile = os.fdopen(newfd, 'wb')
+            try:
+                ofile.write(filedata.encode(self.setup['encoding']))
+            except UnicodeDecodeError:
+                ofile.write(filedata)
         except (OSError, IOError):
             err = sys.exc_info()[1]
             self.logger.error("POSIX: Failed to open temp file %s for writing "
                               "%s: %s" %
                               (newfile, entry.get("name"), err))
             return False
+        finally:
+            ofile.close()
         return newfile
 
     def _rename_tmpfile(self, newfile, entry):
