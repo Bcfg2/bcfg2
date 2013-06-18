@@ -3,6 +3,7 @@ import Bcfg2.settings
 import Bcfg2.Options
 import Bcfg2.Server.Admin
 import Bcfg2.Server.models
+from django.core.exceptions import ImproperlyConfigured
 from django.core.management import setup_environ, call_command
 
 
