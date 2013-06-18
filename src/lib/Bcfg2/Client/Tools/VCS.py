@@ -136,7 +136,7 @@ class VCS(Bcfg2.Client.Tools.Tool):
             full_path = os.path.join(destname, fname)
             dulwich.file.ensure_dir_exists(os.path.dirname(full_path))
 
-            if dulwich.objects.S_ISGITLINK(mode):
+            if stat.S_ISLNK(mode):
                 src_path = destr[sha].as_raw_string()
                 try:
                     os.symlink(src_path, full_path)
