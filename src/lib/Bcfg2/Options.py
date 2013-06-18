@@ -319,6 +319,28 @@ def colon_split(c_string):
     return []
 
 
+def dict_split(c_string):
+    """ split an option string on commans, optionally sourrunded by
+    whitespace and split the resulting items again on equals signs,
+    returning a dict """
+    result = dict()
+    if c_string:
+        items = re.split(r'\s*,\s*', c_string)
+        for item in items:
+            if r'=' in item:
+                key, value = item.split(r'=', 1)
+                try:
+                    result[key] = get_bool(value)
+                except ValueError:
+                    try:
+                        result[key] = get_int(value)
+                    except ValueError:
+                        result[key] = value
+            else:
+                result[item] = True
+    return result
+
+
 def get_bool(val):
     """ given a string value of a boolean configuration option, return
     an actual bool (True or False) """
