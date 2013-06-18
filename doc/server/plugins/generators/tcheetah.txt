@@ -99,7 +99,7 @@ Simple Example
 ==============
 
 TCheetah works similar to Cfg in that you define all literal information
-about a particular file in a directory rooted at TGenshi/path_to_file.
+about a particular file in a directory rooted at TCheetah/path_to_file.
 The actual file contents are placed in a file named `template` in that
 directory. Below is a simple example a file ``/foo``.
 
