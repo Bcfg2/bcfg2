@@ -159,3 +159,5 @@ add themselves to this file.  See LICENSE for the full license.
 
 - Michael Fenn <fennm@deshawresearch.com> fixed various small bugs 
   related to bcfg2 on CentOS 5
+
+- Alexander Sulfrian <alexander@sulfrian.net> fixed various bugs.
