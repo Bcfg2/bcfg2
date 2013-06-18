@@ -674,6 +674,12 @@ DB_PORT = \
            cf=('database', 'port'),
            deprecated_cf=('statistics', 'database_port'))
 
+DB_OPTIONS = \
+    Option('Database options',
+           default=dict(),
+           cf=('database', 'options'),
+           cook=dict_split)
+
 # Django options
 WEB_CFILE = \
     Option('Web interface configuration file',
@@ -1307,6 +1313,7 @@ DATABASE_COMMON_OPTIONS = dict(web_configfile=WEB_CFILE,
                                db_password=DB_PASSWORD,
                                db_host=DB_HOST,
                                db_port=DB_PORT,
+                               db_options=DB_OPTIONS,
                                time_zone=DJANGO_TIME_ZONE,
                                django_debug=DJANGO_DEBUG,
                                web_prefix=DJANGO_WEB_PREFIX)

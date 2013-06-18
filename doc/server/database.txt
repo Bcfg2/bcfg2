@@ -49,6 +49,12 @@ of ``/etc/bcfg2.conf``.
 +-------------+------------------------------------------------------------+-------------------------------+
 | port        | The port to connect to                                     | None                          |
 +-------------+------------------------------------------------------------+-------------------------------+
+| options     | Extra parameters to use when connecting to the database.   | None                          |
+|             | Available parameters vary depending on your database       |                               |
+|             | backend. The parameters are supplied as comma separated    |                               |
+|             | key=value pairs.                                           |                               |
++-------------+------------------------------------------------------------+-------------------------------+
+
 
 Database Schema Sync
 ====================
