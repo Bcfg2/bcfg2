@@ -3,6 +3,7 @@ implementations inherit from. """
 
 import os
 import sys
+import pwd
 import time
 import atexit
 import select
@@ -758,6 +759,11 @@ class BaseCore(object):
                 os.chmod(piddir, 493)  # 0775
             if not self._daemonize():
                 return False
+
+            # rewrite $HOME. pulp stores its auth creds in ~/.pulp, so
+            # this is necessary to make that work when privileges are
+            # dropped
+            os.environ['HOME'] = pwd.getpwuid(self.setup['daemon_uid'])[5]
         else:
             os.umask(int(self.setup['umask'], 8))
 
