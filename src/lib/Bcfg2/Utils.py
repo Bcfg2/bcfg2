@@ -81,9 +81,6 @@ class PackedDigitRange(object):  # pylint: disable=E0012,R0924
     def __str__(self):
         return "[%s]" % self.str
 
-    def __len__(self):
-        return sum(r[1] - r[0] + 1 for r in self.ranges) + len(self.ints)
-
 
 def locked(fd):
     """ Acquire a lock on a file.
