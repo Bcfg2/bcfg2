@@ -904,11 +904,13 @@ class YumCollection(Collection):
         rv = helper.wait()
         errlines = stderr.splitlines()
         if rv:
+            if not errlines:
+                errlines.append("No error output")
             self.logger.error("Packages: error running bcfg2-yum-helper "
                               "(returned %d): %s" % (rv, errlines[0]))
             for line in errlines[1:]:
                 self.logger.error("Packages: %s" % line)
-        else:
+        elif errlines:
             self.debug_log("Packages: debug info from bcfg2-yum-helper: %s" %
                            errlines[0])
             for line in errlines[1:]:
