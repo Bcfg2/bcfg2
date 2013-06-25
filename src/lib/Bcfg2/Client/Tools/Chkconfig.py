@@ -60,6 +60,7 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         if entry.get('status') == 'ignore':
             # 'ignore' should verify
             current_svcstatus = True
+            svcstatus = True
         else:
             svcstatus = self.check_service(entry)
             if entry.get('status') == 'on':
