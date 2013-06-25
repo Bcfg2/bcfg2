@@ -34,9 +34,10 @@ of ``/etc/bcfg2.conf``.
 +-------------+------------------------------------------------------------+-------------------------------+
 | Option name | Description                                                | Default                       |
 +=============+============================================================+===============================+
-| engine      | The full name of the Django database backend to use. See   | "django.db.backends.sqlite3"  |
+| engine      | The name of the Django database backend to use. See        | "sqlite3"                     |
 |             | https://docs.djangoproject.com/en/dev/ref/settings/#engine |                               |
-|             | for available options                                      |                               |
+|             | for available options (note that django.db.backends is not |                               |
+|             | included in the engine name)                               |                               |
 +-------------+------------------------------------------------------------+-------------------------------+
 | name        | The name of the database                                   | "/var/lib/bcfg2/bcfg2.sqlite" |
 +-------------+------------------------------------------------------------+-------------------------------+
