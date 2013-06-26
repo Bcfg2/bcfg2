@@ -2,15 +2,14 @@
 implementations inherit from. """
 
 import os
-import sys
 import pwd
-import time
 import atexit
-import select
-import signal
 import logging
-import inspect
+import select
+import sys
 import threading
+import time
+import inspect
 import lxml.etree
 import Bcfg2.settings
 import Bcfg2.Server
@@ -243,14 +242,6 @@ class BaseCore(object):
 
         #: The CA that signed the server cert
         self.ca = setup['ca']
-
-        def hdlr(sig, frame):  # pylint: disable=W0613
-            """ Handle SIGINT/Ctrl-C by shutting down the core and exiting
-            properly. """
-            self.shutdown()
-            os._exit(1)  # pylint: disable=W0212
-
-        signal.signal(signal.SIGINT, hdlr)
 
         #: The FAM :class:`threading.Thread`,
         #: :func:`_file_monitor_thread`

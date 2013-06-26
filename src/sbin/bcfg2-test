@@ -5,6 +5,7 @@ without failures"""
 
 import os
 import sys
+import signal
 import fnmatch
 import logging
 import Bcfg2.Logger
@@ -193,6 +194,21 @@ def run_child(setup, clients, queue):
 def parse_args():
     """ Parse command line arguments. """
     optinfo = dict(Bcfg2.Options.TEST_COMMON_OPTIONS)
+
+
+def get_sigint_handler(core):
+    """ Get a function that handles SIGINT/Ctrl-C by shutting down the
+    core and exiting properly."""
+
+    def hdlr(sig, frame):  # pylint: disable=W0613
+        """ Handle SIGINT/Ctrl-C by shutting down the core and exiting
+        properly. """
+        core.shutdown()
+        os._exit(1)  # pylint: disable=W0212
+
+    return hdlr
+
+
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
@@ -220,6 +236,7 @@ def parse_args():
         logger.warning("Python multiprocessing library not found, running "
                        "with no children")
         setup['children'] = 0
+    signal.signal(signal.SIGINT, get_sigint_handler(core))
 
     if (setup['children'] and ('--with-xunit' in setup['noseopts'] or
                                '--xunit-file' in setup['noseopts'])):
