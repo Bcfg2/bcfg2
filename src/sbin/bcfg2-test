@@ -191,11 +191,6 @@ def run_child(setup, clients, queue):
     core.shutdown()
 
 
-def parse_args():
-    """ Parse command line arguments. """
-    optinfo = dict(Bcfg2.Options.TEST_COMMON_OPTIONS)
-
-
 def get_sigint_handler(core):
     """ Get a function that handles SIGINT/Ctrl-C by shutting down the
     core and exiting properly."""
@@ -208,6 +203,10 @@ def get_sigint_handler(core):
 
     return hdlr
 
+
+def parse_args():
+    """ Parse command line arguments. """
+    optinfo = dict(Bcfg2.Options.TEST_COMMON_OPTIONS)
 
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
