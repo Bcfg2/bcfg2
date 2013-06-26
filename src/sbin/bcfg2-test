@@ -235,7 +235,6 @@ def parse_args():
         logger.warning("Python multiprocessing library not found, running "
                        "with no children")
         setup['children'] = 0
-    signal.signal(signal.SIGINT, get_sigint_handler(core))
 
     if (setup['children'] and ('--with-xunit' in setup['noseopts'] or
                                '--xunit-file' in setup['noseopts'])):
@@ -262,6 +261,7 @@ def main():
     setup = parse_args()
     logger = logging.getLogger(sys.argv[0])
     core = get_core(setup)
+    signal.signal(signal.SIGINT, get_sigint_handler(core))
 
     if setup['args']:
         clients = setup['args']
