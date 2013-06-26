@@ -115,7 +115,7 @@ class TemplateHelperLint(Bcfg2.Server.Lint.ServerPlugin):
 
     def Run(self):
         for helper in self.core.plugins['TemplateHelper'].entries.values():
-            if self.HandlesFile(helper):
+            if self.HandlesFile(helper.name):
                 self.check_helper(helper.name)
 
     def check_helper(self, helper):
