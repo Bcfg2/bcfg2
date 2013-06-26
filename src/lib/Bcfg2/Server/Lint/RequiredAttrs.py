@@ -76,7 +76,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 permissions=dict(name=is_filename, owner=is_username,
                                  group=is_username, mode=is_octal_mode),
                 vcs=dict(vcstype=lambda v: (v != 'Path' and
-                                            hasattr(Bcfg2.Client.Tools.VCS,
+                                            hasattr(Bcfg2.Client.Tools.VCS.VCS,
                                                     "Install%s" % v)),
                          revision=None, sourceurl=None)),
             Service={"__any__": dict(name=None),
