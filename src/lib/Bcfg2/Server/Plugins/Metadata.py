@@ -1055,7 +1055,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 raise Bcfg2.Server.Plugin.MetadataConsistencyError(err)
             return self.addresses[address][0]
         try:
-            cname = socket.getnameinfo(addresspair, socket.NI_NAMEREQD)[0].lower()
+            cname = socket.getnameinfo(addresspair,
+                                       socket.NI_NAMEREQD)[0].lower()
             if cname in self.aliases:
                 return self.aliases[cname]
             return cname
