@@ -4,3 +4,6 @@ to 1.4.
 migrate_decisions.py
     - Convert old group- and host-specific whitelist and blacklist
       files into structured XML
+
+remove_bundle_names.py
+    - Remove deprecated explicit bundle names

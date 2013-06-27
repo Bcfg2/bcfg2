@@ -30,10 +30,13 @@ def place_source(xdata, source, groups):
     return xdata
 
 def main():
-    opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY}
-    setup = Bcfg2.Options.OptionParser(opts)
-    setup.parse(sys.argv[1:])
-    repo = setup['repo']
+    parser = Bcfg2.Options.get_parser(
+        description="Migrate from Bcfg2 1.1-style Packages configuration to "
+        "1.2-style")
+    parser.add_options([Bcfg2.Options.Common.repository])
+    parser.parse()
+
+    repo = Bcfg2.Options.setup.repository
     configpath = os.path.join(repo, 'Packages')
     oldconfigfile  = os.path.join(configpath, 'config.xml')
     newconfigfile  = os.path.join(configpath, 'packages.conf')
@@ -78,7 +81,7 @@ def main():
             if el.tag == lxml.etree.Comment or el.tag == 'Config':
                 # skip comments and Config
                 continue
-        
+
             if el.tag == XI + 'include':
                 oldsources.append(os.path.join(configpath, el.get('href')))
                 newsource.append(el)
@@ -98,7 +101,7 @@ def main():
                     newel.set(tag.lower(), el.find(tag).text)
                 except AttributeError:
                     pass
-            
+
             for child in el.getchildren():
                 if child.tag in ['Component', 'Blacklist', 'Whitelist', 'Arch']:
                     newel.append(child)

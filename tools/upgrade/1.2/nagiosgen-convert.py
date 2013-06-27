@@ -7,10 +7,13 @@ import lxml.etree
 import Bcfg2.Options
 
 def main():
-    opts = {'repo': Bcfg2.Options.SERVER_REPOSITORY}
-    setup = Bcfg2.Options.OptionParser(opts)
-    setup.parse(sys.argv[1:])
-    repo = setup['repo']
+    parser = Bcfg2.Options.get_parser(
+        description="Migrate from Bcfg2 1.1-style Properties-based NagiosGen "
+        "configuration to standalone 1.2-style")
+    parser.add_options([Bcfg2.Options.Common.repository])
+    parser.parse()
+
+    repo = Bcfg2.Options.setup.repository
     oldconfigfile = os.path.join(repo, 'Properties', 'NagiosGen.xml')
     newconfigpath = os.path.join(repo, 'NagiosGen')
     newconfigfile = os.path.join(newconfigpath, 'config.xml')
@@ -32,11 +35,11 @@ def main():
         if host.tag == lxml.etree.Comment:
             # skip comments
             continue
-        
+
         if host.tag == 'default':
             print("default tag will not be converted; use a suitable Group tag instead")
             continue
-        
+
         newhost = lxml.etree.Element("Client", name=host.tag)
         for opt in host:
             newopt = lxml.etree.Element("Option", name=opt.tag)

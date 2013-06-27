@@ -54,16 +54,17 @@ def convertstructure(structfile):
 
 
 def main():
-    opts = dict(repo=Bcfg2.Options.SERVER_REPOSITORY,
-                configfile=Bcfg2.Options.CFILE,
-                plugins=Bcfg2.Options.SERVER_PLUGINS)
-    setup = Bcfg2.Options.OptionParser(opts)
-    setup.parse(sys.argv[1:])
-    repo = setup['repo']
+    parser = Bcfg2.Options.get_parser(
+        description="Migrate from Bcfg2 1.2 'perms' attribute to 1.3 'mode' "
+        "attribute")
+    parser.add_options([Bcfg2.Options.Common.repository,
+                        Bcfg2.Options.Common.plugins])
+    parser.parse()
+    repo = Bcfg2.Options.setup.repository
 
-    for plugin in setup['plugins']:
+    for plugin in Bcfg2.Options.setup.plugins:
         if plugin in ['Base', 'Bundler', 'Rules']:
-            for root, dirs, files in os.walk(os.path.join(repo, plugin)):
+            for root, _, files in os.walk(os.path.join(repo, plugin)):
                 for fname in files:
                     convertstructure(os.path.join(root, fname))
         if plugin not in ['Cfg', 'TGenshi', 'TCheetah', 'SSHbase', 'SSLCA']:

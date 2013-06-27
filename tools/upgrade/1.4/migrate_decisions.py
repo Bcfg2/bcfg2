@@ -6,7 +6,6 @@ import sys
 import glob
 import lxml.etree
 import Bcfg2.Options
-from Bcfg2.Server import XMLParser
 
 
 SPECIFIC = re.compile(r'.*\/(white|black)list'
@@ -56,12 +55,13 @@ def convert(files, xdata):
 
 
 def main():
-    opts = dict(repo=Bcfg2.Options.SERVER_REPOSITORY,
-                configfile=Bcfg2.Options.CFILE)
-    setup = Bcfg2.Options.load_option_parser(opts)
-    setup.parse(sys.argv[1:])
+    parser = Bcfg2.Options.get_parser(
+        description="Migrate from Bcfg2 1.3 Decisions list format to 1.4 "
+        "format")
+    parser.add_options([Bcfg2.Options.Common.repository])
+    parser.parse()
 
-    datadir = os.path.join(setup['repo'], 'Decisions')
+    datadir = os.path.join(Bcfg2.Options.setup.repository, 'Decisions')
     whitelist = lxml.etree.Element("Decisions")
     blacklist = lxml.etree.Element("Decisions")
     if os.path.exists(datadir):
