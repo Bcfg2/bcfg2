@@ -8,9 +8,24 @@ import Bcfg2.Server.Lint
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 
 
+def threshold(val):
+    """ Option type processor to accept either a percentage (e.g.,
+     "threshold=75") or a ratio (e.g., "threshold=.75") """
+    threshold = float(val)
+    if threshold > 1:
+        threshold /= 100
+    return threshold
+
+
 class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
     """ find Probes or Cfg files with multiple similar files that
     might be merged into one """
+
+    options = Bcfg2.Server.Lint.ServerPlugin.options + [
+        Bcfg2.Options.Option(
+            cf=("MergeFiles", "threshold"), default="0.75", type=threshold,
+            help="The threshold at which to suggest merging files and probes")]
+
     def Run(self):
         if 'Cfg' in self.core.plugins:
             self.check_cfg()
@@ -48,19 +63,10 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
         """ Get a list of similar files from the entry dict.  Return
         value is a list of lists, each of which gives the filenames of
         similar files """
-        if "threshold" in self.config:
-            # accept threshold either as a percent (e.g., "threshold=75") or
-            # as a ratio (e.g., "threshold=.75")
-            threshold = float(self.config['threshold'])
-            if threshold > 1:
-                threshold /= 100
-        else:
-            threshold = 0.75
         rv = []
         elist = list(entries.items())
         while elist:
-            result = self._find_similar(elist.pop(0), copy.copy(elist),
-                                        threshold)
+            result = self._find_similar(elist.pop(0), copy.copy(elist))
             if len(result) > 1:
                 elist = [(fname, fdata)
                          for fname, fdata in elist
@@ -68,7 +74,7 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
                 rv.append(result)
         return rv
 
-    def _find_similar(self, ftuple, others, threshold):
+    def _find_similar(self, ftuple, others):
         """ Find files similar to the one described by ftupe in the
         list of other files.  ftuple is a tuple of (filename, data);
         others is a list of such tuples.  threshold is a float between
@@ -80,9 +86,9 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
             cname, cdata = others.pop(0)
             seqmatch = SequenceMatcher(None, fdata.data, cdata.data)
             # perform progressively more expensive comparisons
-            if (seqmatch.real_quick_ratio() > threshold and
-                seqmatch.quick_ratio() > threshold and
-                seqmatch.ratio() > threshold):
-                rv.extend(self._find_similar((cname, cdata), copy.copy(others),
-                                             threshold))
+            if (seqmatch.real_quick_ratio() > Bcfg2.Options.setup.threshold and
+                seqmatch.quick_ratio() > Bcfg2.Options.setup.threshold and
+                seqmatch.ratio() > Bcfg2.Options.setup.threshold):
+                rv.extend(
+                    self._find_similar((cname, cdata), copy.copy(others)))
         return rv

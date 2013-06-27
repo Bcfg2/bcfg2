@@ -167,8 +167,9 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         for rules in self.core.plugins['Rules'].entries.values():
             xdata = rules.pnode.data
             for path in xdata.xpath("//Path"):
-                self.check_entry(path, os.path.join(self.config['repo'],
-                                                    rules.name))
+                self.check_entry(path,
+                                 os.path.join(Bcfg2.Options.setup.repository,
+                                              rules.name))
 
     def check_bundles(self):
         """ Check bundles for BoundPath entries with missing

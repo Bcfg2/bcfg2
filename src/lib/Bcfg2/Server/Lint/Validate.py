@@ -6,6 +6,7 @@ import sys
 import glob
 import fnmatch
 import lxml.etree
+import Bcfg2.Options
 import Bcfg2.Server.Lint
 from Bcfg2.Utils import Executor
 
@@ -13,6 +14,12 @@ from Bcfg2.Utils import Executor
 class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
     """ Ensure that all XML files in the Bcfg2 repository validate
     according to their respective schemas. """
+
+    options = Bcfg2.Server.Lint.ServerlessPlugin.options + [
+        Bcfg2.Options.PathOption(
+            "--schema", cf=("Validate", "schema"),
+            default="/usr/share/bcfg2/schema",
+            help="The full path to the XML schema files")]
 
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerlessPlugin.__init__(self, *args, **kwargs)
@@ -58,7 +65,6 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         self.cmd = Executor()
 
     def Run(self):
-        schemadir = self.config['schema']
 
         for path, schemaname in self.filesets.items():
             try:
@@ -68,7 +74,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
 
             if filelist:
                 # avoid loading schemas for empty file lists
-                schemafile = os.path.join(schemadir, schemaname)
+                schemafile = os.path.join(Bcfg2.Options.setup.schema,
+                                          schemaname)
                 schema = self._load_schema(schemafile)
                 if schema:
                     for filename in filelist:
@@ -165,8 +172,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             listfiles = lambda p: fnmatch.filter(self.files,
                                                  os.path.join('*', p))
         else:
-            listfiles = lambda p: glob.glob(os.path.join(self.config['repo'],
-                                                         p))
+            listfiles = lambda p: \
+                glob.glob(os.path.join(Bcfg2.Options.setup.repository, p))
 
         for path in self.filesets.keys():
             if '/**/' in path:
@@ -175,9 +182,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                 else:  # self.files is None
                     fpath, fname = path.split('/**/')
                     self.filelists[path] = []
-                    for root, _, files in \
-                            os.walk(os.path.join(self.config['repo'],
-                                                 fpath)):
+                    for root, _, files in os.walk(
+                        os.path.join(Bcfg2.Options.setup.repository, fpath)):
                         self.filelists[path].extend([os.path.join(root, f)
                                                      for f in files
                                                      if f == fname])
