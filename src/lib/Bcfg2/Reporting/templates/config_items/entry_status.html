@@ -1,5 +1,9 @@
 {% extends "base-timeview.html" %}
 {% load bcfg2_tags %}
+{% comment %}
+This is needed for Django versions less than 1.5
+{% endcomment %}
+{% load url from future %}
 
 {% block title %}Bcfg2 - Entry Status{% endblock %}
 
@@ -17,10 +21,10 @@
         {% for item, inters in items %}
           {% for inter in inters %}
           <tr class='{% cycle listview,listview_alt %}'>
-            <td><a href='{% url reports_client_detail hostname=inter.client.name %}'>{{inter.client.name}}</a></td>
-            <td><a href='{% url reports_client_detail_pk hostname=inter.client.name, pk=inter.pk %}'>{{inter.timestamp|date:"Y-m-d\&\n\b\s\p\;H:i"|safe}}</a></td>
+            <td><a href='{% url "reports_client_detail" hostname=inter.client.name %}'>{{inter.client.name}}</a></td>
+            <td><a href='{% url "reports_client_detail_pk" hostname=inter.client.name pk=inter.pk %}'>{{inter.timestamp|date:"Y-m-d\&\n\b\s\p\;H:i"|safe}}</a></td>
             <td>{{ item.get_state_display }}</td>
-            <td style='white-space: nowrap'><a href="{% url reports_item entry_type=item.class_name pk=item.pk %}">({{item.pk}}) {{item.short_list|join:","}}</a></td>
+            <td style='white-space: nowrap'><a href='{% url "reports_item" entry_type=item.class_name pk=item.pk %}'>({{item.pk}}) {{item.short_list|join:","}}</a></td>
           </tr>
           {% endfor %}
         {% endfor %}

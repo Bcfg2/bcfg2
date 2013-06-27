@@ -897,7 +897,7 @@ class TestPOSIXTool(TestTool):
         filedef_rv.__iter__.return_value = iter(file_acls)
 
         defacls = acls
-        for akey, perms in acls.items():
+        for akey, perms in list(acls.items()):
             defacls[('default', akey[1], akey[2])] = perms
         self.assertItemsEqual(ptool._list_file_acls(path), defacls)
         mock_isdir.assert_called_with(path)

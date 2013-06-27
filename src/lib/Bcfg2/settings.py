@@ -32,6 +32,8 @@ TIME_ZONE = None
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
 
+ALLOWED_HOSTS = ['*']
+
 MEDIA_URL = '/site_media/'
 
 

@@ -221,29 +221,58 @@ def main():
         logger.error("Config file %s not found" % options.config)
         return 1
 
+    # pylint: disable=W0702
+    rv = 0
     depsolver = DepSolver(options.config, options.verbose)
     if cmd == "clean":
-        depsolver.clean_cache()
-        print(json.dumps(True))
+        try:
+            depsolver.clean_cache()
+            print(json.dumps(True))
+        except:
+            logger.error("Unexpected error cleaning cache: %s" %
+                         sys.exc_info()[1], exc_info=1)
+            print(json.dumps(False))
+            rv = 2
     elif cmd == "complete":
-        data = json.loads(sys.stdin.read())
-        depsolver.groups = data['groups']
-        (packages, unknown) = depsolver.complete([pkg_to_tuple(p)
-                                                  for p in data['packages']])
-        print(json.dumps(dict(packages=list(packages),
-                              unknown=list(unknown))))
+        try:
+            data = json.loads(sys.stdin.read())
+        except:
+            logger.error("Unexpected error decoding JSON input: %s" %
+                         sys.exc_info()[1])
+            rv = 2
+        try:
+            depsolver.groups = data['groups']
+            (packages, unknown) = depsolver.complete(
+                [pkg_to_tuple(p) for p in data['packages']])
+            print(json.dumps(dict(packages=list(packages),
+                                  unknown=list(unknown))))
+        except:
+            logger.error("Unexpected error completing package set: %s" %
+                         sys.exc_info()[1], exc_info=1)
+            print(json.dumps(dict(packages=[], unknown=data['packages'])))
+            rv = 2
     elif cmd == "get_groups":
-        data = json.loads(sys.stdin.read())
-        rv = dict()
-        for gdata in data:
-            if "type" in gdata:
-                packages = depsolver.get_group(gdata['group'],
-                                               ptype=gdata['type'])
-            else:
-                packages = depsolver.get_group(gdata['group'])
-            rv[gdata['group']] = list(packages)
-        print(json.dumps(rv))
-
+        try:
+            data = json.loads(sys.stdin.read())
+            rv = dict()
+            for gdata in data:
+                if "type" in gdata:
+                    packages = depsolver.get_group(gdata['group'],
+                                                   ptype=gdata['type'])
+                else:
+                    packages = depsolver.get_group(gdata['group'])
+                rv[gdata['group']] = list(packages)
+            print(json.dumps(rv))
+        except:
+            logger.error("Unexpected error getting groups: %s" %
+                         sys.exc_info()[1], exc_info=1)
+            print(json.dumps(dict()))
+            rv = 2
+    else:
+        logger.error("Unknown command %s" % cmd)
+        print(json.dumps(None))
+        rv = 2
+    return rv
 
 if __name__ == '__main__':
     sys.exit(main())

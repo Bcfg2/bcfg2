@@ -2,14 +2,14 @@
 implementations inherit from. """
 
 import os
-import sys
-import time
+import pwd
 import atexit
-import select
-import signal
 import logging
-import inspect
+import select
+import sys
 import threading
+import time
+import inspect
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Logger
@@ -242,14 +242,6 @@ class BaseCore(object):
 
         #: The CA that signed the server cert
         self.ca = self.setup['ca']
-
-        def hdlr(sig, frame):  # pylint: disable=W0613
-            """ Handle SIGINT/Ctrl-C by shutting down the core and exiting
-            properly. """
-            self.shutdown()
-            os._exit(1)  # pylint: disable=W0212
-
-        signal.signal(signal.SIGINT, hdlr)
 
         #: The FAM :class:`threading.Thread`,
         #: :func:`_file_monitor_thread`
@@ -762,6 +754,11 @@ class BaseCore(object):
                 os.chmod(piddir, 493)  # 0775
             if not self._daemonize():
                 return False
+
+            # rewrite $HOME. pulp stores its auth creds in ~/.pulp, so
+            # this is necessary to make that work when privileges are
+            # dropped
+            os.environ['HOME'] = pwd.getpwuid(self.setup['daemon_uid'])[5]
         else:
             os.umask(int(self.setup['umask'], 8))
 
@@ -789,7 +786,8 @@ class BaseCore(object):
             while self.fam.pending() != 0:
                 time.sleep(1)
 
-        self.set_debug(None, self.debug_flag)
+        if self.debug_flag:
+            self.set_debug(None, self.debug_flag)
         self._block()
 
     def _daemonize(self):

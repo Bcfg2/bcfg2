@@ -24,6 +24,24 @@ from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages, \
 #: facility for passing it otherwise.
 CFG = None
 
+_HANDLERS = []
+
+
+def handlers():
+    """ A list of Cfg handler classes. Loading the handlers must
+    be done at run-time, not at compile-time, or it causes a
+    circular import and Bad Things Happen."""
+    if not _HANDLERS:
+        for submodule in walk_packages(path=__path__, prefix=__name__ + "."):
+            mname = submodule[1].rsplit('.', 1)[-1]
+            module = getattr(__import__(submodule[1]).Server.Plugins.Cfg,
+                             mname)
+            hdlr = getattr(module, mname)
+            if issubclass(hdlr, CfgBaseFileMatcher):
+                _HANDLERS.append(hdlr)
+        _HANDLERS.sort(key=operator.attrgetter("__priority__"))
+    return _HANDLERS
+
 
 class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData,
                          Bcfg2.Server.Plugin.Debuggable):
@@ -432,24 +450,6 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
             entry.set_debug(debug)
         return rv
 
-    @property
-    def handlers(self):
-        """ A list of Cfg handler classes. Loading the handlers must
-        be done at run-time, not at compile-time, or it causes a
-        circular import and Bad Things Happen."""
-        if self._handlers is None:
-            self._handlers = []
-            for submodule in walk_packages(path=__path__,
-                                           prefix=__name__ + "."):
-                mname = submodule[1].rsplit('.', 1)[-1]
-                module = getattr(__import__(submodule[1]).Server.Plugins.Cfg,
-                                 mname)
-                hdlr = getattr(module, mname)
-                if CfgBaseFileMatcher in hdlr.__mro__:
-                    self._handlers.append(hdlr)
-            self._handlers.sort(key=operator.attrgetter("__priority__"))
-        return self._handlers
-
     def handle_event(self, event):
         """ Dispatch a FAM event to :func:`entry_init` or the
         appropriate child handler object.
@@ -466,7 +466,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
                 # process a bogus changed event like a created
                 return
 
-            for hdlr in self.handlers:
+            for hdlr in handlers():
                 if hdlr.handles(event, basename=self.path):
                     if action == 'changed':
                         # warn about a bogus 'changed' event, but
@@ -546,10 +546,18 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
 
     def bind_entry(self, entry, metadata):
         self.bind_info_to_entry(entry, metadata)
-        data = self._generate_data(entry, metadata)
+        data, generator = self._generate_data(entry, metadata)
 
-        for fltr in self.get_handlers(metadata, CfgFilter):
-            data = fltr.modify_data(entry, metadata, data)
+        if generator is not None:
+            # apply no filters if the data was created by a CfgCreator
+            for fltr in self.get_handlers(metadata, CfgFilter):
+                if fltr.specific <= generator.specific:
+                    # only apply filters that are as specific or more
+                    # specific than the generator used for this entry.
+                    # Note that specificity comparison is backwards in
+                    # this sense, since it's designed to sort from
+                    # most specific to least specific.
+                    data = fltr.modify_data(entry, metadata, data)
 
         if self.setup['validate']:
             try:
@@ -658,7 +666,9 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         :type entry: lxml.etree._Element
         :param metadata: The client metadata to generate data for
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-        :returns: string - the data for the entry
+        :returns: tuple of (string, generator) - the data for the
+                  entry and the generator used to generate it (or
+                  None, if data was created)
         """
         try:
             generator = self.best_matching(metadata,
@@ -667,10 +677,10 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         except PluginExecutionError:
             # if no creators or generators exist, _create_data()
             # raises an appropriate exception
-            return self._create_data(entry, metadata)
+            return (self._create_data(entry, metadata), None)
 
         try:
-            return generator.get_data(entry, metadata)
+            return (generator.get_data(entry, metadata), generator)
         except:
             msg = "Cfg: Error rendering %s: %s" % (entry.get("name"),
                                                    sys.exc_info()[1])
@@ -837,10 +847,13 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
     def Run(self):
         for basename, entry in list(self.core.plugins['Cfg'].entries.items()):
             self.check_pubkey(basename, entry)
+        self.check_missing_files()
 
     @classmethod
     def Errors(cls):
-        return {"no-pubkey-xml": "warning"}
+        return {"no-pubkey-xml": "warning",
+                "unknown-cfg-files": "error",
+                "extra-cfg-files": "error"}
 
     def check_pubkey(self, basename, entry):
         """ check that privkey.xml files have corresponding pubkey.xml
@@ -862,3 +875,41 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
                 self.LintError("no-pubkey-xml",
                                "%s has no corresponding pubkey.xml at %s" %
                                (basename, pubkey))
+
+    def check_missing_files(self):
+        """ check that all files on the filesystem are known to Cfg """
+        cfg = self.core.plugins['Cfg']
+
+        # first, collect ignore patterns from handlers
+        ignore = []
+        for hdlr in handlers():
+            ignore.extend(hdlr.__ignore__)
+
+        # next, get a list of all non-ignored files on the filesystem
+        all_files = set()
+        for root, _, files in os.walk(cfg.data):
+            all_files.update(os.path.join(root, fname)
+                             for fname in files
+                             if not any(fname.endswith("." + i)
+                                        for i in ignore))
+
+        # next, get a list of all files known to Cfg
+        cfg_files = set()
+        for root, eset in cfg.entries.items():
+            cfg_files.update(os.path.join(cfg.data, root.lstrip("/"), fname)
+                             for fname in eset.entries.keys())
+
+        # finally, compare the two
+        unknown_files = all_files - cfg_files
+        extra_files = cfg_files - all_files
+        if unknown_files:
+            self.LintError(
+                "unknown-cfg-files",
+                "Files on the filesystem could not be understood by Cfg: %s" %
+                "; ".join(unknown_files))
+        if extra_files:
+            self.LintError(
+                "extra-cfg-files",
+                "Cfg has entries for files that do not exist on the "
+                "filesystem: %s\nThis is probably a bug." %
+                "; ".join(extra_files))

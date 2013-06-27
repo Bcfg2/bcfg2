@@ -60,8 +60,47 @@ class Svn(Bcfg2.Server.Plugin.Version):
             self.client.callback_conflict_resolver = \
                 self.get_conflict_resolver(choice)
 
+            try:
+                if self.core.setup.cfp.get(
+                        "svn",
+                        "always_trust").lower() == "true":
+                    self.client.callback_ssl_server_trust_prompt = \
+                        self.ssl_server_trust_prompt
+            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+                self.logger.debug("Svn: Using subversion cache for SSL "
+                                  "certificate trust")
+
+            try:
+                if (self.core.setup.cfp.get("svn", "user") and
+                    self.core.setup.cfp.get("svn", "password")):
+                    self.client.callback_get_login = \
+                        self.get_login
+            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+                self.logger.info("Svn: Using subversion cache for "
+                                 "password-based authetication")
+
         self.logger.debug("Svn: Initialized svn plugin with SVN directory %s" %
                           self.vcs_path)
+
+    # pylint: disable=W0613
+    def get_login(self, realm, username, may_save):
+        """ PySvn callback to get credentials for HTTP basic authentication """
+        self.logger.debug("Svn: Logging in with username: %s" %
+                          self.core.setup.cfp.get("svn", "user"))
+        return True, \
+            self.core.setup.cfp.get("svn", "user"), \
+            self.core.setup.cfp.get("svn", "password"), \
+            False
+    # pylint: enable=W0613
+
+    def ssl_server_trust_prompt(self, trust_dict):
+        """ PySvn callback to always trust SSL certificates from SVN server """
+        self.logger.debug("Svn: Trusting SSL certificate from %s, "
+                          "issued by %s for realm %s" %
+                          (trust_dict['hostname'],
+                           trust_dict['issuer_dname'],
+                           trust_dict['realm']))
+        return True, trust_dict['failures'], False
 
     def get_conflict_resolver(self, choice):
         """ Get a PySvn conflict resolution callback """

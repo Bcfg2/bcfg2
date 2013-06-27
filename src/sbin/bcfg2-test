@@ -5,6 +5,7 @@ without failures"""
 
 import os
 import sys
+import signal
 import fnmatch
 import logging
 import Bcfg2.Logger
@@ -191,9 +192,23 @@ def run_child(setup, clients, queue):
     core.shutdown()
 
 
+def get_sigint_handler(core):
+    """ Get a function that handles SIGINT/Ctrl-C by shutting down the
+    core and exiting properly."""
+
+    def hdlr(sig, frame):  # pylint: disable=W0613
+        """ Handle SIGINT/Ctrl-C by shutting down the core and exiting
+        properly. """
+        core.shutdown()
+        os._exit(1)  # pylint: disable=W0212
+
+    return hdlr
+
+
 def parse_args():
     """ Parse command line arguments. """
     optinfo = dict(Bcfg2.Options.TEST_COMMON_OPTIONS)
+
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
     setup = Bcfg2.Options.load_option_parser(optinfo)
@@ -247,6 +262,7 @@ def main():
     setup = parse_args()
     logger = logging.getLogger(sys.argv[0])
     core = get_core(setup)
+    signal.signal(signal.SIGINT, get_sigint_handler(core))
 
     if setup['args']:
         clients = setup['args']

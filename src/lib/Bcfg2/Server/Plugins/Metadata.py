@@ -40,6 +40,8 @@ if HAS_DJANGO:
         """ dict-like object to make it easier to access client bcfg2
         versions from the database """
 
+        create = False
+
         def __getitem__(self, key):
             try:
                 return MetadataClientModel.objects.get(hostname=key).version

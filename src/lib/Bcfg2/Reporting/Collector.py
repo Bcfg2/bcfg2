@@ -125,7 +125,9 @@ class ReportingCollector(object):
             # this wil be missing if called from bcfg2-admin
             self.terminate.set()
         if self.transport:
-            self.transport.shutdown()
+            try:
+                self.transport.shutdown()
+            except OSError:
+                pass
         if self.storage:
             self.storage.shutdown()
-

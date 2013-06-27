@@ -62,27 +62,29 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
                               entry.get('name'))
             return False
 
-        svcstatus = self.check_service(entry)
-        if entry.get('status') == 'on':
-            if svcstatus:
-                current_srvstatus = True
-            else:
-                current_srvstatus = False
-        elif entry.get('status') == 'off':
-            if svcstatus:
-                current_srvstatus = False
-            else:
-                current_srvstatus = True
-        else:
+        if entry.get('status') == 'ignore':
             # 'ignore' should verify
-            current_srvstatus = True
+            current_svcstatus = True
+            svcstatus = True
+        else:
+            svcstatus = self.check_service(entry)
+            if entry.get('status') == 'on':
+                if svcstatus:
+                    current_svcstatus = True
+                else:
+                    current_svcstatus = False
+            elif entry.get('status') == 'off':
+                if svcstatus:
+                    current_svcstatus = False
+                else:
+                    current_svcstatus = True
 
         if svcstatus:
             entry.set('current_status', 'on')
         else:
             entry.set('current_status', 'off')
 
-        return current_bootstatus and current_srvstatus
+        return current_bootstatus and current_svcstatus
 
     def InstallService(self, entry):
         """Install Service entry."""

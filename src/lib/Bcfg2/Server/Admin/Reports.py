@@ -79,8 +79,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
 
     def __call__(self, args):
         if len(args) == 0 or args[0] == '-h':
-            print(self.__usage__)
-            raise SystemExit(0)
+            self.errExit(self.__usage__)
 
         # FIXME - dry run
 
@@ -101,9 +100,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
                 management.call_command("syncdb", verbosity=vrb)
                 management.call_command("migrate", verbosity=vrb)
             except:
-                print("Update failed: %s" %
-                      traceback.format_exc().splitlines()[-1])
-                raise SystemExit(1)
+                self.errExit("Update failed: %s" % sys.exc_info()[1])
         elif args[0] == 'purge':
             expired = False
             client = None
@@ -124,22 +121,20 @@ class Reports(Bcfg2.Server.Admin.Mode):
                         maxdate = datetime.datetime.now() - \
                             datetime.timedelta(days=int(args[i + 1]))
                     except:
-                        self.log.error("Invalid number of days: %s" %
-                                       args[i + 1])
-                        raise SystemExit(-1)
+                        self.errExit("Invalid number of days: %s" %
+                                     args[i + 1])
                     i = i + 1
                 elif args[i] == '--expired':
                     expired = True
                 i = i + 1
             if expired:
                 if state:
-                    self.log.error("--state is not valid with --expired")
-                    raise SystemExit(-1)
+                    self.errExit("--state is not valid with --expired")
                 self.purge_expired(maxdate)
             else:
                 self.purge(client, maxdate, state)
         else:
-            print("Unknown command: %s" % args[0])
+            self.errExit("Unknown command: %s" % args[0])
 
     @transaction.commit_on_success
     def scrub(self):
@@ -155,8 +150,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
                     (start_count - cls.objects.count(), cls.__class__.__name__))
             except:
                 print("Failed to prune %s: %s" %
-                      (cls.__class__.__name__,
-                       traceback.format_exc().splitlines()[-1]))
+                      (cls.__class__.__name__, sys.exc_info()[1]))
 
     def django_command_proxy(self, command):
         '''Call a django command'''
@@ -180,8 +174,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
                 cobj = Client.objects.get(name=client)
                 ipurge = ipurge.filter(client=cobj)
             except Client.DoesNotExist:
-                self.log.error("Client %s not in database" % client)
-                raise SystemExit(-1)
+                self.errExit("Client %s not in database" % client)
             self.log.debug("Filtering by client: %s" % client)
 
         if maxdate:

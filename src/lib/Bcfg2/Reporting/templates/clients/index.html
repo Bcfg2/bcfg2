@@ -1,5 +1,9 @@
 {% extends "base-timeview.html" %}
 {% load bcfg2_tags %}
+{% comment %}
+This is needed for Django versions less than 1.5
+{% endcomment %}
+{% load url from future %}
 
 {% block extra_header_info %}
 {% endblock%}
@@ -17,9 +21,9 @@
       <td class='{{ inter|determine_client_state }}'>
           <a href="{% spaceless %}
               {% if not timestamp %}
-                  {% url reports_client_detail inter.client.name %}
+                  {% url "reports_client_detail" inter.client.name %}
               {% else %}
-                  {% url reports_client_detail_pk inter.client.name,inter.id %}
+                  {% url "reports_client_detail_pk" inter.client.name inter.id %}
               {% endif %}
               {% endspaceless %}">{{ inter.client.name }}</a>
       </td>

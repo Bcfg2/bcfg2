@@ -111,8 +111,8 @@ class Frame(object):
             self.logger.warning(deprecated)
         experimental = [tool.name for tool in self.tools if tool.experimental]
         if experimental:
-            self.logger.warning("Loaded experimental tool drivers:")
-            self.logger.warning(experimental)
+            self.logger.info("Loaded experimental tool drivers:")
+            self.logger.info(experimental)
 
         # find entries not handled by any tools
         self.unhandled = [entry for struct in config

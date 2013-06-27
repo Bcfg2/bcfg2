@@ -472,7 +472,6 @@ Bcfg2 client itself.""")
             ('Path Bcfg2 repository', self.setup['repo']),
             ('Plugins', self.setup['plugins']),
             ('Password', self.setup['password']),
-            ('Server Metadata Connector', self.setup['mconnect']),
             ('Filemonitor', self.setup['filemonitor']),
             ('Server address', self.setup['location']),
             ('Path to key', self.setup['key']),

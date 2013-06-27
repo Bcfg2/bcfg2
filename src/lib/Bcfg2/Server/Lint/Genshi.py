@@ -34,6 +34,12 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
                         err = sys.exc_info()[1]
                         self.LintError("genshi-syntax-error",
                                        "Genshi syntax error: %s" % err)
+                    except:
+                        etype, err = sys.exc_info()[:2]
+                        self.LintError(
+                            "genshi-syntax-error",
+                            "Unexpected Genshi error on %s: %s: %s" %
+                            (entry.name, etype.__name__, err))
 
     def check_bundler(self):
         """ Check templates in Bundler for syntax errors. """

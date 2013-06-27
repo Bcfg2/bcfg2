@@ -99,8 +99,6 @@ Requires:         bcfg2 = %{version}
 Requires:         python-ssl
 %endif
 Requires:         python-lxml >= 1.2.1
-%if "%{_vendor}" == "redhat"
-%endif
 %if 0%{?suse_version}
 Requires:         python-pyinotify
 Requires:         python-python-daemon
@@ -151,7 +149,7 @@ Group:            System Tools
 Requires:         bcfg2 = %{version}
 Requires:         bcfg2-server = %{version}
 
-# cherrypy 3.2.3 actually doesn't exist yet, but 3.2.2 has bugs that
+# cherrypy 3.3 actually doesn't exist yet, but 3.2 has bugs that
 # prevent it from working:
 # https://bitbucket.org/cherrypy/cherrypy/issue/1154/assertionerror-in-recv-when-ssl-is-enabled
 Requires:         python-cherrypy > 3.3
@@ -297,6 +295,8 @@ This package includes the Bcfg2 reports web frontend.
 %{?pythonpath: export PYTHONPATH="%{pythonpath}"}
 %{__python}%{pythonversion} setup.py build_sphinx
 
+sed -i "s/apache2/httpd/g" misc/apache/bcfg2.conf
+
 %install
 rm -rf %{buildroot}
 %{__python}%{pythonversion} setup.py install --root=%{buildroot} --record=INSTALLED_FILES --prefix=/usr
@@ -316,7 +316,7 @@ mkdir -p %{buildroot}%{_defaultdocdir}/bcfg2-server-%{version}
 %{__mv} %{buildroot}%{_bindir}/bcfg2* %{buildroot}%{_sbindir}
 %{__install} -m 755 debian/bcfg2.init %{buildroot}%{_initrddir}/bcfg2
 %{__install} -m 755 debian/bcfg2-server.init %{buildroot}%{_initrddir}/bcfg2-server
-%{__install} -m 755 debian/bcfg2-report-collector.init %{buildroot}%{_initrddir}/bcfg2-report-collector
+%{__install} -m 755 debian/bcfg2-server.bcfg2-report-collector.init %{buildroot}%{_initrddir}/bcfg2-report-collector
 %{__install} -m 755 debian/bcfg2.default %{buildroot}%{_sysconfdir}/default/bcfg2
 %{__install} -m 755 debian/bcfg2-server.default %{buildroot}%{_sysconfdir}/default/bcfg2-server
 %{__install} -m 755 debian/bcfg2.cron.daily %{buildroot}%{_sysconfdir}/cron.daily/bcfg2
@@ -333,7 +333,6 @@ cp -r tools/* %{buildroot}%{_defaultdocdir}/bcfg2-server-%{version}
 cp -r build/sphinx/html/* %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
 
 %{__install} -d %{buildroot}%{apache_conf}/conf.d
-sed -i "s/apache2/httpd/g" misc/apache/bcfg2.conf
 %{__install} -m 644 misc/apache/bcfg2.conf %{buildroot}%{apache_conf}/conf.d/wsgi_bcfg2.conf
 
 %{__mkdir_p} %{buildroot}%{_localstatedir}/cache/%{name}

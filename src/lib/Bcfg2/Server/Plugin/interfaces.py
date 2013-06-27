@@ -286,6 +286,8 @@ class Statistics(Plugin):
     you should avoid using Statistics and use
     :class:`ThreadedStatistics` instead."""
 
+    create = False
+
     def process_statistics(self, client, xdata):
         """ Process the given XML statistics data for the specified
         client.
@@ -525,6 +527,8 @@ class GoalValidator(object):
 
 class Version(Plugin):
     """ Version plugins interact with various version control systems. """
+
+    create = False
 
     #: The path to the VCS metadata file or directory, relative to the
     #: base of the Bcfg2 repository.  E.g., for Subversion this would

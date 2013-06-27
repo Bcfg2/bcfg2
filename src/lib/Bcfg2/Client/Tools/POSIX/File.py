@@ -146,8 +146,8 @@ class POSIXFile(POSIXTool):
 
         return POSIXTool.install(self, entry) and rv
 
-    def _get_diffs(self, entry, interactive=False, sensitive=False,
-                   is_binary=False, content=None):
+    def _get_diffs(self, entry, interactive=False,  # pylint: disable=R0912
+                   sensitive=False, is_binary=False, content=None):
         """ generate the necessary diffs for entry """
         if not interactive and sensitive:
             return
@@ -163,6 +163,8 @@ class POSIXFile(POSIXTool):
             # prompts for -I and the reports
             try:
                 content = open(entry.get('name')).read()
+            except UnicodeDecodeError:
+                content = open(entry.get('name'), encoding='utf-8').read()
             except IOError:
                 self.logger.error("POSIX: Failed to read %s: %s" %
                                   (entry.get("name"), sys.exc_info()[1]))

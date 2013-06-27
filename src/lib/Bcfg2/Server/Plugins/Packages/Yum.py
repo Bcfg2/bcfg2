@@ -674,7 +674,10 @@ class YumCollection(Collection):
             gdicts.append(dict(group=group, type=ptype))
 
         if self.use_yum:
-            return self.call_helper("get_groups", inputdata=gdicts)
+            try:
+                return self.call_helper("get_groups", inputdata=gdicts)
+            except ValueError:
+                return dict()
         else:
             pkgs = dict()
             for gdict in gdicts:
@@ -837,12 +840,13 @@ class YumCollection(Collection):
             return Collection.complete(self, packagelist)
 
         if packagelist:
-            result = \
-                self.call_helper("complete",
-                                 dict(packages=list(packagelist),
-                                      groups=list(self.get_relevant_groups())))
-            if not result:
-                # some sort of error, reported by call_helper()
+            try:
+                result = self.call_helper(
+                    "complete",
+                    dict(packages=list(packagelist),
+                         groups=list(self.get_relevant_groups())))
+            except ValueError:
+                # error reported by call_helper()
                 return set(), packagelist
             # json doesn't understand sets or tuples, so we get back a
             # lists of lists (packages) and a list of unicode strings
@@ -873,28 +877,39 @@ class YumCollection(Collection):
                   ``bcfg2-yum-helper`` command.
         """
         cmd = [self.helper, "-c", self.cfgfile]
-        verbose = self.debug_flag or self.setup['verbose']
-        if verbose:
+        if self.setup['verbose']:
+            cmd.append("-v")
+        if self.debug_flag:
+            if not self.setup['verbose']:
+                # ensure that running in debug gets -vv, even if
+                # verbose is not enabled
+                cmd.append("-v")
             cmd.append("-v")
         cmd.append(command)
-        self.debug_log("Packages: running %s" % " ".join(cmd), flag=verbose)
+        self.debug_log("Packages: running %s" % " ".join(cmd))
         if inputdata:
             result = self.cmd.run(cmd, inputdata=json.dumps(inputdata))
         else:
             result = self.cmd.run(cmd)
         if not result.success:
+            errlines = result.error.splitlines()
             self.logger.error("Packages: error running bcfg2-yum-helper: %s" %
-                              result.error)
+                              errlines[0])
+            for line in errlines[1:]:
+                self.logger.error("Packages: %s" % line)
         elif result.stderr:
+            errlines = result.stderr.splitlines()
             self.debug_log("Packages: debug info from bcfg2-yum-helper: %s" %
-                           result.stderr, flag=verbose)
+                           errlines[0])
+            for line in errlines[1:]:
+                self.debug_log("Packages: %s" % line)
         try:
             return json.loads(result.stdout)
         except ValueError:
             err = sys.exc_info()[1]
             self.logger.error("Packages: error reading bcfg2-yum-helper "
                               "output: %s" % err)
-            return None
+            raise
 
     def setup_data(self, force_update=False):
         """ Do any collection-level data setup tasks. This is called
@@ -920,13 +935,21 @@ class YumCollection(Collection):
         if force_update:
             # we call this twice: one to clean up data from the old
             # config, and once to clean up data from the new config
-            self.call_helper("clean")
+            try:
+                self.call_helper("clean")
+            except ValueError:
+                # error reported by call_helper
+                pass
 
         os.unlink(self.cfgfile)
         self.write_config()
 
         if force_update:
-            self.call_helper("clean")
+            try:
+                self.call_helper("clean")
+            except ValueError:
+                # error reported by call_helper
+                pass
 
 
 class YumSource(Source):
