@@ -1,44 +1,64 @@
 """ Django database models for all plugins """
 
 import sys
-import copy
 import logging
 import Bcfg2.Options
 import Bcfg2.Server.Plugins
 from Bcfg2.Compat import walk_packages
-from django.db import models
 
 LOGGER = logging.getLogger('Bcfg2.Server.models')
 
 MODELS = []
 
 
-def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
+def _get_all_plugins():
+    rv = []
+    for submodule in walk_packages(path=Bcfg2.Server.Plugins.__path__,
+                                   prefix="Bcfg2.Server.Plugins."):
+        module = submodule[1].rsplit('.', 1)[-1]
+        if submodule[1] == "Bcfg2.Server.Plugins.%s" % module:
+            # we only include direct children of
+            # Bcfg2.Server.Plugins -- e.g., all_plugins should
+            # include Bcfg2.Server.Plugins.Cfg, but not
+            # Bcfg2.Server.Plugins.Cfg.CfgInfoXML
+            rv.append(module)
+    return rv
+
+
+_ALL_PLUGINS = _get_all_plugins()
+
+
+class _OptionContainer(object):
+    # we want to provide a different default plugin list --
+    # namely, _all_ plugins, so that the database is guaranteed to
+    # work, even if /etc/bcfg2.conf isn't set up properly
+    options = [
+        Bcfg2.Options.Option(
+            cf=('server', 'plugins'), type=Bcfg2.Options.Types.comma_list,
+            default=_ALL_PLUGINS, dest="models_plugins",
+            action=Bcfg2.Options.PluginsAction)]
+
+    @staticmethod
+    def options_parsed_hook():
+        # basic invocation to ensure that a default set of models is
+        # loaded, and thus that this module will always work.
+        load_models()
+
+Bcfg2.Options.get_parser().add_component(_OptionContainer)
+
+
+def load_models(plugins=None):
     """ load models from plugins specified in the config """
+    # this has to be imported after options are parsed, because Django
+    # finalizes its settings as soon as it's loaded, which means that
+    # if we import this before Bcfg2.settings has been populated,
+    # Django gets a null configuration, and subsequent updates to
+    # Bcfg2.settings won't help.
+    from django.db import models
     global MODELS
 
-    if plugins is None:
-        # we want to provide a different default plugin list --
-        # namely, _all_ plugins, so that the database is guaranteed to
-        # work, even if /etc/bcfg2.conf isn't set up properly
-        plugin_opt = copy.deepcopy(Bcfg2.Options.SERVER_PLUGINS)
-        all_plugins = []
-        for submodule in walk_packages(path=Bcfg2.Server.Plugins.__path__,
-                                       prefix="Bcfg2.Server.Plugins."):
-            module = submodule[1].rsplit('.', 1)[-1]
-            if submodule[1] == "Bcfg2.Server.Plugins.%s" % module:
-                # we only include direct children of
-                # Bcfg2.Server.Plugins -- e.g., all_plugins should
-                # include Bcfg2.Server.Plugins.Cfg, but not
-                # Bcfg2.Server.Plugins.Cfg.CfgInfoXML
-                all_plugins.append(module)
-        plugin_opt.default = all_plugins
-
-        setup = Bcfg2.Options.get_option_parser()
-        setup.add_option("plugins", plugin_opt)
-        setup.add_option("configfile", Bcfg2.Options.CFILE)
-        setup.reparse(argv=[Bcfg2.Options.CFILE.cmd, cfile])
-        plugins = setup['plugins']
+    if not plugins:
+        plugins = Bcfg2.Options.setup.models_plugins
 
     if MODELS:
         # load_models() has been called once, so first unload all of
@@ -49,45 +69,22 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
             delattr(sys.modules[__name__], model)
         MODELS = []
 
-    for plugin in plugins:
-        try:
-            mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
-                                     plugin).Server.Plugins, plugin)
-        except ImportError:
-            try:
-                err = sys.exc_info()[1]
-                mod = __import__(plugin)
-            except:  # pylint: disable=W0702
-                if plugins != plugin_opt.default:
-                    # only produce errors if the default plugin list
-                    # was not used -- i.e., if the config file was set
-                    # up.  don't produce errors when trying to load
-                    # all plugins, IOW.  the error from the first
-                    # attempt to import is probably more accurate than
-                    # the second attempt.
-                    LOGGER.error("Failed to load plugin %s: %s" % (plugin,
-                                                                   err))
-                    continue
+    for mod in plugins:
         for sym in dir(mod):
             obj = getattr(mod, sym)
-            if hasattr(obj, "__bases__") and models.Model in obj.__bases__:
+            if isinstance(obj, type) and issubclass(obj, models.Model):
                 setattr(sys.modules[__name__], sym, obj)
                 MODELS.append(sym)
 
-# basic invocation to ensure that a default set of models is loaded,
-# and thus that this module will always work.
-load_models(quiet=True)
+    class InternalDatabaseVersion(models.Model):
+        """ Object that tell us to which version the database is """
+        version = models.IntegerField()
+        updated = models.DateTimeField(auto_now_add=True)
 
-
-class InternalDatabaseVersion(models.Model):
-    """ Object that tell us to which version the database is """
-    version = models.IntegerField()
-    updated = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return "version %d updated the %s" % (self.version,
+        def __str__(self):
+            return "version %d updated %s" % (self.version,
                                               self.updated.isoformat())
 
-    class Meta:  # pylint: disable=C0111,W0232
-        app_label = "reports"
-        get_latest_by = "version"
+        class Meta:  # pylint: disable=C0111,W0232
+            app_label = "reports"
+            get_latest_by = "version"
