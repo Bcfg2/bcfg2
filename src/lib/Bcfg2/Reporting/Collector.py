@@ -1,8 +1,8 @@
+import sys
 import atexit
 import daemon
 import logging
 import time
-import traceback
 import threading
 
 # pylint: disable=E0611
@@ -14,52 +14,53 @@ except ImportError:
 # pylint: enable=E0611
 
 import Bcfg2.Logger
-from Bcfg2.Reporting.Transport import load_transport_from_config, \
-    TransportError, TransportImportError
+import Bcfg2.Options
+from Bcfg2.Reporting.Transport.base import TransportError
 from Bcfg2.Reporting.Transport.DirectStore import DirectStore
-from Bcfg2.Reporting.Storage import load_storage_from_config, \
-    StorageError, StorageImportError
+from Bcfg2.Reporting.Storage.base import StorageError
+
 
 class ReportingError(Exception):
     """Generic reporting exception"""
     pass
 
+
 class ReportingCollector(object):
     """The collecting process for reports"""
+    options = [Bcfg2.Options.Common.reporting_storage,
+               Bcfg2.Options.Common.reporting_transport,
+               Bcfg2.Options.Common.daemon]
 
-    def __init__(self, setup):
-        """Setup the collector.  This may be called by the daemon or though 
+    def __init__(self):
+        """Setup the collector.  This may be called by the daemon or though
         bcfg2-admin"""
-        self.setup = setup
-        self.datastore = setup['repo']
-        self.encoding = setup['encoding']
         self.terminate = None
         self.context = None
 
-        if setup['debug']:
+        if Bcfg2.Options.setup.debug:
             level = logging.DEBUG
-        elif setup['verbose']:
+        elif Bcfg2.Options.setup.verbose:
             level = logging.INFO
         else:
             level = logging.WARNING
 
         Bcfg2.Logger.setup_logging('bcfg2-report-collector',
                                    to_console=logging.INFO,
-                                   to_syslog=setup['syslog'],
-                                   to_file=setup['logging'],
+                                   to_syslog=Bcfg2.Options.setup.syslog,
+                                   to_file=Bcfg2.Options.setup.logging,
                                    level=level)
         self.logger = logging.getLogger('bcfg2-report-collector')
 
         try:
-            self.transport = load_transport_from_config(setup)
-            self.storage = load_storage_from_config(setup)
+            self.transport = Bcfg2.Options.setup.transport()
+            self.storage = Bcfg2.Options.setup.reporting_storage()
         except TransportError:
             self.logger.error("Failed to load transport: %s" %
-                traceback.format_exc().splitlines()[-1])
+                              sys.exc_info()[1])
             raise ReportingError
         except StorageError:
             self.logger.error("Failed to load storage: %s" %
-                traceback.format_exc().splitlines()[-1])
+                              sys.exc_info()[1])
             raise ReportingError
 
         if isinstance(self.transport, DirectStore):
@@ -69,14 +70,13 @@ class ReportingCollector(object):
             raise ReportingError
 
         try:
-            self.logger.debug("Validating storage %s" % 
-                self.storage.__class__.__name__)
+            self.logger.debug("Validating storage %s" %
+                              self.storage.__class__.__name__)
             self.storage.validate()
         except:
             self.logger.error("Storage backed %s failed to validate: %s" %
-                (self.storage.__class__.__name__, 
-                    traceback.format_exc().splitlines()[-1]))
-
+                              (self.storage.__class__.__name__,
+                               sys.exc_info()[1]))
 
     def run(self):
         """Startup the processing and go!"""
@@ -84,14 +84,14 @@ class ReportingCollector(object):
         atexit.register(self.shutdown)
         self.context = daemon.DaemonContext()
 
-        if self.setup['daemon']:
+        if Bcfg2.Options.setup.daemon:
             self.logger.debug("Daemonizing")
             try:
-                self.context.pidfile = PIDLockFile(self.setup['daemon'])
+                self.context.pidfile = PIDLockFile(Bcfg2.Options.setup.daemon)
                 self.context.open()
             except PIDFileError:
                 self.logger.error("Error writing pid file: %s" %
-                    traceback.format_exc().splitlines()[-1])
+                                  sys.exc_info()[1])
                 self.shutdown()
                 return
             self.logger.info("Starting daemon")
@@ -107,8 +107,8 @@ class ReportingCollector(object):
                     start = time.time()
                     self.storage.import_interaction(interaction)
                     self.logger.info("Imported interaction for %s in %ss" %
-                        (interaction.get('hostname', '<unknown>'),
-                            time.time() - start))
+                                     (interaction.get('hostname', '<unknown>'),
+                                      time.time() - start))
                 except:
                     #TODO requeue?
                     raise
@@ -117,7 +117,7 @@ class ReportingCollector(object):
                 self.shutdown()
             except:
                 self.logger.error("Unhandled exception in main loop %s" %
-                    traceback.format_exc().splitlines()[-1])
+                                  sys.exc_info()[1])
 
     def shutdown(self):
         """Cleanup and go"""

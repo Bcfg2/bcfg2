@@ -2,28 +2,25 @@
 The base for all Storage backends
 """
 
-import logging 
+import logging
+
 
 class StorageError(Exception):
     """Generic StorageError"""
     pass
 
-class StorageImportError(StorageError):
-    """Raised when a storage module fails to import"""
-    pass
-
 class StorageBase(object):
     """The base for all storages"""
 
+    options = []
+
     __rmi__ = ['Ping', 'GetExtra', 'GetCurrentEntry']
 
-    def __init__(self, setup):
+    def __init__(self):
         """Do something here"""
         clsname = self.__class__.__name__
         self.logger = logging.getLogger(clsname)
         self.logger.debug("Loading %s storage" % clsname)
-        self.setup = setup
-        self.encoding = setup['encoding']
 
     def import_interaction(self, interaction):
         """Import the data into the backend"""
@@ -48,4 +45,3 @@ class StorageBase(object):
     def GetCurrentEntry(self, client, e_type, e_name):
         """Get the current status of an entry on the client"""
         raise NotImplementedError
-

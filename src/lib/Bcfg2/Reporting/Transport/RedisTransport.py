@@ -9,9 +9,9 @@ import signal
 import platform
 import traceback
 import threading
+import Bcfg2.Options
 from Bcfg2.Reporting.Transport.base import TransportBase, TransportError
 from Bcfg2.Compat import cPickle
-from Bcfg2.Options import Option
 
 try:
     import redis
@@ -34,9 +34,19 @@ class RedisTransport(TransportBase):
     STATS_KEY = 'bcfg2_statistics'
     COMMAND_KEY = 'bcfg2_command'
 
-    def __init__(self, setup):
-        super(RedisTransport, self).__init__(setup)
-        self._redis = None
+    options = TransportBase.options + [
+        Bcfg2.Options.Option(
+            cf=('reporting', 'redis_host'), dest="reporting_redis_host",
+            default='127.0.0.1', help='Reporting Redis host'),
+        Bcfg2.Options.Option(
+            cf=('reporting', 'redis_port'), dest="reporting_redis_port",
+            default=6379, type=int, help='Reporting Redis port'),
+        Bcfg2.Options.Option(
+            cf=('reporting', 'redis_db'), dest="reporting_redis_db",
+            default=0, type=int, help='Reporting Redis DB')]
+
+    def __init__(self):
+        super(RedisTransport, self).__init__()
         self._commands = None
 
         self.logger.error("Warning: RedisTransport is experimental")
@@ -45,36 +55,15 @@ class RedisTransport(TransportBase):
             self.logger.error("redis python module is not available")
             raise TransportError
 
-        setup.update(dict(
-            reporting_redis_host=Option(
-                'Redis Host',
-                default='127.0.0.1',
-                cf=('reporting', 'redis_host')),
-            reporting_redis_port=Option(
-                'Redis Port',
-                default=6379,
-                cf=('reporting', 'redis_port')),
-            reporting_redis_db=Option(
-                'Redis DB',
-                default=0,
-                cf=('reporting', 'redis_db')),
-        ))
-        setup.reparse()
-
-        self._redis_host = setup.get('reporting_redis_host', '127.0.0.1')
-        try:
-            self._redis_port = int(setup.get('reporting_redis_port', 6379))
-        except ValueError:
-            self.logger.error("Redis port must be an integer")
-            raise TransportError
-        self._redis_db = setup.get('reporting_redis_db', 0)
-        self._redis = redis.Redis(host=self._redis_host,
-            port=self._redis_port, db=self._redis_db)
+        self._redis = redis.Redis(
+            host=Bcfg2.Options.setup.reporting_redis_host,
+            port=Bcfg2.Options.setup.reporting_redis_port,
+            db=Bcfg2.Options.setup.reporting_redis_db)
 
 
     def start_monitor(self, collector):
         """Start the monitor. Eventaully start the command thread"""
-        self._commands = threading.Thread(target=self.monitor_thread, 
+        self._commands = threading.Thread(target=self.monitor_thread,
             args=(self._redis, collector))
         self._commands.start()
 
@@ -129,7 +118,7 @@ class RedisTransport(TransportBase):
 
         channel = "%s%s" % (platform.node(), int(time.time()))
         pubsub.subscribe(channel)
-        self._redis.rpush(RedisTransport.COMMAND_KEY, 
+        self._redis.rpush(RedisTransport.COMMAND_KEY,
             cPickle.dumps(RedisMessage(channel, method, args, kwargs)))
 
         resp = pubsub.listen()
@@ -160,7 +149,7 @@ class RedisTransport(TransportBase):
                     continue
                 message = cPickle.loads(payload[1])
                 if not isinstance(message, RedisMessage):
-                    self.logger.error("Message \"%s\" is not a RedisMessage" % 
+                    self.logger.error("Message \"%s\" is not a RedisMessage" %
                         message)
 
                 if not message.method in collector.storage.__class__.__rmi__ or\
@@ -192,5 +181,3 @@ class RedisTransport(TransportBase):
                 self.logger.error("Unhandled exception in command thread: %s" %
                     traceback.format_exc().splitlines()[-1])
         self.logger.info("Command thread shutdown")
-
-
