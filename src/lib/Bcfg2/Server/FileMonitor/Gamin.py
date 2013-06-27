@@ -33,8 +33,8 @@ class Gamin(FileMonitor):
     #: releases, so it has a fairly high priority.
     __priority__ = 90
 
-    def __init__(self, ignore=None, debug=False):
-        FileMonitor.__init__(self, ignore=ignore, debug=debug)
+    def __init__(self):
+        FileMonitor.__init__(self)
 
         #: The :class:`Gamin.WatchMonitor` object for this monitor.
         self.mon = None
