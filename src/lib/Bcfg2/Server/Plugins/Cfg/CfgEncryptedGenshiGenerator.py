@@ -37,7 +37,7 @@ class CfgEncryptedGenshiGenerator(CfgGenshiGenerator):
     #: when it's read in
     __loader_cls__ = EncryptedTemplateLoader
 
-    def __init__(self, fname, spec, encoding):
-        CfgGenshiGenerator.__init__(self, fname, spec, encoding)
+    def __init__(self, fname, spec):
+        CfgGenshiGenerator.__init__(self, fname, spec)
         if not HAS_CRYPTO:
             raise PluginExecutionError("M2Crypto is not available")

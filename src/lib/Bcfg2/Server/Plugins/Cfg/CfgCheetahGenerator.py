@@ -2,6 +2,7 @@
 <http://www.cheetahtemplate.org/>`_ templating system to generate
 :ref:`server-plugins-generators-cfg` files. """
 
+import Bcfg2.Options
 from Bcfg2.Server.Plugin import PluginExecutionError
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 
@@ -27,19 +28,19 @@ class CfgCheetahGenerator(CfgGenerator):
     #: :class:`Cheetah.Template.Template` compiler settings
     settings = dict(useStackFrames=False)
 
-    def __init__(self, fname, spec, encoding):
-        CfgGenerator.__init__(self, fname, spec, encoding)
+    def __init__(self, fname, spec):
+        CfgGenerator.__init__(self, fname, spec)
         if not HAS_CHEETAH:
             raise PluginExecutionError("Cheetah is not available")
     __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def get_data(self, entry, metadata):
-        template = Template(self.data.decode(self.encoding),
+        template = Template(self.data.decode(Bcfg2.Options.setup.encoding),
                             compilerSettings=self.settings)
         template.metadata = metadata
         template.name = entry.get('realname', entry.get('name'))
         template.path = entry.get('realname', entry.get('name'))
         template.source_path = self.name
-        template.repo = self.setup['repo']
+        template.repo = Bcfg2.Options.setup.repository
         return template.respond()
     get_data.__doc__ = CfgGenerator.get_data.__doc__

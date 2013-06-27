@@ -50,7 +50,7 @@ import os
 import re
 import sys
 import Bcfg2.Server.Plugin
-from Bcfg2.Options import get_option_parser
+from Bcfg2.Logger import Debuggable
 from Bcfg2.Compat import HTTPError, HTTPBasicAuthHandler, \
     HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, urlopen, \
     cPickle, md5
@@ -93,7 +93,7 @@ class SourceInitError(Exception):
 REPO_RE = re.compile(r'(?:pulp/repos/|/RPMS\.|/)([^/]+)/?$')
 
 
-class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
+class Source(Debuggable):  # pylint: disable=R0902
     """ ``Source`` objects represent a single <Source> tag in
     ``sources.xml``.  Note that a single Source tag can itself
     describe multiple repositories (if it uses the "url" attribute
@@ -121,7 +121,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         :type source: lxml.etree._Element
         :raises: :class:`Bcfg2.Server.Plugins.Packages.Source.SourceInitError`
         """
-        Bcfg2.Server.Plugin.Debuggable.__init__(self)
+        Debuggable.__init__(self)
 
         #: The base filesystem path under which cache data for this
         #: source should be stored
@@ -129,9 +129,6 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
 
         #: The XML tag that describes this source
         self.xsource = xsource
-
-        #: A Bcfg2 options dict
-        self.setup = get_option_parser()
 
         #: A set of package names that are deemed "essential" by this
         #: source

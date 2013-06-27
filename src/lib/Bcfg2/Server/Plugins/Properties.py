@@ -7,7 +7,7 @@ import sys
 import copy
 import logging
 import lxml.etree
-from Bcfg2.Options import get_option_parser
+import Bcfg2.Options
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugin import PluginExecutionError
 
@@ -40,18 +40,14 @@ class PropertyFile(object):
         .. automethod:: _write
         """
         self.name = name
-        self.setup = get_option_parser()
 
     def write(self):
         """ Write the data in this data structure back to the property
         file. This public method performs checking to ensure that
         writing is possible and then calls :func:`_write`. """
-        if not self.setup.cfp.getboolean("properties", "writes_enabled",
-                                         default=True):
-            msg = "Properties files write-back is disabled in the " + \
-                "configuration"
-            LOGGER.error(msg)
-            raise PluginExecutionError(msg)
+        if not Bcfg2.Options.setup.writes_enabled:
+            raise PluginExecutionError("Properties files write-back is "
+                                       "disabled in the configuration")
         try:
             self.validate_data()
         except PluginExecutionError:
@@ -199,7 +195,7 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
     validate_data.__doc__ = PropertyFile.validate_data.__doc__
 
     def get_additional_data(self, metadata):
-        if self.setup.cfp.getboolean("properties", "automatch", default=False):
+        if Bcfg2.Options.setup.automatch:
             default_automatch = "true"
         else:
             default_automatch = "false"
@@ -221,6 +217,13 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
                  Bcfg2.Server.Plugin.DirectoryBacked):
     """ The properties plugin maps property files into client metadata
     instances. """
+    options = [
+        Bcfg2.Options.BooleanOption(
+            cf=("properties", "writes_enabled"), default=True,
+            help="Enable or disable Properties write-back"),
+        Bcfg2.Options.BooleanOption(
+            cf=("properties", "automatch"),
+            help="Enable Properties automatch")]
 
     #: Extensions that are understood by Properties.
     extensions = ["xml"]

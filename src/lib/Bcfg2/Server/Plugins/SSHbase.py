@@ -7,8 +7,9 @@ import socket
 import shutil
 import logging
 import tempfile
-from itertools import chain
+import Bcfg2.Options
 import Bcfg2.Server.Plugin
+from itertools import chain
 from Bcfg2.Utils import Executor
 from Bcfg2.Server.Plugin import PluginExecutionError
 from Bcfg2.Compat import any, u_str, b64encode  # pylint: disable=W0622
@@ -20,8 +21,7 @@ class KeyData(Bcfg2.Server.Plugin.SpecificData):
     """ class to handle key data for HostKeyEntrySet """
 
     def __init__(self, name, specific, encoding):
-        Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific,
-                                                  encoding)
+        Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific)
         self.encoding = encoding
 
     def __lt__(self, other):
@@ -62,27 +62,30 @@ class HostKeyEntrySet(Bcfg2.Server.Plugin.EntrySet):
     """ EntrySet to handle all kinds of host keys """
     def __init__(self, basename, path):
         if basename.startswith("ssh_host_key"):
-            encoding = "base64"
+            self.encoding = "base64"
         else:
-            encoding = None
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, KeyData,
-                                              encoding)
+            self.encoding = None
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, KeyData)
         self.metadata = {'owner': 'root',
                          'group': 'root',
                          'type': 'file'}
-        if encoding is not None:
-            self.metadata['encoding'] = encoding
+        if self.encoding is not None:
+            self.metadata['encoding'] = self.encoding
         if basename.endswith('.pub'):
             self.metadata['mode'] = '0644'
         else:
             self.metadata['mode'] = '0600'
+
+    def get_keydata_object(self, filepath, specificity):
+        return KeyData(filepath, specificity,
+                       self.encoding or Bcfg2.Options.setup.encoding)
 
 
 class KnownHostsEntrySet(Bcfg2.Server.Plugin.EntrySet):
     """ EntrySet to handle the ssh_known_hosts file """
     def __init__(self, path):
         Bcfg2.Server.Plugin.EntrySet.__init__(self, "ssh_known_hosts", path,
-                                              KeyData, None)
+                                              KeyData)
         self.metadata = {'owner': 'root',
                          'group': 'root',
                          'type': 'file',

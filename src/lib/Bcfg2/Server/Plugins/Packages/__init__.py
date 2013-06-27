@@ -7,20 +7,30 @@ import sys
 import glob
 import shutil
 import lxml.etree
-import Bcfg2.Logger
+import Bcfg2.Options
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import ConfigParser, urlopen, HTTPError, URLError
+from Bcfg2.Compat import urlopen, HTTPError, URLError
 from Bcfg2.Server.Plugins.Packages.Collection import Collection, \
     get_collection_class
 from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
 from Bcfg2.Server.Statistics import track_statistics
 
-#: The default path for generated yum configs
-YUM_CONFIG_DEFAULT = "/etc/yum.repos.d/bcfg2.repo"
 
-#: The default path for generated apt configs
-APT_CONFIG_DEFAULT = \
-    "/etc/apt/sources.list.d/bcfg2-packages-generated-sources.list"
+def packages_boolean(value):
+    """ For historical reasons, the Packages booleans 'resolver' and
+    'metadata' both accept "enabled" in addition to the normal boolean
+    values. """
+    if value == 'disabled':
+        return False
+    elif value == 'enabled':
+        return True
+    else:
+        return value
+
+
+class PackagesBackendAction(Bcfg2.Options.ComponentAction):
+    bases = ['Bcfg2.Server.Plugins.Packages']
+    module = True
 
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
@@ -37,6 +47,37 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     resolution.
 
     .. private-include: _build_packages"""
+
+    options = [
+        Bcfg2.Options.Option(
+            cf=("packages", "backends"), dest="packages_backends",
+            help="Packages backends to load",
+            type=Bcfg2.Options.Types.comma_list,
+            action=PackagesBackendAction, default=['Yum', 'Apt', 'Pac']),
+        Bcfg2.Options.PathOption(
+            cf=("packages", "cache"), dest="packages_cache",
+            help="Path to the Packages cache",
+            default='<repository>/Packages/cache'),
+        Bcfg2.Options.Option(
+            cf=("packages", "resolver"), dest="packages_resolver",
+            help="Disable the Packages resolver",
+            type=packages_boolean, default=True),
+        Bcfg2.Options.Option(
+            cf=("packages", "metadata"), dest="packages_metadata",
+            help="Disable all Packages metadata processing",
+            type=packages_boolean, default=True),
+        Bcfg2.Options.Option(
+            cf=("packages", "version"), dest="packages_version",
+            help="Set default Package entry version", default="auto",
+            choices=["auto", "any"]),
+        Bcfg2.Options.PathOption(
+            cf=("packages", "yum_config"),
+            help="The default path for generated yum configs",
+            default="/etc/yum.repos.d/bcfg2.repo"),
+        Bcfg2.Options.PathOption(
+            cf=("packages", "apt_config"),
+            help="The default path for generated apt configs",
+            default="/etc/apt/sources.list.d/bcfg2-packages-generated-sources.list")]
 
     #: Packages is an alternative to
     #: :mod:`Bcfg2.Server.Plugins.Pkgmgr` and conflicts with it.
@@ -56,9 +97,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         #: Packages does a potentially tremendous amount of on-disk
         #: caching.  ``cachepath`` holds the base directory to where
         #: data should be cached.
-        self.cachepath = \
-            self.core.setup.cfp.get("packages", "cache",
-                                    default=os.path.join(self.data, 'cache'))
+        self.cachepath = Bcfg2.Options.setup.packages_cache
 
         #: Where Packages should store downloaded GPG key files
         self.keypath = os.path.join(self.cachepath, 'keys')
@@ -121,40 +160,17 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :attr:`disableMetaData`) implies disabling the resolver.
 
         This property cannot be set. """
-        if self.disableMetaData:
-            # disabling metadata without disabling the resolver Breaks
-            # Things
-            return True
-        try:
-            return not self.core.setup.cfp.getboolean("packages", "resolver")
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            return False
-        except ValueError:
-            # for historical reasons we also accept "enabled" and
-            # "disabled", which are not handled according to the
-            # Python docs but appear to be handled properly by
-            # ConfigParser in at least some versions
-            return self.core.setup.cfp.get(
-                "packages",
-                "resolver",
-                default="enabled").lower() == "disabled"
+        # disabling metadata without disabling the resolver Breaks
+        # Things
+        return not Bcfg2.Options.setup.packages_metadata or \
+            not Bcfg2.Options.setup.packages_resolver
 
     @property
     def disableMetaData(self):
         """ Report whether or not metadata processing is enabled.
 
         This property cannot be set. """
-        try:
-            return not self.core.setup.cfp.getboolean("packages", "resolver")
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            return False
-        except ValueError:
-            # for historical reasons we also accept "enabled" and
-            # "disabled"
-            return self.core.setup.cfp.get(
-                "packages",
-                "metadata",
-                default="enabled").lower() == "disabled"
+        return not Bcfg2.Options.setup.packages_metadata
 
     def create_config(self, entry, metadata):
         """ Create yum/apt config for the specified client.
@@ -203,9 +219,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         """
         if entry.tag == 'Package':
             collection = self.get_collection(metadata)
-            entry.set('version', self.core.setup.cfp.get("packages",
-                                                         "version",
-                                                         default="auto"))
+            entry.set('version', Bcfg2.Options.setup.packages_version)
             entry.set('type', collection.ptype)
         elif entry.tag == 'Path':
             self.create_config(entry, metadata)
@@ -234,14 +248,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             return True
         elif entry.tag == 'Path':
             # managed entries for yum/apt configs
-            if (entry.get("name") ==
-                self.core.setup.cfp.get("packages",
-                                        "yum_config",
-                                        default=YUM_CONFIG_DEFAULT) or
-                entry.get("name") ==
-                self.core.setup.cfp.get("packages",
-                                        "apt_config",
-                                        default=APT_CONFIG_DEFAULT)):
+            if entry.get("name") in [Bcfg2.Options.setup.apt_config,
+                                     Bcfg2.Options.setup.yum_config]:
                 return True
         return False
 
@@ -274,7 +282,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :returns: None
         """
         collection = self.get_collection(metadata)
-        indep = lxml.etree.Element('Independent')
+        indep = lxml.etree.Element('Independent', name=self.__class__.__name__)
         self._build_packages(metadata, indep, structures,
                              collection=collection)
         collection.build_extra_structures(indep)

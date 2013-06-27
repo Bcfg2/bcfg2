@@ -4,14 +4,12 @@
 import os
 import sys
 import Bcfg2.Server.Plugin
-from Bcfg2.Options import get_option_parser
 from Bcfg2.Server.Statistics import track_statistics
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError
 
 
 # pylint: disable=E0012,R0924
-class PackagesSources(Bcfg2.Server.Plugin.StructFile,
-                      Bcfg2.Server.Plugin.Debuggable):
+class PackagesSources(Bcfg2.Server.Plugin.StructFile):
     """ PackagesSources handles parsing of the
     :mod:`Bcfg2.Server.Plugins.Packages` ``sources.xml`` file, and the
     creation of the appropriate
@@ -37,7 +35,6 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
         :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginInitError` -
                  If ``sources.xml`` cannot be read
         """
-        Bcfg2.Server.Plugin.Debuggable.__init__(self)
         Bcfg2.Server.Plugin.StructFile.__init__(self, filename,
                                                 should_monitor=True)
 
@@ -54,8 +51,6 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
                 err = sys.exc_info()[1]
                 self.logger.error("Could not create Packages cache at %s: %s" %
                                   (self.cachepath, err))
-        #: The Bcfg2 options dict
-        self.setup = get_option_parser()
 
         #: The :class:`Bcfg2.Server.Plugins.Packages.Packages` that
         #: instantiated this ``PackagesSources`` object
@@ -69,10 +64,9 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
         self.parsed = set()
 
     def set_debug(self, debug):
-        Bcfg2.Server.Plugin.Debuggable.set_debug(self, debug)
+        Bcfg2.Server.Plugin.StructFile.set_debug(self, debug)
         for source in self.entries:
             source.set_debug(debug)
-    set_debug.__doc__ = Bcfg2.Server.Plugin.Plugin.set_debug.__doc__
 
     def HandleEvent(self, event=None):
         """ HandleEvent is called whenever the FAM registers an event.
@@ -138,15 +132,13 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
                                                         xsource.get("url"))))
             return None
 
-        try:
-            module = getattr(__import__("Bcfg2.Server.Plugins.Packages.%s" %
-                                        stype.title()).Server.Plugins.Packages,
-                             stype.title())
-            cls = getattr(module, "%sSource" % stype.title())
-        except (ImportError, AttributeError):
-            err = sys.exc_info()[1]
-            self.logger.error("Packages: Unknown source type %s (%s)" % (stype,
-                                                                         err))
+        cls = None
+        for mod in Bcfg2.Options.setup.packages_backends:
+            if mod.__name__.endswith(".%s" % stype.title()):
+                cls = getattr(mod, "%sSource" % stype.title())
+                break
+        else:
+            self.logger.error("Packages: Unknown source type %s" % stype)
             return None
 
         try:

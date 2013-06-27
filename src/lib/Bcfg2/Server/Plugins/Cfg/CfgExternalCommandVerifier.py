@@ -15,8 +15,8 @@ class CfgExternalCommandVerifier(CfgVerifier):
     #: Handle :file:`:test` files
     __basenames__ = [':test']
 
-    def __init__(self, name, specific, encoding):
-        CfgVerifier.__init__(self, name, specific, encoding)
+    def __init__(self, name, specific):
+        CfgVerifier.__init__(self, name, specific)
         self.cmd = []
         self.exc = Executor(timeout=30)
     __init__.__doc__ = CfgVerifier.__init__.__doc__

@@ -14,6 +14,7 @@ documentation it's not necessary to use the submodules.  E.g., you can
 
 import os
 import sys
+import Bcfg2.Options
 sys.path.append(os.path.dirname(__file__))
 
 # pylint: disable=W0401
@@ -21,3 +22,31 @@ from Bcfg2.Server.Plugin.base import *
 from Bcfg2.Server.Plugin.interfaces import *
 from Bcfg2.Server.Plugin.helpers import *
 from Bcfg2.Server.Plugin.exceptions import *
+
+
+class _OptionContainer(object):
+    options = [
+        Bcfg2.Options.Common.default_paranoid,
+        Bcfg2.Options.Option(
+           cf=('mdata', 'owner'), dest="default_owner", default='root',
+           help='Default Path owner'),
+        Bcfg2.Options.Option(
+           cf=('mdata', 'group'), dest="default_group", default='root',
+           help='Default Path group'),
+        Bcfg2.Options.Option(
+            cf=('mdata', 'important'), dest="default_important",
+            default='false', choices=['true', 'false'],
+            help='Default Path priority (importance)'),
+        Bcfg2.Options.Option(
+            cf=('mdata', 'mode'), dest="default_mode", default='644',
+            help='Default mode for Path'),
+        Bcfg2.Options.Option(
+            cf=('mdata', 'secontext'), dest="default_secontext",
+            default='__default__', help='Default SELinux context'),
+        Bcfg2.Options.Option(
+            cf=('mdata', 'sensitive'), dest="default_sensitive",
+            default='false',
+            help='Default Path sensitivity setting')]
+
+
+Bcfg2.Options.get_parser().add_component(_OptionContainer)

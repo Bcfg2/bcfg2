@@ -21,8 +21,8 @@ class CfgEncryptedGenerator(CfgGenerator):
     #: .genshi.crypt and .cheetah.crypt files
     __priority__ = 50
 
-    def __init__(self, fname, spec, encoding):
-        CfgGenerator.__init__(self, fname, spec, encoding)
+    def __init__(self, fname, spec):
+        CfgGenerator.__init__(self, fname, spec)
         if not HAS_CRYPTO:
             raise PluginExecutionError("M2Crypto is not available")
     __init__.__doc__ = CfgGenerator.__init__.__doc__

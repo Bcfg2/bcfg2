@@ -3,6 +3,7 @@ based on an XML specification of which SSH keypairs should granted
 access. """
 
 import lxml.etree
+import Bcfg2.Options
 from Bcfg2.Server.Plugin import StructFile, PluginExecutionError
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator, CFG
 from Bcfg2.Server.Plugins.Metadata import ClientMetadata
@@ -26,15 +27,6 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
         self.cache = dict()
         self.core = CFG.core
     __init__.__doc__ = CfgGenerator.__init__.__doc__
-
-    @property
-    def category(self):
-        """ The name of the metadata category that generated keys are
-        specific to """
-        if (self.setup.cfp.has_section("sshkeys") and
-            self.setup.cfp.has_option("sshkeys", "category")):
-            return self.setup.cfp.get("sshkeys", "category")
-        return None
 
     def handle_event(self, event):
         CfgGenerator.handle_event(self, event)
@@ -61,12 +53,13 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
                     key_md = ClientMetadata("dummy", group, [group], [],
                                             set(), set(), dict(), None,
                                             None, None, None)
-                elif (self.category and
-                      not metadata.group_in_category(self.category)):
+                elif (Bcfg2.Options.setup.sshkeys_category and
+                      not metadata.group_in_category(
+                        Bcfg2.Options.setup.sshkeys_category)):
                     self.logger.warning("Cfg: %s ignoring Allow from %s: "
                                         "No group in category %s" %
                                         (metadata.hostname, pubkey_name,
-                                         self.category))
+                                         Bcfg2.Options.setup.sshkeys_category))
                     continue
                 else:
                     key_md = metadata

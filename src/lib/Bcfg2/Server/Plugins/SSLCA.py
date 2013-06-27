@@ -3,16 +3,12 @@ certificates and their keys. """
 
 import os
 import sys
-import logging
 import tempfile
 import lxml.etree
-import Bcfg2.Options
 import Bcfg2.Server.Plugin
 from Bcfg2.Utils import Executor
 from Bcfg2.Compat import ConfigParser
 from Bcfg2.Server.Plugin import PluginExecutionError
-
-LOGGER = logging.getLogger(__name__)
 
 
 class SSLCAXMLSpec(Bcfg2.Server.Plugin.StructFile):
@@ -31,10 +27,9 @@ class SSLCAXMLSpec(Bcfg2.Server.Plugin.StructFile):
                                                   metadata.hostname,
                                                   self.name))
         elif len(entries) > 1:
-            LOGGER.warning("More than one matching %s entry found for %s in "
-                           "%s; using first match" % (self.tag,
-                                                      metadata.hostname,
-                                                      self.name))
+            self.logger.warning(
+                "More than one matching %s entry found for %s in %s; "
+                "using first match" % (self.tag, metadata.hostname, self.name))
         rv = dict()
         for attr, default in self.attrs.items():
             val = entries[0].get(attr.lower(), default)
@@ -84,9 +79,9 @@ class SSLCADataFile(Bcfg2.Server.Plugin.SpecificData):
 
 class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
     """ Entry set to handle SSLCA entries and XML files """
-    def __init__(self, _, path, entry_type, encoding, parent=None):
+    def __init__(self, _, path, entry_type, parent=None):
         Bcfg2.Server.Plugin.EntrySet.__init__(self, os.path.basename(path),
-                                              path, entry_type, encoding)
+                                              path, entry_type)
         self.parent = parent
         self.key = None
         self.cert = None
@@ -361,10 +356,32 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
     """ The SSLCA generator handles the creation and management of ssl
     certificates and their keys. """
     __author__ = 'g.hagger@gmail.com'
+
+    options = Bcfg2.Server.Plugin.GroupSpool.options + [
+        Bcfg2.Options.WildcardSectionGroup(
+            Bcfg2.Options.PathOption(
+                cf=("sslca_*", "config"),
+                help="Path to the openssl config for the CA"),
+            Bcfg2.Options.Option(
+                cf=("sslca_*", "passphrase"),
+                help="Passphrase for the CA private key"),
+            Bcfg2.Options.PathOption(
+                cf=("sslca_*", "chaincert"),
+                help="Path to the SSL chaining certificate for verification"),
+            Bcfg2.Options.BooleanOption(
+                cf=("sslca_*", "root_ca"),
+                help="Whether or not <chaincert> is a root CA (as opposed to "
+                "an intermediate cert"))]
+
     # python 2.5 doesn't support mixing *magic and keyword arguments
     es_cls = lambda self, *args: SSLCAEntrySet(*args, **dict(parent=self))
     es_child_cls = SSLCADataFile
 
     def get_ca(self, name):
         """ get a dict describing a CA from the config file """
-        return dict(self.core.setup.cfp.items("sslca_%s" % name))
+        rv = dict()
+        prefix = "sslca_%s_" % name
+        for attr in dir(Bcfg2.Options.setup):
+            if attr.startswith(prefix):
+                rv[attr[len(prefix):]] = getattr(Bcfg2.Options.setup, attr)
+        return rv

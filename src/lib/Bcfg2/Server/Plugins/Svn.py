@@ -4,8 +4,8 @@ additional XML-RPC methods for committing data to the repository and
 updating the repository. """
 
 import sys
+import Bcfg2.Options
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import ConfigParser
 try:
     import pysvn
     HAS_SVN = True
@@ -16,6 +16,21 @@ except ImportError:
 
 class Svn(Bcfg2.Server.Plugin.Version):
     """Svn is a version plugin for dealing with Bcfg2 repos."""
+    options = Bcfg2.Server.Plugin.Version.options + [
+        Bcfg2.Options.Option(
+            cf=("svn", "conflict_resolution"), dest="svn_conflict_resolution",
+            type=lambda v: v.replace("-", "_"),
+            choices=dir(pysvn.wc_conflict_choice),
+            default=pysvn.wc_conflict_choice.postpone,
+            help="SVN conflict resolution method"),
+        Bcfg2.Options.Option(
+            cf=("svn", "user"), dest="svn_user", help="SVN username"),
+        Bcfg2.Options.Option(
+            cf=("svn", "password"), dest="svn_password", help="SVN password"),
+        Bcfg2.Options.BooleanOption(
+            cf=("svn", "always_trust"), dest="svn_trust_ssl",
+            help="Always trust SSL certs from SVN server")]
+
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __vcs_metadata_path__ = ".svn"
     if HAS_SVN:
@@ -36,62 +51,29 @@ class Svn(Bcfg2.Server.Plugin.Version):
             self.cmd = Executor()
         else:
             self.client = pysvn.Client()
-            # pylint: disable=E1101
-            choice = pysvn.wc_conflict_choice.postpone
-            try:
-                resolution = self.core.setup.cfp.get(
-                    "svn",
-                    "conflict_resolution").replace('-', '_')
-                if resolution in ["edit", "launch", "working"]:
-                    self.logger.warning("Svn: Conflict resolver %s requires "
-                                        "manual intervention, using %s" %
-                                        choice)
-                else:
-                    choice = getattr(pysvn.wc_conflict_choice, resolution)
-            except AttributeError:
-                self.logger.warning("Svn: Conflict resolver %s does not "
-                                    "exist, using %s" % choice)
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-                self.logger.info("Svn: No conflict resolution method "
-                                 "selected, using %s" % choice)
-            # pylint: enable=E1101
             self.debug_log("Svn: Conflicts will be resolved with %s" %
-                           choice)
-            self.client.callback_conflict_resolver = \
-                self.get_conflict_resolver(choice)
+                           Bcfg2.Options.setup.svn_conflict_resolution)
+            self.client.callback_conflict_resolver = self.conflict_resolver
 
-            try:
-                if self.core.setup.cfp.get(
-                        "svn",
-                        "always_trust").lower() == "true":
-                    self.client.callback_ssl_server_trust_prompt = \
-                        self.ssl_server_trust_prompt
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-                self.logger.debug("Svn: Using subversion cache for SSL "
-                                  "certificate trust")
+            if Bcfg2.Options.setup.svn_trust_ssl:
+                self.client.callback_ssl_server_trust_prompt = \
+                    self.ssl_server_trust_prompt
 
-            try:
-                if (self.core.setup.cfp.get("svn", "user") and
-                    self.core.setup.cfp.get("svn", "password")):
-                    self.client.callback_get_login = \
-                        self.get_login
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-                self.logger.info("Svn: Using subversion cache for "
-                                 "password-based authetication")
+            if (Bcfg2.Options.setup.svn_user and
+                Bcfg2.Options.setup.svn_password):
+                self.client.callback_get_login = self.get_login
 
         self.logger.debug("Svn: Initialized svn plugin with SVN directory %s" %
                           self.vcs_path)
 
-    # pylint: disable=W0613
-    def get_login(self, realm, username, may_save):
+    def get_login(self, realm, username, may_save):  # pylint: disable=W0613
         """ PySvn callback to get credentials for HTTP basic authentication """
         self.logger.debug("Svn: Logging in with username: %s" %
-                          self.core.setup.cfp.get("svn", "user"))
-        return True, \
-            self.core.setup.cfp.get("svn", "user"), \
-            self.core.setup.cfp.get("svn", "password"), \
-            False
-    # pylint: enable=W0613
+                          Bcfg2.Options.setup.svn_user)
+        return (True,
+                Bcfg2.Options.setup.svn_user,
+                Bcfg2.Options.setup.svn_password,
+                False)
 
     def ssl_server_trust_prompt(self, trust_dict):
         """ PySvn callback to always trust SSL certificates from SVN server """
@@ -102,22 +84,19 @@ class Svn(Bcfg2.Server.Plugin.Version):
                            trust_dict['realm']))
         return True, trust_dict['failures'], False
 
-    def get_conflict_resolver(self, choice):
-        """ Get a PySvn conflict resolution callback """
-        def callback(conflict_description):
-            """ PySvn callback function to resolve conflicts """
-            self.logger.info("Svn: Resolving conflict for %s with %s" %
-                             (conflict_description['path'], choice))
-            return choice, None, False
-
-        return callback
+    def conflict_resolver(self, conflict_description):
+        """ PySvn callback function to resolve conflicts """
+        self.logger.info("Svn: Resolving conflict for %s with %s" %
+                         (conflict_description['path'],
+                          Bcfg2.Options.setup.svn_conflict_resolution))
+        return Bcfg2.Options.setup.svn_conflict_resolution, None, False
 
     def get_revision(self):
         """Read svn revision information for the Bcfg2 repository."""
         msg = None
         if HAS_SVN:
             try:
-                info = self.client.info(self.vcs_root)
+                info = self.client.info(Bcfg2.Options.setup.vcs_root)
                 self.revision = info.revision
                 self.svn_root = info.url
                 return str(self.revision.number)
@@ -125,7 +104,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
                 msg = "Svn: Failed to get revision: %s" % sys.exc_info()[1]
         else:
             result = self.cmd.run(["env LC_ALL=C", "svn", "info",
-                                   self.vcs_root],
+                                   Bcfg2.Options.setup.vcs_root],
                                   shell=True)
             if result.success:
                 self.revision = [line.split(': ')[1]
@@ -141,7 +120,8 @@ class Svn(Bcfg2.Server.Plugin.Version):
         '''Svn.Update() => True|False\nUpdate svn working copy\n'''
         try:
             old_revision = self.revision.number
-            self.revision = self.client.update(self.vcs_root, recurse=True)[0]
+            self.revision = self.client.update(Bcfg2.Options.setup.vcs_root,
+                                               recurse=True)[0]
         except pysvn.ClientError:  # pylint: disable=E1101
             err = sys.exc_info()[1]
             # try to be smart about the error we got back
@@ -163,7 +143,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
             self.logger.debug("repository is current")
         else:
             self.logger.info("Updated %s from revision %s to %s" %
-                             (self.vcs_root, old_revision,
+                             (Bcfg2.Options.setup.vcs_root, old_revision,
                               self.revision.number))
         return True
 
@@ -176,10 +156,11 @@ class Svn(Bcfg2.Server.Plugin.Version):
             return False
 
         try:
-            self.revision = self.client.checkin([self.vcs_root],
+            self.revision = self.client.checkin([Bcfg2.Options.setup.vcs_root],
                                                 'Svn: autocommit',
                                                 recurse=True)
-            self.revision = self.client.update(self.vcs_root, recurse=True)[0]
+            self.revision = self.client.update(Bcfg2.Options.setup.vcs_root,
+                                               recurse=True)[0]
             self.logger.info("Svn: Commited changes. At %s" %
                              self.revision.number)
             return True

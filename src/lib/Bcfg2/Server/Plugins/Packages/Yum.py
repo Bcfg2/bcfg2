@@ -58,10 +58,10 @@ import errno
 import socket
 import logging
 import lxml.etree
-import Bcfg2.Server.FileMonitor
+import Bcfg2.Options
 import Bcfg2.Server.Plugin
+import Bcfg2.Server.FileMonitor
 from Bcfg2.Utils import Executor
-from Bcfg2.Options import get_option_parser
 # pylint: disable=W0622
 from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
     ConfigParser, any
@@ -106,6 +106,30 @@ PULPSERVER = None
 PULPCONFIG = None
 
 
+options = [
+    Bcfg2.Options.PathOption(
+        cf=("packages:yum", "helper"), dest="yum_helper",
+        help="Path to the bcfg2-yum-helper executable"),
+    Bcfg2.Options.BooleanOption(
+        cf=("packages:yum", "use_yum_libraries"),
+        help="Use Python yum libraries"),
+    Bcfg2.Options.PathOption(
+        cf=("packages:yum", "gpg_keypath"), default="/etc/pki/rpm-gpg",
+        help="GPG key path on the client"),
+    Bcfg2.Options.Option(
+        cf=("packages:yum", "*"), dest="yum_options",
+        help="Other yum options to include in generated yum configs")]
+if HAS_PULP:
+    options.append(
+        Bcfg2.Options.Option(
+            cf=("packages:pulp", "username"), dest="pulp_username",
+            help="Username for Pulp authentication"))
+    options.append(
+        Bcfg2.Options.Option(
+            cf=("packages:pulp", "password"), dest="pulp_password",
+            help="Password for Pulp authentication"))
+
+
 def _setup_pulp():
     """ Connect to a Pulp server and pass authentication credentials.
     This only needs to be called once, but multiple calls won't hurt
@@ -121,20 +145,6 @@ def _setup_pulp():
         raise Bcfg2.Server.Plugin.PluginInitError(msg)
 
     if PULPSERVER is None:
-        setup = get_option_parser()
-        try:
-            username = setup.cfp.get("packages:pulp", "username")
-            password = setup.cfp.get("packages:pulp", "password")
-        except ConfigParser.NoSectionError:
-            msg = "Packages: No [pulp] section found in bcfg2.conf"
-            LOGGER.error(msg)
-            raise Bcfg2.Server.Plugin.PluginInitError(msg)
-        except ConfigParser.NoOptionError:
-            msg = "Packages: Required option not found in bcfg2.conf: %s" % \
-                sys.exc_info()[1]
-            LOGGER.error(msg)
-            raise Bcfg2.Server.Plugin.PluginInitError(msg)
-
         PULPCONFIG = ConsumerConfig()
         serveropts = PULPCONFIG.server
 
@@ -142,7 +152,9 @@ def _setup_pulp():
                                        int(serveropts['port']),
                                        serveropts['scheme'],
                                        serveropts['path'])
-        PULPSERVER.set_basic_auth_credentials(username, password)
+        PULPSERVER.set_basic_auth_credentials(
+            Bcfg2.Options.setup.pulp_username,
+            Bcfg2.Options.setup.pulp_password)
         server.set_active_server(PULPSERVER)
     return PULPSERVER
 
@@ -325,9 +337,8 @@ class YumCollection(Collection):
         forking, but apparently not); finally we check in /usr/sbin,
         the default location. """
         if not self._helper:
-            try:
-                self._helper = self.setup.cfp.get("packages:yum", "helper")
-            except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+            self._helper = Bcfg2.Options.setup.yum_helper
+            if not self._helper:
                 # first see if bcfg2-yum-helper is in PATH
                 try:
                     self.debug_log("Checking for bcfg2-yum-helper in $PATH")
@@ -341,9 +352,7 @@ class YumCollection(Collection):
     def use_yum(self):
         """ True if we should use the yum Python libraries, False
         otherwise """
-        return HAS_YUM and self.setup.cfp.getboolean("packages:yum",
-                                                     "use_yum_libraries",
-                                                     default=False)
+        return HAS_YUM and Bcfg2.Options.setup.use_yum_libraries
 
     @property
     def has_pulp_sources(self):
@@ -378,15 +387,15 @@ class YumCollection(Collection):
                             debuglevel="0",
                             sslverify="0",
                             reposdir="/dev/null")
-            if self.setup['debug']:
+            if Bcfg2.Options.setup.debug:
                 mainopts['debuglevel'] = "5"
-            elif self.setup['verbose']:
+            elif Bcfg2.Options.setup.verbose:
                 mainopts['debuglevel'] = "2"
 
             try:
-                for opt in self.setup.cfp.options("packages:yum"):
+                for opt, val in Bcfg2.Options.setup.yum_options.items():
                     if opt not in self.option_blacklist:
-                        mainopts[opt] = self.setup.cfp.get("packages:yum", opt)
+                        mainopts[opt] = val
             except ConfigParser.NoSectionError:
                 pass
 
@@ -508,8 +517,7 @@ class YumCollection(Collection):
 
             for key in needkeys:
                 # figure out the path of the key on the client
-                keydir = self.setup.cfp.get("global", "gpg_keypath",
-                                            default="/etc/pki/rpm-gpg")
+                keydir = Bcfg2.Options.setup.gpg_keypath
                 remotekey = os.path.join(keydir, os.path.basename(key))
                 localkey = os.path.join(self.keypath, os.path.basename(key))
                 kdata = open(localkey).read()
@@ -728,8 +736,7 @@ class YumCollection(Collection):
         """ Given a package tuple, return a dict of attributes
         suitable for applying to either a Package or an Instance
         tag """
-        attrs = dict(version=self.setup.cfp.get("packages", "version",
-                                                default="auto"))
+        attrs = dict(version=Bcfg2.Options.setup.packages_version)
         if attrs['version'] == 'any' or not isinstance(pkgtup, tuple):
             return attrs
 
@@ -877,14 +884,10 @@ class YumCollection(Collection):
                   ``bcfg2-yum-helper`` command.
         """
         cmd = [self.helper, "-c", self.cfgfile]
-        if self.setup['verbose']:
+        if Bcfg2.Options.setup.verbose:
             cmd.append("-v")
         if self.debug_flag:
-            if not self.setup['verbose']:
-                # ensure that running in debug gets -vv, even if
-                # verbose is not enabled
-                cmd.append("-v")
-            cmd.append("-v")
+            cmd.append("-d")
         cmd.append(command)
         self.debug_log("Packages: running %s" % " ".join(cmd))
         if inputdata:
@@ -1007,9 +1010,7 @@ class YumSource(Source):
     def use_yum(self):
         """ True if we should use the yum Python libraries, False
         otherwise """
-        return HAS_YUM and self.setup.cfp.getboolean("packages:yum",
-                                                     "use_yum_libraries",
-                                                     default=False)
+        return HAS_YUM and Bcfg2.Options.setup.use_yum_libraries
 
     def save_state(self):
         """ If using the builtin yum parser, save state to

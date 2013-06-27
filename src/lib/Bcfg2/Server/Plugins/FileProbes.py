@@ -8,7 +8,6 @@ import os
 import sys
 import errno
 import lxml.etree
-import Bcfg2.Options
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
@@ -220,12 +219,12 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             return
 
         self.logger.info("Writing %s for %s" % (infoxml, data.get("name")))
+        default_mdata = Bcfg2.Server.Plugin.default_path_metadata()
         info = lxml.etree.Element(
             "Info",
-            owner=data.get("owner", Bcfg2.Options.MDATA_OWNER.value),
-            group=data.get("group", Bcfg2.Options.MDATA_GROUP.value),
-            mode=data.get("mode", Bcfg2.Options.MDATA_MODE.value),
-            encoding=entry.get("encoding", Bcfg2.Options.ENCODING.value))
+            owner=data.get("owner", default_mdata['owner']),
+            group=data.get("group", default_mdata['group']),
+            mode=data.get("mode", default_mdata['mode']))
 
         root = lxml.etree.Element("FileInfo")
         root.append(info)

@@ -5,11 +5,10 @@ import time
 import platform
 import traceback
 import lxml.etree
-from Bcfg2.Reporting.Transport import load_transport_from_config, \
-    TransportError
-from Bcfg2.Options import REPORTING_COMMON_OPTIONS
+import Bcfg2.Options
+from Bcfg2.Reporting.Transport.base import TransportError
 from Bcfg2.Server.Plugin import Statistics, PullSource, Threaded, \
-    Debuggable, PluginInitError, PluginExecutionError
+    PluginInitError, PluginExecutionError
 
 # required for reporting
 try:
@@ -33,9 +32,11 @@ def _rpc_call(method):
 
 
 # pylint: disable=W0223
-class Reporting(Statistics, Threaded, PullSource, Debuggable):
+class Reporting(Statistics, Threaded, PullSource):
     """ Unified statistics and reporting plugin """
-    __rmi__ = Debuggable.__rmi__ + ['Ping', 'GetExtra', 'GetCurrentEntry']
+    __rmi__ = Statistics.__rmi__ + ['Ping', 'GetExtra', 'GetCurrentEntry']
+
+    options = [Bcfg2.Options.Common.reporting_transport]
 
     CLIENT_METADATA_FIELDS = ('profile', 'bundles', 'aliases', 'addresses',
                               'groups', 'categories', 'uuid', 'version')
@@ -44,13 +45,9 @@ class Reporting(Statistics, Threaded, PullSource, Debuggable):
         Statistics.__init__(self, core, datastore)
         PullSource.__init__(self)
         Threaded.__init__(self)
-        Debuggable.__init__(self)
 
         self.whoami = platform.node()
         self.transport = None
-
-        core.setup.update(REPORTING_COMMON_OPTIONS)
-        core.setup.reparse()
 
         if not HAS_SOUTH:
             msg = "Django south is required for Reporting"
@@ -59,17 +56,15 @@ class Reporting(Statistics, Threaded, PullSource, Debuggable):
 
     def start_threads(self):
         try:
-            self.transport = load_transport_from_config(self.core.setup)
+            self.transport = Bcfg2.Options.setup.reporting_transport()
         except TransportError:
-            msg = "%s: Failed to load transport: %s" % \
-                (self.name, traceback.format_exc().splitlines()[-1])
-            self.logger.error(msg)
-            raise PluginInitError(msg)
+            raise PluginInitError("%s: Failed to instantiate transport: %s" %
+                                  (self.name, sys.exc_info()[1]))
         if self.debug_flag:
             self.transport.set_debug(self.debug_flag)
 
     def set_debug(self, debug):
-        rv = Debuggable.set_debug(self, debug)
+        rv = Statistics.set_debug(self, debug)
         if self.transport is not None:
             self.transport.set_debug(debug)
         return rv

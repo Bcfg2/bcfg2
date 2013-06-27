@@ -1,12 +1,18 @@
 """This generator provides rule-based entry mappings."""
 
 import re
+import Bcfg2.Options
 import Bcfg2.Server.Plugin
 
 
 class Rules(Bcfg2.Server.Plugin.PrioDir):
     """This is a generator that handles service assignments."""
     __author__ = 'bcfg-dev@mcs.anl.gov'
+
+    options = Bcfg2.Server.Plugin.PrioDir.options + [
+        Bcfg2.Options.BooleanOption(
+            cf=("rules", "regex"), dest="rules_regex",
+            help="Allow regular expressions in Rules")]
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.PrioDir.__init__(self, core, datastore)
@@ -42,4 +48,4 @@ class Rules(Bcfg2.Server.Plugin.PrioDir):
     @property
     def _regex_enabled(self):
         """ Return True if rules regexes are enabled, False otherwise """
-        return self.core.setup.cfp.getboolean("rules", "regex", default=False)
+        return Bcfg2.Options.setup.rules_regex
