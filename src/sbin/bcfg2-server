@@ -2,63 +2,43 @@
 
 """The XML-RPC Bcfg2 server."""
 
-import os
 import sys
 import logging
-import Bcfg2.Logger
 import Bcfg2.Options
 from Bcfg2.Server.Core import CoreInitError
 
-LOGGER = logging.getLogger('bcfg2-server')
+
+class BackendAction(Bcfg2.Options.ComponentAction):
+    islist = False
+    bases = ['Bcfg2.Server']
 
 
-def main():
-    optinfo = dict()
-    optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
-    optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
-    optinfo.update(Bcfg2.Options.DAEMON_COMMON_OPTIONS)
-    setup = Bcfg2.Options.load_option_parser(optinfo)
-    setup.parse(sys.argv[1:])
-    # check whether the specified bcfg2.conf exists
-    if not os.path.exists(setup['configfile']):
-        print("Could not read %s" % setup['configfile'])
-        sys.exit(1)
+class CLI(object):
+    options = [Bcfg2.Options.Option(
+            cf=('server', 'backend'), help='Server Backend',
+            default='Builtin', type=lambda b: b.title() + "Core",
+            action=BackendAction)]
 
-    # TODO: normalize case of various core modules so we can add a new
-    # core without modifying this script
-    backends = dict(cherrypy='CherryPyCore',
-                    builtin='BuiltinCore',
-                    best='BuiltinCore',
-                    multiprocessing='MultiprocessingCore')
+    def __init__(self):
+        parser = Bcfg2.Options.get_parser("Bcfg2 server", components=[self])
+        parser.parse()
+        self.logger = logging.getLogger(parser.prog)
 
-    if setup['backend'] not in backends:
-        print("Unknown server backend %s, using 'best'" % setup['backend'])
-        setup['backend'] = 'best'
-
-    coremodule = backends[setup['backend']]
-    try:
-        corecls = getattr(__import__("Bcfg2.Server.%s" % coremodule).Server,
-                          coremodule).Core
-    except ImportError:
-        err = sys.exc_info()[1]
-        print("Unable to import %s server core: %s" % (setup['backend'], err))
-        raise
-    except AttributeError:
-        err = sys.exc_info()[1]
-        print("Unable to load %s server core: %s" % (setup['backend'], err))
-        raise
-
-    try:
-        core = corecls(setup)
-        core.run()
-    except CoreInitError:
-        msg = sys.exc_info()[1]
-        LOGGER.error(msg)
-        sys.exit(1)
-    except KeyboardInterrupt:
-        sys.exit(1)
-    sys.exit(0)
+    def run(self):
+        try:
+            core = Bcfg2.Options.setup.backend()
+            core.run()
+        except CoreInitError:
+            self.logger.error(sys.exc_info()[1])
+            return 1
+        except TypeError:
+            self.logger.error("Failed to load %s server backend: %s" %
+                              (Bcfg2.Options.setup.backend.__name__,
+                               sys.exc_info()[1]))
+            raise
+        except KeyboardInterrupt:
+            return 1
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    sys.exit(CLI().run())

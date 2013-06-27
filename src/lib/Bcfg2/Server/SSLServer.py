@@ -15,6 +15,10 @@ from Bcfg2.Compat import xmlrpclib, SimpleXMLRPCServer, SocketServer, \
     b64decode
 
 
+class XMLRPCACLCheckException(Exception):
+    """ Raised when ACL checks fail on an RPC request """
+
+
 class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     """ An XML-RPC dispatcher. """
 
@@ -33,6 +37,8 @@ class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
 
     def _marshaled_dispatch(self, address, data):
         params, method = xmlrpclib.loads(data)
+        if not self.instance.check_acls(address, method):
+            raise XMLRPCACLCheckException
         try:
             if '.' not in method:
                 params = (address, ) + params
@@ -42,12 +48,12 @@ class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
                 response = (response.decode('utf-8'), )
             else:
                 response = (response, )
-            raw_response = xmlrpclib.dumps(response, methodresponse=1,
+            raw_response = xmlrpclib.dumps(response, methodresponse=True,
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
         except xmlrpclib.Fault:
             fault = sys.exc_info()[1]
-            raw_response = xmlrpclib.dumps(fault,
+            raw_response = xmlrpclib.dumps(fault, methodresponse=True,
                                            allow_none=self.allow_none,
                                            encoding=self.encoding)
         except:
@@ -56,7 +62,8 @@ class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
             # report exception back to server
             raw_response = xmlrpclib.dumps(
                 xmlrpclib.Fault(1, "%s:%s" % (err[0].__name__, err[1])),
-                allow_none=self.allow_none, encoding=self.encoding)
+                methodresponse=True, allow_none=self.allow_none,
+                encoding=self.encoding)
         return raw_response
 
 
@@ -209,9 +216,8 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             password = ""
         cert = self.request.getpeercert()
         client_address = self.request.getpeername()
-        return (self.server.instance.authenticate(cert, username,
-                                                 password, client_address) and
-				self.server.instance.check_acls(client_address[0]))
+        return self.server.instance.authenticate(cert, username,
+                                                 password, client_address)
 
     def parse_request(self):
         """Extends parse_request.
@@ -241,7 +247,7 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 try:
                     select.select([self.rfile.fileno()], [], [], 3)
                 except select.error:
-                    print("got select timeout")
+                    self.logger.error("Got select timeout")
                     raise
                 chunk_size = min(size_remaining, max_chunk_size)
                 L.append(self.rfile.read(chunk_size).decode('utf-8'))
@@ -251,7 +257,12 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                                                        data)
             if sys.hexversion >= 0x03000000:
                 response = response.encode('utf-8')
+        except XMLRPCACLCheckException:
+            self.send_error(401, self.responses[401][0])
+            self.end_headers()
         except:  # pylint: disable=W0702
+            self.logger.error("Unexpected dispatch error for %s: %s" %
+                              (self.client_address, sys.exc_info()[1]))
             try:
                 self.send_response(500)
                 self.end_headers()
@@ -262,12 +273,7 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 raise
         else:
             # got a valid XML RPC response
-            # first, check ACLs
             client_address = self.request.getpeername()
-            method = xmlrpclib.loads(data)[1]
-            if not self.server.instance.check_acls(client_address, method):
-                self.send_error(401, self.responses[401][0])
-                self.end_headers()
             try:
                 self.send_response(200)
                 self.send_header("Content-type", "text/xml")
