@@ -4,11 +4,11 @@ import os
 import sys
 import stat
 import logging
+import Bcfg2.Options
 import Bcfg2.Client
 import Bcfg2.Client.XML
 from Bcfg2.Utils import Executor, ClassName
 from Bcfg2.Compat import walk_packages  # pylint: disable=W0622
-import Bcfg2.Options
 
 __all__ = [m[1] for m in walk_packages(path=__path__)]
 
@@ -27,6 +27,12 @@ class Tool(object):
     .. autoattribute:: Bcfg2.Client.Tools.Tool.__req__
     .. autoattribute:: Bcfg2.Client.Tools.Tool.__important__
     """
+
+    options = [
+        Bcfg2.Options.Option(
+            cf=('client', 'command_timeout'),
+            help="Timeout when running external commands other than probes",
+            type=Bcfg2.Options.Types.timeout)]
 
     #: The name of the tool.  By default this uses
     #: :class:`Bcfg2.Client.Tools.ClassName` to ensure that it is the
@@ -77,10 +83,6 @@ class Tool(object):
         :type config: lxml.etree._Element
         :raises: :exc:`Bcfg2.Client.Tools.ToolInstantiationError`
         """
-        #: A :class:`Bcfg2.Options.OptionParser` object describing the
-        #: option set Bcfg2 was invoked with
-        self.setup = Bcfg2.Options.get_option_parser()
-
         #: A :class:`logging.Logger` object that will be used by this
         #: tool for logging
         self.logger = logging.getLogger(self.name)
@@ -90,7 +92,7 @@ class Tool(object):
 
         #: An :class:`Bcfg2.Utils.Executor` object for
         #: running external commands.
-        self.cmd = Executor(timeout=self.setup['command_timeout'])
+        self.cmd = Executor(timeout=Bcfg2.Options.setup.command_timeout)
 
         #: A list of entries that have been modified by this tool
         self.modified = []
@@ -136,7 +138,7 @@ class Tool(object):
         :param bundle: The bundle that has been updated
         :type bundle: lxml.etree._Element
         :returns: dict - A dict of the state of entries suitable for
-                  updating :attr:`Bcfg2.Client.Frame.Frame.states`
+                  updating :attr:`Bcfg2.Client.Client.states`
         """
         return dict()
 
@@ -146,7 +148,7 @@ class Tool(object):
         :param bundle: The bundle that has been updated
         :type bundle: lxml.etree._Element
         :returns: dict - A dict of the state of entries suitable for
-                  updating :attr:`Bcfg2.Client.Frame.Frame.states`
+                  updating :attr:`Bcfg2.Client.Client.states`
         """
         return dict()
 
@@ -172,7 +174,7 @@ class Tool(object):
                            be used.
         :type structures: list of lxml.etree._Element
         :returns: dict - A dict of the state of entries suitable for
-                  updating :attr:`Bcfg2.Client.Frame.Frame.states`
+                  updating :attr:`Bcfg2.Client.Client.states`
         """
         if not structures:
             structures = self.config.getchildren()
@@ -210,7 +212,7 @@ class Tool(object):
         :param entries: The entries to install
         :type entries: list of lxml.etree._Element
         :returns: dict - A dict of the state of entries suitable for
-                  updating :attr:`Bcfg2.Client.Frame.Frame.states`
+                  updating :attr:`Bcfg2.Client.Client.states`
         """
         states = dict()
         for entry in entries:
@@ -435,7 +437,7 @@ class PkgTool(Tool):
         :param entries: The entries to install
         :type entries: list of lxml.etree._Element
         :returns: dict - A dict of the state of entries suitable for
-                  updating :attr:`Bcfg2.Client.Frame.Frame.states`
+                  updating :attr:`Bcfg2.Client.Client.states`
         """
         self.logger.info("Trying single pass package install for pkgtype %s" %
                          self.pkgtype)
@@ -492,6 +494,12 @@ class PkgTool(Tool):
 
 class SvcTool(Tool):
     """ Base class for tools that handle Service entries """
+
+    options = Tool.options + [
+        Bcfg2.Options.Option(
+            '-s', '--service-mode', default='default',
+            choices = ['default', 'disabled', 'build'],
+            help='Set client service mode')]
 
     def __init__(self, config):
         Tool.__init__(self, config)
@@ -571,14 +579,14 @@ class SvcTool(Tool):
         return bool(self.cmd.run(self.get_svc_command(service, 'status')))
 
     def Remove(self, services):
-        if self.setup['servicemode'] != 'disabled':
+        if Bcfg2.Options.setup.service_mode != 'disabled':
             for entry in services:
                 entry.set("status", "off")
                 self.InstallService(entry)
     Remove.__doc__ = Tool.Remove.__doc__
 
     def BundleUpdated(self, bundle):
-        if self.setup['servicemode'] == 'disabled':
+        if Bcfg2.Options.setup.service_mode == 'disabled':
             return
 
         for entry in bundle:
@@ -587,15 +595,16 @@ class SvcTool(Tool):
 
             restart = entry.get("restart", "true").lower()
             if (restart == "false" or
-                (restart == "interactive" and not self.setup['interactive'])):
+                (restart == "interactive" and
+                 not Bcfg2.Options.setup.interactive)):
                 continue
 
             success = False
             if entry.get('status') == 'on':
-                if self.setup['servicemode'] == 'build':
+                if Bcfg2.Options.setup.service_mode == 'build':
                     success = self.stop_service(entry)
                 elif entry.get('name') not in self.restarted:
-                    if self.setup['interactive']:
+                    if Bcfg2.Options.setup.interactive:
                         if not Bcfg2.Client.prompt('Restart service %s? (y/N) '
                                                    % entry.get('name')):
                             continue

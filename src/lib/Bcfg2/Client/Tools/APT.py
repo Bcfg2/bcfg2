@@ -4,16 +4,27 @@
 import warnings
 warnings.filterwarnings("ignore", "apt API not stable yet",
                         FutureWarning)
-import apt.cache
 import os
+import apt.cache
+import Bcfg2.Options
 import Bcfg2.Client.Tools
 
-class APT(Bcfg2.Client.Tools.Tool):
-    """The Debian toolset implements package and service operations and inherits
-    the rest from Toolset.Toolset.
 
-    """
-    name = 'APT'
+class APT(Bcfg2.Client.Tools.Tool):
+    """The Debian toolset implements package and service operations
+    and inherits the rest from Tools.Tool.  """
+
+    options = Bcfg2.Client.Tools.Tool.options + [
+        Bcfg2.Options.PathOption(
+           cf=('APT', 'install_path'), default='/usr', dest='apt_install_path',
+           help='Apt tools install path'),
+        Bcfg2.Options.PathOption(
+            cf=('APT', 'var_path'), default='/var', dest='apt_var_path',
+            help='Apt tools var path'),
+        Bcfg2.Options.PathOption(
+           cf=('APT', 'etc_path'), default='/etc', dest='apt_etc_path',
+           help='System etc path')]
+
     __execs__ = []
     __handles__ = [('Package', 'deb'), ('Path', 'ignore')]
     __req__ = {'Package': ['name', 'version'], 'Path': ['type']}
@@ -21,12 +32,9 @@ class APT(Bcfg2.Client.Tools.Tool):
     def __init__(self, config):
         Bcfg2.Client.Tools.Tool.__init__(self, config)
 
-        self.install_path = self.setup.get('apt_install_path', '/usr')
-        self.var_path = self.setup.get('apt_var_path', '/var')
-        self.etc_path = self.setup.get('apt_etc_path', '/etc')
-        self.debsums = '%s/bin/debsums' % self.install_path
-        self.aptget = '%s/bin/apt-get' % self.install_path
-        self.dpkg = '%s/bin/dpkg' % self.install_path
+        self.debsums = '%s/bin/debsums' % Bcfg2.Options.setup.apt_install_path
+        self.aptget = '%s/bin/apt-get' % Bcfg2.Options.setup.apt_install_path
+        self.dpkg = '%s/bin/dpkg' % Bcfg2.Options.setup.apt_install_path
         self.__execs__ = [self.debsums, self.aptget, self.dpkg]
 
         path_entries = os.environ['PATH'].split(':')
@@ -38,7 +46,7 @@ class APT(Bcfg2.Client.Tools.Tool):
                       '-o DPkg::Options::=--force-confmiss ' + \
                       '--reinstall ' + \
                       '--force-yes '
-        if not self.setup['debug']:
+        if not Bcfg2.Options.setup.debug:
             self.pkgcmd += '-q=2 '
         self.pkgcmd += '-y install %s'
         self.ignores = [entry.get('name') for struct in config \
@@ -46,19 +54,23 @@ class APT(Bcfg2.Client.Tools.Tool):
                         if entry.tag == 'Path' and \
                         entry.get('type') == 'ignore']
         self.__important__ = self.__important__ + \
-                             ["%s/cache/debconf/config.dat" % self.var_path,
-                              "%s/cache/debconf/templates.dat" % self.var_path,
-                              '/etc/passwd', '/etc/group',
-                              '%s/apt/apt.conf' % self.etc_path,
-                              '%s/dpkg/dpkg.cfg' % self.etc_path] + \
-                             [entry.get('name') for struct in config for entry in struct \
-                              if entry.tag == 'Path' and \
-                              entry.get('name').startswith('%s/apt/sources.list' % self.etc_path)]
-        self.nonexistent = [entry.get('name') for struct in config for entry in struct \
-                              if entry.tag == 'Path' and entry.get('type') == 'nonexistent']
+                             [
+            "%s/cache/debconf/config.dat" % Bcfg2.Options.setup.apt_var_path,
+            "%s/cache/debconf/templates.dat" % Bcfg2.Options.setup.apt_var_path,
+            '/etc/passwd', '/etc/group',
+            '%s/apt/apt.conf' % Bcfg2.Options.setup.apt_etc_path,
+            '%s/dpkg/dpkg.cfg' % Bcfg2.Options.setup.apt_etc_path] + \
+            [entry.get('name') for struct in config
+             for entry in struct
+             if (entry.tag == 'Path' and
+                 entry.get('name').startswith(
+                    '%s/apt/sources.list' % Bcfg2.Options.setup.apt_etc_path))]
+        self.nonexistent = [
+                entry.get('name') for struct in config for entry in struct
+                if entry.tag == 'Path' and entry.get('type') == 'nonexistent']
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
-        if self.setup['kevlar'] and not self.setup['dryrun']:
+        if Bcfg2.Options.setup.kevlar and not Bcfg2.Options.setup.dry_run:
             self.cmd.run("%s --force-confold --configure --pending" %
                          self.dpkg)
             self.cmd.run("%s clean" % self.aptget)
@@ -184,8 +196,9 @@ class APT(Bcfg2.Client.Tools.Tool):
             return False
         else:
             # version matches
-            if not self.setup['quick'] and entry.get('verify', 'true') == 'true' \
-                   and checksums:
+            if (not Bcfg2.Options.setup.quick and
+                entry.get('verify', 'true') == 'true'
+                and checksums):
                 pkgsums = self.VerifyDebsums(entry, modlist)
                 return pkgsums
             return True

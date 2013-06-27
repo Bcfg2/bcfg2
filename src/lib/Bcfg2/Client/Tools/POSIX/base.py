@@ -105,23 +105,23 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             path = entry.get("name")
 
         rv = True
-        if entry.get("owner") and entry.get("group"):
-            try:
-                self.logger.debug("POSIX: Setting ownership of %s to %s:%s" %
-                                  (path,
-                                   self._norm_entry_uid(entry),
-                                   self._norm_entry_gid(entry)))
-                os.chown(path, self._norm_entry_uid(entry),
-                         self._norm_entry_gid(entry))
-            except KeyError:
-                self.logger.error('POSIX: Failed to change ownership of %s' %
-                                  path)
-                rv = False
-                os.chown(path, 0, 0)
-            except OSError:
-                self.logger.error('POSIX: Failed to change ownership of %s' %
-                                  path)
-                rv = False
+        if os.geteuid() == 0:
+            if entry.get("owner") and entry.get("group"):
+                try:
+                    self.logger.debug("POSIX: Setting ownership of %s to %s:%s"
+                                      % (path,
+                                         self._norm_entry_uid(entry),
+                                         self._norm_entry_gid(entry)))
+                    os.chown(path, self._norm_entry_uid(entry),
+                             self._norm_entry_gid(entry))
+                except (OSError, KeyError):
+                    self.logger.error('POSIX: Failed to change ownership of %s'
+                                      % path)
+                    rv = False
+                    if sys.exc_info()[0] == KeyError:
+                        os.chown(path, 0, 0)
+        else:
+            self.logger.debug("POSIX: Run as non-root, not setting ownership")
 
         if entry.get("mode"):
             wanted_mode = int(entry.get('mode'), 8)
