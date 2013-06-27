@@ -351,6 +351,14 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="lax_decryption" type="xsd:boolean">
+      <xsd:annotation>
+        <xsd:documentation>
+          Override the global lax_decryption setting in
+          ``bcfg2.conf``.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
     <xsd:attribute ref="xml:base"/>
   </xsd:complexType>
