@@ -679,20 +679,6 @@ class StructFile(XMLFileBacked):
         dict(Group=lambda el, md, *args: el.get('name') in md.groups,
              Client=lambda el, md, *args: el.get('name') == md.hostname)
 
-    #: Callbacks used to determine if children of items with the given
-    #: tags should be included in the return value of
-    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` and
-    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch`.  Each
-    #: callback is passed the same arguments as
-    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile._include_element`.
-    #: It should return True if children of the element should be
-    #: included in the match, False otherwise.  The callback does
-    #: *not* need to consider negation; that will be handled in
-    #: :func:`Bcfg2.Server.Plugin.helpers.StructFile._include_element`
-    _include_tests = \
-        dict(Group=lambda el, md, *args: el.get('name') in md.groups,
-             Client=lambda el, md, *args: el.get('name') == md.hostname)
-
     def __init__(self, filename, should_monitor=False):
         XMLFileBacked.__init__(self, filename, should_monitor=should_monitor)
         self.setup = Bcfg2.Options.get_option_parser()
