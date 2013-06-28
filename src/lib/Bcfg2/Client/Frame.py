@@ -207,12 +207,15 @@ class Frame(object):
 
         # take care of important entries first
         if not self.dryrun:
+            parent_map = dict((c, p)
+                              for p in self.config.getiterator()
+                              for c in p)
             for cfile in self.config.findall(".//Path"):
                 if (cfile.get('name') not in self.__important__ or
                     cfile.get('type') != 'file' or
                     cfile not in self.whitelist):
                     continue
-                parent = cfile.getparent()
+                parent = parent_map[cfile]
                 if ((parent.tag == "Bundle" and
                      ((self.setup['bundle'] and
                        parent.get("name") not in self.setup['bundle']) or
