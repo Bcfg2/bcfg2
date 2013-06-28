@@ -1,10 +1,10 @@
 """ XML-RPC Command Interface for bcfg2-admin"""
 
 import sys
-import xmlrpclib
 import Bcfg2.Options
 import Bcfg2.Client.Proxy
 import Bcfg2.Server.Admin
+from Bcfg2.Compat import xmlrpclib
 
 
 class Xcmd(Bcfg2.Server.Admin.Mode):
@@ -31,7 +31,7 @@ class Xcmd(Bcfg2.Server.Admin.Mode):
                                                   cert=setup['certificate'],
                                                   ca=setup['ca'],
                                                   timeout=setup['timeout'])
-        if len(setup['args']) == 0:
+        if len(setup['args']) == 0 or len(args) == 0:
             self.errExit("Usage: xcmd <xmlrpc method> <optional arguments>")
         cmd = args[0]
         try:
