@@ -510,7 +510,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if len(sclasses) > 1:
             self.logger.warning("Packages: Multiple source types found for "
                                 "%s: %s" %
-                                ",".join([s.__name__ for s in sclasses]))
+                                (metadata.hostname,
+                                 ",".join([s.__name__ for s in sclasses])))
             cclass = Collection
         elif len(sclasses) == 0:
             self.logger.error("Packages: No sources found for %s" %
