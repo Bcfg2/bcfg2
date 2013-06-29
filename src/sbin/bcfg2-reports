@@ -53,15 +53,15 @@ def print_fields(fields, client, fmt, extra=None):
             else:
                 fdata.append("dirty")
         elif field == 'total':
-            fdata.append(client.current_interaction.totalcount)
+            fdata.append(client.current_interaction.total_count)
         elif field == 'good':
-            fdata.append(client.current_interaction.goodcount)
+            fdata.append(client.current_interaction.good_count)
         elif field == 'modified':
-            fdata.append(client.current_interaction.modified_entry_count())
+            fdata.append(client.current_interaction.modified_count)
         elif field == 'extra':
-            fdata.append(client.current_interaction.extra_entry_count())
+            fdata.append(client.current_interaction.extra_count)
         elif field == 'bad':
-            fdata.append((client.current_interaction.badcount()))
+            fdata.append(client.current_interaction.bad_count)
         else:
             try:
                 fdata.append(getattr(client, field))
