@@ -47,7 +47,6 @@ BuildRequires:    python-sphinx10
 BuildRequires:    python-sphinx >= 1.0
 %endif
 
-Requires:         python-lxml >= 0.9
 %if 0%{?rhel_version}
 # the debian init script needs redhat-lsb.
 # iff we switch to the redhat one, this might not be needed anymore.
