@@ -281,9 +281,11 @@ Bcfg2 client itself.""")
                 for entry in struct:
                     if entry.tag == 'Path':
                         entry.set('name', odir + '/' + entry.get('name'))
-                        if entry.get('mode') != None:
-                            entry.set('mode', \
-                                oct(int(entry.get('mode'), 8)|stat.S_IWUSR))
+                        if entry.get('mode') is not None:
+                            entry.set(
+                                'mode',
+                                oct(int(entry.get('mode'), 8) | stat.S_IWUSR)
+                            )
 
             posix = Bcfg2.Client.Tools.POSIX.POSIX(MockLog(),
                                                    self.setup,
