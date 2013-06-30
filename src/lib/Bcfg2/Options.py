@@ -320,7 +320,7 @@ def colon_split(c_string):
 
 
 def dict_split(c_string):
-    """ split an option string on commans, optionally sourrunded by
+    """ split an option string on commas, optionally surrounded by
     whitespace and split the resulting items again on equals signs,
     returning a dict """
     result = dict()
