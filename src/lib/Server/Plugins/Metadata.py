@@ -594,10 +594,11 @@ class Metadata(Bcfg2.Server.Plugin.Plugin,
                          (stamp, _) = self.session_cache[addrpair]
                          if curtime - stamp > cache_ttl:
                              del self.session_cache[addrpair]
-            # return the cached data
-            (stamp, uuid) = self.session_cache[addresspair]
-            if time.time() - stamp < cache_ttl:
-                return self.session_cache[addresspair][1]
+            if addresspair in self.session_cache:
+                # return the cached data
+                (stamp, uuid) = self.session_cache[addresspair]
+                if time.time() - stamp < cache_ttl:
+                    return self.session_cache[addresspair][1]
         address = addresspair[0]
         if address in self.addresses:
             if len(self.addresses[address]) != 1:
