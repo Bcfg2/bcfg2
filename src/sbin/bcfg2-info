@@ -758,7 +758,8 @@ USAGE = build_usage()
 def main():
     optinfo = dict(profile=Bcfg2.Options.CORE_PROFILE,
                    interactive=Bcfg2.Options.INTERACTIVE,
-                   interpreter=Bcfg2.Options.INTERPRETER)
+                   interpreter=Bcfg2.Options.INTERPRETER,
+                   command_timeout=Bcfg2.Options.CLIENT_COMMAND_TIMEOUT)
     optinfo.update(Bcfg2.Options.INFO_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
     setup.hm = "\n".join(["     bcfg2-info [options] [command <command args>]",
