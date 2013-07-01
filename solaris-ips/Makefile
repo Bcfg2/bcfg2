@@ -1,6 +1,6 @@
 #!/usr/bin/gmake
 
-VERS=1.2.4-1
+VERS=1.3.2-1
 PYVERSION := $(shell python -c "import sys; print sys.version[0:3]")
 
 default: clean package
