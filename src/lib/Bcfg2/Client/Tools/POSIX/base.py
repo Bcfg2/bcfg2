@@ -706,16 +706,10 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                               (path, err))
             rv = False
 
-        # we need to make sure that we give +x to everyone who needs
-        # it.  E.g., if the file that's been distributed is 0600, we
-        # can't make the parent directories 0600 also; that'd be
-        # pretty useless.  They need to be 0700.
+        # set auto-created directories to mode 755, if you need
+        # something else, you should specify it in your config
         tmpentry = copy.deepcopy(entry)
-        newmode = int(entry.get('mode'), 8)
-        for i in range(0, 3):
-            if newmode & (6 * pow(8, i)):
-                newmode |= 1 * pow(8, i)
-        tmpentry.set('mode', oct_mode(newmode))
+        tmpentry.set('mode', '0755')
         for acl in tmpentry.findall('ACL'):
             acl.set('perms',
                     oct_mode(self._norm_acl_perms(acl.get('perms')) |
