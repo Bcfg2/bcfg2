@@ -249,7 +249,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
 
         ProbesDataModel.objects.filter(
             hostname=client.hostname).exclude(
-                probe__in=self.probedata[client.hostname]).delete()
+            probe__in=self.probedata[client.hostname]).delete()
 
         for group in self.cgroups[client.hostname]:
             try:
@@ -264,7 +264,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                     group=group)
         ProbesGroupsModel.objects.filter(
             hostname=client.hostname).exclude(
-                group__in=self.cgroups[client.hostname]).delete()
+            group__in=self.cgroups[client.hostname]).delete()
 
     def load_data(self):
         """ Load probe data from the appropriate backend (probed.xml
