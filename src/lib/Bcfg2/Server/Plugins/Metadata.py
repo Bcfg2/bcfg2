@@ -749,7 +749,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             return self._remove_xdata(self.groups_xml, "Bundle", bundle_name)
 
     def remove_client(self, client_name):
-        """Remove a bundle."""
+        """Remove a client."""
         if self._use_db:
             try:
                 client = MetadataClientModel.objects.get(hostname=client_name)
