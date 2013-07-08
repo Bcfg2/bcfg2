@@ -2,11 +2,10 @@
 used by both client and server.  Stuff that doesn't fit anywhere
 else. """
 
-import shlex
 import fcntl
 import logging
-import threading
 import subprocess
+import threading
 from Bcfg2.Compat import any  # pylint: disable=W0622
 
 
