@@ -299,8 +299,8 @@ def main():
             for client in clients:
                 yield ClientTest(core, client, ignore)
 
-    TestProgram(argv=sys.argv[:1] + core.setup['noseopts'],
-                suite=LazySuite(generate_tests), exit=False)
+    result = TestProgram(argv=sys.argv[:1] + core.setup['noseopts'],
+                         suite=LazySuite(generate_tests), exit=False)
 
     # block until all children have completed -- should be
     # immediate since we've already gotten all the results we
@@ -309,7 +309,10 @@ def main():
         child.join()
 
     core.shutdown()
-    os._exit(0)  # pylint: disable=W0212
+    if result.success:
+        os._exit(0)  # pylint: disable=W0212
+    else:
+        os._exit(1)  # pylint: disable=W0212
 
 
 if __name__ == "__main__":

@@ -920,8 +920,8 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
             self.assertEqual(metadata.clientgroups["uuid_new"], ["group1"])
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
-    @patch("socket.gethostbyaddr")
-    def test_resolve_client(self, mock_gethostbyaddr):
+    @patch("socket.getnameinfo")
+    def test_resolve_client(self, mock_getnameinfo):
         metadata = self.load_clients_data(metadata=self.load_groups_data())
         metadata.session_cache[('1.2.3.3', None)] = (time.time(), 'client3')
         self.assertEqual(metadata.resolve_client(('1.2.3.3', None)), 'client3')
@@ -938,22 +938,22 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
                                                  cleanup_cache=True), 'client3')
         self.assertEqual(metadata.session_cache, dict())
 
-        mock_gethostbyaddr.return_value = ('client6', [], ['1.2.3.6'])
-        self.assertEqual(metadata.resolve_client(('1.2.3.6', None)), 'client6')
-        mock_gethostbyaddr.assert_called_with('1.2.3.6')
+        mock_getnameinfo.return_value = ('client6', [], ['1.2.3.6'])
+        self.assertEqual(metadata.resolve_client(('1.2.3.6', 6789)), 'client6')
+        mock_getnameinfo.assert_called_with(('1.2.3.6', 6789), socket.NI_NAMEREQD)
 
-        mock_gethostbyaddr.reset_mock()
-        mock_gethostbyaddr.return_value = ('alias3', [], ['1.2.3.7'])
-        self.assertEqual(metadata.resolve_client(('1.2.3.7', None)), 'client4')
-        mock_gethostbyaddr.assert_called_with('1.2.3.7')
+        mock_getnameinfo.reset_mock()
+        mock_getnameinfo.return_value = ('alias3', [], ['1.2.3.7'])
+        self.assertEqual(metadata.resolve_client(('1.2.3.7', 6789)), 'client4')
+        mock_getnameinfo.assert_called_with(('1.2.3.7', 6789), socket.NI_NAMEREQD)
 
-        mock_gethostbyaddr.reset_mock()
-        mock_gethostbyaddr.return_value = None
-        mock_gethostbyaddr.side_effect = socket.herror
+        mock_getnameinfo.reset_mock()
+        mock_getnameinfo.return_value = None
+        mock_getnameinfo.side_effect = socket.herror
         self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.resolve_client,
-                          ('1.2.3.8', None))
-        mock_gethostbyaddr.assert_called_with('1.2.3.8')
+                          ('1.2.3.8', 6789))
+        mock_getnameinfo.assert_called_with(('1.2.3.8', 6789), socket.NI_NAMEREQD)
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.write_xml", Mock())
@@ -1494,30 +1494,30 @@ class TestMetadata_NoClientsXML(TestMetadataBase):
                                                          "1.2.3.8"))
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
-    @patch("socket.gethostbyaddr")
-    def test_resolve_client(self, mock_gethostbyaddr):
+    @patch("socket.getnameinfo")
+    def test_resolve_client(self, mock_getnameinfo):
         metadata = self.load_clients_data(metadata=self.load_groups_data())
         metadata.session_cache[('1.2.3.3', None)] = (time.time(), 'client3')
         self.assertEqual(metadata.resolve_client(('1.2.3.3', None)), 'client3')
 
         metadata.session_cache[('1.2.3.3', None)] = (time.time() - 100,
                                                      'client3')
-        mock_gethostbyaddr.return_value = ("client3", [], ['1.2.3.3'])
+        mock_getnameinfo.return_value = ("client3", [], ['1.2.3.3'])
         self.assertEqual(metadata.resolve_client(('1.2.3.3', None),
                                                  cleanup_cache=True), 'client3')
         self.assertEqual(metadata.session_cache, dict())
 
-        mock_gethostbyaddr.return_value = ('client6', [], ['1.2.3.6'])
-        self.assertEqual(metadata.resolve_client(('1.2.3.6', None)), 'client6')
-        mock_gethostbyaddr.assert_called_with('1.2.3.6')
+        mock_getnameinfo.return_value = ('client6', [], ['1.2.3.6'])
+        self.assertEqual(metadata.resolve_client(('1.2.3.6', 6789), socket.NI_NAMEREQD), 'client6')
+        mock_getnameinfo.assert_called_with(('1.2.3.6', 6789), socket.NI_NAMEREQD)
 
-        mock_gethostbyaddr.reset_mock()
-        mock_gethostbyaddr.return_value = None
-        mock_gethostbyaddr.side_effect = socket.herror
+        mock_getnameinfo.reset_mock()
+        mock_getnameinfo.return_value = None
+        mock_getnameinfo.side_effect = socket.herror
         self.assertRaises(Bcfg2.Server.Plugin.MetadataConsistencyError,
                           metadata.resolve_client,
-                          ('1.2.3.8', None))
-        mock_gethostbyaddr.assert_called_with('1.2.3.8')
+                          ('1.2.3.8', 6789), socket.NI_NAMEREQD)
+        mock_getnameinfo.assert_called_with(('1.2.3.8', 6789), socket.NI_NAMEREQD)
 
     def test_handle_clients_xml_event(self):
         pass

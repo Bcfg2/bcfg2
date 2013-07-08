@@ -215,7 +215,9 @@ class Executor(object):
         """
         if isinstance(command, str):
             cmdstr = command
-            command = shlex.split(cmdstr)
+
+            if not shell:
+                command = shlex.split(cmdstr)
         else:
             cmdstr = " ".join(command)
         self.logger.debug("Running: %s" % cmdstr)

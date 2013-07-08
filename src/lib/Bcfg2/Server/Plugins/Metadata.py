@@ -749,7 +749,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             return self._remove_xdata(self.groups_xml, "Bundle", bundle_name)
 
     def remove_client(self, client_name):
-        """Remove a bundle."""
+        """Remove a client."""
         if self._use_db:
             try:
                 client = MetadataClientModel.objects.get(hostname=client_name)
@@ -1055,7 +1055,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 raise Bcfg2.Server.Plugin.MetadataConsistencyError(err)
             return self.addresses[address][0]
         try:
-            cname = socket.gethostbyaddr(address)[0].lower()
+            cname = socket.getnameinfo(addresspair,
+                                       socket.NI_NAMEREQD)[0].lower()
             if cname in self.aliases:
                 return self.aliases[cname]
             return cname

@@ -231,10 +231,10 @@ simply::
     %}
 
 You can also enable automatch for individual Property files by setting
-the attribute ``automatch="true"`` on the top-level ``<Property>``
+the attribute ``automatch="true"`` on the top-level ``<Properties>``
 tag.  Conversely, if automatch is enabled by default in
 ``bcfg2.conf``, you can disable it for an individual Property file by
-setting ``automatch="false"`` on the top-level ``<Property>`` tag.
+setting ``automatch="false"`` on the top-level ``<Properties>`` tag.
 
 If you want to see what ``XMLMatch()``/automatch would produce for a
 given client on a given Properties file, you can use :ref:`bcfg2-info
