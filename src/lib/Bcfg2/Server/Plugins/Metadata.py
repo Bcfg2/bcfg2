@@ -1166,8 +1166,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             try:
                 bundles.update(self.groups[group].bundles)
             except KeyError:
-                self.logger.warning("%s: %s is a member of undefined group %s" %
-                                    (self.name, client, group))
+                self.logger.warning("%s: %s is a member of undefined group %s"
+                                    % (self.name, client, group))
 
         aliases = self.raliases.get(client, set())
         addresses = self.raddresses.get(client, set())
