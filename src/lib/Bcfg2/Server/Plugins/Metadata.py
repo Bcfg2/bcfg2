@@ -1142,9 +1142,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                                  require_public=False)
                 profile = _add_group(pgroup)
             else:
-                msg = "Cannot add new client %s; no default group set" % client
-                self.logger.error(msg)
-                raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
+                raise Bcfg2.Server.Plugin.MetadataConsistencyError(
+                    "Cannot add new client %s; no default group set" % client)
 
         for cgroup in self.clientgroups.get(client, []):
             if cgroup in groups:
@@ -1167,8 +1166,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             try:
                 bundles.update(self.groups[group].bundles)
             except KeyError:
-                self.logger.warning("%s: %s is a member of undefined group %s"
-                                    % (self.name, client, group))
+                self.logger.warning("%s: %s is a member of undefined group %s" %
+                                    (self.name, client, group))
 
         aliases = self.raliases.get(client, set())
         addresses = self.raddresses.get(client, set())

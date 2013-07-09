@@ -858,7 +858,12 @@ class BaseCore(object):
             imd = self.metadata_cache.get(client_name, None)
         if not imd:
             self.logger.debug("Building metadata for %s" % client_name)
-            imd = self.metadata.get_initial_metadata(client_name)
+            try:
+                imd = self.metadata.get_initial_metadata(client_name)
+            except MetadataConsistencyError:
+                self.critical_error(
+                    "Client metadata resolution error for %s: %s" %
+                    (client_name, sys.exc_info()[1]))
             connectors = self.plugins_by_type(Connector)
             for conn in connectors:
                 grps = conn.get_additional_groups(imd)
