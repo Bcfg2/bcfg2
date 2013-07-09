@@ -67,7 +67,7 @@ def main():
     logger.info("Bcfg2 server core loaded")
     core.load_plugins()
     logger.debug("Plugins loaded")
-    core.fam.handle_events_in_interval(0.1)
+    core.block_for_fam_events(handle_events=True)
     logger.debug("Repository events processed")
 
     if setup['args']:

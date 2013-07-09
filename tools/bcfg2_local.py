@@ -20,7 +20,7 @@ class LocalCore(BaseCore):
         Bcfg2.Server.Core.BaseCore.__init__(self, setup=setup)
         setup['syslog'], setup['logging'] = saved
         self.load_plugins()
-        self.fam.handle_events_in_interval(0.1)
+        self.block_for_fam_events(handle_events=True)
 
     def _daemonize(self):
         return True

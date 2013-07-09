@@ -73,7 +73,7 @@ def load_server(setup):
     """ load server """
     core = Bcfg2.Server.Core.BaseCore(setup)
     core.load_plugins()
-    core.fam.handle_events_in_interval(0.1)
+    core.block_for_fam_events(handle_events=True)
     return core
 
 

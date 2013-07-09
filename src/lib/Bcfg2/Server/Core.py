@@ -728,6 +728,26 @@ class BaseCore(object):
         self.setup.reparse()
         self.metadata_cache.expire()
 
+    def block_for_fam_events(self, handle_events=False):
+        """ Block until all fam events have been handleed, optionally
+        handling events as well.  (Setting ``handle_events=True`` is
+        useful for local server cores that don't spawn an event
+        handling thread.)"""
+        slept = 0
+        log_interval = 3
+        if handle_events:
+            self.fam.handle_events_in_interval(1)
+            slept += 1
+        if self.setup['fam_blocking']:
+            time.sleep(1)
+            slept += 1
+            while self.fam.pending() != 0:
+                time.sleep(1)
+                slept += 1
+                if slept % log_interval == 0:
+                    self.logger.debug("Sleeping to handle FAM events...")
+        self.logger.debug("Slept %s seconds while handling FAM events" % slept)
+
     def run(self):
         """ Run the server core. This calls :func:`_daemonize`,
         :func:`_run`, starts the :attr:`fam_thread`, and calls
@@ -777,13 +797,9 @@ class BaseCore(object):
             self.shutdown()
             raise
 
-        if self.setup['fam_blocking']:
-            time.sleep(1)
-            while self.fam.pending() != 0:
-                time.sleep(1)
-
         if self.debug_flag:
             self.set_debug(None, self.debug_flag)
+        self.block_for_fam_events()
         self._block()
 
     def _daemonize(self):
