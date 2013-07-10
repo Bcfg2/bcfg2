@@ -1,6 +1,7 @@
 """ Frame is the Client Framework that verifies and installs entries,
 and generates statistics. """
 
+import copy
 import time
 import fnmatch
 import logging
@@ -522,7 +523,7 @@ class Frame(object):
             container = Bcfg2.Client.XML.SubElement(stats, ename)
             for item in data:
                 item.set('qtext', '')
-                container.append(item)
+                container.append(copy.deepcopy(item))
                 item.text = None
 
         timeinfo = Bcfg2.Client.XML.Element("OpStamps")
