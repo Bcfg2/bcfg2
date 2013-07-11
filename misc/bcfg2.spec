@@ -5,7 +5,7 @@
 %{!?_initrddir: %global _initrddir %{_sysconfdir}/rc.d/init.d}
 
 Name:             bcfg2
-Version:          1.3.1
+Version:          1.3.2
 Release:          1
 Summary:          Configuration management system
 
@@ -47,7 +47,6 @@ BuildRequires:    python-sphinx10
 BuildRequires:    python-sphinx >= 1.0
 %endif
 
-Requires:         python-lxml >= 0.9
 %if 0%{?rhel_version}
 # the debian init script needs redhat-lsb.
 # iff we switch to the redhat one, this might not be needed anymore.
@@ -87,7 +86,7 @@ deployment strategies.
 This package includes the Bcfg2 client software.
 
 %package server
-Version:          1.3.1
+Version:          1.3.2
 Summary:          Bcfg2 Server
 %if 0%{?suse_version}
 Group:            System/Management
@@ -139,7 +138,7 @@ deployment strategies.
 This package includes the Bcfg2 server software.
 
 %package server-cherrypy
-Version:          1.3.1
+Version:          1.3.2
 Summary:          Bcfg2 Server - CherryPy backend
 %if 0%{?suse_version}
 Group:            System/Management
@@ -240,7 +239,7 @@ deployment strategies.
 This package includes the Bcfg2 documentation.
 
 %package web
-Version:          1.3.1
+Version:          1.3.2
 Summary:          Bcfg2 Web Reporting Interface
 %if 0%{?suse_version}
 Group:            System/Management
@@ -476,6 +475,9 @@ fi
 %endif
 
 %changelog
+* Mon Jul 01 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.2-1
+- New upstream release
+
 * Thu Mar 21 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.1-1
 - New upstream release
 

@@ -1,6 +1,7 @@
 """ Frame is the Client Framework that verifies and installs entries,
 and generates statistics. """
 
+import copy
 import time
 import fnmatch
 import logging
@@ -221,7 +222,15 @@ class Frame(object):
 
         # take care of important entries first
         if not self.dryrun:
-            for parent in self.config.findall(".//Path/.."):
+            parent_map = dict((c, p)
+                              for p in self.config.getiterator()
+                              for c in p)
+            for cfile in self.config.findall(".//Path"):
+                if (cfile.get('name') not in self.__important__ or
+                    cfile.get('type') != 'file' or
+                    cfile not in self.whitelist):
+                    continue
+                parent = parent_map[cfile]
                 if ((parent.tag == "Bundle" and
                      ((self.setup['bundle'] and
                        parent.get("name") not in self.setup['bundle']) or
@@ -230,15 +239,9 @@ class Frame(object):
                     (parent.tag == "Independent" and
                      (self.setup['bundle'] or self.setup['skipindep']))):
                     continue
-                for cfile in parent.findall("./Path"):
-                    if (cfile.get('name') not in self.__important__ or
-                        cfile.get('type') != 'file' or
-                        cfile not in self.whitelist):
-                        continue
-                    tools = [t for t in self.tools
-                             if t.handlesEntry(cfile) and t.canVerify(cfile)]
-                    if not tools:
-                        continue
+                tools = [t for t in self.tools
+                         if t.handlesEntry(cfile) and t.canVerify(cfile)]
+                if tools:
                     if (self.setup['interactive'] and not
                         self.promptFilter("Install %s: %s? (y/N):", [cfile])):
                         self.whitelist.remove(cfile)
@@ -547,7 +550,7 @@ class Frame(object):
             container = Bcfg2.Client.XML.SubElement(stats, ename)
             for item in data:
                 item.set('qtext', '')
-                container.append(item)
+                container.append(copy.deepcopy(item))
                 item.text = None
 
         timeinfo = Bcfg2.Client.XML.Element("OpStamps")

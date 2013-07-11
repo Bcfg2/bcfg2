@@ -230,10 +230,10 @@ simply::
                    for el in metadata.Properties['ntp.xml'].findall("//Server")]
     %}
 
-You can also enable automatch for individual Properties files by setting
+You can also enable automatch for individual Property files by setting
 the attribute ``automatch="true"`` on the top-level ``<Properties>``
 tag.  Conversely, if automatch is enabled by default in
-``bcfg2.conf``, you can disable it for an individual Properties file by
+``bcfg2.conf``, you can disable it for an individual Property file by
 setting ``automatch="false"`` on the top-level ``<Properties>`` tag.
 
 If you want to see what ``XMLMatch()``/automatch would produce for a

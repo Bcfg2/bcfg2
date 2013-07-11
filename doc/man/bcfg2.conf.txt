@@ -719,6 +719,11 @@ control the database connection of the server.
     port
         Port for database connections. Not used for sqlite3.
 
+    options
+        Various options for the database connection. The value is
+        expected as multiple key=value pairs, separated with commas.
+        The concrete value depends on the database engine.
+
 Reporting options
 -----------------
 
