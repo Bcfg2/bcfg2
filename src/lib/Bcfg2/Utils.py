@@ -2,11 +2,10 @@
 used by both client and server.  Stuff that doesn't fit anywhere
 else. """
 
-import shlex
 import fcntl
 import logging
-import threading
 import subprocess
+import threading
 from Bcfg2.Compat import any  # pylint: disable=W0622
 
 
@@ -196,9 +195,10 @@ class Executor(object):
             except OSError:
                 pass
 
-    def run(self, command, inputdata=None, shell=False, timeout=None):
+    def run(self, command, inputdata=None, timeout=None, **kwargs):
         """ Run a command, given as a list, optionally giving it the
-        specified input data.
+        specified input data.  All additional keyword arguments are
+        passed through to :class:`subprocess.Popen`.
 
         :param command: The command to run, as a list (preferred) or
                         as a string.  See :class:`subprocess.Popen` for
@@ -206,8 +206,6 @@ class Executor(object):
         :type command: list or string
         :param inputdata: Data to pass to the command on stdin
         :type inputdata: string
-        :param shell: Run the given command in a shell (not recommended)
-        :type shell: bool
         :param timeout: Kill the command if it runs longer than this
                         many seconds.  Set to 0 or -1 to explicitly
                         override a default timeout.
@@ -216,21 +214,14 @@ class Executor(object):
         """
         if isinstance(command, str):
             cmdstr = command
-
-            if not shell:
-                command = shlex.split(cmdstr)
         else:
             cmdstr = " ".join(command)
         self.logger.debug("Running: %s" % cmdstr)
-        try:
-            proc = subprocess.Popen(command, shell=shell, bufsize=16384,
-                                    close_fds=True,
-                                    stdin=subprocess.PIPE,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-        except OSError:
-            return ExecutorResult('', 'No such command: %s' % cmdstr,
-                                  127)
+        args = dict(shell=False, bufsize=16384, close_fds=True)
+        args.update(kwargs)
+        args.update(stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE)
+        proc = subprocess.Popen(command, **args)
         if timeout is None:
             timeout = self.timeout
         if timeout is not None:
@@ -252,7 +243,8 @@ class Executor(object):
                 self.logger.debug('< %s' % line)
             for line in stderr.splitlines():  # pylint: disable=E1103
                 self.logger.info(line)
-            return ExecutorResult(stdout, stderr, proc.wait())
+            return ExecutorResult(stdout, stderr,
+                                  proc.wait())  # pylint: disable=E1101
         finally:
             if timeout is not None:
                 timer.cancel()

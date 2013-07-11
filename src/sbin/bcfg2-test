@@ -137,6 +137,7 @@ class ClientTest(TestCase):
             "Configuration contains unknown packages: %s" % \
             ", ".join(unknown_pkgs)
 
+        # check for render failures
         failures = []
         msg = output + ["Failures:"]
         for failure in config.xpath('//*[@failure]'):
@@ -210,7 +211,7 @@ def parse_args():
 
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
-    setup = Bcfg2.Options.OptionParser(optinfo)
+    setup = Bcfg2.Options.load_option_parser(optinfo)
     setup.hm = \
         "bcfg2-test [options] [client] [client] [...]\nOptions:\n     %s" % \
         setup.buildHelpMessage()

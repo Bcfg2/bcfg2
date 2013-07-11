@@ -13,6 +13,7 @@ from Bcfg2.Compat import ConfigParser, urlopen, HTTPError, URLError
 from Bcfg2.Server.Plugins.Packages.Collection import Collection, \
     get_collection_class
 from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
+from Bcfg2.Server.Statistics import track_statistics
 
 #: The default path for generated yum configs
 YUM_CONFIG_DEFAULT = "/etc/yum.repos.d/bcfg2.repo"
@@ -65,14 +66,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             # create key directory if needed
             os.makedirs(self.keypath)
 
-        # warn about deprecated magic groups
-        if self.core.setup.cfp.getboolean("packages", "magic_groups",
-                                          default=False):
-            self.logger.warning("Packages: Magic groups are deprecated and "
-                                "will be removed in a future release")
-            self.logger.warning("You can disable magic groups by setting "
-                                "magic_groups=0 in [packages] in bcfg2.conf")
-
         # pylint: disable=C0301
         #: The
         #: :class:`Bcfg2.Server.Plugins.Packages.PackagesSources.PackagesSources`
@@ -80,8 +73,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         #: :class:`Bcfg2.Server.Plugins.Packages.Source.Source` objects for
         #: this plugin.
         self.sources = PackagesSources(os.path.join(self.data, "sources.xml"),
-                                       self.cachepath, core.fam, self,
-                                       self.core.setup)
+                                       self.cachepath, self)
 
         #: We cache
         #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
@@ -239,13 +231,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
         """
         if entry.tag == 'Package':
-            if self.core.setup.cfp.getboolean("packages", "magic_groups",
-                                              default=False):
-                collection = self.get_collection(metadata)
-                if collection.magic_groups_match():
-                    return True
-            else:
-                return True
+            return True
         elif entry.tag == 'Path':
             # managed entries for yum/apt configs
             if (entry.get("name") ==
@@ -259,7 +245,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 return True
         return False
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def validate_structures(self, metadata, structures):
         """ Do the real work of Packages.  This does two things:
 
@@ -294,7 +280,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         collection.build_extra_structures(indep)
         structures.append(indep)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def _build_packages(self, metadata, independent, structures,
                         collection=None):
         """ Perform dependency resolution and build the complete list
@@ -372,7 +358,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         newpkgs.sort()
         collection.packages_to_entry(newpkgs, independent)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def Refresh(self):
         """ Packages.Refresh() => True|False
 
@@ -380,7 +366,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self._load_config(force_update=True)
         return True
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def Reload(self):
         """ Packages.Refresh() => True|False
 
@@ -476,7 +462,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             if kfile not in keyfiles:
                 os.unlink(kfile)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def get_collection(self, metadata):
         """ Get a
         :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
@@ -493,8 +479,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if not self.sources.loaded:
             # if sources.xml has not received a FAM event yet, defer;
             # instantiate a dummy Collection object
-            return Collection(metadata, [], self.cachepath, self.data,
-                              self.core.fam)
+            return Collection(metadata, [], self.cachepath, self.data)
 
         if metadata.hostname in self.clients:
             return self.collections[self.clients[metadata.hostname]]
@@ -526,7 +511,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                               "for %s" % (cclass.__name__, metadata.hostname))
 
         collection = cclass(metadata, relevant, self.cachepath, self.data,
-                            self.core.fam, debug=self.debug_flag)
+                            debug=self.debug_flag)
         ckey = collection.cachekey
         if cclass != Collection:
             self.clients[metadata.hostname] = ckey

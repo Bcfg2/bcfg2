@@ -16,17 +16,6 @@ from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages, \
     any, oct_mode
 # pylint: enable=W0622
 
-#: SETUP contains a reference to the
-#: :class:`Bcfg2.Options.OptionParser` created by the Bcfg2 core for
-#: parsing command-line and config file options.
-#: :class:`Bcfg2.Server.Plugins.Cfg.Cfg` stores it in a module global
-#: so that the handler objects can access it, because there is no other
-#: facility for passing a setup object from a
-#: :class:`Bcfg2.Server.Plugin.helpers.GroupSpool` to its
-#: :class:`Bcfg2.Server.Plugin.helpers.EntrySet` objects and thence to
-#: the EntrySet children.
-SETUP = None
-
 #: CFG is a reference to the :class:`Bcfg2.Server.Plugins.Cfg.Cfg`
 #: plugin object created by the Bcfg2 core.  This is provided so that
 #: the handler objects can access it as necessary, since the existing
@@ -104,6 +93,7 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData,
                                                   encoding)
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
         self.encoding = encoding
+        self.setup = Bcfg2.Options.get_option_parser()
     __init__.__doc__ = Bcfg2.Server.Plugin.SpecificData.__init__.__doc__ + \
         """
 .. -----
@@ -246,10 +236,7 @@ class CfgFilter(CfgBaseFileMatcher):
 
 class CfgInfo(CfgBaseFileMatcher):
     """ CfgInfo handlers provide metadata (owner, group, paranoid,
-    etc.) for a file entry.
-
-    .. private-include: _set_info
-    """
+    etc.) for a file entry. """
 
     #: Whether or not the files handled by this handler are permitted
     #: to have specificity indicators in their filenames -- e.g.,
@@ -278,20 +265,6 @@ class CfgInfo(CfgBaseFileMatcher):
         :returns: None
         """
         raise NotImplementedError
-
-    def _set_info(self, entry, info):
-        """ Helper function to assign a dict of info attributes to an
-        entry object.  ``entry`` is modified in-place.
-
-        :param entry: The abstract entry to bind the info to
-        :type entry: lxml.etree._Element
-        :param info: A dict of attribute: value pairs
-        :type info: dict
-        :returns: None
-        """
-        for key, value in list(info.items()):
-            if not key.startswith("__"):
-                entry.attrib[key] = value
 
 
 class CfgVerifier(CfgBaseFileMatcher):
@@ -334,9 +307,6 @@ class CfgCreator(CfgBaseFileMatcher):
     #: CfgCreators generally store their configuration in a single XML
     #: file, and are thus not specific
     __specific__ = False
-
-    #: The CfgCreator interface is experimental at this time
-    experimental = True
 
     def __init__(self, fname):
         """
@@ -450,21 +420,14 @@ class CfgDefaultInfo(CfgInfo):
     """ :class:`Bcfg2.Server.Plugins.Cfg.Cfg` handler that supplies a
     default set of file metadata """
 
-    def __init__(self, defaults):
+    def __init__(self):
         CfgInfo.__init__(self, '')
-        self.defaults = defaults
     __init__.__doc__ = CfgInfo.__init__.__doc__.split(".. -----")[0]
 
-    def bind_info_to_entry(self, entry, metadata):
-        self._set_info(entry, self.defaults)
+    def bind_info_to_entry(self, entry, _):
+        for key, value in Bcfg2.Server.Plugin.default_path_metadata().items():
+            entry.attrib[key] = value
     bind_info_to_entry.__doc__ = CfgInfo.bind_info_to_entry.__doc__
-
-#: A :class:`CfgDefaultInfo` object instantiated with
-#: :attr:`Bcfg2.Server.Plugin.helper.DEFAULT_FILE_METADATA` as its
-#: default metadata.  This is used to set a default file metadata set
-#: on an entry before a "real" :class:`CfgInfo` handler applies its
-#: metadata to the entry.
-DEFAULT_INFO = CfgDefaultInfo(Bcfg2.Server.Plugin.DEFAULT_FILE_METADATA)
 
 
 class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
@@ -477,6 +440,8 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
                                               entry_type, encoding)
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
         self.specific = None
+        self._handlers = None
+        self.setup = Bcfg2.Options.get_option_parser()
     __init__.__doc__ = Bcfg2.Server.Plugin.EntrySet.__doc__
 
     def set_debug(self, debug):
@@ -594,7 +559,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
                     # most specific to least specific.
                     data = fltr.modify_data(entry, metadata, data)
 
-        if SETUP['validate']:
+        if self.setup['validate']:
             try:
                 self._validate_data(entry, metadata, data)
             except CfgVerificationError:
@@ -665,7 +630,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         :returns: None
         """
         info_handlers = self.get_handlers(metadata, CfgInfo)
-        DEFAULT_INFO.bind_info_to_entry(entry, metadata)
+        CfgDefaultInfo().bind_info_to_entry(entry, metadata)
         if len(info_handlers) > 1:
             self.logger.error("More than one info supplier found for %s: %s" %
                               (entry.get("name"), info_handlers))
@@ -714,13 +679,6 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
             # raises an appropriate exception
             return (self._create_data(entry, metadata), None)
 
-        if entry.get('mode').lower() == 'inherit':
-            # use on-disk permissions
-            self.logger.warning("Cfg: %s: Use of mode='inherit' is deprecated"
-                                % entry.get("name"))
-            fname = os.path.join(self.path, generator.name)
-            entry.set('mode',
-                      oct_mode(stat.S_IMODE(os.stat(fname).st_mode)))
         try:
             return (generator.get_data(entry, metadata), generator)
         except:
@@ -809,13 +767,6 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet,
         badattr = [attr for attr in ['owner', 'group', 'mode']
                    if attr in new_entry]
         if badattr:
-            # check for info files and inform user of their removal
-            for ifile in ['info', ':info']:
-                info = os.path.join(self.path, ifile)
-                if os.path.exists(info):
-                    self.logger.info("Removing %s and replacing with info.xml"
-                                     % info)
-                    os.remove(info)
             metadata_updates = {}
             metadata_updates.update(self.metadata)
             for attr in badattr:
@@ -845,16 +796,16 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
     es_child_cls = Bcfg2.Server.Plugin.SpecificData
 
     def __init__(self, core, datastore):
-        global SETUP, CFG  # pylint: disable=W0603
+        global CFG  # pylint: disable=W0603
         Bcfg2.Server.Plugin.GroupSpool.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
 
         CFG = self
 
-        SETUP = core.setup
-        if 'validate' not in SETUP:
-            SETUP.add_option('validate', Bcfg2.Options.CFG_VALIDATION)
-            SETUP.reparse()
+        setup = Bcfg2.Options.get_option_parser()
+        if 'validate' not in setup:
+            setup.add_option('validate', Bcfg2.Options.CFG_VALIDATION)
+            setup.reparse()
     __init__.__doc__ = Bcfg2.Server.Plugin.GroupSpool.__init__.__doc__
 
     def has_generator(self, entry, metadata):
@@ -895,29 +846,14 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
 
     def Run(self):
         for basename, entry in list(self.core.plugins['Cfg'].entries.items()):
-            self.check_delta(basename, entry)
             self.check_pubkey(basename, entry)
         self.check_missing_files()
 
     @classmethod
     def Errors(cls):
-        return {"cat-file-used": "warning",
-                "diff-file-used": "warning",
-                "no-pubkey-xml": "warning",
+        return {"no-pubkey-xml": "warning",
                 "unknown-cfg-files": "error",
                 "extra-cfg-files": "error"}
-
-    def check_delta(self, basename, entry):
-        """ check that no .cat or .diff files are in use """
-        for fname, handler in entry.entries.items():
-            path = handler.name
-            if self.HandlesFile(path) and isinstance(handler, CfgFilter):
-                extension = fname.split(".")[-1]
-                if extension in ["cat", "diff"]:
-                    self.LintError("%s-file-used" % extension,
-                                   "%s file used on %s: %s" % (extension,
-                                                               basename,
-                                                               fname))
 
     def check_pubkey(self, basename, entry):
         """ check that privkey.xml files have corresponding pubkey.xml

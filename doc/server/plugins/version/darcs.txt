@@ -6,7 +6,7 @@
 Darcs
 =====
 
-This page describes the new Darcs plugin which is experimental. 
+This page describes the new Darcs plugin which is experimental.
 
 Why use the Darcs plugin
 ========================
@@ -25,4 +25,4 @@ You will need to install Darcs on the Bcfg2 server first. Once installed,
 simply add Darcs to your plugins line in ``/etc/bcfg2.conf``::
 
     [server]
-    plugins = Base,Bundler,Cfg,...,Darcs
+    plugins = Bundler,Cfg,...,Darcs

@@ -36,7 +36,6 @@ detected or a default value is provided. ::
 A toplevel repository structure was created under the provided path. ::
 
     /var/lib/bcfg2
-    |-- Base
     |-- Bundler
     |-- Cfg
     |-- etc

@@ -386,6 +386,14 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="encrypted">
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the encryption passphrase that the text content
+          of this tag is encrypted with.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 

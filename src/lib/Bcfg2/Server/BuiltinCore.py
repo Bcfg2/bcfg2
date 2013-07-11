@@ -4,10 +4,10 @@ import sys
 import time
 import socket
 import daemon
-import Bcfg2.Statistics
+import Bcfg2.Server.Statistics
 from Bcfg2.Server.Core import BaseCore, NoExposedMethod
 from Bcfg2.Compat import xmlrpclib, urlparse
-from Bcfg2.SSLServer import XMLRPCServer
+from Bcfg2.Server.SSLServer import XMLRPCServer
 
 from lockfile import LockFailed, LockTimeout
 # pylint: disable=E0611
@@ -22,11 +22,11 @@ class Core(BaseCore):
     """ The built-in server core """
     name = 'bcfg2-server'
 
-    def __init__(self, setup):
-        BaseCore.__init__(self, setup)
+    def __init__(self):
+        BaseCore.__init__(self)
 
-        #: The :class:`Bcfg2.SSLServer.XMLRPCServer` instance powering
-        #: this server core
+        #: The :class:`Bcfg2.Server.SSLServer.XMLRPCServer` instance
+        #: powering this server core
         self.server = None
 
         daemon_args = dict(uid=self.setup['daemon_uid'],
@@ -69,8 +69,9 @@ class Core(BaseCore):
             try:
                 return method_func(*args)
             finally:
-                Bcfg2.Statistics.stats.add_value(method,
-                                                 time.time() - method_start)
+                Bcfg2.Server.Statistics.stats.add_value(
+                    method,
+                    time.time() - method_start)
         except xmlrpclib.Fault:
             raise
         except Exception:

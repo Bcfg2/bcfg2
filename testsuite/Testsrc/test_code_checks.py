@@ -35,7 +35,7 @@ contingent_checks = {
                   "lib/Bcfg2/Server/Admin": ["Reports.py", "Syncdb.py"],
                   "sbin": ["bcfg2-reports"]},
     ("pyinotify",): {"lib/Bcfg2/Server/FileMonitor": ["Inotify.py"]},
-    ("yum",): {"lib/Bcfg2/Client/Tools": ["YUM*"]},
+    ("yum",): {"lib/Bcfg2/Client/Tools": ["YUM.py"]},
     ("genshi",): {"lib/Bcfg2/Server/Plugins/Cfg": ["CfgGenshiGenerator.py"]},
     ("Cheetah",): {"lib/Bcfg2/Server/Plugins/Cfg": ["CfgCheetahGenerator.py"]},
     ("M2Crypto",): {"lib/Bcfg2": ["Encryption.py"],
@@ -49,11 +49,10 @@ contingent_checks = {
 
 # perform only error checking on the listed files
 error_checks = {
-    "sbin": ["bcfg2-build-reports"],
-    "lib/Bcfg2": ["Proxy.py", "SSLServer.py", "Reporting"],
-    "lib/Bcfg2/Server": ["Reports", "SchemaUpdater"],
-    "lib/Bcfg2/Server/Admin": ["Compare.py",
-                               "Snapshots.py"],
+    "lib/Bcfg2": ["Reporting"],
+    "lib/Bcfg2/Client": ["Proxy.py"],
+    "lib/Bcfg2/Server": ["Reports", "SchemaUpdater", "SSLServer.py"],
+    "lib/Bcfg2/Server/Admin": ["Compare.py"],
     "lib/Bcfg2/Client/Tools": ["OpenCSW.py",
                                "Blast.py",
                                "FreeBSDInit.py",
@@ -67,17 +66,9 @@ error_checks = {
 # perform no checks at all on the listed files
 no_checks = {
     "lib/Bcfg2/Client/Tools": ["APT.py", "RPM.py", "rpmtools.py"],
-    "lib/Bcfg2/Server": ["Snapshots", "Hostbase"],
     "lib/Bcfg2": ["manage.py"],
     "lib/Bcfg2/Server/Reports": ["manage.py"],
-    "lib/Bcfg2/Server/Plugins": ["Account.py",
-                                 "Base.py",
-                                 "Editor.py",
-                                 "Hostbase.py",
-                                 "Snapshots.py",
-                                 "Statistics.py",
-                                 "TCheetah.py",
-                                 "TGenshi.py"],
+    "lib/Bcfg2/Server/Plugins": ["Base.py"],
     }
 
 

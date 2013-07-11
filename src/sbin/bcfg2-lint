@@ -14,37 +14,36 @@ import Bcfg2.Server.Lint
 LOGGER = logging.getLogger('bcfg2-lint')
 
 
-def run_serverless_plugins(plugins, setup=None, errorhandler=None, files=None):
+def run_serverless_plugins(plugins, errorhandler=None, files=None):
     """ Run serverless plugins """
     LOGGER.debug("Running serverless plugins")
     for plugin_name, plugin in list(plugins.items()):
-        run_plugin(plugin, plugin_name, errorhandler=errorhandler,
-                   setup=setup, files=files)
+        run_plugin(plugin, plugin_name, errorhandler=errorhandler, files=files)
 
 
-def run_server_plugins(plugins, setup=None, errorhandler=None, files=None):
+def run_server_plugins(plugins, errorhandler=None, files=None):
     """ run plugins that require a running server to run """
-    core = load_server(setup)
+    core = load_server()
     try:
         LOGGER.debug("Running server plugins")
         for plugin_name, plugin in list(plugins.items()):
             run_plugin(plugin, plugin_name, args=[core],
-                       errorhandler=errorhandler, setup=setup, files=files)
+                       errorhandler=errorhandler, files=files)
     finally:
         core.shutdown()
 
 
-def run_plugin(plugin, plugin_name, setup=None, errorhandler=None,
-               args=None, files=None):
+def run_plugin(plugin, plugin_name, errorhandler=None, args=None, files=None):
     """ run a single plugin, server-ful or serverless. """
     LOGGER.debug("  Running %s" % plugin_name)
     if args is None:
         args = []
 
     if errorhandler is None:
-        errorhandler = get_errorhandler(setup)
+        errorhandler = get_errorhandler()
 
-    if setup is not None and setup.cfp.has_section(plugin_name):
+    setup = Bcfg2.Options.get_option_parser()
+    if setup.cfp.has_section(plugin_name):
         arg = setup
         for key, val in setup.cfp.items(plugin_name):
             arg[key] = val
@@ -60,8 +59,9 @@ def run_plugin(plugin, plugin_name, setup=None, errorhandler=None,
     return rv
 
 
-def get_errorhandler(setup):
+def get_errorhandler():
     """ get a Bcfg2.Server.Lint.ErrorHandler object """
+    setup = Bcfg2.Options.get_option_parser()
     if setup.cfp.has_section("errors"):
         errors = dict(setup.cfp.items("errors"))
     else:
@@ -69,9 +69,9 @@ def get_errorhandler(setup):
     return Bcfg2.Server.Lint.ErrorHandler(errors=errors)
 
 
-def load_server(setup):
+def load_server():
     """ load server """
-    core = Bcfg2.Server.Core.BaseCore(setup)
+    core = Bcfg2.Server.Core.BaseCore()
     core.load_plugins()
     core.block_for_fam_events(handle_events=True)
     return core
@@ -89,8 +89,9 @@ def load_plugin(module, obj_name=None):
     return getattr(mod, obj_name)
 
 
-def load_plugins(setup):
+def load_plugins():
     """ get list of plugins to run """
+    setup = Bcfg2.Options.get_option_parser()
     if setup['args']:
         plugin_list = setup['args']
     elif "bcfg2-repo-validate" in sys.argv[0]:
@@ -152,7 +153,7 @@ def main():
                    lint_plugins=Bcfg2.Options.LINT_PLUGINS)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
     optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
-    setup = Bcfg2.Options.OptionParser(optinfo)
+    setup = Bcfg2.Options.load_option_parser(optinfo)
     setup.parse(sys.argv[1:])
 
     log_args = dict(to_syslog=setup['syslog'], to_console=logging.WARNING)
@@ -168,9 +169,8 @@ def main():
     else:
         files = None
 
-    (serverlessplugins, serverplugins) = load_plugins(setup)
-
-    errorhandler = get_errorhandler(setup)
+    (serverlessplugins, serverplugins) = load_plugins()
+    errorhandler = get_errorhandler()
 
     if setup['showerrors']:
         for plugin in serverplugins.values() + serverlessplugins.values():
@@ -182,7 +182,7 @@ def main():
         raise SystemExit(0)
 
     run_serverless_plugins(serverlessplugins, errorhandler=errorhandler,
-                           setup=setup, files=files)
+                           files=files)
 
     if serverplugins:
         if errorhandler.errors:
@@ -198,7 +198,7 @@ def main():
                   "plugins")
         else:
             run_server_plugins(serverplugins, errorhandler=errorhandler,
-                               setup=setup, files=files)
+                               files=files)
 
     if errorhandler.errors or errorhandler.warnings or setup['verbose']:
         print("%d errors" % errorhandler.errors)

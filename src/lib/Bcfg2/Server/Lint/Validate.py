@@ -6,8 +6,8 @@ import sys
 import glob
 import fnmatch
 import lxml.etree
-from subprocess import Popen, PIPE, STDOUT
 import Bcfg2.Server.Lint
+from Bcfg2.Utils import Executor
 
 
 class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
@@ -39,7 +39,6 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
              "Bundler/*.xml": "bundle.xsd",
              "Bundler/*.genshi": "bundle.xsd",
              "Pkgmgr/*.xml": "pkglist.xsd",
-             "Base/*.xml": "base.xsd",
              "Rules/*.xml": "rules.xsd",
              "Defaults/*.xml": "defaults.xsd",
              "etc/report-configuration.xml": "report-configuration.xsd",
@@ -56,6 +55,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
 
         self.filelists = {}
         self.get_filelists()
+        self.cmd = Executor()
 
     def Run(self):
         schemadir = self.config['schema']
@@ -108,11 +108,10 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         try:
             return lxml.etree.parse(filename)
         except SyntaxError:
-            lint = Popen(["xmllint", filename], stdout=PIPE, stderr=STDOUT)
+            result = self.cmd.run(["xmllint", filename])
             self.LintError("xml-failed-to-parse",
-                           "%s fails to parse:\n%s" % (filename,
-                                                       lint.communicate()[0]))
-            lint.wait()
+                           "%s fails to parse:\n%s" %
+                           (filename, result.stdout + result.stderr))
             return False
         except IOError:
             self.LintError("xml-failed-to-read",
@@ -145,14 +144,11 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             if self.files is None:
                 cmd.append("--xinclude")
             cmd.extend(["--noout", "--schema", schemafile, filename])
-            lint = Popen(cmd, stdout=PIPE, stderr=STDOUT)
-            output = lint.communicate()[0]
-            # py3k fix
-            if not isinstance(output, str):
-                output = output.decode('utf-8')
-            if lint.wait():
+            result = self.cmd.run(cmd)
+            if not result.success:
                 self.LintError("xml-failed-to-verify",
-                               "%s fails to verify:\n%s" % (filename, output))
+                               "%s fails to verify:\n%s" %
+                               (filename, result.stdout + result.stderr))
                 return False
         return True
 

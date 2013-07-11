@@ -8,8 +8,8 @@ import shutil
 import logging
 import tempfile
 from itertools import chain
-from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
+from Bcfg2.Utils import Executor
 from Bcfg2.Server.Plugin import PluginExecutionError
 from Bcfg2.Compat import any, u_str, b64encode  # pylint: disable=W0622
 
@@ -20,9 +20,7 @@ class KeyData(Bcfg2.Server.Plugin.SpecificData):
     """ class to handle key data for HostKeyEntrySet """
 
     def __init__(self, name, specific, encoding):
-        Bcfg2.Server.Plugin.SpecificData.__init__(self,
-                                                  name,
-                                                  specific,
+        Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific,
                                                   encoding)
         self.encoding = encoding
 
@@ -135,7 +133,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         # do so once
         self.badnames = dict()
 
-        core.fam.AddMonitor(self.data, self)
+        self.fam = Bcfg2.Server.FileMonitor.get_fam()
+        self.fam.AddMonitor(self.data, self)
 
         self.static = dict()
         self.entries = dict()
@@ -148,6 +147,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             self.entries["/etc/ssh/" + keypattern] = \
                 HostKeyEntrySet(keypattern, self.data)
             self.Entries['Path']["/etc/ssh/" + keypattern] = self.build_hk
+
+        self.cmd = Executor()
 
     def get_skn(self):
         """Build memory cache of the ssh known hosts file."""
@@ -257,7 +258,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     self.skn = False
                 return
 
-        if event.filename in ['info', 'info.xml', ':info']:
+        if event.filename == 'info.xml':
             for entry in list(self.entries.values()):
                 entry.handle_event(event)
             return
@@ -279,12 +280,13 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                          (event.filename, action))
 
     def get_ipcache_entry(self, client):
-        """Build a cache of dns results."""
+        """ Build a cache of dns results. """
         if client in self.ipcache:
             if self.ipcache[client]:
                 return self.ipcache[client]
             else:
-                raise socket.gaierror
+                raise PluginExecutionError("No cached IP address for %s" %
+                                           client)
         else:
             # need to add entry
             try:
@@ -293,14 +295,17 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 self.ipcache[client] = (ipaddr, client)
                 return (ipaddr, client)
             except socket.gaierror:
-                ipaddr = Popen(["getent", "hosts", client],
-                               stdout=PIPE).stdout.read().strip().split()
-                if ipaddr:
-                    self.ipcache[client] = (ipaddr, client)
-                    return (ipaddr, client)
+                result = self.cmd.run(["getent", "hosts", client])
+                if result.success:
+                    ipaddr = result.stdout.strip().split()
+                    if ipaddr:
+                        self.ipcache[client] = (ipaddr, client)
+                        return (ipaddr, client)
                 self.ipcache[client] = False
-                self.logger.error("Failed to find IP address for %s" % client)
-                raise socket.gaierror
+                msg = "Failed to find IP address for %s: %s" % (client,
+                                                                result.error)
+                self.logger(msg)
+                raise PluginExecutionError(msg)
 
     def get_namecache_entry(self, cip):
         """Build a cache of name lookups from client IP addresses."""
@@ -370,7 +375,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     msg = "%s still not registered" % filename
                     self.logger.error(msg)
                     raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-                self.core.fam.handle_events_in_interval(1)
+                self.fam.handle_events_in_interval(1)
                 tries += 1
                 try:
                     self.entries[entry.get('name')].bind_entry(entry, metadata)
@@ -399,11 +404,10 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         cmd = ["ssh-keygen", "-q", "-f", temploc, "-N", "",
                "-t", keytype, "-C", "root@%s" % client]
         self.debug_log("SSHbase: Running: %s" % " ".join(cmd))
-        proc = Popen(cmd, stdout=PIPE, stdin=PIPE)
-        err = proc.communicate()[1]
-        if proc.wait():
+        result = self.cmd.run(cmd)
+        if not result.success:
             raise PluginExecutionError("SSHbase: Error running ssh-keygen: %s"
-                                       % err)
+                                       % result.error)
 
         try:
             shutil.copy(temploc, fileloc)

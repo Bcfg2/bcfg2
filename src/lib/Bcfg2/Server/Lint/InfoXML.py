@@ -4,7 +4,6 @@ import os
 import Bcfg2.Options
 import Bcfg2.Server.Lint
 from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
-from Bcfg2.Server.Plugins.Cfg.CfgLegacyInfo import CfgLegacyInfo
 
 
 class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
@@ -33,19 +32,9 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
                     self.LintError("no-infoxml",
                                    "No info.xml found for %s" % filename)
 
-            for entry in entryset.entries.values():
-                if isinstance(entry, CfgLegacyInfo):
-                    if not self.HandlesFile(entry.path):
-                        continue
-                    self.LintError("deprecated-info-file",
-                                   "Deprecated %s file found at %s" %
-                                   (os.path.basename(entry.name),
-                                    entry.path))
-
     @classmethod
     def Errors(cls):
         return {"no-infoxml": "warning",
-                "deprecated-info-file": "warning",
                 "paranoid-false": "warning",
                 "required-infoxml-attrs-missing": "error"}
 

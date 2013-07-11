@@ -59,7 +59,7 @@ Builtin Core
 
 The builtin server core consists of the core implementation
 (:class:`Bcfg2.Server.BuiltinCore.Core`) and the XML-RPC server
-implementation (:mod:`Bcfg2.SSLServer`).
+implementation (:mod:`Bcfg2.Server.SSLServer`).
 
 Core
 ~~~~
@@ -69,7 +69,7 @@ Core
 XML-RPC Server
 ~~~~~~~~~~~~~~
 
-.. automodule:: Bcfg2.SSLServer
+.. automodule:: Bcfg2.Server.SSLServer
 
 Multiprocessing Core
 --------------------

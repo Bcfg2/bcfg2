@@ -21,7 +21,7 @@ How to enable the Bazaar plugin
 Simply add "Bzr" to your plugins line in ``/etc/bcfg2.conf``::
 
     [server]
-    plugins = Base,Bundler,Cfg,...,Bzr
+    plugins = Bundler,Cfg,...,Bzr
 
 Usage notes
 ===========

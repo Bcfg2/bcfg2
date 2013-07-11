@@ -24,7 +24,6 @@ functionality. Available modes are listed below.
    perf
    pull
    query
-   snapshots
    tidy
    viz
    xcmd

@@ -4,6 +4,8 @@
 import os
 import sys
 import Bcfg2.Server.Plugin
+from Bcfg2.Options import get_option_parser
+from Bcfg2.Server.Statistics import track_statistics
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError
 
 
@@ -19,7 +21,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
     __identifier__ = None
     create = "Sources"
 
-    def __init__(self, filename, cachepath, fam, packages, setup):
+    def __init__(self, filename, cachepath, packages):
         """
         :param filename: The full path to ``sources.xml``
         :type filename: string
@@ -27,21 +29,16 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
                           :class:`Bcfg2.Server.Plugins.Packages.Source.Source`
                           data will be cached
         :type cachepath: string
-        :param fam: The file access monitor to use to create watches
-                    on ``sources.xml`` and any XIncluded files.
-        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
         :param packages: The Packages plugin object ``sources.xml`` is
                          being parsed on behalf of (i.e., the calling
                          object)
         :type packages: Bcfg2.Server.Plugins.Packages.Packages
-        :param setup: A Bcfg2 options dict
-        :type setup: dict
 
         :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginInitError` -
                  If ``sources.xml`` cannot be read
         """
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
-        Bcfg2.Server.Plugin.StructFile.__init__(self, filename, fam=fam,
+        Bcfg2.Server.Plugin.StructFile.__init__(self, filename,
                                                 should_monitor=True)
 
         #: The full path to the directory where
@@ -58,7 +55,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
                 self.logger.error("Could not create Packages cache at %s: %s" %
                                   (self.cachepath, err))
         #: The Bcfg2 options dict
-        self.setup = setup
+        self.setup = get_option_parser()
 
         #: The :class:`Bcfg2.Server.Plugins.Packages.Packages` that
         #: instantiated this ``PackagesSources`` object
@@ -107,7 +104,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
         load its data. """
         return sorted(list(self.parsed)) == sorted(self.extras)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def Index(self):
         Bcfg2.Server.Plugin.StructFile.Index(self)
         self.entries = []
@@ -120,7 +117,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
         ``Index`` is responsible for calling :func:`source_from_xml`
         for each ``Source`` tag in each file. """
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def source_from_xml(self, xsource):
         """ Create a
         :class:`Bcfg2.Server.Plugins.Packages.Source.Source` subclass
@@ -153,7 +150,7 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
             return None
 
         try:
-            source = cls(self.cachepath, xsource, self.setup)
+            source = cls(self.cachepath, xsource)
         except SourceInitError:
             err = sys.exc_info()[1]
             self.logger.error("Packages: %s" % err)

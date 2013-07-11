@@ -7,17 +7,17 @@
 MySQL example
 =============
 
-I had some time ago to continue with putting my configuration into 
+I had some time ago to continue with putting my configuration into
 Bcfg2 and maybe this helps someone else.
 
 I added a new bundle:
 
 .. code-block:: xml
 
-    <Bundle name="mysql-server" version="3.0">
+    <Bundle>
        <Path name="/root/bcfg2-install/mysql/users.sh"/>
        <Path name="/root/bcfg2-install/mysql/users.sql"/>
-       <PostInstall name="/root/bcfg2-install/mysql/users.sh"/>
+       <Action name="mysql_users"/>
        <Package name="mysql-server-4.1"/>
        <Service name="mysql"/>
     </Bundle>
@@ -31,9 +31,9 @@ The ``users.sh`` script looks like this:
     mysql --defaults-extra-file=/etc/mysql/debian.cnf mysql \
         < /root/bcfg2-install/mysql/users.sql
 
-On debian there is a user account in ``/etc/mysql/debian.cnf`` 
-automatically created, but you could also (manually) create a 
-user in the database that has enough permissions and add the 
+On debian there is a user account in ``/etc/mysql/debian.cnf``
+automatically created, but you could also (manually) create a
+user in the database that has enough permissions and add the
 login information in a file yourself. This file looks like this::
 
     [client]

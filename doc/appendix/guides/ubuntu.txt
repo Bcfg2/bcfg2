@@ -82,7 +82,7 @@ You are now ready to start your bcfg2 server for the first time.::
     root@lucid:~# tail /var/log/syslog
     Dec 17 22:07:02 lucid bcfg2-server[17523]: serving bcfg2-server at https://lucid:6789
     Dec 17 22:07:02 lucid bcfg2-server[17523]: serve_forever() [start]
-    Dec 17 22:07:02 lucid bcfg2-server[17523]: Processed 16 fam events in 0.502 seconds. 0 coalesced
+    Dec 17 22:07:02 lucid bcfg2-server[17523]: Handled 16 events in 0.502 seconds
 
 Run bcfg2 to be sure you are able to communicate with the server::
 
@@ -117,7 +117,7 @@ Replace Pkgmgr with Packages in the plugins line of ``bcfg2.conf``::
     root@lucid:~# cat /etc/bcfg2.conf
     [server]
     repository = /var/lib/bcfg2
-    plugins = SSHbase,Cfg,Packages,Rules,Metadata,Base,Bundler
+    plugins = SSHbase,Cfg,Packages,Rules,Metadata,Bundler
 
     [statistics]
     sendmailpath = /usr/lib/sendmail
@@ -181,9 +181,9 @@ Create Packages layout (as per :ref:`packages-exampleusage`) in
       </Group>
     </Sources>
 
-Due to the :ref:`server-plugins-generators-packages-magic-groups`,
-we need to modify our Metadata. Let's add an **ubuntu-lucid**
-group which inherits the **ubuntu** group already present in
+To make these sources apply to our clients, we need to modify our
+Metadata. Let's add an **ubuntu-lucid** group which inherits the
+**ubuntu** group already present in
 ``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file should look
 something like this
 
@@ -224,7 +224,7 @@ Probes to your plugins line in ``bcfg2.conf`` and create the Probe.
 .. code-block:: sh
 
     root@lucid:~# grep plugins /etc/bcfg2.conf
-    plugins = Base,Bundler,Cfg,...,Probes
+    plugins = Bundler,Cfg,...,Probes
     root@lucid:~# mkdir /var/lib/bcfg2/Probes
     root@lucid:~# cat /var/lib/bcfg2/Probes/groups
     #!/bin/sh
@@ -256,7 +256,7 @@ Now we restart the bcfg2-server::
     Dec 17 22:37:27 lucid bcfg2-server[17937]: service available at https://lucid:6789
     Dec 17 22:37:27 lucid bcfg2-server[17937]: serving bcfg2-server at https://lucid:6789
     Dec 17 22:37:27 lucid bcfg2-server[17937]: serve_forever() [start]
-    Dec 17 22:37:28 lucid bcfg2-server[17937]: Processed 17 fam events in 0.502 seconds. 0 coalesced
+    Dec 17 22:37:28 lucid bcfg2-server[17937]: Handled 17 events in 0.502 seconds
 
 Start managing packages
 -----------------------
@@ -267,8 +267,8 @@ it with the ubuntu-standard package.
 .. code-block:: xml
 
     root@lucid:~# cat /var/lib/bcfg2/Bundler/base-packages.xml
-    <Bundle name='base-packages'>
-            <Package name='ubuntu-standard'/>
+    <Bundle>
+      <Package name='ubuntu-standard'/>
     </Bundle>
 
 You need to reference the bundle from your Metadata. The resulting
@@ -357,14 +357,14 @@ while, I ended up with a minimal bundle that looks like this
 
 .. code-block:: xml
 
-    <Bundle name='base-packages'>
+    <Bundle>
             <Package name='bash-completion'/>
             <Package name='bcfg2-server'/>
             <Package name='debconf-i18n'/>
             <Package name='deborphan'/>
             <Package name='diffutils'/>
             <Package name='e2fsprogs'/>
-            <Package name='fam'/>
+            <Package name='gamin'/>
             <Package name='grep'/>
             <Package name='grub-pc'/>
             <Package name='gzip'/>
@@ -379,7 +379,7 @@ while, I ended up with a minimal bundle that looks like this
             <Package name='mlocate'/>
             <Package name='ncurses-base'/>
             <Package name='openssh-server'/>
-            <Package name='python-fam'/>
+            <Package name='python-gamin'/>
             <Package name='tar'/>
             <Package name='ubuntu-minimal'/>
             <Package name='ubuntu-standard'/>
@@ -422,7 +422,7 @@ As you can see below, I no longer have any unmanaged packages. ::
     Incorrect entries:      0
     Total managed entries:  247
     Unmanaged entries:      10
-     Service:bcfg2         Service:fam           Service:killprocs     Service:rc.local      Service:single
+     Service:bcfg2          Service:killprocs     Service:rc.local      Service:single
      Service:bcfg2-server  Service:grub-common   Service:ondemand      Service:rsync         Service:ssh
 
 Manage services
@@ -436,7 +436,6 @@ entries to our bundle...
     <!-- basic services -->
     <Service name='bcfg2'/>
     <Service name='bcfg2-server'/>
-    <Service name='fam'/>
     <Service name='grub-common'/>
     <Service name='killprocs'/>
     <Service name='ondemand'/>
@@ -455,7 +454,6 @@ entries to our bundle...
             <!-- basic services -->
             <Service type='deb' status='on' name='bcfg2'/>
             <Service type='deb' status='on' name='bcfg2-server'/>
-            <Service type='deb' status='on' name='fam'/>
             <Service type='deb' status='on' name='grub-common'/>
             <Service type='deb' status='on' name='killprocs'/>
             <Service type='deb' status='on' name='ondemand'/>

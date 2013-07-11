@@ -7,7 +7,16 @@ import fnmatch
 import logging
 import Bcfg2.Client.Tools
 from Bcfg2.Client import prompt
-from Bcfg2.Compat import any, all  # pylint: disable=W0622
+from Bcfg2.Options import get_option_parser
+from Bcfg2.Compat import any, all, cmp  # pylint: disable=W0622
+
+
+def cmpent(ent1, ent2):
+    """Sort entries."""
+    if ent1.tag != ent2.tag:
+        return cmp(ent1.tag, ent2.tag)
+    else:
+        return cmp(ent1.get('name'), ent2.get('name'))
 
 
 def matches_entry(entryspec, entry):
@@ -41,20 +50,25 @@ def passes_black_list(entry, blacklist):
 class Frame(object):
     """Frame is the container for all Tool objects and state information."""
 
-    def __init__(self, config, setup, times, drivers, dryrun):
+    def __init__(self, config, times):
+        self.setup = get_option_parser()
         self.config = config
         self.times = times
-        self.dryrun = dryrun
+        self.dryrun = self.setup['dryrun']
         self.times['initialization'] = time.time()
-        self.setup = setup
         self.tools = []
+
+        #: A dict of the state of each entry.  Keys are the entries.
+        #: Values are boolean: True means that the entry is good,
+        #: False means that the entry is bad.
         self.states = {}
         self.whitelist = []
         self.blacklist = []
         self.removal = []
         self.logger = logging.getLogger(__name__)
+        drivers = self.setup['drivers']
         for driver in drivers[:]:
-            if (driver not in Bcfg2.Client.Tools.drivers and
+            if (driver not in Bcfg2.Client.Tools.__all__ and
                 isinstance(driver, str)):
                 self.logger.error("Tool driver %s is not available" % driver)
                 drivers.remove(driver)
@@ -76,7 +90,7 @@ class Frame(object):
 
         for tool in list(tclass.values()):
             try:
-                self.tools.append(tool(self.logger, setup, config))
+                self.tools.append(tool(config))
             except Bcfg2.Client.Tools.ToolInstantiationError:
                 continue
             except:
@@ -256,7 +270,7 @@ class Frame(object):
                 self.states[entry] = False
         for tool in self.tools:
             try:
-                tool.Inventory(self.states)
+                self.states.update(tool.Inventory())
             except:
                 self.logger.error("%s.Inventory() call failed:" % tool.name,
                                   exc_info=1)
@@ -326,28 +340,31 @@ class Frame(object):
 
         # first process prereq actions
         for bundle in bundles[:]:
-            if bundle.tag != 'Bundle':
-                continue
-            bmodified = len([item for item in bundle
-                             if item in self.whitelist])
+            if bundle.tag == 'Bundle':
+                bmodified = any(item in self.whitelist for item in bundle)
+            else:
+                bmodified = False
             actions = [a for a in bundle.findall('./Action')
-                       if (a.get('timing') != 'post' and
+                       if (a.get('timing') in ['pre', 'both'] and
                            (bmodified or a.get('when') == 'always'))]
             # now we process all "always actions"
             if self.setup['interactive']:
                 self.promptFilter(iprompt, actions)
             self.DispatchInstallCalls(actions)
 
+            if bundle.tag != 'Bundle':
+                continue
+
             # need to test to fail entries in whitelist
-            if False in [self.states[a] for a in actions]:
+            if not all(self.states[a] for a in actions):
                 # then display bundles forced off with entries
-                self.logger.info("Bundle %s failed prerequisite action" %
-                                 (bundle.get('name')))
+                self.logger.info("%s %s failed prerequisite action" %
+                                 (bundle.tag, bundle.get('name')))
                 bundles.remove(bundle)
                 b_to_remv = [ent for ent in self.whitelist if ent in bundle]
                 if b_to_remv:
-                    self.logger.info("Not installing entries from Bundle %s" %
-                                     (bundle.get('name')))
+                    self.logger.info("Not installing entries from %s %s" %
+                                     (bundle.tag, bundle.get('name')))
                     self.logger.info(["%s:%s" % (e.tag, e.get('name'))
                                       for e in b_to_remv])
                     for ent in b_to_remv:
@@ -372,7 +389,7 @@ class Frame(object):
             if not handled:
                 continue
             try:
-                tool.Install(handled, self.states)
+                self.states.update(tool.Install(handled))
             except:
                 self.logger.error("%s.Install() call failed:" % tool.name,
                                   exc_info=1)
@@ -392,7 +409,7 @@ class Frame(object):
             tbm = [(t, b) for t in self.tools for b in mbundles]
             for tool, bundle in tbm:
                 try:
-                    tool.Inventory(self.states, [bundle])
+                    self.states.update(tool.Inventory(structures=[bundle]))
                 except:
                     self.logger.error("%s.Inventory() call failed:" %
                                       tool.name,
@@ -422,10 +439,20 @@ class Frame(object):
                 func = "BundleNotUpdated"
             for tool in self.tools:
                 try:
-                    getattr(tool, func)(bundle, self.states)
+                    self.states.update(getattr(tool, func)(bundle))
                 except:
-                    self.logger.error("%s.%s() call failed:" %
-                                      (tool.name, func), exc_info=1)
+                    self.logger.error("%s.%s(%s:%s) call failed:" %
+                                      (tool.name, func, bundle.tag,
+                                       bundle.get("name")), exc_info=1)
+
+        for indep in self.config.findall('.//Independent'):
+            for tool in self.tools:
+                try:
+                    self.states.update(tool.BundleNotUpdated(indep))
+                except:
+                    self.logger.error("%s.BundleNotUpdated(%s:%s) call failed:"
+                                      % (tool.name, indep.tag,
+                                         indep.get("name")), exc_info=1)
 
     def Remove(self):
         """Remove extra entries."""

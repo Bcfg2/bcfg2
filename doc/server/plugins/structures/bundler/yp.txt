@@ -14,7 +14,7 @@ treatment too.
 
 .. code-block:: xml
 
-    <Bundle name='yp' version='2.0'>
+    <Bundle>
       <Package name='yp-tools'/>
       <Path name='/etc/nsswitch.conf'/>
       <Path name='/etc/yp.conf'/>

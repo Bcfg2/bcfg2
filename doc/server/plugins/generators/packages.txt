@@ -18,14 +18,10 @@ through those channels.
 Limiting sources to groups
 ==========================
 
-`sources.xml`_ processes ``<Group>`` and ``<Client>`` tags just like
-Bundles. In addition to any groups or clients specified that way,
-clients must be a member of the appropriate architecture group as
-specified in a Source stanza. In total, in order for a source to be
-associated with a client, the client must be in any explicit groups or
-clients specified in `sources.xml`_, and any specified architecture
-groups.  If `"Magic Groups"`_ are enabled, then the client must be a
-member of a matching magic group as well.
+``Packages/sources.xml`` processes ``<Group>`` and ``<Client>`` tags
+just like Bundles. In addition to any groups or clients specified that
+way, clients must be a member of the appropriate architecture group as
+specified in a Source stanza.
 
 Memberships in architecture groups is needed so that Packages can map
 software sources to clients. There is no other way to handle this than
@@ -35,62 +31,6 @@ When multiple sources are specified, clients are associated with each
 source to which they apply (based on group memberships, as described
 above). Packages and dependencies are resolved from all applicable
 sources.
-
-.. note::
-
-    To recap, a client needs to be a member of the **Architecture**
-    group and any other groups defined in your
-    `sources.xml`_ file in order for the client to be
-    associated to the proper sources.  If you are using
-    :ref:`server-plugins-generators-packages-magic-groups`, then a
-    client must also be a member of the appropriate OS group.
-
-.. _server-plugins-generators-packages-magic-groups:
-
-"Magic Groups"
-==============
-
-.. deprecated:: 1.3.0
-
-Packages has the ability to use a feature known as "magic groups"; it
-is the only plugin to use that feature. Most plugins operate based on
-client group memberships, without any concern for the particular names
-chosen for groups by the user. The Packages plugin is the sole
-exception to this rule. Packages needs to "know" two different sorts
-of facts about clients. The first is the basic OS/distro of the
-client, enabling classes of sources. The second is the architecture of
-the client, enabling sources for a given architecture. In addition to
-these magic groups, each source may also specify non-magic groups to
-limit the source's applicability to group member clients.
-
-+--------+----------+--------------+
-| Source | OS Group | Architecture |
-+========+==========+==============+
-| Apt    | debian   | i386         |
-+--------+----------+--------------+
-| Apt    | ubuntu   | amd64        |
-+--------+----------+--------------+
-| Apt    | nexenta  |              |
-+--------+----------+--------------+
-| Apt    | apt      |              |
-+--------+----------+--------------+
-| Yum    | redhat   | i386         |
-+--------+----------+--------------+
-| Yum    | centos   | x86_64       |
-+--------+----------+--------------+
-| Yum    | fedora   |              |
-+--------+----------+--------------+
-| Yum    | yum      |              |
-+--------+----------+--------------+
-
-Magic OS groups are disabled by default in Bcfg2 1.3 and greater.  If
-you require magic groups, you can enable them by setting
-``magic_groups`` to ``1`` in the ``[packages]`` section of
-``bcfg2.conf``.
-
-Magic groups will be removed in a future release.
-
-Magic architecture groups cannot be disabled.
 
 Setup
 =====
@@ -102,14 +42,13 @@ Three basic steps are required for Packages to work properly.
    software  repositories  should  be  used,  and  which  clients  are
    eligible to use each one.
 #. Ensure that clients are members of the proper groups. Each client
-   should be a member of all of the groups listed in the `sources.xml`
-   (like ubuntu-intrepid or centos-5.2 in the following examples), one
-   of the architecture groups listed in the source configuration
-   (i386, amd64 or x86_64 in the following examples), and one of the
-   magic groups listed above, if magic groups are enabled. '''Failure
-   to do this will result in the source either not applying to the
-   client, or only architecture independent packages being made
-   available to the client.'''
+   should be a member of all of the groups listed in the
+   ``sources.xml`` (like ubuntu-intrepid or centos-5.2 in the
+   following examples), and one of the architecture groups listed in
+   the source configuration (i386, amd64 or x86_64 in the following
+   examples). '''Failure to do this will result in the source either
+   not applying to the client, or only architecture independent
+   packages being made available to the client.'''
 #. Add Package entries to bundles.
 #. Sit back and relax, as dependencies are resolved, and automatically
    added to client configurations.
@@ -122,6 +61,7 @@ Packages plugin.  It processes ``<Group>`` and ``<Client>`` tags just like
 Bundles. The primary element in ``sources.xml`` is the Source tag:
 
 .. xml:element:: Source
+   :noautodep: py:genshiElements
 
 Handling GPG Keys
 -----------------
@@ -198,9 +138,7 @@ processed. After this phase, but before entry binding, a list of packages
 and the client metadata instance is passed into Packages' resolver. This
 process determines a superset of packages that will fully satisfy
 dependencies of all package entries included in structures, and reports
-any prerequisites that cannot be satisfied. This facility should largely
-remove the need to use the :ref:`Base <server-plugins-structures-base>`
-plugin.
+any prerequisites that cannot be satisfied.
 
 Disabling dependency resolution
 -------------------------------
@@ -451,7 +389,7 @@ attribute, e.g.:
 
 .. code-block:: xml
 
-    <Bundle name="yum">
+    <Bundle>
       <Group name="sles">
         <Path name="/etc/yum/yum.repos.d/bcfg2.repo"
               altsrc="/etc/yum.repos.d/bcfg2.repo"/>

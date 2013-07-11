@@ -12,11 +12,6 @@ class APK(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'apk'
     pkgtool = ("/sbin/apk add %s", ("%s", ["name"]))
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
-        self.installed = {}
-        self.RefreshPackages()
-
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
         names = self.cmd.run("/sbin/apk info").stdout.splitlines()

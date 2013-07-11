@@ -8,11 +8,11 @@ NagiosGen
 
 This page describes the installation and use of the `NagiosGen`_ plugin.
 
-.. _NagiosGen: http://trac.mcs.anl.gov/projects/bcfg2/browser/src/lib/Server/Plugins/NagiosGen.py
+.. _NagiosGen: https://github.com/Bcfg2/bcfg2/blob/maint/src/lib/Bcfg2/Server/Plugins/NagiosGen.py
 
 Update ``/etc/bcfg2.conf``, adding NagiosGen to plugins::
 
-    plugins = Base,Bundler,Cfg,...,NagiosGen
+    plugins = Bundler,Cfg,...,NagiosGen
 
 Create the NagiosGen directory::
 
@@ -124,7 +124,7 @@ Create a nagios Bcfg2 bundle ``/var/lib/bcfg2/Bundler/nagios.xml``
 
 .. code-block:: xml
 
-    <Bundle name='nagios' version='2.0'>
+    <Bundle>
       <Path name='/etc/nagiosgen.status'/>
       <Group name='rh'>
         <Group name='nagios-server'>

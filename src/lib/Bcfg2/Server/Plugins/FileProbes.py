@@ -11,6 +11,7 @@ import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
+import Bcfg2.Server.FileMonitor
 from Bcfg2.Compat import b64decode
 
 #: The probe we send to clients to get the file data.  Returns an XML
@@ -70,7 +71,6 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
         self.config = \
             Bcfg2.Server.Plugin.StructFile(os.path.join(self.data,
                                                         'config.xml'),
-                                           fam=core.fam,
                                            should_monitor=True,
                                            create=self.name)
         self.entries = dict()
@@ -198,7 +198,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             if tries >= 10:
                 self.logger.error("%s still not registered" % filename)
                 return
-            self.core.fam.handle_events_in_interval(1)
+            Bcfg2.Server.FileMonitor.get_fam().handle_events_in_interval(1)
             try:
                 cfg.entries[filename].bind_entry(entry, metadata)
             except Bcfg2.Server.Plugin.PluginExecutionError:

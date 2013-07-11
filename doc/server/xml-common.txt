@@ -1,0 +1,399 @@
+.. -*- mode: rst -*-
+
+.. _xml-features:
+
+=====================
+ Common XML Features
+=====================
+
+Most of the XML files in Bcfg2 have a common set of features that are
+supported.  These are described in some detail below, and a precise
+rundown of which features are supported by which files is provided.
+
+.. _xml-group-client-tags:
+
+Group and Client tags
+=====================
+
+These allow the portions of an XML document inside a Client or Group
+tag to only apply to the given client group.  That is, they can be
+thought of as conditionals, where the following are roughly equivalent:
+
+.. code-block:: xml
+
+    <Group name="group1">
+      <Path name="/etc/foo.conf"/>
+    </Group>
+
+And::
+
+    If client is a member of group1 then
+        Manage the abstract path "/etc/foo.conf"
+
+Nested Group and Client tags are conjunctive (logical ``AND``).  For
+instance, the following are roughly equivalent:
+
+.. code-block:: xml
+
+    <Group name="group1">
+      <Client name="foo.example.com">
+        <Package name="bar"/>
+      </Client>
+      <Package name="baz"/>
+    </Group>
+
+And::
+
+    If client is a member of group1 and has hostname "foo.example.com" then
+        Manage the abstract package "bar"
+    If client is a member of group1 then
+        Manage the abstract package "baz"
+
+There is no convenient ``else``; you must specify all conditions
+explicitly.  To do this, Group and Client tags may be negated, as in:
+
+.. code-block:: xml
+
+    <Group name="group1">
+      <Service name="foo"/>
+    </Group>
+    <Group name="group1" negate="true">
+      <Service name="bar"/>
+    </Group>
+
+This is roughly equivalent to::
+
+    If client is a member of group1 then
+        Manage the abstract service "foo"
+    If client is not a member of group 1 then
+        Manage the abstract service "bar"
+
+Or, more compactly:
+
+    If client is a member of group1 then
+        Manage the abstract service "foo"
+    Else
+        Manage the abstract service "bar"
+
+As an example, consider the following :ref:`bundle
+<server-plugins-structures-bundler-index>`:
+
+.. code-block:: xml
+
+    <Bundle>
+      <Path name='/etc/ssh/ssh_host_dsa_key'/>
+      <Path name='/etc/ssh/ssh_host_rsa_key'/>
+      <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>
+      <Path name='/etc/ssh/ssh_host_rsa_key.pub'/>
+      <Path name='/etc/ssh/ssh_host_key'/>
+      <Path name='/etc/ssh/ssh_host_key.pub'/>
+      <Path name='/etc/ssh/sshd_config'/>
+      <Path name='/etc/ssh/ssh_config'/>
+      <Path name='/etc/ssh/ssh_known_hosts'/>
+      <Group name='rpm'>
+        <Package name='openssh'/>
+        <Package name='openssh-askpass'/>
+        <Service name='sshd'/>
+        <Group name='fedora' >
+           <Group name='fedora14' negate='true'>
+             <Package name='openssh-clients'/>
+           </Group>
+           <Package name='openssh-server'/>
+        </Group>
+      </Group>
+      <Group name='deb'>
+        <Package name='ssh'/>
+        <Service name='ssh'/>
+      </Group>
+      <Client name='trust.example.com'>
+        <Path name='/etc/ssh/shosts.equiv'/>
+      </Client>
+    </Bundle>
+
+In this bundle, most of the entries are common to all systems. Clients
+in group ``deb`` get one extra package and service, while clients in
+group ``rpm`` get two extra packages and an extra service. In
+addition, clients in group ``fedora`` *and* group ``rpm`` get one
+extra package entries, unless they are not in the ``fedora14`` group,
+in which case, they get an extra package. The client
+``trust.example.com`` gets one extra file that is not distributed to
+any other clients.
+
++------------------------+-----------------------------------+
+| Group/Hostname         | Entry                             |
++========================+===================================+
+| all                    | ``/etc/ssh/ssh_host_dsa_key``     |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_host_rsa_key``     |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_host_dsa_key.pub`` |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_host_rsa_key.pub`` |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_host_key``         |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_host_key.pub``     |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/sshd_config``          |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_config``           |
++------------------------+-----------------------------------+
+| all                    | ``/etc/ssh/ssh_known_hosts``      |
++------------------------+-----------------------------------+
+| ``rpm``                | Package ``openssh``               |
++------------------------+-----------------------------------+
+| ``rpm``                | Package ``openssh-askpass``       |
++------------------------+-----------------------------------+
+| ``rpm``                | Service ``sshd``                  |
++------------------------+-----------------------------------+
+| ``rpm`` AND ``fedora`` | Package ``openssh-server``        |
++------------------------+-----------------------------------+
+| ``rpm`` AND ``fedora`` | Package ``openssh-clients``       |
+| AND NOT ``fedora14``   |                                   |
++------------------------+-----------------------------------+
+| ``deb``                | Package ``ssh``                   |
++------------------------+-----------------------------------+
+| ``deb``                | Service ``ssh``                   |
++------------------------+-----------------------------------+
+| ``trust.example.com``  | ``/etc/ssh/shosts.equiv``         |
++------------------------+-----------------------------------+
+
+.. _xml-genshi-templating:
+
+Genshi templating
+=================
+
+Genshi XML templates allow you to use the `Genshi
+<http://genshi.edgewall.org>`_ templating system to dynamically
+generate XML file content for a given client.  Genshi templating can
+be enabled on a file by adding the Genshi namespace to the top-level
+tag, e.g.:
+
+.. code-block:: xml
+
+    <Bundle xmlns:py="http://genshi.edgewall.org/">
+
+Several variables are pre-defined inside Genshi XML templates:
+
++-------------+--------------------------------------------------------+
+| Name        | Description                                            |
++=============+========================================================+
+| metadata    | :ref:`Client metadata                                  |
+|             | <server-plugins-grouping-metadata-clientmetadata>`     |
++-------------+--------------------------------------------------------+
+| repo        | The path to the Bcfg2 repository on the filesystem     |
++-------------+--------------------------------------------------------+
+
+.. note::
+
+    ``<Group>`` and ``<Client>`` tags can be used inside templates as
+    of Bcfg2 1.2, but they do not behave the same as using a Genshi
+    conditional, e.g.::
+
+        <py:if test="'groupname' in metadata.groups">
+	</py:if>
+
+    The conditional is evaluated when the template is rendered, so
+    code inside the conditional is not executed if the conditional
+    fails.  A ``<Group>`` tag is evaluated *after* the template is
+    rendered, so code inside the tag is always executed.  This is an
+    important distinction: if you have code that will fail on some
+    groups, you *must* use a Genshi conditional, not a ``<Group>``
+    tag.  The same caveats apply to ``<Client>`` tags.
+
+.. _xml-genshi-reference:
+
+Genshi XML Template Reference
+-----------------------------
+
+The Genshi XML templating language is described in depth at `Genshi
+<http://genshi.edgewall.org>`_.  The XML schema reference follows.
+
+Genshi Tags
+~~~~~~~~~~~
+
+.. xml:group:: genshiElements
+   :namespace: py
+
+Genshi Attributes
+~~~~~~~~~~~~~~~~~
+
+.. xml:attributegroup:: genshiAttrs
+   :namespace: py
+
+.. _xml-encryption:
+
+Encryption
+==========
+
+You can encrypt data in XML files to protect that data from other
+people who need access to the repository.  The data is decrypted
+transparently on-the-fly by the server.
+
+.. note::
+
+    This feature is *not* intended to secure the files against a
+    malicious attacker who has gained access to your Bcfg2 server, as
+    the encryption passphrases are held in plaintext in
+    ``bcfg2.conf``.  This is only intended to make it easier to use a
+    single Bcfg2 repository with multiple admins who should not
+    necessarily have access to each other's sensitive data.
+
+XML files are encrypted on a per-element basis; that is, rather than
+encrypting the whole file, only the character content of individual
+elements is encrypted.  This makes it easier to track changes to the
+file in a VCS, and also lets unprivileged users work with the other
+data in the file.  Only character content of an element can be
+encrypted; attribute content and XML elements themselves cannot be
+encrypted.
+
+By default, decryption is *strict*; that is, if any element cannot be
+decrypted, parsing of the file is aborted.  See
+:ref:`server-encryption-lax-strict` for information on changing this
+on a global or per-file basis.
+
+To encrypt or decrypt a file, use :ref:`bcfg2-crypt`.
+
+See :ref:`server-encryption` for more details on encryption in Bcfg2
+in general.
+
+XInclude
+========
+
+.. versionadded:: 0.9.0
+
+`XInclude <http://www.w3.org/TR/xinclude/>`_ is a W3C specification
+for the inclusion of external XML documents into XML source files,
+allowing complex definitions to be split into smaller, more manageable
+pieces.  For instance, in the :ref:`server-plugins-grouping-metadata`
+``groups.xml`` file, you might do:
+
+.. code-block:: xml
+
+    <Groups xmlns:xi="http://www.w3.org/2001/XInclude">
+      <xi:include href="my-groups.xml" />
+      <xi:include href="their-groups.xml" />
+    </Groups>
+
+To enable XInclude on a file, you need only add the XInclude namespace
+to the top-level tag.
+
+You can also *optionally* include a file that may or may not exist
+with the ``fallback`` tag:
+
+.. code-block:: xml
+
+    <Groups xmlns:xi="http://www.w3.org/2001/XInclude">
+      <xi:include href="my-groups.xml"/>
+      <xi:include href="their-groups.xml"><xi:fallback/></xi:include>
+    </Groups>
+
+In this case, if ``their-groups.xml`` does not exist, no error will be
+raised and everything will work fine.  (You can also use ``fallback``
+to include a different file, or explicit content in the case that the
+parent include does not exist.)
+
+XInclude can only include complete, well-formed XML files.  In some
+cases, it may not be entirely obvious or intuitive how to structure
+such an included file to conform to the schema, although in general
+the included files should be structure exactly like the parent file.
+
+Wildcard XInclude
+~~~~~~~~~~~~~~~~~
+
+.. versionadded:: 1.3.1
+
+Bcfg2 supports an extension to XInclude that allows you to use shell
+globbing in the hrefs.  (Stock XInclude doesn't support this, since
+the href is supposed to be a URL.)
+
+For instance:
+
+.. code-block:: xml
+
+    <Groups xmlns:xi="http://www.w3.org/2001/XInclude">
+      <xi:include href="groups/*.xml"/>
+    </Groups>
+
+This would include all ``*.xml`` files in the ``groups`` subdirectory.
+
+Note that if a glob finds no files, that is treated the same as if a
+single included file does not exist.  You should use the ``fallback``
+tag, described above, if a glob may potentially find no files.
+
+Feature Matrix
+==============
+
++-------------------------------------------------+--------------+--------+------------+------------+
+| File                                            | Group/Client | Genshi | Encryption | XInclude   |
++=================================================+==============+========+============+============+
+| :ref:`ACL ip.xml <server-plugins-misc-acl>'     | No           | No     | No         | Yes        |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`ACL metadata.xml                          | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-misc-acl>'                      |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Bundler                                   | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-structures-bundler-index>`      |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`info.xml <server-info>`                   | Yes [#f1]_   | Yes    | Yes        | Yes        |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`privkey.xml and pubkey.xml                | Yes          | Yes    | Yes        | Yes [#f2]_ |
+| <server-plugins-generators-cfg-sshkeys>`        |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`authorizedkeys.xml                        | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-cfg-sshkeys>`        |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Decisions                                 | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-decisions>`          |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Defaults                                  | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-structures-defaults>`           |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`FileProbes                                | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-probes-fileprobes>`             |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`GroupPatterns                             | No           | No     | No         | Yes        |
+| <server-plugins-grouping-grouppatterns>`        |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Metadata clients.xml                      | No           | No     | No         | Yes        |
+| <server-plugins-grouping-metadata-clients-xml>` |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Metadata groups.xml                       | Yes [#f3]_   | No     | No         | Yes        |
+| <server-plugins-grouping-metadata-groups-xml>`  |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`NagiosGen                                 | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-nagiosgen>`          |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Packages                                  | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-packages>`           |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Pkgmgr                                    | Yes          | No     | No         | No         |
+| <server-plugins-generators-pkgmgr>`             |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Properties                                | Yes [#f4]_   | Yes    | Yes        | Yes        |
+| <server-plugins-connectors-properties>`         |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Rules <server-plugins-generators-rules>`  | Yes          | Yes    | Yes        | Yes        |
++-------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`SSLCA cert.xml and key.xml                | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-sslca>`              |              |        |            |            |
++-------------------------------------------------+--------------+--------+------------+------------+
+
+.. rubric:: Footnotes
+
+.. [#f1] ``info.xml`` also supports conditional Path tags; see
+         :ref:`server-info` for more.
+.. [#f2] XInclude is supported, but the schema has not been modified
+         to allow including files that are structured exactly like the
+         parent.  You may need to read the schema to understand how to
+         use XInclude properly.
+.. [#f3] The semantics of Group tags in ``groups.xml`` is slightly
+         different; see
+         :ref:`server-plugins-grouping-metadata-groups-xml` for
+         details.
+.. [#f4] Group and Client tags in XML Properties are not automatic by
+         default; they can be resolved by use of either the
+         ``Match()`` or ``XMLMatch()`` methods, or by use of the
+         :ref:`server-plugins-connectors-properties-automatch`
+         feature. See :ref:`server-plugins-connectors-properties-xml`
+         for details.

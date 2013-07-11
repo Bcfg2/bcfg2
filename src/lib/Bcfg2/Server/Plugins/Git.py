@@ -3,12 +3,12 @@ git. """
 
 import sys
 from Bcfg2.Server.Plugin import Version, PluginExecutionError
-from subprocess import Popen, PIPE
 
 try:
     import git
     HAS_GITPYTHON = True
 except ImportError:
+    from Bcfg2.Utils import Executor
     HAS_GITPYTHON = False
 
 
@@ -24,10 +24,12 @@ class Git(Version):
         Version.__init__(self, core, datastore)
         if HAS_GITPYTHON:
             self.repo = git.Repo(self.vcs_root)
+            self.cmd = None
         else:
             self.logger.debug("Git: GitPython not found, using CLI interface "
                               "to Git")
             self.repo = None
+            self.cmd = Executor()
         self.logger.debug("Initialized git plugin with git directory %s" %
                           self.vcs_path)
 
@@ -45,11 +47,10 @@ class Git(Version):
                 cmd = ["git", "--git-dir", self.vcs_path,
                        "--work-tree", self.vcs_root, "rev-parse", "HEAD"]
                 self.debug_log("Git: Running %s" % cmd)
-                proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-                rv, err = proc.communicate()
-                if proc.wait():
-                    raise Exception(err)
-                return rv
+                result = self.cmd.run(cmd)
+                if not result.success:
+                    raise Exception(result.stderr)
+                return result.stdout
         except:
             raise PluginExecutionError("Git: Error getting revision from %s: "
                                        "%s" % (self.vcs_root,

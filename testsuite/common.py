@@ -13,6 +13,7 @@ import re
 import sys
 import codecs
 import unittest
+import lxml.etree
 from mock import patch, MagicMock, _patch, DEFAULT
 from Bcfg2.Compat import wraps
 
@@ -265,11 +266,18 @@ class Bcfg2TestCase(unittest.TestCase):
         """ Test that the two XML trees given are equal.  Both
         elements and all children are expected to have ``name``
         attributes. """
-        self.assertEqual(el1.tag, el2.tag, msg=msg)
-        self.assertEqual(el1.text, el2.text, msg=msg)
-        self.assertItemsEqual(el1.attrib.items(), el2.attrib.items(), msg=msg)
+        if msg is None:
+            msg = "XML trees were not equal"
+        fullmsg = msg + "\nFirst:  %s" % lxml.etree.tostring(el1) + \
+            "\nSecond: %s" % lxml.etree.tostring(el2)
+
+        self.assertEqual(el1.tag, el2.tag, msg=fullmsg)
+        self.assertEqual(el1.text, el2.text, msg=fullmsg)
+        self.assertItemsEqual(el1.attrib.items(), el2.attrib.items(),
+                              msg=fullmsg)
         self.assertEqual(len(el1.getchildren()),
-                         len(el2.getchildren()))
+                         len(el2.getchildren()),
+                         msg=fullmsg)
         for child1 in el1.getchildren():
             cname = child1.get("name")
             self.assertIsNotNone(cname,

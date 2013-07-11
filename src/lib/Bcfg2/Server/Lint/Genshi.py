@@ -4,7 +4,6 @@ import sys
 import Bcfg2.Server.Lint
 from genshi.template import TemplateLoader, NewTextTemplate, MarkupTemplate, \
     TemplateSyntaxError
-from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
 
 
@@ -14,8 +13,6 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
     def Run(self):
         if 'Cfg' in self.core.plugins:
             self.check_cfg()
-        if 'TGenshi' in self.core.plugins:
-            self.check_tgenshi()
         if 'Bundler' in self.core.plugins:
             self.check_bundler()
 
@@ -44,27 +41,13 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
                             "Unexpected Genshi error on %s: %s: %s" %
                             (entry.name, etype.__name__, err))
 
-    def check_tgenshi(self):
-        """ Check templates in TGenshi for syntax errors. """
-        loader = TemplateLoader()
-
-        for eset in self.core.plugins['TGenshi'].entries.values():
-            for fname, sdata in list(eset.entries.items()):
-                if self.HandlesFile(fname):
-                    try:
-                        loader.load(sdata.name, cls=NewTextTemplate)
-                    except TemplateSyntaxError:
-                        err = sys.exc_info()[1]
-                        self.LintError("genshi-syntax-error",
-                                       "Genshi syntax error: %s" % err)
-
     def check_bundler(self):
         """ Check templates in Bundler for syntax errors. """
         loader = TemplateLoader()
 
         for entry in self.core.plugins['Bundler'].entries.values():
             if (self.HandlesFile(entry.name) and
-                isinstance(entry, BundleTemplateFile)):
+                entry.template is not None):
                 try:
                     loader.load(entry.name, cls=MarkupTemplate)
                 except TemplateSyntaxError:

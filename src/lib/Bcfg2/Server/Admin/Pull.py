@@ -23,8 +23,8 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                  "-I", "interactive",
                  "-s", "stdin"))
 
-    def __init__(self, setup):
-        Bcfg2.Server.Admin.MetadataCore.__init__(self, setup)
+    def __init__(self):
+        Bcfg2.Server.Admin.MetadataCore.__init__(self)
         self.log = False
         self.mode = 'interactive'
 

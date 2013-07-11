@@ -280,7 +280,7 @@ Here's a more complete example bcfg2-client bundle:
 
 .. code-block:: xml
 
-    <Bundle name='bcfg2-client'>
+    <Bundle>
       <Path name='/etc/bcfg2.conf'/>
       <Path name='/etc/cron.d/bcfg2-client'/>
       <Package name='bcfg2'/>

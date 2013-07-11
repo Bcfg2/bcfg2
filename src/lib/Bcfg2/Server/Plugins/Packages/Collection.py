@@ -78,7 +78,10 @@ import copy
 import logging
 import lxml.etree
 import Bcfg2.Server.Plugin
+from Bcfg2.Server.FileMonitor import get_fam
+from Bcfg2.Options import get_option_parser
 from Bcfg2.Compat import any, md5  # pylint: disable=W0622
+from Bcfg2.Server.Statistics import track_statistics
 
 LOGGER = logging.getLogger(__name__)
 
@@ -93,8 +96,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
     #: Whether or not this Packages backend supports package groups
     __package_groups__ = False
 
-    def __init__(self, metadata, sources, cachepath, basepath, fam,
-                 debug=False):
+    def __init__(self, metadata, sources, cachepath, basepath, debug=False):
         """
         :param metadata: The client metadata for this collection
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
@@ -111,9 +113,6 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
                          directory, where more permanent data can be
                          stored
         :type basepath: string
-        :param fam: A file monitor object to use if this Collection
-                    needs to monitor for file activity
-        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
         :param debug: Enable debugging output
         :type debug: bool
 
@@ -127,13 +126,12 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         self.basepath = basepath
         self.cachepath = cachepath
         self.virt_pkgs = dict()
-        self.fam = fam
+        self.fam = get_fam()
+        self.setup = get_option_parser()
 
         try:
-            self.setup = sources[0].setup
             self.ptype = sources[0].ptype
         except IndexError:
-            self.setup = None
             self.ptype = "unknown"
 
     @property
@@ -204,19 +202,6 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         return sorted(list(set(groups)))
 
     @property
-    def basegroups(self):
-        """ Get a list of group names used by this Collection type in
-        resolution of
-        :ref:`server-plugins-generators-packages-magic-groups`.
-
-        The base implementation simply aggregates the results of
-        :attr:`Bcfg2.Server.Plugins.Packages.Source.Source.basegroups`."""
-        groups = set()
-        for source in self:
-            groups.update(source.basegroups)
-        return list(groups)
-
-    @property
     def cachefiles(self):
         """ A list of the full path to all cachefiles used by this
         collection.
@@ -229,7 +214,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
             cachefiles.add(source.cachefile)
         return list(cachefiles)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def get_groups(self, grouplist):
         """ Given a list of package group names, return a dict of
         ``<group name>: <list of packages>``.  This method is provided
@@ -250,7 +235,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
             rv[group] = self.get_group(group, ptype)
         return rv
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def get_group(self, group, ptype=None):
         """ Get the list of packages of the given type in a package
         group.
@@ -386,20 +371,6 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         for source in self:
             source.filter_unknown(unknown)
 
-    def magic_groups_match(self):
-        """ Returns True if the client's
-        :ref:`server-plugins-generators-packages-magic-groups` match
-        the magic groups for any of the sources contained in this
-        Collection.
-
-        The base implementation returns True if any source
-        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.magic_groups_match`
-        returns True.
-
-        :returns: bool
-        """
-        return any(s.magic_groups_match(self.metadata) for s in self)
-
     def build_extra_structures(self, independent):
         """ Add additional entries to the ``<Independent/>`` section
         of the final configuration.  This can be used to handle, e.g.,
@@ -499,7 +470,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         """
         return list(complete.difference(initial))
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def complete(self, packagelist):  # pylint: disable=R0912,R0914
         """ Build a complete list of all packages and their dependencies.
 

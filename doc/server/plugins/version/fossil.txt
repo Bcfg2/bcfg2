@@ -21,4 +21,4 @@ How to enable the Fossil plugin
 Simply add "Fossil" to your plugins line in ``/etc/bcfg2.conf``::
 
     [server]
-    plugins = Base,Bundler,Cfg,...,Fossil
+    plugins = Bundler,Cfg,...,Fossil

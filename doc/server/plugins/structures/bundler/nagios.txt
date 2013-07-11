@@ -12,7 +12,7 @@ the clients.
 
 .. code-block:: xml
 
-    <Bundle name='nagios-client' version='2.0'>
+    <Bundle>
       <Group name='sles8'>
         <Package name='ucdsnmp'/>
       </Group>

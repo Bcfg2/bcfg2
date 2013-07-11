@@ -215,9 +215,9 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
             return XMLMetadataConfig(self.metadata, watch_clients, basefile)
         return inner()
 
+    @patch("Bcfg2.Server.FileMonitor.get_fam", Mock())
     def test__init(self):
         xmc = self.get_obj()
-        self.assertEqual(self.metadata.core.fam, xmc.fam)
         self.assertFalse(xmc.fam.AddMonitor.called)
 
     def test_xdata(self):
@@ -262,20 +262,21 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
         self.assertEqual(config.base_xdata, "<test/>")
 
     def test_add_monitor(self):
-        core = MagicMock()
-        config = self.get_obj(core=core)
+        config = self.get_obj()
+        config.fam = Mock()
 
         fname = "test.xml"
         fpath = os.path.join(self.metadata.data, fname)
 
         config.extras = []
         config.add_monitor(fpath)
-        self.assertFalse(core.fam.AddMonitor.called)
+        self.assertFalse(config.fam.AddMonitor.called)
         self.assertEqual(config.extras, [fpath])
 
-        config = self.get_obj(core=core, watch_clients=True)
+        config = self.get_obj(watch_clients=True)
+        config.fam = Mock()
         config.add_monitor(fpath)
-        core.fam.AddMonitor.assert_called_with(fpath, config.metadata)
+        config.fam.AddMonitor.assert_called_with(fpath, config.metadata)
         self.assertItemsEqual(config.extras, [fpath])
 
     def test_Index(self):
@@ -499,7 +500,8 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
             client_name = "%s%s" % (prefix, i)
         return client_name
 
-    def test__init(self):
+    @patch("Bcfg2.Server.FileMonitor.get_fam")
+    def test__init(self, mock_get_fam):
         # test with watch_clients=False
         core = MagicMock()
         metadata = self.get_obj(core=core)
@@ -512,18 +514,19 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
         self.assertEqual(metadata.states, dict())
 
         # test with watch_clients=True
-        core.fam = MagicMock()
         metadata = self.get_obj(core=core, watch_clients=True)
         self.assertEqual(len(metadata.states), 2)
-        core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
-                                                         "groups.xml"),
-                                            metadata)
-        core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
-                                                         "clients.xml"),
-                                            metadata)
+        mock_get_fam.return_value.AddMonitor.assert_any_call(
+            os.path.join(metadata.data, "groups.xml"),
+            metadata)
+        mock_get_fam.return_value.AddMonitor.assert_any_call(
+            os.path.join(metadata.data, "clients.xml"),
+            metadata)
 
-        core.fam.reset_mock()
-        core.fam.AddMonitor = Mock(side_effect=IOError)
+        mock_get_fam.reset_mock()
+        fam = Mock()
+        fam.AddMonitor = Mock(side_effect=IOError)
+        mock_get_fam.return_value = fam
         self.assertRaises(Bcfg2.Server.Plugin.PluginInitError,
                           self.get_obj, core=core, watch_clients=True)
 
@@ -586,6 +589,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_add_group(self):
         metadata = self.get_obj()
         metadata.groups_xml.write = Mock()
+        metadata.groups_xml.load_xml = Mock()
         metadata.groups_xml.data = lxml.etree.XML('<Groups/>').getroottree()
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
@@ -618,6 +622,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_update_group(self):
         metadata = self.get_obj()
         metadata.groups_xml.write_xml = Mock()
+        metadata.groups_xml.load_xml = Mock()
         metadata.groups_xml.data = copy.deepcopy(get_groups_test_tree())
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
@@ -635,6 +640,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_remove_group(self):
         metadata = self.get_obj()
         metadata.groups_xml.write_xml = Mock()
+        metadata.groups_xml.load_xml = Mock()
         metadata.groups_xml.data = copy.deepcopy(get_groups_test_tree())
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
@@ -650,6 +656,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_add_bundle(self):
         metadata = self.get_obj()
         metadata.groups_xml.write = Mock()
+        metadata.groups_xml.load_xml = Mock()
         metadata.groups_xml.data = lxml.etree.XML('<Groups/>').getroottree()
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
@@ -673,6 +680,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_remove_bundle(self):
         metadata = self.get_obj()
         metadata.groups_xml.write_xml = Mock()
+        metadata.groups_xml.load_xml = Mock()
         metadata.groups_xml.data = copy.deepcopy(get_groups_test_tree())
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
@@ -688,6 +696,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_add_client(self):
         metadata = self.get_obj()
         metadata.clients_xml.write = Mock()
+        metadata.clients_xml.load_xml = Mock()
         metadata.clients_xml.data = lxml.etree.XML('<Clients/>').getroottree()
         metadata.clients_xml.basedata = copy.copy(metadata.clients_xml.data)
 
@@ -722,6 +731,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_update_client(self):
         metadata = self.get_obj()
         metadata.clients_xml.write_xml = Mock()
+        metadata.clients_xml.load_xml = Mock()
         metadata.clients_xml.data = copy.deepcopy(get_clients_test_tree())
         metadata.clients_xml.basedata = copy.copy(metadata.clients_xml.data)
 
@@ -1269,25 +1279,24 @@ class TestMetadataBase(TestMetadata):
         return client_name
 
     @patch('os.path.exists')
-    def test__init(self, mock_exists):
-        core = MagicMock()
-        core.fam = Mock()
+    @patch('Bcfg2.Server.FileMonitor.get_fam')
+    def test__init(self, mock_get_fam, mock_exists):
         mock_exists.return_value = False
-        metadata = self.get_obj(core=core, watch_clients=True)
+        metadata = self.get_obj(watch_clients=True)
         self.assertIsInstance(metadata, Bcfg2.Server.Plugin.DatabaseBacked)
-        core.fam.AddMonitor.assert_called_once_with(os.path.join(metadata.data,
-                                                                 "groups.xml"),
-                                                    metadata)
+        mock_get_fam.return_value.AddMonitor.assert_called_with(
+            os.path.join(metadata.data, "groups.xml"),
+            metadata)
 
         mock_exists.return_value = True
-        core.fam.reset_mock()
-        metadata = self.get_obj(core=core, watch_clients=True)
-        core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
-                                                         "groups.xml"),
-                                            metadata)
-        core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
-                                                         "clients.xml"),
-                                            metadata)
+        mock_get_fam.reset_mock()
+        metadata = self.get_obj(watch_clients=True)
+        mock_get_fam.return_value.AddMonitor.assert_any_call(
+            os.path.join(metadata.data, "groups.xml"),
+            metadata)
+        mock_get_fam.return_value.AddMonitor.assert_any_call(
+            os.path.join(metadata.data, "clients.xml"),
+            metadata)
 
     def test_add_group(self):
         pass
@@ -1530,7 +1539,8 @@ class TestMetadata_ClientsXML(TestMetadataBase):
     def load_clients_data(self, metadata=None, xdata=None):
         if metadata is None:
             metadata = self.get_obj()
-        metadata.core.fam = Mock()
+        fam = Bcfg2.Server.FileMonitor._FAM
+        Bcfg2.Server.FileMonitor._FAM = MagicMock()
         @patchIf(not isinstance(lxml.etree.Element, Mock),
                  "lxml.etree.Element", Mock())
         def inner():
@@ -1538,5 +1548,7 @@ class TestMetadata_ClientsXML(TestMetadataBase):
         inner()
         metadata = TestMetadata.load_clients_data(self, metadata=metadata,
                                                   xdata=xdata)
-        return TestMetadataBase.load_clients_data(self, metadata=metadata,
-                                                    xdata=xdata)
+        rv = TestMetadataBase.load_clients_data(self, metadata=metadata,
+                                                xdata=xdata)
+        Bcfg2.Server.FileMonitor._FAM = fam
+        return rv

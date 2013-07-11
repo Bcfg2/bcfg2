@@ -21,10 +21,11 @@ Add a bundle for ssh
 
 After verifying that SSHbase is listed on the plugins line in
 ``/etc/bcfg2.conf``, you need to create a bundle containing the
-appropriate entries.::
+appropriate entries.
 
-    cat > /tmp/ssh.xml << EOF
-    <Bundle name='ssh'>
+.. code-block:: xml
+
+    <Bundle>
       <Path name='/etc/ssh/ssh_host_dsa_key'/>
       <Path name='/etc/ssh/ssh_host_rsa_key'/>
       <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>
@@ -33,10 +34,6 @@ appropriate entries.::
       <Path name='/etc/ssh/ssh_host_key.pub'/>
       <Path name='/etc/ssh/ssh_known_hosts'/>
     </Bundle>
-
-::
-
-    mv /tmp/ssh.xml /var/lib/bcfg2/Bundle
 
 Next, you need to add the ssh bundle to the client's metadata in
 groups.xml.

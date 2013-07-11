@@ -31,7 +31,7 @@ Default Plugins
 The `Bcfg2 repository`_ contains the all plugins currently distributed
 with Bcfg2.
 
-.. _Bcfg2 repository: http://trac.mcs.anl.gov/projects/bcfg2/browser/src/lib/Server/Plugins
+.. _Bcfg2 repository: https://github.com/Bcfg2/bcfg2/blob/maint/src/lib/Bcfg2/Server/Plugins
 
 Metadata (Grouping)
 -------------------

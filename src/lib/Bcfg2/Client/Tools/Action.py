@@ -11,9 +11,8 @@ from Bcfg2.Compat import input  # pylint: disable=W0622
 class Action(Bcfg2.Client.Tools.Tool):
     """Implement Actions"""
     name = 'Action'
-    __handles__ = [('PostInstall', None), ('Action', None)]
-    __req__ = {'PostInstall': ['name'],
-               'Action': ['name', 'timing', 'when', 'command', 'status']}
+    __handles__ = [('Action', None)]
+    __req__ = {'Action': ['name', 'timing', 'when', 'command', 'status']}
 
     def _action_allowed(self, action):
         """ Return true if the given action is allowed to be run by
@@ -71,39 +70,29 @@ class Action(Bcfg2.Client.Tools.Tool):
         """Actions always verify true."""
         return True
 
-    def VerifyPostInstall(self, dummy, _):
-        """Actions always verify true."""
-        return True
-
     def InstallAction(self, entry):
         """Run actions as pre-checks for bundle installation."""
         if entry.get('timing') != 'post':
             return self.RunAction(entry)
         return True
 
-    def InstallPostInstall(self, entry):
-        """ Install a deprecated PostInstall entry """
-        self.logger.warning("Installing deprecated PostInstall entry %s" %
-                            entry.get("name"))
-        return self.InstallAction(entry)
-
-    def BundleUpdated(self, bundle, states):
+    def BundleUpdated(self, bundle):
         """Run postinstalls when bundles have been updated."""
-        for postinst in bundle.findall("PostInstall"):
-            if not self._action_allowed(postinst):
-                continue
-            self.cmd.run(postinst.get('name'))
+        states = dict()
         for action in bundle.findall("Action"):
             if action.get('timing') in ['post', 'both']:
                 if not self._action_allowed(action):
                     continue
                 states[action] = self.RunAction(action)
+        return states
 
-    def BundleNotUpdated(self, bundle, states):
+    def BundleNotUpdated(self, bundle):
         """Run Actions when bundles have not been updated."""
+        states = dict()
         for action in bundle.findall("Action"):
-            if action.get('timing') in ['post', 'both'] and \
-               action.get('when') != 'modified':
+            if (action.get('timing') in ['post', 'both'] and
+                action.get('when') != 'modified'):
                 if not self._action_allowed(action):
                     continue
                 states[action] = self.RunAction(action)
+        return states

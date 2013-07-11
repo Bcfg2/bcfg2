@@ -8,10 +8,10 @@ import fcntl
 import socket
 import logging
 import tempfile
-import Bcfg2.Proxy
 import Bcfg2.Logger
 import Bcfg2.Options
 import Bcfg2.Client.XML
+import Bcfg2.Client.Proxy
 import Bcfg2.Client.Frame
 import Bcfg2.Client.Tools
 from Bcfg2.Utils import locked, Executor
@@ -22,12 +22,12 @@ from Bcfg2.version import __version__
 class Client(object):
     """ The main Bcfg2 client class """
 
-    def __init__(self, setup):
+    def __init__(self):
         self.toolset = None
         self.tools = None
         self.config = None
         self._proxy = None
-        self.setup = setup
+        self.setup = Bcfg2.Options.get_option_parser()
 
         if self.setup['debug']:
             level = logging.DEBUG
@@ -53,7 +53,7 @@ class Client(object):
                 raise SystemExit(1)
         if 'drivers' in self.setup and self.setup['drivers'] == 'help':
             self.logger.info("The following drivers are available:")
-            self.logger.info(Bcfg2.Client.Tools.drivers)
+            self.logger.info(Bcfg2.Client.Tools.__all__)
             raise SystemExit(0)
         if self.setup['remove'] and 'services' in self.setup['remove'].lower():
             self.logger.error("Service removal is nonsensical; "
@@ -129,7 +129,7 @@ class Client(object):
     def proxy(self):
         """ get an XML-RPC proxy to the server """
         if self._proxy is None:
-            self._proxy = Bcfg2.Proxy.ComponentProxy(
+            self._proxy = Bcfg2.Client.Proxy.ComponentProxy(
                 self.setup['server'],
                 self.setup['user'],
                 self.setup['password'],
@@ -149,8 +149,8 @@ class Client(object):
 
         try:
             probes = Bcfg2.Client.XML.XML(str(self.proxy.GetProbes()))
-        except (Bcfg2.Proxy.ProxyError,
-                Bcfg2.Proxy.CertificateError,
+        except (Bcfg2.Client.Proxy.ProxyError,
+                Bcfg2.Client.Proxy.CertificateError,
                 socket.gaierror,
                 socket.error):
             err = sys.exc_info()[1]
@@ -174,7 +174,7 @@ class Client(object):
                     Bcfg2.Client.XML.tostring(
                         probedata,
                         xml_declaration=False).decode('utf-8'))
-            except Bcfg2.Proxy.ProxyError:
+            except Bcfg2.Client.Proxy.ProxyError:
                 err = sys.exc_info()[1]
                 self.fatal_error("Failed to upload probe data: %s" % err)
 
@@ -200,7 +200,7 @@ class Client(object):
             if self.setup['profile']:
                 try:
                     self.proxy.AssertProfile(self.setup['profile'])
-                except Bcfg2.Proxy.ProxyError:
+                except Bcfg2.Client.Proxy.ProxyError:
                     err = sys.exc_info()[1]
                     self.fatal_error("Failed to set client profile: %s" % err)
 
@@ -215,8 +215,8 @@ class Client(object):
                                       "client version")
                 else:
                     self.logger.error("Failed to declare version: %s" % err)
-            except (Bcfg2.Proxy.ProxyError,
-                    Bcfg2.Proxy.CertificateError,
+            except (Bcfg2.Client.Proxy.ProxyError,
+                    Bcfg2.Client.Proxy.CertificateError,
                     socket.gaierror,
                     socket.error):
                 err = sys.exc_info()[1]
@@ -230,13 +230,13 @@ class Client(object):
                         self.proxy.GetDecisionList(self.setup['decision'])
                     self.logger.info("Got decision list from server:")
                     self.logger.info(self.setup['decision_list'])
-                except Bcfg2.Proxy.ProxyError:
+                except Bcfg2.Client.Proxy.ProxyError:
                     err = sys.exc_info()[1]
                     self.fatal_error("Failed to get decision list: %s" % err)
 
             try:
                 rawconfig = self.proxy.GetConfig().encode('utf-8')
-            except Bcfg2.Proxy.ProxyError:
+            except Bcfg2.Client.Proxy.ProxyError:
                 err = sys.exc_info()[1]
                 self.fatal_error("Failed to download configuration from "
                                  "Bcfg2: %s" % err)
@@ -288,10 +288,7 @@ class Client(object):
                     newconfig.append(bundle)
             self.config = newconfig
 
-        self.tools = Bcfg2.Client.Frame.Frame(self.config,
-                                              self.setup,
-                                              times, self.setup['drivers'],
-                                              self.setup['dryrun'])
+        self.tools = Bcfg2.Client.Frame.Frame(self.config, times)
 
         if not self.setup['omit_lock_check']:
             #check lock here
@@ -331,7 +328,7 @@ class Client(object):
                     Bcfg2.Client.XML.tostring(
                         feedback,
                         xml_declaration=False).decode('utf-8'))
-            except Bcfg2.Proxy.ProxyError:
+            except Bcfg2.Client.Proxy.ProxyError:
                 err = sys.exc_info()[1]
                 self.logger.error("Failed to upload configuration statistics: "
                                   "%s" % err)

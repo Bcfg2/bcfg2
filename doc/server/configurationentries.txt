@@ -28,7 +28,7 @@ Example:
 
 .. code-block:: xml
 
-    <Bundle name='ntp'>
+    <Bundle>
        <BoundPackage name='ntp' type='deb' version='1:4.2.4p4+dfsg-3ubuntu2.1'/>
     </Bundle>
 

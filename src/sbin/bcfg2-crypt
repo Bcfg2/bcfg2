@@ -12,7 +12,7 @@ import Bcfg2.Options
 from Bcfg2.Server import XMLParser
 from Bcfg2.Compat import input  # pylint: disable=W0622
 try:
-    import Bcfg2.Encryption
+    import Bcfg2.Server.Encryption
 except ImportError:
     print("Could not import %s. Is M2Crypto installed?" % sys.exc_info()[1])
     raise SystemExit(1)
@@ -28,7 +28,7 @@ class CryptoTool(object):
     def __init__(self, filename, setup):
         self.setup = setup
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.passphrases = Bcfg2.Encryption.get_passphrases(self.setup)
+        self.passphrases = Bcfg2.Server.Encryption.get_passphrases(self.setup)
 
         self.filename = filename
         try:
@@ -43,8 +43,9 @@ class CryptoTool(object):
 
     def _get_passphrase(self):
         """ get the passphrase for the current file """
-        if (not self.setup.cfp.has_section(Bcfg2.Encryption.CFG_SECTION) or
-            len(Bcfg2.Encryption.get_passphrases(self.setup)) == 0):
+        if (not self.setup.cfp.has_section(
+            Bcfg2.Server.Encryption.CFG_SECTION) or
+                len(Bcfg2.Server.Encryption.get_passphrases(self.setup)) == 0):
             raise PassphraseError("No passphrases available in %s" %
                                   self.setup['configfile'])
 
@@ -53,10 +54,10 @@ class CryptoTool(object):
             pname = self.setup['passphrase']
 
         if pname:
-            if self.setup.cfp.has_option(Bcfg2.Encryption.CFG_SECTION,
+            if self.setup.cfp.has_option(Bcfg2.Server.Encryption.CFG_SECTION,
                                          pname):
-                passphrase = self.setup.cfp.get(Bcfg2.Encryption.CFG_SECTION,
-                                                pname)
+                passphrase = self.setup.cfp.get(
+                    Bcfg2.Server.Encryption.CFG_SECTION, pname)
                 self.logger.debug("Using passphrase %s specified on command "
                                   "line" % pname)
                 return (pname, passphrase)
@@ -64,7 +65,7 @@ class CryptoTool(object):
                 raise PassphraseError("Could not find passphrase %s in %s" %
                                       (pname, self.setup['configfile']))
         else:
-            pnames = Bcfg2.Encryption.get_passphrases(self.setup)
+            pnames = Bcfg2.Server.Encryption.get_passphrases()
             if len(pnames) == 1:
                 pname = pnames.keys()[0]
                 passphrase = pnames[pname]
@@ -123,9 +124,9 @@ class CfgEncryptor(Encryptor):
                                   self.setup['configfile'])
 
     def encrypt(self):
-        return Bcfg2.Encryption.ssl_encrypt(
+        return Bcfg2.Server.Encryption.ssl_encrypt(
             self.data, self.passphrase,
-            Bcfg2.Encryption.get_algorithm(self.setup))
+            Bcfg2.Server.Encryption.get_algorithm(self.setup))
 
     def get_destination_filename(self, original_filename):
         return original_filename + ".crypt"
@@ -138,10 +139,10 @@ class CfgDecryptor(Decryptor):
         """ decrypt the given file, returning the plaintext data """
         if self.passphrase:
             try:
-                return Bcfg2.Encryption.ssl_decrypt(
+                return Bcfg2.Server.Encryption.ssl_decrypt(
                     self.data, self.passphrase,
-                    Bcfg2.Encryption.get_algorithm(self.setup))
-            except Bcfg2.Encryption.EVPError:
+                    Bcfg2.Server.Encryption.get_algorithm(self.setup))
+            except Bcfg2.Server.Encryption.EVPError:
                 self.logger.info("Could not decrypt %s with the "
                                  "specified passphrase" % self.filename)
                 return False
@@ -152,10 +153,11 @@ class CfgDecryptor(Decryptor):
                 return False
         else:  # no passphrase given, brute force
             try:
-                return Bcfg2.Encryption.bruteforce_decrypt(
+                return Bcfg2.Server.Encryption.bruteforce_decrypt(
                     self.data, passphrases=self.passphrases.values(),
-                    algorithm=Bcfg2.Encryption.get_algorithm(self.setup))
-            except Bcfg2.Encryption.EVPError:
+                    algorithm=Bcfg2.Server.Encryption.get_algorithm(
+                        self.setup))
+            except Bcfg2.Server.Encryption.EVPError:
                 self.logger.info("Could not decrypt %s with any passphrase" %
                                  self.filename)
 
@@ -244,9 +246,9 @@ class PropertiesEncryptor(Encryptor, PropertiesCryptoMixin):
             except PassphraseError:
                 self.logger.error(str(sys.exc_info()[1]))
                 return False
-            elt.text = Bcfg2.Encryption.ssl_encrypt(
+            elt.text = Bcfg2.Server.Encryption.ssl_encrypt(
                 elt.text, passphrase,
-                Bcfg2.Encryption.get_algorithm(self.setup)).strip()
+                Bcfg2.Server.Encryption.get_algorithm(self.setup)).strip()
             elt.set("encrypted", pname)
         return xdata
 
@@ -266,9 +268,9 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
             except PassphraseError:
                 self.logger.error(str(sys.exc_info()[1]))
                 return False
-            decrypted = Bcfg2.Encryption.ssl_decrypt(
+            decrypted = Bcfg2.Server.Encryption.ssl_decrypt(
                 elt.text, passphrase,
-                Bcfg2.Encryption.get_algorithm(self.setup)).strip()
+                Bcfg2.Server.Encryption.get_algorithm(self.setup)).strip()
             try:
                 elt.text = decrypted.encode('ascii', 'xmlcharrefreplace')
                 elt.set("encrypted", pname)
@@ -290,10 +292,10 @@ def main():  # pylint: disable=R0912,R0915
     optinfo = dict(interactive=Bcfg2.Options.INTERACTIVE)
     optinfo.update(Bcfg2.Options.CRYPT_OPTIONS)
     optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
-    setup = Bcfg2.Options.OptionParser(optinfo)
+    setup = Bcfg2.Options.load_option_parser(optinfo)
     setup.hm = "     bcfg2-crypt [options] <filename>\nOptions:\n%s" % \
         setup.buildHelpMessage()
-    setup.parse(sys.argv[1:])
+    setup.parse()
 
     if not setup['args']:
         print(setup.hm)
@@ -430,7 +432,7 @@ def main():  # pylint: disable=R0912,R0915
             tool.write(data)
 
         if (setup['remove'] and
-            tool.get_destination_filename(fname) != fname):
+                tool.get_destination_filename(fname) != fname):
             try:
                 os.unlink(fname)
             except IOError:

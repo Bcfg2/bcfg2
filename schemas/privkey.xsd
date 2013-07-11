@@ -1,16 +1,20 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
   <xsd:annotation>
     <xsd:documentation>
       Schema for :ref:`server-plugins-generators-cfg-sshkeys` ``privkey.xml``
     </xsd:documentation>
   </xsd:annotation>
 
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
+
   <xsd:include schemaLocation="types.xsd"/>
 
   <xsd:complexType name="PrivateKeyGroupType">
     <xsd:annotation>
       <xsd:documentation>
-        An **PrivateKeyGroupType** is a tag used to provide logic.
+        A **PrivateKeyGroupType** is a tag used to provide logic.
         Child entries of a PrivateKeyGroupType tag only apply to
         machines that match the condition specified -- either
         membership in a group, or a matching client name.
@@ -19,6 +23,7 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
       <xsd:element name="Passphrase" type="PassphraseType"/>
       <xsd:element name="Params" type="PrivateKeyParamsType"/>
       <xsd:element name="Group" type="PrivateKeyGroupType"/>
@@ -42,6 +47,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:simpleType name="PrivateKeyTypeEnum">
@@ -72,6 +78,7 @@
             </xsd:documentation>
           </xsd:annotation>
         </xsd:attribute>
+        <xsd:attributeGroup ref="py:genshiAttrs"/>
       </xsd:extension>
     </xsd:simpleContent>
   </xsd:complexType>
@@ -97,6 +104,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:element name="PrivateKey">
@@ -107,6 +115,7 @@
     </xsd:annotation>
     <xsd:complexType>
       <xsd:choice minOccurs="0" maxOccurs="unbounded">
+        <xsd:group ref="py:genshiElements"/>
         <xsd:element name="Passphrase" type="PassphraseType"/>
         <xsd:element name="Params" type="PrivateKeyParamsType"/>
         <xsd:element name="Group" type="PrivateKeyGroupType"/>
@@ -143,6 +152,7 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:attribute>
+      <xsd:attributeGroup ref="py:genshiAttrs"/>
     </xsd:complexType>
   </xsd:element>
 </xsd:schema>

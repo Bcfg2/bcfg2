@@ -28,7 +28,7 @@ Add Reporting to the plugins line of ``bcfg2.conf``. The resulting
 
     [server]
     repository = /var/lib/bcfg2
-    plugins = Base,Bundler,Cfg,...,Reporting
+    plugins = Bundler,Cfg,...,Reporting
 
     [reporting]
     transport = LocalFilesystem
@@ -53,7 +53,7 @@ then have something like this::
 
     [server]
     repository = /var/lib/bcfg2
-    plugins = Base,Bundler,Cfg,...,Reporting
+    plugins = Bundler,Cfg,...,Reporting
 
     [database]
     engine = sqlite3
