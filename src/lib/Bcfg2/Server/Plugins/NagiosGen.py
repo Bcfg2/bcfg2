@@ -42,8 +42,8 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
     def createhostconfig(self, entry, metadata):
         """Build host specific configuration file."""
         try:
-            host_address = socket.gethostbyname(metadata.hostname)
-        except socket.gaierror:
+            host_address = socket.getaddrinfo(metadata.hostname, None)[0][4][0]
+        except socket.error:
             self.logger.error("Failed to find IP address for %s" %
                               metadata.hostname)
             raise Bcfg2.Server.Plugin.PluginExecutionError
