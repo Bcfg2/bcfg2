@@ -716,7 +716,7 @@ Bcfg2 client itself.""")
     def run(self, args):  # pylint: disable=W0221
         try:
             self.load_plugins()
-            self.fam.handle_events_in_interval(1)
+            self.block_for_fam_events(handle_events=True)
             if args:
                 self.onecmd(" ".join(args))
             else:

@@ -19,7 +19,7 @@ def prompt(msg):
     while len(select.select([sys.stdin.fileno()], [], [], 0.0)[0]) > 0:
         os.read(sys.stdin.fileno(), 4096)
     try:
-        ans = input(msg)
+        ans = input(msg.encode('utf-8'))
         return ans in ['y', 'Y']
     except EOFError:
         # handle ^C on rhel-based platforms
