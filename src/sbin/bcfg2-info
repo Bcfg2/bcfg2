@@ -16,7 +16,7 @@ import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Plugin
 import Bcfg2.Client.Tools.POSIX
-from Bcfg2.Compat import unicode
+from Bcfg2.Compat import unicode  # pylint: disable=W0622
 
 try:
     try:
@@ -644,8 +644,9 @@ set of packages"""
                              structures)
         print("%d new packages added" % len(indep.getchildren()))
         if len(indep.getchildren()):
-            print("    %s" % "\n    ".join(lxml.etree.tostring(p, encoding=unicode)
-                                           for p in indep.getchildren()))
+            print("    %s" % "\n    ".join(
+                lxml.etree.tostring(p, encoding=unicode)
+                for p in indep.getchildren()))
 
     def do_packagesources(self, args):
         """packagesources <hostname>
