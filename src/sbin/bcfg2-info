@@ -16,6 +16,7 @@ import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Plugin
 import Bcfg2.Client.Tools.POSIX
+from Bcfg2.Compat import unicode
 
 try:
     try:
@@ -115,11 +116,15 @@ def load_interpreters():
 
 class InfoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
     """Main class for bcfg2-info."""
+    doc_header = "bcfg2-info commands (type help <command>):"
+    prompt = 'bcfg2-info> '
+
     def __init__(self):
         cmd.Cmd.__init__(self)
+        self.setup = Bcfg2.Options.get_option_parser()
+        self.setup.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
+        self.setup.update(dict(interpreter=Bcfg2.Options.INTERPRETER))
         Bcfg2.Server.Core.BaseCore.__init__(self)
-        self.prompt = '> '
-        self.cont = True
 
     def _get_client_list(self, hostglobs):
         """ given a host glob, get a list of clients that match it """
@@ -144,37 +149,15 @@ class InfoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
             clist.difference_update(rv)
         return list(rv)
 
-    def _get_usage(self, func):
-        """ get the short usage message for a given function """
-        return "Usage: " + re.sub(r'\s+', ' ', func.__doc__).split(" - ", 1)[0]
-
-    def do_loop(self):
-        """Looping."""
-        self.cont = True
-        while self.cont:
-            try:
-                self.cmdloop('Welcome to bcfg2-info\n'
-                             'Type "help" for more information')
-            except SystemExit:
-                raise
-            except Bcfg2.Server.Plugin.PluginExecutionError:
-                continue
-            except KeyboardInterrupt:
-                print("Ctrl-C pressed exiting...")
-                self.do_exit([])
-            except:
-                self.logger.error("Command failure", exc_info=1)
-
     def do_debug(self, args):
-        """ debug [-n] [-f <command list>] - Shell out to native
-        python interpreter """
+        """debug [-n] [-f <command list>]
+        Shell out to native python interpreter"""
         try:
             opts, _ = getopt.getopt(args.split(), 'nf:')
         except getopt.GetoptError:
             print(str(sys.exc_info()[1]))
-            print(self._get_usage(self.do_debug))
+            print(self.do_debug.__doc__)
             return
-        self.cont = False
         scriptmode = False
         interactive = True
         for opt in opts:
@@ -201,24 +184,23 @@ class InfoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                                   ", ".join(interpreters.keys()))
 
     def do_quit(self, _):
-        """ quit|exit - Exit program """
+        """quit|exit
+        Exit program"""
+        print("")  # put user's prompt on a new line
         self.shutdown()
         os._exit(0)  # pylint: disable=W0212
 
     do_EOF = do_quit
     do_exit = do_quit
 
-    def do_help(self, _):
-        """ help - Print this list of available commands """
-        print(USAGE)
-
     def do_update(self, _):
-        """ update - Process pending filesystem events"""
+        """update
+        Process pending filesystem events"""
         self.fam.handle_events_in_interval(0.1)
 
     def do_build(self, args):
-        """ build [-f] <hostname> <filename> - Build config for
-        hostname, writing to filename"""
+        """build [-f] <hostname> <filename>
+        Build config for hostname, writing to filename"""
         alist = args.split()
         path_force = False
         for arg in alist:
@@ -240,7 +222,7 @@ class InfoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                 err = sys.exc_info()[1]
                 print("Failed to write File %s: %s" % (ofile, err))
         else:
-            print(self._get_usage(self.do_build))
+            print(self.do_build.__doc__)
 
     def help_builddir(self):
         """Display help for builddir command."""
@@ -258,8 +240,8 @@ could be much more permissive than would be created by the
 Bcfg2 client itself.""")
 
     def do_builddir(self, args):
-        """ builddir [-f] <hostname> <dirname> - Build config for
-        hostname, writing separate files to dirname"""
+        """ builddir [-f] <hostname> <dirname>
+        Build config for hostname, writing separate files to dirname"""
         alist = args.split()
         path_force = False
         if '-f' in args:
@@ -288,14 +270,14 @@ Bcfg2 client itself.""")
             posix.Install(list(states.keys()))
         else:
             print('Error: Incorrect number of parameters.')
-            self.help_builddir()
+            print(self.do_builddir.__doc__)
 
     def do_buildall(self, args):
-        """ buildall <directory> [<hostnames*>] - Build configs for
-        all clients in directory """
+        """buildall <directory> [<hostnames*>]
+        Build configs for all clients in directory"""
         alist = args.split()
         if len(alist) < 1:
-            print(self._get_usage(self.do_buildall))
+            print(self.do_buildall.__doc__)
             return
 
         destdir = alist[0]
@@ -314,20 +296,20 @@ Bcfg2 client itself.""")
                                                           client + ".xml")))
 
     def do_buildallfile(self, args):
-        """ buildallfile <directory> <filename> [<hostnames*>] - Build
-        config file for all clients in directory """
+        """ buildallfile <directory> <filename> [<hostnames*>]
+        Build config file for all clients in directory"""
         try:
             opts, args = getopt.gnu_getopt(args.split(), '', ['altsrc='])
         except getopt.GetoptError:
             print(str(sys.exc_info()[1]))
-            print(self._get_usage(self.do_buildallfile))
+            print(self.do_buildallfile.__doc__)
             return
         altsrc = None
         for opt in opts:
             if opt[0] == '--altsrc':
                 altsrc = opt[1]
         if len(args) < 2:
-            print(self._get_usage(self.do_buildallfile))
+            print(self.do_buildallfile.__doc__)
             return
 
         destdir = args[0]
@@ -351,9 +333,8 @@ Bcfg2 client itself.""")
                                       filename, client))
 
     def do_buildfile(self, args):
-        """ buildfile [-f <outfile>] [--altsrc=<altsrc>] <filename>
-        <hostname> - Build config file for hostname (not written to
-        disk)"""
+        """buildfile [-f <outfile>] [--altsrc=<altsrc>] <filename> <hostname>
+        Build config file for hostname (not written to disk)"""
         try:
             opts, alist = getopt.gnu_getopt(args.split(), 'f:', ['altsrc='])
         except getopt.GetoptError:
@@ -395,11 +376,11 @@ Bcfg2 client itself.""")
             print(data)
 
     def do_buildbundle(self, args):
-        """ buildbundle <bundle> <hostname> - Render a templated
-        bundle for hostname (not written to disk) """
+        """buildbundle <bundle> <hostname>
+        Render a templated bundle for hostname (not written to disk)"""
         if len(args.split()) != 2:
-            print(self._get_usage(self.do_buildbundle))
-            return 1
+            print(self.do_buildbundle.__doc__)
+            return
 
         bname, client = args.split()
         try:
@@ -417,8 +398,8 @@ Bcfg2 client itself.""")
                                                                   err))
 
     def do_automatch(self, args):
-        """ automatch [-f] <propertyfile> <hostname> - Perform automatch on
-        a Properties file """
+        """automatch [-f] <propertyfile> <hostname>
+        Perform automatch on a Properties file"""
         alist = args.split()
         force = False
         for arg in alist:
@@ -426,7 +407,7 @@ Bcfg2 client itself.""")
                 alist.remove('-f')
                 force = True
         if len(alist) != 2:
-            print(self._get_usage(self.do_automatch))
+            print(self.do_automatch.__doc__)
             return
 
         if 'Properties' not in self.plugins:
@@ -436,7 +417,7 @@ Bcfg2 client itself.""")
         pname, client = alist
         automatch = self.setup.cfp.getboolean("properties", "automatch",
                                               default=False)
-        pfile = self.plugins['Properties'].store.entries[pname]
+        pfile = self.plugins['Properties'].entries[pname]
         if (not force and
             not automatch and
             pfile.xdata.get("automatch", "false").lower() != "true"):
@@ -448,7 +429,8 @@ Bcfg2 client itself.""")
                                       pretty_print=True).decode('UTF-8'))
 
     def do_bundles(self, _):
-        """ bundles - Print out group/bundle info """
+        """bundles
+        Print out group/bundle info"""
         data = [('Group', 'Bundles')]
         groups = list(self.metadata.groups.keys())
         groups.sort()
@@ -458,7 +440,8 @@ Bcfg2 client itself.""")
         print_tabular(data)
 
     def do_clients(self, _):
-        """ clients - Print out client/profile info """
+        """clients
+        Print out client/profile info"""
         data = [('Client', 'Profile')]
         for client in sorted(self.metadata.list_clients()):
             imd = self.metadata.get_initial_metadata(client)
@@ -466,7 +449,8 @@ Bcfg2 client itself.""")
         print_tabular(data)
 
     def do_config(self, _):
-        """ config - Print out the current configuration of Bcfg2"""
+        """config
+        Print out the current configuration of Bcfg2"""
         output = [
             ('Description', 'Value'),
             ('Path Bcfg2 repository', self.setup['repo']),
@@ -482,16 +466,16 @@ Bcfg2 client itself.""")
         print_tabular(output)
 
     def do_probes(self, args):
-        """ probes [-p] <hostname> - Get probe list for the given
-        host, in XML (the default) or human-readable pretty (with -p)
-        format"""
+        """probes [-p] <hostname>
+        Get probe list for the given host, in XML (the default) \
+or human-readable pretty (with -p) format"""
         alist = args.split()
         pretty = False
         if '-p' in alist:
             pretty = True
             alist.remove('-p')
         if len(alist) != 1:
-            print(self._get_usage(self.do_probes))
+            print(self.do_probes.__doc__)
             return
         hostname = alist[0]
         if pretty:
@@ -517,11 +501,11 @@ Bcfg2 client itself.""")
                                       pretty_print=True).decode('UTF-8'))
 
     def do_showentries(self, args):
-        """ showentries <hostname> <type> - Show abstract
-        configuration entries for a given host """
+        """showentries <hostname> <type>
+        Show abstract configuration entries for a given host"""
         arglen = len(args.split())
         if arglen not in [1, 2]:
-            print(self._get_usage(self.do_showentries))
+            print(self.do_showentries.__doc__)
             return
         client = args.split()[0]
         try:
@@ -544,7 +528,8 @@ Bcfg2 client itself.""")
         print_tabular(output)
 
     def do_groups(self, _):
-        """ groups - Print out group info """
+        """groups
+        Print out group info"""
         data = [("Groups", "Profile", "Category")]
         grouplist = list(self.metadata.groups.keys())
         grouplist.sort()
@@ -558,10 +543,10 @@ Bcfg2 client itself.""")
         print_tabular(data)
 
     def do_showclient(self, args):
-        """ showclient <client> [<client> ...] - Show metadata for the
-        given hosts """
+        """showclient <client> [<client> ...]
+        Show metadata for the given hosts"""
         if not len(args):
-            print(self._get_usage(self.do_showclient))
+            print(self.do_showclient.__doc__)
             return
         for client in args.split():
             try:
@@ -600,8 +585,8 @@ Bcfg2 client itself.""")
                         print("=" * 80)
 
     def do_mappings(self, args):
-        """ mappings <type*> <name*> - Print generator mappings for
-        optional type and name """
+        """mappings <type*> <name*>
+        Print generator mappings for optional type and name"""
         # Dump all mappings unless type specified
         data = [('Plugin', 'Type', 'Name')]
         arglen = len(args.split())
@@ -624,17 +609,17 @@ Bcfg2 client itself.""")
         print_tabular(data)
 
     def do_event_debug(self, _):
-        """ event_debug - Display filesystem events as they are
-        processed """
+        """event_debug
+        Display filesystem events as they are processed"""
         self.fam.debug = True
 
     def do_packageresolve(self, args):
-        """ packageresolve <hostname> [<package> [<package>...]] -
-        Resolve packages for the given host, optionally specifying a
-        set of packages """
+        """packageresolve <hostname> [<package> [<package>...]]
+        Resolve packages for the given host, optionally specifying a \
+set of packages"""
         arglist = args.split(" ")
         if len(arglist) < 1:
-            print(self._get_usage(self.do_packageresolve))
+            print(self.do_packageresolve.__doc__)
             return
 
         try:
@@ -659,13 +644,14 @@ Bcfg2 client itself.""")
                              structures)
         print("%d new packages added" % len(indep.getchildren()))
         if len(indep.getchildren()):
-            print("    %s" % "\n    ".join(lxml.etree.tostring(p)
+            print("    %s" % "\n    ".join(lxml.etree.tostring(p, encoding=unicode)
                                            for p in indep.getchildren()))
 
     def do_packagesources(self, args):
-        """ packagesources <hostname> - Show package sources """
+        """packagesources <hostname>
+        Show package sources"""
         if not args:
-            print(self._get_usage(self.do_packagesources))
+            print(self.do_packagesources.__doc__)
             return
         if 'Packages' not in self.plugins:
             print("Packages plugin not enabled")
@@ -679,13 +665,14 @@ Bcfg2 client itself.""")
         print(collection.sourcelist())
 
     def do_query(self, args):
-        """ query <-g group|-p profile|-b bundle> - Query clients """
+        """query <-g group|-p profile|-b bundle>
+        Query clients"""
         if len(args) == 0:
             print("\n".join(self.metadata.clients))
             return
         arglist = args.split(" ")
         if len(arglist) != 2:
-            print(self._get_usage(self.do_query))
+            print(self.do_query.__doc__)
             return
 
         qtype, qparam = arglist
@@ -696,18 +683,18 @@ Bcfg2 client itself.""")
         elif qtype == '-b':
             res = self.metadata.get_client_names_by_bundles(qparam.split(','))
         else:
-            print(self._get_usage(self.do_query))
+            print(self.do_query.__doc__)
             return
         print("\n".join(res))
 
     def do_profile(self, arg):
-        """ profile <command> <args> - Profile a single bcfg2-info
-        command """
+        """profile <command> <args>
+        Profile a single bcfg2-info command"""
         if not HAS_PROFILE:
             print("Profiling functionality not available.")
             return
         if len(arg) == 0:
-            print(self._get_usage(self.do_profile))
+            print(self.do_profile.__doc__)
             return
         prof = profile.Profile()
         prof.runcall(self.onecmd, arg)
@@ -720,7 +707,14 @@ Bcfg2 client itself.""")
             if args:
                 self.onecmd(" ".join(args))
             else:
-                self.do_loop()
+                try:
+                    self.cmdloop('Welcome to bcfg2-info\n'
+                                 'Type "help" for more information')
+                except KeyboardInterrupt:
+                    print("\nCtrl-C pressed exiting...")
+                    self.do_exit([])
+        except Bcfg2.Server.Plugin.PluginExecutionError:
+            pass
         finally:
             self.shutdown()
 
@@ -735,7 +729,7 @@ Bcfg2 client itself.""")
 
 
 def build_usage():
-    """ build usage message """
+    """build usage message"""
     cmd_blacklist = ["do_loop", "do_EOF"]
     usage = dict()
     for attrname in dir(InfoCore):
@@ -761,7 +755,7 @@ def main():
                    command_timeout=Bcfg2.Options.CLIENT_COMMAND_TIMEOUT)
     optinfo.update(Bcfg2.Options.INFO_COMMON_OPTIONS)
     setup = Bcfg2.Options.OptionParser(optinfo)
-    setup.hm = "\n".join(["     bcfg2-info [options] [command <command args>]",
+    setup.hm = "\n".join(["bcfg2-info [options] [command <command args>]",
                           "Options:",
                           setup.buildHelpMessage(),
                           USAGE])
