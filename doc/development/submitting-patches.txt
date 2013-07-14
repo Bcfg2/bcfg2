@@ -1,0 +1,144 @@
+.. -*- mode: rst -*-
+.. vim: ft=rst
+
+.. _development-submitting-patches:
+
+==================
+Submitting Patches 
+==================
+
+The purpose of this document is to assist those who may be less familiar
+with git in submitting patches upstream. While git is powerful, it can
+be somewhat confusing to those who don't use it regularly (and even
+those who do).
+
+.. note::
+
+    We prefer more in-depth commit messages than those
+    given below which are purely for brevity in this guide. See
+    http://tbaggery.com/2008/04/19/a-note-about-git-commit-messages.html
+    for more about creating proper git commit messages.
+
+.. _Github: https://github.com/
+
+`Github`_
+=========
+
+These steps outline one way of submitting patches via `Github`_. First,
+you will want to `fork <https://github.com/Bcfg2/bcfg2/fork>`_ the
+upstream Bcfg2 repository.
+
+Create a local branch
+---------------------
+
+Once you have forked the upstream repository, you should clone a local
+copy (where <YOUR USERNAME> is your github username).
+
+::
+
+    git clone git@github.com:<YOUR USERNAME>/bcfg2.git
+
+Create a local feature/bugfix branch off the appropriate upstream
+branch. For example, let's say we want to submit a bugfix for
+:program:`bcfg2-info` against the 1.2.x series. We can create a
+``fix-bcfg2-info`` branch which is a copy of the ``maint-1.2`` branch.
+
+::
+
+    git branch fix-bcfg2-info maint-1.2
+    git checkout fix-bcfg2-info
+
+Commit changes to your local branch
+-----------------------------------
+
+Next make whatever changes need to be made and commit them to the
+``fix-bcfg2-info`` branch.
+
+::
+
+    git add src/sbin/bcfg2-info
+    git commit -m "Fix bcfg2-info bug"
+
+Now you need to push your ``fix-bcfg2-info`` branch to github.
+
+::
+
+    git push origin fix-bcfg2-info
+
+Submit pull request
+-------------------
+
+Next, submit a pull request against the proper branch (in this case,
+https://github.com/username/bcfg2/pull/new/fix-bcfg2-info -- again,
+username is your github username). At the top of the pull request, you can
+edit the upstream branch you are targetting so that you create the pull
+request against the proper upstream branch (in this case, ``maint-1.2``).
+
+All that's left to do is to write up a description of your pull request
+and click **Send pull request**. Since your local branch is specific to
+this fix, you can add additional commits if needed and push them. They
+will automatically be added to the pull request.
+
+Remove local branch
+-------------------
+
+Once we have merged your pull request, you can safely delete your local
+feature/bugfix branch. To do so, you must first checkout a different branch.
+
+::
+
+    git checkout master  # switch to a different branch
+    git branch -d fix-bcfg2-info  # delete your local copy of fix-bcfg2-info
+    git push origin :fix-bcfg2-info  # delete fix-bcfg2-info from github
+
+Mailing List
+============
+
+The following lists the steps needed to use git's facilities for
+emailing patches to the mailing list.
+
+Commit changes to your local clone
+----------------------------------
+
+For example, let's say we want to fix a big in :program:`bcfg2-info`.
+For the 1.2.x series.
+
+::
+
+      git clone https://github.com/Bcfg2/bcfg2.git
+      git checkout maint-1.2
+      # make changes
+      git add src/sbin/bcfg2-info
+      git commit -m "Fix bcfg2-info bug"
+
+Setup git for gmail (optional)
+------------------------------
+
+If you would like to use the GMail SMTP server, you can add the following
+to your ~/.gitconfig file as per the :manpage:`git-send-email(1)` manpage.
+
+::
+
+    [sendemail]
+            smtpencryption = tls
+            smtpserver = smtp.gmail.com
+            smtpuser = yourname@gmail.com
+            smtpserverport = 587
+
+Format patches
+--------------
+
+Use git to create patches formatted for email with the following.
+
+::
+
+    git format-patch --cover-letter -M origin/maint-1.2 -o outgoing/
+
+
+Send emails to the mailing list
+-------------------------------
+
+Edit ``outgoing/0000-*`` and then send your emails to the mailing list
+(bcfg-dev@lists.mcs.anl.gov)::
+
+    git send-email outgoing/*
