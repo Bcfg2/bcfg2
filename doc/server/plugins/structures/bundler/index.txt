@@ -49,6 +49,8 @@ be provided by a different plugin such as
 Alternatively, you can use fully-bound entries in Bundler, which has
 various uses.  For instance:
 
+.. code-block:: xml
+
     <Bundle>
       <Path name='/etc/ssh/ssh_config'/>
       <Group name='rpm'>

@@ -327,10 +327,10 @@ Feature Matrix
 +-------------------------------------------------+--------------+--------+------------+------------+
 | File                                            | Group/Client | Genshi | Encryption | XInclude   |
 +=================================================+==============+========+============+============+
-| :ref:`ACL ip.xml <server-plugins-misc-acl>'     | No           | No     | No         | Yes        |
+| :ref:`ACL ip.xml <server-plugins-misc-acl>`     | No           | No     | No         | Yes        |
 +-------------------------------------------------+--------------+--------+------------+------------+
 | :ref:`ACL metadata.xml                          | Yes          | Yes    | Yes        | Yes        |
-| <server-plugins-misc-acl>'                      |              |        |            |            |
+| <server-plugins-misc-acl>`                      |              |        |            |            |
 +-------------------------------------------------+--------------+--------+------------+------------+
 | :ref:`Bundler                                   | Yes          | Yes    | Yes        | Yes        |
 | <server-plugins-structures-bundler-index>`      |              |        |            |            |

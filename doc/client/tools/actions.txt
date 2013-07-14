@@ -57,6 +57,8 @@ same bundle based on group membership.
 It is also possible to do this in one step in the bundle itself with a
 ``BoundAction`` tag, e.g.:
 
+.. code-block:: xml
+
     <Bundle>
       <BoundAction timing='post' when='modified' name='action_name'
                    command='/path/to/command arg1 arg2' status='ignore'/>
