@@ -53,6 +53,7 @@ The Yum Backend
 import os
 import re
 import sys
+import stat
 import copy
 import errno
 import socket
@@ -282,13 +283,15 @@ class YumCollection(Collection):
             #: for cached yum metadata
             self.cachefile = os.path.join(self.cachepath,
                                           "cache-%s" % self.cachekey)
-            if not os.path.exists(self.cachefile):
-                os.mkdir(self.cachefile)
 
             #: The path to the server-side config file used when
             #: resolving packages with the Python yum libraries
             self.cfgfile = os.path.join(self.cachefile, "yum.conf")
-            self.write_config()
+
+            if not os.path.exists(self.cachefile):
+                self.debug_log("Creating common cache %s" % self.cachefile)
+                os.mkdir(self.cachefile)
+                self.setup_data()
         else:
             self.cachefile = None
 
@@ -924,6 +927,28 @@ class YumCollection(Collection):
                               "output: %s" % err)
             raise
 
+    def _set_cache_writeable(self, writeable):
+        """ Set the writeability of the yum cache.
+
+        :param writeable: If True, the cache will be made writeable.
+                          If False, the cache will be made read-only.
+        :type writeable: bool
+        """
+        fmode = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+        if writeable:
+            self.debug_log("Packages: Making cache %s writeable" %
+                           self.cachefile)
+            fmode |= stat.S_IWUSR
+        else:
+            self.debug_log("Packages: Making cache %s read-only" %
+                           self.cachefile)
+        dmode = fmode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+        for root, dirs, files in os.walk(self.cachefile):
+            for dname in dirs:
+                os.chmod(os.path.join(root, dname), dmode)
+            for fname in files:
+                os.chmod(os.path.join(root, fname), fmode)
+
     def setup_data(self, force_update=False):
         """ Do any collection-level data setup tasks. This is called
         when sources are loaded or reloaded by
@@ -931,11 +956,11 @@ class YumCollection(Collection):
 
         If the builtin yum parsers are in use, this defers to
         :func:`Bcfg2.Server.Plugins.Packages.Collection.Collection.setup_data`.
-        If using the yum Python libraries, this cleans up cached yum
-        metadata, regenerates the server-side yum config (in order to
-        catch any new sources that have been added to this server),
-        and then cleans up cached yum metadata again, in case the new
-        config has any preexisting cache.
+        If using the yum Python libraries, this makes the cache
+        writeable, cleans up cached yum metadata, regenerates the
+        server-side yum config (in order to catch any new sources that
+        have been added to this server), regenerates the yum cache,
+        and then sets the cache back to read-only.
 
         :param force_update: Ignore all local cache and setup data
                              from its original upstream sources (i.e.,
@@ -945,24 +970,25 @@ class YumCollection(Collection):
         if not self.use_yum:
             return Collection.setup_data(self, force_update)
 
+        self._set_cache_writeable(True)
         if force_update:
-            # we call this twice: one to clean up data from the old
-            # config, and once to clean up data from the new config
+            # clean up data from the old config
             try:
                 self.call_helper("clean")
             except ValueError:
                 # error reported by call_helper
                 pass
 
-        os.unlink(self.cfgfile)
+        if os.path.exists(self.cfgfile):
+            os.unlink(self.cfgfile)
         self.write_config()
 
-        if force_update:
-            try:
-                self.call_helper("clean")
-            except ValueError:
-                # error reported by call_helper
-                pass
+        try:
+            self.call_helper("makecache")
+        except ValueError:
+            # error reported by call_helper
+            pass
+        self._set_cache_writeable(False)
 
 
 class YumSource(Source):

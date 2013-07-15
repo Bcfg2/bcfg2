@@ -193,6 +193,20 @@ class DepSolver(object):
             if not msg.startswith("0 "):
                 self.logger.info(msg)
 
+    def populate_cache(self):
+        """ populate the yum cache """
+        for repo in self.yumbase.repos.findRepos('*'):
+            repo.metadata_expire = 0
+            repo.mdpolicy = "group:all"
+        self.yumbase.doRepoSetup()
+        self.yumbase.repos.doSetup()
+        for repo in self.yumbase.repos.listEnabled():
+            # this populates the cache as a side effect
+            repo.repoXML  # pylint: disable=W0104
+        self.yumbase.repos.populateSack(mdtype='metadata', cacheonly=1)
+        self.yumbase.repos.populateSack(mdtype='filelists', cacheonly=1)
+        self.yumbase.repos.populateSack(mdtype='otherdata', cacheonly=1)
+
 
 def main():
     parser = OptionParser()
@@ -233,6 +247,15 @@ def main():
                          sys.exc_info()[1], exc_info=1)
             print(json.dumps(False))
             rv = 2
+    elif cmd == "makecache":
+        try:
+            # this code copied from yumcommands.py
+            depsolver.populate_cache()
+            print json.dumps(True)
+        except yum.Errors.YumBaseError:
+            logger.error("Unexpected error creating cache: %s" %
+                         sys.exc_info()[1], exc_info=1)
+            print json.dumps(False)
     elif cmd == "complete":
         try:
             data = json.loads(sys.stdin.read())

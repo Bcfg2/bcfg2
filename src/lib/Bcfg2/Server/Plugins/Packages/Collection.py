@@ -614,6 +614,10 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
             self.filter_unknown(unknown)
         return packages, unknown
 
+    def __repr__(self):
+        return "%s(%s)" % (self.__class__.__name__,
+                           list.__repr__(self))
+
 
 def get_collection_class(source_type):
     """ Given a source type, determine the class of Collection object
