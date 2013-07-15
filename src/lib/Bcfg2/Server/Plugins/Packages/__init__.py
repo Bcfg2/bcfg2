@@ -609,6 +609,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :return: dict of lists of ``url_map`` data
         """
         def get_sources():
+            """ getter for the 'sources' key of the OnDemandDict
+            returned by this function.  This delays calling
+            get_collection() until it's absolutely necessary. """
             return self.get_collection(metadata).get_additional_data
 
         return OnDemandDict(
