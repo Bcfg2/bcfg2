@@ -230,7 +230,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
                     if strict:
                         raise PluginExecutionError(msg)
                     else:
-                        self.logger.warning(msg)
+                        self.logger.info(msg)
     Index.__doc__ = StructFile.Index.__doc__
 
     def _decrypt(self, element):

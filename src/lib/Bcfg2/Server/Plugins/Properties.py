@@ -223,7 +223,7 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
                     if strict:
                         raise PluginExecutionError(msg)
                     else:
-                        LOGGER.warning(msg)
+                        LOGGER.info(msg)
     Index.__doc__ = Bcfg2.Server.Plugin.StructFile.Index.__doc__
 
     def _decrypt(self, element):
