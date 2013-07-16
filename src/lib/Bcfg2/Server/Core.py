@@ -1274,9 +1274,14 @@ class BaseCore(object):
         self.logger.info("Core: debug = %s" % debug)
         levels = self._loglevels[self.debug_flag]
         for handler in logging.root.handlers:
-            level = levels.get(handler.name, levels['default'])
-            self.logger.debug("Setting %s log handler to %s" %
-                              (handler.name, logging.getLevelName(level)))
+            try:
+                level = levels.get(handler.name, levels['default'])
+                self.logger.debug("Setting %s log handler to %s" %
+                                  (handler.name, logging.getLevelName(level)))
+            except AttributeError:
+                level = levels['default']
+                self.logger.debug("Setting unknown log handler %s to %s" %
+                                  (handler, logging.getLevelName(level)))
             handler.setLevel(level)
         return self.debug_flag
 
