@@ -381,15 +381,15 @@ class TestPOSIXUsers(TestTool):
                  (lxml.etree.Element("POSIXUser", name="test", group="test",
                                      home="/home/test", shell="/bin/zsh",
                                      gecos="Test McTest"),
-                  ["-m", "-g", "test", "-d", "/home/test", "-s", "/bin/zsh",
+                  ["-g", "test", "-d", "/home/test", "-s", "/bin/zsh",
                    "-c", "Test McTest"]),
                  (lxml.etree.Element("POSIXUser", name="test", group="test",
                                      home="/home/test", shell="/bin/zsh",
                                      gecos="Test McTest", uid="1001"),
-                  ["-m", "-u", "1001", "-g", "test", "-d", "/home/test",
+                  ["-u", "1001", "-g", "test", "-d", "/home/test",
                    "-s", "/bin/zsh", "-c", "Test McTest"]),
                  (entry,
-                  ["-m", "-g", "test", "-G", "wheel,users", "-d", "/home/test",
+                  ["-g", "test", "-G", "wheel,users", "-d", "/home/test",
                    "-s", "/bin/zsh", "-c", "Test McTest"])]
         for entry, expected in cases:
             for action in ["add", "mod", "del"]:
