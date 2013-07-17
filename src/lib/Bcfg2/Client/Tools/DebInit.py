@@ -108,7 +108,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
     def InstallService(self, entry):
         """Install Service entry."""
         self.logger.info("Installing Service %s" % (entry.get('name')))
-        bootstatus = entry.get('bootstatus')
+        bootstatus = self.get_bootstatus(entry)
 
         # check if init script exists
         try:
