@@ -53,11 +53,13 @@ The Yum Backend
 import os
 import re
 import sys
+import time
 import copy
 import errno
 import socket
 import logging
 import lxml.etree
+from lockfile import FileLock
 from subprocess import Popen, PIPE
 import Bcfg2.Server.Plugin
 # pylint: disable=W0622
@@ -863,6 +865,17 @@ class YumCollection(Collection):
         """
         if not self.use_yum:
             return Collection.complete(self, packagelist)
+
+        lock = FileLock(os.path.join(self.cachefile, "lock"))
+        slept = 0
+        while lock.is_locked():
+            if slept > 30:
+                self.logger.warning("Packages: Timeout waiting for yum cache "
+                                    "to release its lock")
+                return set(), set()
+            self.logger.debug("Packages: Yum cache is locked, waiting...")
+            time.sleep(3)
+            slept += 3
 
         if packagelist:
             try:
