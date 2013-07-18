@@ -290,7 +290,8 @@ class YumCollection(Collection):
             if not os.path.exists(self.cachefile):
                 self.debug_log("Creating common cache %s" % self.cachefile)
                 os.mkdir(self.cachefile)
-                #self.setup_data()
+                if not self.disableMetaData:
+                    self.setup_data()
         else:
             self.cachefile = None
 
@@ -312,6 +313,26 @@ class YumCollection(Collection):
                                           "cert directory at %s: %s" %
                                           (certdir, err))
                 self.pulp_cert_set = PulpCertificateSet(certdir, self.fam)
+
+    @property
+    def disableMetaData(self):
+        """ Report whether or not metadata processing is enabled.
+        This duplicates code in Packages/__init__.py, and can probably
+        be removed in Bcfg2 1.4 when we have a module-level setup
+        object. """
+        if self.setup is None:
+            return True
+        try:
+            return not self.setup.cfp.getboolean("packages", "resolver")
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+            return False
+        except ValueError:
+            # for historical reasons we also accept "enabled" and
+            # "disabled"
+            return self.setup.cfp.get(
+                "packages",
+                "metadata",
+                default="enabled").lower() == "disabled"
 
     @property
     def __package_groups__(self):
