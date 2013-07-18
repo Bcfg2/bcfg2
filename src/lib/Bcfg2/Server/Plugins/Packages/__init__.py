@@ -61,7 +61,7 @@ class OnDemandDict(MutableMapping):
     def __iter__(self):
         return iter(self._getters.keys())
 
-    def __str__(self):
+    def __repr__(self):
         rv = dict(self._values)
         for key in self._getters.keys():
             if key not in rv:
