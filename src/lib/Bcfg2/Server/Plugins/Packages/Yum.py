@@ -377,6 +377,7 @@ class YumCollection(Collection):
             # the rpmdb is so hopelessly intertwined with yum that we
             # have to totally reinvent the dependency resolver.
             mainopts = dict(cachedir='/',
+                            persistdir='/',
                             installroot=self.cachefile,
                             keepcache="0",
                             debuglevel="0",
