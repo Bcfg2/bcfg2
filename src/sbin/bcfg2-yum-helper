@@ -42,8 +42,8 @@ def pkgtup_to_string(package):
     return ''.join(str(e) for e in rv)
 
 
-class DepSolver(object):
-    """ Yum dependency solver """
+class YumHelper(object):
+    """ Yum helper base object """
 
     def __init__(self, cfgfile, verbose=1):
         self.cfgfile = cfgfile
@@ -57,6 +57,16 @@ class DepSolver(object):
             self.yumbase._getConfig(cfgfile, debuglevel=verbose)
         # pylint: enable=E1121,W0212
         self.logger = logging.getLogger(self.__class__.__name__)
+
+
+class DepSolver(YumHelper):
+    """ Yum dependency solver.  This is used for operations that only
+    read from the yum cache, and thus operates in cacheonly mode. """
+
+    def __init__(self, cfgfile, verbose=1):
+        YumHelper.__init__(self, cfgfile, verbose=verbose)
+        # internally, yum uses an integer, not a boolean, for conf.cache
+        self.yumbase.conf.cache = 1
         self._groups = None
 
     def get_groups(self):
@@ -181,6 +191,14 @@ class DepSolver(object):
             packages.add(txmbr.pkgtup)
         return list(packages), list(unknown)
 
+
+class CacheManager(YumHelper):
+    """ Yum cache manager.  Unlike :class:`DepSolver`, this can write
+    to the yum cache, and so is used for operations that muck with the
+    cache.  (Technically, :func:`CacheManager.clean_cache` could be in
+    either DepSolver or CacheManager, but for consistency I've put it
+    here.) """
+
     def clean_cache(self):
         """ clean the yum cache """
         for mdtype in ["Headers", "Packages", "Sqlite", "Metadata",
@@ -237,10 +255,10 @@ def main():
 
     # pylint: disable=W0702
     rv = 0
-    depsolver = DepSolver(options.config, options.verbose)
     if cmd == "clean":
+        cachemgr = CacheManager(options.config, options.verbose)
         try:
-            depsolver.clean_cache()
+            cachemgr.clean_cache()
             print(json.dumps(True))
         except:
             logger.error("Unexpected error cleaning cache: %s" %
@@ -248,15 +266,17 @@ def main():
             print(json.dumps(False))
             rv = 2
     elif cmd == "makecache":
+        cachemgr = CacheManager(options.config, options.verbose)
         try:
             # this code copied from yumcommands.py
-            depsolver.populate_cache()
+            cachemgr.populate_cache()
             print json.dumps(True)
         except yum.Errors.YumBaseError:
             logger.error("Unexpected error creating cache: %s" %
                          sys.exc_info()[1], exc_info=1)
             print json.dumps(False)
     elif cmd == "complete":
+        depsolver = DepSolver(options.config, options.verbose)
         try:
             data = json.loads(sys.stdin.read())
         except:
@@ -275,6 +295,7 @@ def main():
             print(json.dumps(dict(packages=[], unknown=data['packages'])))
             rv = 2
     elif cmd == "get_groups":
+        depsolver = DepSolver(options.config, options.verbose)
         try:
             data = json.loads(sys.stdin.read())
             rv = dict()

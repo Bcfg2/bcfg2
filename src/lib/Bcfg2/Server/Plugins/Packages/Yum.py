@@ -928,28 +928,6 @@ class YumCollection(Collection):
                               "output: %s" % err)
             raise
 
-    def _set_cache_writeable(self, writeable):
-        """ Set the writeability of the yum cache.
-
-        :param writeable: If True, the cache will be made writeable.
-                          If False, the cache will be made read-only.
-        :type writeable: bool
-        """
-        fmode = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
-        if writeable:
-            self.debug_log("Packages: Making cache %s writeable" %
-                           self.cachefile)
-            fmode |= stat.S_IWUSR
-        else:
-            self.debug_log("Packages: Making cache %s read-only" %
-                           self.cachefile)
-        dmode = fmode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-        for root, dirs, files in os.walk(self.cachefile):
-            for dname in dirs:
-                os.chmod(os.path.join(root, dname), dmode)
-            for fname in files:
-                os.chmod(os.path.join(root, fname), fmode)
-
     def setup_data(self, force_update=False):
         """ Do any collection-level data setup tasks. This is called
         when sources are loaded or reloaded by
@@ -957,11 +935,10 @@ class YumCollection(Collection):
 
         If the builtin yum parsers are in use, this defers to
         :func:`Bcfg2.Server.Plugins.Packages.Collection.Collection.setup_data`.
-        If using the yum Python libraries, this makes the cache
-        writeable, cleans up cached yum metadata, regenerates the
-        server-side yum config (in order to catch any new sources that
-        have been added to this server), regenerates the yum cache,
-        and then sets the cache back to read-only.
+        If using the yum Python libraries, this cleans up cached yum
+        metadata, regenerates the server-side yum config (in order to
+        catch any new sources that have been added to this server),
+        then regenerates the yum cache.
 
         :param force_update: Ignore all local cache and setup data
                              from its original upstream sources (i.e.,
@@ -971,7 +948,6 @@ class YumCollection(Collection):
         if not self.use_yum:
             return Collection.setup_data(self, force_update)
 
-        self._set_cache_writeable(True)
         if force_update:
             # clean up data from the old config
             try:
@@ -989,7 +965,6 @@ class YumCollection(Collection):
         except ValueError:
             # error reported by call_helper
             pass
-        self._set_cache_writeable(False)
 
 
 class YumSource(Source):
