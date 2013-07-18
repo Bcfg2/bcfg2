@@ -437,7 +437,7 @@ Bcfg2 client itself.""")
         pname, client = alist
         automatch = self.setup.cfp.getboolean("properties", "automatch",
                                               default=False)
-        pfile = self.plugins['Properties'].store.entries[pname]
+        pfile = self.plugins['Properties'].entries[pname]
         if (not force and
             not automatch and
             pfile.xdata.get("automatch", "false").lower() != "true"):
