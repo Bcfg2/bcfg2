@@ -291,6 +291,7 @@ class YumCollection(Collection):
                 os.mkdir(self.cachefile)
                 if not self.disableMetaData:
                     self.setup_data()
+            self.cmd = Executor()
         else:
             self.cachefile = None
             self.cmd = None
