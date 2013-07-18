@@ -53,7 +53,6 @@ The Yum Backend
 import os
 import re
 import sys
-import stat
 import copy
 import errno
 import socket
@@ -291,7 +290,7 @@ class YumCollection(Collection):
             if not os.path.exists(self.cachefile):
                 self.debug_log("Creating common cache %s" % self.cachefile)
                 os.mkdir(self.cachefile)
-                self.setup_data()
+                #self.setup_data()
         else:
             self.cachefile = None
 
