@@ -251,7 +251,6 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                 if entry.get('gid'):
                     cmd.extend(['-g', entry.get('gid')])
             elif entry.tag == 'POSIXUser':
-                cmd.append('-m')
                 if entry.get('uid'):
                     cmd.extend(['-u', entry.get('uid')])
                 cmd.extend(['-g', entry.get('group')])

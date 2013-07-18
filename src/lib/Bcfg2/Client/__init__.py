@@ -21,6 +21,9 @@ def prompt(msg):
     try:
         ans = input(msg)
         return ans in ['y', 'Y']
+    except UnicodeEncodeError:
+        ans = input(msg.encode('utf-8'))
+        return ans in ['y', 'Y']
     except EOFError:
         # handle ^C on rhel-based platforms
         raise SystemExit(1)

@@ -281,14 +281,16 @@ class YumCollection(Collection):
             #: for cached yum metadata
             self.cachefile = os.path.join(self.cachepath,
                                           "cache-%s" % self.cachekey)
-            if not os.path.exists(self.cachefile):
-                os.mkdir(self.cachefile)
 
             #: The path to the server-side config file used when
             #: resolving packages with the Python yum libraries
             self.cfgfile = os.path.join(self.cachefile, "yum.conf")
-            self.write_config()
-            self.cmd = Executor()
+
+            if not os.path.exists(self.cachefile):
+                self.debug_log("Creating common cache %s" % self.cachefile)
+                os.mkdir(self.cachefile)
+                if not self.disableMetaData:
+                    self.setup_data()
         else:
             self.cachefile = None
             self.cmd = None
@@ -373,6 +375,7 @@ class YumCollection(Collection):
             # the rpmdb is so hopelessly intertwined with yum that we
             # have to totally reinvent the dependency resolver.
             mainopts = dict(cachedir='/',
+                            persistdir='/',
                             installroot=self.cachefile,
                             keepcache="0",
                             debuglevel="0",
@@ -921,8 +924,7 @@ class YumCollection(Collection):
         If using the yum Python libraries, this cleans up cached yum
         metadata, regenerates the server-side yum config (in order to
         catch any new sources that have been added to this server),
-        and then cleans up cached yum metadata again, in case the new
-        config has any preexisting cache.
+        then regenerates the yum cache.
 
         :param force_update: Ignore all local cache and setup data
                              from its original upstream sources (i.e.,
@@ -933,23 +935,22 @@ class YumCollection(Collection):
             return Collection.setup_data(self, force_update)
 
         if force_update:
-            # we call this twice: one to clean up data from the old
-            # config, and once to clean up data from the new config
+            # clean up data from the old config
             try:
                 self.call_helper("clean")
             except ValueError:
                 # error reported by call_helper
                 pass
 
-        os.unlink(self.cfgfile)
+        if os.path.exists(self.cfgfile):
+            os.unlink(self.cfgfile)
         self.write_config()
 
-        if force_update:
-            try:
-                self.call_helper("clean")
-            except ValueError:
-                # error reported by call_helper
-                pass
+        try:
+            self.call_helper("makecache")
+        except ValueError:
+            # error reported by call_helper
+            pass
 
 
 class YumSource(Source):

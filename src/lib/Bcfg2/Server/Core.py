@@ -732,6 +732,26 @@ class BaseCore(object):
         self.setup.reparse()
         self.metadata_cache.expire()
 
+    def block_for_fam_events(self, handle_events=False):
+        """ Block until all fam events have been handleed, optionally
+        handling events as well.  (Setting ``handle_events=True`` is
+        useful for local server cores that don't spawn an event
+        handling thread.)"""
+        slept = 0
+        log_interval = 3
+        if handle_events:
+            self.fam.handle_events_in_interval(1)
+            slept += 1
+        if self.setup['fam_blocking']:
+            time.sleep(1)
+            slept += 1
+            while self.fam.pending() != 0:
+                time.sleep(1)
+                slept += 1
+                if slept % log_interval == 0:
+                    self.logger.debug("Sleeping to handle FAM events...")
+        self.logger.debug("Slept %s seconds while handling FAM events" % slept)
+
     def run(self):
         """ Run the server core. This calls :func:`_daemonize`,
         :func:`_run`, starts the :attr:`fam_thread`, and calls
@@ -781,13 +801,9 @@ class BaseCore(object):
             self.shutdown()
             raise
 
-        if self.setup['fam_blocking']:
-            time.sleep(1)
-            while self.fam.pending() != 0:
-                time.sleep(1)
-
         if self.debug_flag:
             self.set_debug(None, self.debug_flag)
+        self.block_for_fam_events()
         self._block()
 
     def _daemonize(self):
@@ -888,7 +904,12 @@ class BaseCore(object):
             imd = self.metadata_cache.get(client_name, None)
         if not imd:
             self.logger.debug("Building metadata for %s" % client_name)
-            imd = self.metadata.get_initial_metadata(client_name)
+            try:
+                imd = self.metadata.get_initial_metadata(client_name)
+            except MetadataConsistencyError:
+                self.critical_error(
+                    "Client metadata resolution error for %s: %s" %
+                    (client_name, sys.exc_info()[1]))
             connectors = self.plugins_by_type(Connector)
             for conn in connectors:
                 grps = conn.get_additional_groups(imd)
@@ -1301,9 +1322,14 @@ class BaseCore(object):
         self.logger.info("Core: debug = %s" % debug)
         levels = self._loglevels[self.debug_flag]
         for handler in logging.root.handlers:
-            level = levels.get(handler.name, levels['default'])
-            self.logger.debug("Setting %s log handler to %s" %
-                              (handler.name, logging.getLevelName(level)))
+            try:
+                level = levels.get(handler.name, levels['default'])
+                self.logger.debug("Setting %s log handler to %s" %
+                                  (handler.name, logging.getLevelName(level)))
+            except AttributeError:
+                level = levels['default']
+                self.logger.debug("Setting unknown log handler %s to %s" %
+                                  (handler, logging.getLevelName(level)))
             handler.setLevel(level)
         return self.debug_flag
 

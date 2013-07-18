@@ -11,4 +11,4 @@ can help you to maintain your Bcfg2 configuration, to make the initial
 setup easier, or to do some other tasks. 
 
 
-http://trac.mcs.anl.gov/projects/bcfg2/browser/tools
+https://github.com/Bcfg2/bcfg2/tree/maint/tools
