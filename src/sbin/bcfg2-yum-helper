@@ -199,6 +199,8 @@ def acquire_lock(func):
     lock while the method runs """
     @wraps(func)
     def inner(self, *args, **kwargs):
+        """ Get and release a lock while running the function this
+        wraps. """
         self.logger.debug("Acquiring lock at %s" % self.lockfile)
         while not self.lock.i_am_locking():
             try:
