@@ -33,7 +33,7 @@ sendmailpath = %s
 # 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
 #name =
 # Or path to database file if using sqlite3.
-#<repository>/bcfg2.sqlite is default path if left empty
+#<repository>/etc/bcfg2.sqlite is default path if left empty
 #user =
 # Not used with sqlite3.
 #password =
