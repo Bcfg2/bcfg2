@@ -540,7 +540,7 @@ To ignore system UID/GIDs, add the following lines to ``bcfg2.conf``
 
 If you run the client again with ``bcfg2 -vqen``, you should now see a
 :ref:`POSIXUser <server-plugins-generators-rules-posixuser-tag>` entry
-and :ref:`POSIXUser <server-plugins-generators-rules-posixgroup-tag>`
+and :ref:`POSIXGroup <server-plugins-generators-rules-posixgroup-tag>`
 entry for your user account (assuming this is a fresh install with a
 regular user).
 
