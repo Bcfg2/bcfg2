@@ -20,6 +20,8 @@ from Bcfg2.Compat import input  # pylint: disable=W0622
 CONFIG = '''[server]
 repository = %s
 plugins = %s
+# Uncomment the following to listen on all interfaces
+#listen_all = true
 
 [statistics]
 sendmailpath = %s
@@ -78,7 +80,7 @@ CLIENTS = '''<Clients version="3.0">
 '''
 
 # Mapping of operating system names to groups
-OS_LIST = [('Red Hat/Fedora/RHEL/RHAS/Centos', 'redhat'),
+OS_LIST = [('Red Hat/Fedora/RHEL/RHAS/CentOS', 'redhat'),
            ('SUSE/SLES', 'suse'),
            ('Mandrake', 'mandrake'),
            ('Debian', 'debian'),
@@ -234,8 +236,9 @@ class Init(Bcfg2.Server.Admin.Mode):
 
     def _prompt_server(self):
         """Ask for the server name."""
-        newserver = safe_input("Input the server location [%s]: " %
-                               self.data['server_uri'])
+        newserver = safe_input(
+            "Input the server location (the server listens on a single "
+            "interface by default) [%s]: " % self.data['server_uri'])
         if newserver != '':
             self.data['server_uri'] = newserver
 
