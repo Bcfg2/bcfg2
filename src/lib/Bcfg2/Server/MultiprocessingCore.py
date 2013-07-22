@@ -269,8 +269,8 @@ class Core(BuiltinCore):
 
     @exposed
     def set_debug(self, address, debug):
-        BuiltinCore.set_debug(self, address, debug)
         self.metadata_cache.set_debug(debug)
+        return BuiltinCore.set_debug(self, address, debug)
 
     @exposed
     def GetConfig(self, address):
