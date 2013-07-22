@@ -1221,7 +1221,8 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
                              authentication=SERVER_AUTHENTICATION,
                              perflog=LOG_PERFORMANCE,
                              perflog_interval=PERFLOG_INTERVAL,
-                             children=SERVER_CHILDREN)
+                             children=SERVER_CHILDREN,
+                             client_timeout=CLIENT_TIMEOUT)
 
 CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
                      decrypt=DECRYPT,
