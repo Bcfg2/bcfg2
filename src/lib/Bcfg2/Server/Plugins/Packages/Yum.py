@@ -104,9 +104,6 @@ FL = '{http://linux.duke.edu/metadata/filelists}'
 PULPSERVER = None
 PULPCONFIG = None
 
-#: The path to bcfg2-yum-helper
-HELPER = None
-
 
 def _setup_pulp(setup):
     """ Connect to a Pulp server and pass authentication credentials.
@@ -279,6 +276,10 @@ class YumCollection(Collection):
                             debug=debug)
         self.keypath = os.path.join(self.cachepath, "keys")
 
+        #: A :class:`Bcfg2.Utils.Executor` object to use to run
+        #: external commands
+        self.cmd = Executor()
+
         self._helper = None
         if self.use_yum:
             #: Define a unique cache file for this collection to use
@@ -295,10 +296,8 @@ class YumCollection(Collection):
                 os.mkdir(self.cachefile)
                 if not self.disableMetaData:
                     self.setup_data()
-            self.cmd = Executor()
         else:
             self.cachefile = None
-            self.cmd = None
 
         if HAS_PULP and self.has_pulp_sources:
             _setup_pulp(self.setup)
