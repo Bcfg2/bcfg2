@@ -17,7 +17,6 @@ The RPC call always returns a value via the pipe, so the caller *must*
 read the return value in order to keep the pipe consistent.
 """
 
-import logging
 import threading
 import lxml.etree
 import multiprocessing
