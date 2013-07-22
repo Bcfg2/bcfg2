@@ -41,8 +41,7 @@ class DispatchingCache(Cache, Debuggable):
         #: time an item is expired.
         self.pipes = kwargs.pop("pipes", dict())
 
-        #: A :class:`logging.Logger` object this cache object can use
-        self.logger = logging.getLogger(self.__class__.__name__)
+        Debuggable.__init__(self)
         Cache.__init__(self, *args, **kwargs)
 
     def expire(self, key=None):
