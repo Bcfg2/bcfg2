@@ -942,6 +942,10 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
                                (basename, pubkey))
 
     def _list_path_components(self, path):
+        """ Get a list of all components of a path.  E.g.,
+        ``self._list_path_components("/foo/bar/foobaz")`` would return
+        ``["foo", "bar", "foo", "baz"]``.  The list is not guaranteed
+        to be in order."""
         rv = []
         remaining, component = os.path.split(path)
         while component != '':
