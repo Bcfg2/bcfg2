@@ -678,7 +678,7 @@ DB_OPTIONS = \
            default=dict(),
            cf=('database', 'options'),
            cook=dict_split)
-DB_PORT = \
+DB_SCHEMA = \
     Option('Database schema',
            default='',
            cf=('database', 'schema'))
@@ -1318,6 +1318,7 @@ DATABASE_COMMON_OPTIONS = dict(web_configfile=WEB_CFILE,
                                db_host=DB_HOST,
                                db_port=DB_PORT,
                                db_options=DB_OPTIONS,
+                               db_schema=DB_SCHEMA,
                                time_zone=DJANGO_TIME_ZONE,
                                django_debug=DJANGO_DEBUG,
                                web_prefix=DJANGO_WEB_PREFIX)
