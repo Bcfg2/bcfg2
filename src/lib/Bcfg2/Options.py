@@ -673,12 +673,15 @@ DB_PORT = \
            default='',
            cf=('database', 'port'),
            deprecated_cf=('statistics', 'database_port'))
-
 DB_OPTIONS = \
     Option('Database options',
            default=dict(),
            cf=('database', 'options'),
            cook=dict_split)
+DB_PORT = \
+    Option('Database schema',
+           default='',
+           cf=('database', 'schema'))
 
 # Django options
 WEB_CFILE = \
