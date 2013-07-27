@@ -666,13 +666,17 @@ DB_HOST = \
 DB_PORT = \
     Option('Database port',
            default='',
-           cf=('database', 'port'))
-
+           cf=('database', 'port'),
+           deprecated_cf=('statistics', 'database_port'))
 DB_OPTIONS = \
     Option('Database options',
            default=dict(),
            cf=('database', 'options'),
            cook=dict_split)
+DB_SCHEMA = \
+    Option('Database schema',
+           default='',
+           cf=('database', 'schema'))
 
 # Django options
 WEB_CFILE = \
@@ -1154,7 +1158,8 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
                              authentication=SERVER_AUTHENTICATION,
                              perflog=LOG_PERFORMANCE,
                              perflog_interval=PERFLOG_INTERVAL,
-                             children=SERVER_CHILDREN)
+                             children=SERVER_CHILDREN,
+                             client_timeout=CLIENT_TIMEOUT)
 
 CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
                      decrypt=DECRYPT,
@@ -1246,6 +1251,7 @@ DATABASE_COMMON_OPTIONS = dict(web_configfile=WEB_CFILE,
                                db_host=DB_HOST,
                                db_port=DB_PORT,
                                db_options=DB_OPTIONS,
+                               db_schema=DB_SCHEMA,
                                time_zone=DJANGO_TIME_ZONE,
                                django_debug=DJANGO_DEBUG,
                                web_prefix=DJANGO_WEB_PREFIX)

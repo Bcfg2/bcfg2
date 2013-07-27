@@ -23,8 +23,7 @@ Options
 -------
 
 -C configfile     Specify alternate bcfg2.conf location.
--D pidfile        Daemonize, placing the program pid in the specified
-                  pidfile.
+-D pidfile        Daemonize, placing the program pid in *pidfile*.
 -E encoding       Specify the encoding of config files.
 -Q path           Specify the path to the server repository.
 -S server         Manually specify the server location (as opposed to

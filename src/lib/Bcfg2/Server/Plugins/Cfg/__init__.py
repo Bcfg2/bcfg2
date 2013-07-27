@@ -10,6 +10,7 @@ import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Lint
+from fnmatch import fnmatch
 from Bcfg2.Server.Plugin import PluginExecutionError
 # pylint: disable=W0622
 from Bcfg2.Compat import u_str, unicode, b64encode, walk_packages, \
@@ -876,22 +877,41 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
                                "%s has no corresponding pubkey.xml at %s" %
                                (basename, pubkey))
 
+    def _list_path_components(self, path):
+        """ Get a list of all components of a path.  E.g.,
+        ``self._list_path_components("/foo/bar/foobaz")`` would return
+        ``["foo", "bar", "foo", "baz"]``.  The list is not guaranteed
+        to be in order."""
+        rv = []
+        remaining, component = os.path.split(path)
+        while component != '':
+            rv.append(component)
+            remaining, component = os.path.split(remaining)
+        return rv
+
     def check_missing_files(self):
         """ check that all files on the filesystem are known to Cfg """
         cfg = self.core.plugins['Cfg']
 
         # first, collect ignore patterns from handlers
-        ignore = []
+        ignore = set()
         for hdlr in handlers():
-            ignore.extend(hdlr.__ignore__)
+            ignore.update(hdlr.__ignore__)
 
         # next, get a list of all non-ignored files on the filesystem
         all_files = set()
         for root, _, files in os.walk(cfg.data):
-            all_files.update(os.path.join(root, fname)
-                             for fname in files
-                             if not any(fname.endswith("." + i)
-                                        for i in ignore))
+            for fname in files:
+                fpath = os.path.join(root, fname)
+                # check against the handler ignore patterns and the
+                # global FAM ignore list
+                if (not any(fname.endswith("." + i) for i in ignore) and
+                    not any(fnmatch(fpath, p)
+                            for p in self.config['ignore']) and
+                    not any(fnmatch(c, p)
+                            for p in self.config['ignore']
+                            for c in self._list_path_components(fpath))):
+                    all_files.add(fpath)
 
         # next, get a list of all files known to Cfg
         cfg_files = set()

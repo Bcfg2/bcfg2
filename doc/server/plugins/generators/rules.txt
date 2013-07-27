@@ -358,6 +358,8 @@ SEModule Tag
 
 See also :ref:`server-plugins-generators-semodules`.
 
+.. _server-plugins-generators-rules-posixuser-tag:
+
 POSIXUser Tag
 -------------
 
@@ -392,6 +394,8 @@ Defaults plugin <server-plugins-structures-defaults>`.
 
 See :ref:`client-tools-posixusers` for more information on managing
 users and groups.
+
+.. _server-plugins-generators-rules-posixgroup-tag:
 
 POSIXGroup Tag
 --------------

@@ -465,6 +465,16 @@ Bcfg2 client itself.""")
             ('Logging', self.setup['logging'])]
         print_tabular(output)
 
+    def do_expirecache(self, args):
+        """ expirecache [<hostname> [<hostname> ...]]- Expire the
+        metadata cache """
+        alist = args.split()
+        if len(alist):
+            for client in self._get_client_list(alist):
+                self.metadata_cache.expire(client)
+        else:
+            self.metadata_cache.expire()
+
     def do_probes(self, args):
         """probes [-p] <hostname>
         Get probe list for the given host, in XML (the default) \

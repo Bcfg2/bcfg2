@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _appendix-guides-ubuntu:
 
@@ -8,7 +9,7 @@ Ubuntu
 
 .. note::
 
-    This particular how to was done on lucid, but should apply to any
+    This particular how to was done on saucy, but should apply to any
     other `stable`__ version of Ubuntu.
 
 __ ubuntu-releases_
@@ -23,11 +24,6 @@ version available in the ubuntu archives, but it is not as up to date).
 
 .. _PPA: https://launchpad.net/~bcfg2/+archive/ppa
 
-Add the Ubuntu PPA listing to your APT sources
-----------------------------------------------
-
-See http://trac.mcs.anl.gov/projects/bcfg2/wiki/PrecompiledPackages#UbuntuLucid
-
 Install bcfg2-server
 --------------------
 ::
@@ -36,7 +32,7 @@ Install bcfg2-server
 
 Remove the default configuration preseeded by the ubuntu package::
 
-    root@lucid:~# rm -rf /etc/bcfg2* /var/lib/bcfg2
+    root@saucy:~# rm -rf /etc/bcfg2* /etc/ssl/bcfg2* /var/lib/bcfg2
 
 Initialize your repository
 ==========================
@@ -45,63 +41,95 @@ Now that you're done with the install, you need to intialize your
 repository and setup your bcfg2.conf. bcfg2-admin init is a tool which
 allows you to automate this process.::
 
-    root@lucid:~# bcfg2-admin init
-    Store bcfg2 configuration in [/etc/bcfg2.conf]:
-    Location of bcfg2 repository [/var/lib/bcfg2]:
+    root@saucy:~# bcfg2-admin init
+    Store Bcfg2 configuration in [/etc/bcfg2.conf]:
+    Location of Bcfg2 repository [/var/lib/bcfg2]:
     Input password used for communication verification (without echoing; leave blank for a random):
-    What is the server's hostname: [lucid]
-    Input the server location [https://lucid:6789]:
+    What is the server's hostname: [saucy]
+    Input the server location (the server listens on a single interface by default) [https://saucy:6789]:
     Input base Operating System for clients:
-    1: Redhat/Fedora/RHEL/RHAS/Centos
+    1: Redhat/Fedora/RHEL/RHAS/CentOS
     2: SUSE/SLES
     3: Mandrake
     4: Debian
     5: Ubuntu
     6: Gentoo
     7: FreeBSD
+    8: Arch
     : 5
+    Path where Bcfg2 server private key will be created [/etc/ssl/bcfg2.key]:
+    Path where Bcfg2 server cert will be created [/etc/ssl/bcfg2.crt]:
+    The following questions affect SSL certificate generation.
+    If no data is provided, the default values are used.
+    Country name (2 letter code) for certificate: US
+    State or Province Name (full name) for certificate: Illinois
+    Locality Name (eg, city) for certificate: Argonne
+    Repository created successfuly in /var/lib/bcfg2
     Generating a 2048 bit RSA private key
-    ......................................................................................+++
-    ...+++
-    writing new private key to '/etc/bcfg2.key'
+    ....................................................................................................................+++
+    ..............................+++
+    writing new private key to '/etc/ssl/bcfg2.key'
     -----
     Signature ok
-    subject=/C=US/ST=Illinois/L=Argonne/CN=lucid
+    subject=/C=US/ST=Illinois/L=Argonne/CN=saucy
     Getting Private key
-    Repository created successfuly in /var/lib/bcfg2
-
 
 Of course, change responses as necessary.
 
 Start the server
 ================
 
+Before you start the server, you need to fix your network resolution for
+this host. The short and easy way is to remove the 127.0.1.1 line in
+``/etc/hosts`` and move your hostname to the 127.0.0.1 line.
+
+::
+
+    127.0.0.1	saucy localhost
+
+    # The following lines are desirable for IPv6 capable hosts
+    ...
+
+.. _Debian Manual: http://www.debian.org/doc/manuals/debian-reference/ch05.en.html#_the_hostname_resolution
+
+.. note::
+
+    This configuration is not recommended except as a quick hack to get
+    you through this guide. Ideally you'd add a line containing the
+    host's actual IP address. More information on why this is broken
+    can be found in the `Debian Manual`_.
+
 You are now ready to start your bcfg2 server for the first time.::
 
-    root@lucid:~# /etc/init.d/bcfg2-server start
-    root@lucid:~# tail /var/log/syslog
-    Dec 17 22:07:02 lucid bcfg2-server[17523]: serving bcfg2-server at https://lucid:6789
-    Dec 17 22:07:02 lucid bcfg2-server[17523]: serve_forever() [start]
-    Dec 17 22:07:02 lucid bcfg2-server[17523]: Handled 16 events in 0.502 seconds
+    root@saucy:~# /etc/init.d/bcfg2-server start
+    Starting Configuration Management Server:  * bcfg2-server
+    root@saucy:~# tail /var/log/syslog
+    Jul 18 17:50:48 saucy bcfg2-server[5872]: Reconnected to syslog
+    Jul 18 17:50:48 saucy bcfg2-server[5872]: bcfg2-server daemonized
+    Jul 18 17:50:48 saucy bcfg2-server[5872]: service available at https://saucy:6789
+    Jul 18 17:50:48 saucy bcfg2-server[5872]: serving bcfg2-server at https://saucy:6789
+    Jul 18 17:50:48 saucy bcfg2-server[5872]: serve_forever() [start]
+    Jul 18 17:50:48 saucy bcfg2-server[5872]: Handled 13 events in 0.006s
 
 Run bcfg2 to be sure you are able to communicate with the server::
 
-    root@lucid:~# bcfg2 -vqn
+    root@saucy:~# bcfg2 -vqn
+    Starting Bcfg2 client run at 1374188552.53
     Loaded tool drivers:
-     APT      Action   DebInit  POSIX
-
+     APT         Action      DebInit     POSIX       POSIXUsers  Upstart     VCS
+    Loaded experimental tool drivers:
+     POSIXUsers
     Phase: initial
     Correct entries:        0
     Incorrect entries:      0
     Total managed entries:  0
-    Unmanaged entries:      382
-
-
+    Unmanaged entries:      590
     Phase: final
     Correct entries:        0
     Incorrect entries:      0
     Total managed entries:  0
-    Unmanaged entries:      382
+    Unmanaged entries:      590
+    Finished Bcfg2 client run at 1374188563.26
 
 Bring your first machine under Bcfg2 control
 ============================================
@@ -114,92 +142,101 @@ Setup the :ref:`server-plugins-generators-packages` plugin
 
 Replace Pkgmgr with Packages in the plugins line of ``bcfg2.conf``::
 
-    root@lucid:~# cat /etc/bcfg2.conf
+    root@saucy:~# cat /etc/bcfg2.conf
     [server]
     repository = /var/lib/bcfg2
-    plugins = SSHbase,Cfg,Packages,Rules,Metadata,Bundler
+    plugins = Bundler,Cfg,Metadata,Packages,Rules,SSHbase
+    # Uncomment the following to listen on all interfaces
+    #listen_all = true
 
     [statistics]
     sendmailpath = /usr/lib/sendmail
+    #web_debug = False
+    #time_zone =
 
     [database]
-    engine = sqlite3
+    #engine = sqlite3
     # 'postgresql', 'mysql', 'mysql_old', 'sqlite3' or 'ado_mssql'.
-    name =
+    #name =
     # Or path to database file if using sqlite3.
-    #<repository>/etc/brpt.sqlite is default path if left empty
-    user =
+    #<repository>/bcfg2.sqlite is default path if left empty
+    #user =
     # Not used with sqlite3.
-    password =
+    #password =
     # Not used with sqlite3.
-    host =
+    #host =
     # Not used with sqlite3.
-    port =
+    #port =
+
+    [reporting]
+    transport = LocalFilesystem
 
     [communication]
     protocol = xmlrpc/ssl
     password = secret
-    certificate = /etc/bcfg2.crt
-    key = /etc/bcfg2.key
-    ca = /etc/bcfg2.crt
+    certificate = /etc/ssl/bcfg2.crt
+    key = /etc/ssl/bcfg2.key
+    ca = /etc/ssl/bcfg2.crt
 
     [components]
-    bcfg2 = https://lucid:6789
+    bcfg2 = https://saucy:6789
 
 Create Packages layout (as per :ref:`packages-exampleusage`) in
 ``/var/lib/bcfg2``
 
 .. code-block:: xml
 
-    root@lucid:~# mkdir /var/lib/bcfg2/Packages
-    root@lucid:~# cat /var/lib/bcfg2/Packages/packages.conf
+    root@saucy:~# mkdir /var/lib/bcfg2/Packages
+    root@saucy:~# cat /var/lib/bcfg2/Packages/packages.conf
     [global]
-    root@lucid:~# cat /var/lib/bcfg2/Packages/sources.xml
+    root@saucy:~# cat /var/lib/bcfg2/Packages/sources.xml
     <Sources>
-      <Group name="ubuntu-lucid">
-        <Source type="apt" url="http://archive.ubuntu.com/ubuntu" version="lucid">
+      <Group name="ubuntu-saucy">
+        <Source type="apt" debsrc="true" recommended="true" url="http://archive.ubuntu.com/ubuntu" version="saucy">
           <Component>main</Component>
           <Component>multiverse</Component>
           <Component>restricted</Component>
           <Component>universe</Component>
           <Arch>amd64</Arch>
+          <Blacklist>bcfg2</Blacklist>
+          <Blacklist>bcfg2-server</Blacklist>
         </Source>
-        <Source type="apt" url="http://archive.ubuntu.com/ubuntu" version="lucid-updates">
+        <Source type="apt" debsrc="true" recommended="true" url="http://archive.ubuntu.com/ubuntu" version="saucy-updates">
           <Component>main</Component>
           <Component>multiverse</Component>
           <Component>restricted</Component>
           <Component>universe</Component>
           <Arch>amd64</Arch>
+          <Blacklist>bcfg2</Blacklist>
+          <Blacklist>bcfg2-server</Blacklist>
         </Source>
-        <Source type="apt" url="http://security.ubuntu.com/ubuntu" version="lucid-security">
+        <Source type="apt" debsrc="true" recommended="true" url="http://security.ubuntu.com/ubuntu" version="saucy-security">
           <Component>main</Component>
           <Component>multiverse</Component>
           <Component>restricted</Component>
           <Component>universe</Component>
+          <Arch>amd64</Arch>
+          <Blacklist>bcfg2</Blacklist>
+          <Blacklist>bcfg2-server</Blacklist>
+        </Source>
+        <Source type="apt" debsrc="true" recommended="true" url="http://ppa.launchpad.net/bcfg2/ppa/ubuntu" version="saucy">
+          <Component>main</Component>
           <Arch>amd64</Arch>
         </Source>
       </Group>
     </Sources>
 
-To make these sources apply to our clients, we need to modify our
-Metadata. Let's add an **ubuntu-lucid** group which inherits the
-**ubuntu** group already present in
-``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file should look
-something like this
-
-.. note::
-
-    The reason we are creating a release-specific group in this case is
-    that the APTSource above is specific to the lucid release of ubuntu.
-    That is, it should not apply to other releases (hardy, maverick, etc).
+Above, we have grouped our package sources under **ubuntu-saucy**. We
+need to add this group to our ``/var/lib/bcfg2/Metadata/groups.xml`` so
+that our client is able to obtain these sources.
 
 .. code-block:: xml
 
     <Groups version='3.0'>
        <Group profile='true' public='true' default='true' name='basic'>
-          <Group name='ubuntu-lucid'/>
+          <Group name='ubuntu-saucy'/>
        </Group>
-       <Group name='ubuntu-lucid'>
+       <Group name='ubuntu-saucy'>
           <Group name='ubuntu'/>
        </Group>
        <Group name='ubuntu'/>
@@ -214,7 +251,7 @@ something like this
 
 .. note::
     When editing your xml files by hand, it is useful to occasionally run
-    `bcfg2-lint` to ensure that your xml validates properly.
+    ``bcfg2-lint -v`` to ensure that your xml validates properly.
 
 The last thing we need is for the client to have the proper
 arch group membership. For this, we will make use of the
@@ -223,13 +260,13 @@ Probes to your plugins line in ``bcfg2.conf`` and create the Probe.
 
 .. code-block:: sh
 
-    root@lucid:~# grep plugins /etc/bcfg2.conf
-    plugins = Bundler,Cfg,...,Probes
-    root@lucid:~# mkdir /var/lib/bcfg2/Probes
-    root@lucid:~# cat /var/lib/bcfg2/Probes/groups
+    root@saucy:~# grep plugins /etc/bcfg2.conf
+    plugins = Bundler,Cfg,Metadata,...,Probes
+    root@saucy:~# mkdir /var/lib/bcfg2/Probes
+    root@saucy:~# cat /var/lib/bcfg2/Probes/groups
     #!/bin/sh
 
-    ARCH=`uname -m`
+    ARCH=$(uname -m)
     case "$ARCH" in
         "x86_64")
             echo "group:amd64"
@@ -241,34 +278,37 @@ Probes to your plugins line in ``bcfg2.conf`` and create the Probe.
 
 Now we restart the bcfg2-server::
 
-    root@lucid:~# /etc/init.d/bcfg2-server restart
+    root@saucy:~# /etc/init.d/bcfg2-server restart
     Stopping Configuration Management Server:  * bcfg2-server
     Starting Configuration Management Server:  * bcfg2-server
-    root@lucid:~# tail /var/log/syslog
-    Dec 17 22:36:47 lucid bcfg2-server[17937]: Packages: File read failed; falling back to file download
-    Dec 17 22:36:47 lucid bcfg2-server[17937]: Packages: Updating http://us.archive.ubuntu.com/ubuntu//dists/lucid/main/binary-amd64/Packages.gz
-    Dec 17 22:36:54 lucid bcfg2-server[17937]: Packages: Updating http://us.archive.ubuntu.com/ubuntu//dists/lucid/multiverse/binary-amd64/Packages.gz
-    Dec 17 22:36:55 lucid bcfg2-server[17937]: Packages: Updating http://us.archive.ubuntu.com/ubuntu//dists/lucid/restricted/binary-amd64/Packages.gz
-    Dec 17 22:36:56 lucid bcfg2-server[17937]: Packages: Updating http://us.archive.ubuntu.com/ubuntu//dists/lucid/universe/binary-amd64/Packages.gz
-    Dec 17 22:37:27 lucid bcfg2-server[17937]: Failed to read file probed.xml
-    Dec 17 22:37:27 lucid bcfg2-server[17937]: Loading experimental plugin(s): Packages
-    Dec 17 22:37:27 lucid bcfg2-server[17937]: NOTE: Interfaces subject to change
-    Dec 17 22:37:27 lucid bcfg2-server[17937]: service available at https://lucid:6789
-    Dec 17 22:37:27 lucid bcfg2-server[17937]: serving bcfg2-server at https://lucid:6789
-    Dec 17 22:37:27 lucid bcfg2-server[17937]: serve_forever() [start]
-    Dec 17 22:37:28 lucid bcfg2-server[17937]: Handled 17 events in 0.502 seconds
+    root@saucy:~# tail /var/log/syslog
+    Jul 18 18:43:22 saucy bcfg2-server[6215]: Reconnected to syslog
+    Jul 18 18:43:22 saucy bcfg2-server[6215]: bcfg2-server daemonized
+    Jul 18 18:43:22 saucy bcfg2-server[6215]: service available at https://saucy:6789
+    Jul 18 18:43:22 saucy bcfg2-server[6215]: Failed to read file probed.xml: Error reading file '/var/lib/bcfg2/Probes/probed.xml': failed to load external entity "/var/lib/bcfg2/Probes/probed.xml"
+    Jul 18 18:43:22 saucy bcfg2-server[6215]: serving bcfg2-server at https://saucy:6789
+    Jul 18 18:43:22 saucy bcfg2-server[6215]: serve_forever() [start]
+    Jul 18 18:43:22 saucy bcfg2-server[6215]: Reloading Packages plugin
+    Jul 18 18:43:22 saucy bcfg2-server[6215]: Handled 15 events in 0.205s
+
+.. note::
+
+    The error regarding *probed.xml* is non-fatal and just telling you
+    that the file doesn't yet exist. It will be populated once you have
+    run a client with the Probes plugin enabled.
 
 Start managing packages
 -----------------------
 
-Add a base-packages bundle. Let's see what happens when we just populate
-it with the ubuntu-standard package.
+Add a base-saucy (or whatever release you happen to be using)
+bundle. Let's see what happens when we just populate it with the
+ubuntu-standard package.
 
 .. code-block:: xml
 
-    root@lucid:~# cat /var/lib/bcfg2/Bundler/base-packages.xml
-    <Bundle>
-      <Package name='ubuntu-standard'/>
+    root@saucy:~# cat /var/lib/bcfg2/Bundler/base-saucy.xml
+    <Bundle name='base-saucy'>
+            <Package name='ubuntu-standard'/>
     </Bundle>
 
 You need to reference the bundle from your Metadata. The resulting
@@ -277,216 +317,473 @@ profile group might look something like this
 .. code-block:: xml
 
     <Group profile='true' public='true' default='true' name='basic'>
-       <Bundle name='base-packages'/>
-       <Group name='ubuntu-lucid'/>
+       <Bundle name='base-saucy'/>
+       <Group name='ubuntu-saucy'/>
     </Group>
 
 Now if we run the client in debug mode (-d), we can see what this has
 done for us.::
 
-    root@lucid:~# bcfg2 -vqdn
+    root@saucy:/var/lib/bcfg2# bcfg2 -vqdn
+    Configured logging: DEBUG to console; DEBUG to syslog
+    {'help': False, 'extra': False, 'ppath': '/var/cache/bcfg2', 'ca': '/etc/ssl/bcfg2.crt', 'rpm_version_fail_action': 'upgrade', 'yum_version_fail_action': 'upgrade', 'retry_delay': '1', 'posix_uid_whitelist': [], 'rpm_erase_flags': ['allmatches'], 'verbose': True, 'certificate': '/etc/ssl/bcfg2.crt', 'paranoid': False, 'rpm_installonly': ['kernel', 'kernel-bigmem', 'kernel-enterprise', 'kernel-smp', 'kernel-modules', 'kernel-debug', 'kernel-unsupported', 'kernel-devel', 'kernel-source', 'kernel-default', 'kernel-largesmp-devel', 'kernel-largesmp', 'kernel-xen', 'gpg-pubkey'], 'cache': None, 'yum24_autodep': True, 'yum_pkg_verify': True, 'probe_timeout': None, 'yum_installed_action': 'install', 'rpm_verify_fail_action': 'reinstall', 'dryrun': True, 'retries': '3', 'apt_install_path': '/usr', 'quick': True, 'password': 'secret', 'yum24_installed_action': 'install', 'kevlar': False, 'max_copies': 1, 'syslog': True, 'decision_list': False, 'configfile': '/etc/bcfg2.conf', 'remove': None, 'server': 'https://saucy:6789', 'encoding': 'UTF-8', 'timeout': 90, 'debug': True, 'yum24_installonly': ['kernel', 'kernel-bigmem', 'kernel-enterprise', 'kernel-smp', 'kernel-modules', 'kernel-debug', 'kernel-unsupported', 'kernel-devel', 'kernel-source', 'kernel-default', 'kernel-largesmp-devel', 'kernel-largesmp', 'kernel-xen', 'gpg-pubkey'], 'yum24_erase_flags': ['allmatches'], 'yum24_pkg_checks': True, 'interactive': False, 'apt_etc_path': '/etc', 'rpm_installed_action': 'install', 'yum24_verify_fail_action': 'reinstall', 'omit_lock_check': False, 'yum24_pkg_verify': True, 'serverCN': None, 'file': None, 'apt_var_path': '/var', 'posix_gid_whitelist': [], 'posix_gid_blacklist': [], 'indep': False, 'decision': 'none', 'servicemode': 'default', 'version': False, 'rpm_pkg_checks': True, 'profile': None, 'yum_pkg_checks': True, 'args': [], 'bundle': [], 'posix_uid_blacklist': [], 'user': 'root', 'key': '/etc/ssl/bcfg2.key', 'command_timeout': None, 'probe_exit': True, 'lockfile': '/var/lock/bcfg2.run', 'yum_verify_fail_action': 'reinstall', 'yum24_version_fail_action': 'upgrade', 'yum_verify_flags': [], 'logging': None, 'rpm_pkg_verify': True, 'bundle_quick': False, 'rpm_verify_flags': [], 'yum24_verify_flags': [], 'skipindep': False, 'skipbundle': [], 'portage_binpkgonly': False, 'drivers': ['APK', 'APT', 'Action', 'Blast', 'Chkconfig', 'DebInit', 'Encap', 'FreeBSDInit', 'FreeBSDPackage', 'IPS', 'MacPorts', 'OpenCSW', 'POSIX', 'POSIXUsers', 'Pacman', 'Portage', 'RPM', 'RPMng', 'RcUpdate', 'SELinux', 'SMF', 'SYSV', 'Systemd', 'Upstart', 'VCS', 'YUM', 'YUM24', 'YUMng', 'launchd']}
+    Starting Bcfg2 client run at 1374191628.88
     Running probe groups
+    Running: /tmp/tmpEtgdwo
+    < group:amd64
     Probe groups has result:
-    amd64
+    group:amd64
+
+    POSIX: Handlers loaded: nonexistent, directory, hardlink, symlink, file, device, permissions
     Loaded tool drivers:
-     APT      Action   DebInit  POSIX
+     APT         Action      DebInit     POSIX       POSIXUsers  Upstart     VCS
+    Loaded experimental tool drivers:
+     POSIXUsers
     The following packages are specified in bcfg2:
      ubuntu-standard
     The following packages are prereqs added by Packages:
-     adduser             debconf             hdparm              libdevmapper1.02.1  libk5crypto3        libparted1.8-12     libxml2             passwd              upstart
-     apt                 debianutils         info                libdns53            libkeyutils1        libpci3             logrotate           pciutils            usbutils
-     aptitude            dmidecode           install-info        libelf1             libkrb5-3           libpopt0            lsb-base            perl-base           wget
-     at                  dnsutils            iptables            libept0             libkrb5support0     libreadline5        lshw                popularity-contest  zlib1g
-     base-files          dosfstools          libacl1             libgcc1             liblwres50          libreadline6        lsof                psmisc
-     base-passwd         dpkg                libattr1            libgdbm3            libmagic1           libselinux1         ltrace              readline-common
-     bsdmainutils        ed                  libbind9-50         libgeoip1           libmpfr1ldbl        libsigc++-2.0-0c2a  man-db              rsync
-     bsdutils            file                libc-bin            libgmp3c2           libncurses5         libssl0.9.8         memtest86+          sed
-     cpio                findutils           libc6               libgssapi-krb5-2    libncursesw5        libstdc++6          mime-support        sensible-utils
-     cpp                 ftp                 libcap2             libisc50            libpam-modules      libusb-0.1-4        ncurses-bin         strace
-     cpp-4.4             gcc-4.4-base        libcomerr2          libisccc50          libpam-runtime      libuuid1            netbase             time
-     cron                groff-base          libcwidget3         libisccfg50         libpam0g            libxapian15         parted              tzdata
-
+     accountsservice               libdrm2                       libusb-1.0-0
+     adduser                       libedit2                      libustr-1.0-1
+     apparmor                      libelf1                       libuuid1
+     apt                           libexpat1                     libwind0-heimdal
+     apt-transport-https           libffi6                       libx11-6
+     apt-utils                     libfribidi0                   libx11-data
+     base-files                    libfuse2                      libxau6
+     base-passwd                   libgcc1                       libxcb1
+     bash                          libgck-1-0                    libxdmcp6
+     bash-completion               libgcr-3-common               libxext6
+     bsdmainutils                  libgcr-base-3-1               libxml2
+     bsdutils                      libgcrypt11                   libxmuu1
+     busybox-initramfs             libgdbm3                      libxtables10
+     busybox-static                libgeoip1                     locales
+     ca-certificates               libglib2.0-0                  login
+     command-not-found             libglib2.0-data               logrotate
+     command-not-found-data        libgnutls26                   lsb-base
+     coreutils                     libgpg-error0                 lsb-release
+     cpio                          libgpm2                       lshw
+     cron                          libgssapi-krb5-2              lsof
+     dash                          libgssapi3-heimdal            ltrace
+     dbus                          libhcrypto4-heimdal           makedev
+     debconf                       libheimbase1-heimdal          man-db
+     debconf-i18n                  libheimntlm0-heimdal          manpages
+     debianutils                   libhx509-5-heimdal            memtest86+
+     diffutils                     libidn11                      mime-support
+     dmidecode                     libisc92                      mlocate
+     dmsetup                       libisccc90                    module-init-tools
+     dnsutils                      libisccfg90                   mount
+     dosfstools                    libjson-c2                    mountall
+     dpkg                          libjson0                      mtr-tiny
+     e2fslibs                      libk5crypto3                  multiarch-support
+     e2fsprogs                     libkeyutils1                  nano
+     ed                            libklibc                      ncurses-base
+     file                          libkmod2                      ncurses-bin
+     findutils                     libkrb5-26-heimdal            netbase
+     friendly-recovery             libkrb5-3                     ntfs-3g
+     ftp                           libkrb5support0               openssh-client
+     fuse                          libldap-2.4-2                 openssl
+     gcc-4.8-base                  liblocale-gettext-perl        parted
+     geoip-database                liblwres90                    passwd
+     gettext-base                  liblzma5                      pciutils
+     gnupg                         libmagic1                     perl-base
+     gpgv                          libmount1                     plymouth
+     grep                          libncurses5                   plymouth-theme-ubuntu-text
+     groff-base                    libncursesw5                  popularity-contest
+     gzip                          libnewt0.52                   powermgmt-base
+     hdparm                        libnfnetlink0                 ppp
+     hostname                      libnih-dbus1                  pppconfig
+     ifupdown                      libnih1                       pppoeconf
+     info                          libnuma1                      procps
+     initramfs-tools               libp11-kit0                   psmisc
+     initramfs-tools-bin           libpam-modules                python-apt-common
+     initscripts                   libpam-modules-bin            python3
+     insserv                       libpam-runtime                python3-apt
+     install-info                  libpam-systemd                python3-commandnotfound
+     iproute                       libpam0g                      python3-dbus
+     iproute2                      libparted0debian1             python3-distupgrade
+     iptables                      libpcap0.8                    python3-gdbm
+     iputils-tracepath             libpci3                       python3-minimal
+     irqbalance                    libpcre3                      python3-update-manager
+     iso-codes                     libpipeline1                  python3.3
+     klibc-utils                   libplymouth2                  python3.3-minimal
+     kmod                          libpng12-0                    readline-common
+     krb5-locales                  libpolkit-gobject-1-0         rsync
+     language-selector-common      libpopt0                      sed
+     libaccountsservice0           libprocps0                    sensible-utils
+     libacl1                       libpython3-stdlib             sgml-base
+     libapparmor-perl              libpython3.3-minimal          shared-mime-info
+     libapparmor1                  libpython3.3-stdlib           strace
+     libapt-inst1.5                libreadline6                  systemd-services
+     libapt-pkg4.12                libroken18-heimdal            sysv-rc
+     libasn1-8-heimdal             librtmp0                      sysvinit-utils
+     libasprintf0c2                libsasl2-2                    tar
+     libatm1                       libsasl2-modules              tcpdump
+     libattr1                      libselinux1                   telnet
+     libaudit-common               libsemanage-common            time
+     libaudit1                     libsemanage1                  tzdata
+     libbind9-90                   libsepol1                     ubuntu-keyring
+     libblkid1                     libslang2                     ubuntu-release-upgrader-core
+     libbsd0                       libsqlite3-0                  ucf
+     libbz2-1.0                    libss2                        udev
+     libc-bin                      libssl1.0.0                   ufw
+     libc6                         libstdc++6                    update-manager-core
+     libcap-ng0                    libsystemd-daemon0            upstart
+     libcap2                       libsystemd-login0             usbutils
+     libcomerr2                    libtasn1-3                    util-linux
+     libcurl3-gnutls               libtext-charwidth-perl        uuid-runtime
+     libdb5.1                      libtext-iconv-perl            wget
+     libdbus-1-3                   libtext-wrapi18n-perl         whiptail
+     libdbus-glib-1-2              libtinfo5                     xauth
+     libdevmapper1.02.1            libudev1                      xml-core
+     libdns95                      libusb-0.1-4                  zlib1g
     Phase: initial
-    Correct entries:        101
+    Correct entries:        280
     Incorrect entries:      0
-    Total managed entries:  101
-    Unmanaged entries:      281
-
-
+    Total managed entries:  280
+    Unmanaged entries:      313
+    Installing entries in the following bundle(s):
+      base-saucy
+    Bundle base-saucy was not modified
     Phase: final
-    Correct entries:        101
+    Correct entries:        280
     Incorrect entries:      0
-    Total managed entries:  101
-    Unmanaged entries:      281
+    Total managed entries:  280
+    Unmanaged entries:      313
+    Finished Bcfg2 client run at 1374191642.69
 
 As you can see, the Packages plugin has generated the dependencies
 required for the ubuntu-standard package for us automatically. The
 ultimate goal should be to move all the packages from the **Unmanaged**
 entries section to the **Managed** entries section. So, what exactly *are*
-those Unmanaged entries?::
+those Unmanaged entries?
 
-    root@lucid:~# bcfg2 -vqen
+::
+
+    Starting Bcfg2 client run at 1374192077.76
     Running probe groups
     Probe groups has result:
-    amd64
+    group:amd64
+
     Loaded tool drivers:
-     APT      Action   DebInit  POSIX
-
+     APT         Action      DebInit     POSIX       POSIXUsers  Upstart     VCS
+    Loaded experimental tool drivers:
+     POSIXUsers
     Phase: initial
-    Correct entries:        101
+    Correct entries:        280
     Incorrect entries:      0
-    Total managed entries:  101
-    Unmanaged entries:      281
-
-
+    Total managed entries:  280
+    Unmanaged entries:      313
     Phase: final
-    Correct entries:        101
+    Correct entries:        280
     Incorrect entries:      0
-    Total managed entries:  101
-    Unmanaged entries:      281
-     Package:apparmor
-     Package:apparmor-utils
-     Package:apport
-     ...
+    Total managed entries:  280
+    Unmanaged entries:      313
+    POSIXGroup:adm
+    POSIXGroup:audio
+    POSIXGroup:backup
+    ...
+    Package:deb:apt-xapian-index
+    Package:deb:aptitude
+    Package:deb:aptitude-common
+    ...
 
-Now you can go through these and continue adding the packages you want to
-your Bundle. Note that ``aptitude why`` is useful when trying to figure
-out the reason for a package being installed. Also, deborphan is helpful
-for removing leftover dependencies which are no longer needed. After a
-while, I ended up with a minimal bundle that looks like this
+Now you can go through these and continue adding the packages you want
+to your Bundle. Note that ``aptitude why`` is useful when trying to
+figure out the reason for a package being installed. Also, ``deborphan``
+is helpful for removing leftover dependencies which are no longer
+needed. After a while, I ended up with a minimal bundle that looks
+like this:
 
 .. code-block:: xml
 
     <Bundle>
-            <Package name='bash-completion'/>
+            <!-- packages -->
             <Package name='bcfg2-server'/>
-            <Package name='debconf-i18n'/>
+                    <!-- or dependencies -->
+                    <Package name='python-pyinotify'/>
+                    <Package name='ttf-dejavu-core'/>
+            <Package name='bind9-host'/>
+            <Package name='crda'/>
             <Package name='deborphan'/>
-            <Package name='diffutils'/>
-            <Package name='e2fsprogs'/>
-            <Package name='gamin'/>
-            <Package name='grep'/>
             <Package name='grub-pc'/>
-            <Package name='gzip'/>
-            <Package name='hostname'/>
-            <Package name='krb5-config'/>
-            <Package name='krb5-user'/>
-            <Package name='language-pack-en-base'/>
+            <Package name='language-pack-en'/>
             <Package name='linux-generic'/>
             <Package name='linux-headers-generic'/>
-            <Package name='login'/>
-            <Package name='manpages'/>
-            <Package name='mlocate'/>
-            <Package name='ncurses-base'/>
-            <Package name='openssh-server'/>
-            <Package name='python-gamin'/>
-            <Package name='tar'/>
+            <Package name='systemd-shim'/>
+            <Package name='tasksel'/>
             <Package name='ubuntu-minimal'/>
             <Package name='ubuntu-standard'/>
+                    <!-- or dependencies -->
+                    <Package name='python3-gi'/>
+                    <Package name='wamerican'/>
+                    <Package name='wbritish'/>
             <Package name='vim'/>
-            <Package name='vim-runtime'/>
-
-            <!-- PreDepends -->
-            <Package name='dash'/>
-            <Package name='initscripts'/>
-            <Package name='libdbus-1-3'/>
-            <Package name='libnih-dbus1'/>
-            <Package name='lzma'/>
-            <Package name='mountall'/>
-            <Package name='sysvinit-utils'/>
-            <Package name='sysv-rc'/>
-
-            <!-- vim dependencies -->
-            <Package name='libgpm2'/>
-            <Package name='libpython2.6'/>
     </Bundle>
 
-As you can see below, I no longer have any unmanaged packages. ::
+Once your ``bcfg2 -vqen`` output no longer shows Package entries, you
+can move on to the next section.
 
-    root@lucid:~# bcfg2 -vqen
-    Running probe groups
-    Probe groups has result:
-    amd64
-    Loaded tool drivers:
-     APT      Action   DebInit  POSIX
+Manage users
+------------
 
-    Phase: initial
-    Correct entries:        247
-    Incorrect entries:      0
-    Total managed entries:  247
-    Unmanaged entries:      10
+The default setting in ``login.defs`` is for system accounts to be UIDs
+< 1000. We will ignore those accounts for now (you can manage them if
+you like at a later time).
 
+To ignore system UID/GIDs, add the following lines to ``bcfg2.conf``
+(we will also ignore the nobody uid and nogroup gid--65534).
 
-    Phase: final
-    Correct entries:        247
-    Incorrect entries:      0
-    Total managed entries:  247
-    Unmanaged entries:      10
-     Service:bcfg2          Service:killprocs     Service:rc.local      Service:single
-     Service:bcfg2-server  Service:grub-common   Service:ondemand      Service:rsync         Service:ssh
+::
+
+    [POSIXUsers]
+    uid_blacklist = 0-999,65534
+    gid_blacklist = 0-999,65534
+
+If you run the client again with ``bcfg2 -vqen``, you should now see a
+:ref:`POSIXUser <server-plugins-generators-rules-posixuser-tag>` entry
+and :ref:`POSIXGroup <server-plugins-generators-rules-posixgroup-tag>`
+entry for your user account (assuming this is a fresh install with a
+regular user).
+
+You can manage this user by adding the following to your bundle.
+
+.. code-block:: xml
+
+    <BoundPOSIXUser name='username' uid='1000' gecos="Your Name">
+    	<MemberOf>adm</MemberOf>
+    	<MemberOf>cdrom</MemberOf>
+    	<MemberOf>dip</MemberOf>
+    	<MemberOf>lpadmin</MemberOf>
+    	<MemberOf>plugdev</MemberOf>
+    	<MemberOf>sambashare</MemberOf>
+    	<MemberOf>sudo</MemberOf>
+    </BoundPOSIXUser>
 
 Manage services
 ---------------
 
-Now let's clear up the unmanaged service entries by adding the following
-entries to our bundle...
+To clear up the unmanaged service entries, you will need to add the
+entries to your bundle. Here's an example of what that might look like.
 
 .. code-block:: xml
 
-    <!-- basic services -->
+    <!-- services -->
     <Service name='bcfg2'/>
+    <Service name='bcfg2-report-collector'/>
     <Service name='bcfg2-server'/>
+    <Service name='bootmisc.sh'/>
+    <Service name='checkfs.sh'/>
+    <Service name='checkroot-bootclean.sh'/>
+    <Service name='checkroot.sh'/>
+    <Service name='console'/>
+    <Service name='console-font'/>
+    <Service name='console-setup'/>
+    <Service name='container-detect'/>
+    <Service name='control-alt-delete'/>
+    <Service name='cron'/>
+    <Service name='dbus'/>
+    <Service name='dmesg'/>
+    <Service name='dns-clean'/>
+    <Service name='failsafe'/>
+    <Service name='flush-early-job-log'/>
+    <Service name='friendly-recovery'/>
     <Service name='grub-common'/>
+    <Service name='hostname'/>
+    <Service name='hwclock'/>
+    <Service name='hwclock-save'/>
+    <Service name='irqbalance'/>
     <Service name='killprocs'/>
+    <Service name='kmod'/>
+    <Service name='mountall'/>
+    <Service name='mountall.sh'/>
+    <Service name='mountall-bootclean.sh'/>
+    <Service name='mountall-net'/>
+    <Service name='mountall-reboot'/>
+    <Service name='mountall-shell'/>
+    <Service name='mountdevsubfs.sh'/>
+    <Service name='mounted-debugfs'/>
+    <Service name='mounted-dev'/>
+    <Service name='mounted-proc'/>
+    <Service name='mounted-run'/>
+    <Service name='mounted-tmp'/>
+    <Service name='mounted-var'/>
+    <Service name='mountkernfs.sh'/>
+    <Service name='mountnfs-bootclean.sh'/>
+    <Service name='mountnfs.sh'/>
+    <Service name='mtab.sh'/>
+    <Service name='network-interface'/>
+    <Service name='network-interface-container'/>
+    <Service name='network-interface-security'/>
+    <Service name='networking'/>
     <Service name='ondemand'/>
+    <Service name='passwd'/>
+    <Service name='plymouth'/>
+    <Service name='plymouth-log'/>
+    <Service name='plymouth-ready'/>
+    <Service name='plymouth-splash'/>
+    <Service name='plymouth-stop'/>
+    <Service name='plymouth-upstart-bridge'/>
+    <Service name='pppd-dns'/>
+    <Service name='procps'/>
+    <Service name='rc'/>
     <Service name='rc.local'/>
+    <Service name='rc-sysinit'/>
+    <Service name='rcS'/>
+    <Service name='resolvconf'/>
     <Service name='rsync'/>
+    <Service name='rsyslog'/>
+    <Service name='setvtrgb'/>
+    <Service name='shutdown'/>
     <Service name='single'/>
-    <Service name='ssh'/>
+    <Service name='startpar-bridge'/>
+    <Service name='sudo'/>
+    <Service name='systemd-logind'/>
+    <Service name='tty1'/>
+    <Service name='tty2'/>
+    <Service name='tty3'/>
+    <Service name='tty4'/>
+    <Service name='tty5'/>
+    <Service name='tty6'/>
+    <Service name='udev'/>
+    <Service name='udev-fallback-graphics'/>
+    <Service name='udev-finish'/>
+    <Service name='udevmonitor'/>
+    <Service name='udevtrigger'/>
+    <Service name='ufw'/>
+    <Service name='upstart-file-bridge'/>
+    <Service name='upstart-socket-bridge'/>
+    <Service name='upstart-udev-bridge'/>
+    <Service name='ureadahead'/>
+    <Service name='ureadahead-other'/>
+    <Service name='wait-for-state'/>
 
-
-...and bind them in Rules
+Add the literal entries in Rules to bind the Service entries from above.
 
 .. code-block:: xml
 
-    root@lucid:~# cat /var/lib/bcfg2/Rules/services.xml
+    root@saucy:~# cat /var/lib/bcfg2/Rules/services.xml
     <Rules priority='1'>
-            <!-- basic services -->
-            <Service type='deb' status='on' name='bcfg2'/>
-            <Service type='deb' status='on' name='bcfg2-server'/>
-            <Service type='deb' status='on' name='grub-common'/>
-            <Service type='deb' status='on' name='killprocs'/>
-            <Service type='deb' status='on' name='ondemand'/>
-            <Service type='deb' status='on' name='rc.local'/>
-            <Service type='deb' status='on' name='rsync'/>
-            <Service type='deb' status='on' name='single'/>
-            <Service type='deb' status='on' name='ssh'/>
+        <!-- sysv services -->
+        <Service name='bcfg2' type='deb' status='on'/>
+        <Service name='bcfg2-server' type='deb' status='on'/>
+        <Service name='dns-clean' type='deb' status='on'/>
+        <Service name='grub-common' type='deb' status='on'/>
+        <Service name='sudo' type='deb' status='on'/>
+
+        <Service name='killprocs' type='deb' bootstatus='on' status='ignore'/>
+        <Service name='ondemand' type='deb' bootstatus='on' status='ignore'/>
+        <Service name='pppd-dns' type='deb' bootstatus='on' status='ignore'/>
+        <Service name='rc.local' type='deb' bootstatus='on' status='ignore'/>
+        <Service name='rsync' type='deb' bootstatus='on' status='ignore'/>
+        <Service name='single' type='deb' bootstatus='on' status='ignore'/>
+
+        <Service name='bcfg2-report-collector' type='deb' status='off'/>
+
+        <!-- upstart services -->
+        <Service name='bootmisc.sh' type='upstart' status='on'/>
+        <Service name='checkfs.sh' type='upstart' status='on'/>
+        <Service name='checkroot-bootclean.sh' type='upstart' status='on'/>
+        <Service name='checkroot.sh' type='upstart' status='on'/>
+        <Service name='cron' type='upstart' status='on'/>
+        <Service name='dbus' type='upstart' status='on'/>
+        <Service name='mountall.sh' type='upstart' status='on'/>
+        <Service name='mountall-bootclean.sh' type='upstart' status='on'/>
+        <Service name='mountdevsubfs.sh' type='upstart' status='on'/>
+        <Service name='mountkernfs.sh' type='upstart' status='on'/>
+        <Service name='mountnfs-bootclean.sh' type='upstart' status='on'/>
+        <Service name='mountnfs.sh' type='upstart' status='on'/>
+        <Service name='mtab.sh' type='upstart' status='on'/>
+        <Service name='network-interface' type='upstart' status='on' parameters='INTERFACE=eth0'/>
+        <Service name='network-interface-security' type='upstart' status='on' parameters='JOB=network-interface/eth0'/>
+        <Service name='networking' type='upstart' status='on'/>
+        <Service name='plymouth-ready' type='upstart' status='ignore'/>
+        <Service name='resolvconf' type='upstart' status='on'/>
+        <Service name='rsyslog' type='upstart' status='on'/>
+        <Service name='startpar-bridge' type='upstart' status='ignore'/>
+        <Service name='systemd-logind' type='upstart' status='on'/>
+        <Service name='tty1' type='upstart' status='on'/>
+        <Service name='tty2' type='upstart' status='on'/>
+        <Service name='tty3' type='upstart' status='on'/>
+        <Service name='tty4' type='upstart' status='on'/>
+        <Service name='tty5' type='upstart' status='on'/>
+        <Service name='tty6' type='upstart' status='on'/>
+        <Service name='udev' type='upstart' status='on'/>
+        <Service name='ufw' type='upstart' status='on'/>
+        <Service name='upstart-file-bridge' type='upstart' status='on'/>
+        <Service name='upstart-socket-bridge' type='upstart' status='on'/>
+        <Service name='upstart-udev-bridge' type='upstart' status='on'/>
+        <Service name='wait-for-state' type='upstart' status='ignore'/>
+
+        <Service name='console' type='upstart' status='off'/>
+        <Service name='console-font' type='upstart' status='off'/>
+        <Service name='console-setup' type='upstart' status='off'/>
+        <Service name='container-detect' type='upstart' status='off'/>
+        <Service name='control-alt-delete' type='upstart' status='off'/>
+        <Service name='dmesg' type='upstart' status='off'/>
+        <Service name='failsafe' type='upstart' status='off'/>
+        <Service name='flush-early-job-log' type='upstart' status='off'/>
+        <Service name='friendly-recovery' type='upstart' status='off'/>
+        <Service name='hostname' type='upstart' status='off'/>
+        <Service name='hwclock' type='upstart' status='off'/>
+        <Service name='hwclock-save' type='upstart' status='off'/>
+        <Service name='irqbalance' type='upstart' status='off'/>
+        <Service name='kmod' type='upstart' status='off'/>
+        <Service name='mountall' type='upstart' status='off'/>
+        <Service name='mountall-net' type='upstart' status='off'/>
+        <Service name='mountall-reboot' type='upstart' status='off'/>
+        <Service name='mountall-shell' type='upstart' status='off'/>
+        <Service name='mounted-debugfs' type='upstart' status='off'/>
+        <Service name='mounted-dev' type='upstart' status='off'/>
+        <Service name='mounted-proc' type='upstart' status='off'/>
+        <Service name='mounted-run' type='upstart' status='off'/>
+        <Service name='mounted-tmp' type='upstart' status='off'/>
+        <Service name='mounted-var' type='upstart' status='off'/>
+        <Service name='network-interface-container' type='upstart' status='off'/>
+        <Service name='passwd' type='upstart' status='off'/>
+        <Service name='plymouth' type='upstart' status='off'/>
+        <Service name='plymouth-log' type='upstart' status='off'/>
+        <Service name='plymouth-splash' type='upstart' status='off'/>
+        <Service name='plymouth-stop' type='upstart' status='off'/>
+        <Service name='plymouth-upstart-bridge' type='upstart' status='off'/>
+        <Service name='procps' type='upstart' status='off'/>
+        <Service name='rc' type='upstart' status='off'/>
+        <Service name='rc-sysinit' type='upstart' status='off'/>
+        <Service name='rcS' type='upstart' status='off'/>
+        <Service name='setvtrgb' type='upstart' status='off'/>
+        <Service name='shutdown' type='upstart' status='off'/>
+        <Service name='udev-fallback-graphics' type='upstart' status='off'/>
+        <Service name='udev-finish' type='upstart' status='off'/>
+        <Service name='udevmonitor' type='upstart' status='off'/>
+        <Service name='udevtrigger' type='upstart' status='off'/>
+        <Service name='ureadahead' type='upstart' status='off'/>
+        <Service name='ureadahead-other' type='upstart' status='off'/>
     </Rules>
 
-Now we run the client and see there are no more unmanaged entries! ::
+Now we run the client and see there are no more unmanaged entries!
 
-    root@lucid:~# bcfg2 -vqn
+::
+
+    root@saucy:~# bcfg2 -vqn
+    Starting Bcfg2 client run at 1374271524.83
     Running probe groups
     Probe groups has result:
-    amd64
+    group:amd64
+
     Loaded tool drivers:
-     APT      Action   DebInit  POSIX
-
+     APT         Action      DebInit     POSIX       POSIXUsers  Upstart     VCS
+    Loaded experimental tool drivers:
+     POSIXUsers
     Phase: initial
-    Correct entries:        257
+    Correct entries:        519
     Incorrect entries:      0
-    Total managed entries:  257
+    Total managed entries:  519
     Unmanaged entries:      0
-
-    All entries correct.
-
     Phase: final
-    Correct entries:        257
+    Correct entries:        519
     Incorrect entries:      0
-    Total managed entries:  257
+    Total managed entries:  519
     Unmanaged entries:      0
-
     All entries correct.
+    Finished Bcfg2 client run at 1374271541.56
 
 .. warning::
 

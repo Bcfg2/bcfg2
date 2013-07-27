@@ -50,8 +50,8 @@ def read_config(cfile=DEFAULT_CONFIG, repo=None):
     """ read the config file and set django settings based on it """
     # pylint: disable=W0602,W0603
     global DATABASE_ENGINE, DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, \
-        DATABASE_HOST, DATABASE_PORT, DATABASE_OPTIONS, DEBUG, \
-        TEMPLATE_DEBUG, TIME_ZONE, MEDIA_URL
+        DATABASE_HOST, DATABASE_PORT, DATABASE_OPTIONS, DATABASE_SCHEMA, \
+        DEBUG, TEMPLATE_DEBUG, TIME_ZONE, MEDIA_URL
     # pylint: enable=W0602,W0603
 
     if not os.path.exists(cfile) and os.path.exists(DEFAULT_CONFIG):
@@ -79,7 +79,8 @@ def read_config(cfile=DEFAULT_CONFIG, repo=None):
              PASSWORD=setup['db_password'],
              HOST=setup['db_host'],
              PORT=setup['db_port'],
-             OPTIONS=setup['db_options'])
+             OPTIONS=setup['db_options'],
+             SCHEMA=setup['db_schema'])
 
     # dropping the version check.  This was added in 1.1.2
     TIME_ZONE = setup['time_zone']

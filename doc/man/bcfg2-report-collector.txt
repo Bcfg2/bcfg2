@@ -1,0 +1,40 @@
+.. -*- mode: rst -*-
+.. vim: ft=rst
+
+
+bcfg2-report-collector
+======================
+
+.. program:: bcfg2-report-collector
+
+Synopsis
+--------
+
+**bcfg2-report-collector** [*options*]
+
+Description
+-----------
+
+:program:`bcfg2-report-collector` runs a daemon to collect logs from the
+LocalFilesystem :ref:`Bcfg2 Reports <reports-dynamic>` transport object
+and add them to the Reporting storage backend.
+
+Options
+-------
+
+-C configfile            Specify alternate bcfg2.conf location.
+-D pidfile               Daemonize, placing the program pid in *pidfile*.
+-E encoding              Specify the encoding of config files.
+-Q path                  Specify the path to the server repository.
+-W configfile            Specify the path to the web interface
+                         configuration file.
+-d                       Enable debugging output.
+-h                       Print usage information.
+-o path                  Set path of file log
+-v                       Run in verbose mode.
+--version                Print the version and exit
+
+See Also
+--------
+
+:manpage:`bcfg2-server(8)`, :manpage:`bcfg2-reports(8)`

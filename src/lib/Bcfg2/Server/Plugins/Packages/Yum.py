@@ -53,11 +53,14 @@ The Yum Backend
 import os
 import re
 import sys
+import time
 import copy
 import errno
 import socket
 import logging
 import lxml.etree
+from lockfile import FileLock
+
 import Bcfg2.Server.FileMonitor
 import Bcfg2.Server.Plugin
 from Bcfg2.Utils import Executor
@@ -274,6 +277,10 @@ class YumCollection(Collection):
         Collection.__init__(self, metadata, sources, cachepath, basepath,
                             debug=debug)
         self.keypath = os.path.join(self.cachepath, "keys")
+
+        #: A :class:`Bcfg2.Utils.Executor` object to use to run
+        #: external commands
+        self.cmd = Executor()
 
         self._helper = None
         if self.use_yum:
@@ -843,6 +850,17 @@ class YumCollection(Collection):
         if not self.use_yum:
             return Collection.complete(self, packagelist)
 
+        lock = FileLock(os.path.join(self.cachefile, "lock"))
+        slept = 0
+        while lock.is_locked():
+            if slept > 30:
+                self.logger.warning("Packages: Timeout waiting for yum cache "
+                                    "to release its lock")
+                return set(), set()
+            self.logger.debug("Packages: Yum cache is locked, waiting...")
+            time.sleep(3)
+            slept += 3
+
         if packagelist:
             try:
                 result = self.call_helper(
@@ -891,22 +909,19 @@ class YumCollection(Collection):
             cmd.append("-v")
         cmd.append(command)
         self.debug_log("Packages: running %s" % " ".join(cmd))
+
         if inputdata:
-            result = self.cmd.run(cmd, inputdata=json.dumps(inputdata))
+            result = self.cmd.run(cmd, timeout=self.setup['client_timeout'],
+                                  inputdata=json.dumps(inputdata))
         else:
-            result = self.cmd.run(cmd)
+            result = self.cmd.run(cmd, timeout=self.setup['client_timeout'])
         if not result.success:
-            errlines = result.error.splitlines()
             self.logger.error("Packages: error running bcfg2-yum-helper: %s" %
-                              errlines[0])
-            for line in errlines[1:]:
-                self.logger.error("Packages: %s" % line)
+                              result.error)
         elif result.stderr:
-            errlines = result.stderr.splitlines()
             self.debug_log("Packages: debug info from bcfg2-yum-helper: %s" %
-                           errlines[0])
-            for line in errlines[1:]:
-                self.debug_log("Packages: %s" % line)
+                           result.stderr)
+
         try:
             return json.loads(result.stdout)
         except ValueError:

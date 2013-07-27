@@ -10,6 +10,8 @@ import sys
 import yum
 import logging
 import Bcfg2.Logger
+from Bcfg2.Compat import wraps
+from lockfile import FileLock, LockTimeout
 from optparse import OptionParser
 try:
     import json
@@ -192,6 +194,29 @@ class DepSolver(YumHelper):
         return list(packages), list(unknown)
 
 
+def acquire_lock(func):
+    """ decorator for CacheManager methods that gets and release a
+    lock while the method runs """
+    @wraps(func)
+    def inner(self, *args, **kwargs):
+        """ Get and release a lock while running the function this
+        wraps. """
+        self.logger.debug("Acquiring lock at %s" % self.lockfile)
+        while not self.lock.i_am_locking():
+            try:
+                self.lock.acquire(timeout=60)  # wait up to 60 seconds
+            except LockTimeout:
+                self.lock.break_lock()
+                self.lock.acquire()
+        try:
+            func(self, *args, **kwargs)
+        finally:
+            self.lock.release()
+            self.logger.debug("Released lock at %s" % self.lockfile)
+
+    return inner
+
+
 class CacheManager(YumHelper):
     """ Yum cache manager.  Unlike :class:`DepSolver`, this can write
     to the yum cache, and so is used for operations that muck with the
@@ -199,6 +224,14 @@ class CacheManager(YumHelper):
     either DepSolver or CacheManager, but for consistency I've put it
     here.) """
 
+    def __init__(self, cfgfile, verbose=1):
+        YumHelper.__init__(self, cfgfile, verbose=verbose)
+        self.lockfile = \
+            os.path.join(os.path.dirname(self.yumbase.conf.config_file_path),
+                         "lock")
+        self.lock = FileLock(self.lockfile)
+
+    @acquire_lock
     def clean_cache(self):
         """ clean the yum cache """
         for mdtype in ["Headers", "Packages", "Sqlite", "Metadata",
@@ -211,6 +244,7 @@ class CacheManager(YumHelper):
             if not msg.startswith("0 "):
                 self.logger.info(msg)
 
+    @acquire_lock
     def populate_cache(self):
         """ populate the yum cache """
         for repo in self.yumbase.repos.findRepos('*'):
