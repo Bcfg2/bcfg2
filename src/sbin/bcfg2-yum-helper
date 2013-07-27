@@ -304,7 +304,7 @@ def main():
         try:
             # this code copied from yumcommands.py
             cachemgr.populate_cache()
-            print json.dumps(True)
+            print(json.dumps(True))
         except yum.Errors.YumBaseError:
             logger.error("Unexpected error creating cache: %s" %
                          sys.exc_info()[1], exc_info=1)
