@@ -26,8 +26,8 @@ The parent communicates with the children over two constructs:
 import threading
 import lxml.etree
 import multiprocessing
-from Bcfg2.Cache import Cache
 from Bcfg2.Compat import Queue
+from Bcfg2.Server.Cache import Cache
 from Bcfg2.Server.Core import BaseCore, exposed
 from Bcfg2.Server.Plugin import Debuggable
 from Bcfg2.Server.BuiltinCore import Core as BuiltinCore
