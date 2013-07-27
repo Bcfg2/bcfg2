@@ -254,6 +254,8 @@ man_pages = [
      [], 8),
     ('man/bcfg2-lint.conf', 'bcfg2-lint.conf',
      'Configuration parameters for bcfg2-lint', [], 5),
+    ('man/bcfg2-report-collector', 'bcfg2-report-collector',
+     'Reports collection daemon', [], 8),
     ('man/bcfg2-reports', 'bcfg2-reports',
      'Query reporting system for client status', [], 8),
     ('man/bcfg2-server', 'bcfg2-server',
