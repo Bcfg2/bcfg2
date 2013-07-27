@@ -20,7 +20,7 @@
 #BCFG2_INIT=1
 
 # BCFG2_AGENT:
-# Bcfg2 no longer supports agent mode please use the Agent+SSH method
+# Bcfg2 no longer supports agent mode, please see NEWS.Debian
 
 # BCFG2_CRON:
 # Set the frequency of cron runs.
