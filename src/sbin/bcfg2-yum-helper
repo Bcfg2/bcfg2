@@ -308,7 +308,7 @@ def main():
         except yum.Errors.YumBaseError:
             logger.error("Unexpected error creating cache: %s" %
                          sys.exc_info()[1], exc_info=1)
-            print json.dumps(False)
+            print(json.dumps(False))
     elif cmd == "complete":
         depsolver = DepSolver(options.config, options.verbose)
         try:
