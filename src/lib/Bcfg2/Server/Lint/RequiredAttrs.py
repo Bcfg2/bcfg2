@@ -14,14 +14,16 @@ try:
 except ImportError:
     HAS_GENSHI = False
 
-try: 
-    all 
-except NameError: 
-    def all(iterable): 
-        for i in iterable: 
-            if not i: 
-                return False 
-        return True 
+
+try:
+    all
+except NameError:
+    def all(iterable):
+        for i in iterable:
+            if not i:
+                return False
+        return True
+
 
 # format verifying functions.  TODO: These should be moved into XML
 # schemas where possible.
