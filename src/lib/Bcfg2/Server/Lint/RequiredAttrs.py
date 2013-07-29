@@ -14,6 +14,14 @@ try:
 except ImportError:
     HAS_GENSHI = False
 
+try: 
+    all 
+except NameError: 
+    def all(iterable): 
+        for i in iterable: 
+            if not i: 
+                return False 
+        return True 
 
 # format verifying functions.  TODO: These should be moved into XML
 # schemas where possible.
@@ -26,13 +34,13 @@ def is_filename(val):
 def is_selinux_type(val):
     """ Return True if val is a string describing a valid (although
     not necessarily existent) SELinux type """
-    return re.match(r'^[a-z_]+_t', val)
+    return re.match(r'^[A-z][A-z0-9_]+_t', val) or val == '<<none>>'
 
 
 def is_selinux_user(val):
     """ Return True if val is a string describing a valid (although
     not necessarily existent) SELinux user """
-    return re.match(r'^[a-z_]+_u', val)
+    return re.match(r'^[a-z_]+(_[ur])?', val)
 
 
 def is_octal_mode(val):
@@ -111,7 +119,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                 selinuxuser=is_selinux_user)},
             SEUser={None: dict(name=is_selinux_user,
                                roles=lambda v: all(is_selinux_user(u)
-                                                   for u in " ".split(v)),
+                                                   for u in v.split(" ")),
                                prefix=None)},
             SEInterface={None: dict(name=None, selinuxtype=is_selinux_type)},
             SEPermissive={None: dict(name=is_selinux_type)},
