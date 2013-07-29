@@ -19,7 +19,7 @@ try:
     all
 except NameError:
     def all(iterable):
-	""" Provide a replacement for built-in 'all' for python <= 2.4 """
+        """ Provide a replacement for built-in 'all' for python <= 2.4 """
 
         for i in iterable:
             if not i:
