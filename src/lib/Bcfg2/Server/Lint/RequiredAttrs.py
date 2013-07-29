@@ -8,23 +8,12 @@ import Bcfg2.Server.Lint
 import Bcfg2.Client.Tools.VCS
 from Bcfg2.Server.Plugins.Packages import Apt, Yum
 from Bcfg2.Client.Tools.POSIX.base import device_map
+from Bcfg2.Compat import all  # pylint: disable=W0622
 try:
     from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
     HAS_GENSHI = True
 except ImportError:
     HAS_GENSHI = False
-
-
-try:
-    all
-except NameError:
-    def all(iterable):
-        """ Provide a replacement for built-in 'all' for python <= 2.4 """
-
-        for i in iterable:
-            if not i:
-                return False
-        return True
 
 
 # format verifying functions.  TODO: These should be moved into XML
