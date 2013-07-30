@@ -60,22 +60,31 @@ class PublishSubscribeQueue(object):
     Note that, since this is the publishing end, there's no support
     for getting.
     """
+
     def __init__(self):
         self._queues = []
 
     def add_subscriber(self):
+        """ Add a subscriber to the queue.  This returns a
+        :class:`multiprocessing.Queue` object that is used as the
+        subscription end of the queue. """
         new_q = multiprocessing.Queue()
         self._queues.append(new_q)
         return new_q
 
-    def put(self, data, block=True, timeout=None):
+    def put(self, obj, block=True, timeout=None):
+        """ Put ``obj`` into the queue.  See
+        :func:`multiprocessing.Queue.put` for more details."""
         for queue in self._queues:
-            queue.put(data, block=block, timeout=timeout)
+            queue.put(obj, block=block, timeout=timeout)
 
-    def put_nowait(self, data):
-        self.put(data, block=False)
+    def put_nowait(self, obj):
+        """ Equivalent to ``put(obj, False)``. """
+        self.put(obj, block=False)
 
     def close(self):
+        """ Close the queue.  See :func:`multiprocessing.Queue.close`
+        for more details. """
         for queue in self._queues:
             queue.close()
 
@@ -459,6 +468,7 @@ class Core(BuiltinCore):
         self.cmd_q.close()
 
         def term_children():
+            """ Terminate all remaining multiprocessing children. """
             for child in multiprocessing.active_children():
                 self.logger.error("Waited %s seconds to shut down %s, "
                                   "terminating" % (self.shutdown_timeout,
