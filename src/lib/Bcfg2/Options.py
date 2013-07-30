@@ -1265,9 +1265,9 @@ DRIVER_OPTIONS = \
          yum_verify_fail_action=CLIENT_YUM_VERIFY_FAIL_ACTION,
          yum_verify_flags=CLIENT_YUM_VERIFY_FLAGS,
          posix_uid_whitelist=CLIENT_POSIX_UID_WHITELIST,
-         posix_gid_whitelist=CLIENT_POSIX_UID_WHITELIST,
+         posix_gid_whitelist=CLIENT_POSIX_GID_WHITELIST,
          posix_uid_blacklist=CLIENT_POSIX_UID_BLACKLIST,
-         posix_gid_blacklist=CLIENT_POSIX_UID_BLACKLIST)
+         posix_gid_blacklist=CLIENT_POSIX_GID_BLACKLIST)
 
 CLIENT_COMMON_OPTIONS = \
     dict(extra=CLIENT_EXTRA_DISPLAY,
