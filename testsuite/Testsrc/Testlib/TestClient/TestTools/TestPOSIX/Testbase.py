@@ -1009,7 +1009,7 @@ class TestPOSIXTool(TestTool):
             else:
                 return True
         ptool._set_perms.side_effect = set_perms_rv
-        self.assertFalse(ptool._makedirs(entry))
+        self.assertTrue(ptool._makedirs(entry))
         self.assertItemsEqual(mock_exists.call_args_list,
                               [call("/test"), call("/test/foo"),
                                call("/test/foo/bar")])
