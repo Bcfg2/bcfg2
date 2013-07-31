@@ -188,7 +188,7 @@ class CodeTestCase(Bcfg2TestCase):
         cmd = self.command + self.full_args + extra_args + \
             [os.path.join(srcpath, f) for f in files]
         proc = Popen(cmd, stdout=PIPE, stderr=STDOUT, env=self.get_env())
-        print(proc.communicate()[0])
+        print(proc.communicate()[0].decode())
         self.assertEqual(proc.wait(), 0)
 
     def _test_errors(self, files, extra_args=None):
@@ -200,7 +200,7 @@ class CodeTestCase(Bcfg2TestCase):
         cmd = self.command + self.error_args + extra_args + \
             [os.path.join(srcpath, f) for f in files]
         proc = Popen(cmd, stdout=PIPE, stderr=STDOUT, env=self.get_env())
-        print(proc.communicate()[0])
+        print(proc.communicate()[0].decode())
         self.assertEqual(proc.wait(), 0)
 
     @skipIf(not os.path.exists(srcpath), "%s does not exist" % srcpath)
@@ -323,7 +323,7 @@ class TestPylint(CodeTestCase):
         args = self.command + self.error_args + extra_args + \
             [os.path.join(srcpath, p) for p in files]
         pylint = Popen(args, stdout=PIPE, stderr=STDOUT, env=self.get_env())
-        output = pylint.communicate()[0]
+        output = pylint.communicate()[0].decode()
         rv = pylint.wait()
 
         for line in output.splitlines():
