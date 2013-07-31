@@ -511,9 +511,4 @@ class Core(BuiltinCore):
         key = ThreadSafePipeDispatcher.genkey(client)
         pipe = self.pipes[childname]
         pipe.send(key, ("GetConfig", [client], dict()))
-        if pipe.poll(key, timeout=self.setup['client_timeout']):
-            return pipe.recv(key)
-        else:
-            self.logger.error("Building configuration for %s on %s timed out" %
-                              (client, childname))
-            return None
+        return pipe.recv(key)
