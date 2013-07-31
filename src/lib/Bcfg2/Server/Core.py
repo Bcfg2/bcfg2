@@ -311,10 +311,11 @@ class BaseCore(object):
                 else:
                     if not self.fam.pending():
                         terminate.wait(15)
+                if self.fam.pending():
+                    self._update_vcs_revision()
                 self.fam.handle_event_set(self.lock)
             except:
                 continue
-            self._update_vcs_revision()
         self.logger.info("File monitor thread terminated")
 
     @track_statistics()
