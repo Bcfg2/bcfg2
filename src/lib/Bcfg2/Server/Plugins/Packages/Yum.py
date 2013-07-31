@@ -262,6 +262,8 @@ class YumCollection(Collection):
     .. private-include: _add_gpg_instances, _get_pulp_consumer
     """
 
+    _helper = None
+
     #: Options that are included in the [packages:yum] section of the
     #: config but that should not be included in the temporary
     #: yum.conf we write out
@@ -280,7 +282,6 @@ class YumCollection(Collection):
         #: external commands
         self.cmd = Executor()
 
-        self._helper = None
         if self.use_yum:
             #: Define a unique cache file for this collection to use
             #: for cached yum metadata
