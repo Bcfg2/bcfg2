@@ -289,11 +289,12 @@ class BaseCore(object):
         self.logger.debug("Performance logging thread starting")
         while not self.terminate.isSet():
             self.terminate.wait(self.setup['perflog_interval'])
-            for name, stats in self.get_statistics(None).items():
-                self.logger.info("Performance statistics: "
-                                 "%s min=%.06f, max=%.06f, average=%.06f, "
-                                 "count=%d" % ((name, ) + stats))
-        self.logger.debug("Performance logging thread terminated")
+            if not self.terminate.isSet():
+                for name, stats in self.get_statistics(None).items():
+                    self.logger.info("Performance statistics: "
+                                     "%s min=%.06f, max=%.06f, average=%.06f, "
+                                     "count=%d" % ((name, ) + stats))
+        self.logger.info("Performance logging thread terminated")
 
     def _file_monitor_thread(self):
         """ The thread that runs the
@@ -314,7 +315,7 @@ class BaseCore(object):
             except:
                 continue
             self._update_vcs_revision()
-        self.logger.debug("File monitor thread terminated")
+        self.logger.info("File monitor thread terminated")
 
     @track_statistics()
     def _update_vcs_revision(self):
@@ -430,14 +431,14 @@ class BaseCore(object):
 
     def shutdown(self):
         """ Perform plugin and FAM shutdown tasks. """
-        self.logger.debug("Shutting down core...")
+        self.logger.info("Shutting down core...")
         if not self.terminate.isSet():
             self.terminate.set()
             self.fam.shutdown()
-            self.logger.debug("FAM shut down")
+            self.logger.info("FAM shut down")
             for plugin in list(self.plugins.values()):
                 plugin.shutdown()
-            self.logger.debug("All plugins shut down")
+            self.logger.info("All plugins shut down")
 
     @property
     def metadata_cache_mode(self):
@@ -1052,6 +1053,7 @@ class BaseCore(object):
             for plugin in self.plugins_by_type(Probing):
                 for probe in plugin.GetProbes(metadata):
                     resp.append(probe)
+            self.logger.debug("Sending probe list to %s" % client)
             return lxml.etree.tostring(resp,
                                        xml_declaration=False).decode('UTF-8')
         except:

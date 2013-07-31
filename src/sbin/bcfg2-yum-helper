@@ -255,6 +255,10 @@ class CacheManager(YumHelper):
         for repo in self.yumbase.repos.listEnabled():
             # this populates the cache as a side effect
             repo.repoXML  # pylint: disable=W0104
+            try:
+                repo.getGroups()
+            except yum.Errors.RepoMDError:
+                pass  # this repo has no groups
         self.yumbase.repos.populateSack(mdtype='metadata', cacheonly=1)
         self.yumbase.repos.populateSack(mdtype='filelists', cacheonly=1)
         self.yumbase.repos.populateSack(mdtype='otherdata', cacheonly=1)

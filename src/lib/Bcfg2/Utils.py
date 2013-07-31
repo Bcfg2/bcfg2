@@ -244,9 +244,9 @@ class Executor(object):
 
             # py3k fixes
             if not isinstance(stdout, str):
-                stdout = stdout.decode('utf-8')
+                stdout = stdout.decode('utf-8')  # pylint: disable=E1103
             if not isinstance(stderr, str):
-                stderr = stderr.decode('utf-8')
+                stderr = stderr.decode('utf-8')  # pylint: disable=E1103
 
             for line in stdout.splitlines():  # pylint: disable=E1103
                 self.logger.debug('< %s' % line)

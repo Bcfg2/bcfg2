@@ -686,7 +686,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         """ os.makedirs helpfully creates all parent directories for
         us, but it sets permissions according to umask, which is
         probably wrong.  we need to find out which directories were
-        created and set permissions on those
+        created and try to set permissions on those
         (http://trac.mcs.anl.gov/projects/bcfg2/ticket/1125 and
         http://trac.mcs.anl.gov/projects/bcfg2/ticket/1134) """
         created = []
@@ -706,8 +706,9 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                               (path, err))
             rv = False
 
-        # set auto-created directories to mode 755, if you need
-        # something else, you should specify it in your config
+        # set auto-created directories to mode 755 and use best effort for
+        # permissions.  If you need something else, you should specify it in
+        # your config.
         tmpentry = copy.deepcopy(entry)
         tmpentry.set('mode', '0755')
         for acl in tmpentry.findall('ACL'):
@@ -715,7 +716,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                     oct_mode(self._norm_acl_perms(acl.get('perms')) |
                              ACL_MAP['x']))
         for cpath in created:
-            rv &= self._set_perms(tmpentry, path=cpath)
+            self._set_perms(tmpentry, path=cpath)
         return rv
 
 
