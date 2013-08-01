@@ -317,7 +317,8 @@ class YumCollection(Collection):
                         self.logger.error("Could not create Pulp consumer "
                                           "cert directory at %s: %s" %
                                           (certdir, err))
-                self.pulp_cert_set = PulpCertificateSet(certdir, self.fam)
+                self.__class__.pulp_cert_set = PulpCertificateSet(certdir,
+                                                                  self.fam)
 
     @property
     def disableMetaData(self):
@@ -353,15 +354,16 @@ class YumCollection(Collection):
         the default location. """
         if not self._helper:
             try:
-                self._helper = self.setup.cfp.get("packages:yum", "helper")
+                self.__class__._helper = self.setup.cfp.get("packages:yum",
+                                                            "helper")
             except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
                 # first see if bcfg2-yum-helper is in PATH
                 try:
                     self.debug_log("Checking for bcfg2-yum-helper in $PATH")
                     self.cmd.run(['bcfg2-yum-helper'])
-                    self._helper = 'bcfg2-yum-helper'
+                    self.__class__._helper = 'bcfg2-yum-helper'
                 except OSError:
-                    self._helper = "/usr/sbin/bcfg2-yum-helper"
+                    self.__class__._helper = "/usr/sbin/bcfg2-yum-helper"
         return self._helper
 
     @property
