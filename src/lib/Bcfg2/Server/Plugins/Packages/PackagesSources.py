@@ -88,13 +88,12 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
         :type event: Bcfg2.Server.FileMonitor.Event
         :returns: None
         """
-        Bcfg2.Server.Plugin.StructFile.HandleEvent(self, event=event)
         if event and event.filename != self.name:
             for fpath in self.extras:
                 if fpath == os.path.abspath(event.filename):
                     self.parsed.add(fpath)
                     break
-
+        Bcfg2.Server.Plugin.StructFile.HandleEvent(self, event=event)
         if self.loaded:
             self.logger.info("Reloading Packages plugin")
             self.pkg_obj.Reload()
@@ -111,10 +110,11 @@ class PackagesSources(Bcfg2.Server.Plugin.StructFile,
     def Index(self):
         Bcfg2.Server.Plugin.StructFile.Index(self)
         self.entries = []
-        for xsource in self.xdata.findall('.//Source'):
-            source = self.source_from_xml(xsource)
-            if source is not None:
-                self.entries.append(source)
+        if self.loaded:
+            for xsource in self.xdata.findall('.//Source'):
+                source = self.source_from_xml(xsource)
+                if source is not None:
+                    self.entries.append(source)
     Index.__doc__ = Bcfg2.Server.Plugin.StructFile.Index.__doc__ + """
 
         ``Index`` is responsible for calling :func:`source_from_xml`

@@ -29,8 +29,8 @@ from itertools import cycle
 from Bcfg2.Cache import Cache
 from Bcfg2.Compat import Queue, Empty
 from Bcfg2.Server.Core import BaseCore, exposed
-from Bcfg2.Server.Plugin import Debuggable
 from Bcfg2.Server.BuiltinCore import Core as BuiltinCore
+from Bcfg2.Server.Plugin import Debuggable, track_statistics
 
 
 class DispatchingCache(Cache, Debuggable):
@@ -144,8 +144,7 @@ class ThreadSafePipeDispatcher(Debuggable):
         self.logger.debug("Starting interprocess RPC send thread")
         while not self.terminate.isSet():
             try:
-                data = self._send_queue.get(True, self.poll_wait)
-                self._mainpipe.send(data)
+                self._mainpipe.send(self._send_queue.get(True, self.poll_wait))
             except Empty:
                 pass
         self.logger.info("Interprocess RPC send thread stopped")
@@ -331,6 +330,7 @@ class ChildCore(BaseCore):
         key, data = self.rpc_pipe.recv()
         self.rpc_pipe.send((key, self._dispatch(data)))
 
+    @track_statistics()
     def _reap_threads(self):
         """ Reap rendering threads that have completed """
         for thread in self._threads[:]:
@@ -511,9 +511,42 @@ class Core(BuiltinCore):
         key = ThreadSafePipeDispatcher.genkey(client)
         pipe = self.pipes[childname]
         pipe.send(key, ("GetConfig", [client], dict()))
-        if pipe.poll(key, timeout=self.setup['client_timeout']):
-            return pipe.recv(key)
-        else:
-            self.logger.error("Building configuration for %s on %s timed out" %
-                              (client, childname))
-            return None
+        return pipe.recv(key)
+
+    @exposed
+    def get_statistics(self, address):
+        stats = dict()
+
+        def _aggregate_statistics(newstats, prefix=None):
+            """ Aggregate a set of statistics from a child or parent
+            server core.  This adds the statistics to the overall
+            statistics dict (optionally prepending a prefix, such as
+            "Child-1", to uniquely identify this set of statistics),
+            and aggregates it with the set of running totals that are
+            kept from all cores. """
+            for statname, vals in newstats.items():
+                if statname.startswith("ChildCore:"):
+                    statname = statname[5:]
+                if prefix:
+                    prettyname = "%s:%s" % (prefix, statname)
+                else:
+                    prettyname = statname
+                stats[prettyname] = vals
+                totalname = "Total:%s" % statname
+                if totalname not in stats:
+                    stats[totalname] = vals
+                else:
+                    newmin = min(stats[totalname][0], vals[0])
+                    newmax = max(stats[totalname][1], vals[1])
+                    newcount = stats[totalname][3] + vals[3]
+                    newmean = ((stats[totalname][2] * stats[totalname][3]) +
+                               (vals[2] * vals[3])) / newcount
+                    stats[totalname] = (newmin, newmax, newmean, newcount)
+
+        key = ThreadSafePipeDispatcher.genkey("get_statistics")
+        stats = dict()
+        for childname, pipe in self.pipes.items():
+            pipe.send(key, ("get_statistics", [address], dict()))
+            _aggregate_statistics(pipe.recv(key), prefix=childname)
+        _aggregate_statistics(BuiltinCore.get_statistics(self, address))
+        return stats
