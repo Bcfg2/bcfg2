@@ -518,6 +518,12 @@ class Core(BuiltinCore):
         stats = dict()
 
         def _aggregate_statistics(newstats, prefix=None):
+            """ Aggregate a set of statistics from a child or parent
+            server core.  This adds the statistics to the overall
+            statistics dict (optionally prepending a prefix, such as
+            "Child-1", to uniquely identify this set of statistics),
+            and aggregates it with the set of running totals that are
+            kept from all cores. """
             for statname, vals in newstats.items():
                 if statname.startswith("ChildCore:"):
                     statname = statname[5:]
