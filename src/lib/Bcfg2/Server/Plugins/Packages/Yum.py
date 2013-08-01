@@ -353,6 +353,7 @@ class YumCollection(Collection):
         forking, but apparently not); finally we check in /usr/sbin,
         the default location. """
         if not self._helper:
+            # pylint: disable=W0212
             try:
                 self.__class__._helper = self.setup.cfp.get("packages:yum",
                                                             "helper")
@@ -364,6 +365,7 @@ class YumCollection(Collection):
                     self.__class__._helper = 'bcfg2-yum-helper'
                 except OSError:
                     self.__class__._helper = "/usr/sbin/bcfg2-yum-helper"
+            # pylint: enable=W0212
         return self._helper
 
     @property
