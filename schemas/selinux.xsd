@@ -188,14 +188,59 @@
         numeric or dotted-quad.
       </xsd:documentation>
     </xsd:annotation>
-    <xsd:restriction base="xsd:string">
+    <xsd:restriction base="xsd:token">
       <xsd:annotation>
         <xsd:documentation>
           ``&lt;addr&gt;/&lt;netmask&gt;``. Netmask can be numeric
-          (``/16``) or dotted-quad (``/255.255.0.0``).
+         (``/16``) or dotted-quad (``/255.255.0.0``). Address can
+         be IPv4 or IPv6.
         </xsd:documentation>
       </xsd:annotation>
-      <xsd:pattern value="[A-Fa-f0-9:./]+"/>
+      <!-- ipv4 -->
+      <!-- Dotted-quad netmask -->
+      <xsd:pattern value="(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])/(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])"/>
+      <!-- cidr netmask -->
+      <xsd:pattern value="(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])/([1-3]?[0-9])"/>
+
+      <!-- ipv6 -->
+      <!-- address: fully specified, netmask: fully specified -->
+      <xsd:pattern value="[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}/[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}"/>
+      <!-- address: fully specified, netmask: double colon end -->
+      <xsd:pattern value="[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}/([0-9A-Fa-f]{1,4}:){1,7}:"/>
+      <!-- address: double colon start, netmask: fully specified -->
+      <xsd:pattern value=":(:[0-9A-Fa-f]{1,4}){1,7}/[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}"/>
+      <!-- address: double colon start, netmask: double colon end -->
+      <xsd:pattern value=":(:[0-9A-Fa-f]{1,4}){1,7}/([0-9A-Fa-f]{1,4}:){1,7}:"/>
+      <!-- address: double colon middle, netmask: fully specified -->
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1,6}(:[0-9A-Fa-f]{1,4}){1}/[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}"/>
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1,5}(:[0-9A-Fa-f]{1,4}){1,2}/[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}"/>
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1,4}(:[0-9A-Fa-f]{1,4}){1,3}/[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}"/>
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1,3}(:[0-9A-Fa-f]{1,4}){1,4}/[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}"/>
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1,2}(:[0-9A-Fa-f]{1,4}){1,5}/[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}"/>
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1}(:[0-9A-Fa-f]{1,4}){1,6}/[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}"/>
+      <!-- address: double colon middle, netmask: double colon end -->
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1,6}(:[0-9A-Fa-f]{1,4}){1}/([0-9A-Fa-f]{1,4}:){1,7}:"/>
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1,5}(:[0-9A-Fa-f]{1,4}){1,2}/([0-9A-Fa-f]{1,4}:){1,7}:"/>
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1,4}(:[0-9A-Fa-f]{1,4}){1,3}/([0-9A-Fa-f]{1,4}:){1,7}:"/>
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1,3}(:[0-9A-Fa-f]{1,4}){1,4}/([0-9A-Fa-f]{1,4}:){1,7}:"/>
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1,2}(:[0-9A-Fa-f]{1,4}){1,5}/([0-9A-Fa-f]{1,4}:){1,7}:"/>
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1}(:[0-9A-Fa-f]{1,4}){1,6}/([0-9A-Fa-f]{1,4}:){1,7}:"/>
+      <!-- address: double colon end, netmask: fully specified -->
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1,7}:/[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}"/>
+      <!-- address: double colon end, netmask: double colon end -->
+      <xsd:pattern value="([0-9A-Fa-f]{1,4}:){1,7}:/([0-9A-Fa-f]{1,4}:){1,7}:"/>
+      <!-- address: embedded IPv4, netmask: fully specified -->
+      <xsd:pattern value="((:(:0{1,4}){0,3}(:(0{1,4}|[fF]{4}))?)|(0{1,4}:(:0{1,4}){0,2}(:(0{1,4}|[fF]{4}))?)|((0{1,4}:){2}(:0{1,4})?(:(0{1,4}|[fF]{4}))?)|((0{1,4}:){3}(:(0{1,4}|[fF]{4}))?)|((0{1,4}:){4}(0{1,4}|[fF]{4})?)):(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])/[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}"/>
+      <!-- address: embedded IPv4, netmask: double colon end -->
+      <xsd:pattern value="((:(:0{1,4}){0,3}(:(0{1,4}|[fF]{4}))?)|(0{1,4}:(:0{1,4}){0,2}(:(0{1,4}|[fF]{4}))?)|((0{1,4}:){2}(:0{1,4})?(:(0{1,4}|[fF]{4}))?)|((0{1,4}:){3}(:(0{1,4}|[fF]{4}))?)|((0{1,4}:){4}(0{1,4}|[fF]{4})?)):(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])/([0-9A-Fa-f]{1,4}:){1,7}:"/>
+      <!-- address: embedded IPv4, netmask: fully specified (for libxml2 <= 2.6) -->
+      <xsd:pattern value="((:(:0{1,4})?(:0{1,4})?(:0{1,4})?(:(0{1,4}|[fF]{4}))?)|(0{1,4}:(:0{1,4}){0,2}(:(0{1,4}|[fF]{4}))?)|((0{1,4}:){2}(:0{1,4})?(:(0{1,4}|[fF]{4}))?)|((0{1,4}:){3}(:(0{1,4}|[fF]{4}))?)|((0{1,4}:){4}(0{1,4}|[fF]{4})?)):(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])/[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}"/>
+      <!-- address: embedded IPv4, netmask: double colon end (for libxml2 <= 2.6) -->
+      <xsd:pattern value="((:(:0{1,4})?(:0{1,4})?(:0{1,4})?(:(0{1,4}|[fF]{4}))?)|(0{1,4}:(:0{1,4}){0,2}(:(0{1,4}|[fF]{4}))?)|((0{1,4}:){2}(:0{1,4})?(:(0{1,4}|[fF]{4}))?)|((0{1,4}:){3}(:(0{1,4}|[fF]{4}))?)|((0{1,4}:){4}(0{1,4}|[fF]{4})?)):(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])\.(25[0-5]|2[0-4][0-9]|[0-1]?[0-9]?[0-9])/([0-9A-Fa-f]{1,4}:){1,7}:"/>
+      <!-- unspecified address, netmask: fully specified address -->
+      <xsd:pattern value="::/[0-9A-Fa-f]{1,4}(:[0-9A-Fa-f]{1,4}){7}"/>
+      <!-- unspecified address, netmask: double colon end -->
+      <xsd:pattern value="::/([0-9A-Fa-f]{1,4}:){1,7}:"/>
     </xsd:restriction>
   </xsd:simpleType>
 
