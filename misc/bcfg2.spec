@@ -1,13 +1,23 @@
-%global __python python
-%{!?py_ver: %global py_ver %(%{__python} -c 'import sys;print(sys.version[0:3])')}
-%global pythonversion %{py_ver}
-%{!?python_sitelib: %global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")}
+# Fedora 13+ and EL6 contain these macros already; only needed for EL5
+%if 0%{?rhel} && 0%{?rhel} <= 5
+%global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
+%define python_version %(%{__python} -c 'import sys;print(sys.version[0:3])')
+%endif
+
+# openSUSE macro translation
+%if 0%{?suse_version}
+%global python_version %{py_ver}
 %{!?_initrddir: %global _initrddir %{_sysconfdir}/rc.d/init.d}
+# openSUSE < 11.2
+%if %{suse_version} < 1120
+%global python_sitelib %(%{__python} -c "from distutils.sysconfig import get_python_lib; print get_python_lib()")
+%endif
+%endif
 
 Name:             bcfg2
 Version:          1.3.2
 Release:          1
-Summary:          Configuration management system
+Summary:          A configuration management system
 
 %if 0%{?suse_version}
 # http://en.opensuse.org/openSUSE:Package_group_guidelines
@@ -18,7 +28,10 @@ Group:            Applications/System
 License:          BSD
 URL:              http://bcfg2.org
 Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}.tar.gz
+%if %{?rhel}%{!?rhel:10} <= 5 || 0%{?suse_version}
+# EL5 and OpenSUSE require the BuildRoot tag
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+%endif
 BuildArch:        noarch
 
 BuildRequires:    python-devel
@@ -86,15 +99,14 @@ deployment strategies.
 This package includes the Bcfg2 client software.
 
 %package server
-Version:          1.3.2
 Summary:          Bcfg2 Server
 %if 0%{?suse_version}
 Group:            System/Management
 %else
-Group:            System Tools
+Group:            System Environment/Daemons
 %endif
 Requires:         bcfg2 = %{version}
-%if "%{py_ver}" < "2.6"
+%if 0%{?rhel} && 0%{?rhel} < 6
 Requires:         python-ssl
 %endif
 Requires:         python-lxml >= 1.2.1
@@ -138,12 +150,11 @@ deployment strategies.
 This package includes the Bcfg2 server software.
 
 %package server-cherrypy
-Version:          1.3.2
 Summary:          Bcfg2 Server - CherryPy backend
 %if 0%{?suse_version}
 Group:            System/Management
 %else
-Group:            System Tools
+Group:            System Environment/Daemons
 %endif
 Requires:         bcfg2 = %{version}
 Requires:         bcfg2-server = %{version}
@@ -181,8 +192,55 @@ deployment strategies.
 
 This package includes the Bcfg2 CherryPy server backend.
 
+%package web
+Summary:          Bcfg2 Web Reporting Interface
+%if 0%{?suse_version}
+Group:            System/Management
+Requires:         httpd,python-django >= 1.2,python-django-south >= 0.7
+%else
+Group:            System Tools
+Requires:         httpd,Django >= 1.2,Django-south >= 0.7
+%endif
+Requires:         bcfg2-server
+%if "%{_vendor}" == "redhat"
+Requires:         mod_wsgi
+%global apache_conf %{_sysconfdir}/httpd
+%else
+Requires:         apache2-mod_wsgi
+%global apache_conf %{_sysconfdir}/apache2
+%endif
+
+%description web
+Bcfg2 helps system administrators produce a consistent, reproducible,
+and verifiable description of their environment, and offers
+visualization and reporting tools to aid in day-to-day administrative
+tasks. It is the fifth generation of configuration management tools
+developed in the Mathematics and Computer Science Division of Argonne
+National Laboratory.
+
+It is based on an operational model in which the specification can be
+used to validate and optionally change the state of clients, but in a
+feature unique to bcfg2 the client's response to the specification can
+also be used to assess the completeness of the specification. Using
+this feature, bcfg2 provides an objective measure of how good a job an
+administrator has done in specifying the configuration of client
+systems. Bcfg2 is therefore built to help administrators construct an
+accurate, comprehensive specification.
+
+Bcfg2 has been designed from the ground up to support gentle
+reconciliation between the specification and current client states. It
+is designed to gracefully cope with manual system modifications.
+
+Finally, due to the rapid pace of updates on modern networks, client
+systems are constantly changing; if required in your environment,
+Bcfg2 can enable the construction of complex change management and
+deployment strategies.
+
+This package includes the Bcfg2 reports web frontend.
+
+
 %package doc
-Summary:          Configuration management system documentation
+Summary:          Documentation for Bcfg2
 %if 0%{?suse_version}
 Group:            Documentation/HTML
 %else
@@ -238,26 +296,13 @@ deployment strategies.
 
 This package includes the Bcfg2 documentation.
 
-%package web
-Version:          1.3.2
-Summary:          Bcfg2 Web Reporting Interface
-%if 0%{?suse_version}
-Group:            System/Management
-Requires:         httpd,python-django >= 1.2,python-django-south >= 0.7
-%else
-Group:            System Tools
-Requires:         httpd,Django >= 1.2,Django-south >= 0.7
-%endif
-Requires:         bcfg2-server
-%if "%{_vendor}" == "redhat"
-Requires:         mod_wsgi
-%global apache_conf %{_sysconfdir}/httpd
-%else
-Requires:         apache2-mod_wsgi
-%global apache_conf %{_sysconfdir}/apache2
-%endif
 
-%description web
+%package examples
+Summary:          Examples for Bcfg2
+Group:            Documentation
+
+
+%description examples
 Bcfg2 helps system administrators produce a consistent, reproducible,
 and verifiable description of their environment, and offers
 visualization and reporting tools to aid in day-to-day administrative
@@ -283,7 +328,8 @@ systems are constantly changing; if required in your environment,
 Bcfg2 can enable the construction of complex change management and
 deployment strategies.
 
-This package includes the Bcfg2 reports web frontend.
+This package includes the examples files for Bcfg2.
+
 
 %prep
 %setup -q -n %{name}-%{version}
@@ -420,10 +466,6 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf \
 %defattr(-,root,root,-)
 %{python_sitelib}/Bcfg2/Server/CherryPyCore.py
 
-%files doc
-%defattr(-,root,root,-)
-%doc %{_defaultdocdir}/bcfg2-doc-%{version}
-
 %files web
 %defattr(-,root,root,-)
 %{_datadir}/bcfg2/reports.wsgi
@@ -432,6 +474,17 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf \
 %dir %{apache_conf}/conf.d
 %config(noreplace) %{apache_conf}/conf.d/wsgi_bcfg2.conf
 %ghost %config(noreplace,missingok) %attr(0640,root,apache) %{_sysconfdir}/bcfg2-web.conf
+
+%files doc
+%defattr(-,root,root,-)
+%doc %{_defaultdocdir}/bcfg2-doc-%{version}
+
+%files examples
+%if 0%{?rhel} == 5
+# Required for EL5
+%defattr(-,root,root,-)
+%endif
+%doc %{_defaultdocdir}/bcfg2-examples-%{version}%{?_pre_rc}
 
 %post server
 # enable daemon on first install only (not on update).
