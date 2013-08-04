@@ -632,96 +632,104 @@ sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
 
 
 %files
+%if 0%{?rhel} == 5 || 0%{?suse_version}
+# Required for EL5 and OpenSUSE
 %defattr(-,root,root,-)
+%endif
+%doc COPYRIGHT LICENSE README
+%{_mandir}/man1/bcfg2.1*
+%{_mandir}/man5/bcfg2.conf.5*
+%ghost %attr(600,root,root) %config(noreplace,missingok) %{_sysconfdir}/bcfg2.cert
+%ghost %attr(0600,root,root) %config(noreplace,missingok) %{_sysconfdir}/bcfg2.conf
+%if 0%{?fedora} >= 16
+    %config(noreplace) %{_unitdir}/%{name}.service
+%else
+    %{_initrddir}/bcfg2
+%endif
+%if 0%{?fedora} || 0%{?rhel}
+%config(noreplace) %{_sysconfdir}/sysconfig/bcfg2
+%else
+%config(noreplace) %{_sysconfdir}/default/bcfg2
+%endif
+%{_sysconfdir}/cron.daily/bcfg2
+%{_sysconfdir}/cron.hourly/bcfg2
 %{_sbindir}/bcfg2
+%{_libexecdir}/bcfg2-cron
+%dir %{_localstatedir}/cache/%{name}
+%{python_sitelib}/Bcfg2*.egg-info
 %dir %{python_sitelib}/Bcfg2
-%{python_sitelib}/Bcfg2/Compat.py*
 %{python_sitelib}/Bcfg2/__init__.py*
+%{python_sitelib}/Bcfg2/Client
+%{python_sitelib}/Bcfg2/Compat.py*
 %{python_sitelib}/Bcfg2/Logger.py*
 %{python_sitelib}/Bcfg2/Options.py*
 %{python_sitelib}/Bcfg2/Proxy.py*
 %{python_sitelib}/Bcfg2/Utils.py*
 %{python_sitelib}/Bcfg2/version.py*
-%{python_sitelib}/Bcfg2/Client
-%{_mandir}/man1/bcfg2.1*
-%{_mandir}/man5/bcfg2.conf.5*
-%{_initrddir}/bcfg2
-%config(noreplace) %{_sysconfdir}/default/bcfg2
-%{_sysconfdir}/cron.hourly/bcfg2
-%{_sysconfdir}/cron.daily/bcfg2
-%{_prefix}/lib/bcfg2/bcfg2-cron
-%{_localstatedir}/cache/%{name}
-%{_localstatedir}/lib/%{name}
 %if 0%{?suse_version}
 %{_sbindir}/rcbcfg2
 %config(noreplace) /var/adm/fillup-templates/sysconfig.bcfg2
 %endif
-%ghost %config(noreplace,missingok) %attr(0600,root,root) %{_sysconfdir}/bcfg2.conf
 
 %files server
+%if 0%{?rhel} == 5 || 0%{?suse_version}
 %defattr(-,root,root,-)
-%{_initrddir}/bcfg2-server
-%{_initrddir}/bcfg2-report-collector
-%dir %{python_sitelib}/Bcfg2
+%endif
+%ghost %attr(600,root,root) %config(noreplace) %{_sysconfdir}/bcfg2.key
+%if 0%{?fedora} >= 16
+    %config(noreplace) %{_unitdir}/%{name}-server.service
+%else
+    %{_initrddir}/bcfg2-server
+    %{_initrddir}/bcfg2-report-collector
+%endif
+%config(noreplace) %{_sysconfdir}/sysconfig/bcfg2-server
+%{_sbindir}/bcfg2-*
+%dir %{_localstatedir}/lib/%{name}
 %{python_sitelib}/Bcfg2/Cache.py*
 %{python_sitelib}/Bcfg2/Encryption.py*
 %{python_sitelib}/Bcfg2/SSLServer.py*
 %{python_sitelib}/Bcfg2/Statistics.py*
-%{python_sitelib}/Bcfg2/manage.py*
 %{python_sitelib}/Bcfg2/settings.py*
 %{python_sitelib}/Bcfg2/Server
-%{python_sitelib}/Bcfg2/Reporting
 %exclude %{python_sitelib}/Bcfg2/Server/CherryPyCore.py
-
-%{python_sitelib}/*egg-info
 
 %dir %{_datadir}/bcfg2
 %{_datadir}/bcfg2/schemas
 %{_datadir}/bcfg2/xsl-transforms
-%config(noreplace) %{_sysconfdir}/default/bcfg2-server
-%{_sbindir}/bcfg2-admin
-%{_sbindir}/bcfg2-build-reports
-%{_sbindir}/bcfg2-crypt
-%{_sbindir}/bcfg2-info
-%{_sbindir}/bcfg2-lint
-%{_sbindir}/bcfg2-repo-validate
-%{_sbindir}/bcfg2-reports
-%{_sbindir}/bcfg2-report-collector
-%{_sbindir}/bcfg2-server
-%{_sbindir}/bcfg2-yum-helper
-%{_sbindir}/bcfg2-test
 %if 0%{?suse_version}
 %{_sbindir}/rcbcfg2-server
 %config(noreplace) /var/adm/fillup-templates/sysconfig.bcfg2-server
 %endif
 
 %{_mandir}/man5/bcfg2-lint.conf.5*
-%{_mandir}/man8/*.8*
-%dir %{_prefix}/lib/bcfg2
-%ghost %config(noreplace,missingok) %attr(0600,root,root) %{_sysconfdir}/bcfg2.conf
+%{_mandir}/man8/bcfg2*.8*
 
 %doc tools/*
 
 %files server-cherrypy
+%if 0%{?rhel} == 5 || 0%{?suse_version}
 %defattr(-,root,root,-)
+%endif
 %{python_sitelib}/Bcfg2/Server/CherryPyCore.py
 
 %files web
+%if 0%{?rhel} == 5 || 0%{?suse_version}
 %defattr(-,root,root,-)
+%endif
 %{_datadir}/bcfg2/reports.wsgi
 %{_datadir}/bcfg2/site_media
-%dir %{apache_conf}
-%dir %{apache_conf}/conf.d
+%{python_sitelib}/Bcfg2/Reporting
+%{python_sitelib}/Bcfg2/manage.py*
 %config(noreplace) %{apache_conf}/conf.d/wsgi_bcfg2.conf
-%ghost %config(noreplace,missingok) %attr(0640,root,apache) %{_sysconfdir}/bcfg2-web.conf
 
 %files doc
+%if 0%{?rhel} == 5 || 0%{?suse_version}
 %defattr(-,root,root,-)
+%endif
 %doc build/sphinx/html/*
 
 %files examples
-%if 0%{?rhel} == 5
-# Required for EL5
+%if 0%{?rhel} == 5 || 0%{?suse_version}
 %defattr(-,root,root,-)
 %endif
 %doc examples/*
