@@ -417,53 +417,93 @@ sed -i "s/apache2/httpd/g" misc/apache/bcfg2.conf
 
 
 %install
+%if 0%{?rhel} == 5 || 0%{?suse_version}
+# EL5 and OpenSUSE require the buildroot to be cleaned manually
 rm -rf %{buildroot}
-%{__python}%{pythonversion} setup.py install --root=%{buildroot} --record=INSTALLED_FILES --prefix=/usr
-%{__install} -d %{buildroot}%{_bindir}
-%{__install} -d %{buildroot}%{_sbindir}
-%{__install} -d %{buildroot}%{_initrddir}
-%{__install} -d %{buildroot}%{_sysconfdir}/default
-%{__install} -d %{buildroot}%{_sysconfdir}/cron.daily
-%{__install} -d %{buildroot}%{_sysconfdir}/cron.hourly
-%{__install} -d %{buildroot}%{_prefix}/lib/bcfg2
-mkdir -p %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
-mkdir -p %{buildroot}%{_defaultdocdir}/bcfg2-server-%{version}
-%if 0%{?suse_version}
-%{__install} -d %{buildroot}/var/adm/fillup-templates
 %endif
 
-%{__mv} %{buildroot}%{_bindir}/bcfg2* %{buildroot}%{_sbindir}
-%{__install} -m 755 debian/bcfg2.init %{buildroot}%{_initrddir}/bcfg2
-%{__install} -m 755 debian/bcfg2-server.init %{buildroot}%{_initrddir}/bcfg2-server
-%{__install} -m 755 debian/bcfg2-server.bcfg2-report-collector.init %{buildroot}%{_initrddir}/bcfg2-report-collector
-%{__install} -m 755 debian/bcfg2.default %{buildroot}%{_sysconfdir}/default/bcfg2
-%{__install} -m 755 debian/bcfg2-server.default %{buildroot}%{_sysconfdir}/default/bcfg2-server
-%{__install} -m 755 debian/bcfg2.cron.daily %{buildroot}%{_sysconfdir}/cron.daily/bcfg2
-%{__install} -m 755 debian/bcfg2.cron.hourly %{buildroot}%{_sysconfdir}/cron.hourly/bcfg2
-%{__install} -m 755 tools/bcfg2-cron %{buildroot}%{_prefix}/lib/bcfg2/bcfg2-cron
+%{__python} setup.py install -O1 --skip-build --root=%{buildroot} --prefix=/usr
+install -d %{buildroot}%{_bindir}
+install -d %{buildroot}%{_sbindir}
+install -d %{buildroot}%{_initrddir}
+install -d %{buildroot}%{_sysconfdir}/cron.daily
+install -d %{buildroot}%{_sysconfdir}/cron.hourly
+install -d %{buildroot}%{_sysconfdir}/sysconfig
+install -d %{buildroot}%{_libexecdir}
+install -d %{buildroot}%{_localstatedir}/cache/%{name}
+install -d %{buildroot}%{_localstatedir}/lib/%{name}
 %if 0%{?suse_version}
-%{__install} -m 755 debian/bcfg2.default %{buildroot}/var/adm/fillup-templates/sysconfig.bcfg2
-%{__install} -m 755 debian/bcfg2-server.default %{buildroot}/var/adm/fillup-templates/sysconfig.bcfg2-server
+install -d %{buildroot}/var/adm/fillup-templates
+%endif
+
+mv %{buildroot}%{_bindir}/bcfg2* %{buildroot}%{_sbindir}
+
+%if 0%{?fedora} < 16
+# Install SysV init scripts for everyone but new Fedoras
+install -m 755 redhat/scripts/bcfg2.init \
+    %{buildroot}%{_initrddir}/bcfg2
+install -m 755 redhat/scripts/bcfg2-server.init \
+    %{buildroot}%{_initrddir}/bcfg2-server
+install -m 755 redhat/scripts/bcfg2-report-collector.init \
+    %{buildroot}%{_initrddir}/bcfg2-report-collector
+%endif
+install -m 755 debian/bcfg2.cron.daily \
+    %{buildroot}%{_sysconfdir}/cron.daily/bcfg2
+install -m 755 debian/bcfg2.cron.hourly \
+    %{buildroot}%{_sysconfdir}/cron.hourly/bcfg2
+install -m 755 tools/bcfg2-cron \
+    %{buildroot}%{_libexecdir}/bcfg2-cron
+
+install -m 644 debian/bcfg2.default \
+    %{buildroot}%{_sysconfdir}/sysconfig/bcfg2
+install -m 644 debian/bcfg2-server.default \
+    %{buildroot}%{_sysconfdir}/sysconfig/bcfg2-server
+%if 0%{?suse_version}
+install -m 755 debian/bcfg2.default \
+    %{buildroot}/var/adm/fillup-templates/sysconfig.bcfg2
+install -m 755 debian/bcfg2-server.default \
+    %{buildroot}/var/adm/fillup-templates/sysconfig.bcfg2-server
 ln -s %{_initrddir}/bcfg2 %{buildroot}%{_sbindir}/rcbcfg2
 ln -s %{_initrddir}/bcfg2-server %{buildroot}%{_sbindir}/rcbcfg2-server
 %endif
 
-cp -r tools/* %{buildroot}%{_defaultdocdir}/bcfg2-server-%{version}
-cp -r build/sphinx/html/* %{buildroot}%{_defaultdocdir}/bcfg2-doc-%{version}
+touch %{buildroot}%{_sysconfdir}/%{name}.{cert,conf,key}
 
-%{__install} -d %{buildroot}%{apache_conf}/conf.d
-%{__install} -m 644 misc/apache/bcfg2.conf %{buildroot}%{apache_conf}/conf.d/wsgi_bcfg2.conf
+# systemd
+install -d %{buildroot}%{_unitdir}
+install -p -m 644 redhat/systemd/%{name}.service \
+    %{buildroot}%{_unitdir}/%{name}.service
+install -p -m 644 redhat/systemd/%{name}-server.service \
+    %{buildroot}%{_unitdir}/%{name}-server.service
 
-%{__mkdir_p} %{buildroot}%{_localstatedir}/cache/%{name}
-%{__mkdir_p} %{buildroot}%{_localstatedir}/lib/%{name}
+# Webserver
+install -d %{buildroot}%{apache_conf}/conf.d
+install -p -m 644 misc/apache/bcfg2.conf \
+    %{buildroot}%{apache_conf}/conf.d/wsgi_bcfg2.conf
 
-# mandriva and RHEL 5 cannot handle %ghost without the file existing,
+# mandriva cannot handle %ghost without the file existing,
 # so let's touch a bunch of empty config files
 touch %{buildroot}%{_sysconfdir}/bcfg2.conf \
     %{buildroot}%{_sysconfdir}/bcfg2-web.conf
 
+%if 0%{?rhel} == 5
+# Required for EL5
 %clean
-[ "%{buildroot}" != "/" ] && %{__rm} -rf %{buildroot} || exit 2
+rm -rf %{buildroot}
+%endif
+
+
+%if 0%{?rhel} != 5
+# EL5 lacks python-mock, so test suite is disabled
+%check
+# Downloads not allowed in koji; fix .xsd urls to point to local files
+sed -i "s@schema_url = .*\$@schema_url = 'file://`pwd`/`basename %{SOURCE2}`'@" \
+    testsuite/Testschema/test_schema.py
+sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
+    %{SOURCE2} > `basename %{SOURCE2}`
+%{__python} setup.py test
+%endif
+
 
 %files
 %defattr(-,root,root,-)
@@ -534,7 +574,7 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf \
 %dir %{_prefix}/lib/bcfg2
 %ghost %config(noreplace,missingok) %attr(0600,root,root) %{_sysconfdir}/bcfg2.conf
 
-%doc %{_defaultdocdir}/bcfg2-server-%{version}
+%doc tools/*
 
 %files server-cherrypy
 %defattr(-,root,root,-)
@@ -551,26 +591,14 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf \
 
 %files doc
 %defattr(-,root,root,-)
-%doc %{_defaultdocdir}/bcfg2-doc-%{version}
+%doc build/sphinx/html/*
 
 %files examples
 %if 0%{?rhel} == 5
 # Required for EL5
 %defattr(-,root,root,-)
 %endif
-%doc %{_defaultdocdir}/bcfg2-examples-%{version}%{?_pre_rc}
-
-
-%if 0%{?rhel} != 5
-# EL5 lacks python-mock, so test suite is disabled
-%check
-# Downloads not allowed in koji; fix .xsd urls to point to local files
-sed -i "s@schema_url = .*\$@schema_url = 'file://`pwd`/`basename %{SOURCE2}`'@" \
-    testsuite/Testschema/test_schema.py
-sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
-    %{SOURCE2} > `basename %{SOURCE2}`
-%{__python} setup.py test
-%endif
+%doc examples/*
 
 
 %post server
