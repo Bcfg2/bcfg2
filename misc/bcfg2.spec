@@ -505,6 +505,132 @@ sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
 %endif
 
 
+%post
+%if 0%{?fedora} >= 18
+  %systemd_post bcfg2.service
+%else
+  if [ $1 -eq 1 ] ; then
+      # Initial installation
+  %if 0%{?fedora} >= 16
+      /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+  %elif 0%{?suse_version}
+      %fillup_and_insserv -f bcfg2
+  %else
+      /sbin/chkconfig --add bcfg2
+  %endif
+  fi
+%endif
+
+%post server
+%if 0%{?fedora} >= 18
+  %systemd_post bcfg2-server.service
+%else
+  if [ $1 -eq 1 ] ; then
+      # Initial installation
+  %if 0%{?fedora} >= 16
+      /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+  %elif 0%{?suse_version}
+      %fillup_and_insserv -f bcfg2-server
+  %else
+      /sbin/chkconfig --add bcfg2-server
+  %endif
+  fi
+%endif
+
+%preun
+%if 0%{?fedora} >= 18
+  %systemd_preun bcfg2.service
+%else
+  if [ $1 -eq 0 ]; then
+      # Package removal, not upgrade
+  %if 0%{?fedora} >= 16
+      /bin/systemctl --no-reload disable bcfg2.service > /dev/null 2>&1 || :
+      /bin/systemctl stop bcfg2.service > /dev/null 2>&1 || :
+  %elif 0%{?suse_version}
+      %stop_on_removal bcfg2
+  %else
+      /sbin/service bcfg2 stop &>/dev/null || :
+      /sbin/chkconfig --del bcfg2
+  %endif
+  fi
+%endif
+
+%preun server
+%if 0%{?fedora} >= 18
+  %systemd_preun bcfg2-server.service
+%else
+  if [ $1 -eq 0 ]; then
+      # Package removal, not upgrade
+  %if 0%{?fedora} >= 16
+      /bin/systemctl --no-reload disable bcfg2-server.service > /dev/null 2>&1 || :
+      /bin/systemctl stop bcfg2-server.service > /dev/null 2>&1 || :
+  %elif 0%{?suse_version}
+      %stop_on_removal bcfg2-server
+      %stop_on_removal bcfg2-report-collector
+  %else
+      /sbin/service bcfg2-server stop &>/dev/null || :
+      /sbin/chkconfig --del bcfg2-server
+  %endif
+  fi
+%endif
+
+%postun
+%if 0%{?fedora} >= 18
+  %systemd_postun bcfg2.service
+%else
+  %if 0%{?fedora} >= 16
+  /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+  %endif
+  if [ $1 -ge 1 ] ; then
+      # Package upgrade, not uninstall
+  %if 0%{?fedora} >= 16
+      /bin/systemctl try-restart bcfg2.service >/dev/null 2>&1 || :
+  %elif 0%{?suse_version}
+      %insserv_cleanup
+  %else
+      /sbin/service bcfg2 condrestart &>/dev/null || :
+  %endif
+  fi
+%endif
+
+%postun server
+%if 0%{?fedora} >= 18
+  %systemd_postun bcfg2-server.service
+%else
+  %if 0%{?fedora} >= 16
+  /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+  %endif
+  if [ $1 -ge 1 ] ; then
+      # Package upgrade, not uninstall
+  %if 0%{?fedora} >= 16
+      /bin/systemctl try-restart bcfg2-server.service >/dev/null 2>&1 || :
+  %else
+      /sbin/service bcfg2-server condrestart &>/dev/null || :
+  %endif
+  fi
+  %if 0%{?suse_version}
+  if [ $1 -eq 0 ]; then
+      # clean up on removal.
+      %insserv_cleanup
+  fi
+  %endif
+%endif
+
+%if 0%{?fedora} || 0%{?rhel}
+%triggerun -- bcfg2 < 1.2.1-1
+/usr/bin/systemd-sysv-convert --save bcfg2 >/dev/null 2>&1 || :
+/bin/systemctl --no-reload enable bcfg2.service >/dev/null 2>&1 || :
+/sbin/chkconfig --del bcfg2 >/dev/null 2>&1 || :
+/bin/systemctl try-restart bcfg2.service >/dev/null 2>&1 || :
+
+%triggerun server -- bcfg2-server < 1.2.1-1
+/usr/bin/systemd-sysv-convert --save bcfg2-server >/dev/null 2>&1 || :
+/bin/systemctl --no-reload enable bcfg2-server.service >/dev/null 2>&1 || :
+/sbin/chkconfig --del bcfg2-server >/dev/null 2>&1 || :
+/bin/systemctl try-restart bcfg2-server.service >/dev/null 2>&1 || :
+%endif
+
+
 %files
 %defattr(-,root,root,-)
 %{_sbindir}/bcfg2
@@ -600,47 +726,6 @@ sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
 %endif
 %doc examples/*
 
-
-%post server
-# enable daemon on first install only (not on update).
-if [ $1 -eq 1 ]; then
-%if 0%{?suse_version}
-  %fillup_and_insserv -f bcfg2-server
-%else
-  /sbin/chkconfig --add bcfg2-server
-%endif
-fi
-
-%preun
-%if 0%{?suse_version}
-# stop on removal (not on update).
-if [ $1 -eq 0 ]; then
-  %stop_on_removal bcfg2
-fi
-%endif
-
-%preun server
-%if 0%{?suse_version}
-if [ $1 -eq 0 ]; then
-  %stop_on_removal bcfg2-server
-  %stop_on_removal bcfg2-report-collector
-fi
-%endif
-
-%postun
-%if 0%{?suse_version}
-if [ $1 -eq 0 ]; then
-  %insserv_cleanup
-fi
-%endif
-
-%postun server
-%if 0%{?suse_version}
-if [ $1 -eq 0 ]; then
-  # clean up on removal.
-  %insserv_cleanup
-fi
-%endif
 
 %changelog
 * Mon Jul 01 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.2-1
