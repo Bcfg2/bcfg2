@@ -35,7 +35,11 @@ Group:            Applications/System
 %endif
 License:          BSD
 URL:              http://bcfg2.org
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}.tar.gz
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-%{version}%{?_pre_rc}.tar.gz
+Source1:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-%{version}%{?_pre_rc}.tar.gz.gpg
+# Used in %%check
+Source2:          http://www.w3.org/2001/XMLSchema.xsd
+Source3:          http://www.w3.org/2001/xml.xsd
 %if %{?rhel}%{!?rhel:10} <= 5 || 0%{?suse_version}
 # EL5 and OpenSUSE require the BuildRoot tag
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -555,6 +559,19 @@ touch %{buildroot}%{_sysconfdir}/bcfg2.conf \
 %defattr(-,root,root,-)
 %endif
 %doc %{_defaultdocdir}/bcfg2-examples-%{version}%{?_pre_rc}
+
+
+%if 0%{?rhel} != 5
+# EL5 lacks python-mock, so test suite is disabled
+%check
+# Downloads not allowed in koji; fix .xsd urls to point to local files
+sed -i "s@schema_url = .*\$@schema_url = 'file://`pwd`/`basename %{SOURCE2}`'@" \
+    testsuite/Testschema/test_schema.py
+sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
+    %{SOURCE2} > `basename %{SOURCE2}`
+%{__python} setup.py test
+%endif
+
 
 %post server
 # enable daemon on first install only (not on update).
