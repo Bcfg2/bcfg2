@@ -389,15 +389,28 @@ This package includes the examples files for Bcfg2.
 
 
 %prep
-%setup -q -n %{name}-%{version}
+%setup -q -n %{name}-%{version}%{?_pre_rc}
 
-%build
-%{__python}%{pythonversion} setup.py build
+# Fixup some paths
+%{__perl} -pi -e 's@/etc/default@%{_sysconfdir}/sysconfig@g' tools/bcfg2-cron
 
-%{?pythonpath: export PYTHONPATH="%{pythonpath}"}
-%{__python}%{pythonversion} setup.py build_sphinx
+%{__perl} -pi -e 's@/usr/lib/bcfg2@%{_libexecdir}@g' debian/bcfg2.cron.daily
+%{__perl} -pi -e 's@/usr/lib/bcfg2@%{_libexecdir}@g' debian/bcfg2.cron.hourly
+
+# Get rid of extraneous shebangs
+for f in `find src/lib -name \*.py`
+do
+    %{__sed} -i -e '/^#!/,1d' $f
+done
 
 sed -i "s/apache2/httpd/g" misc/apache/bcfg2.conf
+
+
+%build
+%{__python} setup.py build
+%{?pythonpath: PYTHONPATH="%{pythonpath}"} \
+    %{__python} setup.py build_sphinx
+
 
 %install
 rm -rf %{buildroot}
