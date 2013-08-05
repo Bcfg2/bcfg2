@@ -24,7 +24,7 @@
 
 Name:             bcfg2
 Version:          1.3.2
-Release:          1%{?_pre_rc}%{?dist}
+Release:          2%{?_pre_rc}%{?dist}
 Summary:          A configuration management system
 
 %if 0%{?suse_version}
@@ -736,6 +736,24 @@ sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
 
 
 %changelog
+* Sun Aug 04 2013 John Morris <john@zultron.com> - 1.3.2-2
+- Reconcile divergences with Fedora specfile, as requested by upstream
+  (equally large changes made in Fedora version to reconcile with
+  this file)
+- Python macro cleanups
+- Accommodations for OpenSUSE
+- Macros for pre and rc releases
+- %%check section
+- Move BRs to top of file
+- Rearrange lines to match Fedora
+- Group: tag tweaks
+- Startup/shutdown changes
+- Separate examples package
+- Remove %%{__install} macros; RH has backed away from those
+- Add fedora systemd units, both f16 and f18 variants :P
+  - Changes to %%post* scripts
+- Rearrange %%files sections
+
 * Mon Jul 01 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.2-1
 - New upstream release
 
