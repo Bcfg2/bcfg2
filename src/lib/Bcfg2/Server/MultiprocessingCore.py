@@ -294,7 +294,7 @@ class ChildCore(BaseCore):
     def RecvProbeData(self, address, _):
         """ Expire the probe cache for a client """
         if 'Probes' in self.plugins:
-            client = self.resolve_client(address, metadata=False)
+            client = self.resolve_client(address, metadata=False)[0]
             self.plugins['Probes'].load_data(client)
 
     @exposed
