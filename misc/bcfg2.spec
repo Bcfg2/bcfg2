@@ -14,9 +14,17 @@
 %endif
 %endif
 
+# For -pre or -rc releases, remove the initial <hash><percent>
+# characters from the appropriate line below.
+#
+# Don't forget to change the Release: tag below to something like 0.1
+#%%global _rc 1
+#%%global _pre 2
+%global _pre_rc %{?_pre:pre%{_pre}}%{?_rc:rc%{_rc}}
+
 Name:             bcfg2
 Version:          1.3.2
-Release:          1
+Release:          1%{?_pre_rc}%{?dist}
 Summary:          A configuration management system
 
 %if 0%{?suse_version}
@@ -34,8 +42,39 @@ BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 %endif
 BuildArch:        noarch
 
+BuildRequires:    python
 BuildRequires:    python-devel
 BuildRequires:    python-lxml
+%if 0%{?suse_version}
+BuildRequires:    python-M2Crypto
+BuildRequires:    python-Genshi
+BuildRequires:    python-gamin
+BuildRequires:    python-pyinotify
+BuildRequires:    python-python-daemon
+BuildRequires:    python-CherryPy >= 3
+%else # ! suse_version
+BuildRequires:    python-daemon
+BuildRequires:    python-inotify
+%if 0%{?rhel} && 0%{?rhel} < 6
+BuildRequires:    python-ssl
+%else # rhel > 5
+# EL5 lacks python-mock, so test suite is disabled
+BuildRequires:    python-sqlalchemy
+BuildRequires:    python-nose
+BuildRequires:    mock
+BuildRequires:    m2crypto
+BuildRequires:    Django
+BuildRequires:    PyYAML
+BuildRequires:    python-genshi
+BuildRequires:    python-cheetah
+BuildRequires:    pylibacl
+BuildRequires:    libselinux-python
+BuildRequires:    python-pep8
+BuildRequires:    python-cherrypy >= 3
+BuildRequires:    python-mock
+BuildRequires:    pylint
+%endif # rhel > 5
+%endif # ! suse_version
 
 %if 0%{?mandriva_version}
 # mandriva seems to behave differently than other distros and needs
@@ -53,22 +92,43 @@ BuildRequires:    libsane1
 # a different package name in EPEL.
 %if "%{_vendor}" == "redhat" && 0%{?rhel} <= 6 && 0%{?fedora} == 0
 BuildRequires:    python-sphinx10
-# the python-sphinx10 package doesn't set sys.path correctly, so we
-# have to do it for them
+# python-sphinx10 doesn't set sys.path correctly; do it for them
 %global pythonpath %(find %{python_sitelib} -name Sphinx*.egg)
 %else
 BuildRequires:    python-sphinx >= 1.0
 %endif
+BuildRequires:    python-docutils
 
-%if 0%{?rhel_version}
-# the debian init script needs redhat-lsb.
-# iff we switch to the redhat one, this might not be needed anymore.
-Requires:         redhat-lsb
+%if 0%{?fedora} >= 16
+BuildRequires:    systemd-units
 %endif
+
+Requires:         python-lxml
+Requires:         python-nose
+Requires:         m2crypto
+%if 0%{?rhel} && 0%{?rhel} < 6
+Requires:         python-ssl
+%endif
+Requires:         PyYAML
+Requires:         pylibacl
+Requires:         libselinux-python
+
+%if 0%{?fedora} >= 16
+Requires(post):   systemd-units
+Requires(preun):  systemd-units
+Requires(postun): systemd-units
+%else
+Requires(post):   /sbin/chkconfig
+Requires(preun):  /sbin/chkconfig
+Requires(preun):  /sbin/service
+Requires(postun): /sbin/service
+%endif
+
 %if "%{_vendor}" != "redhat"
 # fedora and rhel (and possibly other distros) do not know this tag.
 Recommends:       cron
 %endif
+
 
 %description
 Bcfg2 helps system administrators produce a consistent, reproducible,
@@ -105,10 +165,7 @@ Group:            System/Management
 %else
 Group:            System Environment/Daemons
 %endif
-Requires:         bcfg2 = %{version}
-%if 0%{?rhel} && 0%{?rhel} < 6
-Requires:         python-ssl
-%endif
+Requires:         bcfg2 = %{version}-%{release}
 Requires:         python-lxml >= 1.2.1
 %if 0%{?suse_version}
 Requires:         python-pyinotify
@@ -119,7 +176,23 @@ Requires:         python-daemon
 %endif
 Requires:         /usr/sbin/sendmail
 Requires:         /usr/bin/openssl
+Requires:         python-genshi
+Requires:         python-cheetah
+Requires:         graphviz
 Requires:         python-nose
+
+%if 0%{?fedora} >= 16
+Requires(post):   systemd-units
+Requires(preun):  systemd-units
+Requires(postun): systemd-units
+Requires(post):   systemd-sysv
+%elif 0%{?fedora} || 0%{?rhel}
+Requires(post):   /sbin/chkconfig
+Requires(preun):  /sbin/chkconfig
+Requires(preun):  /sbin/service
+Requires(postun): /sbin/service
+%endif
+
 
 %description server
 Bcfg2 helps system administrators produce a consistent, reproducible,
@@ -156,8 +229,8 @@ Group:            System/Management
 %else
 Group:            System Environment/Daemons
 %endif
-Requires:         bcfg2 = %{version}
-Requires:         bcfg2-server = %{version}
+Requires:         bcfg2 = %{version}-%{release}
+Requires:         bcfg2-server = %{version}-%{release}
 
 # cherrypy 3.3 actually doesn't exist yet, but 3.2 has bugs that
 # prevent it from working:
@@ -194,14 +267,17 @@ This package includes the Bcfg2 CherryPy server backend.
 
 %package web
 Summary:          Bcfg2 Web Reporting Interface
+
 %if 0%{?suse_version}
 Group:            System/Management
-Requires:         httpd,python-django >= 1.2,python-django-south >= 0.7
+Requires:         python-django >= 1.2
+Requires:         python-django-south >= 0.7
 %else
 Group:            System Tools
-Requires:         httpd,Django >= 1.2,Django-south >= 0.7
+Requires:         Django >= 1.2
+Requires:         Django-south >= 0.7
 %endif
-Requires:         bcfg2-server
+Requires:         httpd
 %if "%{_vendor}" == "redhat"
 Requires:         mod_wsgi
 %global apache_conf %{_sysconfdir}/httpd
@@ -209,6 +285,7 @@ Requires:         mod_wsgi
 Requires:         apache2-mod_wsgi
 %global apache_conf %{_sysconfdir}/apache2
 %endif
+
 
 %description web
 Bcfg2 helps system administrators produce a consistent, reproducible,
@@ -246,27 +323,7 @@ Group:            Documentation/HTML
 %else
 Group:            Documentation
 %endif
-%if 0%{?suse_version}
-BuildRequires:    python-M2Crypto
-BuildRequires:    python-Genshi
-BuildRequires:    python-gamin
-BuildRequires:    python-pyinotify
-BuildRequires:    python-python-daemon
-BuildRequires:    python-CherryPy >= 3
-%else
-BuildRequires:    m2crypto
-BuildRequires:    python-genshi
-BuildRequires:    gamin-python
-BuildRequires:    python-inotify
-BuildRequires:    python-daemon
-%endif
 
-%if "%{_vendor}" == "redhat" && 0%{?rhel} < 6 && 0%{?fedora} == 0
-BuildRequires:         python-ssl
-%else
-BuildRequires:    python-cherrypy >= 3
-BuildRequires:    python-mock
-%endif
 
 %description doc
 Bcfg2 helps system administrators produce a consistent, reproducible,
