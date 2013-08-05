@@ -270,7 +270,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         """ Load probe data from the appropriate backend (probed.xml
         or the database) """
         if self._use_db:
-            return self._load_data_db(client)
+            return self._load_data_db(client=client)
         else:
             # the XML backend doesn't support loading data for single
             # clients, so it reloads all data
