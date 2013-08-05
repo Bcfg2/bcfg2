@@ -980,9 +980,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
             profiles = [g for g in self.clientgroups[client]
                         if g in self.groups and self.groups[g].is_profile]
-            self.logger.info("Changing %s profile from %s to %s" %
+            if profiles != [profile]:
+                self.logger.info("Changing %s profile from %s to %s" %
                              (client, profiles, profile))
-            self.update_client(client, dict(profile=profile))
+                self.update_client(client, dict(profile=profile))
             if client in self.clientgroups:
                 for prof in profiles:
                     self.clientgroups[client].remove(prof)
