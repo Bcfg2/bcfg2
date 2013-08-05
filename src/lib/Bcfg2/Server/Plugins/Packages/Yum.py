@@ -946,9 +946,14 @@ class YumCollection(Collection):
         try:
             return json.loads(result.stdout)
         except ValueError:
-            err = sys.exc_info()[1]
-            self.logger.error("Packages: error reading bcfg2-yum-helper "
-                              "output: %s" % err)
+            if result.stdout:
+                err = sys.exc_info()[1]
+                self.logger.error("Packages: Error reading bcfg2-yum-helper "
+                                  "output: %s" % err)
+                self.logger.error("Packages: bcfg2-yum-helper output: %s" %
+                                  result.stdout)
+            else:
+                self.logger.error("Packages: No bcfg2-yum-helper output")
             raise
 
     def setup_data(self, force_update=False):
