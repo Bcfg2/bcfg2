@@ -266,12 +266,14 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             hostname=client.hostname).exclude(
             group__in=self.cgroups[client.hostname]).delete()
 
-    def load_data(self):
+    def load_data(self, client=None):
         """ Load probe data from the appropriate backend (probed.xml
         or the database) """
         if self._use_db:
-            return self._load_data_db()
+            return self._load_data_db(client)
         else:
+            # the XML backend doesn't support loading data for single
+            # clients, so it reloads all data
             return self._load_data_xml()
 
     def _load_data_xml(self):
@@ -296,16 +298,23 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 elif pdata.tag == 'Group':
                     self.cgroups[client.get('name')].append(pdata.get('name'))
 
-    def _load_data_db(self):
+    def _load_data_db(self, client=None):
         """ Load probe data from the database """
         self.probedata = {}
         self.cgroups = {}
-        for pdata in ProbesDataModel.objects.all():
+        if client is None:
+            probedata = ProbesDataModel.objects.all()
+            groupdata = ProbesGroupsModel.objects.all()
+        else:
+            probedata = ProbesDataModel.objects.filter(hostname=client)
+            groupdata = ProbesGroupsModel.objects.filter(hostname=client)
+
+        for pdata in probedata:
             if pdata.hostname not in self.probedata:
                 self.probedata[pdata.hostname] = ClientProbeDataSet(
                     timestamp=time.mktime(pdata.timestamp.timetuple()))
             self.probedata[pdata.hostname][pdata.probe] = ProbeData(pdata.data)
-        for pgroup in ProbesGroupsModel.objects.all():
+        for pgroup in groupdata:
             if pgroup.hostname not in self.cgroups:
                 self.cgroups[pgroup.hostname] = []
             self.cgroups[pgroup.hostname].append(pgroup.group)

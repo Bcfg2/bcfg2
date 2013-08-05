@@ -291,6 +291,13 @@ class ChildCore(BaseCore):
         self.metadata_cache.expire(client)
 
     @exposed
+    def RecvProbeData(self, address, _):
+        """ Expire the probe cache for a client """
+        if 'Probes' in self.plugins:
+            client = self.resolve_client(address, metadata=False)
+            self.plugins['Probes'].load_data(client)
+
+    @exposed
     def GetConfig(self, client):
         """ Render the configuration for a client """
         self.logger.debug("%s: Building configuration for %s" %
@@ -387,6 +394,14 @@ class Core(BuiltinCore):
         self.rpc_q.publish("set_debug", args=[address, debug])
         self.metadata_cache.set_debug(debug)
         return BuiltinCore.set_debug(self, address, debug)
+
+    @exposed
+    def RecvProbeData(self, address, probedata):
+        rv = BuiltinCore.RecvProbeData(self, address, probedata)
+        # we don't want the children to actually process probe data,
+        # so we don't send the data, just the fact that we got some.
+        self.rpc_q.publish("RecvProbeData", args=[address, None])
+        return rv
 
     @exposed
     def GetConfig(self, address):
