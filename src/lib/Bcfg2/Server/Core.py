@@ -903,6 +903,7 @@ class BaseCore(object):
                                                           state.get('state')))
         self.client_run_hook("end_statistics", meta)
 
+    @track_statistics()
     def resolve_client(self, address, cleanup_cache=False, metadata=True):
         """ Given a client address, get the client hostname and
         optionally metadata.
