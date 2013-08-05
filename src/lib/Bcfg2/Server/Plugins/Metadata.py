@@ -1005,8 +1005,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                     self.add_client(client, dict(profile=profile))
                 self.clients.append(client)
                 self.clientgroups[client] = [profile]
-        if not self._use_db:
-            self.clients_xml.write()
+            if not self._use_db:
+                self.clients_xml.write()
 
     def set_version(self, client, version):
         """Set version for provided client."""
