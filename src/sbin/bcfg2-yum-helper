@@ -262,6 +262,7 @@ class CacheManager(YumHelper):
         self.yumbase.repos.populateSack(mdtype='metadata', cacheonly=1)
         self.yumbase.repos.populateSack(mdtype='filelists', cacheonly=1)
         self.yumbase.repos.populateSack(mdtype='otherdata', cacheonly=1)
+        self.yumbase.comps
 
 
 def main():
