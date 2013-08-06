@@ -698,6 +698,7 @@ sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
 %dir %{_datadir}/bcfg2
 %{_datadir}/bcfg2/schemas
 %{_datadir}/bcfg2/xsl-transforms
+%{_datadir}/bcfg2/Hostbase
 %if 0%{?suse_version}
 %{_sbindir}/rcbcfg2-server
 %config(noreplace) /var/adm/fillup-templates/sysconfig.bcfg2-server
@@ -723,6 +724,7 @@ sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
 %{python_sitelib}/Bcfg2/Reporting
 %{python_sitelib}/Bcfg2/manage.py*
 %config(noreplace) %{apache_conf}/conf.d/wsgi_bcfg2.conf
+%config(noreplace) %{_sysconfdir}/bcfg2-web.conf
 
 %files doc
 %if 0%{?rhel} == 5 || 0%{?suse_version}
