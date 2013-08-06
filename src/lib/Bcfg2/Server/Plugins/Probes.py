@@ -298,6 +298,9 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 elif pdata.tag == 'Group':
                     self.cgroups[client.get('name')].append(pdata.get('name'))
 
+        if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
+            self.core.metadata_cache.expire()
+
     def _load_data_db(self, client=None):
         """ Load probe data from the database """
         self.probedata = {}
@@ -318,6 +321,9 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             if pgroup.hostname not in self.cgroups:
                 self.cgroups[pgroup.hostname] = []
             self.cgroups[pgroup.hostname].append(pgroup.group)
+
+        if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
+            self.core.metadata_cache.expire(client)
 
     @Bcfg2.Server.Plugin.track_statistics()
     def GetProbes(self, meta):
