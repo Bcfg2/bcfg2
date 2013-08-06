@@ -303,12 +303,14 @@ class Probes(Bcfg2.Server.Plugin.Probing,
 
     def _load_data_db(self, client=None):
         """ Load probe data from the database """
-        self.probedata = {}
-        self.cgroups = {}
         if client is None:
+            self.probedata = {}
+            self.cgroups = {}
             probedata = ProbesDataModel.objects.all()
             groupdata = ProbesGroupsModel.objects.all()
         else:
+            self.probedata.pop(client, None)
+            self.cgroups.pop(client, None)
             probedata = ProbesDataModel.objects.filter(hostname=client)
             groupdata = ProbesGroupsModel.objects.filter(hostname=client)
 
