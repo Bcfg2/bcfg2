@@ -185,16 +185,18 @@ Requires:         python-cheetah
 Requires:         graphviz
 Requires:         python-nose
 
+%if %{_vendor} == redhat
 %if 0%{?fedora} >= 16
 Requires(post):   systemd-units
 Requires(preun):  systemd-units
 Requires(postun): systemd-units
 Requires(post):   systemd-sysv
-%elif 0%{?fedora} || 0%{?rhel}
+%else
 Requires(post):   /sbin/chkconfig
 Requires(preun):  /sbin/chkconfig
 Requires(preun):  /sbin/service
 Requires(postun): /sbin/service
+%endif
 %endif
 
 
@@ -513,11 +515,11 @@ sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
       # Initial installation
   %if 0%{?fedora} >= 16
       /bin/systemctl daemon-reload >/dev/null 2>&1 || :
-  %elif 0%{?suse_version}
+  %else %if 0%{?suse_version}
       %fillup_and_insserv -f bcfg2
   %else
       /sbin/chkconfig --add bcfg2
-  %endif
+  %endif %endif
   fi
 %endif
 
@@ -529,11 +531,11 @@ sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
       # Initial installation
   %if 0%{?fedora} >= 16
       /bin/systemctl daemon-reload >/dev/null 2>&1 || :
-  %elif 0%{?suse_version}
+  %else %if 0%{?suse_version}
       %fillup_and_insserv -f bcfg2-server
   %else
       /sbin/chkconfig --add bcfg2-server
-  %endif
+  %endif %endif
   fi
 %endif
 
@@ -546,12 +548,12 @@ sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
   %if 0%{?fedora} >= 16
       /bin/systemctl --no-reload disable bcfg2.service > /dev/null 2>&1 || :
       /bin/systemctl stop bcfg2.service > /dev/null 2>&1 || :
-  %elif 0%{?suse_version}
+  %else %if 0%{?suse_version}
       %stop_on_removal bcfg2
   %else
       /sbin/service bcfg2 stop &>/dev/null || :
       /sbin/chkconfig --del bcfg2
-  %endif
+  %endif %endif
   fi
 %endif
 
@@ -564,13 +566,13 @@ sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
   %if 0%{?fedora} >= 16
       /bin/systemctl --no-reload disable bcfg2-server.service > /dev/null 2>&1 || :
       /bin/systemctl stop bcfg2-server.service > /dev/null 2>&1 || :
-  %elif 0%{?suse_version}
+  %else %if 0%{?suse_version}
       %stop_on_removal bcfg2-server
       %stop_on_removal bcfg2-report-collector
   %else
       /sbin/service bcfg2-server stop &>/dev/null || :
       /sbin/chkconfig --del bcfg2-server
-  %endif
+  %endif %endif
   fi
 %endif
 
@@ -585,11 +587,11 @@ sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
       # Package upgrade, not uninstall
   %if 0%{?fedora} >= 16
       /bin/systemctl try-restart bcfg2.service >/dev/null 2>&1 || :
-  %elif 0%{?suse_version}
+  %else %if 0%{?suse_version}
       %insserv_cleanup
   %else
       /sbin/service bcfg2 condrestart &>/dev/null || :
-  %endif
+  %endif %endif
   fi
 %endif
 
