@@ -17,7 +17,7 @@
 ### END INIT INFO
 
 # Include lsb functions
-. /etc//init.d/functions
+. /etc/init.d/functions
 
 # Commonly used stuff
 DAEMON=/usr/sbin/bcfg2-report-collector
