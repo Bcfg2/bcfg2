@@ -498,8 +498,7 @@ install -p -m 644 misc/apache/bcfg2.conf \
 
 # mandriva cannot handle %ghost without the file existing,
 # so let's touch a bunch of empty config files
-touch %{buildroot}%{_sysconfdir}/bcfg2.conf \
-    %{buildroot}%{_sysconfdir}/bcfg2-web.conf
+touch %{buildroot}%{_sysconfdir}/bcfg2.conf
 
 %if 0%{?rhel} == 5
 # Required for EL5
@@ -737,7 +736,6 @@ sed 's@http://www.w3.org/2001/xml.xsd@file://%{SOURCE3}@' \
 %{python_sitelib}/Bcfg2/Reporting
 %{python_sitelib}/Bcfg2/manage.py*
 %config(noreplace) %{apache_conf}/conf.d/wsgi_bcfg2.conf
-%config(noreplace) %{_sysconfdir}/bcfg2-web.conf
 
 %files doc
 %if 0%{?rhel} == 5 || 0%{?suse_version}
