@@ -984,12 +984,12 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 self.logger.info("Changing %s profile from %s to %s" %
                                  (client, profiles, profile))
                 self.update_client(client, dict(profile=profile))
-            if client in self.clientgroups:
-                for prof in profiles:
-                    self.clientgroups[client].remove(prof)
-                self.clientgroups[client].append(profile)
-            else:
-                self.clientgroups[client] = [profile]
+                if client in self.clientgroups:
+                    for prof in profiles:
+                        self.clientgroups[client].remove(prof)
+                    self.clientgroups[client].append(profile)
+                else:
+                    self.clientgroups[client] = [profile]
         else:
             self.logger.info("Creating new client: %s, profile %s" %
                              (client, profile))
