@@ -34,9 +34,6 @@ class Debuggable(object):
         :returns: bool - The new value of the debug flag
         """
         self.debug_flag = debug
-        self.debug_log("%s: debug = %s" % (self.__class__.__name__,
-                                           self.debug_flag),
-                       flag=True)
         return debug
 
     def toggle_debug(self):
@@ -136,6 +133,8 @@ class Plugin(Debuggable):
         self.running = False
 
     def set_debug(self, debug):
+        self.debug_log("%s: debug = %s" % (self.name, self.debug_flag),
+                       flag=True)
         for entry in self.Entries.values():
             if isinstance(entry, Debuggable):
                 entry.set_debug(debug)
