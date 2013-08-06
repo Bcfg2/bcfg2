@@ -876,6 +876,9 @@ class BaseCore(object):
             imd.query.by_name = self.build_metadata
             if self.metadata_cache_mode in ['cautious', 'aggressive']:
                 self.metadata_cache[client_name] = imd
+        else:
+            self.logger.debug("Using cached metadata object for %s" %
+                              client_name)
         return imd
 
     def process_statistics(self, client_name, statistics):
