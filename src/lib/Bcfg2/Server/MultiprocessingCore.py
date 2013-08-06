@@ -235,7 +235,7 @@ class ChildCore(BaseCore):
             # make the return connection before dispatching the actual
             # RPC call so that the parent is blocking for a connection
             # as briefly as possible
-            self.logger.error("Connecting to parent via %s" % address)
+            self.logger.debug("Connecting to parent via %s" % address)
             client = Client(address)
         method, args, kwargs = data
         rv = None
@@ -253,7 +253,7 @@ class ChildCore(BaseCore):
                                                                     method))
         if address is not None:
             # if the key is None, then no response is expected
-            self.logger.error("Returning data to parent via %s" % address)
+            self.logger.debug("Returning data to parent via %s" % address)
             client.send(rv)
 
     def _block(self):
