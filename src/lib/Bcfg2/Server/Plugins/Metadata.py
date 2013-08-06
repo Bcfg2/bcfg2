@@ -978,18 +978,21 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 self.logger.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
 
-            profiles = [g for g in self.clientgroups[client]
-                        if g in self.groups and self.groups[g].is_profile]
-            if profiles != [profile]:
+            metadata = self.core.build_metadata(client)
+            if metadata.profile != profile:
                 self.logger.info("Changing %s profile from %s to %s" %
-                                 (client, profiles, profile))
+                                 (client, metadata.profile, profile))
                 self.update_client(client, dict(profile=profile))
                 if client in self.clientgroups:
-                    for prof in profiles:
-                        self.clientgroups[client].remove(prof)
+                    if metadata.profile in self.clientgroups[client]:
+                        self.clientgroups[client].remove(metadata.profile)
                     self.clientgroups[client].append(profile)
                 else:
                     self.clientgroups[client] = [profile]
+            else:
+                self.logger.debug(
+                    "Ignoring %s request to change profile from %s to %s"
+                    % (client, metadata.profile, profile))
         else:
             self.logger.info("Creating new client: %s, profile %s" %
                              (client, profile))
