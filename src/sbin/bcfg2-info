@@ -488,9 +488,10 @@ Bcfg2 client itself.""")
         alist = args.split()
         if len(alist):
             for client in self._get_client_list(alist):
-                self.metadata_cache.expire(client)
+                self.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata,
+                                           key=client)
         else:
-            self.metadata_cache.expire()
+            self.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata)
 
     def do_probes(self, args):
         """ probes [-p] <hostname> - Get probe list for the given

@@ -263,6 +263,20 @@ class BaseCore(object):
         #: metadata
         self.metadata_cache = Cache()
 
+    def expire_caches_by_type(self, base_cls, key=None):
+        """ Expire caches for all
+        :class:`Bcfg2.Server.Plugin.interfaces.Caching` plugins that
+        are instances of ``base_cls``.
+
+        :param base_cls: The base plugin interface class to match (see
+                         :mod:`Bcfg2.Server.Plugin.interfaces`)
+        :type base_cls: type
+        :param key: The cache key to expire
+        """
+        for plugin in self.plugins_by_type(base_cls):
+            if isinstance(plugin, Bcfg2.Server.Plugin.Caching):
+                plugin.expire_cache(key)
+
     def plugins_by_type(self, base_cls):
         """ Return a list of loaded plugins that match the passed type.
 
@@ -728,7 +742,7 @@ class BaseCore(object):
         if event.code2str() == 'deleted':
             return
         self.setup.reparse()
-        self.metadata_cache.expire()
+        self.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata)
 
     def block_for_fam_events(self, handle_events=False):
         """ Block until all fam events have been handleed, optionally
@@ -1084,7 +1098,7 @@ class BaseCore(object):
             # that's created for RecvProbeData doesn't get cached.
             # I.e., the next metadata object that's built, after probe
             # data is processed, is cached.
-            self.metadata_cache.expire(client)
+            self.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata)
         try:
             xpdata = lxml.etree.XML(probedata.encode('utf-8'),
                                     parser=Bcfg2.Server.XMLParser)

@@ -181,14 +181,16 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
 
 
 class Probes(Bcfg2.Server.Plugin.Probing,
+             Bcfg2.Server.Plugin.Caching,
              Bcfg2.Server.Plugin.Connector,
              Bcfg2.Server.Plugin.DatabaseBacked):
     """ A plugin to gather information from a client machine """
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Connector.__init__(self)
         Bcfg2.Server.Plugin.Probing.__init__(self)
+        Bcfg2.Server.Plugin.Caching.__init__(self)
+        Bcfg2.Server.Plugin.Connector.__init__(self)
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
 
         try:
@@ -266,6 +268,9 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             hostname=client.hostname).exclude(
             group__in=self.cgroups[client.hostname]).delete()
 
+    def expire_cache(self, key=None):
+        self.load_data(client=key)
+
     def load_data(self, client=None):
         """ Load probe data from the appropriate backend (probed.xml
         or the database) """
@@ -299,7 +304,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                     self.cgroups[client.get('name')].append(pdata.get('name'))
 
         if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
-            self.core.metadata_cache.expire()
+            self.core.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata)
 
     def _load_data_db(self, client=None):
         """ Load probe data from the database """
@@ -325,7 +330,8 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             self.cgroups[pgroup.hostname].append(pgroup.group)
 
         if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
-            self.core.metadata_cache.expire(client)
+            self.core.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata,
+                                            key=client)
 
     @Bcfg2.Server.Plugin.track_statistics()
     def GetProbes(self, meta):

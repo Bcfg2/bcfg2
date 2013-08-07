@@ -15,16 +15,16 @@ import time
 import threading
 import lxml.etree
 import multiprocessing
+import Bcfg2.Server.Plugin
 from itertools import cycle
 from Bcfg2.Cache import Cache
 from Bcfg2.Compat import Queue, Empty
-from Bcfg2.Server.Plugin import Debuggable
 from Bcfg2.Server.Core import BaseCore, exposed
 from Bcfg2.Server.BuiltinCore import Core as BuiltinCore
 from multiprocessing.connection import Listener, Client
 
 
-class DispatchingCache(Cache, Debuggable):
+class DispatchingCache(Cache, Bcfg2.Server.Plugin.Debuggable):
     """ Implementation of :class:`Bcfg2.Cache.Cache` that propagates
     cache expiration events to child nodes. """
 
@@ -33,7 +33,7 @@ class DispatchingCache(Cache, Debuggable):
 
     def __init__(self, *args, **kwargs):
         self.rpc_q = kwargs.pop("queue")
-        Debuggable.__init__(self)
+        Bcfg2.Server.Plugin.Debuggable.__init__(self)
         Cache.__init__(self, *args, **kwargs)
 
     def expire(self, key=None):
@@ -41,7 +41,7 @@ class DispatchingCache(Cache, Debuggable):
         Cache.expire(self, key=key)
 
 
-class RPCQueue(Debuggable):
+class RPCQueue(Bcfg2.Server.Plugin.Debuggable):
     """ An implementation of a :class:`multiprocessing.Queue` designed
     for several additional use patterns:
 
@@ -54,7 +54,7 @@ class RPCQueue(Debuggable):
     poll_wait = 3.0
 
     def __init__(self):
-        Debuggable.__init__(self)
+        Bcfg2.Server.Plugin.Debuggable.__init__(self)
         self._terminate = threading.Event()
         self._queues = dict()
         self._available_listeners = Queue()
@@ -293,9 +293,9 @@ class ChildCore(BaseCore):
     @exposed
     def RecvProbeData(self, address, _):
         """ Expire the probe cache for a client """
-        if 'Probes' in self.plugins:
-            client = self.resolve_client(address, metadata=False)[0]
-            self.plugins['Probes'].load_data(client)
+        self.expire_caches_by_type(Bcfg2.Server.Plugin.Probing,
+                                   key=self.resolve_client(address,
+                                                           metadata=False)[0])
 
     @exposed
     def GetConfig(self, client):

@@ -598,3 +598,11 @@ class ClientRunHooks(object):
         :returns: None
         """
         pass
+
+
+class Caching(object):
+    """ A plugin that caches more than just the data received from the
+    FAM.  This presents a unified interface to clear the cache. """
+
+    def expire_cache(self, key=None):
+        raise NotImplementedError

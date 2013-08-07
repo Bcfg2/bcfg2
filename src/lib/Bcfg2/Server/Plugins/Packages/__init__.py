@@ -70,6 +70,7 @@ class OnDemandDict(MutableMapping):
 
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
+               Bcfg2.Server.Plugin.Caching,
                Bcfg2.Server.Plugin.StructureValidator,
                Bcfg2.Server.Plugin.Generator,
                Bcfg2.Server.Plugin.Connector,
@@ -94,6 +95,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.Caching.__init__(self)
         Bcfg2.Server.Plugin.StructureValidator.__init__(self)
         Bcfg2.Server.Plugin.Generator.__init__(self)
         Bcfg2.Server.Plugin.Connector.__init__(self)
@@ -457,6 +459,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Reload configuration specification and sources """
         self._load_config()
         return True
+
+    def expire_cache(self, _=None):
+        self.Reload()
 
     def _load_config(self, force_update=False):
         """
