@@ -58,6 +58,12 @@ BuildRequires:    python-CherryPy >= 3
 %else # ! suse_version
 BuildRequires:    python-daemon
 BuildRequires:    python-inotify
+%if "%{_vendor}" == "redhat" && 0%{!?rhel:1} && 0%{!?fedora:1}
+# by default, el5 doesn't have the %%rhel macro, provided by this
+# package; EPEL build servers install buildsys-macros by default, but
+# explicitly requiring this may help builds in other environments
+BuildRequires:    buildsys-macros
+%else # vendor != redhat || rhel defined
 %if 0%{?rhel} && 0%{?rhel} < 6
 BuildRequires:    python-ssl
 %else # rhel > 5
@@ -77,6 +83,7 @@ BuildRequires:    python-cherrypy >= 3
 BuildRequires:    python-mock
 BuildRequires:    pylint
 %endif # rhel > 5
+%endif # vendor != redhat || rhel defined
 %endif # ! suse_version
 
 %if 0%{?mandriva_version}
