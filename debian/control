@@ -50,6 +50,16 @@ Description: Configuration management web interface
  for clients bound by client profiles.
  bcfg2-web is the reporting server for bcfg2.
 
+Package: bcfg2-utils
+Architecture: all
+Depends: ${python:Depends}, ${misc:Depends}, bcfg2 (= ${binary:Version})
+Suggests: bcfg2-doc (= ${binary:Version})
+Description: Configuration management helper package
+ Bcfg2 is a configuration management system that generates configuration sets
+ for clients bound by client profiles.
+ bcfg2-utils contains scripts for gethering useful information for config
+ creation.
+
 Package: bcfg2-doc
 Section: doc
 Architecture: all
