@@ -93,6 +93,9 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     #: and :func:`Reload`
     __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Refresh', 'Reload']
 
+    __child_rmi__ = Bcfg2.Server.Plugin.Plugin.__child_rmi__ + \
+        [('Refresh', 'expire_cache'), ('Reload', 'expire_cache')]
+
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.Caching.__init__(self)

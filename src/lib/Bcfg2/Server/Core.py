@@ -976,12 +976,10 @@ class BaseCore(object):
     def _get_rmi(self):
         """ Get a list of RMI calls exposed by plugins """
         rmi = dict()
-        for pname, pinst in list(self.plugins.items()):
+        for pname, pinst in self.plugins.items() + \
+                [(self.fam.__class__.__name__, self.fam)]:
             for mname in pinst.__rmi__:
                 rmi["%s.%s" % (pname, mname)] = getattr(pinst, mname)
-        famname = self.fam.__class__.__name__
-        for mname in self.fam.__rmi__:
-            rmi["%s.%s" % (famname, mname)] = getattr(self.fam, mname)
         return rmi
 
     def _resolve_exposed_method(self, method_name):

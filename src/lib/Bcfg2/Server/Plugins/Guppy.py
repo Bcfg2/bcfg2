@@ -37,6 +37,7 @@ class Guppy(Bcfg2.Server.Plugin.Plugin):
 
     experimental = True
     __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Enable', 'Disable']
+    __child_rmi__ = __rmi__[:]
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
