@@ -157,8 +157,21 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         #: object when one is requested, so each entry is very
         #: short-lived -- it's purged at the end of each client run.
         self.clients = dict()
-        # pylint: enable=C0301
 
+        #: groupcache caches group lookups.  It maps Collections (via
+        #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`)
+        #: to sets of package groups, and thence to the packages
+        #: indicated by those groups.
+        self.groupcache = dict()
+
+        #: pkgcache caches complete package sets.  It maps Collections
+        #: (via
+        #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`)
+        #: to sets of initial packages, and thence to the final
+        #: (complete) package selections resolved from the initial
+        #: packages
+        self.pkgcache = dict()
+        # pylint: enable=C0301
     __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
 
     def set_debug(self, debug):
@@ -402,14 +415,24 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         for el in to_remove:
             el.getparent().remove(el)
 
-        gpkgs = collection.get_groups(groups)
-        for pkgs in gpkgs.values():
+        groups.sort()
+        # check for this set of groups in the group cache
+        gkey = hash(tuple(groups))
+        if gkey not in self.groupcache[collection.cachekey]:
+            self.groupcache[collection.cachekey][gkey] = \
+                collection.get_groups(groups)
+        for pkgs in self.groupcache[collection.cachekey][gkey].values():
             base.update(pkgs)
 
         # essential pkgs are those marked as such by the distribution
         base.update(collection.get_essential())
 
-        packages, unknown = collection.complete(base)
+        # check for this set of packages in the package cache
+        pkey = hash(tuple(base))
+        if pkey not in self.pkgcache[collection.cachekey]:
+            self.pkgcache[collection.cachekey][pkey] = \
+                collection.complete(base)
+        packages, unknown = self.pkgcache[collection.cachekey][pkey]
         if unknown:
             self.logger.info("Packages: Got %d unknown entries" % len(unknown))
             self.logger.info("Packages: %s" % list(unknown))
@@ -462,9 +485,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             if not self.disableMetaData:
                 collection.setup_data(force_update)
 
-        # clear Collection caches
+        # clear Collection and package caches
         self.clients = dict()
         self.collections = dict()
+        self.groupcache = dict()
+        self.pkgcache = dict()
 
         for source in self.sources.entries:
             cachefiles.add(source.cachefile)
@@ -578,6 +603,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if cclass != Collection:
             self.clients[metadata.hostname] = ckey
             self.collections[ckey] = collection
+            self.groupcache.setdefault(ckey, dict())
+            self.pkgcache.setdefault(ckey, dict())
         return collection
 
     def get_additional_data(self, metadata):
