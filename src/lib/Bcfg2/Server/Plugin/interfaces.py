@@ -605,4 +605,15 @@ class Caching(object):
     FAM.  This presents a unified interface to clear the cache. """
 
     def expire_cache(self, key=None):
+        """ Expire the cache associated with the given key.
+
+        :param key: The key to expire the cache for.  Because cache
+                    implementations vary tremendously between plugins,
+                    this could be any number of things, but generally
+                    a hostname.  It also may or may not be possible to
+                    expire the cache for a single host; this interface
+                    does not require any guarantee about that.
+        :type key: varies
+        :returns: None
+        """
         raise NotImplementedError
