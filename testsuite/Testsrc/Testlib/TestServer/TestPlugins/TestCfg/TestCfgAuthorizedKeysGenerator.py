@@ -23,6 +23,10 @@ class TestCfgAuthorizedKeysGenerator(TestCfgGenerator, TestStructFile):
     test_obj = CfgAuthorizedKeysGenerator
     should_monitor = False
 
+    def setUp(self):
+        TestCfgGenerator.setUp(self)
+        TestStructFile.setUp(self)
+
     def get_obj(self, name=None, core=None, fam=None):
         if name is None:
             name = self.path
@@ -40,31 +44,9 @@ class TestCfgAuthorizedKeysGenerator(TestCfgGenerator, TestStructFile):
         mock_HandleEvent.assert_called_with(akg, evt)
         mock_handle_event.assert_called_with(akg, evt)
 
-    def test_category(self):
-        akg = self.get_obj()
-        akg.setup = Mock()
-        akg.setup.cfp.has_section.return_value = False
-        akg.setup.cfp.has_option.return_value = False
-
-        self.assertIsNone(akg.category)
-        akg.setup.cfp.has_section.assert_called_with("sshkeys")
-
-        akg.setup.reset_mock()
-        akg.setup.cfp.has_section.return_value = True
-        self.assertIsNone(akg.category)
-        akg.setup.cfp.has_section.assert_called_with("sshkeys")
-        akg.setup.cfp.has_option.assert_called_with("sshkeys", "category")
-
-        akg.setup.reset_mock()
-        akg.setup.cfp.has_option.return_value = True
-        self.assertEqual(akg.category, akg.setup.cfp.get.return_value)
-        akg.setup.cfp.has_section.assert_called_with("sshkeys")
-        akg.setup.cfp.has_option.assert_called_with("sshkeys", "category")
-        akg.setup.cfp.get.assert_called_with("sshkeys", "category")
-
     @patch("Bcfg2.Server.Plugins.Cfg.CfgAuthorizedKeysGenerator.ClientMetadata")
-    @patch("Bcfg2.Server.Plugins.Cfg.CfgAuthorizedKeysGenerator.CfgAuthorizedKeysGenerator.category", "category")
     def test_get_data(self, mock_ClientMetadata):
+        Bcfg2.Options.setup.sshkeys_category = "category"
         akg = self.get_obj()
         akg.XMLMatch = Mock()
 

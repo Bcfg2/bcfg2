@@ -6,7 +6,6 @@ import socket
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
-from Bcfg2.Server.Plugins.Metadata import *
 from mock import Mock, MagicMock, patch
 
 # add all parent testsuite directories to sys.path to allow (most)
@@ -19,8 +18,12 @@ while path != "/":
         break
     path = os.path.dirname(path)
 from common import *
+from Bcfg2.Server.Plugins.Metadata import load_django_models
 from TestPlugin import TestXMLFileBacked, TestMetadata as _TestMetadata, \
     TestClientRunHooks, TestDatabaseBacked
+
+load_django_models()
+from Bcfg2.Server.Plugins.Metadata import *
 
 
 def get_clients_test_tree():
@@ -88,13 +91,12 @@ def get_groups_test_tree():
 </Groups>''').getroottree()
 
 
-def get_metadata_object(core=None, watch_clients=False, use_db=False):
+def get_metadata_object(core=None, watch_clients=False):
     if core is None:
         core = Mock()
-        core.setup = MagicMock()
         core.metadata_cache = MagicMock()
-    core.setup.cfp.getboolean = Mock(return_value=use_db)
 
+    set_setup_default("password")
     @patchIf(not isinstance(os.makedirs, Mock), "os.makedirs", Mock())
     @patchIf(not isinstance(lxml.etree.Element, Mock),
              "lxml.etree.Element", Mock())
@@ -119,6 +121,7 @@ if HAS_DJANGO or can_skip:
 
         @skipUnless(HAS_DJANGO, "Django not found")
         def setUp(self):
+            TestDatabaseBacked.setUp(self)
             self.test_obj = ClientVersions
             syncdb(TestMetadataDB)
             for client, version in self.test_clients.items():
@@ -476,11 +479,16 @@ class TestClientMetadata(Bcfg2TestCase):
 
 class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     test_obj = Metadata
-    use_db = False
+
+    def setUp(self):
+        _TestMetadata.setUp(self)
+        TestClientRunHooks.setUp(self)
+        TestDatabaseBacked.setUp(self)
+        Bcfg2.Options.setup.metadata_db = False
+        Bcfg2.Options.setup.authentication = "cert+password"
 
     def get_obj(self, core=None, watch_clients=False):
-        return get_metadata_object(core=core, watch_clients=watch_clients,
-                                   use_db=self.use_db)
+        return get_metadata_object(core=core, watch_clients=watch_clients)
 
     @skipUnless(HAS_DJANGO, "Django not found")
     def test__use_db(self):
@@ -767,7 +775,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
         metadata.clients_xml.xdata = copy.deepcopy(get_clients_test_tree())
         metadata._handle_clients_xml_event(Mock())
 
-        if not self.use_db:
+        if not Bcfg2.Options.setup.metadata_db:
             self.assertItemsEqual(metadata.clients,
                                   dict([(c.get("name"), c.get("profile"))
                                         for c in get_clients_test_tree().findall("//Client")]))
@@ -1259,10 +1267,13 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
 class TestMetadataBase(TestMetadata):
     """ base test object for testing Metadata with database enabled """
     __test__ = False
-    use_db = True
 
     @skipUnless(HAS_DJANGO, "Django not found")
     def setUp(self):
+        _TestMetadata.setUp(self)
+        TestClientRunHooks.setUp(self)
+        TestDatabaseBacked.setUp(self)
+        Bcfg2.Options.setup.metadata_db = True
         syncdb(TestMetadataDB)
 
     def load_clients_data(self, metadata=None, xdata=None):

@@ -19,10 +19,14 @@ from TestLogger import TestDebuggable
 class TestPlugin(TestDebuggable):
     test_obj = Plugin
 
+    def setUp(self):
+        TestDebuggable.setUp(self)
+        set_setup_default("filemonitor", MagicMock())
+
     def get_obj(self, core=None):
         if core is None:
             core = Mock()
-        set_setup_default("debug", False)
+
         @patchIf(not isinstance(os.makedirs, Mock), "os.makedirs", Mock())
         def inner():
             return self.test_obj(core, datastore)

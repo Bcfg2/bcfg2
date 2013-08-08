@@ -24,7 +24,7 @@ if can_skip or HAS_CRYPTO:
 
         @skipUnless(HAS_CRYPTO, "Encryption libraries not found, skipping")
         def setUp(self):
-            pass
+            TestCfgGenerator.setUp(self)
 
         @patchIf(HAS_CRYPTO,
                  "Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.bruteforce_decrypt")

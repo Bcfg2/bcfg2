@@ -42,59 +42,6 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
         mock_HandleEvent.assert_called_with(pkc, evt)
         mock_handle_event.assert_called_with(pkc, evt)
 
-    def test_category(self):
-        pkc = self.get_obj()
-        pkc.setup = Mock()
-        pkc.setup.cfp = Mock()
-        pkc.setup.cfp.has_section.return_value = False
-        pkc.setup.cfp.has_option.return_value = False
-
-        self.assertIsNone(pkc.category)
-        pkc.setup.cfp.has_section.assert_called_with("sshkeys")
-
-        pkc.setup.reset_mock()
-        pkc.setup.cfp.has_section.return_value = True
-        self.assertIsNone(pkc.category)
-        pkc.setup.cfp.has_section.assert_called_with("sshkeys")
-        pkc.setup.cfp.has_option.assert_called_with("sshkeys", "category")
-
-        pkc.setup.reset_mock()
-        pkc.setup.cfp.has_option.return_value = True
-        self.assertEqual(pkc.category, pkc.setup.cfp.get.return_value)
-        pkc.setup.cfp.has_section.assert_called_with("sshkeys")
-        pkc.setup.cfp.has_option.assert_called_with("sshkeys", "category")
-        pkc.setup.cfp.get.assert_called_with("sshkeys", "category")
-
-    @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
-    @patchIf(HAS_CRYPTO, "Bcfg2.Server.Encryption.get_passphrases")
-    def test_passphrase(self, mock_get_passphrases):
-        pkc = self.get_obj()
-        pkc.setup = Mock()
-        pkc.setup.cfp = Mock()
-        pkc.setup.cfp.has_section.return_value = False
-        pkc.setup.cfp.has_option.return_value = False
-
-        self.assertIsNone(pkc.passphrase)
-        pkc.setup.cfp.has_section.assert_called_with("sshkeys")
-
-        pkc.setup.reset_mock()
-        pkc.setup.cfp.has_section.return_value = True
-        self.assertIsNone(pkc.passphrase)
-        pkc.setup.cfp.has_section.assert_called_with("sshkeys")
-        pkc.setup.cfp.has_option.assert_called_with("sshkeys",
-                                                    "passphrase")
-
-        pkc.setup.reset_mock()
-        pkc.setup.cfp.get.return_value = "test"
-        mock_get_passphrases.return_value = dict(test="foo", test2="bar")
-        pkc.setup.cfp.has_option.return_value = True
-        self.assertEqual(pkc.passphrase, "foo")
-        pkc.setup.cfp.has_section.assert_called_with("sshkeys")
-        pkc.setup.cfp.has_option.assert_called_with("sshkeys",
-                                                    "passphrase")
-        pkc.setup.cfp.get.assert_called_with("sshkeys", "passphrase")
-        mock_get_passphrases.assert_called_with()
-
     @patch("shutil.rmtree")
     @patch("tempfile.mkdtemp")
     def test__gen_keypair(self, mock_mkdtemp, mock_rmtree):
@@ -153,52 +100,46 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
             pkc.XMLMatch.reset_mock()
             metadata.group_in_category.reset_mock()
 
-        category = "Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator.CfgPrivateKeyCreator.category"
-        @patch(category, None)
-        def inner():
-            pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey")
-            self.assertItemsEqual(pkc.get_specificity(metadata),
-                                  dict(host=metadata.hostname))
-        inner()
+        Bcfg2.Options.setup.sshkeys_category = None
+        pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey")
+        self.assertItemsEqual(pkc.get_specificity(metadata),
+                              dict(host=metadata.hostname))
 
-        @patch(category, "foo")
-        def inner2():
-            pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey")
-            self.assertItemsEqual(pkc.get_specificity(metadata),
-                                  dict(group=metadata.group_in_category.return_value,
-                                       prio=50))
-            metadata.group_in_category.assert_called_with("foo")
+        Bcfg2.Options.setup.sshkeys_category = "foo"
+        pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey")
+        self.assertItemsEqual(pkc.get_specificity(metadata),
+                              dict(group=metadata.group_in_category.return_value,
+                                   prio=50))
+        metadata.group_in_category.assert_called_with("foo")
 
-            reset()
-            pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey",
-                                                           perhost="true")
-            self.assertItemsEqual(pkc.get_specificity(metadata),
-                                  dict(host=metadata.hostname))
+        reset()
+        pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey",
+                                                       perhost="true")
+        self.assertItemsEqual(pkc.get_specificity(metadata),
+                              dict(host=metadata.hostname))
 
-            reset()
-            pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey",
-                                                           category="bar")
-            self.assertItemsEqual(pkc.get_specificity(metadata),
-                                  dict(group=metadata.group_in_category.return_value,
-                                       prio=50))
-            metadata.group_in_category.assert_called_with("bar")
+        reset()
+        pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey",
+                                                       category="bar")
+        self.assertItemsEqual(pkc.get_specificity(metadata),
+                              dict(group=metadata.group_in_category.return_value,
+                                   prio=50))
+        metadata.group_in_category.assert_called_with("bar")
 
-            reset()
-            pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey",
-                                                           prio="10")
-            self.assertItemsEqual(pkc.get_specificity(metadata),
-                                  dict(group=metadata.group_in_category.return_value,
-                                       prio=10))
-            metadata.group_in_category.assert_called_with("foo")
+        reset()
+        pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey",
+                                                       prio="10")
+        self.assertItemsEqual(pkc.get_specificity(metadata),
+                              dict(group=metadata.group_in_category.return_value,
+                                   prio=10))
+        metadata.group_in_category.assert_called_with("foo")
 
-            reset()
-            pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey")
-            metadata.group_in_category.return_value = ''
-            self.assertItemsEqual(pkc.get_specificity(metadata),
-                                  dict(host=metadata.hostname))
-            metadata.group_in_category.assert_called_with("foo")
-
-        inner2()
+        reset()
+        pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey")
+        metadata.group_in_category.return_value = ''
+        self.assertItemsEqual(pkc.get_specificity(metadata),
+                              dict(host=metadata.hostname))
+        metadata.group_in_category.assert_called_with("foo")
 
     @patch("shutil.rmtree")
     @patch("%s.open" % builtins)

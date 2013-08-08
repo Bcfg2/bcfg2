@@ -51,22 +51,28 @@ class TestFunctions(Bcfg2TestCase):
 class TestDatabaseBacked(TestPlugin):
     test_obj = DatabaseBacked
 
+    def setUp(self):
+        TestPlugin.setUp(self)
+        set_setup_default("%s_db" % self.test_obj.__name__.lower(), False)
+
     @skipUnless(HAS_DJANGO, "Django not found")
     def test__use_db(self):
-        db = self.get_obj()
+        core = Mock()
+        db = self.get_obj(core=core)
+        attr = "%s_db" % self.test_obj.__name__.lower()
 
-        Bcfg2.Options.setup.databasebacked_db = True
+        db.core.database_available = True
+        setattr(Bcfg2.Options.setup, attr, True)
         self.assertTrue(db._use_db)
 
-        Bcfg2.Options.setup.databasebacked_db = False
+        setattr(Bcfg2.Options.setup, attr, False)
         self.assertFalse(db._use_db)
 
-        Bcfg2.Server.Plugin.helpers.HAS_DJANGO = False
+        db.core.database_available = False
         self.assertFalse(db._use_db)
 
-        Bcfg2.Options.setup.databasebacked_db = False
+        setattr(Bcfg2.Options.setup, attr, True)
         self.assertFalse(db._use_db)
-        Bcfg2.Server.Plugin.helpers.HAS_DJANGO = True
 
 
 class TestPluginDatabaseModel(Bcfg2TestCase):
@@ -74,14 +80,17 @@ class TestPluginDatabaseModel(Bcfg2TestCase):
     pass
 
 
-class TestFileBacked(Bcfg2TestCase):
+class TestFileBacked(TestDebuggable):
     test_obj = FileBacked
     path = os.path.join(datastore, "test")
+
+    def setUp(self):
+        TestDebuggable.setUp(self)
+        set_setup_default("filemonitor", MagicMock())
 
     def get_obj(self, path=None):
         if path is None:
             path = self.path
-        set_setup_default("filemonitor", MagicMock())
         return self.test_obj(path)
 
     @patch("%s.open" % builtins)
@@ -110,7 +119,7 @@ class TestFileBacked(Bcfg2TestCase):
         self.assertFalse(fb.Index.called)
 
 
-class TestDirectoryBacked(Bcfg2TestCase):
+class TestDirectoryBacked(TestDebuggable):
     test_obj = DirectoryBacked
     testpaths = {1: '',
                  2: '/foo',
@@ -124,6 +133,10 @@ class TestDirectoryBacked(Bcfg2TestCase):
     badevents = []  # DirectoryBacked handles all files, so there's no
                     # such thing as a bad event
 
+    def setUp(self):
+        TestDebuggable.setUp(self)
+        set_setup_default("filemonitor", MagicMock())
+
     def test_child_interface(self):
         """ ensure that the child object has the correct interface """
         self.assertTrue(hasattr(self.test_obj.__child__, "HandleEvent"))
@@ -133,7 +146,6 @@ class TestDirectoryBacked(Bcfg2TestCase):
         if fam is None:
             fam = Mock()
 
-        set_setup_default("filemonitor", MagicMock())
         @patch("%s.%s.add_directory_monitor" % (self.test_obj.__module__,
                                                 self.test_obj.__name__),
                Mock())
@@ -378,11 +390,13 @@ class TestXMLFileBacked(TestFileBacked):
     should_monitor = None
     path = os.path.join(datastore, "test", "test1.xml")
 
+    def setUp(self):
+        TestFileBacked.setUp(self)
+        set_setup_default("encoding", 'utf-8')
+
     def get_obj(self, path=None, should_monitor=False):
         if path is None:
             path = self.path
-        set_setup_default("filemonitor", MagicMock())
-        set_setup_default("encoding", 'utf-8')
 
         @patchIf(not isinstance(os.path.exists, Mock),
                  "os.path.exists", Mock())
@@ -1158,6 +1172,11 @@ class TestXMLDirectoryBacked(TestDirectoryBacked):
 class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
     test_obj = PrioDir
 
+    def setUp(self):
+        TestPlugin.setUp(self)
+        TestGenerator.setUp(self)
+        TestXMLDirectoryBacked.setUp(self)
+
     def get_obj(self, core=None):
         if core is None:
             core = Mock()
@@ -1331,9 +1350,13 @@ class TestSpecificity(Bcfg2TestCase):
                     self.assertGreaterEqual(specs[j], specs[i])
 
 
-class TestSpecificData(Bcfg2TestCase):
+class TestSpecificData(TestDebuggable):
     test_obj = SpecificData
     path = os.path.join(datastore, "test.txt")
+
+    def setUp(self):
+        TestDebuggable.setUp(self)
+        set_setup_default("encoding", "utf-8")
 
     def get_obj(self, name=None, specific=None):
         if name is None:
@@ -1382,7 +1405,8 @@ class TestEntrySet(TestDebuggable):
     ignore = ["foo~", ".#foo", ".foo.swp", ".foo.swx",
               "test.txt.genshi_include", "test.G_foo.genshi_include"]
 
-    def get_obj(self, basename="test", path=datastore, entry_type=MagicMock()):
+    def setUp(self):
+        TestDebuggable.setUp(self)
         set_setup_default("default_owner")
         set_setup_default("default_group")
         set_setup_default("default_mode")
@@ -1390,6 +1414,8 @@ class TestEntrySet(TestDebuggable):
         set_setup_default("default_important", False)
         set_setup_default("default_paranoid", False)
         set_setup_default("default_sensitive", False)
+
+    def get_obj(self, basename="test", path=datastore, entry_type=MagicMock()):
         return self.test_obj(basename, path, entry_type)
 
     def test__init(self):
@@ -1742,10 +1768,14 @@ class TestEntrySet(TestDebuggable):
 class TestGroupSpool(TestPlugin, TestGenerator):
     test_obj = GroupSpool
 
+    def setUp(self):
+        TestPlugin.setUp(self)
+        TestGenerator.setUp(self)
+        set_setup_default("encoding", "utf-8")
+
     def get_obj(self, core=None):
         if core is None:
             core = MagicMock()
-        set_setup_default("encoding", "utf-8")
 
         @patch("%s.%s.AddDirectoryMonitor" % (self.test_obj.__module__,
                                               self.test_obj.__name__),

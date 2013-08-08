@@ -30,6 +30,7 @@ class TestPropertyFile(Bcfg2TestCase):
     path = os.path.join(datastore, "test")
 
     def get_obj(self, path=None):
+        set_setup_default("writes_enabled", False)
         if path is None:
             path = self.path
         return self.test_obj(path)
@@ -38,7 +39,6 @@ class TestPropertyFile(Bcfg2TestCase):
         pf = self.get_obj()
         pf.validate_data = Mock()
         pf._write = Mock()
-        pf.setup = Mock()
 
         xstr = u("<Properties/>\n")
         pf.xdata = lxml.etree.XML(xstr)
@@ -46,20 +46,16 @@ class TestPropertyFile(Bcfg2TestCase):
         def reset():
             pf.validate_data.reset_mock()
             pf._write.reset_mock()
-            pf.setup.reset_mock()
 
         # test writes disabled
-        pf.setup.cfp.getboolean.return_value = False
+        Bcfg2.Options.setup.writes_enabled = False
         self.assertRaises(PluginExecutionError, pf.write)
         self.assertFalse(pf.validate_data.called)
         self.assertFalse(pf._write.called)
-        pf.setup.cfp.getboolean.assert_called_with("properties",
-                                                "writes_enabled",
-                                                default=True)
 
         # test successful write
         reset()
-        pf.setup.cfp.getboolean.return_value = True
+        Bcfg2.Options.setup.writes_enabled = True
         self.assertEqual(pf.write(), pf._write.return_value)
         pf.validate_data.assert_called_with()
         pf._write.assert_called_with()
@@ -97,12 +93,10 @@ if can_skip or HAS_JSON:
     class TestJSONPropertyFile(TestFileBacked, TestPropertyFile):
         test_obj = JSONPropertyFile
 
-        def get_obj(self, *args, **kwargs):
-            return TestFileBacked.get_obj(self, *args, **kwargs)
-
         @skipUnless(HAS_JSON, "JSON libraries not found, skipping")
         def setUp(self):
-            pass
+            TestFileBacked.setUp(self)
+            TestPropertyFile.setUp(self)
 
         @patch("%s.loads" % JSON)
         def test_Index(self, mock_loads):
@@ -140,12 +134,10 @@ if can_skip or HAS_YAML:
     class TestYAMLPropertyFile(TestFileBacked, TestPropertyFile):
         test_obj = YAMLPropertyFile
 
-        def get_obj(self, *args, **kwargs):
-            return TestFileBacked.get_obj(self, *args, **kwargs)
-
         @skipUnless(HAS_YAML, "YAML libraries not found, skipping")
         def setUp(self):
-            pass
+            TestFileBacked.setUp(self)
+            TestPropertyFile.setUp(self)
 
         @patch("yaml.load")
         def test_Index(self, mock_load):
@@ -182,6 +174,11 @@ if can_skip or HAS_YAML:
 class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
     test_obj = XMLPropertyFile
     path = TestStructFile.path
+
+    def setUp(self):
+        TestPropertyFile.setUp(self)
+        TestStructFile.setUp(self)
+        set_setup_default("automatch", False)
 
     def get_obj(self, *args, **kwargs):
         return TestStructFile.get_obj(self, *args, **kwargs)
@@ -250,48 +247,34 @@ class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
             pf.setup.reset_mock()
 
         pf.xdata = lxml.etree.Element("Properties", automatch="true")
-        for automatch in [True, False]:
+        for Bcfg2.Options.setup.automatch in [True, False]:
             reset()
-            pf.setup.cfp.getboolean.return_value = automatch
             self.assertEqual(pf.get_additional_data(metadata),
                              pf.XMLMatch.return_value)
             pf.XMLMatch.assert_called_with(metadata)
-            pf.setup.cfp.getboolean.assert_called_with("properties",
-                                                       "automatch",
-                                                       default=False)
             self.assertFalse(mock_copy.called)
 
         pf.xdata = lxml.etree.Element("Properties", automatch="false")
-        for automatch in [True, False]:
+        for Bcfg2.Options.setup.automatch in [True, False]:
             reset()
-            pf.setup.cfp.getboolean.return_value = automatch
             self.assertEqual(pf.get_additional_data(metadata),
                              mock_copy.return_value)
             mock_copy.assert_called_with(pf)
             self.assertFalse(pf.XMLMatch.called)
-            pf.setup.cfp.getboolean.assert_called_with("properties",
-                                                       "automatch",
-                                                       default=False)
 
         pf.xdata = lxml.etree.Element("Properties")
         reset()
-        pf.setup.cfp.getboolean.return_value = False
+        Bcfg2.Options.setup.automatch = False
         self.assertEqual(pf.get_additional_data(metadata),
                          mock_copy.return_value)
         mock_copy.assert_called_with(pf)
         self.assertFalse(pf.XMLMatch.called)
-        pf.setup.cfp.getboolean.assert_called_with("properties",
-                                                   "automatch",
-                                                   default=False)
 
         reset()
-        pf.setup.cfp.getboolean.return_value = True
+        Bcfg2.Options.setup.automatch = True
         self.assertEqual(pf.get_additional_data(metadata),
                          pf.XMLMatch.return_value)
         pf.XMLMatch.assert_called_with(metadata)
-        pf.setup.cfp.getboolean.assert_called_with("properties",
-                                                   "automatch",
-                                                   default=False)
         self.assertFalse(mock_copy.called)
 
 

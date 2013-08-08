@@ -22,6 +22,10 @@ from TestServer.TestPlugins.TestCfg.Test_init import TestCfgGenerator
 class TestCfgGenshiGenerator(TestCfgGenerator):
     test_obj = CfgGenshiGenerator
 
+    def setUp(self):
+        TestCfgGenerator.setUp(self)
+        set_setup_default("repository", datastore)
+
     def test__init(self):
         TestCfgGenerator.test__init(self)
         cgg = self.get_obj()
@@ -30,7 +34,6 @@ class TestCfgGenshiGenerator(TestCfgGenerator):
     def test_get_data(self):
         cgg = self.get_obj()
         cgg._handle_genshi_exception = Mock()
-        cgg.setup = MagicMock()
         cgg.template = Mock()
         fltr = Mock()
         cgg.template.generate.return_value = fltr
@@ -39,26 +42,25 @@ class TestCfgGenshiGenerator(TestCfgGenerator):
         entry = lxml.etree.Element("Path", name="/test.txt")
         metadata = Mock()
 
-
         def reset():
             cgg.template.reset_mock()
             cgg._handle_genshi_exception.reset_mock()
-            cgg.setup.reset_mock()
 
         template_vars = dict(
             name=entry.get("name"),
             metadata=metadata,
             path=cgg.name,
             source_path=cgg.name,
-            repo=cgg.setup.__getitem__.return_value)
+            repo=datastore)
 
         self.assertEqual(cgg.get_data(entry, metadata),
                          stream.render.return_value)
         cgg.template.generate.assert_called_with(**template_vars)
-        cgg.setup.__getitem__.assert_called_with("repo")
         fltr.filter.assert_called_with(removecomment)
-        stream.render.assert_called_with("text", encoding=cgg.encoding,
-                                         strip_whitespace=False)
+        stream.render.assert_called_with(
+            "text",
+            encoding=Bcfg2.Options.setup.encoding,
+            strip_whitespace=False)
 
         reset()
         def render(fmt, **kwargs):
@@ -68,21 +70,22 @@ class TestCfgGenshiGenerator(TestCfgGenerator):
         self.assertEqual(cgg.get_data(entry, metadata),
                          stream.render.return_value)
         cgg.template.generate.assert_called_with(**template_vars)
-        cgg.setup.__getitem__.assert_called_with("repo")
         fltr.filter.assert_called_with(removecomment)
         self.assertEqual(stream.render.call_args_list,
-                         [call("text", encoding=cgg.encoding,
-                              strip_whitespace=False),
-                          call("text", encoding=cgg.encoding)])
+                         [call("text",
+                               encoding=Bcfg2.Options.setup.encoding,
+                               strip_whitespace=False),
+                          call("text",
+                               encoding=Bcfg2.Options.setup.encoding)])
 
         reset()
         stream.render.side_effect = UndefinedError("test")
         self.assertRaises(UndefinedError,
                           cgg.get_data, entry, metadata)
         cgg.template.generate.assert_called_with(**template_vars)
-        cgg.setup.__getitem__.assert_called_with("repo")
         fltr.filter.assert_called_with(removecomment)
-        stream.render.assert_called_with("text", encoding=cgg.encoding,
+        stream.render.assert_called_with("text",
+                                         encoding=Bcfg2.Options.setup.encoding,
                                          strip_whitespace=False)
 
         reset()
@@ -91,9 +94,9 @@ class TestCfgGenshiGenerator(TestCfgGenerator):
         self.assertRaises(ValueError,
                           cgg.get_data, entry, metadata)
         cgg.template.generate.assert_called_with(**template_vars)
-        cgg.setup.__getitem__.assert_called_with("repo")
         fltr.filter.assert_called_with(removecomment)
-        stream.render.assert_called_with("text", encoding=cgg.encoding,
+        stream.render.assert_called_with("text",
+                                         encoding=Bcfg2.Options.setup.encoding,
                                          strip_whitespace=False)
         self.assertTrue(cgg._handle_genshi_exception.called)
 
@@ -102,14 +105,16 @@ class TestCfgGenshiGenerator(TestCfgGenerator):
         cgg.loader = Mock()
         event = Mock()
         cgg.handle_event(event)
-        cgg.loader.load.assert_called_with(cgg.name,
-                                           cls=NewTextTemplate,
-                                           encoding=cgg.encoding)
+        cgg.loader.load.assert_called_with(
+            cgg.name,
+            cls=NewTextTemplate,
+            encoding=Bcfg2.Options.setup.encoding)
 
         cgg.loader.reset_mock()
         cgg.loader.load.side_effect = OSError
         self.assertRaises(PluginExecutionError,
                           cgg.handle_event, event)
-        cgg.loader.load.assert_called_with(cgg.name,
-                                           cls=NewTextTemplate,
-                                           encoding=cgg.encoding)
+        cgg.loader.load.assert_called_with(
+            cgg.name,
+            cls=NewTextTemplate,
+            encoding=Bcfg2.Options.setup.encoding)

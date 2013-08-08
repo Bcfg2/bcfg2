@@ -35,16 +35,34 @@ inPy3k = False
 if sys.hexversion >= 0x03000000:
     inPy3k = True
 
+
+#: A function to set a default config option if it's not already set
+def set_setup_default(option, value=None):
+    if not hasattr(Bcfg2.Options.setup, option):
+        setattr(Bcfg2.Options.setup, option, value)
+
 try:
     from django.core.management import setup_environ
     has_django = True
 
     os.environ['DJANGO_SETTINGS_MODULE'] = "Bcfg2.settings"
 
+    set_setup_default("db_engine", "sqlite3")
+    set_setup_default("db_name",
+                      os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                  "test.sqlite"))
+    set_setup_default("db_user")
+    set_setup_default("db_password")
+    set_setup_default("db_host")
+    set_setup_default("db_port")
+    set_setup_default("db_opts", dict())
+    set_setup_default("db_schema")
+    set_setup_default("timezone")
+    set_setup_default("web_debug", False)
+    set_setup_default("web_prefix")
+
     import Bcfg2.settings
-    Bcfg2.settings.DATABASE_NAME = \
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), "test.sqlite")
-    Bcfg2.settings.DATABASES['default']['NAME'] = Bcfg2.settings.DATABASE_NAME
+    Bcfg2.settings.read_config()
 except ImportError:
     has_django = False
 
@@ -303,7 +321,8 @@ class DBModelTestCase(Bcfg2TestCase):
             import django.core.management
             django.core.management.call_command("syncdb", interactive=False,
                                                 verbosity=0)
-            self.assertTrue(os.path.exists(Bcfg2.settings.DATABASE_NAME))
+            self.assertTrue(
+                os.path.exists(Bcfg2.settings.DATABASES['default']['NAME']))
 
     @skipUnless(has_django, "Django not found, skipping")
     def test_cleandb(self):
@@ -404,9 +423,3 @@ try:
     re_type = re._pattern_type
 except AttributeError:
     re_type = type(re.compile(""))
-
-
-#: A function to set a default config option if it's not already set
-def set_setup_default(option, value=None):
-    if not hasattr(Bcfg2.Options.setup, option):
-        setattr(Bcfg2.Options.setup, option, value)

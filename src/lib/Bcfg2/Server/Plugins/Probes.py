@@ -14,11 +14,11 @@ from Bcfg2.Server.Statistics import track_statistics
 
 HAS_DJANGO = False
 ProbesDataModel = None
-ProbesGroupModel = None
+ProbesGroupsModel = None
 
 
 def load_django_models():
-    global ProbesDataModel, ProbesGroupModel, HAS_DJANGO
+    global ProbesDataModel, ProbesGroupsModel, HAS_DJANGO
     try:
         from django.db import models
         HAS_DJANGO = True
@@ -128,11 +128,6 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     bangline = re.compile(r'^#!\s*(?P<interpreter>.*)$')
     basename_is_regex = True
 
-    options = [
-        Bcfg2.Options.BooleanOption(
-            cf=('probes', 'use_database'), dest="probes_db",
-            help="Use database capabilities of the Probes plugin")]
-
     def __init__(self, path, plugin_name):
         self.plugin_name = plugin_name
         Bcfg2.Server.Plugin.EntrySet.__init__(self, r'[0-9A-Za-z_\-]+', path,
@@ -200,6 +195,12 @@ class Probes(Bcfg2.Server.Plugin.Probing,
              Bcfg2.Server.Plugin.DatabaseBacked):
     """ A plugin to gather information from a client machine """
     __author__ = 'bcfg-dev@mcs.anl.gov'
+
+    options = [
+        Bcfg2.Options.BooleanOption(
+            cf=('probes', 'use_database'), dest="probes_db",
+            help="Use database capabilities of the Probes plugin")]
+    options_parsed_hook = load_django_models
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Probing.__init__(self)

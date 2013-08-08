@@ -21,6 +21,10 @@ from TestServer.TestPlugins.TestCfg.Test_init import TestCfgInfo
 class TestCfgInfoXML(TestCfgInfo):
     test_obj = CfgInfoXML
 
+    def setUp(self):
+        TestCfgInfo.setUp(self)
+        set_setup_default("filemonitor", MagicMock())
+
     def test__init(self):
         TestCfgInfo.test__init(self)
         ci = self.get_obj()

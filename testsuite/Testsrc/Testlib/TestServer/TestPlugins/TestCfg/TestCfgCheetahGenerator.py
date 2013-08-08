@@ -23,25 +23,25 @@ if HAS_CHEETAH or can_skip:
 
         @skipUnless(HAS_CHEETAH, "Cheetah libraries not found, skipping")
         def setUp(self):
-            pass
+            TestCfgGenerator.setUp(self)
+            set_setup_default("repository", datastore)
 
         @patch("Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator.Template")
         def test_get_data(self, mock_Template):
-            ccg = self.get_obj(encoding='UTF-8')
+            ccg = self.get_obj()
             ccg.data = "data"
             entry = lxml.etree.Element("Path", name="/test.txt")
             metadata = Mock()
-            ccg.setup = MagicMock()
 
             self.assertEqual(ccg.get_data(entry, metadata),
                              mock_Template.return_value.respond.return_value)
-            ccg.setup.__getitem__.assert_called_with("repo")
-            mock_Template.assert_called_with("data".decode(ccg.encoding),
-                                             compilerSettings=ccg.settings)
+            mock_Template.assert_called_with(
+                "data".decode(Bcfg2.Options.setup.encoding),
+                compilerSettings=ccg.settings)
             tmpl = mock_Template.return_value
             tmpl.respond.assert_called_with()
             self.assertEqual(tmpl.metadata, metadata)
             self.assertEqual(tmpl.name, entry.get("name"))
             self.assertEqual(tmpl.path, entry.get("name"))
             self.assertEqual(tmpl.source_path, ccg.name)
-            self.assertEqual(tmpl.repo, ccg.setup.__getitem__.return_value)
+            self.assertEqual(tmpl.repo, datastore)

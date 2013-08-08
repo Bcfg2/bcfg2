@@ -19,8 +19,10 @@ from common import *
 class TestDebuggable(Bcfg2TestCase):
     test_obj = Debuggable
 
-    def get_obj(self):
+    def setUp(self):
         set_setup_default('debug', False)
+
+    def get_obj(self):
         return self.test_obj()
 
     def test__init(self):

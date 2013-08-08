@@ -21,6 +21,10 @@ from TestPlugin import TestPrioDir
 class TestRules(TestPrioDir):
     test_obj = Rules
 
+    def setUp(self):
+        TestPrioDir.setUp(self)
+        set_setup_default("rules_regex", False)
+
     def test_HandlesEntry(self):
         r = self.get_obj()
         r.Entries = dict(Path={"/etc/foo.conf": Mock(),
@@ -76,11 +80,3 @@ class TestRules(TestPrioDir):
             self.assertTrue(r._matches(entry, metadata, candidate))
             mock_matches.assert_called_with(r, entry, metadata, candidate)
             self.assertIn("/etc/.*\.conf", r._regex_cache.keys())
-
-    def test__regex_enabled(self):
-        r = self.get_obj()
-        r.core.setup = MagicMock()
-        self.assertEqual(r._regex_enabled,
-                         r.core.setup.cfp.getboolean.return_value)
-        r.core.setup.cfp.getboolean.assert_called_with("rules", "regex",
-                                                       default=False)

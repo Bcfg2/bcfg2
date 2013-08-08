@@ -22,7 +22,7 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
     __basenames__ = ['authorizedkeys.xml', 'authorized_keys.xml']
 
     def __init__(self, fname):
-        CfgGenerator.__init__(self, fname, None, None)
+        CfgGenerator.__init__(self, fname, None)
         StructFile.__init__(self, fname)
         self.cache = dict()
         self.core = CFG.core

@@ -21,11 +21,13 @@ from common import *
 class TestTool(Bcfg2TestCase):
     test_obj = Tool
 
+    def setUp(self):
+        set_setup_default('command_timeout')
+        set_setup_default('interactive', False)
+
     def get_obj(self, config=None):
         if config is None:
             config = lxml.etree.Element("Configuration")
-        set_setup_default('command_timeout')
-        set_setup_default('interactive', False)
 
         execs = self.test_obj.__execs__
         self.test_obj.__execs__ = []

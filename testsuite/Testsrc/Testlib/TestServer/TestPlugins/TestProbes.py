@@ -18,9 +18,18 @@ while path != "/":
         break
     path = os.path.dirname(path)
 from common import *
-from Bcfg2.Server.Plugins.Probes import *
+from Bcfg2.Server.Plugins.Probes import load_django_models
 from TestPlugin import TestEntrySet, TestProbing, TestConnector, \
     TestDatabaseBacked
+
+load_django_models()
+from Bcfg2.Server.Plugins.Probes import *
+
+if HAS_JSON:
+    json = json
+
+if HAS_YAML:
+    yaml = yaml
 
 # test data for JSON and YAML tests
 test_data = dict(a=1, b=[1, 2, 3], c="test",
@@ -74,7 +83,8 @@ class FakeList(list):
 
 class TestProbesDB(DBModelTestCase):
     if HAS_DJANGO:
-        models = [ProbesGroupsModel, ProbesDataModel]
+        models = [ProbesGroupsModel,
+                  ProbesDataModel]
 
 
 class TestClientProbeDataSet(Bcfg2TestCase):
@@ -108,19 +118,22 @@ class TestProbeData(Bcfg2TestCase):
     def test_xdata(self):
         xdata = lxml.etree.Element("test")
         lxml.etree.SubElement(xdata, "test2")
-        data = ProbeData(lxml.etree.tostring(xdata,
-                                             xml_declaration=False).decode('UTF-8'))
+        data = ProbeData(
+            lxml.etree.tostring(xdata,
+                                xml_declaration=False).decode('UTF-8'))
         self.assertIsNotNone(data.xdata)
         self.assertIsNotNone(data.xdata.find("test2"))
 
-    @skipUnless(HAS_JSON, "JSON libraries not found, skipping JSON tests")
+    @skipUnless(HAS_JSON,
+                "JSON libraries not found, skipping JSON tests")
     def test_json(self):
         jdata = json.dumps(test_data)
         data = ProbeData(jdata)
         self.assertIsNotNone(data.json)
         self.assertItemsEqual(test_data, data.json)
 
-    @skipUnless(HAS_YAML, "YAML libraries not found, skipping YAML tests")
+    @skipUnless(HAS_YAML,
+                "YAML libraries not found, skipping YAML tests")
     def test_yaml(self):
         jdata = yaml.dump(test_data)
         data = ProbeData(jdata)
@@ -139,7 +152,7 @@ class TestProbeSet(TestEntrySet):
         # get_obj() accepts the basename argument, accepted by the
         # parent get_obj() method, and just throws it away, since
         # ProbeSet uses a regex for the "basename"
-        rv = self.test_obj(path, encoding, plugin_name)
+        rv = self.test_obj(path, plugin_name)
         rv.entry_type = MagicMock()
         return rv
 
@@ -243,30 +256,47 @@ group-specific"""
 class TestProbes(TestProbing, TestConnector, TestDatabaseBacked):
     test_obj = Probes
 
-    def get_obj(self, core=None):
-        return TestDatabaseBacked.get_obj(self, core=core)
+    def get_obj(self, core=None, load_data=None):
+        core = MagicMock()
+        if load_data is None:
+            load_data = MagicMock()
+
+        @patch("%s.%s.load_data" % (self.test_obj.__module__,
+                                    self.test_obj.__name__), new=load_data)
+        def inner():
+            return TestDatabaseBacked.get_obj(self, core=core)
+
+        return inner()
 
     def get_test_probedata(self):
         test_xdata = lxml.etree.Element("test")
         lxml.etree.SubElement(test_xdata, "test", foo="foo")
         rv = dict()
-        rv["foo.example.com"] = ClientProbeDataSet(timestamp=time.time())
+        rv["foo.example.com"] = ClientProbeDataSet(
+            timestamp=time.time())
         rv["foo.example.com"]["xml"] = \
-            ProbeData(lxml.etree.tostring(test_xdata,
-                                          xml_declaration=False).decode('UTF-8'))
-        rv["foo.example.com"]["text"] = ProbeData("freeform text")
-        rv["foo.example.com"]["multiline"] = ProbeData("""multiple
+            ProbeData(lxml.etree.tostring(
+                test_xdata,
+                xml_declaration=False).decode('UTF-8'))
+        rv["foo.example.com"]["text"] = \
+            ProbeData("freeform text")
+        rv["foo.example.com"]["multiline"] = \
+            ProbeData("""multiple
 lines
 of
 freeform
 text
 """)
-        rv["bar.example.com"] = ClientProbeDataSet(timestamp=time.time())
-        rv["bar.example.com"]["empty"] = ProbeData("")
+        rv["bar.example.com"] = ClientProbeDataSet(
+            timestamp=time.time())
+        rv["bar.example.com"]["empty"] = \
+            ProbeData("")
         if HAS_JSON:
-            rv["bar.example.com"]["json"] = ProbeData(json.dumps(test_data))
+            rv["bar.example.com"]["json"] = \
+                ProbeData(json.dumps(test_data))
         if HAS_YAML:
-            rv["bar.example.com"]["yaml"] = ProbeData(yaml.dump(test_data))
+            rv["bar.example.com"]["yaml"] = \
+                ProbeData(yaml.dump(test_data))
         return rv
 
     def get_test_cgroups(self):
@@ -274,62 +304,36 @@ text
                                     "group-with-dashes"],
                 "bar.example.com": []}
 
-    def get_probes_object(self, use_db=False, load_data=None):
-        core = MagicMock()
-        core.setup.cfp.getboolean = Mock()
-        core.setup.cfp.getboolean.return_value = use_db
-        if load_data is None:
-            load_data = MagicMock()
-        # we have to patch load_data() in a funny way because
-        # different versions of Mock have different scopes for
-        # patching.  in some versions, a patch applied to
-        # get_probes_object() would only apply to that function, while
-        # in others it would also apply to the calling function (e.g.,
-        # test__init(), which relies on being able to check the calls
-        # of load_data(), and thus on load_data() being consistently
-        # mocked)
-        @patch("%s.%s.load_data" % (self.test_obj.__module__,
-                                    self.test_obj.__name__), new=load_data)
-        def inner():
-            return self.get_obj(core)
-
-        return inner()
-
     def test__init(self):
         mock_load_data = Mock()
-        probes = self.get_probes_object(load_data=mock_load_data)
+        probes = self.get_obj(load_data=mock_load_data)
         mock_load_data.assert_any_call()
-        self.assertEqual(probes.probedata, ClientProbeDataSet())
+        self.assertEqual(probes.probedata,
+                         ClientProbeDataSet())
         self.assertEqual(probes.cgroups, dict())
 
-    @patch("Bcfg2.Server.Plugins.Probes.Probes.load_data", Mock())
-    def test__use_db(self):
-        probes = self.get_probes_object()
-        self.assertFalse(probes._use_db)
-        probes.core.setup.cfp.getboolean.assert_called_with("probes",
-                                                            "use_database",
-                                                            default=False)
-
-    @skipUnless(HAS_DJANGO, "Django not found, skipping")
-    @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_db", Mock())
-    @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_xml", Mock())
     def test_write_data_xml(self):
-        probes = self.get_probes_object(use_db=False)
+        Bcfg2.Options.setup.probes_db = False
+        probes = self.get_obj()
+        probes._write_data_db = Mock()
+        probes._write_data_xml = Mock()
         probes.write_data("test")
         probes._write_data_xml.assert_called_with("test")
         self.assertFalse(probes._write_data_db.called)
 
     @skipUnless(HAS_DJANGO, "Django not found, skipping")
-    @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_db", Mock())
-    @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_xml", Mock())
     def test_write_data_db(self):
-        probes = self.get_probes_object(use_db=True)
+        Bcfg2.Options.setup.probes_db = True
+        probes = self.get_obj()
+        probes._write_data_db = Mock()
+        probes._write_data_xml = Mock()
         probes.write_data("test")
         probes._write_data_db.assert_called_with("test")
         self.assertFalse(probes._write_data_xml.called)
 
     def test__write_data_xml(self):
-        probes = self.get_probes_object(use_db=False)
+        Bcfg2.Options.setup.probes_db = False
+        probes = self.get_obj()
         probes.probedata = self.get_test_probedata()
         probes.cgroups = self.get_test_cgroups()
 
@@ -397,7 +401,8 @@ text
     @skipUnless(HAS_DJANGO, "Django not found, skipping")
     def test__write_data_db(self):
         syncdb(TestProbesDB)
-        probes = self.get_probes_object(use_db=True)
+        Bcfg2.Options.setup.probes_db = True
+        probes = self.get_obj()
         probes.probedata = self.get_test_probedata()
         probes.cgroups = self.get_test_cgroups()
 
@@ -446,27 +451,29 @@ text
         pgroups = ProbesGroupsModel.objects.filter(hostname=cname).all()
         self.assertEqual(len(pgroups), len(probes.cgroups[cname]))
 
-    @skipUnless(HAS_DJANGO, "Django not found, skipping")
-    @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_db", Mock())
-    @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_xml", Mock())
     def test_load_data_xml(self):
-        probes = self.get_probes_object(use_db=False)
+        Bcfg2.Options.setup.probes_db = False
+        probes = self.get_obj()
+        probes._load_data_db = Mock()
+        probes._load_data_xml = Mock()
         probes.load_data()
         probes._load_data_xml.assert_any_call()
         self.assertFalse(probes._load_data_db.called)
 
     @skipUnless(HAS_DJANGO, "Django not found, skipping")
-    @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_db", Mock())
-    @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_xml", Mock())
     def test_load_data_db(self):
-        probes = self.get_probes_object(use_db=True)
+        Bcfg2.Options.setup.probes_db = True
+        probes = self.get_obj()
+        probes._load_data_db = Mock()
+        probes._load_data_xml = Mock()
         probes.load_data()
         probes._load_data_db.assert_any_call(client=None)
         self.assertFalse(probes._load_data_xml.called)
 
     @patch("lxml.etree.parse")
     def test__load_data_xml(self, mock_parse):
-        probes = self.get_probes_object(use_db=False)
+        Bcfg2.Options.setup.probes_db = False
+        probes = self.get_obj()
         probes.probedata = self.get_test_probedata()
         probes.cgroups = self.get_test_cgroups()
 
@@ -496,7 +503,8 @@ text
     @skipUnless(HAS_DJANGO, "Django not found, skipping")
     def test__load_data_db(self):
         syncdb(TestProbesDB)
-        probes = self.get_probes_object(use_db=True)
+        Bcfg2.Options.setup.probes_db = True
+        probes = self.get_obj()
         probes.probedata = self.get_test_probedata()
         probes.cgroups = self.get_test_cgroups()
         for cname in probes.probedata.keys():
@@ -521,19 +529,19 @@ text
 
     @patch("Bcfg2.Server.Plugins.Probes.ProbeSet.get_probe_data")
     def test_GetProbes(self, mock_get_probe_data):
-        probes = self.get_probes_object()
+        probes = self.get_obj()
         metadata = Mock()
         probes.GetProbes(metadata)
         mock_get_probe_data.assert_called_with(metadata)
 
-    @patch("Bcfg2.Server.Plugins.Probes.Probes.write_data")
-    @patch("Bcfg2.Server.Plugins.Probes.Probes.ReceiveDataItem")
-    def test_ReceiveData(self, mock_ReceiveDataItem, mock_write_data):
+    def test_ReceiveData(self):
         # we use a simple (read: bogus) datalist here to make this
         # easy to test
         datalist = ["a", "b", "c"]
 
-        probes = self.get_probes_object()
+        probes = self.get_obj()
+        probes.write_data = Mock()
+        probes.ReceiveDataItem = Mock()
         probes.core.metadata_cache_mode = 'off'
         client = Mock()
         client.hostname = "foo.example.com"
@@ -541,11 +549,11 @@ text
 
         cgroups = []
         cprobedata = ClientProbeDataSet()
-        self.assertItemsEqual(mock_ReceiveDataItem.call_args_list,
+        self.assertItemsEqual(probes.ReceiveDataItem.call_args_list,
                               [call(client, "a", cgroups, cprobedata),
                                call(client, "b", cgroups, cprobedata),
                                call(client, "c", cgroups, cprobedata)])
-        mock_write_data.assert_called_with(client)
+        probes.write_data.assert_called_with(client)
         self.assertFalse(probes.core.metadata_cache.expire.called)
 
         # change the datalist, ensure that the cache is cleared
@@ -553,11 +561,11 @@ text
         probes.core.metadata_cache_mode = 'aggressive'
         probes.ReceiveData(client, ['a', 'b', 'd'])
 
-        mock_write_data.assert_called_with(client)
+        probes.write_data.assert_called_with(client)
         probes.core.metadata_cache.expire.assert_called_with(client.hostname)
 
     def test_ReceiveDataItem(self):
-        probes = self.get_probes_object()
+        probes = self.get_obj()
         for cname, cdata in self.get_test_probedata().items():
             client = Mock()
             client.hostname = cname
@@ -589,7 +597,7 @@ text
     def test_get_additional_groups(self):
         TestConnector.test_get_additional_groups(self)
 
-        probes = self.get_probes_object()
+        probes = self.get_obj()
         test_cgroups = self.get_test_cgroups()
         probes.cgroups = self.get_test_cgroups()
         for cname in test_cgroups.keys():
@@ -606,7 +614,7 @@ text
     def test_get_additional_data(self):
         TestConnector.test_get_additional_data(self)
 
-        probes = self.get_probes_object()
+        probes = self.get_obj()
         test_probedata = self.get_test_probedata()
         probes.probedata = self.get_test_probedata()
         for cname in test_probedata.keys():

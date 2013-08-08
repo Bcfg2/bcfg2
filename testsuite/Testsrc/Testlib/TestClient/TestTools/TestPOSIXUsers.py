@@ -24,11 +24,14 @@ from TestTools.Test_init import TestTool
 class TestPOSIXUsers(TestTool):
     test_obj = POSIXUsers
 
-    def get_obj(self, config=None):
+    def setUp(self):
+        TestTool.setUp(self)
         set_setup_default('uid_whitelist')
         set_setup_default('uid_blacklist')
         set_setup_default('gid_whitelist')
         set_setup_default('gid_blacklist')
+
+    def get_obj(self, config=None):
         return TestTool.get_obj(self, config)
 
     @patch("pwd.getpwall")
