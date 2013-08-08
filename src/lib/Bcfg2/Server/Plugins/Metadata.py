@@ -1069,7 +1069,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             if cname in self.aliases:
                 return self.aliases[cname]
             return cname
-        except socket.herror:
+        except (socket.gaierror, socket.herror):
             err = "Address resolution error for %s: %s" % (address,
                                                            sys.exc_info()[1])
             self.logger.error(err)
