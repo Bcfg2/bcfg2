@@ -298,11 +298,12 @@ class DBModelTestCase(Bcfg2TestCase):
     @skipUnless(has_django, "Django not found, skipping")
     def test_syncdb(self):
         """ Create the test database and sync the schema """
-        setup_environ(Bcfg2.settings)
-        import django.core.management
-        django.core.management.call_command("syncdb", interactive=False,
-                                            verbosity=0)
-        self.assertTrue(os.path.exists(Bcfg2.settings.DATABASE_NAME))
+        if self.models:
+            setup_environ(Bcfg2.settings)
+            import django.core.management
+            django.core.management.call_command("syncdb", interactive=False,
+                                                verbosity=0)
+            self.assertTrue(os.path.exists(Bcfg2.settings.DATABASE_NAME))
 
     @skipUnless(has_django, "Django not found, skipping")
     def test_cleandb(self):
