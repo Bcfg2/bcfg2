@@ -12,10 +12,19 @@ import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Server.Statistics import track_statistics
 
-try:
-    from django.db import models
-    from django.core.exceptions import MultipleObjectsReturned
-    HAS_DJANGO = True
+HAS_DJANGO = False
+ProbesDataModel = None
+ProbesGroupModel = None
+
+
+def load_django_models():
+    global ProbesDataModel, ProbesGroupModel, HAS_DJANGO
+    try:
+        from django.db import models
+        HAS_DJANGO = True
+    except ImportError:
+        HAS_DJANGO = False
+        return
 
     class ProbesDataModel(models.Model,
                           Bcfg2.Server.Plugin.PluginDatabaseModel):
@@ -30,8 +39,7 @@ try:
         """ The database model for storing probe groups """
         hostname = models.CharField(max_length=255)
         group = models.CharField(max_length=255)
-except ImportError:
-    HAS_DJANGO = False
+
 
 try:
     import json
@@ -120,11 +128,15 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
     bangline = re.compile(r'^#!\s*(?P<interpreter>.*)$')
     basename_is_regex = True
 
-    def __init__(self, path, encoding, plugin_name):
+    options = [
+        Bcfg2.Options.BooleanOption(
+            cf=('probes', 'use_database'), dest="probes_db",
+            help="Use database capabilities of the Probes plugin")]
+
+    def __init__(self, path, plugin_name):
         self.plugin_name = plugin_name
         Bcfg2.Server.Plugin.EntrySet.__init__(self, r'[0-9A-Za-z_\-]+', path,
-                                              Bcfg2.Server.Plugin.SpecificData,
-                                              encoding)
+                                              Bcfg2.Server.Plugin.SpecificData)
         Bcfg2.Server.FileMonitor.get_fam().AddMonitor(path, self)
 
     def HandleEvent(self, event):
@@ -196,8 +208,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
 
         try:
-            self.probes = ProbeSet(self.data, core.setup['encoding'],
-                                   self.name)
+            self.probes = ProbeSet(self.data, self.name)
         except:
             err = sys.exc_info()[1]
             raise Bcfg2.Server.Plugin.PluginInitError(err)
@@ -260,7 +271,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 ProbesGroupsModel.objects.get_or_create(
                     hostname=client.hostname,
                     group=group)
-            except MultipleObjectsReturned:
+            except ProbesGroupsModel.MultipleObjectsReturned:
                 ProbesGroupsModel.objects.filter(hostname=client.hostname,
                                                  group=group).delete()
                 ProbesGroupsModel.objects.get_or_create(

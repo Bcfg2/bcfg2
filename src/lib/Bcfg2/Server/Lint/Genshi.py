@@ -18,7 +18,20 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"genshi-syntax-error": "error"}
+        return {"genshi-syntax-error": "error",
+                "unknown-genshi-error": "error"}
+
+    def check_template(self, loader, fname, cls=None):
+        try:
+            loader.load(fname, cls=cls)
+        except TemplateSyntaxError:
+            err = sys.exc_info()[1]
+            self.LintError("genshi-syntax-error",
+                           "Genshi syntax error in %s: %s" % (fname, err))
+        except:
+            err = sys.exc_info()[1]
+            self.LintError("unknown-genshi-error",
+                           "Unknown Genshi error in %s: %s" % (fname, err))
 
     def check_cfg(self):
         """ Check genshi templates in Cfg for syntax errors. """
@@ -27,30 +40,13 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
                 if (self.HandlesFile(entry.name) and
                     isinstance(entry, CfgGenshiGenerator) and
                     not entry.template):
-                    try:
-                        entry.loader.load(entry.name,
-                                          cls=NewTextTemplate)
-                    except TemplateSyntaxError:
-                        err = sys.exc_info()[1]
-                        self.LintError("genshi-syntax-error",
-                                       "Genshi syntax error: %s" % err)
-                    except:
-                        etype, err = sys.exc_info()[:2]
-                        self.LintError(
-                            "genshi-syntax-error",
-                            "Unexpected Genshi error on %s: %s: %s" %
-                            (entry.name, etype.__name__, err))
+                    self.check_template(entry.loader, entry.name,
+                                        cls=NewTextTemplate)
 
     def check_bundler(self):
         """ Check templates in Bundler for syntax errors. """
         loader = TemplateLoader()
-
         for entry in self.core.plugins['Bundler'].entries.values():
             if (self.HandlesFile(entry.name) and
                 entry.template is not None):
-                try:
-                    loader.load(entry.name, cls=MarkupTemplate)
-                except TemplateSyntaxError:
-                    err = sys.exc_info()[1]
-                    self.LintError("genshi-syntax-error",
-                                   "Genshi syntax error: %s" % err)
+                self.check_template(loader, entry.name, cls=MarkupTemplate)

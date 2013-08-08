@@ -1,6 +1,10 @@
 import re
+import sys
+import time
 import socket
 import logging
+import Bcfg2.Options
+from Bcfg2.Compat import httplib, xmlrpclib, urlparse, quote_plus
 
 # The ssl module is provided by either Python 2.6 or a separate ssl
 # package that works on older versions of Python (see
@@ -16,11 +20,6 @@ except ImportError:
     SSL_LIB = 'm2crypto'
     SSL_ERROR = SSL.SSLError
 
-import sys
-import time
-
-# Compatibility imports
-from Bcfg2.Compat import httplib, xmlrpclib, urlparse, quote_plus
 
 version = sys.version_info[:2]
 has_py26 = version >= (2, 6)
@@ -64,6 +63,7 @@ class CertificateError(Exception):
 
 _orig_Method = xmlrpclib._Method
 
+
 class RetryMethod(xmlrpclib._Method):
     """Method with error handling and retries built in."""
     log = logging.getLogger('xmlrpc')
@@ -104,7 +104,6 @@ class RetryMethod(xmlrpclib._Method):
                 err = sys.exc_info()[1]
                 msg = err
             except:
-                raise
                 etype, err = sys.exc_info()[:2]
                 msg = "Unknown failure: %s (%s)" % (err, etype.__name__)
             if msg:
@@ -218,12 +217,15 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             other_side_required = ssl.CERT_REQUIRED
         else:
             other_side_required = ssl.CERT_NONE
-            self.logger.warning("No ca is specified. Cannot authenticate the server with SSL.")
+            self.logger.warning("No ca is specified. Cannot authenticate the "
+                                "server with SSL.")
         if self.cert and not self.key:
-            self.logger.warning("SSL cert specfied, but no key. Cannot authenticate this client with SSL.")
+            self.logger.warning("SSL cert specfied, but no key. Cannot "
+                                "authenticate this client with SSL.")
             self.cert = None
         if self.key and not self.cert:
-            self.logger.warning("SSL key specfied, but no cert. Cannot authenticate this client with SSL.")
+            self.logger.warning("SSL key specfied, but no cert. Cannot "
+                                "authenticate this client with SSL.")
             self.key = None
 
         rawsock.settimeout(self.timeout)
@@ -234,7 +236,8 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         self.sock.connect((self.host, self.port))
         peer_cert = self.sock.getpeercert()
         if peer_cert and self.scns:
-            scn = [x[0][1] for x in peer_cert['subject'] if x[0][0] == 'commonName'][0]
+            scn = [x[0][1] for x in peer_cert['subject']
+                   if x[0][0] == 'commonName'][0]
             if scn not in self.scns:
                 raise CertificateError(scn)
         self.sock.closeSocket = True
@@ -253,20 +256,24 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         if self.ca:
             # Use the certificate authority to validate the cert
             # presented by the server
-            ctx.set_verify(SSL.verify_peer | SSL.verify_fail_if_no_peer_cert, depth=9)
+            ctx.set_verify(SSL.verify_peer | SSL.verify_fail_if_no_peer_cert,
+                           depth=9)
             if ctx.load_verify_locations(self.ca) != 1:
                 raise Exception('No CA certs')
         else:
-            self.logger.warning("No ca is specified. Cannot authenticate the server with SSL.")
+            self.logger.warning("No ca is specified. Cannot authenticate the "
+                                "server with SSL.")
 
         if self.cert and self.key:
             # A cert/key is defined, use them to support client
             # authentication to the server
             ctx.load_cert(self.cert, self.key)
         elif self.cert:
-            self.logger.warning("SSL cert specfied, but no key. Cannot authenticate this client with SSL.")
+            self.logger.warning("SSL cert specfied, but no key. Cannot "
+                                "authenticate this client with SSL.")
         elif self.key:
-            self.logger.warning("SSL key specfied, but no cert. Cannot authenticate this client with SSL.")
+            self.logger.warning("SSL key specfied, but no cert. Cannot "
+                                "authenticate this client with SSL.")
 
         self.sock = SSL.Connection(ctx)
         if re.match('\\d+\\.\\d+\\.\\d+\\.\\d+', self.host):
@@ -343,26 +350,50 @@ class XMLRPCTransport(xmlrpclib.Transport):
         # pylint: enable=E1101
 
 
-def ComponentProxy(url, user=None, password=None, key=None, cert=None, ca=None,
-                   allowedServerCNs=None, timeout=90, retries=3, delay=1):
+class ComponentProxy(xmlrpclib.ServerProxy):
+    """Constructs proxies to components. """
 
-    """Constructs proxies to components.
+    options = [
+        Bcfg2.Options.Common.location, Bcfg2.Options.Common.ssl_key,
+        Bcfg2.Options.Common.ssl_cert, Bcfg2.Options.Common.ssl_ca,
+        Bcfg2.Options.Common.password,
+        Bcfg2.Options.Option(
+            "-u", "--user", default="root", cf=('communication', 'user'),
+            help='The user to provide for authentication'),
+        Bcfg2.Options.Option(
+            "-R", "--retries", type=int, default=3,
+            cf=('communication', 'retries'),
+            help='The number of times to retry network communication'),
+        Bcfg2.Options.Option(
+            "-y", "--retry-delay", type=int, default=1,
+            cf=('communication', 'retry_delay'),
+            help='The time in seconds to wait between retries'),
+        Bcfg2.Options.Option(
+            '--ssl-cns', cf=('communication', 'serverCommonNames'),
+            type=Bcfg2.Options.Types.colon_list,
+            help='List of server commonNames'),
+        Bcfg2.Options.Option(
+            "-t", "--timeout", type=float, default=90.0,
+            cf=('communication', 'timeout'),
+            help='Set the client XML-RPC timeout')]
 
-    Arguments:
-    component_name -- name of the component to connect to
+    def __init__(self):
+        RetryMethod.max_retries = Bcfg2.Options.setup.retries
+        RetryMethod.retry_delay = Bcfg2.Options.setup.retry_delay
 
-    Additional arguments are passed to the ServerProxy constructor.
-
-    """
-    xmlrpclib._Method.max_retries = retries
-    xmlrpclib._Method.retry_delay = delay
-
-    if user and password:
-        method, path = urlparse(url)[:2]
-        newurl = "%s://%s:%s@%s" % (method, quote_plus(user, ''),
-                                    quote_plus(password, ''), path)
-    else:
-        newurl = url
-    ssl_trans = XMLRPCTransport(key, cert, ca,
-                                allowedServerCNs, timeout=float(timeout))
-    return xmlrpclib.ServerProxy(newurl, allow_none=True, transport=ssl_trans)
+        if Bcfg2.Options.setup.user and Bcfg2.Options.setup.password:
+            method, path = urlparse(Bcfg2.Options.setup.server)[:2]
+            url = "%s://%s:%s@%s" % (
+                method,
+                quote_plus(Bcfg2.Options.setup.user, ''),
+                quote_plus(Bcfg2.Options.setup.password, ''),
+                path)
+        else:
+            url = Bcfg2.Options.setup.server
+        ssl_trans = XMLRPCTransport(Bcfg2.Options.setup.key,
+                                    Bcfg2.Options.setup.cert,
+                                    Bcfg2.Options.setup.ca,
+                                    Bcfg2.Options.setup.ssl_cns,
+                                    Bcfg2.Options.setup.timeout)
+        xmlrpclib.ServerProxy.__init__(self, url,
+                                       allow_none=True, transport=ssl_trans)

@@ -1,7 +1,6 @@
 """ Django settings for the Bcfg2 server """
 
 import os
-import sys
 import Bcfg2.Options
 
 try:
@@ -17,91 +16,17 @@ try:
 except ImportError:
     HAS_SOUTH = False
 
-DATABASES = dict()
+DATABASES = dict(default=dict())
 
 TIME_ZONE = None
 
-DEBUG = False
-TEMPLATE_DEBUG = DEBUG
+TEMPLATE_DEBUG = DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
 MEDIA_URL = '/site_media/'
 
-
-def _default_config():
-    """ get the default config file.  returns /etc/bcfg2-web.conf,
-    UNLESS /etc/bcfg2.conf exists AND /etc/bcfg2-web.conf does not
-    exist. """
-    setup = Bcfg2.Options.get_option_parser()
-    setup.add_option("configfile", Bcfg2.Options.CFILE)
-    setup.add_option("web_configfile", Bcfg2.Options.WEB_CFILE)
-    setup.reparse(argv=sys.argv[1:], do_getopt=False)
-    if (not os.path.exists(setup['web_configfile']) and
-        os.path.exists(setup['configfile'])):
-        return setup['configfile']
-    else:
-        return setup['web_configfile']
-
-DEFAULT_CONFIG = _default_config()
-
-
-def read_config(cfile=DEFAULT_CONFIG, repo=None):
-    """ read the config file and set django settings based on it """
-    # pylint: disable=W0602,W0603
-    global DATABASE_ENGINE, DATABASE_NAME, DATABASE_USER, DATABASE_PASSWORD, \
-        DATABASE_HOST, DATABASE_PORT, DATABASE_OPTIONS, DATABASE_SCHEMA, \
-        DEBUG, TEMPLATE_DEBUG, TIME_ZONE, MEDIA_URL
-    # pylint: enable=W0602,W0603
-
-    if not os.path.exists(cfile) and os.path.exists(DEFAULT_CONFIG):
-        print("%s does not exist, using %s for database configuration" %
-              (cfile, DEFAULT_CONFIG))
-        cfile = DEFAULT_CONFIG
-
-    # when setting a different config file, it has to be set in either
-    # sys.argv or in the OptionSet() constructor AS WELL AS the argv
-    # that's passed to setup.parse()
-    argv = [Bcfg2.Options.CFILE.cmd, cfile,
-            Bcfg2.Options.WEB_CFILE.cmd, cfile]
-    setup = Bcfg2.Options.get_option_parser()
-    setup.add_options(Bcfg2.Options.DATABASE_COMMON_OPTIONS)
-    setup.add_option("repo", Bcfg2.Options.SERVER_REPOSITORY)
-    setup.reparse(argv=argv)
-
-    if repo is None:
-        repo = setup['repo']
-
-    DATABASES['default'] = \
-        dict(ENGINE="django.db.backends.%s" % setup['db_engine'],
-             NAME=setup['db_name'],
-             USER=setup['db_user'],
-             PASSWORD=setup['db_password'],
-             HOST=setup['db_host'],
-             PORT=setup['db_port'],
-             OPTIONS=setup['db_options'],
-             SCHEMA=setup['db_schema'])
-
-    # dropping the version check.  This was added in 1.1.2
-    TIME_ZONE = setup['time_zone']
-
-    DEBUG = setup['django_debug']
-    TEMPLATE_DEBUG = DEBUG
-    if DEBUG:
-        print("Warning: Setting web_debug to True causes extraordinary memory "
-              "leaks.  Only use this setting if you know what you're doing.")
-
-    if setup['web_prefix']:
-        MEDIA_URL = setup['web_prefix'].rstrip('/') + MEDIA_URL
-    else:
-        MEDIA_URL = '/site_media/'
-
-# initialize settings from /etc/bcfg2-web.conf or /etc/bcfg2.conf, or
-# set up basic defaults.  this lets manage.py work in all cases
-read_config()
-
-ADMINS = (('Root', 'root'))
-MANAGERS = ADMINS
+MANAGERS = ADMINS = (('Root', 'root'))
 
 # Language code for this installation. All choices can be found here:
 # http://www.w3.org/TR/REC-html40/struct/dirlang.html#langcodes
@@ -183,3 +108,77 @@ TEMPLATE_CONTEXT_PROCESSORS = (
     'django.core.context_processors.media',
     'django.core.context_processors.request'
 )
+
+
+def read_config():
+    """ read the config file and set django settings based on it """
+    global DEBUG, TEMPLATE_DEBUG, TIME_ZONE, MEDIA_URL  # pylint: disable=W0603
+
+    DATABASES['default'] = \
+        dict(ENGINE="django.db.backends.%s" % Bcfg2.Options.setup.db_engine,
+             NAME=Bcfg2.Options.setup.db_name,
+             USER=Bcfg2.Options.setup.db_user,
+             PASSWORD=Bcfg2.Options.setup.db_password,
+             HOST=Bcfg2.Options.setup.db_host,
+             PORT=Bcfg2.Options.setup.db_port,
+             OPTIONS=Bcfg2.Options.setup.db_opts,
+             SCHEMA=Bcfg2.Options.setup.db_schema)
+
+    TIME_ZONE = Bcfg2.Options.setup.timezone
+
+    TEMPLATE_DEBUG = DEBUG = Bcfg2.Options.setup.web_debug
+    if DEBUG:
+        print("Warning: Setting web_debug to True causes extraordinary memory "
+              "leaks.  Only use this setting if you know what you're doing.")
+
+    if Bcfg2.Options.setup.web_prefix:
+        MEDIA_URL = Bcfg2.Options.setup.web_prefix.rstrip('/') + MEDIA_URL
+
+
+class _OptionContainer(object):
+    """ Container for options loaded at import-time to configure
+    databases """
+    options = [
+        Bcfg2.Options.Common.repository,
+        Bcfg2.Options.PathOption(
+            '-W', '--web-config', cf=('reporting', 'config'),
+            default="/etc/bcfg2-web.conf",
+            action=Bcfg2.Options.ConfigFileAction,
+            help='Web interface configuration file'),
+        Bcfg2.Options.Option(
+            cf=('database', 'engine'), default='sqlite3',
+            help='Database engine', dest='db_engine'),
+        Bcfg2.Options.Option(
+            cf=('database', 'name'), default='<repository>/etc/bcfg2.sqlite',
+            help="Database name", dest="db_name"),
+        Bcfg2.Options.Option(
+            cf=('database', 'user'), help='Database username', dest='db_user'),
+        Bcfg2.Options.Option(
+            cf=('database', 'password'), help='Database password',
+            dest='db_password'),
+        Bcfg2.Options.Option(
+            cf=('database', 'host'), help='Database host', dest='db_host'),
+        Bcfg2.Options.Option(
+            cf=('database', 'port'), help='Database port', dest='db_port'),
+        Bcfg2.Options.Option(
+            cf=('database', 'schema'), help='Database schema',
+            dest='db_schema'),
+        Bcfg2.Options.Option(
+            cf=('database', 'options'), help='Database options',
+            dest='db_opts', type=Bcfg2.Options.Types.comma_dict),
+        Bcfg2.Options.Option(
+            cf=('reporting', 'timezone'), help='Django timezone'),
+        Bcfg2.Options.BooleanOption(
+            cf=('reporting', 'web_debug'), help='Django debug'),
+        Bcfg2.Options.Option(
+            cf=('reporting', 'web_prefix'), help='Web prefix')]
+
+    @staticmethod
+    def options_parsed_hook():
+        """ initialize settings from /etc/bcfg2-web.conf or
+        /etc/bcfg2.conf, or set up basic defaults.  this lets
+        manage.py work in all cases """
+        read_config()
+
+
+Bcfg2.Options.get_parser().add_component(_OptionContainer)

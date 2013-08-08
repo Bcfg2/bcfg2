@@ -13,8 +13,10 @@ import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Options
 import Bcfg2.Server.FileMonitor
+from Bcfg2.Utils import ClassName
+from Bcfg2.Logger import Debuggable
 from Bcfg2.Compat import CmpMixin, wraps
-from Bcfg2.Server.Plugin.base import Debuggable, Plugin
+from Bcfg2.Server.Plugin.base import Plugin
 from Bcfg2.Server.Plugin.interfaces import Generator
 from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
     PluginExecutionError
@@ -31,62 +33,7 @@ try:
 except ImportError:
     HAS_DJANGO = False
 
-#: A dict containing default metadata for Path entries from bcfg2.conf
-DEFAULT_FILE_METADATA = Bcfg2.Options.OptionParser(
-    dict(configfile=Bcfg2.Options.CFILE,
-         owner=Bcfg2.Options.MDATA_OWNER,
-         group=Bcfg2.Options.MDATA_GROUP,
-         mode=Bcfg2.Options.MDATA_MODE,
-         secontext=Bcfg2.Options.MDATA_SECONTEXT,
-         important=Bcfg2.Options.MDATA_IMPORTANT,
-         paranoid=Bcfg2.Options.MDATA_PARANOID,
-         sensitive=Bcfg2.Options.MDATA_SENSITIVE))
-DEFAULT_FILE_METADATA.parse([Bcfg2.Options.CFILE.cmd, Bcfg2.Options.CFILE])
-del DEFAULT_FILE_METADATA['args']
-del DEFAULT_FILE_METADATA['configfile']
-
 LOGGER = logging.getLogger(__name__)
-
-#: a compiled regular expression for parsing info and :info files
-INFO_REGEX = re.compile(r'owner:\s*(?P<owner>\S+)|' +
-                        r'group:\s*(?P<group>\S+)|' +
-                        r'mode:\s*(?P<mode>\w+)|' +
-                        r'secontext:\s*(?P<secontext>\S+)|' +
-                        r'paranoid:\s*(?P<paranoid>\S+)|' +
-                        r'sensitive:\s*(?P<sensitive>\S+)|' +
-                        r'encoding:\s*(?P<encoding>\S+)|' +
-                        r'important:\s*(?P<important>\S+)|' +
-                        r'mtime:\s*(?P<mtime>\w+)')
-
-
-def bind_info(entry, metadata, infoxml=None, default=DEFAULT_FILE_METADATA):
-    """ Bind the file metadata in the given
-    :class:`Bcfg2.Server.Plugin.helpers.InfoXML` object to the given
-    entry.
-
-    :param entry: The abstract entry to bind the info to
-    :type entry: lxml.etree._Element
-    :param metadata: The client metadata to get info for
-    :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-    :param infoxml: The info.xml file to pull file metadata from
-    :type infoxml: Bcfg2.Server.Plugin.helpers.InfoXML
-    :param default: Default metadata to supply when the info.xml file
-                    does not include a particular attribute
-    :type default: dict
-    :returns: None
-    :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
-    """
-    for attr, val in list(default.items()):
-        entry.set(attr, val)
-    if infoxml:
-        mdata = dict()
-        infoxml.pnode.Match(metadata, mdata, entry=entry)
-        if 'Info' not in mdata:
-            msg = "Failed to set metadata for file %s" % entry.get('name')
-            LOGGER.error(msg)
-            raise PluginExecutionError(msg)
-        for attr, val in list(mdata['Info'][None].items()):
-            entry.set(attr, val)
 
 
 class track_statistics(object):  # pylint: disable=C0103
@@ -139,53 +86,76 @@ def removecomment(stream):
         yield kind, data, pos
 
 
+def bind_info(entry, metadata, infoxml=None, default=None):
+    """ Bind the file metadata in the given
+    :class:`Bcfg2.Server.Plugin.helpers.InfoXML` object to the given
+    entry.
+
+    :param entry: The abstract entry to bind the info to
+    :type entry: lxml.etree._Element
+    :param metadata: The client metadata to get info for
+    :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+    :param infoxml: The info.xml file to pull file metadata from
+    :type infoxml: Bcfg2.Server.Plugin.helpers.InfoXML
+    :param default: Default metadata to supply when the info.xml file
+                    does not include a particular attribute
+    :type default: dict
+    :returns: None
+    :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
+    """
+    if default is None:
+        default = default_path_metadata()
+    for attr, val in list(default.items()):
+        entry.set(attr, val)
+    if infoxml:
+        mdata = dict()
+        infoxml.pnode.Match(metadata, mdata, entry=entry)
+        if 'Info' not in mdata:
+            msg = "Failed to set metadata for file %s" % entry.get('name')
+            LOGGER.error(msg)
+            raise PluginExecutionError(msg)
+        for attr, val in list(mdata['Info'][None].items()):
+            entry.set(attr, val)
+
+
 def default_path_metadata():
     """ Get the default Path entry metadata from the config.
 
     :returns: dict of metadata attributes and their default values
     """
-    attrs = Bcfg2.Options.PATH_METADATA_OPTIONS.keys()
-    setup = Bcfg2.Options.get_option_parser()
-    if not set(attrs).issubset(setup.keys()):
-        setup.add_options(Bcfg2.Options.PATH_METADATA_OPTIONS)
-        setup.reparse(argv=[Bcfg2.Options.CFILE.cmd, Bcfg2.Options.CFILE])
-    return dict([(k, setup[k]) for k in attrs])
+    return dict([(k, getattr(Bcfg2.Options.setup, "default_%s" % k))
+                 for k in ['owner', 'group', 'mode', 'secontext', 'important',
+                           'paranoid', 'sensitive']])
 
 
 class DatabaseBacked(Plugin):
     """ Provides capabilities for a plugin to read and write to a
-    database.
+    database. The plugin must add an option to flag database use with
+    something like:
+
+    options = Bcfg2.Server.Plugin.Plugins.options + [
+        Bcfg2.Options.BooleanOption(
+            cf=('metadata', 'use_database'), dest="metadata_db",
+            help="Use database capabilities of the Metadata plugin")
+
+    This must be done manually due to various limitations in Python.
 
     .. private-include: _use_db
     .. private-include: _must_lock
     """
 
-    #: The option to look up in :attr:`section` to determine whether or
-    #: not to use the database capabilities of this plugin.  The option
-    #: is retrieved with
-    #: :py:func:`ConfigParser.SafeConfigParser.getboolean`, and so must
-    #: conform to the possible values that function can handle.
-    option = "use_database"
-
-    def _section(self):
-        """ The section to look in for :attr:`DatabaseBacked.option`
-        """
-        return self.name.lower()
-    section = property(_section)
-
     @property
     def _use_db(self):
         """ Whether or not this plugin is configured to use the
         database. """
-        use_db = self.core.setup.cfp.getboolean(self.section,
-                                                self.option,
-                                                default=False)
+        use_db = getattr(Bcfg2.Options.setup, "%s_db" % self.name.lower(),
+                         False)
         if use_db and HAS_DJANGO and self.core.database_available:
             return True
         elif not use_db:
             return False
         else:
-            self.logger.error("%s is true but django not found" % self.option)
+            self.logger.error("use_database is true but django not found")
             return False
 
     @property
@@ -193,11 +163,7 @@ class DatabaseBacked(Plugin):
         """ Whether or not the backend database must acquire a thread
         lock before writing, because it does not allow multiple
         threads to write."""
-        engine = \
-            self.core.setup.cfp.get(Bcfg2.Options.DB_ENGINE.cf[0],
-                                    Bcfg2.Options.DB_ENGINE.cf[1],
-                                    default=Bcfg2.Options.DB_ENGINE.default)
-        return engine == 'sqlite3'
+        return Bcfg2.Options.setup.db_engine == 'sqlite3'
 
     @staticmethod
     def get_db_lock(func):
@@ -679,10 +645,9 @@ class StructFile(XMLFileBacked):
         dict(Group=lambda el, md, *args: el.get('name') in md.groups,
              Client=lambda el, md, *args: el.get('name') == md.hostname)
 
-    def __init__(self, filename, should_monitor=False):
-        XMLFileBacked.__init__(self, filename, should_monitor=should_monitor)
-        self.setup = Bcfg2.Options.get_option_parser()
-        self.encoding = self.setup['encoding']
+    def __init__(self, filename, should_monitor=False, create=None):
+        XMLFileBacked.__init__(self, filename, should_monitor=should_monitor,
+                               create=create)
         self.template = None
 
     def Index(self):
@@ -692,9 +657,10 @@ class StructFile(XMLFileBacked):
              self.xdata.nsmap['py'] == 'http://genshi.edgewall.org/')):
             try:
                 loader = genshi.template.TemplateLoader()
-                self.template = loader.load(self.name,
-                                            cls=genshi.template.MarkupTemplate,
-                                            encoding=self.encoding)
+                self.template = \
+                    loader.load(self.name,
+                                cls=genshi.template.MarkupTemplate,
+                                encoding=Bcfg2.Options.setup.encoding)
             except LookupError:
                 err = sys.exc_info()[1]
                 self.logger.error('Genshi lookup error in %s: %s' % (self.name,
@@ -709,10 +675,9 @@ class StructFile(XMLFileBacked):
                                                                     err))
 
         if HAS_CRYPTO:
-            strict = self.xdata.get(
-                "decrypt",
-                self.setup.cfp.get(Bcfg2.Server.Encryption.CFG_SECTION,
-                                   "decrypt", default="strict")) == "strict"
+            lax_decrypt = self.xdata.get(
+                "lax_decryption",
+                str(Bcfg2.Options.setup.lax_decryption)).lower() == "true"
             for el in self.xdata.xpath("//*[@encrypted]"):
                 try:
                     el.text = self._decrypt(el).encode('ascii',
@@ -723,17 +688,17 @@ class StructFile(XMLFileBacked):
                 except Bcfg2.Server.Encryption.EVPError:
                     msg = "Failed to decrypt %s element in %s" % (el.tag,
                                                                   self.name)
-                    if strict:
-                        raise PluginExecutionError(msg)
-                    else:
+                    if lax_decrypt:
                         self.logger.warning(msg)
+                    else:
+                        raise PluginExecutionError(msg)
     Index.__doc__ = XMLFileBacked.Index.__doc__
 
     def _decrypt(self, element):
         """ Decrypt a single encrypted properties file element """
         if not element.text or not element.text.strip():
             return
-        passes = Bcfg2.Server.Encryption.get_passphrases()
+        passes = Bcfg2.Options.setup.passphrases
         try:
             passphrase = passes[element.get("encrypted")]
             try:
@@ -780,7 +745,7 @@ class StructFile(XMLFileBacked):
         """
         stream = self.template.generate(
             metadata=metadata,
-            repo=self.setup['repo']).filter(removecomment)
+            repo=Bcfg2.Options.setup.repository).filter(removecomment)
         return lxml.etree.XML(stream.render('xml',
                                             strip_whitespace=False),
                               parser=Bcfg2.Server.XMLParser)
@@ -897,7 +862,7 @@ class InfoXML(StructFile):
     metadata (permissions, owner, etc.) of files. """
     encryption = False
 
-    _include_tests = StructFile._include_tests
+    _include_tests = copy.copy(StructFile._include_tests)
     _include_tests['Path'] = lambda el, md, entry, *args: \
         entry.get("name") == el.get("name")
 
@@ -1152,7 +1117,7 @@ class SpecificData(Debuggable):
     """ A file that is specific to certain clients, groups, or all
     clients. """
 
-    def __init__(self, name, specific, encoding):  # pylint: disable=W0613
+    def __init__(self, name, specific):  # pylint: disable=W0613
         """
         :param name: The full path to the file
         :type name: string
@@ -1161,8 +1126,6 @@ class SpecificData(Debuggable):
                          object describing what clients this file
                          applies to.
         :type specific: Bcfg2.Server.Plugin.helpers.Specificity
-        :param encoding: The encoding to use for data in this file
-        :type encoding: string
         """
         Debuggable.__init__(self)
         self.name = name
@@ -1210,7 +1173,7 @@ class EntrySet(Debuggable):
     #: considered a plain string and filenames must match exactly.
     basename_is_regex = False
 
-    def __init__(self, basename, path, entry_type, encoding):
+    def __init__(self, basename, path, entry_type):
         """
         :param basename: The filename or regular expression that files
                          in this EntrySet must match.  See
@@ -1225,12 +1188,10 @@ class EntrySet(Debuggable):
                            be an object factory or similar callable.
                            See below for the expected signature.
         :type entry_type: callable
-        :param encoding: The encoding of all files in this entry set.
-        :type encoding: string
 
         The ``entry_type`` callable must have the following signature::
 
-            entry_type(filepath, specificity, encoding)
+            entry_type(filepath, specificity)
 
         Where the parameters are:
 
@@ -1241,8 +1202,6 @@ class EntrySet(Debuggable):
                          object describing what clients this file
                          applies to.
         :type specific: Bcfg2.Server.Plugin.helpers.Specificity
-        :param encoding: The encoding to use for data in this file
-        :type encoding: string
 
         Additionally, the object returned by ``entry_type`` must have
         a ``specific`` attribute that is sortable (e.g., a
@@ -1257,7 +1216,6 @@ class EntrySet(Debuggable):
         self.entries = {}
         self.metadata = default_path_metadata()
         self.infoxml = None
-        self.encoding = encoding
 
         if self.basename_is_regex:
             base_pat = basename
@@ -1273,6 +1231,12 @@ class EntrySet(Debuggable):
         #: regex is constructed from the ``basename`` argument. It can
         #: be overridden on a per-entry basis in :func:`entry_init`.
         self.specific = re.compile(pattern)
+
+    def set_debug(self, debug):
+        rv = Debuggable.set_debug(self, debug)
+        for entry in self.entries.values():
+            entry.set_debug(debug)
+        return rv
 
     def get_matching(self, metadata):
         """ Get a list of all entries that apply to the given client.
@@ -1391,8 +1355,7 @@ class EntrySet(Debuggable):
                     self.logger.error("Could not process filename %s; ignoring"
                                       % fpath)
                 return
-            self.entries[event.filename] = entry_type(fpath, spec,
-                                                      self.encoding)
+            self.entries[event.filename] = entry_type(fpath, spec)
         self.entries[event.filename].handle_event(event)
 
     def specificity_from_filename(self, fname, specific=None):
@@ -1539,7 +1502,6 @@ class GroupSpool(Plugin, Generator):
         self.entries = {}
         self.handles = {}
         self.AddDirectoryMonitor('')
-        self.encoding = core.setup['encoding']
     __init__.__doc__ = Plugin.__init__.__doc__
 
     def add_entry(self, event):
@@ -1563,8 +1525,7 @@ class GroupSpool(Plugin, Generator):
             dirpath = self.data + ident
             self.entries[ident] = self.es_cls(self.filename_pattern,
                                               dirpath,
-                                              self.es_child_cls,
-                                              self.encoding)
+                                              self.es_child_cls)
             self.Entries[self.entry_type][ident] = \
                 self.entries[ident].bind_entry
         if not os.path.isdir(epath):

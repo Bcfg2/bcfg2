@@ -13,12 +13,12 @@ import inspect
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Logger
+import Bcfg2.Options
 import Bcfg2.settings
 import Bcfg2.Server.Statistics
 import Bcfg2.Server.FileMonitor
 from itertools import chain
 from Bcfg2.Server.Cache import Cache
-from Bcfg2.Options import get_option_parser, SERVER_FAM_IGNORE
 from Bcfg2.Compat import xmlrpclib  # pylint: disable=W0622
 from Bcfg2.Server.Plugin.exceptions import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin.interfaces import *  # pylint: disable=W0401,W0614
@@ -82,43 +82,40 @@ class NoExposedMethod (Exception):
 # in core we frequently want to catch all exceptions, regardless of
 # type, so disable the pylint rule that catches that.
 
-
-class BaseCore(object):
+class Core(object):
     """ The server core is the container for all Bcfg2 server logic
     and modules. All core implementations must inherit from
-    ``BaseCore``. """
+    ``Core``. """
+
+    options = [
+        Bcfg2.Options.Common.plugins,
+        Bcfg2.Options.Common.repository,
+        Bcfg2.Options.Common.filemonitor,
+        Bcfg2.Options.BooleanOption(
+            cf=('server', 'fam_blocking'), default=False,
+            help='FAM blocks on startup until all events are processed'),
+        Bcfg2.Options.BooleanOption(
+            cf=('logging', 'performance'), dest="perflog",
+            help="Periodically log performance statistics"),
+        Bcfg2.Options.Option(
+            cf=('logging', 'performance_interval'), default=300.0,
+            type=Bcfg2.Options.Types.timeout,
+            help="Performance statistics logging interval in seconds"),
+        Bcfg2.Options.Option(
+            cf=('caching', 'client_metadata'), dest='client_metadata_cache',
+            default='off',
+            choices=['off', 'on', 'initial', 'cautious', 'aggressive'])]
 
     def __init__(self):  # pylint: disable=R0912,R0915
         """
-        .. automethod:: _daemonize
         .. automethod:: _run
         .. automethod:: _block
         .. -----
         .. automethod:: _file_monitor_thread
         .. automethod:: _perflog_thread
         """
-        #: The Bcfg2 options dict
-        self.setup = get_option_parser()
-
         #: The Bcfg2 repository directory
-        self.datastore = self.setup['repo']
-
-        if self.setup['debug']:
-            level = logging.DEBUG
-        elif self.setup['verbose']:
-            level = logging.INFO
-        else:
-            level = logging.WARNING
-        # we set a higher log level for the console by default.  we
-        # assume that if someone is running bcfg2-server in such a way
-        # that it _can_ log to console, they want more output.  if
-        # level is set to DEBUG, that will get handled by
-        # setup_logging and the console will get DEBUG output.
-        Bcfg2.Logger.setup_logging('bcfg2-server',
-                                   to_console=logging.INFO,
-                                   to_syslog=self.setup['syslog'],
-                                   to_file=self.setup['logging'],
-                                   level=level)
+        self.datastore = Bcfg2.Options.setup.repository
 
         #: A :class:`logging.Logger` object for use by the core
         self.logger = logging.getLogger('bcfg2-server')
@@ -130,43 +127,32 @@ class BaseCore(object):
         #: special, and will be used for any log handlers whose name
         #: does not appear elsewhere in the dict.  At a minimum,
         #: ``default`` must be provided.
-        self._loglevels = {True: dict(default=logging.DEBUG),
-                           False: dict(console=logging.INFO,
-                                       default=level)}
+        self._loglevels = {
+            True: dict(default=logging.DEBUG),
+            False: dict(console=logging.INFO,
+                        default=Bcfg2.Logger.default_log_level())}
 
         #: Used to keep track of the current debug state of the core.
         self.debug_flag = False
 
         # enable debugging on the core now.  debugging is enabled on
         # everything else later
-        if self.setup['debug']:
-            self.set_core_debug(None, self.setup['debug'])
-
-        if 'ignore' not in self.setup:
-            self.setup.add_option('ignore', SERVER_FAM_IGNORE)
-            self.setup.reparse()
-
-        famargs = dict(filemonitor=self.setup['filemonitor'],
-                       debug=self.setup['debug'],
-                       ignore=self.setup['ignore'])
-        if self.setup['filemonitor'] not in Bcfg2.Server.FileMonitor.available:
-            self.logger.error("File monitor driver %s not available; "
-                              "forcing to default" % self.setup['filemonitor'])
-            famargs['filemonitor'] = 'default'
+        if Bcfg2.Options.setup.debug:
+            self.set_core_debug(None, Bcfg2.Options.setup.debug)
 
         try:
             #: The :class:`Bcfg2.Server.FileMonitor.FileMonitor`
             #: object used by the core to monitor for Bcfg2 data
             #: changes.
-            self.fam = Bcfg2.Server.FileMonitor.load_fam(**famargs)
+            self.fam = Bcfg2.Server.FileMonitor.get_fam()
         except IOError:
             msg = "Failed to instantiate fam driver %s" % \
-                self.setup['filemonitor']
+                Bcfg2.Options.setup.filemonitor
             self.logger.error(msg, exc_info=1)
             raise CoreInitError(msg)
 
         #: Path to bcfg2.conf
-        self.cfile = self.setup['configfile']
+        self.cfile = Bcfg2.Options.setup.config
 
         #: Dict of plugins that are enabled.  Keys are the plugin
         #: names (just the plugin name, in the correct case; e.g.,
@@ -198,59 +184,19 @@ class BaseCore(object):
 
         # generate Django ORM settings.  this must be done _before_ we
         # load plugins
-        Bcfg2.settings.read_config(repo=self.datastore)
-
-        #: Whether or not it's possible to use the Django database
-        #: backend for plugins that have that capability
-        self._database_available = False
-        if Bcfg2.settings.HAS_DJANGO:
-            db_settings = Bcfg2.settings.DATABASES['default']
-            if ('daemon' in self.setup and 'daemon_uid' in self.setup and
-                self.setup['daemon'] and self.setup['daemon_uid'] and
-                db_settings['ENGINE'].endswith(".sqlite3") and
-                not os.path.exists(db_settings['NAME'])):
-                # syncdb will create the sqlite database, and we're
-                # going to daemonize, dropping privs to a non-root
-                # user, so we need to chown the database after
-                # creating it
-                do_chown = True
-            else:
-                do_chown = False
-
-            from django.core.exceptions import ImproperlyConfigured
-            from django.core import management
-            try:
-                management.call_command("syncdb", interactive=False,
-                                        verbosity=0)
-                self._database_available = True
-            except ImproperlyConfigured:
-                err = sys.exc_info()[1]
-                self.logger.error("Django configuration problem: %s" % err)
-            except:
-                err = sys.exc_info()[1]
-                self.logger.error("Database update failed: %s" % err)
-
-            if do_chown and self._database_available:
-                try:
-                    os.chown(db_settings['NAME'],
-                             self.setup['daemon_uid'],
-                             self.setup['daemon_gid'])
-                except OSError:
-                    err = sys.exc_info()[1]
-                    self.logger.error("Failed to set ownership of database "
-                                      "at %s: %s" % (db_settings['NAME'], err))
-
-        #: The CA that signed the server cert
-        self.ca = self.setup['ca']
+        Bcfg2.settings.read_config()
 
         #: The FAM :class:`threading.Thread`,
         #: :func:`_file_monitor_thread`
         self.fam_thread = \
-            threading.Thread(name="%sFAMThread" % self.setup['filemonitor'],
+            threading.Thread(name="%sFAMThread" %
+                             Bcfg2.Options.setup.filemonitor.__name__,
                              target=self._file_monitor_thread)
 
+        #: The :class:`threading.Thread` that reports performance
+        #: statistics to syslog.
         self.perflog_thread = None
-        if self.setup['perflog']:
+        if Bcfg2.Options.setup.perflog:
             self.perflog_thread = \
                 threading.Thread(name="PerformanceLoggingThread",
                                  target=self._perflog_thread)
@@ -262,6 +208,24 @@ class BaseCore(object):
         #: A :class:`Bcfg2.Server.Cache.Cache` object for caching client
         #: metadata
         self.metadata_cache = Cache()
+
+        #: Whether or not it's possible to use the Django database
+        #: backend for plugins that have that capability
+        self._database_available = False
+        if Bcfg2.settings.HAS_DJANGO:
+            from django.core.exceptions import ImproperlyConfigured
+            from django.core import management
+            try:
+                management.call_command("syncdb", interactive=False,
+                                        verbosity=0)
+                self._database_available = True
+            except ImproperlyConfigured:
+                err = sys.exc_info()[1]
+                self.logger.error("Django configuration problem: %s" % err)
+            except:
+                err = sys.exc_info()[1]
+                self.logger.error("Updating database %s failed: %s" %
+                                  (Bcfg2.Options.setup.db_name, err))
 
     def expire_caches_by_type(self, base_cls, key=None):
         """ Expire caches for all
@@ -302,7 +266,7 @@ class BaseCore(object):
         to syslog. """
         self.logger.debug("Performance logging thread starting")
         while not self.terminate.isSet():
-            self.terminate.wait(self.setup['perflog_interval'])
+            self.terminate.wait(Bcfg2.Options.setup.performance_interval)
             if not self.terminate.isSet():
                 for name, stats in self.get_statistics(None).items():
                     self.logger.info("Performance statistics: "
@@ -354,10 +318,7 @@ class BaseCore(object):
         :attr:`Bcfg2.Server.Core.BaseCore.metadata` as side effects.
         This does not start plugin threads; that is done later, in
         :func:`Bcfg2.Server.Core.BaseCore.run` """
-        while '' in self.setup['plugins']:
-            self.setup['plugins'].remove('')
-
-        for plugin in self.setup['plugins']:
+        for plugin in Bcfg2.Options.setup.plugins:
             if not plugin in self.plugins:
                 self.init_plugin(plugin)
 
@@ -397,10 +358,6 @@ class BaseCore(object):
                               "failed to instantiate Core")
             raise CoreInitError("No Metadata Plugin")
 
-        if self.debug_flag:
-            # enable debugging on plugins
-            self.plugins[plugin].set_debug(self.debug_flag)
-
     def init_plugin(self, plugin):
         """ Import and instantiate a single plugin.  The plugin is
         stored to :attr:`plugins`.
@@ -411,29 +368,13 @@ class BaseCore(object):
         :type plugin: string
         :returns: None
         """
-        self.logger.debug("Loading plugin %s" % plugin)
-        try:
-            mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
-                                     (plugin)).Server.Plugins, plugin)
-        except ImportError:
-            try:
-                mod = __import__(plugin, globals(), locals(),
-                                 [plugin.split('.')[-1]])
-            except:
-                self.logger.error("Failed to load plugin %s" % plugin)
-                return
-        try:
-            plug = getattr(mod, plugin.split('.')[-1])
-        except AttributeError:
-            self.logger.error("Failed to load plugin %s: %s" %
-                              (plugin, sys.exc_info()[1]))
-            return
+        self.logger.debug("Loading plugin %s" % plugin.name)
         # Blacklist conflicting plugins
-        cplugs = [conflict for conflict in plug.conflicts
+        cplugs = [conflict for conflict in plugin.conflicts
                   if conflict in self.plugins]
-        self.plugin_blacklist[plug.name] = cplugs
+        self.plugin_blacklist[plugin.name] = cplugs
         try:
-            self.plugins[plugin] = plug(self, self.datastore)
+            self.plugins[plugin.name] = plugin(self, self.datastore)
         except PluginInitError:
             self.logger.error("Failed to instantiate plugin %s" % plugin,
                               exc_info=1)
@@ -461,10 +402,7 @@ class BaseCore(object):
         """ Get the client :attr:`metadata_cache` mode.  Options are
         off, initial, cautious, aggressive, on (synonym for
         cautious). See :ref:`server-caching` for more details. """
-        # pylint: disable=E1103
-        mode = self.setup.cfp.get("caching", "client_metadata",
-                                  default="off").lower()
-        # pylint: enable=E1103
+        mode = Bcfg2.Options.setup.client_metadata_cache
         if mode == "on":
             return "cautious"
         else:
@@ -648,10 +586,9 @@ class BaseCore(object):
                 del entry.attrib['realname']
                 return ret
             except:
-                entry.set('name', oldname)
                 self.logger.error("Failed binding entry %s:%s with altsrc %s" %
-                                  (entry.tag, entry.get('name'),
-                                   entry.get('altsrc')))
+                                  (entry.tag, oldname, entry.get('name')))
+                entry.set('name', oldname)
                 self.logger.error("Falling back to %s:%s" %
                                   (entry.tag, entry.get('name')))
 
@@ -745,7 +682,7 @@ class BaseCore(object):
             return
         if event.code2str() == 'deleted':
             return
-        self.setup.reparse()
+        Bcfg2.Options.get_parser().reparse()
         self.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata)
 
     def block_for_fam_events(self, handle_events=False):
@@ -758,7 +695,7 @@ class BaseCore(object):
         if handle_events:
             self.fam.handle_events_in_interval(1)
             slept += 1
-        if self.setup['fam_blocking']:
+        if Bcfg2.Options.setup.fam_blocking:
             time.sleep(1)
             slept += 1
             while self.fam.pending() != 0:
@@ -769,35 +706,12 @@ class BaseCore(object):
         self.logger.debug("Slept %s seconds while handling FAM events" % slept)
 
     def run(self):
-        """ Run the server core. This calls :func:`_daemonize`,
-        :func:`_run`, starts the :attr:`fam_thread`, and calls
-        :func:`_block`, but note that it is the responsibility of the
-        server core implementation to call :func:`shutdown` under
-        normal operation. This also handles creation of the directory
-        containing the pidfile, if necessary. """
-        if self.setup['daemon']:
-            # if we're dropping privs, then the pidfile is likely
-            # /var/run/bcfg2-server/bcfg2-server.pid or similar.
-            # since some OSes clean directories out of /var/run on
-            # reboot, we need to ensure that the directory containing
-            # the pidfile exists and has the appropriate permissions
-            piddir = os.path.dirname(self.setup['daemon'])
-            if not os.path.exists(piddir):
-                os.makedirs(piddir)
-                os.chown(piddir,
-                         self.setup['daemon_uid'],
-                         self.setup['daemon_gid'])
-                os.chmod(piddir, 493)  # 0775
-            if not self._daemonize():
-                return False
-
-            # rewrite $HOME. pulp stores its auth creds in ~/.pulp, so
-            # this is necessary to make that work when privileges are
-            # dropped
-            os.environ['HOME'] = pwd.getpwuid(self.setup['daemon_uid'])[5]
-        else:
-            os.umask(int(self.setup['umask'], 8))
-
+        """ Run the server core. This calls :func:`_run`, starts the
+        :attr:`fam_thread`, and calls :func:`_block`, but note that it
+        is the responsibility of the server core implementation to
+        call :func:`shutdown` under normal operation. This also
+        handles creation of the directory containing the pidfile, if
+        necessary."""
         if not self._run():
             self.shutdown()
             return False
@@ -817,15 +731,8 @@ class BaseCore(object):
             self.shutdown()
             raise
 
-        if self.debug_flag:
-            self.set_debug(None, self.debug_flag)
         self.block_for_fam_events()
         self._block()
-
-    def _daemonize(self):
-        """ Daemonize the server and write the pidfile.  This must be
-        overridden by a core implementation. """
-        raise NotImplementedError
 
     def _run(self):
         """ Start up the server; this method should return
@@ -884,9 +791,13 @@ class BaseCore(object):
 
         if all(ip_checks):
             # if all ACL plugins return True (allow), then allow
+            self.logger.debug("Client %s passed IP-based ACL checks for %s" %
+                              (address[0], rmi))
             return True
         elif False in ip_checks:
             # if any ACL plugin returned False (deny), then deny
+            self.logger.warning("Client %s failed IP-based ACL checks for %s" %
+                                (address[0], rmi))
             return False
         # else, no plugins returned False, but not all plugins
         # returned True, so some plugin returned None (defer), so
@@ -894,7 +805,16 @@ class BaseCore(object):
 
         client, metadata = self.resolve_client(address)
         try:
-            return all(p.check_acl_metadata(metadata, rmi) for p in plugins)
+            rv = all(p.check_acl_metadata(metadata, rmi) for p in plugins)
+            if rv:
+                self.logger.debug(
+                    "Client %s passed metadata ACL checks for %s" %
+                    (metadata.hostname, rmi))
+            else:
+                self.logger.warning(
+                    "Client %s failed metadata ACL checks for %s" %
+                    (metadata.hostname, rmi))
+            return rv
         except:
             self.logger.error("Unexpected error checking ACLs for %s for %s: "
                               "%s" % (client, rmi, sys.exc_info()[1]))
@@ -1226,28 +1146,6 @@ class BaseCore(object):
         self.process_statistics(client, sdata)
         return True
 
-    def authenticate(self, cert, user, password, address):
-        """ Authenticate a client connection with
-        :func:`Bcfg2.Server.Plugin.interfaces.Metadata.AuthenticateConnection`.
-
-        :param cert: an x509 certificate
-        :type cert: dict
-        :param user: The username of the user trying to authenticate
-        :type user: string
-        :param password: The password supplied by the client
-        :type password: string
-        :param address: An address pair of ``(<ip address>, <port>)``
-        :type address: tuple
-        :return: bool - True if the authenticate succeeds, False otherwise
-        """
-        if self.ca:
-            acert = cert
-        else:
-            # No ca, so no cert validation can be done
-            acert = None
-        return self.metadata.AuthenticateConnection(acert, user, password,
-                                                    address)
-
     @exposed
     def GetDecisionList(self, address, mode):
         """ Get the decision list for the client with :func:`GetDecisions`.
@@ -1369,3 +1267,110 @@ class BaseCore(object):
                             address[0])
         return "This method is deprecated and will be removed in a future " + \
             "release\n%s" % self.fam.set_debug(debug)
+
+
+class NetworkCore(Core):
+    """ A server core that actually listens on the network, can be
+    daemonized, etc."""
+    options = Core.options + [
+        Bcfg2.Options.Common.daemon, Bcfg2.Options.Common.syslog,
+        Bcfg2.Options.Common.location, Bcfg2.Options.Common.ssl_key,
+        Bcfg2.Options.Common.ssl_cert, Bcfg2.Options.Common.ssl_ca,
+        Bcfg2.Options.BooleanOption(
+            '--listen-all', cf=('server', 'listen_all'), default=False,
+            help="Listen on all interfaces"),
+        Bcfg2.Options.Option(
+            cf=('server', 'umask'), default='0077', help='Server umask',
+            type=Bcfg2.Options.Types.octal),
+        Bcfg2.Options.Option(
+            cf=('server', 'user'), default=0, dest='daemon_uid',
+            type=Bcfg2.Options.Types.username,
+            help="User to run the server daemon as"),
+        Bcfg2.Options.Option(
+            cf=('server', 'group'), default=0, dest='daemon_gid',
+            type=Bcfg2.Options.Types.groupname,
+            help="Group to run the server daemon as")]
+
+    def __init__(self):
+        Core.__init__(self)
+
+        #: The CA that signed the server cert
+        self.ca = Bcfg2.Options.setup.ca
+
+        if self._database_available:
+            db_settings = Bcfg2.settings.DATABASES['default']
+            if (Bcfg2.Options.setup.daemon and
+                Bcfg2.Options.setup.daemon_uid and
+                db_settings['ENGINE'].endswith(".sqlite3") and
+                not os.path.exists(db_settings['NAME'])):
+                # syncdb will create the sqlite database, and we're
+                # going to daemonize, dropping privs to a non-root
+                # user, so we need to chown the database after
+                # creating it
+                try:
+                    os.chown(db_settings['NAME'],
+                             Bcfg2.Options.setup.daemon_uid,
+                             Bcfg2.Options.setup.daemon_gid)
+                except OSError:
+                    err = sys.exc_info()[1]
+                    self.logger.error("Failed to set ownership of database "
+                                      "at %s: %s" % (db_settings['NAME'], err))
+    __init__.__doc__ = Core.__init__.__doc__.split(".. -----")[0] + \
+        "\n.. automethod:: _daemonize\n"
+
+    def run(self):
+        """ Run the server core.  This calls :func:`_daemonize` before
+        calling :func:`Bcfg2.Server.Core.Core.run` to run the server
+        core. """
+        if Bcfg2.Options.setup.daemon:
+            # if we're dropping privs, then the pidfile is likely
+            # /var/run/bcfg2-server/bcfg2-server.pid or similar.
+            # since some OSes clean directories out of /var/run on
+            # reboot, we need to ensure that the directory containing
+            # the pidfile exists and has the appropriate permissions
+            piddir = os.path.dirname(Bcfg2.Options.setup.daemon)
+            if not os.path.exists(piddir):
+                os.makedirs(piddir)
+                os.chown(piddir,
+                         Bcfg2.Options.setup.daemon_uid,
+                         Bcfg2.Options.setup.daemon_gid)
+                os.chmod(piddir, 493)  # 0775
+            if not self._daemonize():
+                return False
+
+            # rewrite $HOME. pulp stores its auth creds in ~/.pulp, so
+            # this is necessary to make that work when privileges are
+            # dropped
+            os.environ['HOME'] = \
+                pwd.getpwuid(Bcfg2.Options.setup.daemon_uid)[5]
+        else:
+            os.umask(int(Bcfg2.Options.setup.umask, 8))
+
+        Core.run(self)
+
+    def authenticate(self, cert, user, password, address):
+        """ Authenticate a client connection with
+        :func:`Bcfg2.Server.Plugin.interfaces.Metadata.AuthenticateConnection`.
+
+        :param cert: an x509 certificate
+        :type cert: dict
+        :param user: The username of the user trying to authenticate
+        :type user: string
+        :param password: The password supplied by the client
+        :type password: string
+        :param address: An address pair of ``(<ip address>, <port>)``
+        :type address: tuple
+        :return: bool - True if the authenticate succeeds, False otherwise
+        """
+        if self.ca:
+            acert = cert
+        else:
+            # No ca, so no cert validation can be done
+            acert = None
+        return self.metadata.AuthenticateConnection(acert, user, password,
+                                                    address)
+
+    def _daemonize(self):
+        """ Daemonize the server and write the pidfile.  This must be
+        overridden by a core implementation. """
+        raise NotImplementedError

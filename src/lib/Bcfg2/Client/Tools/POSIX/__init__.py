@@ -4,20 +4,31 @@ import os
 import re
 import sys
 import shutil
-from datetime import datetime
+import Bcfg2.Options
 import Bcfg2.Client.Tools
+from datetime import datetime
 from Bcfg2.Compat import walk_packages
 from Bcfg2.Client.Tools.POSIX.base import POSIXTool
 
 
 class POSIX(Bcfg2.Client.Tools.Tool):
     """POSIX File support code."""
-    name = 'POSIX'
+
+    options = Bcfg2.Client.Tools.Tool.options + [
+        Bcfg2.Options.PathOption(
+            cf=('paranoid', 'path'), default='/var/cache/bcfg2',
+            dest='paranoid_path',
+            help='Specify path for paranoid file backups'),
+        Bcfg2.Options.Option(
+            cf=('paranoid', 'max_copies'), default=1, type=int,
+            dest='paranoid_copies',
+            help='Specify the number of paranoid copies you want'),
+        Bcfg2.Options.BooleanOption(
+            '-P', '--paranoid', cf=('client', 'paranoid'),
+            help='Make automatic backups of config files')]
 
     def __init__(self, config):
         Bcfg2.Client.Tools.Tool.__init__(self, config)
-        self.ppath = self.setup['ppath']
-        self.max_copies = self.setup['max_copies']
         self._handlers = self._load_handlers()
         self.logger.debug("POSIX: Handlers loaded: %s" %
                           (", ".join(self._handlers.keys())))
@@ -89,7 +100,7 @@ class POSIX(Bcfg2.Client.Tools.Tool):
         self.logger.debug("POSIX: Verifying entry %s:%s:%s" %
                           (entry.tag, entry.get("type"), entry.get("name")))
         ret = self._handlers[entry.get("type")].verify(entry, modlist)
-        if self.setup['interactive'] and not ret:
+        if Bcfg2.Options.setup.interactive and not ret:
             entry.set('qtext',
                       '%s\nInstall %s %s: (y/N) ' %
                       (entry.get('qtext', ''),
@@ -103,35 +114,39 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             bkupnam + r'_\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{6}$')
         # current list of backups for this file
         try:
-            bkuplist = [f for f in os.listdir(self.ppath) if
-                        bkup_re.match(f)]
+            bkuplist = [f
+                        for f in os.listdir(Bcfg2.Options.setup.paranoid_path)
+                        if bkup_re.match(f)]
         except OSError:
             err = sys.exc_info()[1]
             self.logger.error("POSIX: Failed to create backup list in %s: %s" %
-                              (self.ppath, err))
+                              (Bcfg2.Options.setup.paranoid_path, err))
             return
         bkuplist.sort()
-        while len(bkuplist) >= int(self.max_copies):
+        while len(bkuplist) >= int(Bcfg2.Options.setup.paranoid_copies):
             # remove the oldest backup available
             oldest = bkuplist.pop(0)
             self.logger.info("POSIX: Removing old backup %s" % oldest)
             try:
-                os.remove(os.path.join(self.ppath, oldest))
+                os.remove(os.path.join(Bcfg2.Options.setup.paranoid_path,
+                                       oldest))
             except OSError:
                 err = sys.exc_info()[1]
-                self.logger.error("POSIX: Failed to remove old backup %s: %s" %
-                                  (os.path.join(self.ppath, oldest), err))
+                self.logger.error(
+                    "POSIX: Failed to remove old backup %s: %s" %
+                    (os.path.join(Bcfg2.Options.setup.paranoid_path, oldest),
+                     err))
 
     def _paranoid_backup(self, entry):
         """ Take a backup of the specified entry for paranoid mode """
         if (entry.get("paranoid", 'false').lower() == 'true' and
-            self.setup.get("paranoid", False) and
+            Bcfg2.Options.setup.paranoid and
             entry.get('current_exists', 'true') == 'true' and
             not os.path.isdir(entry.get("name"))):
             self._prune_old_backups(entry)
             bkupnam = "%s_%s" % (entry.get('name').replace('/', '_'),
                                  datetime.isoformat(datetime.now()))
-            bfile = os.path.join(self.ppath, bkupnam)
+            bfile = os.path.join(Bcfg2.Options.setup.paranoid_path, bkupnam)
             try:
                 shutil.copy(entry.get('name'), bfile)
                 self.logger.info("POSIX: Backup of %s saved to %s" %

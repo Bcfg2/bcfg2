@@ -48,7 +48,8 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
             prereqs = self.calculate_prereqs(metadata, entries)
             self.cache[(entries, groups)] = prereqs
 
-        newstruct = lxml.etree.Element("Independent")
+        newstruct = lxml.etree.Element("Independent",
+                                       name=self.__class__.__name__)
         for tag, name in prereqs:
             lxml.etree.SubElement(newstruct, tag, name=name)
         structures.append(newstruct)

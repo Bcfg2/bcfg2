@@ -35,6 +35,14 @@
         <xsd:element name="Client" type="DContainerType"/>
       </xsd:choice>
       <xsd:attribute name="priority" type="xsd:integer" use="required"/>
+      <xsd:attribute name="lax_decryption" type="xsd:boolean">
+        <xsd:annotation>
+          <xsd:documentation>
+            Override the global lax_decryption setting in
+            ``bcfg2.conf``.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
     </xsd:complexType>
   </xsd:element>
 </xsd:schema>

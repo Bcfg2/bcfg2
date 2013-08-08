@@ -2,10 +2,9 @@
 
 import os
 import sys
-import select
 import Bcfg2.Client.Tools
-from Bcfg2.Client.Frame import matches_white_list, passes_black_list
-from Bcfg2.Compat import input  # pylint: disable=W0622
+from Bcfg2.Utils import safe_input
+from Bcfg2.Client import matches_white_list, passes_black_list
 
 
 class Action(Bcfg2.Client.Tools.Tool):
@@ -17,13 +16,13 @@ class Action(Bcfg2.Client.Tools.Tool):
     def _action_allowed(self, action):
         """ Return true if the given action is allowed to be run by
         the whitelist or blacklist """
-        if self.setup['decision'] == 'whitelist' and \
-           not matches_white_list(action, self.setup['decision_list']):
+        if (Bcfg2.Options.setup.decision == 'whitelist' and
+            not matches_white_list(action, Bcfg2.Options.setup.decision_list)):
             self.logger.info("In whitelist mode: suppressing Action: %s" %
                              action.get('name'))
             return False
-        if self.setup['decision'] == 'blacklist' and \
-           not passes_black_list(action, self.setup['decision_list']):
+        if (Bcfg2.Options.setup.decision == 'blacklist' and
+            not passes_black_list(action, Bcfg2.Options.setup.decision_list)):
             self.logger.info("In blacklist mode: suppressing Action: %s" %
                              action.get('name'))
             return False
@@ -37,19 +36,15 @@ class Action(Bcfg2.Client.Tools.Tool):
             shell = True
             shell_string = '(in shell) '
 
-        if not self.setup['dryrun']:
-            if self.setup['interactive']:
+        if not Bcfg2.Options.setup.dryrun:
+            if Bcfg2.Options.setup.interactive:
                 prompt = ('Run Action %s%s, %s: (y/N): ' %
                           (shell_string, entry.get('name'),
                            entry.get('command')))
-                # flush input buffer
-                while len(select.select([sys.stdin.fileno()], [], [],
-                                        0.0)[0]) > 0:
-                    os.read(sys.stdin.fileno(), 4096)
-                ans = input(prompt)
+                ans = safe_input(prompt)
                 if ans not in ['y', 'Y']:
                     return False
-            if self.setup['servicemode'] == 'build':
+            if Bcfg2.Options.setup.service_mode == 'build':
                 if entry.get('build', 'true') == 'false':
                     self.logger.debug("Action: Deferring execution of %s due "
                                       "to build mode" % entry.get('command'))

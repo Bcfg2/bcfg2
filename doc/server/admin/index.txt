@@ -16,14 +16,11 @@ functionality. Available modes are listed below.
    :maxdepth: 1
 
    backup
-   bundle
    client
    compare
    init
    minestruct
    perf
    pull
-   query
-   tidy
    viz
    xcmd

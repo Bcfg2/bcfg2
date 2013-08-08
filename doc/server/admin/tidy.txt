@@ -1,8 +1,0 @@
-.. -*- mode: rst -*-
-
-.. _server-admin-tidy:
-
-tidy
-====
-
-Clean up useless files in the repo.

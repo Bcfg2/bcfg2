@@ -20,7 +20,7 @@ class Hg(Bcfg2.Server.Plugin.Version):
     def get_revision(self):
         """Read hg revision information for the Bcfg2 repository."""
         try:
-            repo_path = self.vcs_root + "/"
+            repo_path = Bcfg2.Options.setup.vcs_root + "/"
             repo = hg.repository(ui.ui(), repo_path)
             tip = repo.changelog.tip()
             return repo.changelog.rev(tip)

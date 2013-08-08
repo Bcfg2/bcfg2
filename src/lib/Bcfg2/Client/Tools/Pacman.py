@@ -38,8 +38,6 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
                 return True
             elif self.installed[entry.attrib['name']] == \
                     entry.attrib['version']:
-                #if not self.setup['quick'] and \
-                #                entry.get('verify', 'true') == 'true':
                 #FIXME: need to figure out if pacman
                 #       allows you to verify packages
                 return True

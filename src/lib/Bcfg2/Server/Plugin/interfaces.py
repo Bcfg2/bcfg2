@@ -6,6 +6,7 @@ import copy
 import threading
 import lxml.etree
 import Bcfg2.Server
+import Bcfg2.Options
 from Bcfg2.Compat import Queue, Empty, Full, cPickle
 from Bcfg2.Server.Plugin.base import Plugin
 from Bcfg2.Server.Plugin.exceptions import PluginInitError, \
@@ -530,6 +531,11 @@ class Version(Plugin):
 
     create = False
 
+    options = Plugin.options + [
+        Bcfg2.Options.PathOption(cf=('server', 'vcs_root'),
+                                 default='<repository>',
+                                 help='Server VCS repository root')]
+
     #: The path to the VCS metadata file or directory, relative to the
     #: base of the Bcfg2 repository.  E.g., for Subversion this would
     #: be ".svn"
@@ -540,12 +546,8 @@ class Version(Plugin):
     def __init__(self, core, datastore):
         Plugin.__init__(self, core, datastore)
 
-        if core.setup['vcs_root']:
-            self.vcs_root = core.setup['vcs_root']
-        else:
-            self.vcs_root = datastore
         if self.__vcs_metadata_path__:
-            self.vcs_path = os.path.join(self.vcs_root,
+            self.vcs_path = os.path.join(Bcfg2.Options.setup.vcs_root,
                                          self.__vcs_metadata_path__)
 
             if not os.path.exists(self.vcs_path):

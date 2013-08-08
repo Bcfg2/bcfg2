@@ -2,11 +2,15 @@
 used by both client and server.  Stuff that doesn't fit anywhere
 else. """
 
+import os
+import re
+import sys
 import fcntl
+import select
 import logging
 import subprocess
 import threading
-from Bcfg2.Compat import any  # pylint: disable=W0622
+from Bcfg2.Compat import input, any  # pylint: disable=W0622
 
 
 class ClassName(object):
@@ -248,3 +252,64 @@ class Executor(object):
         finally:
             if timeout is not None:
                 timer.cancel()
+
+
+def list2range(lst):
+    ''' convert a list of integers to a set of human-readable ranges.  e.g.:
+
+    [1, 2, 3, 6, 9, 10, 11] -> "[1-3,6,9-11]" '''
+    ilst = sorted(int(i) for i in lst)
+    ranges = []
+    start = None
+    last = None
+    for i in ilst:
+        if not last or i != last + 1:
+            if start:
+                if start == last:
+                    ranges.append(str(start))
+                else:
+                    ranges.append("%d-%d" % (start, last))
+            start = i
+        last = i
+    if start:
+        if start == last:
+            ranges.append(str(start))
+        else:
+            ranges.append("%d-%d" % (start, last))
+    if not ranges:
+        return ""
+    elif len(ranges) > 1 or "-" in ranges[0]:
+        return "[%s]" % ",".join(ranges)
+    else:
+        # only one range consisting of only a single number
+        return ranges[0]
+
+
+def hostnames2ranges(hostnames):
+    ''' convert a list of hostnames to a set of human-readable ranges.  e.g.:
+
+    ["foo1.example.com", "foo2.example.com", "foo3.example.com",
+        "foo6.example.com"] -> ["foo[1-3,6].example.com"]'''
+    hosts = {}
+    hostre = re.compile(r'(\w+?)(\d+)(\..*)$')
+    for host in hostnames:
+        match = hostre.match(host)
+        if match:
+            key = (match.group(1), match.group(3))
+            try:
+                hosts[key].append(match.group(2))
+            except KeyError:
+                hosts[key] = [match.group(2)]
+
+    ranges = []
+    for name, nums in hosts.items():
+        ranges.append(name[0] + list2range(nums) + name[1])
+    return ranges
+
+
+def safe_input(msg):
+    """ input() that flushes the input buffer before accepting input """
+    # flush input buffer
+    while len(select.select([sys.stdin.fileno()], [], [], 0.0)[0]) > 0:
+        os.read(sys.stdin.fileno(), 4096)
+    return input(msg)

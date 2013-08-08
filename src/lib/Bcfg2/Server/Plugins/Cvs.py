@@ -20,7 +20,7 @@ class Cvs(Bcfg2.Server.Plugin.Version):
     def get_revision(self):
         """Read cvs revision information for the Bcfg2 repository."""
         result = self.cmd.run(["env LC_ALL=C", "cvs", "log"],
-                              shell=True, cwd=self.vcs_root)
+                              shell=True, cwd=Bcfg2.Options.setup.vcs_root)
         try:
             return result.stdout.splitlines()[0].strip()
         except (IndexError, AttributeError):

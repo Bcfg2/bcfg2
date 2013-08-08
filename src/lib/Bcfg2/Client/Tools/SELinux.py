@@ -141,7 +141,7 @@ class SELinux(Bcfg2.Client.Tools.Tool):
     def GenericSEVerify(self, entry, _):
         """Dispatch verify to the proper method according to entry tag"""
         rv = self.handlers[entry.tag].Verify(entry)
-        if entry.get('qtext') and self.setup['interactive']:
+        if entry.get('qtext') and Bcfg2.Options.setup.interactive:
             entry.set('qtext',
                       '%s\nInstall %s: (y/N) ' %
                       (entry.get('qtext'),
@@ -174,7 +174,6 @@ class SELinuxEntryHandler(object):
     def __init__(self, tool, config):
         self.tool = tool
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.setup = tool.setup
         self.config = config
         self._records = None
         self._all = None

@@ -48,11 +48,9 @@ Base Classes
 import os
 import sys
 import fnmatch
-import logging
+import Bcfg2.Options
 from time import sleep, time
-from Bcfg2.Server.Plugin import Debuggable
-
-LOGGER = logging.getLogger(__name__)
+from Bcfg2.Logger import Debuggable
 
 
 class Event(object):
@@ -112,6 +110,14 @@ class FileMonitor(Debuggable):
     monitor objects to :attr:`handles` and received events to
     :attr:`events`; the basic interface will handle the rest. """
 
+    options = [
+        Bcfg2.Options.Option(
+            cf=('server', 'ignore_files'),
+            help='File globs to ignore',
+            type=Bcfg2.Options.Types.comma_list,
+            default=['*~', '*#', '.#*', '*.swp', '*.swpx', '.*.swx',
+                     'SCCS', '.svn', '4913', '.gitignore'])]
+
     #: The relative priority of this FAM backend.  Better backends
     #: should have higher priorities.
     __priority__ = -1
@@ -119,7 +125,7 @@ class FileMonitor(Debuggable):
     #: List of names of methods to be exposed as XML-RPC functions
     __rmi__ = Debuggable.__rmi__ + ["list_event_handlers"]
 
-    def __init__(self, ignore=None, debug=False):
+    def __init__(self):
         """
         :param ignore: A list of filename globs describing events that
                        should be ignored (i.e., not processed by any
@@ -133,7 +139,6 @@ class FileMonitor(Debuggable):
         .. autoattribute:: __priority__
         """
         Debuggable.__init__(self)
-        self.debug_flag = debug
 
         #: A dict that records which objects handle which events.
         #: Keys are monitor handle IDs and values are objects whose
@@ -143,12 +148,10 @@ class FileMonitor(Debuggable):
         #: Queue of events to handle
         self.events = []
 
-        if ignore is None:
-            ignore = []
         #: List of filename globs to ignore events for.  For events
         #: that include the full path, both the full path and the bare
         #: filename will be checked against ``ignore``.
-        self.ignore = ignore
+        self.ignore = Bcfg2.Options.setup.ignore_files
 
         #: Whether or not the FAM has been started.  See :func:`start`.
         self.started = False
@@ -226,8 +229,8 @@ class FileMonitor(Debuggable):
         if self.should_ignore(event):
             return
         if event.requestID not in self.handles:
-            LOGGER.info("Got event for unexpected id %s, file %s" %
-                        (event.requestID, event.filename))
+            self.logger.info("Got event for unexpected id %s, file %s" %
+                             (event.requestID, event.filename))
             return
         self.debug_log("Dispatching event %s %s to obj %s" %
                        (event.code2str(), event.filename,
@@ -236,8 +239,8 @@ class FileMonitor(Debuggable):
             self.handles[event.requestID].HandleEvent(event)
         except:  # pylint: disable=W0702
             err = sys.exc_info()[1]
-            LOGGER.error("Error in handling of event %s for %s: %s" %
-                         (event.code2str(), event.filename, err))
+            self.logger.error("Error in handling of event %s for %s: %s" %
+                              (event.code2str(), event.filename, err))
 
     def handle_event_set(self, lock=None):
         """ Handle all pending events.
@@ -263,7 +266,8 @@ class FileMonitor(Debuggable):
             lock.release()
         end = time()
         if count > 0:
-            LOGGER.info("Handled %d events in %.03fs" % (count, (end - start)))
+            self.logger.info("Handled %d events in %.03fs" % (count,
+                                                              (end - start)))
 
     def handle_events_in_interval(self, interval):
         """ Handle events for the specified period of time (in
@@ -330,37 +334,17 @@ class FileMonitor(Debuggable):
 _FAM = None
 
 
-def load_fam(filemonitor='default', ignore=None, debug=False):
-    """ Load a new :class:`Bcfg2.Server.FileMonitor.FileMonitor`
-    object, caching it in :attr:`_FAM` for later retrieval via
-    :func:`get_fam`.
-
-    :param filemonitor: Which filemonitor backend to use
-    :type filemonitor: string
-    :param ignore: A list of filenames to ignore
-    :type ignore: list of strings (filename globs)
-    :param debug: Produce debugging information
-    :type debug: bool
-    :returns: :class:`Bcfg2.Server.FileMonitor.FileMonitor`
-    """
-    global _FAM  # pylint: disable=W0603
-    if _FAM is None:
-        if ignore is None:
-            ignore = []
-        _FAM = available[filemonitor](ignore=ignore, debug=debug)
-    return _FAM
-
-
 def get_fam():
-    """ Get an already-created
+    """ Get a
     :class:`Bcfg2.Server.FileMonitor.FileMonitor` object.  If
     :attr:`_FAM` has not been populated, then a new default
     FileMonitor will be created.
 
     :returns: :class:`Bcfg2.Server.FileMonitor.FileMonitor`
     """
+    global _FAM  # pylint: disable=W0603
     if _FAM is None:
-        return load_fam('default')
+        _FAM = Bcfg2.Options.setup.filemonitor()
     return _FAM
 
 

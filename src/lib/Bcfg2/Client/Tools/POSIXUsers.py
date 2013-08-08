@@ -8,9 +8,31 @@ import Bcfg2.Client.Tools
 from Bcfg2.Utils import PackedDigitRange
 
 
+def uid_range_type(val):
+    return PackedDigitRange(*Bcfg2.Options.Types.comma_list(val))
+
+
 class POSIXUsers(Bcfg2.Client.Tools.Tool):
     """ A tool to handle creating users and groups with
     useradd/mod/del and groupadd/mod/del """
+    options = Bcfg2.Client.Tools.Tool.options + [
+        Bcfg2.Options.Option(
+            cf=('POSIXUsers', 'uid_whitelist'), default=[],
+            type=uid_range_type,
+            help="UID ranges the POSIXUsers tool will manage"),
+        Bcfg2.Options.Option(
+            cf=('POSIXUsers', 'gid_whitelist'), default=[],
+            type=uid_range_type,
+            help="GID ranges the POSIXUsers tool will manage"),
+        Bcfg2.Options.Option(
+            cf=('POSIXUsers', 'uid_blacklist'), default=[],
+            type=uid_range_type,
+            help="UID ranges the POSIXUsers tool will not manage"),
+        Bcfg2.Options.Option(
+            cf=('POSIXUsers', 'gid_blacklist'), default=[],
+            type=uid_range_type,
+            help="GID ranges the POSIXUsers tool will not manage")]
+
     __execs__ = ['/usr/sbin/useradd', '/usr/sbin/usermod', '/usr/sbin/userdel',
                  '/usr/sbin/groupadd', '/usr/sbin/groupmod',
                  '/usr/sbin/groupdel']
@@ -34,20 +56,10 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
         self.set_defaults = dict(POSIXUser=self.populate_user_entry,
                                  POSIXGroup=lambda g: g)
         self._existing = None
-        self._whitelist = dict(POSIXUser=None, POSIXGroup=None)
-        self._blacklist = dict(POSIXUser=None, POSIXGroup=None)
-        if self.setup['posix_uid_whitelist']:
-            self._whitelist['POSIXUser'] = \
-                PackedDigitRange(*self.setup['posix_uid_whitelist'])
-        else:
-            self._blacklist['POSIXUser'] = \
-                PackedDigitRange(*self.setup['posix_uid_blacklist'])
-        if self.setup['posix_gid_whitelist']:
-            self._whitelist['POSIXGroup'] = \
-                PackedDigitRange(*self.setup['posix_gid_whitelist'])
-        else:
-            self._blacklist['POSIXGroup'] = \
-                PackedDigitRange(*self.setup['posix_gid_blacklist'])
+        self._whitelist = dict(POSIXUser=Bcfg2.Options.setup.uid_whitelist,
+                               POSIXGroup=Bcfg2.Options.setup.gid_whitelist)
+        self._blacklist = dict(POSIXUser=Bcfg2.Options.setup.uid_blacklist,
+                               POSIXGroup=Bcfg2.Options.setup.gid_blacklist)
 
     @property
     def existing(self):
@@ -164,7 +176,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                                      % (entry.tag, entry.get("name"),
                                         actual, expected)]))
                 rv = False
-        if self.setup['interactive'] and not rv:
+        if Bcfg2.Options.setup.interactive and not rv:
             entry.set('qtext',
                       '%s\nInstall %s %s: (y/N) ' %
                       (entry.get('qtext', ''), entry.tag, entry.get('name')))
@@ -173,7 +185,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
     def VerifyPOSIXGroup(self, entry, _):
         """ Verify a POSIXGroup entry """
         rv = self._verify(entry)
-        if self.setup['interactive'] and not rv:
+        if Bcfg2.Options.setup.interactive and not rv:
             entry.set('qtext',
                       '%s\nInstall %s %s: (y/N) ' %
                       (entry.get('qtext', ''), entry.tag, entry.get('name')))

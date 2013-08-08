@@ -70,9 +70,9 @@ no_checks = {
     "lib/Bcfg2/Server/Reports": ["manage.py"],
     "lib/Bcfg2/Server/Plugins": ["Base.py"],
     }
-if sys.version_info > (2, 5):
+if sys.version_info < (2, 6):
     # multiprocessing core requires py2.6
-    no_checks['lib/Bcfg2/Server'].append('MultiprocessingCore.py')
+    no_checks['lib/Bcfg2/Server'] = ['MultiprocessingCore.py']
 
 try:
     any

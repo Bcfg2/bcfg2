@@ -2,27 +2,9 @@
 """Bcfg2 Client"""
 
 import sys
-import signal
-from Bcfg2.Client.Client import Client
-from Bcfg2.Options import load_option_parser, CLIENT_COMMON_OPTIONS
-
-
-def cb_sigint_handler(signum, frame):
-    """ Exit upon CTRL-C. """
-    raise SystemExit(1)
-
-
-def main():
-    setup = load_option_parser(CLIENT_COMMON_OPTIONS)
-    setup.parse(sys.argv[1:])
-
-    if setup['args']:
-        print("Bcfg2 takes no arguments, only options")
-        print(setup.buildHelpMessage())
-        raise SystemExit(1)
-
-    signal.signal(signal.SIGINT, cb_sigint_handler)
-    return Client().run()
+from Bcfg2.Options import get_parser
+from Bcfg2.Client import Client
 
 if __name__ == '__main__':
-    sys.exit(main())
+    get_parser("Bcfg2 client", components=[Client]).parse()
+    sys.exit(Client().run())

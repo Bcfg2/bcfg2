@@ -12,23 +12,28 @@ import socket
 import logging
 import lxml.etree
 import Bcfg2.Server
-import Bcfg2.Server.Lint
+import Bcfg2.Options
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Utils import locked
 from Bcfg2.Compat import MutableMapping, all, wraps  # pylint: disable=W0622
 from Bcfg2.version import Bcfg2VersionInfo
 
-try:
-    from django.db import models
-    HAS_DJANGO = True
-except ImportError:
-    HAS_DJANGO = False
 
-LOGGER = logging.getLogger(__name__)
+MetadataClientModel = None
+HAS_DJANGO = False
 
 
-if HAS_DJANGO:
+def load_django_models():
+    global MetadataClientModel, ClientVersions, HAS_DJANGO
+
+    try:
+        from django.db import models
+        HAS_DJANGO = True
+    except ImportError:
+        HAS_DJANGO = False
+        return
+
     class MetadataClientModel(models.Model,
                               Bcfg2.Server.Plugin.PluginDatabaseModel):
         """ django model for storing clients in the database """
@@ -39,12 +44,12 @@ if HAS_DJANGO:
                          Bcfg2.Server.Plugin.DatabaseBacked):
         """ dict-like object to make it easier to access client bcfg2
         versions from the database """
-
         create = False
 
         def __getitem__(self, key):
             try:
-                return MetadataClientModel.objects.get(hostname=key).version
+                return MetadataClientModel.objects.get(
+                    hostname=key).version
             except MetadataClientModel.DoesNotExist:
                 raise KeyError(key)
 
@@ -350,6 +355,8 @@ class MetadataQuery(object):
 
     def __init__(self, by_name, get_clients, by_groups, by_profiles,
                  all_groups, all_groups_in_category):
+        self.logger = logging.getLogger(self.__class__.__name__)
+
         #: Get :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata`
         #: object for the given hostname.
         #:
@@ -402,8 +409,9 @@ class MetadataQuery(object):
         @wraps(func)
         def inner(arg):
             if isinstance(arg, str):
-                LOGGER.warning("%s: %s takes a list as argument, not a string"
-                               % (self.__class__.__name__, func.__name__))
+                self.logger.warning("%s: %s takes a list as argument, not a "
+                                    "string" % (self.__class__.__name__,
+                                                func.__name__))
             return func(arg)
         # pylint: enable=C0111
 
@@ -493,6 +501,16 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     __author__ = 'bcfg-dev@mcs.anl.gov'
     sort_order = 500
 
+    options = Bcfg2.Server.Plugin.DatabaseBacked.options + [
+        Bcfg2.Options.Common.password,
+        Bcfg2.Options.BooleanOption(
+            cf=('metadata', 'use_database'), dest="metadata_db",
+            help="Use database capabilities of the Metadata plugin"),
+        Bcfg2.Options.Option(
+            cf=('communication', 'authentication'), default='cert+password',
+            choices=['cert', 'bootstrap', 'cert+password'],
+            help='Default client authentication method')]
+
     def __init__(self, core, datastore, watch_clients=True):
         Bcfg2.Server.Plugin.Metadata.__init__(self)
         Bcfg2.Server.Plugin.Caching.__init__(self)
@@ -541,7 +559,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.session_cache = {}
         self.default = None
         self.pdirty = False
-        self.password = core.setup['password']
+        self.password = Bcfg2.Options.setup.password
         self.query = MetadataQuery(core.build_metadata,
                                    lambda: list(self.clients),
                                    self.get_client_names_by_groups,
@@ -1296,6 +1314,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 return False
         resolved = self.resolve_client(addresspair)
         if resolved.lower() == client.lower():
+            self.logger.debug("Client %s address validates" % client)
             return True
         else:
             self.logger.error("Got request for %s from incorrect address %s" %
@@ -1315,7 +1334,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             client = certinfo['commonName']
             self.debug_log("Got cN %s; using as client name" % client)
             auth_type = self.auth.get(client,
-                                      self.core.setup['authentication'])
+                                      Bcfg2.Options.setup.authentication)
         elif user == 'root':
             id_method = 'address'
             try:
@@ -1346,6 +1365,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             # remember the cert-derived client name for this connection
             if client in self.floating:
                 self.session_cache[address] = (time.time(), client)
+            self.logger.debug("Client %s certificate validates" % client)
             # we are done if cert+password not required
             return True
 
@@ -1372,13 +1392,14 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         # populate the session cache
         if user != 'root':
             self.session_cache[address] = (time.time(), client)
+        self.logger.debug("Client %s authenticated successfully" % client)
         return True
     # pylint: enable=R0911,R0912
 
     def end_statistics(self, metadata):
         """ Hook to toggle clients in bootstrap mode """
         if self.auth.get(metadata.hostname,
-                         self.core.setup['authentication']) == 'bootstrap':
+                         Bcfg2.Options.setup.authentication) == 'bootstrap':
             self.update_client(metadata.hostname, dict(auth='cert'))
 
     def viz(self, hosts, bundles, key, only_client, colors):
@@ -1494,149 +1515,6 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                               (group.get('name'), parent.get('name')))
         return rv
 
-
-class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
-    """ ``bcfg2-lint`` plugin for :ref:`Metadata
-    <server-plugins-grouping-metadata>`.  This checks for several things:
-
-    * ``<Client>`` tags nested inside other ``<Client>`` tags;
-    * Deprecated options (like ``location="floating"``);
-    * Profiles that don't exist, or that aren't profile groups;
-    * Groups or clients that are defined multiple times;
-    * Multiple default groups or a default group that isn't a profile
-      group.
-    """
-
-    def Run(self):
-        self.nested_clients()
-        self.deprecated_options()
-        self.bogus_profiles()
-        self.duplicate_groups()
-        self.duplicate_default_groups()
-        self.duplicate_clients()
-        self.default_is_profile()
-
-    @classmethod
-    def Errors(cls):
-        return {"nested-client-tags": "warning",
-                "deprecated-clients-options": "warning",
-                "nonexistent-profile-group": "error",
-                "non-profile-set-as-profile": "error",
-                "duplicate-group": "error",
-                "duplicate-client": "error",
-                "multiple-default-groups": "error",
-                "default-is-not-profile": "error"}
-
-    def deprecated_options(self):
-        """ Check for the ``location='floating'`` option, which has
-        been deprecated in favor of ``floating='true'``. """
-        if not hasattr(self.metadata, "clients_xml"):
-            # using metadata database
-            return
-        clientdata = self.metadata.clients_xml.xdata
-        for el in clientdata.xpath("//Client"):
-            loc = el.get("location")
-            if loc:
-                if loc == "floating":
-                    floating = True
-                else:
-                    floating = False
-                self.LintError("deprecated-clients-options",
-                               "The location='%s' option is deprecated.  "
-                               "Please use floating='%s' instead:\n%s" %
-                               (loc, floating, self.RenderXML(el)))
-
-    def nested_clients(self):
-        """ Check for a ``<Client/>`` tag inside a ``<Client/>`` tag,
-        which is either redundant or will never match. """
-        groupdata = self.metadata.groups_xml.xdata
-        for el in groupdata.xpath("//Client//Client"):
-            self.LintError("nested-client-tags",
-                           "Client %s nested within Client tag: %s" %
-                           (el.get("name"), self.RenderXML(el)))
-
-    def bogus_profiles(self):
-        """ Check for clients that have profiles that are either not
-        flagged as profile groups in ``groups.xml``, or don't exist. """
-        if not hasattr(self.metadata, "clients_xml"):
-            # using metadata database
-            return
-        for client in self.metadata.clients_xml.xdata.findall('.//Client'):
-            profile = client.get("profile")
-            if profile not in self.metadata.groups:
-                self.LintError("nonexistent-profile-group",
-                               "%s has nonexistent profile group %s:\n%s" %
-                               (client.get("name"), profile,
-                                self.RenderXML(client)))
-            elif not self.metadata.groups[profile].is_profile:
-                self.LintError("non-profile-set-as-profile",
-                               "%s is set as profile for %s, but %s is not a "
-                               "profile group:\n%s" %
-                               (profile, client.get("name"), profile,
-                                self.RenderXML(client)))
-
-    def duplicate_default_groups(self):
-        """ Check for multiple default groups. """
-        defaults = []
-        for grp in self.metadata.groups_xml.xdata.xpath("//Groups/Group") + \
-                self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group"):
-            if grp.get("default", "false").lower() == "true":
-                defaults.append(self.RenderXML(grp))
-        if len(defaults) > 1:
-            self.LintError("multiple-default-groups",
-                           "Multiple default groups defined:\n%s" %
-                           "\n".join(defaults))
-
-    def duplicate_clients(self):
-        """ Check for clients that are defined more than once. """
-        if not hasattr(self.metadata, "clients_xml"):
-            # using metadata database
-            return
-        self.duplicate_entries(
-            self.metadata.clients_xml.xdata.xpath("//Client"),
-            "client")
-
-    def duplicate_groups(self):
-        """ Check for groups that are defined more than once.  We
-        count a group tag as a definition if it a) has profile or
-        public set; or b) has any children."""
-        allgroups = [
-            g
-            for g in self.metadata.groups_xml.xdata.xpath("//Groups/Group") +
-            self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group")
-            if g.get("profile") or g.get("public") or g.getchildren()]
-        self.duplicate_entries(allgroups, "group")
-
-    def duplicate_entries(self, allentries, etype):
-        """ Generic duplicate entry finder.
-
-        :param allentries: A list of all entries to check for
-                           duplicates.
-        :type allentries: list of lxml.etree._Element
-        :param etype: The entry type. This will be used to determine
-                      the error name (``duplicate-<etype>``) and for
-                      display to the end user.
-        :type etype: string
-        """
-        entries = dict()
-        for el in allentries:
-            if el.get("name") in entries:
-                entries[el.get("name")].append(self.RenderXML(el))
-            else:
-                entries[el.get("name")] = [self.RenderXML(el)]
-        for ename, els in entries.items():
-            if len(els) > 1:
-                self.LintError("duplicate-%s" % etype,
-                               "%s %s is defined multiple times:\n%s" %
-                               (etype.title(), ename, "\n".join(els)))
-
-    def default_is_profile(self):
-        """ Ensure that the default group is a profile group. """
-        if (self.metadata.default and
-            not self.metadata.groups[self.metadata.default].is_profile):
-            xdata = \
-                self.metadata.groups_xml.xdata.xpath("//Group[@name='%s']" %
-                                                     self.metadata.default)[0]
-            self.LintError("default-is-not-profile",
-                           "Default group is not a profile group:\n%s" %
-                           self.RenderXML(xdata))
+    @staticmethod
+    def options_parsed_hook():
+        load_django_models()

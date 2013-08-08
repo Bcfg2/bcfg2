@@ -119,6 +119,34 @@ class YumDisplay(yum.callbacks.ProcessTransBaseCallback):
 
 class YUM(Bcfg2.Client.Tools.PkgTool):
     """Support for Yum packages."""
+
+    options = Bcfg2.Client.Tools.PkgTool.options + [
+        Bcfg2.Options.BooleanOption(
+            cf=('YUM', 'pkg_checks'), default=True, dest="yum_pkg_checks",
+            help="Perform YUM package checks"),
+        Bcfg2.Options.BooleanOption(
+            cf=('YUM', 'pkg_verify'), default=True, dest="yum_pkg_verify",
+            help="Perform YUM package verify"),
+        Bcfg2.Options.BooleanOption(
+            cf=('YUM', 'install_missing'), default=True,
+            dest="yum_install_missing",
+            help="Install missing packages"),
+        Bcfg2.Options.Option(
+            cf=('YUM', 'erase_flags'), default=["allmatches"],
+            dest="yum_erase_flags",
+            help="YUM erase flags"),
+        Bcfg2.Options.BooleanOption(
+            cf=('YUM', 'fix_version'), default=True,
+            dest="yum_fix_version",
+            help="Fix (upgrade or downgrade) packages with the wrong version"),
+        Bcfg2.Options.BooleanOption(
+            cf=('YUM', 'reinstall_broken'), default=True,
+            dest="yum_reinstall_broken",
+            help="Reinstall packages that fail to verify"),
+        Bcfg2.Options.Option(
+            cf=('YUM', 'verify_flags'), default=[], dest="yum_verify_flags",
+            help="YUM verify flags")]
+
     pkgtype = 'yum'
     __execs__ = []
     __handles__ = [('Package', 'yum'),
@@ -173,26 +201,23 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                 else:
                     dest[pname] = dict(data)
 
-        # Process the Yum section from the config file.  These are all
-        # boolean flags, either we do stuff or we don't
-        self.pkg_checks = self.setup["yum_pkg_checks"]
-        self.pkg_verify = self.setup["yum_pkg_verify"]
-        self.do_install = self.setup["yum_installed_action"] == "install"
-        self.do_upgrade = self.setup["yum_version_fail_action"] == "upgrade"
-        self.do_reinst = self.setup["yum_verify_fail_action"] == "reinstall"
-        self.verify_flags = self.setup["yum_verify_flags"]
-
         self.installonlypkgs = self.yumbase.conf.installonlypkgs
         if 'gpg-pubkey' not in self.installonlypkgs:
             self.installonlypkgs.append('gpg-pubkey')
 
-        self.logger.debug("Yum: Install missing: %s" % self.do_install)
-        self.logger.debug("Yum: pkg_checks: %s" % self.pkg_checks)
-        self.logger.debug("Yum: pkg_verify: %s" % self.pkg_verify)
-        self.logger.debug("Yum: Upgrade on version fail: %s" % self.do_upgrade)
-        self.logger.debug("Yum: Reinstall on verify fail: %s" % self.do_reinst)
+        self.logger.debug("Yum: Install missing: %s" %
+                          Bcfg2.Options.setup.yum_install_missing)
+        self.logger.debug("Yum: pkg_checks: %s" %
+                          Bcfg2.Options.setup.yum_pkg_checks)
+        self.logger.debug("Yum: pkg_verify: %s" %
+                          Bcfg2.Options.setup.yum_pkg_verify)
+        self.logger.debug("Yum: Upgrade on version fail: %s" %
+                          Bcfg2.Options.setup.yum_fix_version)
+        self.logger.debug("Yum: Reinstall on verify fail: %s" %
+                          Bcfg2.Options.setup.yum_reinstall_broken)
         self.logger.debug("Yum: installonlypkgs: %s" % self.installonlypkgs)
-        self.logger.debug("Yum: verify_flags: %s" % self.verify_flags)
+        self.logger.debug("Yum: verify_flags: %s" %
+                          Bcfg2.Options.setup.yum_verify_flags)
 
     def _loadYumBase(self):
         ''' this may be called before PkgTool.__init__() is called on
@@ -203,18 +228,14 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         packages. '''
         rv = yum.YumBase()  # pylint: disable=C0103
 
-        if hasattr(self, "setup"):
-            setup = self.setup
-        else:
-            setup = Bcfg2.Options.get_option_parser()
         if hasattr(self, "logger"):
             logger = self.logger
         else:
             logger = logging.getLogger(self.name)
 
-        if setup['debug']:
+        if Bcfg2.Options.setup.debug:
             debuglevel = 3
-        elif setup['verbose']:
+        elif Bcfg2.Options.setup.verbose:
             debuglevel = 2
         else:
             debuglevel = 0
@@ -314,7 +335,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             using. Disabling file checksums is a new feature yum
             3.2.17-ish """
             try:
-                return pkg.verify(fast=self.setup.get('quick', False))
+                return pkg.verify(fast=Bcfg2.Options.setup.quick)
             except TypeError:
                 # Older Yum API
                 return pkg.verify()
@@ -439,9 +460,9 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         package_fail = False
         qtext_versions = []
         virt_pkg = False
-        pkg_checks = (self.pkg_checks and
+        pkg_checks = (Bcfg2.Options.setup.yum_pkg_checks and
                       entry.get('pkg_checks', 'true').lower() == 'true')
-        pkg_verify = (self.pkg_verify and
+        pkg_verify = (Bcfg2.Options.setup.yum_pkg_verify and
                       entry.get('pkg_verify', 'true').lower() == 'true')
         yum_group = False
 
@@ -534,7 +555,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                     inst.get('verify_flags').lower().replace(' ',
                                                              ',').split(',')
             else:
-                verify_flags = self.verify_flags
+                verify_flags = Bcfg2.Options.setup.yum_verify_flags
 
             if 'arch' in nevra:
                 # If arch is specified use it to select the package
@@ -622,7 +643,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                 qtext_versions.append("U(%s)" % str(all_pkg_objs[0]))
                 continue
 
-            if self.setup.get('quick', False):
+            if Bcfg2.Options.setup.quick:
                 # Passed -q on the command line
                 continue
             if not (pkg_verify and
@@ -696,7 +717,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             install_only = False
 
         if virt_pkg or \
-           (install_only and not self.setup['kevlar']) or \
+           (install_only and not Bcfg2.Options.setup.kevlar) or \
            yum_group:
             # virtual capability supplied, we are probably dealing
             # with multiple packages of different names.  This check
@@ -904,8 +925,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         # Remove extra instances.
         # Can not reverify because we don't have a package entry.
         if self.extra_instances is not None and len(self.extra_instances) > 0:
-            if (self.setup.get('remove') == 'all' or
-                self.setup.get('remove') == 'packages'):
+            if Bcfg2.Options.setup.remove in ['all', 'packages']:
                 self.Remove(self.extra_instances)
             else:
                 self.logger.info("The following extra package instances will "
@@ -930,11 +950,14 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                             nevra2string(build_yname(pkg.get('name'), inst)))
                         continue
                     status = self.instance_status[inst]
-                    if not status.get('installed', False) and self.do_install:
+                    if (not status.get('installed', False) and
+                        Bcfg2.Options.setup.yum_install_missing):
                         queue_pkg(pkg, inst, install_pkgs)
-                    elif status.get('version_fail', False) and self.do_upgrade:
+                    elif (status.get('version_fail', False) and
+                          Bcfg2.Options.setup.yum_fix_version):
                         queue_pkg(pkg, inst, upgrade_pkgs)
-                    elif status.get('verify_fail', False) and self.do_reinst:
+                    elif (status.get('verify_fail', False) and
+                          Bcfg2.Options.setup.yum_reinstall_broken):
                         queue_pkg(pkg, inst, reinstall_pkgs)
                     else:
                         # Either there was no Install/Version/Verify
@@ -1010,7 +1033,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
 
         self._runYumTransaction()
 
-        if not self.setup['kevlar']:
+        if not Bcfg2.Options.setup.kevlar:
             for pkg_entry in [p for p in packages if self.canVerify(p)]:
                 self.logger.debug("Reverifying Failed Package %s" %
                                   pkg_entry.get('name'))

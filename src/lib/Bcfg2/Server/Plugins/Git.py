@@ -23,7 +23,7 @@ class Git(Version):
     def __init__(self, core, datastore):
         Version.__init__(self, core, datastore)
         if HAS_GITPYTHON:
-            self.repo = git.Repo(self.vcs_root)
+            self.repo = git.Repo(Bcfg2.Options.setup.vcs_root)
             self.cmd = None
         else:
             self.logger.debug("Git: GitPython not found, using CLI interface "
@@ -45,7 +45,8 @@ class Git(Version):
                 return self.repo.head.commit.hexsha
             else:
                 cmd = ["git", "--git-dir", self.vcs_path,
-                       "--work-tree", self.vcs_root, "rev-parse", "HEAD"]
+                       "--work-tree", Bcfg2.Options.setup.vcs_root,
+                       "rev-parse", "HEAD"]
                 self.debug_log("Git: Running %s" % cmd)
                 result = self.cmd.run(cmd)
                 if not result.success:
@@ -53,7 +54,7 @@ class Git(Version):
                 return result.stdout
         except:
             raise PluginExecutionError("Git: Error getting revision from %s: "
-                                       "%s" % (self.vcs_root,
+                                       "%s" % (Bcfg2.Options.setup.vcs_root,
                                                sys.exc_info()[1]))
 
     def Update(self, ref=None):
@@ -62,14 +63,15 @@ class Git(Version):
         """
         self.logger.info("Git: Git.Update(ref='%s')" % ref)
         self.debug_log("Git: Performing garbage collection on repo at %s" %
-                       self.vcs_root)
+                       Bcfg2.Options.setup.vcs_root)
         try:
             self._log_git_cmd(self.repo.git.gc('--auto'))
         except git.GitCommandError:
             self.logger.warning("Git: Failed to perform garbage collection: %s"
                                 % sys.exc_info()[1])
 
-        self.debug_log("Git: Fetching all refs for repo at %s" % self.vcs_root)
+        self.debug_log("Git: Fetching all refs for repo at %s" %
+                       Bcfg2.Options.setup.vcs_root)
         try:
             self._log_git_cmd(self.repo.git.fetch('--all'))
         except git.GitCommandError:
@@ -102,5 +104,5 @@ class Git(Version):
                                            "upstream: %s" % sys.exc_info()[1])
 
         self.logger.info("Git: Repo at %s updated to %s" %
-                         (self.vcs_root, self.get_revision()))
+                         (Bcfg2.Options.setup.vcs_root, self.get_revision()))
         return True

@@ -1,0 +1,236 @@
+.. -*- mode: rst -*-
+
+.. _development-option-parsing:
+
+====================
+Bcfg2 Option Parsing
+====================
+
+Bcfg2 uses an option parsing mechanism based on the Python
+:mod:`argparse` module.  It does several very useful things that
+``argparse`` does not:
+
+* Collects options from various places, which lets us easily specify
+  per-plugin options, for example;
+* Automatically loads components (such as plugins);
+* Synthesizes option values from the command line, config files, and
+  environment variables;
+* Can dynamically create commands with many subcommands (e.g.,
+  bcfg2-info and bcfg2-admin); and
+* Supports keeping documentation inline with the option declaration,
+  which will make it easier to generate man pages.
+
+
+Collecting Options
+==================
+
+One of the more important features of the option parser is its ability
+to automatically collect options from loaded components (e.g., Bcfg2
+server plugins).  Given the highly pluggable architecture of Bcfg2,
+this helps ensure two things:
+
+#. We do not have to specify all options in all places, or even in
+   most places. Options are specified alongside the class(es) that use
+   them.
+#. All options needed for a given script to run are guaranteed to be
+   loaded, without the need to specify all components that script uses
+   manually.
+
+For instance, assume a few plugins:
+
+* The ``Foo`` plugin takes one option, ``--foo``
+* The ``Bar`` plugin takes two options, ``--bar`` and ``--force``
+
+The plugins are used by the ``bcfg2-quux`` command, which itself takes
+two options: ``--plugins`` (which selects the plugins) and
+``--test``.  The options would be selected at runtime, so for instance
+these would be valid:
+
+.. code-block:: bash
+
+    bcfg2-quux --plugins Foo --foo --test
+    bcfg2-quux --plugins Foo,Bar --foo --bar --force
+    bcfg2-quux --plugins Bar --force
+
+But this would not:
+
+    bcfg2-quux --plugins Foo --bar
+
+The help message would reflect the options that are available to the
+default set of plugins.  (For this reason, allowing component lists to
+be set in the config file is very useful; that way, usage messages
+reflect the components in the config file.)
+
+Components (in this example, the plugins) can be classes or modules.
+There is no required interface for an option component.  They may
+*optionally* have:
+
+* An ``options`` attribute that is a list of
+  :class:`Bcfg2.Options.Options.Option` objects or option groups.
+* A function or static method, ``options_parsed_hook``, that is called
+  when all options have been parsed.  (This will be called again if
+  :func:`Bcfg2.Options.Parser.Parser.reparse` is called.)
+
+Options are collected through two primary mechanisms:
+
+#. The :class:`Bcfg2.Options.Actions.ComponentAction` class.  When a
+   ComponentAction subclass is used as the action of an option, then
+   options contained in the classes (or modules) given in the option
+   value will be added to the parser.
+#. Modules that are not loaded via a
+   :class:`Bcfg2.Options.Actions.ComponentAction` option may load
+   options at runtime.
+
+Since it is preferred to add components instead of just options,
+loading options at runtime is generally best accomplished by creating
+a container object whose only purpose is to hold options.  For
+instance:
+
+.. code-block:: python
+
+    def foo():
+        # do stuff
+
+    class _OptionContainer(object):
+        options = [
+            Bcfg2.Options.BooleanOption("--foo", help="Enable foo")]
+
+        @staticmethod
+        def options_parsed_hook():
+            if Bcfg2.Options.setup.foo:
+                foo()
+
+    Bcfg2.Options.get_parser().add_component(_OptionContainer)
+
+The Bcfg2.Options module
+========================
+
+.. currentmodule:: Bcfg2.Options
+
+.. autodata:: setup
+
+Options
+-------
+
+The base :class:`Bcfg2.Options.Option` object represents an option.
+Unlike options in :mod:`argparse`, an Option object does not need to
+be associated with an option parser; it exists on its own.
+
+.. autoclass:: Option
+.. autoclass:: PathOption
+.. autoclass:: BooleanOption
+.. autoclass:: PositionalArgument
+
+The Parser
+----------
+
+.. autoclass:: Parser
+.. autofunction:: get_parser
+.. autoexception:: OptionParserException
+
+Option Groups
+-------------
+
+Options can be grouped in various meaningful ways.  This uses a
+variety of :mod:`argparse` functionality behind the scenes.
+
+In all cases, options can be added to groups in-line by simply
+specifying them in the object group constructor:
+
+.. code-block:: python
+
+    options = [
+        Bcfg2.Options.ExclusiveOptionGroup(
+            Bcfg2.Options.Option(...),
+            Bcfg2.Options.Option(...),
+            required=True),
+        ....]
+
+Nesting object groups is supported in theory, but barely tested.
+
+.. autoclass:: OptionGroup
+.. autoclass:: ExclusiveOptionGroup
+.. autoclass:: Subparser
+.. autoclass:: WildcardSectionGroup
+
+Subcommands
+-----------
+
+This library makes it easier to work with programs that have a large
+number of subcommands (e.g., :ref:`bcfg2-info <server-bcfg2-info>` and
+:ref:`bcfg2-admin <server-admin-index>`).
+
+The normal implementation pattern is this:
+
+#. Define all of your subcommands as children of
+   :class:`Bcfg2.Options.Subcommand`.
+#. Define a :class:`Bcfg2.Options.CommandRegistry` object that will be
+   used to register all of the commands.  Registering a command
+   collect its options and adds it as a
+   :class:`Bcfg2.Options.Subparser` option group to the main option
+   parser.
+#. Register your commands with
+   :func:`Bcfg2.Options.register_commands`, parse options, and run.
+
+:mod:`Bcfg2.Server.Admin` provides a fairly simple implementation,
+where the CLI class is itself the command registry:
+
+.. code-block:: python
+
+    class CLI(Bcfg2.Options.CommandRegistry):
+        def __init__(self):
+            Bcfg2.Options.CommandRegistry.__init__(self)
+            Bcfg2.Options.register_commands(self.__class__,
+                                            globals().values(),
+                                            parent=AdminCmd)
+            parser = Bcfg2.Options.get_parser(
+                description="Manage a running Bcfg2 server",
+                components=[self])
+            parser.parse()
+
+In this case, commands are collected from amongst all global variables
+(the most likely scenario), and they must be children of
+:class:`Bcfg2.Server.Admin.AdminCmd`, which itself subclasses
+:class:`Bcfg2.Options.Subcommand`.
+
+Commands are defined by subclassing :class:`Bcfg2.Options.Subcommand`.
+At a minimum, the :func:`Bcfg2.Options.Subcommand.run` method must be
+overridden, and a docstring written.
+
+.. autoclass:: Subcommand
+.. autoclass:: HelpCommand
+.. autoclass:: CommandRegistry
+.. autofunction:: register_commands
+
+Actions
+-------
+
+Several custom argparse `actions
+<http://docs.python.org/dev/library/argparse.html#action>`_ provide
+some of the option collection magic of :mod:`Bcfg2.Options`.
+
+.. autoclass:: ConfigFileAction
+.. autoclass:: ComponentAction
+.. autoclass:: PluginsAction
+
+Option Types
+------------
+
+:mod:`Bcfg2.Options` provides a number of useful types for use as the `type
+<http://docs.python.org/dev/library/argparse.html#type>`_ keyword
+argument to
+the :class:`Bcfg2.Options.Option` constructor.
+
+.. autofunction:: Bcfg2.Options.Types.path
+.. autofunction:: Bcfg2.Options.Types.comma_list
+.. autofunction:: Bcfg2.Options.Types.colon_list
+.. autofunction:: Bcfg2.Options.Types.octal
+.. autofunction:: Bcfg2.Options.Types.username
+.. autofunction:: Bcfg2.Options.Types.groupname
+.. autofunction:: Bcfg2.Options.Types.timeout
+.. autofunction:: Bcfg2.Options.Types.size
+
+Common Options
+--------------
+
+.. autoclass:: Common

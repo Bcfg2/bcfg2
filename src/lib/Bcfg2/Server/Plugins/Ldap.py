@@ -3,7 +3,6 @@ import logging
 import sys
 import time
 import traceback
-import Bcfg2.Options
 import Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.Ldap')

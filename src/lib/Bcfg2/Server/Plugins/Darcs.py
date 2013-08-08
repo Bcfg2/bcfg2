@@ -20,7 +20,7 @@ class Darcs(Bcfg2.Server.Plugin.Version):
     def get_revision(self):
         """Read Darcs changeset information for the Bcfg2 repository."""
         result = self.cmd.run(["env LC_ALL=C", "darcs", "changes"],
-                              shell=True, cwd=self.vcs_root)
+                              shell=True, cwd=Bcfg2.Options.setup.vcs_root)
         if result.success:
             return result.stdout.splitlines()[0].strip()
         else:

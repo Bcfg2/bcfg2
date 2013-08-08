@@ -5,7 +5,16 @@ import re
 import sys
 import lxml.etree
 import Bcfg2.Options
-from Bcfg2.Server.Plugin import INFO_REGEX
+
+INFO_REGEX = re.compile(r'owner:\s*(?P<owner>\S+)|' +
+                        r'group:\s*(?P<group>\S+)|' +
+                        r'mode:\s*(?P<mode>\w+)|' +
+                        r'secontext:\s*(?P<secontext>\S+)|' +
+                        r'paranoid:\s*(?P<paranoid>\S+)|' +
+                        r'sensitive:\s*(?P<sensitive>\S+)|' +
+                        r'encoding:\s*(?P<encoding>\S+)|' +
+                        r'important:\s*(?P<important>\S+)|' +
+                        r'mtime:\s*(?P<mtime>\w+)')
 
 
 PERMS_REGEX = re.compile(r'perms:\s*(?P<perms>\w+)')
@@ -32,16 +41,17 @@ def convert(info_file):
 
 
 def main():
-    opts = dict(repo=Bcfg2.Options.SERVER_REPOSITORY,
-                configfile=Bcfg2.Options.CFILE,
-                plugins=Bcfg2.Options.SERVER_PLUGINS)
-    setup = Bcfg2.Options.OptionParser(opts)
-    setup.parse(sys.argv[1:])
+    parser = Bcfg2.Options.get_parser(
+        description="Migrate from Bcfg2 1.2 info/:info files to 1.3 info.xml")
+    parser.add_options([Bcfg2.Options.Common.repository,
+                        Bcfg2.Options.Common.plugins])
+    parser.parse()
 
-    for plugin in setup['plugins']:
+    for plugin in Bcfg2.Options.setup.plugins:
         if plugin not in ['SSLCA', 'Cfg', 'TGenshi', 'TCheetah', 'SSHbase']:
             continue
-        for root, dirs, files in os.walk(os.path.join(setup['repo'], plugin)):
+        datastore = os.path.join(Bcfg2.Options.setup.repository, plugin)
+        for root, dirs, files in os.walk(datastore):
             for fname in files:
                 if fname in [":info", "info"]:
                     convert(os.path.join(root, fname))

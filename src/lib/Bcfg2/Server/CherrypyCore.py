@@ -5,7 +5,7 @@ import sys
 import time
 import Bcfg2.Server.Statistics
 from Bcfg2.Compat import urlparse, xmlrpclib, b64decode
-from Bcfg2.Server.Core import BaseCore
+from Bcfg2.Server.Core import NetworkCore
 import cherrypy
 from cherrypy.lib import xmlrpcutil
 from cherrypy._cptools import ErrorTool
@@ -27,7 +27,7 @@ def on_error(*args, **kwargs):  # pylint: disable=W0613
 cherrypy.tools.xmlrpc_error = ErrorTool(on_error)
 
 
-class Core(BaseCore):
+class CherrypyCore(NetworkCore):
     """ The CherryPy-based server core. """
 
     #: Base CherryPy config for this class.  We enable the
@@ -37,7 +37,7 @@ class Core(BaseCore):
                   'tools.bcfg2_authn.on': True}
 
     def __init__(self):
-        BaseCore.__init__(self)
+        NetworkCore.__init__(self)
 
         cherrypy.tools.bcfg2_authn = cherrypy.Tool('on_start_resource',
                                                    self.do_authn)
@@ -45,11 +45,11 @@ class Core(BaseCore):
         #: List of exposed plugin RMI
         self.rmi = self._get_rmi()
         cherrypy.engine.subscribe('stop', self.shutdown)
-    __init__.__doc__ = BaseCore.__init__.__doc__.split('.. -----')[0]
+    __init__.__doc__ = NetworkCore.__init__.__doc__.split('.. -----')[0]
 
     def do_authn(self):
         """ Perform authentication by calling
-        :func:`Bcfg2.Server.Core.BaseCore.authenticate`. This is
+        :func:`Bcfg2.Server.Core.NetworkCore.authenticate`. This is
         implemented as a CherryPy tool."""
         try:
             header = cherrypy.request.headers['Authorization']
@@ -115,36 +115,36 @@ class Core(BaseCore):
         with :class:`cherrypy.process.plugins.Daemonizer`, and write a
         PID file with :class:`cherrypy.process.plugins.PIDFile`. """
         DropPrivileges(cherrypy.engine,
-                       uid=self.setup['daemon_uid'],
-                       gid=self.setup['daemon_gid'],
-                       umask=int(self.setup['umask'], 8)).subscribe()
+                       uid=Bcfg2.Options.setup.daemon_uid,
+                       gid=Bcfg2.Options.setup.daemon_gid,
+                       umask=int(Bcfg2.Options.setup.umask, 8)).subscribe()
         Daemonizer(cherrypy.engine).subscribe()
-        PIDFile(cherrypy.engine, self.setup['daemon']).subscribe()
+        PIDFile(cherrypy.engine, Bcfg2.Options.setup.daemon).subscribe()
         return True
 
     def _run(self):
         """ Start the server listening. """
-        hostname, port = urlparse(self.setup['location'])[1].split(':')
-        if self.setup['listen_all']:
+        hostname, port = urlparse(Bcfg2.Options.setup.server)[1].split(':')
+        if Bcfg2.Options.setup.listen_all:
             hostname = '0.0.0.0'
 
         config = {'engine.autoreload.on': False,
                   'server.socket_port': int(port),
                   'server.socket_host': hostname}
-        if self.setup['cert'] and self.setup['key']:
+        if Bcfg2.Options.setup.cert and Bcfg2.Options.setup.key:
             config.update({'server.ssl_module': 'pyopenssl',
-                           'server.ssl_certificate': self.setup['cert'],
-                           'server.ssl_private_key': self.setup['key']})
-        if self.setup['debug']:
+                           'server.ssl_certificate': Bcfg2.Options.setup.cert,
+                           'server.ssl_private_key': Bcfg2.Options.setup.key})
+        if Bcfg2.Options.setup.debug:
             config['log.screen'] = True
         cherrypy.config.update(config)
-        cherrypy.tree.mount(self, '/', {'/': self.setup})
+        cherrypy.tree.mount(self, '/', {'/': Bcfg2.Options.setup})
         cherrypy.engine.start()
         return True
 
     def _block(self):
         """ Enter the blocking infinite server
-        loop. :func:`Bcfg2.Server.Core.BaseCore.shutdown` is called on
+        loop. :func:`Bcfg2.Server.Core.NetworkCore.shutdown` is called on
         exit by a :meth:`subscription
         <cherrypy.process.wspbus.Bus.subscribe>` on the top-level
         CherryPy engine."""

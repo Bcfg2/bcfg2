@@ -3,8 +3,8 @@
 import os
 import shutil
 import tempfile
+import Bcfg2.Options
 from Bcfg2.Utils import Executor
-from Bcfg2.Options import get_option_parser
 from Bcfg2.Server.Plugin import StructFile
 from Bcfg2.Server.Plugins.Cfg import CfgCreator, CfgCreationError
 from Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator import CfgPublicKeyCreator
@@ -25,6 +25,14 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
     #: Handle XML specifications of private keys
     __basenames__ = ['privkey.xml']
 
+    options = [
+        Bcfg2.Options.Option(
+            cf=("sshkeys", "category"), dest="sshkeys_category",
+            help="Metadata category that generated SSH keys are specific to"),
+        Bcfg2.Options.Option(
+            cf=("sshkeys", "passphrase"), dest="sshkeys_passphrase",
+            help="Passphrase used to encrypt generated SSH private keys")]
+
     def __init__(self, fname):
         CfgCreator.__init__(self, fname)
         StructFile.__init__(self, fname)
@@ -32,27 +40,15 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         pubkey_path = os.path.dirname(self.name) + ".pub"
         pubkey_name = os.path.join(pubkey_path, os.path.basename(pubkey_path))
         self.pubkey_creator = CfgPublicKeyCreator(pubkey_name)
-        self.setup = get_option_parser()
         self.cmd = Executor()
     __init__.__doc__ = CfgCreator.__init__.__doc__
 
     @property
-    def category(self):
-        """ The name of the metadata category that generated keys are
-        specific to """
-        if (self.setup.cfp.has_section("sshkeys") and
-            self.setup.cfp.has_option("sshkeys", "category")):
-            return self.setup.cfp.get("sshkeys", "category")
-        return None
-
-    @property
     def passphrase(self):
         """ The passphrase used to encrypt private keys """
-        if (HAS_CRYPTO and
-            self.setup.cfp.has_section("sshkeys") and
-            self.setup.cfp.has_option("sshkeys", "passphrase")):
-            return Bcfg2.Server.Encryption.get_passphrases()[
-                self.setup.cfp.get("sshkeys", "passphrase")]
+        if HAS_CRYPTO and Bcfg2.Options.setup.sshkeys_passphrase:
+            return Bcfg2.Options.setup.passphrases[
+                Bcfg2.Options.setup.sshkeys_passphrase]
         return None
 
     def handle_event(self, event):
@@ -141,7 +137,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         """
         if spec is None:
             spec = self.XMLMatch(metadata)
-        category = spec.get("category", self.category)
+        category = spec.get("category", Bcfg2.Options.setup.sshkeys_category)
         if category is None:
             per_host_default = "true"
         else:

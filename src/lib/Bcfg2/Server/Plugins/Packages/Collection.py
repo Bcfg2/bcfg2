@@ -73,20 +73,17 @@ The Collection Module
 ---------------------
 """
 
-import sys
 import copy
-import logging
 import lxml.etree
+import Bcfg2.Options
 import Bcfg2.Server.Plugin
-from Bcfg2.Server.FileMonitor import get_fam
-from Bcfg2.Options import get_option_parser
+from Bcfg2.Logger import Debuggable
 from Bcfg2.Compat import any, md5  # pylint: disable=W0622
+from Bcfg2.Server.FileMonitor import get_fam
 from Bcfg2.Server.Statistics import track_statistics
 
-LOGGER = logging.getLogger(__name__)
 
-
-class Collection(list, Bcfg2.Server.Plugin.Debuggable):
+class Collection(list, Debuggable):
     """ ``Collection`` objects represent the set of
     :class:`Bcfg2.Server.Plugins.Packages.Source` objects that apply
     to a given client, and can be used to query all software
@@ -119,15 +116,14 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         .. -----
         .. autoattribute:: __package_groups__
         """
-        Bcfg2.Server.Plugin.Debuggable.__init__(self)
+        Debuggable.__init__(self)
         list.__init__(self, sources)
-        self.debug_flag = debug
+        self.debug_flag = self.debug_flag or debug
         self.metadata = metadata
         self.basepath = basepath
         self.cachepath = cachepath
         self.virt_pkgs = dict()
         self.fam = get_fam()
-        self.setup = get_option_parser()
 
         try:
             self.ptype = sources[0].ptype
@@ -447,9 +443,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         """
         for pkg in pkglist:
             lxml.etree.SubElement(entry, 'BoundPackage', name=pkg,
-                                  version=self.setup.cfp.get("packages",
-                                                             "version",
-                                                             default="auto"),
+                                  version=Bcfg2.Options.setup.packages_version,
                                   type=self.ptype, origin='Packages')
 
     def get_new_packages(self, initial, complete):
@@ -601,22 +595,9 @@ def get_collection_class(source_type):
     :type source_type: string
     :returns: type - the Collection subclass that should be used to
               instantiate an object to contain sources of the given type. """
-    modname = "Bcfg2.Server.Plugins.Packages.%s" % source_type.title()
-    try:
-        module = sys.modules[modname]
-    except KeyError:
-        try:
-            module = __import__(modname).Server.Plugins.Packages
-        except ImportError:
-            msg = "Packages: Unknown source type %s" % source_type
-            LOGGER.error(msg)
-            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-
-    try:
-        cclass = getattr(module, source_type.title() + "Collection")
-    except AttributeError:
-        msg = "Packages: No collection class found for %s sources" % \
-            source_type
-        LOGGER.error(msg)
-        raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-    return cclass
+    cls = None
+    for mod in Bcfg2.Options.setup.packages_backends:
+        if mod.__name__.endswith(".%s" % source_type.title()):
+            return getattr(mod, "%sCollection" % source_type.title())
+    raise Bcfg2.Server.Plugin.PluginExecutionError(
+        "Packages: No collection class found for %s sources" % source_type)
