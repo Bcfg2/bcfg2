@@ -21,23 +21,15 @@ from common import *
 class TestTool(Bcfg2TestCase):
     test_obj = Tool
 
-    def get_obj(self, setup=None, config=None):
+    def get_obj(self, config=None):
         if config is None:
             config = lxml.etree.Element("Configuration")
-        if not setup:
-            setup = MagicMock()
-        if 'command_timeout' not in setup:
-            setup['command_timeout'] = None
+        set_setup_default('command_timeout')
+        set_setup_default('interactive', False)
 
         execs = self.test_obj.__execs__
         self.test_obj.__execs__ = []
-
-        @patch("Bcfg2.Options.get_option_parser")
-        def inner(mock_option_parser):
-            mock_option_parser.return_value = setup
-            return self.test_obj(config)
-
-        rv = inner()
+        rv = self.test_obj(config)
         self.test_obj.__execs__ = execs
         return rv
 
@@ -545,8 +537,9 @@ class TestSvcTool(TestTool):
 
     @patch("Bcfg2.Client.prompt")
     def test_BundleUpdated(self, mock_prompt):
-        st = self.get_obj(setup=dict(interactive=False,
-                                     servicemode='default'))
+        Bcfg2.Options.setup.service_mode = 'default'
+        Bcfg2.Options.setup.interactive = False
+        st = self.get_obj()
         st.handlesEntry = Mock()
         st.handlesEntry.side_effect = lambda e: e.tag == "Service"
         st.stop_service = Mock()
@@ -598,7 +591,7 @@ class TestSvcTool(TestTool):
         # test in interactive mode
         reset()
         mock_prompt.side_effect = lambda p: "interactive2" not in p
-        st.setup['interactive'] = True
+        Bcfg2.Options.setup.interactive = True
         states = st.BundleUpdated(bundle)
         self.assertItemsEqual(st.handlesEntry.call_args_list,
                               [call(e) for e in entries])
@@ -611,8 +604,8 @@ class TestSvcTool(TestTool):
 
         # test in build mode
         reset()
-        st.setup['interactive'] = False
-        st.setup['servicemode'] = 'build'
+        Bcfg2.Options.setup.interactive = False
+        Bcfg2.Options.setup.service_mode = 'build'
         states = st.BundleUpdated(bundle)
         self.assertItemsEqual(st.handlesEntry.call_args_list,
                               [call(e) for e in entries])

@@ -14,6 +14,7 @@ import sys
 import codecs
 import unittest
 import lxml.etree
+import Bcfg2.Options
 from mock import patch, MagicMock, _patch, DEFAULT
 from Bcfg2.Compat import wraps
 
@@ -403,3 +404,8 @@ try:
 except AttributeError:
     re_type = type(re.compile(""))
 
+
+#: A function to set a default config option if it's not already set
+def set_setup_default(option, value=None):
+    if not hasattr(Bcfg2.Options.setup, option):
+        setattr(Bcfg2.Options.setup, option, value)

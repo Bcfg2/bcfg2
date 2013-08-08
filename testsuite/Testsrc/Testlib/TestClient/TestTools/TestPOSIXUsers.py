@@ -24,11 +24,12 @@ from TestTools.Test_init import TestTool
 class TestPOSIXUsers(TestTool):
     test_obj = POSIXUsers
 
-    def get_obj(self, setup=None, config=None):
-        if setup is None:
-            setup = MagicMock()
-            setup.__getitem__.return_value = []
-        return TestTool.get_obj(self, setup, config)
+    def get_obj(self, config=None):
+        set_setup_default('uid_whitelist')
+        set_setup_default('uid_blacklist')
+        set_setup_default('gid_whitelist')
+        set_setup_default('gid_blacklist')
+        return TestTool.get_obj(self, config)
 
     @patch("pwd.getpwall")
     @patch("grp.getgrall")

@@ -55,8 +55,8 @@ class TestPOSIXFile(TestPOSIXTool):
 
     def test_get_data(self):
         orig_entry = lxml.etree.Element("Path", name="/test", type="file")
-        ptool = self.get_obj(setup=dict(encoding="ascii", ppath='/',
-                                        max_copies=5))
+        Bcfg2.Options.setup.encoding = "ascii"
+        ptool = self.get_obj()
 
         entry = copy.deepcopy(orig_entry)
         entry.text = b64encode("test")
@@ -91,8 +91,7 @@ class TestPOSIXFile(TestPOSIXTool):
     @patch("Bcfg2.Client.Tools.POSIX.base.POSIXTool.verify")
     def test_verify(self, mock_verify, mock_open):
         entry = lxml.etree.Element("Path", name="/test", type="file")
-        ptool = self.get_obj(setup=dict(interactive=False, ppath='/',
-                                        max_copies=5))
+        ptool = self.get_obj()
         ptool._exists = Mock()
         ptool._get_data = Mock()
         ptool._get_diffs = Mock()
@@ -223,8 +222,8 @@ class TestPOSIXFile(TestPOSIXTool):
                                         group='root')
         orig_entry.text = "test"
         ondisk = "test2"
-        ptool = self.get_obj(setup=dict(encoding="utf-8", ppath='/',
-                                        max_copies=5))
+        Bcfg2.Options.setup.encoding = "utf-8"
+        ptool = self.get_obj()
         ptool._get_data = Mock()
         ptool._diff = Mock()
         ptool._is_string = Mock()
@@ -312,7 +311,7 @@ class TestPOSIXFile(TestPOSIXTool):
         # non-sensitive, interactive with unicode data
         entry = reset()
         entry.text = u("tëst")
-        encoded = entry.text.encode(ptool.setup['encoding'])
+        encoded = entry.text.encode(Bcfg2.Options.setup.encoding)
         ptool._diff.return_value = ["-test2", "+tëst"]
         ptool._get_data.return_value = (encoded, False)
         ptool._get_diffs(entry, interactive=True)

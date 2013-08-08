@@ -197,7 +197,8 @@ class TestPOSIXTool(TestTool):
     @patch("os.chown")
     @patch("os.chmod")
     @patch("os.utime")
-    def test_set_perms(self, mock_utime, mock_chmod, mock_chown):
+    @patch("os.geteuid")
+    def test_set_perms(self, mock_geteuid, mock_utime, mock_chmod, mock_chown):
         ptool = self.get_obj()
         ptool._norm_entry_uid = Mock()
         ptool._norm_entry_gid = Mock()
@@ -211,7 +212,12 @@ class TestPOSIXTool(TestTool):
             mock_chmod.reset_mock()
             mock_chown.reset_mock()
             mock_utime.reset_mock()
+            mock_geteuid.reset_mock()
 
+        # pretend to run as root
+        mock_geteuid.return_value = 0
+
+        # test symlink -- no owner, group, permissions
         entry = lxml.etree.Element("Path", name="/etc/foo", to="/etc/bar",
                                    type="symlink")
         ptool._set_acls.return_value = True
@@ -220,12 +226,12 @@ class TestPOSIXTool(TestTool):
         ptool._set_secontext.assert_called_with(entry, path=entry.get("name"))
         ptool._set_acls.assert_called_with(entry, path=entry.get("name"))
 
+        # test file with owner, group, permissions
+        reset()
         entry = lxml.etree.Element("Path", name="/etc/foo", owner="owner",
                                    group="group", mode="644", type="file")
         ptool._norm_entry_uid.return_value = 10
         ptool._norm_entry_gid.return_value = 100
-
-        reset()
         self.assertTrue(ptool._set_perms(entry))
         ptool._norm_entry_uid.assert_called_with(entry)
         ptool._norm_entry_gid.assert_called_with(entry)
@@ -236,6 +242,23 @@ class TestPOSIXTool(TestTool):
         ptool._set_secontext.assert_called_with(entry, path=entry.get("name"))
         ptool._set_acls.assert_called_with(entry, path=entry.get("name"))
 
+        # test file with owner, group, permissions, run as non-root
+        mock_geteuid.return_value = 1000
+        reset()
+        entry = lxml.etree.Element("Path", name="/etc/foo", owner="owner",
+                                   group="group", mode="644", type="file")
+        self.assertTrue(ptool._set_perms(entry))
+        self.assertFalse(ptool._norm_entry_uid.called)
+        self.assertFalse(ptool._norm_entry_gid.called)
+        self.assertFalse(mock_chown.called)
+        mock_chmod.assert_called_with(entry.get("name"),
+                                      int(entry.get("mode"), 8))
+        self.assertFalse(mock_utime.called)
+        ptool._set_secontext.assert_called_with(entry, path=entry.get("name"))
+        ptool._set_acls.assert_called_with(entry, path=entry.get("name"))
+        mock_geteuid.return_value = 0
+
+        # test with mtime
         reset()
         mtime = 1344459042
         entry.set("mtime", str(mtime))
