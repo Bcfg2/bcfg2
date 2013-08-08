@@ -35,7 +35,7 @@ baz
 
         @skipUnless(HAS_CRYPTO, "Encryption libraries not found")
         def setUp(self):
-            pass
+            Bcfg2.Options.setup.algorithm = "aes_256_cbc"
 
         def test_str_crypt(self):
             """ test str_encrypt/str_decrypt """
@@ -110,66 +110,41 @@ baz
             self.assertRaises(EVPError, ssl_decrypt,
                               crypted, passwd)  # bogus algorithm
 
-        @patch("Bcfg2.Options.get_option_parser")
-        def test_get_passphrases(self, mock_get_option_parser):
-            setup = Mock()
-            setup.cfp.has_section.return_value = False
-            mock_get_option_parser.return_value = setup
-            self.assertEqual(get_passphrases(), dict())
-
-            setup.cfp.has_section.return_value = True
-            setup.cfp.options.return_value = ["foo", "bar", CFG_ALGORITHM]
-            setup.cfp.get.return_value = "passphrase"
-            self.assertItemsEqual(get_passphrases(),
-                                  dict(foo="passphrase",
-                                       bar="passphrase"))
-
-        @patch("Bcfg2.Server.Encryption.get_passphrases")
-        def test_bruteforce_decrypt(self, mock_passphrases):
+        def test_bruteforce_decrypt(self):
             passwd = "a simple passphrase"
             crypted = ssl_encrypt(self.plaintext, passwd)
 
             # test with no passphrases given nor in config
-            mock_passphrases.return_value = dict()
+            Bcfg2.Options.setup.passphrases = dict()
             self.assertRaises(EVPError,
                               bruteforce_decrypt, crypted)
-            mock_passphrases.assert_called_with()
 
             # test with good passphrase given in function call
-            mock_passphrases.reset_mock()
             self.assertEqual(self.plaintext,
                              bruteforce_decrypt(crypted,
                                                 passphrases=["bogus pass",
                                                              passwd,
                                                              "also bogus"]))
-            self.assertFalse(mock_passphrases.called)
 
             # test with no good passphrase given nor in config
-            mock_passphrases.reset_mock()
             self.assertRaises(EVPError,
                               bruteforce_decrypt,
                               crypted, passphrases=["bogus", "also bogus"])
-            self.assertFalse(mock_passphrases.called)
 
             # test with good passphrase in config file
-            mock_passphrases.reset_mock()
-            mock_passphrases.return_value = dict(bogus="bogus",
-                                                 real=passwd,
-                                                 bogus2="also bogus")
+            Bcfg2.Options.setup.passphrases = dict(bogus="bogus",
+                                                   real=passwd,
+                                                   bogus2="also bogus")
             self.assertEqual(self.plaintext,
                              bruteforce_decrypt(crypted))
-            mock_passphrases.assert_called_with()
 
             # test that passphrases given in function call take
             # precedence over config
-            mock_passphrases.reset_mock()
             self.assertRaises(EVPError,
                               bruteforce_decrypt, crypted,
                               passphrases=["bogus", "also bogus"])
-            self.assertFalse(mock_passphrases.called)
 
             # test that different algorithms are used
-            mock_passphrases.reset_mock()
             crypted = ssl_encrypt(self.plaintext, passwd, algorithm=self.algo)
             self.assertEqual(self.plaintext,
                              bruteforce_decrypt(crypted, algorithm=self.algo))

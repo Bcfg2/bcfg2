@@ -53,24 +53,18 @@ class TestDatabaseBacked(TestPlugin):
 
     @skipUnless(HAS_DJANGO, "Django not found")
     def test__use_db(self):
-        core = Mock()
-        core.setup.cfp.getboolean.return_value = True
-        db = self.get_obj(core)
+        db = self.get_obj()
+
+        Bcfg2.Options.setup.databasebacked_db = True
         self.assertTrue(db._use_db)
 
-        core = Mock()
-        core.setup.cfp.getboolean.return_value = False
-        db = self.get_obj(core)
+        Bcfg2.Options.setup.databasebacked_db = False
         self.assertFalse(db._use_db)
 
         Bcfg2.Server.Plugin.helpers.HAS_DJANGO = False
-        core = Mock()
-        db = self.get_obj(core)
         self.assertFalse(db._use_db)
 
-        core = Mock()
-        core.setup.cfp.getboolean.return_value = True
-        db = self.get_obj(core)
+        Bcfg2.Options.setup.databasebacked_db = False
         self.assertFalse(db._use_db)
         Bcfg2.Server.Plugin.helpers.HAS_DJANGO = True
 
@@ -87,6 +81,7 @@ class TestFileBacked(Bcfg2TestCase):
     def get_obj(self, path=None):
         if path is None:
             path = self.path
+        set_setup_default("filemonitor", MagicMock())
         return self.test_obj(path)
 
     @patch("%s.open" % builtins)
@@ -138,6 +133,7 @@ class TestDirectoryBacked(Bcfg2TestCase):
         if fam is None:
             fam = Mock()
 
+        set_setup_default("filemonitor", MagicMock())
         @patch("%s.%s.add_directory_monitor" % (self.test_obj.__module__,
                                                 self.test_obj.__name__),
                Mock())
@@ -385,6 +381,8 @@ class TestXMLFileBacked(TestFileBacked):
     def get_obj(self, path=None, should_monitor=False):
         if path is None:
             path = self.path
+        set_setup_default("filemonitor", MagicMock())
+        set_setup_default("encoding", 'utf-8')
 
         @patchIf(not isinstance(os.path.exists, Mock),
                  "os.path.exists", Mock())
@@ -720,7 +718,7 @@ class TestStructFile(TestXMLFileBacked):
         loader = mock_TemplateLoader.return_value
         loader.load.assert_called_with(sf.name,
                                        cls=genshi.template.MarkupTemplate,
-                                       encoding=sf.encoding)
+                                       encoding=Bcfg2.Options.setup.encoding)
         self.assertEqual(sf.template,
                          loader.load.return_value)
 
@@ -728,9 +726,8 @@ class TestStructFile(TestXMLFileBacked):
 
     @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
     def test_Index_crypto(self):
+        Bcfg2.Options.setup.lax_decryption = False
         sf = self.get_obj()
-        sf.setup = Mock()
-        sf.setup.cfp.get.return_value = "strict"
         sf._decrypt = Mock()
         sf._decrypt.return_value = 'plaintext'
         sf.data = '''
@@ -757,7 +754,7 @@ class TestStructFile(TestXMLFileBacked):
         self.assertRaises(PluginExecutionError, sf.Index)
 
         # test failed decryption, lax
-        sf.setup.cfp.get.return_value = "lax"
+        Bcfg2.Options.setup.lax_decryption = True
         sf._decrypt.reset_mock()
         sf.Index()
         self.assertItemsEqual(
@@ -766,30 +763,28 @@ class TestStructFile(TestXMLFileBacked):
 
     @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
     @patchIf(HAS_CRYPTO, "Bcfg2.Server.Encryption.ssl_decrypt")
-    @patchIf(HAS_CRYPTO, "Bcfg2.Server.Encryption.get_passphrases")
     @patchIf(HAS_CRYPTO, "Bcfg2.Server.Encryption.bruteforce_decrypt")
-    def test_decrypt(self, mock_bruteforce, mock_get_passphrases, mock_ssl):
+    def test_decrypt(self, mock_bruteforce, mock_ssl):
         sf = self.get_obj()
 
         def reset():
             mock_bruteforce.reset_mock()
-            mock_get_passphrases.reset_mock()
             mock_ssl.reset_mock()
 
+
         # test element without text contents
+        Bcfg2.Options.setup.passphrases = dict()
         self.assertIsNone(sf._decrypt(lxml.etree.Element("Test")))
         self.assertFalse(mock_bruteforce.called)
-        self.assertFalse(mock_get_passphrases.called)
         self.assertFalse(mock_ssl.called)
 
         # test element with a passphrase in the config file
         reset()
         el = lxml.etree.Element("Test", encrypted="foo")
         el.text = "crypted"
-        mock_get_passphrases.return_value = dict(foo="foopass", bar="barpass")
+        Bcfg2.Options.setup.passphrases = dict(foo="foopass", bar="barpass")
         mock_ssl.return_value = "decrypted with ssl"
         self.assertEqual(sf._decrypt(el), mock_ssl.return_value)
-        mock_get_passphrases.assert_called_with()
         mock_ssl.assert_called_with(el.text, "foopass")
         self.assertFalse(mock_bruteforce.called)
 
@@ -797,7 +792,6 @@ class TestStructFile(TestXMLFileBacked):
         reset()
         mock_ssl.side_effect = EVPError
         self.assertRaises(EVPError, sf._decrypt, el)
-        mock_get_passphrases.assert_called_with()
         mock_ssl.assert_called_with(el.text, "foopass")
         self.assertFalse(mock_bruteforce.called)
 
@@ -806,7 +800,6 @@ class TestStructFile(TestXMLFileBacked):
         el.set("encrypted", "true")
         mock_bruteforce.return_value = "decrypted with bruteforce"
         self.assertEqual(sf._decrypt(el), mock_bruteforce.return_value)
-        mock_get_passphrases.assert_called_with()
         mock_bruteforce.assert_called_with(el.text)
         self.assertFalse(mock_ssl.called)
 
@@ -814,7 +807,6 @@ class TestStructFile(TestXMLFileBacked):
         reset()
         mock_bruteforce.side_effect = EVPError
         self.assertRaises(EVPError, sf._decrypt, el)
-        mock_get_passphrases.assert_called_with()
         mock_bruteforce.assert_called_with(el.text)
         self.assertFalse(mock_ssl.called)
 
@@ -881,6 +873,7 @@ class TestStructFile(TestXMLFileBacked):
                 self.assertXMLEqual(el, sf._match(el, metadata)[0])
 
     def test_do_match(self):
+        Bcfg2.Options.setup.lax_decryption = True
         sf = self.get_obj()
         sf._match = Mock()
 
@@ -973,6 +966,7 @@ class TestStructFile(TestXMLFileBacked):
 
     def test_match_ordering(self):
         """ Match() returns elements in document order """
+        Bcfg2.Options.setup.lax_decryption = True
         sf = self.get_obj()
         sf._match = Mock()
 
@@ -1341,12 +1335,12 @@ class TestSpecificData(Bcfg2TestCase):
     test_obj = SpecificData
     path = os.path.join(datastore, "test.txt")
 
-    def get_obj(self, name=None, specific=None, encoding=None):
+    def get_obj(self, name=None, specific=None):
         if name is None:
             name = self.path
         if specific is None:
             specific = Mock()
-        return self.test_obj(name, specific, encoding)
+        return self.test_obj(name, specific)
 
     def test__init(self):
         pass
@@ -1388,9 +1382,15 @@ class TestEntrySet(TestDebuggable):
     ignore = ["foo~", ".#foo", ".foo.swp", ".foo.swx",
               "test.txt.genshi_include", "test.G_foo.genshi_include"]
 
-    def get_obj(self, basename="test", path=datastore, entry_type=MagicMock(),
-                encoding=None):
-        return self.test_obj(basename, path, entry_type, encoding)
+    def get_obj(self, basename="test", path=datastore, entry_type=MagicMock()):
+        set_setup_default("default_owner")
+        set_setup_default("default_group")
+        set_setup_default("default_mode")
+        set_setup_default("default_secontext")
+        set_setup_default("default_important", False)
+        set_setup_default("default_paranoid", False)
+        set_setup_default("default_sensitive", False)
+        return self.test_obj(basename, path, entry_type)
 
     def test__init(self):
         for basename in self.basenames:
@@ -1585,8 +1585,9 @@ class TestEntrySet(TestDebuggable):
         eset.entry_init(event)
         eset.specificity_from_filename.assert_called_with("test.txt",
                                                           specific=None)
-        eset.entry_type.assert_called_with(os.path.join(eset.path, "test.txt"),
-                                           eset.specificity_from_filename.return_value, None)
+        eset.entry_type.assert_called_with(
+            os.path.join(eset.path, "test.txt"),
+            eset.specificity_from_filename.return_value)
         eset.entry_type.return_value.handle_event.assert_called_with(event)
         self.assertIn("test.txt", eset.entries)
 
@@ -1607,8 +1608,7 @@ class TestEntrySet(TestDebuggable):
         eset.specificity_from_filename.assert_called_with("test2.txt",
                                                           specific=specific)
         etype.assert_called_with(os.path.join(eset.path, "test2.txt"),
-                                 eset.specificity_from_filename.return_value,
-                                 None)
+                                 eset.specificity_from_filename.return_value)
         etype.return_value.handle_event.assert_called_with(event)
         self.assertIn("test2.txt", eset.entries)
 
@@ -1745,12 +1745,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
     def get_obj(self, core=None):
         if core is None:
             core = MagicMock()
-            core.setup = MagicMock()
-        else:
-            try:
-                core.setup['encoding']
-            except TypeError:
-                core.setup.__getitem__ = MagicMock()
+        set_setup_default("encoding", "utf-8")
 
         @patch("%s.%s.AddDirectoryMonitor" % (self.test_obj.__module__,
                                               self.test_obj.__name__),
@@ -1821,8 +1816,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
         self.assertFalse(gs.AddDirectoryMonitor.called)
         gs.es_cls.assert_called_with(gs.filename_pattern,
                                      gs.data + ident,
-                                     gs.es_child_cls,
-                                     gs.encoding)
+                                     gs.es_child_cls)
         self.assertIn(ident, gs.entries)
         self.assertEqual(gs.entries[ident], gs.es_cls.return_value)
         self.assertIn(ident, gs.Entries[gs.entry_type])

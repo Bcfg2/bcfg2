@@ -155,7 +155,8 @@ class DatabaseBacked(Plugin):
         elif not use_db:
             return False
         else:
-            self.logger.error("use_database is true but django not found")
+            self.logger.error("%s: use_database is true but django not found" %
+                              self.name)
             return False
 
     @property
