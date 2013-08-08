@@ -895,10 +895,13 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
         metadata = self.load_clients_data(metadata=self.load_groups_data())
         if not metadata._use_db:
             metadata.clients_xml.write = Mock()
+            metadata.core.build_metadata = Mock()
+            metadata.core.build_metadata.side_effect = \
+                lambda c: metadata.get_initial_metadata(c)
+
             metadata.set_profile("client1", "group2", None)
             mock_update_client.assert_called_with("client1",
                                                   dict(profile="group2"))
-            metadata.clients_xml.write.assert_any_call()
             self.assertEqual(metadata.clientgroups["client1"], ["group2"])
 
             metadata.clients_xml.write.reset_mock()

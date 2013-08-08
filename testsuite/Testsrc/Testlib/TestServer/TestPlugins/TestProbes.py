@@ -461,7 +461,7 @@ text
     def test_load_data_db(self):
         probes = self.get_probes_object(use_db=True)
         probes.load_data()
-        probes._load_data_db.assert_any_call()
+        probes._load_data_db.assert_any_call(client=None)
         self.assertFalse(probes._load_data_xml.called)
 
     @patch("lxml.etree.parse")

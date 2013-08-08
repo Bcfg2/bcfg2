@@ -160,6 +160,7 @@ class CfgDecryptor(Decryptor):
             except Bcfg2.Server.Encryption.EVPError:
                 self.logger.info("Could not decrypt %s with any passphrase" %
                                  self.filename)
+                return False
 
     def get_destination_filename(self, original_filename):
         if original_filename.endswith(".crypt"):
@@ -419,7 +420,7 @@ def main():  # pylint: disable=R0912,R0915
 
         if data is None:
             data = getattr(tool, mode)()
-        if data is False:
+        if not data:
             logger.error("Failed to %s %s, skipping" % (mode, fname))
             continue
         if setup['crypt_stdout']:

@@ -196,7 +196,10 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                         # automatically determine one -- i.e., it always
                         # verifies
                         continue
-                if val != entry.get(attr):
+                entval = entry.get(attr)
+                if not isinstance(entval, str):
+                    entval = entval.encode('utf-8')
+                if val != entval:
                     errors.append("%s for %s %s is incorrect.  Current %s is "
                                   "%s, but should be %s" %
                                   (attr.title(), entry.tag, entry.get("name"),

@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _appendix-files-mysql:
 
@@ -17,7 +18,7 @@ I added a new bundle:
     <Bundle>
        <Path name="/root/bcfg2-install/mysql/users.sh"/>
        <Path name="/root/bcfg2-install/mysql/users.sql"/>
-       <Action name="mysql_users"/>
+       <Action name="users.sh"/>
        <Package name="mysql-server-4.1"/>
        <Service name="mysql"/>
     </Bundle>

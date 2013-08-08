@@ -17,7 +17,7 @@
 ### END INIT INFO
 
 # Include lsb functions
-. /etc//init.d/functions
+. /etc/init.d/functions
 
 # Commonly used stuff
 DAEMON=/usr/sbin/bcfg2-report-collector
@@ -25,7 +25,7 @@ PIDFILE=/var/run/bcfg2-server/bcfg2-report-collector.pid
 PARAMS="-D $PIDFILE"
 
 # Include default startup configuration if exists
-test -f "/etc/sysconfig/bcfg2-server" && . /etc/sysconfig/bcfg2-server
+test -f "/etc/sysconfig/bcfg2-report-collector" && . /etc/sysconfig/bcfg2-report-collector
 
 # Exit if $DAEMON doesn't exist and is not executable
 test -x $DAEMON || exit 5

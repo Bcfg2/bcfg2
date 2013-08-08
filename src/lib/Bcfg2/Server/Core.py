@@ -263,6 +263,20 @@ class BaseCore(object):
         #: metadata
         self.metadata_cache = Cache()
 
+    def expire_caches_by_type(self, base_cls, key=None):
+        """ Expire caches for all
+        :class:`Bcfg2.Server.Plugin.interfaces.Caching` plugins that
+        are instances of ``base_cls``.
+
+        :param base_cls: The base plugin interface class to match (see
+                         :mod:`Bcfg2.Server.Plugin.interfaces`)
+        :type base_cls: type
+        :param key: The cache key to expire
+        """
+        for plugin in self.plugins_by_type(base_cls):
+            if isinstance(plugin, Bcfg2.Server.Plugin.Caching):
+                plugin.expire_cache(key)
+
     def plugins_by_type(self, base_cls):
         """ Return a list of loaded plugins that match the passed type.
 
@@ -289,11 +303,12 @@ class BaseCore(object):
         self.logger.debug("Performance logging thread starting")
         while not self.terminate.isSet():
             self.terminate.wait(self.setup['perflog_interval'])
-            for name, stats in self.get_statistics(None).items():
-                self.logger.info("Performance statistics: "
-                                 "%s min=%.06f, max=%.06f, average=%.06f, "
-                                 "count=%d" % ((name, ) + stats))
-        self.logger.debug("Performance logging thread terminated")
+            if not self.terminate.isSet():
+                for name, stats in self.get_statistics(None).items():
+                    self.logger.info("Performance statistics: "
+                                     "%s min=%.06f, max=%.06f, average=%.06f, "
+                                     "count=%d" % ((name, ) + stats))
+        self.logger.info("Performance logging thread terminated")
 
     def _file_monitor_thread(self):
         """ The thread that runs the
@@ -310,11 +325,12 @@ class BaseCore(object):
                 else:
                     if not self.fam.pending():
                         terminate.wait(15)
+                if self.fam.pending():
+                    self._update_vcs_revision()
                 self.fam.handle_event_set(self.lock)
             except:
                 continue
-            self._update_vcs_revision()
-        self.logger.debug("File monitor thread terminated")
+        self.logger.info("File monitor thread terminated")
 
     @Bcfg2.Server.Statistics.track_statistics()
     def _update_vcs_revision(self):
@@ -431,14 +447,14 @@ class BaseCore(object):
 
     def shutdown(self):
         """ Perform plugin and FAM shutdown tasks. """
-        self.logger.debug("Shutting down core...")
+        self.logger.info("Shutting down core...")
         if not self.terminate.isSet():
             self.terminate.set()
             self.fam.shutdown()
-            self.logger.debug("FAM shut down")
+            self.logger.info("FAM shut down")
             for plugin in list(self.plugins.values()):
                 plugin.shutdown()
-            self.logger.debug("All plugins shut down")
+            self.logger.info("All plugins shut down")
 
     @property
     def metadata_cache_mode(self):
@@ -730,7 +746,7 @@ class BaseCore(object):
         if event.code2str() == 'deleted':
             return
         self.setup.reparse()
-        self.metadata_cache.expire()
+        self.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata)
 
     def block_for_fam_events(self, handle_events=False):
         """ Block until all fam events have been handleed, optionally
@@ -920,6 +936,9 @@ class BaseCore(object):
             imd.query.by_name = self.build_metadata
             if self.metadata_cache_mode in ['cautious', 'aggressive']:
                 self.metadata_cache[client_name] = imd
+        else:
+            self.logger.debug("Using cached metadata object for %s" %
+                              client_name)
         return imd
 
     def process_statistics(self, client_name, statistics):
@@ -947,6 +966,7 @@ class BaseCore(object):
                                                           state.get('state')))
         self.client_run_hook("end_statistics", meta)
 
+    @track_statistics()
     def resolve_client(self, address, cleanup_cache=False, metadata=True):
         """ Given a client address, get the client hostname and
         optionally metadata.
@@ -1002,12 +1022,10 @@ class BaseCore(object):
     def _get_rmi(self):
         """ Get a list of RMI calls exposed by plugins """
         rmi = dict()
-        for pname, pinst in list(self.plugins.items()):
+        for pname, pinst in self.plugins.items() + \
+                [(self.fam.__class__.__name__, self.fam)]:
             for mname in pinst.__rmi__:
                 rmi["%s.%s" % (pname, mname)] = getattr(pinst, mname)
-        famname = self.fam.__class__.__name__
-        for mname in self.fam.__rmi__:
-            rmi["%s.%s" % (famname, mname)] = getattr(self.fam, mname)
         return rmi
 
     def _resolve_exposed_method(self, method_name):
@@ -1100,6 +1118,7 @@ class BaseCore(object):
             for plugin in self.plugins_by_type(Probing):
                 for probe in plugin.GetProbes(metadata):
                     resp.append(probe)
+            self.logger.debug("Sending probe list to %s" % client)
             return lxml.etree.tostring(resp,
                                        xml_declaration=False).decode('UTF-8')
         except:
@@ -1125,7 +1144,7 @@ class BaseCore(object):
             # that's created for RecvProbeData doesn't get cached.
             # I.e., the next metadata object that's built, after probe
             # data is processed, is cached.
-            self.metadata_cache.expire(client)
+            self.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata)
         try:
             xpdata = lxml.etree.XML(probedata.encode('utf-8'),
                                     parser=Bcfg2.Server.XMLParser)

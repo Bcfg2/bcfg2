@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _server-plugins-generators-rules:
 
@@ -41,7 +42,7 @@ Rules Tag
 .. xml:element:: Rules
    :linktotype:
    :noautodep:
-   :inlinetypes: PostInstall,RContainerType
+   :inlinetypes: RContainerType
 
 Package Tag
 -----------

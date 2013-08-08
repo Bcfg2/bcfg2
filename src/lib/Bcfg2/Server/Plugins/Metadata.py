@@ -486,6 +486,7 @@ class MetadataGroup(tuple):  # pylint: disable=E0012,R0924
 
 
 class Metadata(Bcfg2.Server.Plugin.Metadata,
+               Bcfg2.Server.Plugin.Caching,
                Bcfg2.Server.Plugin.ClientRunHooks,
                Bcfg2.Server.Plugin.DatabaseBacked):
     """This class contains data for bcfg2 server metadata."""
@@ -494,6 +495,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
     def __init__(self, core, datastore, watch_clients=True):
         Bcfg2.Server.Plugin.Metadata.__init__(self)
+        Bcfg2.Server.Plugin.Caching.__init__(self)
         Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
         self.watch_clients = watch_clients
@@ -934,13 +936,16 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                     self.groups[gname]
         self.states['groups.xml'] = True
 
+    def expire_cache(self, key=None):
+        self.core.metadata_cache.expire(key)
+
     def HandleEvent(self, event):
         """Handle update events for data files."""
         for handles, event_handler in self.handlers.items():
             if handles(event):
                 # clear the entire cache when we get an event for any
                 # metadata file
-                self.core.metadata_cache.expire()
+                self.expire_cache()
                 event_handler(event)
 
         if False not in list(self.states.values()) and self.debug_flag:
@@ -978,17 +983,21 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 self.logger.error(msg)
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
 
-            profiles = [g for g in self.clientgroups[client]
-                        if g in self.groups and self.groups[g].is_profile]
-            self.logger.info("Changing %s profile from %s to %s" %
-                             (client, profiles, profile))
-            self.update_client(client, dict(profile=profile))
-            if client in self.clientgroups:
-                for prof in profiles:
-                    self.clientgroups[client].remove(prof)
-                self.clientgroups[client].append(profile)
+            metadata = self.core.build_metadata(client)
+            if metadata.profile != profile:
+                self.logger.info("Changing %s profile from %s to %s" %
+                                 (client, metadata.profile, profile))
+                self.update_client(client, dict(profile=profile))
+                if client in self.clientgroups:
+                    if metadata.profile in self.clientgroups[client]:
+                        self.clientgroups[client].remove(metadata.profile)
+                    self.clientgroups[client].append(profile)
+                else:
+                    self.clientgroups[client] = [profile]
             else:
-                self.clientgroups[client] = [profile]
+                self.logger.debug(
+                    "Ignoring %s request to change profile from %s to %s"
+                    % (client, metadata.profile, profile))
         else:
             self.logger.info("Creating new client: %s, profile %s" %
                              (client, profile))
@@ -1004,8 +1013,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                     self.add_client(client, dict(profile=profile))
                 self.clients.append(client)
                 self.clientgroups[client] = [profile]
-        if not self._use_db:
-            self.clients_xml.write()
+            if not self._use_db:
+                self.clients_xml.write()
 
     def set_version(self, client, version):
         """Set version for provided client."""

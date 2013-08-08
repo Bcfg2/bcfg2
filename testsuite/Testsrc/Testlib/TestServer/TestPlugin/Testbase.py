@@ -29,16 +29,11 @@ class TestDebuggable(Bcfg2TestCase):
 
     def test_set_debug(self):
         d = self.get_obj()
-        d.debug_log = Mock()
         self.assertEqual(True, d.set_debug(True))
         self.assertEqual(d.debug_flag, True)
-        self.assertTrue(d.debug_log.called)
-
-        d.debug_log.reset_mock()
 
         self.assertEqual(False, d.set_debug(False))
         self.assertEqual(d.debug_flag, False)
-        self.assertTrue(d.debug_log.called)
 
     def test_toggle_debug(self):
         d = self.get_obj()

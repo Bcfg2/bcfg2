@@ -183,14 +183,16 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
 
 
 class Probes(Bcfg2.Server.Plugin.Probing,
+             Bcfg2.Server.Plugin.Caching,
              Bcfg2.Server.Plugin.Connector,
              Bcfg2.Server.Plugin.DatabaseBacked):
     """ A plugin to gather information from a client machine """
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
     def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Connector.__init__(self)
         Bcfg2.Server.Plugin.Probing.__init__(self)
+        Bcfg2.Server.Plugin.Caching.__init__(self)
+        Bcfg2.Server.Plugin.Connector.__init__(self)
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
 
         try:
@@ -268,12 +270,17 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             hostname=client.hostname).exclude(
             group__in=self.cgroups[client.hostname]).delete()
 
-    def load_data(self):
+    def expire_cache(self, key=None):
+        self.load_data(client=key)
+
+    def load_data(self, client=None):
         """ Load probe data from the appropriate backend (probed.xml
         or the database) """
         if self._use_db:
-            return self._load_data_db()
+            return self._load_data_db(client=client)
         else:
+            # the XML backend doesn't support loading data for single
+            # clients, so it reloads all data
             return self._load_data_xml()
 
     def _load_data_xml(self):
@@ -298,19 +305,35 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 elif pdata.tag == 'Group':
                     self.cgroups[client.get('name')].append(pdata.get('name'))
 
-    def _load_data_db(self):
+        if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
+            self.core.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata)
+
+    def _load_data_db(self, client=None):
         """ Load probe data from the database """
-        self.probedata = {}
-        self.cgroups = {}
-        for pdata in ProbesDataModel.objects.all():
+        if client is None:
+            self.probedata = {}
+            self.cgroups = {}
+            probedata = ProbesDataModel.objects.all()
+            groupdata = ProbesGroupsModel.objects.all()
+        else:
+            self.probedata.pop(client, None)
+            self.cgroups.pop(client, None)
+            probedata = ProbesDataModel.objects.filter(hostname=client)
+            groupdata = ProbesGroupsModel.objects.filter(hostname=client)
+
+        for pdata in probedata:
             if pdata.hostname not in self.probedata:
                 self.probedata[pdata.hostname] = ClientProbeDataSet(
                     timestamp=time.mktime(pdata.timestamp.timetuple()))
             self.probedata[pdata.hostname][pdata.probe] = ProbeData(pdata.data)
-        for pgroup in ProbesGroupsModel.objects.all():
+        for pgroup in groupdata:
             if pgroup.hostname not in self.cgroups:
                 self.cgroups[pgroup.hostname] = []
             self.cgroups[pgroup.hostname].append(pgroup.group)
+
+        if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
+            self.core.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata,
+                                            key=client)
 
     @track_statistics()
     def GetProbes(self, meta):

@@ -117,7 +117,7 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
             self.logger.warning("PuppetENC is incompatible with aggressive "
                                 "client metadata caching, try 'cautious' or "
                                 "'initial' instead")
-            self.core.cache.expire()
+            self.core.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata)
 
     def end_statistics(self, metadata):
         self.end_client_run(self, metadata)

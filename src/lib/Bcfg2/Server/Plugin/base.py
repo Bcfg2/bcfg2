@@ -12,6 +12,10 @@ class Debuggable(object):
     #: List of names of methods to be exposed as XML-RPC functions
     __rmi__ = ['toggle_debug', 'set_debug']
 
+    #: How exposed XML-RPC functions should be dispatched to child
+    #: processes.
+    __child_rmi__ = __rmi__[:]
+
     def __init__(self, name=None):
         """
         :param name: The name of the logger object to get.  If none is
@@ -34,9 +38,6 @@ class Debuggable(object):
         :returns: bool - The new value of the debug flag
         """
         self.debug_flag = debug
-        self.debug_log("%s: debug = %s" % (self.__class__.__name__,
-                                           self.debug_flag),
-                       flag=True)
         return debug
 
     def toggle_debug(self):
@@ -94,6 +95,20 @@ class Plugin(Debuggable):
     #: List of names of methods to be exposed as XML-RPC functions
     __rmi__ = Debuggable.__rmi__
 
+    #: How exposed XML-RPC functions should be dispatched to child
+    #: processes, if :mod:`Bcfg2.Server.MultiprocessingCore` is in
+    #: use.  Items ``__child_rmi__`` can either be strings (in which
+    #: case the same function is called on child processes as on the
+    #: parent) or 2-tuples, in which case the first element is the
+    #: name of the RPC function called on the parent process, and the
+    #: second element is the name of the function to call on child
+    #: processes.  Functions that are not listed in the list will not
+    #: be dispatched to child processes, i.e., they will only be
+    #: called on the parent.  A function must be listed in ``__rmi__``
+    #: in order to be exposed; functions listed in ``_child_rmi__``
+    #: but not ``__rmi__`` will be ignored.
+    __child_rmi__ = Debuggable.__child_rmi__
+
     def __init__(self, core, datastore):
         """
         :param core: The Bcfg2.Server.Core initializing the plugin
@@ -136,6 +151,8 @@ class Plugin(Debuggable):
         self.running = False
 
     def set_debug(self, debug):
+        self.debug_log("%s: debug = %s" % (self.name, self.debug_flag),
+                       flag=True)
         for entry in self.Entries.values():
             if isinstance(entry, Debuggable):
                 entry.set_debug(debug)

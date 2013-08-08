@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _getting_started-index:
 
@@ -115,7 +116,7 @@ files: ``clients.xml`` and ``groups.xml``. Your current
 
 .. code-block:: xml
 
-    <Clients version="3.0">
+    <Clients>
        <Client profile="basic" pingable="Y" pingtime="0" name="bcfg-server.example.com"/>
     </Clients>
 
@@ -132,7 +133,7 @@ Our simple ``groups.xml`` file looks like:
 
 .. code-block:: xml
 
-    <Groups version='3.0'>
+    <Groups>
        <Group profile='true' public='false' name='basic'>
           <Group name='suse'/>
        </Group>
@@ -205,7 +206,11 @@ real ``/etc/motd`` file to that location, run the client again, and
 you will find that we now have a correct entry::
 
     Loaded tool drivers:
+<<<<<<< HEAD
      Chkconfig    POSIX     Action   RPM
+=======
+     Chkconfig    POSIX        YUM
+>>>>>>> maint
 
     Phase: initial
     Correct entries:        1

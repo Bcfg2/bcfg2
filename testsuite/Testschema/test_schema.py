@@ -41,7 +41,7 @@ class TestSchemas(Bcfg2TestCase):
         xmllint = Popen(['xmllint', '--xinclude', '--noout', '--schema',
                          self.schema_url] + schemas,
                         stdout=PIPE, stderr=STDOUT)
-        print(xmllint.communicate()[0])
+        print(xmllint.communicate()[0].decode())
         self.assertEqual(xmllint.wait(), 0)
 
     def test_duplicates(self):

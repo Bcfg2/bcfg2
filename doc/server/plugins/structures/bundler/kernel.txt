@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _server-plugins-structures-bundler-kernel:
 
@@ -30,7 +31,7 @@ some of which might be better than this one. Feel free to hack as needed.
           <Path name='/boot/initrd'/>
           <Path name='/boot/vmlinuz.old'/>
           <Path name='/boot/initrd.old'/>
-          <Action name='lilo'/>
+          <BoundAction name='lilo' command='/sbin/lilo' timing='post' when='modified'/>
           <!-- Current kernel -->
           <Package name='linux-2.4.21-314.tg1'/>
           <Package name='linux-2.4.21-314.tg1-source'/>

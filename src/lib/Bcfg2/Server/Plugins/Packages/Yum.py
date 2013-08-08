@@ -265,6 +265,8 @@ class YumCollection(Collection):
     .. private-include: _add_gpg_instances, _get_pulp_consumer
     """
 
+    _helper = None
+
     #: Options that are included in the [packages:yum] section of the
     #: config but that should not be included in the temporary
     #: yum.conf we write out
@@ -282,7 +284,6 @@ class YumCollection(Collection):
         #: external commands
         self.cmd = Executor()
 
-        self._helper = None
         if self.use_yum:
             #: Define a unique cache file for this collection to use
             #: for cached yum metadata
@@ -320,7 +321,7 @@ class YumCollection(Collection):
                         self.logger.error("Could not create Pulp consumer "
                                           "cert directory at %s: %s" %
                                           (certdir, err))
-                self.pulp_cert_set = PulpCertificateSet(certdir)
+                self.__class__.pulp_cert_set = PulpCertificateSet(certdir)
 
     @property
     def disableMetaData(self):
@@ -355,16 +356,19 @@ class YumCollection(Collection):
         forking, but apparently not); finally we check in /usr/sbin,
         the default location. """
         if not self._helper:
+            # pylint: disable=W0212
             try:
-                self._helper = self.setup.cfp.get("packages:yum", "helper")
+                self.__class__._helper = self.setup.cfp.get("packages:yum",
+                                                            "helper")
             except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
                 # first see if bcfg2-yum-helper is in PATH
                 try:
                     self.debug_log("Checking for bcfg2-yum-helper in $PATH")
                     self.cmd.run(['bcfg2-yum-helper'])
-                    self._helper = 'bcfg2-yum-helper'
+                    self.__class__._helper = 'bcfg2-yum-helper'
                 except OSError:
-                    self._helper = "/usr/sbin/bcfg2-yum-helper"
+                    self.__class__._helper = "/usr/sbin/bcfg2-yum-helper"
+            # pylint: enable=W0212
         return self._helper
 
     @property
@@ -945,9 +949,14 @@ class YumCollection(Collection):
         try:
             return json.loads(result.stdout)
         except ValueError:
-            err = sys.exc_info()[1]
-            self.logger.error("Packages: error reading bcfg2-yum-helper "
-                              "output: %s" % err)
+            if result.stdout:
+                err = sys.exc_info()[1]
+                self.logger.error("Packages: Error reading bcfg2-yum-helper "
+                                  "output: %s" % err)
+                self.logger.error("Packages: bcfg2-yum-helper output: %s" %
+                                  result.stdout)
+            else:
+                self.logger.error("Packages: No bcfg2-yum-helper output")
             raise
 
     def setup_data(self, force_update=False):
