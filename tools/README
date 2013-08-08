@@ -17,9 +17,6 @@ bcfg2_local.py
     - Perform a full Bcfg2 run against a local repository instead of
       against a remote server
 
-bcfg2-profile-templates.py [<template>]
-    - Benchmark template rendering times
-
 bcfg2_svnlog.py
     - Send intelligent log messages about changes made to your Bcfg2
       repository from SVN postcommit
@@ -88,4 +85,3 @@ upgrade
 yum-listpkgs-xml.py
     - Produces a list of all packages installed and available in a
       format suitable for use by Packages or Pkgmgr
-
