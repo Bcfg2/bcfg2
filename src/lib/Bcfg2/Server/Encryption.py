@@ -32,6 +32,8 @@ IV = r'\0' * 16
 
 
 class _OptionContainer(object):
+    """ Container for options loaded at import-time to configure
+    encryption """
     options = [
         Bcfg2.Options.BooleanOption(
             cf=("encryption", "lax_decryption"),
@@ -371,7 +373,7 @@ class PropertiesCryptoMixin(object):
             if pname:
                 self.logger.warning("Passphrase %s not found in %s, "
                                     "using passphrase given on command line" %
-                                    (pname, Bcfg2.Option.setup.configfile))
+                                    (pname, Bcfg2.Options.setup.configfile))
             passphrase = self.passphrase
             pname = self.pname
         else:
@@ -502,6 +504,7 @@ class CLI(object):
             return False
 
     def run(self):  # pylint: disable=R0912,R0915
+        """ Run bcfg2-crypt """
         for fname in Bcfg2.Options.setup.files:
             if not os.path.exists(fname):
                 self.logger.error("%s does not exist, skipping" % fname)

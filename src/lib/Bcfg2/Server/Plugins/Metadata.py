@@ -20,12 +20,18 @@ from Bcfg2.Compat import MutableMapping, all, wraps  # pylint: disable=W0622
 from Bcfg2.version import Bcfg2VersionInfo
 
 
+# pylint: disable=C0103
+ClientVersions = None
 MetadataClientModel = None
+# pylint: enable=C0103
 HAS_DJANGO = False
 
 
 def load_django_models():
+    """ Load models for Django after option parsing has completed """
+    # pylint: disable=W0602
     global MetadataClientModel, ClientVersions, HAS_DJANGO
+    # pylint: enable=W0602
 
     try:
         from django.db import models
@@ -674,7 +680,9 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             try:
                 client = MetadataClientModel.objects.get(hostname=client_name)
             except MetadataClientModel.DoesNotExist:
+                # pylint: disable=E1102
                 client = MetadataClientModel(hostname=client_name)
+                # pylint: enable=E1102
                 client.save()
             self.clients = self.list_clients()
             return client

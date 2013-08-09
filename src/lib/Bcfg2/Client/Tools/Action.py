@@ -1,7 +1,5 @@
 """Action driver"""
 
-import os
-import sys
 import Bcfg2.Client.Tools
 from Bcfg2.Utils import safe_input
 from Bcfg2.Client import matches_white_list, passes_black_list

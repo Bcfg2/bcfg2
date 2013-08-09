@@ -147,7 +147,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             self.write_file(fileloc, contents)
             self.verify_file(filename, contents, metadata)
             infoxml = os.path.join(cfg.data, filename.lstrip("/"), "info.xml")
-            self.write_infoxml(infoxml, entry, data)
+            self.write_infoxml(infoxml, data)
         elif entrydata == contents:
             self.debug_log("Existing %s contents match probed contents" %
                            filename)
@@ -213,7 +213,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
                 updated = True
             tries += 1
 
-    def write_infoxml(self, infoxml, entry, data):
+    def write_infoxml(self, infoxml, data):
         """ write an info.xml for the file """
         if os.path.exists(infoxml):
             return

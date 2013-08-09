@@ -49,7 +49,6 @@ in your ``Source`` subclass.  For an example of this kind of
 import os
 import re
 import sys
-import Bcfg2.Server.Plugin
 from Bcfg2.Logger import Debuggable
 from Bcfg2.Compat import HTTPError, HTTPBasicAuthHandler, \
     HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, urlopen, \

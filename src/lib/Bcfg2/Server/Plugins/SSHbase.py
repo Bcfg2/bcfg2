@@ -76,10 +76,6 @@ class HostKeyEntrySet(Bcfg2.Server.Plugin.EntrySet):
         else:
             self.metadata['mode'] = '0600'
 
-    def get_keydata_object(self, filepath, specificity):
-        return KeyData(filepath, specificity,
-                       self.encoding or Bcfg2.Options.setup.encoding)
-
 
 class KnownHostsEntrySet(Bcfg2.Server.Plugin.EntrySet):
     """ EntrySet to handle the ssh_known_hosts file """

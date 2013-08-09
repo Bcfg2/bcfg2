@@ -13,12 +13,17 @@ import Bcfg2.Server.FileMonitor
 from Bcfg2.Server.Statistics import track_statistics
 
 HAS_DJANGO = False
+# pylint: disable=C0103
 ProbesDataModel = None
 ProbesGroupsModel = None
+# pylint: enable=C0103
 
 
 def load_django_models():
+    """ Load models for Django after option parsing has completed """
+    # pylint: disable=W0602
     global ProbesDataModel, ProbesGroupsModel, HAS_DJANGO
+    # pylint: enable=W0602
     try:
         from django.db import models
         HAS_DJANGO = True

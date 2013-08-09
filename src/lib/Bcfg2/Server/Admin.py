@@ -39,7 +39,8 @@ except ImportError:
     HAS_REPORTS = False
 
 
-class ccolors:
+class ccolors:  # pylint: disable=C0103
+    """ ANSI color escapes to make colorizing text easier """
     # pylint: disable=W1401
     ADDED = '\033[92m'
     CHANGED = '\033[93m'
@@ -47,8 +48,9 @@ class ccolors:
     ENDC = '\033[0m'
     # pylint: enable=W1401
 
-    @staticmethod
+    @classmethod
     def disable(cls):
+        """ Disable all coloration """
         cls.ADDED = ''
         cls.CHANGED = ''
         cls.REMOVED = ''
@@ -94,6 +96,7 @@ def print_table(rows, justify='left', hdr=True, vdelim=" ", padding=1):
 
 
 class AdminCmd(Bcfg2.Options.Subcommand):
+    """ Base class for all bcfg2-admin modes """
     def setup(self):
         """ Perform post-init (post-options parsing), pre-run setup
         tasks """
@@ -106,11 +109,15 @@ class AdminCmd(Bcfg2.Options.Subcommand):
 
 
 class _ServerAdminCmd(AdminCmd):
-    """Base class for admin modes that run a Bcfg2 server."""
+    """ Base class for admin modes that run a Bcfg2 server. """
     __plugin_whitelist__ = None
     __plugin_blacklist__ = None
 
     options = AdminCmd.options + Bcfg2.Server.Core.Core.options
+
+    def __init__(self):
+        AdminCmd.__init__(self)
+        self.metadata = None
 
     def setup(self):
         if self.__plugin_whitelist__ is not None:
@@ -224,23 +231,28 @@ class Compare(AdminCmd):
     changes = dict()
 
     def removed(self, msg, host):
+        """ Record a removed element """
         self.record("%sRemoved: %s%s" % (ccolors.REMOVED, msg, ccolors.ENDC),
                     host)
 
     def added(self, msg, host):
+        """ Record an removed element """
         self.record("%sAdded: %s%s" % (ccolors.ADDED, msg, ccolors.ENDC), host)
 
     def changed(self, msg, host):
+        """ Record a changed element """
         self.record("%sChanged: %s%s" % (ccolors.CHANGED, msg, ccolors.ENDC),
                     host)
 
     def record(self, msg, host):
+        """ Record a new removed/added/changed message for the given
+        host """
         if msg not in self.changes:
             self.changes[msg] = [host]
         else:
             self.changes[msg].append(host)
 
-    def udiff(self, l1, l2, **kwargs):
+    def udiff(self, lines1, lines2, **kwargs):
         """ get a unified diff with control lines stripped """
         lines = None
         if "lines" in kwargs:
@@ -251,7 +263,7 @@ class Compare(AdminCmd):
             return []
         kwargs['n'] = 0
         diff = []
-        for line in difflib.unified_diff(l1, l2, **kwargs):
+        for line in difflib.unified_diff(lines1, lines2, **kwargs):
             if (line.startswith("--- ") or line.startswith("+++ ") or
                 line.startswith("@@ ")):
                 continue
@@ -259,24 +271,23 @@ class Compare(AdminCmd):
                 diff.append("  ...")
                 break
             if line.startswith("+"):
-                for l in line.splitlines():
-                    diff.append("  %s%s%s" % (ccolors.ADDED, l, ccolors.ENDC))
+                diff.extend("  %s%s%s" % (ccolors.ADDED, l, ccolors.ENDC)
+                            for l in line.splitlines())
             elif line.startswith("-"):
-                for l in line.splitlines():
-                    diff.append("  %s%s%s" % (ccolors.REMOVED, l,
-                                              ccolors.ENDC))
+                diff.extend("  %s%s%s" % (ccolors.REMOVED, l, ccolors.ENDC)
+                            for l in line.splitlines())
         return diff
 
     def _bundletype(self, el):
+        """ Get a human-friendly representation of the type of the
+        given bundle -- independent or not """
         if el.get("tag") == "Independent":
             return "Independent bundle"
         else:
             return "Bundle"
 
-    def run(self, setup):
-        if not sys.stdout.isatty() and not setup.color:
-            ccolors.disable(ccolors)
-
+    def _get_filelists(self, setup):
+        """ Get a list of 2-tuples of files to compare """
         files = []
         if os.path.isdir(setup.path1) and os.path.isdir(setup.path1):
             for fpath in glob.glob(os.path.join(setup.path1, '*')):
@@ -302,8 +313,13 @@ class Compare(AdminCmd):
             files.append((setup.path1, setup.path2))
         else:
             self.errExit("Cannot diff a file and a directory")
+        return files
 
-        for file1, file2 in files:
+    def run(self, setup):  # pylint: disable=R0912,R0914,R0915
+        if not sys.stdout.isatty() and not setup.color:
+            ccolors.disable(ccolors)
+
+        for file1, file2 in self._get_filelists():
             host = None
             if os.path.basename(file1) == os.path.basename(file2):
                 fname = os.path.basename(file1)
@@ -400,6 +416,9 @@ class Help(AdminCmd, Bcfg2.Options.HelpCommand):
     def command_registry(self):
         return CLI.commands
 
+    def run(self, setup):
+        Bcfg2.Options.HelpCommand.run(self, setup)
+
 
 class Init(AdminCmd):
     """Interactively initialize a new repository."""
@@ -480,6 +499,8 @@ bcfg2 = %s
             self.data['certpath'] = os.path.join(basepath, 'bcfg2.crt')
 
     def input_with_default(self, msg, default_name):
+        """ Prompt for input with the given message, taking the
+        default from ``self.data`` """
         val = safe_input("%s [%s]: " % (msg, self.data[default_name]))
         if val:
             self.data[default_name] = val
@@ -803,6 +824,8 @@ class Pull(_ServerAdminCmd):
 
 
 class _ReportsCmd(AdminCmd):
+    """ Base command for all admin modes dealing with the reporting
+    subsystem """
     def __init__(self):
         AdminCmd.__init__(self)
         self.reports_entries = ()
@@ -832,6 +855,8 @@ class _ReportsCmd(AdminCmd):
 
 if HAS_DJANGO:
     class _DjangoProxyCmd(AdminCmd):
+        """ Base for admin modes that proxy a command through the
+        Django management system """
         command = None
         args = []
 
@@ -1151,5 +1176,6 @@ class CLI(Bcfg2.Options.CommandRegistry):
         parser.parse()
 
     def run(self):
+        """ Run bcfg2-admin """
         self.commands[Bcfg2.Options.setup.subcommand].setup()
         return self.runcommand()

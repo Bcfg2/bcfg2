@@ -1,4 +1,10 @@
+""" ``bcfg2-lint`` plugin for :ref:`Cfg
+<server-plugins-generators-cfg>` """
+
+
 import os
+import Bcfg2.Options
+from fnmatch import fnmatch
 from Bcfg2.Server.Lint import ServerPlugin
 
 
@@ -55,7 +61,7 @@ class Cfg(ServerPlugin):
 
         # first, collect ignore patterns from handlers
         ignore = set()
-        for hdlr in handlers():
+        for hdlr in cfg.handlers():
             ignore.update(hdlr.__ignore__)
 
         # next, get a list of all non-ignored files on the filesystem
@@ -67,9 +73,9 @@ class Cfg(ServerPlugin):
                 # global FAM ignore list
                 if (not any(fname.endswith("." + i) for i in ignore) and
                     not any(fnmatch(fpath, p)
-                            for p in self.config['ignore']) and
+                            for p in Bcfg2.Options.setup.ignore_files) and
                     not any(fnmatch(c, p)
-                            for p in self.config['ignore']
+                            for p in sBcfg2.Options.setup.ignore_files
                             for c in self._list_path_components(fpath))):
                     all_files.add(fpath)
 

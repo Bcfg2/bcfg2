@@ -25,6 +25,8 @@ from Bcfg2.Server.Plugin.exceptions import *
 
 
 class _OptionContainer(object):
+    """ Container for plugin options that are loaded at import time
+    """
     options = [
         Bcfg2.Options.Common.default_paranoid,
         Bcfg2.Options.Option(

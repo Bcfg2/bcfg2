@@ -1,3 +1,6 @@
+""" ``bcfg2-lint`` plugin for :ref:`Pkgmgr
+<server-plugins-generators-pkgmgr>` """
+
 import os
 import glob
 import lxml.etree

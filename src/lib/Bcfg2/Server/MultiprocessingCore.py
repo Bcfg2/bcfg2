@@ -225,9 +225,6 @@ class ChildCore(Core):
     def _run(self):
         return True
 
-    def _daemonize(self):
-        return True
-
     def _dispatch(self, address, data):
         """ Method dispatcher used for commands received from
         the RPC queue. """

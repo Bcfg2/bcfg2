@@ -1,3 +1,6 @@
+""" ``bcfg2-lint`` plugin for :ref:`Metadata
+<server-plugins-grouping-metadata>` """
+
 from Bcfg2.Server.Lint import ServerPlugin
 
 

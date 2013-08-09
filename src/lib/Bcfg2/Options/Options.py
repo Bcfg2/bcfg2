@@ -4,7 +4,7 @@ need to be associated with an option parser; it exists on its own."""
 
 import os
 import copy
-import Types
+import Types  # pylint: disable=W0403
 import fnmatch
 import argparse
 from Bcfg2.Compat import ConfigParser
@@ -15,7 +15,7 @@ __all__ = ["Option", "BooleanOption", "PathOption", "PositionalArgument"]
 #: A dict that records a mapping of argparse action name (e.g.,
 #: "store_true") to the argparse Action class for it.  See
 #: :func:`_get_action_class`
-_action_map = dict()
+_action_map = dict()  # pylint: disable=C0103
 
 
 def _get_action_class(action_name):
@@ -82,7 +82,7 @@ class Option(object):
 
         #: The tuple giving the section and option name for this
         #: option in the config file
-        self.cf = None
+        self.cf = None  # pylint: disable=C0103
 
         #: The environment variable that this option can take its
         #: value from
@@ -214,9 +214,11 @@ class Option(object):
                 self.default = val
 
     def _get_default(self):
+        """ Getter for the ``default`` property """
         return self._default
 
     def _set_default(self, value):
+        """ Setter for the ``default`` property """
         self._default = value
         for action in self.actions.values():
             action.default = value
@@ -225,9 +227,11 @@ class Option(object):
     default = property(_get_default, _set_default)
 
     def _get_dest(self):
+        """ Getter for the ``dest`` property """
         return self._dest
 
     def _set_dest(self, value):
+        """ Setter for the ``dest`` property """
         self._dest = value
         for action in self.actions.values():
             action.dest = value

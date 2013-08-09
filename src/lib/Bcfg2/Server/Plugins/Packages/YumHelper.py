@@ -266,6 +266,8 @@ class CacheManager(YumHelper):
 
 
 class HelperSubcommand(Bcfg2.Options.Subcommand):
+    """ Base class for all yum helper subcommands """
+
     # the value to JSON encode and print out if the command fails
     fallback = None
 
@@ -300,10 +302,14 @@ class HelperSubcommand(Bcfg2.Options.Subcommand):
         return 0
 
     def _run(self, setup, data):
+        """ Actually run the command """
         raise NotImplementedError
 
 
 class DepSolverSubcommand(HelperSubcommand):
+    """ Base class for helper commands that use the depsolver (i.e.,
+    only resolve dependencies, don't modify the cache) """
+
     def __init__(self):
         HelperSubcommand.__init__(self)
         self.depsolver = DepSolver(Bcfg2.Options.setup.yum_config,
@@ -311,6 +317,8 @@ class DepSolverSubcommand(HelperSubcommand):
 
 
 class CacheManagerSubcommand(HelperSubcommand):
+    """ Base class for helper commands that use the cachemanager
+    (i.e., modify the cache) """
     fallback = False
     accept_input = False
 
@@ -321,18 +329,22 @@ class CacheManagerSubcommand(HelperSubcommand):
 
 
 class Clean(CacheManagerSubcommand):
+    """ Clean the cache """
     def _run(self, setup, data):  # pylint: disable=W0613
         self.cachemgr.clean_cache()
         return True
 
 
 class MakeCache(CacheManagerSubcommand):
+    """ Update the on-disk cache """
     def _run(self, setup, data):  # pylint: disable=W0613
         self.cachemgr.populate_cache()
         return True
 
 
 class Complete(DepSolverSubcommand):
+    """ Given an initial set of packages, get a complete set of
+    packages with all dependencies resolved """
     fallback = dict(packages=[], unknown=[])
 
     def _run(self, _, data):
@@ -344,6 +356,7 @@ class Complete(DepSolverSubcommand):
 
 
 class GetGroups(DepSolverSubcommand):
+    """ Resolve the given package groups """
     def _run(self, _, data):
         rv = dict()
         for gdata in data:
@@ -356,10 +369,11 @@ class GetGroups(DepSolverSubcommand):
         return rv
 
 
-Get_Groups = GetGroups
+Get_Groups = GetGroups  # pylint: disable=C0103
 
 
 class CLI(Bcfg2.Options.CommandRegistry):
+    """ The bcfg2-yum-helper CLI """
     options = [
         Bcfg2.Options.PathOption(
             "-c", "--yum-config", help="Yum config file"),
@@ -377,6 +391,7 @@ class CLI(Bcfg2.Options.CommandRegistry):
         self.logger = logging.getLogger(parser.prog)
 
     def run(self):
+        """ Run bcfg2-yum-helper """
         if not os.path.exists(Bcfg2.Options.setup.yum_config):
             self.logger.error("Config file %s not found" %
                               Bcfg2.Options.setup.yum_config)

@@ -3,6 +3,7 @@
 import glob
 import os
 import re
+import Bcfg2.Options
 import Bcfg2.Client.Tools
 
 # Debian squeeze and beyond uses a dependecy based boot sequence
@@ -137,10 +138,10 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                 bootcmd = '/usr/sbin/update-rc.d -f %s remove' % \
                           entry.get('name')
             bootcmdrv = self.cmd.run(bootcmd)
-            if self.setup['servicemode'] == 'disabled':
+            if Bcfg2.Options.setup.service_mode == 'disabled':
                 # 'disabled' means we don't attempt to modify running svcs
                 return bootcmdrv and seqcmdrv
-            buildmode = self.setup['servicemode'] == 'build'
+            buildmode = Bcfg2.Options.setup.service_mode == 'build'
             if (entry.get('status') == 'on' and not buildmode) and \
                entry.get('current_status') == 'off':
                 svccmdrv = self.start_service(entry)

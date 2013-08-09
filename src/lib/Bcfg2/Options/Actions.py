@@ -2,7 +2,7 @@
 
 import sys
 import argparse
-from Parser import get_parser
+from Parser import get_parser  # pylint: disable=W0403
 
 __all__ = ["ConfigFileAction", "ComponentAction", "PluginsAction"]
 
@@ -88,6 +88,8 @@ class ComponentAction(argparse.Action):
         argparse.Action.__init__(self, *args, **kwargs)
 
     def _import(self, module, name):
+        """ Import the given name from the given module, handling
+        errors """
         try:
             return getattr(__import__(module, fromlist=[name]), name)
         except (AttributeError, ImportError):

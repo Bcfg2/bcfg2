@@ -763,6 +763,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
 
 
 class CfgHandlerAction(Bcfg2.Options.ComponentAction):
+    """ Option parser action to load Cfg handlers """
     bases = ['Bcfg2.Server.Plugins.Cfg']
 
 
@@ -796,9 +797,17 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
         global CFG  # pylint: disable=W0603
         Bcfg2.Server.Plugin.GroupSpool.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
-
+        self._handlers = None
         CFG = self
     __init__.__doc__ = Bcfg2.Server.Plugin.GroupSpool.__init__.__doc__
+
+    @property
+    def handlers(self):
+        """ A list of Cfg handler classes. """
+        if self._handlers is None:
+            self._handlers = Bcfg2.Options.setup.cfg_handlers
+            self._handlers.sort(key=operator.attrgetter("__priority__"))
+        return self._handlers
 
     def has_generator(self, entry, metadata):
         """ Return True if the given entry can be generated for the

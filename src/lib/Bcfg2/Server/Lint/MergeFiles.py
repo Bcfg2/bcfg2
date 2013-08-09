@@ -11,10 +11,10 @@ from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 def threshold(val):
     """ Option type processor to accept either a percentage (e.g.,
      "threshold=75") or a ratio (e.g., "threshold=.75") """
-    threshold = float(val)
-    if threshold > 1:
-        threshold /= 100
-    return threshold
+    rv = float(val)
+    if rv > 1:
+        rv /= 100
+    return rv
 
 
 class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):

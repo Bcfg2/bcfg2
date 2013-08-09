@@ -5,7 +5,7 @@ import sys
 import argparse
 from Bcfg2.version import __version__
 from Bcfg2.Compat import ConfigParser
-from Options import Option, PathOption, BooleanOption
+from Options import Option, PathOption, BooleanOption  # pylint: disable=W0403
 
 __all__ = ["setup", "OptionParserException", "Parser", "get_parser"]
 
@@ -13,14 +13,14 @@ __all__ = ["setup", "OptionParserException", "Parser", "get_parser"]
 #: The repository option.  This is specified here (and imported into
 #: :module:`Bcfg2.Options.Common`) rather than vice-versa due to
 #: circular imports.
-repository = PathOption(
+repository = PathOption(  # pylint: disable=C0103
     '-Q', '--repository', cf=('server', 'repository'),
     default='var/lib/bcfg2', help="Server repository path")
 
 
 #: A module-level :class:`argparse.Namespace` object that stores all
 #: configuration for Bcfg2.
-setup = argparse.Namespace(version=__version__,
+setup = argparse.Namespace(version=__version__,  # pylint: disable=C0103
                            name="Bcfg2",
                            uri='http://trac.mcs.anl.gov/projects/bcfg2')
 
@@ -115,6 +115,9 @@ class Parser(argparse.ArgumentParser):
                 self.add_options(getattr(component, "options"))
 
     def _set_defaults(self):
+        """ Set defaults from the config file for all options that can
+        come from the config file, but haven't yet had their default
+        set """
         for opt in self.option_list:
             if opt not in self._defaults_set:
                 opt.default_from_config(self._cfp)
@@ -137,10 +140,16 @@ class Parser(argparse.ArgumentParser):
                     setattr(self.namespace, opt.dest, value)
 
     def _finalize(self):
+        """ Finalize the value of any options that require that
+        additional post-processing step.  (Mostly
+        :class:`Bcfg2.Options.Actions.ComponentAction` subclasses.)
+        """
         for opt in self.option_list[:]:
             opt.finalize(self.namespace)
 
     def _reset_namespace(self):
+        """ Delete all options from the namespace except for a few
+        predefined values and config file options. """
         self.parsed = False
         for attr in dir(self.namespace):
             if (not attr.startswith("_") and
@@ -200,11 +209,10 @@ class Parser(argparse.ArgumentParser):
         # components, until all components have been loaded.  On each
         # iteration, set defaults from config file/environment
         # variables
-        remaining = self.argv
         while not self.parsed:
             self.parsed = True
             self._set_defaults()
-            self.parse_known_args(namespace=self.namespace)[1]
+            self.parse_known_args(namespace=self.namespace)
             self._parse_config_options()
             self._finalize()
         self._parse_config_options()
@@ -227,7 +235,7 @@ class Parser(argparse.ArgumentParser):
 
 #: A module-level :class:`Bcfg2.Options.Parser` object that is used
 #: for all parsing
-_parser = Parser()
+_parser = Parser()  # pylint: disable=C0103
 
 #: Track whether or not the module-level parser has been initialized
 #: yet.  We track this separately because some things (e.g., modules
@@ -235,7 +243,7 @@ _parser = Parser()
 #: been initialized, so we can't just set
 #: :attr:`Bcfg2.Options._parser` to None and wait for
 #: :func:`Bcfg2.Options.get_parser` to be called.
-_parser_initialized = False
+_parser_initialized = False  # pylint: disable=C0103
 
 
 def get_parser(description=None, components=None, namespace=None):

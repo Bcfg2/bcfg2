@@ -1,3 +1,6 @@
+""" ``bcfg2-lint`` plugin for :ref:`GroupPatterns
+<server-plugins-grouping-grouppatterns>` """
+
 import sys
 from Bcfg2.Server.Lint import ServerPlugin
 from Bcfg2.Server.Plugins.GroupPatterns import PatternMap

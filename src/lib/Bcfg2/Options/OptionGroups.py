@@ -3,16 +3,11 @@
 import re
 import copy
 import fnmatch
-from Options import Option
+from Options import Option  # pylint: disable=W0403
 from itertools import chain
 
 __all__ = ["OptionGroup", "ExclusiveOptionGroup", "Subparser",
            "WildcardSectionGroup"]
-
-#: A dict that records a mapping of argparse action name (e.g.,
-#: "store_true") to the argparse Action class for it.  See
-#: :func:`_get_action_class`
-_action_map = dict()
 
 
 class OptionContainer(list):

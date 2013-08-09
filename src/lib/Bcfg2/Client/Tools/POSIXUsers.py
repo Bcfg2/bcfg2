@@ -9,6 +9,7 @@ from Bcfg2.Utils import PackedDigitRange
 
 
 def uid_range_type(val):
+    """ Option type to unpack a list of numerical ranges """
     return PackedDigitRange(*Bcfg2.Options.Types.comma_list(val))
 
 

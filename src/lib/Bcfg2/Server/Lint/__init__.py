@@ -346,7 +346,6 @@ class CLI(object):
             except ImportError:
                 # no lint plugin for this server plugin
                 self.logger.debug("No lint plugin for %s" % plugin.__name__)
-                pass
             except AttributeError:
                 self.logger.error("Failed to load plugin %s: %s" %
                                   (plugin.__name__, sys.exc_info()[1]))
@@ -369,6 +368,7 @@ class CLI(object):
                 self.serverlessplugins.append(plugin)
 
     def run(self):
+        """ Run bcfg2-lint """
         if Bcfg2.Options.setup.list_errors:
             for plugin in self.serverplugins + self.serverlessplugins:
                 self.errorhandler.RegisterErrors(getattr(plugin, 'Errors')())
@@ -441,6 +441,7 @@ class CLI(object):
             core.shutdown()
 
     def _run_plugin(self, plugin, args=None):
+        """ Run a single bcfg2-lint plugin """
         if args is None:
             args = []
         start = time.time()

@@ -595,7 +595,6 @@ def get_collection_class(source_type):
     :type source_type: string
     :returns: type - the Collection subclass that should be used to
               instantiate an object to contain sources of the given type. """
-    cls = None
     for mod in Bcfg2.Options.setup.packages_backends:
         if mod.__name__.endswith(".%s" % source_type.title()):
             return getattr(mod, "%sCollection" % source_type.title())

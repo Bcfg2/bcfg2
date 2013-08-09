@@ -22,6 +22,7 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
                 "unknown-genshi-error": "error"}
 
     def check_template(self, loader, fname, cls=None):
+        """ Generic check for all genshi templates (XML and text) """
         try:
             loader.load(fname, cls=cls)
         except TemplateSyntaxError:

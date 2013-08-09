@@ -13,7 +13,6 @@ import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Options
 import Bcfg2.Server.FileMonitor
-from Bcfg2.Utils import ClassName
 from Bcfg2.Logger import Debuggable
 from Bcfg2.Compat import CmpMixin, wraps
 from Bcfg2.Server.Plugin.base import Plugin

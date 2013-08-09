@@ -89,6 +89,8 @@ class InfoCmd(Bcfg2.Options.Subcommand):
     """ Base class for bcfg2-info subcommands """
 
     def _expand_globs(self, globs, candidates):
+        """ Given a list of globs, select the items from candidates
+        that match the globs """
         # special cases to speed things up:
         if globs is None or '*' in globs:
             return candidates
@@ -264,6 +266,7 @@ class BuildAllMixin(object):
                 return cls
 
     def run(self, setup):
+        """ Run the command """
         try:
             os.makedirs(setup.directory)
         except OSError:
@@ -278,6 +281,8 @@ class BuildAllMixin(object):
             self._parent.run(self, csetup)  # pylint: disable=E1101
 
     def _get_setup(self, client, setup):
+        """ This can be overridden by children to populate individual
+        setup options on a per-client basis """
         raise NotImplementedError
 
 
@@ -335,7 +340,7 @@ class Buildbundle(InfoCmd):
                                       pretty_print=True).decode('UTF-8'))
         except:  # pylint: disable=W0702
             print("Failed to render bundle %s for host %s: %s" %
-                  (setup.bundle, client, sys.exc_info()[1]))
+                  (setup.bundle, setup.hostname, sys.exc_info()[1]))
             raise
 
 
@@ -379,10 +384,10 @@ class ExpireCache(InfoCmd):
     def run(self, setup):
         if setup.clients:
             for client in self.get_client_list(setup.clients):
-                self.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata,
-                                           key=client)
+                self.core.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata,
+                                                key=client)
         else:
-            self.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata)
+            self.core.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata)
 
 
 class Bundles(InfoCmd):
@@ -506,6 +511,7 @@ class Groups(InfoCmd):
     options = [Bcfg2.Options.PositionalArgument("group", nargs='*')]
 
     def _profile_flag(self, group):
+        """ Whether or not the group is a profile group """
         if self.core.metadata.groups[group].is_profile:
             return 'yes'
         else:
@@ -681,7 +687,6 @@ class Shell(InfoCmd):
                               'Type "help" for more information')
         except KeyboardInterrupt:
             print("Ctrl-C pressed, exiting...")
-            loop = False
 
 
 class ProfileTemplates(InfoCmd):
@@ -699,6 +704,7 @@ class ProfileTemplates(InfoCmd):
             help="Profile the named templates instead of all templates")]
 
     def profile_entry(self, entry, metadata, runs=5):
+        """ Profile a single entry """
         times = []
         for i in range(runs):  # pylint: disable=W0612
             start = time.time()
@@ -715,6 +721,7 @@ class ProfileTemplates(InfoCmd):
         return times
 
     def profile_struct(self, struct, metadata, templates=None, runs=5):
+        """ Profile all entries in a given structure """
         times = dict()
         entries = struct.xpath("//Path")
         entry_count = 0
@@ -730,6 +737,7 @@ class ProfileTemplates(InfoCmd):
         return times
 
     def profile_client(self, metadata, templates=None, runs=5):
+        """ Profile all structures for a given client """
         structs = self.core.GetStructures(metadata)
         struct_count = 0
         times = dict()
@@ -744,6 +752,7 @@ class ProfileTemplates(InfoCmd):
         return times
 
     def stdev(self, nums):
+        """ Calculate the standard deviation of a list of numbers """
         mean = float(sum(nums)) / len(nums)
         return math.sqrt(sum((n - mean) ** 2 for n in nums) / float(len(nums)))
 
@@ -804,6 +813,8 @@ class InfoCore(cmd.Cmd,
         self.prompt = 'bcfg2-info> '
 
     def get_locals(self):
+        """ Expose the local variables of the core to subcommands that
+        need to reference them (i.e., the interactive interpreter) """
         return locals()
 
     def do_quit(self, _):
@@ -827,9 +838,6 @@ class InfoCore(cmd.Cmd,
         self.load_plugins()
         self.block_for_fam_events(handle_events=True)
 
-    def _daemonize(self):
-        pass
-
     def _run(self):
         pass
 
@@ -842,6 +850,7 @@ class InfoCore(cmd.Cmd,
 
 
 class CLI(object):
+    """ The bcfg2-info CLI """
     options = [Bcfg2.Options.BooleanOption("-p", "--profile", help="Profile")]
 
     def __init__(self):
@@ -865,6 +874,7 @@ class CLI(object):
             command.core = self.core
 
     def run(self):
+        """ Run bcfg2-info """
         if Bcfg2.Options.setup.subcommand != 'help':
             self.core.run()
         return self.core.runcommand()

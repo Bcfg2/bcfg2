@@ -1,9 +1,11 @@
 """ Common options used in multiple different contexts. """
 
+# pylint: disable=W0403
 import Types
 from Actions import PluginsAction, ComponentAction
 from Parser import repository as _repository_option
 from Options import Option, PathOption, BooleanOption
+# pylint: enable=W0403
 
 __all__ = ["Common"]
 

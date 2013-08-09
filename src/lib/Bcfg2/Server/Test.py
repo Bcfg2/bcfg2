@@ -165,6 +165,7 @@ class ClientTest(TestCase):
 
 
 class CLI(object):
+    """ The bcfg2-test CLI """
     options = [
         Bcfg2.Options.PositionalArgument(
             "clients", help="Specific clients to build", nargs="*"),
@@ -230,6 +231,7 @@ class CLI(object):
         core.shutdown()
 
     def run(self):
+        """ Run bcfg2-test """
         core = self.get_core()
         clients = Bcfg2.Options.setup.clients or core.metadata.clients
         ignore = self.get_ignore()

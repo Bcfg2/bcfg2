@@ -1,3 +1,6 @@
+""" ``bcfg2-lint`` plugin for :ref:`TemplateHelper
+<server-plugins-connectors-templatehelper>` """
+
 import sys
 import imp
 from Bcfg2.Server.Lint import ServerPlugin
