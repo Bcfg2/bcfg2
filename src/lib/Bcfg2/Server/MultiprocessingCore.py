@@ -435,6 +435,8 @@ class Core(BuiltinCore):
         (i.e., in the parent process). """
         @wraps(parent_rmi)
         def inner(*args, **kwargs):
+            """ Function that dispatches an RMI call to child
+            processes and to the (original) parent function. """
             self.logger.debug("Dispatching RMI call to %s to children: %s" %
                               (method, child_rmi))
             self.rpc_q.publish(child_rmi, args=args, kwargs=kwargs)
