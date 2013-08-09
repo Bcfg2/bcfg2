@@ -19,7 +19,7 @@ class CLI(object):
     options = [
         Bcfg2.Options.Option(
             cf=('server', 'backend'), help='Server Backend',
-            default='Builtin', type=lambda b: b.title() + "Core",
+            default='BuiltinCore', type=lambda b: b.title() + "Core",
             action=BackendAction)]
 
     def __init__(self):
