@@ -1406,7 +1406,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         viz_str.extend(self._viz_groups(egroups, bundles, clientmeta))
         if key:
             for category in categories:
-                viz_str.append('"%s" [label="%s", shape="record", '
+                viz_str.append('"%s" [label="%s", shape="trapezium", '
                                'style="filled", fillcolor="%s"];' %
                                (category, category, categories[category]))
         return "\n".join("\t" + s for s in viz_str)
