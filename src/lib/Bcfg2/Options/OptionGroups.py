@@ -197,7 +197,7 @@ class WildcardSectionGroup(OptionContainer, Option):
                 for opt_tmpl in self._options:
                     option = copy.deepcopy(opt_tmpl)
                     option.cf = (section, option.cf[1])
-                    option.dest = prefix + section + "_" + option.dest
+                    option.dest = self._prefix + section + "_" + option.dest
                     newopts.append(option)
                 self.extend(newopts)
                 for parser in self.parsers:
