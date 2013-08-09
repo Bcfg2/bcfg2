@@ -1421,7 +1421,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         instances = {}
         rv = []
         for client in list(self.clients):
-            if include_client(client):
+            if not include_client(client):
                 continue
             if client in self.clientgroups:
                 grps = self.clientgroups[client]
