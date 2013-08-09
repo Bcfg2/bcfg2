@@ -148,7 +148,7 @@ class Option(object):
         :class:`Bcfg2.Options.OptionGroup` """
         return [self]
 
-    def finalize(self):
+    def finalize(self, namespace):
         """ Finalize the default value for this option.  This is used
         with actions (such as :class:`Bcfg2.Options.ComponentAction`)
         that allow you to specify a default in a different format than
@@ -157,9 +157,8 @@ class Option(object):
         not given on the command line or in the config file) to store
         the appropriate default value in the appropriate format."""
         for parser, action in self.actions.items():
-            if parser is not None:
-                if hasattr(action, "finalize"):
-                    action.finalize(parser, parser.namespace)
+            if hasattr(action, "finalize"):
+                action.finalize(parser, namespace)
 
     def from_config(self, cfp):
         """ Get the value of this option from the given

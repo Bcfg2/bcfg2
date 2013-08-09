@@ -138,26 +138,26 @@ class Parser(argparse.ArgumentParser):
 
     def _finalize(self):
         for opt in self.option_list[:]:
-            opt.finalize()
+            opt.finalize(self.namespace)
 
     def _reset_namespace(self):
         self.parsed = False
         for attr in dir(self.namespace):
             if (not attr.startswith("_") and
                 attr not in ['uri', 'version', 'name'] and
-                attr not in self.config_files):
+                attr not in self._config_files):
                 delattr(self.namespace, attr)
 
     def add_config_file(self, dest, cfile):
         """ Add a config file, which triggers a full reparse of all
         options. """
-        if dest not in self.config_files:
+        if dest not in self._config_files:
             self._reset_namespace()
             self._cfp.read([cfile])
             self._defaults_set = []
             self._set_defaults()
             self._parse_config_options()
-            self.config_files.append(dest)
+            self._config_files.append(dest)
 
     def reparse(self, argv=None):
         """ Reparse options after they have already been parsed.

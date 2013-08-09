@@ -145,7 +145,7 @@ class ComponentAction(argparse.Action):
             else:
                 result = self._load_component(values)
         self._final = True
-        setattr(namespace, self.dest, values)
+        setattr(namespace, self.dest, result)
 
 
 class ConfigFileAction(argparse.Action):
