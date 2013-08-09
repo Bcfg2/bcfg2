@@ -330,7 +330,7 @@ class Client(object):
         if Bcfg2.Options.setup.cache:
             try:
                 Bcfg2.Options.setup.cache.write(rawconfig)
-                os.chmod(Bcfg2.Options.setup.cache, 384)  # 0600
+                os.chmod(Bcfg2.Options.setup.cache.name, 384)  # 0600
             except IOError:
                 self.logger.warning("Failed to write config cache file %s" %
                                     (Bcfg2.Options.setup.cache))
