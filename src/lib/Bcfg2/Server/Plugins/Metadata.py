@@ -510,6 +510,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             cf=('communication', 'authentication'), default='cert+password',
             choices=['cert', 'bootstrap', 'cert+password'],
             help='Default client authentication method')]
+    options_parsed_hook = staticmethod(load_django_models)
 
     def __init__(self, core, datastore, watch_clients=True):
         Bcfg2.Server.Plugin.Metadata.__init__(self)
@@ -1514,7 +1515,3 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                     rv.append('"group-%s" -> "group-%s";' %
                               (group.get('name'), parent.get('name')))
         return rv
-
-    @staticmethod
-    def options_parsed_hook():
-        load_django_models()

@@ -200,7 +200,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         Bcfg2.Options.BooleanOption(
             cf=('probes', 'use_database'), dest="probes_db",
             help="Use database capabilities of the Probes plugin")]
-    options_parsed_hook = load_django_models
+    options_parsed_hook = staticmethod(load_django_models)
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Probing.__init__(self)
