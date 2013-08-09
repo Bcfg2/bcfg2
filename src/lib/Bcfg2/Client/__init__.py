@@ -296,16 +296,8 @@ class Client(object):
 
             try:
                 self.proxy.DeclareVersion(__version__)
-            except xmlrpclib.Fault:
-                err = sys.exc_info()[1]
-                if (err.faultCode == xmlrpclib.METHOD_NOT_FOUND or
-                    (err.faultCode == 7 and
-                     err.faultString.startswith("Unknown method"))):
-                    self.logger.debug("Server does not support declaring "
-                                      "client version")
-                else:
-                    self.logger.error("Failed to declare version: %s" % err)
-            except (Proxy.ProxyError,
+            except (xmlrpclib.Fault,
+                    Proxy.ProxyError,
                     Proxy.CertificateError,
                     socket.gaierror,
                     socket.error):
