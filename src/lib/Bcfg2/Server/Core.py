@@ -973,11 +973,17 @@ class BaseCore(object):
         raise xmlrpclib.Fault(xmlrpclib.APPLICATION_ERROR,
                               "Critical failure: %s" % message)
 
+    def _get_rmi_objects(self):
+        """ Get a dict (name: object) of all objects that may have RMI
+        calls.  Currently, that includes all plugins and the FAM. """
+        rv = {self.fam.__class__.__name__: self.fam}
+        rv.update(self.plugins)
+        return rv
+
     def _get_rmi(self):
         """ Get a list of RMI calls exposed by plugins """
         rmi = dict()
-        for pname, pinst in self.plugins.items() + \
-                [(self.fam.__class__.__name__, self.fam)]:
+        for pname, pinst in self._get_rmi_objects():
             for mname in pinst.__rmi__:
                 rmi["%s.%s" % (pname, mname)] = getattr(pinst, mname)
         return rmi
