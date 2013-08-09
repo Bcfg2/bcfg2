@@ -983,7 +983,7 @@ class BaseCore(object):
     def _get_rmi(self):
         """ Get a list of RMI calls exposed by plugins """
         rmi = dict()
-        for pname, pinst in self._get_rmi_objects():
+        for pname, pinst in self._get_rmi_objects().items():
             for mname in pinst.__rmi__:
                 rmi["%s.%s" % (pname, mname)] = getattr(pinst, mname)
         return rmi

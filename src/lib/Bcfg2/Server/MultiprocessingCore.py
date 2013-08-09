@@ -298,7 +298,7 @@ class ChildCore(BaseCore):
 
     def _get_rmi(self):
         rmi = dict()
-        for pname, pinst in self._get_rmi_objects():
+        for pname, pinst in self._get_rmi_objects().items():
             for crmi in pinst.__child_rmi__:
                 if isinstance(crmi, tuple):
                     mname = crmi[1]
@@ -412,7 +412,7 @@ class Core(BuiltinCore):
 
     def _get_rmi(self):
         child_rmi = dict()
-        for pname, pinst in self._get_rmi_objects():
+        for pname, pinst in self._get_rmi_objects().items():
             for crmi in pinst.__child_rmi__:
                 if isinstance(crmi, tuple):
                     parentname, childname = crmi
