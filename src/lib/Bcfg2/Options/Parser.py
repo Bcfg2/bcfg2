@@ -204,16 +204,12 @@ class Parser(argparse.ArgumentParser):
         while not self.parsed:
             self.parsed = True
             self._set_defaults()
-            remaining = self.parse_known_args(args=remaining,
-                                              namespace=self.namespace)[1]
+            self.parse_known_args(namespace=self.namespace)[1]
             self._parse_config_options()
             self._finalize()
-
-        # phase 3: parse command line for real, with all components
-        # loaded and all options known
         self._parse_config_options()
 
-        # phase 4: fix up <repository> macros
+        # phase 3: fix up <repository> macros
         repo = getattr(self.namespace, "repository", repository.default)
         for attr in dir(self.namespace):
             value = getattr(self.namespace, attr)
@@ -221,7 +217,7 @@ class Parser(argparse.ArgumentParser):
                 setattr(self.namespace, attr,
                         value.replace("<repository>", repo, 1))
 
-        # phase 5: call post-parsing hooks
+        # phase 4: call post-parsing hooks
         for component in self.components:
             if hasattr(component, "options_parsed_hook"):
                 getattr(component, "options_parsed_hook")()
