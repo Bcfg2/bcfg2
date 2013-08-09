@@ -1449,7 +1449,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             the graph"""
             return not clientmeta or bundle in clientmeta.bundles
 
-        bundles = list(set(bund.get('name'))
+        bundles = list(bund.get('name')
                        for bund in self.groups_xml.xdata.findall('.//Bundle')
                        if include_bundle(bund.get('name')))
         bundles.sort()
