@@ -9,7 +9,7 @@ import operator
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import unicode
+from Bcfg2.Compat import unicode  # pylint: disable=W0622
 
 try:
     from django.db import models
