@@ -115,7 +115,8 @@ class POSIXFile(POSIXTool):
             if isinstance(filedata, str) and str != unicode:
                 os.fdopen(newfd, 'w').write(filedata)
             else:
-                os.fdopen(newfd, 'wb').write(filedata.encode(self.setup['encoding']))
+                os.fdopen(newfd, 'wb').write(
+                    filedata.encode(self.setup['encoding']))
         except (OSError, IOError):
             err = sys.exc_info()[1]
             self.logger.error("POSIX: Failed to open temp file %s for writing "
