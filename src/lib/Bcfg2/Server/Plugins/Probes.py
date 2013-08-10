@@ -64,7 +64,7 @@ class ProbeData(str):  # pylint: disable=E0012,R0924
     .json, and .yaml properties to provide convenient ways to use
     ProbeData objects as XML, JSON, or YAML data """
     def __new__(cls, data):
-        return str.__new__(cls, data)
+        return str.__new__(cls, data.encode('utf-8'))
 
     def __init__(self, data):  # pylint: disable=W0613
         str.__init__(self)
@@ -225,9 +225,15 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                 lxml.etree.SubElement(top, 'Client', name=client,
                                       timestamp=str(int(probedata.timestamp)))
             for probe in sorted(probedata):
-                lxml.etree.SubElement(
-                    ctag, 'Probe', name=probe,
-                    value=self.probedata[client][probe])
+                try:
+                    lxml.etree.SubElement(
+                        ctag, 'Probe', name=probe,
+                        value=str(
+                            self.probedata[client][probe]).decode('utf-8'))
+                except AttributeError:
+                    lxml.etree.SubElement(
+                        ctag, 'Probe', name=probe,
+                        value=str(self.probedata[client][probe]))
             for group in sorted(self.cgroups[client]):
                 lxml.etree.SubElement(ctag, "Group", name=group)
         try:
