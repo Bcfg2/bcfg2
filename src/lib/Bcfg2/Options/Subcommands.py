@@ -197,8 +197,10 @@ class CommandRegistry(object):
         cmd_obj = cmdcls()
         name = cmdcls.__name__.lower()
         cls.commands[name] = cmd_obj
+        # py2.5 can't mix *magic and non-magical keyword args, thus
+        # the **dict(...)
         cls.options.append(
-            Subparser(*cmdcls.options, name=name, help=cmdcls.__doc__))
+            Subparser(*cmdcls.options, **dict(name=name, help=cmdcls.__doc__)))
         if issubclass(cls, cmd.Cmd) and cmdcls.interactive:
             setattr(cls, "do_%s" % name, cmd_obj)
             setattr(cls, "help_%s" % name, cmd_obj.parser.print_help)

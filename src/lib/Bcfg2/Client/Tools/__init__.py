@@ -8,9 +8,6 @@ import Bcfg2.Options
 import Bcfg2.Client
 import Bcfg2.Client.XML
 from Bcfg2.Utils import Executor, ClassName
-from Bcfg2.Compat import walk_packages  # pylint: disable=W0622
-
-__all__ = [m[1] for m in walk_packages(path=__path__)]
 
 
 class ToolInstantiationError(Exception):

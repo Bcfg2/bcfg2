@@ -163,7 +163,7 @@ class DatabaseBacked(Plugin):
         """ Whether or not the backend database must acquire a thread
         lock before writing, because it does not allow multiple
         threads to write."""
-        return Bcfg2.Options.setup.db_engine == 'sqlite3'
+        return self._use_db and Bcfg2.Options.setup.db_engine == 'sqlite3'
 
     @staticmethod
     def get_db_lock(func):
