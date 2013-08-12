@@ -559,7 +559,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.negated_groups = dict()
         # mapping of hostname -> version string
         if self._use_db:
-            self.versions = ClientVersions(core, # pylint: disable=E1102
+            self.versions = ClientVersions(core,  # pylint: disable=E1102
                                            datastore)
         else:
             self.versions = dict()

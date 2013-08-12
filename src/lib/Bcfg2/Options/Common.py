@@ -130,6 +130,6 @@ class Common(object):
 
     #: Client timeout
     client_timeout = Option(
-            "-t", "--timeout", type=float, default=90.0, dest="client_timeout",
-            cf=('communication', 'timeout'),
-            help='Set the client XML-RPC timeout')
+        "-t", "--timeout", type=float, default=90.0, dest="client_timeout",
+        cf=('communication', 'timeout'),
+        help='Set the client XML-RPC timeout')
