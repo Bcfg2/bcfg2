@@ -611,13 +611,13 @@ class Client(object):
         if Bcfg2.Options.setup.remove:
             if Bcfg2.Options.setup.remove == 'all':
                 self.removal = self.extra
-            elif Bcfg2.Options.setup.remove.lower() == 'services':
+            elif Bcfg2.Options.setup.remove == 'services':
                 self.removal = [entry for entry in self.extra
                                 if entry.tag == 'Service']
-            elif Bcfg2.Options.setup.remove.lower() == 'packages':
+            elif Bcfg2.Options.setup.remove == 'packages':
                 self.removal = [entry for entry in self.extra
                                 if entry.tag == 'Package']
-            elif Bcfg2.Options.setup.remove.lower() == 'users':
+            elif Bcfg2.Options.setup.remove == 'users':
                 self.removal = [entry for entry in self.extra
                                 if entry.tag in ['POSIXUser', 'POSIXGroup']]
 
