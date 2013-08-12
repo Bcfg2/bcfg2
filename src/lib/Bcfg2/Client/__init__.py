@@ -12,9 +12,9 @@ import argparse
 import tempfile
 import Bcfg2.Logger
 import Bcfg2.Options
-import XML  # pylint: disable=W0403
-import Proxy  # pylint: disable=W0403
-import Tools  # pylint: disable=W0403
+from Bcfg2.Client import XML
+from Bcfg2.Client import Proxy
+from Bcfg2.Client import Tools
 from Bcfg2.Utils import locked, Executor, safe_input
 from Bcfg2.version import __version__
 # pylint: disable=W0622
