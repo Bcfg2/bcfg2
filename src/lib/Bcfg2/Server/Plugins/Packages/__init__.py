@@ -551,7 +551,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if not self.sources.loaded:
             # if sources.xml has not received a FAM event yet, defer;
             # instantiate a dummy Collection object
-            return Collection(metadata, [], self.cachepath, self.data)
+            collection = Collection(metadata, [], self.cachepath, self.data)
+            ckey = collection.cachekey
+            self.groupcache.setdefault(ckey, dict())
+            self.pkgcache.setdefault(ckey, dict())
+            return collection
 
         if metadata.hostname in self.clients:
             return self.collections[self.clients[metadata.hostname]]
@@ -588,8 +592,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if cclass != Collection:
             self.clients[metadata.hostname] = ckey
             self.collections[ckey] = collection
-            self.groupcache.setdefault(ckey, dict())
-            self.pkgcache.setdefault(ckey, dict())
+        self.groupcache.setdefault(ckey, dict())
+        self.pkgcache.setdefault(ckey, dict())
         return collection
 
     def get_additional_data(self, metadata):

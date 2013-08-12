@@ -88,7 +88,7 @@ class InteractionManager(models.Manager):
         Returns the ids of most recent interactions for clients as of a date.
 
         Arguments:
-        maxdate -- datetime object.  Most recent date to pull. (dafault None)
+        maxdate -- datetime object.  Most recent date to pull. (default None)
 
         """
         from django.db import connection

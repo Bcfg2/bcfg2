@@ -1128,6 +1128,7 @@ class Viz(_ServerAdminCmd):
                  '\tcolor="lightblue";',
                  '\tBundle [ shape="septagon" ];',
                  '\tGroup [shape="ellipse"];',
+                 '\tGroup Category [shape="trapezium"];\n',
                  '\tProfile [style="bold", shape="ellipse"];',
                  '\tHblock [label="Host1|Host2|Host3",shape="record"];',
                  '\tlabel="Key";',

@@ -1097,7 +1097,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             if cname in self.aliases:
                 return self.aliases[cname]
             return cname
-        except socket.herror:
+        except (socket.gaierror, socket.herror):
             err = "Address resolution error for %s: %s" % (address,
                                                            sys.exc_info()[1])
             self.logger.error(err)
@@ -1437,7 +1437,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         viz_str.extend(self._viz_groups(egroups, bundles, clientmeta))
         if key:
             for category in categories:
-                viz_str.append('"%s" [label="%s", shape="record", '
+                viz_str.append('"%s" [label="%s", shape="trapezium", '
                                'style="filled", fillcolor="%s"];' %
                                (category, category, categories[category]))
         return "\n".join("\t" + s for s in viz_str)
@@ -1452,7 +1452,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         instances = {}
         rv = []
         for client in list(self.clients):
-            if include_client(client):
+            if not include_client(client):
                 continue
             if client in self.clientgroups:
                 grps = self.clientgroups[client]
@@ -1480,9 +1480,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             the graph"""
             return not clientmeta or bundle in clientmeta.bundles
 
-        bundles = list(set(bund.get('name'))
-                       for bund in self.groups_xml.xdata.findall('.//Bundle')
-                       if include_bundle(bund.get('name')))
+        bundles = \
+            list(set(bund.get('name')
+                     for bund in self.groups_xml.xdata.findall('.//Bundle')
+                     if include_bundle(bund.get('name'))))
         bundles.sort()
         return ['"bundle-%s" [ label="%s", shape="septagon"];' % (bundle,
                                                                   bundle)
