@@ -10,7 +10,6 @@ import select
 import time
 import traceback
 import Bcfg2.Options
-import Bcfg2.CommonOptions
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Reporting.Collector import ReportingCollector, ReportingError
 from Bcfg2.Reporting.Transport.base import TransportBase, TransportError

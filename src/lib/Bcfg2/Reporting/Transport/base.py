@@ -4,6 +4,7 @@ The base for all server -> collector Transports
 
 import os
 import sys
+import Bcfg2.Options
 from Bcfg2.Logger import Debuggable
 
 
