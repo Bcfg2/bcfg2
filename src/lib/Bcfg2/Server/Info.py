@@ -550,7 +550,7 @@ class Showclient(InfoCmd):
 
             group_fmt = "%-10s  %-30s %s"
             header = False
-            for group in list(metadata.groups):
+            for group in sorted(list(metadata.groups)):
                 category = ""
                 for cat, grp in metadata.categories.items():
                     if grp == group:
@@ -564,7 +564,7 @@ class Showclient(InfoCmd):
 
             if metadata.bundles:
                 print(fmt % ("Bundles:", list(metadata.bundles)[0]))
-            for bnd in list(metadata.bundles)[1:]:
+            for bnd in sorted(list(metadata.bundles)[1:]):
                 print(fmt % ("", bnd))
             if metadata.connectors:
                 print("Connector data")
