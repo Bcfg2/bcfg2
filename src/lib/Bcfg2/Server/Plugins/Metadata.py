@@ -1143,8 +1143,12 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             pgroup = None
             if client in self.clientgroups:
                 pgroup = self.clientgroups[client][0]
+                self.debug_log("%s: Adding new client with profile %s" %
+                               (self.name, pgroup))
             elif self.default:
                 pgroup = self.default
+                self.debug_log("%s: Adding new client with default profile %s"
+                               % (self.name, pgroup))
 
             if pgroup:
                 self.set_profile(client, pgroup, (None, None),
