@@ -563,9 +563,10 @@ class Showclient(InfoCmd):
                     print(group_fmt % ("", group, category))
 
             if metadata.bundles:
-                print(fmt % ("Bundles:", list(metadata.bundles)[0]))
-            for bnd in sorted(list(metadata.bundles)[1:]):
-                print(fmt % ("", bnd))
+                sorted_bundles = sorted(list(metadata.bundles))
+                print(fmt % ("Bundles:", sorted_bundles[0]))
+                for bnd in sorted_bundles[1:]:
+                    print(fmt % ("", bnd))
             if metadata.connectors:
                 print("Connector data")
                 print("=" * 80)
