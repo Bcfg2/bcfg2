@@ -2,6 +2,7 @@
 git. """
 
 import sys
+import Bcfg2.Options
 from Bcfg2.Server.Plugin import Version, PluginExecutionError
 
 try:

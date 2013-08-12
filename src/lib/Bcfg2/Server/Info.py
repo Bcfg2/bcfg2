@@ -85,7 +85,7 @@ def load_interpreters():
     return (interpreters, default)
 
 
-class InfoCmd(Bcfg2.Options.Subcommand):
+class InfoCmd(Bcfg2.Options.Subcommand):  # pylint: disable=W0223
     """ Base class for bcfg2-info subcommands """
 
     def _expand_globs(self, globs, candidates):
@@ -127,6 +127,9 @@ class Help(InfoCmd, Bcfg2.Options.HelpCommand):
     """ Get help on a specific subcommand """
     def command_registry(self):
         return self.core.commands
+
+    def run(self, setup):
+        Bcfg2.Options.HelpCommand.run(self, setup)
 
 
 class Debug(InfoCmd):

@@ -311,7 +311,7 @@ class Client(object):
                     # TODO: read decision list from --decision-list
                     Bcfg2.Options.setup.decision_list = \
                         self.proxy.GetDecisionList(
-                        Bcfg2.Options.setup.decision)
+                            Bcfg2.Options.setup.decision)
                     self.logger.info("Got decision list from server:")
                     self.logger.info(Bcfg2.Options.setup.decision_list)
                 except Proxy.ProxyError:

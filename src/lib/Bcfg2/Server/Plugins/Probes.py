@@ -31,7 +31,7 @@ def load_django_models():
         HAS_DJANGO = False
         return
 
-    class ProbesDataModel(models.Model,
+    class ProbesDataModel(models.Model,  # pylint: disable=W0621,W0612
                           Bcfg2.Server.Plugin.PluginDatabaseModel):
         """ The database model for storing probe data """
         hostname = models.CharField(max_length=255)
@@ -39,7 +39,7 @@ def load_django_models():
         timestamp = models.DateTimeField(auto_now=True)
         data = models.TextField(null=True)
 
-    class ProbesGroupsModel(models.Model,
+    class ProbesGroupsModel(models.Model,  # pylint: disable=W0621,W0612
                             Bcfg2.Server.Plugin.PluginDatabaseModel):
         """ The database model for storing probe groups """
         hostname = models.CharField(max_length=255)

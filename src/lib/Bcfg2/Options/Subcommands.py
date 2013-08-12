@@ -8,10 +8,11 @@ import copy
 import shlex
 import logging
 from Bcfg2.Compat import StringIO
+# pylint: disable=W0403
 from OptionGroups import Subparser
 from Options import PositionalArgument
 from Parser import Parser, setup as master_setup
-
+# pylint: enable=W0403
 
 __all__ = ["Subcommand", "HelpCommand", "CommandRegistry", "register_commands"]
 
@@ -94,9 +95,9 @@ class Subcommand(object):
     def usage(self):
         """ Get the short usage message. """
         if self._usage is None:
-            io = StringIO()
-            self.parser.print_usage(file=io)
-            usage = self._ws_re.sub(' ', io.getvalue()).strip()[7:]
+            sio = StringIO()
+            self.parser.print_usage(file=sio)
+            usage = self._ws_re.sub(' ', sio.getvalue()).strip()[7:]
             doc = self._ws_re.sub(' ', getattr(self, "__doc__")).strip()
             if doc is None:
                 self._usage = usage

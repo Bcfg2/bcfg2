@@ -39,7 +39,7 @@ except ImportError:
     HAS_REPORTS = False
 
 
-class ccolors:  # pylint: disable=C0103
+class ccolors:  # pylint: disable=C0103,W0232
     """ ANSI color escapes to make colorizing text easier """
     # pylint: disable=W1401
     ADDED = '\033[92m'
@@ -95,7 +95,7 @@ def print_table(rows, justify='left', hdr=True, vdelim=" ", padding=1):
             hdr = False
 
 
-class AdminCmd(Bcfg2.Options.Subcommand):
+class AdminCmd(Bcfg2.Options.Subcommand):  # pylint: disable=W0223
     """ Base class for all bcfg2-admin modes """
     def setup(self):
         """ Perform post-init (post-options parsing), pre-run setup
@@ -108,7 +108,7 @@ class AdminCmd(Bcfg2.Options.Subcommand):
         raise SystemExit(1)
 
 
-class _ServerAdminCmd(AdminCmd):
+class _ServerAdminCmd(AdminCmd):  # pylint: disable=W0223
     """ Base class for admin modes that run a Bcfg2 server. """
     __plugin_whitelist__ = None
     __plugin_blacklist__ = None
@@ -142,7 +142,7 @@ class _ServerAdminCmd(AdminCmd):
         self.core.shutdown()
 
 
-class _ProxyAdminCmd(AdminCmd):
+class _ProxyAdminCmd(AdminCmd):  # pylint: disable=W0223
     """ Base class for admin modes that proxy to a running Bcfg2 server """
 
     options = AdminCmd.options + Bcfg2.Client.Proxy.ComponentProxy.options
@@ -317,9 +317,10 @@ class Compare(AdminCmd):
 
     def run(self, setup):  # pylint: disable=R0912,R0914,R0915
         if not sys.stdout.isatty() and not setup.color:
-            ccolors.disable(ccolors)
+            ccolors.disable()
 
-        for file1, file2 in self._get_filelists():
+        files = self._get_filelists(setup)
+        for file1, file2 in files:
             host = None
             if os.path.basename(file1) == os.path.basename(file2):
                 fname = os.path.basename(file1)
@@ -823,7 +824,7 @@ class Pull(_ServerAdminCmd):
                 vcsplugin.commit_data([files], comment)
 
 
-class _ReportsCmd(AdminCmd):
+class _ReportsCmd(AdminCmd):  # pylint: disable=W0223
     """ Base command for all admin modes dealing with the reporting
     subsystem """
     def __init__(self):
@@ -838,7 +839,7 @@ class _ReportsCmd(AdminCmd):
         # Bcfg2.settings has been populated, Django gets a null
         # configuration, and subsequent updates to Bcfg2.settings
         # won't help.
-        import Bcfg2.Reporting.models
+        import Bcfg2.Reporting.models  # pylint: disable=W0621
         self.reports_entries = (Bcfg2.Reporting.models.Group,
                                 Bcfg2.Reporting.models.Bundle,
                                 Bcfg2.Reporting.models.FailureEntry,
@@ -916,7 +917,7 @@ if HAS_REPORTS:
             from django.db.transaction import commit_on_success
             self.run = commit_on_success(self.run)
 
-        def run(self, _):
+        def run(self, _):  # pylint: disable=E0202
             # Cleanup unused entries
             for cls in self.reports_entries:
                 try:

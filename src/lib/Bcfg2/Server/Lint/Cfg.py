@@ -75,7 +75,7 @@ class Cfg(ServerPlugin):
                     not any(fnmatch(fpath, p)
                             for p in Bcfg2.Options.setup.ignore_files) and
                     not any(fnmatch(c, p)
-                            for p in sBcfg2.Options.setup.ignore_files
+                            for p in Bcfg2.Options.setup.ignore_files
                             for c in self._list_path_components(fpath))):
                     all_files.add(fpath)
 

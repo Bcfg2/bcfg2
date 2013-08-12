@@ -306,7 +306,7 @@ class HelperSubcommand(Bcfg2.Options.Subcommand):
         raise NotImplementedError
 
 
-class DepSolverSubcommand(HelperSubcommand):
+class DepSolverSubcommand(HelperSubcommand):  # pylint: disable=W0223
     """ Base class for helper commands that use the depsolver (i.e.,
     only resolve dependencies, don't modify the cache) """
 
@@ -316,7 +316,7 @@ class DepSolverSubcommand(HelperSubcommand):
                                    self.verbosity)
 
 
-class CacheManagerSubcommand(HelperSubcommand):
+class CacheManagerSubcommand(HelperSubcommand):  # pylint: disable=W0223
     """ Base class for helper commands that use the cachemanager
     (i.e., modify the cache) """
     fallback = False

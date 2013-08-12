@@ -1,5 +1,6 @@
 """ Common options used in multiple different contexts. """
 
+from Bcfg2.Utils import classproperty
 # pylint: disable=W0403
 import Types
 from Actions import PluginsAction, ComponentAction
@@ -8,17 +9,6 @@ from Options import Option, PathOption, BooleanOption
 # pylint: enable=W0403
 
 __all__ = ["Common"]
-
-
-class classproperty(object):
-    """ Decorator that can be used to create read-only class
-    properties. """
-
-    def __init__(self, getter):
-        self.getter = getter
-
-    def __get__(self, instance, owner):
-        return self.getter(owner)
 
 
 class ReportingTransportAction(ComponentAction):
@@ -62,6 +52,8 @@ class Common(object):
             import Bcfg2.Server.FileMonitor
 
             class FileMonitorAction(ComponentAction):
+                """ ComponentAction for loading a single FAM backend
+                class """
                 islist = False
                 mapping = Bcfg2.Server.FileMonitor.available
 
@@ -135,3 +127,9 @@ class Common(object):
     default_paranoid = Option(
         cf=('mdata', 'paranoid'), dest="default_paranoid", default='true',
         choices=['true', 'false'], help='Default Path paranoid setting')
+
+    #: Client timeout
+    client_timeout = Option(
+            "-t", "--timeout", type=float, default=90.0, dest="client_timeout",
+            cf=('communication', 'timeout'),
+            help='Set the client XML-RPC timeout')

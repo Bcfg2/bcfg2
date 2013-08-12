@@ -107,7 +107,8 @@ PULPSERVER = None
 PULPCONFIG = None
 
 
-options = [
+options = [  # pylint: disable=C0103
+    Bcfg2.Options.Common.client_timeout,
     Bcfg2.Options.PathOption(
         cf=("packages:yum", "helper"), dest="yum_helper",
         help="Path to the bcfg2-yum-helper executable"),
@@ -307,7 +308,7 @@ class YumCollection(Collection):
             if not os.path.exists(self.cachefile):
                 self.debug_log("Creating common cache %s" % self.cachefile)
                 os.mkdir(self.cachefile)
-                if not self.disableMetaData:
+                if Bcfg2.Options.setup.packages_metadata:
                     self.setup_data()
             self.cmd = Executor()
         else:
@@ -332,26 +333,6 @@ class YumCollection(Collection):
                                           "cert directory at %s: %s" %
                                           (certdir, err))
                 self.__class__.pulp_cert_set = PulpCertificateSet(certdir)
-
-    @property
-    def disableMetaData(self):
-        """ Report whether or not metadata processing is enabled.
-        This duplicates code in Packages/__init__.py, and can probably
-        be removed in Bcfg2 1.4 when we have a module-level setup
-        object. """
-        if self.setup is None:
-            return True
-        try:
-            return not self.setup.cfp.getboolean("packages", "resolver")
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            return False
-        except ValueError:
-            # for historical reasons we also accept "enabled" and
-            # "disabled"
-            return self.setup.cfp.get(
-                "packages",
-                "metadata",
-                default="enabled").lower() == "disabled"
 
     @property
     def __package_groups__(self):
@@ -935,10 +916,12 @@ class YumCollection(Collection):
         self.debug_log("Packages: running %s" % " ".join(cmd))
 
         if inputdata:
-            result = self.cmd.run(cmd, timeout=self.setup['client_timeout'],
+            result = self.cmd.run(cmd,
+                                  timeout=Bcfg2.Options.setup.client_timeout,
                                   inputdata=json.dumps(inputdata))
         else:
-            result = self.cmd.run(cmd, timeout=self.setup['client_timeout'])
+            result = self.cmd.run(cmd,
+                                  timeout=Bcfg2.Options.setup.client_timeout)
         if not result.success:
             self.logger.error("Packages: error running bcfg2-yum-helper: %s" %
                               result.error)

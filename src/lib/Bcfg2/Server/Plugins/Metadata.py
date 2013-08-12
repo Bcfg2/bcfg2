@@ -40,13 +40,13 @@ def load_django_models():
         HAS_DJANGO = False
         return
 
-    class MetadataClientModel(models.Model,
+    class MetadataClientModel(models.Model,  # pylint: disable=W0621
                               Bcfg2.Server.Plugin.PluginDatabaseModel):
         """ django model for storing clients in the database """
         hostname = models.CharField(max_length=255, primary_key=True)
         version = models.CharField(max_length=31, null=True)
 
-    class ClientVersions(MutableMapping,
+    class ClientVersions(MutableMapping,  # pylint: disable=W0621,W0612
                          Bcfg2.Server.Plugin.DatabaseBacked):
         """ dict-like object to make it easier to access client bcfg2
         versions from the database """
@@ -559,7 +559,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.negated_groups = dict()
         # mapping of hostname -> version string
         if self._use_db:
-            self.versions = ClientVersions(core, datastore)
+            self.versions = ClientVersions(core, # pylint: disable=E1102
+                                           datastore)
         else:
             self.versions = dict()
         self.uuid = {}

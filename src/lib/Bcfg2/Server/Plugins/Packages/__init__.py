@@ -29,6 +29,7 @@ def packages_boolean(value):
 
 
 class PackagesBackendAction(Bcfg2.Options.ComponentAction):
+    """ ComponentAction to load Packages backends """
     bases = ['Bcfg2.Server.Plugins.Packages']
     module = True
 
@@ -218,25 +219,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         return rv
     set_debug.__doc__ = Bcfg2.Server.Plugin.Plugin.set_debug.__doc__
 
-    @property
-    def disableResolver(self):
-        """ Report the state of the resolver.  This can be disabled in
-        the configuration.  Note that disabling metadata (see
-        :attr:`disableMetaData`) implies disabling the resolver.
-
-        This property cannot be set. """
-        # disabling metadata without disabling the resolver Breaks
-        # Things
-        return not Bcfg2.Options.setup.packages_metadata or \
-            not Bcfg2.Options.setup.packages_resolver
-
-    @property
-    def disableMetaData(self):
-        """ Report whether or not metadata processing is enabled.
-
-        This property cannot be set. """
-        return not Bcfg2.Options.setup.packages_metadata
-
     def create_config(self, entry, metadata):
         """ Create yum/apt config for the specified client.
 
@@ -376,8 +358,10 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                            :func:`get_collection`
         :type collection: Bcfg2.Server.Plugins.Packages.Collection.Collection
         """
-        if self.disableResolver:
-            # Config requests no resolver
+        if (not Bcfg2.Options.setup.packages_metadata or
+            not Bcfg2.Options.setup.packages_resolver):
+            # Config requests no resolver.  Note that disabling
+            # metadata implies disabling the resolver.
             for struct in structures:
                 for pkg in struct.xpath('//Package | //BoundPackage'):
                     if pkg.get("group"):
@@ -484,7 +468,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
         for collection in list(self.collections.values()):
             cachefiles.update(collection.cachefiles)
-            if not self.disableMetaData:
+            if Bcfg2.Options.setup.packages_metadata:
                 collection.setup_data(force_update)
 
         # clear Collection and package caches
@@ -495,7 +479,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
         for source in self.sources.entries:
             cachefiles.add(source.cachefile)
-            if not self.disableMetaData:
+            if Bcfg2.Options.setup.packages_metadata:
                 source.setup_data(force_update)
 
         for cfile in glob.glob(os.path.join(self.cachepath, "cache-*")):

@@ -313,3 +313,14 @@ def safe_input(msg):
     while len(select.select([sys.stdin.fileno()], [], [], 0.0)[0]) > 0:
         os.read(sys.stdin.fileno(), 4096)
     return input(msg)
+
+
+class classproperty(object):  # pylint: disable=C0103
+    """ Decorator that can be used to create read-only class
+    properties. """
+
+    def __init__(self, getter):
+        self.getter = getter
+
+    def __get__(self, instance, owner):
+        return self.getter(owner)

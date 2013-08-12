@@ -356,7 +356,7 @@ class ComponentProxy(xmlrpclib.ServerProxy):
     options = [
         Bcfg2.Options.Common.location, Bcfg2.Options.Common.ssl_key,
         Bcfg2.Options.Common.ssl_cert, Bcfg2.Options.Common.ssl_ca,
-        Bcfg2.Options.Common.password,
+        Bcfg2.Options.Common.password, Bcfg2.Options.Common.client_timeout,
         Bcfg2.Options.Option(
             "-u", "--user", default="root", cf=('communication', 'user'),
             help='The user to provide for authentication'),
@@ -371,11 +371,7 @@ class ComponentProxy(xmlrpclib.ServerProxy):
         Bcfg2.Options.Option(
             '--ssl-cns', cf=('communication', 'serverCommonNames'),
             type=Bcfg2.Options.Types.colon_list,
-            help='List of server commonNames'),
-        Bcfg2.Options.Option(
-            "-t", "--timeout", type=float, default=90.0,
-            cf=('communication', 'timeout'),
-            help='Set the client XML-RPC timeout')]
+            help='List of server commonNames')]
 
     def __init__(self):
         RetryMethod.max_retries = Bcfg2.Options.setup.retries
@@ -394,6 +390,6 @@ class ComponentProxy(xmlrpclib.ServerProxy):
                                     Bcfg2.Options.setup.cert,
                                     Bcfg2.Options.setup.ca,
                                     Bcfg2.Options.setup.ssl_cns,
-                                    Bcfg2.Options.setup.timeout)
+                                    Bcfg2.Options.setup.client_timeout)
         xmlrpclib.ServerProxy.__init__(self, url,
                                        allow_none=True, transport=ssl_trans)
