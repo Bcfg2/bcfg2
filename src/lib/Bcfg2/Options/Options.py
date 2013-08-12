@@ -4,9 +4,9 @@ need to be associated with an option parser; it exists on its own."""
 
 import os
 import copy
-import Types  # pylint: disable=W0403
 import fnmatch
 import argparse
+from Bcfg2.Options import Types
 from Bcfg2.Compat import ConfigParser
 
 

@@ -8,11 +8,9 @@ import copy
 import shlex
 import logging
 from Bcfg2.Compat import StringIO
-# pylint: disable=W0403
-from OptionGroups import Subparser
-from Options import PositionalArgument
-from Parser import Parser, setup as master_setup
-# pylint: enable=W0403
+from Bcfg2.Options import PositionalArgument
+from Bcfg2.Options.OptionGroups import Subparser
+from Bcfg2.Options.Parser import Parser, setup as master_setup
 
 __all__ = ["Subcommand", "HelpCommand", "CommandRegistry", "register_commands"]
 

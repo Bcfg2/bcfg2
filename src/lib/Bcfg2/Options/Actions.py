@@ -2,7 +2,7 @@
 
 import sys
 import argparse
-from Parser import get_parser  # pylint: disable=W0403
+from Bcfg2.Options.Parser import get_parser
 
 __all__ = ["ConfigFileAction", "ComponentAction", "PluginsAction"]
 

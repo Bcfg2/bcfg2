@@ -3,7 +3,7 @@
 import re
 import copy
 import fnmatch
-from Options import Option  # pylint: disable=W0403
+from Bcfg2.Options import Option
 from itertools import chain
 
 __all__ = ["OptionGroup", "ExclusiveOptionGroup", "Subparser",

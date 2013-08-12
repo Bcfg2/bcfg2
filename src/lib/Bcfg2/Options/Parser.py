@@ -5,7 +5,7 @@ import sys
 import argparse
 from Bcfg2.version import __version__
 from Bcfg2.Compat import ConfigParser
-from Options import Option, PathOption, BooleanOption  # pylint: disable=W0403
+from Bcfg2.Options import Option, PathOption, BooleanOption
 
 __all__ = ["setup", "OptionParserException", "Parser", "get_parser"]
 
