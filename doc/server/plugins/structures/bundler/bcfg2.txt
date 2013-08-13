@@ -52,7 +52,7 @@ entries between Bundler and Rules.
     <BoundPOSIXUser name='bcfg2' shell='/sbin/nologin' gecos='Bcfg2 User'/>
     <Path name="/home/bcfg2/.ssh/id_rsa"/>
 
-    <!-- SSLCA setup -->
+    <!-- SSL CA setup -->
     <BoundPath name="/etc/pki/CA" type="directory" important="true"
                owner="bcfg2" group="bcfg2" mode="755"/>
     <BoundPath name="/etc/pki/CA/crl" type="directory" owner="bcfg2"
@@ -85,4 +85,3 @@ entries between Bundler and Rules.
         name="create-CA-crlnumber" timing="post" when="always" status="check"
         command="[ -e /etc/pki/CA/crlnumber ] || touch /etc/pki/CA/crlnumber"/>
   </Bundle>
-

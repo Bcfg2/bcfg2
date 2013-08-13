@@ -5,17 +5,11 @@ import shutil
 import tempfile
 import Bcfg2.Options
 from Bcfg2.Utils import Executor
-from Bcfg2.Server.Plugin import StructFile
-from Bcfg2.Server.Plugins.Cfg import CfgCreator, CfgCreationError
+from Bcfg2.Server.Plugins.Cfg import XMLCfgCreator, CfgCreationError
 from Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator import CfgPublicKeyCreator
-try:
-    import Bcfg2.Server.Encryption
-    HAS_CRYPTO = True
-except ImportError:
-    HAS_CRYPTO = False
 
 
-class CfgPrivateKeyCreator(CfgCreator, StructFile):
+class CfgPrivateKeyCreator(XMLCfgCreator):
     """The CfgPrivateKeyCreator creates SSH keys on the fly. """
 
     #: Different configurations for different clients/groups can be
@@ -25,6 +19,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
     #: Handle XML specifications of private keys
     __basenames__ = ['privkey.xml']
 
+    cfg_section = "sshkeys"
     options = [
         Bcfg2.Options.Option(
             cf=("sshkeys", "category"), dest="sshkeys_category",
@@ -34,27 +29,12 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
             help="Passphrase used to encrypt generated SSH private keys")]
 
     def __init__(self, fname):
-        CfgCreator.__init__(self, fname)
-        StructFile.__init__(self, fname)
-
+        XMLCfgCreator.__init__(self, fname)
         pubkey_path = os.path.dirname(self.name) + ".pub"
         pubkey_name = os.path.join(pubkey_path, os.path.basename(pubkey_path))
         self.pubkey_creator = CfgPublicKeyCreator(pubkey_name)
         self.cmd = Executor()
-    __init__.__doc__ = CfgCreator.__init__.__doc__
-
-    @property
-    def passphrase(self):
-        """ The passphrase used to encrypt private keys """
-        if HAS_CRYPTO and Bcfg2.Options.setup.sshkeys_passphrase:
-            return Bcfg2.Options.setup.passphrases[
-                Bcfg2.Options.setup.sshkeys_passphrase]
-        return None
-
-    def handle_event(self, event):
-        CfgCreator.handle_event(self, event)
-        StructFile.HandleEvent(self, event)
-    handle_event.__doc__ = CfgCreator.handle_event.__doc__
+    __init__.__doc__ = XMLCfgCreator.__init__.__doc__
 
     def _gen_keypair(self, metadata, spec=None):
         """ Generate a keypair according to the given client medata
@@ -117,45 +97,6 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
             shutil.rmtree(tempdir)
             raise
 
-    def get_specificity(self, metadata, spec=None):
-        """ Get config settings for key generation specificity
-        (per-host or per-group).
-
-        :param metadata: The client metadata to create data for
-        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-        :param spec: The key specification to follow when creating the
-                     keys. This should be an XML document that only
-                     contains key specification data that applies to
-                     the given client metadata, and may be obtained by
-                     doing ``self.XMLMatch(metadata)``
-        :type spec: lxml.etree._Element
-        :returns: dict - A dict of specificity arguments suitable for
-                  passing to
-                  :func:`Bcfg2.Server.Plugins.Cfg.CfgCreator.write_data`
-                  or
-                  :func:`Bcfg2.Server.Plugins.Cfg.CfgCreator.get_filename`
-        """
-        if spec is None:
-            spec = self.XMLMatch(metadata)
-        category = spec.get("category", Bcfg2.Options.setup.sshkeys_category)
-        if category is None:
-            per_host_default = "true"
-        else:
-            per_host_default = "false"
-        per_host = spec.get("perhost", per_host_default).lower() == "true"
-
-        specificity = dict(host=metadata.hostname)
-        if category and not per_host:
-            group = metadata.group_in_category(category)
-            if group:
-                specificity = dict(group=group,
-                                   prio=int(spec.get("priority", 50)))
-            else:
-                self.logger.info("Cfg: %s has no group in category %s, "
-                                 "creating host-specific key" %
-                                 (metadata.hostname, category))
-        return specificity
-
     # pylint: disable=W0221
     def create_data(self, entry, metadata, return_pair=False):
         """ Create data for the given entry on the given client
@@ -176,7 +117,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
                   ``return_pair`` is set to True
         """
         spec = self.XMLMatch(metadata)
-        specificity = self.get_specificity(metadata, spec)
+        specificity = self.get_specificity(metadata)
         filename = self._gen_keypair(metadata, spec)
 
         try:
@@ -190,12 +131,6 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
             # encrypt the private key, write to the proper place, and
             # return it
             privkey = open(filename).read()
-            if HAS_CRYPTO and self.passphrase:
-                self.debug_log("Cfg: Encrypting key data at %s" % filename)
-                privkey = Bcfg2.Server.Encryption.ssl_encrypt(privkey,
-                                                              self.passphrase)
-                specificity['ext'] = '.crypt'
-
             self.write_data(privkey, **specificity)
 
             if return_pair:

@@ -5,7 +5,7 @@ access. """
 import lxml.etree
 import Bcfg2.Options
 from Bcfg2.Server.Plugin import StructFile, PluginExecutionError
-from Bcfg2.Server.Plugins.Cfg import CfgGenerator, CFG
+from Bcfg2.Server.Plugins.Cfg import CfgGenerator, get_cfg
 from Bcfg2.Server.Plugins.Metadata import ClientMetadata
 
 
@@ -25,7 +25,7 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
         CfgGenerator.__init__(self, fname, None)
         StructFile.__init__(self, fname)
         self.cache = dict()
-        self.core = CFG.core
+        self.core = get_cfg().core
     __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def handle_event(self, event):

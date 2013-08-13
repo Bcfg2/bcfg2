@@ -1375,10 +1375,10 @@ class TestSpecificData(TestDebuggable):
         sd = self.get_obj()
         sd.handle_event(event)
         self.assertFalse(mock_open.called)
-        if hasattr(sd, 'data'):
-            self.assertIsNone(sd.data)
-        else:
+        try:
             self.assertFalse(hasattr(sd, 'data'))
+        except AssertionError:
+            self.assertIsNone(sd.data)
 
         event = Mock()
         mock_open.return_value.read.return_value = "test"

@@ -324,60 +324,60 @@ tag, described above, if a glob may potentially find no files.
 Feature Matrix
 ==============
 
-+-------------------------------------------------+--------------+--------+------------+------------+
-| File                                            | Group/Client | Genshi | Encryption | XInclude   |
-+=================================================+==============+========+============+============+
-| :ref:`ACL ip.xml <server-plugins-misc-acl>`     | No           | No     | No         | Yes        |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`ACL metadata.xml                          | Yes          | Yes    | Yes        | Yes        |
-| <server-plugins-misc-acl>`                      |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`Bundler                                   | Yes          | Yes    | Yes        | Yes        |
-| <server-plugins-structures-bundler-index>`      |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`info.xml <server-info>`                   | Yes [#f1]_   | Yes    | Yes        | Yes        |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`privkey.xml and pubkey.xml                | Yes          | Yes    | Yes        | Yes [#f2]_ |
-| <server-plugins-generators-cfg-sshkeys>`        |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`authorizedkeys.xml                        | Yes          | Yes    | Yes        | Yes        |
-| <server-plugins-generators-cfg-sshkeys>`        |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`Decisions                                 | Yes          | Yes    | Yes        | Yes        |
-| <server-plugins-generators-decisions>`          |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`Defaults                                  | Yes          | Yes    | Yes        | Yes        |
-| <server-plugins-structures-defaults>`           |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`FileProbes                                | Yes          | Yes    | Yes        | Yes        |
-| <server-plugins-probes-fileprobes>`             |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`GroupPatterns                             | No           | No     | No         | Yes        |
-| <server-plugins-grouping-grouppatterns>`        |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`Metadata clients.xml                      | No           | No     | No         | Yes        |
-| <server-plugins-grouping-metadata-clients-xml>` |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`Metadata groups.xml                       | Yes [#f3]_   | No     | No         | Yes        |
-| <server-plugins-grouping-metadata-groups-xml>`  |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`NagiosGen                                 | Yes          | Yes    | Yes        | Yes        |
-| <server-plugins-generators-nagiosgen>`          |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`Packages                                  | Yes          | Yes    | Yes        | Yes        |
-| <server-plugins-generators-packages>`           |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`Pkgmgr                                    | Yes          | No     | No         | No         |
-| <server-plugins-generators-pkgmgr>`             |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`Properties                                | Yes [#f4]_   | Yes    | Yes        | Yes        |
-| <server-plugins-connectors-properties>`         |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`Rules <server-plugins-generators-rules>`  | Yes          | Yes    | Yes        | Yes        |
-+-------------------------------------------------+--------------+--------+------------+------------+
-| :ref:`SSLCA cert.xml and key.xml                | Yes          | Yes    | Yes        | Yes        |
-| <server-plugins-generators-sslca>`              |              |        |            |            |
-+-------------------------------------------------+--------------+--------+------------+------------+
++---------------------------------------------------+--------------+--------+------------+------------+
+| File                                              | Group/Client | Genshi | Encryption | XInclude   |
++===================================================+==============+========+============+============+
+| :ref:`ACL ip.xml <server-plugins-misc-acl>`       | No           | No     | No         | Yes        |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`ACL metadata.xml                            | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-misc-acl>`                        |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Bundler                                     | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-structures-bundler-index>`        |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`info.xml <server-info>`                     | Yes [#f1]_   | Yes    | Yes        | Yes        |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`privkey.xml and pubkey.xml                  | Yes          | Yes    | Yes        | Yes [#f2]_ |
+| <server-plugins-generators-cfg-sshkeys>`          |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`authorizedkeys.xml                          | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-cfg-sshkeys>`          |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`sslcert.xml and sslkey.xml                  | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-cfg-ssl-certificates>` |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Decisions                                   | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-decisions>`            |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Defaults                                    | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-structures-defaults>`             |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`FileProbes                                  | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-probes-fileprobes>`               |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`GroupPatterns                               | No           | No     | No         | Yes        |
+| <server-plugins-grouping-grouppatterns>`          |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Metadata clients.xml                        | No           | No     | No         | Yes        |
+| <server-plugins-grouping-metadata-clients-xml>`   |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Metadata groups.xml                         | Yes [#f3]_   | No     | No         | Yes        |
+| <server-plugins-grouping-metadata-groups-xml>`    |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`NagiosGen                                   | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-nagiosgen>`            |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Packages                                    | Yes          | Yes    | Yes        | Yes        |
+| <server-plugins-generators-packages>`             |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Pkgmgr                                      | Yes          | No     | No         | No         |
+| <server-plugins-generators-pkgmgr>`               |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Properties                                  | Yes [#f4]_   | Yes    | Yes        | Yes        |
+| <server-plugins-connectors-properties>`           |              |        |            |            |
++---------------------------------------------------+--------------+--------+------------+------------+
+| :ref:`Rules <server-plugins-generators-rules>`    | Yes          | Yes    | Yes        | Yes        |
++---------------------------------------------------+--------------+--------+------------+------------+
 
 .. rubric:: Footnotes
 

@@ -39,8 +39,9 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
              "Cfg/**/pubkey.xml": "pubkey.xsd",
              "Cfg/**/authorizedkeys.xml": "authorizedkeys.xsd",
              "Cfg/**/authorized_keys.xml": "authorizedkeys.xsd",
+             "Cfg/**/sslcert.xml": "sslca-cert.xsd",
+             "Cfg/**/sslkey.xml": "sslca-key.xsd",
              "SSHbase/**/info.xml": "info.xsd",
-             "SSLCA/**/info.xml": "info.xsd",
              "TGenshi/**/info.xml": "info.xsd",
              "TCheetah/**/info.xml": "info.xsd",
              "Bundler/*.xml": "bundle.xsd",
@@ -55,8 +56,6 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
              "GroupPatterns/config.xml": "grouppatterns.xsd",
              "NagiosGen/config.xml": "nagiosgen.xsd",
              "FileProbes/config.xml": "fileprobes.xsd",
-             "SSLCA/**/cert.xml": "sslca-cert.xsd",
-             "SSLCA/**/key.xml": "sslca-key.xsd",
              "GroupLogic/groups.xml": "grouplogic.xsd"
              }
 

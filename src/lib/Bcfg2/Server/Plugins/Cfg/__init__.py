@@ -10,16 +10,26 @@ import Bcfg2.Options
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugin import PluginExecutionError
 # pylint: disable=W0622
-from Bcfg2.Compat import u_str, unicode, b64encode, any, oct_mode
+from Bcfg2.Compat import u_str, unicode, b64encode, any
 # pylint: enable=W0622
 
-#: CFG is a reference to the :class:`Bcfg2.Server.Plugins.Cfg.Cfg`
-#: plugin object created by the Bcfg2 core.  This is provided so that
-#: the handler objects can access it as necessary, since the existing
-#: :class:`Bcfg2.Server.Plugin.helpers.GroupSpool` and
-#: :class:`Bcfg2.Server.Plugin.helpers.EntrySet` classes have no
-#: facility for passing it otherwise.
-CFG = None
+try:
+    import Bcfg2.Server.Encryption
+    HAS_CRYPTO = True
+except ImportError:
+    HAS_CRYPTO = False
+
+
+_CFG = None
+
+def get_cfg():
+    """ Get the :class:`Bcfg2.Server.Plugins.Cfg.Cfg` plugin object
+    created by the Bcfg2 core.  This is provided so that the handler
+    objects can access it as necessary, since the existing
+    :class:`Bcfg2.Server.Plugin.helpers.GroupSpool` and
+    :class:`Bcfg2.Server.Plugin.helpers.EntrySet` classes have no
+    facility for passing it otherwise."""
+    return _CFG
 
 
 class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
@@ -288,7 +298,7 @@ class CfgCreator(CfgBaseFileMatcher):
         :type name: string
 
         .. -----
-        .. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgCreator.__specific__
+        .. autoattribute:: Bcfg2.Server.Plugins.Cfg.CfgInfo.__specific__
         """
         CfgBaseFileMatcher.__init__(self, fname, None)
 
@@ -310,7 +320,9 @@ class CfgCreator(CfgBaseFileMatcher):
         ``host`` is given, it will be host-specific.  It will be
         group-specific if ``group`` and ``prio`` are given.  If
         neither ``host`` nor ``group`` is given, the filename will be
-        non-specific.
+        non-specific. In general, this will be called as::
+
+            self.get_filename(**self.get_specificity(metadata))
 
         :param host: The file applies to the given host
         :type host: bool
@@ -341,6 +353,9 @@ class CfgCreator(CfgBaseFileMatcher):
         written as a host-specific file, or as a group-specific file
         if ``group`` and ``prio`` are given.  If neither ``host`` nor
         ``group`` is given, it will be written as a non-specific file.
+        In general, this will be called as::
+
+            self.write_data(data, **self.get_specificity(metadata))
 
         :param data: The data to write
         :type data: string
@@ -360,7 +375,7 @@ class CfgCreator(CfgBaseFileMatcher):
         :raises: :exc:`Bcfg2.Server.Plugins.Cfg.CfgCreationError`
         """
         fileloc = self.get_filename(host=host, group=group, prio=prio, ext=ext)
-        self.debug_log("%s: Writing new file %s" % (self.name, fileloc))
+        self.debug_log("Cfg: Writing new file %s" % fileloc)
         try:
             os.makedirs(os.path.dirname(fileloc))
         except OSError:
@@ -374,6 +389,95 @@ class CfgCreator(CfgBaseFileMatcher):
         except IOError:
             err = sys.exc_info()[1]
             raise CfgCreationError("Could not write %s: %s" % (fileloc, err))
+
+
+class XMLCfgCreator(CfgCreator,  # pylint: disable=W0223
+                    Bcfg2.Server.Plugin.StructFile):
+    """ A CfgCreator that uses XML to describe how data should be
+    generated. """
+
+    #: Whether or not the created data from this class can be
+    #: encrypted
+    encryptable = True
+
+    #: Encryption and creation settings can be stored in bcfg2.conf,
+    #: either under the [cfg] section, or under the named section.
+    cfg_section = None
+
+    def __init__(self, name):
+        CfgCreator.__init__(self, name)
+        Bcfg2.Server.Plugin.StructFile.__init__(self, name)
+
+    def handle_event(self, event):
+        CfgCreator.handle_event(self, event)
+        Bcfg2.Server.Plugin.StructFile.HandleEvent(self, event)
+
+    @property
+    def passphrase(self):
+        """ The passphrase used to encrypt created data """
+        if self.cfg_section:
+            localopt = "%s_passphrase" % self.cfg_section
+            passphrase = getattr(Bcfg2.Options.setup, localopt,
+                                 Bcfg2.Options.setup.cfg_passphrase)
+        else:
+            passphrase = Bcfg2.Options.setup.cfg_passphrase
+        if passphrase is None:
+            return None
+        try:
+            return Bcfg2.Options.setup.passphrases[passphrase]
+        except KeyError:
+            raise CfgCreationError("%s: No such passphrase: %s" %
+                                   (self.__class__.__name__, passphrase))
+
+    @property
+    def category(self):
+        """ The category to which created data is specific """
+        if self.cfg_section:
+            localopt = "%s_category" % self.cfg_section
+            return getattr(Bcfg2.Options.setup, localopt,
+                           Bcfg2.Options.setup.cfg_category)
+        else:
+            return Bcfg2.Options.setup.cfg_category
+
+    def write_data(self, data, host=None, group=None, prio=0, ext=''):
+        if HAS_CRYPTO and self.encryptable and self.passphrase:
+            self.debug_log("Cfg: Encrypting created data")
+            data = Bcfg2.Server.Encryption.ssl_encrypt(data, self.passphrase)
+            ext = '.crypt'
+        CfgCreator.write_data(self, data, host=host, group=group, prio=prio,
+                              ext=ext)
+
+    def get_specificity(self, metadata):
+        """ Get config settings for key generation specificity
+        (per-host or per-group).
+
+        :param metadata: The client metadata to create data for
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :returns: dict - A dict of specificity arguments suitable for
+                  passing to
+                  :func:`Bcfg2.Server.Plugins.Cfg.CfgCreator.write_data`
+                  or
+                  :func:`Bcfg2.Server.Plugins.Cfg.CfgCreator.get_filename`
+        """
+        category = self.xdata.get("category", self.category)
+        if category is None:
+            per_host_default = "true"
+        else:
+            per_host_default = "false"
+        per_host = self.xdata.get("perhost",
+                                  per_host_default).lower() == "true"
+
+        specificity = dict(host=metadata.hostname)
+        if category and not per_host:
+            group = metadata.group_in_category(category)
+            if group:
+                specificity = dict(group=group,
+                                   prio=int(self.xdata.get("priority", 50)))
+            else:
+                self.logger.info("Cfg: %s has no group in category %s, "
+                                 "creating host-specific data" %
+                                 (metadata.hostname, category))
+        return specificity
 
 
 class CfgVerificationError(Exception):
@@ -411,7 +515,6 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
     def __init__(self, basename, path, entry_type):
         Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, entry_type)
         self.specific = None
-        self._handlers = None
     __init__.__doc__ = Bcfg2.Server.Plugin.EntrySet.__doc__
 
     def set_debug(self, debug):
@@ -419,14 +522,6 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         for entry in self.entries.values():
             entry.set_debug(debug)
         return rv
-
-    @property
-    def handlers(self):
-        """ A list of Cfg handler classes. """
-        if self._handlers is None:
-            self._handlers = Bcfg2.Options.setup.cfg_handlers
-            self._handlers.sort(key=operator.attrgetter("__priority__"))
-        return self._handlers
 
     def handle_event(self, event):
         """ Dispatch a FAM event to :func:`entry_init` or the
@@ -444,7 +539,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 # process a bogus changed event like a created
                 return
 
-            for hdlr in self.handlers:
+            for hdlr in Bcfg2.Options.setup.cfg_handlers:
                 if hdlr.handles(event, basename=self.path):
                     if action == 'changed':
                         # warn about a bogus 'changed' event, but
@@ -783,6 +878,13 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
             '--cfg-validation', cf=('cfg', 'validation'), default=True,
             help='Run validation on Cfg files'),
         Bcfg2.Options.Option(
+            cf=('cfg', 'category'), dest="cfg_category",
+            help='The default name of the metadata category that created data '
+            'is specific to'),
+        Bcfg2.Options.Option(
+            cf=('cfg', 'passphrase'), dest="cfg_passphrase",
+            help='The default passphrase name used to encrypt created data'),
+        Bcfg2.Options.Option(
             cf=("cfg", "handlers"), dest="cfg_handlers",
             help="Cfg handlers to load",
             type=Bcfg2.Options.Types.comma_list, action=CfgHandlerAction,
@@ -791,23 +893,17 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
                      'CfgGenshiGenerator', 'CfgEncryptedGenshiGenerator',
                      'CfgExternalCommandVerifier', 'CfgInfoXML',
                      'CfgPlaintextGenerator',
-                     'CfgPrivateKeyCreator', 'CfgPublicKeyCreator'])]
+                     'CfgPrivateKeyCreator', 'CfgPublicKeyCreator',
+                     'CfgSSLCACertCreator', 'CfgSSLCAKeyCreator'])]
 
     def __init__(self, core, datastore):
-        global CFG  # pylint: disable=W0603
+        global _CFG  # pylint: disable=W0603
         Bcfg2.Server.Plugin.GroupSpool.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
-        self._handlers = None
-        CFG = self
+        Bcfg2.Options.setup.cfg_handlers.sort(
+            key=operator.attrgetter("__priority__"))
+        _CFG = self
     __init__.__doc__ = Bcfg2.Server.Plugin.GroupSpool.__init__.__doc__
-
-    @property
-    def handlers(self):
-        """ A list of Cfg handler classes. """
-        if self._handlers is None:
-            self._handlers = Bcfg2.Options.setup.cfg_handlers
-            self._handlers.sort(key=operator.attrgetter("__priority__"))
-        return self._handlers
 
     def has_generator(self, entry, metadata):
         """ Return True if the given entry can be generated for the

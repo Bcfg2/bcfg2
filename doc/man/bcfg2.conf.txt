@@ -107,7 +107,6 @@ plugins
 	SEModules
 	ServiceCompat
 	SSHbase
-	SSLCA
 	Svn
 	TemplateHelper
 	Trigger
@@ -364,12 +363,6 @@ The SSHbase generator plugin manages ssh host keys (both v1 and v2) for
 hosts. It also manages the ssh_known_hosts file. It can integrate host
 keys from other management domains and similarly export its keys.
 
-SSLCA Plugin
-++++++++++++
-
-The SSLCA plugin is designed to handle creation of SSL privatekeys and
-certificates on request.
-
 Svn Plugin
 ++++++++++
 
@@ -610,11 +603,12 @@ the configuration file.
         running in paranoid mode. Only the most recent versions of these
         copies will be kept.
 
-SSLCA options
--------------
+SSL CA options
+--------------
 
-These options are necessary to configure the SSLCA plugin and can be
-found in the **[sslca_default]** section of the configuration file.
+These options are necessary to configure the SSL CA feature of the Cfg
+plugin and can be found in the **[sslca_default]** section of the
+configuration file.
 
     config
         Specifies the location of the openssl configuration file for

@@ -6,5 +6,9 @@ migrate_decisions.py
       files into structured XML
 
 convert_bundles.py
-    - Remove deprecated explicit bundle names, renames .genshi bundles
+    - Remove deprecated explicit bundle names, rename .genshi bundles
       to .xml
+
+migrate_sslca.py
+    - Migrate from the standalone SSLCA plugin to the built-in SSL
+      certificate generation abilities of the Cfg plugin

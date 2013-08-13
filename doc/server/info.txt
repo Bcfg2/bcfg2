@@ -7,8 +7,7 @@ info.xml
 ========
 
 Various file properties for entries served by most generator plugins,
-including :ref:`server-plugins-generators-cfg`,
-:ref:`server-plugins-generators-sslca`, and
+including :ref:`server-plugins-generators-cfg` and
 :ref:`server-plugins-generators-sshbase`, are controlled through the
 use of ``info.xml`` files.
 

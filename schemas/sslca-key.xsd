@@ -2,7 +2,7 @@
             xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
   <xsd:annotation>
     <xsd:documentation>
-      Schema for :ref:`server-plugins-generators-sslca` ``key.xml``
+      Schema for :ref:`server-plugins-generators-sslca` ``sslkey.xml``
     </xsd:documentation>
   </xsd:annotation>
 
@@ -91,11 +91,26 @@
       <xsd:element name="Client" type="SSLCAKeyGroupType"/>
       <xsd:element name="KeyInfo" type="KeyInfoType"/>
     </xsd:choice>
-    <xsd:attribute name="lax_decryption" type="xsd:boolean">
+    <xsd:attribute name="perhost" type="xsd:boolean">
       <xsd:annotation>
         <xsd:documentation>
-          Override the global lax_decryption setting in
-          ``bcfg2.conf``.
+          Create keys on a per-host basis (rather than on a per-group
+          basis).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="category" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>
+          Create keys specific to the given category, instead of
+          specific to the category given in ``bcfg2.conf``.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="priority" type="xsd:positiveInteger" default="50">
+      <xsd:annotation>
+        <xsd:documentation>
+          Create group-specific keys with the given priority.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

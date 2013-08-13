@@ -2,7 +2,7 @@
             xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
   <xsd:annotation>
     <xsd:documentation>
-      Schema for :ref:`server-plugins-generators-sslca` ``cert.xml``
+      Schema for :ref:`server-plugins-generators-sslca` ``sslcert.xml``
     </xsd:documentation>
   </xsd:annotation>
 
@@ -76,7 +76,7 @@
         <xsd:documentation>
           The full path to the key entry to use for this certificate.
           This is the *client* path; e.g., for a key defined at
-          ``/var/lib/bcfg2/SSLCA/etc/pki/tls/private/foo.key/key.xml``,
+          ``/var/lib/bcfg2/SSLCA/etc/pki/tls/private/foo.key/sslkey.xml``,
           **key** should be ``/etc/pki/tls/private/foo.key``.
         </xsd:documentation>
       </xsd:annotation>

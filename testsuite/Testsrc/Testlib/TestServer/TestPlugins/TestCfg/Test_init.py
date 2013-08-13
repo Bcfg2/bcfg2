@@ -3,7 +3,7 @@ import sys
 import errno
 import lxml.etree
 import Bcfg2.Options
-from Bcfg2.Compat import walk_packages
+from Bcfg2.Compat import walk_packages, ConfigParser
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugins.Cfg import *
 from Bcfg2.Server.Plugin import PluginExecutionError, Specificity
@@ -19,7 +19,7 @@ while path != "/":
     path = os.path.dirname(path)
 from common import *
 from TestPlugin import TestSpecificData, TestEntrySet, TestGroupSpool, \
-    TestPullTarget
+    TestPullTarget, TestStructFile
 
 
 class TestCfgBaseFileMatcher(TestSpecificData):
@@ -172,6 +172,7 @@ class TestCfgVerifier(TestCfgBaseFileMatcher):
 class TestCfgCreator(TestCfgBaseFileMatcher):
     test_obj = CfgCreator
     path = "/foo/bar/test.txt"
+    should_monitor = False
 
     def setUp(self):
         TestCfgBaseFileMatcher.setUp(self)
@@ -243,6 +244,101 @@ class TestCfgCreator(TestCfgBaseFileMatcher):
         reset()
         mock_makedirs.side_effect = OSError
         self.assertRaises(CfgCreationError, cc.write_data, data)
+
+
+class TestXMLCfgCreator(TestCfgCreator, TestStructFile):
+    test_obj = XMLCfgCreator
+
+    @patch("Bcfg2.Server.Plugins.Cfg.CfgCreator.handle_event")
+    @patch("Bcfg2.Server.Plugin.helpers.StructFile.HandleEvent")
+    def test_handle_event(self, mock_HandleEvent, mock_handle_event):
+        cc = self.get_obj()
+        evt = Mock()
+        cc.handle_event(evt)
+        mock_HandleEvent.assert_called_with(cc, evt)
+        mock_handle_event.assert_called_with(cc, evt)
+
+    def test_get_specificity(self):
+        cc = self.get_obj()
+        metadata = Mock()
+
+        def reset():
+            metadata.group_in_category.reset_mock()
+
+        category = "%s.%s.category" % (self.test_obj.__module__,
+                                       self.test_obj.__name__)
+        @patch(category, None)
+        def inner():
+            cc.xdata = lxml.etree.Element("PrivateKey")
+            self.assertItemsEqual(cc.get_specificity(metadata),
+                                  dict(host=metadata.hostname))
+        inner()
+
+        @patch(category, "foo")
+        def inner2():
+            cc.xdata = lxml.etree.Element("PrivateKey")
+            self.assertItemsEqual(cc.get_specificity(metadata),
+                                  dict(group=metadata.group_in_category.return_value,
+                                       prio=50))
+            metadata.group_in_category.assert_called_with("foo")
+
+            reset()
+            cc.xdata = lxml.etree.Element("PrivateKey", perhost="true")
+            self.assertItemsEqual(cc.get_specificity(metadata),
+                                  dict(host=metadata.hostname))
+
+            reset()
+            cc.xdata = lxml.etree.Element("PrivateKey", category="bar")
+            self.assertItemsEqual(cc.get_specificity(metadata),
+                                  dict(group=metadata.group_in_category.return_value,
+                                       prio=50))
+            metadata.group_in_category.assert_called_with("bar")
+
+            reset()
+            cc.xdata = lxml.etree.Element("PrivateKey", prio="10")
+            self.assertItemsEqual(cc.get_specificity(metadata),
+                                  dict(group=metadata.group_in_category.return_value,
+                                       prio=10))
+            metadata.group_in_category.assert_called_with("foo")
+
+            reset()
+            cc.xdata = lxml.etree.Element("PrivateKey")
+            metadata.group_in_category.return_value = ''
+            self.assertItemsEqual(cc.get_specificity(metadata),
+                                  dict(host=metadata.hostname))
+            metadata.group_in_category.assert_called_with("foo")
+
+        inner2()
+
+    def _test_cfg_property(self, name):
+        """ generic test function to test both category and passphrase
+        properties """
+        cc = self.get_obj()
+        cc.setup = Mock()
+        cc.setup.cfp = ConfigParser.ConfigParser()
+        self.assertIsNone(getattr(cc, name))
+
+        cc.setup.reset_mock()
+        cc.setup.cfp.add_section("cfg")
+        cc.setup.cfp.set("cfg", name, "foo")
+        self.assertEqual(getattr(cc, name), "foo")
+
+        if cc.cfg_section:
+            cc.setup.cfp.add_section(cc.cfg_section)
+            cc.setup.cfp.set(cc.cfg_section, name, "bar")
+            self.assertEqual(getattr(cc, name), "bar")
+
+    def test_category(self):
+        self._test_cfg_property("category")
+
+    @patchIf(HAS_CRYPTO, "Bcfg2.Server.Encryption.get_passphrases")
+    def test_passphrase(self, mock_get_passphrases):
+        cc = self.get_obj()
+        if HAS_CRYPTO and cc.encryptable:
+            mock_get_passphrases.return_value = dict(foo="foo", bar="bar")
+            self._test_cfg_property("passphrase")
+        else:
+            self.assertIsNone(getattr(cc, name))
 
 
 class TestCfgDefaultInfo(TestCfgInfo):

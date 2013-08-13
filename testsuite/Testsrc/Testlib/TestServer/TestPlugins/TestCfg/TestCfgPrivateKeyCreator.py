@@ -33,15 +33,6 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
     def get_obj(self, name=None, fam=None):
         return TestCfgCreator.get_obj(self, name=name)
 
-    @patch("Bcfg2.Server.Plugins.Cfg.CfgCreator.handle_event")
-    @patch("Bcfg2.Server.Plugin.helpers.StructFile.HandleEvent")
-    def test_handle_event(self, mock_HandleEvent, mock_handle_event):
-        pkc = self.get_obj()
-        evt = Mock()
-        pkc.handle_event(evt)
-        mock_HandleEvent.assert_called_with(pkc, evt)
-        mock_handle_event.assert_called_with(pkc, evt)
-
     @patch("shutil.rmtree")
     @patch("tempfile.mkdtemp")
     def test__gen_keypair(self, mock_mkdtemp, mock_rmtree):
@@ -90,57 +81,6 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
         self.assertRaises(CfgCreationError, pkc._gen_keypair, metadata)
         mock_rmtree.assert_called_with(datastore)
 
-    def test_get_specificity(self):
-        pkc = self.get_obj()
-        pkc.XMLMatch = Mock()
-
-        metadata = Mock()
-
-        def reset():
-            pkc.XMLMatch.reset_mock()
-            metadata.group_in_category.reset_mock()
-
-        Bcfg2.Options.setup.sshkeys_category = None
-        pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey")
-        self.assertItemsEqual(pkc.get_specificity(metadata),
-                              dict(host=metadata.hostname))
-
-        Bcfg2.Options.setup.sshkeys_category = "foo"
-        pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey")
-        self.assertItemsEqual(pkc.get_specificity(metadata),
-                              dict(group=metadata.group_in_category.return_value,
-                                   prio=50))
-        metadata.group_in_category.assert_called_with("foo")
-
-        reset()
-        pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey",
-                                                       perhost="true")
-        self.assertItemsEqual(pkc.get_specificity(metadata),
-                              dict(host=metadata.hostname))
-
-        reset()
-        pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey",
-                                                       category="bar")
-        self.assertItemsEqual(pkc.get_specificity(metadata),
-                              dict(group=metadata.group_in_category.return_value,
-                                   prio=50))
-        metadata.group_in_category.assert_called_with("bar")
-
-        reset()
-        pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey",
-                                                       prio="10")
-        self.assertItemsEqual(pkc.get_specificity(metadata),
-                              dict(group=metadata.group_in_category.return_value,
-                                   prio=10))
-        metadata.group_in_category.assert_called_with("foo")
-
-        reset()
-        pkc.XMLMatch.return_value = lxml.etree.Element("PrivateKey")
-        metadata.group_in_category.return_value = ''
-        self.assertItemsEqual(pkc.get_specificity(metadata),
-                              dict(host=metadata.hostname))
-        metadata.group_in_category.assert_called_with("foo")
-
     @patch("shutil.rmtree")
     @patch("%s.open" % builtins)
     def test_create_data(self, mock_open, mock_rmtree):
@@ -179,67 +119,33 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
             mock_open.return_value.read.side_effect = open_read_rv
 
         reset()
-        passphrase = "Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator.CfgPrivateKeyCreator.passphrase"
+        self.assertEqual(pkc.create_data(entry, metadata), "privatekey")
+        pkc.XMLMatch.assert_called_with(metadata)
+        pkc.get_specificity.assert_called_with(metadata)
+        pkc._gen_keypair.assert_called_with(metadata,
+ pkc.XMLMatch.return_value)
+        self.assertItemsEqual(mock_open.call_args_list,
+                              [call(privkey + ".pub"), call(privkey)])
+        pkc.pubkey_creator.get_filename.assert_called_with(group="foo")
+        pkc.pubkey_creator.write_data.assert_called_with(
+            "ssh-rsa publickey pubkey.filename\n", group="foo")
+        pkc.write_data.assert_called_with("privatekey", group="foo")
+        mock_rmtree.assert_called_with(datastore)
 
-        @patch(passphrase, None)
-        def inner():
-            self.assertEqual(pkc.create_data(entry, metadata), "privatekey")
-            pkc.XMLMatch.assert_called_with(metadata)
-            pkc.get_specificity.assert_called_with(metadata,
-                                                   pkc.XMLMatch.return_value)
-            pkc._gen_keypair.assert_called_with(metadata,
-                                                pkc.XMLMatch.return_value)
-            self.assertItemsEqual(mock_open.call_args_list,
-                                  [call(privkey + ".pub"), call(privkey)])
-            pkc.pubkey_creator.get_filename.assert_called_with(group="foo")
-            pkc.pubkey_creator.write_data.assert_called_with(
-                "ssh-rsa publickey pubkey.filename\n", group="foo")
-            pkc.write_data.assert_called_with("privatekey", group="foo")
-            mock_rmtree.assert_called_with(datastore)
-
-            reset()
-            self.assertEqual(pkc.create_data(entry, metadata, return_pair=True),
-                             ("ssh-rsa publickey pubkey.filename\n",
-                              "privatekey"))
-            pkc.XMLMatch.assert_called_with(metadata)
-            pkc.get_specificity.assert_called_with(metadata,
-                                                   pkc.XMLMatch.return_value)
-            pkc._gen_keypair.assert_called_with(metadata,
-                                                pkc.XMLMatch.return_value)
-            self.assertItemsEqual(mock_open.call_args_list,
-                                  [call(privkey + ".pub"), call(privkey)])
-            pkc.pubkey_creator.get_filename.assert_called_with(group="foo")
-            pkc.pubkey_creator.write_data.assert_called_with(
-                "ssh-rsa publickey pubkey.filename\n",
-                group="foo")
-            pkc.write_data.assert_called_with("privatekey", group="foo")
-            mock_rmtree.assert_called_with(datastore)
-
-        inner()
-
-        if HAS_CRYPTO:
-            @patch(passphrase, "foo")
-            @patch("Bcfg2.Server.Encryption.ssl_encrypt")
-            def inner2(mock_ssl_encrypt):
-                reset()
-                mock_ssl_encrypt.return_value = "encryptedprivatekey"
-                Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator.HAS_CRYPTO = True
-                self.assertEqual(pkc.create_data(entry, metadata),
-                                 "encryptedprivatekey")
-                pkc.XMLMatch.assert_called_with(metadata)
-                pkc.get_specificity.assert_called_with(
-                    metadata,
-                    pkc.XMLMatch.return_value)
-                pkc._gen_keypair.assert_called_with(metadata,
-                                                    pkc.XMLMatch.return_value)
-                self.assertItemsEqual(mock_open.call_args_list,
-                                      [call(privkey + ".pub"), call(privkey)])
-                pkc.pubkey_creator.get_filename.assert_called_with(group="foo")
-                pkc.pubkey_creator.write_data.assert_called_with(
-                    "ssh-rsa publickey pubkey.filename\n", group="foo")
-                pkc.write_data.assert_called_with("encryptedprivatekey",
-                                                  group="foo", ext=".crypt")
-                mock_ssl_encrypt.assert_called_with("privatekey", "foo")
-                mock_rmtree.assert_called_with(datastore)
-
-            inner2()
+        reset()
+        self.assertEqual(pkc.create_data(entry, metadata, return_pair=True),
+                         ("ssh-rsa publickey pubkey.filename\n",
+                          "privatekey"))
+        pkc.XMLMatch.assert_called_with(metadata)
+        pkc.get_specificity.assert_called_with(metadata,
+                                               pkc.XMLMatch.return_value)
+        pkc._gen_keypair.assert_called_with(metadata,
+                                            pkc.XMLMatch.return_value)
+        self.assertItemsEqual(mock_open.call_args_list,
+                              [call(privkey + ".pub"), call(privkey)])
+        pkc.pubkey_creator.get_filename.assert_called_with(group="foo")
+        pkc.pubkey_creator.write_data.assert_called_with(
+            "ssh-rsa publickey pubkey.filename\n",
+            group="foo")
+        pkc.write_data.assert_called_with("privatekey", group="foo")
+        mock_rmtree.assert_called_with(datastore)
