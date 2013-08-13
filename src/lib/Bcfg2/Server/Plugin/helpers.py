@@ -928,6 +928,7 @@ class PriorityStructFile(StructFile):
     __init__.__doc__ = StructFile.__init__.__doc__
 
     def Index(self):
+        StructFile.Index(self)
         try:
             self.priority = int(self.xdata.get('priority'))
         except (ValueError, TypeError):
@@ -958,13 +959,11 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
     def HandleEvent(self, event):
         XMLDirectoryBacked.HandleEvent(self, event)
         self.Entries = {}
-        for src in list(self.entries.values()):
-            for itype, children in list(src.items.items()):
-                for child in children:
-                    try:
-                        self.Entries[itype][child] = self.BindEntry
-                    except KeyError:
-                        self.Entries[itype] = {child: self.BindEntry}
+        for src in self.entries.values():
+            for child in src.xdata.iterchildren():
+                if child.tag not in self.Entries:
+                    self.Entries[child.tag] = dict()
+                self.Entries[child.tag][child.get("name")] = self.BindEntry
     HandleEvent.__doc__ = XMLDirectoryBacked.HandleEvent.__doc__
 
     def _matches(self, entry, metadata, candidate):  # pylint: disable=W0613

@@ -1199,13 +1199,20 @@ class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
                Mock())
         def inner():
             pd = self.get_obj()
-            test1 = Mock()
-            test1.items = dict(Path=["/etc/foo.conf", "/etc/bar.conf"])
-            test2 = Mock()
-            test2.items = dict(Path=["/etc/baz.conf"],
-                               Package=["quux", "xyzzy"])
-            pd.entries = {"/test1.xml": test1,
-                          "/test2.xml": test2}
+            test1 = lxml.etree.Element("Test")
+            lxml.etree.SubElement(test1, "Path", name="/etc/foo.conf")
+            lxml.etree.SubElement(lxml.etree.SubElement(test1,
+                                                        "Group", name="foo"),
+                                  "Path", name="/etc/bar.conf")
+
+            test2 = lxml.etree.Element("Test")
+            lxml.etree.SubElement(test2, "Path", name="/etc/baz.conf")
+            lxml.etree.SubElement(test2, "Package", name="quux")
+            lxml.etree.SubElement(lxml.etree.SubElement(test2,
+                                                        "Group", name="bar"),
+                                  "Package", name="xyzzy")
+            pd.entries = {"/test1.xml": Mock(xdata=test1),
+                          "/test2.xml": Mock(xdata=test2)}
             pd.HandleEvent(Mock())
             self.assertItemsEqual(pd.Entries,
                                   dict(Path={"/etc/foo.conf": pd.BindEntry,
