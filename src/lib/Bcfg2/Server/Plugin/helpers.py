@@ -631,6 +631,9 @@ class StructFile(XMLFileBacked):
     #: the file being cached
     __identifier__ = None
 
+    #: Whether or not to enable encryption
+    encryption = True
+
     #: Callbacks used to determine if children of items with the given
     #: tags should be included in the return value of
     #: :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` and
@@ -674,7 +677,7 @@ class StructFile(XMLFileBacked):
                 self.logger.error('Genshi parse error in %s: %s' % (self.name,
                                                                     err))
 
-        if HAS_CRYPTO:
+        if HAS_CRYPTO and self.encryption:
             lax_decrypt = self.xdata.get(
                 "lax_decryption",
                 str(Bcfg2.Options.setup.lax_decryption)).lower() == "true"

@@ -10,7 +10,7 @@ import Bcfg2.Options
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugin import PluginExecutionError
 # pylint: disable=W0622
-from Bcfg2.Compat import u_str, unicode, b64encode, any
+from Bcfg2.Compat import u_str, unicode, b64encode, any, walk_packages
 # pylint: enable=W0622
 
 try:
@@ -19,8 +19,11 @@ try:
 except ImportError:
     HAS_CRYPTO = False
 
+_handlers = [m[1]  # pylint: disable=C0103
+             for m in walk_packages(path=__path__)]
 
 _CFG = None
+
 
 def get_cfg():
     """ Get the :class:`Bcfg2.Server.Plugins.Cfg.Cfg` plugin object
@@ -888,13 +891,7 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
             cf=("cfg", "handlers"), dest="cfg_handlers",
             help="Cfg handlers to load",
             type=Bcfg2.Options.Types.comma_list, action=CfgHandlerAction,
-            default=['CfgAuthorizedKeysGenerator', 'CfgEncryptedGenerator',
-                     'CfgCheetahGenerator', 'CfgEncryptedCheetahGenerator',
-                     'CfgGenshiGenerator', 'CfgEncryptedGenshiGenerator',
-                     'CfgExternalCommandVerifier', 'CfgInfoXML',
-                     'CfgPlaintextGenerator',
-                     'CfgPrivateKeyCreator', 'CfgPublicKeyCreator',
-                     'CfgSSLCACertCreator', 'CfgSSLCAKeyCreator'])]
+            default=_handlers)]
 
     def __init__(self, core, datastore):
         global _CFG  # pylint: disable=W0603

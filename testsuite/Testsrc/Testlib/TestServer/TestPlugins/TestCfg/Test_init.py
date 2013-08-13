@@ -177,6 +177,7 @@ class TestCfgCreator(TestCfgBaseFileMatcher):
     def setUp(self):
         TestCfgBaseFileMatcher.setUp(self)
         set_setup_default("filemonitor", MagicMock())
+        set_setup_default("cfg_passphrase", None)
 
     def get_obj(self, name=None):
         if name is None:
@@ -249,6 +250,10 @@ class TestCfgCreator(TestCfgBaseFileMatcher):
 class TestXMLCfgCreator(TestCfgCreator, TestStructFile):
     test_obj = XMLCfgCreator
 
+    def setUp(self):
+        TestCfgCreator.setUp(self)
+        TestStructFile.setUp(self)
+
     @patch("Bcfg2.Server.Plugins.Cfg.CfgCreator.handle_event")
     @patch("Bcfg2.Server.Plugin.helpers.StructFile.HandleEvent")
     def test_handle_event(self, mock_HandleEvent, mock_handle_event):
@@ -310,36 +315,6 @@ class TestXMLCfgCreator(TestCfgCreator, TestStructFile):
 
         inner2()
 
-    def _test_cfg_property(self, name):
-        """ generic test function to test both category and passphrase
-        properties """
-        cc = self.get_obj()
-        cc.setup = Mock()
-        cc.setup.cfp = ConfigParser.ConfigParser()
-        self.assertIsNone(getattr(cc, name))
-
-        cc.setup.reset_mock()
-        cc.setup.cfp.add_section("cfg")
-        cc.setup.cfp.set("cfg", name, "foo")
-        self.assertEqual(getattr(cc, name), "foo")
-
-        if cc.cfg_section:
-            cc.setup.cfp.add_section(cc.cfg_section)
-            cc.setup.cfp.set(cc.cfg_section, name, "bar")
-            self.assertEqual(getattr(cc, name), "bar")
-
-    def test_category(self):
-        self._test_cfg_property("category")
-
-    @patchIf(HAS_CRYPTO, "Bcfg2.Server.Encryption.get_passphrases")
-    def test_passphrase(self, mock_get_passphrases):
-        cc = self.get_obj()
-        if HAS_CRYPTO and cc.encryptable:
-            mock_get_passphrases.return_value = dict(foo="foo", bar="bar")
-            self._test_cfg_property("passphrase")
-        else:
-            self.assertIsNone(getattr(cc, name))
-
 
 class TestCfgDefaultInfo(TestCfgInfo):
     test_obj = CfgDefaultInfo
@@ -372,6 +347,7 @@ class TestCfgEntrySet(TestEntrySet):
     def setUp(self):
         TestEntrySet.setUp(self)
         set_setup_default("cfg_validation", False)
+        set_setup_default("cfg_handlers", [])
 
     def test__init(self):
         pass
@@ -379,14 +355,14 @@ class TestCfgEntrySet(TestEntrySet):
     def test_handle_event(self):
         eset = self.get_obj()
         eset.entry_init = Mock()
-        eset._handlers = [Mock(), Mock(), Mock()]
-        for hdlr in eset._handlers:
+        Bcfg2.Options.setup.cfg_handlers = [Mock(), Mock(), Mock()]
+        for hdlr in Bcfg2.Options.setup.cfg_handlers:
             hdlr.__name__ = "handler"
         eset.entries = dict()
 
         def reset():
             eset.entry_init.reset_mock()
-            for hdlr in eset._handlers:
+            for hdlr in Bcfg2.Options.setup.cfg_handlers:
                 hdlr.reset_mock()
 
         # test that a bogus deleted event is discarded
@@ -396,18 +372,19 @@ class TestCfgEntrySet(TestEntrySet):
         eset.handle_event(evt)
         self.assertFalse(eset.entry_init.called)
         self.assertItemsEqual(eset.entries, dict())
-        for hdlr in eset._handlers:
+        for hdlr in Bcfg2.Options.setup.cfg_handlers:
             self.assertFalse(hdlr.handles.called)
             self.assertFalse(hdlr.ignore.called)
 
         # test creation of a new file
         for action in ["exists", "created", "changed"]:
+            print("Testing handling of %s events" % action)
             evt = Mock()
             evt.code2str.return_value = action
             evt.filename = os.path.join(datastore, "test.txt")
 
             # test with no handler that handles
-            for hdlr in eset._handlers:
+            for hdlr in Bcfg2.Options.setup.cfg_handlers:
                 hdlr.handles.return_value = False
                 hdlr.ignore.return_value = False
 
@@ -415,16 +392,16 @@ class TestCfgEntrySet(TestEntrySet):
             eset.handle_event(evt)
             self.assertFalse(eset.entry_init.called)
             self.assertItemsEqual(eset.entries, dict())
-            for hdlr in eset._handlers:
+            for hdlr in Bcfg2.Options.setup.cfg_handlers:
                 hdlr.handles.assert_called_with(evt, basename=eset.path)
                 hdlr.ignore.assert_called_with(evt, basename=eset.path)
 
             # test with a handler that handles the entry
             reset()
-            eset._handlers[-1].handles.return_value = True
+            Bcfg2.Options.setup.cfg_handlers[-1].handles.return_value = True
             eset.handle_event(evt)
-            eset.entry_init.assert_called_with(evt, eset._handlers[-1])
-            for hdlr in eset._handlers:
+            eset.entry_init.assert_called_with(evt, Bcfg2.Options.setup.cfg_handlers[-1])
+            for hdlr in Bcfg2.Options.setup.cfg_handlers:
                 hdlr.handles.assert_called_with(evt, basename=eset.path)
                 if not hdlr.return_value:
                     hdlr.ignore.assert_called_with(evt, basename=eset.path)
@@ -432,14 +409,14 @@ class TestCfgEntrySet(TestEntrySet):
             # test with a handler that ignores the entry before one
             # that handles it
             reset()
-            eset._handlers[0].ignore.return_value = True
+            Bcfg2.Options.setup.cfg_handlers[0].ignore.return_value = True
             eset.handle_event(evt)
             self.assertFalse(eset.entry_init.called)
-            eset._handlers[0].handles.assert_called_with(evt,
-                                                         basename=eset.path)
-            eset._handlers[0].ignore.assert_called_with(evt,
-                                                        basename=eset.path)
-            for hdlr in eset._handlers[1:]:
+            Bcfg2.Options.setup.cfg_handlers[0].handles.assert_called_with(
+                evt, basename=eset.path)
+            Bcfg2.Options.setup.cfg_handlers[0].ignore.assert_called_with(
+                evt, basename=eset.path)
+            for hdlr in Bcfg2.Options.setup.cfg_handlers[1:]:
                 self.assertFalse(hdlr.handles.called)
                 self.assertFalse(hdlr.ignore.called)
 
@@ -451,7 +428,7 @@ class TestCfgEntrySet(TestEntrySet):
         eset.entries[evt.filename] = Mock()
         eset.handle_event(evt)
         self.assertFalse(eset.entry_init.called)
-        for hdlr in eset._handlers:
+        for hdlr in Bcfg2.Options.setup.cfg_handlers:
             self.assertFalse(hdlr.handles.called)
             self.assertFalse(hdlr.ignore.called)
         eset.entries[evt.filename].handle_event.assert_called_with(evt)
@@ -461,7 +438,7 @@ class TestCfgEntrySet(TestEntrySet):
         evt.code2str.return_value = "deleted"
         eset.handle_event(evt)
         self.assertFalse(eset.entry_init.called)
-        for hdlr in eset._handlers:
+        for hdlr in Bcfg2.Options.setup.cfg_handlers:
             self.assertFalse(hdlr.handles.called)
             self.assertFalse(hdlr.ignore.called)
         self.assertItemsEqual(eset.entries, dict())
@@ -825,6 +802,11 @@ class TestCfgEntrySet(TestEntrySet):
 
 class TestCfg(TestGroupSpool, TestPullTarget):
     test_obj = Cfg
+
+    def setUp(self):
+        TestGroupSpool.setUp(self)
+        TestPullTarget.setUp(self)
+        set_setup_default("cfg_handlers", [])
 
     def get_obj(self, core=None):
         if core is None:

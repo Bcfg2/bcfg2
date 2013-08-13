@@ -24,9 +24,8 @@ from TestServer.TestPlugin.Testinterfaces import TestGenerator
 
 try:
     from Bcfg2.Server.Encryption import EVPError
-    HAS_CRYPTO = True
 except:
-    HAS_CRYPTO = False
+    pass
 
 
 def tostring(el):
@@ -625,6 +624,10 @@ class TestXMLFileBacked(TestFileBacked):
 class TestStructFile(TestXMLFileBacked):
     test_obj = StructFile
 
+    def setUp(self):
+        TestXMLFileBacked.setUp(self)
+        set_setup_default("lax_decryption", False)
+
     def _get_test_data(self):
         """ build a very complex set of test data """
         # top-level group and client elements
@@ -707,11 +710,10 @@ class TestStructFile(TestXMLFileBacked):
 
     @patch("genshi.template.TemplateLoader")
     def test_Index(self, mock_TemplateLoader):
-        has_crypto = Bcfg2.Server.Plugin.helpers.HAS_CRYPTO
-        Bcfg2.Server.Plugin.helpers.HAS_CRYPTO = False
         TestXMLFileBacked.test_Index(self)
 
         sf = self.get_obj()
+        sf.encryption = False
         sf.encoding = Mock()
         (xdata, groups, subgroups, children, subchildren, standalone) = \
             self._get_test_data()
@@ -736,10 +738,10 @@ class TestStructFile(TestXMLFileBacked):
         self.assertEqual(sf.template,
                          loader.load.return_value)
 
-        Bcfg2.Server.Plugin.helpers.HAS_CRYPTO = has_crypto
-
     @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
     def test_Index_crypto(self):
+        if not self.test_obj.encryption:
+            return
         Bcfg2.Options.setup.lax_decryption = False
         sf = self.get_obj()
         sf._decrypt = Mock()

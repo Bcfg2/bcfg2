@@ -22,16 +22,15 @@ while path != "/":
         break
     path = os.path.dirname(path)
 from common import *
-from TestServer.TestPlugins.TestCfg.Test_init import TestCfgCreator
-from TestServer.TestPlugin.Testhelpers import TestStructFile
+from TestServer.TestPlugins.TestCfg.Test_init import TestXMLCfgCreator
 
 
-class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
+class TestCfgPrivateKeyCreator(TestXMLCfgCreator):
     test_obj = CfgPrivateKeyCreator
     should_monitor = False
 
     def get_obj(self, name=None, fam=None):
-        return TestCfgCreator.get_obj(self, name=name)
+        return TestXMLCfgCreator.get_obj(self, name=name)
 
     @patch("shutil.rmtree")
     @patch("tempfile.mkdtemp")
@@ -93,7 +92,7 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
         # the get_specificity() return value is being used
         # appropriately, we put some dummy data in it and test for
         # that data
-        pkc.get_specificity.side_effect = lambda m, s: dict(group="foo")
+        pkc.get_specificity.side_effect = lambda m: dict(group="foo")
         pkc._gen_keypair = Mock()
         privkey = os.path.join(datastore, "privkey")
         pkc._gen_keypair.return_value = privkey
@@ -137,8 +136,7 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
                          ("ssh-rsa publickey pubkey.filename\n",
                           "privatekey"))
         pkc.XMLMatch.assert_called_with(metadata)
-        pkc.get_specificity.assert_called_with(metadata,
-                                               pkc.XMLMatch.return_value)
+        pkc.get_specificity.assert_called_with(metadata)
         pkc._gen_keypair.assert_called_with(metadata,
                                             pkc.XMLMatch.return_value)
         self.assertItemsEqual(mock_open.call_args_list,

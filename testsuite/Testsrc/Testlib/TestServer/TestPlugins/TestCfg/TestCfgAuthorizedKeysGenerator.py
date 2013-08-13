@@ -27,12 +27,12 @@ class TestCfgAuthorizedKeysGenerator(TestCfgGenerator, TestStructFile):
         TestCfgGenerator.setUp(self)
         TestStructFile.setUp(self)
 
-    def get_obj(self, name=None, core=None, fam=None):
+    @patch("Bcfg2.Server.Plugins.Cfg.CfgAuthorizedKeysGenerator.get_cfg")
+    def get_obj(self, mock_get_cfg, name=None, core=None, fam=None):
         if name is None:
             name = self.path
-        Bcfg2.Server.Plugins.Cfg.CfgAuthorizedKeysGenerator.CFG = Mock()
         if core is not None:
-            Bcfg2.Server.Plugins.Cfg.CfgAuthorizedKeysGenerator.CFG.core = core
+            mock_get_cfg.return_value.core = core
         return self.test_obj(name)
 
     @patch("Bcfg2.Server.Plugins.Cfg.CfgGenerator.handle_event")
