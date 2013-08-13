@@ -1091,7 +1091,7 @@ class Viz(_ServerAdminCmd):
             help="Show a key for different digraph shapes"),
         Bcfg2.Options.Option(
             "-c", "--only-client", metavar="<hostname>",
-            help="Show only the groups, bundles for the named client"),
+            help="Only show groups and bundles for the named client"),
         Bcfg2.Options.PathOption(
             "-o", "--outfile",
             help="Write viz output to an output file")]

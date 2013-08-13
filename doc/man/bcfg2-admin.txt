@@ -38,9 +38,6 @@ Modes
 
 backup
     Create an archive of the entire Bcfg2 repository.
-bundle *action*
-    Display details about the available bundles (See BUNDLE OPTIONS
-    below).
 client *action* *client* [attribute=value]
     Add, edit, or remove clients entries in metadata (See CLIENT OPTIONS
     below).
@@ -48,8 +45,12 @@ compare *old* *new*
     Compare two client configurations. Can be used to verify consistent
     behavior between releases. Determine differences between files or
     directories (See COMPARE OPTIONS below).
+dbshell
+    Call the Django 'dbshell' command on the configured database.
 init
     Initialize a new repository (interactive).
+initreports
+    Initialize the Reporting database.
 minestruct *client* [-f xml-file] [-g groups]
     Build structure entries based on client statistics extra entries
     (See MINESTRUCT OPTIONS below).
@@ -58,33 +59,30 @@ perf
 pull *client* *entry-type* *entry-name*
     Install configuration information into repo based on client bad
     entries (See PULL OPTIONS below).
-reports [init|load_stats|purge|scrub|update]
-    Interact with the dynamic reporting system (See REPORTS OPTIONS
-    below).
-snapshots [init|dump|query|reports]
-    Interact with the Snapshots database (See SNAPSHOTS OPTIONS below).
+purgereports
+    Purge historic and expired data from the Reporting database
+reportssqlall
+    Call the Django 'shell' command on the Reporting database.
+reportsstats
+    Print Reporting database statistics.
+scrubreports
+    Scrub the Reporting database for duplicate reasons and orphaned
+    entries.
+shell
+    Call the Django 'shell' command on the configured database.
 syncdb
     Sync the Django ORM with the configured database.
 tidy
     Remove unused files from repository.
+updatereports
+    Apply database schema updates to the Reporting database.
+validatedb
+    Call the Django 'validate' command on the configured database.
 viz [-H] [-b] [-k] [-o png-file]
     Create a graphviz diagram of client, group and bundle information
     (See VIZ OPTIONS below).
 xcmd
     Provides a XML-RPC Command Interface to the bcfg2-server.
-
-BUNDLE OPTIONS
-++++++++++++++
-
-mode
-    One of the following.
-
-    *list-xml*
-        List all available xml bundles
-    *list-genshi*
-        List all available genshi bundles
-    *show*
-        Interactive dialog to get details about the available bundles
 
 CLIENT OPTIONS
 ++++++++++++++
@@ -110,11 +108,20 @@ attribute=value
 COMPARE OPTIONS
 +++++++++++++++
 
+-d *N*, --diff-lines *N*
+    Show only N lines of a diff
+
+-c, --color
+    Show colors even if not ryn from a TTY
+
+-q, --quiet
+    Only show that entries differ, not how they differ
+
 old
-    Specify the location of the old configuration file.
+    Specify the location of the old configuration(s).
 
 new
-    Specify the location of the new configuration file.
+    Specify the location of the new configuration(s).
 
 MINESTRUCT OPTIONS
 ++++++++++++++++++
@@ -140,50 +147,23 @@ entry type
 entry name
     Specify the name of the entry to pull.
 
-REPORTS OPTIONS
-+++++++++++++++
-
-load_stats [-s] [-c] [-03]
-    Load statistics data.
-
-purge [--client [n]] [--days [n]] [--expired]
-    Purge historic and expired data.
-
-scrub
-    Scrub the database for duplicate reasons and orphaned entries.
-
-update
-    Apply any updates to the reporting database.
-
-SNAPSHOTS OPTIONS
-+++++++++++++++++
-
-init
-    Initialize the snapshots database.
-
-query
-    Query the snapshots database.
-
-dump
-    Dump some of the contents of the snapshots database.
-
-reports [-a] [-b] [-e] [--date=MM-DD-YYYY]
-    Generate reports for clients in the snapshots database.
-
 VIZ OPTIONS
 +++++++++++
 
--H
+-H, --includehosts
     Include hosts in diagram.
 
--b
+-b, --includebundles
     Include bundles in diagram.
 
--o <outfile>
+-o *outfile*, --outfile *outfile*
     Write to outfile file instead of stdout.
 
--k
+-k, --includekey
     Add a shape/color key.
+
+-c *hostname*, --only-client *hostname*
+    Only show groups and bundles for the named client
 
 See Also
 --------
