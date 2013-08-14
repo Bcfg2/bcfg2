@@ -61,6 +61,9 @@ export.sh
 generate-manpages.bash
     - Generate man pages from the Sphinx source
 
+git_commit.py
+    - Trigger script to commit local changes back to a git repository
+
 hostbasepush.py
     - Call the Hostbase.rebuildState XML-RPC method
 
@@ -100,4 +103,3 @@ upgrade
 yum-listpkgs-xml.py
     - Produces a list of all packages installed and available in a
       format suitable for use by Packages or Pkgmgr
-
