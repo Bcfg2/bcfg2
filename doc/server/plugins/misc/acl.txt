@@ -189,7 +189,7 @@ The ACL descriptions allow you to use '*' as a wildcard for any number
 of characters *other than* ``.``.  That is:
 
 * ``*`` would match ``DeclareVersion`` and ``GetProbes``, but would
-  *not* match ``Git.Update``.
+  *not* match ``Git.Update`.
 * ``*.*`` would match ``Git.Update``, but not ``DeclareVersion`` or
   ``GetProbes``.
 

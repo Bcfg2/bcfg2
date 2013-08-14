@@ -13,7 +13,7 @@ Metadata Caching
 
 Caching (or, rather, cache expiration) is always a difficult problem,
 but it's particularly vexing in Bcfg2 due to the number of different
-data sources incorporated.  In 1.3.0, we introduced some limited
+data sources incorporated.  In 1.3.0, we introduce some limited
 caching of client metadata objects.  Since a client metadata object
 can be generated anywhere from 7 to dozens of times per client run
 (depending on your templates), and since client metadata generation

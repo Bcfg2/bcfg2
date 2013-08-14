@@ -2,8 +2,7 @@
             xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
   <xsd:annotation>
     <xsd:documentation>
-      Schema for :ref:`server-plugins-generators-cfg-ssl-certificates`
-      ``sslcert.xml``
+      Schema for :ref:`server-plugins-generators-sslca` ``sslcert.xml``
     </xsd:documentation>
   </xsd:annotation>
 
@@ -93,8 +92,8 @@
       <xsd:annotation>
         <xsd:documentation>
           The name of the CA (from :ref:`bcfg2.conf
-          &lt;server-plugins-generators-cfg-configuration&gt;`) to use
-          to generate this certificate.
+          &lt;sslca-configuration&gt;`) to use to generate this
+          certificate.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

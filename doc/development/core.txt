@@ -86,4 +86,4 @@ Multiprocessing Core
 CherryPy Core
 -------------
 
-.. automodule:: Bcfg2.Server.CherrypyCore
+.. automodule:: Bcfg2.Server.CherryPyCore

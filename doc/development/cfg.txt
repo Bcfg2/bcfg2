@@ -55,6 +55,11 @@ exceptions:
 .. autoexception:: Bcfg2.Server.Plugin.exceptions.PluginInitError
    :noindex:
 
+Global Variables
+================
+
+.. autodata:: Bcfg2.Server.Plugins.Cfg.CFG
+
 Existing Cfg Handlers
 =====================
 
@@ -94,4 +99,3 @@ included for completeness.
 
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEntrySet
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.Cfg
-.. automethod:: Bcfg2.Server.Plugins.Cfg.get_cfg
