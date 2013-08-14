@@ -832,50 +832,33 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         if self._use_db:
             self.clients = self.list_clients()
 
+    def _get_condition(self, element):
+        """ Return a predicate that returns True if a client meets
+        the condition specified in the given Group or Client
+        element """
+        negate = element.get('negate', 'false').lower() == 'true'
+        pname = element.get("name")
+        if element.tag == 'Group':
+            return lambda c, g, _: negate != (pname in g)
+        elif element.tag == 'Client':
+            return lambda c, g, _: negate != (pname == c)
+
+    def _get_category_condition(self, grpname):
+        """ get a predicate that returns False if a client is already
+        a member of a group in the given group's category, True
+        otherwise"""
+        return lambda client, _, categories: \
+            bool(self._check_category(client, grpname, categories))
+
+    def _aggregate_conditions(self, conditions):
+        """ aggregate all conditions on a given group declaration
+        into a single predicate """
+        return lambda client, groups, cats: \
+            all(cond(client, groups, cats) for cond in conditions)
+
     def _handle_groups_xml_event(self, _):  # pylint: disable=R0912
         """ re-read groups.xml on any event on it """
         self.groups = {}
-
-        # these three functions must be separate functions in order to
-        # ensure that the scope is right for the closures they return
-        def get_condition(element):
-            """ Return a predicate that returns True if a client meets
-            the condition specified in the given Group or Client
-            element """
-            negate = element.get('negate', 'false').lower() == 'true'
-            pname = element.get("name")
-            if element.tag == 'Group':
-                return lambda c, g, _: negate != (pname in g)
-            elif element.tag == 'Client':
-                return lambda c, g, _: negate != (pname == c)
-
-        def get_category_condition(category, gname):
-            """ get a predicate that returns False if a client is
-            already a member of a group in the given category, True
-            otherwise """
-            def in_cat(client, groups, categories):  # pylint: disable=W0613
-                """ return True if the client is already a member of a
-                group in the category given in the enclosing function,
-                False otherwise """
-                if category in categories:
-                    if (gname not in self.groups or
-                        client not in self.groups[gname].warned):
-                        self.logger.warning("%s: Group %s suppressed by "
-                                            "category %s; %s already a member "
-                                            "of %s" %
-                                            (self.name, gname, category,
-                                             client, categories[category]))
-                        if gname in self.groups:
-                            self.groups[gname].warned.append(client)
-                    return False
-                return True
-            return in_cat
-
-        def aggregate_conditions(conditions):
-            """ aggregate all conditions on a given group declaration
-            into a single predicate """
-            return lambda client, groups, cats: \
-                all(cond(client, groups, cats) for cond in conditions)
 
         # first, we get a list of all of the groups declared in the
         # file.  we do this in two stages because the old way of
@@ -918,21 +901,20 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
             conditions = []
             for parent in el.iterancestors():
-                cond = get_condition(parent)
+                cond = self._get_condition(parent)
                 if cond:
                     conditions.append(cond)
 
             gname = el.get("name")
             if el.get("negate", "false").lower() == "true":
-                self.negated_groups[aggregate_conditions(conditions)] = \
+                self.negated_groups[self._aggregate_conditions(conditions)] = \
                     self.groups[gname]
             else:
                 if self.groups[gname].category:
-                    conditions.append(
-                        get_category_condition(self.groups[gname].category,
-                                               gname))
+                    conditions.append(self._get_category_condition(gname))
 
-                self.group_membership[aggregate_conditions(conditions)] = \
+                self.group_membership[
+                    self._aggregate_conditions(conditions)] = \
                     self.groups[gname]
         self.states['groups.xml'] = True
 
@@ -946,6 +928,12 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 # clear the entire cache when we get an event for any
                 # metadata file
                 self.expire_cache()
+
+                # clear out the list of category suppressions that
+                # have been warned about, since this may change when
+                # clients.xml or groups.xml changes.
+                for group in self.groups.values():
+                    group.warned = []
                 event_handler(event)
 
         if False not in list(self.states.values()) and self.debug_flag:
@@ -1100,6 +1088,54 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                         del categories[group.category]
         return (groups, categories)
 
+    def _check_category(self, client, grpname, categories):
+        """ Determine if the given client is already a member of a
+        group in the same category as the named group.
+
+        The return value is one of three possibilities:
+
+        * If the client is already a member of a group in the same
+          category, then False is returned (i.e., the category check
+          failed);
+        * If the group is not in any categories, then True is returned;
+        * If the group is not a member of a group in the category,
+          then the name of the category is returned.  This makes it
+          easy to add the category to the ClientMetadata object (or
+          other category list).
+
+        If a pure boolean value is required, you can do
+        ``bool(self._check_category(...))``.
+        """
+        if grpname not in self.groups:
+            return True
+        category = self.groups[grpname].category
+        if not category:
+            return True
+        if category in categories:
+            if client not in self.groups[grpname].warned:
+                self.logger.warning("%s: Group %s suppressed by category %s; "
+                                    "%s already a member of %s" %
+                                    (self.name, grpname, category,
+                                     client, categories[category]))
+                self.groups[grpname].warned.append(client)
+            return False
+        return category
+
+    def _check_and_add_category(self, client, grpname, categories):
+        """ If the client is not a member of a group in the same
+        category as the named group, then the category is added to
+        ``categories``.
+        :func:`Bcfg2.Server.Plugins.Metadata._check_category` is used
+        to determine if the category can be added.
+
+        If the category check failed, returns False; otherwise,
+        returns True. """
+        rv = self._check_category(client, grpname, categories)
+        if rv and rv is not True:
+            categories[rv] = grpname
+            return True
+        return rv
+
     def get_initial_metadata(self, client):  # pylint: disable=R0914,R0912
         """Return the metadata for a given client."""
         if False in list(self.states.values()):
@@ -1121,23 +1157,18 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             Handles setting categories and category suppression.
             Returns the new profile for the client (which might be
             unchanged). """
-            groups.add(grpname)
             if grpname in self.groups:
-                group = self.groups[grpname]
-                category = group.category
-                if category:
-                    if category in categories:
-                        self.logger.warning("%s: Group %s suppressed by "
-                                            "category %s; %s already a member "
-                                            "of %s" %
-                                            (self.name, grpname, category,
-                                             client, categories[category]))
-                        return
-                    categories[category] = grpname
-                if not profile and group.is_profile:
+                if not self._check_and_add_category(client, grpname,
+                                                    categories):
+                    return profile
+                groups.add(grpname)
+                if not profile and self.groups[grpname].is_profile:
                     return grpname
                 else:
                     return profile
+            else:
+                groups.add(grpname)
+                return profile
 
         if client not in self.clients:
             pgroup = None
@@ -1165,6 +1196,9 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 self.groups[cgroup] = MetadataGroup(cgroup)
             profile = _add_group(cgroup)
 
+        # we do this before setting the default because there may be
+        # groups set in <Client> tags in groups.xml that we want to
+        # set
         groups, categories = self._merge_groups(client, groups,
                                                 categories=categories)
 
@@ -1248,16 +1282,9 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         for group in groups:
             if group in imd.groups:
                 continue
-            if group in self.groups and self.groups[group].category:
-                category = self.groups[group].category
-                if self.groups[group].category in imd.categories:
-                    self.logger.warning("%s: Group %s suppressed by category "
-                                        "%s; %s already a member of %s" %
-                                        (self.name, group, category,
-                                         imd.hostname,
-                                         imd.categories[category]))
-                    continue
-                imd.categories[category] = group
+            if not self._check_and_add_category(imd.hostname, group,
+                                                imd.categories):
+                continue
             imd.groups.add(group)
 
         self._merge_groups(imd.hostname, imd.groups,
