@@ -293,6 +293,7 @@ more complex example Bundles.
 .. toctree::
    :maxdepth: 1
 
+   bcfg2
    kernel
    moab
    nagios

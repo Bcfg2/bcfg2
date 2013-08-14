@@ -299,7 +299,7 @@ such an included file to conform to the schema, although in general
 the included files should be structure exactly like the parent file.
 
 Wildcard XInclude
-~~~~~~~~~~~~~~~~~
+-----------------
 
 .. versionadded:: 1.3.1
 
