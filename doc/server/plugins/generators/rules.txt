@@ -479,8 +479,8 @@ If you wish, you can configure the Rules plugin to support regular
 expressions.  This entails a small performance and memory usage
 penalty.  To do so, add the following setting to ``bcfg2.conf``::
 
-  [rules]
-  regex = yes
+    [rules]
+    regex = yes
 
 With regular expressions enabled, you can use a regex in the ``name``
 attribute to match multiple abstract configuration entries.

@@ -25,7 +25,7 @@ Unmanaged entries
         sudo yum remove PACKAGE
 
  #. Otherwise, add ``<Package name="PACKAGE" />`` to the Bundler
-  configuration.
+    configuration.
 
 * Package (dependency)
 

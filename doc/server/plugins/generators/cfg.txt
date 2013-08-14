@@ -560,7 +560,6 @@ Example
     Hopefully, the performance concerns can be resolved in a future
     release and these features can be added.
 
-.. _server-plugins-generators-sslca:
 .. _server-plugins-generators-cfg-ssl-certificates:
 
 SSL Keys and Certificates
@@ -640,7 +639,7 @@ paths.
    `sslkey.xml`_ for details on how to change the key type and size.)
 
 #. Similarly, create `sslcert.xml`_ in
- ``Cfg/etc/pki/tls/certs/localhost.cfg/``, containing the following:
+   ``Cfg/etc/pki/tls/certs/localhost.cfg/``, containing the following:
 
    .. code-block:: xml
 
@@ -772,6 +771,8 @@ File permissions for entries handled by Cfg are controlled via the use
 of :ref:`server-info` files. Note that you **cannot** use both a
 Permissions entry and a Path entry to handle the same file.
 
+.. _server-plugins-generators-cfg-configuration:
+
 Cfg Configuration
 =================
 
@@ -785,7 +786,7 @@ influenced by several options in the ``[sshkeys]`` section of
 
 +-------------+----------------+---------------------------------------------------------+-----------------------+------------+
 | Section     | Option         | Description                                             | Values                | Default    |
-+================+=========================================================+=======================+============+
++=============+================+=========================================================+=======================+============+
 | ``cfg``     | ``passphrase`` | Use the named passphrase to encrypt created data on the | String                | None       |
 |             |                | filesystem. (E.g., SSH and SSL keys.) The passphrase    |                       |            |
 |             |                | must be defined in the ``[encryption]`` section.        |                       |            |

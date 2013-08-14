@@ -2,7 +2,8 @@
             xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
   <xsd:annotation>
     <xsd:documentation>
-      Schema for :ref:`server-plugins-generators-sslca` ``sslkey.xml``
+      Schema for :ref:`server-plugins-generators-cfg-ssl-certificates`
+      ``sslkey.xml``
     </xsd:documentation>
   </xsd:annotation>
 
