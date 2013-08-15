@@ -530,14 +530,17 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.raliases = {}
         # mapping of groupname -> MetadataGroup object
         self.groups = {}
-        # mappings of predicate -> MetadataGroup object
+        # mappings of groupname -> [predicates]
         self.group_membership = dict()
         self.negated_groups = dict()
+        # list of group names in document order
+        self.ordered_groups = []
         # mapping of hostname -> version string
         if self._use_db:
             self.versions = ClientVersions(core, datastore)
         else:
             self.versions = dict()
+
         self.uuid = {}
         self.session_cache = {}
         self.default = None
@@ -885,6 +888,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
         self.group_membership = dict()
         self.negated_groups = dict()
+        self.ordered_groups = []
 
         # confusing loop condition; the XPath query asks for all
         # elements under a Group tag under a Groups tag; that is
@@ -895,8 +899,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         # XPath.  We do the same thing for Client tags.
         for el in self.groups_xml.xdata.xpath("//Groups/Group//*") + \
                 self.groups_xml.xdata.xpath("//Groups/Client//*"):
-            if ((el.tag != 'Group' and el.tag != 'Client') or
-                el.getchildren()):
+            if (el.tag != 'Group' and el.tag != 'Client') or el.getchildren():
                 continue
 
             conditions = []
@@ -907,15 +910,18 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
             gname = el.get("name")
             if el.get("negate", "false").lower() == "true":
-                self.negated_groups[self._aggregate_conditions(conditions)] = \
-                    self.groups[gname]
+                self.negated_groups.setdefault(gname, [])
+                self.negated_groups[gname].append(
+                    self._aggregate_conditions(conditions))
             else:
                 if self.groups[gname].category:
                     conditions.append(self._get_category_condition(gname))
 
-                self.group_membership[
-                    self._aggregate_conditions(conditions)] = \
-                    self.groups[gname]
+                if gname not in self.ordered_groups:
+                    self.ordered_groups.append(gname)
+                self.group_membership.setdefault(gname, [])
+                self.group_membership[gname].append(
+                    self._aggregate_conditions(conditions))
         self.states['groups.xml'] = True
 
     def expire_cache(self, key=None):
@@ -1072,20 +1078,27 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             categories = dict()
         while numgroups != len(groups):
             numgroups = len(groups)
-            for predicate, group in self.group_membership.items():
-                if group.name in groups:
+            newgroups = set()
+            removegroups = set()
+            for grpname in self.ordered_groups:
+                if grpname in groups:
                     continue
-                if predicate(client, groups, categories):
-                    groups.add(group.name)
-                    if group.category:
-                        categories[group.category] = group.name
-            for predicate, group in self.negated_groups.items():
-                if group.name not in groups:
+                if any(p(client, groups, categories)
+                       for p in self.group_membership[grpname]):
+                    newgroups.add(grpname)
+                    if (grpname in self.groups and
+                        self.groups[grpname].category):
+                        categories[self.groups[grpname].category] = grpname
+            groups.update(newgroups)
+            for grpname, predicates in self.negated_groups.items():
+                if grpname not in groups:
                     continue
-                if predicate(client, groups, categories):
-                    groups.remove(group.name)
-                    if group.category:
-                        del categories[group.category]
+                if any(p(client, groups, categories) for p in predicates):
+                    removegroups.add(grpname)
+                    if (grpname in self.groups and
+                        self.groups[grpname].category):
+                        del categories[self.groups[grpname].category]
+            groups.difference_update(removegroups)
         return (groups, categories)
 
     def _check_category(self, client, grpname, categories):
@@ -1189,6 +1202,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 raise Bcfg2.Server.Plugin.MetadataConsistencyError(
                     "Cannot add new client %s; no default group set" % client)
 
+
         for cgroup in self.clientgroups.get(client, []):
             if cgroup in groups:
                 continue
@@ -1247,8 +1261,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         """ return a list of all group names """
         all_groups = set()
         all_groups.update(self.groups.keys())
-        all_groups.update([g.name for g in self.group_membership.values()])
-        all_groups.update([g.name for g in self.negated_groups.values()])
+        all_groups.update(self.group_membership.keys())
+        all_groups.update(self.negated_groups.keys())
         for grp in self.clientgroups.values():
             all_groups.update(grp)
         return all_groups
@@ -1287,9 +1301,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 continue
             imd.groups.add(group)
 
-        self._merge_groups(imd.hostname, imd.groups,
-                           categories=imd.categories)
-
+        self._merge_groups(imd.hostname, imd.groups, categories=imd.categories)
         for group in imd.groups:
             if group in self.groups:
                 imd.bundles.update(self.groups[group].bundles)
