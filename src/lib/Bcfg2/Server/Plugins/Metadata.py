@@ -10,6 +10,7 @@ import errno
 import fcntl
 import socket
 import logging
+import warnings
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Options
@@ -333,13 +334,14 @@ class ClientMetadata(object):
 
     def group_in_category(self, category):
         """ Return the group in the given category that the client is
-        a member of, or an empty string.
+        a member of, or an empty string.  Deprecated in favor of
+        :func:`Bcfg2.Server.Plugins.Metadata.MetadataQuery.group_in_category`
 
         :returns: string """
-        for grp in self.query.all_groups_in_category(category):
-            if grp in self.groups:
-                return grp
-        return ''
+        warnings.warn("metadata.group_in_category() is deprecated; "
+                      "use metadata.query.group_in_category() instead",
+                      DeprecationWarning)
+        return self.query.group_in_category(category) or ''
 
     def __repr__(self):
         return "%s(%s, profile=%s, groups=%s)" % (self.__class__.__name__,
@@ -422,6 +424,17 @@ class MetadataQuery(object):
         # pylint: enable=C0111
 
         return inner
+
+    def group_in_category(self, category):
+        """ Return the group in the given category that the client is
+        a member of, or None, if the client is not a member of any
+        group in the category.
+
+        :returns: string or None """
+        for grp in self.query.all_groups_in_category(category):
+            if grp in self.groups:
+                return grp
+        return None
 
     def by_groups(self, groups):
         """ Get a list of
