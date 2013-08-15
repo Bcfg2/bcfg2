@@ -1202,7 +1202,6 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 raise Bcfg2.Server.Plugin.MetadataConsistencyError(
                     "Cannot add new client %s; no default group set" % client)
 
-
         for cgroup in self.clientgroups.get(client, []):
             if cgroup in groups:
                 continue
