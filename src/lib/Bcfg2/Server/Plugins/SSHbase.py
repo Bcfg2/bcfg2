@@ -89,7 +89,6 @@ class KnownHostsEntrySet(Bcfg2.Server.Plugin.EntrySet):
 
 
 class SSHbase(Bcfg2.Server.Plugin.Plugin,
-              Bcfg2.Server.Plugin.Caching,
               Bcfg2.Server.Plugin.Generator,
               Bcfg2.Server.Plugin.PullTarget):
     """
@@ -123,7 +122,6 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        Bcfg2.Server.Plugin.Caching.__init__(self)
         Bcfg2.Server.Plugin.Generator.__init__(self)
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
         self.ipcache = {}
@@ -149,9 +147,6 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 HostKeyEntrySet(keypattern, self.data)
             self.Entries['Path']["/etc/ssh/" + keypattern] = self.build_hk
         self.cmd = Executor()
-
-    def expire_cache(self, key=None):
-        self.__skn = False
 
     def get_skn(self):
         """Build memory cache of the ssh known hosts file."""

@@ -17,9 +17,9 @@ import Bcfg2.Options
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Utils import locked
+from Bcfg2.Server.Cache import Cache
 from Bcfg2.Compat import MutableMapping, all, wraps  # pylint: disable=W0622
 from Bcfg2.version import Bcfg2VersionInfo
-
 
 # pylint: disable=C0103
 ClientVersions = None
@@ -90,7 +90,7 @@ def load_django_models():
 
         def keys(self):
             """ Get keys for the mapping """
-            return [c.hostname for c in MetadataClientModel.objects.all()]
+            return list(iter(self))
 
         def __contains__(self, key):
             try:
@@ -513,7 +513,6 @@ class MetadataGroup(tuple):  # pylint: disable=E0012,R0924
 
 
 class Metadata(Bcfg2.Server.Plugin.Metadata,
-               Bcfg2.Server.Plugin.Caching,
                Bcfg2.Server.Plugin.ClientRunHooks,
                Bcfg2.Server.Plugin.DatabaseBacked):
     """This class contains data for bcfg2 server metadata."""
@@ -533,7 +532,6 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
     def __init__(self, core, datastore, watch_clients=True):
         Bcfg2.Server.Plugin.Metadata.__init__(self)
-        Bcfg2.Server.Plugin.Caching.__init__(self)
         Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
         self.watch_clients = watch_clients
@@ -578,6 +576,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             self.versions = dict()
         self.uuid = {}
         self.session_cache = {}
+        self.cache = Cache("Metadata")
         self.default = None
         self.pdirty = False
         self.password = Bcfg2.Options.setup.password
@@ -977,16 +976,13 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                     self.groups[gname]
         self.states['groups.xml'] = True
 
-    def expire_cache(self, key=None):
-        self.core.metadata_cache.expire(key)
-
     def HandleEvent(self, event):
         """Handle update events for data files."""
         for handles, event_handler in self.handlers.items():
             if handles(event):
                 # clear the entire cache when we get an event for any
                 # metadata file
-                self.expire_cache()
+                self.cache.expire()
                 event_handler(event)
 
         if False not in list(self.states.values()) and self.debug_flag:
@@ -1147,8 +1143,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             raise Bcfg2.Server.Plugin.MetadataRuntimeError("Metadata has not "
                                                            "been read yet")
         client = client.lower()
-        if client in self.core.metadata_cache:
-            return self.core.metadata_cache[client]
+        if client in self.cache:
+            return self.cache[client]
 
         if client in self.aliases:
             client = self.aliases[client]
@@ -1243,7 +1239,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                             addresses, categories, uuid, password, version,
                             self.query)
         if self.core.metadata_cache_mode == 'initial':
-            self.core.metadata_cache[client] = rv
+            self.cache[client] = rv
         return rv
 
     def get_all_group_names(self):

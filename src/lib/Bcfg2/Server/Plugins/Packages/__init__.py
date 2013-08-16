@@ -8,6 +8,7 @@ import glob
 import shutil
 import lxml.etree
 import Bcfg2.Options
+import Bcfg2.Server.Cache
 import Bcfg2.Server.Plugin
 from Bcfg2.Compat import urlopen, HTTPError, URLError, MutableMapping
 from Bcfg2.Server.Plugins.Packages.Collection import Collection, \
@@ -81,7 +82,6 @@ class OnDemandDict(MutableMapping):
 
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
-               Bcfg2.Server.Plugin.Caching,
                Bcfg2.Server.Plugin.StructureValidator,
                Bcfg2.Server.Plugin.Generator,
                Bcfg2.Server.Plugin.Connector,
@@ -136,12 +136,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     #: and :func:`Reload`
     __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Refresh', 'Reload']
 
-    __child_rmi__ = Bcfg2.Server.Plugin.Plugin.__child_rmi__ + \
-        [('Refresh', 'expire_cache'), ('Reload', 'expire_cache')]
-
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        Bcfg2.Server.Plugin.Caching.__init__(self)
         Bcfg2.Server.Plugin.StructureValidator.__init__(self)
         Bcfg2.Server.Plugin.Generator.__init__(self)
         Bcfg2.Server.Plugin.Connector.__init__(self)
@@ -185,7 +181,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`,
         #: a unique key identifying the collection by its *config*,
         #: which could be shared among multiple clients.
-        self.collections = dict()
+        self.collections = Bcfg2.Server.Cache.Cache("Packages", "collections")
 
         #: clients is a cache mapping of hostname ->
         #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`
@@ -193,21 +189,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
         #: object when one is requested, so each entry is very
         #: short-lived -- it's purged at the end of each client run.
-        self.clients = dict()
+        self.clients = Bcfg2.Server.Cache.Cache("Packages", "cache")
 
-        #: groupcache caches group lookups.  It maps Collections (via
-        #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`)
-        #: to sets of package groups, and thence to the packages
-        #: indicated by those groups.
-        self.groupcache = dict()
-
-        #: pkgcache caches complete package sets.  It maps Collections
-        #: (via
-        #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`)
-        #: to sets of initial packages, and thence to the final
-        #: (complete) package selections resolved from the initial
-        #: packages
-        self.pkgcache = dict()
         # pylint: enable=C0301
     __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
 
@@ -400,11 +383,12 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
         groups.sort()
         # check for this set of groups in the group cache
+        gcache = Bcfg2.Server.Cache.Cache("Packages", "pkg_groups",
+                                          collection.cachekey)
         gkey = hash(tuple(groups))
-        if gkey not in self.groupcache[collection.cachekey]:
-            self.groupcache[collection.cachekey][gkey] = \
-                collection.get_groups(groups)
-        for pkgs in self.groupcache[collection.cachekey][gkey].values():
+        if gkey not in gcache:
+            gcache[gkey] = collection.get_groups(groups)
+        for pkgs in gcache[gkey].values():
             base.update(pkgs)
 
         # essential pkgs are those marked as such by the distribution
@@ -412,10 +396,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
         # check for this set of packages in the package cache
         pkey = hash(tuple(base))
-        if pkey not in self.pkgcache[collection.cachekey]:
-            self.pkgcache[collection.cachekey][pkey] = \
-                collection.complete(base)
-        packages, unknown = self.pkgcache[collection.cachekey][pkey]
+        pcache = Bcfg2.Server.Cache.Cache("Packages", "pkg_sets",
+                                          collection.cachekey)
+        if pkey not in pcache:
+            pcache[pkey] = collection.complete(base)
+        packages, unknown = pcache[pkey]
         if unknown:
             self.logger.info("Packages: Got %d unknown entries" % len(unknown))
             self.logger.info("Packages: %s" % list(unknown))
@@ -441,7 +426,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self._load_config()
         return True
 
-    def expire_cache(self, _=None):
+    def child_reload(self, _=None):
+        """ Reload the Packages configuration on a child process. """
         self.Reload()
 
     def _load_config(self, force_update=False):
@@ -472,10 +458,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 collection.setup_data(force_update)
 
         # clear Collection and package caches
-        self.clients = dict()
-        self.collections = dict()
-        self.groupcache = dict()
-        self.pkgcache = dict()
+        Bcfg2.Server.Cache.expire("Packages")
 
         for source in self.sources.entries:
             cachefiles.add(source.cachefile)
@@ -551,11 +534,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if not self.sources.loaded:
             # if sources.xml has not received a FAM event yet, defer;
             # instantiate a dummy Collection object
-            collection = Collection(metadata, [], self.cachepath, self.data)
-            ckey = collection.cachekey
-            self.groupcache.setdefault(ckey, dict())
-            self.pkgcache.setdefault(ckey, dict())
-            return collection
+            return Collection(metadata, [], self.cachepath, self.data)
 
         if metadata.hostname in self.clients:
             return self.collections[self.clients[metadata.hostname]]
@@ -592,8 +571,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if cclass != Collection:
             self.clients[metadata.hostname] = ckey
             self.collections[ckey] = collection
-        self.groupcache.setdefault(ckey, dict())
-        self.pkgcache.setdefault(ckey, dict())
         return collection
 
     def get_additional_data(self, metadata):
@@ -642,8 +619,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :param metadata: The client metadata
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         """
-        if metadata.hostname in self.clients:
-            del self.clients[metadata.hostname]
+        self.clients.expire(metadata.hostname)
 
     def end_statistics(self, metadata):
         """ Hook to clear the cache for this client in :attr:`clients`

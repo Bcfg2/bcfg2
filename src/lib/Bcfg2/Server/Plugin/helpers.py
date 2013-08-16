@@ -961,6 +961,8 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
         self.Entries = {}
         for src in self.entries.values():
             for child in src.xdata.iterchildren():
+                if child.tag in ['Group', 'Client']:
+                    continue
                 if child.tag not in self.Entries:
                     self.Entries[child.tag] = dict()
                 self.Entries[child.tag][child.get("name")] = self.BindEntry
