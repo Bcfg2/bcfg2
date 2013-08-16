@@ -1,7 +1,7 @@
 import os
 import sys
-import copy
-import time
+import shutil
+import tempfile
 import lxml.etree
 import Bcfg2.version
 import Bcfg2.Server
@@ -36,47 +36,6 @@ test_data = dict(a=1, b=[1, 2, 3], c="test",
                  d=dict(a=1, b=dict(a=1), c=(1, "2", 3)))
 
 
-class FakeElement(lxml.etree._Element):
-     getroottree = Mock()
-
-     def __init__(self, el):
-         self._element = el
-
-     def __getattribute__(self, attr):
-         el = lxml.etree._Element.__getattribute__(self,
-                                                   '__dict__')['_element']
-         if attr == "getroottree":
-             return FakeElement.getroottree
-         elif attr == "_element":
-             return el
-         else:
-             return getattr(el, attr)
-
-
-class StoringElement(object):
-    OriginalElement = copy.copy(lxml.etree.Element)
-
-    def __init__(self):
-        self.element = None
-        self.return_value = None
-
-    def __call__(self, *args, **kwargs):
-        self.element = self.OriginalElement(*args, **kwargs)
-        self.return_value = FakeElement(self.element)
-        return self.return_value
-
-
-class StoringSubElement(object):
-    OriginalSubElement = copy.copy(lxml.etree.SubElement)
-
-    def __call__(self, parent, tag, **kwargs):
-        try:
-            return self.OriginalSubElement(parent._element, tag,
-                                           **kwargs)
-        except AttributeError:
-            return self.OriginalSubElement(parent, tag, **kwargs)
-
-
 class FakeList(list):
     pass
 
@@ -85,18 +44,6 @@ class TestProbesDB(DBModelTestCase):
     if HAS_DJANGO:
         models = [ProbesGroupsModel,
                   ProbesDataModel]
-
-
-class TestClientProbeDataSet(Bcfg2TestCase):
-    def test__init(self):
-        ds = ClientProbeDataSet()
-        self.assertLessEqual(ds.timestamp, time.time())
-        self.assertIsInstance(ds, dict)
-        self.assertNotIn("timestamp", ds)
-
-        ds = ClientProbeDataSet(timestamp=123)
-        self.assertEqual(ds.timestamp, 123)
-        self.assertNotIn("timestamp", ds)
 
 
 class TestProbeData(Bcfg2TestCase):
@@ -253,377 +200,161 @@ group-specific"""
                 assert False, "Strange probe found in get_probe_data() return"
 
 
-class TestProbes(TestProbing, TestConnector, TestDatabaseBacked):
+class TestProbes(Bcfg2TestCase):
     test_obj = Probes
 
-    def get_obj(self, core=None, load_data=None):
-        core = MagicMock()
-        if load_data is None:
-            load_data = MagicMock()
+    test_xdata = lxml.etree.Element("test")
+    lxml.etree.SubElement(test_xdata, "test", foo="foo")
+    test_xdoc = lxml.etree.tostring(test_xdata,
+                                    xml_declaration=False).decode('UTF-8')
 
-        @patch("%s.%s.load_data" % (self.test_obj.__module__,
-                                    self.test_obj.__name__), new=load_data)
-        def inner():
-            return TestDatabaseBacked.get_obj(self, core=core)
-
-        return inner()
-
-    def get_test_probedata(self):
-        test_xdata = lxml.etree.Element("test")
-        lxml.etree.SubElement(test_xdata, "test", foo="foo")
-        rv = dict()
-        rv["foo.example.com"] = ClientProbeDataSet(
-            timestamp=time.time())
-        rv["foo.example.com"]["xml"] = \
-            ProbeData(lxml.etree.tostring(
-                test_xdata,
-                xml_declaration=False).decode('UTF-8'))
-        rv["foo.example.com"]["text"] = \
-            ProbeData("freeform text")
-        rv["foo.example.com"]["multiline"] = \
-            ProbeData("""multiple
+    data = dict()
+    data['xml'] = "group:group\n" + test_xdoc
+    data['text'] = "freeform text"
+    data['multiline'] = """multiple
 lines
 of
 freeform
 text
-""")
-        rv["bar.example.com"] = ClientProbeDataSet(
-            timestamp=time.time())
-        rv["bar.example.com"]["empty"] = \
-            ProbeData("")
+group:group-with-dashes
+group:      group:with:colons
+"""
+    data['empty'] = ''
+    data['almost_empty'] = 'group: other_group'
+    if HAS_JSON:
+        data['json'] = json.dumps(test_data)
+    if HAS_YAML:
+        data['yaml'] = yaml.dump(test_data)
+
+    def setUp(self):
+        Bcfg2TestCase.setUp(self)
+        set_setup_default("probes_db")
+        self.datastore = None
+        Bcfg2.Server.Cache.expire("Probes")
+
+    def tearDown(self):
+        if self.datastore is not None:
+            shutil.rmtree(self.datastore)
+            self.datastore = None
+
+    def get_obj(self, core=None):
+        if core is None:
+            core = Mock()
+        if Bcfg2.Options.setup.probes_db:
+            @patch("os.makedirs", Mock())
+            def inner():
+                return self.test_obj(core, datastore)
+            return inner()
+        else:
+            # actually use a real datastore so we can read and write
+            # probed.xml
+            if self.datastore is None:
+                self.datastore = tempfile.mkdtemp()
+            return self.test_obj(core, self.datastore)
+
+    def test_GetProbes(self):
+        p = self.get_obj()
+        p.probes = Mock()
+        metadata = Mock()
+        p.GetProbes(metadata)
+        p.probes.get_probe_data.assert_called_with(metadata)
+
+    def additionalDataEqual(self, actual, expected):
+        self.assertItemsEqual(
+            dict([(k, str(d)) for k, d in actual.items()]),
+            expected)
+
+    def test_probes_xml(self):
+        """ Set and retrieve probe data with database disabled """
+        Bcfg2.Options.setup.probes_db = False
+        self._perform_tests()
+
+    def test_probes_db(self):
+        """ Set and retrieve probe data with database enabled """
+        Bcfg2.Options.setup.probes_db = True
+        self._perform_tests()
+
+    def _perform_tests(self):
+        p = self.get_obj()
+
+        # first, sanity checks
+        foo_md = Mock(hostname="foo.example.com")
+        bar_md = Mock(hostname="bar.example.com")
+        self.assertItemsEqual(p.get_additional_groups(foo_md), [])
+        self.assertItemsEqual(p.get_additional_data(foo_md), dict())
+        self.assertItemsEqual(p.get_additional_groups(bar_md), [])
+        self.assertItemsEqual(p.get_additional_data(bar_md), dict())
+
+        # next, set some initial probe data
+        foo_datalist = []
+        for key in ['xml', 'text', 'multiline']:
+            pdata = lxml.etree.Element("Probe", name=key)
+            pdata.text = self.data[key]
+            foo_datalist.append(pdata)
+        foo_addl_data = dict(xml=self.test_xdoc,
+                             text="freeform text",
+                             multiline="""multiple
+lines
+of
+freeform
+text""")
+        bar_datalist = []
+        for key in ['empty', 'almost_empty', 'json', 'yaml']:
+            if key in self.data:
+                pdata = lxml.etree.Element("Probe", name=key)
+                pdata.text = self.data[key]
+                bar_datalist.append(pdata)
+        bar_addl_data = dict(empty="", almost_empty="")
         if HAS_JSON:
-            rv["bar.example.com"]["json"] = \
-                ProbeData(json.dumps(test_data))
+            bar_addl_data['json'] = self.data['json']
         if HAS_YAML:
-            rv["bar.example.com"]["yaml"] = \
-                ProbeData(yaml.dump(test_data))
-        return rv
+            bar_addl_data['yaml'] = self.data['yaml']
 
-    def get_test_cgroups(self):
-        return {"foo.example.com": ["group", "group with spaces",
-                                    "group-with-dashes"],
-                "bar.example.com": []}
+        p.ReceiveData(foo_md, foo_datalist)
+        self.assertItemsEqual(p.get_additional_groups(foo_md),
+                              ["group", "group-with-dashes",
+                               "group:with:colons"])
+        self.additionalDataEqual(p.get_additional_data(foo_md), foo_addl_data)
 
-    def test__init(self):
-        mock_load_data = Mock()
-        probes = self.get_obj(load_data=mock_load_data)
-        mock_load_data.assert_any_call()
-        self.assertEqual(probes.probedata,
-                         ClientProbeDataSet())
-        self.assertEqual(probes.cgroups, dict())
+        p.ReceiveData(bar_md, bar_datalist)
+        self.assertItemsEqual(p.get_additional_groups(foo_md),
+                              ["group", "group-with-dashes",
+                               "group:with:colons"])
+        self.additionalDataEqual(p.get_additional_data(foo_md), foo_addl_data)
+        self.assertItemsEqual(p.get_additional_groups(bar_md), ['other_group'])
+        self.additionalDataEqual(p.get_additional_data(bar_md), bar_addl_data)
 
-    def test_write_data_xml(self):
-        Bcfg2.Options.setup.probes_db = False
-        probes = self.get_obj()
-        probes._write_data_db = Mock()
-        probes._write_data_xml = Mock()
-        probes.write_data("test")
-        probes._write_data_xml.assert_called_with("test")
-        self.assertFalse(probes._write_data_db.called)
+        # instantiate a new Probes object and clear Probes caches to
+        # imitate a server restart
+        p = self.get_obj()
+        Bcfg2.Server.Cache.expire("Probes")
 
-    @skipUnless(HAS_DJANGO, "Django not found, skipping")
-    def test_write_data_db(self):
-        Bcfg2.Options.setup.probes_db = True
-        probes = self.get_obj()
-        probes._write_data_db = Mock()
-        probes._write_data_xml = Mock()
-        probes.write_data("test")
-        probes._write_data_db.assert_called_with("test")
-        self.assertFalse(probes._write_data_xml.called)
+        self.assertItemsEqual(p.get_additional_groups(foo_md),
+                              ["group", "group-with-dashes",
+                               "group:with:colons"])
+        self.additionalDataEqual(p.get_additional_data(foo_md), foo_addl_data)
+        self.assertItemsEqual(p.get_additional_groups(bar_md), ['other_group'])
+        self.additionalDataEqual(p.get_additional_data(bar_md), bar_addl_data)
 
-    def test__write_data_xml(self):
-        Bcfg2.Options.setup.probes_db = False
-        probes = self.get_obj()
-        probes.probedata = self.get_test_probedata()
-        probes.cgroups = self.get_test_cgroups()
+        # set new data (and groups) for foo
+        foo_datalist = []
+        pdata = lxml.etree.Element("Probe", name='xml')
+        pdata.text = self.data['xml']
+        foo_datalist.append(pdata)
+        foo_addl_data = dict(xml=self.test_xdoc)
 
-        @patch("lxml.etree.Element")
-        @patch("lxml.etree.SubElement", StoringSubElement())
-        def inner(mock_Element):
-            mock_Element.side_effect = StoringElement()
-            probes._write_data_xml(None)
+        p.ReceiveData(foo_md, foo_datalist)
+        self.assertItemsEqual(p.get_additional_groups(foo_md), ["group"])
+        self.additionalDataEqual(p.get_additional_data(foo_md), foo_addl_data)
+        self.assertItemsEqual(p.get_additional_groups(bar_md), ['other_group'])
+        self.additionalDataEqual(p.get_additional_data(bar_md), bar_addl_data)
 
-            top = mock_Element.side_effect.return_value
-            write = top.getroottree.return_value.write
-            self.assertEqual(write.call_args[0][0],
-                             os.path.join(datastore, probes.name,
-                                          "probed.xml"))
+        # instantiate a new Probes object and clear Probes caches to
+        # imitate a server restart
+        p = self.get_obj()
+        Bcfg2.Server.Cache.expire("Probes")
 
-            data = top._element
-            foodata = data.find("Client[@name='foo.example.com']")
-            self.assertIsNotNone(foodata)
-            self.assertIsNotNone(foodata.get("timestamp"))
-            self.assertEqual(len(foodata.findall("Probe")),
-                             len(probes.probedata['foo.example.com']))
-            self.assertEqual(len(foodata.findall("Group")),
-                             len(probes.cgroups['foo.example.com']))
-            xml = foodata.find("Probe[@name='xml']")
-            self.assertIsNotNone(xml)
-            self.assertIsNotNone(xml.get("value"))
-            xdata = lxml.etree.XML(xml.get("value"))
-            self.assertIsNotNone(xdata)
-            self.assertIsNotNone(xdata.find("test"))
-            self.assertEqual(xdata.find("test").get("foo"), "foo")
-            text = foodata.find("Probe[@name='text']")
-            self.assertIsNotNone(text)
-            self.assertIsNotNone(text.get("value"))
-            multiline = foodata.find("Probe[@name='multiline']")
-            self.assertIsNotNone(multiline)
-            self.assertIsNotNone(multiline.get("value"))
-            self.assertGreater(len(multiline.get("value").splitlines()), 1)
-
-            bardata = data.find("Client[@name='bar.example.com']")
-            self.assertIsNotNone(bardata)
-            self.assertIsNotNone(bardata.get("timestamp"))
-            self.assertEqual(len(bardata.findall("Probe")),
-                             len(probes.probedata['bar.example.com']))
-            self.assertEqual(len(bardata.findall("Group")),
-                             len(probes.cgroups['bar.example.com']))
-            empty = bardata.find("Probe[@name='empty']")
-            self.assertIsNotNone(empty)
-            self.assertIsNotNone(empty.get("value"))
-            self.assertEqual(empty.get("value"), "")
-            if HAS_JSON:
-                jdata = bardata.find("Probe[@name='json']")
-                self.assertIsNotNone(jdata)
-                self.assertIsNotNone(jdata.get("value"))
-                self.assertItemsEqual(test_data,
-                                      json.loads(jdata.get("value")))
-            if HAS_YAML:
-                ydata = bardata.find("Probe[@name='yaml']")
-                self.assertIsNotNone(ydata)
-                self.assertIsNotNone(ydata.get("value"))
-                self.assertItemsEqual(test_data,
-                                      yaml.load(ydata.get("value")))
-
-        inner()
-
-    @skipUnless(HAS_DJANGO, "Django not found, skipping")
-    def test__write_data_db(self):
-        syncdb(TestProbesDB)
-        Bcfg2.Options.setup.probes_db = True
-        probes = self.get_obj()
-        probes.probedata = self.get_test_probedata()
-        probes.cgroups = self.get_test_cgroups()
-
-        for cname in ["foo.example.com", "bar.example.com"]:
-            client = Mock()
-            client.hostname = cname
-            probes._write_data_db(client)
-
-            pdata = ProbesDataModel.objects.filter(hostname=cname).all()
-            self.assertEqual(len(pdata), len(probes.probedata[cname]))
-
-            for probe in pdata:
-                self.assertEqual(probe.hostname, client.hostname)
-                self.assertIsNotNone(probe.data)
-                if probe.probe == "xml":
-                    xdata = lxml.etree.XML(probe.data)
-                    self.assertIsNotNone(xdata)
-                    self.assertIsNotNone(xdata.find("test"))
-                    self.assertEqual(xdata.find("test").get("foo"), "foo")
-                elif probe.probe == "text":
-                    pass
-                elif probe.probe == "multiline":
-                    self.assertGreater(len(probe.data.splitlines()), 1)
-                elif probe.probe == "empty":
-                    self.assertEqual(probe.data, "")
-                elif probe.probe == "yaml":
-                    self.assertItemsEqual(test_data, yaml.load(probe.data))
-                elif probe.probe == "json":
-                    self.assertItemsEqual(test_data, json.loads(probe.data))
-                else:
-                    assert False, "Strange probe found in _write_data_db data"
-
-            pgroups = ProbesGroupsModel.objects.filter(hostname=cname).all()
-            self.assertEqual(len(pgroups), len(probes.cgroups[cname]))
-
-        # test that old probe data is removed properly
-        cname = 'foo.example.com'
-        del probes.probedata[cname]['text']
-        probes.cgroups[cname].pop()
-        client = Mock()
-        client.hostname = cname
-        probes._write_data_db(client)
-
-        pdata = ProbesDataModel.objects.filter(hostname=cname).all()
-        self.assertEqual(len(pdata), len(probes.probedata[cname]))
-        pgroups = ProbesGroupsModel.objects.filter(hostname=cname).all()
-        self.assertEqual(len(pgroups), len(probes.cgroups[cname]))
-
-    def test_load_data_xml(self):
-        Bcfg2.Options.setup.probes_db = False
-        probes = self.get_obj()
-        probes._load_data_db = Mock()
-        probes._load_data_xml = Mock()
-        probes.load_data()
-        probes._load_data_xml.assert_any_call()
-        self.assertFalse(probes._load_data_db.called)
-
-    @skipUnless(HAS_DJANGO, "Django not found, skipping")
-    def test_load_data_db(self):
-        Bcfg2.Options.setup.probes_db = True
-        probes = self.get_obj()
-        probes._load_data_db = Mock()
-        probes._load_data_xml = Mock()
-        probes.load_data()
-        probes._load_data_db.assert_any_call(client=None)
-        self.assertFalse(probes._load_data_xml.called)
-
-    @patch("lxml.etree.parse")
-    def test__load_data_xml(self, mock_parse):
-        Bcfg2.Options.setup.probes_db = False
-        probes = self.get_obj()
-        probes.probedata = self.get_test_probedata()
-        probes.cgroups = self.get_test_cgroups()
-
-        # to get the value for lxml.etree.parse to parse, we call
-        # _write_data_xml, mock the lxml.etree._ElementTree.write()
-        # call, and grab the data that gets "written" to probed.xml
-        @patch("lxml.etree.Element")
-        @patch("lxml.etree.SubElement", StoringSubElement())
-        def inner(mock_Element):
-            mock_Element.side_effect = StoringElement()
-            probes._write_data_xml(None)
-            top = mock_Element.side_effect.return_value
-            return top._element
-
-        xdata = inner()
-        mock_parse.return_value = xdata.getroottree()
-        probes.probedata = dict()
-        probes.cgroups = dict()
-
-        probes._load_data_xml()
-        mock_parse.assert_called_with(os.path.join(datastore, probes.name,
-                                                   'probed.xml'),
-                                      parser=Bcfg2.Server.XMLParser)
-        self.assertItemsEqual(probes.probedata, self.get_test_probedata())
-        self.assertItemsEqual(probes.cgroups, self.get_test_cgroups())
-
-    @skipUnless(HAS_DJANGO, "Django not found, skipping")
-    def test__load_data_db(self):
-        syncdb(TestProbesDB)
-        Bcfg2.Options.setup.probes_db = True
-        probes = self.get_obj()
-        probes.probedata = self.get_test_probedata()
-        probes.cgroups = self.get_test_cgroups()
-        for cname in probes.probedata.keys():
-            client = Mock()
-            client.hostname = cname
-            probes._write_data_db(client)
-
-        probes.probedata = dict()
-        probes.cgroups = dict()
-        probes._load_data_db()
-        self.assertItemsEqual(probes.probedata, self.get_test_probedata())
-        # the db backend does not store groups at all if a client has
-        # no groups set, so we can't just use assertItemsEqual here,
-        # because loading saved data may _not_ result in the original
-        # data if some clients had no groups set.
-        test_cgroups = self.get_test_cgroups()
-        for cname, groups in test_cgroups.items():
-            if cname in probes.cgroups:
-                self.assertEqual(groups, probes.cgroups[cname])
-            else:
-                self.assertEqual(groups, [])
-
-    @patch("Bcfg2.Server.Plugins.Probes.ProbeSet.get_probe_data")
-    def test_GetProbes(self, mock_get_probe_data):
-        probes = self.get_obj()
-        metadata = Mock()
-        probes.GetProbes(metadata)
-        mock_get_probe_data.assert_called_with(metadata)
-
-    def test_ReceiveData(self):
-        # we use a simple (read: bogus) datalist here to make this
-        # easy to test
-        datalist = ["a", "b", "c"]
-
-        probes = self.get_obj()
-        probes.write_data = Mock()
-        probes.ReceiveDataItem = Mock()
-        probes.core.metadata_cache_mode = 'off'
-        client = Mock()
-        client.hostname = "foo.example.com"
-        probes.ReceiveData(client, datalist)
-
-        cgroups = []
-        cprobedata = ClientProbeDataSet()
-        self.assertItemsEqual(probes.ReceiveDataItem.call_args_list,
-                              [call(client, "a", cgroups, cprobedata),
-                               call(client, "b", cgroups, cprobedata),
-                               call(client, "c", cgroups, cprobedata)])
-        probes.write_data.assert_called_with(client)
-        self.assertFalse(probes.core.metadata_cache.expire.called)
-
-        # change the datalist, ensure that the cache is cleared
-        probes.cgroups[client.hostname] = datalist
-        probes.core.metadata_cache_mode = 'aggressive'
-        probes.ReceiveData(client, ['a', 'b', 'd'])
-
-        probes.write_data.assert_called_with(client)
-        probes.core.metadata_cache.expire.assert_called_with(client.hostname)
-
-    def test_ReceiveDataItem(self):
-        probes = self.get_obj()
-        for cname, cdata in self.get_test_probedata().items():
-            client = Mock()
-            client.hostname = cname
-            cgroups = []
-            cprobedata = ClientProbeDataSet()
-            for pname, pdata in cdata.items():
-                dataitem = lxml.etree.Element("Probe", name=pname)
-                if pname == "text":
-                    # add some groups to the plaintext test to test
-                    # group parsing
-                    data = [pdata]
-                    for group in self.get_test_cgroups()[cname]:
-                        data.append("group:%s" % group)
-                    dataitem.text = "\n".join(data)
-                else:
-                    dataitem.text = str(pdata)
-
-                probes.ReceiveDataItem(client, dataitem, cgroups, cprobedata)
-
-            probes.cgroups[client.hostname] = cgroups
-            probes.probedata[client.hostname] = cprobedata
-            self.assertIn(client.hostname, probes.probedata)
-            self.assertIn(pname, probes.probedata[cname])
-            self.assertEqual(pdata, probes.probedata[cname][pname])
-            self.assertIn(client.hostname, probes.cgroups)
-            self.assertEqual(probes.cgroups[cname],
-                             self.get_test_cgroups()[cname])
-
-    def test_get_additional_groups(self):
-        TestConnector.test_get_additional_groups(self)
-
-        probes = self.get_obj()
-        test_cgroups = self.get_test_cgroups()
-        probes.cgroups = self.get_test_cgroups()
-        for cname in test_cgroups.keys():
-            metadata = Mock()
-            metadata.hostname = cname
-            self.assertEqual(test_cgroups[cname],
-                             probes.get_additional_groups(metadata))
-        # test a non-existent client
-        metadata = Mock()
-        metadata.hostname = "nonexistent"
-        self.assertEqual(probes.get_additional_groups(metadata),
-                         list())
-
-    def test_get_additional_data(self):
-        TestConnector.test_get_additional_data(self)
-
-        probes = self.get_obj()
-        test_probedata = self.get_test_probedata()
-        probes.probedata = self.get_test_probedata()
-        for cname in test_probedata.keys():
-            metadata = Mock()
-            metadata.hostname = cname
-            self.assertEqual(test_probedata[cname],
-                             probes.get_additional_data(metadata))
-        # test a non-existent client
-        metadata = Mock()
-        metadata.hostname = "nonexistent"
-        self.assertEqual(probes.get_additional_data(metadata),
-                         ClientProbeDataSet())
+        self.assertItemsEqual(p.get_additional_groups(foo_md), ["group"])
+        self.additionalDataEqual(p.get_additional_data(foo_md), foo_addl_data)
+        self.assertItemsEqual(p.get_additional_groups(bar_md), ['other_group'])
+        self.additionalDataEqual(p.get_additional_data(bar_md), bar_addl_data)
