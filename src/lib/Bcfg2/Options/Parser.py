@@ -201,8 +201,7 @@ class Parser(argparse.ArgumentParser):
 
         # check whether the specified bcfg2.conf exists
         if not os.path.exists(bootstrap.config):
-            print("Could not read %s" % bootstrap.config)
-            return 1
+            self.error("Could not read %s" % bootstrap.config)
         self.add_config_file(self.configfile.dest, bootstrap.config)
 
         # phase 2: re-parse command line, loading additional
