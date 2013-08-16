@@ -367,8 +367,8 @@ class PropertiesCryptoMixin(object):
         """ Get the passphrase to use to encrypt or decrypt a given
         element """
         pname = element.get("encrypted")
-        if pname in self.passphrases:
-            passphrase = self.passphrases[pname]
+        if pname in Bcfg2.Options.setup.passphrases:
+            passphrase = Bcfg2.Options.setup.passphrases[pname]
         elif self.passphrase:
             if pname:
                 self.logger.warning("Passphrase %s not found in %s, "
@@ -579,7 +579,7 @@ class CLI(object):
 
             if data is None:
                 data = getattr(tool, mode)()
-            if not data:
+            if data is None:
                 self.logger.error("Failed to %s %s, skipping" % (mode, fname))
                 continue
             if Bcfg2.Options.setup.stdout:
