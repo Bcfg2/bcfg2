@@ -78,9 +78,23 @@ class NoExposedMethod (Exception):
     method exposed with the given name. """
 
 
-# pylint: disable=W0702
+class DefaultACL(Plugin, ClientACLs):
+    """ Default ACL 'plugin' that provides security by default. This
+    is only loaded if no other ClientACLs plugin is enabled. """
+    def __init__(self, core, datastore):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.ClientACLs.__init__(self)
+
+    def check_acl_ip(self, address, rmi):
+        return (("." not in rmi and
+                 not rmi.endswith("_debug") and
+                 rmi != 'get_statistics') or
+                address[0] == "127.0.0.1")
+
+
 # in core we frequently want to catch all exceptions, regardless of
 # type, so disable the pylint rule that catches that.
+# pylint: disable=W0702
 
 class Core(object):
     """ The server core is the container for all Bcfg2 server logic
@@ -282,7 +296,7 @@ class Core(object):
                 continue
         self.logger.info("File monitor thread terminated")
 
-    @Bcfg2.Server.Statistics.track_statistics()
+    @track_statistics()
     def _update_vcs_revision(self):
         """ Update the revision of the current configuration on-disk
         from the VCS plugin """
@@ -344,14 +358,16 @@ class Core(object):
                               "failed to instantiate Core")
             raise CoreInitError("No Metadata Plugin")
 
+        # ensure that an ACL plugin is loaded
+        if not self.plugins_by_type(Bcfg2.Server.Plugin.ClientACLs):
+            self.init_plugin(DefaultACL)
+
     def init_plugin(self, plugin):
         """ Import and instantiate a single plugin.  The plugin is
         stored to :attr:`plugins`.
 
-        :param plugin: The name of the plugin.  This is just the name
-                       of the plugin, in the appropriate case.  I.e.,
-                       ``Cfg``, not ``Bcfg2.Server.Plugins.Cfg``.
-        :type plugin: string
+        :param plugin: The plugin class to load.
+        :type plugin: type
         :returns: None
         """
         self.logger.debug("Loading plugin %s" % plugin.name)

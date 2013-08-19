@@ -200,3 +200,36 @@ could also do something like ``*.toggle_debug`` to allow a host to
 enable or disable debugging for all plugins.
 
 No other bash globbing is supported.
+
+Examples
+========
+
+The :ref:`default ACL list <server-access-control>` can be described
+in ``ip.xml`` fairly simply:
+
+.. code-block:: xml
+
+    <ACL>
+      <Allow address="127.0.0.1" method="*.*"/>
+      <Allow address="127.0.0.1" method="*"/>
+      <Deny method="*.*"/>
+      <Deny method="*_debug"/>
+      <Deny method="get_statistics"/>
+      <Allow method="*"/>
+    </ACL>
+
+A basic configuration that is still very secure but perhaps more
+functional could be given in ``metadata.xml``:
+
+.. code-block:: xml
+
+    <ACL>
+      <Group name="bcfg2-server">
+        <Allow method="*.*"/>
+        <Allow method="*"/>
+      </Group>
+      <Deny method="*.*"/>
+      <Deny method="*_debug"/>
+      <Deny method="get_statistics"/>
+      <Allow method="*"/>
+    </ACL>

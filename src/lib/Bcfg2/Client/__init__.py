@@ -88,7 +88,6 @@ class Client(object):
 
     options = Proxy.ComponentProxy.options + [
         Bcfg2.Options.Common.syslog,
-        Bcfg2.Options.Common.location,
         Bcfg2.Options.Common.interactive,
         Bcfg2.Options.BooleanOption(
             "-q", "--quick", help="Disable some checksum verification"),

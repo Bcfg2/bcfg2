@@ -1,0 +1,41 @@
+.. -*- mode: rst -*-
+
+.. _server-access-control:
+
+================
+ Access Control
+================
+
+.. versionadded:: 1.4.0
+
+Bcfg2 exposes various functions via XML-RPC calls.  Some of these are
+relatively benign (e.g., the calls necessary to generate a client
+configuration) while others can be used to inspect potentially private
+data on the server or very easily mount a denial of service attack.
+As a result, access control lists to limit exposure of these calls is
+built in.  There are two possible ACL methods: built-in, and the
+:ref:`server-plugins-misc-acls` plugin.
+
+The built-in approach simply applies a restrictive default ACL that
+lets ``localhost`` perform all XML-RPC calls, and restricts all other
+machines to only the calls necessary to run the Bcfg2 client.
+Specifically:
+
+* If the remote client is ``127.0.0.1``, the call is allowed.  Note
+  that, depending on where your Bcfg2 server listens and how it
+  communicates with itself, it likely will not identify to itself as
+  ``localhost``.
+* If the remote client is not ``127.0.0.1`` and the call is any of the
+  ``set_debug`` or ``toggle_debug`` methods (including
+  ``[toggle|set]_core_debug``), it is rejected.
+* If the remote client is not ``127.0.0.1`` and the call is
+  ``get_statistics`` (used by ``bcfg2-admin perf``), it is rejected.
+* If the remote client is not ``127.0.0.1`` and the call includes a
+  ``.`` -- i.e., it is dispatched to any plugin, such as
+  ``Packages.Refresh`` -- then it is rejected.
+* Otherwise, the call is allowed.
+
+The built-in ACL is *only* intended to ensure that Bcfg2 is secure by
+default; it will not be sufficient in many (or even most) cases.  In
+these cases, it's recommended that you use the
+:ref:`server-plugins-misc-acls` plugin.
