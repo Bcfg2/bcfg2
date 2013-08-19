@@ -82,7 +82,7 @@ class ReportingCollector(object):
         """Startup the processing and go!"""
         self.terminate = threading.Event()
         atexit.register(self.shutdown)
-        self.context = daemon.DaemonContext()
+        self.context = daemon.DaemonContext(detach_process=True)
 
         if self.setup['daemon']:
             self.logger.debug("Daemonizing")
