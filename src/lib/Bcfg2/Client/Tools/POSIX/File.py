@@ -53,6 +53,10 @@ class POSIXFile(POSIXTool):
     def verify(self, entry, modlist):
         ondisk = self._exists(entry)
         tempdata, is_binary = self._get_data(entry)
+        if isinstance(tempdata, str) and str != unicode:
+            tempdatasize = len(tempdata)
+        else:
+            tempdatasize = len(tempdata.encode(self.setup['encoding']))
 
         different = False
         content = None
@@ -61,7 +65,7 @@ class POSIXFile(POSIXTool):
             # they're clearly different
             different = True
             content = ""
-        elif len(tempdata) != ondisk[stat.ST_SIZE]:
+        elif tempdatasize != ondisk[stat.ST_SIZE]:
             # next, see if the size of the target file is different
             # from the size of the desired content
             different = True
@@ -72,6 +76,9 @@ class POSIXFile(POSIXTool):
             # for everything else
             try:
                 content = open(entry.get('name')).read()
+            except UnicodeDecodeError:
+                content = open(entry.get('name'),
+                               encoding=self.setup['encoding']).read()
             except IOError:
                 self.logger.error("POSIX: Failed to read %s: %s" %
                                   (entry.get("name"), sys.exc_info()[1]))
@@ -89,7 +96,7 @@ class POSIXFile(POSIXTool):
 
     def _write_tmpfile(self, entry):
         """ Write the file data to a temp file """
-        filedata, _ = self._get_data(entry)
+        filedata = self._get_data(entry)[0]
         # get a temp file to write to that is in the same directory as
         # the existing file in order to preserve any permissions
         # protections on that directory, and also to avoid issues with
@@ -105,7 +112,11 @@ class POSIXFile(POSIXTool):
                               (os.path.dirname(entry.get('name')), err))
             return False
         try:
-            os.fdopen(newfd, 'w').write(filedata)
+            if isinstance(filedata, str) and str != unicode:
+                os.fdopen(newfd, 'w').write(filedata)
+            else:
+                os.fdopen(newfd, 'wb').write(
+                    filedata.encode(self.setup['encoding']))
         except (OSError, IOError):
             err = sys.exc_info()[1]
             self.logger.error("POSIX: Failed to open temp file %s for writing "

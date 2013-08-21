@@ -102,6 +102,7 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
             dotpipe.stdin.write('\tcolor="lightblue";\n')
             dotpipe.stdin.write('\tBundle [ shape="septagon" ];\n')
             dotpipe.stdin.write('\tGroup [shape="ellipse"];\n')
+            dotpipe.stdin.write('\tGroup Category [shape="trapezium"];\n')
             dotpipe.stdin.write('\tProfile [style="bold", shape="ellipse"];\n')
             dotpipe.stdin.write('\tHblock [label="Host1|Host2|Host3", '
                                 'shape="record"];\n')

@@ -594,13 +594,14 @@ class SvcTool(Tool):
             if not self.handlesEntry(entry):
                 continue
 
+            estatus = entry.get('status')
             restart = entry.get("restart", "true").lower()
-            if (restart == "false" or
+            if (restart == "false" or estatus == 'ignore' or
                 (restart == "interactive" and not self.setup['interactive'])):
                 continue
 
             success = False
-            if entry.get('status') == 'on':
+            if estatus == 'on':
                 if self.setup['servicemode'] == 'build':
                     success = self.stop_service(entry)
                 elif entry.get('name') not in self.restarted:

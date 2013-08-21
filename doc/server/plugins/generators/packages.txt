@@ -490,17 +490,18 @@ Benefits to this include:
 * Much lower memory usage by the ``bcfg2-server`` process.
 * Much faster ``Packages.Refresh`` behavior.
 * More accurate dependency resolution.
+* Better use of multiple processors/cores.
 
 Drawbacks include:
 
-* More disk I/O. In some cases, you may have to raise the open file
+* Resolution of package dependencies is slower and more
+  resource-intensive.  At times it can be much slower, particularly
+  after running ``Packages.Refresh``.
+* More disk I/O. This can be alleviated by putting
+  ``/var/lib/bcfg2/Packages/cache`` on tmpfs, but that offsets the
+  lower memory usage.  In some cases, you may have to raise the open file
   limit for the user who runs your Bcfg2 server process, particularly
   if you have a lot of repositories.
-* Resolution of package dependencies is slower in some cases,
-  particularly after running ``Packages.Refresh``.
-* If you have a very large number of clients using a very small number
-  of repositories, using native yum libraries may actually increase
-  memory usage.
 
 Configuring the Yum Helper
 --------------------------
