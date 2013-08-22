@@ -525,7 +525,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             if entry.get("secontext") == "__default__":
                 try:
                     wanted_secontext = \
-                        selinux.matchpathcon(path, 0)[1].split(":")[2]
+                        selinux.matchpathcon(path, ondisk[stat.ST_MODE])[1].split(":")[2]
                 except OSError:
                     errors.append("%s has no default SELinux context" %
                                   entry.get("name"))
