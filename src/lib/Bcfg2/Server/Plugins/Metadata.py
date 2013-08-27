@@ -547,7 +547,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.pdirty = False
         self.password = core.setup['password']
         self.query = MetadataQuery(core.build_metadata,
-                                   lambda: list(self.clients),
+                                   self.list_clients,
                                    self.get_client_names_by_groups,
                                    self.get_client_names_by_profiles,
                                    self.get_all_group_names,
@@ -1274,7 +1274,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def get_client_names_by_profiles(self, profiles):
         """ return a list of names of clients in the given profile groups """
         rv = []
-        for client in list(self.clients):
+        for client in list(self.list_clients()):
             mdata = self.core.build_metadata(client)
             if mdata.profile in profiles:
                 rv.append(client)
@@ -1282,13 +1282,13 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
     def get_client_names_by_groups(self, groups):
         """ return a list of names of clients in the given groups """
-        mdata = [self.core.build_metadata(client) for client in self.clients]
+        mdata = [self.core.build_metadata(client) for client in self.list_clients()]
         return [md.hostname for md in mdata if md.groups.issuperset(groups)]
 
     def get_client_names_by_bundles(self, bundles):
         """ given a list of bundles, return a list of names of clients
         that use those bundles """
-        mdata = [self.core.build_metadata(client) for client in self.clients]
+        mdata = [self.core.build_metadata(client) for client in self.list_clients()]
         return [md.hostname for md in mdata if md.bundles.issuperset(bundles)]
 
     def merge_additional_groups(self, imd, groups):
@@ -1462,7 +1462,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
         instances = {}
         rv = []
-        for client in list(self.clients):
+        for client in list(self.list_clients()):
             if not include_client(client):
                 continue
             if client in self.clientgroups:
