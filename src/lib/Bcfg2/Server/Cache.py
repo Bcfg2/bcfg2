@@ -129,7 +129,7 @@ class _CacheRegistry(dict):
         have). This is used to expire all cache data that matches a
         set of tags. """
         tags = frozenset(tags)
-        for key in self.keys():
+        for key in list(self.keys()):
             if key.issuperset(tags):
                 yield key
 
