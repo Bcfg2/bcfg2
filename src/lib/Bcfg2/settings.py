@@ -165,7 +165,8 @@ class _OptionContainer(object):
             dest='db_schema'),
         Bcfg2.Options.Option(
             cf=('database', 'options'), help='Database options',
-            dest='db_opts', type=Bcfg2.Options.Types.comma_dict),
+            dest='db_opts', type=Bcfg2.Options.Types.comma_dict,
+            default=dict()),
         Bcfg2.Options.Option(
             cf=('reporting', 'timezone'), help='Django timezone'),
         Bcfg2.Options.BooleanOption(
