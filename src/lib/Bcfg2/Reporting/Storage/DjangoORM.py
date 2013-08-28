@@ -378,7 +378,7 @@ class DjangoORM(StorageBase):
     def validate(self):
         """Validate backend storage.  Should be called once when loaded"""
 
-        settings.read_config(repo=Bcfg2.Options.setup.repository)
+        settings.read_config()
 
         # verify our database schema
         try:
