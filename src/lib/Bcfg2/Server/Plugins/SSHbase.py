@@ -5,7 +5,6 @@ import os
 import sys
 import socket
 import shutil
-import logging
 import tempfile
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
@@ -14,15 +13,9 @@ from Bcfg2.Utils import Executor
 from Bcfg2.Server.Plugin import PluginExecutionError
 from Bcfg2.Compat import any, u_str, b64encode  # pylint: disable=W0622
 
-LOGGER = logging.getLogger(__name__)
-
 
 class KeyData(Bcfg2.Server.Plugin.SpecificData):
     """ class to handle key data for HostKeyEntrySet """
-
-    def __init__(self, name, specific, encoding):
-        Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific)
-        self.encoding = encoding
 
     def __lt__(self, other):
         return self.name < other.name
@@ -40,19 +33,20 @@ class KeyData(Bcfg2.Server.Plugin.SpecificData):
             entry.text = b64encode(self.data)
         else:
             try:
-                entry.text = u_str(self.data, self.encoding)
+                entry.text = u_str(self.data, Bcfg2.Options.setup.encoding)
             except UnicodeDecodeError:
                 msg = "Failed to decode %s: %s" % (entry.get('name'),
                                                    sys.exc_info()[1])
-                LOGGER.error(msg)
-                LOGGER.error("Please verify you are using the proper encoding")
+                self.logger.error(msg)
+                self.logger.error("Please verify you are using the proper "
+                                  "encoding")
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             except ValueError:
                 msg = "Error in specification for %s: %s" % (entry.get('name'),
                                                              sys.exc_info()[1])
-                LOGGER.error(msg)
-                LOGGER.error("You need to specify base64 encoding for %s" %
-                             entry.get('name'))
+                self.logger.error(msg)
+                self.logger.error("You need to specify base64 encoding for %s"
+                                  % entry.get('name'))
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         if entry.text in ['', None]:
             entry.set('empty', 'true')
@@ -61,16 +55,12 @@ class KeyData(Bcfg2.Server.Plugin.SpecificData):
 class HostKeyEntrySet(Bcfg2.Server.Plugin.EntrySet):
     """ EntrySet to handle all kinds of host keys """
     def __init__(self, basename, path):
-        if basename.startswith("ssh_host_key"):
-            self.encoding = "base64"
-        else:
-            self.encoding = None
         Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, KeyData)
         self.metadata = {'owner': 'root',
                          'group': 'root',
                          'type': 'file'}
-        if self.encoding is not None:
-            self.metadata['encoding'] = self.encoding
+        if basename.startswith("ssh_host_key"):
+            self.metadata['encoding'] = "base64"
         if basename.endswith('.pub'):
             self.metadata['mode'] = '0644'
         else:
