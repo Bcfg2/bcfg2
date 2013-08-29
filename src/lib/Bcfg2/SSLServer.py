@@ -305,14 +305,11 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 
     def finish(self):
         # shut down the connection
-        if not self.wfile.closed:
-            try:
-                self.wfile.flush()
-                self.wfile.close()
-            except socket.error:
-                err = sys.exc_info()[1]
-                self.logger.warning("Error closing connection: %s" % err)
-        self.rfile.close()
+        try:
+            SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.finish(self)
+        except socket.error:
+            err = sys.exc_info()[1]
+            self.logger.warning("Error closing connection: %s" % err)
 
 
 class XMLRPCServer(SocketServer.ThreadingMixIn, SSLServer,
