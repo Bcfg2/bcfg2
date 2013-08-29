@@ -1274,7 +1274,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def get_client_names_by_profiles(self, profiles):
         """ return a list of names of clients in the given profile groups """
         rv = []
-        for client in list(self.list_clients()):
+        for client in self.list_clients():
             mdata = self.core.build_metadata(client)
             if mdata.profile in profiles:
                 rv.append(client)
@@ -1282,14 +1282,22 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
     def get_client_names_by_groups(self, groups):
         """ return a list of names of clients in the given groups """
-        mdata = [self.core.build_metadata(client) for client in self.list_clients()]
-        return [md.hostname for md in mdata if md.groups.issuperset(groups)]
+        rv = []
+        for client in self.list_clients():
+            mdata = self.core.build_metadata(client)
+            if mdata.groups.issuperset(groups):
+                rv.append(client)
+        return rv
 
     def get_client_names_by_bundles(self, bundles):
         """ given a list of bundles, return a list of names of clients
         that use those bundles """
-        mdata = [self.core.build_metadata(client) for client in self.list_clients()]
-        return [md.hostname for md in mdata if md.bundles.issuperset(bundles)]
+        rv = []
+        for client in self.list_clients():
+            mdata = self.core.build_metadata(client)
+            if mdata.bundles.issuperset(bundles):
+                rv.append(client)
+        return rv
 
     def merge_additional_groups(self, imd, groups):
         for group in groups:
