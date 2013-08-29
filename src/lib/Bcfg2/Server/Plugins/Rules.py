@@ -13,10 +13,9 @@ class Rules(Bcfg2.Server.Plugin.PrioDir):
         self._regex_cache = dict()
 
     def HandlesEntry(self, entry, metadata):
-        for src in self.entries.values():
-            for candidate in src.XMLMatch(metadata).xpath("//%s" % entry.tag):
-                if self._matches(entry, metadata, candidate):
-                    return True
+        if entry.tag in self.Entries:
+            return self._matches(entry, metadata,
+                                 self.Entries[entry.tag].keys())
         return False
 
     def BindEntry(self, entry, metadata):
