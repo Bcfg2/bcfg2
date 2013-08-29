@@ -282,31 +282,39 @@ class Bcfg2TestCase(unittest.TestCase):
                                      "%s is not less than or equal to %s")
 
     def assertXMLEqual(self, el1, el2, msg=None):
-        """ Test that the two XML trees given are equal.  Both
-        elements and all children are expected to have ``name``
-        attributes. """
+        """ Test that the two XML trees given are equal. """
         if msg is None:
-            msg = "XML trees were not equal"
+            msg = "XML trees are not equal: %s"
+        else:
+            msg += ": %s"
         fullmsg = msg + "\nFirst:  %s" % lxml.etree.tostring(el1) + \
             "\nSecond: %s" % lxml.etree.tostring(el2)
 
-        self.assertEqual(el1.tag, el2.tag, msg=fullmsg)
-        self.assertEqual(el1.text, el2.text, msg=fullmsg)
+        self.assertEqual(el1.tag, el2.tag, msg=fullmsg % "Tags differ")
+        self.assertEqual(el1.text, el2.text,
+                         msg=fullmsg % "Text content differs")
         self.assertItemsEqual(el1.attrib.items(), el2.attrib.items(),
-                              msg=fullmsg)
+                              msg=fullmsg % "Attributes differ")
         self.assertEqual(len(el1.getchildren()),
                          len(el2.getchildren()),
-                         msg=fullmsg)
+                         msg=fullmsg % "Different numbers of children")
+        matched = []
         for child1 in el1.getchildren():
-            cname = child1.get("name")
-            self.assertIsNotNone(cname,
-                                 msg="Element %s has no 'name' attribute" %
-                                 child1.tag)
-            children2 = el2.xpath("%s[@name='%s']" % (child1.tag, cname))
-            self.assertEqual(len(children2), 1,
-                             msg="More than one %s element named %s" % \
-                                 (child1.tag, cname))
-            self.assertXMLEqual(child1, children2[0], msg=msg)
+            for child2 in el2.xpath(child1.tag):
+                if child2 in matched:
+                    continue
+                try:
+                    self.assertXMLEqual(child1, child2)
+                    matched.append(child2)
+                    break
+                except AssertionError:
+                    continue
+            else:
+                assert False, \
+                    fullmsg % ("Element %s is missing from second" %
+                               lxml.etree.tostring(child1))
+        self.assertItemsEqual(el2.getchildren(), matched,
+                              msg=fullmsg % "Second has extra element(s)")
 
 
 class DBModelTestCase(Bcfg2TestCase):
