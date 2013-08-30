@@ -329,12 +329,12 @@ class Frame(object):
             if bundle.tag != 'Bundle':
                 continue
             bmodified = len([item for item in bundle
-                             if item in self.whitelist or 
-                                item in self.modified])
+                             if item in self.whitelist or
+                             item in self.modified])
             actions = [a for a in bundle.findall('./Action')
                        if (a.get('timing') != 'post' and
                            (bmodified or a.get('when') == 'always'))]
-            # now we process all "pre" and "both" actions that are either 
+            # now we process all "pre" and "both" actions that are either
             # always or the bundle has been modified
             if self.setup['interactive']:
                 self.promptFilter(iprompt, actions)
