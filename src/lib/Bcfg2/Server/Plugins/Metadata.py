@@ -102,17 +102,12 @@ def load_django_models():
 class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
     """Handles xml config files and all XInclude statements"""
 
-    def __init__(self, metadata, watch_clients, basefile):
-        # we tell XMLFileBacked _not_ to add a monitor for this file,
-        # because the main Metadata plugin has already added one.
-        # then we immediately set should_monitor to the proper value,
-        # so that XInclude'd files get properly watched
+    def __init__(self, metadata, basefile):
         fpath = os.path.join(metadata.data, basefile)
         toptag = os.path.splitext(basefile)[0].title()
         Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, fpath,
                                                    should_monitor=False,
                                                    create=toptag)
-        self.should_monitor = watch_clients
         self.metadata = metadata
         self.basefile = basefile
         self.data = None
@@ -257,8 +252,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
 
     def add_monitor(self, fpath):
         self.extras.append(fpath)
-        if self.should_monitor:
-            self.fam.AddMonitor(fpath, self.metadata)
+        self.fam.AddMonitor(fpath, self.metadata)
 
     def HandleEvent(self, event=None):
         """Handle fam events"""
@@ -517,11 +511,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             help='Default client authentication method')]
     options_parsed_hook = staticmethod(load_django_models)
 
-    def __init__(self, core, datastore, watch_clients=True):
+    def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Metadata.__init__(self)
         Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
-        self.watch_clients = watch_clients
         self.states = dict()
         self.extra = dict()
         self.handlers = dict()
@@ -594,17 +587,16 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def _handle_file(self, fname):
         """ set up the necessary magic for handling a metadata file
         (clients.xml or groups.xml, e.g.) """
-        if self.watch_clients:
-            try:
-                Bcfg2.Server.FileMonitor.get_fam().AddMonitor(
-                    os.path.join(self.data, fname), self)
-            except:
-                err = sys.exc_info()[1]
-                msg = "Unable to add file monitor for %s: %s" % (fname, err)
-                self.logger.error(msg)
-                raise Bcfg2.Server.Plugin.PluginInitError(msg)
-            self.states[fname] = False
-        xmlcfg = XMLMetadataConfig(self, self.watch_clients, fname)
+        try:
+            Bcfg2.Server.FileMonitor.get_fam().AddMonitor(
+                os.path.join(self.data, fname), self)
+        except:
+            err = sys.exc_info()[1]
+            msg = "Unable to add file monitor for %s: %s" % (fname, err)
+            self.logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginInitError(msg)
+        self.states[fname] = False
+        xmlcfg = XMLMetadataConfig(self, fname)
         aname = re.sub(r'[^A-z0-9_]', '_', os.path.basename(fname))
         self.handlers[xmlcfg.HandleEvent] = getattr(self,
                                                     "_handle_%s_event" % aname)
