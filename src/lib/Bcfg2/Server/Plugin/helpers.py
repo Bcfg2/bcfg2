@@ -597,17 +597,14 @@ class XMLFileBacked(FileBacked):
     Index.__doc__ = FileBacked.Index.__doc__
 
     def add_monitor(self, fpath):
-        """ Add a FAM monitor to a file that has been XIncluded.  This
-        is only done if the constructor got both a ``fam`` object and
-        ``should_monitor`` set to True.
+        """ Add a FAM monitor to a file that has been XIncluded.
 
         :param fpath: The full path to the file to monitor
         :type fpath: string
         :returns: None
         """
         self.extra_monitors.append(fpath)
-        if self.should_monitor:
-            self.fam.AddMonitor(fpath, self)
+        self.fam.AddMonitor(fpath, self)
 
     def __iter__(self):
         return iter(self.entries)

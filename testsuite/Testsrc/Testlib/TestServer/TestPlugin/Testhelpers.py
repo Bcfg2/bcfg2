@@ -606,19 +606,11 @@ class TestXMLFileBacked(TestFileBacked):
         xfb.add_monitor("/test/test2.xml")
         self.assertIn("/test/test2.xml", xfb.extra_monitors)
 
-        if self.should_monitor is not True:
-            xfb = self.get_obj()
-            xfb.fam = Mock()
-            xfb.add_monitor("/test/test3.xml")
-            self.assertFalse(xfb.fam.AddMonitor.called)
-            self.assertIn("/test/test3.xml", xfb.extra_monitors)
-
-        if self.should_monitor is not False:
-            xfb = self.get_obj(should_monitor=True)
-            xfb.fam = Mock()
-            xfb.add_monitor("/test/test4.xml")
-            xfb.fam.AddMonitor.assert_called_with("/test/test4.xml", xfb)
-            self.assertIn("/test/test4.xml", xfb.extra_monitors)
+        xfb = self.get_obj()
+        xfb.fam = Mock()
+        xfb.add_monitor("/test/test4.xml")
+        xfb.fam.AddMonitor.assert_called_with("/test/test4.xml", xfb)
+        self.assertIn("/test/test4.xml", xfb.extra_monitors)
 
 
 class TestStructFile(TestXMLFileBacked):
