@@ -623,17 +623,9 @@ class TestXMLFileBacked(TestFileBacked):
         self.assertIn("/test/test2.xml", xfb.extra_monitors)
 
         fam = Mock()
-        if self.should_monitor is not True:
-            fam.reset_mock()
-            xfb = self.get_obj(fam=fam)
-            fam.reset_mock()
-            xfb.add_monitor("/test/test3.xml")
-            self.assertFalse(fam.AddMonitor.called)
-            self.assertIn("/test/test3.xml", xfb.extra_monitors)
-
-        if self.should_monitor is not False:
-            fam.reset_mock()
-            xfb = self.get_obj(fam=fam, should_monitor=True)
+        fam.reset_mock()
+        xfb = self.get_obj(fam=fam)
+        if xfb.fam:
             xfb.add_monitor("/test/test4.xml")
             fam.AddMonitor.assert_called_with("/test/test4.xml", xfb)
             self.assertIn("/test/test4.xml", xfb.extra_monitors)
