@@ -44,15 +44,11 @@ class ReportingCollector(object):
         else:
             level = logging.WARNING
 
-        Bcfg2.Logger.setup_logging('bcfg2-report-collector',
-                                   to_console=logging.INFO,
-                                   to_syslog=Bcfg2.Options.setup.syslog,
-                                   to_file=Bcfg2.Options.setup.logging,
-                                   level=level)
+        Bcfg2.Logger.setup_logging()
         self.logger = logging.getLogger('bcfg2-report-collector')
 
         try:
-            self.transport = Bcfg2.Options.setup.transport()
+            self.transport = Bcfg2.Options.setup.reporting_transport()
             self.storage = Bcfg2.Options.setup.reporting_storage()
         except TransportError:
             self.logger.error("Failed to load transport: %s" %
