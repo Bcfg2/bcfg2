@@ -21,9 +21,9 @@ class NagiosGen(Plugin, Generator):
         self.config = \
             StructFile(os.path.join(self.data, 'config.xml'),
                        should_monitor=True, create=self.name)
-        self.Entries = {'Path':
-                        {'/etc/nagiosgen.status': self.createhostconfig,
-                         '/etc/nagios/conf.d/bcfg2.cfg': self.createserverconfig}}
+        self.Entries = {
+            'Path': {'/etc/nagiosgen.status': self.createhostconfig,
+                     '/etc/nagios/conf.d/bcfg2.cfg': self.createserverconfig}}
 
         self.client_attrib = {'encoding': 'ascii',
                               'owner': 'root',

@@ -55,6 +55,9 @@ export.sh
 generate-manpages.bash
     - Generate man pages from the Sphinx source
 
+git_commit.py
+    - Trigger script to commit local changes back to a git repository
+
 pkgmgr_gen.py
     - Generate Pkgmgr XML files from a list of directories that
       contain RPMS

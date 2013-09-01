@@ -10,6 +10,7 @@ import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Cache
 import Bcfg2.Server.Plugin
+from Bcfg2.Compat import unicode  # pylint: disable=W0622
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Logger import Debuggable
 from Bcfg2.Server.Statistics import track_statistics
@@ -285,7 +286,10 @@ class ProbeData(str):  # pylint: disable=E0012,R0924
     .json, and .yaml properties to provide convenient ways to use
     ProbeData objects as XML, JSON, or YAML data """
     def __new__(cls, data):
-        return str.__new__(cls, data)
+        if isinstance(data, unicode):
+            return str.__new__(cls, data.encode('utf-8'))
+        else:
+            return str.__new__(cls, data)
 
     def __init__(self, data):  # pylint: disable=W0613
         str.__init__(self)

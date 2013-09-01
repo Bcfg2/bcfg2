@@ -734,12 +734,13 @@ class TestPOSIXTool(TestTool):
             gather_data_rv[idx] = val
         ptool._gather_data.return_value = tuple(gather_data_rv)
 
+        stat_mode = 17407
         mtime = 1344430414
+        stat_rv = (stat_mode, Mock(), Mock(), Mock(), Mock(), Mock(), Mock(),
+                   Mock(), mtime, Mock())
+        gather_data_rv[0] = stat_rv
         entry = reset()
         entry.set("mtime", str(mtime))
-        stat_rv = MagicMock()
-        stat_rv.__getitem__.return_value = mtime
-        gather_data_rv[0] = stat_rv
         ptool._gather_data.return_value = tuple(gather_data_rv)
         self.assertTrue(ptool._verify_metadata(entry))
         ptool._gather_data.assert_called_with(entry.get("name"))
@@ -811,7 +812,7 @@ class TestPOSIXTool(TestTool):
             ptool._gather_data.assert_called_with(entry.get("name"))
             ptool._verify_acls.assert_called_with(entry,
                                                 path=entry.get("name"))
-            mock_matchpathcon.assert_called_with(entry.get("name"), 0)
+            mock_matchpathcon.assert_called_with(entry.get("name"), stat_mode)
             self.assertEqual(entry.get("current_exists", 'true'), 'true')
             for attr, idx, val in expected:
                 self.assertEqual(entry.get(attr), val)
@@ -826,7 +827,7 @@ class TestPOSIXTool(TestTool):
             ptool._gather_data.assert_called_with(entry.get("name"))
             ptool._verify_acls.assert_called_with(entry,
                                                 path=entry.get("name"))
-            mock_matchpathcon.assert_called_with(entry.get("name"), 0)
+            mock_matchpathcon.assert_called_with(entry.get("name"), stat_mode)
             self.assertEqual(entry.get("current_exists", 'true'), 'true')
             for attr, idx, val in expected:
                 self.assertEqual(entry.get(attr), val)
