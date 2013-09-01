@@ -5,7 +5,6 @@ better. """
 import os
 import sys
 import socket
-import select
 import signal
 import logging
 import ssl
@@ -183,7 +182,6 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 
     Adds support for HTTP authentication.
     """
-
     logger = logging.getLogger("Bcfg2.SSLServer.XMLRPCRequestHandler")
 
     def authenticate(self):
@@ -228,22 +226,22 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             return False
         return True
 
-    ### need to override do_POST here
     def do_POST(self):
         try:
             max_chunk_size = 10 * 1024 * 1024
             size_remaining = int(self.headers["content-length"])
             L = []
             while size_remaining:
-                try:
-                    select.select([self.rfile.fileno()], [], [], 3)
-                except select.error:
-                    print("got select timeout")
-                    raise
                 chunk_size = min(size_remaining, max_chunk_size)
-                L.append(self.rfile.read(chunk_size).decode('utf-8'))
+                chunk = self.rfile.read(chunk_size)
+                if not chunk:
+                    break
+                L.append(chunk)
                 size_remaining -= len(L[-1])
             data = ''.join(L)
+            if data is None:
+                return  # response has been sent
+
             response = self.server._marshaled_dispatch(self.client_address,
                                                        data)
             if sys.hexversion >= 0x03000000:
@@ -251,6 +249,7 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         except:  # pylint: disable=W0702
             try:
                 self.send_response(500)
+                self.send_header("Content-length", "0")
                 self.end_headers()
             except:
                 (etype, msg) = sys.exc_info()[:2]
@@ -306,14 +305,11 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 
     def finish(self):
         # shut down the connection
-        if not self.wfile.closed:
-            try:
-                self.wfile.flush()
-                self.wfile.close()
-            except socket.error:
-                err = sys.exc_info()[1]
-                self.logger.warning("Error closing connection: %s" % err)
-        self.rfile.close()
+        try:
+            SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.finish(self)
+        except socket.error:
+            err = sys.exc_info()[1]
+            self.logger.warning("Error closing connection: %s" % err)
 
 
 class XMLRPCServer(SocketServer.ThreadingMixIn, SSLServer,
@@ -430,8 +426,6 @@ class XMLRPCServer(SocketServer.ThreadingMixIn, SSLServer,
                 try:
                     self.handle_request()
                 except socket.timeout:
-                    pass
-                except select.error:
                     pass
                 except:
                     self.logger.error("Got unexpected error in handle_request",

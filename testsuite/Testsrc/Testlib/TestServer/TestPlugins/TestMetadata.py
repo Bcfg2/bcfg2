@@ -830,21 +830,18 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
         self.assertEqual(metadata.groups['group4'].category, 'category1')
         self.assertEqual(metadata.default, "group1")
 
-        all_groups = []
-        negated_groups = []
+        all_groups = set()
+        negated_groups = set()
         for group in get_groups_test_tree().xpath("//Groups/Client//*") + \
                 get_groups_test_tree().xpath("//Groups/Group//*"):
             if group.tag == 'Group' and not group.getchildren():
                 if group.get("negate", "false").lower() == 'true':
-                    negated_groups.append(group.get("name"))
+                    negated_groups.add(group.get("name"))
                 else:
-                    all_groups.append(group.get("name"))
-        self.assertItemsEqual([g.name
-                               for g in metadata.group_membership.values()],
-                              all_groups)
-        self.assertItemsEqual([g.name
-                               for g in metadata.negated_groups.values()],
-                              negated_groups)
+                    all_groups.add(group.get("name"))
+        self.assertItemsEqual(metadata.ordered_groups, all_groups)
+        self.assertItemsEqual(metadata.group_membership.keys(), all_groups)
+        self.assertItemsEqual(metadata.negated_groups.keys(), negated_groups)
 
     @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml", Mock())
     def test_set_profile(self):

@@ -110,7 +110,6 @@ class Core(BaseCore):
                                        keyfile=self.setup['key'],
                                        certfile=self.setup['cert'],
                                        register=False,
-                                       timeout=1,
                                        ca=self.setup['ca'],
                                        protocol=self.setup['protocol'])
         except:  # pylint: disable=W0702
