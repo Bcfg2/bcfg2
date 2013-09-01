@@ -193,7 +193,11 @@ class Client(object):
         ret = XML.Element("probe-data", name=name, source=probe.get('source'))
         try:
             scripthandle, scriptname = tempfile.mkstemp()
-            script = os.fdopen(scripthandle, 'w')
+            if sys.hexversion >= 0x03000000:
+                script = os.fdopen(scripthandle, 'w',
+                                   encoding=Bcfg2.Options.setup.encoding)
+            else:
+                script = os.fdopen(scripthandle, 'w')
             try:
                 script.write("#!%s\n" %
                              (probe.attrib.get('interpreter', '/bin/sh')))

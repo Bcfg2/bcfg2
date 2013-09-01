@@ -238,9 +238,14 @@ class XMLProbeStore(ProbeStore):
                 lxml.etree.SubElement(top, 'Client', name=client,
                                       timestamp=str(int(probedata.timestamp)))
             for probe in sorted(probedata):
-                lxml.etree.SubElement(
-                    ctag, 'Probe', name=probe,
-                    value=self._datacache[client][probe])
+                try:
+                    lxml.etree.SubElement(
+                        ctag, 'Probe', name=probe,
+                        value=self._datacache[client][probe].decode('utf-8'))
+                except AttributeError:
+                    lxml.etree.SubElement(
+                        ctag, 'Probe', name=probe,
+                        value=self._datacache[client][probe])
             for group in sorted(self._groupcache[client]):
                 lxml.etree.SubElement(ctag, "Group", name=group)
         try:
