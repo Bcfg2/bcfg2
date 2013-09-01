@@ -59,7 +59,7 @@ class ccolors:  # pylint: disable=C0103,W0232
 
 def gen_password(length):
     """Generates a random alphanumeric password with length characters."""
-    chars = string.letters + string.digits
+    chars = string.ascii_letters + string.digits
     return "".join(random.choice(chars) for i in range(length))
 
 
