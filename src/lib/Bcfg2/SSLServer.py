@@ -233,7 +233,7 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             L = []
             while size_remaining:
                 chunk_size = min(size_remaining, max_chunk_size)
-                chunk = self.rfile.read(chunk_size)
+                chunk = self.rfile.read(chunk_size).decode('utf-8')
                 if not chunk:
                     break
                 L.append(chunk)
