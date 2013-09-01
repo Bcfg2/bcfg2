@@ -57,7 +57,7 @@ class POSIXFile(POSIXTool):
         if isinstance(tempdata, str) and str != unicode:
             tempdatasize = len(tempdata)
         else:
-            tempdatasize = len(tempdata.encode(self.setup['encoding']))
+            tempdatasize = len(tempdata.encode(Bcfg2.Options.setup.encoding))
 
         different = False
         content = None
@@ -79,7 +79,7 @@ class POSIXFile(POSIXTool):
                 content = open(entry.get('name')).read()
             except UnicodeDecodeError:
                 content = open(entry.get('name'),
-                               encoding=self.setup['encoding']).read()
+                               encoding=Bcfg2.Options.setup.encoding).read()
             except IOError:
                 self.logger.error("POSIX: Failed to read %s: %s" %
                                   (entry.get("name"), sys.exc_info()[1]))
@@ -117,7 +117,7 @@ class POSIXFile(POSIXTool):
                 os.fdopen(newfd, 'w').write(filedata)
             else:
                 os.fdopen(newfd, 'wb').write(
-                    filedata.encode(self.setup['encoding']))
+                    filedata.encode(Bcfg2.Options.setup.encoding))
         except (OSError, IOError):
             err = sys.exc_info()[1]
             self.logger.error("POSIX: Failed to open temp file %s for writing "
