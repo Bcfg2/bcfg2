@@ -24,9 +24,9 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
                                                         'config.xml'),
                                            core.fam, should_monitor=True,
                                            create=self.name)
-        self.Entries = {'Path':
-            {'/etc/nagiosgen.status': self.createhostconfig,
-             '/etc/nagios/nagiosgen.cfg': self.createserverconfig}}
+        self.Entries = {
+            'Path': {'/etc/nagiosgen.status': self.createhostconfig,
+                     '/etc/nagios/nagiosgen.cfg': self.createserverconfig}}
 
         self.client_attrib = {'encoding': 'ascii',
                               'owner': 'root',
