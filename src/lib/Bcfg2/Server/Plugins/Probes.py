@@ -240,7 +240,7 @@ class XMLProbeStore(ProbeStore):
             for probe in sorted(probedata):
                 lxml.etree.SubElement(
                     ctag, 'Probe', name=probe,
-                    value=self._datacache[client][probe])
+                    value=self._datacache[client][probe].decode('utf-8'))
             for group in sorted(self._groupcache[client]):
                 lxml.etree.SubElement(ctag, "Group", name=group)
         try:
