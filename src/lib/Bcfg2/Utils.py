@@ -2,12 +2,13 @@
 used by both client and server.  Stuff that doesn't fit anywhere
 else. """
 
+import fcntl
+import logging
 import os
 import re
-import sys
-import fcntl
 import select
-import logging
+import shlex
+import sys
 import subprocess
 import threading
 from Bcfg2.Compat import input, any  # pylint: disable=W0622
@@ -216,12 +217,17 @@ class Executor(object):
         :type timeout: float
         :returns: :class:`Bcfg2.Utils.ExecutorResult`
         """
+        shell = False
+        if 'shell' in kwargs:
+            shell = kwargs['shell']
         if isinstance(command, str):
             cmdstr = command
+            if not shell:
+                command = shlex.split(cmdstr)
         else:
             cmdstr = " ".join(command)
         self.logger.debug("Running: %s" % cmdstr)
-        args = dict(shell=False, bufsize=16384, close_fds=True)
+        args = dict(shell=shell, bufsize=16384, close_fds=True)
         args.update(kwargs)
         args.update(stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE)
