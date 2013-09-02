@@ -8,6 +8,7 @@ import Bcfg2.Server.Lint
 import Bcfg2.Client.Tools.VCS
 from Bcfg2.Server.Plugins.Packages import Apt, Yum
 from Bcfg2.Client.Tools.POSIX.base import device_map
+from Bcfg2.Compat import all  # pylint: disable=W0622
 try:
     from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
     HAS_GENSHI = True
@@ -26,13 +27,13 @@ def is_filename(val):
 def is_selinux_type(val):
     """ Return True if val is a string describing a valid (although
     not necessarily existent) SELinux type """
-    return re.match(r'^[a-z_]+_t', val)
+    return re.match(r'^[A-z][A-z0-9_]+_t', val) or val == '<<none>>'
 
 
 def is_selinux_user(val):
     """ Return True if val is a string describing a valid (although
     not necessarily existent) SELinux user """
-    return re.match(r'^[a-z_]+_u', val)
+    return re.match(r'^[a-z_]+(_[ur])?', val)
 
 
 def is_octal_mode(val):
@@ -111,7 +112,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                 selinuxuser=is_selinux_user)},
             SEUser={None: dict(name=is_selinux_user,
                                roles=lambda v: all(is_selinux_user(u)
-                                                   for u in " ".split(v)),
+                                                   for u in v.split(" ")),
                                prefix=None)},
             SEInterface={None: dict(name=None, selinuxtype=is_selinux_type)},
             SEPermissive={None: dict(name=is_selinux_type)},
