@@ -269,6 +269,7 @@ group:      group:with:colons
         Bcfg2.Options.setup.probes_db = False
         self._perform_tests()
 
+    @skipUnless(HAS_DJANGO, "Django not found")
     def test_probes_db(self):
         """ Set and retrieve probe data with database enabled """
         Bcfg2.Options.setup.probes_db = True
