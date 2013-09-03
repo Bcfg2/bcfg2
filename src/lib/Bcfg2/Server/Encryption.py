@@ -215,7 +215,7 @@ class CryptoTool(object):
         """ get the passphrase for the current file """
         if not Bcfg2.Options.setup.passphrases:
             raise PassphraseError("No passphrases available in %s" %
-                                  Bcfg2.Options.setup.configfile)
+                                  Bcfg2.Options.setup.config)
 
         pname = None
         if Bcfg2.Options.setup.passphrase:
@@ -229,7 +229,7 @@ class CryptoTool(object):
                 return (pname, passphrase)
             except KeyError:
                 raise PassphraseError("Could not find passphrase %s in %s" %
-                                      (pname, Bcfg2.Options.setup.configfile))
+                                      (pname, Bcfg2.Options.setup.config))
         else:
             if len(Bcfg2.Options.setup.passphrases) == 1:
                 pname, passphrase = Bcfg2.Options.setup.passphrases.items()[0]
@@ -285,7 +285,7 @@ class CfgEncryptor(Encryptor):
         if self.passphrase is None:
             raise PassphraseError("Multiple passphrases found in %s, "
                                   "specify one on the command line with -p" %
-                                  Bcfg2.Options.setup.configfile)
+                                  Bcfg2.Options.setup.config)
 
     def encrypt(self):
         return ssl_encrypt(self.data, self.passphrase)
@@ -373,13 +373,13 @@ class PropertiesCryptoMixin(object):
             if pname:
                 self.logger.warning("Passphrase %s not found in %s, "
                                     "using passphrase given on command line" %
-                                    (pname, Bcfg2.Options.setup.configfile))
+                                    (pname, Bcfg2.Options.setup.config))
             passphrase = self.passphrase
             pname = self.pname
         else:
             raise PassphraseError("Multiple passphrases found in %s, "
                                   "specify one on the command line with -p" %
-                                  Bcfg2.Options.setup.configfile)
+                                  Bcfg2.Options.setup.config)
         return (pname, passphrase)
 
     def _write(self, filename, data):
