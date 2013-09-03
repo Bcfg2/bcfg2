@@ -211,7 +211,7 @@ class Parser(argparse.ArgumentParser):
         while not self.parsed:
             self.parsed = True
             self._set_defaults()
-            self.parse_known_args(namespace=self.namespace)
+            self.parse_known_args(args=self.argv, namespace=self.namespace)
             self._parse_config_options()
             self._finalize()
         self._parse_config_options()
