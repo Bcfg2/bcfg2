@@ -6,6 +6,10 @@ pip install -r testsuite/requirements.txt --use-mirrors
 
 PYVER=$(python -c 'import sys;print(".".join(str(v) for v in sys.version_info[0:2]))')
 
+if [[ ${PYVER:0:1} == "2" && $PYVER != "2.7" ]]; then
+    pip install --use-mirrors unittest2
+fi
+
 if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
     pip install --use-mirrors PyYAML pyinotify
     if [[ $PYVER == "2.5" ]]; then

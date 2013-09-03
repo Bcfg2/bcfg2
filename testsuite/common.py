@@ -12,11 +12,13 @@ import os
 import re
 import sys
 import codecs
-import unittest
 import lxml.etree
 import Bcfg2.Options
 from mock import patch, MagicMock, _patch, DEFAULT
-from Bcfg2.Compat import wraps
+try:
+    from unittest import skip, skipIf, skipUnless, TestCase
+except ImportError:
+    from unittest2 import skip, skipIf, skipUnless, TestCase
 
 #: The path to the Bcfg2 specification root for the tests.  Using the
 #: root directory exposes a lot of potential problems with building
@@ -110,177 +112,15 @@ else:
         return codecs.unicode_escape_decode(s)[0]
 
 
-#: Whether or not skipping tests is natively supported by
-#: :mod:`unittest`.  If it isn't, then we have to make tests that
-#: would be skipped succeed instead.
-can_skip = False
-
-if hasattr(unittest, "skip"):
-    can_skip = True
-
-    #: skip decorator from :func:`unittest.skip`
-    skip = unittest.skip
-
-    #: skipIf decorator from :func:`unittest.skipIf`
-    skipIf = unittest.skipIf
-
-    #: skipUnless decorator from :func:`unittest.skipUnless`
-    skipUnless = unittest.skipUnless
-else:
-    # we can't actually skip tests, we just make them pass
-    can_skip = False
-
-    def skip(msg):
-        """ skip decorator used when :mod:`unittest` doesn't support
-        skipping tests.  Replaces the decorated function with a
-        no-op. """
-        def decorator(func):
-            return lambda *args, **kwargs: None
-        return decorator
-
-    def skipIf(condition, msg):
-        """ skipIf decorator used when :mod:`unittest` doesn't support
-        skipping tests """
-        if not condition:
-            return lambda f: f
-        else:
-            return skip(msg)
-
-    def skipUnless(condition, msg):
-        """ skipUnless decorator used when :mod:`unittest` doesn't
-        support skipping tests """
-        if condition:
-            return lambda f: f
-        else:
-            return skip(msg)
+can_skip = True
 
 
-def _count_diff_all_purpose(actual, expected):
-    '''Returns list of (cnt_act, cnt_exp, elem) triples where the
-    counts differ'''
-    # elements need not be hashable
-    s, t = list(actual), list(expected)
-    m, n = len(s), len(t)
-    NULL = object()
-    result = []
-    for i, elem in enumerate(s):
-        if elem is NULL:
-            continue
-        cnt_s = cnt_t = 0
-        for j in range(i, m):
-            if s[j] == elem:
-                cnt_s += 1
-                s[j] = NULL
-        for j, other_elem in enumerate(t):
-            if other_elem == elem:
-                cnt_t += 1
-                t[j] = NULL
-        if cnt_s != cnt_t:
-            diff = (cnt_s, cnt_t, elem)
-            result.append(diff)
-
-    for i, elem in enumerate(t):
-        if elem is NULL:
-            continue
-        cnt_t = 0
-        for j in range(i, n):
-            if t[j] == elem:
-                cnt_t += 1
-                t[j] = NULL
-        diff = (0, cnt_t, elem)
-        result.append(diff)
-    return result
-
-
-def _assertion(predicate, default_msg=None):
-    @wraps(predicate)
-    def inner(self, *args, **kwargs):
-        if 'msg' in kwargs:
-            msg = kwargs['msg']
-            del kwargs['msg']
-        else:
-            try:
-                msg = default_msg % args
-            except TypeError:
-                # message passed as final (non-keyword) argument?
-                msg = args[-1]
-                args = args[:-1]
-        assert predicate(*args, **kwargs), msg
-    return inner
-
-
-def _regex_matches(val, regex):
-    if hasattr(regex, 'search'):
-        return regex.search(val)
-    else:
-        return re.search(regex, val)
-
-
-class Bcfg2TestCase(unittest.TestCase):
+class Bcfg2TestCase(TestCase):
     """ Base TestCase class that inherits from
-    :class:`unittest.TestCase`.  This class does a few things:
-
-    * Adds :func:`assertXMLEqual`, a useful assertion method given all
-      the XML used by Bcfg2;
-
-    * Defines convenience methods that were (mostly) added in Python
-      2.7.
+    :class:`unittest.TestCase`.  This class adds
+    :func:`assertXMLEqual`, a useful assertion method given all the
+    XML used by Bcfg2.
     """
-    if not hasattr(unittest.TestCase, "assertItemsEqual"):
-        # TestCase in Py3k lacks assertItemsEqual, but has the other
-        # convenience methods.  this code is (mostly) cribbed from the
-        # py2.7 unittest library
-        def assertItemsEqual(self, expected_seq, actual_seq, msg=None):
-            """ Implementation of
-            :func:`unittest.TestCase.assertItemsEqual` for python
-            versions that lack it """
-            first_seq, second_seq = list(actual_seq), list(expected_seq)
-            differences = _count_diff_all_purpose(first_seq, second_seq)
-
-            if differences:
-                standardMsg = 'Element counts were not equal:\n'
-                lines = ['First has %d, Second has %d:  %r' % diff
-                         for diff in differences]
-                diffMsg = '\n'.join(lines)
-                standardMsg = self._truncateMessage(standardMsg, diffMsg)
-                msg = self._formatMessage(msg, standardMsg)
-                self.fail(msg)
-
-    if not hasattr(unittest.TestCase, "assertRegexpMatches"):
-        # Some versions of TestCase in Py3k seem to lack
-        # assertRegexpMatches, but have the other convenience methods.
-        assertRegexpMatches = _assertion(lambda s, r: _regex_matches(s, r),
-                                         "%s does not contain /%s/")
-
-    if not hasattr(unittest.TestCase, "assertNotRegexpMatches"):
-        # Some versions of TestCase in Py3k seem to lack
-        # assertNotRegexpMatches even though they have
-        # assertRegexpMatches
-        assertNotRegexpMatches = \
-            _assertion(lambda s, r: not _regex_matches(s, r),
-                       "%s contains /%s/")
-
-    if not hasattr(unittest.TestCase, "assertIn"):
-        # versions of TestCase before python 2.7 and python 3.1 lacked
-        # a lot of the really handy convenience methods, so we provide
-        # them -- at least the easy ones and the ones we use.
-        assertIs = _assertion(lambda a, b: a is b, "%s is not %s")
-        assertIsNot = _assertion(lambda a, b: a is not b, "%s is %s")
-        assertIsNone = _assertion(lambda x: x is None, "%s is not None")
-        assertIsNotNone = _assertion(lambda x: x is not None, "%s is None")
-        assertIn = _assertion(lambda a, b: a in b, "%s is not in %s")
-        assertNotIn = _assertion(lambda a, b: a not in b, "%s is in %s")
-        assertIsInstance = _assertion(isinstance, "%s is not instance of %s")
-        assertNotIsInstance = _assertion(lambda a, b: not isinstance(a, b),
-                                         "%s is instance of %s")
-        assertGreater = _assertion(lambda a, b: a > b,
-                                   "%s is not greater than %s")
-        assertGreaterEqual = _assertion(lambda a, b: a >= b,
-                                        "%s is not greater than or equal to %s")
-        assertLess = _assertion(lambda a, b: a < b, "%s is not less than %s")
-        assertLessEqual = _assertion(lambda a, b: a <= b,
-                                     "%s is not less than or equal to %s")
-
     def assertXMLEqual(self, el1, el2, msg=None):
         """ Test that the two XML trees given are equal. """
         if msg is None:
