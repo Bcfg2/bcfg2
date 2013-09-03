@@ -249,7 +249,6 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 L.append(chunk)
                 size_remaining -= len(L[-1])
             data = ''.join(L)
-            data = self.decode_request_content(data)
             if data is None:
                 return  # response has been sent
 
