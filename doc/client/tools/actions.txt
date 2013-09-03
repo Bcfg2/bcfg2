@@ -31,10 +31,11 @@ central reporting of action failure is desired, set this attribute to
 'check'. Also note that Action entries included in Base will not be
 executed.
 
-Actions cannot be completely defined inside of a bundle; they are a bound
-entry, much like Packages, Services or Paths. The Rules plugin can bind
-these entries. For example to include the above action in a bundle,
-first the Action entry must be included in the bundle:
+Actions may be completely defined inside of a bundle with the use of 
+:ref:`server-configurationentries`, much like Packages, Services or Paths. 
+The Rules plugin can also bind these entries. For example to include the 
+above action in a bundle, first the Action entry must be included in the 
+bundle:
 
 .. code-block:: xml
 
@@ -70,3 +71,18 @@ requires this key.
         <Action timing='post' name='apt-key-update' command='apt-key adv --recv-keys --keyserver hkp://pgp.mit.edu 0C5A2783' when='modified' status='check'/>
       </Group>
     </Rules>
+
+Example BoundAction (add RPM GPG keys)
+======================================
+
+This example will add the RPM-GPG-KEY-redhat-release key to the RPM
+GPG keyring **before** Package entries are handled on the client run.
+
+.. code-block:: xml
+
+    <Bundle name="rpm-gpg-keys">
+      <Group name='rhel'>
+        <Path name="/etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release"/>
+        <BoundAction timing="pre" name="install rpm key" command="rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-redhat-release" when="modified" status="check"/>
+      </Group>
+    </Bundle>
