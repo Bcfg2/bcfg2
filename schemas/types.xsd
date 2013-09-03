@@ -122,7 +122,10 @@
     <xsd:attribute type='ActionTimingEnum' name='timing'>
       <xsd:annotation>
         <xsd:documentation>
-          When the action is run.
+          When the action is run. Actions with "pre" timing are run
+          after important entries have been installed and before
+          bundle entries are installed. Actions with "post" timing
+          are run after bundle entries are installed.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -130,9 +133,7 @@
       <xsd:annotation>
         <xsd:documentation>
           If the action is always run, or is only run when a bundle
-          has been modified.  Actions that run before bundle
-          installation ("pre" and "both") ignore the setting of
-          ``when`` and are always run regardless.
+          has been modified.  
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
