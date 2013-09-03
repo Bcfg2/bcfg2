@@ -100,7 +100,10 @@ class _Cache(MutableMapping):
             expire(*self._tags)
         else:
             tags = self._tags | set([key])
-            expire(*tags, exact=True)
+            # py 2.5 doesn't support mixing *args and explicit keyword
+            # args
+            kwargs = dict(exact=True)
+            expire(*tags, **kwargs)
 
     def __repr__(self):
         return repr(dict(self))
