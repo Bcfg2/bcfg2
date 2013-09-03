@@ -92,7 +92,7 @@ class InfoCmd(Bcfg2.Options.Subcommand):  # pylint: disable=W0223
         """ Given a list of globs, select the items from candidates
         that match the globs """
         # special cases to speed things up:
-        if globs is None or '*' in globs:
+        if not globs or '*' in globs:
             return candidates
         has_wildcards = False
         for glob in globs:
