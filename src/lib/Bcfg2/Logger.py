@@ -236,7 +236,6 @@ def setup_logging():
 
     logging.root.setLevel(logging.DEBUG)
     logging.root.debug("Configured logging: %s" % "; ".join(params))
-    print("Configured logging: %s" % "; ".join(params))
     logging.already_setup = True
 
 
