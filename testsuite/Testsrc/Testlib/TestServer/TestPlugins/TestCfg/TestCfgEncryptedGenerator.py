@@ -18,54 +18,53 @@ from common import *
 from TestServer.TestPlugins.TestCfg.Test_init import TestCfgGenerator
 
 
-if can_skip or HAS_CRYPTO:
-    class TestCfgEncryptedGenerator(TestCfgGenerator):
-        test_obj = CfgEncryptedGenerator
+class TestCfgEncryptedGenerator(TestCfgGenerator):
+    test_obj = CfgEncryptedGenerator
 
-        @skipUnless(HAS_CRYPTO, "Encryption libraries not found, skipping")
-        def setUp(self):
-            TestCfgGenerator.setUp(self)
+    @skipUnless(HAS_CRYPTO, "Encryption libraries not found, skipping")
+    def setUp(self):
+        TestCfgGenerator.setUp(self)
 
-        @patchIf(HAS_CRYPTO,
-                 "Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.bruteforce_decrypt")
-        def test_handle_event(self, mock_decrypt):
-            @patch("Bcfg2.Server.Plugins.Cfg.CfgGenerator.handle_event")
-            def inner(mock_handle_event):
-                def reset():
-                    mock_decrypt.reset_mock()
-                    mock_handle_event.reset_mock()
+    @patchIf(HAS_CRYPTO,
+             "Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.bruteforce_decrypt")
+    def test_handle_event(self, mock_decrypt):
+        @patch("Bcfg2.Server.Plugins.Cfg.CfgGenerator.handle_event")
+        def inner(mock_handle_event):
+            def reset():
+                mock_decrypt.reset_mock()
+                mock_handle_event.reset_mock()
 
-                def get_event_data(obj, event):
-                    obj.data = "encrypted"
+            def get_event_data(obj, event):
+                obj.data = "encrypted"
 
-                mock_handle_event.side_effect = get_event_data
-                mock_decrypt.side_effect = lambda d, **kw: "plaintext"
-                event = Mock()
-                ceg = self.get_obj()
-                ceg.handle_event(event)
-                mock_handle_event.assert_called_with(ceg, event)
-                mock_decrypt.assert_called_with("encrypted")
-                self.assertEqual(ceg.data, "plaintext")
-
-                reset()
-                mock_decrypt.side_effect = EVPError
-                self.assertRaises(PluginExecutionError,
-                                  ceg.handle_event, event)
-            inner()
-
-            # to perform the tests from the parent test object, we
-            # make bruteforce_decrypt just return whatever data was
-            # given to it
-            mock_decrypt.side_effect = lambda d, **kw: d
-            TestCfgGenerator.test_handle_event(self)
-
-        def test_get_data(self):
+            mock_handle_event.side_effect = get_event_data
+            mock_decrypt.side_effect = lambda d, **kw: "plaintext"
+            event = Mock()
             ceg = self.get_obj()
-            ceg.data = None
-            entry = lxml.etree.Element("Path", name="/test.txt")
-            metadata = Mock()
+            ceg.handle_event(event)
+            mock_handle_event.assert_called_with(ceg, event)
+            mock_decrypt.assert_called_with("encrypted")
+            self.assertEqual(ceg.data, "plaintext")
 
+            reset()
+            mock_decrypt.side_effect = EVPError
             self.assertRaises(PluginExecutionError,
-                              ceg.get_data, entry, metadata)
+                              ceg.handle_event, event)
+        inner()
 
-            TestCfgGenerator.test_get_data(self)
+        # to perform the tests from the parent test object, we
+        # make bruteforce_decrypt just return whatever data was
+        # given to it
+        mock_decrypt.side_effect = lambda d, **kw: d
+        TestCfgGenerator.test_handle_event(self)
+
+    def test_get_data(self):
+        ceg = self.get_obj()
+        ceg.data = None
+        entry = lxml.etree.Element("Path", name="/test.txt")
+        metadata = Mock()
+
+        self.assertRaises(PluginExecutionError,
+                          ceg.get_data, entry, metadata)
+
+        TestCfgGenerator.test_get_data(self)

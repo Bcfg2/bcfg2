@@ -112,9 +112,6 @@ else:
         return codecs.unicode_escape_decode(s)[0]
 
 
-can_skip = True
-
-
 class Bcfg2TestCase(TestCase):
     """ Base TestCase class that inherits from
     :class:`unittest.TestCase`.  This class adds

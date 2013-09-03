@@ -89,86 +89,84 @@ class TestPropertyFile(Bcfg2TestCase):
         mock_copy.assert_called_with(pf)
 
 
-if can_skip or HAS_JSON:
-    class TestJSONPropertyFile(TestFileBacked, TestPropertyFile):
-        test_obj = JSONPropertyFile
+class TestJSONPropertyFile(TestFileBacked, TestPropertyFile):
+    test_obj = JSONPropertyFile
 
-        @skipUnless(HAS_JSON, "JSON libraries not found, skipping")
-        def setUp(self):
-            TestFileBacked.setUp(self)
-            TestPropertyFile.setUp(self)
+    @skipUnless(HAS_JSON, "JSON libraries not found, skipping")
+    def setUp(self):
+        TestFileBacked.setUp(self)
+        TestPropertyFile.setUp(self)
 
-        @patch("%s.loads" % JSON)
-        def test_Index(self, mock_loads):
-            pf = self.get_obj()
-            pf.Index()
-            mock_loads.assert_called_with(pf.data)
-            self.assertEqual(pf.json, mock_loads.return_value)
+    @patch("%s.loads" % JSON)
+    def test_Index(self, mock_loads):
+        pf = self.get_obj()
+        pf.Index()
+        mock_loads.assert_called_with(pf.data)
+        self.assertEqual(pf.json, mock_loads.return_value)
 
-            mock_loads.reset_mock()
-            mock_loads.side_effect = ValueError
-            self.assertRaises(PluginExecutionError, pf.Index)
-            mock_loads.assert_called_with(pf.data)
+        mock_loads.reset_mock()
+        mock_loads.side_effect = ValueError
+        self.assertRaises(PluginExecutionError, pf.Index)
+        mock_loads.assert_called_with(pf.data)
 
-        @patch("%s.dump" % JSON)
-        @patch("%s.open" % builtins)
-        def test__write(self, mock_open, mock_dump):
-            pf = self.get_obj()
-            self.assertTrue(pf._write())
-            mock_open.assert_called_with(pf.name, 'wb')
-            mock_dump.assert_called_with(pf.json, mock_open.return_value)
+    @patch("%s.dump" % JSON)
+    @patch("%s.open" % builtins)
+    def test__write(self, mock_open, mock_dump):
+        pf = self.get_obj()
+        self.assertTrue(pf._write())
+        mock_open.assert_called_with(pf.name, 'wb')
+        mock_dump.assert_called_with(pf.json, mock_open.return_value)
 
-        @patch("%s.dumps" % JSON)
-        def test_validate_data(self, mock_dumps):
-            pf = self.get_obj()
-            pf.validate_data()
-            mock_dumps.assert_called_with(pf.json)
+    @patch("%s.dumps" % JSON)
+    def test_validate_data(self, mock_dumps):
+        pf = self.get_obj()
+        pf.validate_data()
+        mock_dumps.assert_called_with(pf.json)
 
-            mock_dumps.reset_mock()
-            mock_dumps.side_effect = ValueError
-            self.assertRaises(PluginExecutionError, pf.validate_data)
-            mock_dumps.assert_called_with(pf.json)
+        mock_dumps.reset_mock()
+        mock_dumps.side_effect = ValueError
+        self.assertRaises(PluginExecutionError, pf.validate_data)
+        mock_dumps.assert_called_with(pf.json)
 
 
-if can_skip or HAS_YAML:
-    class TestYAMLPropertyFile(TestFileBacked, TestPropertyFile):
-        test_obj = YAMLPropertyFile
+class TestYAMLPropertyFile(TestFileBacked, TestPropertyFile):
+    test_obj = YAMLPropertyFile
 
-        @skipUnless(HAS_YAML, "YAML libraries not found, skipping")
-        def setUp(self):
-            TestFileBacked.setUp(self)
-            TestPropertyFile.setUp(self)
+    @skipUnless(HAS_YAML, "YAML libraries not found, skipping")
+    def setUp(self):
+        TestFileBacked.setUp(self)
+        TestPropertyFile.setUp(self)
 
-        @patch("yaml.load")
-        def test_Index(self, mock_load):
-            pf = self.get_obj()
-            pf.Index()
-            mock_load.assert_called_with(pf.data)
-            self.assertEqual(pf.yaml, mock_load.return_value)
+    @patch("yaml.load")
+    def test_Index(self, mock_load):
+        pf = self.get_obj()
+        pf.Index()
+        mock_load.assert_called_with(pf.data)
+        self.assertEqual(pf.yaml, mock_load.return_value)
 
-            mock_load.reset_mock()
-            mock_load.side_effect = yaml.YAMLError
-            self.assertRaises(PluginExecutionError, pf.Index)
-            mock_load.assert_called_with(pf.data)
+        mock_load.reset_mock()
+        mock_load.side_effect = yaml.YAMLError
+        self.assertRaises(PluginExecutionError, pf.Index)
+        mock_load.assert_called_with(pf.data)
 
-        @patch("yaml.dump")
-        @patch("%s.open" % builtins)
-        def test__write(self, mock_open, mock_dump):
-            pf = self.get_obj()
-            self.assertTrue(pf._write())
-            mock_open.assert_called_with(pf.name, 'wb')
-            mock_dump.assert_called_with(pf.yaml, mock_open.return_value)
+    @patch("yaml.dump")
+    @patch("%s.open" % builtins)
+    def test__write(self, mock_open, mock_dump):
+        pf = self.get_obj()
+        self.assertTrue(pf._write())
+        mock_open.assert_called_with(pf.name, 'wb')
+        mock_dump.assert_called_with(pf.yaml, mock_open.return_value)
 
-        @patch("yaml.dump")
-        def test_validate_data(self, mock_dump):
-            pf = self.get_obj()
-            pf.validate_data()
-            mock_dump.assert_called_with(pf.yaml)
+    @patch("yaml.dump")
+    def test_validate_data(self, mock_dump):
+        pf = self.get_obj()
+        pf.validate_data()
+        mock_dump.assert_called_with(pf.yaml)
 
-            mock_dump.reset_mock()
-            mock_dump.side_effect = yaml.YAMLError
-            self.assertRaises(PluginExecutionError, pf.validate_data)
-            mock_dump.assert_called_with(pf.yaml)
+        mock_dump.reset_mock()
+        mock_dump.side_effect = yaml.YAMLError
+        self.assertRaises(PluginExecutionError, pf.validate_data)
+        mock_dump.assert_called_with(pf.yaml)
 
 
 class TestXMLPropertyFile(TestPropertyFile, TestStructFile):

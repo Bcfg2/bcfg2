@@ -110,99 +110,98 @@ class TestMetadataDB(DBModelTestCase):
         models = [MetadataClientModel]
 
 
-if HAS_DJANGO or can_skip:
-    class TestClientVersions(TestDatabaseBacked):
-        test_clients = dict(client1="1.2.0",
-                            client2="1.2.2",
-                            client3="1.3.0pre1",
-                            client4="1.1.0",
-                            client5=None,
-                            client6=None)
+class TestClientVersions(TestDatabaseBacked):
+    test_clients = dict(client1="1.2.0",
+                        client2="1.2.2",
+                        client3="1.3.0pre1",
+                        client4="1.1.0",
+                        client5=None,
+                        client6=None)
 
-        @skipUnless(HAS_DJANGO, "Django not found")
-        def setUp(self):
-            TestDatabaseBacked.setUp(self)
-            self.test_obj = ClientVersions
-            syncdb(TestMetadataDB)
-            for client, version in self.test_clients.items():
-                MetadataClientModel(hostname=client, version=version).save()
+    @skipUnless(HAS_DJANGO, "Django not found")
+    def setUp(self):
+        TestDatabaseBacked.setUp(self)
+        self.test_obj = ClientVersions
+        syncdb(TestMetadataDB)
+        for client, version in self.test_clients.items():
+            MetadataClientModel(hostname=client, version=version).save()
 
-        def test__contains(self):
-            v = self.get_obj()
-            self.assertIn("client1", v)
-            self.assertIn("client5", v)
-            self.assertNotIn("client__contains", v)
+    def test__contains(self):
+        v = self.get_obj()
+        self.assertIn("client1", v)
+        self.assertIn("client5", v)
+        self.assertNotIn("client__contains", v)
 
-        def test_keys(self):
-            v = self.get_obj()
-            self.assertItemsEqual(self.test_clients.keys(), v.keys())
+    def test_keys(self):
+        v = self.get_obj()
+        self.assertItemsEqual(self.test_clients.keys(), v.keys())
 
-        def test__setitem(self):
-            v = self.get_obj()
+    def test__setitem(self):
+        v = self.get_obj()
 
-            # test setting version of existing client
-            v["client1"] = "1.2.3"
-            self.assertIn("client1", v)
-            self.assertEqual(v['client1'], "1.2.3")
-            client = MetadataClientModel.objects.get(hostname="client1")
-            self.assertEqual(client.version, "1.2.3")
+        # test setting version of existing client
+        v["client1"] = "1.2.3"
+        self.assertIn("client1", v)
+        self.assertEqual(v['client1'], "1.2.3")
+        client = MetadataClientModel.objects.get(hostname="client1")
+        self.assertEqual(client.version, "1.2.3")
 
-            # test adding new client
-            new = "client__setitem"
-            v[new] = "1.3.0"
-            self.assertIn(new, v)
-            self.assertEqual(v[new], "1.3.0")
-            client = MetadataClientModel.objects.get(hostname=new)
-            self.assertEqual(client.version, "1.3.0")
+        # test adding new client
+        new = "client__setitem"
+        v[new] = "1.3.0"
+        self.assertIn(new, v)
+        self.assertEqual(v[new], "1.3.0")
+        client = MetadataClientModel.objects.get(hostname=new)
+        self.assertEqual(client.version, "1.3.0")
 
-            # test adding new client with no version
-            new2 = "client__setitem_2"
-            v[new2] = None
-            self.assertIn(new2, v)
-            self.assertEqual(v[new2], None)
-            client = MetadataClientModel.objects.get(hostname=new2)
-            self.assertEqual(client.version, None)
+        # test adding new client with no version
+        new2 = "client__setitem_2"
+        v[new2] = None
+        self.assertIn(new2, v)
+        self.assertEqual(v[new2], None)
+        client = MetadataClientModel.objects.get(hostname=new2)
+        self.assertEqual(client.version, None)
 
-        def test__getitem(self):
-            v = self.get_obj()
+    def test__getitem(self):
+        v = self.get_obj()
 
-            # test getting existing client
-            self.assertEqual(v['client2'], "1.2.2")
-            self.assertIsNone(v['client5'])
+        # test getting existing client
+        self.assertEqual(v['client2'], "1.2.2")
+        self.assertIsNone(v['client5'])
 
-            # test exception on nonexistent client
-            expected = KeyError
-            try:
-                v['clients__getitem']
-            except expected:
-                pass
-            except:
-                err = sys.exc_info()[1]
-                self.assertFalse(True, "%s raised instead of %s" %
-                                 (err.__class__.__name__,
-                                  expected.__class__.__name__))
-            else:
-                self.assertFalse(True,
-                                 "%s not raised" % expected.__class__.__name__)
+        # test exception on nonexistent client
+        expected = KeyError
+        try:
+            v['clients__getitem']
+        except expected:
+            pass
+        except:
+            err = sys.exc_info()[1]
+            self.assertFalse(True, "%s raised instead of %s" %
+                             (err.__class__.__name__,
+                              expected.__class__.__name__))
+        else:
+            self.assertFalse(True,
+                             "%s not raised" % expected.__class__.__name__)
 
-        def test__len(self):
-            v = self.get_obj()
-            self.assertEqual(len(v), MetadataClientModel.objects.count())
+    def test__len(self):
+        v = self.get_obj()
+        self.assertEqual(len(v), MetadataClientModel.objects.count())
 
-        def test__iter(self):
-            v = self.get_obj()
-            self.assertItemsEqual([h for h in iter(v)], v.keys())
+    def test__iter(self):
+        v = self.get_obj()
+        self.assertItemsEqual([h for h in iter(v)], v.keys())
 
-        def test__delitem(self):
-            v = self.get_obj()
+    def test__delitem(self):
+        v = self.get_obj()
 
-            # test adding new client
-            new = "client__delitem"
-            v[new] = "1.3.0"
+        # test adding new client
+        new = "client__delitem"
+        v[new] = "1.3.0"
 
-            del v[new]
-            self.assertIn(new, v)
-            self.assertIsNone(v[new])
+        del v[new]
+        self.assertIn(new, v)
+        self.assertIsNone(v[new])
 
 
 class TestXMLMetadataConfig(TestXMLFileBacked):
@@ -1354,12 +1353,7 @@ class TestMetadataBase(TestMetadata):
 class TestMetadata_NoClientsXML(TestMetadataBase):
     """ test Metadata without a clients.xml. we have to disable or
     override tests that rely on client options """
-    # only run these tests if it's possible to skip tests or if we
-    # have django.  otherwise they'll all get run because our fake
-    # skipping decorators for python < 2.7 won't work when they
-    # decorate setUp()
-    if can_skip or HAS_DJANGO:
-        __test__ = True
+    __test__ = True
 
     def load_groups_data(self, metadata=None, xdata=None):
         if metadata is None:
@@ -1523,12 +1517,7 @@ class TestMetadata_NoClientsXML(TestMetadataBase):
 
 class TestMetadata_ClientsXML(TestMetadataBase):
     """ test Metadata with a clients.xml.  """
-    # only run these tests if it's possible to skip tests or if we
-    # have django.  otherwise they'll all get run because our fake
-    # skipping decorators for python < 2.7 won't work when they
-    # decorate setUp()
-    if can_skip or HAS_DJANGO:
-        __test__ = True
+    __test__ = True
 
     def load_clients_data(self, metadata=None, xdata=None):
         if metadata is None:

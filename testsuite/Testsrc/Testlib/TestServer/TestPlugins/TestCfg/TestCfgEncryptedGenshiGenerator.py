@@ -18,10 +18,9 @@ from TestServer.TestPlugins.TestCfg.TestCfgGenshiGenerator import \
     TestCfgGenshiGenerator
 
 
-if can_skip or HAS_CRYPTO:
-    class TestCfgEncryptedGenshiGenerator(TestCfgGenshiGenerator):
-        test_obj = CfgEncryptedGenshiGenerator
+class TestCfgEncryptedGenshiGenerator(TestCfgGenshiGenerator):
+    test_obj = CfgEncryptedGenshiGenerator
 
-        @skipUnless(HAS_CRYPTO, "Encryption libraries not found, skipping")
-        def setUp(self):
-            TestCfgGenshiGenerator.setUp(self)
+    @skipUnless(HAS_CRYPTO, "Encryption libraries not found, skipping")
+    def setUp(self):
+        TestCfgGenshiGenerator.setUp(self)
