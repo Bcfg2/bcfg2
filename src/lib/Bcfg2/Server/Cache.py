@@ -89,6 +89,7 @@ class _Cache(MutableMapping):
             yield list(item.difference(self._tags))[0]
 
     def keys(self):
+        """ List cache keys """
         return list(iter(self))
 
     def __len__(self):
