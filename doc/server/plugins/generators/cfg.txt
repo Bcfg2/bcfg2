@@ -539,7 +539,8 @@ Example
       </Group>
       <Allow from="/root/.ssh/id_rsa.pub" host="foo.example.com"/>
       <Allow from="/home/foo_user/.ssh/id_rsa.pub">
-        <Params command="/home/foo_user/.ssh/ssh_command_filter"/>
+        <Option name="command" value="/home/foo_user/.ssh/ssh_command_filter"/>
+        <Option name="no-X11-forwarding"/>
       </Allow>
       <Allow>
         ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDw/rgKQeARRAHK5bQQhAAe1b+gzdtqBXWrZIQ6cIaLgxqj76TwZ3DY4A6aW9RgC4zzd0p4a9MfsScUIB4+UeZsx9GopUj4U6H8Vz7S3pXxrr4E9logVLuSfOLFbI/wMWNRuOANqquLYQ+JYWKeP4kagkVp0aAWp7mH5IOI0rp0A6qE2you4ep9N/nKvHDrtypwhYBWprsgTUXXMHnAWGmyuHGYWxNYBV9AARPdAvZfb8ggtuwibcOULlyK4DdVNbDTAN1/BDBE1ve6WZDcrc386KhqUGj/yoRyPjNZ46uZiOjRr3cdY6yUZoCwzzxvm5vle6mEbLjHgjGEMQMArzM9 vendor@example.com

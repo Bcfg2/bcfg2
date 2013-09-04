@@ -52,15 +52,12 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data)
         #: Bundles by bundle name, rather than filename
         self.bundles = dict()
-    __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
 
     def HandleEvent(self, event):
         Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent(self, event)
 
         self.bundles = dict([(b.bundle_name, b)
                              for b in self.entries.values()])
-    HandleEvent.__doc__ = \
-        Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent.__doc__
 
     def BuildStructures(self, metadata):
         bundleset = []
@@ -121,5 +118,3 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
                     data.remove(child)
             bundleset.append(data)
         return bundleset
-    BuildStructures.__doc__ = \
-        Bcfg2.Server.Plugin.Structure.BuildStructures.__doc__

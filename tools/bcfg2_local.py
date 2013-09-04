@@ -47,7 +47,10 @@ class LocalProxy(object):
             func = getattr(self.core, attr)
             if func.exposed:
                 def inner(*args, **kwargs):
-                    args = ((self.ipaddr, self.hostname), ) + args
+                    # the port portion of the addresspair tuple isn't
+                    # actually used, so it's safe to hardcode 6789
+                    # here.
+                    args = ((self.ipaddr, 6789), ) + args
                     return func(*args, **kwargs)
                 return inner
         raise AttributeError(attr)

@@ -669,13 +669,15 @@ class Client(object):
         # first process prereq actions
         for bundle in bundles[:]:
             if bundle.tag == 'Bundle':
-                bmodified = any(item in self.whitelist for item in bundle)
+                bmodified = any((item in self.whitelist or
+                                 item in self.modified) for item in bundle)
             else:
                 bmodified = False
             actions = [a for a in bundle.findall('./Action')
                        if (a.get('timing') in ['pre', 'both'] and
                            (bmodified or a.get('when') == 'always'))]
-            # now we process all "always actions"
+            # now we process all "pre" and "both" actions that are either
+            # always or the bundle has been modified
             if Bcfg2.Options.setup.interactive:
                 self.promptFilter(iprompt, actions)
             self.DispatchInstallCalls(actions)
