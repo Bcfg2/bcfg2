@@ -42,6 +42,43 @@
     </xsd:attribute>
   </xsd:complexType>
 
+  <xsd:complexType name="OptionContainerType">
+    <xsd:annotation>
+      <xsd:documentation>
+        An **OptionContainerType** is a tag used to provide logic.
+        Child entries of an OptionContainerType tag only apply to
+        machines that match the condition specified -- either
+        membership in a group, or a matching client name.
+        :xml:attribute:`OptionContainerType:negate` can be set to
+        negate the sense of the match.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:choice minOccurs="0" maxOccurs="unbounded">
+      <xsd:element name="Group" type="OptionContainerType"/>
+      <xsd:element name="Client" type="OptionContainerType"/>
+      <xsd:element name="Option" type="AuthorizedKeysOptionType"/>
+      <xsd:element name="Params" type="AuthorizedKeysParamsType"/>
+    </xsd:choice>
+    <xsd:attribute name='name' type='xsd:string'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the client or group to match on.  Child entries
+          will only apply to this client or group (unless
+          :xml:attribute:`OptionContainerType:negate` is set).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name='negate' type='xsd:boolean'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Negate the sense of the match, so that child entries only
+          apply to a client if it is not a member of the given group
+          or does not have the given name.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
   <xsd:complexType name="AllowType" mixed="true">
     <xsd:annotation>
       <xsd:documentation>
@@ -50,6 +87,9 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice minOccurs="0" maxOccurs="unbounded">
+      <xsd:element name="Group" type="OptionContainerType"/>
+      <xsd:element name="Client" type="OptionContainerType"/>
+      <xsd:element name="Option" type="AuthorizedKeysOptionType"/>
       <xsd:element name="Params" type="AuthorizedKeysParamsType"/>
     </xsd:choice>
     <xsd:attribute name="from" type="xsd:string">
@@ -77,12 +117,36 @@
     </xsd:attribute>
   </xsd:complexType>
 
+  <xsd:complexType name="AuthorizedKeysOptionType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Specify options for public key authentication and connection.
+        See :manpage:`sshd(8)` for details on allowable options.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute name="name" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the sshd option.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="value" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>
+          The value of the sshd option.  This can be omitted for
+          options that take no value.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
   <xsd:complexType name="AuthorizedKeysParamsType">
     <xsd:annotation>
       <xsd:documentation>
-        Specify parameters for public key authentication and
-        connection.  See :manpage:`sshd(8)` for details on allowable
-        parameters.
+        **Deprecated** way to specify options for public key
+        authentication and connection.  See :manpage:`sshd(8)` for
+        details on allowable parameters.
       </xsd:documentation>
     </xsd:annotation>
     <xsd:anyAttribute processContents="lax"/>

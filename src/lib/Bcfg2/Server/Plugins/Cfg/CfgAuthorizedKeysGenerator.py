@@ -50,10 +50,19 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
         spec = self.XMLMatch(metadata)
         rv = []
         for allow in spec.findall("Allow"):
-            params = ''
+            options = []
             if allow.find("Params") is not None:
-                params = ",".join("=".join(p)
-                                  for p in allow.find("Params").attrib.items())
+                self.logger.warning("Use of <Params> in authorized_keys.xml "
+                                    "is deprecated; use <Option> instead")
+                options.extend("=".join(p)
+                               for p in allow.find("Params").attrib.items())
+
+            for opt in allow.findall("Option"):
+                if opt.get("value"):
+                    options.append("%s=%s" % (opt.get("name"),
+                                              opt.get("value")))
+                else:
+                    options.append(opt.get("name"))
 
             pubkey_name = allow.get("from")
             if pubkey_name:
@@ -96,6 +105,6 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
                                     (metadata.hostname,
                                      lxml.etree.tostring(allow)))
                 continue
-            rv.append(" ".join([params, pubkey]).strip())
+            rv.append(" ".join([",".join(options), pubkey]).strip())
         return "\n".join(rv)
     get_data.__doc__ = CfgGenerator.get_data.__doc__
