@@ -11,10 +11,17 @@ class GroupLogicConfig(Bcfg2.Server.Plugin.StructFile):
     create = lxml.etree.Element("GroupLogic",
                                 nsmap=dict(py="http://genshi.edgewall.org/"))
 
-    def _match(self, item, metadata):
+    def _match(self, item, metadata, *args):
         if item.tag == 'Group' and not len(item.getchildren()):
             return [item]
-        return Bcfg2.Server.Plugin.StructFile._match(self, item, metadata)
+        return Bcfg2.Server.Plugin.StructFile._match(self, item, metadata,
+                                                     *args)
+
+    def _xml_match(self, item, metadata, *args):
+        if item.tag == 'Group' and not len(item.getchildren()):
+            return [item]
+        return Bcfg2.Server.Plugin.StructFile._xml_match(self, item, metadata,
+                                                         *args)
 
 
 class GroupLogic(Bcfg2.Server.Plugin.Plugin,
