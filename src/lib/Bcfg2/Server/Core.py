@@ -22,6 +22,7 @@ from Bcfg2.Compat import xmlrpclib  # pylint: disable=W0622
 from Bcfg2.Server.Plugin.exceptions import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin.interfaces import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin import track_statistics
+from Bcfg2.Server.Plugins.Metadata import MetadataGroup
 
 try:
     import psyco
@@ -199,6 +200,10 @@ class BaseCore(object):
         # generate Django ORM settings.  this must be done _before_ we
         # load plugins
         Bcfg2.settings.read_config(repo=self.datastore)
+
+        # mapping of group name => plugin name to record where groups
+        # that are created by Connector plugins came from
+        self._dynamic_groups = dict()
 
         #: Whether or not it's possible to use the Django database
         #: backend for plugins that have that capability
@@ -882,8 +887,35 @@ class BaseCore(object):
                     (client_name, sys.exc_info()[1]))
             connectors = self.plugins_by_type(Connector)
             for conn in connectors:
-                grps = conn.get_additional_groups(imd)
-                self.metadata.merge_additional_groups(imd, grps)
+                groups = conn.get_additional_groups(imd)
+                groupnames = []
+                for group in groups:
+                    if isinstance(group, MetadataGroup):
+                        groupname = group.name
+                        if groupname in self._dynamic_groups:
+                            if self._dynamic_groups[groupname] == conn.name:
+                                self.metadata.groups[groupname] = group
+                            else:
+                                self.logger.warning(
+                                    "Refusing to clobber dynamic group %s "
+                                    "defined by %s" %
+                                    (self._dynamic_groups[groupname],
+                                     groupname))
+                        elif groupname in self.metadata.groups:
+                            # not recorded as a dynamic group, but
+                            # present in metadata.groups -- i.e., a
+                            # static group
+                            self.logger.warning(
+                                "Refusing to clobber predefined group %s" %
+                                groupname)
+                        else:
+                            self.metadata.groups[groupname] = group
+                            self._dynamic_groups[groupname] = conn.name
+                        groupnames.append(groupname)
+                    else:
+                        groupnames.append(group)
+
+                self.metadata.merge_additional_groups(imd, groupnames)
             for conn in connectors:
                 data = conn.get_additional_data(imd)
                 self.metadata.merge_additional_data(imd, conn.name, data)
