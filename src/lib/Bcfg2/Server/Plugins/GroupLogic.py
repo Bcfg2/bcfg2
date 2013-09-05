@@ -4,6 +4,7 @@ template to dynamically set additional groups for clients. """
 import os
 import lxml.etree
 import Bcfg2.Server.Plugin
+from Bcfg2.Server.Plugins.Metadata import MetadataGroup
 
 
 class GroupLogicConfig(Bcfg2.Server.Plugin.StructFile):
@@ -37,5 +38,11 @@ class GroupLogic(Bcfg2.Server.Plugin.Plugin,
                                        should_monitor=True)
 
     def get_additional_groups(self, metadata):
-        return [el.get("name")
-                for el in self.config.XMLMatch(metadata).findall("Group")]
+        rv = []
+        for el in self.config.XMLMatch(metadata).findall("Group"):
+            if el.get("category"):
+                rv.append(MetadataGroup(el.get("name"),
+                                        category=el.get("category")))
+            else:
+                rv.append(el.get("name"))
+        return rv
