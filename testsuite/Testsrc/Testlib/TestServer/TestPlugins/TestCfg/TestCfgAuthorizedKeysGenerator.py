@@ -111,17 +111,18 @@ class TestCfgAuthorizedKeysGenerator(TestCfgGenerator, TestStructFile):
         reset()
         host = "baz.example.com"
         spec = lxml.etree.Element("AuthorizedKeys")
-        lxml.etree.SubElement(
-            lxml.etree.SubElement(spec,
-                                  "Allow",
-                                  attrib={"from": pubkey, "host": host}),
-            "Params", foo="foo", bar="bar=bar")
+        allow = lxml.etree.SubElement(spec, "Allow",
+                                      attrib={"from": pubkey, "host": host})
+        lxml.etree.SubElement(allow, "Option", name="foo", value="foo")
+        lxml.etree.SubElement(allow, "Option", name="bar")
+        lxml.etree.SubElement(allow, "Option", name="baz", value="baz=baz")
         akg.XMLMatch.return_value = spec
         params, actual_host, actual_pubkey = akg.get_data(entry,
                                                           metadata).split()
         self.assertEqual(actual_host, host)
         self.assertEqual(actual_pubkey, pubkey)
-        self.assertItemsEqual(params.split(","), ["foo=foo", "bar=bar=bar"])
+        self.assertItemsEqual(params.split(","), ["foo=foo", "bar",
+                                                  "baz=baz=baz"])
         akg.XMLMatch.assert_called_with(metadata)
         akg.core.build_metadata.assert_called_with(host)
         self.assertEqual(akg.core.Bind.call_args[0][0].get("name"), pubkey)
@@ -131,10 +132,10 @@ class TestCfgAuthorizedKeysGenerator(TestCfgGenerator, TestStructFile):
         spec = lxml.etree.Element("AuthorizedKeys")
         text = lxml.etree.SubElement(spec, "Allow")
         text.text = "ssh-rsa publickey /foo/bar\n"
-        lxml.etree.SubElement(text, "Params", foo="foo")
+        lxml.etree.SubElement(text, "Option", name="foo")
         akg.XMLMatch.return_value = spec
         self.assertEqual(akg.get_data(entry, metadata),
-                         "foo=foo %s" % text.text.strip())
+                         "foo %s" % text.text.strip())
         akg.XMLMatch.assert_called_with(metadata)
         self.assertFalse(akg.core.build_metadata.called)
         self.assertFalse(akg.core.Bind.called)
@@ -143,7 +144,7 @@ class TestCfgAuthorizedKeysGenerator(TestCfgGenerator, TestStructFile):
         lxml.etree.SubElement(spec, "Allow", attrib={"from": pubkey})
         akg.XMLMatch.return_value = spec
         self.assertItemsEqual(akg.get_data(entry, metadata).splitlines(),
-                              ["foo=foo %s" % text.text.strip(),
+                              ["foo %s" % text.text.strip(),
                                "profile %s" % pubkey])
         akg.XMLMatch.assert_called_with(metadata)
 
