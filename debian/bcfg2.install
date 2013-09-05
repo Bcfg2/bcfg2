@@ -6,4 +6,3 @@ debian/tmp/usr/share/man/man5/*
 examples/bcfg2.conf		usr/share/bcfg2
 debian/bcfg2.default		usr/share/bcfg2
 tools/bcfg2-cron		usr/lib/bcfg2
-tools/bcfg2-import-config	usr/share/bcfg2
