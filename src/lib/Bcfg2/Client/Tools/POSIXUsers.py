@@ -189,7 +189,8 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
         else:
             for attr, idx in self.attr_mapping[entry.tag].items():
                 val = str(self.existing[entry.tag][entry.get("name")][idx])
-                entry.set("current_%s" % attr, val)
+                entry.set("current_%s" %
+                          attr, val.decode(self.setup['encoding']))
                 if attr in ["uid", "gid"]:
                     if entry.get(attr) is None:
                         # no uid/gid specified, so we let the tool
