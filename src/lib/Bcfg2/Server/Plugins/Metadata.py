@@ -520,7 +520,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.handlers = dict()
         self.groups_xml = self._handle_file("groups.xml")
         if (self._use_db and
-            os.path.exists(os.path.join(self.data, "clients.xml"))):
+                os.path.exists(os.path.join(self.data, "clients.xml"))):
             self.logger.warning("Metadata: database enabled but clients.xml "
                                 "found, parsing in compatibility mode")
             self.clients_xml = self._handle_file("clients.xml")
@@ -614,7 +614,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             elif alias:
                 for child in node:
                     if (child.tag == "Alias" and
-                        child.attrib["name"] == name):
+                            child.attrib["name"] == name):
                         return node
         return None
 
@@ -816,7 +816,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             if client.get('secure', 'false').lower() == 'true':
                 self.secure.append(clname)
             if (client.get('location', 'fixed') == 'floating' or
-                client.get('floating', 'false').lower() == 'true'):
+                    client.get('floating', 'false').lower() == 'true'):
                 self.floating.append(clname)
             if 'password' in client.attrib:
                 self.passwords[clname] = client.get('password')
@@ -1103,7 +1103,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                        for p in self.group_membership[grpname]):
                     newgroups.add(grpname)
                     if (grpname in self.groups and
-                        self.groups[grpname].category):
+                            self.groups[grpname].category):
                         categories[self.groups[grpname].category] = grpname
             groups.update(newgroups)
             for grpname, predicates in self.negated_groups.items():
@@ -1112,7 +1112,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 if any(p(client, groups, categories) for p in predicates):
                     removegroups.add(grpname)
                     if (grpname in self.groups and
-                        self.groups[grpname].category):
+                            self.groups[grpname].category):
                         del categories[self.groups[grpname].category]
             groups.difference_update(removegroups)
         return (groups, categories)
@@ -1406,7 +1406,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
         # next we validate the address
         if (id_method != 'uuid' and
-            not self.validate_client_address(client, address)):
+                not self.validate_client_address(client, address)):
             return False
 
         if id_method == 'cert' and auth_type != 'cert+password':
@@ -1555,7 +1555,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         for group in egroups:
             for parent in group.findall('Group'):
                 if (parent.get('name') not in gseen and
-                    include_group(parent.get('name'))):
+                        include_group(parent.get('name'))):
                     rv.append(gfmt % (parent.get('name'),
                                       parent.get('name')))
                     gseen.append(parent.get("name"))

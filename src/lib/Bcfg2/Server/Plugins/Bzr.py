@@ -23,7 +23,7 @@ class Bzr(Bcfg2.Server.Plugin.Version):
             working_tree = WorkingTree.open(Bcfg2.Options.setup.vcs_root)
             revision = str(working_tree.branch.revno())
             if (working_tree.has_changes(working_tree.basis_tree()) or
-                working_tree.unknowns()):
+                    working_tree.unknowns()):
                 revision += "+"
         except errors.NotBranchError:
             msg = "Failed to read Bazaar branch"

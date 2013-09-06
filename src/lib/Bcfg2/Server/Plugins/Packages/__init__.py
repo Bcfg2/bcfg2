@@ -342,7 +342,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :type collection: Bcfg2.Server.Plugins.Packages.Collection.Collection
         """
         if (not Bcfg2.Options.setup.packages_metadata or
-            not Bcfg2.Options.setup.packages_resolver):
+                not Bcfg2.Options.setup.packages_resolver):
             # Config requests no resolver.  Note that disabling
             # metadata implies disabling the resolver.
             for struct in structures:
@@ -494,7 +494,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 if localfile not in keyfiles:
                     keyfiles.append(localfile)
                 if ((force_update and key not in keys) or
-                    not os.path.exists(localfile)):
+                        not os.path.exists(localfile)):
                     self.logger.info("Packages: Downloading and parsing %s" %
                                      key)
                     try:

@@ -33,7 +33,7 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
                 if tag.startswith('Bound'):
                     tag = tag[5:]
                 if ((tag, entry.get('name')) not in entries
-                    and not isinstance(entry, lxml.etree._Comment)):
+                        and not isinstance(entry, lxml.etree._Comment)):
                     entries.append((tag, entry.get('name')))
         entries.sort()
         entries = tuple(entries)
@@ -74,10 +74,10 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
                 prio = [int(m[0].priority) for m in matching]
                 if prio.count(max(prio)) > 1:
                     raise PluginExecutionError(
-                            "Deps: Found conflicting dependencies with same "
-                            "priority for %s:%s for %s: %s" %
-                            (entry.tag, entry.get("name"),
-                             metadata.hostname, [m[0].name for m in matching]))
+                        "Deps: Found conflicting dependencies with same "
+                        "priority for %s:%s for %s: %s" %
+                        (entry.tag, entry.get("name"),
+                         metadata.hostname, [m[0].name for m in matching]))
                 index = prio.index(max(prio))
                 matching = [matching[index]]
             if not matching:

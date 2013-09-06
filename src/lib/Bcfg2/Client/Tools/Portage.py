@@ -66,7 +66,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
 
         if not Bcfg2.Options.setup.quick:
             if ('verify' not in entry.attrib or
-                entry.get('verify').lower() == 'true'):
+                    entry.get('verify').lower() == 'true'):
 
             # Check the package if:
             # - Not running in quick mode

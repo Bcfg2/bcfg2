@@ -16,14 +16,15 @@ class APT(Bcfg2.Client.Tools.Tool):
 
     options = Bcfg2.Client.Tools.Tool.options + [
         Bcfg2.Options.PathOption(
-           cf=('APT', 'install_path'), default='/usr', dest='apt_install_path',
-           help='Apt tools install path'),
+            cf=('APT', 'install_path'),
+            default='/usr', dest='apt_install_path',
+            help='Apt tools install path'),
         Bcfg2.Options.PathOption(
             cf=('APT', 'var_path'), default='/var', dest='apt_var_path',
             help='Apt tools var path'),
         Bcfg2.Options.PathOption(
-           cf=('APT', 'etc_path'), default='/etc', dest='apt_etc_path',
-           help='System etc path')]
+            cf=('APT', 'etc_path'), default='/etc', dest='apt_etc_path',
+            help='System etc path')]
 
     __execs__ = []
     __handles__ = [('Package', 'deb'), ('Path', 'ignore')]
@@ -49,14 +50,14 @@ class APT(Bcfg2.Client.Tools.Tool):
         if not Bcfg2.Options.setup.debug:
             self.pkgcmd += '-q=2 '
         self.pkgcmd += '-y install %s'
-        self.ignores = [entry.get('name') for struct in config \
-                        for entry in struct \
-                        if entry.tag == 'Path' and \
+        self.ignores = [entry.get('name') for struct in config
+                        for entry in struct
+                        if entry.tag == 'Path' and
                         entry.get('type') == 'ignore']
-        self.__important__ = self.__important__ + \
-                             [
+        self.__important__ = self.__important__ + [
             "%s/cache/debconf/config.dat" % Bcfg2.Options.setup.apt_var_path,
-            "%s/cache/debconf/templates.dat" % Bcfg2.Options.setup.apt_var_path,
+            "%s/cache/debconf/templates.dat" %
+            Bcfg2.Options.setup.apt_var_path,
             '/etc/passwd', '/etc/group',
             '%s/apt/apt.conf' % Bcfg2.Options.setup.apt_etc_path,
             '%s/dpkg/dpkg.cfg' % Bcfg2.Options.setup.apt_etc_path] + \
@@ -64,10 +65,11 @@ class APT(Bcfg2.Client.Tools.Tool):
              for entry in struct
              if (entry.tag == 'Path' and
                  entry.get('name').startswith(
-                    '%s/apt/sources.list' % Bcfg2.Options.setup.apt_etc_path))]
-        self.nonexistent = [
-                entry.get('name') for struct in config for entry in struct
-                if entry.tag == 'Path' and entry.get('type') == 'nonexistent']
+                     '%s/apt/sources.list' %
+                     Bcfg2.Options.setup.apt_etc_path))]
+        self.nonexistent = [entry.get('name') for struct in config
+                            for entry in struct if entry.tag == 'Path'
+                            and entry.get('type') == 'nonexistent']
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
         if Bcfg2.Options.setup.kevlar and not Bcfg2.Options.setup.dry_run:
@@ -96,16 +98,16 @@ class APT(Bcfg2.Client.Tools.Tool):
         else:
             extras = [(p.name, p.installedVersion) for p in self.pkg_cache
                       if p.isInstalled and p.name not in packages]
-        return [Bcfg2.Client.XML.Element('Package', name=name, \
-                                         type='deb', version=version) \
-                                         for (name, version) in extras]
+        return [Bcfg2.Client.XML.Element('Package', name=name,
+                                         type='deb', version=version)
+                for (name, version) in extras]
 
     def VerifyDebsums(self, entry, modlist):
         output = \
             self.cmd.run("%s -as %s" %
                          (self.debsums, entry.get('name'))).stdout.splitlines()
         if len(output) == 1 and "no md5sums for" in output[0]:
-            self.logger.info("Package %s has no md5sums. Cannot verify" % \
+            self.logger.info("Package %s has no md5sums. Cannot verify" %
                              entry.get('name'))
             entry.set('qtext',
                       "Reinstall Package %s-%s to setup md5sums? (y/N) " %
@@ -125,11 +127,11 @@ class APT(Bcfg2.Client.Tools.Tool):
                 # these files should not exist
                 continue
             elif "is not installed" in item or "missing file" in item:
-                self.logger.error("Package %s is not fully installed" \
-                                  % entry.get('name'))
+                self.logger.error("Package %s is not fully installed" %
+                                  entry.get('name'))
             else:
-                self.logger.error("Got Unsupported pattern %s from debsums" \
-                                  % item)
+                self.logger.error("Got Unsupported pattern %s from debsums" %
+                                  item)
                 files.append(item)
         files = list(set(files) - set(self.ignores))
         # We check if there is file in the checksum to do
@@ -139,15 +141,15 @@ class APT(Bcfg2.Client.Tools.Tool):
             modlist = [os.path.realpath(filename) for filename in modlist]
             bad = [filename for filename in files if filename not in modlist]
             if bad:
-                self.logger.debug("It is suggested that you either manage these "
-                                  "files, revert the changes, or ignore false "
-                                  "failures:")
-                self.logger.info("Package %s failed validation. Bad files are:" % \
-                                 entry.get('name'))
+                self.logger.debug("It is suggested that you either manage "
+                                  "these files, revert the changes, or ignore "
+                                  "false failures:")
+                self.logger.info("Package %s failed validation. Bad files "
+                                 "are:" % entry.get('name'))
                 self.logger.info(bad)
                 entry.set('qtext',
-                          "Reinstall Package %s-%s to fix failing files? (y/N) " % \
-                          (entry.get('name'), entry.get('version')))
+                          "Reinstall Package %s-%s to fix failing files? "
+                          "(y/N) " % (entry.get('name'), entry.get('version')))
                 return False
         return True
 
@@ -158,12 +160,12 @@ class APT(Bcfg2.Client.Tools.Tool):
                              (entry.attrib['name']))
             return False
         pkgname = entry.get('name')
-        if self.pkg_cache.has_key(pkgname):
+        if self.pkg_cache.has_key(pkgname):  # nopep8
             if self._newapi:
                 is_installed = self.pkg_cache[pkgname].is_installed
             else:
                 is_installed = self.pkg_cache[pkgname].isInstalled
-        if not self.pkg_cache.has_key(pkgname) or not is_installed:
+        if not self.pkg_cache.has_key(pkgname) or not is_installed:  # nopep8
             self.logger.info("Package %s not installed" % (entry.get('name')))
             entry.set('current_exists', 'false')
             return False
@@ -177,9 +179,11 @@ class APT(Bcfg2.Client.Tools.Tool):
             candidate_version = pkg.candidateVersion
         if entry.get('version') == 'auto':
             if self._newapi:
-                is_upgradable = self.pkg_cache._depcache.is_upgradable(pkg._pkg)
+                is_upgradable = \
+                    self.pkg_cache._depcache.is_upgradable(pkg._pkg)
             else:
-                is_upgradable = self.pkg_cache._depcache.IsUpgradable(pkg._pkg)
+                is_upgradable = \
+                    self.pkg_cache._depcache.IsUpgradable(pkg._pkg)
             if is_upgradable:
                 desiredVersion = candidate_version
             else:
@@ -190,15 +194,15 @@ class APT(Bcfg2.Client.Tools.Tool):
             desiredVersion = entry.get('version')
         if desiredVersion != installed_version:
             entry.set('current_version', installed_version)
-            entry.set('qtext', "Modify Package %s (%s -> %s)? (y/N) " % \
+            entry.set('qtext', "Modify Package %s (%s -> %s)? (y/N) " %
                       (entry.get('name'), entry.get('current_version'),
                        desiredVersion))
             return False
         else:
             # version matches
             if (not Bcfg2.Options.setup.quick and
-                entry.get('verify', 'true') == 'true'
-                and checksums):
+                    entry.get('verify', 'true') == 'true'
+                    and checksums):
                 pkgsums = self.VerifyDebsums(entry, modlist)
                 return pkgsums
             return True
@@ -236,35 +240,39 @@ class APT(Bcfg2.Client.Tools.Tool):
         ipkgs = []
         bad_pkgs = []
         for pkg in packages:
-            if not self.pkg_cache.has_key(pkg.get('name')):
-                self.logger.error("APT has no information about package %s" % (pkg.get('name')))
+            if not self.pkg_cache.has_key(pkg.get('name')):  # nopep8
+                self.logger.error("APT has no information about package %s" %
+                                  (pkg.get('name')))
                 continue
             if pkg.get('version') in ['auto', 'any']:
                 if self._newapi:
                     try:
-                        ipkgs.append("%s=%s" % (pkg.get('name'),
-                                                self.pkg_cache[pkg.get('name')].candidate.version))
+                        cversion = \
+                            self.pkg_cache[pkg.get('name')].candidate.version
+                        ipkgs.append("%s=%s" % (pkg.get('name'), cversion))
                     except AttributeError:
-                        self.logger.error("Failed to find %s in apt package cache" %
-                                          pkg.get('name'))
+                        self.logger.error("Failed to find %s in apt package "
+                                          "cache" % pkg.get('name'))
                         continue
                 else:
-                    ipkgs.append("%s=%s" % (pkg.get('name'),
-                                            self.pkg_cache[pkg.get('name')].candidateVersion))
+                    cversion = self.pkg_cache[pkg.get('name')].candidateVersion
+                    ipkgs.append("%s=%s" % (pkg.get('name'), cversion))
                 continue
             if self._newapi:
-                avail_vers = [x.ver_str for x in \
-                              self.pkg_cache[pkg.get('name')]._pkg.version_list]
+                avail_vers = [
+                    x.ver_str for x in
+                    self.pkg_cache[pkg.get('name')]._pkg.version_list]
             else:
-                avail_vers = [x.VerStr for x in \
-                              self.pkg_cache[pkg.get('name')]._pkg.VersionList]
+                avail_vers = [
+                    x.VerStr for x in
+                    self.pkg_cache[pkg.get('name')]._pkg.VersionList]
             if pkg.get('version') in avail_vers:
                 ipkgs.append("%s=%s" % (pkg.get('name'), pkg.get('version')))
                 continue
             else:
-                self.logger.error("Package %s: desired version %s not in %s" \
-                                  % (pkg.get('name'), pkg.get('version'),
-                                     avail_vers))
+                self.logger.error("Package %s: desired version %s not in %s" %
+                                  (pkg.get('name'), pkg.get('version'),
+                                   avail_vers))
             bad_pkgs.append(pkg.get('name'))
         if bad_pkgs:
             self.logger.error("Cannot find correct versions of packages:")

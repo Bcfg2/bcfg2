@@ -592,7 +592,7 @@ class CLI(object):
                 tool.write(data)
 
             if (Bcfg2.Options.setup.remove and
-                tool.get_destination_filename(fname) != fname):
+                    tool.get_destination_filename(fname) != fname):
                 try:
                     os.unlink(fname)
                 except IOError:

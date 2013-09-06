@@ -97,7 +97,7 @@ class PNode(object):
             self.contents['Package'] = FuzzyDict()
         for pkg in data.findall('./Package'):
             if ('name' in pkg.attrib and
-                pkg.get('name') not in pdict['Package']):
+                    pkg.get('name') not in pdict['Package']):
                 pdict['Package'].add(pkg.get('name'))
             if pkg.get('name') is not None:
                 self.contents['Package'][pkg.get('name')] = {}
@@ -123,7 +123,7 @@ class PNode(object):
                         pkg.set('url', '%s/%s' % (pkg.get('uri'),
                                                   pkg.get('file')))
                 if (pkg.get('type') in self.splitters and
-                    pkg.get('file') is not None):
+                        pkg.get('file') is not None):
                     mdata = \
                         self.splitters[pkg.get('type')].match(pkg.get('file'))
                     if not mdata:

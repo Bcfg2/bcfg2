@@ -87,7 +87,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
                 # for which update is false; we can't possibly do
                 # anything with the data we get from such a probe
                 if (entry.get('update', 'false').lower() == "false" and
-                    not cfg.has_generator(entry, metadata)):
+                        not cfg.has_generator(entry, metadata)):
                     continue
                 self.entries[metadata.hostname][path] = entry
                 probe = lxml.etree.Element('probe', name=path,

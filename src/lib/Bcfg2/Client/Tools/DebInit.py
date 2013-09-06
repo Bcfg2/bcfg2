@@ -34,8 +34,8 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
 
         if entry.get('sequence'):
             if (deb_version in DEBIAN_OLD_STYLE_BOOT_SEQUENCE or
-                deb_version.startswith('5') or
-                os.path.exists('/etc/init.d/.legacy-bootordering')):
+                    deb_version.startswith('5') or
+                    os.path.exists('/etc/init.d/.legacy-bootordering')):
                 start_sequence = int(entry.get('sequence'))
                 kill_sequence = 100 - start_sequence
             else:

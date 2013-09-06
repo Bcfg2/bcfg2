@@ -508,7 +508,8 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                           (path, attrib['current_group'], entry.get('group')))
 
         if (wanted_mode and
-            oct_mode(int(attrib['current_mode'], 8)) != oct_mode(wanted_mode)):
+                oct_mode(int(attrib['current_mode'], 8)) !=
+                oct_mode(wanted_mode)):
             errors.append("Permissions for path %s are incorrect. "
                           "Current permissions are %s but should be %s" %
                           (path, attrib['current_mode'], entry.get('mode')))
@@ -533,7 +534,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             else:
                 wanted_secontext = entry.get("secontext")
             if (wanted_secontext and
-                attrib['current_secontext'] != wanted_secontext):
+                    attrib['current_secontext'] != wanted_secontext):
                 errors.append("SELinux context for path %s is incorrect. "
                               "Current context is %s but should be %s" %
                               (path, attrib['current_secontext'],

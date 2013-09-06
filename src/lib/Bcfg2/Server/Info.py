@@ -207,7 +207,7 @@ dir>.  This only handles file entries, and does not respect 'owner' or
         for struct in client_config:
             for entry in struct:
                 if (entry.tag == 'Path' and
-                    entry.get("type") not in self.blacklisted_types):
+                        entry.get("type") not in self.blacklisted_types):
                     failure = entry.get("failure")
                     if failure is not None:
                         print("Skipping entry %s:%s with bind failure: %s" %
@@ -265,7 +265,7 @@ class BuildAllMixin(object):
         """ the parent command """
         for cls in self.__class__.__mro__:
             if (cls != InfoCmd and cls != self.__class__ and
-                issubclass(cls, InfoCmd)):
+                    issubclass(cls, InfoCmd)):
                 return cls
 
     def run(self, setup):
@@ -366,8 +366,8 @@ class Automatch(InfoCmd):
 
         pfile = props.entries[setup.propertyfile]
         if (not Bcfg2.Options.setup.force and
-            not Bcfg2.Options.setup.automatch and
-            pfile.xdata.get("automatch", "false").lower() != "true"):
+                not Bcfg2.Options.setup.automatch and
+                pfile.xdata.get("automatch", "false").lower() != "true"):
             print("Automatch not enabled on %s" % setup.propertyfile)
         else:
             metadata = self.core.build_metadata(setup.hostname)
@@ -585,7 +585,7 @@ class Mappings(InfoCmd):
     def run(self, setup):
         data = [('Plugin', 'Type', 'Name')]
         for generator in self.core.plugins_by_type(
-            Bcfg2.Server.Plugin.Generator):
+                Bcfg2.Server.Plugin.Generator):
             etypes = setup.type or list(generator.Entries.keys())
             if setup.name:
                 interested = [(etype, [setup.name]) for etype in etypes]

@@ -690,7 +690,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         rv = []
         for ent in self.entries.values():
             if (isinstance(ent, handler_type) and
-                (not ent.__specific__ or ent.specific.matches(metadata))):
+                    (not ent.__specific__ or ent.specific.matches(metadata))):
                 rv.append(ent)
         return rv
 

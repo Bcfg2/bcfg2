@@ -30,7 +30,7 @@ def rmi_names_equal(first, second):
         return False
     for i in range(len(first_parts)):
         if (first_parts[i] != second_parts[i] and first_parts[i] != '*' and
-            second_parts[i] != '*'):
+                second_parts[i] != '*'):
             return False
     return True
 
@@ -75,7 +75,7 @@ class IPACLFile(Bcfg2.Server.Plugin.XMLFileBacked):
             return self.actions["Defer"]
         for entry in self.entries:
             if (ip_matches(address, entry) and
-                rmi_names_equal(entry.get("method"), rmi)):
+                    rmi_names_equal(entry.get("method"), rmi)):
                 self.debug_log("ACL: %s requests %s: Found matching IP ACL, "
                                "%s" % (address, rmi, entry.tag.lower()))
                 return self.actions[entry.tag]

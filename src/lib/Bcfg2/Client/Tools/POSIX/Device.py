@@ -13,7 +13,7 @@ class POSIXDevice(POSIXTool):
         if entry.get('dev_type') in ['block', 'char']:
             # check if major/minor are properly specified
             if (entry.get('major') is None or
-                entry.get('minor') is None):
+                    entry.get('minor') is None):
                 return False
         return True
 

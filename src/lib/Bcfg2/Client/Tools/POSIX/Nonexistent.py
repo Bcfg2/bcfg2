@@ -24,8 +24,8 @@ class POSIXNonexistent(POSIXTool):
             for struct in self.config.getchildren():
                 for el in struct.getchildren():
                     if (el.tag == 'Path' and
-                        el.get('type') != 'nonexistent' and
-                        el.get('name').startswith(ename)):
+                            el.get('type') != 'nonexistent' and
+                            el.get('name').startswith(ename)):
                         self.logger.error('POSIX: Not removing %s. One or '
                                           'more files in this directory are '
                                           'specified in your configuration.' %

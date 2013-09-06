@@ -142,7 +142,7 @@ class Metadata(ServerPlugin):
     def default_is_profile(self):
         """ Ensure that the default group is a profile group. """
         if (self.metadata.default and
-            not self.metadata.groups[self.metadata.default].is_profile):
+                not self.metadata.groups[self.metadata.default].is_profile):
             xdata = \
                 self.metadata.groups_xml.xdata.xpath("//Group[@name='%s']" %
                                                      self.metadata.default)[0]

@@ -400,8 +400,8 @@ class CLI(object):
                 self.run_server_plugins()
 
         if (self.errorhandler.errors or
-            self.errorhandler.warnings or
-            Bcfg2.Options.setup.verbose):
+                self.errorhandler.warnings or
+                Bcfg2.Options.setup.verbose):
             print("%d errors" % self.errorhandler.errors)
             print("%d warnings" % self.errorhandler.warnings)
 

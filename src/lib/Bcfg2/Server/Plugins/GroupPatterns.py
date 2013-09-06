@@ -77,7 +77,7 @@ class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
     def Index(self):
         Bcfg2.Server.Plugin.XMLFileBacked.Index(self)
         if (self.core and
-            self.core.metadata_cache_mode in ['cautious', 'aggressive']):
+                self.core.metadata_cache_mode in ['cautious', 'aggressive']):
             self.core.metadata_cache.expire()
         self.patterns = []
         for entry in self.xdata.xpath('//GroupPattern'):

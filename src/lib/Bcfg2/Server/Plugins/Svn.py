@@ -60,7 +60,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
                     self.ssl_server_trust_prompt
 
             if (Bcfg2.Options.setup.svn_user and
-                Bcfg2.Options.setup.svn_password):
+                    Bcfg2.Options.setup.svn_password):
                 self.client.callback_get_login = self.get_login
 
         self.logger.debug("Svn: Initialized svn plugin with SVN directory %s" %

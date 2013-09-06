@@ -138,7 +138,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         for source in self.core.plugins['Packages'].sources:
             if isinstance(source, Yum.YumSource):
                 if (not source.pulp_id and not source.url and
-                    not source.rawurl):
+                        not source.rawurl):
                     self.LintError(
                         "required-attrs-missing",
                         "A %s source must have either a url, rawurl, or "
@@ -152,7 +152,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                     (source.ptype, self.RenderXML(source.xsource)))
 
             if (not isinstance(source, Apt.AptSource) and
-                source.recommended):
+                    source.recommended):
                 self.LintError(
                     "extra-attrs",
                     "The recommended attribute is not supported on %s sources:"
@@ -180,7 +180,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         for bundle in self.core.plugins['Bundler'].entries.values():
             if self.HandlesFile(bundle.name) and bundle.template is None:
                 for path in bundle.xdata.xpath(
-                    "//*[substring(name(), 1, 5) = 'Bound']"):
+                        "//*[substring(name(), 1, 5) = 'Bound']"):
                     self.check_entry(path, bundle.name)
 
     def check_entry(self, entry, filename):
@@ -228,7 +228,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 fmt = required_attrs['__text__']
                 del required_attrs['__text__']
                 if (not entry.text and
-                    not entry.get('empty', 'false').lower() == 'true'):
+                        not entry.get('empty', 'false').lower() == 'true'):
                     self.LintError("required-attrs-missing",
                                    "Text missing for %s %s in %s: %s" %
                                    (tag, name, filename,

@@ -140,9 +140,9 @@ class POSIX(Bcfg2.Client.Tools.Tool):
     def _paranoid_backup(self, entry):
         """ Take a backup of the specified entry for paranoid mode """
         if (entry.get("paranoid", 'false').lower() == 'true' and
-            Bcfg2.Options.setup.paranoid and
-            entry.get('current_exists', 'true') == 'true' and
-            not os.path.isdir(entry.get("name"))):
+                Bcfg2.Options.setup.paranoid and
+                entry.get('current_exists', 'true') == 'true' and
+                not os.path.isdir(entry.get("name"))):
             self._prune_old_backups(entry)
             bkupnam = "%s_%s" % (entry.get('name').replace('/', '_'),
                                  datetime.isoformat(datetime.now()))

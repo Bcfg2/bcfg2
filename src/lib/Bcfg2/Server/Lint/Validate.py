@@ -182,7 +182,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                     fpath, fname = path.split('/**/')
                     self.filelists[path] = []
                     for root, _, files in os.walk(
-                        os.path.join(Bcfg2.Options.setup.repository, fpath)):
+                            os.path.join(Bcfg2.Options.setup.repository,
+                                         fpath)):
                         self.filelists[path].extend([os.path.join(root, f)
                                                      for f in files
                                                      if f == fname])

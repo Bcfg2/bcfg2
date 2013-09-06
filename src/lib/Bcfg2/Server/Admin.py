@@ -265,7 +265,7 @@ class Compare(AdminCmd):
         diff = []
         for line in difflib.unified_diff(lines1, lines2, **kwargs):
             if (line.startswith("--- ") or line.startswith("+++ ") or
-                line.startswith("@@ ")):
+                    line.startswith("@@ ")):
                 continue
             if lines is not None and len(diff) > lines:
                 diff.append("  ...")
@@ -363,7 +363,7 @@ class Compare(AdminCmd):
                 else:
                     el2 = elements2[elid]
                     if (el.getparent().get("name") !=
-                        el2.getparent().get("name")):
+                            el2.getparent().get("name")):
                         self.changed(
                             "Element %s was in bundle %s, "
                             "now in bundle %s" % (elid,

@@ -118,7 +118,7 @@ class SSLServer(SocketServer.TCPServer, object):
         self.socket.settimeout(timeout)
         self.keyfile = keyfile
         if (keyfile is not None and
-            (keyfile == False or
+            (keyfile is False or
              not os.path.exists(keyfile) or
              not os.access(keyfile, os.R_OK))):
             msg = "Keyfile %s does not exist or is not readable" % keyfile
@@ -126,7 +126,7 @@ class SSLServer(SocketServer.TCPServer, object):
             raise Exception(msg)
         self.certfile = certfile
         if (certfile is not None and
-            (certfile == False or
+            (certfile is False or
              not os.path.exists(certfile) or
              not os.access(certfile, os.R_OK))):
             msg = "Certfile %s does not exist or is not readable" % certfile
@@ -134,7 +134,7 @@ class SSLServer(SocketServer.TCPServer, object):
             raise Exception(msg)
         self.ca = ca
         if (ca is not None and
-            (ca == False or
+            (ca is False or
              not os.path.exists(ca) or
              not os.access(ca, os.R_OK))):
             msg = "CA %s does not exist or is not readable" % ca

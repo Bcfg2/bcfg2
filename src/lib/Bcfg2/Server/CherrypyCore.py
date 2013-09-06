@@ -72,7 +72,7 @@ class CherrypyCore(NetworkCore):
             raise Exception("Unknown error processing XML-RPC request body")
 
         if (not self.check_acls(address[0], rpcmethod) or
-            not self.authenticate(cert, username, password, address)):
+                not self.authenticate(cert, username, password, address)):
             raise cherrypy.HTTPError(401)
 
     @cherrypy.expose

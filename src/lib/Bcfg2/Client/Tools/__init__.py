@@ -110,7 +110,7 @@ class Tool(object):
         for struct in self.config:
             for entry in struct:
                 if (entry.tag == 'Path' and
-                    entry.get('important', 'false').lower() == 'true'):
+                        entry.get('important', 'false').lower() == 'true'):
                     self.__important__.append(entry.get('name'))
         self.handled = self.getSupportedEntries()
 

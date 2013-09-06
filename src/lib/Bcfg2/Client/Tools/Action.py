@@ -15,12 +15,14 @@ class Action(Bcfg2.Client.Tools.Tool):
         """ Return true if the given action is allowed to be run by
         the whitelist or blacklist """
         if (Bcfg2.Options.setup.decision == 'whitelist' and
-            not matches_white_list(action, Bcfg2.Options.setup.decision_list)):
+                not matches_white_list(action,
+                                       Bcfg2.Options.setup.decision_list)):
             self.logger.info("In whitelist mode: suppressing Action: %s" %
                              action.get('name'))
             return False
         if (Bcfg2.Options.setup.decision == 'blacklist' and
-            not passes_black_list(action, Bcfg2.Options.setup.decision_list)):
+                not passes_black_list(action,
+                                      Bcfg2.Options.setup.decision_list)):
             self.logger.info("In blacklist mode: suppressing Action: %s" %
                              action.get('name'))
             return False
@@ -84,7 +86,7 @@ class Action(Bcfg2.Client.Tools.Tool):
         states = dict()
         for action in bundle.findall("Action"):
             if (action.get('timing') in ['post', 'both'] and
-                action.get('when') != 'modified'):
+                    action.get('when') != 'modified'):
                 if not self._action_allowed(action):
                     continue
                 states[action] = self.RunAction(action)

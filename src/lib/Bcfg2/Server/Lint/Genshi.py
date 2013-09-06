@@ -39,8 +39,8 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
         for entryset in self.core.plugins['Cfg'].entries.values():
             for entry in entryset.entries.values():
                 if (self.HandlesFile(entry.name) and
-                    isinstance(entry, CfgGenshiGenerator) and
-                    not entry.template):
+                        isinstance(entry, CfgGenshiGenerator) and
+                        not entry.template):
                     self.check_template(entry.loader, entry.name,
                                         cls=NewTextTemplate)
 
@@ -49,5 +49,5 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
         loader = TemplateLoader()
         for entry in self.core.plugins['Bundler'].entries.values():
             if (self.HandlesFile(entry.name) and
-                entry.template is not None):
+                    entry.template is not None):
                 self.check_template(loader, entry.name, cls=MarkupTemplate)

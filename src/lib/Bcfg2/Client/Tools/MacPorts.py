@@ -38,7 +38,7 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
 
         if entry.attrib['name'] in self.installed:
             if (self.installed[entry.attrib['name']] == entry.attrib['version']
-                or entry.attrib['version'] == 'any'):
+                    or entry.attrib['version'] == 'any'):
                 #FIXME: We should be able to check this once
                 #       http://trac.macports.org/ticket/15709 is implemented
                 return True

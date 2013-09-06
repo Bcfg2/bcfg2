@@ -87,8 +87,8 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
             seqmatch = SequenceMatcher(None, fdata.data, cdata.data)
             # perform progressively more expensive comparisons
             if (seqmatch.real_quick_ratio() > Bcfg2.Options.setup.threshold and
-                seqmatch.quick_ratio() > Bcfg2.Options.setup.threshold and
-                seqmatch.ratio() > Bcfg2.Options.setup.threshold):
+                    seqmatch.quick_ratio() > Bcfg2.Options.setup.threshold and
+                    seqmatch.ratio() > Bcfg2.Options.setup.threshold):
                 rv.extend(
                     self._find_similar((cname, cdata), copy.copy(others)))
         return rv

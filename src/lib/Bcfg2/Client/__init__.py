@@ -157,7 +157,7 @@ class Client(object):
 
         if Bcfg2.Options.setup.bundle_quick:
             if (not Bcfg2.Options.setup.only_bundles and
-                not Bcfg2.Options.setup.except_bundles):
+                    not Bcfg2.Options.setup.except_bundles):
                 self.logger.error("-Q option requires -b or -B")
                 raise SystemExit(1)
         if Bcfg2.Options.setup.remove == 'services':
@@ -432,7 +432,7 @@ class Client(object):
                                       lockfile.name)
 
         if (not Bcfg2.Options.setup.file and
-            not Bcfg2.Options.setup.bundle_quick):
+                not Bcfg2.Options.setup.bundle_quick):
             # upload statistics
             feedback = self.GenerateStats()
 
@@ -567,15 +567,16 @@ class Client(object):
                     continue
                 for cfile in parent.findall("./Path"):
                     if (cfile.get('name') not in self.__important__ or
-                        cfile.get('type') != 'file' or
-                        cfile not in self.whitelist):
+                            cfile.get('type') != 'file' or
+                            cfile not in self.whitelist):
                         continue
                     tools = [t for t in self.tools
                              if t.handlesEntry(cfile) and t.canVerify(cfile)]
                     if not tools:
                         continue
                     if (Bcfg2.Options.setup.interactive and not
-                        self.promptFilter("Install %s: %s? (y/N):", [cfile])):
+                            self.promptFilter("Install %s: %s? (y/N):",
+                                              [cfile])):
                         self.whitelist.remove(cfile)
                         continue
                     try:
@@ -756,7 +757,8 @@ class Client(object):
 
         for bundle in self.config.findall('.//Bundle'):
             if (Bcfg2.Options.setup.only_bundles and
-                bundle.get('name') not in Bcfg2.Options.setup.only_bundles):
+                    bundle.get('name') not in
+                    Bcfg2.Options.setup.only_bundles):
                 # prune out unspecified bundles when running with -b
                 continue
             if bundle in mbundles:
