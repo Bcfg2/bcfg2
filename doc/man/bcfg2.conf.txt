@@ -43,7 +43,6 @@ filemonitor
 
         inotify
 	gamin
-	fam
 	pseudo
 
 fam_blocking
