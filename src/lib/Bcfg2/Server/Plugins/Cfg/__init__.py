@@ -101,6 +101,8 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData,
     experimental = False
 
     def __init__(self, name, specific, encoding):
+        if not self.__specific__ and not specific:
+            specific = Bcfg2.Server.Plugin.Specificity(all=True)
         Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific,
                                                   encoding)
         Bcfg2.Server.Plugin.Debuggable.__init__(self)
