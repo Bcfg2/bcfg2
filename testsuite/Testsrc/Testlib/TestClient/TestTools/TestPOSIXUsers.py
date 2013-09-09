@@ -27,7 +27,14 @@ class TestPOSIXUsers(TestTool):
     def get_obj(self, logger=None, setup=None, config=None):
         if setup is None:
             setup = MagicMock()
-            setup.__getitem__.return_value = []
+            def getitem(key):
+                if key == 'encoding':
+                    return 'UTF-8'
+                else:
+                    return []
+
+            setup.__getitem__.side_effect = getitem
+
         return TestTool.get_obj(self, logger, setup, config)
 
     @patch("pwd.getpwall")
