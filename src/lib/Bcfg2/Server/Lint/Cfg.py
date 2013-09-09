@@ -1,11 +1,11 @@
 """ ``bcfg2-lint`` plugin for :ref:`Cfg
 <server-plugins-generators-cfg>` """
 
-
 import os
 import Bcfg2.Options
 from fnmatch import fnmatch
 from Bcfg2.Server.Lint import ServerPlugin
+from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 
 
 class Cfg(ServerPlugin):
@@ -15,12 +15,28 @@ class Cfg(ServerPlugin):
         for basename, entry in list(self.core.plugins['Cfg'].entries.items()):
             self.check_pubkey(basename, entry)
         self.check_missing_files()
+        self.check_conflicting_handlers()
 
     @classmethod
     def Errors(cls):
         return {"no-pubkey-xml": "warning",
                 "unknown-cfg-files": "error",
-                "extra-cfg-files": "error"}
+                "extra-cfg-files": "error",
+                "multiple-global-handlers": "error"}
+
+    def check_conflicting_handlers(self):
+        """ Check that a single entryset doesn't have multiple
+        non-specific (i.e., 'all') handlers. """
+        cfg = self.core.plugins['Cfg']
+        for eset in cfg.entries.values():
+            alls = [e for e in eset.entries.values()
+                    if (e.specific.all and
+                        issubclass(e.__class__, CfgGenerator))]
+            if len(alls) > 1:
+                self.LintError("multiple-global-handlers",
+                               "%s has multiple global handlers: %s" %
+                               (eset.path, ", ".join(os.path.basename(e.name)
+                                                     for e in alls)))
 
     def check_pubkey(self, basename, entry):
         """ check that privkey.xml files have corresponding pubkey.xml
