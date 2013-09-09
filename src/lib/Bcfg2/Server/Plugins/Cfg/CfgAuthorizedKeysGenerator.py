@@ -68,18 +68,18 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
             if pubkey_name:
                 host = allow.get("host")
                 group = allow.get("group")
+                category = allow.get("category", self.category)
                 if host:
                     key_md = self.core.build_metadata(host)
                 elif group:
                     key_md = ClientMetadata("dummy", group, [group], [],
                                             set(), set(), dict(), None,
                                             None, None, None)
-                elif (self.category and
-                      not metadata.group_in_category(self.category)):
+                elif category and not metadata.group_in_category(category):
                     self.logger.warning("Cfg: %s ignoring Allow from %s: "
                                         "No group in category %s" %
                                         (metadata.hostname, pubkey_name,
-                                         self.category))
+                                         category))
                     continue
                 else:
                     key_md = metadata
