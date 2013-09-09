@@ -61,7 +61,7 @@ class Cfg(ServerPlugin):
 
         # first, collect ignore patterns from handlers
         ignore = set()
-        for hdlr in cfg.handlers():
+        for hdlr in Bcfg2.Options.setup.cfg_handlers:
             ignore.update(hdlr.__ignore__)
 
         # next, get a list of all non-ignored files on the filesystem
