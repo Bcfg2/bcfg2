@@ -901,6 +901,7 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
             self.check_delta(basename, entry)
             self.check_pubkey(basename, entry)
         self.check_missing_files()
+        self.check_conflicting_handlers()
 
     @classmethod
     def Errors(cls):
@@ -908,7 +909,8 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
                 "diff-file-used": "warning",
                 "no-pubkey-xml": "warning",
                 "unknown-cfg-files": "error",
-                "extra-cfg-files": "error"}
+                "extra-cfg-files": "error",
+                "multiple-global-handlers": "error"}
 
     def check_delta(self, basename, entry):
         """ check that no .cat or .diff files are in use """
@@ -954,6 +956,20 @@ class CfgLint(Bcfg2.Server.Lint.ServerPlugin):
             rv.append(component)
             remaining, component = os.path.split(remaining)
         return rv
+
+    def check_conflicting_handlers(self):
+        """ Check that a single entryset doesn't have multiple
+        non-specific (i.e., 'all') handlers. """
+        cfg = self.core.plugins['Cfg']
+        for eset in cfg.entries.values():
+            alls = [e for e in eset.entries.values()
+                    if (e.specific.all and
+                        issubclass(e.__class__, CfgGenerator))]
+            if len(alls) > 1:
+                self.LintError("multiple-global-handlers",
+                               "%s has multiple global handlers: %s" %
+                               (eset.path, ", ".join(os.path.basename(e.name)
+                                                     for e in alls)))
 
     def check_missing_files(self):
         """ check that all files on the filesystem are known to Cfg """
