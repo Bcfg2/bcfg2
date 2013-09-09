@@ -35,14 +35,25 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
     @classmethod
     def Errors(cls):
         return {"merge-cfg": "warning",
-                "merge-probes": "warning"}
+                "identical-cfg": "error",
+                "merge-probes": "warning",
+                "identical-probes": "error"}
 
     def check_cfg(self):
         """ check Cfg for similar files """
+        # ignore non-specific Cfg entries, e.g., privkey.xml
+        ignore = []
+        for hdlr in Bcfg2.Options.setup.cfg_handlers:
+            if not hdlr.__specific__:
+                ignore.extend(hdlr.__basenames__)
+
         for filename, entryset in self.core.plugins['Cfg'].entries.items():
             candidates = dict([(f, e) for f, e in entryset.entries.items()
-                               if isinstance(e, CfgGenerator)])
-            for mset in self.get_similar(candidates):
+                               if (isinstance(e, CfgGenerator) and
+                                   f not in ignore and
+                                   not f.endswith(".crypt"))])
+            similar, identical = self.get_similar(candidates)
+            for mset in similar:
                 self.LintError("merge-cfg",
                                "The following files are similar: %s. "
                                "Consider merging them into a single Genshi "
@@ -50,29 +61,47 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
                                ", ".join([os.path.join(filename, p)
                                           for p in mset]))
 
+            for mset in identical:
+                self.LintError("identical-cfg",
+                               "The following files are identical: %s. "
+                               "Strongly consider merging them into a single "
+                               "Genshi template." %
+                               ", ".join([os.path.join(filename, p)
+                                          for p in mset]))
+
     def check_probes(self):
         """ check Probes for similar files """
         probes = self.core.plugins['Probes'].probes.entries
-        for mset in self.get_similar(probes):
+        similar, identical = self.get_similar(probes)
+        for mset in similar:
             self.LintError("merge-probes",
                            "The following probes are similar: %s. "
                            "Consider merging them into a single probe." %
+                           ", ".join([p for p in mset]))
+        for mset in identical:
+            self.LintError("identical-probes",
+                           "The following probes are identical: %s. "
+                           "Strongly consider merging them into a single "
+                           "probe." %
                            ", ".join([p for p in mset]))
 
     def get_similar(self, entries):
         """ Get a list of similar files from the entry dict.  Return
         value is a list of lists, each of which gives the filenames of
         similar files """
-        rv = []
+        similar = []
+        identical = []
         elist = list(entries.items())
         while elist:
-            result = self._find_similar(elist.pop(0), copy.copy(elist))
-            if len(result) > 1:
-                elist = [(fname, fdata)
-                         for fname, fdata in elist
-                         if fname not in result]
-                rv.append(result)
-        return rv
+            rv = self._find_similar(elist.pop(0), copy.copy(elist))
+            if rv[0]:
+                similar.append(rv[0])
+            if rv[1]:
+                identical.append(rv[1])
+            elist = [(fname, fdata)
+                     for fname, fdata in elist
+                     if fname not in rv[0] | rv[1]]
+        return similar, identical
 
     def _find_similar(self, ftuple, others):
         """ Find files similar to the one described by ftupe in the
@@ -81,14 +110,20 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
         0 and 1 that describes how similar two files much be to rate
         as 'similar' """
         fname, fdata = ftuple
-        rv = [fname]
-        while others:
-            cname, cdata = others.pop(0)
+        similar = set()
+        identical = set()
+        for cname, cdata in others:
             seqmatch = SequenceMatcher(None, fdata.data, cdata.data)
             # perform progressively more expensive comparisons
-            if (seqmatch.real_quick_ratio() > Bcfg2.Options.setup.threshold and
-                    seqmatch.quick_ratio() > Bcfg2.Options.setup.threshold and
-                    seqmatch.ratio() > Bcfg2.Options.setup.threshold):
-                rv.extend(
-                    self._find_similar((cname, cdata), copy.copy(others)))
-        return rv
+            if seqmatch.real_quick_ratio() == 1.0:
+                identical.add(cname)
+            elif (
+                seqmatch.real_quick_ratio() > Bcfg2.Options.setup.threshold and
+                seqmatch.quick_ratio() > Bcfg2.Options.setup.threshold and
+                seqmatch.ratio() > Bcfg2.Options.setup.threshold):
+                similar.add(cname)
+        if similar:
+            similar.add(fname)
+        if identical:
+            identical.add(fname)
+        return (similar, identical)
