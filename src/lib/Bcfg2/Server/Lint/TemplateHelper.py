@@ -8,7 +8,7 @@ from Bcfg2.Server.Plugins.TemplateHelper import HelperModule, MODULE_RE, \
     safe_module_name
 
 
-class TemplateHelperLint(ServerPlugin):
+class TemplateHelper(ServerPlugin):
     """ ``bcfg2-lint`` plugin to ensure that all :ref:`TemplateHelper
     <server-plugins-connectors-templatehelper>` modules are valid.
     This can check for:
