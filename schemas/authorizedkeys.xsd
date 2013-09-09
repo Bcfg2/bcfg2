@@ -114,6 +114,15 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="category" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>
+          Use a public key specific to the group in the given
+          category, instead of the category specified in
+          ``bcfg2.conf``.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute name="host" type="xsd:string">
       <xsd:annotation>
         <xsd:documentation>

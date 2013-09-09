@@ -3,6 +3,7 @@ and groupadd/mod/del """
 
 import pwd
 import grp
+import Bcfg2.Options
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
 from Bcfg2.Utils import PackedDigitRange
@@ -202,7 +203,8 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
         else:
             for attr, idx in self.attr_mapping[entry.tag].items():
                 val = str(self.existing[entry.tag][entry.get("name")][idx])
-                entry.set("current_%s" % attr, val)
+                entry.set("current_%s" %
+                          attr, val.decode(Bcfg2.Options.setup.encoding))
                 if attr in ["uid", "gid"]:
                     if entry.get(attr) is None:
                         # no uid/gid specified, so we let the tool

@@ -50,19 +50,19 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
             if pubkey_name:
                 host = allow.get("host")
                 group = allow.get("group")
+                category = allow.get("category",
+                                     Bcfg2.Options.setup.sshkeys_category)
                 if host:
                     key_md = self.core.build_metadata(host)
                 elif group:
                     key_md = ClientMetadata("dummy", group, [group], [],
                                             set(), set(), dict(), None,
                                             None, None, None)
-                elif (Bcfg2.Options.setup.sshkeys_category and
-                      not metadata.group_in_category(
-                        Bcfg2.Options.setup.sshkeys_category)):
+                elif category and not metadata.group_in_category(category):
                     self.logger.warning("Cfg: %s ignoring Allow from %s: "
                                         "No group in category %s" %
                                         (metadata.hostname, pubkey_name,
-                                         Bcfg2.Options.setup.sshkeys_category))
+                                         category))
                     continue
                 else:
                     key_md = metadata

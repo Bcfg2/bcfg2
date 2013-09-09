@@ -80,6 +80,8 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
     experimental = False
 
     def __init__(self, name, specific):
+        if not self.__specific__ and not specific:
+            specific = Bcfg2.Server.Plugin.Specificity(all=True)
         Bcfg2.Server.Plugin.SpecificData.__init__(self, name, specific)
     __init__.__doc__ = Bcfg2.Server.Plugin.SpecificData.__init__.__doc__ + \
         """

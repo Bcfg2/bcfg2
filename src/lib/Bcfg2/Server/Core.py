@@ -23,7 +23,6 @@ from Bcfg2.Compat import xmlrpclib  # pylint: disable=W0622
 from Bcfg2.Server.Plugin.exceptions import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin.interfaces import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin import track_statistics
-from Bcfg2.Server.Plugins.Metadata import MetadataGroup
 
 try:
     import psyco
@@ -858,7 +857,7 @@ class Core(object):
                 groups = conn.get_additional_groups(imd)
                 groupnames = []
                 for group in groups:
-                    if isinstance(group, MetadataGroup):
+                    if hasattr(group, "name"):
                         groupname = group.name
                         if groupname in self._dynamic_groups:
                             if self._dynamic_groups[groupname] == conn.name:

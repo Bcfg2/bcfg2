@@ -30,6 +30,7 @@ class TestPOSIXUsers(TestTool):
         set_setup_default('uid_blacklist')
         set_setup_default('gid_whitelist')
         set_setup_default('gid_blacklist')
+        set_setup_default('encoding', 'UTF-8')
 
     def get_obj(self, config=None):
         return TestTool.get_obj(self, config)

@@ -612,7 +612,7 @@ class TestCfgEntrySet(TestEntrySet):
 
         def reset():
             for e in eset.entries.values():
-                if e.specific is not None:
+                if hasattr(e.specific, "reset_mock"):
                     e.specific.reset_mock()
 
         metadata = Mock()
@@ -629,7 +629,7 @@ class TestCfgEntrySet(TestEntrySet):
                               [eset.entries['test1.txt'],
                                eset.entries['test3.txt']])
         for entry in eset.entries.values():
-            if entry.specific is not None:
+            if hasattr(entry.specific.matches, "called"):
                 self.assertFalse(entry.specific.matches.called)
 
         reset()
@@ -637,20 +637,22 @@ class TestCfgEntrySet(TestEntrySet):
                               [eset.entries['test6.txt']])
         eset.entries['test6.txt'].specific.matches.assert_called_with(metadata)
         for ename, entry in eset.entries.items():
-            if ename != 'test6.txt' and entry.specific is not None:
+            if (ename != 'test6.txt' and
+                hasattr(entry.specific.matches, "called")):
                 self.assertFalse(entry.specific.matches.called)
 
         reset()
         self.assertItemsEqual(eset.get_handlers(metadata, CfgFilter), [])
         eset.entries['test7.txt'].specific.matches.assert_called_with(metadata)
         for ename, entry in eset.entries.items():
-            if ename != 'test7.txt' and entry.specific is not None:
+            if (ename != 'test7.txt' and
+                hasattr(entry.specific.matches, "called")):
                 self.assertFalse(entry.specific.matches.called)
 
         reset()
         self.assertItemsEqual(eset.get_handlers(metadata, Mock), [])
         for ename, entry in eset.entries.items():
-            if entry.specific is not None:
+            if hasattr(entry.specific.matches, "called"):
                 self.assertFalse(entry.specific.matches.called)
 
     @patch("Bcfg2.Server.Plugins.Cfg.CfgDefaultInfo")
