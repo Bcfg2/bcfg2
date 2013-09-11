@@ -576,7 +576,7 @@ class XMLFileBacked(FileBacked):
             parent.remove(el)
             for extra in extras:
                 if extra != self.name:
-                    added = lxml.etree.SubElement(parent, xinclude, href=extra)
+                    lxml.etree.SubElement(parent, xinclude, href=extra)
                     if extra not in self.extras:
                         self.extras.append(extra)
                         self._follow_xincludes(fname=extra)
