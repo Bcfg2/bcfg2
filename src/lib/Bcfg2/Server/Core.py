@@ -81,6 +81,8 @@ class NoExposedMethod (Exception):
 class DefaultACL(Plugin, ClientACLs):
     """ Default ACL 'plugin' that provides security by default. This
     is only loaded if no other ClientACLs plugin is enabled. """
+    create = False
+
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
         Bcfg2.Server.Plugin.ClientACLs.__init__(self)
