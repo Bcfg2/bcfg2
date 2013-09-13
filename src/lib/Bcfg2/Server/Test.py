@@ -54,7 +54,8 @@ class CapturingLogger(object):
 
     def debug(self, msg):
         """ discard error messages """
-        self.output.append(msg)
+        if Bcfg2.Options.setup.debug:
+            self.output.append(msg)
 
     def reset_output(self):
         """ Reset the captured output """
