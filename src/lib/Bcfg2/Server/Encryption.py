@@ -586,10 +586,11 @@ class CLI(object):
                                      % fname)
                     tool = tools[0]
                     mode = "encrypt"
+                    self.logger.debug("Encrypting %s file %s" % (ftype, fname))
 
             if data is None:
                 data = getattr(tool, mode)()
-            if data is None:
+            if data in [False, None]:
                 self.logger.error("Failed to %s %s, skipping" % (mode, fname))
                 continue
             if Bcfg2.Options.setup.stdout:
