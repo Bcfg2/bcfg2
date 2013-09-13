@@ -31,6 +31,7 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
     should_monitor = False
 
     def get_obj(self, name=None, fam=None):
+        Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator.CFG = Mock()
         return TestCfgCreator.get_obj(self, name=name)
 
     @patch("Bcfg2.Server.Plugins.Cfg.CfgCreator.handle_event")
@@ -256,24 +257,6 @@ class TestCfgPrivateKeyCreator(TestCfgCreator, TestStructFile):
             pkc.pubkey_creator.get_filename.assert_called_with(group="foo")
             pkc.pubkey_creator.write_data.assert_called_with(
                 "ssh-rsa publickey pubkey.filename\n", group="foo")
-            pkc.write_data.assert_called_with("privatekey", group="foo")
-            mock_rmtree.assert_called_with(datastore)
-
-            reset()
-            self.assertEqual(pkc.create_data(entry, metadata, return_pair=True),
-                             ("ssh-rsa publickey pubkey.filename\n",
-                              "privatekey"))
-            pkc.XMLMatch.assert_called_with(metadata)
-            pkc.get_specificity.assert_called_with(metadata,
-                                                   pkc.XMLMatch.return_value)
-            pkc._gen_keypair.assert_called_with(metadata,
-                                                pkc.XMLMatch.return_value)
-            self.assertItemsEqual(mock_open.call_args_list,
-                                  [call(privkey + ".pub"), call(privkey)])
-            pkc.pubkey_creator.get_filename.assert_called_with(group="foo")
-            pkc.pubkey_creator.write_data.assert_called_with(
-                "ssh-rsa publickey pubkey.filename\n",
-                group="foo")
             pkc.write_data.assert_called_with("privatekey", group="foo")
             mock_rmtree.assert_called_with(datastore)
 

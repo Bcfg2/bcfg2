@@ -159,7 +159,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         return specificity
 
     # pylint: disable=W0221
-    def create_data(self, entry, metadata, return_pair=False):
+    def create_data(self, entry, metadata):
         """ Create data for the given entry on the given client
 
         :param entry: The abstract entry to create data for.  This
@@ -167,15 +167,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         :type entry: lxml.etree._Element
         :param metadata: The client metadata to create data for
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-        :param return_pair: Return a tuple of ``(public key, private
-                            key)`` instead of just the private key.
-                            This is used by
-                            :class:`Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator.CfgPublicKeyCreator`
-                            to create public keys as requested.
-        :type return_pair: bool
         :returns: string - The private key data
-        :returns: tuple - Tuple of ``(public key, private key)``, if
-                  ``return_pair`` is set to True
         """
         spec = self.XMLMatch(metadata)
         specificity = self.get_specificity(metadata, spec)
@@ -201,11 +193,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
                 specificity['ext'] = '.crypt'
 
             self.write_data(privkey, **specificity)
-
-            if return_pair:
-                return (pubkey, privkey)
-            else:
-                return privkey
+            return privkey
         finally:
             shutil.rmtree(os.path.dirname(filename))
     # pylint: enable=W0221
