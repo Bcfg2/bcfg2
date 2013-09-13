@@ -524,6 +524,7 @@ class CLI(object):
                 continue
 
             if props:
+                ftype = "Properties"
                 if Bcfg2.Options.setup.remove:
                     self.logger.info("Cannot use --remove with Properties "
                                      "file %s, ignoring for this file" % fname)
@@ -538,6 +539,7 @@ class CLI(object):
                                       (fname, err))
                     continue
             else:
+                ftype = "Cfg"
                 if Bcfg2.Options.setup.xpath:
                     self.logger.error("Specifying --xpath with --cfg is "
                                       "nonsensical, ignoring --xpath")
@@ -561,16 +563,21 @@ class CLI(object):
             if Bcfg2.Options.setup.encrypt:
                 tool = tools[0]
                 mode = "encrypt"
+                self.logger.debug("Encrypting %s file %s" % (ftype, fname))
             elif Bcfg2.Options.setup.decrypt:
                 tool = tools[1]
                 mode = "decrypt"
+                self.logger.debug("Decrypting %s file %s" % (ftype, fname))
             else:
                 self.logger.info("Neither --encrypt nor --decrypt specified, "
                                  "determining mode")
                 tool = tools[1]
                 try:
+                    self.logger.debug("Trying to decrypt %s file %s" % (ftype,
+                                                                        fname))
                     data = tool.decrypt()
                     mode = "decrypt"
+                    self.logger.debug("Decrypted %s file %s" % (ftype, fname))
                 except:  # pylint: disable=W0702
                     pass
                 if data is False:
