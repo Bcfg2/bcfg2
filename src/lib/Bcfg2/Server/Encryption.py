@@ -369,17 +369,20 @@ class PropertiesCryptoMixin(object):
         pname = element.get("encrypted")
         if pname in Bcfg2.Options.setup.passphrases:
             passphrase = Bcfg2.Options.setup.passphrases[pname]
-        elif self.passphrase:
+        else:
             if pname:
                 self.logger.warning("Passphrase %s not found in %s, "
                                     "using passphrase given on command line" %
                                     (pname, Bcfg2.Options.setup.config))
-            passphrase = self.passphrase
-            pname = self.pname
-        else:
-            raise PassphraseError("Multiple passphrases found in %s, "
-                                  "specify one on the command line with -p" %
-                                  Bcfg2.Options.setup.config)
+            if self.passphrase:
+                passphrase = self.passphrase
+                pname = self.pname
+            else:
+                self.logger.warning("No passphrase specified for %s element" %
+                                    element.tag)
+                raise PassphraseError("Multiple passphrases found in %s, "
+                                      "specify one on the command line with "
+                                      "-p" % Bcfg2.Options.setup.config)
         return (pname, passphrase)
 
     def _write(self, filename, data):
