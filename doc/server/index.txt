@@ -33,3 +33,4 @@ clients.
    caching
    encryption
    xml-common
+   acl
