@@ -50,21 +50,20 @@ class TestCfgPublicKeyCreator(TestCfgCreator, TestStructFile):
         pkc.cfg = Mock()
         pkc.core = Mock()
         pkc.cmd = Mock()
-        pkc.get_filename = Mock()
         pkc.write_data = Mock()
 
         pubkey = "public key data"
         privkey_entryset = Mock()
         privkey_creator = Mock()
         privkey_creator.get_specificity = Mock()
-        privkey_creator.get_specificity.return_value = MagicMock()
+        privkey_creator.get_specificity.return_value = dict()
+        fileloc = pkc.get_filename()
         pkc.cfg.entries = {"/home/foo/.ssh/id_rsa": privkey_entryset}
 
         def reset():
             privkey_creator.reset_mock()
             pkc.cmd.reset_mock()
             pkc.core.reset_mock()
-            pkc.get_filename.reset_mock()
             pkc.write_data.reset_mock()
             mock_exists.reset_mock()
             mock_unlink.reset_mock()
@@ -124,7 +123,7 @@ class TestCfgPublicKeyCreator(TestCfgCreator, TestStructFile):
         privkey_entryset.best_matching.assert_called_with(
             metadata,
             privkey_entryset.get_handlers.return_value)
-        mock_exists.assert_called_with(pkc.get_filename.return_value)
+        mock_exists.assert_called_with(fileloc)
         pkc.cmd.run.assert_called_with(["ssh-keygen", "-y", "-f",
                                         mock_mkstemp.return_value[1]])
         self.assertEqual(pkc.write_data.call_args[0][0], pubkey)
@@ -149,7 +148,7 @@ class TestCfgPublicKeyCreator(TestCfgCreator, TestStructFile):
         privkey_entryset.best_matching.assert_called_with(
             metadata,
             privkey_entryset.get_handlers.return_value)
-        mock_exists.assert_called_with(pkc.get_filename.return_value)
-        mock_open.assert_called_with(pkc.get_filename.return_value)
+        mock_exists.assert_called_with(fileloc)
+        mock_open.assert_called_with(fileloc)
         self.assertFalse(mock_mkstemp.called)
         self.assertFalse(pkc.write_data.called)
