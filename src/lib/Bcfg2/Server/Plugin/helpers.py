@@ -547,16 +547,12 @@ class XMLFileBacked(FileBacked):
                 xdata = self.xdata.getroottree()
             else:
                 xdata = lxml.etree.parse(fname)
-        included = [el for el in xdata.findall('//' + xinclude)]
-        for el in included:
+        for el in xdata.findall('//' + xinclude):
             name = el.get("href")
             if name.startswith("/"):
                 fpath = name
             else:
-                if fname:
-                    rel = fname
-                else:
-                    rel = self.name
+                rel = fname or self.name
                 fpath = os.path.join(os.path.dirname(rel), name)
 
             # expand globs in xinclude, a bcfg2-specific extension
@@ -571,12 +567,13 @@ class XMLFileBacked(FileBacked):
             parent = el.getparent()
             parent.remove(el)
             for extra in extras:
-                if extra != self.name and extra not in self.extras:
-                    self.extras.append(extra)
+                if extra != self.name:
                     lxml.etree.SubElement(parent, xinclude, href=extra)
-                    self._follow_xincludes(fname=extra)
-                    if extra not in self.extra_monitors:
-                        self.add_monitor(extra)
+                    if extra not in self.extras:
+                        self.extras.append(extra)
+                        self._follow_xincludes(fname=extra)
+                        if extra not in self.extra_monitors:
+                            self.add_monitor(extra)
 
     def Index(self):
         self.xdata = lxml.etree.XML(self.data, base_url=self.name,

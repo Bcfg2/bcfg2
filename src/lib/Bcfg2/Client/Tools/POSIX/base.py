@@ -232,6 +232,11 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         else:
             defacl = None
 
+        if not acls:
+            self.logger.debug("POSIX: Removed ACLs from %s" %
+                              entry.get("name"))
+            return True
+
         for aclkey, perms in acls.items():
             atype, scope, qualifier = aclkey
             if atype == "default":
