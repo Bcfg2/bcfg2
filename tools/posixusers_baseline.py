@@ -46,8 +46,8 @@ def main():
         config = lxml.etree.parse(setup['file']).getroot()
     else:
         config = lxml.etree.Element("Configuration")
-    users = POSIXUsers(logging.getLogger('posixusers_baseline.py'),
-                       setup, config)
+    logger = logging.getLogger('posixusers_baseline.py')
+    users = POSIXUsers(logger, setup, config)
 
     baseline = lxml.etree.Element("Bundle", name="posixusers_baseline")
     for entry in users.FindExtra():
@@ -59,7 +59,12 @@ def main():
                 continue
             entry.set(attr, str(data[idx]))
         if entry.tag == 'POSIXUser':
-            entry.set("group", grp.getgrgid(data[3])[0])
+            try:
+                entry.set("group", grp.getgrgid(data[3])[0])
+            except KeyError:
+                logger.warning("User %s is a member of nonexistent group %s" %
+                               (entry.get("name"), data[3]))
+                entry.set("group", str(data[3]))
             for group in users.user_supplementary_groups(entry):
                 memberof = lxml.etree.SubElement(entry, "MemberOf",
                                                  group=group[0])
