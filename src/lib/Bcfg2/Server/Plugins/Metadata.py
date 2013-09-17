@@ -1648,15 +1648,35 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
             "client")
 
     def duplicate_groups(self):
-        """ Check for groups that are defined more than once.  We
-        count a group tag as a definition if it a) has profile or
-        public set; or b) has any children."""
-        allgroups = [
-            g
-            for g in self.metadata.groups_xml.xdata.xpath("//Groups/Group") +
-            self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group")
-            if g.get("profile") or g.get("public") or g.getchildren()]
-        self.duplicate_entries(allgroups, "group")
+        """ Check  for groups that  are defined more than  once. There
+        are two ways this can happen:
+
+        1. The group is listed twice with contradictory options.
+        2. The group is listed with no options *first*, and then with
+           options later.
+
+        In this context, 'first' refers to the order in which groups
+        are parsed; see the loop condition below and
+        _handle_groups_xml_event above for details. """
+        groups = dict()
+        duplicates = dict()
+        for grp in self.metadata.groups_xml.xdata.xpath("//Groups/Group") + \
+                self.metadata.groups_xml.xdata.xpath("//Groups/Group//Group"):
+            grpname = grp.get("name")
+            if grpname in duplicates:
+                duplicates[grpname].append(grp)
+            elif len(grp.attrib) > 1:  # group has options
+                if grpname in groups:
+                    duplicates[grpname] = [grp, groups[grpname]]
+                else:
+                    groups[grpname] = grp
+            else:  # group has no options
+                groups[grpname] = grp
+        for grpname, grps in duplicates.items():
+            self.LintError("duplicate-group",
+                           "Group %s is defined multiple times:\n%s" %
+                           (grpname,
+                            "\n".join(self.RenderXML(g) for g in grps)))
 
     def duplicate_entries(self, allentries, etype):
         """ Generic duplicate entry finder.
