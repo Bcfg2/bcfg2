@@ -14,7 +14,7 @@ configuration) while others can be used to inspect potentially private
 data on the server or very easily mount a denial of service attack.
 As a result, access control lists to limit exposure of these calls is
 built in.  There are two possible ACL methods: built-in, and the
-:ref:`server-plugins-misc-acls` plugin.
+:ref:`server-plugins-misc-acl` plugin.
 
 The built-in approach simply applies a restrictive default ACL that
 lets ``localhost`` perform all XML-RPC calls, and restricts all other
@@ -38,4 +38,4 @@ Specifically:
 The built-in ACL is *only* intended to ensure that Bcfg2 is secure by
 default; it will not be sufficient in many (or even most) cases.  In
 these cases, it's recommended that you use the
-:ref:`server-plugins-misc-acls` plugin.
+:ref:`server-plugins-misc-acl` plugin.
