@@ -126,7 +126,7 @@
       <xsd:annotation>
         <xsd:documentation>
           If the action is always run, or is only run when a bundle
-          has been modified.  
+          has been modified.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -419,6 +419,16 @@
     </xsd:simpleContent>
   </xsd:complexType>
 
+  <xsd:complexType name="MemberOfContainerType">
+    <xsd:choice maxOccurs="unbounded">
+      <xsd:element name="MemberOf" type="MemberOfType"/>
+      <xsd:element name="Client" type="containerType"/>
+      <xsd:element name="Group" type="containerType"/>
+    </xsd:choice>
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+    <xsd:attribute name="negate" type="xsd:boolean"/>
+  </xsd:complexType>
+
   <xsd:complexType name="POSIXUserType">
     <xsd:annotation>
       <xsd:documentation>
@@ -427,6 +437,8 @@
     </xsd:annotation>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='MemberOf' type='MemberOfType'/>
+      <xsd:element name='Group' type='MemberOfContainer'/>
+      <xsd:element name='Client' type='MemberOfContainer'/>
     </xsd:choice>
     <xsd:attribute type="xsd:token" name="name" use="required">
       <xsd:annotation>
