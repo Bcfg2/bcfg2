@@ -121,6 +121,7 @@ class DBProbeStore(ProbeStore, Bcfg2.Server.Plugin.DatabaseBacked):
     create = False
 
     def __init__(self, core, datadir):
+        self._use_db = True
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core,
                                                     os.path.dirname(datadir))
         ProbeStore.__init__(self, core, datadir)
