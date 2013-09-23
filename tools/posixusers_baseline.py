@@ -2,6 +2,7 @@
 
 import grp
 import sys
+import logging
 import lxml.etree
 import Bcfg2.Logger
 import Bcfg2.Options
@@ -22,6 +23,7 @@ class CLI(object):
             components=[self, POSIXUsers]).parse()
         config = lxml.etree.Element("Configuration")
         self.users = POSIXUsers(config)
+        self.logger = logging.getLogger('posixusers_baseline.py')
 
     def run(self):
         baseline = lxml.etree.Element("Bundle", name="posixusers_baseline")
@@ -34,7 +36,13 @@ class CLI(object):
                     continue
                 entry.set(attr, str(data[idx]))
             if entry.tag == 'POSIXUser':
-                entry.set("group", grp.getgrgid(data[3])[0])
+                try:
+                    entry.set("group", grp.getgrgid(data[3])[0])
+                except KeyError:
+                    self.logger.warning(
+                        "User %s is a member of nonexistent group %s" %
+                        (entry.get("name"), data[3]))
+                    entry.set("group", str(data[3]))
                 for group in self.users.user_supplementary_groups(entry):
                     lxml.etree.SubElement(entry, "MemberOf", group=group[0])
 

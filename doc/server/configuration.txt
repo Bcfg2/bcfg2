@@ -147,7 +147,7 @@ Consequently, you simply have to run:
 .. code-block:: bash
 
     chown bcfg2:bcfg2 /var/run/bcfg2-server
-    chmod 0644 /var/run/bcfg2-server
+    chmod 0755 /var/run/bcfg2-server
 
 Additionally, the server daemon itself supports dropping privileges
 natively in 1.3.  Simply add the following lines to ``bcfg2.conf``::
