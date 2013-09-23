@@ -36,6 +36,9 @@ class GroupLogic(Bcfg2.Server.Plugin.Plugin,
     """ GroupLogic is a connector plugin that lets you use an XML
     Genshi template to dynamically set additional groups for
     clients. """
+    # perform grouplogic later than other Connector plugins, so it can
+    # use groups set by them
+    sort_order = 1000
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
