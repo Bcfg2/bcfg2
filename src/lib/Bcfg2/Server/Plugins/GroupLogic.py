@@ -3,6 +3,7 @@ template to dynamically set additional groups for clients. """
 
 import os
 import lxml.etree
+from threading import local
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugins.Metadata import MetadataGroup
 try:
@@ -45,8 +46,23 @@ class GroupLogic(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Connector.__init__(self)
         self.config = GroupLogicConfig(os.path.join(self.data, "groups.xml"),
                                        core.fam)
+        self._local = local()
+        # building is a thread-local set that tracks which machines
+        # GroupLogic is getting additional groups for.  If a
+        # get_additional_groups() is called twice for a machine before
+        # the first call has completed, the second call returns an
+        # empty list.  This is for infinite recursion protection;
+        # without this check, it'd be impossible to use things like
+        # metadata.query.in_group() in GroupLogic, since that requires
+        # building all metadata, which requires running
+        # GroupLogic.get_additional_groups() for all hosts, which
+        # requires building all metadata...
+        self._local.building = set()
 
     def get_additional_groups(self, metadata):
+        if metadata.hostname in self._local.building:
+            return []
+        self._local.building.add(metadata.hostname)
         rv = []
         for el in self.config.get_xml_value(metadata).findall("Group"):
             if el.get("category"):
@@ -54,4 +70,5 @@ class GroupLogic(Bcfg2.Server.Plugin.Plugin,
                                         category=el.get("category")))
             else:
                 rv.append(el.get("name"))
+        self._local.building.discard(metadata.hostname)
         return rv
