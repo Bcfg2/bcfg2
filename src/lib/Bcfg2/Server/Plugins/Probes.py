@@ -70,7 +70,7 @@ class ProbeStore(Debuggable):
     """ Caching abstraction layer between persistent probe data
     storage and the Probes plugin."""
 
-    def __init__(self, core, datastore):  # pylint: disable=W0613
+    def __init__(self, core, datadir):  # pylint: disable=W0613
         Debuggable.__init__(self)
         self._groupcache = Bcfg2.Server.Cache.Cache("Probes", "probegroups")
         self._datacache = Bcfg2.Server.Cache.Cache("Probes", "probedata")
@@ -120,9 +120,10 @@ class DBProbeStore(ProbeStore, Bcfg2.Server.Plugin.DatabaseBacked):
     plugin. """
     create = False
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
-        ProbeStore.__init__(self, core, datastore)
+    def __init__(self, core, datadir):
+        Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core,
+                                                    os.path.dirname(datadir))
+        ProbeStore.__init__(self, core, datadir)
 
     def _load_groups(self, hostname):
         Bcfg2.Server.Cache.expire("Probes", "probegroups", hostname)
@@ -191,9 +192,9 @@ class DBProbeStore(ProbeStore, Bcfg2.Server.Plugin.DatabaseBacked):
 class XMLProbeStore(ProbeStore):
     """ Caching abstraction layer between ``probed.xml`` and the
     Probes plugin."""
-    def __init__(self, core, datastore):
-        ProbeStore.__init__(self, core, datastore)
-        self._fname = os.path.join(datastore, 'probed.xml')
+    def __init__(self, core, datadir):
+        ProbeStore.__init__(self, core, datadir)
+        self._fname = os.path.join(datadir, 'probed.xml')
         self._load_data()
 
     def _load_data(self, _=None):
@@ -435,9 +436,9 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             raise Bcfg2.Server.Plugin.PluginInitError(err)
 
         if self._use_db:
-            self.probestore = DBProbeStore(core, datastore)
+            self.probestore = DBProbeStore(core, self.data)
         else:
-            self.probestore = XMLProbeStore(core, datastore)
+            self.probestore = XMLProbeStore(core, self.data)
 
     @track_statistics()
     def GetProbes(self, metadata):
