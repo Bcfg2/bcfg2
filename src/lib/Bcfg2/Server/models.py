@@ -57,7 +57,7 @@ def load_models(plugins=None, cfile='/etc/bcfg2.conf', quiet=True):
                     # the second attempt.
                     LOGGER.error("Failed to load plugin %s: %s" % (plugin,
                                                                    err))
-                    continue
+                continue
         for sym in dir(mod):
             obj = getattr(mod, sym)
             if hasattr(obj, "__bases__") and models.Model in obj.__bases__:
