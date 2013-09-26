@@ -188,6 +188,7 @@ Group:            Documentation/HTML
 %else
 Group:            Documentation
 %endif
+BuildRequires:    python-boto
 %if 0%{?suse_version}
 BuildRequires:    python-M2Crypto
 BuildRequires:    python-Genshi

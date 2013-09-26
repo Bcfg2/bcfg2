@@ -47,6 +47,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
              "Decisions/*.xml": "decisions.xsd",
              "Packages/sources.xml": "packages.xsd",
              "GroupPatterns/config.xml": "grouppatterns.xsd",
+             "AWSTags/config.xml": "awstags.xsd",
              "NagiosGen/config.xml": "nagiosgen.xsd",
              "FileProbes/config.xml": "fileprobes.xsd",
              "SSLCA/**/cert.xml": "sslca-cert.xsd",
