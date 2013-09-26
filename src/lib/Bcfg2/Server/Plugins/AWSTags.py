@@ -181,7 +181,7 @@ class AWSTags(Bcfg2.Server.Plugin.Plugin,
         self._tagcache.expire(key=key)
 
     def start_client_run(self, metadata):
-        self.expire_cache(self, key=metadata.hostname)
+        self.expire_cache(key=metadata.hostname)
 
     def get_additional_data(self, metadata):
         return self.get_tags(metadata)
