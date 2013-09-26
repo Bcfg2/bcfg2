@@ -677,14 +677,15 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         """ Generic method to modify XML data (group, client, etc.) """
         node = self._search_xdata(tag, name, config.xdata, alias=alias)
         if node is None:
-            self.logger.error("%s \"%s\" does not exist" % (tag, name))
-            raise Bcfg2.Server.Plugin.MetadataConsistencyError
+            msg = "%s \"%s\" does not exist" % (tag, name)
+            self.logger.error(msg)
+            raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
         xdict = config.find_xml_for_xpath('.//%s[@name="%s"]' %
                                           (tag, node.get('name')))
         if not xdict:
-            self.logger.error("Unexpected error finding %s \"%s\"" %
-                              (tag, name))
-            raise Bcfg2.Server.Plugin.MetadataConsistencyError
+            msg = 'Unexpected error finding %s "%s"' % (tag, name)
+            self.logger.error(msg)
+            raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
         for key, val in list(attribs.items()):
             xdict['xquery'][0].set(key, val)
         config.write_xml(xdict['filename'], xdict['xmltree'])
