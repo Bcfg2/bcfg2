@@ -16,7 +16,9 @@ import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Utils import locked
-from Bcfg2.Compat import MutableMapping, all, wraps  # pylint: disable=W0622
+# pylint: disable=W0622
+from Bcfg2.Compat import MutableMapping, all, any, wraps
+# pylint: enable=W0622
 from Bcfg2.version import Bcfg2VersionInfo
 
 try:
