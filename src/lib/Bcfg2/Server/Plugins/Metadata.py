@@ -221,6 +221,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
                                                          sys.exc_info()[1])
             self.logger.error(msg)
             raise Bcfg2.Server.Plugin.MetadataRuntimeError(msg)
+        self.load_xml()
 
     def find_xml_for_xpath(self, xpath):
         """Find and load xml file containing the xpath query"""
