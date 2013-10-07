@@ -411,7 +411,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 except Bcfg2.Server.Plugin.PluginExecutionError:
                     import lxml.etree
 
-                    print "failed to bind %s: %s" % (
+                    print("failed to bind %s: %s") % (
                         lxml.etree.tostring(entry),
                         sys.exc_info()[1])
                     pass
