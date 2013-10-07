@@ -160,6 +160,17 @@ in order to permit :ref:`pulling with bcfg2-admin
 <server-admin-pull>`.  You should almost certainly set ``sensitive``
 to "true" in ``info.xml``.
 
+Encryption
+==========
+
+SSHbase can optionally encrypt the private keys that it generates.  To
+enable this feature, set the ``passphrase`` option in the
+``[sshbase]`` section of ``bcfg2.conf`` to the name of the passphrase
+that should be used to encrypt all SSH keys.  (The passphrases are
+enumerated in the ``[encryption]`` section.)  See
+:ref:`server-encryption` for more details on Bcfg2 encryption in
+general.
+
 Blog post
 =========
 
