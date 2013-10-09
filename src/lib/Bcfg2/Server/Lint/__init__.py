@@ -314,7 +314,7 @@ class CLI(object):
             action=Bcfg2.Options.ConfigFileAction,
             help='Specify bcfg2-lint configuration file'),
         Bcfg2.Options.Option(
-            "--lint-plugins", cf=('lint', 'plugins'),
+            "--lint-plugins", cf=('lint', 'plugins'), default=[],
             type=Bcfg2.Options.Types.comma_list, action=LintPluginAction,
             help='bcfg2-lint plugin list'),
         Bcfg2.Options.BooleanOption(
