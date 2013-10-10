@@ -29,15 +29,17 @@ class ReportingError(Exception):
 class ReportingStoreThread(threading.Thread):
     """Thread for calling the storage backend"""
     def __init__(self, interaction, storage, group=None, target=None,
-                 name=None, *args, **kwargs):
+                 name=None, args=(), kwargs=None):
         """Initialize the thread with a reference to the interaction
         as well as the storage engine to use"""
-        threading.Thread.__init__(self, group, target, name, args, kwargs)
+        threading.Thread.__init__(self, group, target, name, args,
+                                  kwargs or dict())
         self.interaction = interaction
         self.storage = storage
         self.logger = logging.getLogger('bcfg2-report-collector')
 
     def run(self):
+        """Call the database storage procedure (aka import)"""
         try:
             start = time.time()
             self.storage.import_interaction(self.interaction)
@@ -129,11 +131,11 @@ class ReportingCollector(object):
                 if not interaction:
                     continue
 
-                t = ReportingStoreThread(interaction, self.storage)
+                store_thread = ReportingStoreThread(interaction, self.storage)
                 while len(threading.enumerate()) > 100:
                     self.logger.info("more than 100 threads running, sleeping")
                     time.sleep(1)
-                t.start()
+                store_thread.start()
             except (SystemExit, KeyboardInterrupt):
                 self.logger.info("Shutting down")
                 self.shutdown()
