@@ -132,9 +132,6 @@ class ReportingCollector(object):
                     continue
 
                 store_thread = ReportingStoreThread(interaction, self.storage)
-                while len(threading.enumerate()) > 100:
-                    self.logger.info("more than 100 threads running, sleeping")
-                    time.sleep(1)
                 store_thread.start()
             except (SystemExit, KeyboardInterrupt):
                 self.logger.info("Shutting down")
