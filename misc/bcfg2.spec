@@ -38,9 +38,8 @@ Group:            Applications/System
 License:          BSD
 URL:              http://bcfg2.org
 Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-%{version}%{?_pre_rc}.tar.gz
-Source1:          ftp://ftp.mcs.anl.gov/pub/bcfg/bcfg2-%{version}%{?_pre_rc}.tar.gz.gpg
 # Used in %%check
-Source2:          http://www.w3.org/2001/XMLSchema.xsd
+Source1:          http://www.w3.org/2001/XMLSchema.xsd
 %if %{?rhel}%{!?rhel:10} <= 5 || 0%{?suse_version}
 # EL5 and OpenSUSE require the BuildRoot tag
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
@@ -518,10 +517,10 @@ rm -rf %{buildroot}
 # EL5 lacks python-mock, so test suite is disabled
 %check
 # Downloads not allowed in koji; fix .xsd urls to point to local files
-sed -i "s@schema_url = .*\$@schema_url = 'file://`pwd`/`basename %{SOURCE2}`'@" \
+sed -i "s@schema_url = .*\$@schema_url = 'file://`pwd`/`basename %{SOURCE1}`'@" \
     testsuite/Testschema/test_schema.py
 sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
-    %{SOURCE2} > `basename %{SOURCE2}`
+    %{SOURCE1} > `basename %{SOURCE1}`
 %{__python} setup.py test
 %endif
 
