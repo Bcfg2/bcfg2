@@ -65,11 +65,7 @@ class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
     create = 'AWSTags'
 
     def __init__(self, filename, core=None):
-        try:
-            fam = core.fam
-        except AttributeError:
-            fam = None
-        Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, filename, fam=fam,
+        Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, filename,
                                                    should_monitor=True)
         self.core = core
         self.tags = []
