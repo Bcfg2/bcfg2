@@ -70,7 +70,6 @@ BuildRequires:    buildsys-macros
 BuildRequires:    python-ssl
 %else # rhel > 5
 # EL5 lacks python-mock, so test suite is disabled
-BuildRequires:    python-sqlalchemy
 BuildRequires:    python-nose
 BuildRequires:    mock
 BuildRequires:    m2crypto
