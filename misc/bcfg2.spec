@@ -114,12 +114,10 @@ BuildRequires:    systemd-units
 %endif
 
 Requires:         python-lxml
-Requires:         python-nose
 Requires:         m2crypto
 %if 0%{?rhel} && 0%{?rhel} < 6
 Requires:         python-ssl
 %endif
-Requires:         PyYAML
 Requires:         pylibacl
 Requires:         libselinux-python
 
@@ -190,6 +188,7 @@ Requires:         python-genshi
 Requires:         python-cheetah
 Requires:         graphviz
 Requires:         python-nose
+Requires:         PyYAML
 
 %if %{_vendor} == redhat
 %if 0%{?fedora} >= 16
@@ -280,6 +279,8 @@ This package includes the Bcfg2 CherryPy server backend.
 %package web
 Summary:          Bcfg2 Web Reporting Interface
 
+Requires:         bcfg2-server = %{version}-%{release}
+Requires:         httpd
 %if 0%{?suse_version}
 Group:            System/Management
 Requires:         python-django >= 1.2
@@ -289,7 +290,6 @@ Group:            System Tools
 Requires:         Django >= 1.2
 Requires:         Django-south >= 0.7
 %endif
-Requires:         httpd
 %if "%{_vendor}" == "redhat"
 Requires:         mod_wsgi
 %global apache_conf %{_sysconfdir}/httpd
@@ -531,13 +531,15 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %else
   if [ $1 -eq 1 ] ; then
       # Initial installation
-  %if 0%{?fedora} >= 16
-      /bin/systemctl daemon-reload >/dev/null 2>&1 || :
-  %else %if 0%{?suse_version}
+  %if 0%{?suse_version}
       %fillup_and_insserv -f bcfg2
   %else
+    %if 0%{?fedora} >= 16
+      /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+    %else
       /sbin/chkconfig --add bcfg2
-  %endif %endif
+    %endif
+  %endif
   fi
 %endif
 
@@ -547,13 +549,15 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %else
   if [ $1 -eq 1 ] ; then
       # Initial installation
-  %if 0%{?fedora} >= 16
-      /bin/systemctl daemon-reload >/dev/null 2>&1 || :
-  %else %if 0%{?suse_version}
+  %if 0%{?suse_version}
       %fillup_and_insserv -f bcfg2-server
   %else
+    %if 0%{?fedora} >= 16
+      /bin/systemctl daemon-reload >/dev/null 2>&1 || :
+    %else
       /sbin/chkconfig --add bcfg2-server
-  %endif %endif
+    %endif
+  %endif
   fi
 %endif
 
@@ -563,15 +567,17 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %else
   if [ $1 -eq 0 ]; then
       # Package removal, not upgrade
-  %if 0%{?fedora} >= 16
-      /bin/systemctl --no-reload disable bcfg2.service > /dev/null 2>&1 || :
-      /bin/systemctl stop bcfg2.service > /dev/null 2>&1 || :
-  %else %if 0%{?suse_version}
+  %if 0%{?suse_version}
       %stop_on_removal bcfg2
   %else
+    %if 0%{?fedora} >= 16
+      /bin/systemctl --no-reload disable bcfg2.service > /dev/null 2>&1 || :
+      /bin/systemctl stop bcfg2.service > /dev/null 2>&1 || :
+    %else
       /sbin/service bcfg2 stop &>/dev/null || :
       /sbin/chkconfig --del bcfg2
-  %endif %endif
+    %endif
+  %endif
   fi
 %endif
 
@@ -581,16 +587,18 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %else
   if [ $1 -eq 0 ]; then
       # Package removal, not upgrade
-  %if 0%{?fedora} >= 16
-      /bin/systemctl --no-reload disable bcfg2-server.service > /dev/null 2>&1 || :
-      /bin/systemctl stop bcfg2-server.service > /dev/null 2>&1 || :
-  %else %if 0%{?suse_version}
+  %if 0%{?suse_version}
       %stop_on_removal bcfg2-server
       %stop_on_removal bcfg2-report-collector
   %else
+    %if 0%{?fedora} >= 16
+      /bin/systemctl --no-reload disable bcfg2-server.service > /dev/null 2>&1 || :
+      /bin/systemctl stop bcfg2-server.service > /dev/null 2>&1 || :
+    %else
       /sbin/service bcfg2-server stop &>/dev/null || :
       /sbin/chkconfig --del bcfg2-server
-  %endif %endif
+    %endif
+  %endif
   fi
 %endif
 
@@ -603,13 +611,15 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
   %endif
   if [ $1 -ge 1 ] ; then
       # Package upgrade, not uninstall
-  %if 0%{?fedora} >= 16
-      /bin/systemctl try-restart bcfg2.service >/dev/null 2>&1 || :
-  %else %if 0%{?suse_version}
+  %if 0%{?suse_version}
       %insserv_cleanup
   %else
+    %if 0%{?fedora} >= 16
+      /bin/systemctl try-restart bcfg2.service >/dev/null 2>&1 || :
+    %else
       /sbin/service bcfg2 condrestart &>/dev/null || :
-  %endif %endif
+    %endif
+  %endif
   fi
 %endif
 
@@ -711,6 +721,8 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %{python_sitelib}/Bcfg2/Statistics.py*
 %{python_sitelib}/Bcfg2/settings.py*
 %{python_sitelib}/Bcfg2/Server
+%{python_sitelib}/Bcfg2/Reporting
+%{python_sitelib}/Bcfg2/manage.py*
 %exclude %{python_sitelib}/Bcfg2/Server/CherryPyCore.py
 
 %dir %{_datadir}/bcfg2
@@ -739,8 +751,6 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %endif
 %{_datadir}/bcfg2/reports.wsgi
 %{_datadir}/bcfg2/site_media
-%{python_sitelib}/Bcfg2/Reporting
-%{python_sitelib}/Bcfg2/manage.py*
 %config(noreplace) %{apache_conf}/conf.d/wsgi_bcfg2.conf
 
 %files doc
