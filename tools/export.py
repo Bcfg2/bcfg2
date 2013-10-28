@@ -177,8 +177,7 @@ E.G. 1.2.0pre1 is a valid version.
 
     # write out the new RPM changelog
     specs = ["misc/bcfg2.spec",
-             "misc/bcfg2-selinux.spec",
-             "redhat/bcfg2.spec.in"]
+             "misc/bcfg2-selinux.spec"]
     if options.dryrun:
         print("*** Add the following to the top of the %%changelog section in %s:\n%s\n"
               % (rpmchangelog, " and ".join(specs)))
@@ -200,20 +199,6 @@ E.G. 1.2.0pre1 is a valid version.
                 print("Could not write %s: %s" % (fname, err))
                 print(help_message)
                 quit()
-
-    # Update redhat directory versions
-    if options.dryrun:
-        print("*** Replace redhat/VERSIONS content with '%s'."
-              % version_release)
-        print("*** Replace redhat/RELEASE content with '%s'."
-              % version_info['build'])
-    else:
-        with open('redhat/VERSION', 'w') as f:
-            f.write("%s\n" % version_release)
-        f.close()
-        with open('redhat/RELEASE', 'w') as f:
-            f.write("0.0%s\n" % version_info['build'])
-        f.close()
 
     # update solaris version
     find_and_replace('solaris/Makefile', 'VERS=',
