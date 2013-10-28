@@ -49,9 +49,6 @@ encap-util-xml.sh
 export.py
     - Export a tagged version of the Bcfg2 source
 
-export.sh
-    - Export a tagged version of the Bcfg2 source
-
 generate-manpages.bash
     - Generate man pages from the Sphinx source
 
