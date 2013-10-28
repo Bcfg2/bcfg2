@@ -595,7 +595,8 @@ class Core(object):
                 return ret
             except:
                 self.logger.error("Failed binding entry %s:%s with altsrc %s" %
-                                  (entry.tag, oldname, entry.get('name')))
+                                  (entry.tag, entry.get('realname'),
+                                   entry.get('name')))
                 entry.set('name', oldname)
                 self.logger.error("Falling back to %s:%s" %
                                   (entry.tag, entry.get('name')))

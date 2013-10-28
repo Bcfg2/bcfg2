@@ -336,6 +336,7 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
 
     @patch('Bcfg2.Utils.locked', Mock(return_value=False))
     @patch('fcntl.lockf', Mock())
+    @patch("Bcfg2.Server.Plugins.Metadata.XMLMetadataConfig.load_xml")
     @patch('os.open')
     @patch('os.fdopen')
     @patch('os.unlink')
@@ -343,7 +344,7 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
     @patch('os.path.islink')
     @patch('os.readlink')
     def test_write_xml(self, mock_readlink, mock_islink, mock_rename,
-                       mock_unlink, mock_fdopen, mock_open):
+                       mock_unlink, mock_fdopen, mock_open, mock_load_xml):
         fname = "clients.xml"
         config = self.get_obj(fname)
         fpath = os.path.join(self.metadata.data, fname)
@@ -357,6 +358,7 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
             mock_unlink.reset_mock()
             mock_fdopen.reset_mock()
             mock_open.reset_mock()
+            mock_load_xml.reset_mock()
 
         mock_islink.return_value = False
 
@@ -368,6 +370,7 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
         self.assertTrue(mock_fdopen.return_value.write.called)
         mock_islink.assert_called_with(fpath)
         mock_rename.assert_called_with(tmpfile, fpath)
+        mock_load_xml.assert_called_with()
 
         # test: clients.xml.new is locked the first time we write it
         def rv(fname, mode):
@@ -386,6 +389,7 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
         self.assertTrue(mock_fdopen.return_value.write.called)
         mock_islink.assert_called_with(fpath)
         mock_rename.assert_called_with(tmpfile, fpath)
+        mock_load_xml.assert_called_with()
 
         # test writing a symlinked clients.xml
         reset()
@@ -394,6 +398,7 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
         mock_readlink.return_value = linkdest
         config.write_xml(fpath, get_clients_test_tree())
         mock_rename.assert_called_with(tmpfile, linkdest)
+        mock_load_xml.assert_called_with()
 
         # test failure of os.rename()
         reset()

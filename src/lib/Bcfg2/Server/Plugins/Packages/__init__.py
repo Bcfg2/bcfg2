@@ -605,7 +605,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             """ getter for the 'sources' key of the OnDemandDict
             returned by this function.  This delays calling
             get_collection() until it's absolutely necessary. """
-            return self.get_collection(metadata).get_additional_data
+            return self.get_collection(metadata).get_additional_data()
 
         return OnDemandDict(
             sources=get_sources,

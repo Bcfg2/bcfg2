@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      :ref:`AWSTags &lt;server-plugins-connectors-awstags&gt;` config
+      schema for bcfg2
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:import namespace="http://www.w3.org/XML/1998/namespace"
+              schemaLocation="xml.xsd"/>
+
+  <xsd:complexType name="TagType">
+    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:element name="Group" type="xsd:string" minOccurs="1"
+                   maxOccurs="unbounded">
+        <xsd:annotation>
+          <xsd:documentation>
+            The group to assign to machines with tags that match the
+            enclosing Tag expression.  More than one group can be
+            specified.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:choice>
+    <xsd:attribute name="name" type="xsd:string" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          The name pattern to match against. This is a regular
+          expression. It is not anchored.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="value" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>
+          The value pattern to match against. This is a regular
+          expression. It is not anchored.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:complexType name="AWSTagsType">
+    <xsd:annotation>
+      <xsd:documentation>
+        Top-level tag for ``AWSTags/config.xml``.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:element name="Tag" type="TagType">
+        <xsd:annotation>
+          <xsd:documentation>
+            Representation of a pattern that matches AWS tags. Tags can be
+            matched in one of two ways:
+
+            * If only :xml:attribute:`TagType:name` is specified, then
+              AWSTags will only look for a tag with a matching name, and
+              the value of tags is ignored.
+            * If both :xml:attribute:`TagType:name` and
+              :xml:attribute:`TagType:value` are specified, a tag must
+              have a matching name *and* a matching value.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="AWSTags" type="AWSTagsType"/>
+    </xsd:choice>
+    <xsd:attribute ref="xml:base"/>
+  </xsd:complexType>
+
+  <xsd:element name="AWSTags" type="AWSTagsType"/>
+</xsd:schema>

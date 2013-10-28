@@ -183,6 +183,8 @@ XML tag should be ``<Properties>``.
 JSON Property Files
 -------------------
 
+.. versionadded:: 1.3.0
+
 The data in a JSON property file can be accessed with the ``json``
 attribute, which is the loaded JSON data.  The JSON properties
 interface does not provide any additional functionality beyond the
@@ -190,6 +192,8 @@ interface does not provide any additional functionality beyond the
 
 YAML Property Files
 -------------------
+
+.. versionadded:: 1.3.0
 
 The data in a YAML property file can be accessed with the ``yaml``
 attribute, which is the loaded YAML data.  Only a single YAML document

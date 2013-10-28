@@ -20,9 +20,36 @@ from Bcfg2.Reporting.Transport.DirectStore import DirectStore
 from Bcfg2.Reporting.Storage.base import StorageError
 
 
+
 class ReportingError(Exception):
     """Generic reporting exception"""
     pass
+
+
+class ReportingStoreThread(threading.Thread):
+    """Thread for calling the storage backend"""
+    def __init__(self, interaction, storage, group=None, target=None,
+                 name=None, args=(), kwargs=None):
+        """Initialize the thread with a reference to the interaction
+        as well as the storage engine to use"""
+        threading.Thread.__init__(self, group, target, name, args,
+                                  kwargs or dict())
+        self.interaction = interaction
+        self.storage = storage
+        self.logger = logging.getLogger('bcfg2-report-collector')
+
+    def run(self):
+        """Call the database storage procedure (aka import)"""
+        try:
+            start = time.time()
+            self.storage.import_interaction(self.interaction)
+            self.logger.info("Imported interaction for %s in %ss" %
+                             (self.interaction.get('hostname', '<unknown>'),
+                              time.time() - start))
+        except:
+            #TODO requeue?
+            self.logger.error("Unhandled exception in import thread %s" %
+                              traceback.format_exc().splitlines()[-1])
 
 
 class ReportingCollector(object):
@@ -99,15 +126,8 @@ class ReportingCollector(object):
                 interaction = self.transport.fetch()
                 if not interaction:
                     continue
-                try:
-                    start = time.time()
-                    self.storage.import_interaction(interaction)
-                    self.logger.info("Imported interaction for %s in %ss" %
-                                     (interaction.get('hostname', '<unknown>'),
-                                      time.time() - start))
-                except:
-                    #TODO requeue?
-                    raise
+                store_thread = ReportingStoreThread(interaction, self.storage)
+                store_thread.start()
             except (SystemExit, KeyboardInterrupt):
                 self.logger.info("Shutting down")
                 self.shutdown()

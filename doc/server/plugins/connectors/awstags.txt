@@ -1,0 +1,124 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-connectors-awstags:
+
+=========
+ AWSTags
+=========
+
+The AWSTags plugin is a connector that retrieves tags from instances
+in EC2, and can assign optionally assign
+group membership pased on patterns in the tags.  See `Using Tags
+<http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html>`_
+for details on using tags in EC2.
+
+AWSTags queries EC2 for instances whose ``private-dns-name`` property
+matches the hostname of the client.
+
+Setup
+=====
+
+#. Add ``AWSTags`` to the ``plugins`` option in ``/etc/bcfg2.conf``
+#. Configure AWS credentials in ``/etc/bcfg2.conf`` (See
+   `Configuration`_ below for details.)
+#. Optionally, create ``AWSTags/config.xml`` (See `Assigning Groups`_
+   below for details.)
+#. Restart the Bcfg2 server.
+
+Using Tag Data
+==============
+
+AWSTags exposes the data in templates as a dict available as
+``metadata.AWSTags``.  E.g., in a :ref:`Genshi template
+<server-plugins-generators-cfg-genshi>`, you could do:
+
+.. code-block:: genshitext
+
+    Known tags on ${metadata.hostname}:
+    {% for key, val in metadata.AWSTags.items() %}\
+    ${key}  ${val}
+    {% end %}\
+
+This would produce something like::
+
+    Known tags on foo.example.com:
+    Name  foo.example.com
+    some random tag  the value
+
+Assigning Groups
+================
+
+AWSTags can assign groups based on the tag data.  This functionality
+is configured in ``AWSTags/config.xml``.
+
+Example
+-------
+
+.. code-block:: xml
+
+    <AWSTags>
+      <Tag name="^foo$">
+        <Group>foo</Group>
+      </Tag>
+      <Tag name="^bar$" value="^bar$">
+        <Group>bar</Group>
+      </Tag>
+      <Tag name="^bcfg2 group$" value="(.*)">
+        <Group>$1</Group>
+      </Tag>
+    </AWSTags>
+
+In this example, any machine with a tag named ``foo`` would be added
+to the ``foo`` group.  Any machine with a tag named ``bar`` whose
+value was also ``bar`` would be added to the ``bar`` group.  Finally,
+any machine with a tag named ``bcfg2 group`` would be added to the
+group named in the value of that tag.
+
+Note that both the ``name`` and ``value`` attributes are *always*
+regular expressions.
+
+If a ``<Tag/>`` element has only a ``name`` attribute, then it only
+checks for existence of a matching tag.  If it has both ``name`` and
+``value``, then it checks for a matching tag with a matching value.
+
+You can use backreferences (``$1``, ``$2``, etc.) in the group names.
+If only ``name`` is specified, then the backreferences will refer to
+groups in the ``name`` regex.  If ``name`` and ``value`` are both
+specified, then backreferences will refer to groups in the ``value``
+regex.  If you specify both ``name`` and ``value``, it is not possible
+to refer to groups in the ``name`` regex.
+
+Schema Reference
+----------------
+
+.. xml:schema:: awstags.xsd
+
+Configuration
+=============
+
+AWSTags recognizes several options in ``/etc/bcfg2.conf``; at a
+minimum, you must configure an AWS access key ID and secret key.  All
+of the following options are in the ``[awstags]`` section:
+
++-----------------------+-----------------------------------------------------+
+| Option                | Description                                         |
++=======================+=====================================================+
+| ``access_key_id``     | The AWS access key ID                               |
++-----------------------+-----------------------------------------------------+
+| ``secret_access_key`` | The AWS secret access key                           |
++-----------------------+-----------------------------------------------------+
+| ``cache``             | Whether or not to cache tag lookups. See `Caching`_ |
+|                       | for details. Default is to cache.                   |
++-----------------------+-----------------------------------------------------+
+
+Caching
+=======
+
+Since the AWS API isn't always very quick to respond, AWSTags caches
+its results by default.  The cache is fairly short-lived: the cache
+for each host is expired when it starts a client run, so it will start
+the run with fresh data.
+
+If you frequently update tags on your instances, you may wish to
+disable caching.  That's probably a bad idea, and would tend to
+suggest that updating tags frequently is perhaps the Wrong Thing.
