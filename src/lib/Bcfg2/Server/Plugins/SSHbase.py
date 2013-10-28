@@ -6,6 +6,7 @@ import sys
 import socket
 import shutil
 import tempfile
+import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
 from itertools import chain
@@ -409,12 +410,9 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     self.entries[entry.get('name')].bind_entry(entry, metadata)
                     is_bound = True
                 except Bcfg2.Server.Plugin.PluginExecutionError:
-                    import lxml.etree
-
-                    print("failed to bind %s: %s") % (
+                    print("Failed to bind %s: %s") % (
                         lxml.etree.tostring(entry),
                         sys.exc_info()[1])
-                    pass
 
     def GenerateHostKeyPair(self, client, filename):
         """Generate new host key pair for client."""

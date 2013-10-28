@@ -106,7 +106,6 @@ class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
 
 
 class AWSTags(Bcfg2.Server.Plugin.Plugin,
-              Bcfg2.Server.Plugin.Caching,
               Bcfg2.Server.Plugin.ClientRunHooks,
               Bcfg2.Server.Plugin.Connector):
     """ Query tags from AWS via boto, optionally setting group membership """
@@ -114,7 +113,6 @@ class AWSTags(Bcfg2.Server.Plugin.Plugin,
 
     def __init__(self, core, datastore):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        Bcfg2.Server.Plugin.Caching.__init__(self)
         Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         try:
@@ -177,6 +175,8 @@ class AWSTags(Bcfg2.Server.Plugin.Plugin,
         return self._tagcache[metadata.hostname]
 
     def expire_cache(self, key=None):
+        """ Expire the cache for one host, or for all hosts.  This is
+        exposed as an XML-RPC RMI. """
         self._tagcache.expire(key=key)
 
     def start_client_run(self, metadata):

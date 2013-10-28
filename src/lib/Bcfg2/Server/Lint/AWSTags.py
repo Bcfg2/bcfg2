@@ -1,3 +1,6 @@
+""" ``bcfg2-lint`` plugin to check all given :ref:`AWSTags
+<server-plugins-connectors-awstags>` patterns for validity."""
+
 import re
 import sys
 import Bcfg2.Server.Lint
