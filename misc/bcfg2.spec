@@ -692,8 +692,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %{python_sitelib}/Bcfg2/Client
 %{python_sitelib}/Bcfg2/Compat.py*
 %{python_sitelib}/Bcfg2/Logger.py*
-%{python_sitelib}/Bcfg2/Options.py*
-%{python_sitelib}/Bcfg2/Proxy.py*
+%{python_sitelib}/Bcfg2/Options
 %{python_sitelib}/Bcfg2/Utils.py*
 %{python_sitelib}/Bcfg2/version.py*
 %if 0%{?suse_version}
@@ -715,20 +714,15 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %config(noreplace) %{_sysconfdir}/sysconfig/bcfg2-server
 %{_sbindir}/bcfg2-*
 %dir %{_localstatedir}/lib/%{name}
-%{python_sitelib}/Bcfg2/Cache.py*
-%{python_sitelib}/Bcfg2/Encryption.py*
-%{python_sitelib}/Bcfg2/SSLServer.py*
-%{python_sitelib}/Bcfg2/Statistics.py*
 %{python_sitelib}/Bcfg2/settings.py*
 %{python_sitelib}/Bcfg2/Server
 %{python_sitelib}/Bcfg2/Reporting
 %{python_sitelib}/Bcfg2/manage.py*
-%exclude %{python_sitelib}/Bcfg2/Server/CherryPyCore.py
+%exclude %{python_sitelib}/Bcfg2/Server/CherrypyCore.py
 
 %dir %{_datadir}/bcfg2
 %{_datadir}/bcfg2/schemas
 %{_datadir}/bcfg2/xsl-transforms
-%{_datadir}/bcfg2/Hostbase
 %if 0%{?suse_version}
 %{_sbindir}/rcbcfg2-server
 %config(noreplace) /var/adm/fillup-templates/sysconfig.bcfg2-server
@@ -743,7 +737,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %if 0%{?rhel} == 5 || 0%{?suse_version}
 %defattr(-,root,root,-)
 %endif
-%{python_sitelib}/Bcfg2/Server/CherryPyCore.py
+%{python_sitelib}/Bcfg2/Server/CherrypyCore.py
 
 %files web
 %if 0%{?rhel} == 5 || 0%{?suse_version}
