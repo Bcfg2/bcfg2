@@ -93,10 +93,10 @@ class DefaultACL(Plugin, ClientACLs):
                  rmi != 'get_statistics') or
                 address[0] == "127.0.0.1")
 
-
 # in core we frequently want to catch all exceptions, regardless of
 # type, so disable the pylint rule that catches that.
 # pylint: disable=W0702
+
 
 class Core(object):
     """ The server core is the container for all Bcfg2 server logic
@@ -130,8 +130,8 @@ class Core(object):
         .. automethod:: _file_monitor_thread
         .. automethod:: _perflog_thread
         """
-        global _CORE
-        _CORE = self
+        # Record the core as a module variable
+        Bcfg2.Server.core = self
 
         #: A :class:`logging.Logger` object for use by the core
         self.logger = logging.getLogger('bcfg2-server')
