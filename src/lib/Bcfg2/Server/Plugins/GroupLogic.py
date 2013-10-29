@@ -35,8 +35,8 @@ class GroupLogic(Bcfg2.Server.Plugin.Plugin,
     # use groups set by them
     sort_order = 1000
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         self.config = GroupLogicConfig(os.path.join(self.data, "groups.xml"),
                                        should_monitor=True)

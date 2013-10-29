@@ -83,8 +83,8 @@ class DefaultACL(Plugin, ClientACLs):
     is only loaded if no other ClientACLs plugin is enabled. """
     create = False
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.ClientACLs.__init__(self)
 
     def check_acl_ip(self, address, rmi):
@@ -130,8 +130,8 @@ class Core(object):
         .. automethod:: _file_monitor_thread
         .. automethod:: _perflog_thread
         """
-        #: The Bcfg2 repository directory
-        self.datastore = Bcfg2.Options.setup.repository
+        global _CORE
+        _CORE = self
 
         #: A :class:`logging.Logger` object for use by the core
         self.logger = logging.getLogger('bcfg2-server')
@@ -382,7 +382,7 @@ class Core(object):
                   if conflict in self.plugins]
         self.plugin_blacklist[plugin.name] = cplugs
         try:
-            self.plugins[plugin.name] = plugin(self, self.datastore)
+            self.plugins[plugin.name] = plugin(self)
         except PluginInitError:
             self.logger.error("Failed to instantiate plugin %s" % plugin,
                               exc_info=1)

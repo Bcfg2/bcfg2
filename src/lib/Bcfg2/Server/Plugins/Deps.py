@@ -13,8 +13,8 @@ class Deps(Bcfg2.Server.Plugin.PrioDir,
     # packages that will be installed on the client.
     sort_order = 750
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.PrioDir.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.PrioDir.__init__(self, core)
         Bcfg2.Server.Plugin.StructureValidator.__init__(self)
         self.cache = {}
 

@@ -41,8 +41,8 @@ class Reporting(Statistics, Threaded, PullSource):
     CLIENT_METADATA_FIELDS = ('profile', 'bundles', 'aliases', 'addresses',
                               'groups', 'categories', 'uuid', 'version')
 
-    def __init__(self, core, datastore):
-        Statistics.__init__(self, core, datastore)
+    def __init__(self, core):
+        Statistics.__init__(self, core)
         PullSource.__init__(self)
         Threaded.__init__(self)
 

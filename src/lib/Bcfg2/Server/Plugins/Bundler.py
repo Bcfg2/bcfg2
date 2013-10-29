@@ -46,8 +46,8 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
     __child__ = BundleFile
     patterns = re.compile(r'^.*\.(?:xml|genshi)$')
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Structure.__init__(self)
         Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data)
         #: Bundles by bundle name, rather than filename

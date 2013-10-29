@@ -24,8 +24,8 @@ class Decisions(Bcfg2.Server.Plugin.Plugin,
     """ Decisions plugin """
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Decision.__init__(self)
         self.whitelist = DecisionFile(os.path.join(self.data, "whitelist.xml"))
         self.blacklist = DecisionFile(os.path.join(self.data, "blacklist.xml"))

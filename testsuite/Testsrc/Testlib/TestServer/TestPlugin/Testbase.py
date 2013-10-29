@@ -29,7 +29,7 @@ class TestPlugin(TestDebuggable):
 
         @patchIf(not isinstance(os.makedirs, Mock), "os.makedirs", Mock())
         def inner():
-            return self.test_obj(core, datastore)
+            return self.test_obj(core)
         return inner()
 
     @patch("os.makedirs")

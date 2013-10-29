@@ -136,8 +136,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     #: and :func:`Reload`
     __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Refresh', 'Reload']
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.StructureValidator.__init__(self)
         Bcfg2.Server.Plugin.Generator.__init__(self)
         Bcfg2.Server.Plugin.Connector.__init__(self)

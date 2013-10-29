@@ -895,9 +895,9 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
             type=Bcfg2.Options.Types.comma_list, action=CfgHandlerAction,
             default=_handlers)]
 
-    def __init__(self, core, datastore):
+    def __init__(self, core):
         global _CFG  # pylint: disable=W0603
-        Bcfg2.Server.Plugin.GroupSpool.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.GroupSpool.__init__(self, core)
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
         Bcfg2.Options.setup.cfg_handlers.sort(
             key=operator.attrgetter("__priority__"))

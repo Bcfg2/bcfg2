@@ -118,8 +118,8 @@ class ACL(Bcfg2.Server.Plugin.Plugin,
           Bcfg2.Server.Plugin.ClientACLs):
     """ allow connections to bcfg-server based on IP address """
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.ClientACLs.__init__(self)
         self.ip_acls = IPACLFile(os.path.join(self.data, 'ip.xml'),
                                  should_monitor=True)

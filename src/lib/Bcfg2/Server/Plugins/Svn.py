@@ -38,8 +38,8 @@ class Svn(Bcfg2.Server.Plugin.Version):
     else:
         __vcs_metadata_path__ = ".svn"
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Version.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Version.__init__(self, core)
 
         self.revision = None
         self.svn_root = None

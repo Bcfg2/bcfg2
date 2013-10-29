@@ -11,8 +11,8 @@ class Darcs(Bcfg2.Server.Plugin.Version):
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __vcs_metadata_path__ = "_darcs"
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Version.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Version.__init__(self, core)
         self.cmd = Executor()
         self.logger.debug("Initialized Darcs plugin with darcs directory %s" %
                           self.vcs_path)

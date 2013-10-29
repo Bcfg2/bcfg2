@@ -1,6 +1,7 @@
 """This module provides the base class for Bcfg2 server plugins."""
 
 import os
+import Bcfg2.Options
 from Bcfg2.Logger import Debuggable
 from Bcfg2.Utils import ClassName
 
@@ -53,13 +54,10 @@ class Plugin(Debuggable):
     #: but not ``__rmi__`` will be ignored.
     __child_rmi__ = Debuggable.__child_rmi__
 
-    def __init__(self, core, datastore):
+    def __init__(self, core):
         """
         :param core: The Bcfg2.Server.Core initializing the plugin
         :type core: Bcfg2.Server.Core
-        :param datastore: The path to the Bcfg2 repository on the
-                          filesystem
-        :type datastore: string
         :raises: :exc:`OSError` if adding a file monitor failed;
                  :class:`Bcfg2.Server.Plugin.exceptions.PluginInitError`
                  on other errors
@@ -69,7 +67,7 @@ class Plugin(Debuggable):
         Debuggable.__init__(self, name=self.name)
         self.Entries = {}
         self.core = core
-        self.data = os.path.join(datastore, self.name)
+        self.data = os.path.join(Bcfg2.Options.setup.repository, self.name)
         if self.create and not os.path.exists(self.data):
             self.logger.warning("%s: %s does not exist, creating" %
                                 (self.name, self.data))

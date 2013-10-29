@@ -944,8 +944,8 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
     #: :class:`Bcfg2.Server.Plugin.helpers.PriorityStructFile`
     __child__ = PriorityStructFile
 
-    def __init__(self, core, datastore):
-        Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Plugin.__init__(self, core)
         Generator.__init__(self)
         XMLDirectoryBacked.__init__(self, self.data)
     __init__.__doc__ = Plugin.__init__.__doc__
@@ -1483,8 +1483,8 @@ class GroupSpool(Plugin, Generator):
     #: object.
     entry_type = 'Path'
 
-    def __init__(self, core, datastore):
-        Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Plugin.__init__(self, core)
         Generator.__init__(self)
 
         self.fam = Bcfg2.Server.FileMonitor.get_fam()

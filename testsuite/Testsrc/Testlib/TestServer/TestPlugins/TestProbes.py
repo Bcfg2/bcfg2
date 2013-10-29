@@ -19,7 +19,7 @@ while path != "/":
     path = os.path.dirname(path)
 from common import *
 from Bcfg2.Server.Plugins.Probes import load_django_models
-from TestPlugin import TestEntrySet, TestProbing, TestConnector, \
+from TestPlugin import TestEntrySet, TestPlugin, \
     TestDatabaseBacked
 
 load_django_models()
@@ -200,7 +200,7 @@ group-specific"""
                 assert False, "Strange probe found in get_probe_data() return"
 
 
-class TestProbes(Bcfg2TestCase):
+class TestProbes(TestPlugin):
     test_obj = Probes
 
     test_xdata = lxml.etree.Element("test")
@@ -236,21 +236,23 @@ group:      group:with:colons
         if self.datastore is not None:
             shutil.rmtree(self.datastore)
             self.datastore = None
+            Bcfg2.Options.setup.repository = datastore
 
-    def get_obj(self, core=None):
-        if core is None:
-            core = Mock()
-        if Bcfg2.Options.setup.probes_db:
-            @patch("os.makedirs", Mock())
-            def inner():
-                return self.test_obj(core, datastore)
-            return inner()
-        else:
+    def get_obj(self):
+        if not Bcfg2.Options.setup.probes_db:
             # actually use a real datastore so we can read and write
             # probed.xml
             if self.datastore is None:
                 self.datastore = tempfile.mkdtemp()
-            return self.test_obj(core, self.datastore)
+                Bcfg2.Options.setup.repository = self.datastore
+                datadir = os.path.join(self.datastore, self.test_obj.name)
+                if not os.path.exists(datadir):
+                    os.makedirs(datadir)
+        return TestPlugin.get_obj(self)
+
+    def test__init(self):
+        if Bcfg2.Options.setup.probes_db:
+            TestPlugin.test__init(self)
 
     def test_GetProbes(self):
         p = self.get_obj()

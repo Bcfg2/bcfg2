@@ -343,14 +343,14 @@ class ThreadedStatistics(Statistics, Threaded, threading.Thread):
     """ ThreadedStatistics plugins process client statistics in a
     separate thread. """
 
-    def __init__(self, core, datastore):
-        Statistics.__init__(self, core, datastore)
+    def __init__(self, core):
+        Statistics.__init__(self, core)
         Threaded.__init__(self)
         threading.Thread.__init__(self)
         # Event from the core signaling an exit
         self.terminate = core.terminate
         self.work_queue = Queue(100000)
-        self.pending_file = os.path.join(datastore, "etc",
+        self.pending_file = os.path.join(Bcfg2.Options.setup.repository, "etc",
                                          "%s.pending" % self.name)
         self.daemon = False
 
@@ -565,8 +565,8 @@ class Version(Plugin):
 
     __rmi__ = Plugin.__rmi__ + ['get_revision']
 
-    def __init__(self, core, datastore):
-        Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Plugin.__init__(self, core)
 
         if self.__vcs_metadata_path__:
             self.vcs_path = os.path.join(Bcfg2.Options.setup.vcs_root,

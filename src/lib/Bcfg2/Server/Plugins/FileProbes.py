@@ -64,8 +64,8 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
     the client """
     __author__ = 'chris.a.st.pierre@gmail.com'
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Probing.__init__(self)
         self.config = \
             Bcfg2.Server.Plugin.StructFile(os.path.join(self.data,

@@ -242,8 +242,8 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
     #: Ignore XML schema (``.xsd``) files
     ignore = re.compile(r'.*\.xsd$')
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data)
 

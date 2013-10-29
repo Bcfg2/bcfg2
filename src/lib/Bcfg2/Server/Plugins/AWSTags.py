@@ -107,8 +107,8 @@ class AWSTags(Bcfg2.Server.Plugin.Plugin,
     """ Query tags from AWS via boto, optionally setting group membership """
     __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['expire_cache']
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         try:

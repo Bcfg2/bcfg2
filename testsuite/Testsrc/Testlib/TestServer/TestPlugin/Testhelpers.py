@@ -1180,7 +1180,7 @@ class TestPrioDir(TestPlugin, TestGenerator, TestXMLDirectoryBacked):
                Mock())
         @patchIf(not isinstance(os.makedirs, Mock), "os.makedirs", Mock())
         def inner():
-            return self.test_obj(core, datastore)
+            return self.test_obj(core)
 
         return inner()
 
@@ -1416,7 +1416,7 @@ class TestEntrySet(TestDebuggable):
         set_setup_default("default_paranoid", False)
         set_setup_default("default_sensitive", False)
 
-    def get_obj(self, basename="test", path=datastore, entry_type=MagicMock()):
+    def get_obj(self, basename="test", entry_type=MagicMock()):
         return self.test_obj(basename, path, entry_type)
 
     def test__init(self):
@@ -1791,7 +1791,7 @@ class TestGroupSpool(TestPlugin, TestGenerator):
         @patch("%s.%s.AddDirectoryMonitor" % (self.test_obj.__module__,
                                               self.test_obj.__name__))
         def inner(mock_Add):
-            gs = self.test_obj(MagicMock(), datastore)
+            gs = self.test_obj(MagicMock())
             mock_Add.assert_called_with('')
             self.assertItemsEqual(gs.Entries, {gs.entry_type: {}})
 

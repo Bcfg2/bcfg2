@@ -121,8 +121,7 @@ class DBProbeStore(ProbeStore, Bcfg2.Server.Plugin.DatabaseBacked):
     create = False
 
     def __init__(self, core, datadir):
-        Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core,
-                                                    os.path.dirname(datadir))
+        Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core)
         ProbeStore.__init__(self, core, datadir)
 
     @property
@@ -259,7 +258,7 @@ class XMLProbeStore(ProbeStore):
                                     pretty_print='true')
         except IOError:
             err = sys.exc_info()[1]
-            self.logger.error("Failed to write probed.xml: %s" % err)
+            self.logger.error("Failed to write %s: %s" % (self._fname, err))
 
     def set_groups(self, hostname, groups):
         Bcfg2.Server.Cache.expire("Probes", "probegroups", hostname)
@@ -428,10 +427,10 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             help="Use database capabilities of the Probes plugin")]
     options_parsed_hook = staticmethod(load_django_models)
 
-    def __init__(self, core, datastore):
+    def __init__(self, core):
         Bcfg2.Server.Plugin.Probing.__init__(self)
         Bcfg2.Server.Plugin.Connector.__init__(self)
-        Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core)
 
         try:
             self.probes = ProbeSet(self.data, self.name)

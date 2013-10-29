@@ -11,8 +11,8 @@ class POSIXCompat(Bcfg2.Server.Plugin.Plugin,
 
     create = False
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.GoalValidator.__init__(self)
 
     def validate_goals(self, metadata, goals):

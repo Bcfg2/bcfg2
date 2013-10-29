@@ -30,8 +30,8 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
     (http://docs.puppetlabs.com/guides/external_nodes.html) """
     __child__ = PuppetENCFile
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
         Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data)

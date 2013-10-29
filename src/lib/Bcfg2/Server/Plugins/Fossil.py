@@ -11,8 +11,8 @@ class Fossil(Bcfg2.Server.Plugin.Version):
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __vcs_metadata_path__ = "_FOSSIL_"
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Version.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Version.__init__(self, core)
         self.cmd = Executor()
         self.logger.debug("Initialized Fossil plugin with fossil directory %s"
                           % self.vcs_path)

@@ -11,8 +11,8 @@ class Bzr(Bcfg2.Server.Plugin.Version):
     using bazaar. """
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Version.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Version.__init__(self, core)
         self.logger.debug("Initialized Bazaar plugin with directory %s at "
                           "revision = %s" % (Bcfg2.Options.setup.vcs_root,
                                              self.get_revision()))

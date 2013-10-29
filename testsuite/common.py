@@ -20,11 +20,6 @@ try:
 except ImportError:
     from unittest2 import skip, skipIf, skipUnless, TestCase
 
-#: The path to the Bcfg2 specification root for the tests.  Using the
-#: root directory exposes a lot of potential problems with building
-#: paths.
-datastore = "/"
-
 #: The XInclude namespace name
 XI_NAMESPACE = "http://www.w3.org/2001/XInclude"
 
@@ -68,6 +63,12 @@ try:
 except ImportError:
     has_django = False
 
+#: The path to the Bcfg2 specification root for the tests.  Using the
+#: root directory exposes a lot of potential problems with building
+#: paths.
+datastore = "/"
+
+set_setup_default("repository", datastore)
 
 try:
     from mock import call

@@ -15,8 +15,8 @@ class NagiosGen(Plugin, Generator):
     __author__ = 'bcfg-dev@mcs.anl.gov'
     line_fmt = '\t%-32s %s'
 
-    def __init__(self, core, datastore):
-        Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Plugin.__init__(self, core)
         Generator.__init__(self)
         self.config = \
             StructFile(os.path.join(self.data, 'config.xml'),

@@ -139,8 +139,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             cf=("sshbase", "passphrase"), dest="sshbase_passphrase",
             help="Passphrase used to encrypt generated private SSH host keys")]
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Generator.__init__(self)
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
         self.ipcache = {}

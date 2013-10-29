@@ -100,8 +100,9 @@ def get_metadata_object(core=None):
     @patchIf(not isinstance(os.makedirs, Mock), "os.makedirs", Mock())
     @patchIf(not isinstance(lxml.etree.Element, Mock),
              "lxml.etree.Element", Mock())
+
     def inner():
-        return Metadata(core, datastore)
+        return Metadata(core)
     return inner()
 
 

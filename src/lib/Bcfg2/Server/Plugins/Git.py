@@ -21,8 +21,8 @@ class Git(Version):
     if HAS_GITPYTHON:
         __rmi__ = Version.__rmi__ + ['Update']
 
-    def __init__(self, core, datastore):
-        Version.__init__(self, core, datastore)
+    def __init__(self, core):
+        Version.__init__(self, core)
         if HAS_GITPYTHON:
             self.repo = git.Repo(Bcfg2.Options.setup.vcs_root)
             self.cmd = None

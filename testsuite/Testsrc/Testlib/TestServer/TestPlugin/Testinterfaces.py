@@ -374,4 +374,3 @@ class TestClientACLs(Bcfg2TestCase):
         ca = self.get_obj()
         self.assertIn(ca.check_acl_metadata(Mock(), Mock()),
                       [True, False])
-

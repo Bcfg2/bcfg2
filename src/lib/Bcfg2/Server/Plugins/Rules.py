@@ -14,8 +14,8 @@ class Rules(Bcfg2.Server.Plugin.PrioDir):
             cf=("rules", "regex"), dest="rules_regex",
             help="Allow regular expressions in Rules")]
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.PrioDir.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.PrioDir.__init__(self, core)
         self._regex_cache = dict()
 
     def HandlesEntry(self, entry, metadata):

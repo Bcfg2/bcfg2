@@ -514,10 +514,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             help='Default client authentication method')]
     options_parsed_hook = staticmethod(load_django_models)
 
-    def __init__(self, core, datastore):
+    def __init__(self, core):
         Bcfg2.Server.Plugin.Metadata.__init__(self)
         Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
-        Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core, datastore)
+        Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core)
         self.states = dict()
         self.extra = dict()
         self.handlers = dict()
@@ -555,8 +555,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.ordered_groups = []
         # mapping of hostname -> version string
         if self._use_db:
-            self.versions = ClientVersions(core,  # pylint: disable=E1102
-                                           datastore)
+            self.versions = ClientVersions(core)  # pylint: disable=E1102
         else:
             self.versions = dict()
 

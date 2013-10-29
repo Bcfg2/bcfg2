@@ -114,8 +114,8 @@ class GroupPatterns(Bcfg2.Server.Plugin.Plugin,
                     Bcfg2.Server.Plugin.Connector):
     """ set group membership based on client hostnames """
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         self.config = PatternFile(os.path.join(self.data, 'config.xml'),
                                   core=core)
