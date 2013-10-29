@@ -16,7 +16,7 @@ import Bcfg2.Server.FileMonitor
 from Bcfg2.Logger import Debuggable
 from Bcfg2.Compat import CmpMixin, wraps
 from Bcfg2.Server.Plugin.base import Plugin
-from Bcfg2.Server.Plugin.interfaces import Generator
+from Bcfg2.Server.Plugin.interfaces import Generator, TemplateDataProvider
 from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
     PluginExecutionError
 
@@ -125,6 +125,82 @@ def default_path_metadata():
     return dict([(k, getattr(Bcfg2.Options.setup, "default_%s" % k))
                  for k in ['owner', 'group', 'mode', 'secontext', 'important',
                            'paranoid', 'sensitive']])
+
+
+class DefaultTemplateDataProvider(TemplateDataProvider):
+    """ A base
+    :class:`Bcfg2.Server.Plugin.interfaces.TemplateDataProvider` that
+    provides default data for text and XML templates.
+
+    Note that, since Cheetah and Genshi text templates treat the
+    ``path`` variable differently, this is overridden, by
+    :class:`Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator.DefaultCheetahDataProvider`
+    and
+    :class:`Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator.DefaultGenshiDataProvider`,
+    respectively. """
+
+    def get_template_data(self, entry, metadata, template):
+        return dict(name=entry.get('realname', entry.get('name')),
+                    metadata=metadata,
+                    source_path=template,
+                    repo=Bcfg2.Options.setup.repository)
+
+    def get_xml_template_data(self, _, metadata):
+        return dict(metadata=metadata,
+                    repo=Bcfg2.Options.setup.repository)
+
+_sentinel = object()  # pylint: disable=C0103
+
+
+def _get_template_data(func_name, args, default=_sentinel):
+    """ Generic template data getter for both text and XML templates.
+
+    :param func_name: The name of the function to call on
+                      :class:`Bcfg2.Server.Plugin.interfaces.TemplateDataProvider`
+                      objects to get data for this template type.
+                      Should be one of either ``get_template_data``
+                      for text templates, or ``get_xml_template_data``
+                      for XML templates.
+    :type func_name: string
+    :param args: The arguments to pass to the data retrieval function
+    :type args: list
+    :param default: An object that provides a set of base values. If
+                    this is not provided, an instance of
+                    :class:`Bcfg2.Server.Plugin.helpers.DefaultTemplateDataProvider`
+                    is used. This can be set to None to avoid setting
+                    any base values at all.
+    :type default: Bcfg2.Server.Plugin.interfaces.TemplateDataProvider
+    """
+    if default is _sentinel:
+        default = DefaultTemplateDataProvider()
+    providers = Bcfg2.Server.core.plugins_by_type(TemplateDataProvider)
+    if default is not None:
+        providers.insert(0, default)
+
+    rv = dict()
+    source = dict()
+    for prov in providers:
+        pdata = getattr(prov, func_name)(*args)
+        for key, val in pdata.items():
+            if key not in rv:
+                rv[key] = val
+                source[key] = prov
+            else:
+                LOGGER.warning("Duplicate template variable %s provided by "
+                               "both %s and %s" % (key, prov, source[key]))
+    return rv
+
+
+def get_template_data(entry, metadata, template, default=_sentinel):
+    """ Get all template variables for a text (i.e., Cfg) template """
+    return _get_template_data("get_template_data", [entry, metadata, template],
+                              default=default)
+
+
+def get_xml_template_data(structfile, metadata, default=_sentinel):
+    """ Get all template variables for an XML template """
+    return _get_template_data("get_xml_template_data", [structfile, metadata],
+                              default=default)
 
 
 class DatabaseBacked(Plugin):
@@ -741,10 +817,8 @@ class StructFile(XMLFileBacked):
                   XML data
         """
         stream = self.template.generate(
-            metadata=metadata,
-            repo=Bcfg2.Options.setup.repository).filter(removecomment)
-        return lxml.etree.XML(stream.render('xml',
-                                            strip_whitespace=False),
+            **get_xml_template_data(self, metadata)).filter(removecomment)
+        return lxml.etree.XML(stream.render('xml', strip_whitespace=False),
                               parser=Bcfg2.Server.XMLParser)
 
     def _match(self, item, metadata, *args):

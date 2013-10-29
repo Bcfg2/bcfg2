@@ -31,7 +31,8 @@ class TestCfgGenshiGenerator(TestCfgGenerator):
         cgg = self.get_obj()
         self.assertIsInstance(cgg.loader, cgg.__loader_cls__)
 
-    def test_get_data(self):
+    @patch("Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator.get_template_data")
+    def test_get_data(self, mock_get_template_data):
         cgg = self.get_obj()
         cgg._handle_genshi_exception = Mock()
         cgg.template = Mock()
@@ -45,17 +46,22 @@ class TestCfgGenshiGenerator(TestCfgGenerator):
         def reset():
             cgg.template.reset_mock()
             cgg._handle_genshi_exception.reset_mock()
+            mock_get_template_data.reset_mock()
 
-        template_vars = dict(
-            name=entry.get("name"),
-            metadata=metadata,
-            path=cgg.name,
-            source_path=cgg.name,
-            repo=datastore)
+        template_vars = dict(name=entry.get("name"),
+                             metadata=metadata,
+                             path=cgg.name,
+                             source_path=cgg.name,
+                             repo=datastore)
+        mock_get_template_data.return_value = template_vars
 
         self.assertEqual(cgg.get_data(entry, metadata),
                          stream.render.return_value)
         cgg.template.generate.assert_called_with(**template_vars)
+        self.assertItemsEqual(mock_get_template_data.call_args[0],
+                              [entry, metadata, cgg.name])
+        self.assertIsInstance(mock_get_template_data.call_args[1]['default'],
+                              DefaultGenshiDataProvider)
         fltr.filter.assert_called_with(removecomment)
         stream.render.assert_called_with(
             "text",
@@ -70,6 +76,10 @@ class TestCfgGenshiGenerator(TestCfgGenerator):
         self.assertEqual(cgg.get_data(entry, metadata),
                          stream.render.return_value)
         cgg.template.generate.assert_called_with(**template_vars)
+        self.assertItemsEqual(mock_get_template_data.call_args[0],
+                              [entry, metadata, cgg.name])
+        self.assertIsInstance(mock_get_template_data.call_args[1]['default'],
+                              DefaultGenshiDataProvider)
         fltr.filter.assert_called_with(removecomment)
         self.assertEqual(stream.render.call_args_list,
                          [call("text",
@@ -83,6 +93,10 @@ class TestCfgGenshiGenerator(TestCfgGenerator):
         self.assertRaises(UndefinedError,
                           cgg.get_data, entry, metadata)
         cgg.template.generate.assert_called_with(**template_vars)
+        self.assertItemsEqual(mock_get_template_data.call_args[0],
+                              [entry, metadata, cgg.name])
+        self.assertIsInstance(mock_get_template_data.call_args[1]['default'],
+                              DefaultGenshiDataProvider)
         fltr.filter.assert_called_with(removecomment)
         stream.render.assert_called_with("text",
                                          encoding=Bcfg2.Options.setup.encoding,
@@ -94,6 +108,10 @@ class TestCfgGenshiGenerator(TestCfgGenerator):
         self.assertRaises(ValueError,
                           cgg.get_data, entry, metadata)
         cgg.template.generate.assert_called_with(**template_vars)
+        self.assertItemsEqual(mock_get_template_data.call_args[0],
+                              [entry, metadata, cgg.name])
+        self.assertIsInstance(mock_get_template_data.call_args[1]['default'],
+                              DefaultGenshiDataProvider)
         fltr.filter.assert_called_with(removecomment)
         stream.render.assert_called_with("text",
                                          encoding=Bcfg2.Options.setup.encoding,

@@ -3,10 +3,8 @@
 import re
 import imp
 import sys
-import logging
+from Bcfg2.Logger import Debuggable
 import Bcfg2.Server.Plugin
-
-LOGGER = logging.getLogger(__name__)
 
 MODULE_RE = re.compile(r'(?P<filename>(?P<module>[^\/]+)\.py)$')
 
@@ -19,10 +17,11 @@ def safe_module_name(module):
     return '__TemplateHelper_%s' % module
 
 
-class HelperModule(object):
+class HelperModule(Debuggable):
     """ Representation of a TemplateHelper module """
 
     def __init__(self, name):
+        Debuggable.__init__(self)
         self.name = name
 
         #: The name of the module as used by get_additional_data().
@@ -31,6 +30,9 @@ class HelperModule(object):
 
         #: The attributes exported by this module
         self._attrs = []
+
+        #: The attributes added to the template namespace by this module
+        self.defaults = []
 
     def HandleEvent(self, event=None):
         """ HandleEvent is called whenever the FAM registers an event.
@@ -47,37 +49,50 @@ class HelperModule(object):
                                      self.name)
         except:  # pylint: disable=W0702
             err = sys.exc_info()[1]
-            LOGGER.error("TemplateHelper: Failed to import %s: %s" %
-                         (self.name, err))
+            self.logger.error("TemplateHelper: Failed to import %s: %s" %
+                              (self.name, err))
             return
 
         if not hasattr(module, "__export__"):
-            LOGGER.error("TemplateHelper: %s has no __export__ list" %
-                         self.name)
+            self.logger.error("TemplateHelper: %s has no __export__ list" %
+                              self.name)
             return
 
         newattrs = []
         for sym in module.__export__:
             if sym not in self._attrs and hasattr(self, sym):
-                LOGGER.warning("TemplateHelper: %s: %s is a reserved keyword, "
-                               "skipping export" % (self.name, sym))
+                self.logger.warning(
+                    "TemplateHelper: %s: %s is a reserved keyword, "
+                    "skipping export" % (self.name, sym))
                 continue
             try:
                 setattr(self, sym, getattr(module, sym))
                 newattrs.append(sym)
             except AttributeError:
-                LOGGER.warning("TemplateHelper: %s exports %s, but has no "
-                               "such attribute" % (self.name, sym))
+                self.logger.warning(
+                    "TemplateHelper: %s exports %s, but has no such attribute"
+                    % (self.name, sym))
+
         # remove old exports
         for sym in set(self._attrs) - set(newattrs):
             delattr(self, sym)
 
         self._attrs = newattrs
 
+        self.defaults = []
+        for sym in getattr(module, "__default__", []):
+            if sym not in self._attrs:
+                self.logger.warning(
+                    "TemplateHelper: %s: %s is flagged as a default, "
+                    "but is not exported; skipping")
+                continue
+            self.defaults.append(sym)
+
 
 class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
                      Bcfg2.Server.Plugin.Connector,
-                     Bcfg2.Server.Plugin.DirectoryBacked):
+                     Bcfg2.Server.Plugin.DirectoryBacked,
+                     Bcfg2.Server.Plugin.TemplateDataProvider):
     """ A plugin to provide helper classes and functions to templates """
     __author__ = 'chris.a.st.pierre@gmail.com'
     ignore = re.compile(r'^(\.#.*|.*~|\..*\.(sw[px])|.*\.py[co])$')
@@ -88,7 +103,23 @@ class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data)
+        Bcfg2.Server.Plugin.TemplateDataProvider.__init__(self)
 
     def get_additional_data(self, _):
         return dict([(h._module_name, h)  # pylint: disable=W0212
                      for h in self.entries.values()])
+
+    def get_template_data(self, *_):
+        rv = dict()
+        source = dict()
+        for helper in self.entries.values():
+            for key in helper.defaults:
+                if key not in rv:
+                    rv[key] = getattr(helper, key)
+                    source[key] = helper
+                else:
+                    self.logger.warning(
+                        "TemplateHelper: Duplicate default variable %s "
+                        "provided by both %s and %s" %
+                        (key, helper.name, source[key].name))
+        return rv

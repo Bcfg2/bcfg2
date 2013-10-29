@@ -6,7 +6,8 @@ import re
 import sys
 import traceback
 import Bcfg2.Options
-from Bcfg2.Server.Plugin import PluginExecutionError, removecomment
+from Bcfg2.Server.Plugin import PluginExecutionError, removecomment, \
+    DefaultTemplateDataProvider, get_template_data
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 from genshi.template import TemplateLoader, NewTextTemplate
 from genshi.template.eval import UndefinedError, Suite
@@ -40,6 +41,18 @@ d['a']"""
 #: and trailing blank lines. See
 #: :func:`_genshi_removes_blank_lines` for an explanation of this.
 GENSHI_REMOVES_BLANK_LINES = _genshi_removes_blank_lines()
+
+
+class DefaultGenshiDataProvider(DefaultTemplateDataProvider):
+    """ Template data provider for Genshi templates. Cheetah and
+    Genshi currently differ over the value of the ``path`` variable,
+    which is why this is necessary. """
+
+    def get_template_data(self, entry, metadata, template):
+        rv = DefaultTemplateDataProvider.get_template_data(self, entry,
+                                                           metadata, template)
+        rv['path'] = template
+        return rv
 
 
 class CfgGenshiGenerator(CfgGenerator):
@@ -81,13 +94,10 @@ class CfgGenshiGenerator(CfgGenerator):
             raise PluginExecutionError("Failed to load template %s" %
                                        self.name)
 
-        fname = entry.get('realname', entry.get('name'))
         stream = self.template.generate(
-            name=fname,
-            metadata=metadata,
-            path=self.name,
-            source_path=self.name,
-            repo=Bcfg2.Options.setup.repository).filter(removecomment)
+            **get_template_data(
+                entry, metadata, self.name,
+                default=DefaultGenshiDataProvider())).filter(removecomment)
         try:
             try:
                 return stream.render('text',

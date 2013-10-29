@@ -3,7 +3,8 @@
 :ref:`server-plugins-generators-cfg` files. """
 
 import Bcfg2.Options
-from Bcfg2.Server.Plugin import PluginExecutionError
+from Bcfg2.Server.Plugin import PluginExecutionError, \
+    DefaultTemplateDataProvider, get_template_data
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 
 try:
@@ -11,6 +12,18 @@ try:
     HAS_CHEETAH = True
 except ImportError:
     HAS_CHEETAH = False
+
+
+class DefaultCheetahDataProvider(DefaultTemplateDataProvider):
+    """ Template data provider for Cheetah templates. Cheetah and
+    Genshi currently differ over the value of the ``path`` variable,
+    which is why this is necessary. """
+
+    def get_template_data(self, entry, metadata, template):
+        rv = DefaultTemplateDataProvider.get_template_data(self, entry,
+                                                           metadata, template)
+        rv['path'] = rv['name']
+        return rv
 
 
 class CfgCheetahGenerator(CfgGenerator):
@@ -37,10 +50,9 @@ class CfgCheetahGenerator(CfgGenerator):
     def get_data(self, entry, metadata):
         template = Template(self.data.decode(Bcfg2.Options.setup.encoding),
                             compilerSettings=self.settings)
-        template.metadata = metadata
-        template.name = entry.get('realname', entry.get('name'))
-        template.path = entry.get('realname', entry.get('name'))
-        template.source_path = self.name
-        template.repo = Bcfg2.Options.setup.repository
+        for key, val in get_template_data(
+            entry, metadata, self.name,
+            default=DefaultCheetahDataProvider()).items():
+            setattr(template, key, val)
         return template.respond()
     get_data.__doc__ = CfgGenerator.get_data.__doc__

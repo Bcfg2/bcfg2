@@ -12,6 +12,11 @@ from Bcfg2.Server.Plugin.base import Plugin
 from Bcfg2.Server.Plugin.exceptions import PluginInitError, \
     MetadataRuntimeError, MetadataConsistencyError
 
+# Since this file basically just contains abstract interface
+# descriptions, just about every function declaration has unused
+# arguments.  Disable this pylint warning for the whole file.
+# pylint: disable=W0613
+
 
 class Generator(object):
     """ Generator plugins contribute to literal client configurations.
@@ -27,13 +32,12 @@ class Generator(object):
        generate the content.  The callable will receive two arguments:
        the abstract entry (as an lxml.etree._Element object), and the
        client metadata object the entry is being generated for.
-
     #. If the entry is not listed in ``Entries``, the Bcfg2 core calls
        :func:`HandlesEntry`; if that returns True, then it calls
        :func:`HandleEntry`.
     """
 
-    def HandlesEntry(self, entry, metadata):  # pylint: disable=W0613
+    def HandlesEntry(self, entry, metadata):
         """ HandlesEntry is the slow path method for routing
         configuration binding requests.  It is called if the
         ``Entries`` dict does not contain a method for binding the
@@ -48,7 +52,7 @@ class Generator(object):
         """
         return False
 
-    def HandleEntry(self, entry, metadata):  # pylint: disable=W0613
+    def HandleEntry(self, entry, metadata):
         """ HandleEntry is the slow path method for binding
         configuration binding requests.  It is called if the
         ``Entries`` dict does not contain a method for binding the
@@ -138,7 +142,6 @@ class Metadata(object):
         """
         pass
 
-    # pylint: disable=W0613
     def resolve_client(self, address, cleanup_cache=False):
         """ Resolve the canonical name of this client.  If this method
         is not implemented, the hostname claimed by the client is
@@ -156,7 +159,6 @@ class Metadata(object):
                  :class:`Bcfg2.Server.Plugin.exceptions.MetadataConsistencyError`
         """
         return address[1]
-    # pylint: enable=W0613
 
     def AuthenticateConnection(self, cert, user, password, address):
         """ Authenticate the given client.
@@ -219,7 +221,7 @@ class Connector(object):
     """ Connector plugins augment client metadata instances with
     additional data, additional groups, or both. """
 
-    def get_additional_groups(self, metadata):  # pylint: disable=W0613
+    def get_additional_groups(self, metadata):
         """ Return a list of additional groups for the given client.
         Each group can be either the name of a group (a string), or a
         :class:`Bcfg2.Server.Plugins.Metadata.MetadataGroup` object
@@ -250,7 +252,7 @@ class Connector(object):
         """
         return list()
 
-    def get_additional_data(self, metadata):  # pylint: disable=W0613
+    def get_additional_data(self, metadata):
         """ Return arbitrary additional data for the given
         ClientMetadata object.  By convention this is usually a dict
         object, but doesn't need to be.
@@ -473,7 +475,7 @@ class ThreadedStatistics(Statistics, Threaded, threading.Thread):
 # Someone who understands these interfaces better needs to write docs
 # for PullSource and PullTarget
 class PullSource(object):
-    def GetExtra(self, client):  # pylint: disable=W0613
+    def GetExtra(self, client):
         return []
 
     def GetCurrentEntry(self, client, e_type, e_name):
@@ -630,7 +632,7 @@ class ClientACLs(object):
     """ ClientACLs are used to grant or deny access to different
     XML-RPC calls based on client IP or metadata. """
 
-    def check_acl_ip(self, address, rmi):  # pylint: disable=W0613
+    def check_acl_ip(self, address, rmi):
         """ Check if the given IP address is authorized to make the
         named XML-RPC call.
 
@@ -643,7 +645,7 @@ class ClientACLs(object):
         """
         return True
 
-    def check_acl_metadata(self, metadata, rmi):  # pylint: disable=W0613
+    def check_acl_metadata(self, metadata, rmi):
         """ Check if the given client is authorized to make the named
         XML-RPC call.
 
@@ -654,3 +656,18 @@ class ClientACLs(object):
         :returns: bool
         """
         return True
+
+
+class TemplateDataProvider(object):
+    """ TemplateDataProvider plugins provide variables to templates
+    for use in rendering. """
+
+    def get_template_data(self, entry, metadata, template):
+        """ Get a dict of variables that will be supplied to a Cfg
+        template for rendering """
+        return dict()
+
+    def get_xml_template_data(self, structfile, metadata):
+        """ Get a dict of variables that will be supplied to an XML
+        template (e.g., a bundle) for rendering """
+        return dict()
