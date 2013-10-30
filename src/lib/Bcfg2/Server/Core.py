@@ -1364,8 +1364,11 @@ class NetworkCore(Core):
         "\n.. automethod:: _daemonize\n"
 
     def __str__(self):
-        return "%s(%s)" % (self.__class__.__name__,
-                           Bcfg2.Options.setup.location)
+        if hasattr(Bcfg2.Options.setup, "location"):
+            return "%s(%s)" % (self.__class__.__name__,
+                               Bcfg2.Options.setup.location)
+        else:
+            return Core.__str__(self)
 
     def run(self):
         """ Run the server core.  This calls :func:`_daemonize` before
