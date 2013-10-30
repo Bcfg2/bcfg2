@@ -690,7 +690,7 @@ class Shell(InfoCmd):
             self.core.cmdloop('Welcome to bcfg2-info\n'
                               'Type "help" for more information')
         except KeyboardInterrupt:
-            print("Ctrl-C pressed, exiting...")
+            print("\nCtrl-C pressed, exiting...")
 
 
 class ProfileTemplates(InfoCmd):
