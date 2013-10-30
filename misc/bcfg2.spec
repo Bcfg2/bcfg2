@@ -113,11 +113,9 @@ BuildRequires:    systemd-units
 %endif
 
 Requires:         python-lxml
-Requires:         m2crypto
 %if 0%{?rhel} && 0%{?rhel} < 6
 Requires:         python-ssl
 %endif
-Requires:         pylibacl
 Requires:         libselinux-python
 
 %if 0%{?fedora} >= 16
