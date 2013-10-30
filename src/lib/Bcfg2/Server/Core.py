@@ -247,6 +247,9 @@ class Core(object):
                 self.logger.error("Updating database %s failed: %s" %
                                   (Bcfg2.Options.setup.db_name, err))
 
+    def __str__(self):
+        return self.__class__.__name__
+
     def plugins_by_type(self, base_cls):
         """ Return a list of loaded plugins that match the passed type.
 
@@ -1359,6 +1362,10 @@ class NetworkCore(Core):
                                       "at %s: %s" % (db_settings['NAME'], err))
     __init__.__doc__ = Core.__init__.__doc__.split(".. -----")[0] + \
         "\n.. automethod:: _daemonize\n"
+
+    def __str__(self):
+        return "%s(%s)" % (self.__class__.__name__,
+                           Bcfg2.Options.setup.location)
 
     def run(self):
         """ Run the server core.  This calls :func:`_daemonize` before

@@ -351,6 +351,11 @@ class MultiprocessingCore(BuiltinCore):
         #: to provide a round-robin distribution of render requests
         self.children = None
 
+    def __str__(self):
+        return "%s(%s; %s children)" % (self.__class__.__name__,
+                                        Bcfg2.Options.setup.location,
+                                        len(self._all_children))
+
     def _run(self):
         for cnum in range(Bcfg2.Options.setup.core_children):
             name = "Child-%s" % cnum
