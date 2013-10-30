@@ -74,6 +74,11 @@ class Parser(argparse.ArgumentParser):
         self.namespace = kwargs.pop('namespace', setup)
         add_base_options = kwargs.pop('add_base_options', True)
 
+        #: Flag to indicate that this is the pre-parsing 'early' run
+        #: for important options like database settings that must be
+        #: loaded before other components can be.
+        self._early = kwargs.pop('early', False)
+
         if 'add_help' not in kwargs:
             kwargs['add_help'] = add_base_options
         argparse.ArgumentParser.__init__(self, **kwargs)
@@ -185,8 +190,8 @@ class Parser(argparse.ArgumentParser):
         :param argv: The argument list to parse.  By default,
                      ``sys.argv[1:]`` is used.  This is stored in
                      :attr:`Bcfg2.Options.Parser.argv` for reuse by
-                     :func:`Bcfg2.Options.Parser.reparse`.  :type
-                     argv: list
+                     :func:`Bcfg2.Options.Parser.reparse`.
+        :type argv: list
         """
         if argv is None:
             argv = sys.argv[1:]
@@ -204,7 +209,26 @@ class Parser(argparse.ArgumentParser):
             self.error("Could not read %s" % bootstrap.config)
         self.add_config_file(self.configfile.dest, bootstrap.config)
 
-        # phase 2: re-parse command line, loading additional
+        # phase 2: re-parse command line for early options; currently,
+        # that's database options
+        if not self._early:
+            early_opts = argparse.Namespace()
+            early_parser = Parser(add_help=False, namespace=early_opts,
+                                  early=True)
+            # add the repo option so we can resolve <repository>
+            # macros
+            early_parser.add_options([repository])
+            early_components = []
+            for component in self.components:
+                if getattr(component, "parse_first", False):
+                    early_components.append(component)
+                    early_parser.add_component(component)
+            early_parser.parse(self.argv)
+            for component in early_components:
+                if hasattr(component, "component_parsed_hook"):
+                    getattr(component, "component_parsed_hook")(early_opts)
+
+        # phase 3: re-parse command line, loading additional
         # components, until all components have been loaded.  On each
         # iteration, set defaults from config file/environment
         # variables
@@ -216,7 +240,7 @@ class Parser(argparse.ArgumentParser):
             self._finalize()
         self._parse_config_options()
 
-        # phase 3: fix up <repository> macros
+        # phase 4: fix up <repository> macros
         repo = getattr(self.namespace, "repository", repository.default)
         for attr in dir(self.namespace):
             value = getattr(self.namespace, attr)
@@ -224,10 +248,11 @@ class Parser(argparse.ArgumentParser):
                 setattr(self.namespace, attr,
                         value.replace("<repository>", repo, 1))
 
-        # phase 4: call post-parsing hooks
-        for component in self.components:
-            if hasattr(component, "options_parsed_hook"):
-                getattr(component, "options_parsed_hook")()
+        # phase 5: call post-parsing hooks
+        if not self._early:
+            for component in self.components:
+                if hasattr(component, "options_parsed_hook"):
+                    getattr(component, "options_parsed_hook")()
 
         return self.namespace
 

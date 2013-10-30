@@ -39,10 +39,8 @@ def set_setup_default(option, value=None):
         setattr(Bcfg2.Options.setup, option, value)
 
 try:
-    from django.core.management import setup_environ
+    import django.conf
     has_django = True
-
-    os.environ['DJANGO_SETTINGS_MODULE'] = "Bcfg2.settings"
 
     set_setup_default("db_engine", "sqlite3")
     set_setup_default("db_name",
@@ -58,8 +56,8 @@ try:
     set_setup_default("web_debug", False)
     set_setup_default("web_prefix")
 
-    import Bcfg2.settings
-    Bcfg2.settings.read_config()
+    import Bcfg2.DBSettings
+    Bcfg2.DBSettings.finalize_django_config()
 except ImportError:
     has_django = False
 
@@ -163,12 +161,12 @@ class DBModelTestCase(Bcfg2TestCase):
     def test_syncdb(self):
         """ Create the test database and sync the schema """
         if self.models:
-            setup_environ(Bcfg2.settings)
             import django.core.management
             django.core.management.call_command("syncdb", interactive=False,
                                                 verbosity=0)
             self.assertTrue(
-                os.path.exists(Bcfg2.settings.DATABASES['default']['NAME']))
+                os.path.exists(
+                    django.conf.settings.DATABASES['default']['NAME']))
 
     @skipUnless(has_django, "Django not found, skipping")
     def test_cleandb(self):

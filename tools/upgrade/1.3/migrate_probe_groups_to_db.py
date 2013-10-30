@@ -4,16 +4,13 @@ and Probe plugins. Does not migrate individual probe return data. Assumes
 migration to BOTH Metadata and Probe to database backends. """
 
 import os
-os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
-
-import lxml.etree
 import sys
+import lxml.etree
 import Bcfg2.Options
+import Bcfg2.DBSettings
 
-from Bcfg2.Server.Plugins.Metadata import MetadataClientModel
-from Bcfg2.Server.Plugins.Probes import ProbesGroupsModel
 
-def migrate(xclient):
+def migrate(xclient, MetadataClientModel, ProbesGroupsModel):
     """ Helper to do the migration given a <Client/> XML element """
     client_name = xclient.get('name')
     try:
@@ -32,9 +29,11 @@ def migrate(xclient):
             group_name = xgroup.get('name')
             cgroups.append(group_name)
             try:
-                group = ProbesGroupsModel.objects.get(hostname=client_name, group=group_name)
+                group = ProbesGroupsModel.objects.get(hostname=client_name,
+                                                      group=group_name)
             except ProbesGroupsModel.DoesNotExist:
-                group = ProbesGroupsModel(hostname=client_name, group=group_name)
+                group = ProbesGroupsModel(hostname=client_name,
+                                          group=group_name)
                 group.save()
 
         ProbesGroupsModel.objects.filter(
@@ -45,6 +44,7 @@ def migrate(xclient):
         print("Failed to migrate groups")
         return False
     return True
+
 
 def main():
     """ Main """
@@ -59,10 +59,15 @@ def main():
     except lxml.etree.XMLSyntaxError:
         err = sys.exc_info()[1]
         print("Could not parse %s, skipping: %s" % (probefile, err))
-    
+
+    # these must be loaded after option parsing is complete
+    from Bcfg2.Server.Plugins.Metadata import MetadataClientModel
+    from Bcfg2.Server.Plugins.Probes import ProbesGroupsModel
+
     for xclient in xdata.findall('Client'):
-        print "Migrating Metadata and Probe groups for %s" % xclient.get('name')
-        migrate(xclient)
+        print("Migrating Metadata and Probe groups for %s" %
+              xclient.get('name'))
+        migrate(xclient, MetadataClientModel, ProbesGroupsModel)
 
 if __name__ == '__main__':
     sys.exit(main())

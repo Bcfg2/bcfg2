@@ -15,6 +15,7 @@ import argparse
 import lxml.etree
 import Bcfg2.Logger
 import Bcfg2.Options
+import Bcfg2.DBSettings
 import Bcfg2.Server.Core
 import Bcfg2.Client.Proxy
 from Bcfg2.Server.Plugin import PullSource, Generator, MetadataConsistencyError
@@ -22,10 +23,9 @@ from Bcfg2.Utils import hostnames2ranges, Executor, safe_input
 import Bcfg2.Server.Plugins.Metadata
 
 try:
-    import Bcfg2.settings
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
     from django.core.exceptions import ImproperlyConfigured
     from django.core import management
+    import django.conf
     import Bcfg2.Server.models
 
     HAS_DJANGO = True
@@ -833,12 +833,11 @@ class _ReportsCmd(AdminCmd):  # pylint: disable=W0223
         self.reports_classes = ()
 
     def setup(self):
-        # this has to be imported after options are parsed,
-        # because Django finalizes its settings as soon as it's
-        # loaded, which means that if we import this before
-        # Bcfg2.settings has been populated, Django gets a null
-        # configuration, and subsequent updates to Bcfg2.settings
-        # won't help.
+        # this has to be imported after options are parsed, because
+        # Django finalizes its settings as soon as it's loaded, which
+        # means that if we import this before Bcfg2.DBSettings has
+        # been populated, Django gets a null configuration, and
+        # subsequent updates to Bcfg2.DBSettings won't help.
         import Bcfg2.Reporting.models  # pylint: disable=W0621
         self.reports_entries = (Bcfg2.Reporting.models.Group,
                                 Bcfg2.Reporting.models.Bundle,
@@ -884,7 +883,6 @@ if HAS_DJANGO:
         """ Sync the Django ORM with the configured database """
 
         def run(self, setup):
-            management.setup_environ(Bcfg2.settings)
             Bcfg2.Server.models.load_models()
             try:
                 management.call_command("syncdb", interactive=False,
@@ -911,9 +909,9 @@ if HAS_REPORTS:
             # this has to be imported after options are parsed,
             # because Django finalizes its settings as soon as it's
             # loaded, which means that if we import this before
-            # Bcfg2.settings has been populated, Django gets a null
-            # configuration, and subsequent updates to Bcfg2.settings
-            # won't help.
+            # Bcfg2.DBSettings has been populated, Django gets a null
+            # configuration, and subsequent updates to
+            # Bcfg2.DBSettings won't help.
             from django.db.transaction import commit_on_success
             self.run = commit_on_success(self.run)
 
@@ -1011,7 +1009,7 @@ if HAS_REPORTS:
                 self.logger.debug("Filtering by maxdate: %s" % maxdate)
                 ipurge = ipurge.filter(timestamp__lt=maxdate)
 
-            if Bcfg2.settings.DATABASES['default']['ENGINE'] == \
+            if django.conf.settings.DATABASES['default']['ENGINE'] == \
                     'django.db.backends.sqlite3':
                 grp_limit = 100
             else:

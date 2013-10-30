@@ -51,9 +51,9 @@ def load_models(plugins=None):
     """ load models from plugins specified in the config """
     # this has to be imported after options are parsed, because Django
     # finalizes its settings as soon as it's loaded, which means that
-    # if we import this before Bcfg2.settings has been populated,
+    # if we import this before Bcfg2.DBSettings has been populated,
     # Django gets a null configuration, and subsequent updates to
-    # Bcfg2.settings won't help.
+    # Bcfg2.DBSettings won't help.
     from django.db import models
     global MODELS
 

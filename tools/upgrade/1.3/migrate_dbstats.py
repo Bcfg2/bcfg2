@@ -2,7 +2,6 @@
 
 import os
 os.environ['BCFG2_LEGACY_MODELS'] = '1'
-os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
 
 import sys
 import logging

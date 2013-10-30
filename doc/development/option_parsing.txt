@@ -67,9 +67,19 @@ There is no required interface for an option component.  They may
 
 * An ``options`` attribute that is a list of
   :class:`Bcfg2.Options.Options.Option` objects or option groups.
+* A boolean ``parse_first`` attribute; if set to True, the options for
+  the component are parsed before all other options.  This is useful
+  for, e.g., Django database settings, which must be parsed before
+  plugins that use Django can be loaded.
 * A function or static method, ``options_parsed_hook``, that is called
   when all options have been parsed.  (This will be called again if
   :func:`Bcfg2.Options.Parser.Parser.reparse` is called.)
+* A function or static method, ``component_parsed_hook``, that is
+  called when early option parsing for a given component has
+  completed.  This is *only* called for components with
+  ``parse_first`` set to True.  It is passed a single argument: a
+  :class:`argparse.Namespace` object containing the complete set of
+  early options.
 
 Options are collected through two primary mechanisms:
 

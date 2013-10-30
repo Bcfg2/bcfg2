@@ -1,5 +1,4 @@
-import Bcfg2.settings
-
+import Bcfg2.DBSettings
 from django.db import connection
 import django.core.management
 import sys

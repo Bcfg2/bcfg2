@@ -712,7 +712,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %config(noreplace) %{_sysconfdir}/sysconfig/bcfg2-server
 %{_sbindir}/bcfg2-*
 %dir %{_localstatedir}/lib/%{name}
-%{python_sitelib}/Bcfg2/settings.py*
+%{python_sitelib}/Bcfg2/DBSettings.py*
 %{python_sitelib}/Bcfg2/Server
 %{python_sitelib}/Bcfg2/Reporting
 %{python_sitelib}/Bcfg2/manage.py*

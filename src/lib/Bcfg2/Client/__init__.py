@@ -305,7 +305,7 @@ class Client(object):
                     socket.gaierror,
                     socket.error):
                 err = sys.exc_info()[1]
-                self.logger.error("Failed to declare version: %s" % err)
+                self.fatal_error("Failed to declare version: %s" % err)
 
             self.run_probes()
 

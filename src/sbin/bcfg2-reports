@@ -4,25 +4,9 @@
 import os
 import sys
 import datetime
-from optparse import OptionParser, OptionGroup, make_option
+import Bcfg2.DBSettings
 from Bcfg2.Compat import ConfigParser
-
-try:
-    import Bcfg2.settings
-except ConfigParser.NoSectionError:
-    print("Your bcfg2.conf is currently missing the [database] section which "
-          "is necessary for the reporting interface. Please see bcfg2.conf(5) "
-          "for more details.")
-    sys.exit(1)
-
-project_directory = os.path.dirname(Bcfg2.settings.__file__)
-project_name = os.path.basename(project_directory)
-sys.path.append(os.path.join(project_directory, '..'))
-project_module = __import__(project_name, '', '', [''])
-sys.path.pop()
-# Set DJANGO_SETTINGS_MODULE appropriately.
-os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
-
+from optparse import OptionParser, OptionGroup, make_option
 from Bcfg2.Reporting.models import (Client, BaseEntry)
 
 def hosts_by_entry_type(clients, etype, entryspec):

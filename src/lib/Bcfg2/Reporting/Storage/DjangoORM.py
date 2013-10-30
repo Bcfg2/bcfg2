@@ -2,16 +2,11 @@
 The base for the original DjangoORM (DBStats)
 """
 
-import os
-import traceback
 from lxml import etree
 from datetime import datetime
 from time import strptime
-
-os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
-from Bcfg2 import settings
-
 import Bcfg2.Options
+import Bcfg2.DBSettings
 from Bcfg2.Compat import md5
 from Bcfg2.Reporting.Storage.base import StorageBase, StorageError
 from Bcfg2.Server.Plugin.exceptions import PluginExecutionError
@@ -377,9 +372,6 @@ class DjangoORM(StorageBase):
 
     def validate(self):
         """Validate backend storage.  Should be called once when loaded"""
-
-        settings.read_config()
-
         # verify our database schema
         try:
             if Bcfg2.Options.setup.debug:
@@ -392,9 +384,9 @@ class DjangoORM(StorageBase):
             management.call_command("migrate", verbosity=vrb,
                                     interactive=False)
         except:
-            self.logger.error("Failed to update database schema: %s" %
-                              sys.exc_info()[1])
-            raise StorageError
+            msg = "Failed to update database schema: %s" % sys.exc_info()[1]
+            self.logger.error(msg)
+            raise StorageError(msg)
 
     def GetExtra(self, client):
         """Fetch extra entries for a client"""

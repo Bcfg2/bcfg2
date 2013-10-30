@@ -14,7 +14,7 @@ import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Logger
 import Bcfg2.Options
-import Bcfg2.settings
+import Bcfg2.DBSettings
 import Bcfg2.Server.Statistics
 import Bcfg2.Server.FileMonitor
 from itertools import chain
@@ -25,12 +25,18 @@ from Bcfg2.Server.Plugin.interfaces import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin import track_statistics
 
 try:
+    from django.core.exceptions import ImproperlyConfigured
+    from django.core import management
+    import django.conf
+    HAS_DJANGO = True
+except ImportError:
+    HAS_DJANGO = False
+
+try:
     import psyco
     psyco.full()
 except ImportError:
     pass
-
-os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
 
 
 def exposed(func):
@@ -198,10 +204,6 @@ class Core(object):
         #: RLock to be held on writes to the backend db
         self.db_write_lock = threading.RLock()
 
-        # generate Django ORM settings.  this must be done _before_ we
-        # load plugins
-        Bcfg2.settings.read_config()
-
         # mapping of group name => plugin name to record where groups
         # that are created by Connector plugins came from
         self._dynamic_groups = dict()
@@ -232,9 +234,7 @@ class Core(object):
         #: Whether or not it's possible to use the Django database
         #: backend for plugins that have that capability
         self._database_available = False
-        if Bcfg2.settings.HAS_DJANGO:
-            from django.core.exceptions import ImproperlyConfigured
-            from django.core import management
+        if HAS_DJANGO:
             try:
                 management.call_command("syncdb", interactive=False,
                                         verbosity=0)
@@ -1343,7 +1343,7 @@ class NetworkCore(Core):
         self.ca = Bcfg2.Options.setup.ca
 
         if self._database_available:
-            db_settings = Bcfg2.settings.DATABASES['default']
+            db_settings = django.conf.settings.DATABASES['default']
             if (Bcfg2.Options.setup.daemon and
                     Bcfg2.Options.setup.daemon_uid and
                     db_settings['ENGINE'].endswith(".sqlite3") and
