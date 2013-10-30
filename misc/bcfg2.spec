@@ -73,7 +73,6 @@ BuildRequires:    python-nose
 BuildRequires:    mock
 BuildRequires:    m2crypto
 BuildRequires:    Django
-BuildRequires:    PyYAML
 BuildRequires:    python-genshi
 BuildRequires:    python-cheetah
 BuildRequires:    pylibacl
@@ -184,11 +183,8 @@ Requires:         python-daemon
 %endif
 Requires:         /usr/sbin/sendmail
 Requires:         /usr/bin/openssl
-Requires:         python-genshi
-Requires:         python-cheetah
 Requires:         graphviz
 Requires:         python-nose
-Requires:         PyYAML
 
 %if %{_vendor} == redhat
 %if 0%{?fedora} >= 16
