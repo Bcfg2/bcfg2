@@ -381,7 +381,7 @@ class BaseEntry(models.Model):
 
     @classmethod
     def entry_from_type(cls, etype):
-        for entry_cls in ENTRY_CLASSES:
+        for entry_cls in ENTRY_TYPES:
             if etype == entry_cls.ENTRY_TYPE:
                 return entry_cls
         else:
