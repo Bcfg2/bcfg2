@@ -692,7 +692,10 @@ class Core(object):
             self.logger.error("Got event for unknown file: %s" %
                               event.filename)
             return
-        if event.code2str() == 'deleted':
+        if event.code2str() in ['deleted', 'exists']:
+            # ignore config file deletion, and ignore the initial
+            # 'exists' event as well.  we've already parsed options on
+            # startup, we don't need to parse them twice.
             return
         Bcfg2.Options.get_parser().reparse()
         self.metadata_cache.expire()
