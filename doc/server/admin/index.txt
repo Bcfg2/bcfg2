@@ -23,7 +23,6 @@ functionality. Available modes are listed below.
    minestruct
    perf
    pull
-   query
    snapshots
    tidy
    viz
