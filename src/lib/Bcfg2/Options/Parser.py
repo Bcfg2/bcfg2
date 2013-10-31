@@ -162,7 +162,7 @@ class Parser(argparse.ArgumentParser):
                 attr not in self._config_files):
                 delattr(self.namespace, attr)
 
-    def add_config_file(self, dest, cfile):
+    def add_config_file(self, dest, cfile, reparse=True):
         """ Add a config file, which triggers a full reparse of all
         options. """
         if dest not in self._config_files:
@@ -170,7 +170,8 @@ class Parser(argparse.ArgumentParser):
             self._cfp.read([cfile])
             self._defaults_set = []
             self._set_defaults()
-            self._parse_config_options()
+            if reparse:
+                self._parse_config_options()
             self._config_files.append(dest)
 
     def reparse(self, argv=None):
@@ -207,7 +208,8 @@ class Parser(argparse.ArgumentParser):
         # check whether the specified bcfg2.conf exists
         if not os.path.exists(bootstrap.config):
             self.error("Could not read %s" % bootstrap.config)
-        self.add_config_file(self.configfile.dest, bootstrap.config)
+        self.add_config_file(self.configfile.dest, bootstrap.config,
+                             reparse=False)
 
         # phase 2: re-parse command line for early options; currently,
         # that's database options
