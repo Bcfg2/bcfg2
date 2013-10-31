@@ -49,7 +49,7 @@ class ReportingStoreThread(threading.Thread):
         except:
             #TODO requeue?
             self.logger.error("Unhandled exception in import thread %s" %
-                              traceback.format_exc().splitlines()[-1])
+                              sys.exc_info()[1])
 
 
 class ReportingCollector(object):
