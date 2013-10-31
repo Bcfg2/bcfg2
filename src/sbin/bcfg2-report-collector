@@ -7,6 +7,7 @@ import sys
 import logging
 import Bcfg2.Logger
 import Bcfg2.Options
+import Bcfg2.DBSettings
 from Bcfg2.Reporting.Collector import ReportingCollector, ReportingError
 
 
