@@ -103,6 +103,9 @@ class RetryMethod(xmlrpclib._Method):
             except ProxyError:
                 err = sys.exc_info()[1]
                 msg = err
+            except SSL_ERROR:
+                err = sys.exc_info()[1]
+                msg = err
             except:
                 raise
                 etype, err = sys.exc_info()[:2]
