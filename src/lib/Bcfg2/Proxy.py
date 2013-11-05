@@ -104,7 +104,6 @@ class RetryMethod(xmlrpclib._Method):
                 err = sys.exc_info()[1]
                 msg = err
             except:
-                raise
                 etype, err = sys.exc_info()[:2]
                 msg = "Unknown failure: %s (%s)" % (err, etype.__name__)
             if msg:
