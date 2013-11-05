@@ -27,7 +27,6 @@ class Snapshots(Bcfg2.Server.Admin.Mode):
         self.cfile = self.configfile
 
     def __call__(self, args):
-        Bcfg2.Server.Admin.Mode.__call__(self, args)
         if len(args) == 0 or args[0] == '-h':
             print(self.__usage__)
             raise SystemExit(0)

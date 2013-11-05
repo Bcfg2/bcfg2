@@ -115,7 +115,6 @@ class Compare(Bcfg2.Server.Admin.Mode):
         return identical
 
     def __call__(self, args):
-        Bcfg2.Server.Admin.Mode.__call__(self, args)
         if len(args) == 0:
             self.errExit("No argument specified.\n"
                          "Please see bcfg2-admin compare help for usage.")
