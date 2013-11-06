@@ -220,12 +220,12 @@ E.G. 1.2.0pre1 is a valid version.
                      dryrun=options.dryrun)
     find_and_replace('solaris-ips/MANIFEST.bcfg2.header',
                      'set name=pkg.fmri value="pkg://bcfg2/bcfg2@',
-                     'set name=pkg.fmri value="pkg://bcfg2/bcfg2@%s"' % version,
+                     'set name=pkg.fmri value="pkg://bcfg2/bcfg2@%s"\n' % version,
                      startswith=True,
                      dryrun=options.dryrun)
     find_and_replace('solaris-ips/MANIFEST.bcfg2-server.header',
                      'set name=pkg.fmri value="pkg://bcfg2/bcfg2-server@',
-                     'set name=pkg.fmri value="pkg://bcfg2/bcfg2-server@%s"' % version,
+                     'set name=pkg.fmri value="pkg://bcfg2/bcfg2-server@%s"\n' % version,
                      startswith=True,
                      dryrun=options.dryrun)
     find_and_replace('solaris-ips/pkginfo.bcfg2', 'VERSION=',
