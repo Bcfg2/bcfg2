@@ -251,9 +251,11 @@ E.G. 1.2.0pre1 is a valid version.
     if version_info['build'] == '':
         find_and_replace('misc/bcfg2.spec', 'Release: ',
                          'Release:          1\n',
+                         startswith=True,
                          dryrun=options.dryrun)
         find_and_replace('misc/bcfg2-selinux.spec', 'Release: ',
                          'Release:          1\n',
+                         startswith=True,
                          dryrun=options.dryrun)
     else:
         find_and_replace('misc/bcfg2.spec', 'Release: ',
