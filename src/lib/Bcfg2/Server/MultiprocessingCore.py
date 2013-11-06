@@ -94,9 +94,9 @@ class RPCQueue(Bcfg2.Server.Plugin.Debuggable):
         try:
             self._queues[dest].put((listener.address,
                                     (method, args or [], kwargs or dict())))
-            conn = listener.accept()
-            self._blocking_listeners.remove(listener)
             try:
+                conn = listener.accept()
+                self._blocking_listeners.remove(listener)
                 while not self._terminate.is_set():
                     if conn.poll(self.poll_wait):
                         return conn.recv()
