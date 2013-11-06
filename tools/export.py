@@ -248,32 +248,49 @@ E.G. 1.2.0pre1 is a valid version.
     find_and_replace('misc/bcfg2-selinux.spec', 'Version:',
                      'Version:          %s\n' % version_release,
                      dryrun=options.dryrun)
-    if version_info['build'] == '':
-        find_and_replace('misc/bcfg2.spec', 'Release: ',
-                         'Release:          1\n',
-                         startswith=True,
+    if version_info['build'].startswith('rc'):
+        find_and_replace('misc/bcfg2.spec', 'global _rc ',
+                         '%%global _rc %s\n' % version_info['build'],
                          dryrun=options.dryrun)
-        find_and_replace('misc/bcfg2-selinux.spec', 'Release: ',
-                         'Release:          1\n',
-                         startswith=True,
+        find_and_replace('misc/bcfg2-selinux.spec', 'global _rc ',
+                         '%%global _rc %s\n' % version_info['build'],
+                         dryrun=options.dryrun)
+    elif version_info['build'].startswith('pre'):
+        find_and_replace('misc/bcfg2.spec', 'global _pre ',
+                         '%%global _pre %s\n' % version_info['build'],
+                         dryrun=options.dryrun)
+        find_and_replace('misc/bcfg2-selinux.spec', 'global _pre ',
+                         '%%global _pre %s\n' % version_info['build'],
                          dryrun=options.dryrun)
     else:
+        # comment out pre/rc
+        find_and_replace('misc/bcfg2.spec', 'global _pre ',
+                         '#%%global _pre 2\n',
+                         dryrun=options.dryrun)
+        find_and_replace('misc/bcfg2-selinux.spec', 'global _pre ',
+                         '#%%global _pre 2\n',
+                         dryrun=options.dryrun)
+        find_and_replace('misc/bcfg2.spec', 'global _rc ',
+                         '#%%global _rc 1\n',
+                         dryrun=options.dryrun)
+        find_and_replace('misc/bcfg2-selinux.spec', 'global _rc ',
+                         '#%%global _rc 1\n',
+                         dryrun=options.dryrun)
+
         find_and_replace('misc/bcfg2.spec', 'Release: ',
-                         'Release:          0.%s.%s\n' %
-                         (version_info['build'][-1], version_info['build']),
+                         'Release:          1%{?_pre_rc}%{?dist}\n',
+                         startswith=True,
                          dryrun=options.dryrun)
         find_and_replace('misc/bcfg2-selinux.spec', 'Release: ',
-                         'Release:          0.%s.%s\n' %
-                         (version_info['build'][-1], version_info['build']),
+                         'Release:          1%{?_pre_rc}%{?dist}\n',
+                         startswith=True,
                          dryrun=options.dryrun)
     find_and_replace('misc/bcfg2.spec', '%setup',
-                     '%%setup -q -n %%{name}-%%{version}%s\n' %
-                     version_info['build'],
+                     '%setup -q -n %{name}-%{version}%{?_pre_rc}\n',
                      startswith=True,
                      dryrun=options.dryrun)
     find_and_replace('misc/bcfg2-selinux.spec', '%setup',
-                     '%%setup -q -n %%{name}-%%{version}%s\n' %
-                     version_info['build'],
+                     '%setup -q -n %{name}-%{version}%{?_pre_rc}\n',
                      startswith=True,
                      dryrun=options.dryrun)
     find_and_replace('misc/bcfg2.spec', 'BuildRoot',
