@@ -7,7 +7,7 @@ Bcfg2 documentation |release|
 =============================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    introduction/index
    installation/index
