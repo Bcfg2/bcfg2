@@ -16,13 +16,13 @@ def copy_section(src_file, tgt_cfg, section, newsection=None):
                 tgt_cfg.add_section(newsection)
             except ConfigParser.DuplicateSectionError:
                 print("[%s] section already exists in %s, adding options" %
-                      (newsection, setup['cfile']))
+                      (newsection, setup['configfile']))
             for opt in cfg.options(section):
                 val = cfg.get(section, opt)
                 if tgt_cfg.has_option(newsection, opt):
                     print("%s in [%s] already populated in %s, skipping" %
-                          (opt, newsection, setup['cfile']))
-                    print("  %s: %s" % (setup['cfile'],
+                          (opt, newsection, setup['configfile']))
+                    print("  %s: %s" % (setup['configfile'],
                                         tgt_cfg.get(newsection, opt)))
                     print("  %s: %s" % (src_file, val))
                 else:
@@ -43,7 +43,7 @@ def main():
     if os.path.exists(rules_conf):
         remove.append(rules_conf)
         copy_section(rules_conf, setup.cfp, "rules")
-    
+
     # move packages config out of packages.conf and into bcfg2.conf
     pkgs_conf = os.path.join(setup['repo'], 'Packages', 'packages.conf')
     if os.path.exists(pkgs_conf):
