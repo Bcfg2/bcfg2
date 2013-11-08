@@ -3,7 +3,8 @@
 import lxml.etree
 import os
 import sys
-
+from fnmatch import fnmatch
+from Bcfg2.Compat import any
 import Bcfg2.Options
 
 
@@ -53,9 +54,15 @@ def convertstructure(structfile):
         writefile(structfile, xdata)
 
 
+def skip_path(path, setup):
+    return any(fnmatch(path, p) or fnmatch(os.path.basename(path), p)
+               for p in setup['ignore'])
+
+
 def main():
     opts = dict(repo=Bcfg2.Options.SERVER_REPOSITORY,
                 configfile=Bcfg2.Options.CFILE,
+                ignore=Bcfg2.Options.SERVER_FAM_IGNORE,
                 plugins=Bcfg2.Options.SERVER_PLUGINS)
     setup = Bcfg2.Options.OptionParser(opts)
     setup.parse(sys.argv[1:])
@@ -64,11 +71,17 @@ def main():
     for plugin in setup['plugins']:
         if plugin in ['Base', 'Bundler', 'Rules']:
             for root, dirs, files in os.walk(os.path.join(repo, plugin)):
+                if skip_path(root, setup):
+                    continue
                 for fname in files:
+                    if skip_path(fname, setup):
+                        continue
                     convertstructure(os.path.join(root, fname))
         if plugin not in ['Cfg', 'TGenshi', 'TCheetah', 'SSHbase', 'SSLCA']:
             continue
         for root, dirs, files in os.walk(os.path.join(repo, plugin)):
+            if skip_path(root, setup):
+                continue
             for fname in files:
                 if fname == 'info.xml':
                     convertinfo(os.path.join(root, fname))
