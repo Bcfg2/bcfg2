@@ -300,8 +300,7 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
                 decrypted = Bcfg2.Encryption.ssl_decrypt(
                     elt.text, passphrase,
                     Bcfg2.Encryption.get_algorithm(self.setup)).strip()
-            except EVPError:
-
+            except Bcfg2.Encryption.EVPError:
                 self.logger.error("Could not decrypt %s, skipping" %
                                   print_xml(elt))
             try:
