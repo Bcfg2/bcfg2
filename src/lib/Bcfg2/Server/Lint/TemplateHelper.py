@@ -24,6 +24,8 @@ class TemplateHelper(ServerPlugin):
     def __init__(self, *args, **kwargs):
         ServerPlugin.__init__(self, *args, **kwargs)
         self.reserved_keywords = dir(HelperModule("foo.py"))
+        self.reserved_defaults = \
+            self.core.plugins['TemplateHelper'].reserved_defaults
 
     def Run(self):
         for helper in self.core.plugins['TemplateHelper'].entries.values():
@@ -69,6 +71,16 @@ class TemplateHelper(ServerPlugin):
                 self.LintError("templatehelper-underscore-export",
                                "%s: exported symbol %s starts with underscore"
                                % (helper, sym))
+            if sym in getattr(module, "__default__", []):
+                self.LintError("templatehelper-export-and-default",
+                               "%s: %s is listed in both __default__ and "
+                               "__export__" % (helper, sym))
+
+        for sym in getattr(module, "__default__", []):
+            if sym in self.reserved_defaults:
+                self.LintError("templatehelper-reserved-default",
+                               "%s: default symbol %s is reserved" %
+                               (helper, sym))
 
     @classmethod
     def Errors(cls):
@@ -77,4 +89,6 @@ class TemplateHelper(ServerPlugin):
                 "templatehelper-nonlist-export": "error",
                 "templatehelper-nonexistent-export": "error",
                 "templatehelper-reserved-export": "error",
-                "templatehelper-underscore-export": "warning"}
+                "templatehelper-reserved-default": "error",
+                "templatehelper-underscore-export": "warning",
+                "templatehelper-export-and-default": "warning"}
