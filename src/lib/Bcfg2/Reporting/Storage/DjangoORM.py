@@ -18,12 +18,12 @@ from django.core import management
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import FieldDoesNotExist
 from django.core.cache import cache
-from django.db import transaction
 
 #Used by GetCurrentEntry
 import difflib
 from Bcfg2.Compat import b64decode
 from Bcfg2.Reporting.models import *
+from Bcfg2.Reporting.Compat import transaction
 
 
 class DjangoORM(StorageBase):
@@ -256,7 +256,7 @@ class DjangoORM(StorageBase):
                           entry.tag)
         return None
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def _import_interaction(self, interaction):
         """Real import function"""
         hostname = interaction['hostname']

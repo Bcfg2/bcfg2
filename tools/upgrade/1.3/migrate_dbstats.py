@@ -10,11 +10,12 @@ import time
 import Bcfg2.Logger
 import Bcfg2.Options
 from django.core.cache import cache
-from django.db import connection, transaction, backend
+from django.db import connection, backend
 
 from Bcfg2.Server.Admin.Reports import Reports
 from Bcfg2.Reporting import models as new_models
 from Bcfg2.Reporting.utils import BatchFetch
+from Bcfg2.Reporting.Compat import transaction
 from Bcfg2.Server.Reports.reports import models as legacy_models
 
 logger = logging.getLogger(__name__)
@@ -38,7 +39,7 @@ def _quote(value):
     return _our_backend.quote_name(value)
 
 
-@transaction.commit_on_success
+@transaction.atomic
 def _migrate_perms():
     """helper"""
 
@@ -57,7 +58,7 @@ def _migrate_perms():
     return fperms
 
 
-@transaction.commit_on_success
+@transaction.atomic
 def _migrate_transaction(inter, entries, fperms):
     """helper"""
 
@@ -187,7 +188,7 @@ def _shove(old_table, new_table, columns):
     cursor.close()
 
 
-@transaction.commit_on_success
+@transaction.atomic
 def migrate_stage1():
     logger.info("Migrating clients")
     try:

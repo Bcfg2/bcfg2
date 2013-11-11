@@ -9,10 +9,12 @@ except ImproperlyConfigured:
     print("Reports: unable to import django models: %s" % e)
     sys.exit(1)
 
-from django.db import connection, transaction
+from django.db import connection
 from django.db.models import Q
 from datetime import datetime, timedelta
 from time import strptime
+
+from Bcfg2.Reporting.Compat import transaction
 
 KIND_CHOICES = (
     #These are the kinds of config elements
@@ -288,7 +290,7 @@ class Reason(models.Model):
         return rv
 
     @staticmethod
-    @transaction.commit_on_success
+    @transaction.atomic
     def prune_orphans():
         '''Prune oprhaned rows... no good way to use the ORM'''
         cursor = connection.cursor()
@@ -305,7 +307,7 @@ class Entries(models.Model):
         return self.name
 
     @staticmethod
-    @transaction.commit_on_success
+    @transaction.atomic
     def prune_orphans():
         '''Prune oprhaned rows... no good way to use the ORM'''
         cursor = connection.cursor()
@@ -334,7 +336,7 @@ class Performance(models.Model):
         return self.metric
 
     @staticmethod
-    @transaction.commit_on_success
+    @transaction.atomic
     def prune_orphans():
         '''Prune oprhaned rows... no good way to use the ORM'''
         cursor = connection.cursor()

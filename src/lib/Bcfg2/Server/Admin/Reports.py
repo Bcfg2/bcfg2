@@ -19,11 +19,11 @@ sys.path.pop()
 
 # Set DJANGO_SETTINGS_MODULE appropriately.
 os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
-from django.db import transaction
 
 from Bcfg2.Reporting.models import Client, Interaction, \
     Performance, Bundle, Group, FailureEntry, PathEntry, \
     PackageEntry, ServiceEntry, ActionEntry
+from Bcfg2.Reporting.Compat import transaction
 
 
 def printStats(fn):
@@ -136,7 +136,7 @@ class Reports(Bcfg2.Server.Admin.Mode):
         else:
             self.errExit("Unknown command: %s" % args[0])
 
-    @transaction.commit_on_success
+    @transaction.atomic
     def scrub(self):
         ''' Perform a thorough scrub and cleanup of the database '''
 

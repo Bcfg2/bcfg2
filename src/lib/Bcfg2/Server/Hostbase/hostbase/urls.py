@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from django.conf.urls.defaults import *
+from Bcfg2.Reporting.Compat.django_urls import *
 from django.contrib.auth.decorators import login_required
 from django.core.urlresolvers import reverse
 from django.views.generic.create_update import create_object, update_object, delete_object
