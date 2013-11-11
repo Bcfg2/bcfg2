@@ -252,9 +252,16 @@ class Probes(Bcfg2.Server.Plugin.Probing,
     def _write_data_db(self, client):
         """ Write received probe data to the database """
         for probe, data in self.probedata[client.hostname].items():
-            pdata = \
-                ProbesDataModel.objects.get_or_create(hostname=client.hostname,
-                                                      probe=probe)[0]
+            try:
+                pdata = ProbesDataModel.objects.get_or_create(
+                    hostname=client.hostname,
+                    probe=probe)[0]
+            except MultipleObjectsReturned:
+                ProbesDataModel.objects.filter(hostname=client.hostname,
+                                               probe=probe).delete()
+                ProbesDataModel.objects.get_or_create(
+                    hostname=client.hostname,
+                    probe=probe)
             if pdata.data != data:
                 pdata.data = data
                 pdata.save()
