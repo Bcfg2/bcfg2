@@ -3,8 +3,10 @@
 import re
 import imp
 import sys
+import lxml.etree
+from Bcfg2.Server.Plugin import Plugin, Connector, DirectoryBacked, \
+    TemplateDataProvider, DefaultTemplateDataProvider
 from Bcfg2.Logger import Debuggable
-import Bcfg2.Server.Plugin
 
 MODULE_RE = re.compile(r'(?P<filename>(?P<module>[^\/]+)\.py)$')
 
@@ -34,6 +36,11 @@ class HelperModule(Debuggable):
         #: The attributes added to the template namespace by this module
         self.defaults = []
 
+        default_prov = DefaultTemplateDataProvider()
+        self.reserved_defaults = default_prov.get_template_data(
+            lxml.etree.Element("Path", name="/dummy"),
+            None, None).keys() + ["path"]
+
     def HandleEvent(self, event=None):
         """ HandleEvent is called whenever the FAM registers an event.
 
@@ -59,7 +66,10 @@ class HelperModule(Debuggable):
             return
 
         newattrs = []
-        for sym in module.__export__:
+        for sym in module.__export__ + getattr(module, "__default__", []):
+            if sym in newattrs:
+                # already added to attribute list
+                continue
             if sym not in self._attrs and hasattr(self, sym):
                 self.logger.warning(
                     "TemplateHelper: %s: %s is a reserved keyword, "
@@ -81,18 +91,14 @@ class HelperModule(Debuggable):
 
         self.defaults = []
         for sym in getattr(module, "__default__", []):
-            if sym not in self._attrs:
+            if sym in self.reserved_defaults:
                 self.logger.warning(
-                    "TemplateHelper: %s: %s is flagged as a default, "
-                    "but is not exported; skipping")
-                continue
+                    "TemplateHelper: %s: %s is a reserved keyword, not adding "
+                    "as default" % (self.name, sym))
             self.defaults.append(sym)
 
 
-class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
-                     Bcfg2.Server.Plugin.Connector,
-                     Bcfg2.Server.Plugin.DirectoryBacked,
-                     Bcfg2.Server.Plugin.TemplateDataProvider):
+class TemplateHelper(Plugin, Connector, DirectoryBacked, TemplateDataProvider):
     """ A plugin to provide helper classes and functions to templates """
     __author__ = 'chris.a.st.pierre@gmail.com'
     ignore = re.compile(r'^(\.#.*|.*~|\..*\.(sw[px])|.*\.py[co])$')
@@ -100,10 +106,10 @@ class TemplateHelper(Bcfg2.Server.Plugin.Plugin,
     __child__ = HelperModule
 
     def __init__(self, core):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
-        Bcfg2.Server.Plugin.Connector.__init__(self)
-        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data)
-        Bcfg2.Server.Plugin.TemplateDataProvider.__init__(self)
+        Plugin.__init__(self, core)
+        Connector.__init__(self)
+        DirectoryBacked.__init__(self, self.data)
+        TemplateDataProvider.__init__(self)
 
     def get_additional_data(self, _):
         return dict([(h._module_name, h)  # pylint: disable=W0212
