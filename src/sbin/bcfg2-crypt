@@ -418,7 +418,7 @@ def main():  # pylint: disable=R0912,R0915
 
         if data is None:
             data = getattr(tool, mode)()
-        if data is not None:
+        if data is None:
             logger.error("Failed to %s %s, skipping" % (mode, fname))
             continue
         if setup['crypt_stdout']:
