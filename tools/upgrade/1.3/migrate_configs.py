@@ -5,6 +5,7 @@ import sys
 from Bcfg2.Compat import ConfigParser
 import Bcfg2.Options
 
+
 def copy_section(src_file, tgt_cfg, section, newsection=None):
     if newsection is None:
         newsection = section

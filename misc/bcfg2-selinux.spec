@@ -7,9 +7,17 @@
 %global selinux_types %(%{__awk} '/^#[[:space:]]*SELINUXTYPE=/,/^[^#]/ { if ($3 == "-") printf "%s ", $2 }' /etc/selinux/config 2>/dev/null)
 %global selinux_variants %([ -z "%{selinux_types}" ] && echo mls strict targeted || echo %{selinux_types})
 
+# For -pre or -rc releases, remove the initial <hash><percent>
+# characters from the appropriate line below.
+#
+# Don't forget to change the Release: tag below to something like 0.1
+#%%global _rc 1
+#%%global _pre 2
+%global _pre_rc %{?_pre:.pre%{_pre}}%{?_rc:.rc%{_rc}}
+
 Name:             bcfg2-selinux
-Version:          1.3.2
-Release:          1
+Version:          1.3.3
+Release:          1%{?_pre_rc}%{?dist}
 Summary:          Bcfg2 Client and Server SELinux policy
 
 %if 0%{?suse_version}
@@ -65,7 +73,7 @@ deployment strategies.
 This package includes the Bcfg2 server and client SELinux policy.
 
 %prep
-%setup -q -n %{name}-%{version}
+%setup -q -n %{name}-%{version}%{?_pre_rc}
 
 %build
 cd redhat/selinux
@@ -120,6 +128,9 @@ if [ $1 -eq 0 ] ; then
 fi
 
 %changelog
+* Thu Nov 07 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.3-1
+- New upstream release
+
 * Mon Jul 01 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.2-1
 - New upstream release
 

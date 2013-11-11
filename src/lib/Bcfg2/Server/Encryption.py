@@ -197,6 +197,33 @@ def bruteforce_decrypt(crypted, passphrases=None, algorithm=None):
     raise EVPError("Failed to decrypt")
 
 
+def print_xml(element, keep_text=False):
+    """ Render an XML element for error output.  This prefixes the
+    line number and removes children for nicer display.
+
+    :param element: The element to render
+    :type element: lxml.etree._Element
+    :param keep_text: Do not discard text content from the element for
+                      display
+    :type keep_text: boolean
+    """
+    xml = None
+    if len(element) or element.text:
+        el = copy.copy(element)
+        if el.text and not keep_text:
+            el.text = '...'
+        for child in el.iterchildren():
+            el.remove(child)
+        xml = lxml.etree.tostring(
+            el,
+            xml_declaration=False).decode("UTF-8").strip()
+    else:
+        xml = lxml.etree.tostring(
+            element,
+            xml_declaration=False).decode("UTF-8").strip()
+    return "%s (line %s)" % (xml, element.sourceline)
+
+
 class PassphraseError(Exception):
     """ Exception raised when there's a problem determining the
     passphrase to encrypt or decrypt with """
@@ -403,6 +430,7 @@ class PropertiesEncryptor(Encryptor, PropertiesCryptoMixin):
             except PassphraseError:
                 self.logger.error(str(sys.exc_info()[1]))
                 return False
+            self.logger.debug("Encrypting %s" % print_xml(elt))
             elt.text = ssl_encrypt(elt.text, passphrase).strip()
             elt.set("encrypted", pname)
         return xdata
@@ -423,10 +451,14 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
             except PassphraseError:
                 self.logger.error(str(sys.exc_info()[1]))
                 return False
-            decrypted = ssl_decrypt(elt.text, passphrase).strip()
+            self.logger.debug("Decrypting %s" % print_xml(elt))
             try:
+                decrypted = ssl_decrypt(elt.text, passphrase).strip()
                 elt.text = decrypted.encode('ascii', 'xmlcharrefreplace')
                 elt.set("encrypted", pname)
+            except Bcfg2.Encryption.EVPError:
+                self.logger.error("Could not decrypt %s, skipping" %
+                                  print_xml(elt))
             except UnicodeDecodeError:
                 # we managed to decrypt the value, but it contains
                 # content that can't even be encoded into xml

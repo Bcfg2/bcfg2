@@ -329,6 +329,13 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute type="xsd:boolean" name="important">
+      <xsd:annotation>
+        <xsd:documentation>
+          Important entries are installed first during client execution.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute type="xsd:boolean" name="recursive">
       <xsd:annotation>
         <xsd:documentation>

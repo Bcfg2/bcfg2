@@ -175,9 +175,16 @@ class DBProbeStore(ProbeStore, Bcfg2.Server.Plugin.DatabaseBacked):
         expire_metadata = False
         for probe, pdata in data.items():
             self._datacache[hostname][probe] = pdata
-            record, created = ProbesDataModel.objects.get_or_create(
-                hostname=hostname,
-                probe=probe)
+            try:
+                record, created = ProbesDataModel.objects.get_or_create(
+                    hostname=hostname,
+                    probe=probe)
+            except ProbesDataModel.MultipleObjectsReturned:
+                ProbesDataModel.objects.filter(hostname=hostname,
+                                               probe=probe).delete()
+                record, created = ProbesDataModel.objects.get_or_create(
+                    hostname=hostname,
+                    probe=probe)
             expire_metadata |= created
             if record.data != pdata:
                 record.data = pdata
@@ -447,7 +454,6 @@ class Probes(Bcfg2.Server.Plugin.Probing,
     def GetProbes(self, metadata):
         return self.probes.get_probe_data(metadata)
 
-    @track_statistics()
     def ReceiveData(self, client, datalist):
         cgroups = set()
         cdata = dict()

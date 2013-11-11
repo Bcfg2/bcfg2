@@ -23,8 +23,8 @@
 %global _pre_rc %{?_pre:.pre%{_pre}}%{?_rc:.rc%{_rc}}
 
 Name:             bcfg2
-Version:          1.3.2
-Release:          2%{?_pre_rc}%{?dist}
+Version:          1.3.3
+Release:          1%{?_pre_rc}%{?dist}
 Summary:          A configuration management system
 
 %if 0%{?suse_version}
@@ -753,6 +753,9 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 
 
 %changelog
+* Thu Nov 07 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.3-1
+- New upstream release
+
 * Sun Aug 04 2013 John Morris <john@zultron.com> - 1.3.2-2
 - Reconcile divergences with Fedora specfile, as requested by upstream
   (equally large changes made in Fedora version to reconcile with
