@@ -31,7 +31,7 @@ helpers will be available to all clients.
 Writing Helpers
 ===============
 
-A helper module is just a Python module with three special conditions:
+A helper module is just a Python module with several special conditions:
 
 * The filename must end with ``.py``
 * The module must have an attribute, ``__export__``, that lists all of
@@ -42,6 +42,12 @@ A helper module is just a Python module with three special conditions:
   in ``__export__``.  Additionally, including symbols that start with
   an underscore or double underscore is bad form, and may also produce
   errors.
+
+Additionally, the module *may* have an attribute, ``__default__``,
+that lists all of the symbols that you wish to include by default in
+the template namespace.  ``name``, ``metadata``, ``source_path``,
+``repo``, and ``path`` are reserved names, and should not be included
+in ``__default__``.
 
 See ``examples/TemplateHelper`` for examples of helper modules.
 
@@ -54,17 +60,23 @@ a HelperModule object will has, as attributes, all symbols listed in
 ``__export__``.  For example, consider this helper module::
 
   __export__ = ["hello"]
-  
+  __default__ = ["pining"]
+
   def hello(metadata):
       return "Hello, %s!" % metadata.hostname
+
+  def pining(text):
+      return "It's pinin' for the %s!" % text
 
 To use this in a Genshi template, we could do::
 
   ${metadata.TemplateHelper['hello'].hello(metadata)}
+  ${pining("fjords")}
 
 The template would produce::
 
   Hello, foo.example.com!
+  It's pinin' for the fjords!
 
 Note that the client metadata object is not passed to a helper module
 in any magical way; if you want to access the client metadata object
