@@ -229,6 +229,10 @@ class PassphraseError(Exception):
     passphrase to encrypt or decrypt with """
 
 
+class DecryptError(Exception):
+    """ Exception raised when decryption fails. """
+
+
 class CryptoTool(object):
     """ Generic decryption/encryption interface base object """
 
@@ -330,21 +334,17 @@ class CfgDecryptor(Decryptor):
             try:
                 return ssl_decrypt(self.data, self.passphrase)
             except EVPError:
-                self.logger.info("Could not decrypt %s with the "
-                                 "specified passphrase" % self.filename)
-                return False
+                raise DecryptError("Could not decrypt %s with the "
+                                   "specified passphrase" % self.filename)
             except:
-                err = sys.exc_info()[1]
-                self.logger.error("Error decrypting %s: %s" %
-                                  (self.filename, err))
-                return False
+                raise DecryptError("Error decrypting %s: %s" %
+                                   (self.filename, sys.exc_info()[1]))
         else:  # no passphrase given, brute force
             try:
                 return bruteforce_decrypt(self.data)
             except EVPError:
-                self.logger.info("Could not decrypt %s with any passphrase" %
-                                 self.filename)
-                return False
+                raise DecryptError("Could not decrypt %s with any passphrase" %
+                                   self.filename)
 
     def get_destination_filename(self, original_filename):
         if original_filename.endswith(".crypt"):
@@ -444,19 +444,20 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
     default_xpath = '//*[@encrypted]'
 
     def decrypt(self):
+        decrypted = False
         xdata = lxml.etree.XML(self.data, parser=XMLParser)
         for elt in self._get_elements(xdata):
             try:
                 pname, passphrase = self._get_element_passphrase(elt)
             except PassphraseError:
-                self.logger.error(str(sys.exc_info()[1]))
-                return False
+                raise DecryptError(str(sys.exc_info()[1]))
             self.logger.debug("Decrypting %s" % print_xml(elt))
             try:
                 decrypted = ssl_decrypt(elt.text, passphrase).strip()
                 elt.text = decrypted.encode('ascii', 'xmlcharrefreplace')
                 elt.set("encrypted", pname)
-            except Bcfg2.Encryption.EVPError:
+                decrypted = True
+            except (EVPError, TypeError):
                 self.logger.error("Could not decrypt %s, skipping" %
                                   print_xml(elt))
             except UnicodeDecodeError:
@@ -467,7 +468,11 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
                 # a different key, and wound up with gibberish.
                 self.logger.warning("Decrypted %s to gibberish, skipping" %
                                     elt.tag)
-        return xdata
+        if decrypted:
+            return xdata
+        else:
+            raise DecryptError("Failed to decrypt any data in %s" %
+                               self.filename)
 
     def _write(self, filename, data):
         PropertiesCryptoMixin._write(self, filename, data)
@@ -507,11 +512,11 @@ class CLI(object):
         Bcfg2.Options.PathOption(
             "files", help="File(s) to encrypt or decrypt", nargs='+')]
 
-    def __init__(self):
+    def __init__(self, argv=None):
         parser = Bcfg2.Options.get_parser(
             description="Encrypt and decrypt Bcfg2 data",
             components=[self, _OptionContainer])
-        parser.parse()
+        parser.parse(argv=argv)
         self.logger = logging.getLogger(parser.prog)
 
         if Bcfg2.Options.setup.decrypt:
@@ -560,16 +565,7 @@ class CLI(object):
                 if Bcfg2.Options.setup.remove:
                     self.logger.info("Cannot use --remove with Properties "
                                      "file %s, ignoring for this file" % fname)
-                try:
-                    tools = (PropertiesEncryptor(fname),
-                             PropertiesDecryptor(fname))
-                except PassphraseError:
-                    self.logger.error(str(sys.exc_info()[1]))
-                    continue
-                except IOError:
-                    self.logger.error("Error reading %s, skipping: %s" %
-                                      (fname, err))
-                    continue
+                tools = (PropertiesEncryptor, PropertiesDecryptor)
             else:
                 ftype = "Cfg"
                 if Bcfg2.Options.setup.xpath:
@@ -580,8 +576,13 @@ class CLI(object):
                     self.logger.error("Cannot use interactive mode with "
                                       "--cfg, ignoring --interactive")
                     Bcfg2.Options.setup.interactive = False
+                tools = (CfgEncryptor, CfgDecryptor)
+
+            data = None
+            mode = None
+            if Bcfg2.Options.setup.encrypt:
                 try:
-                    tools = (CfgEncryptor(fname), CfgDecryptor(fname))
+                    tool = tools[0](fname)
                 except PassphraseError:
                     self.logger.error(str(sys.exc_info()[1]))
                     continue
@@ -589,40 +590,56 @@ class CLI(object):
                     self.logger.error("Error reading %s, skipping: %s" %
                                       (fname, err))
                     continue
-
-            data = None
-            mode = None
-            if Bcfg2.Options.setup.encrypt:
-                tool = tools[0]
                 mode = "encrypt"
                 self.logger.debug("Encrypting %s file %s" % (ftype, fname))
             elif Bcfg2.Options.setup.decrypt:
-                tool = tools[1]
+                try:
+                    tool = tools[1](fname)
+                except PassphraseError:
+                    self.logger.error(str(sys.exc_info()[1]))
+                    continue
+                except IOError:
+                    self.logger.error("Error reading %s, skipping: %s" %
+                                      (fname, err))
+                    continue
                 mode = "decrypt"
                 self.logger.debug("Decrypting %s file %s" % (ftype, fname))
             else:
                 self.logger.info("Neither --encrypt nor --decrypt specified, "
                                  "determining mode")
-                tool = tools[1]
+                try:
+                    tool = tools[1](fname)
+                except PassphraseError:
+                    self.logger.error(str(sys.exc_info()[1]))
+                    continue
+                except IOError:
+                    self.logger.error("Error reading %s, skipping: %s" %
+                                      (fname, err))
+                    continue
                 try:
                     self.logger.debug("Trying to decrypt %s file %s" % (ftype,
                                                                         fname))
                     data = tool.decrypt()
                     mode = "decrypt"
                     self.logger.debug("Decrypted %s file %s" % (ftype, fname))
-                except:  # pylint: disable=W0702
-                    pass
-                if data is False:
-                    data = None
+                except DecryptError:
                     self.logger.info("Failed to decrypt %s, trying encryption"
                                      % fname)
-                    tool = tools[0]
+                    try:
+                        tool = tools[0](fname)
+                    except PassphraseError:
+                        self.logger.error(str(sys.exc_info()[1]))
+                        continue
+                    except IOError:
+                        self.logger.error("Error reading %s, skipping: %s" %
+                                          (fname, err))
+                        continue
                     mode = "encrypt"
                     self.logger.debug("Encrypting %s file %s" % (ftype, fname))
 
-            if data is None:
+            try:
                 data = getattr(tool, mode)()
-            if data in [False, None]:
+            except DecryptError:
                 self.logger.error("Failed to %s %s, skipping" % (mode, fname))
                 continue
             if Bcfg2.Options.setup.stdout:
