@@ -12,7 +12,7 @@ try:
     # Django < 1.6
     from django.conf.urls import defaults
     django_urls = defaults
-except:
+except ImportError:
     # Django > 1.6
     from django.conf import urls
     django_urls = urls
