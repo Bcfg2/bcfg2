@@ -311,6 +311,14 @@ def list_split(c_string):
         return re.split(r'\s*,\s*', c_string)
     return []
 
+def list_split_anchored_regex(c_string):
+    """ like list_split but split on whitespace and compile each element as
+    anchored regex """
+    try:
+        return [re.compile('^' + x + '$') for x in re.split(r'\s+', c_string)]
+    except re.error:
+        raise ValueError("Not a list of regexes", c_string)
+
 
 def colon_split(c_string):
     """ split an option string on colons, returning a list """
@@ -641,6 +649,12 @@ SERVER_CHILDREN = \
            cf=('server', 'children'),
            cook=get_int,
            long_arg=True)
+SERVER_PROBE_ALLOWED_GROUPS = \
+    Option('Whitespace-separated list of group names (as regex) to which '
+           'probes can assign a client by writing "group:" to stdout.',
+           default=['.*'],
+           cf=('probes', 'allowed_groups'),
+           cook=list_split_anchored_regex)
 
 # database options
 DB_ENGINE = \
@@ -1225,7 +1239,8 @@ SERVER_COMMON_OPTIONS = dict(repo=SERVER_REPOSITORY,
                              perflog=LOG_PERFORMANCE,
                              perflog_interval=PERFLOG_INTERVAL,
                              children=SERVER_CHILDREN,
-                             client_timeout=CLIENT_TIMEOUT)
+                             client_timeout=CLIENT_TIMEOUT,
+                             probe_allowed_groups=SERVER_PROBE_ALLOWED_GROUPS)
 
 CRYPT_OPTIONS = dict(encrypt=ENCRYPT,
                      decrypt=DECRYPT,

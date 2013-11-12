@@ -204,6 +204,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             err = sys.exc_info()[1]
             raise Bcfg2.Server.Plugin.PluginInitError(err)
 
+        self.allowed_cgroups = core.setup['probe_allowed_groups']
         self.probedata = dict()
         self.cgroups = dict()
         self.load_data()
@@ -391,10 +392,17 @@ class Probes(Bcfg2.Server.Plugin.Probing,
             if line.split(':')[0] == 'group':
                 newgroup = line.split(':')[1].strip()
                 if newgroup not in cgroups:
-                    cgroups.append(newgroup)
+                    if self._group_allowed(newgroup):
+                        cgroups.append(newgroup)
+                    else:
+                        self.logger.info("Disallowed group assignment %s from %s"
+                                         % (newgroup, client.hostname))
                 dlines.remove(line)
         dobj = ProbeData("\n".join(dlines))
         cprobedata[data.get('name')] = dobj
+
+    def _group_allowed(self, group):
+        return any(r.match(group) for r in self.allowed_cgroups)
 
     def get_additional_groups(self, meta):
         return self.cgroups.get(meta.hostname, list())
