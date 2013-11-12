@@ -444,7 +444,7 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
     default_xpath = '//*[@encrypted]'
 
     def decrypt(self):
-        decrypted = False
+        decrypted_any = False
         xdata = lxml.etree.XML(self.data, parser=XMLParser)
         for elt in self._get_elements(xdata):
             try:
@@ -456,7 +456,7 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
                 decrypted = ssl_decrypt(elt.text, passphrase).strip()
                 elt.text = decrypted.encode('ascii', 'xmlcharrefreplace')
                 elt.set("encrypted", pname)
-                decrypted = True
+                decrypted_any = True
             except (EVPError, TypeError):
                 self.logger.error("Could not decrypt %s, skipping" %
                                   print_xml(elt))
@@ -468,7 +468,7 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
                 # a different key, and wound up with gibberish.
                 self.logger.warning("Decrypted %s to gibberish, skipping" %
                                     elt.tag)
-        if decrypted:
+        if decrypted_any:
             return xdata
         else:
             raise DecryptError("Failed to decrypt any data in %s" %

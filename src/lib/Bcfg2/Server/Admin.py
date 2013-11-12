@@ -912,8 +912,8 @@ if HAS_REPORTS:
             # Bcfg2.DBSettings has been populated, Django gets a null
             # configuration, and subsequent updates to
             # Bcfg2.DBSettings won't help.
-            from django.db.transaction import commit_on_success
-            self.run = commit_on_success(self.run)
+            from Bcfg2.Reporting.Compat import transaction
+            self.run = transaction.atomic(self.run)
 
         def run(self, _):  # pylint: disable=E0202
             # Cleanup unused entries

@@ -1,5 +1,5 @@
 """Helper functions for reports"""
-from django.conf.urls.defaults import *
+from Bcfg2.Reporting.Compat.django_urls import *
 import re
 
 """List of filters provided by filteredUrls"""
