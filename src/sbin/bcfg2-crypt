@@ -50,6 +50,10 @@ class PassphraseError(Exception):
     passphrase to encrypt or decrypt with """
 
 
+class DecryptError(Exception):
+    """ Exception raised when decryption fails. """
+
+
 class CryptoTool(object):
     """ Generic decryption/encryption interface base object """
     def __init__(self, filename, setup):
@@ -169,23 +173,19 @@ class CfgDecryptor(Decryptor):
                     self.data, self.passphrase,
                     Bcfg2.Encryption.get_algorithm(self.setup))
             except Bcfg2.Encryption.EVPError:
-                self.logger.info("Could not decrypt %s with the "
-                                 "specified passphrase" % self.filename)
-                return False
+                raise DecryptError("Could not decrypt %s with the "
+                                   "specified passphrase" % self.filename)
             except:
-                err = sys.exc_info()[1]
-                self.logger.error("Error decrypting %s: %s" %
-                                  (self.filename, err))
-                return False
+                raise DecryptError("Error decrypting %s: %s" %
+                                   (self.filename, sys.exc_info()[1]))
         else:  # no passphrase given, brute force
             try:
                 return Bcfg2.Encryption.bruteforce_decrypt(
                     self.data, passphrases=self.passphrases.values(),
                     algorithm=Bcfg2.Encryption.get_algorithm(self.setup))
             except Bcfg2.Encryption.EVPError:
-                self.logger.info("Could not decrypt %s with any passphrase" %
-                                 self.filename)
-                return False
+                raise DecryptError("Could not decrypt %s with any passphrase" %
+                                   self.filename)
 
     def get_destination_filename(self, original_filename):
         if original_filename.endswith(".crypt"):
@@ -288,19 +288,20 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
     default_xpath = '//*[@encrypted]'
 
     def decrypt(self):
+        decrypted = False
         xdata = lxml.etree.XML(self.data, parser=XMLParser)
         for elt in self._get_elements(xdata):
             try:
                 pname, passphrase = self._get_element_passphrase(elt)
             except PassphraseError:
-                self.logger.error(str(sys.exc_info()[1]))
-                return False
+                raise DecryptError(str(sys.exc_info()[1]))
             self.logger.debug("Decrypting %s" % print_xml(elt))
             try:
                 decrypted = Bcfg2.Encryption.ssl_decrypt(
                     elt.text, passphrase,
                     Bcfg2.Encryption.get_algorithm(self.setup)).strip()
-            except Bcfg2.Encryption.EVPError:
+                decrypted = True
+            except (Bcfg2.Encryption.EVPError, TypeError):
                 self.logger.error("Could not decrypt %s, skipping" %
                                   print_xml(elt))
             try:
@@ -314,7 +315,11 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
                 # a different key, and wound up with gibberish.
                 self.logger.warning("Decrypted %s to gibberish, skipping" %
                                     elt.tag)
-        return xdata
+        if decrypted:
+            return xdata
+        else:
+            raise DecryptError("Failed to decrypt any data in %s" %
+                               self.filename)
 
     def _write(self, filename, data):
         PropertiesCryptoMixin._write(self, filename, data)
@@ -437,10 +442,7 @@ def main():  # pylint: disable=R0912,R0915
             try:
                 data = tool.decrypt()
                 mode = "decrypt"
-            except:  # pylint: disable=W0702
-                pass
-            if data is False:
-                data = None
+            except DecryptError:
                 logger.info("Failed to decrypt %s, trying encryption" % fname)
                 try:
                     tool = tools[0](fname, setup)
@@ -450,10 +452,11 @@ def main():  # pylint: disable=R0912,R0915
                 mode = "encrypt"
 
         if data is None:
-            data = getattr(tool, mode)()
-        if data is None:
-            logger.error("Failed to %s %s, skipping" % (mode, fname))
-            continue
+            try:
+                data = getattr(tool, mode)()
+            except DecryptError:
+                logger.error("Failed to %s %s, skipping" % (mode, fname))
+                continue
         if setup['crypt_stdout']:
             if len(setup['args']) > 1:
                 print("----- %s -----" % fname)
