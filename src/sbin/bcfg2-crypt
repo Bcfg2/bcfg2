@@ -288,7 +288,7 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
     default_xpath = '//*[@encrypted]'
 
     def decrypt(self):
-        decrypted = False
+        decrypted_any = False
         xdata = lxml.etree.XML(self.data, parser=XMLParser)
         for elt in self._get_elements(xdata):
             try:
@@ -300,7 +300,7 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
                 decrypted = Bcfg2.Encryption.ssl_decrypt(
                     elt.text, passphrase,
                     Bcfg2.Encryption.get_algorithm(self.setup)).strip()
-                decrypted = True
+                decrypted_any = True
             except (Bcfg2.Encryption.EVPError, TypeError):
                 self.logger.error("Could not decrypt %s, skipping" %
                                   print_xml(elt))
@@ -315,7 +315,7 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
                 # a different key, and wound up with gibberish.
                 self.logger.warning("Decrypted %s to gibberish, skipping" %
                                     elt.tag)
-        if decrypted:
+        if decrypted_any:
             return xdata
         else:
             raise DecryptError("Failed to decrypt any data in %s" %
