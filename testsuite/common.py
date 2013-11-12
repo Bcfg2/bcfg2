@@ -38,6 +38,8 @@ def set_setup_default(option, value=None):
     if not hasattr(Bcfg2.Options.setup, option):
         setattr(Bcfg2.Options.setup, option, value)
 
+Bcfg2.Options.Parser._unit_test = True
+
 try:
     import django.conf
     has_django = True
@@ -156,6 +158,7 @@ class Bcfg2TestCase(TestCase):
 class DBModelTestCase(Bcfg2TestCase):
     """ Test case class for Django database models """
     models = []
+    __test__ = False
 
     @skipUnless(has_django, "Django not found, skipping")
     def test_syncdb(self):

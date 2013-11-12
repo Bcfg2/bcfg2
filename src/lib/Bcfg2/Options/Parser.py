@@ -47,6 +47,9 @@ class Parser(argparse.ArgumentParser):
                       default='UTF-8', help="Encoding of config files",
                       cf=('components', 'encoding'))]
 
+    #: Flag used in unit tests to disable actual config file reads
+    _unit_test = False
+
     def __init__(self, **kwargs):
         """ See :class:`argparse.ArgumentParser` for a full list of
         accepted parameters.
@@ -72,6 +75,8 @@ class Parser(argparse.ArgumentParser):
 
         #: The namespace options will be stored in.
         self.namespace = kwargs.pop('namespace', setup)
+        if self.namespace is None:
+            self.namespace = setup
         add_base_options = kwargs.pop('add_base_options', True)
 
         #: Flag to indicate that this is the pre-parsing 'early' run
@@ -98,8 +103,9 @@ class Parser(argparse.ArgumentParser):
         self._config_files = []
         if add_base_options:
             self.add_component(self)
-        for component in components:
-            self.add_component(component)
+        if components:
+            for component in components:
+                self.add_component(component)
 
     def add_options(self, options):
         """ Add an explicit list of options to the parser.  When
@@ -206,7 +212,7 @@ class Parser(argparse.ArgumentParser):
         bootstrap = bootstrap_parser.parse_known_args(args=self.argv)[0]
 
         # check whether the specified bcfg2.conf exists
-        if not os.path.exists(bootstrap.config):
+        if not self._unit_test and not os.path.exists(bootstrap.config):
             self.error("Could not read %s" % bootstrap.config)
         self.add_config_file(self.configfile.dest, bootstrap.config,
                              reparse=False)
@@ -263,14 +269,6 @@ class Parser(argparse.ArgumentParser):
 #: for all parsing
 _parser = Parser()  # pylint: disable=C0103
 
-#: Track whether or not the module-level parser has been initialized
-#: yet.  We track this separately because some things (e.g., modules
-#: that add components on import) will use the parser before it has
-#: been initialized, so we can't just set
-#: :attr:`Bcfg2.Options._parser` to None and wait for
-#: :func:`Bcfg2.Options.get_parser` to be called.
-_parser_initialized = False  # pylint: disable=C0103
-
 
 def get_parser(description=None, components=None, namespace=None):
     """ Get an existing :class:`Bcfg2.Options.Parser` object.  (One is
@@ -299,8 +297,9 @@ def get_parser(description=None, components=None, namespace=None):
     :type namespace: argparse.Namespace
     :returns: Bcfg2.Options.Parser object
     """
-    if _parser_initialized and (description or components or namespace):
-        raise OptionParserException("Parser has already been initialized")
+    if Parser._unit_test:
+        return Parser(description=description, components=components,
+                      namespace=namespace)
     elif (description or components or namespace):
         if description:
             _parser.description = description
