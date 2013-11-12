@@ -637,11 +637,13 @@ class CLI(object):
                     mode = "encrypt"
                     self.logger.debug("Encrypting %s file %s" % (ftype, fname))
 
-            try:
-                data = getattr(tool, mode)()
-            except DecryptError:
-                self.logger.error("Failed to %s %s, skipping" % (mode, fname))
-                continue
+            if data is None:
+                try:
+                    data = getattr(tool, mode)()
+                except DecryptError:
+                    self.logger.error("Failed to %s %s, skipping" % (mode,
+                                                                     fname))
+                    continue
             if Bcfg2.Options.setup.stdout:
                 if len(Bcfg2.Options.setup.files) > 1:
                     print("----- %s -----" % fname)
