@@ -1,0 +1,12 @@
+<Properties>
+  <Foo name="1" encrypted="basic">U2FsdGVkX18bAwhcMtr8J02ztT8kBjdCjae9lYnbsRY=</Foo>
+  <Bar name="1" encrypted="complex">Some text</Bar>
+  <Foo name="2" encrypted="complex">U2FsdGVkX19+Yq+VwbAfNGUHtnB7hy74V7Fvz0GHsqA=</Foo>
+  <Group name="test">
+    <Bar name="2" encrypted="basic">Some text</Bar>
+    <Foo name="3" encrypted="basic">U2FsdGVkX1+A3f6lIoFvCNaC6/ctbOLqT0z/YCJ+FkeyTgAnmU1/wk7FlPxOaPPkI2iRfEbNK2sNtUS0rQ8TYT3gIRO3qyrUNIcHaYfGerAZN3Xg9F3CsaL1NQjHxSKyJLdTmdB/1m0AQ3jw13n1eNrokGHF6HU6bD6TIJVFmds126ucOg56Xh+3ffOUukh2EwlBxnvGC/CDQluFixL1MY74xFd5mY5iDcJG9o5qUtjKmiOrtEAXFuM49JLciDHtMjQ2wbX/9lGek7U2Y05I2vU8BGtD3jh/Pt+17Vql80UrNHqVnWx247sxgYmkJIaworCTNowU2KsWEQj46E1bzAXEUVdGF65ltIXIK75KozHf8msKuVFwQDYCJ+lXRZgIygqcZ5glAyjW1WxyigxSFpRfVcZfiHp7d52JfBCU66367j7DvEnAJAuvL7jufJSavd6RxaEGGB3KGAMpz8NQxPy6i2s5RkY5V8eiqUOHsnZN6zHPgkZ90a+dokllLbH+HSYGU26sevJL4TupDCkz2/sRasmBB8fBAF5PGOI+UC7vXncbvpsMLsILFoUYtyWrDZ9cygOElEmWpVJSeECAA09iOhyaXN5rN/tyqkt3+ao=</Foo>
+  </Group>
+  <Group name="test2">
+    <Bar name="3" encrypted="basic">Some text<Foo name="4" encrypted="basic">U2FsdGVkX1+cSl37JVEVIEV+bqVBlMGQnZdZWsjHPME=</Foo></Bar>
+  </Group>
+</Properties>

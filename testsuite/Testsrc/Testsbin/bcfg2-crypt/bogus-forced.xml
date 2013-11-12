@@ -1,0 +1,5 @@
+<Bogus>
+  <!-- This is not a real properties file; we use it to test forcing
+       bcfg2-crypt to treat it like one -->
+  <Test encrypted="basic">U2FsdGVkX1+uFQUijBDQpGBdTroNS6nl8lPUSeHcWJw=</Test>
+</Bogus>

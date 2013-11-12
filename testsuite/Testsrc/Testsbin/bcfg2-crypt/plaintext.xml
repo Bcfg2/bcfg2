@@ -1,0 +1,18 @@
+<Properties>
+  <Foo name="1" encrypted="basic">Some text</Foo>
+  <Bar name="1" encrypted="complex">Some text</Bar>
+  <Foo name="2" encrypted="complex">Some text</Foo>
+  <Group name="test">
+    <Bar name="2" encrypted="basic">Some text</Bar>
+    <Foo name="3" encrypted="basic">Praesent consectetur condimentum nisl ut cursus. Etiam aliquam nisi
+dolor. Mauris aliquet condimentum neque, sodales laoreet lectus
+venenatis ac. Morbi mattis justo odio, ac fringilla leo egestas
+ut. Integer nec sapien pulvinar, ultrices nulla id, posuere
+magna. Quisque in tincidunt sem, sed vehicula orci. Nulla blandit,
+nisi vel cursus semper, nibh metus consequat purus, ac ullamcorper
+dolor lorem vitae ligula. Maecenas non consectetur nibh.</Foo>
+  </Group>
+  <Group name="test2">
+    <Bar name="3" encrypted="basic">Some text<Foo name="4" encrypted="basic">Nested text</Foo></Bar>
+  </Group>
+</Properties>

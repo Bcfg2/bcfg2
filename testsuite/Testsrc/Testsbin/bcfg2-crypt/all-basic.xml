@@ -1,0 +1,12 @@
+<Properties>
+  <Foo name="1" encrypted="basic">U2FsdGVkX19C6Cy0nM0mlcGGBjqBMAC+GqyPfLpqgT0=</Foo>
+  <Bar name="1" encrypted="basic">U2FsdGVkX18KUHJTHdrgz3gWtNA5U3g3gq0i/AsdCVE=</Bar>
+  <Foo name="2" encrypted="basic">U2FsdGVkX1+9nUFxmbl8UJh1t5fWo4cQQa5nQm8hVtw=</Foo>
+  <Group name="test">
+    <Bar name="2" encrypted="basic">U2FsdGVkX18tScJs1si9y45NxPkjYj66Ee+TsYDZAd0=</Bar>
+    <Foo name="3" encrypted="basic">U2FsdGVkX19q3USU1cnvgfV8roHeSNSQ2bCMD1CCR3jE0e53aT71ATtqHmfsJfDnTgQ28xbKGZhAwoML8ixXkdkyqnsSF69bnIwebaI4qqYXFA2FWF1Cop3bYEV67m6dSM9BkSluKIcs7VdPRANE71OQnd9P2cQbMig50IkBtuE3El8bnc+n4E0k31NT7ZZJ9s/9FJMHg/AfIjvB4KgMqylHcfT43gGICeq4JYPKIsxYjKq0bzFISPBgztD1++YTdCKbJDtjNJJOlqanB3LsBR3PQt6rliWqqPVT3aLP8BU/gIcGE3oyyce04ULxNGTPqFlWgw2r7RopygqgZbzTgU21thzef7bXRi/NATQpXkM70BdCLwRvRNaC3JrMY/z4k0//QliTiNYPNejpGvwezHf99PTN7VPWMhQyONSpLO905KmEJYRt1BXx8p+72b1Q/1S/QFfzU8JU3MO4yiLFf6kyB6nS+pCA40g/UfwKLQI2Fr6Oi5acOK7SRTXqSmxhI+96TQms6bWmm889BO8QOfiuAI1CvHWEBljPACXydcM9wACjhBvpra41UzVgkzadaUO8yBV0Z0bLVHuyIdI1I78vgrkd99tJvC/AmYazEwM=</Foo>
+  </Group>
+  <Group name="test2">
+    <Bar name="3" encrypted="basic">U2FsdGVkX19aE/IqfkkhgkbhA0i9cb1PYp7tdTmfidg=<Foo name="4" encrypted="basic">U2FsdGVkX1+J4nhfxE5GjwDF1PzOjw2q5e5vrcFZyCQ=</Foo></Bar>
+  </Group>
+</Properties>
