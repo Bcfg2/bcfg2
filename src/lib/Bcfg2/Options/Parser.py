@@ -48,7 +48,7 @@ class Parser(argparse.ArgumentParser):
                       cf=('components', 'encoding'))]
 
     #: Flag used in unit tests to disable actual config file reads
-    _unit_test = False
+    unit_test = False
 
     def __init__(self, **kwargs):
         """ See :class:`argparse.ArgumentParser` for a full list of
@@ -212,7 +212,7 @@ class Parser(argparse.ArgumentParser):
         bootstrap = bootstrap_parser.parse_known_args(args=self.argv)[0]
 
         # check whether the specified bcfg2.conf exists
-        if not self._unit_test and not os.path.exists(bootstrap.config):
+        if not self.unit_test and not os.path.exists(bootstrap.config):
             self.error("Could not read %s" % bootstrap.config)
         self.add_config_file(self.configfile.dest, bootstrap.config,
                              reparse=False)
@@ -297,7 +297,7 @@ def get_parser(description=None, components=None, namespace=None):
     :type namespace: argparse.Namespace
     :returns: Bcfg2.Options.Parser object
     """
-    if Parser._unit_test:
+    if Parser.unit_test:
         return Parser(description=description, components=components,
                       namespace=namespace)
     elif (description or components or namespace):

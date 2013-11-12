@@ -38,7 +38,7 @@ def set_setup_default(option, value=None):
     if not hasattr(Bcfg2.Options.setup, option):
         setattr(Bcfg2.Options.setup, option, value)
 
-Bcfg2.Options.Parser._unit_test = True
+Bcfg2.Options.Parser.unit_test = True
 
 try:
     import django.conf
