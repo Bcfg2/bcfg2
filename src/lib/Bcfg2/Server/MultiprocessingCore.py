@@ -333,8 +333,12 @@ class MultiprocessingCore(BuiltinCore):
         self.children = None
 
     def __str__(self):
-        return "%s(%s; %s children)" % (self.__class__.__name__,
-                                        Bcfg2.Options.setup.location,
+        if hasattr(Bcfg2.Options.setup, "location"):
+            return "%s(%s; %s children)" % (self.__class__.__name__,
+                                            Bcfg2.Options.setup.location,
+                                            len(self._all_children))
+        else:
+            return "%s(%s children)" % (self.__class__.__name__,
                                         len(self._all_children))
 
     def _run(self):
