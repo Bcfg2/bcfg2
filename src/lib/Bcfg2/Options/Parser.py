@@ -240,6 +240,7 @@ class Parser(argparse.ArgumentParser):
         # components, until all components have been loaded.  On each
         # iteration, set defaults from config file/environment
         # variables
+        self._parse_config_options()
         while not self.parsed:
             self.parsed = True
             self._set_defaults()
