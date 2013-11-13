@@ -680,7 +680,7 @@ DB_OPTIONS = \
            cook=dict_split)
 DB_SCHEMA = \
     Option('Database schema',
-           default='',
+           default='public',
            cf=('database', 'schema'))
 
 # Django options
