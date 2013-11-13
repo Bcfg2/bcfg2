@@ -53,7 +53,7 @@ class NagiosGen(Plugin, Generator):
 
         if host_groups:
             host_config.append(self.line_fmt % ("hostgroups",
-                                                ",".join(host_groups)))
+                                                ",".join(sorted(host_groups))))
 
         # read the config
         xtra = dict()
