@@ -292,17 +292,21 @@ class Core(object):
         famfd = self.fam.fileno()
         terminate = self.terminate
         while not terminate.isSet():
-            try:
-                if famfd:
-                    select.select([famfd], [], [], 2)
-                else:
-                    if not self.fam.pending():
-                        terminate.wait(15)
-                if self.fam.pending():
+            if famfd:
+                select.select([famfd], [], [], 2)
+            elif not self.fam.pending():
+                terminate.wait(15)
+            if self.fam.pending():
+                try:
                     self._update_vcs_revision()
+                except:
+                    self.logger.error("Error updating VCS revision: %s" %
+                                      sys.exc_info()[1])
+            try:
                 self.fam.handle_event_set(self.lock)
             except:
-                continue
+                self.logger.error("Error handling event set: %s" %
+                                  sys.exc_info()[1])
         self.logger.info("File monitor thread terminated")
 
     @track_statistics()
