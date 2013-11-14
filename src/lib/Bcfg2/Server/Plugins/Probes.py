@@ -403,6 +403,9 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         cprobedata[data.get('name')] = dobj
 
     def _group_allowed(self, group):
+        """ Determine if the named group can be set as a probe group
+        by checking the regexes listed in the [probes] groups_allowed
+        setting """
         return any(r.match(group) for r in self.allowed_cgroups)
 
     def get_additional_groups(self, meta):
