@@ -143,21 +143,23 @@ This assigns the client to the groups debian-wheezy and amd64.
 To prevent clients from manipulating the probe output and choosing
 unexpected groups (and receiving their potential sensitive files) you
 can use the ``allowed_groups`` option in the ``[probes]`` section of
-``bcfg2.conf`` on the server. This whitespace-separated list of anchored
-regular expressions (must match the complete group name) controls
-dynamic group assignments. Only matching groups are allowed. The
-default allows all groups.
+``bcfg2.conf`` on the server. This whitespace-separated list of
+anchored regular expressions (must match the complete group name)
+controls dynamic group assignments. Only matching groups are
+allowed. The default allows all groups.
 
-.. versionadded:: TODO
+.. versionadded:: 1.3.4
 
-Example::
+Example:
+
+.. code-block:: ini
 
     [probes]
     allowed_groups = debian-(squeeze|wheezy|sid) i386
 
-This allows the groups debian-squeeze, debian-wheezy, debian-sid and
-i386. With the probe output from above, this setting would disallow
-the group amd64.
+This allows the groups `debian-squeeze`, `debian-wheezy`, `debian-sid`
+and `i386`. With the probe output from above, this setting would
+disallow the group `amd64`.
 
 Handling Probe Output
 =====================
