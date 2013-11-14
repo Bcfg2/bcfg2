@@ -311,6 +311,7 @@ def list_split(c_string):
         return re.split(r'\s*,\s*', c_string)
     return []
 
+
 def list_split_anchored_regex(c_string):
     """ like list_split but split on whitespace and compile each element as
     anchored regex """

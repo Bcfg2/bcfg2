@@ -395,8 +395,9 @@ class Probes(Bcfg2.Server.Plugin.Probing,
                     if self._group_allowed(newgroup):
                         cgroups.append(newgroup)
                     else:
-                        self.logger.info("Disallowed group assignment %s from %s"
-                                         % (newgroup, client.hostname))
+                        self.logger.info(
+                            "Disallowed group assignment %s from %s" %
+                            (newgroup, client.hostname))
                 dlines.remove(line)
         dobj = ProbeData("\n".join(dlines))
         cprobedata[data.get('name')] = dobj
