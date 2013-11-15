@@ -112,7 +112,6 @@ BuildRequires:    python-docutils
 BuildRequires:    systemd-units
 %endif
 
-Requires:         python-lxml
 %if 0%{?rhel} && 0%{?rhel} < 6
 Requires:         python-ssl
 %endif
