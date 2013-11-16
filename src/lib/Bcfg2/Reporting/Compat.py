@@ -10,9 +10,7 @@ if VERSION[0] == 1 and VERSION[1] < 6:
 
 try:
     # Django < 1.6
-    from django.conf.urls import defaults
-    django_urls = defaults
+    from django.conf.urls.defaults import url, patterns
 except ImportError:
     # Django > 1.6
-    from django.conf import urls
-    django_urls = urls
+    from django.conf.urls import url, patterns
