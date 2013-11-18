@@ -412,9 +412,6 @@ awk '
 # Fixup some paths
 %{__perl} -pi -e 's@/etc/default@%{_sysconfdir}/sysconfig@g' tools/bcfg2-cron
 
-%{__perl} -pi -e 's@/usr/lib/bcfg2@%{_libexecdir}@g' debian/bcfg2.cron.daily
-%{__perl} -pi -e 's@/usr/lib/bcfg2@%{_libexecdir}@g' debian/bcfg2.cron.hourly
-
 # Get rid of extraneous shebangs
 for f in `find src/lib -name \*.py`
 do
