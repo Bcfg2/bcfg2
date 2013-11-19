@@ -5,14 +5,13 @@ Synopsis:
 
   {% python
   import os
-  include = metadata.TemplateHelper['include']
-  custom = include.IncludeHelper(metadata, path).files(os.path.basename(name))
+  custom = IncludeHelper(metadata, path).files(os.path.basename(name))
   %}\
   {% for file in custom %}\
 
-  ########## Start ${include.describe_specificity(file)} ##########
+  ########## Start ${describe_specificity(file)} ##########
   {% include ${file} %}
-  ########## End ${include.describe_specificity(file)} ##########
+  ########## End ${describe_specificity(file)} ##########
   {% end %}\
 
 This would let you include files with the same base name; e.g. in a
@@ -20,7 +19,7 @@ template for ''foo.conf'', the include files would be called
 ''foo.conf.G_<group>.genshi_include''.  If a template needs to include
 different files in different places, you can do that like so:
 
-  inc = metadata.TemplateHelper['include'].IncludeHelper(metadata, path)
+  inc = IncludeHelper(metadata, path)
   custom_bar = inc.files("bar")
   custom_baz = inc.files("baz")
 
@@ -33,7 +32,7 @@ from ''baz.conf.G_<group>.genshi_include''.
 import os
 import re
 
-__export__ = ["IncludeHelper", "get_specificity", "describe_specificity"]
+__default__ = ["IncludeHelper", "get_specificity", "describe_specificity"]
 
 
 class IncludeHelper(object):
