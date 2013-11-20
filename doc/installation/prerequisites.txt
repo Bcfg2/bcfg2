@@ -21,7 +21,7 @@ Bcfg2 Client
 +----------------------------+------------------------+--------------------------------+
 | libxslt (if lxml is used)  | Any                    | libxml2                        |
 +----------------------------+------------------------+--------------------------------+
-| python                     | 2.4 and greater [#f1]  |                                |
+| python                     | 2.4 and greater [#f1]_ |                                |
 +----------------------------+------------------------+--------------------------------+
 | lxml or elementtree [#f2]_ | Any                    | lxml: libxml2, libxslt, python |
 +----------------------------+------------------------+--------------------------------+
@@ -50,12 +50,23 @@ Bcfg2 Server
 +-------------------------------+----------+--------------------------------+
 | lxml                          | 0.9+     | lxml: libxml2, libxslt, python |
 +-------------------------------+----------+--------------------------------+
-| gamin or fam                  | Any      |                                |
+| gamin or inotify              | Any      |                                |
 +-------------------------------+----------+--------------------------------+
-| python-gamin or python-fam    | Any      | gamin or fam, python           |
+| python-gamin or pyinotify     | Any      | gamin or inotify, python       |
 +-------------------------------+----------+--------------------------------+
-| M2crypto or python-ssl (note  | Any      | python, openssl                |
-| that the ssl module is        |          |                                |
-| included in python versions   |          |                                |
-| 2.6 and later                 |          |                                |
+| python-ssl (note              | Any      | python, backported ssl module  |
++-------------------------------+----------+--------------------------------+
+
+Bcfg2 Reporting
+---------------
+
+A webserver capabable of running wsgi applications is required for web
+reporting, such as Apache + mod_wsgi or nginx.
+
++-------------------------------+----------+--------------------------------+
+| Software                      | Version  | Requires                       |
++===============================+==========+================================+
+| django                        | 1.2.0+   |                                |
++-------------------------------+----------+--------------------------------+
+| south                         | 0.7.0+   |                                |
 +-------------------------------+----------+--------------------------------+
