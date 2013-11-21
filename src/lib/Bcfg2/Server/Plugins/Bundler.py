@@ -53,9 +53,9 @@ if HAS_GENSHI:
             stream = self.template.generate(
                 metadata=metadata,
                 repo=SETUP['repo']).filter(removecomment)
-            data = lxml.etree.XML(stream.render('xml',
-                                                strip_whitespace=False),
-                                  parser=Bcfg2.Server.XMLParser)
+            data = lxml.etree.XML(
+                stream.render('xml', strip_whitespace=False).encode(),
+                parser=Bcfg2.Server.XMLParser)
             bundlename = os.path.splitext(os.path.basename(self.name))[0]
             bundle = lxml.etree.Element('Bundle', name=bundlename)
             for item in self.Match(metadata, data):
