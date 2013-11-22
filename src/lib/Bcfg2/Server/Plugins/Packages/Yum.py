@@ -63,6 +63,7 @@ import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
 from lockfile import FileLock
 from Bcfg2.Utils import Executor
+from distutils.spawn import find_executable
 # pylint: disable=W0622
 from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
     ConfigParser, any
@@ -340,22 +341,18 @@ class YumCollection(Collection):
 
     @property
     def helper(self):
-        """ The full path to :file:`bcfg2-yum-helper`.  First, we
-        check in the config file to see if it has been explicitly
-        specified; next we see if it's in $PATH (which we do by making
-        a call to it; I wish there was a way to do this without
-        forking, but apparently not); finally we check in /usr/sbin,
-        the default location. """
+        """The full path to :file:`bcfg2-yum-helper`.  First, we check in the
+        config file to see if it has been explicitly specified; next
+        we see if it's in $PATH; finally we default to /usr/sbin, the
+        default location. """
         if not self._helper:
             # pylint: disable=W0212
             self.__class__._helper = Bcfg2.Options.setup.yum_helper
             if not self.__class__._helper:
                 # first see if bcfg2-yum-helper is in PATH
-                try:
-                    self.debug_log("Checking for bcfg2-yum-helper in $PATH")
-                    self.cmd.run(['bcfg2-yum-helper'])
-                    self.__class__._helper = 'bcfg2-yum-helper'
-                except OSError:
+                self.debug_log("Checking for bcfg2-yum-helper in $PATH")
+                self.__class__._helper = find_executable('bcfg2-yum-helper')
+                if not self.__class__._helper:
                     self.__class__._helper = "/usr/sbin/bcfg2-yum-helper"
             # pylint: enable=W0212
         return self._helper
