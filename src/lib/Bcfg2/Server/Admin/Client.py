@@ -6,6 +6,7 @@ from Bcfg2.Server.Plugin import MetadataConsistencyError
 
 
 def get_attribs(args):
+    """ Get a list of attributes to set on a client when adding/updating it """
     attr_d = {}
     for i in args[2:]:
         attr, val = i.split('=', 1)
@@ -19,7 +20,7 @@ def get_attribs(args):
 
 class Client(Bcfg2.Server.Admin.MetadataCore):
     """ Create, delete, or list client entries """
-    __usage__ = "[options] [add|del|list] [attr=val]"
+    __usage__ = "[options] [add|del|update|list] [attr=val]"
     __plugin_whitelist__ = ["Metadata"]
 
     def __call__(self, args):
