@@ -16,7 +16,7 @@ from Bcfg2.Compat import CmpMixin, wraps
 from Bcfg2.Server.Plugin.base import Debuggable, Plugin
 from Bcfg2.Server.Plugin.interfaces import Generator
 from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
-    PluginExecutionError
+    PluginExecutionError, PluginInitError
 
 try:
     import django  # pylint: disable=W0611
@@ -131,6 +131,18 @@ class DatabaseBacked(Plugin):
     #: conform to the possible values that function can handle.
     option = "use_database"
 
+    def __init__(self, core, datastore):
+        Plugin.__init__(self, core, datastore)
+        use_db = self.core.setup.cfp.getboolean(self.section,
+                                                self.option,
+                                                default=False)
+        if use_db and not HAS_DJANGO:
+            raise PluginInitError("%s is True but Django not found" %
+                                  self.option)
+        elif use_db and not self.core.database_available:
+            raise PluginInitError("%s is True but the database is unavailable "
+                                  "due to prior errors" % self.option)
+
     def _section(self):
         """ The section to look in for :attr:`DatabaseBacked.option`
         """
@@ -146,10 +158,7 @@ class DatabaseBacked(Plugin):
                                                 default=False)
         if use_db and HAS_DJANGO and self.core.database_available:
             return True
-        elif not use_db:
-            return False
         else:
-            self.logger.error("%s is true but django not found" % self.option)
             return False
 
     @property

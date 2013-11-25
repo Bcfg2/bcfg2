@@ -228,11 +228,11 @@ class BaseCore(object):
                                         verbosity=0)
                 self._database_available = True
             except ImproperlyConfigured:
-                err = sys.exc_info()[1]
-                self.logger.error("Django configuration problem: %s" % err)
+                self.logger.error("Django configuration problem: %s" %
+                                  sys.exc_info()[1])
             except:
-                err = sys.exc_info()[1]
-                self.logger.error("Database update failed: %s" % err)
+                self.logger.error("Database update failed: %s" %
+                                  sys.exc_info()[1])
 
             if do_chown and self._database_available:
                 try:
