@@ -137,11 +137,12 @@ class DatabaseBacked(Plugin):
                                                 self.option,
                                                 default=False)
         if use_db and not HAS_DJANGO:
-            raise PluginInitError("%s is True but Django not found" %
-                                  self.option)
+            raise PluginInitError("%s.%s is True but Django not found" %
+                                  (self.section, self.option))
         elif use_db and not self.core.database_available:
-            raise PluginInitError("%s is True but the database is unavailable "
-                                  "due to prior errors" % self.option)
+            raise PluginInitError("%s.%s is True but the database is "
+                                  "unavailable due to prior errors" %
+                                  (self.section, self.option))
 
     def _section(self):
         """ The section to look in for :attr:`DatabaseBacked.option`

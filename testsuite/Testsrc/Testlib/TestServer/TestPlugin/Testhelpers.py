@@ -7,6 +7,7 @@ import Bcfg2.Server
 from Bcfg2.Compat import reduce
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugin.helpers import *
+from Bcfg2.Server.Plugin.exceptions import PluginInitError
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4
@@ -90,13 +91,13 @@ class TestDatabaseBacked(TestPlugin):
 
         Bcfg2.Server.Plugin.helpers.HAS_DJANGO = False
         core = Mock()
+        core.setup.cfp.getboolean.return_value = False
         db = self.get_obj(core)
         self.assertFalse(db._use_db)
 
         core = Mock()
         core.setup.cfp.getboolean.return_value = True
-        db = self.get_obj(core)
-        self.assertFalse(db._use_db)
+        self.assertRaises(PluginInitError, self.get_obj, core)
         Bcfg2.Server.Plugin.helpers.HAS_DJANGO = True
 
 
