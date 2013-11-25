@@ -80,7 +80,7 @@ class TestDatabaseBacked(TestPlugin):
     def get_obj(self, core=None):
         if not HAS_DJANGO:
             if core is None:
-                core = Mock()
+                core = MagicMock()
             # disable the database
             core.setup.cfp.getboolean.return_value = False
         return TestPlugin.get_obj(self, core=core)
