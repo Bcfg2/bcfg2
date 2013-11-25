@@ -77,6 +77,14 @@ class TestFunctions(Bcfg2TestCase):
 class TestDatabaseBacked(TestPlugin):
     test_obj = DatabaseBacked
 
+    def get_obj(self, core=None):
+        if not HAS_DJANGO:
+            if core is None:
+                core = Mock()
+            # disable the database
+            core.setup.cfp.getboolean.return_value = False
+        return TestPlugin.get_obj(self, core=core)
+
     @skipUnless(HAS_DJANGO, "Django not found")
     def test__use_db(self):
         core = Mock()
