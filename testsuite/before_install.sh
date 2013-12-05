@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # before_install script for Travis-CI
 
@@ -9,5 +9,6 @@ sudo apt-get install -qq swig libxml2-utils
 if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
     if [[ ${PYVER:0:1} == "2" ]]; then
         sudo apt-get install -qq python-selinux python-pylibacl yum python-augeas
+        dpkg -L python-augeas
     fi
 fi

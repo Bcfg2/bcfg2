@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # install script for Travis-CI
 
