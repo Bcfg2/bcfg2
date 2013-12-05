@@ -253,10 +253,11 @@ that our client is able to obtain these sources.
     When editing your xml files by hand, it is useful to occasionally run
     ``bcfg2-lint -v`` to ensure that your xml validates properly.
 
-The last thing we need is for the client to have the proper
-arch group membership. For this, we will make use of the
-:ref:`unsorted-dynamic_groups` capabilities of the Probes plugin. Add
-Probes to your plugins line in ``bcfg2.conf`` and create the Probe.
+The last thing we need is for the client to have the proper arch group
+membership. For this, we will make use of the
+:ref:`server-plugins-probes-dynamic-groups` capabilities of the Probes
+plugin. Add Probes to your plugins line in ``bcfg2.conf`` and create
+the Probe.
 
 .. code-block:: sh
 

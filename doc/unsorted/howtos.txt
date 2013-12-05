@@ -14,5 +14,5 @@ Here are several howtos that describe different aspects of Bcfg2 deployment
 * :ref:`appendix-guides-gentoo` - Issues specific to running Bcfg2 on Gentoo
 * :ref:`server-plugins-probes-index` - How to use Probes to gather information from a client machine.
 * :ref:`client-tools-actions` - How to use Actions
-* :ref:`unsorted-dynamic_groups` - Using dynamic groups
+* :ref:`server-plugins-probes-dynamic-groups` - Using dynamic groups
 * :ref:`client-modes-paranoid` - How to run an update in paranoid mode

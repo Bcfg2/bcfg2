@@ -256,10 +256,11 @@ file should look something like this
 Add a probe
 +++++++++++
 
-The next step for the client will be to have the proper
-arch group membership. For this, we will make use of the
-:ref:`unsorted-dynamic_groups` capabilities of the Probes plugin. Add
-**Probes** to your plugins line in ``bcfg2.conf`` and create the Probe:
+The next step for the client will be to have the proper arch group
+membership. For this, we will make use of the
+:ref:`server-plugins-probes-dynamic-groups` capabilities of the Probes
+plugin. Add **Probes** to your plugins line in ``bcfg2.conf`` and
+create the Probe:
 
 .. code-block:: sh
 
