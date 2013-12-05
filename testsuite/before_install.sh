@@ -8,10 +8,6 @@ sudo apt-get update -qq
 sudo apt-get install -qq swig libxml2-utils
 if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
     if [[ ${PYVER:0:1} == "2" ]]; then
-        sudo apt-get install -y python-selinux python-pylibacl yum python-augeas
-        dpkg -L python-augeas
-        dpkg -L python-pylibacl
-        python -c 'import sys;print sys.path'
-        python -c 'import augeas'
+        sudo apt-get install -y yum libaugeas0 augeas-lenses
     fi
 fi

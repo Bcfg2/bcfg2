@@ -11,7 +11,7 @@ install:
   - testsuite/install.sh
   - pip install --use-mirrors -e .
 script:
-  - nosetests testsuite
+  - nosetests -v testsuite
 branches:
   except:
     - maint-1.2
