@@ -223,8 +223,11 @@ class Bcfg2TestCase(unittest.TestCase):
                 lines = ['First has %d, Second has %d:  %r' % diff
                          for diff in differences]
                 diffMsg = '\n'.join(lines)
-                standardMsg = self._truncateMessage(standardMsg, diffMsg)
-                msg = self._formatMessage(msg, standardMsg)
+                standardMsg += diffMsg
+                if msg is None:
+                    msg = standardMsg
+                else:
+                    msg = "%s : %s" % (standardMsg, msg)
                 self.fail(msg)
 
     if not hasattr(unittest.TestCase, "assertRegexpMatches"):
