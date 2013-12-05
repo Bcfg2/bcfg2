@@ -9,8 +9,8 @@ from Bcfg2.Client.Tools.POSIX.base import POSIXTool
 class AugeasCommand(object):
     """ Base class for all Augeas command objects """
 
-    def __init__(self, command, augeas, logger):
-        self._augeas = augeas
+    def __init__(self, command, augeas_obj, logger):
+        self._augeas = augeas_obj
         self.command = command
         self.entry = self.command.getparent()
         self.logger = logger
@@ -103,6 +103,7 @@ class AugeasCommand(object):
 
 
 class Remove(AugeasCommand):
+    """ Augeas ``rm`` command """
     def verify(self):
         return self._verify_not_exists()
 
@@ -112,8 +113,9 @@ class Remove(AugeasCommand):
 
 
 class Move(AugeasCommand):
-    def __init__(self, command, augeas, logger):
-        AugeasCommand.__init__(self, command, augeas, logger)
+    """ Augeas ``move`` command """
+    def __init__(self, command, augeas_obj, logger):
+        AugeasCommand.__init__(self, command, augeas_obj, logger)
         self.source = self.get_path("source")
         self.dest = self.get_path("destination")
 
@@ -127,8 +129,9 @@ class Move(AugeasCommand):
 
 
 class Set(AugeasCommand):
-    def __init__(self, command, augeas, logger):
-        AugeasCommand.__init__(self, command, augeas, logger)
+    """ Augeas ``set`` command """
+    def __init__(self, command, augeas_obj, logger):
+        AugeasCommand.__init__(self, command, augeas_obj, logger)
         self.value = self.command.get("value")
 
     def verify(self):
@@ -141,14 +144,16 @@ class Set(AugeasCommand):
 
 
 class Clear(Set):
-    def __init__(self, command, augeas, logger):
-        Set.__init__(self, command, augeas, logger)
+    """ Augeas ``clear`` command """
+    def __init__(self, command, augeas_obj, logger):
+        Set.__init__(self, command, augeas_obj, logger)
         self.value = None
 
 
 class SetMulti(AugeasCommand):
-    def __init__(self, command, augeas, logger):
-        AugeasCommand.__init__(self, command, augeas, logger)
+    """ Augeas ``setm`` command """
+    def __init__(self, command, augeas_obj, logger):
+        AugeasCommand.__init__(self, command, augeas_obj, logger)
         self.sub = self.command.get("sub")
         self.value = self.command.get("value")
         self.base = self.get_path("base")
@@ -163,8 +168,9 @@ class SetMulti(AugeasCommand):
 
 
 class Insert(AugeasCommand):
-    def __init__(self, command, augeas, logger):
-        AugeasCommand.__init__(self, command, augeas, logger)
+    """ Augeas ``ins`` command """
+    def __init__(self, command, augeas_obj, logger):
+        AugeasCommand.__init__(self, command, augeas_obj, logger)
         self.label = self.command.get("label")
         self.where = self.command.get("where", "before")
         self.before = self.where == "before"
