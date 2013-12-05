@@ -1,8 +1,8 @@
 """ Augeas driver """
 
 import sys
-import augeas
 import Bcfg2.Client.XML
+from augeas import Augeas
 from Bcfg2.Client.Tools.POSIX.base import POSIXTool
 
 
@@ -198,7 +198,7 @@ class POSIXAugeas(POSIXTool):
     def get_augeas(self, entry):
         """ Get an augeas object for the given entry. """
         if entry.get("name") not in self._augeas:
-            aug = augeas.augeas()
+            aug = Augeas()
             if entry.get("lens"):
                 self.logger.debug("Augeas: Adding %s to include path for %s" %
                                   (entry.get("name"), entry.get("lens")))
