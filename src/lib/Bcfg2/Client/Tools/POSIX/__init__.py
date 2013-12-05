@@ -47,8 +47,11 @@ class POSIX(Bcfg2.Client.Tools.Tool):
             mname = submodule[1].rsplit('.', 1)[-1]
             if mname == 'base':
                 continue
-            module = getattr(__import__(submodule[1]).Client.Tools.POSIX,
-                             mname)
+            try:
+                module = getattr(__import__(submodule[1]).Client.Tools.POSIX,
+                                 mname)
+            except ImportError:
+                continue
             hdlr = getattr(module, "POSIX" + mname)
             if POSIXTool in hdlr.__mro__:
                 # figure out what entry type this handler handles
