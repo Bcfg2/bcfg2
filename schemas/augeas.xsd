@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
+
+  <xsd:annotation>
+    <xsd:documentation>
+      Augeas commands
+    </xsd:documentation>
+  </xsd:annotation>
+
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
+
+  <xsd:complexType name="AugeasRemoveCommand">
+    <xsd:annotation>
+      <xsd:documentation>
+        Implementation of the Augeas ``rm`` command.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:string" name="path" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Delete nodes (and all children) matching the given Augeas
+          path expression.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="AugeasMoveCommand">
+    <xsd:annotation>
+      <xsd:documentation>
+        Implementation of the Augeas ``mv`` command.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:string" name="source" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Move the node matching this path expression.  ``source``
+          must match exactly one node.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="destination" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Move the node to this location.  ``destination`` must match
+          either zero or one nodes.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="AugeasSetCommand">
+    <xsd:annotation>
+      <xsd:documentation>
+        Implementation of the Augeas ``set`` command.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:string" name="path" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path to set the value for.  If the path does not exist, it
+          and all of its ancestors will be created.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="value" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Value to set.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="AugeasClearCommand">
+    <xsd:annotation>
+      <xsd:documentation>
+        Implementation of the Augeas ``clear`` command.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:string" name="path" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          Path whose value will be set to ``NULL``.  If the path does
+          not exist, it and all of its ancestors will be created.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name="AugeasSetMultiCommand">
+    <xsd:annotation>
+      <xsd:documentation>
+        Set multiple node values at once.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:string" name="base" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          The base path.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="sub" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          ``sub`` will be used as an expression relative to each node
+          that matches the :xml:attribute:`AugeasSetMultiCommand:base`
+          expression.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="value" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          The value to set on all nodes that match
+          :xml:attribute:`AugeasSetMultiCommand:sub` relative to each
+          node matching :xml:attribute:`AugeasSetMultiCommand:base`.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:simpleType name="AugeasWhenEnum">
+    <xsd:restriction base="xsd:string">
+      <xsd:enumeration value="before"/>
+      <xsd:enumeration value="after"/>
+    </xsd:restriction>
+  </xsd:simpleType>
+
+  <xsd:complexType name="AugeasInsertCommand">
+    <xsd:annotation>
+      <xsd:documentation>
+        Implementation of the Augeas ``ins`` command.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type="xsd:string" name="path" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          The path to a node that will be the sibling of the new node.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="label" use="required">
+      <xsd:annotation>
+        <xsd:documentation>
+          The label of the new node to be created.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="AugeasWhenEnum" name="where" default="before">
+      <xsd:annotation>
+        <xsd:documentation>
+          Where to create the node: ``before`` or ``after`` the
+          sibling given in :xml:attribute:`AugeasInsertCommand:path`.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:group name="augeasCommands">
+    <xsd:annotation>
+      <xsd:documentation>
+        All available Augeas commands.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:choice>
+      <xsd:element name="Remove" type="AugeasRemoveCommand">
+        <xsd:annotation>
+          <xsd:documentation>
+            Implementation of the Augeas ``rm`` command.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Move" type="AugeasMoveCommand">
+        <xsd:annotation>
+          <xsd:documentation>
+            Implementation of the Augeas ``mv`` command.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Set" type="AugeasSetCommand">
+        <xsd:annotation>
+          <xsd:documentation>
+            Implementation of the Augeas ``set`` command.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Clear" type="AugeasClearCommand">
+        <xsd:annotation>
+          <xsd:documentation>
+            Implementation of the Augeas ``clear`` command.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="SetMulti" type="AugeasSetMultiCommand">
+        <xsd:annotation>
+          <xsd:documentation>
+            Set multiple node values at once.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+      <xsd:element name="Insert" type="AugeasInsertCommand">
+        <xsd:annotation>
+          <xsd:documentation>
+            Implementation of the Augeas ``ins`` command.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
+    </xsd:choice>
+  </xsd:group>
+</xsd:schema>

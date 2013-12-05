@@ -9,6 +9,7 @@
   </xsd:annotation>
 
   <xsd:include schemaLocation="selinux.xsd"/>
+  <xsd:include schemaLocation="augeas.xsd"/>
   <xsd:import namespace="http://genshi.edgewall.org/"
               schemaLocation="genshi.xsd"/>
 
@@ -41,6 +42,7 @@
 
   <xsd:simpleType name='PathTypeEnum'>
     <xsd:restriction base='xsd:string'>
+      <xsd:enumeration value='augeas' />
       <xsd:enumeration value='device' />
       <xsd:enumeration value='directory' />
       <xsd:enumeration value='file' />
@@ -133,7 +135,7 @@
       <xsd:annotation>
         <xsd:documentation>
           If the action is always run, or is only run when a bundle
-          has been modified.  
+          has been modified.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -267,6 +269,7 @@
 
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='ACL' type='ACLType'/>
+      <xsd:group name="augeasCommands"/>
     </xsd:choice>
     <xsd:attribute type="PathTypeEnum" name="type">
       <xsd:annotation>
@@ -391,6 +394,14 @@
       <xsd:annotation>
         <xsd:documentation>
           The VCS URL to checkout.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:token" name="lens">
+      <xsd:annotation>
+        <xsd:documentation>
+          The Augeas lens to use when editing files in a non-standard
+          (according to Augeas) location.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

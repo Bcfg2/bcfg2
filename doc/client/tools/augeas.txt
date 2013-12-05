@@ -1,0 +1,72 @@
+.. -*- mode: rst -*-
+
+.. _client-tools-augeas:
+
+========
+ Augeas
+========
+
+The Augeas tool provides a way to use `Augeas
+<http://www.augeas.net>`_ to edit files that may not be completely
+managed.
+
+In the simplest case, you simply tell Augeas which path to edit, and
+give it a sequence of commands:
+
+.. code-block:: xml
+
+    <Path type="augeas" name="/etc/hosts" owner="root" group="root"
+          mode="0644">
+      <Set path="01/ipaddr" value="192.168.0.1"/>
+      <Set path="01/canonical" value="pigiron.example.com"/>
+      <Set path="01/alias[1]" value="pigiron"/>
+      <Set path="01/alias[2]" value="piggy"/>
+    </Path>
+
+The commands are run in document order.  There's no need to do an
+explicit ``save`` at the end.
+
+Each of these commands will only be run if the path does not already
+have the given setting.  That is, the ip address for the first host
+record will only be set to ``192.168.0.1`` if it's not set to that
+value already.  Its canonical name will only be set to
+``pigiron.example.com`` if it's not that already; and so on.
+
+The Augeas paths are all relative to ``/files/etc/hosts``.
+
+The Augeas tool understands a subset of ``augtool`` commands.  Valid
+tags are: ``Remove``, ``Move``, ``Set``, ``Clear``, ``SetMulti``, and
+``Insert``.  Refer to the official Augeas docs or the `Schema`_ below
+for details on the commands.
+
+Editing files outside the default load path
+===========================================
+
+If you're using Augeas to edit files outside of its default load path,
+you must manually specify the lens.  For instance:
+
+.. code-block:: xml
+
+    <Path type="augeas" name="/opt/jenkins/home/config.xml" lens="Xml"
+          owner="jenkins" group="jenkins" mode="0640">
+      <Set path="hudson/systemMessage/#text"
+           value="This is a Jenkins server."/>
+    </Path>
+
+Note that there's no need to manually modify the load path by setting
+``/augeas/load/<lens>/incl``, nor do you have to call ``load``
+explicitly.
+
+Schema
+======
+
+.. xml:group:: augeasCommands
+
+
+Performance
+===========
+
+The Augeas tool is quite slow to initialize.  For each ``<Path
+type="augeas" ... >`` entry you have, it creates a new Augeas object
+internally, which can take several seconds.  It's thus important to
+use this tool sparingly.
