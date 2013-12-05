@@ -11,5 +11,7 @@ if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
         sudo apt-get install -y python-selinux python-pylibacl yum python-augeas
         dpkg -L python-augeas
         dpkg -L python-pylibacl
+        python -c 'import sys;print sys.path'
+        python -c 'import augeas'
     fi
 fi
