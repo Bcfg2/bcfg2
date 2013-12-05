@@ -7,36 +7,82 @@ from Bcfg2.Client.Tools.POSIX.base import POSIXTool
 
 
 class AugeasCommand(object):
+    """ Base class for all Augeas command objects """
+
     def __init__(self, command, augeas, logger):
-        self.augeas = augeas
+        self._augeas = augeas
         self.command = command
         self.entry = self.command.getparent()
         self.logger = logger
 
     def get_path(self, attr="path"):
+        """ Get a fully qualified path from the name of the parent entry and
+        the path given in this command tag.
+
+        @param attr: The attribute to get the relative path from
+        @type attr: string
+        @returns: string - the fully qualified Augeas path
+
+        """
         return "/files/%s/%s" % (self.entry.get("name").strip("/"),
                                  self.command.get(attr).lstrip("/"))
 
     def _exists(self, path):
-        return len(self.augeas.match(path)) > 1
+        """ Return True if a path exists in Augeas, False otherwise.
+
+        Note that a False return can mean many things: A file that
+        doesn't exist, a node within the file that doesn't exist, no
+        lens to parse the file, etc. """
+        return len(self._augeas.match(path)) > 1
 
     def _verify_exists(self, path=None):
+        """ Verify that the given path exists, with friendly debug
+        logging.
+
+        @param path: The path to verify existence of.  Defaults to the
+                     result of
+                     :func:`Bcfg2.Client.Tools.POSIX.Augeas.AugeasCommand.getpath`.
+        @type path: string
+        @returns: bool - Whether or not the path exists
+        """
         if path is None:
             path = self.get_path()
         self.logger.debug("Augeas: Verifying that '%s' exists" % path)
         return self._exists(path)
 
     def _verify_not_exists(self, path=None):
+        """ Verify that the given path does not exist, with friendly
+        debug logging.
+
+        @param path: The path to verify existence of.  Defaults to the
+                     result of
+                     :func:`Bcfg2.Client.Tools.POSIX.Augeas.AugeasCommand.getpath`.
+        @type path: string
+        @returns: bool - Whether or not the path does not exist.
+                  (I.e., True if it does not exist, False if it does
+                  exist.)
+        """
         if path is None:
             path = self.get_path()
         self.logger.debug("Augeas: Verifying that '%s' does not exist" % path)
         return not self._exists(path)
 
     def _verify_set(self, expected, path=None):
+        """ Verify that the given path is set to the given value, with
+        friendly debug logging.
+
+        @param expected: The expected value of the node.
+        @param path: The path to verify existence of.  Defaults to the
+                     result of
+                     :func:`Bcfg2.Client.Tools.POSIX.Augeas.AugeasCommand.getpath`.
+        @type path: string
+        @returns: bool - Whether or not the path matches the expected value.
+
+        """
         if path is None:
             path = self.get_path()
         self.logger.debug("Augeas: Verifying '%s' == '%s'" % (path, expected))
-        actual = self.augeas.get(path)
+        actual = self._augeas.get(path)
         if actual == expected:
             return True
         else:
@@ -47,6 +93,14 @@ class AugeasCommand(object):
     def __str__(self):
         return Bcfg2.Client.XML.tostring(self.command)
 
+    def verify(self):
+        """ Verify that the command has been applied. """
+        raise NotImplementedError
+
+    def install(self):
+        """ Run the command. """
+        raise NotImplementedError
+
 
 class Remove(AugeasCommand):
     def verify(self):
@@ -54,7 +108,7 @@ class Remove(AugeasCommand):
 
     def install(self):
         self.logger.debug("Augeas: Removing %s" % self.get_path())
-        return self.augeas.remove(self.get_path())
+        return self._augeas.remove(self.get_path())
 
 
 class Move(AugeasCommand):
@@ -69,7 +123,7 @@ class Move(AugeasCommand):
 
     def install(self):
         self.logger.debug("Augeas: Moving %s to %s" % (self.source, self.dest))
-        return self.augeas.move(self.source, self.dest)
+        return self._augeas.move(self.source, self.dest)
 
 
 class Set(AugeasCommand):
@@ -83,7 +137,7 @@ class Set(AugeasCommand):
     def install(self):
         self.logger.debug("Augeas: Setting %s to %s" % (self.get_path(),
                                                         self.value))
-        return self.augeas.set(self.get_path(), self.value)
+        return self._augeas.set(self.get_path(), self.value)
 
 
 class Clear(Set):
@@ -102,10 +156,10 @@ class SetMulti(AugeasCommand):
     def verify(self):
         return all(self._verify_set(self.value,
                                     path="%s/%s" % (path, self.sub))
-                   for path in self.augeas.match(self.base))
+                   for path in self._augeas.match(self.base))
 
     def install(self):
-        return self.augeas.setm(self.base, self.sub, self.value)
+        return self._augeas.setm(self.base, self.sub, self.value)
 
 
 class Insert(AugeasCommand):
@@ -121,7 +175,7 @@ class Insert(AugeasCommand):
     def install(self):
         self.logger.debug("Augeas: Inserting new %s %s %s" %
                           (self.label, self.where, self.get_path()))
-        return self.augeas.insert(self.get_path(), self.label, self.before)
+        return self._augeas.insert(self.get_path(), self.label, self.before)
 
 
 class POSIXAugeas(POSIXTool):
@@ -136,6 +190,7 @@ class POSIXAugeas(POSIXTool):
         self._augeas = dict()
 
     def get_augeas(self, entry):
+        """ Get an augeas object for the given entry. """
         if entry.get("name") not in self._augeas:
             aug = augeas.augeas()
             if entry.get("lens"):
@@ -156,6 +211,16 @@ class POSIXAugeas(POSIXTool):
         return entry.text is not None
 
     def get_commands(self, entry, unverified=False):
+        """ Get a list of commands to verify or install.
+
+        @param entry: The entry to get commands from.
+        @type entry: lxml.etree._Element
+        @param unverified: Only get commands that failed verification.
+        @type unverified: bool
+        @returns: list of
+                  :class:`Bcfg2.Client.Tools.POSIX.Augeas.AugeasCommand`
+                  objects representing the commands.
+        """
         rv = []
         for cmd in entry.iterchildren():
             if cmd.tag in globals():
