@@ -158,6 +158,8 @@ class POSIXAugeas(POSIXTool):
     def get_commands(self, entry, unverified=False):
         rv = []
         for cmd in entry.iterchildren():
+            if unverified and cmd.get("verified", "false") != "false":
+                continue
             if cmd.tag in globals():
                 rv.append(globals()[cmd.tag](cmd, self.get_augeas(entry),
                                              self.logger))
