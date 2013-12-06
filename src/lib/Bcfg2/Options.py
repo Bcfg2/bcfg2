@@ -653,7 +653,7 @@ SERVER_CHILDREN = \
 SERVER_PROBE_ALLOWED_GROUPS = \
     Option('Whitespace-separated list of group names (as regex) to which '
            'probes can assign a client by writing "group:" to stdout.',
-           default=['.*'],
+           default=[re.compile('.*')],
            cf=('probes', 'allowed_groups'),
            cook=list_split_anchored_regex)
 
