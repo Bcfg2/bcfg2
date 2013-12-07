@@ -246,8 +246,8 @@ class Parser(argparse.ArgumentParser):
             self._set_defaults()
             self.parse_known_args(args=self.argv, namespace=self.namespace)
             self._parse_config_options()
-            self._finalize()
         self._parse_config_options()
+        self._finalize()
 
         # phase 4: fix up <repository> macros
         repo = getattr(self.namespace, "repository", repository.default)
