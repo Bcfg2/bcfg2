@@ -21,11 +21,11 @@ Installation
 ------------
 
 For details about the installation of Bcfg2 please refer to the
-following pages in the Bcfg2 wiki.
+following pages in the Bcfg2 online documentation:
 
-* Prerequisites: http://bcfg2.org/wiki/Prereqs
-* Download:      http://bcfg2.org/wiki/Download
-* Installation:  http://bcfg2.org/wiki/Install
+* Prerequisites: http://docs.bcfg2.org/installation/prerequisites.html
+* Download:      http://bcfg2.org/download/
+* Installation:  http://docs.bcfg2.org/installation/index.html
 
 Need help
 ---------
