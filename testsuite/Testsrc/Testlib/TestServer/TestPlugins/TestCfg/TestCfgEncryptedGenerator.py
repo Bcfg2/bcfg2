@@ -1,6 +1,7 @@
 import os
 import sys
 import lxml.etree
+import Bcfg2.Server.Plugins.Cfg
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator import *
 from Bcfg2.Server.Plugin import PluginExecutionError
@@ -47,9 +48,10 @@ if can_skip or HAS_CRYPTO:
                 ceg = self.get_obj()
                 ceg.handle_event(event)
                 mock_handle_event.assert_called_with(ceg, event)
-                mock_decrypt.assert_called_with("encrypted",
-                                                setup=SETUP,
-                                                algorithm=mock_get_algorithm.return_value)
+                mock_decrypt.assert_called_with(
+                    "encrypted",
+                    setup=Bcfg2.Server.Plugins.Cfg.SETUP,
+                    algorithm=mock_get_algorithm.return_value)
                 self.assertEqual(ceg.data, "plaintext")
 
                 reset()
