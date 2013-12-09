@@ -2,7 +2,7 @@
 
 .. _GPG1: http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x75BF2C177F7D197E
 .. _GPG2: http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x80B8492FA88FFF4B
-.. _Download: http://trac.mcs.anl.gov/projects/bcfg2/wiki/Download
+.. _Download: http://bcfg2.org/download/
 
 .. _source:
 
