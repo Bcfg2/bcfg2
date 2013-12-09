@@ -674,6 +674,11 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         if attribs is None:
             attribs = dict()
         if self._use_db:
+            if attribs:
+                msg = "Metadata does not support setting client attributes " +\
+                      "with use_database enabled"
+                self.logger.error(msg)
+                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             try:
                 client = MetadataClientModel.objects.get(hostname=client_name)
             except MetadataClientModel.DoesNotExist:

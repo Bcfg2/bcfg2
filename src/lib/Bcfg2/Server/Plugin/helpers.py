@@ -18,7 +18,7 @@ from Bcfg2.Compat import CmpMixin, wraps
 from Bcfg2.Server.Plugin.base import Plugin
 from Bcfg2.Server.Plugin.interfaces import Generator, TemplateDataProvider
 from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
-    PluginExecutionError
+    PluginExecutionError, PluginInitError
 
 try:
     import Bcfg2.Server.Encryption
@@ -219,6 +219,18 @@ class DatabaseBacked(Plugin):
     .. private-include: _must_lock
     """
 
+    def __init__(self, core):
+        Plugin.__init__(self, core)
+        use_db = getattr(Bcfg2.Options.setup, "%s_db" % self.name.lower(),
+                         False)
+        if use_db and not HAS_DJANGO:
+            raise PluginInitError("%s is configured to use the database but "
+                                  "Django libraries are not found" % self.name)
+        elif use_db and not self.core.database_available:
+            raise PluginInitError("%s is configured to use the database but "
+                                  "the database is unavailable due to prior "
+                                  "errors" % self.name)
+
     @property
     def _use_db(self):
         """ Whether or not this plugin is configured to use the
@@ -227,11 +239,7 @@ class DatabaseBacked(Plugin):
                          False)
         if use_db and HAS_DJANGO and self.core.database_available:
             return True
-        elif not use_db:
-            return False
         else:
-            self.logger.error("%s: use_database is true but django not found" %
-                              self.name)
             return False
 
     @property
@@ -818,7 +826,8 @@ class StructFile(XMLFileBacked):
         """
         stream = self.template.generate(
             **get_xml_template_data(self, metadata)).filter(removecomment)
-        return lxml.etree.XML(stream.render('xml', strip_whitespace=False),
+        return lxml.etree.XML(stream.render('xml',
+                                            strip_whitespace=False).encode(),
                               parser=Bcfg2.Server.XMLParser)
 
     def _match(self, item, metadata, *args):

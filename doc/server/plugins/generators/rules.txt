@@ -118,6 +118,20 @@ Attributes common to all Path tags:
    :onlyattrs: name,type
 
 
+augeas
+^^^^^^
+
+Run `Augeas <http://www.augeas.net>`_ commands.  See
+:ref:`client-tools-augeas` for more details.
+
+.. xml:type:: PathType
+   :nochildren:
+   :noattributegroups:
+   :nodoc:
+   :notext:
+   :onlyattrs: owner,group,mode,secontext,lens
+   :requiredattrs: owner,group,mode
+
 device
 ^^^^^^
 

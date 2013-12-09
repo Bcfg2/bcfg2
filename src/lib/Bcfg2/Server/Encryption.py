@@ -233,6 +233,10 @@ class DecryptError(Exception):
     """ Exception raised when decryption fails. """
 
 
+class EncryptError(Exception):
+    """ Exception raised when encryption fails. """
+
+
 class CryptoTool(object):
     """ Generic decryption/encryption interface base object """
 
@@ -428,8 +432,7 @@ class PropertiesEncryptor(Encryptor, PropertiesCryptoMixin):
             try:
                 pname, passphrase = self._get_element_passphrase(elt)
             except PassphraseError:
-                self.logger.error(str(sys.exc_info()[1]))
-                return False
+                raise EncryptError(str(sys.exc_info()[1]))
             self.logger.debug("Encrypting %s" % print_xml(elt))
             elt.text = ssl_encrypt(elt.text, passphrase).strip()
             elt.set("encrypted", pname)
@@ -640,9 +643,9 @@ class CLI(object):
             if data is None:
                 try:
                     data = getattr(tool, mode)()
-                except DecryptError:
-                    self.logger.error("Failed to %s %s, skipping" % (mode,
-                                                                     fname))
+                except (EncryptError, DecryptError):
+                    self.logger.error("Failed to %s %s, skipping: %s" %
+                                      (mode, fname, sys.exc_info()[1]))
                     continue
             if Bcfg2.Options.setup.stdout:
                 if len(Bcfg2.Options.setup.files) > 1:

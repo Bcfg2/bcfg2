@@ -1,5 +1,4 @@
 """Helper functions for reports"""
-from Bcfg2.Reporting.Compat.django_urls import *
 import re
 
 """List of filters provided by filteredUrls"""

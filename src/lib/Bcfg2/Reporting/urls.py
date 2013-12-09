@@ -1,4 +1,4 @@
-from Bcfg2.Reporting.Compat.django_urls import *
+from Bcfg2.Reporting.Compat import url, patterns  # django compat imports
 from django.core.urlresolvers import reverse, NoReverseMatch
 from django.http import HttpResponsePermanentRedirect
 from Bcfg2.Reporting.utils import filteredUrls, paginatedUrls, timeviewUrls

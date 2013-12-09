@@ -240,12 +240,12 @@ class Core(object):
                                         verbosity=0)
                 self._database_available = True
             except ImproperlyConfigured:
-                err = sys.exc_info()[1]
-                self.logger.error("Django configuration problem: %s" % err)
+                self.logger.error("Django configuration problem: %s" %
+                                  sys.exc_info()[1])
             except:
-                err = sys.exc_info()[1]
                 self.logger.error("Updating database %s failed: %s" %
-                                  (Bcfg2.Options.setup.db_name, err))
+                                  (Bcfg2.Options.setup.db_name,
+                                   sys.exc_info()[1]))
 
     def __str__(self):
         return self.__class__.__name__

@@ -8,6 +8,7 @@ import genshi.core
 from Bcfg2.Compat import reduce
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugin.helpers import *
+from Bcfg2.Server.Plugin.exceptions import PluginInitError
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4
@@ -34,6 +35,7 @@ def tostring(el):
 
 class FakeElementTree(lxml.etree._ElementTree):
     xinclude = Mock()
+    parse = Mock
 
 
 class TestFunctions(Bcfg2TestCase):
@@ -71,7 +73,7 @@ class TestDatabaseBacked(TestPlugin):
         self.assertFalse(db._use_db)
 
         setattr(Bcfg2.Options.setup, attr, True)
-        self.assertFalse(db._use_db)
+        self.assertRaises(PluginInitError, self.get_obj, core)
 
 
 class TestPluginDatabaseModel(Bcfg2TestCase):

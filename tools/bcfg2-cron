@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Script to run bcfg2 with cron. 
+# Script to run bcfg2 with cron.
 #
 # This script is designed so that bcfg2-cron can be invoked from both
 # /etc/cron.daily and /etc/cron.hourly. This allows the administrators to

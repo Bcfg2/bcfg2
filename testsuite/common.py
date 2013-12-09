@@ -129,8 +129,12 @@ class Bcfg2TestCase(TestCase):
             "\nSecond: %s" % lxml.etree.tostring(el2)
 
         self.assertEqual(el1.tag, el2.tag, msg=fullmsg % "Tags differ")
-        self.assertEqual(el1.text, el2.text,
-                         msg=fullmsg % "Text content differs")
+        if el1.text is not None and el2.text is not None:
+            self.assertEqual(el1.text.strip(), el2.text.strip(),
+                             msg=fullmsg % "Text content differs")
+        else:
+            self.assertEqual(el1.text, el2.text,
+                             msg=fullmsg % "Text content differs")
         self.assertItemsEqual(el1.attrib.items(), el2.attrib.items(),
                               msg=fullmsg % "Attributes differ")
         self.assertEqual(len(el1.getchildren()),

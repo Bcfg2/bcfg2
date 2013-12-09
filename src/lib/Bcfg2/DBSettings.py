@@ -148,7 +148,7 @@ class _OptionContainer(object):
             cf=('database', 'port'), help='Database port', dest='db_port'),
         Bcfg2.Options.Option(
             cf=('database', 'schema'), help='Database schema',
-            dest='db_schema'),
+            dest='db_schema', default='public'),
         Bcfg2.Options.Option(
             cf=('database', 'options'), help='Database options',
             dest='db_opts', type=Bcfg2.Options.Types.comma_dict,

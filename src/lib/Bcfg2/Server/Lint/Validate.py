@@ -113,9 +113,16 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         :type filename: string
         :returns: lxml.etree._ElementTree - the parsed data"""
         try:
-            return lxml.etree.parse(filename)
-        except SyntaxError:
-            result = self.cmd.run(["xmllint", filename])
+            xdata = lxml.etree.parse(filename)
+            if self.files is None:
+                xdata.xinclude()
+            return xdata
+        except (lxml.etree.XIncludeError, SyntaxError):
+            cmd = ["xmllint", "--noout"]
+            if self.files is None:
+                cmd.append("--xinclude")
+            cmd.append(filename)
+            result = self.cmd.run(cmd)
             self.LintError("xml-failed-to-parse",
                            "%s fails to parse:\n%s" %
                            (filename, result.stdout + result.stderr))
@@ -146,6 +153,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             if not schema:
                 return False
         datafile = self.parse(filename)
+        if not datafile:
+            return False
         if not schema.validate(datafile):
             cmd = ["xmllint"]
             if self.files is None:

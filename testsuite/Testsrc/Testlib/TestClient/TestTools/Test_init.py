@@ -41,9 +41,11 @@ class TestTool(Bcfg2TestCase):
         @patch("%s.%s._analyze_config" % (self.test_obj.__module__,
                                           self.test_obj.__name__))
         def inner(mock_analyze_config, mock_check_execs):
-            t = self.get_obj()
+            self.get_obj()
             mock_analyze_config.assert_called_with()
             mock_check_execs.assert_called_with()
+
+        inner()
 
     def test__analyze_config(self):
         t = self.get_obj()

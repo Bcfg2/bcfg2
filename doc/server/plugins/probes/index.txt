@@ -13,6 +13,9 @@ the system disk, you would want to know this information to correctly
 generate an `/etc/auto.master` autofs config file for each type. Here
 we will look at how to do this.
 
+Probes also allow dynamic group assignment for clients, see
+:ref:`_server-plugins-probes-dynamic-groups`.
+
 First, create a ``Probes`` directory in our toplevel repository
 location::
 
@@ -118,6 +121,45 @@ is to add the ``/etc/auto.master`` to a Bundle:
 .. code-block:: xml
 
     <Path name='/etc/auto.master'/>
+
+.. _server-plugins-probes-dynamic-groups:
+
+Dynamic Group Assignment
+========================
+
+The output lines of the probe matching "group:" are used to
+dynamically assign hosts to groups. These dynamic groups need not already
+exist in ``Metadata/groups.xml``. If a dynamic group is defined in
+``Metadata/groups.xml``, clients that include this group will also get
+all included groups and bundles.
+
+Consider the following output of a probe::
+
+    group:debian-wheezy
+    group:amd64
+
+This assigns the client to the groups debian-wheezy and amd64.
+
+To prevent clients from manipulating the probe output and choosing
+unexpected groups (and receiving their potential sensitive files) you
+can use the ``allowed_groups`` option in the ``[probes]`` section of
+``bcfg2.conf`` on the server. This whitespace-separated list of
+anchored regular expressions (must match the complete group name)
+controls dynamic group assignments. Only matching groups are
+allowed. The default allows all groups.
+
+.. versionadded:: 1.3.4
+
+Example:
+
+.. code-block:: ini
+
+    [probes]
+    allowed_groups = debian-(squeeze|wheezy|sid) i386
+
+This allows the groups `debian-squeeze`, `debian-wheezy`, `debian-sid`
+and `i386`. With the probe output from above, this setting would
+disallow the group `amd64`.
 
 Handling Probe Output
 =====================

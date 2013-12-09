@@ -50,6 +50,15 @@ def comma_dict(value):
     return result
 
 
+def anchored_regex_list(value):
+    """ Split an option string on whitespace and compile each element as
+    an anchored regex """
+    try:
+        return [re.compile('^' + x + '$') for x in re.split(r'\s+', value)]
+    except re.error:
+        raise ValueError("Not a list of regexes", value)
+
+
 def octal(value):
     """ Given an octal string, get an integer representation. """
     return int(value, 8)

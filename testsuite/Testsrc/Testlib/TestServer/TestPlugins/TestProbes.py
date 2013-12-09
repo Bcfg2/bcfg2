@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 import shutil
 import tempfile
@@ -229,10 +230,12 @@ group:      group:with:colons
     def setUp(self):
         Bcfg2TestCase.setUp(self)
         set_setup_default("probes_db")
+        set_setup_default("probes_allowed_groups", [re.compile(".*")])
         self.datastore = None
         Bcfg2.Server.Cache.expire("Probes")
 
     def tearDown(self):
+        Bcfg2.Server.Cache.expire("Probes")
         if self.datastore is not None:
             shutil.rmtree(self.datastore)
             self.datastore = None
@@ -276,6 +279,31 @@ group:      group:with:colons
         """ Set and retrieve probe data with database enabled """
         Bcfg2.Options.setup.probes_db = True
         self._perform_tests()
+
+    def test_allowed_cgroups(self):
+        """ Test option to only allow probes to set certain groups """
+        probes = self.get_obj()
+
+        test_text = """a couple lines
+of freeform text
+"""
+        test_groups = ["group", "group2", "group-with-dashes"]
+        test_probe_data = lxml.etree.Element("Probe", name="test")
+        test_probe_data.text = test_text
+        for group in test_groups:
+            test_probe_data.text += "group:%s\n" % group
+
+        client = Mock()
+        groups, data = probes.ReceiveDataItem(client, test_probe_data)
+        self.assertItemsEqual(groups, test_groups)
+        self.assertEqual(data, test_text)
+
+        old_allowed_groups = Bcfg2.Options.setup.probes_allowed_groups
+        Bcfg2.Options.setup.probes_allowed_groups = [re.compile(r'^group.?$')]
+        groups, data = probes.ReceiveDataItem(client, test_probe_data)
+        self.assertItemsEqual(groups, ['group', 'group2'])
+        self.assertEqual(data, test_text)
+        Bcfg2.Options.setup.probes_allowed_groups = old_allowed_groups
 
     def _perform_tests(self):
         p = self.get_obj()

@@ -1,6 +1,7 @@
 import os
 import sys
 import lxml.etree
+import Bcfg2.Server.Plugins.Cfg
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator import *
 from Bcfg2.Server.Plugin import PluginExecutionError

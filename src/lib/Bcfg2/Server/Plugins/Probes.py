@@ -10,7 +10,7 @@ import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Cache
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import unicode  # pylint: disable=W0622
+from Bcfg2.Compat import unicode, any  # pylint: disable=W0622
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Logger import Debuggable
 from Bcfg2.Server.Statistics import track_statistics
@@ -431,7 +431,13 @@ class Probes(Bcfg2.Server.Plugin.Probing,
     options = [
         Bcfg2.Options.BooleanOption(
             cf=('probes', 'use_database'), dest="probes_db",
-            help="Use database capabilities of the Probes plugin")]
+            help="Use database capabilities of the Probes plugin"),
+        Bcfg2.Options.Option(
+            cf=('probes', 'allowed_groups'), dest="probes_allowed_groups",
+            help="Whitespace-separated list of group name regexps to which "
+            "probes can assign a client",
+            default=[re.compile('.*')],
+            type=Bcfg2.Options.Types.anchored_regex_list)]
     options_parsed_hook = staticmethod(load_django_models)
 
     def __init__(self, core):
@@ -480,7 +486,13 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         for line in dlines[:]:
             match = self.groupline_re.match(line)
             if match:
-                groups.append(match.group("groupname"))
+                newgroup = match.group("groupname")
+                if self._group_allowed(newgroup):
+                    groups.append(newgroup)
+                else:
+                    self.logger.warning(
+                        "Disallowed group assignment %s from %s" %
+                        (newgroup, client.hostname))
                 dlines.remove(line)
         return (groups, ProbeData("\n".join(dlines)))
 
@@ -489,3 +501,10 @@ class Probes(Bcfg2.Server.Plugin.Probing,
 
     def get_additional_data(self, metadata):
         return self.probestore.get_data(metadata.hostname)
+
+    def _group_allowed(self, group):
+        """ Determine if the named group can be set as a probe group
+        by checking the regexes listed in the [probes] groups_allowed
+        setting """
+        return any(r.match(group)
+                   for r in Bcfg2.Options.setup.probes_allowed_groups)

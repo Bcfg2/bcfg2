@@ -173,15 +173,33 @@ class Backup(AdminCmd):
 
 
 class Client(_ServerAdminCmd):
-    """ Create, delete, or list client entries """
+    """ Create, modify, delete, or list client entries """
 
+    __plugin_whitelist__ = ["Metadata"]
     options = _ServerAdminCmd.options + [
         Bcfg2.Options.PositionalArgument(
             "mode",
-            choices=["add", "del", "list"]),
-        Bcfg2.Options.PositionalArgument("hostname", nargs='?')]
+            choices=["add", "del", "delete", "remove", "rm", "up", "update",
+                     "list"]),
+        Bcfg2.Options.PositionalArgument("hostname", nargs='?'),
+        Bcfg2.Options.PositionalArgument("attributes", metavar="KEY=VALUE",
+                                         nargs='*')]
 
-    __plugin_whitelist__ = ["Metadata"]
+    valid_attribs = ['profile', 'uuid', 'password', 'floating', 'secure',
+                     'address', 'auth']
+
+    def get_attribs(self, setup):
+        """ Get attributes for adding or updating a client from the command
+        line """
+        attr_d = {}
+        for i in setup.attributes:
+            attr, val = i.split('=', 1)
+            if attr not in self.valid_attribs:
+                print("Attribute %s unknown. Valid attributes: %s" %
+                      (attr, self.valid_attribs))
+                raise SystemExit(1)
+            attr_d[attr] = val
+        return attr_d
 
     def run(self, setup):
         if setup.mode != 'list' and not setup.hostname:
@@ -189,23 +207,32 @@ class Client(_ServerAdminCmd):
         elif setup.mode == 'list' and setup.hostname:
             self.logger.warning("<hostname> is not honored in list mode")
 
-        if setup.mode == 'add':
-            try:
-                self.metadata.add_client(setup.hostname)
-            except MetadataConsistencyError:
-                err = sys.exc_info()[1]
-                self.errExit("Error adding client %s: %s" % (setup.hostname,
-                                                             err))
-        elif setup.mode == 'del':
-            try:
-                self.metadata.remove_client(setup.hostname)
-            except MetadataConsistencyError:
-                err = sys.exc_info()[1]
-                self.errExit("Error deleting client %s: %s" % (setup.hostname,
-                                                               err))
-        elif setup.mode == 'list':
+        if setup.mode == 'list':
             for client in self.metadata.list_clients():
                 print(client)
+        else:
+            include_attribs = True
+            if setup.mode == 'add':
+                func = self.metadata.add_client
+                action = "adding"
+            elif setup.mode in ['up', 'update']:
+                func = self.metadata.update_client
+                action = "updating"
+            elif setup.mode in ['del', 'delete', 'rm', 'remove']:
+                func = self.metadata.remove_client
+                include_attribs = False
+                action = "deleting"
+
+            if include_attribs:
+                args = (setup.hostname, self.get_attribs(setup))
+            else:
+                args = (setup.hostname,)
+            try:
+                func(*args)
+            except MetadataConsistencyError:
+                err = sys.exc_info()[1]
+                self.errExit("Error %s client %s: %s" % (setup.hostname,
+                                                         action, err))
 
 
 class Compare(AdminCmd):
