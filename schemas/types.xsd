@@ -270,6 +270,7 @@
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='ACL' type='ACLType'/>
       <xsd:group ref="augeasCommands"/>
+      <xsd:group ref="py:genshiElements"/>
     </xsd:choice>
     <xsd:attribute type="PathTypeEnum" name="type">
       <xsd:annotation>
