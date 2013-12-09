@@ -1,5 +1,4 @@
 import os
-import re
 import sys
 import copy
 import lxml.etree
@@ -29,6 +28,7 @@ def tostring(el):
 
 class FakeElementTree(lxml.etree._ElementTree):
     xinclude = Mock()
+    parse = Mock
 
 
 class TestFunctions(Bcfg2TestCase):
@@ -1132,14 +1132,14 @@ class TestXMLSrc(TestXMLFileBacked):
         # ensure that the node object has the necessary interface
         self.assertTrue(hasattr(self.test_obj.__node__, "Match"))
 
-    @patch("%s.open" % builtins)
-    def test_HandleEvent(self, mock_open):
+    @patch("lxml.etree.parse")
+    def test_HandleEvent(self, mock_parse):
         xdata = lxml.etree.Element("Test")
         lxml.etree.SubElement(xdata, "Path", name="path", attr="whatever")
 
         xsrc = self.get_obj("/test/foo.xml")
         xsrc.__node__ = Mock()
-        mock_open.return_value.read.return_value = tostring(xdata)
+        mock_parse.return_value = xdata.getroottree()
 
         if xsrc.__priority_required__:
             # test with no priority at all
@@ -1148,20 +1148,20 @@ class TestXMLSrc(TestXMLFileBacked):
 
             # test with bogus priority
             xdata.set("priority", "cow")
-            mock_open.return_value.read.return_value = tostring(xdata)
+            mock_parse.return_value = xdata.getroottree()
             self.assertRaises(PluginExecutionError,
-                               xsrc.HandleEvent, Mock())
+                              xsrc.HandleEvent, Mock())
 
             # assign a priority to use in future tests
             xdata.set("priority", "10")
-            mock_open.return_value.read.return_value = tostring(xdata)
+            mock_parse.return_value = xdata.getroottree()
 
-        mock_open.reset_mock()
+        mock_parse.reset_mock()
         xsrc = self.get_obj("/test/foo.xml")
         xsrc.__node__ = Mock()
         xsrc.HandleEvent(Mock())
-        mock_open.assert_called_with("/test/foo.xml")
-        mock_open.return_value.read.assert_any_call()
+        mock_parse.assert_called_with("/test/foo.xml",
+                                      parser=Bcfg2.Server.XMLParser)
         self.assertXMLEqual(xsrc.__node__.call_args[0][0], xdata)
         self.assertEqual(xsrc.__node__.call_args[0][1], dict())
         self.assertEqual(xsrc.pnode, xsrc.__node__.return_value)

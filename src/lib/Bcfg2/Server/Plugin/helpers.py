@@ -840,15 +840,10 @@ class XMLSrc(XMLFileBacked):
 
     def HandleEvent(self, _=None):
         """Read file upon update."""
-        try:
-            data = open(self.name).read()
-        except IOError:
-            msg = "Failed to read file %s: %s" % (self.name, sys.exc_info()[1])
-            self.logger.error(msg)
-            raise PluginExecutionError(msg)
         self.items = {}
         try:
-            xdata = lxml.etree.XML(data, parser=Bcfg2.Server.XMLParser)
+            xdata = lxml.etree.parse(self.name,
+                                     parser=Bcfg2.Server.XMLParser).getroot()
         except lxml.etree.XMLSyntaxError:
             msg = "Failed to parse file %s: %s" % (self.name,
                                                    sys.exc_info()[1])
@@ -864,8 +859,6 @@ class XMLSrc(XMLFileBacked):
                     (xdata.get('priority'), self.name)
                 self.logger.error(msg)
                 raise PluginExecutionError(msg)
-
-        del xdata, data
 
     def Cache(self, metadata):
         """Build a package dict for a given host."""
