@@ -74,7 +74,7 @@ if can_skip or HAS_AUGEAS:
 
         def tearDown(self):
             tmpfile = getattr(self, "tmpfile", None)
-            if tmpfile:
+            if tmpfile and os.path.exists(tmpfile):
                 os.unlink(tmpfile)
 
         def test_fully_specified(self):
@@ -83,7 +83,7 @@ if can_skip or HAS_AUGEAS:
             entry = lxml.etree.Element("Path", name="/test", type="augeas")
             self.assertFalse(ptool.fully_specified(entry))
 
-            entry.text = "text"
+            lxml.etree.SubElement(entry, "Set", path="/test", value="test")
             self.assertTrue(ptool.fully_specified(entry))
 
         def test_install(self):
@@ -138,12 +138,14 @@ if can_skip or HAS_AUGEAS:
             self._verify(self.applied_commands.values())
 
         @patch("Bcfg2.Client.Tools.POSIX.Augeas.POSIXTool.install")
-        def _install(self, commands, expected, mock_install):
+        def _install(self, commands, expected, mock_install, **attrs):
             ptool = self.get_obj()
             mock_install.return_value = True
 
             entry = lxml.etree.Element("Path", name=self.tmpfile,
                                        type="augeas", lens="Xml")
+            for key, val in attrs.items():
+                entry.set(key, val)
             entry.extend(commands)
 
             self.assertTrue(ptool.install(entry))
@@ -156,8 +158,7 @@ if can_skip or HAS_AUGEAS:
             expected = copy.deepcopy(test_xdata)
             expected.find("Text").text = "Changed content"
             self._install([lxml.etree.Element("Set", path="Test/Text/#text",
-                                              value="Changed content",
-                                              verified="false")],
+                                              value="Changed content")],
                           expected)
 
         def test_install_set_new(self):
@@ -166,21 +167,8 @@ if can_skip or HAS_AUGEAS:
             newtext = lxml.etree.SubElement(expected, "NewText")
             newtext.text = "new content"
             self._install([lxml.etree.Element("Set", path="Test/NewText/#text",
-                                              value="new content",
-                                              verified="false")],
+                                              value="new content")],
                           expected)
-
-        def test_install_only_verified(self):
-            """ Test that only unverified commands are installed """
-            expected = copy.deepcopy(test_xdata)
-            newtext = lxml.etree.SubElement(expected, "NewText")
-            newtext.text = "new content"
-            self._install(
-                [lxml.etree.Element("Set", path="Test/NewText/#text",
-                                    value="new content", verified="false"),
-                 lxml.etree.Element("Set", path="Test/Bogus/#text",
-                                    value="bogus", verified="true")],
-                expected)
 
         def test_install_remove(self):
             """ Test removing a node """
@@ -188,8 +176,7 @@ if can_skip or HAS_AUGEAS:
             expected.remove(expected.find("Attrs"))
             self._install(
                 [lxml.etree.Element("Remove",
-                                    path='Test/*[#attribute/foo = "foo"]',
-                                    verified="false")],
+                                    path='Test/*[#attribute/foo = "foo"]')],
                 expected)
 
         def test_install_move(self):
@@ -199,8 +186,7 @@ if can_skip or HAS_AUGEAS:
             expected.append(foo)
             self._install(
                 [lxml.etree.Element("Move", source='Test/Children/Foo',
-                                    destination='Test/Foo',
-                                    verified="false")],
+                                    destination='Test/Foo')],
                 expected)
 
         def test_install_clear(self):
@@ -228,7 +214,7 @@ if can_skip or HAS_AUGEAS:
                 [lxml.etree.Element(
                     "SetMulti", value="same",
                     base='Test/Children[#attribute/identical = "true"]',
-                    sub="Thing/#text", verified="false")],
+                    sub="Thing/#text")],
                 expected)
 
         def test_install_insert(self):
@@ -242,9 +228,20 @@ if can_skip or HAS_AUGEAS:
                 [lxml.etree.Element(
                     "Insert",
                     path='Test/Children[#attribute/identical = "true"]/Thing[2]',
-                    label="Thing", where="after", verified="false"),
+                    label="Thing", where="after"),
                  lxml.etree.Element(
                      "Set",
                      path='Test/Children[#attribute/identical = "true"]/Thing[3]/#text',
-                     value="three", verified="false")],
+                     value="three")],
                 expected)
+
+        def test_install_initial(self):
+            """ Test creating initial content and then modifying it """
+            os.unlink(self.tmpfile)
+            expected = copy.deepcopy(test_xdata)
+            expected.find("Text").text = "Changed content"
+            initial = lxml.etree.Element("Initial")
+            initial.text = test_data
+            modify = lxml.etree.Element("Set", path="Test/Text/#text",
+                                        value="Changed content")
+            self._install([initial, modify], expected, current_exists="false")
