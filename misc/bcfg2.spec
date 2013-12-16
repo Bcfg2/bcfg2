@@ -449,7 +449,7 @@ install -d %{buildroot}/var/adm/fillup-templates
 
 mv %{buildroot}%{_bindir}/bcfg2* %{buildroot}%{_sbindir}
 
-%if 0%{?fedora} < 16
+%if 0%{?fedora} && 0%{?fedora} < 16 || 0%{?rhel} && 0%{?rhel} < 7
 # Install SysV init scripts for everyone but new Fedoras
 install -m 755 redhat/scripts/bcfg2.init \
     %{buildroot}%{_initrddir}/bcfg2
@@ -651,7 +651,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %{_mandir}/man5/bcfg2.conf.5*
 %ghost %attr(600,root,root) %config(noreplace,missingok) %{_sysconfdir}/bcfg2.cert
 %ghost %attr(0600,root,root) %config(noreplace,missingok) %{_sysconfdir}/bcfg2.conf
-%if 0%{?fedora} >= 16
+%if 0%{?fedora} >= 16 || 0%{?rhel} >= 7
     %config(noreplace) %{_unitdir}/%{name}.service
 %else
     %{_initrddir}/bcfg2
@@ -686,7 +686,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %defattr(-,root,root,-)
 %endif
 %ghost %attr(600,root,root) %config(noreplace) %{_sysconfdir}/bcfg2.key
-%if 0%{?fedora} >= 16
+%if 0%{?fedora} >= 16 || 0%{?rhel} >= 7
     %config(noreplace) %{_unitdir}/%{name}-server.service
 %else
     %{_initrddir}/bcfg2-server
