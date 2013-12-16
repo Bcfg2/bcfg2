@@ -747,9 +747,6 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 
 
 %changelog
-* Thu Nov 07 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.3-1
-- New upstream release
-
 * Sun Aug 04 2013 John Morris <john@zultron.com> - 1.3.2-2
 - Reconcile divergences with Fedora specfile, as requested by upstream
   (equally large changes made in Fedora version to reconcile with
@@ -768,32 +765,11 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
   - Changes to %%post* scripts
 - Rearrange %%files sections
 
-* Mon Jul 01 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.2-1
-- New upstream release
-
-* Thu Mar 21 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.1-1
-- New upstream release
-
-* Fri Mar 15 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0
-- New upstream release
-
-* Tue Jan 29 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0rc2
-- New upstream release
-
-* Wed Jan 09 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0rc1
-- New upstream release
-
-* Tue Oct 30 2012 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0pre2
-- New upstream release
-
 * Wed Oct 17 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.3.0-0.2pre1
 - Split bcfg2-selinux into its own specfile
 
 * Fri Sep 14 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.3.0-0.1pre1
 - Added -selinux subpackage
-
-* Fri Aug 31 2012 Sol Jerome <sol.jerome@gmail.com> 1.3.0-0.0pre1
-- New upstream release
 
 * Wed Aug 15 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.2.3-0.1
 - Added tools/ as doc for bcfg2-server subpackage

@@ -163,43 +163,6 @@ E.G. 1.2.0pre1 is a valid version.
             print(help_message)
             quit()
 
-    if version_info['build'] == '':
-        rpmchangelog = ["* %s %s <%s> %s-1\n" %
-                        (datetime.datetime.now().strftime("%a %b %d %Y"),
-                         name, email, version_release),
-                        "- New upstream release\n", "\n"]
-    else:
-        rpmchangelog = ["* %s %s <%s> %s-0.%s.%s\n" %
-                        (datetime.datetime.now().strftime("%a %b %d %Y"),
-                         name, email, version_release,
-                         version_info['build'][-1], version_info['build']),
-                        "- New upstream release\n", "\n"]
-
-    # write out the new RPM changelog
-    specs = ["misc/bcfg2.spec",
-             "misc/bcfg2-selinux.spec"]
-    if options.dryrun:
-        print("*** Add the following to the top of the %%changelog section in %s:\n%s\n"
-              % (rpmchangelog, " and ".join(specs)))
-    else:
-        for fname in specs:
-            try:
-                lines = open(fname).readlines()
-                for lineno in range(len(lines)):
-                    if lines[lineno].startswith("%changelog"):
-                        break
-                else:
-                    print("No %changelog section found in %s" % fname)
-                    continue
-                for line in reversed(rpmchangelog):
-                    lines.insert(lineno + 1, line)
-                open(fname, 'w').write("".join(lines))
-            except:
-                err = sys.exc_info()[1]
-                print("Could not write %s: %s" % (fname, err))
-                print(help_message)
-                quit()
-
     # update solaris version
     find_and_replace('solaris/Makefile', 'VERS=',
                      'VERS=%s-1\n' % version,
