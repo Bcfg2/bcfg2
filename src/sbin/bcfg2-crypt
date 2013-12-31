@@ -307,6 +307,7 @@ class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
             except (Bcfg2.Encryption.EVPError, TypeError):
                 self.logger.error("Could not decrypt %s, skipping" %
                                   print_xml(elt))
+                continue
             try:
                 elt.text = decrypted.encode('ascii', 'xmlcharrefreplace')
                 elt.set("encrypted", pname)
