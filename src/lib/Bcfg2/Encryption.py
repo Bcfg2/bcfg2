@@ -3,6 +3,7 @@ handling encryption in Bcfg2.  See :ref:`server-encryption` for more
 details. """
 
 import os
+import sys
 from M2Crypto import Rand
 from M2Crypto.EVP import Cipher, EVPError
 from Bcfg2.Compat import StringIO, md5, b64encode, b64decode
@@ -114,7 +115,15 @@ def ssl_decrypt(data, passwd, algorithm=ALGORITHM):
     :returns: string - The decrypted data
     """
     # base64-decode the data
-    data = b64decode(data)
+    try:
+        data = b64decode(data)
+    except TypeError:
+        # we do not include the data in the error message, because one
+        # of the common causes of this is data that claims to be
+        # encrypted but is not.  we don't want to include a plaintext
+        # secret in the error logs.
+        raise TypeError("Could not decode base64 data: %s" %
+                        (data, sys.exc_info()[1]))
     salt = data[8:16]
     # pylint: disable=E1101,E1121
     hashes = [md5(passwd + salt).digest()]
