@@ -147,6 +147,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
         given entry is a member of """
         return [g for g in self.existing['POSIXGroup'].values()
                 if entry.get("name") in g[3] and g[0] != entry.get("group")]
+		and self._in_managed_range('POSIXGroup', g[2]
 
     def VerifyPOSIXUser(self, entry, _):
         """ Verify a POSIXUser entry """
