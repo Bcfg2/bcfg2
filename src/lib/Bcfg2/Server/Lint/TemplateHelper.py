@@ -23,9 +23,11 @@ class TemplateHelper(ServerPlugin):
 
     def __init__(self, *args, **kwargs):
         ServerPlugin.__init__(self, *args, **kwargs)
-        self.reserved_keywords = dir(HelperModule("foo.py"))
-        self.reserved_defaults = \
-            self.core.plugins['TemplateHelper'].reserved_defaults
+        # we instantiate a dummy helper to discover which keywords and
+        # defaults are reserved
+        dummy = HelperModule("foo.py")
+        self.reserved_keywords = dir(dummy)
+        self.reserved_defaults = dummy.reserved_defaults
 
     def Run(self):
         for helper in self.core.plugins['TemplateHelper'].entries.values():
