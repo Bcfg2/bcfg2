@@ -173,6 +173,17 @@ def ssl_encrypt(plaintext, passwd, algorithm=None, salt=None):
     return b64encode("Salted__" + salt + crypted) + "\n"
 
 
+def is_encrypted(val):
+    """ Make a best guess if the value is encrypted or not.  This just
+    checks to see if ``val`` is a base64-encoded string whose content
+    starts with "Salted__", so it may have (rare) false positives.  It
+    will not have false negatives. """
+    try:
+        return b64decode(val).startswith("Salted__")
+    except:  # pylint: disable=W0702
+        return False
+
+
 def bruteforce_decrypt(crypted, passphrases=None, algorithm=None):
     """ Convenience method to decrypt the given encrypted string by
     trying the given passphrases or all passphrases sequentially until
@@ -323,6 +334,8 @@ class CfgEncryptor(Encryptor):
                                   Bcfg2.Options.setup.config)
 
     def encrypt(self):
+        if is_encrypted(self.data):
+            raise EncryptError("Data is alraedy encrypted")
         return ssl_encrypt(self.data, self.passphrase)
 
     def get_destination_filename(self, original_filename):
@@ -429,6 +442,9 @@ class PropertiesEncryptor(Encryptor, PropertiesCryptoMixin):
     def encrypt(self):
         xdata = lxml.etree.XML(self.data, parser=XMLParser)
         for elt in self._get_elements(xdata):
+            if is_encrypted(elt.text):
+                raise EncryptError("Element is already encrypted: %s" %
+                                   print_xml(elt))
             try:
                 pname, passphrase = self._get_element_passphrase(elt)
             except PassphraseError:
