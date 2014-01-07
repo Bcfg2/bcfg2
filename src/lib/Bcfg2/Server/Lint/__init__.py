@@ -13,6 +13,7 @@ import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Plugins
+from Bcfg2.Compat import walk_packages
 
 
 def _ioctl_GWINSZ(fd):  # pylint: disable=C0103
@@ -297,11 +298,10 @@ class LintPluginAction(Bcfg2.Options.ComponentAction):
     bases = ['Bcfg2.Server.Lint']
 
     def __call__(self, parser, namespace, values, option_string=None):
-        for plugin in getattr(Bcfg2.Options.setup, "plugins", []):
-            module = sys.modules[plugin.__module__]
-            if hasattr(module, "%sLint" % plugin.name):
-                print("Adding lint plugin %s" % plugin)
-                values.append(plugin)
+        plugins = getattr(Bcfg2.Options.setup, "plugins", [])
+        for lint_plugin in walk_packages(path=__path__):
+            if lint_plugin[1] in plugins:
+                values.append(lint_plugin[1])
         Bcfg2.Options.ComponentAction.__call__(self, parser, namespace, values,
                                                option_string)
 
