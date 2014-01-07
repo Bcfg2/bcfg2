@@ -123,7 +123,7 @@ def ssl_decrypt(data, passwd, algorithm=ALGORITHM):
         # encrypted but is not.  we don't want to include a plaintext
         # secret in the error logs.
         raise TypeError("Could not decode base64 data: %s" %
-                        (data, sys.exc_info()[1]))
+                        sys.exc_info()[1])
     salt = data[8:16]
     # pylint: disable=E1101,E1121
     hashes = [md5(passwd + salt).digest()]
