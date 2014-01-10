@@ -63,6 +63,8 @@ class ReportingCollector(object):
         self.encoding = setup['encoding']
         self.terminate = None
         self.context = None
+        self.children = []
+        self.cleanup_threshold = 25
 
         if setup['debug']:
             level = logging.DEBUG
@@ -110,6 +112,7 @@ class ReportingCollector(object):
         self.terminate = threading.Event()
         atexit.register(self.shutdown)
         self.context = daemon.DaemonContext(detach_process=True)
+        iter = 0
 
         if self.setup['daemon']:
             self.logger.debug("Daemonizing")
@@ -133,6 +136,13 @@ class ReportingCollector(object):
 
                 store_thread = ReportingStoreThread(interaction, self.storage)
                 store_thread.start()
+                self.children.append(store_thread)
+
+                iter += 1
+                if iter >= self.cleanup_threshold:
+                    self.reap_children()
+                    iter = 0
+
             except (SystemExit, KeyboardInterrupt):
                 self.logger.info("Shutting down")
                 self.shutdown()
@@ -152,3 +162,16 @@ class ReportingCollector(object):
                 pass
         if self.storage:
             self.storage.shutdown()
+
+    def reap_children(self):
+        """Join any non-live threads"""
+        newlist = []
+
+        self.logger.debug("Starting reap_children")
+        for child in self.children:
+            if child.isAlive():
+                newlist.append(child)
+            else:
+                child.join()
+                self.logger.debug("Joined child thread %s" % child.getName())
+        self.children = newlist
