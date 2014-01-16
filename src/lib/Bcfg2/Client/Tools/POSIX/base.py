@@ -395,7 +395,10 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             acl_str.append("user")
         elif scope == posix1e.ACL_GROUP:
             acl_str.append("group")
-        acl_str.append(qualifier)
+        if qualifier is None:
+            acl_str.append('')
+        else:
+            acl_str.append(qualifier)
         acl_str.append(self._acl_perm2string(perms))
         return ":".join(acl_str)
 
