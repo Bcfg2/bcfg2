@@ -237,7 +237,8 @@ class FileMonitor(Debuggable):
         except:  # pylint: disable=W0702
             err = sys.exc_info()[1]
             LOGGER.error("Error in handling of event %s for %s: %s" %
-                         (event.code2str(), event.filename, err))
+                         (event.code2str(), event.filename, err),
+                         exc_info=1)
 
     def handle_event_set(self, lock=None):
         """ Handle all pending events.
