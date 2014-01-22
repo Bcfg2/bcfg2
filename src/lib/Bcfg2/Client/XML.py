@@ -8,14 +8,17 @@ try:
     from lxml.etree import Element, SubElement, tostring
     from lxml.etree import XMLSyntaxError as ParseError
     from lxml.etree import XML as _XML
+    from Bcfg2.Compat import wraps
     driver = 'lxml'
 
+    @wraps(_XML)
     def XML(val, **kwargs):
+        """ unicode strings w/encoding declaration are not supported in
+        recent lxml.etree, so we try to read XML, and if it fails we try
+        encoding the string. """
         try:
             return _XML(val, **kwargs)
         except ValueError:
-            # unicode strings w/encoding declaration are not supported
-            # in recent lxml.etree
             return _XML(val.encode(), **kwargs)
 except ImportError:
     # lxml not available
