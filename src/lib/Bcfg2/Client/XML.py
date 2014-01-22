@@ -5,9 +5,18 @@
 # pylint: disable=E0611,W0611,W0613,C0103
 
 try:
-    from lxml.etree import Element, SubElement, XML, tostring
+    from lxml.etree import Element, SubElement, tostring
     from lxml.etree import XMLSyntaxError as ParseError
+    from lxml.etree import XML as _XML
     driver = 'lxml'
+
+    def XML(val, **kwargs):
+        try:
+            return _XML(val, **kwargs)
+        except ValueError:
+            # unicode strings w/encoding declaration are not supported
+            # in recent lxml.etree
+            return _XML(val.encode(), **kwargs)
 except ImportError:
     # lxml not available
     from xml.parsers.expat import ExpatError as ParseError
