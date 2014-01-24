@@ -10,7 +10,18 @@ from Bcfg2.Options import Types
 from Bcfg2.Compat import ConfigParser
 
 
-__all__ = ["Option", "BooleanOption", "PathOption", "PositionalArgument"]
+__all__ = ["Option", "BooleanOption", "PathOption", "PositionalArgument",
+           "_debug"]
+
+
+def _debug(msg):
+    """ Option parsing happens before verbose/debug have been set --
+    they're options, after all -- so option parsing verbosity is
+    enabled by changing this to True. The verbosity here is primarily
+    of use to developers. """
+    if os.environ.get('BCFG2_OPTIONS_DEBUG', '0') == '1':
+        print(msg)
+
 
 #: A dict that records a mapping of argparse action name (e.g.,
 #: "store_true") to the argparse Action class for it.  See
@@ -158,6 +169,7 @@ class Option(object):
         the appropriate default value in the appropriate format."""
         for parser, action in self.actions.items():
             if hasattr(action, "finalize"):
+                _debug("Finalizing %s for %s" % (self, parser))
                 action.finalize(parser, namespace)
 
     def from_config(self, cfp):
@@ -172,6 +184,7 @@ class Option(object):
         """
         if not self.cf:
             return None
+        _debug("Setting %s from config file(s)" % self)
         if '*' in self.cf[1]:
             if cfp.has_section(self.cf[0]):
                 # build a list of known options in this section, and
@@ -208,9 +221,13 @@ class Option(object):
         """
         if self.env and self.env in os.environ:
             self.default = os.environ[self.env]
+            _debug("Setting the default of %s from environment: %s" %
+                   (self, self.default))
         else:
             val = self.from_config(cfp)
             if val is not None:
+                _debug("Setting the default of %s from config: %s" %
+                       (self, val))
                 self.default = val
 
     def _get_default(self):
@@ -250,13 +267,18 @@ class Option(object):
         self.parsers.append(parser)
         if self.args:
             # cli option
+            _debug("Adding %s to %s as a CLI option" % (self, parser))
             action = parser.add_argument(*self.args, **self._kwargs)
             if not self._dest:
                 self._dest = action.dest
             if self._default:
                 action.default = self._default
             self.actions[parser] = action
-        # else, config file-only option
+        else:
+            # else, config file-only option
+            _debug("Adding %s to %s as a config file-only option" %
+                   (self, parser))
+
 
 
 class PathOption(Option):

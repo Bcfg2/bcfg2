@@ -5,7 +5,7 @@ import sys
 import argparse
 from Bcfg2.version import __version__
 from Bcfg2.Compat import ConfigParser
-from Bcfg2.Options import Option, PathOption, BooleanOption
+from Bcfg2.Options import Option, PathOption, BooleanOption, _debug
 
 __all__ = ["setup", "OptionParserException", "Parser", "get_parser"]
 
@@ -121,6 +121,7 @@ class Parser(argparse.ArgumentParser):
         """ Add a component (and all of its options) to the
         parser. """
         if component not in self.components:
+            _debug("Adding component %s to %s" % (component, self))
             self.components.append(component)
             if hasattr(component, "options"):
                 self.add_options(getattr(component, "options"))
@@ -129,6 +130,7 @@ class Parser(argparse.ArgumentParser):
         """ Set defaults from the config file for all options that can
         come from the config file, but haven't yet had their default
         set """
+        _debug("Setting defaults on all options")
         for opt in self.option_list:
             if opt not in self._defaults_set:
                 opt.default_from_config(self._cfp)
@@ -138,11 +140,14 @@ class Parser(argparse.ArgumentParser):
         """ populate the namespace with default values for any options
         that aren't already in the namespace (i.e., options without
         CLI arguments) """
+        _debug("Parsing config file-only options")
         for opt in self.option_list[:]:
             if not opt.args and opt.dest not in self.namespace:
                 value = opt.default
                 if value:
                     for parser, action in opt.actions.items():
+                        _debug("Setting config file-only option %s to %s" %
+                               (opt, value))
                         if parser is None:
                             action(self, self.namespace, value)
                         else:
@@ -155,6 +160,7 @@ class Parser(argparse.ArgumentParser):
         additional post-processing step.  (Mostly
         :class:`Bcfg2.Options.Actions.ComponentAction` subclasses.)
         """
+        _debug("Finalizing options")
         for opt in self.option_list[:]:
             opt.finalize(self.namespace)
 
@@ -162,16 +168,19 @@ class Parser(argparse.ArgumentParser):
         """ Delete all options from the namespace except for a few
         predefined values and config file options. """
         self.parsed = False
+        _debug("Resetting namespace")
         for attr in dir(self.namespace):
             if (not attr.startswith("_") and
                 attr not in ['uri', 'version', 'name'] and
                 attr not in self._config_files):
+                _debug("Deleting %s" % attr)
                 delattr(self.namespace, attr)
 
     def add_config_file(self, dest, cfile, reparse=True):
         """ Add a config file, which triggers a full reparse of all
         options. """
         if dest not in self._config_files:
+            _debug("Adding new config file %s for %s" % (cfile, dest))
             self._reset_namespace()
             self._cfp.read([cfile])
             self._defaults_set = []
@@ -188,6 +197,7 @@ class Parser(argparse.ArgumentParser):
                      (I.e., the argument list that was initially
                      parsed.)  :type argv: list
         """
+        _debug("Reparsing all options")
         self._reset_namespace()
         self.parse(argv or self.argv)
 
@@ -200,13 +210,16 @@ class Parser(argparse.ArgumentParser):
                      :func:`Bcfg2.Options.Parser.reparse`.
         :type argv: list
         """
+        _debug("Parsing options")
         if argv is None:
             argv = sys.argv[1:]
         if self.parsed and self.argv == argv:
+            _debug("Returning already parsed namespace")
             return self.namespace
         self.argv = argv
 
         # phase 1: get and read config file
+        _debug("Option parsing phase 1: Get and read main config file")
         bootstrap_parser = argparse.ArgumentParser(add_help=False)
         self.configfile.add_to_parser(bootstrap_parser)
         bootstrap = bootstrap_parser.parse_known_args(args=self.argv)[0]
@@ -219,6 +232,7 @@ class Parser(argparse.ArgumentParser):
 
         # phase 2: re-parse command line for early options; currently,
         # that's database options
+        _debug("Option parsing phase 2: Parse early options")
         if not self._early:
             early_opts = argparse.Namespace()
             early_parser = Parser(add_help=False, namespace=early_opts,
@@ -240,6 +254,7 @@ class Parser(argparse.ArgumentParser):
         # components, until all components have been loaded.  On each
         # iteration, set defaults from config file/environment
         # variables
+        _debug("Option parsing phase 3: Main parser loop")
         self._parse_config_options()
         while not self.parsed:
             self.parsed = True
@@ -250,17 +265,24 @@ class Parser(argparse.ArgumentParser):
         self._finalize()
 
         # phase 4: fix up <repository> macros
+        _debug("Option parsing phase 4: Fix up macros")
         repo = getattr(self.namespace, "repository", repository.default)
         for attr in dir(self.namespace):
             value = getattr(self.namespace, attr)
-            if not attr.startswith("_") and hasattr(value, "replace"):
+            if (not attr.startswith("_") and
+                hasattr(value, "replace") and
+                "<repository>" in value):
                 setattr(self.namespace, attr,
                         value.replace("<repository>", repo, 1))
+                _debug("Fixing up macros in %s: %s -> %s" %
+                       (attr, value, getattr(self.namespace, attr)))
 
         # phase 5: call post-parsing hooks
+        _debug("Option parsing phase 5: Call hooks")
         if not self._early:
             for component in self.components:
                 if hasattr(component, "options_parsed_hook"):
+                    _debug("Calling post-parsing hook on %s" % component)
                     getattr(component, "options_parsed_hook")()
 
         return self.namespace
