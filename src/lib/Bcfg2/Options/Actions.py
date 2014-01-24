@@ -123,7 +123,7 @@ class ComponentAction(argparse.Action):
                     break
         if cls:
             get_parser().add_component(cls)
-        else:
+        elif not self.fail_silently:
             print("Could not load component %s" % name)
         return cls
 
