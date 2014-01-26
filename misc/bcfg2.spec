@@ -772,6 +772,13 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 
 
 %changelog
+* Sun Dec 15 2013 John Morris <john@zultron.com> - 1.3.3-3
+- Remove unneeded Django dep in 'web' package, bz #1043229
+
+* Sun Nov 24 2013 John Morris <john@zultron.com> - 1.3.3-2
+- Fix CherryPyCore.py exclude glob to include compiled files
+- Disable server-cherrypy package build to make Fedora buildsys happy
+
 * Sun Aug 04 2013 John Morris <john@zultron.com> - 1.3.2-2
 - Reconcile divergences with Fedora specfile, as requested by upstream
   (equally large changes made in Fedora version to reconcile with
@@ -790,8 +797,54 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
   - Changes to %%post* scripts
 - Rearrange %%files sections
 
+* Wed Jul  3 2013 John Morris <john@zultron.com> - 1.3.2-1
+- Update to new upstream version 1.3.2
+- Move settings.py into server package (fixes bug reported on bcfg2-dev ML)
+- Use init scripts from redhat/scripts directory
+- Fix EL5/EL6 sphinx docs
+- Require python-inotify instead of gamin-python; recommended by upstream
+- Remove obsolete bcfg2-py27-auth.patch, accepted upstream
+- Add %%check script
+  - Hack test suite to use local copies of XMLSchema.xsd and xml.xsd
+  - Many new BRs to support %%check script
+  - Disable %%check script on EL5, where there is no python-mock package
+- Cleanups to _pre/_rc macros
+- Mark EL5 relics
+- Other minor formatting
+
+* Mon Apr 08 2013 Fabian Affolter <mail@fabian-affolter.ch> - 1.3.1-1
+- Updated to new upstream version 1.3.1
+
+* Mon Mar 18 2013 Fabian Affolter <mail@fabian-affolter.ch> - 1.3.0-1
+- Updated to new upstream version 1.3.0
+
+* Wed Feb 13 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.3.0-0.2.pre2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
+
+* Wed Oct 31 2012 Fabian Affolter <mail@fabian-affolter.ch> - 1.3.0-0.1.pre2
+- Updated to new upstream version 1.3.0 pre2
+
 * Wed Oct 17 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.3.0-0.2pre1
 - Split bcfg2-selinux into its own specfile
+
+* Mon Aug 27 2012 Václav Pavlín <vpavlin@redhat.com> - 1.2.3-3
+- Scriptlets replaced with new systemd macros (#850043)
+
+* Wed Jul 18 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.2.3-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
+
+* Sat Jul 07 2012 Fabian Affolter <mail@fabian-affolter.ch> - 1.2.3-1
+- Fix CVE-2012-3366
+- Updated to new upstream version 1.2.3
+
+* Tue May 01 2012 Fabian Affolter <mail@fabian-affolter.ch> - 1.2.2-2
+- python-nose is needed by bcfg2-test
+
+* Fri Apr 06 2012 Fabian Affolter <mail@fabian-affolter.ch> - 1.2.2-1
+- Updated to new upstream version 1.2.2
+
+* Sun Feb 26 2012 Fabian Affolter <mail@fabian-affolter.ch> - 1.2.1-2
+- Fixed systemd files
 
 * Fri Sep 14 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.3.0-0.1pre1
 - Added -selinux subpackage
@@ -807,14 +860,211 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 - Added openSUSE compatibility.
 - Various changes to satisfy rpmlint.
 
+* Tue Feb 07 2012 Fabian Affolter <mail@fabian-affolter.ch> - 1.2.1-1
+- Added examples package
+- Updated to new upstream version 1.2.1
+
+* Mon Jan 02 2012 Fabian Affolter <mail@fabian-affolter.ch> - 1.2.0-6
+- Added support for systemd
+- Example subpackage
+
+* Wed Sep 07 2011 Fabian Affolter <mail@fabian-affolter.ch> - 1.2.0-5
+- Updated to new upstreadm version 1.2.0
+
+* Wed Sep 07 2011 Fabian Affolter <mail@fabian-affolter.ch> - 1.2.0-4.1.rc1
+- Updated to new upstreadm version 1.2.0rc1
+
+* Wed Jun 22 2011 Fabian Affolter <mail@fabian-affolter.ch> - 1.2.0-3.1.pre3
+- Updated to new upstreadm version 1.2.0pre3
+
+* Wed May 04 2011 Fabian Affolter <mail@fabian-affolter.ch> - 1.2.0-2.1.pre2
+- Added bcfg2-lint stuff
+- Pooled file section entries to reduce future maintainance
+- Removed Patch
+
+* Wed May 04 2011 Fabian Affolter <mail@fabian-affolter.ch> - 1.2.0-1.1.pre2
+- Updated to new upstream version 1.2.0pre2
+
+* Sun Mar 20 2011 Fabian Affolter <mail@fabian-affolter.ch> - 1.2.0-1.1.pre1
+- Added doc subpackage
+- Updated to new upstream version 1.2.0pre1
+
+* Mon Feb 07 2011 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.1.1-2.1
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_15_Mass_Rebuild
+
 * Thu Jan 27 2011 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.2.0pre1-0.0
 - Added -doc sub-package
+
+* Thu Nov 18 2010 Fabian Affolter <mail@fabian-affolter.ch> - 1.1.1-2
+- Added new man page
+- Updated doc section (ChangeLog is gone)
+
+* Thu Nov 18 2010 Fabian Affolter <mail@fabian-affolter.ch> - 1.1.1-1
+- Updated to new upstream version 1.1.1
+
+* Fri Nov  5 2010 Jeffrey C. Ollie <jeff@ocjtech.us> - 1.1.0-3
+- Add patch from Gordon Messmer to fix authentication on F14+ (Python 2.7)
+
+* Mon Sep 27 2010 Jeffrey C. Ollie <jeff@ocjtech.us> - 1.1.0-2
+- Update to final version
+
+* Wed Sep 15 2010 Jeffrey C. Ollie <jeff@ocjtech.us> - 1.1.0-1.3.rc5
+- Update to 1.1.0rc5:
+
+* Tue Aug 31 2010 Jeffrey C. Ollie <jeff@ocjtech.us> - 1.1.0-1.2.rc4
+- Add new YUMng driver
+
+* Wed Jul 21 2010 David Malcolm <dmalcolm@redhat.com> - 1.1.0-1.1.rc4.1
+- Rebuilt for https://fedoraproject.org/wiki/Features/Python_2.7/MassRebuild
+
+* Tue Jul 20 2010 Fabian Affolter <mail@fabian-affolter.ch> - 1.1.0-1.1.rc4
+- Added patch to fix indention
+
+* Tue Jul 20 2010 Fabian Affolter <mail@fabian-affolter.ch> - 1.1.0-0.1.rc4
+- Updated to new upstream release candidate RC4
 
 * Mon Jun 21 2010 Fabian Affolter <fabian@bernewireless.net> - 1.1.0rc3-0.1
 - Changed source0 in order that it works with spectool
 
+* Sat Jun 19 2010 Fabian Affolter <mail@fabian-affolter.ch> - 1.1.0-0.1.rc3
+- Updated to new upstream release candidate RC3 
+
+* Sun May 02 2010 Fabian Affolter <mail@fabian-affolter.ch> - 1.1.0-0.2.rc1
+- Changed define to global
+- Added graphviz for the server package
+
+* Wed Apr 28 2010 Jeffrey C. Ollie <jeff@ocjtech.us> - 1.1.0-0.1.rc1
+- Update to 1.1.0rc1
+
+* Tue Apr 13 2010 Jeffrey C. Ollie <jeff@ocjtech.us> - 1.0.1-1
+- Update to final version
+
+* Fri Nov  6 2009 Jeffrey C. Ollie <jeff@ocjtech.us> - 1.0.0-2
+- Fixup the bcfg2-server init script
+
+* Fri Nov  6 2009 Jeffrey C. Ollie <jeff@ocjtech.us> - 1.0.0-1
+- Update to 1.0.0 final
+
+* Wed Nov  4 2009 Jeffrey C. Ollie <jeff@ocjtech.us> - 1.0.0-0.5.rc2
+- Only require python-ssl on EPEL
+
+* Sat Oct 31 2009 Jeffrey C. Ollie <jeff@ocjtech.us> - 1.0.0-0.4.rc2
+- Update to 1.0.0rc2
+
+* Mon Oct 26 2009 Jeffrey C. Ollie <jeff@ocjtech.us> - 1.0.0-0.3.rc1
+- Update to 1.0rc1
+
+* Fri Oct 16 2009 Jeffrey C. Ollie <jeff@ocjtech.us> - 1.0-0.2.pre5
+- Add python-ssl requirement
+
+* Tue Aug 11 2009 Jeffrey C. Ollie <jeff@ocjtech.us> - 1.0-0.1.pre5
+- Update to 1.0pre5
+
+* Fri Jul 24 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.9.6-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_12_Mass_Rebuild
+
+* Mon Feb 23 2009 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 0.9.6-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_11_Mass_Rebuild
+
+* Sat Nov 29 2008 Ignacio Vazquez-Abrams <ivazqueznet+rpm@gmail.com> - 0.9.6-2
+- Rebuild for Python 2.6
+
+* Tue Nov 18 2008 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.6-1
+- Update to 0.9.6 final.
+
+* Tue Oct 14 2008 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.6-0.8.pre3
+- Update to 0.9.6pre3
+
+* Sat Aug  9 2008 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.6-0.2.pre2
+- Update to 0.9.6pre2
+
+* Wed May 28 2008 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.6-0.1.pre1
+- Update to 0.9.6pre1
+
+* Fri Feb 15 2008 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.5.7-1
+- Update to 0.9.5.7.
+
+* Fri Feb 15 2008 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.5.7-1
+- Update to 0.9.5.7.
+
+* Fri Jan 11 2008 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.5.5-1
+- Update to 0.9.5.5
+- More egg-info entries.
+
+* Wed Jan  9 2008 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.5.4-1
+- Update to 0.9.5.4.
+
+* Tue Jan  8 2008 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.5.3-1
+- Update to 0.9.5.3
+- Package egg-info files.
+
+* Mon Nov 12 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.5.2-1
+- Update to 0.9.5.2
+
+* Mon Nov 12 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.5-2
+- Fix oops.
+
+* Mon Nov 12 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.5-1
+- Update to 0.9.5 final.
+
+* Mon Nov 05 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.5-0.5.pre7
+- Commit new patches to CVS.
+
+* Mon Nov 05 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.5-0.4.pre7
+- Update to 0.9.5pre7
+
+* Wed Jun 27 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.4-4
+- Oops, apply right patch
+
+* Wed Jun 27 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.4-3
+- Add patch to fix YUMng problem
+
+* Mon Jun 25 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.4-2
+- Bump revision and rebuild
+
+* Mon Jun 25 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.4-1
+- Update to 0.9.4 final
+
+* Thu Jun 21 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.4-0.1.pre4
+- Update to 0.9.4pre4
+
+* Thu Jun 14 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.4-0.1.pre3
+- Update to 0.9.4pre3
+
+* Tue Jun 12 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.4-0.1.pre2
+- Update to 0.9.4pre2
+
+* Tue May 22 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.3-2
+- Drop requires on pyOpenSSL
+- Add requires on redhat-lsb
+- (Fixes #240871)
+
+* Mon Apr 30 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.3-1
+- Update to 0.9.3
+
+* Tue Mar 20 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.2-4
+- Server needs pyOpenSSL
+
+* Wed Feb 28 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.2-3
+- Don't forget %%dir
+
+* Wed Feb 28 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.2-2
+- Fix #230478
+
+* Mon Feb 19 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.2-1
+- Update to 0.9.2
+
+* Thu Feb  8 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.9.1-1.d
+- Update to 0.9.1d
+
 * Fri Feb 2 2007 Mike Brady <mike.brady@devnull.net.nz> 0.9.1
 - Removed use of _libdir due to Red Hat x86_64 issue.
+
+* Tue Jan  9 2007 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.8.7.3-2
+- Merge client back into base package.
+
+* Wed Dec 27 2006 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.8.7.3-1
+- Update to 0.8.7.3
 
 * Fri Dec 22 2006 Jeffrey C. Ollie <jeff@ocjtech.us> - 0.8.7.1-5
 - Server needs client library files too so put them in main package
