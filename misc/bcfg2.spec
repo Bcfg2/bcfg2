@@ -72,7 +72,7 @@ BuildRequires:    python-sqlalchemy
 BuildRequires:    python-nose
 BuildRequires:    mock
 BuildRequires:    m2crypto
-# EPEL uses the properly-named python-django start with EPEL7
+# EPEL uses the properly-named python-django starting with EPEL7
 %if 0%{?rhel} && 0%{?rhel} > 6
 BuildRequires:    python-django
 %else
@@ -283,8 +283,13 @@ Requires:         python-django >= 1.2
 Requires:         python-django-south >= 0.7
 %else
 Group:            System Tools
+# EPEL uses the properly-named python-django starting with EPEL7
+%if 0%{?rhel} && 0%{?rhel} > 6
+Requires:         python-django
+%else
 Requires:         Django >= 1.2
 Requires:         Django-south >= 0.7
+%endif
 Requires:         bcfg2-server
 %endif
 Requires:         httpd
