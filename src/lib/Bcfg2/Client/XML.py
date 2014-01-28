@@ -5,17 +5,25 @@
 # pylint: disable=E0611,W0611,W0613,C0103
 
 try:
-    from lxml.etree import Element, SubElement, tostring
+    from lxml.etree import Element, SubElement, tostring, XMLParser
     from lxml.etree import XMLSyntaxError as ParseError
     from lxml.etree import XML as _XML
     from Bcfg2.Compat import wraps
     driver = 'lxml'
+
+    try:
+        # libxml2 2.9.0+ doesn't parse 10M+ documents by default:
+        # https://mail.gnome.org/archives/commits-list/2012-August/msg00645.html
+        _parser = XMLParser(huge_tree=True)
+    except TypeError:
+        _parser = XMLParser()
 
     @wraps(_XML)
     def XML(val, **kwargs):
         """ unicode strings w/encoding declaration are not supported in
         recent lxml.etree, so we try to read XML, and if it fails we try
         encoding the string. """
+        kwargs.setdefault('parser', _parser)
         try:
             return _XML(val, **kwargs)
         except ValueError:
