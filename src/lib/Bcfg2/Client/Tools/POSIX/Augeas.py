@@ -273,7 +273,8 @@ class POSIXAugeas(POSIXTool):
             if initial is not None:
                 self.logger.debug("Augeas: Setting initial data for %s" %
                                   entry.get("name"))
-                file_entry = Bcfg2.Client.XML.Element("Path", **entry.attrib)
+                file_entry = Bcfg2.Client.XML.Element("Path",
+                                                      **dict(entry.attrib))
                 file_entry.text = initial.text
                 self.filetool.install(file_entry)
                 # re-parse the file
