@@ -10,7 +10,8 @@ import Bcfg2.Server.Plugin
 
 try:
     import json
-except ImportError:
+    json.loads  # py2.4 json library is structured differently
+except (ImportError, AttributeError):
     import simplejson as json
 
 PROBECODE = """#!/bin/sh

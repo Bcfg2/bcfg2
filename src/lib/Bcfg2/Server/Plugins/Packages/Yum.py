@@ -87,7 +87,8 @@ try:
     import yum
     try:
         import json
-    except ImportError:
+        json.loads  # py2.4 json library is structured differently
+    except (ImportError, AttributeError):
         import simplejson as json
     HAS_YUM = True
 except ImportError:

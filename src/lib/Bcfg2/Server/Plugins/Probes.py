@@ -34,8 +34,9 @@ except ImportError:
 
 try:
     import json
+    json.loads  # py2.4 json library is structured differently
     HAS_JSON = True
-except ImportError:
+except (ImportError, AttributeError):
     try:
         import simplejson as json
         HAS_JSON = True
