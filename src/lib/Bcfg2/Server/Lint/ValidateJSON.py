@@ -10,7 +10,8 @@ import Bcfg2.Server.Lint
 
 try:
     import json
-    json.loads  # py2.4 json library is structured differently
+    # py2.4 json library is structured differently
+    json.loads  # pylint: disable=W0104
 except (ImportError, AttributeError):
     import simplejson as json
 

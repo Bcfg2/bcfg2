@@ -17,7 +17,8 @@ except ImportError:
 
 try:
     import json
-    json.loads  # py2.4 json library is structured differently
+    # py2.4 json library is structured differently
+    json.loads  # pylint: disable=W0104
     HAS_JSON = True
 except (ImportError, AttributeError):
     try:

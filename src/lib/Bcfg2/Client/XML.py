@@ -11,9 +11,9 @@ try:
     from Bcfg2.Compat import wraps
     driver = 'lxml'
 
+    # libxml2 2.9.0+ doesn't parse 10M+ documents by default:
+    # https://mail.gnome.org/archives/commits-list/2012-August/msg00645.html
     try:
-        # libxml2 2.9.0+ doesn't parse 10M+ documents by default:
-        # https://mail.gnome.org/archives/commits-list/2012-August/msg00645.html
         _parser = XMLParser(huge_tree=True)
     except TypeError:
         _parser = XMLParser()
