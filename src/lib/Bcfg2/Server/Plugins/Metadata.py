@@ -1657,8 +1657,8 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
             "client")
 
     def duplicate_groups(self):
-        """ Check  for groups that  are defined more than  once. There
-        are two ways this can happen:
+        """ Check for groups that are defined more than once. There are two
+        ways this can happen:
 
         1. The group is listed twice with contradictory options.
         2. The group is listed with no options *first*, and then with
@@ -1674,7 +1674,8 @@ class MetadataLint(Bcfg2.Server.Lint.ServerPlugin):
             grpname = grp.get("name")
             if grpname in duplicates:
                 duplicates[grpname].append(grp)
-            elif len(grp.attrib) > 1:  # group has options
+            elif set(grp.attrib.keys()).difference(['negate', 'name']):
+                # group has options
                 if grpname in groups:
                     duplicates[grpname] = [grp, groups[grpname]]
                 else:
