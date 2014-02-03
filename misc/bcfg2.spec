@@ -30,7 +30,7 @@
 
 Name:             bcfg2
 Version:          1.3.3
-Release:          1%{?_pre_rc}%{?dist}
+Release:          3%{?_pre_rc}%{?dist}
 Summary:          A configuration management system
 
 %if 0%{?suse_version}
@@ -41,7 +41,7 @@ Group:            Applications/System
 %endif
 License:          BSD
 URL:              http://bcfg2.org
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}.tar.gz
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}%{?_pre_rc}.tar.gz
 # Used in %%check
 Source1:          http://www.w3.org/2001/XMLSchema.xsd
 %if %{?rhel}%{!?rhel:10} <= 5 || 0%{?suse_version}
@@ -88,17 +88,25 @@ BuildRequires:    Django
 %endif
 BuildRequires:    python-genshi
 BuildRequires:    python-cheetah
-BuildRequires:    pylibacl
 BuildRequires:    libselinux-python
+%if 0%{?rhel} != 7
+# FIXME:  Not yet present in EPEL7; for %%check
+BuildRequires:    pylibacl
 BuildRequires:    python-pep8
+BuildRequires:    pylint
+%endif
 %if %{build_cherry_py}
 BuildRequires:    python-cherrypy >= 3
 %endif
 BuildRequires:    python-mock
-BuildRequires:    pylint
 %endif # rhel > 5
 %endif # vendor != redhat || rhel defined
 %endif # ! suse_version
+%if 0%{?fedora} && 0%{?fedora} >= 16 || 0%{?rhel} && 0%{?rhel} >= 7
+# Pick up _unitdir macro
+BuildRequires:    systemd
+%endif
+
 
 %if 0%{?mandriva_version}
 # mandriva seems to behave differently than other distros and needs
@@ -510,10 +518,17 @@ install -p -m 644 redhat/systemd/%{name}.service \
 install -p -m 644 redhat/systemd/%{name}-server.service \
     %{buildroot}%{_unitdir}/%{name}-server.service
 
+%if 0%{?rhel} != 5
 # Webserver
 install -d %{buildroot}%{apache_conf}/conf.d
 install -p -m 644 misc/apache/bcfg2.conf \
     %{buildroot}%{apache_conf}/conf.d/wsgi_bcfg2.conf
+%else
+# remove web server files not in EL5 packages
+rm -r %{buildroot}%{_datadir}/bcfg2/reports.wsgi \
+      %{buildroot}%{_datadir}/bcfg2/site_media
+%endif
+
 
 # mandriva cannot handle %ghost without the file existing,
 # so let's touch a bunch of empty config files
@@ -528,6 +543,8 @@ rm -rf %{buildroot}
 
 %if 0%{?rhel} != 5
 # EL5 lacks python-mock, so test suite is disabled
+%if 0%{?rhel} != 7
+# FIXME:  EL7 has some missing EPEL deps, so test suite is disabled
 %check
 # Downloads not allowed in koji; fix .xsd urls to point to local files
 sed -i "s@schema_url = .*\$@schema_url = 'file://`pwd`/`basename %{SOURCE1}`'@" \
@@ -535,6 +552,7 @@ sed -i "s@schema_url = .*\$@schema_url = 'file://`pwd`/`basename %{SOURCE1}`'@" 
 sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
     %{SOURCE1} > `basename %{SOURCE1}`
 %{__python} setup.py test
+%endif
 %endif
 
 
@@ -750,13 +768,16 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %{python_sitelib}/Bcfg2/Server/CherryPyCore.py
 %endif
 
+# bcfg2-web package is disabled on EL5, which lacks Django
+%if 0%{?rhel} != 5
 %files web
-%if 0%{?rhel} == 5 || 0%{?suse_version}
+%if 0%{?suse_version}
 %defattr(-,root,root,-)
 %endif
 %{_datadir}/bcfg2/reports.wsgi
 %{_datadir}/bcfg2/site_media
 %config(noreplace) %{apache_conf}/conf.d/wsgi_bcfg2.conf
+%endif
 
 %files doc
 %if 0%{?rhel} == 5 || 0%{?suse_version}
@@ -772,12 +793,27 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 
 
 %changelog
+* Sat Feb  1 2014 John Morris <john@zultron.com> - 1.3.3-4
+- Disable bcfg2-web package on EL5; bz #1058427
+- Disable %%check on EL7; missing EPEL deps
+- BR: systemd to pick up _unitdir macro
+
+* Mon Jan 27 2014 Sol Jerome <sol.jerome@gmail.com> - 1.3.3-4
+- Fix BuildRequires for EPEL7's Django
+- Remove unnecessary client-side lxml dependency
+- Add Django dependency for bcfg2-web (the web package *does* require
+  Django for the database)
+- Fix OS detection for RHEL7 initscripts
+
 * Sun Dec 15 2013 John Morris <john@zultron.com> - 1.3.3-3
 - Remove unneeded Django dep in 'web' package, bz #1043229
 
 * Sun Nov 24 2013 John Morris <john@zultron.com> - 1.3.3-2
 - Fix CherryPyCore.py exclude glob to include compiled files
 - Disable server-cherrypy package build to make Fedora buildsys happy
+
+* Thu Nov 07 2013 Sol Jerome <sol.jerome@gmail.com> 1.3.3-1
+- New upstream release
 
 * Sun Aug 04 2013 John Morris <john@zultron.com> - 1.3.2-2
 - Reconcile divergences with Fedora specfile, as requested by upstream
