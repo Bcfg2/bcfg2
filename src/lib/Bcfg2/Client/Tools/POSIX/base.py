@@ -664,7 +664,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                 else:
                     self.logger.debug("POSIX: Unknown ACL scope %s on %s" %
                                       (scope, path))
-                    continue
+                    return
 
                 if scope != posix1e.ACL_OTHER:
                     aclentry.set(aclentry.get("scope"), qual)
