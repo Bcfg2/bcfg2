@@ -643,6 +643,8 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         """ verify POSIX ACLs on the given entry.  return True if all
         ACLS are correct, false otherwise """
         def _verify_acl(aclkey, perms):
+            """ Given ACL data, process it appropriately and add it to
+            missing or wrong lists if appropriate """
             if aclkey not in existing:
                 missing.append(self._acl2string(aclkey, perms))
             elif existing[aclkey] != perms:
