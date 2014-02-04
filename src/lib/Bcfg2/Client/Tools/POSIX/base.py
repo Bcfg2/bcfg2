@@ -251,14 +251,14 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             aclentry.tag_type = scope
             try:
                 if scope == posix1e.ACL_USER:
+                    scopename = "user"
                     if qualifier:
-                        scopename = "user"
                         aclentry.qualifier = self._norm_uid(qualifier)
                     else:
                         aclentry.tag_type = posix1e.ACL_USER_OBJ
                 elif scope == posix1e.ACL_GROUP:
+                    scopename = "group"
                     if qualifier:
-                        scopename = "group"
                         aclentry.qualifier = self._norm_gid(qualifier)
                     else:
                         aclentry.tag_type = posix1e.ACL_GROUP_OBJ
@@ -610,9 +610,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                     qual = pwd.getpwuid(acl.qualifier)[0]
                 elif acl.tag_type == posix1e.ACL_GROUP:
                     qual = grp.getgrgid(acl.qualifier)[0]
-                elif atype == "access":
-                    return
-                elif acl.tag_type == posix1e.ACL_MASK:
+                elif atype == "access" or acl.tag_type == posix1e.ACL_MASK:
                     return
             except (OSError, KeyError):
                 err = sys.exc_info()[1]
@@ -686,6 +684,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                     self.logger.debug("POSIX: Unknown ACL scope %s on %s" %
                                       (scope, path))
                     continue
+
                 if scope != posix1e.ACL_OTHER:
                     aclentry.set(aclentry.get("scope"), qual)
                 entry.append(aclentry)
