@@ -219,14 +219,13 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                 acl.delete_entry(aclentry)
         if os.path.isdir(path):
             defacl = posix1e.ACL(filedef=path)
-            if defacl.valid():
-                for aclentry in defacl:
-                    if aclentry.tag_type in [posix1e.ACL_USER,
-                                             posix1e.ACL_USER_OBJ,
-                                             posix1e.ACL_GROUP,
-                                             posix1e.ACL_GROUP_OBJ,
-                                             posix1e.ACL_OTHER]:
-                        defacl.delete_entry(aclentry)
+            for aclentry in defacl:
+                if aclentry.tag_type in [posix1e.ACL_USER,
+                                         posix1e.ACL_USER_OBJ,
+                                         posix1e.ACL_GROUP,
+                                         posix1e.ACL_GROUP_OBJ,
+                                         posix1e.ACL_OTHER]:
+                    defacl.delete_entry(aclentry)
         else:
             defacl = None
 
