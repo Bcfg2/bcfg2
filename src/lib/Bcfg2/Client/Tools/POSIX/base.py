@@ -643,26 +643,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
     def _verify_acls(self, entry, path=None):
         """ verify POSIX ACLs on the given entry.  return True if all
         ACLS are correct, false otherwise """
-        if not HAS_ACLS:
-            if entry.findall("ACL"):
-                self.logger.debug("POSIX: ACLs listed for %s but no pylibacl "
-                                  "library installed" % entry.get('name'))
-            return True
-
-        if path is None:
-            path = entry.get("name")
-
-        # create lists of normalized representations of the ACLs we want
-        # and the ACLs we have.  this will make them easier to compare
-        # than trying to mine that data out of the ACL objects and XML
-        # objects and compare it at the same time.
-        wanted = self._list_entry_acls(entry)
-        existing = self._list_file_acls(path)
-
-        missing = []
-        extra = []
-        wrong = []
-        for aclkey, perms in wanted.items():
+        def _verify_acl(aclkey, perms):
             if aclkey not in existing:
                 missing.append(self._acl2string(aclkey, perms))
             elif existing[aclkey] != perms:
@@ -688,6 +669,28 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                 if scope != posix1e.ACL_OTHER:
                     aclentry.set(aclentry.get("scope"), qual)
                 entry.append(aclentry)
+
+        if not HAS_ACLS:
+            if entry.findall("ACL"):
+                self.logger.debug("POSIX: ACLs listed for %s but no pylibacl "
+                                  "library installed" % entry.get('name'))
+            return True
+
+        if path is None:
+            path = entry.get("name")
+
+        # create lists of normalized representations of the ACLs we want
+        # and the ACLs we have.  this will make them easier to compare
+        # than trying to mine that data out of the ACL objects and XML
+        # objects and compare it at the same time.
+        wanted = self._list_entry_acls(entry)
+        existing = self._list_file_acls(path)
+
+        missing = []
+        extra = []
+        wrong = []
+        for aclkey, perms in wanted.items():
+            _verify_acl(aclkey, perms)
 
         for aclkey, perms in existing.items():
             if aclkey not in wanted:
