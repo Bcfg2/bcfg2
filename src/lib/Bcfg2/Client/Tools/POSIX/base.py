@@ -639,7 +639,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                 _process_acl(acl, "default")
         return existing
 
-    def _verify_acls(self, entry, path=None):
+    def _verify_acls(self, entry, path=None):  # pylint: disable=R0912
         """ verify POSIX ACLs on the given entry.  return True if all
         ACLS are correct, false otherwise """
         def _verify_acl(aclkey, perms):
