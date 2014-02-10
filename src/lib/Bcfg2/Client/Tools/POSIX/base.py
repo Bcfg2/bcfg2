@@ -213,9 +213,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         # clear ACLs out so we start fresh -- way easier than trying
         # to add/remove/modify ACLs
         for aclentry in acl:
-            if aclentry.tag_type in [posix1e.ACL_USER,
-                                     posix1e.ACL_GROUP,
-                                     posix1e.ACL_OTHER]:
+            if aclentry.tag_type in [posix1e.ACL_USER, posix1e.ACL_GROUP]:
                 acl.delete_entry(aclentry)
         if os.path.isdir(path):
             defacl = posix1e.ACL(filedef=path)
