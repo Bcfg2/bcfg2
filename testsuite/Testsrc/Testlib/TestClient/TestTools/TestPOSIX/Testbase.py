@@ -563,16 +563,16 @@ class TestPOSIXTool(TestTool):
         self.assertEqual(6, ptool._norm_acl_perms("rwa"))
         self.assertEqual(4, ptool._norm_acl_perms("rr"))
 
-    @patch('os.stat')
-    def test__gather_data(self, mock_stat):
+    @patch('os.lstat')
+    def test__gather_data(self, mock_lstat):
         ptool = self.get_obj()
         path = '/test'
-        mock_stat.side_effect = OSError
+        mock_lstat.side_effect = OSError
         self.assertFalse(ptool._gather_data(path)[0])
-        mock_stat.assert_called_with(path)
+        mock_lstat.assert_called_with(path)
 
-        mock_stat.reset_mock()
-        mock_stat.side_effect = None
+        mock_lstat.reset_mock()
+        mock_lstat.side_effect = None
         # create a return value
         stat_rv = MagicMock()
         def stat_getitem(key):
@@ -585,7 +585,7 @@ class TestPOSIXTool(TestTool):
                 # and ensure that they're stripped
                 return int('060660', 8)
         stat_rv.__getitem__ = Mock(side_effect=stat_getitem)
-        mock_stat.return_value = stat_rv
+        mock_lstat.return_value = stat_rv
 
         # disable selinux and acls for this call -- we test them
         # separately so that we can skip those tests as appropriate
@@ -597,7 +597,7 @@ class TestPOSIXTool(TestTool):
                          (stat_rv, '0', '10', '0660', None, None))
         Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX, \
             Bcfg2.Client.Tools.POSIX.base.HAS_ACLS = states
-        mock_stat.assert_called_with(path)
+        mock_lstat.assert_called_with(path)
 
     @skipUnless(HAS_SELINUX, "SELinux not found, skipping")
     def test__gather_data_selinux(self):
@@ -605,12 +605,12 @@ class TestPOSIXTool(TestTool):
         context = 'system_u:object_r:root_t:s0'
         path = '/test'
 
-        @patch('os.stat')
-        @patchIf(HAS_SELINUX, "selinux.getfilecon")
-        def inner(mock_getfilecon, mock_stat):
-            mock_getfilecon.return_value = [len(context) + 1, context]
-            mock_stat.return_value = MagicMock()
-            mock_stat.return_value.__getitem__.return_value = MagicMock()
+        @patch('os.lstat')
+        @patchIf(HAS_SELINUX, "selinux.lgetfilecon")
+        def inner(mock_lgetfilecon, mock_lstat):
+            mock_lgetfilecon.return_value = [len(context) + 1, context]
+            mock_lstat.return_value = MagicMock()
+            mock_lstat.return_value.__getitem__.return_value = MagicMock()
             # disable acls for this call and test them separately
             state = (Bcfg2.Client.Tools.POSIX.base.HAS_ACLS,
                      Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX)
@@ -619,30 +619,40 @@ class TestPOSIXTool(TestTool):
             self.assertEqual(ptool._gather_data(path)[4], 'root_t')
             Bcfg2.Client.Tools.POSIX.base.HAS_ACLS, \
                 Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = state
-            mock_getfilecon.assert_called_with(path)
+            mock_lgetfilecon.assert_called_with(path)
 
         inner()
 
     @skipUnless(HAS_ACLS, "ACLS not found, skipping")
-    @patch('os.stat')
-    def test__gather_data_acls(self, mock_stat):
+    @patch('os.lstat')
+    @patch('stat.S_ISLNK')
+    def test__gather_data_acls(self, mock_S_ISLNK, mock_lstat):
         ptool = self.get_obj()
         ptool._list_file_acls = Mock()
         acls = {("default", posix1e.ACL_USER, "testuser"): "rwx",
                 ("access", posix1e.ACL_GROUP, "testgroup"): "rx"}
         ptool._list_file_acls.return_value = acls
         path = '/test'
-        mock_stat.return_value = MagicMock()
-        mock_stat.return_value.__getitem__.return_value = MagicMock()
+        mock_lstat.return_value = MagicMock()
+        mock_lstat.return_value.__getitem__.return_value = MagicMock()
+        mock_S_ISLNK.return_value = False
         # disable selinux for this call and test it separately
         state = (Bcfg2.Client.Tools.POSIX.base.HAS_ACLS,
                  Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX)
         Bcfg2.Client.Tools.POSIX.base.HAS_ACLS = True
         Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = False
         self.assertItemsEqual(ptool._gather_data(path)[5], acls)
+        ptool._list_file_acls.assert_called_with(path)
+
+        # symlinks can't have their own ACLs, so ensure that the
+        # _list_file_acls call is skipped and no ACLs are returned
+        mock_S_ISLNK.return_value = True
+        ptool._list_file_acls.reset_mock()
+        self.assertEqual(ptool._gather_data(path)[5], None)
+        self.assertFalse(ptool._list_file_acls.called)
+
         Bcfg2.Client.Tools.POSIX.base.HAS_ACLS, \
             Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = state
-        ptool._list_file_acls.assert_called_with(path)
 
     @patchIf(HAS_SELINUX, "selinux.matchpathcon")
     def test_verify_metadata(self, mock_matchpathcon):

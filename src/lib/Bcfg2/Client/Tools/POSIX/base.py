@@ -419,7 +419,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         """ Get data on the existing state of <path> -- e.g., whether
         or not it exists, owner, group, permissions, etc. """
         try:
-            ondisk = os.stat(path)
+            ondisk = os.lstat(path)
         except OSError:
             self.logger.debug("POSIX: %s does not exist" % path)
             return (False, None, None, None, None, None)
@@ -456,7 +456,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
 
         if HAS_SELINUX:
             try:
-                secontext = selinux.getfilecon(path)[1].split(":")[2]
+                secontext = selinux.lgetfilecon(path)[1].split(":")[2]
             except (OSError, KeyError):
                 err = sys.exc_info()[1]
                 self.logger.debug("POSIX: Could not get current SELinux "
@@ -465,7 +465,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         else:
             secontext = None
 
-        if HAS_ACLS:
+        if HAS_ACLS and not stat.S_ISLNK(ondisk):
             acls = self._list_file_acls(path)
         else:
             acls = None
