@@ -169,7 +169,10 @@ class Option(object):
         the appropriate default value in the appropriate format."""
         for parser, action in self.actions.items():
             if hasattr(action, "finalize"):
-                _debug("Finalizing %s for %s" % (self, parser))
+                if parser:
+                    _debug("Finalizing %s for %s" % (self, parser))
+                else:
+                    _debug("Finalizing %s" % self)
                 action.finalize(parser, namespace)
 
     def from_config(self, cfp):
@@ -184,7 +187,6 @@ class Option(object):
         """
         if not self.cf:
             return None
-        _debug("Setting %s from config file(s)" % self)
         if '*' in self.cf[1]:
             if cfp.has_section(self.cf[0]):
                 # build a list of known options in this section, and
@@ -194,23 +196,25 @@ class Option(object):
                     exclude.update(o.cf[1]
                                    for o in parser.option_list
                                    if o.cf and o.cf[0] == self.cf[0])
-                return dict([(o, cfp.get(self.cf[0], o))
-                             for o in fnmatch.filter(cfp.options(self.cf[0]),
-                                                     self.cf[1])
-                             if o not in exclude])
+                rv = dict([(o, cfp.get(self.cf[0], o))
+                           for o in fnmatch.filter(cfp.options(self.cf[0]),
+                                                   self.cf[1])
+                           if o not in exclude])
             else:
-                return dict()
+                rv = dict()
         else:
-            try:
-                val = cfp.getboolean(*self.cf)
-            except ValueError:
-                val = cfp.get(*self.cf)
-            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-                return None
             if self.type:
-                return self.type(val)
+                rtype = self.type
             else:
-                return val
+                rtype = lambda x: x
+            try:
+                rv = rtype(cfp.getboolean(*self.cf))
+            except ValueError:
+                rv = rtype(cfp.get(*self.cf))
+            except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
+                rv = None
+        _debug("Setting %s from config file(s): %s" % (self, rv))
+        return rv
 
     def default_from_config(self, cfp):
         """ Set the default value of this option from the config file

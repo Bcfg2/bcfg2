@@ -132,7 +132,8 @@ class ComponentAction(argparse.Action):
         in it.  This lets a default be specified with a list of
         strings instead of a list of classes. """
         if not self._final:
-            self.__call__(parser, namespace, self.default)
+            self.__call__(parser, namespace, getattr(namespace, self.dest,
+                                                     self.default))
 
     def __call__(self, parser, namespace, values, option_string=None):
         if values is None:
