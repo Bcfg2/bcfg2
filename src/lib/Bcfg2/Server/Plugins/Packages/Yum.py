@@ -323,7 +323,7 @@ class YumCollection(Collection):
                                                                   self.fam)
 
     @property
-    def disableMetaData(self):
+    def disableMetaData(self):  # pylint: disable=C0103
         """ Report whether or not metadata processing is enabled.
         This duplicates code in Packages/__init__.py, and can probably
         be removed in Bcfg2 1.4 when we have a module-level setup

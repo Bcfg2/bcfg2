@@ -35,7 +35,7 @@ contingent_checks = {
                   "lib/Bcfg2/Server/Admin": ["Reports.py", "Syncdb.py"],
                   "sbin": ["bcfg2-reports"]},
     ("pyinotify",): {"lib/Bcfg2/Server/FileMonitor": ["Inotify.py"]},
-    ("yum",): {"lib/Bcfg2/Client/Tools": ["YUM*"]},
+    ("yum",): {"lib/Bcfg2/Client/Tools": ["YUM.py"]},
     ("genshi",): {"lib/Bcfg2/Server/Plugins/Cfg": ["CfgGenshiGenerator.py"]},
     ("Cheetah",): {"lib/Bcfg2/Server/Plugins/Cfg": ["CfgCheetahGenerator.py"]},
     ("M2Crypto",): {"lib/Bcfg2": ["Encryption.py"],

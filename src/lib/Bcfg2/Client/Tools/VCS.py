@@ -161,15 +161,19 @@ class VCS(Bcfg2.Client.Tools.Tool):
 
     def Verifysvn(self, entry, _):
         """Verify svn repositories"""
-        headrev = pysvn.Revision( pysvn.opt_revision_kind.head )
+        # pylint: disable=E1101
+        headrev = pysvn.Revision(pysvn.opt_revision_kind.head)
+        # pylint: enable=E1101
         client = pysvn.Client()
         try:
             cur_rev = str(client.info(entry.get('name')).revision.number)
-            server = client.info2(entry.get('sourceurl'), headrev, recurse=False)
+            server = client.info2(entry.get('sourceurl'), headrev,
+                                  recurse=False)
             if server:
                 server_rev = str(server[0][1].rev.number)
         except:
-            self.logger.info("Repository %s does not exist" % entry.get('name'))
+            self.logger.info("Repository %s does not exist" %
+                             entry.get('name'))
             return False
 
         if entry.get('revision') == 'latest' and cur_rev == server_rev:

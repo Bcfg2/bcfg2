@@ -188,7 +188,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     set_debug.__doc__ = Bcfg2.Server.Plugin.Plugin.set_debug.__doc__
 
     @property
-    def disableResolver(self):
+    def disableResolver(self):  # pylint: disable=C0103
         """ Report the state of the resolver.  This can be disabled in
         the configuration.  Note that disabling metadata (see
         :attr:`disableMetaData`) implies disabling the resolver.
@@ -213,7 +213,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 default="enabled").lower() == "disabled"
 
     @property
-    def disableMetaData(self):
+    def disableMetaData(self):  # pylint: disable=C0103
         """ Report whether or not metadata processing is enabled.
 
         This property cannot be set. """
