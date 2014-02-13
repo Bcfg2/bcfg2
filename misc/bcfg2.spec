@@ -64,6 +64,7 @@ BuildRequires:    python-python-daemon
 BuildRequires:    python-CherryPy >= 3
 %endif
 %else # ! suse_version
+BuildRequires:    gamin-python
 BuildRequires:    python-daemon
 BuildRequires:    python-inotify
 %if "%{_vendor}" == "redhat" && 0%{!?rhel:1} && 0%{!?fedora:1}
@@ -963,7 +964,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 - Changed source0 in order that it works with spectool
 
 * Sat Jun 19 2010 Fabian Affolter <mail@fabian-affolter.ch> - 1.1.0-0.1.rc3
-- Updated to new upstream release candidate RC3 
+- Updated to new upstream release candidate RC3
 
 * Sun May 02 2010 Fabian Affolter <mail@fabian-affolter.ch> - 1.1.0-0.2.rc1
 - Changed define to global
