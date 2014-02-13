@@ -64,7 +64,6 @@ BuildRequires:    python-python-daemon
 BuildRequires:    python-CherryPy >= 3
 %endif
 %else # ! suse_version
-BuildRequires:    gamin-python
 BuildRequires:    python-daemon
 BuildRequires:    python-inotify
 %if "%{_vendor}" == "redhat" && 0%{!?rhel:1} && 0%{!?fedora:1}
@@ -86,16 +85,16 @@ BuildRequires:    m2crypto
 BuildRequires:    python-django
 %else
 BuildRequires:    Django
-%endif
-BuildRequires:    python-genshi
-BuildRequires:    python-cheetah
-BuildRequires:    libselinux-python
-%if 0%{?rhel} != 7
+# FIXME: Not yet present in EPEL7; for building docs
+BuildRequires:    gamin-python
 # FIXME:  Not yet present in EPEL7; for %%check
 BuildRequires:    pylibacl
 BuildRequires:    python-pep8
 BuildRequires:    pylint
 %endif
+BuildRequires:    python-genshi
+BuildRequires:    python-cheetah
+BuildRequires:    libselinux-python
 %if %{build_cherry_py}
 BuildRequires:    python-cherrypy >= 3
 %endif
