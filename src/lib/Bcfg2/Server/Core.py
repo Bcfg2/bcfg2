@@ -726,6 +726,11 @@ class BaseCore(object):
         self.validate_goals(meta, config)
 
         self.client_run_hook("end_client_run", meta)
+        if self._database_available:
+            from django import db
+            self.logger.debug("%s: Closing database connection" %
+                              threading.current_thread().name)
+            db.close_connection()
 
         sort_xml(config, key=lambda e: e.get('name'))
 
