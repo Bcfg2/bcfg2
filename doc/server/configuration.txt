@@ -229,7 +229,7 @@ By default, the server spawns as many children as the host has CPUs.
 (This is determined by ``multiprocessing.cpu_count()``.)  To change
 this, set:
 
-.. code-block:: conf
+.. code-block:: ini
 
     [server]
     children = 4
