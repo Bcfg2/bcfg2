@@ -157,7 +157,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
 
         if 'Bundler' in self.core.plugins:
             for bundle in self.core.plugins['Bundler'].entries.values():
-                xdata = bundle.pnode.data
+                xdata = lxml.etree.XML(bundle.data)
                 for path in xdata.xpath("//BoundPath"):
                     check_acl(path)
         if 'Rules' in self.core.plugins:
