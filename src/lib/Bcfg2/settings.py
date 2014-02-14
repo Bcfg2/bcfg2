@@ -82,8 +82,13 @@ def read_config(cfile=DEFAULT_CONFIG, repo=None, quiet=False):
     if repo is None:
         repo = setup['repo']
 
+    if setup['db_engine'] == 'ibm_db_django':
+        db_engine = setup['db_engine']
+    else:
+        db_engine = "django.db.backends.%s" % setup['db_engine']
+
     DATABASES['default'] = \
-        dict(ENGINE="django.db.backends.%s" % setup['db_engine'],
+        dict(ENGINE=db_engine,
              NAME=setup['db_name'],
              USER=setup['db_user'],
              PASSWORD=setup['db_password'],
