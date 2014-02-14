@@ -119,6 +119,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
             POSIXUser={None: dict(name=is_username)})
 
     def Run(self):
+        self.check_default_acls()
         self.check_packages()
         if "Defaults" in self.core.plugins:
             self.logger.info("Defaults plugin enabled; skipping required "
@@ -129,11 +130,41 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"unknown-entry-type": "error",
+        return {"missing-elements": "error",
+                "unknown-entry-type": "error",
                 "unknown-entry-tag": "error",
                 "required-attrs-missing": "error",
                 "required-attr-format": "error",
                 "extra-attrs": "warning"}
+
+    def check_default_acls(self):
+        """ Check Path entries have valid default ACLs """
+        def check_acl(path):
+            """ Check that a default ACL contains either no entries or minimum
+            required entries """
+            defaults = 1 if len(path.xpath(
+                "/ACL[@type='default' and @scope='user']")) else 0
+            defaults += 1 if len(path.xpath(
+                "/ACL[@type='default' and @scope='user']")) else 0
+            defaults += 1 if len(path.xpath(
+                "/ACL[@type='default' and @scope='user']")) else 0
+            if defaults > 0 and defaults < 3:
+                self.LintError(
+                    "missing-elements",
+                    "A Path must have either no default ACLs or at"
+                    " least default:user::, default:group:: and"
+                    " default:other::")
+
+        if 'Bundler' in self.core.plugins:
+            for bundle in self.core.plugins['Bundler'].entries.values():
+                xdata = bundle.pnode.data
+                for path in xdata.xpath("//BoundPath"):
+                    check_acl(path)
+        if 'Rules' in self.core.plugins:
+            for rules in self.core.plugins['Rules'].entries.values():
+                xdata = rules.pnode.data
+                for path in xdata.xpath("//Path"):
+                    check_acl(path)
 
     def check_packages(self):
         """ Check Packages sources for Source entries with missing
