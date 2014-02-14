@@ -49,7 +49,7 @@ start () {
 
 stop () {
     echo -n $"Stopping $prog: "
-    killproc ${prog} && success || failure
+    killproc -p ${PIDFILE} -d 10 ${prog} && success || failure
     RETVAL=$?
     echo
     rm -f /var/lock/subsys/$prog
