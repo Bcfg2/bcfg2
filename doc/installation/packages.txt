@@ -1,81 +1,25 @@
 .. -*- mode: rst -*-
 
-.. _packages:
+.. _installation-packages:
 
 .. _CentOS: http://www.centos.org/
-.. _Red Hat/RHEL: http://www.redhat.com/rhel/
-.. _Scientific Linux: http://www.scientificlinux.org/
 .. _EPEL: http://fedoraproject.org/wiki/EPEL
-.. _RPMForge: https://rpmrepo.org/RPMforge
-
 
 Building RPM packages from source
 =================================
 
-The Bcfg2 distribution contains two different spec files.
-
 Building from Tarball
 ---------------------
 
-* Copy the tarball to ``/usr/src/packages/SOURCES/``
+* Create a directory structure for rpmbuild::
+    rpmdev-setuptree
+
+* Copy the tarball to ``~/rpmbuild/SOURCES/``
 * Extract another copy of it somewhere else (eg: ``/tmp``) and retrieve
   the ``misc/bcfg2.spec`` file
-* Run ::
+* Run the following::
 
     rpmbuild -ba bcfg2.spec
 
-* The resulting RPMs will be in ``/usr/src/packages/RPMS/`` and SRPMs
-  in ``/usr/src/packages/SRPMS``
-
-Building from an GIT Checkout
------------------------------
-
-* Change to the ``redhat/`` directory in the working copy
-* Run ::
-
-    make
-
-* The resulting RPMs will be in ``/usr/src/redhat/RPMS/`` and SRPMs
-  in ``/usr/src/redhat/SRPMS`` and will have the SVN revision appended
-
-Building RPM packages with ``rpmbuild``
----------------------------------------
-
-While you can go about building all these things from source, this
-how to will try and meet the dependencies using packages from EPEL_.
-The *el5* and the *el6* package should be compatible with CentOS 5.x.
-
-* Installation of the EPEL_ repository package ::
-
-    [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-6.noarch.rpm
-
-* Now you can install the rest of the prerequisites ::
-
-    [root@centos ~]# yum install python-genshi python-cheetah python-lxml
-
-* After installing git, check out the master branch ::
-
-    [root@centos redhat]# git clone git://git.mcs.anl.gov/bcfg2.git
-
-* Install the ``fedora-packager`` package ::
-
-    [root@centos ~]# yum install fedora-packager
-
-* A directory structure for the RPM build process has to be established. ::
-
-    [you@centos ~]$ rpmdev-setuptree
-
-* Change to the *redhat* directory of the checked out Bcfg2 source::
-
-    [you@centos ~]$ cd bcfg2/redhat/
-
-* In the particular directory is a ``Makefile`` which will do the job of
-  building the RPM packages. You can do this as root, but it's not
-  recommended::
-
-    [you@centos redhat]$ make
-
-* Now the new RPM package can be installed. Please adjust the path to
-  your RPM package ::
-
-    [root@centos ~]# rpm -ihv /home/YOU/rpmbuild/RPMS/noarch/bcfg2-server-1.0.0-0.2r5835.noarch.rpm
+* The resulting RPMs will be in ``~/rpmbuild/RPMS/`` and SRPMs
+  in ``~/rpmbuild/SRPMS/``.
