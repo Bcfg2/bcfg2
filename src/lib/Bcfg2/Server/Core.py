@@ -1,4 +1,4 @@
-y""" Bcfg2.Server.Core provides the base core object that server core
+""" Bcfg2.Server.Core provides the base core object that server core
 implementations inherit from. """
 
 import os
