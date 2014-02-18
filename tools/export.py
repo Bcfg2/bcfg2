@@ -270,12 +270,12 @@ E.G. 1.2.0pre1 is a valid version.
     # http://trac.mcs.anl.gov/projects/bcfg2/ticket/1129
     find_and_replace('misc/bcfg2.spec',
                      'Source0',
-                     'Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%%{name}-%%{version}%s.tar.gz\n' % version_info["build"],
+                     'Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%%{name}-%%{version}%{?_pre_rc}.tar.gz\n',
                      startswith=True,
                      dryrun=options.dryrun)
     find_and_replace('misc/bcfg2-selinux.spec',
                      'Source0',
-                     'Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%%{name}-%%{version}%s.tar.gz\n' % version_info["build"],
+                     'Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%%{name}-%%{version}%{?_pre_rc}.tar.gz\n',
                      startswith=True,
                      dryrun=options.dryrun)
     # update the version in reports
