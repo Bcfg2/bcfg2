@@ -200,6 +200,7 @@
     <xsd:restriction base="xsd:string">
       <xsd:enumeration value="user"/>
       <xsd:enumeration value="group"/>
+      <xsd:enumeration value="other"/>
     </xsd:restriction>
   </xsd:simpleType>
 

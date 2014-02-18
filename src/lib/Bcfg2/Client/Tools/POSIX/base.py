@@ -217,18 +217,13 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                 acl.delete_entry(aclentry)
         if os.path.isdir(path):
             defacl = posix1e.ACL(filedef=path)
-            if not defacl.valid():
-                # when a default ACL is queried on a directory that
-                # has no default ACL entries at all, you get an empty
-                # ACL, which is not valid.  in this circumstance, we
-                # just copy the access ACL to get a base valid ACL
-                # that we can add things to.
-                defacl = posix1e.ACL(acl=acl)
-            else:
-                for aclentry in defacl:
-                    if aclentry.tag_type in [posix1e.ACL_USER,
-                                             posix1e.ACL_GROUP]:
-                        defacl.delete_entry(aclentry)
+            for aclentry in defacl:
+                if aclentry.tag_type in [posix1e.ACL_USER,
+                                         posix1e.ACL_USER_OBJ,
+                                         posix1e.ACL_GROUP,
+                                         posix1e.ACL_GROUP_OBJ,
+                                         posix1e.ACL_OTHER]:
+                    defacl.delete_entry(aclentry)
         else:
             defacl = None
 
@@ -254,10 +249,16 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             try:
                 if scope == posix1e.ACL_USER:
                     scopename = "user"
-                    aclentry.qualifier = self._norm_uid(qualifier)
+                    if qualifier:
+                        aclentry.qualifier = self._norm_uid(qualifier)
+                    else:
+                        aclentry.tag_type = posix1e.ACL_USER_OBJ
                 elif scope == posix1e.ACL_GROUP:
                     scopename = "group"
-                    aclentry.qualifier = self._norm_gid(qualifier)
+                    if qualifier:
+                        aclentry.qualifier = self._norm_gid(qualifier)
+                    else:
+                        aclentry.tag_type = posix1e.ACL_GROUP_OBJ
             except (OSError, KeyError):
                 err = sys.exc_info()[1]
                 self.logger.error("POSIX: Could not resolve %s %s: %s" %
@@ -358,7 +359,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         try:
             # single octal digit
             rv = int(perms)
-            if rv > 0 and rv < 8:
+            if rv >= 0 and rv < 8:
                 return rv
             else:
                 self.logger.error("POSIX: Permissions digit out of range in "
@@ -388,17 +389,18 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         """ Get a string representation of the given ACL.  aclkey must
         be a tuple of (<acl type>, <acl scope>, <qualifier>) """
         atype, scope, qualifier = aclkey
+        if not qualifier:
+            qualifier = ''
         acl_str = []
         if atype == 'default':
             acl_str.append(atype)
-        if scope == posix1e.ACL_USER:
+        if scope == posix1e.ACL_USER or scope == posix1e.ACL_USER_OBJ:
             acl_str.append("user")
-        elif scope == posix1e.ACL_GROUP:
+        elif scope == posix1e.ACL_GROUP or scope == posix1e.ACL_GROUP_OBJ:
             acl_str.append("group")
-        if qualifier is None:
-            acl_str.append('')
-        else:
-            acl_str.append(qualifier)
+        elif scope == posix1e.ACL_OTHER:
+            acl_str.append("other")
+        acl_str.append(qualifier)
         acl_str.append(self._acl_perm2string(perms))
         return ":".join(acl_str)
 
@@ -564,9 +566,17 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         wanted = dict()
         for acl in entry.findall("ACL"):
             if acl.get("scope") == "user":
-                scope = posix1e.ACL_USER
+                if acl.get("user"):
+                    scope = posix1e.ACL_USER
+                else:
+                    scope = posix1e.ACL_USER_OBJ
             elif acl.get("scope") == "group":
-                scope = posix1e.ACL_GROUP
+                if acl.get("group"):
+                    scope = posix1e.ACL_GROUP
+                else:
+                    scope = posix1e.ACL_GROUP_OBJ
+            elif acl.get("scope") == "other":
+                scope = posix1e.ACL_OTHER
             else:
                 self.logger.error("POSIX: Unknown ACL scope %s" %
                                   acl.get("scope"))
@@ -575,7 +585,10 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                 self.logger.error("POSIX: No permissions set for ACL: %s" %
                                   Bcfg2.Client.XML.tostring(acl))
                 continue
-            wanted[(acl.get("type"), scope, acl.get(acl.get("scope")))] = \
+            qual = acl.get(acl.get("scope"))
+            if not qual:
+                qual = ''
+            wanted[(acl.get("type"), scope, qual)] = \
                 self._norm_acl_perms(acl.get('perms'))
         return wanted
 
@@ -589,11 +602,12 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             """ Given an ACL object, process it appropriately and add
             it to the return value """
             try:
+                qual = ''
                 if acl.tag_type == posix1e.ACL_USER:
                     qual = pwd.getpwuid(acl.qualifier)[0]
                 elif acl.tag_type == posix1e.ACL_GROUP:
                     qual = grp.getgrgid(acl.qualifier)[0]
-                else:
+                elif atype == "access" or acl.tag_type == posix1e.ACL_MASK:
                     return
             except (OSError, KeyError):
                 err = sys.exc_info()[1]
@@ -623,9 +637,38 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                 _process_acl(acl, "default")
         return existing
 
-    def _verify_acls(self, entry, path=None):
+    def _verify_acls(self, entry, path=None):  # pylint: disable=R0912
         """ verify POSIX ACLs on the given entry.  return True if all
         ACLS are correct, false otherwise """
+        def _verify_acl(aclkey, perms):
+            """ Given ACL data, process it appropriately and add it to
+            missing or wrong lists if appropriate """
+            if aclkey not in existing:
+                missing.append(self._acl2string(aclkey, perms))
+            elif existing[aclkey] != perms:
+                wrong.append((self._acl2string(aclkey, perms),
+                              self._acl2string(aclkey, existing[aclkey])))
+            if path == entry.get("name"):
+                atype, scope, qual = aclkey
+                aclentry = Bcfg2.Client.XML.Element("ACL", type=atype,
+                                                    perms=str(perms))
+                if (scope == posix1e.ACL_USER or
+                    scope == posix1e.ACL_USER_OBJ):
+                    aclentry.set("scope", "user")
+                elif (scope == posix1e.ACL_GROUP or
+                      scope == posix1e.ACL_GROUP_OBJ):
+                    aclentry.set("scope", "group")
+                elif scope == posix1e.ACL_OTHER:
+                    aclentry.set("scope", "other")
+                else:
+                    self.logger.debug("POSIX: Unknown ACL scope %s on %s" %
+                                      (scope, path))
+                    return
+
+                if scope != posix1e.ACL_OTHER:
+                    aclentry.set(aclentry.get("scope"), qual)
+                entry.append(aclentry)
+
         if not HAS_ACLS:
             if entry.findall("ACL"):
                 self.logger.debug("POSIX: ACLs listed for %s but no pylibacl "
@@ -646,25 +689,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         extra = []
         wrong = []
         for aclkey, perms in wanted.items():
-            if aclkey not in existing:
-                missing.append(self._acl2string(aclkey, perms))
-            elif existing[aclkey] != perms:
-                wrong.append((self._acl2string(aclkey, perms),
-                              self._acl2string(aclkey, existing[aclkey])))
-            if path == entry.get("name"):
-                atype, scope, qual = aclkey
-                aclentry = Bcfg2.Client.XML.Element("ACL", type=atype,
-                                                    perms=str(perms))
-                if scope == posix1e.ACL_USER:
-                    aclentry.set("scope", "user")
-                elif scope == posix1e.ACL_GROUP:
-                    aclentry.set("scope", "group")
-                else:
-                    self.logger.debug("POSIX: Unknown ACL scope %s on %s" %
-                                      (scope, path))
-                    continue
-                aclentry.set(aclentry.get("scope"), qual)
-                entry.append(aclentry)
+            _verify_acl(aclkey, perms)
 
         for aclkey, perms in existing.items():
             if aclkey not in wanted:

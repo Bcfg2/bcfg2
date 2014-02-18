@@ -129,11 +129,29 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"unknown-entry-type": "error",
+        return {"missing-elements": "error",
+                "unknown-entry-type": "error",
                 "unknown-entry-tag": "error",
                 "required-attrs-missing": "error",
                 "required-attr-format": "error",
                 "extra-attrs": "warning"}
+
+    def check_default_acl(self, path):
+        """ Check that a default ACL contains either no entries or minimum
+        required entries """
+        defaults = 0
+        if path.xpath("ACL[@type='default' and @scope='user' and @user='']"):
+            defaults += 1
+        if path.xpath("ACL[@type='default' and @scope='group' and @group='']"):
+            defaults += 1
+        if path.xpath("ACL[@type='default' and @scope='other']"):
+            defaults += 1
+        if defaults > 0 and defaults < 3:
+            self.LintError(
+                "missing-elements",
+                "A Path must have either no default ACLs or at"
+                " least default:user::, default:group:: and"
+                " default:other::")
 
     def check_packages(self):
         """ Check Packages sources for Source entries with missing
@@ -233,6 +251,9 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                     # check if major/minor are specified
                     required_attrs['major'] = is_device_mode
                     required_attrs['minor'] = is_device_mode
+
+            if tag == 'Path':
+                self.check_default_acl(entry)
 
             if tag == 'ACL' and 'scope' in required_attrs:
                 required_attrs[entry.get('scope')] = is_username
