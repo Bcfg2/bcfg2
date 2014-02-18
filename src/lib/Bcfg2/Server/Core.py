@@ -414,7 +414,7 @@ class BaseCore(object):
         :type plugin: string
         :returns: None
         """
-        self.logger.debug("Loading plugin %s" % plugin)
+        self.logger.debug("%s: Loading plugin %s" % (self.name, plugin))
         try:
             mod = getattr(__import__("Bcfg2.Server.Plugins.%s" %
                                      (plugin)).Server.Plugins, plugin)
@@ -450,14 +450,18 @@ class BaseCore(object):
 
     def shutdown(self):
         """ Perform plugin and FAM shutdown tasks. """
-        self.logger.info("Shutting down core...")
+        self.logger.info("%s: Shutting down core..." % self.name)
         if not self.terminate.isSet():
             self.terminate.set()
-            self.fam.shutdown()
-            self.logger.info("FAM shut down")
-            for plugin in list(self.plugins.values()):
-                plugin.shutdown()
-            self.logger.info("All plugins shut down")
+        self.fam.shutdown()
+        self.logger.info("%s: FAM shut down" % self.name)
+        for plugin in list(self.plugins.values()):
+            plugin.shutdown()
+        self.logger.info("%s: All plugins shut down" % self.name)
+        if self._database_available:
+            from django import db
+            self.logger.info("%s: Closing database connection" % self.name)
+            db.close_connection()
 
     @property
     def metadata_cache_mode(self):

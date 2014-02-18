@@ -24,6 +24,7 @@ sys.path.pop()
 os.environ['DJANGO_SETTINGS_MODULE'] = '%s.settings' % project_name
 
 from Bcfg2.Reporting.models import (Client, BaseEntry)
+from django import db
 
 def hosts_by_entry_type(clients, etype, entryspec):
     result = []
@@ -293,6 +294,8 @@ def main():
             if not client.expiration:
                 print_fields(fields, client, fmt,
                              extra=edata.get(client, None))
+    db.close_connection()
+
 
 if __name__ == "__main__":
     sys.exit(main())
