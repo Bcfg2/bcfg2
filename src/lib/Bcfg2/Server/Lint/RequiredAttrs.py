@@ -139,12 +139,13 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
     def check_default_acl(self, path):
         """ Check that a default ACL contains either no entries or minimum
         required entries """
-        defaults = 1 if path.xpath(
-            "ACL[@type='default' and @scope='user' and @user='']") else 0
-        defaults += 1 if path.xpath(
-            "ACL[@type='default' and @scope='group' and @group='']") else 0
-        defaults += 1 if path.xpath(
-            "ACL[@type='default' and @scope='other']") else 0
+        defaults = 0
+        if path.xpath("ACL[@type='default' and @scope='user' and @user='']"):
+            defaults += 1
+        if path.xpath("ACL[@type='default' and @scope='group' and @group='']"):
+            defaults += 1
+        if path.xpath("ACL[@type='default' and @scope='other']"):
+            defaults += 1
         if defaults > 0 and defaults < 3:
             self.LintError(
                 "missing-elements",
