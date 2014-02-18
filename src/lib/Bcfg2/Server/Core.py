@@ -1,4 +1,4 @@
-""" Bcfg2.Server.Core provides the base core object that server core
+y""" Bcfg2.Server.Core provides the base core object that server core
 implementations inherit from. """
 
 import os
@@ -86,6 +86,7 @@ class BaseCore(object):
     """ The server core is the container for all Bcfg2 server logic
     and modules. All core implementations must inherit from
     ``BaseCore``. """
+    name = "core"
 
     def __init__(self, setup):  # pylint: disable=R0912,R0915
         """
