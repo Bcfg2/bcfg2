@@ -189,6 +189,12 @@ class BaseCore(object):
         self.setup = setup
 
         atexit.register(self.shutdown)
+        #: if :func:`Bcfg2.Server.Core.shutdown` is called explicitly,
+        #: then :mod:`atexit` calls it *again*, so it gets called
+        #: twice.  This is potentially bad, so we use
+        #: :attr:`Bcfg2.Server.Core._running` as a flag to determine
+        #: if the core needs to be shutdown, and only do it once.
+        self._running = True
 
         #: Threading event to signal worker threads (e.g.,
         #: :attr:`fam_thread`) to shutdown
@@ -451,9 +457,13 @@ class BaseCore(object):
 
     def shutdown(self):
         """ Perform plugin and FAM shutdown tasks. """
+        if not self._running:
+            self.logger.debug("%s: Core already shut down" % self.name)
+            return
         self.logger.info("%s: Shutting down core..." % self.name)
         if not self.terminate.isSet():
             self.terminate.set()
+        self._running = False
         self.fam.shutdown()
         self.logger.info("%s: FAM shut down" % self.name)
         for plugin in list(self.plugins.values()):
