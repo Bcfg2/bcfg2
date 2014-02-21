@@ -355,7 +355,7 @@ class YumCollection(Collection):
         forking, but apparently not); finally we check in /usr/sbin,
         the default location. """
         # pylint: disable=W0212
-        if not self.__class___helper:
+        if not self.__class__._helper:
             try:
                 self.__class__._helper = self.setup.cfp.get("packages:yum",
                                                             "helper")
