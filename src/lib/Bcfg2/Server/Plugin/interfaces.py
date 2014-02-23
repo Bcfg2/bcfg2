@@ -213,6 +213,10 @@ class Metadata(object):
         """
         raise NotImplementedError
 
+    def update_client_list(self):
+        """ Re-read the cached list of clients """
+        raise NotImplementedError
+
 
 class Connector(object):
     """ Connector plugins augment client metadata instances with
