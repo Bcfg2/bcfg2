@@ -872,8 +872,7 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
     """ The Cfg plugin provides a repository to describe configuration
     file contents for clients. In its simplest form, the Cfg repository is
     just a directory tree modeled off of the directory tree on your client
-    machines.
-    """
+    machines. """
     __author__ = 'bcfg-dev@mcs.anl.gov'
     es_cls = CfgEntrySet
     es_child_cls = Bcfg2.Server.Plugin.SpecificData

@@ -4,31 +4,30 @@ import os
 import re
 import sys
 import copy
-import Bcfg2.Server
-import Bcfg2.Server.Plugin
+import fnmatch
+import lxml.etree
+from Bcfg2.Server.Plugin import StructFile, Plugin, Structure, \
+    StructureValidator, XMLDirectoryBacked, Generator
 from genshi.template import TemplateError
 
 
-class BundleFile(Bcfg2.Server.Plugin.StructFile):
+class BundleFile(StructFile):
     """ Representation of a bundle XML file """
     bundle_name_re = re.compile(r'^(?P<name>.*)\.(xml|genshi)$')
 
     def __init__(self, filename, should_monitor=False):
-        Bcfg2.Server.Plugin.StructFile.__init__(self, filename,
-                                                should_monitor=should_monitor)
+        StructFile.__init__(self, filename, should_monitor=should_monitor)
         if self.name.endswith(".genshi"):
             self.logger.warning("Bundler: %s: Bundle filenames ending with "
                                 ".genshi are deprecated; add the Genshi XML "
                                 "namespace to a .xml bundle instead" %
                                 self.name)
-    __init__.__doc__ = Bcfg2.Server.Plugin.StructFile.__init__.__doc__
 
     def Index(self):
-        Bcfg2.Server.Plugin.StructFile.Index(self)
+        StructFile.Index(self)
         if self.xdata.get("name"):
             self.logger.warning("Bundler: %s: Explicitly specifying bundle "
                                 "names is deprecated" % self.name)
-    Index.__doc__ = Bcfg2.Server.Plugin.StructFile.Index.__doc__
 
     @property
     def bundle_name(self):
@@ -37,9 +36,10 @@ class BundleFile(Bcfg2.Server.Plugin.StructFile):
             os.path.basename(self.name)).group("name")
 
 
-class Bundler(Bcfg2.Server.Plugin.Plugin,
-              Bcfg2.Server.Plugin.Structure,
-              Bcfg2.Server.Plugin.XMLDirectoryBacked):
+class Bundler(Plugin,
+              Structure,
+              StructureValidator,
+              XMLDirectoryBacked):
     """ The bundler creates dependent clauses based on the
     bundle/translation scheme from Bcfg1. """
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -47,17 +47,29 @@ class Bundler(Bcfg2.Server.Plugin.Plugin,
     patterns = re.compile(r'^.*\.(?:xml|genshi)$')
 
     def __init__(self, core):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
-        Bcfg2.Server.Plugin.Structure.__init__(self)
-        Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data)
+        Plugin.__init__(self, core)
+        Structure.__init__(self)
+        StructureValidator.__init__(self)
+        XMLDirectoryBacked.__init__(self, self.data)
         #: Bundles by bundle name, rather than filename
         self.bundles = dict()
 
     def HandleEvent(self, event):
-        Bcfg2.Server.Plugin.XMLDirectoryBacked.HandleEvent(self, event)
-
+        XMLDirectoryBacked.HandleEvent(self, event)
         self.bundles = dict([(b.bundle_name, b)
                              for b in self.entries.values()])
+
+    def validate_structures(self, metadata, structures):
+        """ Translate <Path glob='...'/> entries into <Path name='...'/>
+        entries """
+        for struct in structures:
+            for pathglob in struct.xpath("//Path[@glob]"):
+                for plugin in self.core.plugins_by_type(Generator):
+                    for match in fnmatch.filter(plugin.Entries['Path'].keys(),
+                                                pathglob.get("glob")):
+                        lxml.etree.SubElement(pathglob.getparent(),
+                                              "Path", name=match)
+                pathglob.getparent().remove(pathglob)
 
     def BuildStructures(self, metadata):
         bundleset = []
