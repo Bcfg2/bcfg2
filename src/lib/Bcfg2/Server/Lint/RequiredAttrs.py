@@ -183,6 +183,16 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                         "//*[substring(name(), 1, 5) = 'Bound']"):
                     self.check_entry(path, bundle.name)
 
+                # ensure that abstract Path tags have either name
+                # or glob specified
+                for path in bundle.xdata.xpath("//Path"):
+                    if ('name' not in path.attrib and
+                        'glob' not in path.attrib):
+                        self.LintError(
+                            "required-attrs-missing",
+                            "Path tags require either a 'name' or 'glob' "
+                            "attribute: \n%s" % self.RenderXML(path))
+
     def check_entry(self, entry, filename):
         """ Generic entry check.
 
