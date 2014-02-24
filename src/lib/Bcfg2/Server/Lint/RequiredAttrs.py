@@ -214,6 +214,16 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                         xdata.xpath("//*[substring(name(), 1, 5) = 'Bound']"):
                     self.check_entry(path, bundle.name)
 
+                # ensure that abstract Package tags have either name
+                # or group specified
+                for package in xdata.xpath("//Package"):
+                    if ('name' not in package.attrib and
+                        'group' not in package.attrib):
+                        self.LintError(
+                            "required-attrs-missing",
+                            "Package tags require either a 'name' or 'group' "
+                            "attribute: \n%s" % self.RenderXML(package))
+
     def check_entry(self, entry, filename):
         """ Generic entry check.
 
