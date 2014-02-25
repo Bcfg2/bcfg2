@@ -1,4 +1,4 @@
-git """ Base class for tools that handle POSIX (Path) entries """
+""" Base class for tools that handle POSIX (Path) entries """
 
 import os
 import sys
@@ -465,7 +465,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         else:
             secontext = None
 
-        if HAS_ACLS and not stat.S_ISLNK(ondisk[stat.ST_MODE]):
+        if HAS_ACLS and not stat.S_ISLNK(ondisk):
             acls = self._list_file_acls(path)
         else:
             acls = None
