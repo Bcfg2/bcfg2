@@ -863,8 +863,14 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 * Wed Oct 17 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.3.0-0.2pre1
 - Split bcfg2-selinux into its own specfile
 
+* Fri Sep 14 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.3.0-0.1pre1
+- Added -selinux subpackage
+
 * Mon Aug 27 2012 Václav Pavlín <vpavlin@redhat.com> - 1.2.3-3
 - Scriptlets replaced with new systemd macros (#850043)
+
+* Wed Aug 15 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.2.3-0.1
+- Added tools/ as doc for bcfg2-server subpackage
 
 * Wed Jul 18 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.2.3-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_18_Mass_Rebuild
@@ -881,12 +887,6 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 
 * Sun Feb 26 2012 Fabian Affolter <mail@fabian-affolter.ch> - 1.2.1-2
 - Fixed systemd files
-
-* Fri Sep 14 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.3.0-0.1pre1
-- Added -selinux subpackage
-
-* Wed Aug 15 2012 Chris St. Pierre <chris.a.st.pierre@gmail.com> 1.2.3-0.1
-- Added tools/ as doc for bcfg2-server subpackage
 
 * Sat Feb 18 2012 Christopher 'm4z' Holm <686f6c6d@googlemail.com> 1.2.1
 - Added Fedora and Mandriva compatibilty (for Open Build Service).
