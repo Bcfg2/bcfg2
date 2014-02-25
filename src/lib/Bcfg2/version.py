@@ -2,7 +2,7 @@
 
 import re
 
-__version__ = "1.3.3"
+__version__ = "1.3.4"
 
 
 class Bcfg2VersionInfo(tuple):  # pylint: disable=E0012,R0924

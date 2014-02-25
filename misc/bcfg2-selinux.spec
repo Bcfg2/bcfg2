@@ -16,7 +16,7 @@
 %global _pre_rc %{?_pre:.pre%{_pre}}%{?_rc:.rc%{_rc}}
 
 Name:             bcfg2-selinux
-Version:          1.3.3
+Version:          1.3.4
 Release:          1%{?_pre_rc}%{?dist}
 Summary:          Bcfg2 Client and Server SELinux policy
 
@@ -32,7 +32,7 @@ Conflicts:        selinux-policy = 3.11.1
 
 License:          BSD
 URL:              http://bcfg2.org
-Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}.tar.gz
+Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}%{?_pre_rc}.tar.gz
 BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 BuildArch:        noarch
 

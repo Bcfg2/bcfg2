@@ -29,8 +29,8 @@
 
 
 Name:             bcfg2
-Version:          1.3.3
-Release:          4%{?_pre_rc}%{?dist}
+Version:          1.3.4
+Release:          1%{?_pre_rc}%{?dist}
 Summary:          A configuration management system
 
 %if 0%{?suse_version}
