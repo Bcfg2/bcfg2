@@ -1,7 +1,8 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
-.. _GPG1: http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x75BF2C177F7D197E
-.. _GPG2: http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x80B8492FA88FFF4B
+.. _7F7D197E: http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x75BF2C177F7D197E
+.. _A88FFF4B: http://pgp.mit.edu:11371/pks/lookup?op=get&search=0x80B8492FA88FFF4B
 .. _Download: http://bcfg2.org/download/
 
 .. _source:
@@ -17,8 +18,8 @@ Tarball
 
 The Bcfg2 source tarball can be grabbed from the `Download`_ page.
 
-All tarballs are signed with GPG keys `7F7D197E <GPG1>`_ or `A88FFF4B
-<GPG2>`_. You can verify your download by importing the keys and running ::
+All tarballs are signed with GPG keys `7F7D197E`_ or `A88FFF4B`_. You
+can verify your download by importing the keys and running ::
 
     gpg --recv-keys 0x75bf2c177f7d197e 0x80B8492FA88FFF4B
     gpg --verify bcfg2-<version>.tar.gz.gpg bcfg2-<version>.tar.gz
