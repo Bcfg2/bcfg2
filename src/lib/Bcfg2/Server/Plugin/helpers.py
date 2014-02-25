@@ -1145,7 +1145,8 @@ class SpecificData(object):
         except UnicodeDecodeError:
             self.data = open(self.name, mode='rb').read()
         except:  # pylint: disable=W0201
-            LOGGER.error("Failed to read file %s" % self.name)
+            LOGGER.error("Failed to read file %s: %s" % (self.name,
+                                                         sys.exc_info()[1]))
 
 
 class EntrySet(Debuggable):
