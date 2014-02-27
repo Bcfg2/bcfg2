@@ -12,13 +12,9 @@ from Bcfg2.Compat import httplib, xmlrpclib, urlparse, quote_plus
 # M2Crypto instead.
 try:
     import ssl
-    SSL_LIB = 'py26_ssl'
     SSL_ERROR = ssl.SSLError
 except ImportError:
-    from M2Crypto import SSL
-    import M2Crypto.SSL.Checker
-    SSL_LIB = 'm2crypto'
-    SSL_ERROR = SSL.SSLError
+    raise Exception("No SSL module support")
 
 
 version = sys.version_info[:2]
@@ -187,15 +183,6 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         self.timeout = timeout
 
     def connect(self):
-        """Initiates a connection using previously set attributes."""
-        if SSL_LIB == 'py26_ssl':
-            self._connect_py26ssl()
-        elif SSL_LIB == 'm2crypto':
-            self._connect_m2crypto()
-        else:
-            raise Exception("No SSL module support")
-
-    def _connect_py26ssl(self):
         """Initiates a connection using the ssl module."""
         # check for IPv6
         hostip = socket.getaddrinfo(self.host,
@@ -241,56 +228,6 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             if scn not in self.scns:
                 raise CertificateError(scn)
         self.sock.closeSocket = True
-
-    def _connect_m2crypto(self):
-        """Initiates a connection using the M2Crypto module."""
-
-        if self.protocol == 'xmlrpc/ssl':
-            ctx = SSL.Context('sslv23')
-        elif self.protocol == 'xmlrpc/tlsv1':
-            ctx = SSL.Context('tlsv1')
-        else:
-            self.logger.error("Unknown protocol %s" % (self.protocol))
-            raise Exception("unknown protocol %s" % self.protocol)
-
-        if self.ca:
-            # Use the certificate authority to validate the cert
-            # presented by the server
-            ctx.set_verify(SSL.verify_peer | SSL.verify_fail_if_no_peer_cert,
-                           depth=9)
-            if ctx.load_verify_locations(self.ca) != 1:
-                raise Exception('No CA certs')
-        else:
-            self.logger.warning("No ca is specified. Cannot authenticate the "
-                                "server with SSL.")
-
-        if self.cert and self.key:
-            # A cert/key is defined, use them to support client
-            # authentication to the server
-            ctx.load_cert(self.cert, self.key)
-        elif self.cert:
-            self.logger.warning("SSL cert specfied, but no key. Cannot "
-                                "authenticate this client with SSL.")
-        elif self.key:
-            self.logger.warning("SSL key specfied, but no cert. Cannot "
-                                "authenticate this client with SSL.")
-
-        self.sock = SSL.Connection(ctx)
-        if re.match('\\d+\\.\\d+\\.\\d+\\.\\d+', self.host):
-            # host is ip address
-            try:
-                hostname = socket.gethostbyaddr(self.host)[0]
-            except:
-                # fall back to ip address
-                hostname = self.host
-        else:
-            hostname = self.host
-        try:
-            self.sock.connect((hostname, self.port))
-            # automatically checks cert matches host
-        except M2Crypto.SSL.Checker.WrongHost:
-            wr = sys.exc_info()[1]
-            raise CertificateError(wr)
 
 
 class XMLRPCTransport(xmlrpclib.Transport):
