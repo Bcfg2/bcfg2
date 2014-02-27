@@ -132,15 +132,7 @@ The following is an annotated copy of a bundle:
 .. code-block:: xml
 
     <Bundle>
-      <Path name='/etc/ssh/ssh_host_dsa_key'/>
-      <Path name='/etc/ssh/ssh_host_rsa_key'/>
-      <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>
-      <Path name='/etc/ssh/ssh_host_rsa_key.pub'/>
-      <Path name='/etc/ssh/ssh_host_key'/>
-      <Path name='/etc/ssh/ssh_host_key.pub'/>
-      <Path name='/etc/ssh/sshd_config'/>
-      <Path name='/etc/ssh/ssh_config'/>
-      <Path name='/etc/ssh/ssh_known_hosts'/>
+      <Path glob='/etc/ssh/*'/>
       <Group name='rpm'>
         <Package name='openssh'/>
         <Package name='openssh-askpass'/>
@@ -171,23 +163,7 @@ can be used in bundles)
 +----------------+-------------------------------+
 | Group          | Entry                         |
 +================+===============================+
-| all            | /etc/ssh/ssh_host_dsa_key     |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_host_rsa_key     |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_host_dsa_key.pub |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_host_rsa_key.pub |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_host_key         |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_host_key.pub     |
-+----------------+-------------------------------+
-| all            | /etc/ssh/sshd_config          |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_config           |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_known_hosts      |
+| all            | /etc/ssh/*                    |
 +----------------+-------------------------------+
 | rpm            | Package openssh               |
 +----------------+-------------------------------+

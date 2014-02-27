@@ -21,7 +21,17 @@ Add a bundle for ssh
 
 After verifying that SSHbase is listed on the plugins line in
 ``/etc/bcfg2.conf``, you need to create a bundle containing the
-appropriate entries.
+appropriate entries.  In general, you can use a path glob:
+
+.. code-block:: xml
+
+    <Bundle>
+      <Path glob="/etc/ssh/*"/>
+    </Bundle>
+
+If you need more granular control -- e.g., other entries in
+``/etc/ssh`` are specified in other bundles -- you can also list the
+files explicity:
 
 .. code-block:: xml
 
