@@ -162,9 +162,6 @@ class ReportingCollector(object):
                 pass
         if self.storage:
             self.storage.shutdown()
-        from django import db
-        self.logger.info("%s: Closing database connection" % self.name)
-        db.close_connection()
 
     def reap_children(self):
         """Join any non-live threads"""

@@ -18,6 +18,7 @@ from django.core import management
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import FieldDoesNotExist
 from django.core.cache import cache
+from django import db
 
 #Used by GetCurrentEntry
 import difflib
@@ -370,6 +371,11 @@ class DjangoORM(StorageBase):
         except:
             self.logger.error("Failed to import interaction: %s" %
                     traceback.format_exc().splitlines()[-1])
+        finally:
+            self.logger.info("%s: Closing database connection" %
+                             self.__class__.__name__)
+            db.close_connection()
+
 
     def validate(self):
         """Validate backend storage.  Should be called once when loaded"""
@@ -451,4 +457,3 @@ class DjangoORM(StorageBase):
             else:
                 ret.append(None)
         return ret
-
