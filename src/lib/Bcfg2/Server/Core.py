@@ -18,7 +18,7 @@ import Bcfg2.Server.FileMonitor
 from Bcfg2.Cache import Cache
 import Bcfg2.Statistics
 from itertools import chain
-from Bcfg2.Compat import xmlrpclib  # pylint: disable=W0622
+from Bcfg2.Compat import xmlrpclib, wraps  # pylint: disable=W0622
 from Bcfg2.Server.Plugin.exceptions import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin.interfaces import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin import track_statistics
@@ -65,6 +65,24 @@ def sort_xml(node, key=None):
     except TypeError:
         sorted_children = node
     node[:] = sorted_children
+
+
+def close_db_connection(func):
+    """ Decorator that closes the Django database connection at the end of
+    the function.  This should decorate any exposed function that
+    might open a database connection. """
+    @wraps(func)
+    def inner(self, *args, **kwargs):
+        """ The decorated function """
+        rv = func(self, *args, **kwargs)
+        if self._database_available:  # pylint: disable=W0212
+            from django import db
+            self.logger.debug("%s: Closing database connection" %
+                              threading.current_thread().name)
+            db.close_connection()
+        return rv
+
+    return inner
 
 
 class CoreInitError(Exception):
@@ -741,11 +759,6 @@ class BaseCore(object):
         self.validate_goals(meta, config)
 
         self.client_run_hook("end_client_run", meta)
-        if self._database_available:
-            from django import db
-            self.logger.debug("%s: Closing database connection" %
-                              threading.current_thread().name)
-            db.close_connection()
 
         sort_xml(config, key=lambda e: e.get('name'))
 
@@ -1089,6 +1102,7 @@ class BaseCore(object):
 
     @exposed
     @track_statistics()
+    @close_db_connection
     def DeclareVersion(self, address, version):
         """ Declare the client version.
 
@@ -1111,6 +1125,7 @@ class BaseCore(object):
         return True
 
     @exposed
+    @close_db_connection
     def GetProbes(self, address):
         """ Fetch probes for the client.
 
@@ -1136,6 +1151,7 @@ class BaseCore(object):
                                 (client, err))
 
     @exposed
+    @close_db_connection
     def RecvProbeData(self, address, probedata):
         """ Receive probe data from clients.
 
@@ -1183,6 +1199,7 @@ class BaseCore(object):
         return True
 
     @exposed
+    @close_db_connection
     def AssertProfile(self, address, profile):
         """ Set profile for a client.
 
@@ -1202,6 +1219,7 @@ class BaseCore(object):
         return True
 
     @exposed
+    @close_db_connection
     def GetConfig(self, address):
         """ Build config for a client by calling
         :func:`BuildConfiguration`.
@@ -1221,6 +1239,7 @@ class BaseCore(object):
             self.critical_error("Metadata consistency failure for %s" % client)
 
     @exposed
+    @close_db_connection
     def RecvStats(self, address, stats):
         """ Act on statistics upload with :func:`process_statistics`.
 
@@ -1258,6 +1277,7 @@ class BaseCore(object):
                                                     address)
 
     @exposed
+    @close_db_connection
     def GetDecisionList(self, address, mode):
         """ Get the decision list for the client with :func:`GetDecisions`.
 
