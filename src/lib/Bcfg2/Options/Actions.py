@@ -7,7 +7,27 @@ from Bcfg2.Options.Parser import get_parser
 __all__ = ["ConfigFileAction", "ComponentAction", "PluginsAction"]
 
 
-class ComponentAction(argparse.Action):
+class FinalizableAction(argparse.Action):
+    """ A FinalizableAction requires some additional action to be taken
+    when storing the value, and as a result must be finalized if the
+    default value is used."""
+
+    def __init__(self, *args, **kwargs):
+        argparse.Action.__init__(self, *args, **kwargs)
+        self._final = False
+
+    def finalize(self, parser, namespace):
+        """ Finalize a default value by calling the action callable. """
+        if not self._final:
+            self.__call__(parser, namespace, getattr(namespace, self.dest,
+                                                     self.default))
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, values)
+        self._final = True
+
+
+class ComponentAction(FinalizableAction):
     """ ComponentAction automatically imports classes and modules
     based on the value of the option, and automatically collects
     options from the loaded classes and modules.  It cannot be used by
@@ -84,8 +104,7 @@ class ComponentAction(argparse.Action):
         if self.mapping:
             if 'choices' not in kwargs:
                 kwargs['choices'] = self.mapping.keys()
-        self._final = False
-        argparse.Action.__init__(self, *args, **kwargs)
+        FinalizableAction.__init__(self, *args, **kwargs)
 
     def _import(self, module, name):
         """ Import the given name from the given module, handling
@@ -127,14 +146,6 @@ class ComponentAction(argparse.Action):
             print("Could not load component %s" % name)
         return cls
 
-    def finalize(self, parser, namespace):
-        """ Finalize a default value by loading the components given
-        in it.  This lets a default be specified with a list of
-        strings instead of a list of classes. """
-        if not self._final:
-            self.__call__(parser, namespace, getattr(namespace, self.dest,
-                                                     self.default))
-
     def __call__(self, parser, namespace, values, option_string=None):
         if values is None:
             result = None
@@ -147,18 +158,19 @@ class ComponentAction(argparse.Action):
                         result.append(cls)
             else:
                 result = self._load_component(values)
-        self._final = True
-        setattr(namespace, self.dest, result)
+        FinalizableAction.__call__(self, parser, namespace, result,
+                                   option_string=option_string)
 
 
-class ConfigFileAction(argparse.Action):
+class ConfigFileAction(FinalizableAction):
     """ ConfigFileAction automatically loads and parses a
     supplementary config file (e.g., ``bcfg2-web.conf`` or
     ``bcfg2-lint.conf``). """
 
     def __call__(self, parser, namespace, values, option_string=None):
         get_parser().add_config_file(self.dest, values)
-        setattr(namespace, self.dest, values)
+        FinalizableAction.__call__(self, parser, namespace, values,
+                                   option_string=option_string)
 
 
 class PluginsAction(ComponentAction):
