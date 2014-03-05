@@ -2,6 +2,8 @@ import os
 import Bcfg2.Options
 import Bcfg2.DBSettings
 
+os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.DBSettings'
+
 Bcfg2.Options.get_parser().parse()
 
 import django.core.handlers.wsgi
