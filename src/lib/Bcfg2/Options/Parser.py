@@ -145,13 +145,10 @@ class Parser(argparse.ArgumentParser):
             if not opt.args and opt.dest not in self.namespace:
                 value = opt.default
                 if value:
-                    for parser, action in opt.actions.items():
+                    for _, action in opt.actions.items():
                         _debug("Setting config file-only option %s to %s" %
                                (opt, value))
-                        if parser is None:
-                            action(self, self.namespace, value)
-                        else:
-                            action(parser, parser.namespace, value)
+                        action(self, self.namespace, value)
                 else:
                     setattr(self.namespace, opt.dest, value)
 
@@ -246,8 +243,10 @@ class Parser(argparse.ArgumentParser):
                     early_components.append(component)
                     early_parser.add_component(component)
             early_parser.parse(self.argv)
+            _debug("Early parsing complete, calling hooks")
             for component in early_components:
                 if hasattr(component, "component_parsed_hook"):
+                    _debug("Calling component_parsed_hook on %s" % component)
                     getattr(component, "component_parsed_hook")(early_opts)
 
         # phase 3: re-parse command line, loading additional
