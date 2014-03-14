@@ -681,9 +681,10 @@ class BaseCore(object):
                 del entry.attrib['realname']
                 return ret
             except:
-                self.logger.error("Failed binding entry %s:%s with altsrc %s" %
-                                  (entry.tag, entry.get('realname'),
-                                   entry.get('name')))
+                self.logger.error(
+                    "Failed binding entry %s:%s with altsrc %s: %s" %
+                    (entry.tag, entry.get('realname'), entry.get('name'),
+                     sys.exc_info()[1]))
                 entry.set('name', oldname)
                 self.logger.error("Falling back to %s:%s" %
                                   (entry.tag, entry.get('name')))
