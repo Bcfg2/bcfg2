@@ -126,7 +126,7 @@ class Parser(argparse.ArgumentParser):
             if hasattr(component, "options"):
                 self.add_options(getattr(component, "options"))
 
-    def _set_defaults(self):
+    def _set_defaults_from_config(self):
         """ Set defaults from the config file for all options that can
         come from the config file, but haven't yet had their default
         set """
@@ -181,7 +181,7 @@ class Parser(argparse.ArgumentParser):
             self._reset_namespace()
             self._cfp.read([cfile])
             self._defaults_set = []
-            self._set_defaults()
+            self._set_defaults_from_config()
             if reparse:
                 self._parse_config_options()
             self._config_files.append(dest)
@@ -257,7 +257,7 @@ class Parser(argparse.ArgumentParser):
         self._parse_config_options()
         while not self.parsed:
             self.parsed = True
-            self._set_defaults()
+            self._set_defaults_from_config()
             self.parse_known_args(args=self.argv, namespace=self.namespace)
             self._parse_config_options()
             self._finalize()
