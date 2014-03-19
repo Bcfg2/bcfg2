@@ -126,7 +126,7 @@ class Parser(argparse.ArgumentParser):
             if hasattr(component, "options"):
                 self.add_options(getattr(component, "options"))
 
-    def _set_defaults(self):
+    def _set_defaults_from_config(self):
         """ Set defaults from the config file for all options that can
         come from the config file, but haven't yet had their default
         set """
@@ -181,7 +181,7 @@ class Parser(argparse.ArgumentParser):
             self._reset_namespace()
             self._cfp.read([cfile])
             self._defaults_set = []
-            self._set_defaults()
+            self._set_defaults_from_config()
             if reparse:
                 self._parse_config_options()
             self._config_files.append(dest)
@@ -254,10 +254,28 @@ class Parser(argparse.ArgumentParser):
         # iteration, set defaults from config file/environment
         # variables
         _debug("Option parsing phase 3: Main parser loop")
+        # _set_defaults_from_config must be called before _parse_config_options
+        # This is due to a tricky interaction between the two methods:
+        #
+        # (1) _set_defaults_from_config does what its name implies, it updates
+        # the "default" property of each Option based on the value that exists
+        # in the config.
+        #
+        # (2)  _parse_config_options will look at each option and set it to the
+        # default value that is _currently_ defined.  If the option does not
+        # exist in the namespace, it will be added.  The method carefully
+        # avoids overwriting the value of an option that is already defined in
+        # the namespace.
+        #
+        # Thus, if _set_defaults_from_config has not been called yet when
+        # _parse_config_options is called, all config file options will get set
+        # to their hardcoded defaults.  This process defines the options in the
+        # namespace and _parse_config_options will never look at them again.
+        self._set_defaults_from_config()
         self._parse_config_options()
         while not self.parsed:
             self.parsed = True
-            self._set_defaults()
+            self._set_defaults_from_config()
             self.parse_known_args(args=self.argv, namespace=self.namespace)
             self._parse_config_options()
             self._finalize()
