@@ -63,7 +63,8 @@ settings = dict(  # pylint: disable=C0103
         'django.core.context_processors.debug',
         'django.core.context_processors.i18n',
         'django.core.context_processors.media',
-        'django.core.context_processors.request'))
+        'django.core.context_processors.request'),
+    DATABASE_ROUTERS = ['Bcfg2.DBSettings.PerApplicationRouter'])
 
 if HAS_SOUTH:
     settings['INSTALLED_APPS'] += ('south', 'Bcfg2.Reporting')
@@ -95,6 +96,17 @@ def finalize_django_config(opts=None, silent=False):
             OPTIONS=opts.db_opts,
             SCHEMA=opts.db_schema))
 
+    if opts.reporting_db_engine is not None:
+        settings['DATABASES']['Reporting'] = dict(
+            ENGINE="django.db.backends.%s" % opts.reporting_db_engine,
+            NAME=opts.reporting_db_name,
+            USER=opts.reporting_db_user,
+            PASSWORD=opts.reporting_db_password,
+            HOST=opts.reporting_db_host,
+            PORT=opts.reporting_db_port,
+            OPTIONS=opts.reporting_db_opts,
+            SCHEMA=opts.reporting_db_schema)
+
     settings['TIME_ZONE'] = opts.timezone
 
     settings['TEMPLATE_DEBUG'] = settings['DEBUG'] = \
@@ -123,6 +135,57 @@ def finalize_django_config(opts=None, silent=False):
                            sys.exc_info()[1])
 
 
+def sync_databases(**kwargs):
+    """ Synchronize all databases that we know about.  """
+    logger = logging.getLogger()
+    for database in settings['DATABASES']:
+        logger.debug("Syncing database %s" % (database))
+        django.core.management.call_command("syncdb", database=database,
+                                            **kwargs)
+
+
+def migrate_databases(**kwargs):
+    """ Do South migrations on all databases that we know about.  """
+    logger = logging.getLogger()
+    for database in settings['DATABASES']:
+        logger.debug("Migrating database %s" % (database))
+        django.core.management.call_command("migrate", database=database,
+                                            **kwargs)
+
+
+class PerApplicationRouter(object):
+    """ Django database router for redirecting different applications to their
+    own database """
+
+    def _db_per_app(self, model, **hints):
+        """ If a database with the same name as the application exists, use it.
+        Otherwise use the default """
+        app = model._meta.app_label
+        if app in settings['DATABASES']:
+            return app
+
+        return 'default'
+
+    def db_for_read(self, model, **hints):
+        """ Called when Django wants to find out what database to read from """
+        return self._db_per_app(model, **hints)
+
+    def db_for_write(self, model, **hints):
+        """ Called when Django wants to find out what database to write to """
+        return self._db_per_app(model, **hints)
+
+    def allow_relation(self, obj1, obj2, **hints):
+        """ Called when Django wants to determine what relations to allow. Only
+        allow relations within an app """
+        return obj1._meta.app_label == obj2._meta.app_label
+
+    def allow_syncdb(self, db, model):
+        """ Called when Django wants to determine which models to sync to a
+        given database.  Take the cowards way out and sync all models to all
+        databases to allow for easy migrations. """
+        return True
+
+
 class _OptionContainer(object):
     """ Container for options loaded at import-time to configure
     databases """
@@ -134,6 +197,7 @@ class _OptionContainer(object):
             default="/etc/bcfg2-web.conf",
             action=Bcfg2.Options.ConfigFileAction,
             help='Web interface configuration file'),
+        # default database options
         Bcfg2.Options.Option(
             cf=('database', 'engine'), default='sqlite3',
             help='Database engine', dest='db_engine'),
@@ -156,6 +220,35 @@ class _OptionContainer(object):
             cf=('database', 'options'), help='Database options',
             dest='db_opts', type=Bcfg2.Options.Types.comma_dict,
             default=dict()),
+        # reporting database options
+        Bcfg2.Options.Option(
+            cf=('database', 'reporting_engine'),
+            help='Reporting database engine', dest='reporting_db_engine'),
+        Bcfg2.Options.Option(
+            cf=('database', 'reporting_name'),
+            default='<repository>/etc/reporting.sqlite',
+            help="Reporting database name", dest="reporting_db_name"),
+        Bcfg2.Options.Option(
+            cf=('database', 'reporting_user'),
+            help='Reporting database username', dest='reporting_db_user'),
+        Bcfg2.Options.Option(
+            cf=('database', 'reporting_password'),
+            help='Reporting database password', dest='reporting_db_password'),
+        Bcfg2.Options.Option(
+            cf=('database', 'reporting_host'),
+            help='Reporting database host', dest='reporting_db_host'),
+        Bcfg2.Options.Option(
+            cf=('database', 'reporting_port'),
+            help='Reporting database port', dest='reporting_db_port'),
+        Bcfg2.Options.Option(
+            cf=('database', 'reporting_schema'),
+            help='Reporting database schema', dest='reporting_db_schema',
+            default='public'),
+        Bcfg2.Options.Option(
+            cf=('database', 'reporting_options'),
+            help='Reporting database options', dest='reporting_db_opts',
+            type=Bcfg2.Options.Types.comma_dict, default=dict()),
+        # Django options
         Bcfg2.Options.Option(
             cf=('reporting', 'timezone'), help='Django timezone'),
         Bcfg2.Options.BooleanOption(

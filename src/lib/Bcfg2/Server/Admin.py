@@ -912,8 +912,9 @@ if HAS_DJANGO:
         def run(self, setup):
             Bcfg2.Server.models.load_models()
             try:
-                management.call_command("syncdb", interactive=False,
-                                        verbosity=setup.verbose + setup.debug)
+                Bcfg2.DBSettings.sync_databases(
+                    interactive=False,
+                    verbosity=setup.verbose + setup.debug)
             except ImproperlyConfigured:
                 err = sys.exc_info()[1]
                 self.logger.error("Django configuration problem: %s" % err)
@@ -960,10 +961,10 @@ if HAS_REPORTS:
         def run(self, setup):
             verbose = setup.verbose + setup.debug
             try:
-                management.call_command("syncdb", interactive=False,
-                                        verbosity=verbose)
-                management.call_command("migrate", interactive=False,
-                                        verbosity=verbose)
+                Bcfg2.DBSettings.sync_databases(interactive=False,
+                                                verbosity=verbose)
+                Bcfg2.DBSettings.migrate_databases(interactive=False,
+                                                   verbosity=verbose)
             except:  # pylint: disable=W0702
                 self.errExit("%s failed: %s" %
                              (self.__class__.__name__.title(),
