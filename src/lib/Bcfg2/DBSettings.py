@@ -96,7 +96,8 @@ def finalize_django_config(opts=None, silent=False):
             OPTIONS=opts.db_opts,
             SCHEMA=opts.db_schema))
 
-    if opts.reporting_db_engine is not None:
+    if hasattr(opts, "reporting_db_engine") and \
+       opts.reporting_db_engine is not None:
         settings['DATABASES']['Reporting'] = dict(
             ENGINE="django.db.backends.%s" % opts.reporting_db_engine,
             NAME=opts.reporting_db_name,
