@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _appendix-guides-import-existing-ssh-keys:
 
@@ -25,6 +26,10 @@ appropriate entries.::
 
     cat > /tmp/ssh.xml << EOF
     <Bundle name='ssh'>
+      <!-- requires a version of openssh that can generate ecdsa keys -->
+      <Path name="/etc/ssh/ssh_host_ecdsa_key"/>
+      <Path name="/etc/ssh/ssh_host_ecdsa_key.pub"/>
+
       <Path name='/etc/ssh/ssh_host_dsa_key'/>
       <Path name='/etc/ssh/ssh_host_rsa_key'/>
       <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>
@@ -86,7 +91,7 @@ Now, we pull the ssh host key data for the client out of the uploaded
 stats and insert it as host-specific copies of these files in
 ``/var/lib/bcfg2/SSHBase``.::
 
-    for key in ssh_host_rsa_key ssh_host_dsa_key ssh_host_key; do
+    for key in ssh_host_ecdsa_key ssh_host_rsa_key ssh_host_dsa_key ssh_host_key; do
         sudo bcfg2-admin pull <clientname> Path /etc/ssh/$key
         sudo bcfg2-admin pull <clientname> Path /etc/ssh/$key.pub
     done
