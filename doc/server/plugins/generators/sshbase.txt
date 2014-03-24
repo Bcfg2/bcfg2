@@ -31,7 +31,7 @@ Interacting with SSHbase
   ``<repo>/SSHbase/<key filename>.H_<hostname>``
 
 * Pre-seeding can also be performed using ``bcfg2-admin pull
-  ConfigFile /name/of/ssh/key``
+  Path /name/of/ssh/key``
 
 * Revoking existing keys -- deleting
   ``<repo>/SSHbase/\*.H_<hostname>`` will remove keys for an existing
