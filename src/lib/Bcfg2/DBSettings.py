@@ -64,7 +64,7 @@ settings = dict(  # pylint: disable=C0103
         'django.core.context_processors.i18n',
         'django.core.context_processors.media',
         'django.core.context_processors.request'),
-    DATABASE_ROUTERS = ['Bcfg2.DBSettings.PerApplicationRouter'])
+    DATABASE_ROUTERS=['Bcfg2.DBSettings.PerApplicationRouter'])
 
 if HAS_SOUTH:
     settings['INSTALLED_APPS'] += ('south', 'Bcfg2.Reporting')
