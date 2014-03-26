@@ -632,7 +632,7 @@ Server-only, specified in the **[database]** section. These options
 control the database connection of the server.
 
     engine
-        The database engine used by the statistics module. One of the
+        The database engine used by server plugins. One of the
         following::
 
             postgresql
@@ -641,9 +641,9 @@ control the database connection of the server.
             ado_mssql
 
     name
-        The name of the database to use for statistics data. If
+        The name of the database to use for server data. If
         'database_engine' is set to 'sqlite3' this is a file path to
-        the sqlite file and defaults to ``$REPOSITORY_DIR/etc/brpt.sqlite``.
+        the sqlite file and defaults to ``$REPOSITORY_DIR/etc/bcfg2.sqlite``.
 
     user
         User for database connections. Not used for sqlite3.
@@ -660,6 +660,41 @@ control the database connection of the server.
     options
         Various options for the database connection. The value is
         expected as multiple key=value pairs, separated with commas.
+        The concrete value depends on the database engine.
+
+    reporting_engine
+        The database engine used by the Reporting plugin. One of the
+        following::
+
+            postgresql
+            mysql
+            sqlite3
+            ado_mssql
+
+         If reporting_engine is not specified, the Reporting plugin uses
+         the same database as the other server plugins.
+
+    reporting_name
+        The name of the database to use for reporting data. If
+        'database_engine' is set to 'sqlite3' this is a file path to
+        the sqlite file and defaults to 
+        ``$REPOSITORY_DIR/etc/reporting.sqlite``.
+
+    reporting_user
+        User for reporting database connections. Not used for sqlite3.
+
+    reporting_password
+        Password for reporting database connections. Not used for sqlite3.
+
+    reporting_host
+        Host for reporting database connections. Not used for sqlite3.
+
+    reporting_port
+        Port for reporting database connections. Not used for sqlite3.
+
+    reporting_options
+        Various options for the reporting database connection. The value 
+        is expected as multiple key=value pairs, separated with commas.
         The concrete value depends on the database engine.
 
 Reporting options
