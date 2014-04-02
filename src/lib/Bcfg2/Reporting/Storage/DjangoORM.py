@@ -380,9 +380,9 @@ class DjangoORM(StorageBase):
                 vrb = 1
             else:
                 vrb = 0
-            management.call_command("syncdb", verbosity=vrb, interactive=False)
-            management.call_command("migrate", verbosity=vrb,
-                                    interactive=False)
+            Bcfg2.DBSettings.sync_databases(verbosity=vrb, interactive=False)
+            Bcfg2.DBSettings.migrate_databases(verbosity=vrb,
+                                               interactive=False)
         except:
             msg = "Failed to update database schema: %s" % sys.exc_info()[1]
             self.logger.error(msg)

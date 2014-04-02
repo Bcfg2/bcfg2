@@ -157,7 +157,8 @@ add themselves to this file.  See LICENSE for the full license.
 - Zach Lowry <zach@mcs.anl.gov> wrote Solaris support and general
   hardening.
 
-- Michael Fenn <fennm@deshawresearch.com> fixed various small bugs 
+- Michael Fenn <fennm@deshawresearch.com> implemented the database router
+  for separately storing the reporting database and fixed various small bugs 
   related to bcfg2 on CentOS 5
 
 - Alexander Sulfrian <alexander@sulfrian.net> fixed various bugs.

@@ -236,8 +236,8 @@ class Core(object):
         self._database_available = False
         if HAS_DJANGO:
             try:
-                management.call_command("syncdb", interactive=False,
-                                        verbosity=0)
+                Bcfg2.DBSettings.sync_databases(interactive=False,
+                                                verbosity=0)
                 self._database_available = True
             except ImproperlyConfigured:
                 self.logger.error("Django configuration problem: %s" %
