@@ -85,16 +85,13 @@ BuildRequires:    m2crypto
 BuildRequires:    python-django
 %else
 BuildRequires:    Django
-# FIXME: Not yet present in EPEL7; for building docs
-BuildRequires:    gamin-python
-# FIXME:  Not yet present in EPEL7; for %%check
-BuildRequires:    pylibacl
-BuildRequires:    python-pep8
-BuildRequires:    pylint
 %endif
 BuildRequires:    python-genshi
 BuildRequires:    python-cheetah
 BuildRequires:    libselinux-python
+BuildRequires:    pylibacl
+BuildRequires:    python-pep8
+BuildRequires:    pylint
 %if %{build_cherry_py}
 BuildRequires:    python-cherrypy >= 3
 %endif
@@ -543,8 +540,6 @@ rm -rf %{buildroot}
 
 %if 0%{?rhel} != 5
 # EL5 lacks python-mock, so test suite is disabled
-%if 0%{?rhel} != 7
-# FIXME:  EL7 has some missing EPEL deps, so test suite is disabled
 %check
 # Downloads not allowed in koji; fix .xsd urls to point to local files
 sed -i "s@schema_url = .*\$@schema_url = 'file://`pwd`/`basename %{SOURCE1}`'@" \
@@ -552,7 +547,6 @@ sed -i "s@schema_url = .*\$@schema_url = 'file://`pwd`/`basename %{SOURCE1}`'@" 
 sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
     %{SOURCE1} > `basename %{SOURCE1}`
 %{__python} setup.py test
-%endif
 %endif
 
 
@@ -793,6 +787,12 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 
 
 %changelog
+* Sun Apr  6 2014 John Morris <john@zultron.com> - 1.3.4-1
+- New upstream release
+
+* Wed Feb 26 2014 John Morris <john@zultron.com> - 1.3.3-5
+- EL7:  Re-add deps and re-enable %%check script; bz #1058427
+
 * Sat Feb  1 2014 John Morris <john@zultron.com> - 1.3.3-4
 - Disable bcfg2-web package on EL5; bz #1058427
 - Disable %%check on EL7; missing EPEL deps
