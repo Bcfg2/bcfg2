@@ -37,6 +37,7 @@ class Parser(argparse.ArgumentParser):
 
     #: Option for specifying the path to the Bcfg2 config file
     configfile = PathOption('-C', '--config',
+                            env="BCFG2_CONFIG_FILE",
                             help="Path to configuration file",
                             default="/etc/bcfg2.conf")
 
@@ -219,6 +220,7 @@ class Parser(argparse.ArgumentParser):
         _debug("Option parsing phase 1: Get and read main config file")
         bootstrap_parser = argparse.ArgumentParser(add_help=False)
         self.configfile.add_to_parser(bootstrap_parser)
+        self.configfile.default_from_config(self._cfp)
         bootstrap = bootstrap_parser.parse_known_args(args=self.argv)[0]
 
         # check whether the specified bcfg2.conf exists
