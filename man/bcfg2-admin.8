@@ -1,4 +1,4 @@
-.TH "BCFG2-ADMIN" "8" "March 18, 2013" "1.3" "Bcfg2"
+.TH "BCFG2-ADMIN" "8" "April 06, 2014" "1.3" "Bcfg2"
 .SH NAME
 bcfg2-admin \- Perform repository administration tasks
 .
@@ -78,10 +78,6 @@ Use \(aqpassword\(aq for client communication.
 .B backup
 Create an archive of the entire Bcfg2 repository.
 .TP
-.B bundle \fIaction\fP
-Display details about the available bundles (See BUNDLE OPTIONS
-below).
-.TP
 .B client \fIaction\fP \fIclient\fP [attribute=value]
 Add, edit, or remove clients entries in metadata (See CLIENT OPTIONS
 below).
@@ -91,8 +87,14 @@ Compare two client configurations. Can be used to verify consistent
 behavior between releases. Determine differences between files or
 directories (See COMPARE OPTIONS below).
 .TP
+.B dbshell
+Call the Django \(aqdbshell\(aq command on the configured database.
+.TP
 .B init
 Initialize a new repository (interactive).
+.TP
+.B initreports
+Initialize the Reporting database.
 .TP
 .B minestruct \fIclient\fP [\-f xml\-file] [\-g groups]
 Build structure entries based on client statistics extra entries
@@ -105,12 +107,21 @@ Query server for performance data.
 Install configuration information into repo based on client bad
 entries (See PULL OPTIONS below).
 .TP
-.B reports [init|load_stats|purge|scrub|update]
-Interact with the dynamic reporting system (See REPORTS OPTIONS
-below).
+.B purgereports
+Purge historic and expired data from the Reporting database
 .TP
-.B snapshots [init|dump|query|reports]
-Interact with the Snapshots database (See SNAPSHOTS OPTIONS below).
+.B reportssqlall
+Call the Django \(aqshell\(aq command on the Reporting database.
+.TP
+.B reportsstats
+Print Reporting database statistics.
+.TP
+.B scrubreports
+Scrub the Reporting database for duplicate reasons and orphaned
+entries.
+.TP
+.B shell
+Call the Django \(aqshell\(aq command on the configured database.
 .TP
 .B syncdb
 Sync the Django ORM with the configured database.
@@ -118,29 +129,18 @@ Sync the Django ORM with the configured database.
 .B tidy
 Remove unused files from repository.
 .TP
+.B updatereports
+Apply database schema updates to the Reporting database.
+.TP
+.B validatedb
+Call the Django \(aqvalidate\(aq command on the configured database.
+.TP
 .B viz [\-H] [\-b] [\-k] [\-o png\-file]
 Create a graphviz diagram of client, group and bundle information
 (See VIZ OPTIONS below).
 .TP
 .B xcmd
 Provides a XML\-RPC Command Interface to the bcfg2\-server.
-.UNINDENT
-.SS BUNDLE OPTIONS
-.INDENT 0.0
-.TP
-.B mode
-One of the following.
-.INDENT 7.0
-.TP
-.B \fIlist\-xml\fP
-List all available xml bundles
-.TP
-.B \fIlist\-genshi\fP
-List all available genshi bundles
-.TP
-.B \fIshow\fP
-Interactive dialog to get details about the available bundles
-.UNINDENT
 .UNINDENT
 .SS CLIENT OPTIONS
 .INDENT 0.0
@@ -170,11 +170,24 @@ are \(aqprofile\(aq, \(aquuid\(aq, \(aqpassword\(aq, \(aqlocation\(aq, \(aqsecur
 .SS COMPARE OPTIONS
 .INDENT 0.0
 .TP
+.B \-d \fIN\fP, \-\-diff\-lines \fIN\fP
+Show only N lines of a diff
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-c,  \-\-color
+Show colors even if not ryn from a TTY
+.TP
+.B \-q,  \-\-quiet
+Only show that entries differ, not how they differ
+.UNINDENT
+.INDENT 0.0
+.TP
 .B old
-Specify the location of the old configuration file.
+Specify the location of the old configuration(s).
 .TP
 .B new
-Specify the location of the new configuration file.
+Specify the location of the new configuration(s).
 .UNINDENT
 .SS MINESTRUCT OPTIONS
 .INDENT 0.0
@@ -200,50 +213,29 @@ Specify the type of the entry to pull.
 .B entry name
 Specify the name of the entry to pull.
 .UNINDENT
-.SS REPORTS OPTIONS
-.INDENT 0.0
-.TP
-.B load_stats [\-s] [\-c] [\-03]
-Load statistics data.
-.TP
-.B purge [\-\-client [n]] [\-\-days [n]] [\-\-expired]
-Purge historic and expired data.
-.TP
-.B scrub
-Scrub the database for duplicate reasons and orphaned entries.
-.TP
-.B update
-Apply any updates to the reporting database.
-.UNINDENT
-.SS SNAPSHOTS OPTIONS
-.INDENT 0.0
-.TP
-.B init
-Initialize the snapshots database.
-.TP
-.B query
-Query the snapshots database.
-.TP
-.B dump
-Dump some of the contents of the snapshots database.
-.TP
-.B reports [\-a] [\-b] [\-e] [\-\-date=MM\-DD\-YYYY]
-Generate reports for clients in the snapshots database.
-.UNINDENT
 .SS VIZ OPTIONS
 .INDENT 0.0
 .TP
-.B \-H
+.B \-H,  \-\-includehosts
 Include hosts in diagram.
 .TP
-.B \-b
+.B \-b,  \-\-includebundles
 Include bundles in diagram.
+.UNINDENT
+.INDENT 0.0
 .TP
-.BI \-o \ <outfile>
+.B \-o \fIoutfile\fP, \-\-outfile \fIoutfile\fP
 Write to outfile file instead of stdout.
+.UNINDENT
+.INDENT 0.0
 .TP
-.B \-k
+.B \-k,  \-\-includekey
 Add a shape/color key.
+.UNINDENT
+.INDENT 0.0
+.TP
+.B \-c \fIhostname\fP, \-\-only\-client \fIhostname\fP
+Only show groups and bundles for the named client
 .UNINDENT
 .SH SEE ALSO
 .sp
