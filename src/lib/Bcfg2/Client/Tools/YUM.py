@@ -588,34 +588,38 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                 package_fail = True
                 stat['version_fail'] = True
                 # Just chose the first pkg for the error message
+                current_pkg = all_pkg_objs[0]
                 if virt_pkg:
                     provides = \
-                        [p for p in all_pkg_objs[0].provides
+                        [p for p in current_pkg.provides
                          if p[0] == entry.get("name")][0]
-                    entry.set('current_version', "%s:%s-%s" % provides[2])
+                    current_evr = provides[2]
                     self.logger.info(
                         "  %s: Wrong version installed.  "
                         "Want %s, but %s provides %s" %
                         (entry.get("name"),
                          nevra2string(nevra),
-                         nevra2string(all_pkg_objs[0]),
+                         nevra2string(current_pkg),
                          yum.misc.prco_tuple_to_string(provides)))
                 else:
-                    entry.set('current_version', "%s:%s-%s.%s" %
-                              (all_pkg_objs[0].epoch,
-                               all_pkg_objs[0].version,
-                               all_pkg_objs[0].release,
-                               all_pkg_objs[0].arch))
+                    current_evr = (current_pkg.epoch,
+                                   current_pkg.version,
+                                   current_pkg.release)
                     self.logger.info("  %s: Wrong version installed.  "
                                      "Want %s, but have %s" %
                                      (entry.get("name"),
                                       nevra2string(nevra),
-                                      nevra2string(all_pkg_objs[0])))
-                entry.set('version', "%s:%s-%s.%s" %
-                          (nevra.get('epoch', 'any'),
-                           nevra.get('version', 'any'),
-                           nevra.get('release', 'any'),
-                           nevra.get('arch', 'any')))
+                                      nevra2string(current_pkg)))
+                wanted_evr = (nevra.get('epoch', 'any'),
+                              nevra.get('version', 'any'),
+                              nevra.get('release', 'any'))
+                entry.set('current_version', "%s:%s-%s" % current_evr)
+                entry.set('version', "%s:%s-%s" % wanted_evr)
+                if yum.compareEVR(current_evr, wanted_evr) == 1:
+                    entry.set("package_fail_action", "downgrade")
+                else:
+                    entry.set("package_fail_action", "update")
+
                 qtext_versions.append("U(%s)" % str(all_pkg_objs[0]))
                 continue
 
@@ -887,6 +891,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         install_pkgs = []
         gpg_keys = []
         upgrade_pkgs = []
+        downgrade_pkgs = []
         reinstall_pkgs = []
 
         def queue_pkg(pkg, inst, queue):
@@ -929,7 +934,10 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                     if not status.get('installed', False) and self.do_install:
                         queue_pkg(pkg, inst, install_pkgs)
                     elif status.get('version_fail', False) and self.do_upgrade:
-                        queue_pkg(pkg, inst, upgrade_pkgs)
+                        if pkg.get("package_fail_action") == "downgrade":
+                            queue_pkg(pkg, inst, downgrade_pkgs)
+                        else:
+                            queue_pkg(pkg, inst, upgrade_pkgs)
                     elif status.get('verify_fail', False) and self.do_reinst:
                         queue_pkg(pkg, inst, reinstall_pkgs)
                     else:
@@ -990,6 +998,19 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                 except yum.Errors.YumBaseError:
                     yume = sys.exc_info()[1]
                     self.logger.error("Error upgrading package %s: %s" %
+                                      (pkg_arg, yume))
+
+        if len(downgrade_pkgs) > 0:
+            self.logger.info("Attempting to downgrade packages")
+
+            for inst in downgrade_pkgs:
+                pkg_arg = self.instance_status[inst].get('pkg').get('name')
+                self.logger.debug("Downgrading %s" % pkg_arg)
+                try:
+                    self.yumbase.downgrade(**build_yname(pkg_arg, inst))
+                except yum.Errors.YumBaseError:
+                    yume = sys.exc_info()[1]
+                    self.logger.error("Error downgrading package %s: %s" %
                                       (pkg_arg, yume))
 
         if len(reinstall_pkgs) > 0:
