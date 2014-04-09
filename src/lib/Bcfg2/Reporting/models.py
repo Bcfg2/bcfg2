@@ -3,7 +3,7 @@ import sys
 
 from django.core.exceptions import ImproperlyConfigured
 try:
-    from django.db import models, backend, connection
+    from django.db import models, backend, connections
 except ImproperlyConfigured:
     e = sys.exc_info()[1]
     print("Reports: unable to import django models: %s" % e)
@@ -12,6 +12,7 @@ except ImproperlyConfigured:
 from django.core.cache import cache
 from datetime import datetime, timedelta
 from Bcfg2.Compat import cPickle
+from Bcfg2.DBSettings import get_db_label
 
 
 TYPE_GOOD = 0
@@ -61,7 +62,8 @@ def _quote(value):
     global _our_backend
     if not _our_backend:
         try:
-            _our_backend = backend.DatabaseOperations(connection)
+            _our_backend = backend.DatabaseOperations(
+                connections[get_db_label('Reporting')])
         except TypeError:
             _our_backend = backend.DatabaseOperations()
     return _our_backend.quote_name(value)
@@ -91,8 +93,8 @@ class InteractionManager(models.Manager):
         maxdate -- datetime object.  Most recent date to pull. (default None)
 
         """
-        from django.db import connection
-        cursor = connection.cursor()
+        from django.db import connections
+        cursor = connections[get_db_label('Reporting')].cursor()
         cfilter = "expiration is null"
 
         sql = 'select ri.id, x.client_id from ' + \
