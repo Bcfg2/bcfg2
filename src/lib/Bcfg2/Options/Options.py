@@ -284,7 +284,6 @@ class Option(object):
                    (self, parser))
 
 
-
 class PathOption(Option):
     """ Shortcut for options that expect a path argument. Uses
     :meth:`Bcfg2.Options.Types.path` to transform the argument into a
