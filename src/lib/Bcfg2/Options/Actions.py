@@ -168,7 +168,7 @@ class ConfigFileAction(FinalizableAction):
     ``bcfg2-lint.conf``). """
 
     def __call__(self, parser, namespace, values, option_string=None):
-        get_parser().add_config_file(self.dest, values)
+        parser.add_config_file(self.dest, values, reparse=False)
         FinalizableAction.__call__(self, parser, namespace, values,
                                    option_string=option_string)
 
