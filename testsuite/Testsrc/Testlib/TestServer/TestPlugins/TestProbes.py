@@ -278,6 +278,7 @@ group:      group:with:colons
     def test_probes_db(self):
         """ Set and retrieve probe data with database enabled """
         Bcfg2.Options.setup.probes_db = True
+        syncdb(TestProbesDB)
         self._perform_tests()
 
     def test_allowed_cgroups(self):
