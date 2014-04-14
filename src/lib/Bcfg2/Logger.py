@@ -21,7 +21,7 @@ class TermiosFormatter(logging.Formatter):
 
     def __init__(self, fmt=None, datefmt=None):
         logging.Formatter.__init__(self, fmt, datefmt)
-        if sys.stdout.isatty():
+        if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
             # now get termios info
             try:
                 self.width = struct.unpack('hhhh',

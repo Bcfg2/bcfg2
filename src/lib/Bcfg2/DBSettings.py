@@ -154,6 +154,17 @@ def migrate_databases(**kwargs):
                                             **kwargs)
 
 
+def get_db_label(application):
+    """ Get the name of the database for a given Django "application".  The
+    rule is that if a database with the same name as the application exists,
+    use it.  Otherwise use the default. Returns a string suitible for use as a
+    key in the Django database settings dict """
+    if application in settings['DATABASES']:
+        return application
+
+    return 'default'
+
+
 class PerApplicationRouter(object):
     """ Django database router for redirecting different applications to their
     own database """
@@ -161,11 +172,7 @@ class PerApplicationRouter(object):
     def _db_per_app(self, model, **hints):
         """ If a database with the same name as the application exists, use it.
         Otherwise use the default """
-        app = model._meta.app_label
-        if app in settings['DATABASES']:
-            return app
-
-        return 'default'
+        return get_db_label(model._meta.app_label)
 
     def db_for_read(self, model, **hints):
         """ Called when Django wants to find out what database to read from """

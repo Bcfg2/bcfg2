@@ -16,6 +16,7 @@ class BackendAction(Bcfg2.Options.ComponentAction):
 
 class CLI(object):
     """ bcfg2-server CLI class """
+    parse_first = True
     options = [
         Bcfg2.Options.Option(
             cf=('server', 'backend'), help='Server Backend',
