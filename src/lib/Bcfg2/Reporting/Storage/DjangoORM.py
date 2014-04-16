@@ -372,8 +372,8 @@ class DjangoORM(StorageBase):
             self.logger.error("Failed to import interaction: %s" %
                     traceback.format_exc().splitlines()[-1])
         finally:
-            self.logger.info("%s: Closing database connection" %
-                             self.__class__.__name__)
+            self.logger.debug("%s: Closing database connection" %
+                              self.__class__.__name__)
             db.close_connection()
 
 
