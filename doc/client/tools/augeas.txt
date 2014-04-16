@@ -26,11 +26,20 @@ give it a sequence of commands:
 The commands are run in document order.  There's no need to do an
 explicit ``save`` at the end.
 
-Each of these commands will only be run if the path does not already
-have the given setting.  That is, the ip address for the first host
-record will only be set to ``192.168.0.1`` if it's not set to that
-value already.  Its canonical name will only be set to
-``pigiron.example.com`` if it's not that already; and so on.
+These commands will be run if any of the paths do not already
+have the given setting.  In other words, if any command has not
+already been run, they will all be run.
+
+So, if the first host already has all of the specified settings, then
+that Path will verify successfully and nothing will be changed.  But
+suppose the first host looks like this::
+
+    192.168.0.1 pigiron.example.com pigiron
+
+All that is missing is the second alias, ``piggy``.  The entire Augeas
+script will be run in this case.  It's important, then, to ensure that
+all commands you use are idempotent.  (For instance, the ``Move`` and
+``Insert`` commands are unlikely to be useful.)
 
 The Augeas paths are all relative to ``/files/etc/hosts``.
 
@@ -38,6 +47,20 @@ The Augeas tool understands a subset of ``augtool`` commands.  Valid
 tags are: ``Remove``, ``Move``, ``Set``, ``Clear``, ``SetMulti``, and
 ``Insert``.  Refer to the official Augeas docs or the `Schema`_ below
 for details on the commands.
+
+The Augeas tool also supports one additional directive, ``Initial``,
+for setting initial file content when a file does not exist.  For
+instance, the ``Xml`` lens fails to parse a file that does not exist,
+and, as a result, you cannot add content to it.  You can use
+``Initial`` to circumvent this issue:
+
+.. code-block:: xml
+
+    <Path type="augeas" name="/etc/test.xml" lens="Xml"
+          owner="root" group="root" mode="0640">
+      <Initial>&lt;Test/&gt;</Initial>
+      <Set path="Test/#text" value="text content"/>
+    </Path>
 
 Editing files outside the default load path
 ===========================================

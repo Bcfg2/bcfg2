@@ -216,3 +216,46 @@ To select which backend to use, set the ``backend`` option in the
 * ``best`` (the default; currently the same as ``builtin``)
 
 ``best`` may change in future releases.
+
+Multiprocessing core configuration
+----------------------------------
+
+If you use the multiprocessing core, there are other bits you may wish
+to twiddle.
+
+By default, the server spawns as many children as the host has CPUs.
+(This is determined by ``multiprocessing.cpu_count()``.)  To change
+this, set:
+
+.. code-block:: ini
+
+    [server]
+    children = 4
+
+The optimal number of children may vary depending on your workload.
+For instance, if you are using :ref:`native yum
+library support <native-yum-libraries>`, then a separate process is
+spawned for each client to resolve its package dependencies, so
+keeping the children at or below the CPU count is likely a good idea.
+If you're not using native yum library support, though, you may wish
+to oversubscribe the core slightly.  It's recommended that you test
+various configurations and use what works best for your workload.
+
+Secondly, if ``tmpwatch`` is enabled, you must either disable it or
+exclude the pattern ``/tmp/pymp-\*``.  For instance, on RHEL or CentOS
+you may have a line like the following in
+``/etc/cron.daily/tmpwatch``:
+
+.. code-block:: bash
+
+    /usr/sbin/tmpwatch -x /tmp/.X11-unix -x /tmp/.XIM-unix -x /tmp/.font-unix \
+        -x /tmp/.ICE-unix -x /tmp/.Test-unix 240 /tmp
+
+You would need to add ``-X /tmp/pymp-\*`` to it, like so:
+
+.. code-block:: bash
+
+    /usr/sbin/tmpwatch -x /tmp/.X11-unix -x /tmp/.XIM-unix -x /tmp/.font-unix \
+        -x /tmp/.ICE-unix -x /tmp/.Test-unix -X /tmp/pymp-\* 240 /tmp
+
+See https://bugzilla.redhat.com/show_bug.cgi?id=1058310 for more information.

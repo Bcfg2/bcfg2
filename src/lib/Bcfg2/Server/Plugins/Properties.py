@@ -13,8 +13,10 @@ from Bcfg2.Server.Plugin import PluginExecutionError
 
 try:
     import json
+    # py2.4 json library is structured differently
+    json.loads  # pylint: disable=W0104
     HAS_JSON = True
-except ImportError:
+except (ImportError, AttributeError):
     try:
         import simplejson as json
         HAS_JSON = True

@@ -1,0 +1,49 @@
+.. -*- mode: rst -*-
+.. vim: ft=rst
+
+.. _releases-1.3.4:
+
+1.3.4
+=====
+
+We are happy to announce the release of Bcfg2 1.3.4. It is available for
+download at:
+
+ ftp://ftp.mcs.anl.gov/pub/bcfg
+
+This is primarily a bugfix release.
+
+* New probes.allowed_groups option to restrict group assignments
+
+* Bundler fixes:
+
+  * Fix parsing XML template output with encoding declaration
+
+* bcfg2-lint:
+
+  * Resolve XIncludes when parsing XML for validation
+  * New TemplateAbuse plugin to detect templated scripts
+  * New ValidateJSON plugin
+
+* bcfg2-crypt fixes:
+
+  * Fix logic
+  * Improve debugging/error handling with Properties files
+  * Fix exception handling
+  * Handle error when encrypting properties with multiple keys
+
+* Add new Augeas client tool driver:
+  http://docs.bcfg2.org/client/tools/augeas.html
+* Restored bcfg2-admin client add functionality
+* Migration tool fixes
+* Schema fixes
+* Add Django 1.6 support
+* Use 'public' default pgsql database schema
+* Refresh essential packages during Packages.Refresh
+* Allow lxml.etree XML implementation to parse very large documents
+* Support ACLs without a specific user/group
+* Explicitly close database connections at the end of each client run
+* Fix verification of symlinks
+
+Special thanks to the following contributors for this release: Matt Baker,
+Simon Ruderich,  Michael Fenn, Dan Foster, Richard Connon, John Morris.

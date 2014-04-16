@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _distributions:
 
@@ -103,10 +104,12 @@ section will try and meet the dependencies using packages from EPEL_
 [#f1]_. The *el5* and the *el6* package should be compatible
 with `CentOS`_ 5.x/6.x and `Scientific Linux`_.
 
-EPEL_ for 5.x ::
+EPEL_ for 5.x::
+
     [root@centos ~]# rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
 
-EPEL_ for 6.x ::
+EPEL_ for 6.x::
+
     [root@centos ~]# rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-5.noarch.rpm
 
 Install the bcfg2-server and bcfg2 RPMs::

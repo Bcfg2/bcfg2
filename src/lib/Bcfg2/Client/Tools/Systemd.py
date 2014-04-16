@@ -13,8 +13,6 @@ class Systemd(Bcfg2.Client.Tools.SvcTool):
     __handles__ = [('Service', 'systemd')]
     __req__ = {'Service': ['name', 'status']}
 
-    conflicts = ['Chkconfig']
-
     def get_svc_command(self, service, action):
         return "/bin/systemctl %s %s.service" % (action, service.get('name'))
 

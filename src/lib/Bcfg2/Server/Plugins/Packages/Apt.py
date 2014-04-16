@@ -72,6 +72,7 @@ class AptSource(Source):
     def read_files(self):
         bdeps = dict()
         bprov = dict()
+        self.essentialpkgs = set()
         depfnames = ['Depends', 'Pre-Depends']
         if self.recommended:
             depfnames.append('Recommends')

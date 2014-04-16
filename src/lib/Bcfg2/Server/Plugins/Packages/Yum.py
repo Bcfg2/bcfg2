@@ -90,7 +90,9 @@ try:
     import yum
     try:
         import json
-    except ImportError:
+        # py2.4 json library is structured differently
+        json.loads  # pylint: disable=W0104
+    except (ImportError, AttributeError):
         import simplejson as json
     HAS_YUM = True
 except ImportError:
@@ -354,8 +356,8 @@ class YumCollection(Collection):
                 self.__class__._helper = find_executable('bcfg2-yum-helper')
                 if not self.__class__._helper:
                     self.__class__._helper = "/usr/sbin/bcfg2-yum-helper"
-            # pylint: enable=W0212
-        return self._helper
+        return self.__class__._helper
+        # pylint: enable=W0212
 
     @property
     def use_yum(self):

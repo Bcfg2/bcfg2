@@ -19,5 +19,5 @@ needs to be installed on any machine you plan to manage by Bcfg2.
 
    prerequisites
    source
-   packages
+   building-packages
    distributions

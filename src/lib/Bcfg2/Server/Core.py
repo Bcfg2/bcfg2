@@ -19,7 +19,7 @@ import Bcfg2.Server.Statistics
 import Bcfg2.Server.FileMonitor
 from itertools import chain
 from Bcfg2.Server.Cache import Cache
-from Bcfg2.Compat import xmlrpclib  # pylint: disable=W0622
+from Bcfg2.Compat import xmlrpclib, wraps  # pylint: disable=W0622
 from Bcfg2.Server.Plugin.exceptions import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin.interfaces import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin import track_statistics
@@ -72,6 +72,24 @@ def sort_xml(node, key=None):
     except TypeError:
         sorted_children = node
     node[:] = sorted_children
+
+
+def close_db_connection(func):
+    """ Decorator that closes the Django database connection at the end of
+    the function.  This should decorate any exposed function that
+    might open a database connection. """
+    @wraps(func)
+    def inner(self, *args, **kwargs):
+        """ The decorated function """
+        rv = func(self, *args, **kwargs)
+        if self._database_available:  # pylint: disable=W0212
+            from django import db
+            self.logger.debug("%s: Closing database connection" %
+                              threading.current_thread().name)
+            db.close_connection()
+        return rv
+
+    return inner
 
 
 class CoreInitError(Exception):
@@ -196,6 +214,12 @@ class Core(object):
         self.revision = '-1'
 
         atexit.register(self.shutdown)
+        #: if :func:`Bcfg2.Server.Core.shutdown` is called explicitly,
+        #: then :mod:`atexit` calls it *again*, so it gets called
+        #: twice.  This is potentially bad, so we use
+        #: :attr:`Bcfg2.Server.Core._running` as a flag to determine
+        #: if the core needs to be shutdown, and only do it once.
+        self._running = True
 
         #: Threading event to signal worker threads (e.g.,
         #: :attr:`fam_thread`) to shutdown
@@ -403,14 +427,22 @@ class Core(object):
 
     def shutdown(self):
         """ Perform plugin and FAM shutdown tasks. """
-        self.logger.info("Shutting down core...")
+        if not self._running:
+            self.logger.debug("%s: Core already shut down" % self.name)
+            return
+        self.logger.info("%s: Shutting down core..." % self.name)
         if not self.terminate.isSet():
             self.terminate.set()
-            self.fam.shutdown()
-            self.logger.info("FAM shut down")
-            for plugin in list(self.plugins.values()):
-                plugin.shutdown()
-            self.logger.info("All plugins shut down")
+        self._running = False
+        self.fam.shutdown()
+        self.logger.info("%s: FAM shut down" % self.name)
+        for plugin in list(self.plugins.values()):
+            plugin.shutdown()
+        self.logger.info("%s: All plugins shut down" % self.name)
+        if self._database_available:
+            from django import db
+            self.logger.info("%s: Closing database connection" % self.name)
+            db.close_connection()
 
     @property
     def metadata_cache_mode(self):
@@ -601,9 +633,10 @@ class Core(object):
                 del entry.attrib['realname']
                 return ret
             except:
-                self.logger.error("Failed binding entry %s:%s with altsrc %s" %
-                                  (entry.tag, entry.get('realname'),
-                                   entry.get('name')))
+                self.logger.error(
+                    "Failed binding entry %s:%s with altsrc %s: %s" %
+                    (entry.tag, entry.get('realname'), entry.get('name'),
+                     sys.exc_info()[1]))
                 entry.set('name', oldname)
                 self.logger.error("Falling back to %s:%s" %
                                   (entry.tag, entry.get('name')))
@@ -1052,6 +1085,7 @@ class Core(object):
 
     @exposed
     @track_statistics()
+    @close_db_connection
     def DeclareVersion(self, address, version):
         """ Declare the client version.
 
@@ -1074,6 +1108,7 @@ class Core(object):
         return True
 
     @exposed
+    @close_db_connection
     def GetProbes(self, address):
         """ Fetch probes for the client.
 
@@ -1099,6 +1134,7 @@ class Core(object):
                                 (client, err))
 
     @exposed
+    @close_db_connection
     def RecvProbeData(self, address, probedata):
         """ Receive probe data from clients.
 
@@ -1146,6 +1182,7 @@ class Core(object):
         return True
 
     @exposed
+    @close_db_connection
     def AssertProfile(self, address, profile):
         """ Set profile for a client.
 
@@ -1165,6 +1202,7 @@ class Core(object):
         return True
 
     @exposed
+    @close_db_connection
     def GetConfig(self, address):
         """ Build config for a client by calling
         :func:`BuildConfiguration`.
@@ -1184,6 +1222,7 @@ class Core(object):
             self.critical_error("Metadata consistency failure for %s" % client)
 
     @exposed
+    @close_db_connection
     def RecvStats(self, address, stats):
         """ Act on statistics upload with :func:`process_statistics`.
 
@@ -1199,6 +1238,7 @@ class Core(object):
         return True
 
     @exposed
+    @close_db_connection
     def GetDecisionList(self, address, mode):
         """ Get the decision list for the client with :func:`GetDecisions`.
 

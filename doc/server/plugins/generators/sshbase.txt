@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _server-plugins-generators-sshbase:
 
@@ -13,8 +14,9 @@ record for the current system.
 
 It has two functions:
 
-* Generating new ssh keys -- When a client requests a dsa, rsa, or v1 key,
-  and there is no existing key in the repository, one is generated.
+* Generating new ssh keys -- When a client requests a ecdsa, dsa, rsa,
+  or v1 key, and there is no existing key in the repository, one is
+  generated.
 
 * Maintaining the ``ssh_known_hosts`` file -- all current known public
   keys (and extra public key stores) are integrated into a single
@@ -31,7 +33,7 @@ Interacting with SSHbase
   ``<repo>/SSHbase/<key filename>.H_<hostname>``
 
 * Pre-seeding can also be performed using ``bcfg2-admin pull
-  ConfigFile /name/of/ssh/key``
+  Path /name/of/ssh/key``
 
 * Revoking existing keys -- deleting
   ``<repo>/SSHbase/\*.H_<hostname>`` will remove keys for an existing

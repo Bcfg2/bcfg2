@@ -173,6 +173,15 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice>
+      <xsd:element name="Initial" type="xsd:string">
+        <xsd:annotation>
+          <xsd:documentation>
+            Specify initial content for a file, which will be created
+            before Augeas commands are applied if a file doesn't
+            exist.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
       <xsd:element name="Remove" type="AugeasRemoveCommand">
         <xsd:annotation>
           <xsd:documentation>

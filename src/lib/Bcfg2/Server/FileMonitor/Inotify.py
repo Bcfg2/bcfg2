@@ -212,7 +212,7 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
     AddMonitor.__doc__ = Pseudo.AddMonitor.__doc__
 
     def shutdown(self):
-        if self.notifier:
+        if self.started and self.notifier:
             self.notifier.stop()
     shutdown.__doc__ = Pseudo.shutdown.__doc__
 

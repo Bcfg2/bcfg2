@@ -275,6 +275,7 @@ class ChildCore(Core):
     @exposed
     def GetConfig(self, client):
         """ Render the configuration for a client """
+        self.metadata.update_client_list()
         self.logger.debug("%s: Building configuration for %s" %
                           (self.name, client))
         return lxml.etree.tostring(self.BuildConfiguration(client))

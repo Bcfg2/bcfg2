@@ -277,6 +277,7 @@ child ``<ACL>`` tags.  For instance:
           mode="0775">
       <ACL type="default" scope="user" user="foouser" perms="rw"/>
       <ACL type="default" scope="group" group="users" perms="rx"/>
+      <ACL type="default" scope="other" perms="r"/>
     </Path>
 
 .. xml:element:: ACL
@@ -284,6 +285,9 @@ child ``<ACL>`` tags.  For instance:
 It is not currently possible to manually set an effective rights mask;
 the mask will be automatically calculated from the given ACLs when
 they are applied.
+
+For directories either no default ACL entries or at least an entry for
+the owner, owning group and other must be defined.
 
 Note that it is possible to set ACLs that demand different permissions
 on a file than those specified in the ``perms`` attribute on the

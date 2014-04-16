@@ -686,7 +686,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 client = MetadataClientModel(hostname=client_name)
                 # pylint: enable=E1102
                 client.save()
-            self.clients = self.list_clients()
+            self.update_client_list()
             return client
         else:
             try:
@@ -739,7 +739,15 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                                       attribs, alias=True)
 
     def list_clients(self):
-        """ List all clients in client database """
+        """ List all clients in client database.
+
+        Making ``self.clients`` a property and reading the client list
+        dynamically from the database on every call to
+        ``self.clients`` can result in very high rates of database
+        reads, so we cache the ``list_clients()`` results to reduce
+        the database load.  When the database is in use, the client
+        list is reread periodically with
+        :func:`Bcfg2.Server.Plugins.Metadata.update_client_list`. """
         if self._use_db:
             return set([c.hostname for c in MetadataClientModel.objects.all()])
         else:
@@ -790,7 +798,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 self.logger.warning(msg)
                 raise Bcfg2.Server.Plugin.MetadataConsistencyError(msg)
             client.delete()
-            self.clients = self.list_clients()
+            self.update_client_list()
         else:
             return self._remove_xdata(self.clients_xml, "Client", client_name)
 
@@ -859,8 +867,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             except KeyError:
                 self.clientgroups[clname] = [profile]
         self.states['clients.xml'] = True
-        if self._use_db:
-            self.clients = self.list_clients()
+        self.update_client_list()
 
     def _get_condition(self, element):
         """ Return a predicate that returns True if a client meets
@@ -1451,6 +1458,30 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.logger.debug("Client %s authenticated successfully" % client)
         return True
     # pylint: enable=R0911,R0912
+
+    def update_client_list(self):
+        """ Re-read the client list from the database (if the database is in
+        use) """
+        if self._use_db:
+            self.logger.debug("Metadata: Re-reading client list from database")
+            old = set(self.clients)
+            self.clients = self.list_clients()
+            new = set(self.clients)
+            added = new - old
+            removed = old - new
+            self.logger.debug("Metadata: Added %s clients: %s" %
+                              (len(added), added))
+            self.logger.debug("Metadata: Removed %s clients: %s" %
+                              (len(removed), removed))
+            # we could do this with set.symmetric_difference(), but we
+            # want detailed numbers of added/removed clients for
+            # logging
+            for client in added.union(removed):
+                self.expire_cache(client)
+
+    def start_client_run(self, metadata):
+        """ Hook to reread client list if the database is in use """
+        self.update_client_list()
 
     def end_statistics(self, metadata):
         """ Hook to toggle clients in bootstrap mode """

@@ -165,12 +165,13 @@ class VCS(Bcfg2.Client.Tools.Tool):
 
     def Verifysvn(self, entry, _):
         """Verify svn repositories"""
+        # pylint: disable=E1101
         headrev = pysvn.Revision(pysvn.opt_revision_kind.head)
+        # pylint: enable=E1101
         client = pysvn.Client()
         try:
             cur_rev = str(client.info(entry.get('name')).revision.number)
-            server = client.info2(entry.get('sourceurl'),
-                                  headrev,
+            server = client.info2(entry.get('sourceurl'), headrev,
                                   recurse=False)
             if server:
                 server_rev = str(server[0][1].rev.number)

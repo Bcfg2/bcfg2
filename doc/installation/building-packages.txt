@@ -1,0 +1,228 @@
+.. -*- mode: rst -*-
+.. vim: ft=rst
+
+.. _installation-building-packages:
+
+=============================
+Building packages from source
+=============================
+
+Building RPMs
+=============
+
+Building from a tarball
+-----------------------
+
+* Create a directory structure for rpmbuild::
+
+    rpmdev-setuptree
+
+* Copy the tarball to ``~/rpmbuild/SOURCES/``
+* Extract another copy of it somewhere else (eg: ``/tmp``) and retrieve
+  the ``misc/bcfg2.spec`` file
+* Run the following::
+
+    rpmbuild -ba bcfg2.spec
+
+* The resulting RPMs will be in ``~/rpmbuild/RPMS/`` and SRPMs
+  in ``~/rpmbuild/SRPMS/``.
+
+Building Debian packages
+========================
+
+The Bcfg2 project provides a ``debian`` subdirectory with the project's
+source that enables users to create their own Debian/Ubuntu compatible
+packages (`.deb` files).
+
+Build deps
+----------
+
+If the distribution you are building on already has packaged bcfg2
+(even an older version), the following command will likely install the
+necessary build dependencies::
+
+    apt-get build-dep bcfg2 bcfg2-server
+
+Install source code
+-------------------
+
+Depending on which version of bcfg2 you want build, you can obtain the
+source code from the Download_ page or from the project's git repository.
+To create a local anonymous working copy of the latest version of the
+bcfg2 source code, use a command like the following::
+
+    git clone git://git.mcs.anl.gov/bcfg2.git
+
+Update the changelog
+--------------------
+
+The next step is to update the ``debian/changelog`` file with an
+appropriate package version string. Debian packages contain a version
+that is extracted from the latest entry in this file. An appropriate
+version will help you distinguish your locally built package from one
+provided by your distribution. It also helps the packaging system know
+when a newer version of the package is available to install.
+
+It is possible to skip this step, but the packages you build will have
+the same version as the source distribution and will be easy to confuse
+with other similarly named (but maybe not equivalent) packages.
+
+The basic format of the package version string to use is this::
+
+    <UPSTREAM VER>~<UPSTREAM PRE-VER>+<GIT-ID>-0.1+<LOCAL VER>
+
+.. note::
+    The '+', and '-' characters have significance in determining when
+    one package is newer than another. The following format is believed
+    to do the right thing in all common situations.
+
+The components of the package version string are explained below:
+
+.. glossary::
+
+    <UPSTREAM VER>
+        This is the version of the Bcfg source code you are working
+        from. It will likely be something like `0.9.6` or `1.0`.
+
+    <UPSTREAM PRE-VER>
+        If you are using a published pre-release of Bcfg2, it will have
+        a name like `pre1` or `rc1`. Use that string here, otherwise
+        drop this component from the package version string.
+
+    +<GIT-ID>
+        If you are building from a local working copy of the git
+        repository, it is useful to include the revision in the package
+        version. If you are building from a downloaded copy of the source,
+        drop this component (including the preceding plus-sign (`+`)
+        from the package version string.
+
+    +<LOCAL VER>
+        This is a locally relevant name like your last name or your
+        domain name, plus the digit `1`. For example, if your family
+        name is ''Smith'', you could use `smith1`. If you work for
+        ''Example Inc'', you could use `example1`.
+
+Here are some examples:
+
+* If you are building packages for revision 6c681bd from git, and the
+  latest published version is 1.2.0rc1, the version string should be
+  `1.2.0rc1+6c681bd-0.1+example1`.
+* If you are building packages for the published 1.0 rc1 version, the
+  version string should be `1.0rc1-0.1+example1`.
+* If you are building packages for the published 1.0 version, the version
+  string should be `1.0-0.1+example1`.
+
+If you are working on a git working copy of 1.0 pre5 and have the
+``devscripts`` package installed, the following command is a convenient
+way to create a well formatted changelog entry::
+
+    REV=$(git log --oneline | head -n 1 | cut -d' ' -f1)
+    debchange --force-bad-version --preserve --newversion "1.0~pre5+${REV}-0.1+example1" git revision $REV
+
+Building the package
+--------------------
+
+With the preliminaries out of the way, building the package is simple.::
+
+    cd ..  # Change into the top level of the source directory
+    fakeroot dpkg-buildpackage -uc -us
+
+The freshly built packages will be deposited in the parent of the
+current directory (``..``).  Examine the output of ``dpkg-buildpackage``
+for details.
+
+External build systems
+----------------------
+
+This section describes how to build bcfg2 and deps via external build
+systems (Currently only a PPA). Some other possibilities are:
+
+ * #651 Look into project-builder to make more native-system bcfg2 packages available
+ * http://en.opensuse.org/Build_Service/Deb_builds
+
+Launchpad PPA
+^^^^^^^^^^^^^
+
+https://launchpad.net/~bcfg2
+
+To upload to the PPA you need to be on the active member list of `Bcfg2
+in Launchpad`_.
+
+Note that **after each successful upload**, you should wait until the PPA
+is built, and then **install it locally** using ``sudo aptitude update;
+sudo aptitude install (packagename)`` so the next build doesn't fail on
+your local machine. If you don't want to wait for a PPA binary build to
+complete, you can "apt-get source (packagename)" and do a local build
+before the PPA build is done.
+
+setup gpg-agent
+"""""""""""""""
+
+Setting up gpg-agent and pinentry prevents you from having to type your
+passphrase repeatedly.::
+
+    sudo aptitude install gnupg-agent pinentry-gtk2 pinentry-curses
+    # replace 0xAA95C349 with your GPG Key ID
+    export GPGKEY=0xAA95C349
+    killall -q gpg-agent
+    eval $(gpg-agent --daemon)
+
+setup debuild
+"""""""""""""
+
+Tell dpkg-buildpackage who you are, for example::
+
+    export DEBEMAIL="dclark@pobox.com"
+    export DEBFULLNAME="Daniel Joseph Barnhart Clark"
+
+upload bcfg2 to ppa
+"""""""""""""""""""
+
+A ``dists`` file contains a space-separated list of all distributions
+you want to build PPA packages for.
+
+.. code-block:: sh
+
+    #!/bin/sh
+
+    . ./dists
+
+    # Replace 0xAA95C349 with your GnuPG Key ID
+    export GPGKEY=0xAA95C349
+
+    sudo apt-get build-dep bcfg2 bcfg2-server
+    sudo aptitude install git
+
+    VERSION=1.3.2-1
+    if [ ! -d testing ]; then
+        mkdir testing
+    fi
+    DATE=$(date +%F-%H%M)
+    ppa="testing" # "testing" or "ppa" (for stable)
+
+    # download source
+    cd testing
+    git clone git://git.mcs.anl.gov/bcfg2
+    cd bcfg2
+    GITID=$(git log --oneline | head -n 1 | cut -d' ' -f1)
+    cp debian/changelog ../changelog.orig
+
+    for dist in $DISTS
+    do
+        cp ../changelog.orig debian/changelog
+        (cd debian && dch --distribution ${dist} \
+                          --force-bad-version \
+                          --preserve \
+                          --force-distribution \
+                          --newversion "${VERSION}~${ppa}~${dist}${DATE}+${GITID}" \
+                          "bcfg2 backport for ${dist} release ${VERSION} git commit ${GITID}")
+        debuild --no-tgz-check -rfakeroot -I -S -k${GPGKEY}
+    done
+
+    for dist in $DISTS
+    do
+        dput ppa:bcfg2/${dist}testing ../bcfg2_${VERSION}~${ppa}~${dist}${DATE}+${GITID}_source.changes
+    done
+
+.. _Download: http://bcfg2.org/download/
+.. _Bcfg2 in Launchpad: https://launchpad.net/~bcfg2

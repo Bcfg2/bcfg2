@@ -123,11 +123,29 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
 
     @classmethod
     def Errors(cls):
-        return {"unknown-entry-type": "error",
+        return {"missing-elements": "error",
+                "unknown-entry-type": "error",
                 "unknown-entry-tag": "error",
                 "required-attrs-missing": "error",
                 "required-attr-format": "error",
                 "extra-attrs": "warning"}
+
+    def check_default_acl(self, path):
+        """ Check that a default ACL contains either no entries or minimum
+        required entries """
+        defaults = 0
+        if path.xpath("ACL[@type='default' and @scope='user' and @user='']"):
+            defaults += 1
+        if path.xpath("ACL[@type='default' and @scope='group' and @group='']"):
+            defaults += 1
+        if path.xpath("ACL[@type='default' and @scope='other']"):
+            defaults += 1
+        if defaults > 0 and defaults < 3:
+            self.LintError(
+                "missing-elements",
+                "A Path must have either no default ACLs or at"
+                " least default:user::, default:group:: and"
+                " default:other::")
 
     def check_packages(self):
         """ Check Packages sources for Source entries with missing
@@ -172,7 +190,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                                               rules.name))
 
     def check_bundles(self):
-        """ Check bundles for BoundPath entries with missing
+        """ Check bundles for BoundPath and BoundPackage entries with missing
         attrs. """
         if 'Bundler' not in self.core.plugins:
             return
@@ -192,6 +210,15 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                             "required-attrs-missing",
                             "Path tags require either a 'name' or 'glob' "
                             "attribute: \n%s" % self.RenderXML(path))
+                # ensure that abstract Package tags have either name
+                # or group specified
+                for package in xdata.xpath("//Package"):
+                    if ('name' not in package.attrib and
+                        'group' not in package.attrib):
+                        self.LintError(
+                            "required-attrs-missing",
+                            "Package tags require either a 'name' or 'group' "
+                            "attribute: \n%s" % self.RenderXML(package))
 
     def check_entry(self, entry, filename):
         """ Generic entry check.
@@ -230,6 +257,9 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                     # check if major/minor are specified
                     required_attrs['major'] = is_device_mode
                     required_attrs['minor'] = is_device_mode
+
+            if tag == 'Path':
+                self.check_default_acl(entry)
 
             if tag == 'ACL' and 'scope' in required_attrs:
                 required_attrs[entry.get('scope')] = is_username

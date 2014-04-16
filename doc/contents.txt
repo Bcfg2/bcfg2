@@ -21,6 +21,7 @@ Bcfg2 documentation |release|
    glossary
    appendix/index
    man/index
+   releases/index
 
    unsorted/index
 

@@ -69,8 +69,8 @@ Server Testing
           Entry: fs13.bgl.mcs.anl.gov.xml
           Entry: fs13.bgl.mcs.anl.gov.xml good
           Entry: login1.bgl.mcs.anl.gov.xml
-           ConfigFile /bin/whatami contents differ
-           ConfigFile /bin/whatami differs (in bundle softenv)
+           Path /bin/whatami contents differ
+           Path /bin/whatami differs (in bundle softenv)
           Entry: login1.bgl.mcs.anl.gov.xml bad
 
    This can be used to compare configurations for single clients, or

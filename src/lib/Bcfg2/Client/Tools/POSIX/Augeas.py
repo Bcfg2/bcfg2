@@ -4,6 +4,7 @@ import sys
 import Bcfg2.Client.XML
 from augeas import Augeas
 from Bcfg2.Client.Tools.POSIX.base import POSIXTool
+from Bcfg2.Client.Tools.POSIX.File import POSIXFile
 
 
 class AugeasCommand(object):
@@ -187,13 +188,14 @@ class Insert(AugeasCommand):
 class POSIXAugeas(POSIXTool):
     """ Handle <Path type='augeas'...> entries.  See
     :ref:`client-tools-augeas`. """
-
-    __handles__ = [('Path', 'augeas')]
-    __req__ = {'Path': ['type', 'name', 'setting', 'value']}
+    __req__ = ['name', 'mode', 'owner', 'group']
 
     def __init__(self, config):
         POSIXTool.__init__(self, config)
         self._augeas = dict()
+        # file tool for setting initial values of files that don't
+        # exist
+        self.filetool = POSIXFile(logger, setup, config)
 
     def get_augeas(self, entry):
         """ Get an augeas object for the given entry. """
@@ -214,9 +216,9 @@ class POSIXAugeas(POSIXTool):
         return self._augeas[entry.get("name")]
 
     def fully_specified(self, entry):
-        return entry.text is not None
+        return len(entry.getchildren()) != 0
 
-    def get_commands(self, entry, unverified=False):
+    def get_commands(self, entry):
         """ Get a list of commands to verify or install.
 
         @param entry: The entry to get commands from.
@@ -229,7 +231,7 @@ class POSIXAugeas(POSIXTool):
         """
         rv = []
         for cmd in entry.iterchildren():
-            if unverified and cmd.get("verified", "false") != "false":
+            if cmd.tag == "Initial":
                 continue
             if cmd.tag in globals():
                 rv.append(globals()[cmd.tag](cmd, self.get_augeas(entry),
@@ -266,7 +268,18 @@ class POSIXAugeas(POSIXTool):
 
     def install(self, entry):
         rv = True
-        for cmd in self.get_commands(entry, unverified=True):
+        if entry.get("current_exists", "true") == "false":
+            initial = entry.find("Initial")
+            if initial is not None:
+                self.logger.debug("Augeas: Setting initial data for %s" %
+                                  entry.get("name"))
+                file_entry = Bcfg2.Client.XML.Element("Path",
+                                                      **dict(entry.attrib))
+                file_entry.text = initial.text
+                self.filetool.install(file_entry)
+                # re-parse the file
+                self.get_augeas(entry).load()
+        for cmd in self.get_commands(entry):
             try:
                 cmd.install()
             except:  # pylint: disable=W0702
@@ -277,8 +290,7 @@ class POSIXAugeas(POSIXTool):
         try:
             self.get_augeas(entry).save()
         except:  # pylint: disable=W0702
-            self.logger.error(
-                "Failure saving Augeas changes to %s: %s" %
-                (entry.get("name"), sys.exc_info()[1]))
+            self.logger.error("Failure saving Augeas changes to %s: %s" %
+                              (entry.get("name"), sys.exc_info()[1]))
             rv = False
         return POSIXTool.install(self, entry) and rv

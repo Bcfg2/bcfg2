@@ -30,9 +30,9 @@ that allow quick composition of bundles and base files.
                 <Group name='${1:groupname}'>
                         ${2}
                 </Group>
-        # ConfigFile
-        snippet <Config
-                <ConfigFile name='${1:filename}'/>
+        # Path
+        snippet <Path
+                <Path name='${1:filename}'/>
         # Service
         snippet <Service
                 <Service name='${1:svcname}'/>

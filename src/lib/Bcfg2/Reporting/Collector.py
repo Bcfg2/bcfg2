@@ -6,6 +6,7 @@ import time
 import threading
 
 # pylint: disable=E0611
+from lockfile import LockFailed, LockTimeout
 try:
     from lockfile.pidlockfile import PIDLockFile
     from lockfile import Error as PIDFileError
@@ -63,6 +64,8 @@ class ReportingCollector(object):
         bcfg2-admin"""
         self.terminate = None
         self.context = None
+        self.children = []
+        self.cleanup_threshold = 25
 
         if Bcfg2.Options.setup.debug:
             level = logging.DEBUG
@@ -106,12 +109,24 @@ class ReportingCollector(object):
         self.terminate = threading.Event()
         atexit.register(self.shutdown)
         self.context = daemon.DaemonContext(detach_process=True)
+        iter = 0
 
         if Bcfg2.Options.setup.daemon:
             self.logger.debug("Daemonizing")
             try:
                 self.context.pidfile = PIDLockFile(Bcfg2.Options.setup.daemon)
                 self.context.open()
+            except LockFailed:
+                self.logger.error("Failed to daemonize: %s" %
+                                  sys.exc_info()[1])
+                self.shutdown()
+                return
+            except LockTimeout:
+                self.logger.error("Failed to daemonize: "
+                                  "Failed to acquire lock on %s" %
+                                  self.setup['daemon'])
+                self.shutdown()
+                return
             except PIDFileError:
                 self.logger.error("Error writing pid file: %s" %
                                   sys.exc_info()[1])
@@ -128,6 +143,13 @@ class ReportingCollector(object):
                     continue
                 store_thread = ReportingStoreThread(interaction, self.storage)
                 store_thread.start()
+                self.children.append(store_thread)
+
+                iter += 1
+                if iter >= self.cleanup_threshold:
+                    self.reap_children()
+                    iter = 0
+
             except (SystemExit, KeyboardInterrupt):
                 self.logger.info("Shutting down")
                 self.shutdown()
@@ -147,3 +169,16 @@ class ReportingCollector(object):
                 pass
         if self.storage:
             self.storage.shutdown()
+
+    def reap_children(self):
+        """Join any non-live threads"""
+        newlist = []
+
+        self.logger.debug("Starting reap_children")
+        for child in self.children:
+            if child.isAlive():
+                newlist.append(child)
+            else:
+                child.join()
+                self.logger.debug("Joined child thread %s" % child.getName())
+        self.children = newlist

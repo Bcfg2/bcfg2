@@ -275,7 +275,8 @@ class PluginDatabaseModel(object):
     inherit from.  This is just a mixin; models must also inherit from
     django.db.models.Model to be valid Django models."""
 
-    class Meta:  # pylint: disable=C0111,W0232
+    class Meta(object):  # pylint: disable=W0232
+        """ Model metadata options """
         app_label = "Server"
 
 

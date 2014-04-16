@@ -31,7 +31,7 @@ More snippets are under development.
          ("<Group" "<Group name='${1:groupname}>
           $0
        </Group>" nil)
-         ("<Config" "<ConfigFile name='${1:filename}'/>
+         ("<Path" "<Path name='${1:filename}'/>
        $0" nil)
          ("<Service" "<Service name='${1:svcname}'/>
        $0" nil)
