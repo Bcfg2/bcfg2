@@ -62,6 +62,10 @@ class YumHelper(object):
         # pylint: enable=E1121,W0212
         self.logger = logging.getLogger(self.__class__.__name__)
 
+    def setarch(self, arch):
+        """ Configure an arch other than the bcfg2 server arch for dep
+        resolution. """
+        self.yumbase.arch.setup_arch(arch=arch)
 
 class DepSolver(YumHelper):
     """ Yum dependency solver.  This is used for operations that only
@@ -326,6 +330,11 @@ def main():
                          sys.exc_info()[1])
             rv = 2
         try:
+            # if provided, set client arch for dependency resolution
+            arch = data.get('arch', None)
+            if arch is not None:
+                depsolver.setarch(arch)
+
             depsolver.groups = data['groups']
             (packages, unknown) = depsolver.complete(
                 [pkg_to_tuple(p) for p in data['packages']])

@@ -429,6 +429,25 @@ class YumCollection(Collection):
 
             yumconf.write(open(self.cfgfile, 'w'))
 
+    def get_arch(self):
+        """ If 'arch' for each source is the same, return that arch, otherwise
+        None.
+
+        This helps bcfg2-yum-helper when the client arch is
+        incompatible with the bcfg2 server's arch.
+
+        In case multiple arches are found, punt back to the default behavior.
+        """
+        arches = set()
+        for source in self:
+            for url_map in source.url_map:
+                if url_map['arch'] in self.metadata.groups:
+                    arches.add(url_map['arch'])
+        if len(arches) == 1:
+            return arches.pop()
+        else:
+            return None
+
     def get_config(self, raw=False):  # pylint: disable=W0221
         """ Get the yum configuration for this collection.
 
@@ -886,10 +905,12 @@ class YumCollection(Collection):
 
         if packagelist:
             try:
-                result = self.call_helper(
-                    "complete",
-                    dict(packages=list(packagelist),
-                         groups=list(self.get_relevant_groups())))
+                helper_dict = dict(packages=list(packagelist),
+                                   groups=list(self.get_relevant_groups()))
+                arch = self.get_arch()
+                if arch is not None:
+                    helper_dict['arch'] = arch
+                result = self.call_helper("complete", helper_dict)
             except ValueError:
                 # error reported by call_helper()
                 return set(), packagelist
