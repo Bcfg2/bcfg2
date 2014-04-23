@@ -30,7 +30,7 @@
 
 Name:             bcfg2
 Version:          1.3.4
-Release:          1%{?_pre_rc}%{?dist}
+Release:          2%{?_pre_rc}%{?dist}
 Summary:          A configuration management system
 
 %if 0%{?suse_version}
@@ -768,6 +768,9 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 
 
 %changelog
+* Wed Apr 23 2014 Jonathan S. Billings <jsbillin@umich.edu> - 1.3.4-2
+- Fixed RPM scriptlet logic for el6 vs. Fedora init commands
+
 * Sun Apr  6 2014 John Morris <john@zultron.com> - 1.3.4-1
 - New upstream release
 
