@@ -560,7 +560,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
       %fillup_and_insserv -f bcfg2
   %else
       /sbin/chkconfig --add bcfg2
-  %endif %endif
+  %endif
   fi
 %endif
 
@@ -574,7 +574,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
       %fillup_and_insserv -f bcfg2-server
   %else
       /sbin/chkconfig --add bcfg2-server
-  %endif %endif
+  %endif
   fi
 %endif
 
@@ -589,7 +589,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
   %else
       /sbin/service bcfg2 stop &>/dev/null || :
       /sbin/chkconfig --del bcfg2
-  %endif %endif
+  %endif
   fi
 %endif
 
@@ -605,7 +605,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
   %else
       /sbin/service bcfg2-server stop &>/dev/null || :
       /sbin/chkconfig --del bcfg2-server
-  %endif %endif
+  %endif
   fi
 %endif
 
@@ -622,7 +622,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
       %insserv_cleanup
   %else
       /sbin/service bcfg2 condrestart &>/dev/null || :
-  %endif %endif
+  %endif
   fi
 %endif
 
