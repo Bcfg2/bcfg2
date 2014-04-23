@@ -30,7 +30,7 @@
 
 Name:             bcfg2
 Version:          1.3.4
-Release:          1%{?_pre_rc}%{?dist}
+Release:          2%{?_pre_rc}%{?dist}
 Summary:          A configuration management system
 
 %if 0%{?suse_version}
@@ -558,11 +558,9 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
       # Initial installation
   %if 0%{?suse_version}
       %fillup_and_insserv -f bcfg2
-  %else %if 0%{?fedora} >= 16
-      /bin/systemctl daemon-reload >/dev/null 2>&1 || :
   %else
       /sbin/chkconfig --add bcfg2
-  %endif %endif
+  %endif
   fi
 %endif
 
@@ -574,11 +572,9 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
       # Initial installation
   %if 0%{?suse_version}
       %fillup_and_insserv -f bcfg2-server
-  %else %if 0%{?fedora} >= 16
-      /bin/systemctl daemon-reload >/dev/null 2>&1 || :
   %else
       /sbin/chkconfig --add bcfg2-server
-  %endif %endif
+  %endif
   fi
 %endif
 
@@ -590,13 +586,10 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
       # Package removal, not upgrade
   %if 0%{?suse_version}
       %stop_on_removal bcfg2
-  %else %if 0%{?fedora} >= 16
-      /bin/systemctl --no-reload disable bcfg2.service > /dev/null 2>&1 || :
-      /bin/systemctl stop bcfg2.service > /dev/null 2>&1 || :
   %else
       /sbin/service bcfg2 stop &>/dev/null || :
       /sbin/chkconfig --del bcfg2
-  %endif %endif
+  %endif
   fi
 %endif
 
@@ -609,13 +602,10 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
   %if 0%{?suse_version}
       %stop_on_removal bcfg2-server
       %stop_on_removal bcfg2-report-collector
-  %else %if 0%{?fedora} >= 16
-      /bin/systemctl --no-reload disable bcfg2-server.service > /dev/null 2>&1 || :
-      /bin/systemctl stop bcfg2-server.service > /dev/null 2>&1 || :
   %else
       /sbin/service bcfg2-server stop &>/dev/null || :
       /sbin/chkconfig --del bcfg2-server
-  %endif %endif
+  %endif
   fi
 %endif
 
@@ -630,11 +620,9 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
       # Package upgrade, not uninstall
   %if 0%{?suse_version}
       %insserv_cleanup
-  %else %if 0%{?fedora} >= 16
-      /bin/systemctl try-restart bcfg2.service >/dev/null 2>&1 || :
   %else
       /sbin/service bcfg2 condrestart &>/dev/null || :
-  %endif %endif
+  %endif
   fi
 %endif
 
@@ -642,16 +630,9 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %if 0%{?fedora} >= 18
   %systemd_postun bcfg2-server.service
 %else
-  %if 0%{?fedora} >= 16
-  /bin/systemctl daemon-reload >/dev/null 2>&1 || :
-  %endif
   if [ $1 -ge 1 ] ; then
       # Package upgrade, not uninstall
-  %if 0%{?fedora} >= 16
-      /bin/systemctl try-restart bcfg2-server.service >/dev/null 2>&1 || :
-  %else
       /sbin/service bcfg2-server condrestart &>/dev/null || :
-  %endif
   fi
   %if 0%{?suse_version}
   if [ $1 -eq 0 ]; then
@@ -787,6 +768,9 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 
 
 %changelog
+* Wed Apr 23 2014 Jonathan S. Billings <jsbillin@umich.edu> - 1.3.4-2
+- Fixed RPM scriptlet logic for el6 vs. Fedora init commands
+
 * Sun Apr  6 2014 John Morris <john@zultron.com> - 1.3.4-1
 - New upstream release
 
