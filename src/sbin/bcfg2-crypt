@@ -200,7 +200,7 @@ class CfgDecryptor(Decryptor):
 
 class PropertiesCryptoMixin(object):
     """ Mixin to provide some common methods for Properties crypto """
-    default_xpath = '//*'
+    default_xpath = '//*[@encrypted]'
 
     def _get_elements(self, xdata):
         """ Get the list of elements to encrypt or decrypt """
@@ -288,7 +288,6 @@ class PropertiesEncryptor(Encryptor, PropertiesCryptoMixin):
 
 class PropertiesDecryptor(Decryptor, PropertiesCryptoMixin):
     """ decryptor class for Properties files """
-    default_xpath = '//*[@encrypted]'
 
     def decrypt(self):
         decrypted_any = False
