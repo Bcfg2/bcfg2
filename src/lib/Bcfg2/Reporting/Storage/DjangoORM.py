@@ -4,6 +4,7 @@ The base for the original DjangoORM (DBStats)
 
 from lxml import etree
 from datetime import datetime
+import traceback
 from time import strptime
 import Bcfg2.Options
 import Bcfg2.DBSettings
