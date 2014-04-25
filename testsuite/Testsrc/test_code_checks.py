@@ -327,7 +327,7 @@ class TestPylint(CodeTestCase):
 
 class TestPEP8(CodeTestCase):
     __test__ = True
-    command = ["pep8", "--ignore=E125,E501"]
+    command = ["pep8", "--ignore=E125,E129,E501"]
 
     def _test_errors(self, files, extra_args=None):
         pass

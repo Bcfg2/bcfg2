@@ -79,7 +79,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
         defined, and the uid/gid is in that whitelist; or b) no
         whitelist is defined, and the uid/gid is not in the
         blacklist. """
-        if self._whitelist[tag] is None:
+        if not self._whitelist[tag]:
             return eid not in self._blacklist[tag]
         else:
             return eid in self._whitelist[tag]

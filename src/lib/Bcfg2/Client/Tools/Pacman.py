@@ -19,7 +19,6 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
         for pkg in self.cmd.run("/usr/bin/pacman -Q").stdout.splitlines():
             pkgname = pkg.split(' ')[0].strip()
             version = pkg.split(' ')[1].strip()
-            #self.logger.info(" pkgname: %s, version: %s" % (pkgname, version))
             self.installed[pkgname] = version
 
     def VerifyPackage(self, entry, _):
@@ -28,7 +27,7 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
         self.logger.info("VerifyPackage: %s : %s" % (entry.get('name'),
                                                      entry.get('version')))
 
-        if not 'version' in entry.attrib:
+        if 'version' not in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
                              entry.attrib['name'])
             return False
@@ -38,8 +37,8 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
                 return True
             elif self.installed[entry.attrib['name']] == \
                     entry.attrib['version']:
-                #FIXME: need to figure out if pacman
-                #       allows you to verify packages
+                # FIXME: need to figure out if pacman
+                #        allows you to verify packages
                 return True
             else:
                 entry.set('current_version', self.installed[entry.get('name')])

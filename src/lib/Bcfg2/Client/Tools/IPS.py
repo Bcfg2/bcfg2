@@ -37,7 +37,7 @@ class IPS(Bcfg2.Client.Tools.PkgTool):
     def VerifyPackage(self, entry, _):
         """Verify package for entry."""
         pname = entry.get('name')
-        if not 'version' in entry.attrib:
+        if 'version' not in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" % (pname))
             return False
         if pname not in self.installed:

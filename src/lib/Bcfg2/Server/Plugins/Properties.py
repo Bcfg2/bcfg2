@@ -163,7 +163,6 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
         Bcfg2.Server.Plugin.StructFile.__init__(self, name,
                                                 should_monitor=should_monitor)
         PropertyFile.__init__(self, name)
-    __init__.__doc__ = Bcfg2.Server.Plugin.StructFile.__init__.__doc__
 
     def _write(self):
         open(self.name, "wb").write(
@@ -171,7 +170,6 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
                                 xml_declaration=False,
                                 pretty_print=True).decode('UTF-8'))
         return True
-    _write.__doc__ = PropertyFile._write.__doc__
 
     def validate_data(self):
         """ ensure that the data in this object validates against the
@@ -194,7 +192,6 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
                                        self.name)
         else:
             return True
-    validate_data.__doc__ = PropertyFile.validate_data.__doc__
 
     def get_additional_data(self, metadata):
         if Bcfg2.Options.setup.automatch:

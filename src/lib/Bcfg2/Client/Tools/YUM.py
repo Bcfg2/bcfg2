@@ -894,7 +894,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
 
         cleanup()
 
-    def Install(self, packages):  # pylint: disable=R0912,R0914
+    def Install(self, packages):  # pylint: disable=R0912,R0914,R0915
         """ Try and fix everything that Yum.VerifyPackages() found
         wrong for each Package Entry.  This can result in individual
         RPMs being installed (for the first time), deleted, downgraded
@@ -956,14 +956,16 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                         continue
                     status = self.instance_status[inst]
                     if (not status.get('installed', False) and
-                            Bcfg2.Options.setup.yum_install_missing):
+                        Bcfg2.Options.setup.yum_install_missing):
                         queue_pkg(pkg, inst, install_pkgs)
-                    elif status.get('version_fail', False) and self.do_upgrade:
+                    elif (status.get('version_fail', False) and
+                          Bcfg2.Options.setup.yum_fix_version):
                         if pkg.get("package_fail_action") == "downgrade":
                             queue_pkg(pkg, inst, downgrade_pkgs)
                         else:
                             queue_pkg(pkg, inst, upgrade_pkgs)
-                    elif status.get('verify_fail', False) and self.do_reinst:
+                    elif (status.get('verify_fail', False) and
+                          Bcfg2.Options.setup.yum_reinstall_broken):
                         queue_pkg(pkg, inst, reinstall_pkgs)
                     else:
                         # Either there was no Install/Version/Verify

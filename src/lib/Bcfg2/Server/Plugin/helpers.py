@@ -757,9 +757,6 @@ class StructFile(XMLFileBacked):
                                                                     err))
 
         if HAS_CRYPTO and self.encryption:
-            lax_decrypt = self.xdata.get(
-                "lax_decryption",
-                str(Bcfg2.Options.setup.lax_decryption)).lower() == "true"
             for el in self.xdata.xpath("//*[@encrypted]"):
                 try:
                     el.text = self._decrypt(el).encode('ascii',
@@ -768,10 +765,14 @@ class StructFile(XMLFileBacked):
                     self.logger.info("%s: Decrypted %s to gibberish, skipping"
                                      % (self.name, el.tag))
                 except Bcfg2.Server.Encryption.EVPError:
+                    lax_decrypt = self.xdata.get(
+                        "lax_decryption",
+                        str(Bcfg2.Options.setup.lax_decryption)).lower() == \
+                        "true"
                     msg = "Failed to decrypt %s element in %s" % (el.tag,
                                                                   self.name)
                     if lax_decrypt:
-                        self.logger.warning(msg)
+                        self.logger.debug(msg)
                     else:
                         raise PluginExecutionError(msg)
     Index.__doc__ = XMLFileBacked.Index.__doc__
@@ -783,16 +784,11 @@ class StructFile(XMLFileBacked):
         passes = Bcfg2.Options.setup.passphrases
         try:
             passphrase = passes[element.get("encrypted")]
-            try:
-                return Bcfg2.Server.Encryption.ssl_decrypt(element.text,
-                                                           passphrase)
-            except Bcfg2.Server.Encryption.EVPError:
-                # error is raised below
-                pass
+            return Bcfg2.Server.Encryption.ssl_decrypt(element.text,
+                                                       passphrase)
         except KeyError:
-            # bruteforce_decrypt raises an EVPError with a sensible
-            # error message, so we just let it propagate up the stack
-            return Bcfg2.Server.Encryption.bruteforce_decrypt(element.text)
+            raise Bcfg2.Server.Encryption.EVPError("No passphrase named '%s'" %
+                                                   element.get("encrypted"))
         raise Bcfg2.Server.Encryption.EVPError("Failed to decrypt")
 
     def _include_element(self, item, metadata, *args):

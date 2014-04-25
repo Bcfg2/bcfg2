@@ -1477,7 +1477,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             # want detailed numbers of added/removed clients for
             # logging
             for client in added.union(removed):
-                self.expire_cache(client)
+                self.cache.expire(client)
 
     def start_client_run(self, metadata):
         """ Hook to reread client list if the database is in use """

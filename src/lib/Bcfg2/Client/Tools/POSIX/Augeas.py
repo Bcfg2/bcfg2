@@ -195,7 +195,7 @@ class POSIXAugeas(POSIXTool):
         self._augeas = dict()
         # file tool for setting initial values of files that don't
         # exist
-        self.filetool = POSIXFile(logger, setup, config)
+        self.filetool = POSIXFile(config)
 
     def get_augeas(self, entry):
         """ Get an augeas object for the given entry. """

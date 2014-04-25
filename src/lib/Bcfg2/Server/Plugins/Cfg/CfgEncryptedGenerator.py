@@ -1,6 +1,7 @@
 """ CfgEncryptedGenerator lets you encrypt your plaintext
 :ref:`server-plugins-generators-cfg` files on the server. """
 
+import Bcfg2.Options
 from Bcfg2.Server.Plugin import PluginExecutionError
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 try:
@@ -25,7 +26,6 @@ class CfgEncryptedGenerator(CfgGenerator):
         CfgGenerator.__init__(self, fname, spec)
         if not HAS_CRYPTO:
             raise PluginExecutionError("M2Crypto is not available")
-    __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def handle_event(self, event):
         CfgGenerator.handle_event(self, event)
@@ -35,11 +35,14 @@ class CfgEncryptedGenerator(CfgGenerator):
         try:
             self.data = bruteforce_decrypt(self.data)
         except EVPError:
-            raise PluginExecutionError("Failed to decrypt %s" % self.name)
-    handle_event.__doc__ = CfgGenerator.handle_event.__doc__
+            msg = "Cfg: Failed to decrypt %s" % self.name
+            print "lax decrypt: %s" % Bcfg2.Options.setup.lax_decryption
+            if Bcfg2.Options.setup.lax_decryption:
+                self.logger.debug(msg)
+            else:
+                raise PluginExecutionError(msg)
 
     def get_data(self, entry, metadata):
         if self.data is None:
             raise PluginExecutionError("Failed to decrypt %s" % self.name)
         return CfgGenerator.get_data(self, entry, metadata)
-    get_data.__doc__ = CfgGenerator.get_data.__doc__

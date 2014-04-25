@@ -20,8 +20,8 @@ class Svn(Bcfg2.Server.Plugin.Version):
         Bcfg2.Options.Option(
             cf=("svn", "conflict_resolution"), dest="svn_conflict_resolution",
             type=lambda v: v.replace("-", "_"),
-            choices=dir(pysvn.wc_conflict_choice),
-            default=pysvn.wc_conflict_choice.postpone,
+            choices=dir(pysvn.wc_conflict_choice),  # pylint: disable=E1101
+            default=pysvn.wc_conflict_choice.postpone,  # pylint: disable=E1101
             help="SVN conflict resolution method"),
         Bcfg2.Options.Option(
             cf=("svn", "user"), dest="svn_user", help="SVN username"),

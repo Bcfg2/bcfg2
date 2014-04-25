@@ -25,7 +25,7 @@ class SMF(Bcfg2.Client.Tools.SvcTool):
 
     def GetFMRI(self, entry):
         """Perform FMRI resolution for service."""
-        if not 'FMRI' in entry.attrib:
+        if 'FMRI' not in entry.attrib:
             rv = self.cmd.run(["/usr/bin/svcs", "-H", "-o", "FMRI",
                                entry.get('name')])
             if rv.success:

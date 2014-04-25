@@ -63,7 +63,7 @@ import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
 from lockfile import FileLock
 from Bcfg2.Utils import Executor
-from distutils.spawn import find_executable
+from distutils.spawn import find_executable  # pylint: disable=E0611
 # pylint: disable=W0622
 from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
     ConfigParser, any
@@ -347,8 +347,8 @@ class YumCollection(Collection):
         config file to see if it has been explicitly specified; next
         we see if it's in $PATH; finally we default to /usr/sbin, the
         default location. """
+        # pylint: disable=W0212
         if not self._helper:
-            # pylint: disable=W0212
             self.__class__._helper = Bcfg2.Options.setup.yum_helper
             if not self.__class__._helper:
                 # first see if bcfg2-yum-helper is in PATH
@@ -415,6 +415,25 @@ class YumCollection(Collection):
                 yumconf.set("main", opt, val)
 
             yumconf.write(open(self.cfgfile, 'w'))
+
+    def get_arch(self):
+        """ If 'arch' for each source is the same, return that arch, otherwise
+        None.
+
+        This helps bcfg2-yum-helper when the client arch is
+        incompatible with the bcfg2 server's arch.
+
+        In case multiple arches are found, punt back to the default behavior.
+        """
+        arches = set()
+        for source in self:
+            for url_map in source.url_map:
+                if url_map['arch'] in self.metadata.groups:
+                    arches.add(url_map['arch'])
+        if len(arches) == 1:
+            return arches.pop()
+        else:
+            return None
 
     def get_config(self, raw=False):  # pylint: disable=W0221
         """ Get the yum configuration for this collection.
@@ -871,10 +890,12 @@ class YumCollection(Collection):
 
         if packagelist:
             try:
-                result = self.call_helper(
-                    "complete",
-                    dict(packages=list(packagelist),
-                         groups=list(self.get_relevant_groups())))
+                helper_dict = dict(packages=list(packagelist),
+                                   groups=list(self.get_relevant_groups()))
+                arch = self.get_arch()
+                if arch is not None:
+                    helper_dict['arch'] = arch
+                result = self.call_helper("complete", helper_dict)
             except ValueError:
                 # error reported by call_helper()
                 return set(), packagelist

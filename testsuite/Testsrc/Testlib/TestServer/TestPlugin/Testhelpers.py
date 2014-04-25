@@ -773,19 +773,15 @@ class TestStructFile(TestXMLFileBacked):
 
     @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
     @patchIf(HAS_CRYPTO, "Bcfg2.Server.Encryption.ssl_decrypt")
-    @patchIf(HAS_CRYPTO, "Bcfg2.Server.Encryption.bruteforce_decrypt")
-    def test_decrypt(self, mock_bruteforce, mock_ssl):
+    def test_decrypt(self, mock_ssl):
         sf = self.get_obj()
 
         def reset():
-            mock_bruteforce.reset_mock()
             mock_ssl.reset_mock()
-
 
         # test element without text contents
         Bcfg2.Options.setup.passphrases = dict()
         self.assertIsNone(sf._decrypt(lxml.etree.Element("Test")))
-        self.assertFalse(mock_bruteforce.called)
         self.assertFalse(mock_ssl.called)
 
         # test element with a passphrase in the config file
@@ -796,29 +792,17 @@ class TestStructFile(TestXMLFileBacked):
         mock_ssl.return_value = "decrypted with ssl"
         self.assertEqual(sf._decrypt(el), mock_ssl.return_value)
         mock_ssl.assert_called_with(el.text, "foopass")
-        self.assertFalse(mock_bruteforce.called)
+
+        # test element without valid passphrase
+        reset()
+        el.set("encrypted", "true")
+        self.assertRaises(EVPError, sf._decrypt, el)
+        self.assertFalse(mock_ssl.called)
 
         # test failure to decrypt element with a passphrase in the config
         reset()
         mock_ssl.side_effect = EVPError
         self.assertRaises(EVPError, sf._decrypt, el)
-        mock_ssl.assert_called_with(el.text, "foopass")
-        self.assertFalse(mock_bruteforce.called)
-
-        # test element without valid passphrase
-        reset()
-        el.set("encrypted", "true")
-        mock_bruteforce.return_value = "decrypted with bruteforce"
-        self.assertEqual(sf._decrypt(el), mock_bruteforce.return_value)
-        mock_bruteforce.assert_called_with(el.text)
-        self.assertFalse(mock_ssl.called)
-
-        # test failure to decrypt element without valid passphrase
-        reset()
-        mock_bruteforce.side_effect = EVPError
-        self.assertRaises(EVPError, sf._decrypt, el)
-        mock_bruteforce.assert_called_with(el.text)
-        self.assertFalse(mock_ssl.called)
 
     def test_include_element(self):
         sf = self.get_obj()

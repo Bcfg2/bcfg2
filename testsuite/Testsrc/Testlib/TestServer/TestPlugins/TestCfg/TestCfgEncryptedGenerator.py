@@ -22,14 +22,11 @@ from TestServer.TestPlugins.TestCfg.Test_init import TestCfgGenerator
 class TestCfgEncryptedGenerator(TestCfgGenerator):
     test_obj = CfgEncryptedGenerator
 
-    @skipUnless(HAS_CRYPTO, "Encryption libraries not found, skipping")
-    def setUp(self):
-        TestCfgGenerator.setUp(self)
-
     @patchIf(HAS_CRYPTO,
              "Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.bruteforce_decrypt")
     def test_handle_event(self, mock_decrypt):
         @patch("Bcfg2.Server.Plugins.Cfg.CfgGenerator.handle_event")
+        @patch("Bcfg2.Options.setup.lax_decryption", False)
         def inner(mock_handle_event):
             def reset():
                 mock_decrypt.reset_mock()

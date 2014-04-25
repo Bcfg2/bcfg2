@@ -212,7 +212,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                             "attribute: \n%s" % self.RenderXML(path))
                 # ensure that abstract Package tags have either name
                 # or group specified
-                for package in xdata.xpath("//Package"):
+                for package in bundle.xdata.xpath("//Package"):
                     if ('name' not in package.attrib and
                         'group' not in package.attrib):
                         self.LintError(

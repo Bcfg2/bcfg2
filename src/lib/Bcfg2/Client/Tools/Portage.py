@@ -50,7 +50,7 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
 
     def VerifyPackage(self, entry, modlist):
         """Verify package for entry."""
-        if not 'version' in entry.attrib:
+        if 'version' not in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
                              (entry.get('name')))
             return False
@@ -68,11 +68,11 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
             if ('verify' not in entry.attrib or
                     entry.get('verify').lower() == 'true'):
 
-            # Check the package if:
-            # - Not running in quick mode
-            # - No verify option is specified in the literal configuration
-            #    OR
-            # - Verify option is specified and is true
+                # Check the package if:
+                # - Not running in quick mode
+                # - No verify option is specified in the literal configuration
+                #    OR
+                # - Verify option is specified and is true
 
                 self.logger.debug('Running equery check on %s' %
                                   entry.get('name'))

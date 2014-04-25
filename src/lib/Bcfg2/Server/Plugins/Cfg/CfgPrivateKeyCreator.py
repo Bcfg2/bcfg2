@@ -34,7 +34,6 @@ class CfgPrivateKeyCreator(XMLCfgCreator):
         pubkey_name = os.path.join(pubkey_path, os.path.basename(pubkey_path))
         self.pubkey_creator = CfgPublicKeyCreator(pubkey_name)
         self.cmd = Executor()
-    __init__.__doc__ = XMLCfgCreator.__init__.__doc__
 
     def _gen_keypair(self, metadata, spec=None):
         """ Generate a keypair according to the given client medata

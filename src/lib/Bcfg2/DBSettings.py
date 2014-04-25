@@ -169,10 +169,10 @@ class PerApplicationRouter(object):
     """ Django database router for redirecting different applications to their
     own database """
 
-    def _db_per_app(self, model, **hints):
+    def _db_per_app(self, model, **_):
         """ If a database with the same name as the application exists, use it.
         Otherwise use the default """
-        return get_db_label(model._meta.app_label)
+        return get_db_label(model._meta.app_label)  # pylint: disable=W0212
 
     def db_for_read(self, model, **hints):
         """ Called when Django wants to find out what database to read from """
@@ -182,12 +182,14 @@ class PerApplicationRouter(object):
         """ Called when Django wants to find out what database to write to """
         return self._db_per_app(model, **hints)
 
-    def allow_relation(self, obj1, obj2, **hints):
+    def allow_relation(self, obj1, obj2, **_):
         """ Called when Django wants to determine what relations to allow. Only
         allow relations within an app """
+        # pylint: disable=W0212
         return obj1._meta.app_label == obj2._meta.app_label
+        # pylint: enable=W0212
 
-    def allow_syncdb(self, db, model):
+    def allow_syncdb(self, *_):
         """ Called when Django wants to determine which models to sync to a
         given database.  Take the cowards way out and sync all models to all
         databases to allow for easy migrations. """

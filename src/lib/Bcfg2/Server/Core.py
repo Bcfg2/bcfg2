@@ -26,7 +26,6 @@ from Bcfg2.Server.Plugin import track_statistics
 
 try:
     from django.core.exceptions import ImproperlyConfigured
-    from django.core import management
     import django.conf
     HAS_DJANGO = True
 except ImportError:
@@ -145,6 +144,10 @@ class Core(object):
             cf=('caching', 'client_metadata'), dest='client_metadata_cache',
             default='off',
             choices=['off', 'on', 'initial', 'cautious', 'aggressive'])]
+
+    #: The name of this server core. This can be overridden by core
+    #: implementations to provide a more specific name.
+    name = "Core"
 
     def __init__(self):  # pylint: disable=R0912,R0915
         """
@@ -356,7 +359,7 @@ class Core(object):
         This does not start plugin threads; that is done later, in
         :func:`Bcfg2.Server.Core.BaseCore.run` """
         for plugin in Bcfg2.Options.setup.plugins:
-            if not plugin in self.plugins:
+            if plugin not in self.plugins:
                 self.init_plugin(plugin)
 
         # Remove blacklisted plugins

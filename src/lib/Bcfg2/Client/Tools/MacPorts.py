@@ -31,16 +31,16 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
 
     def VerifyPackage(self, entry, _):
         """Verify Package status for entry."""
-        if not 'version' in entry.attrib:
+        if 'version' not in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
                              entry.attrib['name'])
             return False
 
         if entry.attrib['name'] in self.installed:
             if (self.installed[entry.attrib['name']] == entry.attrib['version']
-                    or entry.attrib['version'] == 'any'):
-                #FIXME: We should be able to check this once
-                #       http://trac.macports.org/ticket/15709 is implemented
+                or entry.attrib['version'] == 'any'):
+                # FIXME: We should be able to check this once
+                #        http://trac.macports.org/ticket/15709 is implemented
                 return True
             else:
                 self.logger.info("  %s: Wrong version installed.  "
