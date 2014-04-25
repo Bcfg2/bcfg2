@@ -36,7 +36,7 @@ class CfgEncryptedGenerator(CfgGenerator):
             self.data = bruteforce_decrypt(self.data)
         except EVPError:
             msg = "Cfg: Failed to decrypt %s" % self.name
-            print "lax decrypt: %s" % Bcfg2.Options.setup.lax_decryption
+            print("lax decrypt: %s" % Bcfg2.Options.setup.lax_decryption)
             if Bcfg2.Options.setup.lax_decryption:
                 self.logger.debug(msg)
             else:
