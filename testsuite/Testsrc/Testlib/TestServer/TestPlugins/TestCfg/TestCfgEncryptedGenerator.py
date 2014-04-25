@@ -31,7 +31,9 @@ if can_skip or HAS_CRYPTO:
                  "Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.get_algorithm")
         @patchIf(HAS_CRYPTO,
                  "Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.bruteforce_decrypt")
-        def test_handle_event(self, mock_decrypt, mock_get_algorithm):
+        @patch("Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.SETUP")
+        def test_handle_event(self, mock_SETUP, mock_decrypt,
+                              mock_get_algorithm):
             @patch("Bcfg2.Server.Plugins.Cfg.CfgGenerator.handle_event")
             def inner(mock_handle_event):
                 def reset():
@@ -50,7 +52,7 @@ if can_skip or HAS_CRYPTO:
                 mock_handle_event.assert_called_with(ceg, event)
                 mock_decrypt.assert_called_with(
                     "encrypted",
-                    setup=Bcfg2.Server.Plugins.Cfg.SETUP,
+                    setup=mock_SETUP,
                     algorithm=mock_get_algorithm.return_value)
                 self.assertEqual(ceg.data, "plaintext")
 
