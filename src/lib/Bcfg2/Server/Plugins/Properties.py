@@ -231,19 +231,12 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
         passes = Bcfg2.Encryption.get_passphrases(SETUP)
         try:
             passphrase = passes[element.get("encrypted")]
-            try:
-                return Bcfg2.Encryption.ssl_decrypt(
-                    element.text, passphrase,
-                    algorithm=Bcfg2.Encryption.get_algorithm(SETUP))
-            except Bcfg2.Encryption.EVPError:
-                # error is raised below
-                pass
-        except KeyError:
-            # bruteforce_decrypt raises an EVPError with a sensible
-            # error message, so we just let it propagate up the stack
-            return Bcfg2.Encryption.bruteforce_decrypt(
-                element.text, passphrases=passes.values(),
+            return Bcfg2.Encryption.ssl_decrypt(
+                element.text, passphrase,
                 algorithm=Bcfg2.Encryption.get_algorithm(SETUP))
+        except KeyError:
+            raise Bcfg2.Encryption.EVPError("No passphrase named '%s'" %
+                                            element.get("encrypted"))
         raise Bcfg2.Encryption.EVPError("Failed to decrypt")
 
     def get_additional_data(self, metadata):
