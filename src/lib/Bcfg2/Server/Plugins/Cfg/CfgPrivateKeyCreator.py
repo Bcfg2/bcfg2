@@ -31,7 +31,6 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         pubkey_path = os.path.dirname(self.name) + ".pub"
         pubkey_name = os.path.join(pubkey_path, os.path.basename(pubkey_path))
         self.pubkey_creator = CfgPublicKeyCreator(pubkey_name)
-    __init__.__doc__ = CfgCreator.__init__.__doc__
 
     @property
     def category(self):
@@ -55,7 +54,6 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
     def handle_event(self, event):
         CfgCreator.handle_event(self, event)
         StructFile.HandleEvent(self, event)
-    handle_event.__doc__ = CfgCreator.handle_event.__doc__
 
     def _gen_keypair(self, metadata, spec=None):
         """ Generate a keypair according to the given client medata
@@ -201,10 +199,6 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
     def Index(self):
         StructFile.Index(self)
         if HAS_CRYPTO:
-            strict = self.xdata.get(
-                "decrypt",
-                SETUP.cfp.get(Bcfg2.Encryption.CFG_SECTION, "decrypt",
-                              default="strict")) == "strict"
             for el in self.xdata.xpath("//*[@encrypted]"):
                 try:
                     el.text = self._decrypt(el).encode('ascii',
@@ -213,13 +207,17 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
                     self.logger.info("Cfg: Decrypted %s to gibberish, skipping"
                                      % el.tag)
                 except Bcfg2.Encryption.EVPError:
+                    default_strict = SETUP.cfp.get(
+                        Bcfg2.Encryption.CFG_SECTION, "decrypt",
+                        default="strict")
+                    strict = self.xdata.get("decrypt",
+                                            default_strict) == "strict"
                     msg = "Cfg: Failed to decrypt %s element in %s" % \
                         (el.tag, self.name)
                     if strict:
                         raise PluginExecutionError(msg)
                     else:
-                        self.logger.info(msg)
-    Index.__doc__ = StructFile.Index.__doc__
+                        self.logger.debug(msg)
 
     def _decrypt(self, element):
         """ Decrypt a single encrypted element """

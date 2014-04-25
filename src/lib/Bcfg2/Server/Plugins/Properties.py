@@ -172,7 +172,6 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
         Bcfg2.Server.Plugin.StructFile.__init__(self, name, fam=fam,
                                                 should_monitor=should_monitor)
         PropertyFile.__init__(self, name)
-    __init__.__doc__ = Bcfg2.Server.Plugin.StructFile.__init__.__doc__
 
     def _write(self):
         open(self.name, "wb").write(
@@ -180,7 +179,6 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
                                 xml_declaration=False,
                                 pretty_print=True).decode('UTF-8'))
         return True
-    _write.__doc__ = PropertyFile._write.__doc__
 
     def validate_data(self):
         """ ensure that the data in this object validates against the
@@ -203,30 +201,28 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
                                        self.name)
         else:
             return True
-    validate_data.__doc__ = PropertyFile.validate_data.__doc__
 
     def Index(self):
         Bcfg2.Server.Plugin.StructFile.Index(self)
         if HAS_CRYPTO:
-            strict = self.xdata.get(
-                "decrypt",
-                SETUP.cfp.get(Bcfg2.Encryption.CFG_SECTION, "decrypt",
-                              default="strict")) == "strict"
             for el in self.xdata.xpath("//*[@encrypted]"):
                 try:
                     el.text = self._decrypt(el).encode('ascii',
                                                        'xmlcharrefreplace')
                 except UnicodeDecodeError:
-                    LOGGER.info("Properties: Decrypted %s to gibberish, "
-                                "skipping" % el.tag)
+                    self.logger.info("Properties: Decrypted %s to gibberish, "
+                                     "skipping" % el.tag)
                 except Bcfg2.Encryption.EVPError:
+                    strict = self.xdata.get(
+                        "decrypt",
+                        SETUP.cfp.get(Bcfg2.Encryption.CFG_SECTION, "decrypt",
+                                      default="strict")) == "strict"
                     msg = "Properties: Failed to decrypt %s element in %s" % \
-                        (el.tag, self.name)
+                          (el.tag, self.name)
                     if strict:
                         raise PluginExecutionError(msg)
                     else:
-                        LOGGER.info(msg)
-    Index.__doc__ = Bcfg2.Server.Plugin.StructFile.Index.__doc__
+                        self.logger.debug(msg)
 
     def _decrypt(self, element):
         """ Decrypt a single encrypted properties file element """

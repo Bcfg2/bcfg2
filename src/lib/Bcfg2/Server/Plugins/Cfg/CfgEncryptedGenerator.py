@@ -1,12 +1,11 @@
 """ CfgEncryptedGenerator lets you encrypt your plaintext
 :ref:`server-plugins-generators-cfg` files on the server. """
 
-import Bcfg2.Server.Plugins.Cfg
 from Bcfg2.Server.Plugin import PluginExecutionError
-from Bcfg2.Server.Plugins.Cfg import CfgGenerator
+from Bcfg2.Server.Plugins.Cfg import CfgGenerator, SETUP
 try:
     from Bcfg2.Encryption import bruteforce_decrypt, EVPError, \
-        get_algorithm
+        get_algorithm, CFG_SECTION
     HAS_CRYPTO = True
 except ImportError:
     HAS_CRYPTO = False
@@ -27,7 +26,6 @@ class CfgEncryptedGenerator(CfgGenerator):
         CfgGenerator.__init__(self, fname, spec, encoding)
         if not HAS_CRYPTO:
             raise PluginExecutionError("M2Crypto is not available")
-    __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def handle_event(self, event):
         CfgGenerator.handle_event(self, event)
@@ -36,15 +34,18 @@ class CfgEncryptedGenerator(CfgGenerator):
         # todo: let the user specify a passphrase by name
         try:
             self.data = bruteforce_decrypt(
-                self.data,
-                setup=Bcfg2.Server.Plugins.Cfg.SETUP,
-                algorithm=get_algorithm(Bcfg2.Server.Plugins.Cfg.SETUP))
+                self.data, setup=SETUP,
+                algorithm=get_algorithm(SETUP))
         except EVPError:
-            raise PluginExecutionError("Failed to decrypt %s" % self.name)
-    handle_event.__doc__ = CfgGenerator.handle_event.__doc__
+            strict = SETUP.cfp.get(CFG_SECTION, "decrypt",
+                                   default="strict")
+            msg = "Cfg: Failed to decrypt %s" % self.name
+            if strict:
+                raise PluginExecutionError(msg)
+            else:
+                self.logger.debug(msg)
 
     def get_data(self, entry, metadata):
         if self.data is None:
             raise PluginExecutionError("Failed to decrypt %s" % self.name)
         return CfgGenerator.get_data(self, entry, metadata)
-    get_data.__doc__ = CfgGenerator.get_data.__doc__
