@@ -4,7 +4,6 @@
 
 import sys
 import time
-import inspect
 import logging
 import Bcfg2.Logger
 import Bcfg2.Options
@@ -136,8 +135,7 @@ def load_plugins(setup):
     serverplugins = dict()
     serverlessplugins = dict()
     for plugin_name, plugin in allplugins.items():
-        if [c for c in inspect.getmro(plugin)
-            if c == Bcfg2.Server.Lint.ServerPlugin]:
+        if issubclass(plugin, Bcfg2.Server.Lint.ServerPlugin):
             serverplugins[plugin_name] = plugin
         else:
             serverlessplugins[plugin_name] = plugin

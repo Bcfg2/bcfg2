@@ -294,7 +294,7 @@ class Client(object):
                                               self.setup['dryrun'])
 
         if not self.setup['omit_lock_check']:
-            #check lock here
+            # check lock here
             try:
                 lockfile = open(self.setup['lockfile'], 'w')
                 if locked(lockfile.fileno()):

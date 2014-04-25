@@ -387,7 +387,7 @@ class BaseCore(object):
             self.setup['plugins'].remove('')
 
         for plugin in self.setup['plugins']:
-            if not plugin in self.plugins:
+            if plugin not in self.plugins:
                 self.init_plugin(plugin)
 
         # Remove blacklisted plugins

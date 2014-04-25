@@ -14,16 +14,16 @@ class Viz(Bcfg2.Server.Admin.MetadataCore):
                  "     %-32s%s\n"
                  "     %-32s%s\n"
                  "     %-32s%s\n" %
-                ("-H, --includehosts",
-                 "include hosts in the viz output",
-                 "-b, --includebundles",
-                 "include bundles in the viz output",
-                 "-k, --includekey",
-                 "show a key for different digraph shapes",
-                 "-c, --only-client <clientname>",
-                 "show only the groups, bundles for the named client",
-                 "-o, --outfile <file>",
-                 "write viz output to an output file"))
+                 ("-H, --includehosts",
+                  "include hosts in the viz output",
+                  "-b, --includebundles",
+                  "include bundles in the viz output",
+                  "-k, --includekey",
+                  "show a key for different digraph shapes",
+                  "-c, --only-client <clientname>",
+                  "show only the groups, bundles for the named client",
+                  "-o, --outfile <file>",
+                  "write viz output to an output file"))
 
     colors = ['steelblue1', 'chartreuse', 'gold', 'magenta',
               'indianred1', 'limegreen', 'orange1', 'lightblue2',

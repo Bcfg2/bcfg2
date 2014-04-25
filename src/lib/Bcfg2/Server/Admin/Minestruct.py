@@ -11,8 +11,8 @@ class Minestruct(Bcfg2.Server.Admin.StructureMode):
     __usage__ = ("[options] <client>\n\n"
                  "     %-25s%s\n"
                  "     %-25s%s\n" %
-                ("-f <filename>", "build a particular file",
-                 "-g <groups>", "only build config for groups"))
+                 ("-f <filename>", "build a particular file",
+                  "-g <groups>", "only build config for groups"))
 
     def __call__(self, args):
         if len(args) == 0:

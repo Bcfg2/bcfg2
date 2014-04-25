@@ -67,6 +67,7 @@ class YumHelper(object):
         resolution. """
         self.yumbase.arch.setup_arch(arch=arch)
 
+
 class DepSolver(YumHelper):
     """ Yum dependency solver.  This is used for operations that only
     read from the yum cache, and thus operates in cacheonly mode. """

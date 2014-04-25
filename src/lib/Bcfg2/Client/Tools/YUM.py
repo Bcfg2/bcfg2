@@ -870,7 +870,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
 
         cleanup()
 
-    def Install(self, packages, states):  # pylint: disable=R0912,R0914
+    def Install(self, packages, states):  # pylint: disable=R0912,R0914,R0915
         """ Try and fix everything that Yum.VerifyPackages() found
         wrong for each Package Entry.  This can result in individual
         RPMs being installed (for the first time), deleted, downgraded

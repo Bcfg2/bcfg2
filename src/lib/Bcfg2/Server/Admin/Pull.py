@@ -18,10 +18,10 @@ class Pull(Bcfg2.Server.Admin.MetadataCore):
                  "     %-25s%s\n"
                  "     %-25s%s\n"
                  "     %-25s%s\n" %
-                ("-v", "be verbose",
-                 "-f", "force",
-                 "-I", "interactive",
-                 "-s", "stdin"))
+                 ("-v", "be verbose",
+                  "-f", "force",
+                  "-I", "interactive",
+                  "-s", "stdin"))
 
     def __init__(self, setup):
         Bcfg2.Server.Admin.MetadataCore.__init__(self, setup)
