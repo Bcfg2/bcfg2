@@ -6,19 +6,19 @@ the server core, then uses that to get probes, run them, and so on."""
 import sys
 import socket
 import Bcfg2.Options
-from Bcfg2.Client.Client import Client
-from Bcfg2.Server.Core import BaseCore
+from Bcfg2.Client import Client
+from Bcfg2.Server.Core import Core
 
 
-class LocalCore(BaseCore):
+class LocalCore(Core):
     """ Local server core similar to the one started by bcfg2-info """
 
-    def __init__(self, setup):
-        saved = (setup['syslog'], setup['logging'])
-        setup['syslog'] = False
-        setup['logging'] = None
-        Bcfg2.Server.Core.BaseCore.__init__(self, setup=setup)
-        setup['syslog'], setup['logging'] = saved
+    def __init__(self):
+        #saved = (setup['syslog'], setup['logging'])
+        #setup['syslog'] = False
+        #setup['logging'] = None
+        Bcfg2.Server.Core.BaseCore.__init__(self)
+        #setup['syslog'], setup['logging'] = saved
         self.load_plugins()
         self.block_for_fam_events(handle_events=True)
 
@@ -60,26 +60,22 @@ class LocalClient(Client):
     """ A version of the Client class that uses LocalProxy instead of
     an XML-RPC proxy to make its calls """
 
-    def __init__(self, setup, proxy):
-        Client.__init__(self, setup)
+    def __init__(self, proxy):
+        Client.__init__(self)
         self._proxy = proxy
 
 
 def main():
-    optinfo = Bcfg2.Options.CLIENT_COMMON_OPTIONS
-    optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
-    if 'bundle_quick' in optinfo:
-        # CLIENT_BUNDLEQUICK option uses -Q, just like the server repo
-        # option.  the server repo is more important for this
-        # application.
-        optinfo['bundle_quick'] = Bcfg2.Options.Option('bundlequick',
-                                                       default=False)
-    setup = Bcfg2.Options.OptionParser(optinfo)
-    setup.parse(sys.argv[1:])
+    parser = Bcfg2.Options.Parser(
+        description="Run a Bcfg2 client against a local repository without a "
+        "server",
+        conflict_handler="resolve",
+        components=[LocalCore, LocalProxy, LocalClient])
+    parser.parse()
 
-    core = LocalCore(setup)
+    core = LocalCore()
     try:
-        LocalClient(setup, LocalProxy(core)).run()
+        LocalClient(LocalProxy(core)).run()
     finally:
         core.shutdown()
 

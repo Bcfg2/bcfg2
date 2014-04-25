@@ -9,7 +9,7 @@ Reporting
 Reporting can be enabled by adding Reporting to the plugins line in
 ``/etc/bcfg2.conf``:
 
-    plugins = Base,Bundler,Cfg,...,Reporting
+    plugins = Bundler,Cfg,...,Reporting
 
 For more information on how to use Reporting to setup reporting, see
 :ref:`reports-dynamic`.

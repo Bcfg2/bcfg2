@@ -2,13 +2,14 @@
 git. """
 
 import sys
+import Bcfg2.Options
 from Bcfg2.Server.Plugin import Version, PluginExecutionError
-from subprocess import Popen, PIPE
 
 try:
     import git
     HAS_GITPYTHON = True
 except ImportError:
+    from Bcfg2.Utils import Executor
     HAS_GITPYTHON = False
 
 
@@ -20,14 +21,16 @@ class Git(Version):
     if HAS_GITPYTHON:
         __rmi__ = Version.__rmi__ + ['Update']
 
-    def __init__(self, core, datastore):
-        Version.__init__(self, core, datastore)
+    def __init__(self, core):
+        Version.__init__(self, core)
         if HAS_GITPYTHON:
-            self.repo = git.Repo(self.vcs_root)
+            self.repo = git.Repo(Bcfg2.Options.setup.vcs_root)
+            self.cmd = None
         else:
             self.logger.debug("Git: GitPython not found, using CLI interface "
                               "to Git")
             self.repo = None
+            self.cmd = Executor()
         self.logger.debug("Initialized git plugin with git directory %s" %
                           self.vcs_path)
 
@@ -43,16 +46,16 @@ class Git(Version):
                 return self.repo.head.commit.hexsha
             else:
                 cmd = ["git", "--git-dir", self.vcs_path,
-                       "--work-tree", self.vcs_root, "rev-parse", "HEAD"]
+                       "--work-tree", Bcfg2.Options.setup.vcs_root,
+                       "rev-parse", "HEAD"]
                 self.debug_log("Git: Running %s" % cmd)
-                proc = Popen(cmd, stdout=PIPE, stderr=PIPE)
-                rv, err = proc.communicate()
-                if proc.wait():
-                    raise Exception(err)
-                return rv
+                result = self.cmd.run(cmd)
+                if not result.success:
+                    raise Exception(result.stderr)
+                return result.stdout
         except:
             raise PluginExecutionError("Git: Error getting revision from %s: "
-                                       "%s" % (self.vcs_root,
+                                       "%s" % (Bcfg2.Options.setup.vcs_root,
                                                sys.exc_info()[1]))
 
     def Update(self, ref=None):
@@ -61,14 +64,15 @@ class Git(Version):
         """
         self.logger.info("Git: Git.Update(ref='%s')" % ref)
         self.debug_log("Git: Performing garbage collection on repo at %s" %
-                       self.vcs_root)
+                       Bcfg2.Options.setup.vcs_root)
         try:
             self._log_git_cmd(self.repo.git.gc('--auto'))
         except git.GitCommandError:
             self.logger.warning("Git: Failed to perform garbage collection: %s"
                                 % sys.exc_info()[1])
 
-        self.debug_log("Git: Fetching all refs for repo at %s" % self.vcs_root)
+        self.debug_log("Git: Fetching all refs for repo at %s" %
+                       Bcfg2.Options.setup.vcs_root)
         try:
             self._log_git_cmd(self.repo.git.fetch('--all'))
         except git.GitCommandError:
@@ -101,5 +105,5 @@ class Git(Version):
                                            "upstream: %s" % sys.exc_info()[1])
 
         self.logger.info("Git: Repo at %s updated to %s" %
-                         (self.vcs_root, self.get_revision()))
+                         (Bcfg2.Options.setup.vcs_root, self.get_revision()))
         return True

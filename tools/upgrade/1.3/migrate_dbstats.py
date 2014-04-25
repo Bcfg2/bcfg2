@@ -2,17 +2,14 @@
 
 import os
 os.environ['BCFG2_LEGACY_MODELS'] = '1'
-os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
 
 import sys
 import logging
 import time
 import Bcfg2.Logger
 import Bcfg2.Options
-from django.core.cache import cache
-from django.db import connection, backend
-
-from Bcfg2.Server.Admin.Reports import Reports
+from django.db import connection, transaction, backend
+from Bcfg2.Server.Admin import UpdateReports
 from Bcfg2.Reporting import models as new_models
 from Bcfg2.Reporting.utils import BatchFetch
 from Bcfg2.Reporting.Compat import transaction
@@ -282,17 +279,10 @@ def _restructure():
 
 
 if __name__ == '__main__':
-    Bcfg2.Logger.setup_logging('bcfg2-report-collector',
-                                   to_console=logging.INFO,
-                                   level=logging.INFO)
+    parser = Bcfg2.Options.get_parser(
+        description="Migrate from Bcfg2 1.2 DBStats plugin to 1.3 Reporting "
+        "subsystem",
+        components=[UpdateReports])
 
-    optinfo = dict()
-    optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
-    optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
-    setup = Bcfg2.Options.OptionParser(optinfo)
-    setup.parse(sys.argv[1:])
-
-    #sync!
-    Reports(setup).__call__(['update'])
-
+    UpdateReports().run(Bcfg2.Options.setup)
     _restructure()

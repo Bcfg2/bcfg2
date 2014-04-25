@@ -9,6 +9,8 @@ class Defaults(Bcfg2.Server.Plugins.Rules.Rules,
     """Set default attributes on bound entries"""
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
+    options = Bcfg2.Server.Plugin.PrioDir.options
+
     # Rules is a Generator that happens to implement all of the
     # functionality we want, so we overload it, but Defaults should
     # _not_ handle any entries; it does its stuff in the structure

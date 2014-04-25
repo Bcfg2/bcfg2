@@ -6,14 +6,18 @@ import glob
 import lxml.etree
 import Bcfg2.Options
 
+
 def main():
-    opts = dict(repo=Bcfg2.Options.SERVER_REPOSITORY)
-    setup = Bcfg2.Options.OptionParser(opts)
-    setup.parse(sys.argv[1:])
+    parser = Bcfg2.Options.get_parser(
+        description="Migrate from Bcfg2 1.2 Service modes to 1.3-style "
+        "granular Service specification")
+    parser.add_options([Bcfg2.Options.Common.repository])
+    parser.parse()
 
     files = []
     for plugin in ['Bundler', 'Rules', 'Default']:
-        files.extend(glob.glob(os.path.join(setup['repo'], plugin, "*")))
+        files.extend(glob.glob(os.path.join(Bcfg2.Options.setup.repository,
+                                            plugin, "*")))
 
     for bfile in files:
         bdata = lxml.etree.parse(bfile)

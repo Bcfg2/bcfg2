@@ -69,11 +69,7 @@ class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
     create = 'GroupPatterns'
 
     def __init__(self, filename, core=None):
-        try:
-            fam = core.fam
-        except AttributeError:
-            fam = None
-        Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, filename, fam=fam,
+        Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, filename,
                                                    should_monitor=True)
         self.core = core
         self.patterns = []
@@ -81,7 +77,7 @@ class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
     def Index(self):
         Bcfg2.Server.Plugin.XMLFileBacked.Index(self)
         if (self.core and
-            self.core.metadata_cache_mode in ['cautious', 'aggressive']):
+                self.core.metadata_cache_mode in ['cautious', 'aggressive']):
             self.core.metadata_cache.expire()
         self.patterns = []
         for entry in self.xdata.xpath('//GroupPattern'):
@@ -118,48 +114,11 @@ class GroupPatterns(Bcfg2.Server.Plugin.Plugin,
                     Bcfg2.Server.Plugin.Connector):
     """ set group membership based on client hostnames """
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         self.config = PatternFile(os.path.join(self.data, 'config.xml'),
                                   core=core)
 
     def get_additional_groups(self, metadata):
         return self.config.process_patterns(metadata.hostname)
-
-
-class GroupPatternsLint(Bcfg2.Server.Lint.ServerPlugin):
-    """ ``bcfg2-lint`` plugin to check all given :ref:`GroupPatterns
-    <server-plugins-grouping-grouppatterns>` patterns for validity.
-    This is simply done by trying to create a
-    :class:`Bcfg2.Server.Plugins.GroupPatterns.PatternMap` object for
-    each pattern, and catching exceptions and presenting them as
-    ``bcfg2-lint`` errors."""
-
-    def Run(self):
-        cfg = self.core.plugins['GroupPatterns'].config
-        for entry in cfg.xdata.xpath('//GroupPattern'):
-            groups = [g.text for g in entry.findall('Group')]
-            self.check(entry, groups, ptype='NamePattern')
-            self.check(entry, groups, ptype='NameRange')
-
-    @classmethod
-    def Errors(cls):
-        return {"pattern-fails-to-initialize": "error"}
-
-    def check(self, entry, groups, ptype="NamePattern"):
-        """ Check a single pattern for validity """
-        if ptype == "NamePattern":
-            pmap = lambda p: PatternMap(p, None, groups)
-        else:
-            pmap = lambda p: PatternMap(None, p, groups)
-
-        for el in entry.findall(ptype):
-            pat = el.text
-            try:
-                pmap(pat)
-            except:  # pylint: disable=W0702
-                err = sys.exc_info()[1]
-                self.LintError("pattern-fails-to-initialize",
-                               "Failed to initialize %s %s for %s: %s" %
-                               (ptype, pat, entry.get('pattern'), err))

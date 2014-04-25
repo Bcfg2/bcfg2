@@ -12,7 +12,7 @@ the clients.
 
 .. code-block:: xml
 
-    <Bundle name='nagios-client' version='2.0'>
+    <Bundle>
       <Group name='sles8'>
         <Package name='ucdsnmp'/>
       </Group>
@@ -27,29 +27,14 @@ the clients.
       <Path name='/etc/hosts.deny'/>
       <Path name='/etc/services'/>
       <Path name='/etc/snmpd.conf'/>
-      <Path name='/usr/lib/nagios/plugins/check_disks_scratchgpfs1.tg'/>
-      <Path name='/usr/lib/nagios/plugins/check_fs.mds'/>
-      <Path name='/usr/lib/nagios/plugins/check_gm_network.tg'/>
-      <Path name='/usr/lib/nagios/plugins/check_gpfs_wan.tg'/>
-      <Path name='/usr/lib/nagios/plugins/check_hung_jobs.tg'/>
-      <Path name='/usr/lib/nagios/plugins/check_mem.mds'/>
-      <Path name='/usr/lib/nagios/plugins/check_mem.tg'/>
-      <Path name='/usr/lib/nagios/plugins/check_nvidia_acceleration.tg'/>
-      <Path name='/usr/lib/nagios/plugins/check_os.mds'/>
-      <Path name='/usr/lib/nagios/plugins/check_procinfo.mds'/>
-      <Path name='/usr/lib/nagios/plugins/check_torque.tg'/>
-      <Path name='/usr/lib/nagios/plugins/check_uname_r.tg'/>
-      <Path name='/usr/lib/nagios/plugins/check_uname_r.tg.conf'/>
+      <Path glob='/usr/lib/nagios/plugins/*'/>
       <Service name='snmpd'/>
       <Group name='nagios-server'>
         <Package name='nagios'/>
         <Package name='nagios-devel'/>
         <Package name='nagios-www'/>
         <Path name='/etc/httpd/conf.d/nagios.conf'/>
-        <Path name='/etc/nagios/cgi.cfg'/>
-        <Path name='/etc/nagios/checkcommands.cfg'/>
-        <Path name='/etc/nagios/nagios.cfg'/>
-        <Path name='/etc/nagios/resource.cfg'/>
+        <Path glob='/etc/nagios/*'/>
       </Group>
     </Bundle>
 

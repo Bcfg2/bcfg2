@@ -1,9 +1,14 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
   <xsd:annotation>
     <xsd:documentation>
-      Schema for :ref:`server-plugins-generators-sslca` ``cert.xml``
+      Schema for :ref:`server-plugins-generators-cfg-ssl-certificates`
+      ``sslcert.xml``
     </xsd:documentation>
   </xsd:annotation>
+
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
 
   <xsd:complexType name="SSLCACertGroupType">
     <xsd:annotation>
@@ -17,10 +22,12 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
       <xsd:element name="Cert" type="CertType"/>
       <xsd:element name="Group" type="SSLCACertGroupType"/>
       <xsd:element name="Client" type="SSLCACertGroupType"/>
       <xsd:element name="subjectAltName" type="SubjectAltNameType"/>
+      <xsd:element name="CertInfo" type="CertInfoType"/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string'>
       <xsd:annotation>
@@ -40,6 +47,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:simpleType name="SSLCACertFormatEnum">
@@ -69,7 +77,7 @@
         <xsd:documentation>
           The full path to the key entry to use for this certificate.
           This is the *client* path; e.g., for a key defined at
-          ``/var/lib/bcfg2/SSLCA/etc/pki/tls/private/foo.key/key.xml``,
+          ``/var/lib/bcfg2/SSLCA/etc/pki/tls/private/foo.key/sslkey.xml``,
           **key** should be ``/etc/pki/tls/private/foo.key``.
         </xsd:documentation>
       </xsd:annotation>
@@ -85,8 +93,8 @@
       <xsd:annotation>
         <xsd:documentation>
           The name of the CA (from :ref:`bcfg2.conf
-          &lt;sslca-configuration&gt;`) to use to generate this
-          certificate.
+          &lt;server-plugins-generators-cfg-configuration&gt;`) to use
+          to generate this certificate.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -147,21 +155,32 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
-  <xsd:element name="CertInfo">
+  <xsd:complexType name="CertInfoType">
     <xsd:annotation>
       <xsd:documentation>
         Top-level tag for describing an SSLCA generated certificate.
       </xsd:documentation>
     </xsd:annotation>
-    <xsd:complexType>
-      <xsd:choice minOccurs="1" maxOccurs="unbounded">
-        <xsd:element name="Cert" type="CertType"/>
-        <xsd:element name="Group" type="SSLCACertGroupType"/>
-        <xsd:element name="Client" type="SSLCACertGroupType"/>
-        <xsd:element name="subjectAltName" type="SubjectAltNameType"/>
-      </xsd:choice>
-    </xsd:complexType>
-  </xsd:element>
+    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
+      <xsd:element name="Cert" type="CertType"/>
+      <xsd:element name="Group" type="SSLCACertGroupType"/>
+      <xsd:element name="Client" type="SSLCACertGroupType"/>
+      <xsd:element name="subjectAltName" type="SubjectAltNameType"/>
+      <xsd:element name="CertInfo" type="CertInfoType"/>
+    </xsd:choice>
+    <xsd:attribute name="lax_decryption" type="xsd:boolean">
+      <xsd:annotation>
+        <xsd:documentation>
+          Override the global lax_decryption setting in
+          ``bcfg2.conf``.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:element name="CertInfo" type="CertInfoType"/>
 </xsd:schema>

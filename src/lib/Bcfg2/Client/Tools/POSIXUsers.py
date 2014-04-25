@@ -3,14 +3,38 @@ and groupadd/mod/del """
 
 import pwd
 import grp
+import Bcfg2.Options
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
 from Bcfg2.Utils import PackedDigitRange
 
 
+def uid_range_type(val):
+    """ Option type to unpack a list of numerical ranges """
+    return PackedDigitRange(*Bcfg2.Options.Types.comma_list(val))
+
+
 class POSIXUsers(Bcfg2.Client.Tools.Tool):
     """ A tool to handle creating users and groups with
     useradd/mod/del and groupadd/mod/del """
+    options = Bcfg2.Client.Tools.Tool.options + [
+        Bcfg2.Options.Option(
+            cf=('POSIXUsers', 'uid_whitelist'), default=[],
+            type=uid_range_type,
+            help="UID ranges the POSIXUsers tool will manage"),
+        Bcfg2.Options.Option(
+            cf=('POSIXUsers', 'gid_whitelist'), default=[],
+            type=uid_range_type,
+            help="GID ranges the POSIXUsers tool will manage"),
+        Bcfg2.Options.Option(
+            cf=('POSIXUsers', 'uid_blacklist'), default=[],
+            type=uid_range_type,
+            help="UID ranges the POSIXUsers tool will not manage"),
+        Bcfg2.Options.Option(
+            cf=('POSIXUsers', 'gid_blacklist'), default=[],
+            type=uid_range_type,
+            help="GID ranges the POSIXUsers tool will not manage")]
+
     __execs__ = ['/usr/sbin/useradd', '/usr/sbin/usermod', '/usr/sbin/userdel',
                  '/usr/sbin/groupadd', '/usr/sbin/groupmod',
                  '/usr/sbin/groupdel']
@@ -18,7 +42,6 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                    ('POSIXGroup', None)]
     __req__ = dict(POSIXUser=['name'],
                    POSIXGroup=['name'])
-    experimental = True
 
     #: A mapping of XML entry attributes to the indexes of
     #: corresponding values in the get{pw|gr}all data structures
@@ -30,25 +53,15 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
     #: user or group
     id_mapping = dict(POSIXUser="uid", POSIXGroup="gid")
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        Bcfg2.Client.Tools.Tool.__init__(self, config)
         self.set_defaults = dict(POSIXUser=self.populate_user_entry,
                                  POSIXGroup=lambda g: g)
         self._existing = None
-        self._whitelist = dict(POSIXUser=None, POSIXGroup=None)
-        self._blacklist = dict(POSIXUser=None, POSIXGroup=None)
-        if self.setup['posix_uid_whitelist']:
-            self._whitelist['POSIXUser'] = \
-                PackedDigitRange(*self.setup['posix_uid_whitelist'])
-        else:
-            self._blacklist['POSIXUser'] = \
-                PackedDigitRange(*self.setup['posix_uid_blacklist'])
-        if self.setup['posix_gid_whitelist']:
-            self._whitelist['POSIXGroup'] = \
-                PackedDigitRange(*self.setup['posix_gid_whitelist'])
-        else:
-            self._blacklist['POSIXGroup'] = \
-                PackedDigitRange(*self.setup['posix_gid_blacklist'])
+        self._whitelist = dict(POSIXUser=Bcfg2.Options.setup.uid_whitelist,
+                               POSIXGroup=Bcfg2.Options.setup.gid_whitelist)
+        self._blacklist = dict(POSIXUser=Bcfg2.Options.setup.uid_blacklist,
+                               POSIXGroup=Bcfg2.Options.setup.gid_blacklist)
 
     @property
     def existing(self):
@@ -66,7 +79,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
         defined, and the uid/gid is in that whitelist; or b) no
         whitelist is defined, and the uid/gid is not in the
         blacklist. """
-        if self._whitelist[tag] is None:
+        if not self._whitelist[tag]:
             return eid not in self._blacklist[tag]
         else:
             return eid in self._whitelist[tag]
@@ -87,7 +100,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
             return False
         return True
 
-    def Inventory(self, states, structures=None):
+    def Inventory(self, structures=None):
         if not structures:
             structures = self.config.getchildren()
         # we calculate a list of all POSIXUser and POSIXGroup entries,
@@ -107,7 +120,8 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                                       (group, entry.get("name")))
                     struct.append(Bcfg2.Client.XML.Element("POSIXGroup",
                                                            name=group))
-        return Bcfg2.Client.Tools.Tool.Inventory(self, states, structures)
+        return Bcfg2.Client.Tools.Tool.Inventory(self, structures)
+    Inventory.__doc__ = Bcfg2.Client.Tools.Tool.Inventory.__doc__
 
     def FindExtra(self):
         extra = []
@@ -165,7 +179,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                                      % (entry.tag, entry.get("name"),
                                         actual, expected)]))
                 rv = False
-        if self.setup['interactive'] and not rv:
+        if Bcfg2.Options.setup.interactive and not rv:
             entry.set('qtext',
                       '%s\nInstall %s %s: (y/N) ' %
                       (entry.get('qtext', ''), entry.tag, entry.get('name')))
@@ -174,7 +188,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
     def VerifyPOSIXGroup(self, entry, _):
         """ Verify a POSIXGroup entry """
         rv = self._verify(entry)
-        if self.setup['interactive'] and not rv:
+        if Bcfg2.Options.setup.interactive and not rv:
             entry.set('qtext',
                       '%s\nInstall %s %s: (y/N) ' %
                       (entry.get('qtext', ''), entry.tag, entry.get('name')))
@@ -191,7 +205,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
             for attr, idx in self.attr_mapping[entry.tag].items():
                 val = str(self.existing[entry.tag][entry.get("name")][idx])
                 entry.set("current_%s" %
-                          attr, val.decode(self.setup['encoding']))
+                          attr, val.decode(Bcfg2.Options.setup.encoding))
                 if attr in ["uid", "gid"]:
                     if entry.get(attr) is None:
                         # no uid/gid specified, so we let the tool
@@ -213,7 +227,8 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
             entry.set('qtext', "\n".join([entry.get('qtext', '')] + errors))
         return len(errors) == 0
 
-    def Install(self, entries, states):
+    def Install(self, entries):
+        states = dict()
         for entry in entries:
             # install groups first, so that all groups exist for
             # users that might need them
@@ -223,6 +238,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
             if entry.tag == 'POSIXUser':
                 states[entry] = self._install(entry)
         self._existing = None
+        return states
 
     def _install(self, entry):
         """ add or modify a user or group using the appropriate command """

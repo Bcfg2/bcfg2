@@ -9,6 +9,7 @@ import socket
 import struct
 import sys
 import termios
+import Bcfg2.Options
 
 logging.raiseExceptions = 0
 
@@ -20,7 +21,7 @@ class TermiosFormatter(logging.Formatter):
 
     def __init__(self, fmt=None, datefmt=None):
         logging.Formatter.__init__(self, fmt, datefmt)
-        if sys.stdout.isatty():
+        if hasattr(sys.stdout, 'isatty') and sys.stdout.isatty():
             # now get termios info
             try:
                 self.width = struct.unpack('hhhh',
@@ -150,8 +151,11 @@ def add_console_handler(level=logging.DEBUG):
     logging.root.addHandler(console)
 
 
-def add_syslog_handler(procname, syslog_facility, level=logging.DEBUG):
+def add_syslog_handler(procname=None, syslog_facility='daemon',
+                       level=logging.DEBUG):
     """Add a logging handler that logs as procname to syslog_facility."""
+    if procname is None:
+        procname = Bcfg2.Options.get_parser().prog
     try:
         try:
             syslog = FragmentingSysLogHandler(procname,
@@ -175,9 +179,9 @@ def add_syslog_handler(procname, syslog_facility, level=logging.DEBUG):
         print("Failed to activate syslogging")
 
 
-def add_file_handler(to_file, level=logging.DEBUG):
-    """Add a logging handler that logs to to_file."""
-    filelog = logging.FileHandler(to_file)
+def add_file_handler(level=logging.DEBUG):
+    """Add a logging handler that logs to a file."""
+    filelog = logging.FileHandler(Bcfg2.Options.setup.logfile)
     try:
         filelog.set_name("file")  # pylint: disable=E1101
     except AttributeError:
@@ -188,34 +192,127 @@ def add_file_handler(to_file, level=logging.DEBUG):
     logging.root.addHandler(filelog)
 
 
-def setup_logging(procname, to_console=True, to_syslog=True,
-                  syslog_facility='daemon', level=0, to_file=None):
+def default_log_level():
+    """ Get the default log level, according to the configuration """
+    if Bcfg2.Options.setup.debug:
+        return logging.DEBUG
+    elif Bcfg2.Options.setup.verbose:
+        return logging.INFO
+    else:
+        return logging.WARNING
+
+
+def setup_logging():
     """Setup logging for Bcfg2 software."""
     if hasattr(logging, 'already_setup'):
         return
 
+    level = default_log_level()
     params = []
 
+    to_console = True
+    if hasattr(Bcfg2.Options.setup, "daemon"):
+        if Bcfg2.Options.setup.daemon:
+            to_console = False
+        # if a command can be daemonized, but hasn't been, then we
+        # assume that they're running it in the foreground and thus
+        # want some more output.
+        clvl = min(level, logging.INFO)
+    else:
+        clvl = level
     if to_console:
-        if to_console is True:
-            to_console = logging.WARNING
-        if level == 0:
-            clvl = to_console
-        else:
-            clvl = min(to_console, level)
         params.append("%s to console" % logging.getLevelName(clvl))
-        add_console_handler(clvl)
-    if to_syslog:
-        if level == 0:
-            slvl = logging.INFO
-        else:
-            slvl = min(level, logging.INFO)
+        add_console_handler(level=clvl)
+
+    if hasattr(Bcfg2.Options.setup, "syslog") and Bcfg2.Options.setup.syslog:
+        slvl = min(level, logging.INFO)
         params.append("%s to syslog" % logging.getLevelName(slvl))
-        add_syslog_handler(procname, syslog_facility, level=slvl)
-    if to_file is not None:
-        params.append("%s to %s" % (logging.getLevelName(level), to_file))
-        add_file_handler(to_file, level=level)
+        add_syslog_handler(level=slvl)
+
+    if Bcfg2.Options.setup.logfile:
+        params.append("%s to %s" % (logging.getLevelName(level),
+                                    Bcfg2.Options.setup.logfile))
+        add_file_handler(level=level)
 
     logging.root.setLevel(logging.DEBUG)
     logging.root.debug("Configured logging: %s" % "; ".join(params))
     logging.already_setup = True
+
+
+class Debuggable(object):
+    """ Mixin to add a debugging interface to an object """
+
+    options = []
+
+    #: List of names of methods to be exposed as XML-RPC functions, if
+    #: applicable to the child class
+    __rmi__ = ['toggle_debug', 'set_debug']
+
+    #: How exposed XML-RPC functions should be dispatched to child
+    #: processes.
+    __child_rmi__ = __rmi__[:]
+
+    def __init__(self, name=None):
+        """
+        :param name: The name of the logger object to get.  If none is
+                     supplied, the full name of the class (including
+                     module) will be used.
+        :type name: string
+        """
+        if name is None:
+            name = "%s.%s" % (self.__class__.__module__,
+                              self.__class__.__name__)
+        self.debug_flag = Bcfg2.Options.setup.debug
+        self.logger = logging.getLogger(name)
+
+    def set_debug(self, debug):
+        """ Explicitly enable or disable debugging.
+
+        :returns: bool - The new value of the debug flag
+        """
+        self.debug_flag = debug
+        return debug
+
+    def toggle_debug(self):
+        """ Turn debugging output on or off.
+
+        :returns: bool - The new value of the debug flag
+        """
+        return self.set_debug(not self.debug_flag)
+
+    def debug_log(self, message, flag=None):
+        """ Log a message at the debug level.
+
+        :param message: The message to log
+        :type message: string
+        :param flag: Override the current debug flag with this value
+        :type flag: bool
+        :returns: None
+        """
+        if (flag is None and self.debug_flag) or flag:
+            self.logger.error(message)
+
+
+class _OptionContainer(object):
+    """ Container for options loaded at import-time to configure
+    logging """
+    options = [
+        Bcfg2.Options.BooleanOption(
+            '-d', '--debug', help='Enable debugging output',
+            cf=('logging', 'debug')),
+        Bcfg2.Options.BooleanOption(
+            '-v', '--verbose', help='Enable verbose output',
+            cf=('logging', 'verbose')),
+        Bcfg2.Options.PathOption(
+            '-o', '--logfile', help='Set path of file log',
+            cf=('logging', 'path'))]
+
+    @staticmethod
+    def options_parsed_hook():
+        """ initialize settings from /etc/bcfg2-web.conf or
+        /etc/bcfg2.conf, or set up basic defaults.  this lets
+        manage.py work in all cases """
+        setup_logging()
+
+
+Bcfg2.Options.get_parser().add_component(_OptionContainer)

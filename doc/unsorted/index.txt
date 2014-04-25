@@ -13,7 +13,6 @@ list below.
 
 .. _TitleIndex: https://trac.mcs.anl.gov/projects/bcfg2/wiki/TitleIndex
 
-* `Plugins/Snapshots`
 * `PrecompiledPackages`
 * `SchemaEvolution`
 * `SecurityDevPlan`

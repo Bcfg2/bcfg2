@@ -25,6 +25,7 @@ configuration. Specific features in the new system include:
   users to drill down to find out about a :ref:`specific host
   <reports-client-detail>`, rather than only having one huge page with
   too much information.
+* Ability to store reporting data separately from other server data.
 
 Installation
 ============
@@ -214,8 +215,8 @@ database
 ^^^^^^^^
 
 If you choose to use a different database, you'll need to edit
-``/etc/bcfg2.conf``. These fields should be updated in the [database]
-section:
+``/etc/bcfg2.conf``. These fields should be updated in the 
+``[database]`` section:
 
 * engine
 
@@ -228,11 +229,27 @@ section:
 * host
 * port (optional)
 
+To store reporting data separately from the main server data, use
+the following options:
+
+* reporting_engine
+
+  * ex: reporting_engine = mysql
+  * ex: reporting_engine = postgresql_psycopg2
+
+* reporting_name
+* reporting_user
+* reporting_password
+* reporting_host
+* reporting_port (optional)
+
 .. warning::
 
     If mysql is used as a backend, it is recommended to use InnoDB for
     the `storage engine <http://dev.mysql.com/doc/refman/5.1/en/storage-engine-setting.html>`_.
 
+Refer to :ref:`server-database` for a full listing of 
+available options.
 
 statistics
 ^^^^^^^^^^

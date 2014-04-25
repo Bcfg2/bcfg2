@@ -30,18 +30,17 @@ except ImportError:
     HAS_CRYPTO = False
 
 
-if can_skip or (HAS_CRYPTO and HAS_CHEETAH):
-    class TestCfgEncryptedCheetahGenerator(TestCfgCheetahGenerator,
-                                           TestCfgEncryptedGenerator):
-        test_obj = CfgEncryptedCheetahGenerator
+class TestCfgEncryptedCheetahGenerator(TestCfgCheetahGenerator,
+                                       TestCfgEncryptedGenerator):
+    test_obj = CfgEncryptedCheetahGenerator
 
-        @skipUnless(HAS_CRYPTO, "Encryption libraries not found, skipping")
-        @skipUnless(HAS_CHEETAH, "Cheetah libraries not found, skipping")
-        def setUp(self):
-            pass
+    @skipUnless(HAS_CRYPTO, "Encryption libraries not found, skipping")
+    @skipUnless(HAS_CHEETAH, "Cheetah libraries not found, skipping")
+    def setUp(self):
+        pass
 
-        def test_handle_event(self):
-            TestCfgEncryptedGenerator.test_handle_event(self)
+    def test_handle_event(self):
+        TestCfgEncryptedGenerator.test_handle_event(self)
 
-        def test_get_data(self):
-            TestCfgCheetahGenerator.test_get_data(self)
+    def test_get_data(self):
+        TestCfgCheetahGenerator.test_get_data(self)

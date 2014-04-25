@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _development-unit-testing:
 
@@ -13,7 +14,7 @@ You will first need to install the `Python Mock Module`_ and `Python
 Nose`_ modules. You can then run the existing tests with the
 following:
 
-.. code-block: bash
+.. code-block: sh
 
     cd testsuite
     nosetests
@@ -123,7 +124,7 @@ writing tests for the base :class:`Bcfg2.Server.Plugin.base.Plugin`
 class, which all Bcfg2 :ref:`server-plugins-index` inherit from via
 the :mod:`Plugin interfaces <Bcfg2.Server.Plugin.interfaces>`,
 yielding several levels of often-multiple inheritance.  To make this
-easier, our unit tests adhere to several design considerations:
+easier, our unit tests adhere to several design considerations.
 
 Inherit Tests
 -------------

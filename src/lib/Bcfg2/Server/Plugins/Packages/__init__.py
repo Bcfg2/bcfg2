@@ -7,20 +7,32 @@ import sys
 import glob
 import shutil
 import lxml.etree
-import Bcfg2.Logger
+import Bcfg2.Options
+import Bcfg2.Server.Cache
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import ConfigParser, urlopen, HTTPError, URLError, \
-    MutableMapping
+from Bcfg2.Compat import urlopen, HTTPError, URLError, MutableMapping
 from Bcfg2.Server.Plugins.Packages.Collection import Collection, \
     get_collection_class
 from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
+from Bcfg2.Server.Statistics import track_statistics
 
-#: The default path for generated yum configs
-YUM_CONFIG_DEFAULT = "/etc/yum.repos.d/bcfg2.repo"
 
-#: The default path for generated apt configs
-APT_CONFIG_DEFAULT = \
-    "/etc/apt/sources.list.d/bcfg2-packages-generated-sources.list"
+def packages_boolean(value):
+    """ For historical reasons, the Packages booleans 'resolver' and
+    'metadata' both accept "enabled" in addition to the normal boolean
+    values. """
+    if value == 'disabled':
+        return False
+    elif value == 'enabled':
+        return True
+    else:
+        return value
+
+
+class PackagesBackendAction(Bcfg2.Options.ComponentAction):
+    """ ComponentAction to load Packages backends """
+    bases = ['Bcfg2.Server.Plugins.Packages']
+    module = True
 
 
 class OnDemandDict(MutableMapping):
@@ -70,7 +82,6 @@ class OnDemandDict(MutableMapping):
 
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
-               Bcfg2.Server.Plugin.Caching,
                Bcfg2.Server.Plugin.StructureValidator,
                Bcfg2.Server.Plugin.Generator,
                Bcfg2.Server.Plugin.Connector,
@@ -85,6 +96,38 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
     .. private-include: _build_packages"""
 
+    options = [
+        Bcfg2.Options.Option(
+            cf=("packages", "backends"), dest="packages_backends",
+            help="Packages backends to load",
+            type=Bcfg2.Options.Types.comma_list,
+            action=PackagesBackendAction, default=['Yum', 'Apt', 'Pac']),
+        Bcfg2.Options.PathOption(
+            cf=("packages", "cache"), dest="packages_cache",
+            help="Path to the Packages cache",
+            default='<repository>/Packages/cache'),
+        Bcfg2.Options.Option(
+            cf=("packages", "resolver"), dest="packages_resolver",
+            help="Disable the Packages resolver",
+            type=packages_boolean, default=True),
+        Bcfg2.Options.Option(
+            cf=("packages", "metadata"), dest="packages_metadata",
+            help="Disable all Packages metadata processing",
+            type=packages_boolean, default=True),
+        Bcfg2.Options.Option(
+            cf=("packages", "version"), dest="packages_version",
+            help="Set default Package entry version", default="auto",
+            choices=["auto", "any"]),
+        Bcfg2.Options.PathOption(
+            cf=("packages", "yum_config"),
+            help="The default path for generated yum configs",
+            default="/etc/yum.repos.d/bcfg2.repo"),
+        Bcfg2.Options.PathOption(
+            cf=("packages", "apt_config"),
+            help="The default path for generated apt configs",
+            default=
+            "/etc/apt/sources.list.d/bcfg2-packages-generated-sources.list")]
+
     #: Packages is an alternative to
     #: :mod:`Bcfg2.Server.Plugins.Pkgmgr` and conflicts with it.
     conflicts = ['Pkgmgr']
@@ -93,12 +136,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
     #: and :func:`Reload`
     __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Refresh', 'Reload']
 
-    __child_rmi__ = Bcfg2.Server.Plugin.Plugin.__child_rmi__ + \
-        [('Refresh', 'expire_cache'), ('Reload', 'expire_cache')]
-
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        Bcfg2.Server.Plugin.Caching.__init__(self)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.StructureValidator.__init__(self)
         Bcfg2.Server.Plugin.Generator.__init__(self)
         Bcfg2.Server.Plugin.Connector.__init__(self)
@@ -107,23 +146,13 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         #: Packages does a potentially tremendous amount of on-disk
         #: caching.  ``cachepath`` holds the base directory to where
         #: data should be cached.
-        self.cachepath = \
-            self.core.setup.cfp.get("packages", "cache",
-                                    default=os.path.join(self.data, 'cache'))
+        self.cachepath = Bcfg2.Options.setup.packages_cache
 
         #: Where Packages should store downloaded GPG key files
         self.keypath = os.path.join(self.cachepath, 'keys')
         if not os.path.exists(self.keypath):
             # create key directory if needed
             os.makedirs(self.keypath)
-
-        # warn about deprecated magic groups
-        if self.core.setup.cfp.getboolean("packages", "magic_groups",
-                                          default=False):
-            self.logger.warning("Packages: Magic groups are deprecated and "
-                                "will be removed in a future release")
-            self.logger.warning("You can disable magic groups by setting "
-                                "magic_groups=0 in [packages] in bcfg2.conf")
 
         # pylint: disable=C0301
         #: The
@@ -132,8 +161,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         #: :class:`Bcfg2.Server.Plugins.Packages.Source.Source` objects for
         #: this plugin.
         self.sources = PackagesSources(os.path.join(self.data, "sources.xml"),
-                                       self.cachepath, core.fam, self,
-                                       self.core.setup)
+                                       self.cachepath, self)
 
         #: We cache
         #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
@@ -153,7 +181,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`,
         #: a unique key identifying the collection by its *config*,
         #: which could be shared among multiple clients.
-        self.collections = dict()
+        self.collections = Bcfg2.Server.Cache.Cache("Packages", "collections")
 
         #: clients is a cache mapping of hostname ->
         #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`
@@ -161,21 +189,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
         #: object when one is requested, so each entry is very
         #: short-lived -- it's purged at the end of each client run.
-        self.clients = dict()
+        self.clients = Bcfg2.Server.Cache.Cache("Packages", "cache")
 
-        #: groupcache caches group lookups.  It maps Collections (via
-        #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`)
-        #: to sets of package groups, and thence to the packages
-        #: indicated by those groups.
-        self.groupcache = dict()
-
-        #: pkgcache caches complete package sets.  It maps Collections
-        #: (via
-        #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`)
-        #: to sets of initial packages, and thence to the final
-        #: (complete) package selections resolved from the initial
-        #: packages
-        self.pkgcache = dict()
         # pylint: enable=C0301
     __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
 
@@ -186,48 +201,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             collection.set_debug(debug)
         return rv
     set_debug.__doc__ = Bcfg2.Server.Plugin.Plugin.set_debug.__doc__
-
-    @property
-    def disableResolver(self):  # pylint: disable=C0103
-        """ Report the state of the resolver.  This can be disabled in
-        the configuration.  Note that disabling metadata (see
-        :attr:`disableMetaData`) implies disabling the resolver.
-
-        This property cannot be set. """
-        if self.disableMetaData:
-            # disabling metadata without disabling the resolver Breaks
-            # Things
-            return True
-        try:
-            return not self.core.setup.cfp.getboolean("packages", "resolver")
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            return False
-        except ValueError:
-            # for historical reasons we also accept "enabled" and
-            # "disabled", which are not handled according to the
-            # Python docs but appear to be handled properly by
-            # ConfigParser in at least some versions
-            return self.core.setup.cfp.get(
-                "packages",
-                "resolver",
-                default="enabled").lower() == "disabled"
-
-    @property
-    def disableMetaData(self):  # pylint: disable=C0103
-        """ Report whether or not metadata processing is enabled.
-
-        This property cannot be set. """
-        try:
-            return not self.core.setup.cfp.getboolean("packages", "resolver")
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            return False
-        except ValueError:
-            # for historical reasons we also accept "enabled" and
-            # "disabled"
-            return self.core.setup.cfp.get(
-                "packages",
-                "metadata",
-                default="enabled").lower() == "disabled"
 
     def create_config(self, entry, metadata):
         """ Create yum/apt config for the specified client.
@@ -276,9 +249,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         """
         if entry.tag == 'Package':
             collection = self.get_collection(metadata)
-            entry.set('version', self.core.setup.cfp.get("packages",
-                                                         "version",
-                                                         default="auto"))
+            entry.set('version', Bcfg2.Options.setup.packages_version)
             entry.set('type', collection.ptype)
         elif entry.tag == 'Path':
             self.create_config(entry, metadata)
@@ -304,27 +275,15 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :raises: :class:`Bcfg2.Server.Plugin.exceptions.PluginExecutionError`
         """
         if entry.tag == 'Package':
-            if self.core.setup.cfp.getboolean("packages", "magic_groups",
-                                              default=False):
-                collection = self.get_collection(metadata)
-                if collection.magic_groups_match():
-                    return True
-            else:
-                return True
+            return True
         elif entry.tag == 'Path':
             # managed entries for yum/apt configs
-            if (entry.get("name") ==
-                self.core.setup.cfp.get("packages",
-                                        "yum_config",
-                                        default=YUM_CONFIG_DEFAULT) or
-                entry.get("name") ==
-                self.core.setup.cfp.get("packages",
-                                        "apt_config",
-                                        default=APT_CONFIG_DEFAULT)):
+            if entry.get("name") in [Bcfg2.Options.setup.apt_config,
+                                     Bcfg2.Options.setup.yum_config]:
                 return True
         return False
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def validate_structures(self, metadata, structures):
         """ Do the real work of Packages.  This does two things:
 
@@ -353,13 +312,13 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :returns: None
         """
         collection = self.get_collection(metadata)
-        indep = lxml.etree.Element('Independent')
+        indep = lxml.etree.Element('Independent', name=self.__class__.__name__)
         self._build_packages(metadata, indep, structures,
                              collection=collection)
         collection.build_extra_structures(indep)
         structures.append(indep)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def _build_packages(self, metadata, independent, structures,
                         collection=None):
         """ Perform dependency resolution and build the complete list
@@ -382,8 +341,10 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                            :func:`get_collection`
         :type collection: Bcfg2.Server.Plugins.Packages.Collection.Collection
         """
-        if self.disableResolver:
-            # Config requests no resolver
+        if (not Bcfg2.Options.setup.packages_metadata or
+                not Bcfg2.Options.setup.packages_resolver):
+            # Config requests no resolver.  Note that disabling
+            # metadata implies disabling the resolver.
             for struct in structures:
                 for pkg in struct.xpath('//Package | //BoundPackage'):
                     if pkg.get("group"):
@@ -396,10 +357,15 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         initial = set()
         to_remove = []
         groups = []
+        recommended = dict()
+
         for struct in structures:
             for pkg in struct.xpath('//Package | //BoundPackage'):
                 if pkg.get("name"):
                     initial.update(collection.packages_from_entry(pkg))
+
+                    if pkg.get("recommended"):
+                        recommended[pkg.get("name")] = pkg.get("recommended")
                 elif pkg.get("group"):
                     groups.append((pkg.get("group"),
                                    pkg.get("type")))
@@ -422,11 +388,12 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
         groups.sort()
         # check for this set of groups in the group cache
+        gcache = Bcfg2.Server.Cache.Cache("Packages", "pkg_groups",
+                                          collection.cachekey)
         gkey = hash(tuple(groups))
-        if gkey not in self.groupcache[collection.cachekey]:
-            self.groupcache[collection.cachekey][gkey] = \
-                collection.get_groups(groups)
-        for pkgs in self.groupcache[collection.cachekey][gkey].values():
+        if gkey not in gcache:
+            gcache[gkey] = collection.get_groups(groups)
+        for pkgs in gcache[gkey].values():
             base.update(pkgs)
 
         # essential pkgs are those marked as such by the distribution
@@ -434,10 +401,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
         # check for this set of packages in the package cache
         pkey = hash(tuple(base))
-        if pkey not in self.pkgcache[collection.cachekey]:
-            self.pkgcache[collection.cachekey][pkey] = \
-                collection.complete(base)
-        packages, unknown = self.pkgcache[collection.cachekey][pkey]
+        pcache = Bcfg2.Server.Cache.Cache("Packages", "pkg_sets",
+                                          collection.cachekey)
+        if pkey not in pcache:
+            pcache[pkey] = collection.complete(base, recommended)
+        packages, unknown = pcache[pkey]
         if unknown:
             self.logger.info("Packages: Got %d unknown entries" % len(unknown))
             self.logger.info("Packages: %s" % list(unknown))
@@ -447,7 +415,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         newpkgs.sort()
         collection.packages_to_entry(newpkgs, independent)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def Refresh(self):
         """ Packages.Refresh() => True|False
 
@@ -455,7 +423,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self._load_config(force_update=True)
         return True
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def Reload(self):
         """ Packages.Refresh() => True|False
 
@@ -463,7 +431,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         self._load_config()
         return True
 
-    def expire_cache(self, _=None):
+    def child_reload(self, _=None):
+        """ Reload the Packages configuration on a child process. """
         self.Reload()
 
     def _load_config(self, force_update=False):
@@ -490,18 +459,15 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
         for collection in list(self.collections.values()):
             cachefiles.update(collection.cachefiles)
-            if not self.disableMetaData:
+            if Bcfg2.Options.setup.packages_metadata:
                 collection.setup_data(force_update)
 
         # clear Collection and package caches
-        self.clients = dict()
-        self.collections = dict()
-        self.groupcache = dict()
-        self.pkgcache = dict()
+        Bcfg2.Server.Cache.expire("Packages")
 
         for source in self.sources.entries:
             cachefiles.add(source.cachefile)
-            if not self.disableMetaData:
+            if Bcfg2.Options.setup.packages_metadata:
                 source.setup_data(force_update)
 
         for cfile in glob.glob(os.path.join(self.cachepath, "cache-*")):
@@ -533,7 +499,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                 if localfile not in keyfiles:
                     keyfiles.append(localfile)
                 if ((force_update and key not in keys) or
-                    not os.path.exists(localfile)):
+                        not os.path.exists(localfile)):
                     self.logger.info("Packages: Downloading and parsing %s" %
                                      key)
                     try:
@@ -556,7 +522,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             if kfile not in keyfiles:
                 os.unlink(kfile)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def get_collection(self, metadata):
         """ Get a
         :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
@@ -573,12 +539,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         if not self.sources.loaded:
             # if sources.xml has not received a FAM event yet, defer;
             # instantiate a dummy Collection object
-            collection = Collection(metadata, [], self.cachepath, self.data,
-                                    self.core.fam)
-            ckey = collection.cachekey
-            self.groupcache.setdefault(ckey, dict())
-            self.pkgcache.setdefault(ckey, dict())
-            return collection
+            return Collection(metadata, [], self.cachepath, self.data)
 
         if metadata.hostname in self.clients:
             return self.collections[self.clients[metadata.hostname]]
@@ -610,13 +571,11 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                               "for %s" % (cclass.__name__, metadata.hostname))
 
         collection = cclass(metadata, relevant, self.cachepath, self.data,
-                            self.core.fam, debug=self.debug_flag)
+                            debug=self.debug_flag)
         ckey = collection.cachekey
         if cclass != Collection:
             self.clients[metadata.hostname] = ckey
             self.collections[ckey] = collection
-        self.groupcache.setdefault(ckey, dict())
-        self.pkgcache.setdefault(ckey, dict())
         return collection
 
     def get_additional_data(self, metadata):
@@ -665,8 +624,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         :param metadata: The client metadata
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         """
-        if metadata.hostname in self.clients:
-            del self.clients[metadata.hostname]
+        self.clients.expire(metadata.hostname)
 
     def end_statistics(self, metadata):
         """ Hook to clear the cache for this client in :attr:`clients`

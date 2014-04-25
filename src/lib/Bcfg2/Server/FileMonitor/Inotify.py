@@ -34,8 +34,8 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
     #: listed in :attr:`action_map`
     mask = reduce(lambda x, y: x | y, action_map.keys())
 
-    def __init__(self, ignore=None, debug=False):
-        Pseudo.__init__(self, ignore=ignore, debug=debug)
+    def __init__(self):
+        Pseudo.__init__(self)
         pyinotify.ProcessEvent.__init__(self)
 
         #: inotify can't set useful monitors directly on files, only
@@ -149,7 +149,7 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
         evt = Event(handleID, path, action)
 
         if (ievent.wd not in self.event_filter or
-            ievent.pathname in self.event_filter[ievent.wd]):
+                ievent.pathname in self.event_filter[ievent.wd]):
             self.events.append(evt)
 
     def AddMonitor(self, path, obj, handleID=None):

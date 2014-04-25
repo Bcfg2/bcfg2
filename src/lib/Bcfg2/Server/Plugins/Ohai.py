@@ -80,11 +80,9 @@ class Ohai(Bcfg2.Server.Plugin.Plugin,
     """The Ohai plugin is used to detect information
     about the client operating system.
     """
-    name = 'Ohai'
-    experimental = True
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Probing.__init__(self)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         self.probe = lxml.etree.Element('probe', name='Ohai', source='Ohai',

@@ -7,13 +7,9 @@ import sys
 import copy
 import logging
 import lxml.etree
+import Bcfg2.Options
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugin import PluginExecutionError
-try:
-    import Bcfg2.Encryption
-    HAS_CRYPTO = True
-except ImportError:
-    HAS_CRYPTO = False
 
 try:
     import json
@@ -35,8 +31,6 @@ except ImportError:
 
 LOGGER = logging.getLogger(__name__)
 
-SETUP = None
-
 
 class PropertyFile(object):
     """ Base Properties file handler """
@@ -53,12 +47,9 @@ class PropertyFile(object):
         """ Write the data in this data structure back to the property
         file. This public method performs checking to ensure that
         writing is possible and then calls :func:`_write`. """
-        if not SETUP.cfp.getboolean("properties", "writes_enabled",
-                                    default=True):
-            msg = "Properties files write-back is disabled in the " + \
-                "configuration"
-            LOGGER.error(msg)
-            raise PluginExecutionError(msg)
+        if not Bcfg2.Options.setup.writes_enabled:
+            raise PluginExecutionError("Properties files write-back is "
+                                       "disabled in the configuration")
         try:
             self.validate_data()
         except PluginExecutionError:
@@ -90,8 +81,8 @@ class PropertyFile(object):
 class JSONPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
     """ Handle JSON Properties files. """
 
-    def __init__(self, name, fam=None):
-        Bcfg2.Server.Plugin.FileBacked.__init__(self, name, fam=fam)
+    def __init__(self, name):
+        Bcfg2.Server.Plugin.FileBacked.__init__(self, name)
         PropertyFile.__init__(self, name)
         self.json = None
     __init__.__doc__ = Bcfg2.Server.Plugin.FileBacked.__init__.__doc__
@@ -129,8 +120,8 @@ class JSONPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
 class YAMLPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
     """ Handle YAML Properties files. """
 
-    def __init__(self, name, fam=None):
-        Bcfg2.Server.Plugin.FileBacked.__init__(self, name, fam=fam)
+    def __init__(self, name):
+        Bcfg2.Server.Plugin.FileBacked.__init__(self, name)
         PropertyFile.__init__(self, name)
         self.yaml = None
     __init__.__doc__ = Bcfg2.Server.Plugin.FileBacked.__init__.__doc__
@@ -168,8 +159,8 @@ class YAMLPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
 class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
     """ Handle XML Properties files. """
 
-    def __init__(self, name, fam=None, should_monitor=False):
-        Bcfg2.Server.Plugin.StructFile.__init__(self, name, fam=fam,
+    def __init__(self, name, should_monitor=False):
+        Bcfg2.Server.Plugin.StructFile.__init__(self, name,
                                                 should_monitor=should_monitor)
         PropertyFile.__init__(self, name)
 
@@ -202,45 +193,8 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
         else:
             return True
 
-    def Index(self):
-        Bcfg2.Server.Plugin.StructFile.Index(self)
-        if HAS_CRYPTO:
-            for el in self.xdata.xpath("//*[@encrypted]"):
-                try:
-                    el.text = self._decrypt(el).encode('ascii',
-                                                       'xmlcharrefreplace')
-                except UnicodeDecodeError:
-                    self.logger.info("Properties: Decrypted %s to gibberish, "
-                                     "skipping" % el.tag)
-                except Bcfg2.Encryption.EVPError:
-                    strict = self.xdata.get(
-                        "decrypt",
-                        SETUP.cfp.get(Bcfg2.Encryption.CFG_SECTION, "decrypt",
-                                      default="strict")) == "strict"
-                    msg = "Properties: Failed to decrypt %s element in %s" % \
-                          (el.tag, self.name)
-                    if strict:
-                        raise PluginExecutionError(msg)
-                    else:
-                        self.logger.debug(msg)
-
-    def _decrypt(self, element):
-        """ Decrypt a single encrypted properties file element """
-        if not element.text or not element.text.strip():
-            return
-        passes = Bcfg2.Encryption.get_passphrases(SETUP)
-        try:
-            passphrase = passes[element.get("encrypted")]
-            return Bcfg2.Encryption.ssl_decrypt(
-                element.text, passphrase,
-                algorithm=Bcfg2.Encryption.get_algorithm(SETUP))
-        except KeyError:
-            raise Bcfg2.Encryption.EVPError("No passphrase named '%s'" %
-                                            element.get("encrypted"))
-        raise Bcfg2.Encryption.EVPError("Failed to decrypt")
-
     def get_additional_data(self, metadata):
-        if SETUP.cfp.getboolean("properties", "automatch", default=False):
+        if Bcfg2.Options.setup.automatch:
             default_automatch = "true"
         else:
             default_automatch = "false"
@@ -262,6 +216,13 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
                  Bcfg2.Server.Plugin.DirectoryBacked):
     """ The properties plugin maps property files into client metadata
     instances. """
+    options = [
+        Bcfg2.Options.BooleanOption(
+            cf=("properties", "writes_enabled"), default=True,
+            help="Enable or disable Properties write-back"),
+        Bcfg2.Options.BooleanOption(
+            cf=("properties", "automatch"),
+            help="Enable Properties automatch")]
 
     #: Extensions that are understood by Properties.
     extensions = ["xml"]
@@ -280,12 +241,10 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
     #: Ignore XML schema (``.xsd``) files
     ignore = re.compile(r'.*\.xsd$')
 
-    def __init__(self, core, datastore):
-        global SETUP  # pylint: disable=W0603
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Connector.__init__(self)
-        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data, core.fam)
-        SETUP = core.setup
+        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data)
 
         #: Instead of creating children of this object with a static
         #: object, we use :func:`property_dispatcher` to create a
@@ -293,23 +252,21 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
         self.__child__ = self.property_dispatcher
     __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
 
-    def property_dispatcher(self, fname, fam):
+    def property_dispatcher(self, fname):
         """ Dispatch an event on a Properties file to the
         appropriate object.
 
         :param fname: The name of the file that received the event
         :type fname: string
-        :param fam: The file monitor the event was received by
-        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
         :returns: An object of the appropriate subclass of
                   :class:`PropertyFile`
         """
         if fname.endswith(".xml"):
-            return XMLPropertyFile(fname, fam)
+            return XMLPropertyFile(fname)
         elif HAS_JSON and fname.endswith(".json"):
-            return JSONPropertyFile(fname, fam)
+            return JSONPropertyFile(fname)
         elif HAS_YAML and (fname.endswith(".yaml") or fname.endswith(".yml")):
-            return YAMLPropertyFile(fname, fam)
+            return YAMLPropertyFile(fname)
         else:
             raise Bcfg2.Server.Plugin.PluginExecutionError(
                 "Properties: Unknown extension %s" % fname)

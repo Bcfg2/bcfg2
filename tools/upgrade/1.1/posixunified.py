@@ -17,12 +17,13 @@ NOTE: This script takes a conservative approach when it comes to
 """
 
 if __name__ == '__main__':
-    opts = {
-               'repo': Bcfg2.Options.SERVER_REPOSITORY,
-           }
-    setup = Bcfg2.Options.OptionParser(opts)
-    setup.parse(sys.argv[1:])
-    repo = setup['repo']
+    parser = Bcfg2.Options.get_parser(
+        description="Migrate from Bcfg2 1.0-style POSIX entries to 1.1-style "
+        "unified Path entries")
+    parser.add_options([Bcfg2.Options.Common.repository])
+    parser.parse()
+
+    repo = Bcfg2.Options.setup.repository
     unifiedposixrules = "%s/Rules/unified-rules.xml" % repo
     rulesroot = lxml.etree.Element("Rules")
 

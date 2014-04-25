@@ -32,8 +32,8 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'sysv'
     pkgtool = ("/usr/sbin/pkgadd %s -n -d %%s", (('%s %s', ['url', 'name'])))
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        Bcfg2.Client.Tools.PkgTool.__init__(self, config)
         # noaskfile needs to live beyond __init__ otherwise file is removed
         self.noaskfile = tempfile.NamedTemporaryFile()
         self.noaskname = self.noaskfile.name
@@ -80,8 +80,8 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
                 self.logger.debug("Package %s not installed" %
                                   entry.get("name"))
         else:
-            if (self.setup['quick'] or
-                entry.attrib.get('verify', 'true') == 'false'):
+            if (Bcfg2.Options.setup.quick or
+                    entry.attrib.get('verify', 'true') == 'false'):
                 return True
             rv = self.cmd.run("/usr/sbin/pkgchk -n %s" % entry.get('name'))
             if rv.success:

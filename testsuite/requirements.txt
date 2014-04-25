@@ -5,3 +5,5 @@ sphinx
 pylint<1.0
 pep8
 python-daemon
+genshi
+argparse

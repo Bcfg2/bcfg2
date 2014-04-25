@@ -20,7 +20,9 @@
 # Don't forget to change the Release: tag below to something like 0.1
 #%%global _rc 1
 #%%global _pre 2
-%global _pre_rc %{?_pre:.pre%{_pre}}%{?_rc:.rc%{_rc}}
+%global _nightly 1
+%global _date %(date +%Y%m%d)
+%global _pre_rc %{?_pre:pre%{_pre}}%{?_rc:rc%{_rc}}
 
 # cherrypy 3.3 actually doesn't exist yet, but 3.2 has bugs that
 # prevent it from working:
@@ -29,8 +31,8 @@
 
 
 Name:             bcfg2
-Version:          1.3.4
-Release:          2%{?_pre_rc}%{?dist}
+Version:          1.4.0
+Release:          0.1.%{?_nightly:nightly.%{_date}}%{?_pre_rc}%{?dist}
 Summary:          A configuration management system
 
 %if 0%{?suse_version}
@@ -76,7 +78,6 @@ BuildRequires:    buildsys-macros
 BuildRequires:    python-ssl
 %else # rhel > 5
 # EL5 lacks python-mock, so test suite is disabled
-BuildRequires:    python-sqlalchemy
 BuildRequires:    python-nose
 BuildRequires:    mock
 BuildRequires:    m2crypto
@@ -295,6 +296,8 @@ This package includes the Bcfg2 CherryPy server backend.
 %package web
 Summary:          Bcfg2 Web Reporting Interface
 
+Requires:         bcfg2-server = %{version}-%{release}
+Requires:         httpd
 %if 0%{?suse_version}
 Group:            System/Management
 Requires:         python-django >= 1.2
@@ -310,7 +313,6 @@ Requires:         Django-south >= 0.7
 %endif
 Requires:         bcfg2-server
 %endif
-Requires:         httpd
 %if "%{_vendor}" == "redhat"
 Requires:         mod_wsgi
 %global apache_conf %{_sysconfdir}/httpd
@@ -443,7 +445,7 @@ awk '
 # Get rid of extraneous shebangs
 for f in `find src/lib -name \*.py`
 do
-    sed -i -e '/^#!/,1d' $f
+    %{__sed} -i -e '/^#!/,1d' $f
 done
 
 sed -i "s/apache2/httpd/g" misc/apache/bcfg2.conf
@@ -559,7 +561,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
   %if 0%{?suse_version}
       %fillup_and_insserv -f bcfg2
   %else
-      /sbin/chkconfig --add bcfg2
+    /sbin/chkconfig --add bcfg2
   %endif
   fi
 %endif
@@ -573,7 +575,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
   %if 0%{?suse_version}
       %fillup_and_insserv -f bcfg2-server
   %else
-      /sbin/chkconfig --add bcfg2-server
+    /sbin/chkconfig --add bcfg2-server
   %endif
   fi
 %endif
@@ -688,8 +690,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %{python_sitelib}/Bcfg2/Client
 %{python_sitelib}/Bcfg2/Compat.py*
 %{python_sitelib}/Bcfg2/Logger.py*
-%{python_sitelib}/Bcfg2/Options.py*
-%{python_sitelib}/Bcfg2/Proxy.py*
+%{python_sitelib}/Bcfg2/Options
 %{python_sitelib}/Bcfg2/Utils.py*
 %{python_sitelib}/Bcfg2/version.py*
 %if 0%{?suse_version}
@@ -711,11 +712,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %config(noreplace) %{_sysconfdir}/sysconfig/bcfg2-server
 %{_sbindir}/bcfg2-*
 %dir %{_localstatedir}/lib/%{name}
-%{python_sitelib}/Bcfg2/Cache.py*
-%{python_sitelib}/Bcfg2/Encryption.py*
-%{python_sitelib}/Bcfg2/SSLServer.py*
-%{python_sitelib}/Bcfg2/Statistics.py*
-%{python_sitelib}/Bcfg2/settings.py*
+%{python_sitelib}/Bcfg2/DBSettings.py*
 %{python_sitelib}/Bcfg2/Server
 %{python_sitelib}/Bcfg2/Reporting
 %{python_sitelib}/Bcfg2/manage.py*
@@ -724,7 +721,6 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %dir %{_datadir}/bcfg2
 %{_datadir}/bcfg2/schemas
 %{_datadir}/bcfg2/xsl-transforms
-%{_datadir}/bcfg2/Hostbase
 %if 0%{?suse_version}
 %{_sbindir}/rcbcfg2-server
 %config(noreplace) /var/adm/fillup-templates/sysconfig.bcfg2-server

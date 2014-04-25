@@ -12,11 +12,6 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'macport'
     pkgtool = ('/opt/local/bin/port install %s', ('%s', ['name']))
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
-        self.installed = {}
-        self.RefreshPackages()
-
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
         pkgcache = self.cmd.run(["/opt/local/bin/port",
@@ -44,8 +39,6 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
         if entry.attrib['name'] in self.installed:
             if (self.installed[entry.attrib['name']] == entry.attrib['version']
                 or entry.attrib['version'] == 'any'):
-                # if (not self.setup['quick'] and
-                #     entry.get('verify', 'true') == 'true'):
                 # FIXME: We should be able to check this once
                 #        http://trac.macports.org/ticket/15709 is implemented
                 return True

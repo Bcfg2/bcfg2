@@ -3,18 +3,13 @@
 import os
 import shutil
 import tempfile
-import subprocess
-from Bcfg2.Server.Plugin import PluginExecutionError, StructFile
-from Bcfg2.Server.Plugins.Cfg import CfgCreator, CfgCreationError, SETUP
+import Bcfg2.Options
+from Bcfg2.Utils import Executor
+from Bcfg2.Server.Plugins.Cfg import XMLCfgCreator, CfgCreationError
 from Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator import CfgPublicKeyCreator
-try:
-    import Bcfg2.Encryption
-    HAS_CRYPTO = True
-except ImportError:
-    HAS_CRYPTO = False
 
 
-class CfgPrivateKeyCreator(CfgCreator, StructFile):
+class CfgPrivateKeyCreator(XMLCfgCreator):
     """The CfgPrivateKeyCreator creates SSH keys on the fly. """
 
     #: Different configurations for different clients/groups can be
@@ -24,36 +19,21 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
     #: Handle XML specifications of private keys
     __basenames__ = ['privkey.xml']
 
-    def __init__(self, fname):
-        CfgCreator.__init__(self, fname)
-        StructFile.__init__(self, fname)
+    cfg_section = "sshkeys"
+    options = [
+        Bcfg2.Options.Option(
+            cf=("sshkeys", "category"), dest="sshkeys_category",
+            help="Metadata category that generated SSH keys are specific to"),
+        Bcfg2.Options.Option(
+            cf=("sshkeys", "passphrase"), dest="sshkeys_passphrase",
+            help="Passphrase used to encrypt generated SSH private keys")]
 
+    def __init__(self, fname):
+        XMLCfgCreator.__init__(self, fname)
         pubkey_path = os.path.dirname(self.name) + ".pub"
         pubkey_name = os.path.join(pubkey_path, os.path.basename(pubkey_path))
         self.pubkey_creator = CfgPublicKeyCreator(pubkey_name)
-
-    @property
-    def category(self):
-        """ The name of the metadata category that generated keys are
-        specific to """
-        if (SETUP.cfp.has_section("sshkeys") and
-            SETUP.cfp.has_option("sshkeys", "category")):
-            return SETUP.cfp.get("sshkeys", "category")
-        return None
-
-    @property
-    def passphrase(self):
-        """ The passphrase used to encrypt private keys """
-        if (HAS_CRYPTO and
-            SETUP.cfp.has_section("sshkeys") and
-            SETUP.cfp.has_option("sshkeys", "passphrase")):
-            return Bcfg2.Encryption.get_passphrases(SETUP)[
-                SETUP.cfp.get("sshkeys", "passphrase")]
-        return None
-
-    def handle_event(self, event):
-        CfgCreator.handle_event(self, event)
-        StructFile.HandleEvent(self, event)
+        self.cmd = Executor()
 
     def _gen_keypair(self, metadata, spec=None):
         """ Generate a keypair according to the given client medata
@@ -100,61 +80,21 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
                 log_cmd.append("''")
             self.debug_log("Cfg: Generating new SSH key pair: %s" %
                            " ".join(log_cmd))
-            proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-            err = proc.communicate()[1]
-            if proc.wait():
+            result = self.cmd.run(cmd)
+            if not result.success:
                 raise CfgCreationError("Cfg: Failed to generate SSH key pair "
                                        "at %s for %s: %s" %
-                                       (filename, metadata.hostname, err))
-            elif err:
+                                       (filename, metadata.hostname,
+                                        result.error))
+            elif result.stderr:
                 self.logger.warning("Cfg: Generated SSH key pair at %s for %s "
                                     "with errors: %s" % (filename,
                                                          metadata.hostname,
-                                                         err))
+                                                         result.stderr))
             return filename
         except:
             shutil.rmtree(tempdir)
             raise
-
-    def get_specificity(self, metadata, spec=None):
-        """ Get config settings for key generation specificity
-        (per-host or per-group).
-
-        :param metadata: The client metadata to create data for
-        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
-        :param spec: The key specification to follow when creating the
-                     keys. This should be an XML document that only
-                     contains key specification data that applies to
-                     the given client metadata, and may be obtained by
-                     doing ``self.XMLMatch(metadata)``
-        :type spec: lxml.etree._Element
-        :returns: dict - A dict of specificity arguments suitable for
-                  passing to
-                  :func:`Bcfg2.Server.Plugins.Cfg.CfgCreator.write_data`
-                  or
-                  :func:`Bcfg2.Server.Plugins.Cfg.CfgCreator.get_filename`
-        """
-        if spec is None:
-            spec = self.XMLMatch(metadata)
-        category = spec.get("category", self.category)
-        if category is None:
-            per_host_default = "true"
-        else:
-            per_host_default = "false"
-        per_host = spec.get("perhost", per_host_default).lower() == "true"
-
-        specificity = dict(host=metadata.hostname)
-        if category and not per_host:
-            group = metadata.group_in_category(category)
-            if group:
-                specificity = dict(group=group,
-                                   prio=int(spec.get("priority", 50)))
-            else:
-                self.logger.info("Cfg: %s has no group in category %s, "
-                                 "creating host-specific key" %
-                                 (metadata.hostname, category))
-        return specificity
 
     # pylint: disable=W0221
     def create_data(self, entry, metadata):
@@ -168,7 +108,7 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
         :returns: string - The private key data
         """
         spec = self.XMLMatch(metadata)
-        specificity = self.get_specificity(metadata, spec)
+        specificity = self.get_specificity(metadata)
         filename = self._gen_keypair(metadata, spec)
 
         try:
@@ -182,63 +122,8 @@ class CfgPrivateKeyCreator(CfgCreator, StructFile):
             # encrypt the private key, write to the proper place, and
             # return it
             privkey = open(filename).read()
-            if HAS_CRYPTO and self.passphrase:
-                self.debug_log("Cfg: Encrypting key data at %s" % filename)
-                privkey = Bcfg2.Encryption.ssl_encrypt(
-                    privkey,
-                    self.passphrase,
-                    algorithm=Bcfg2.Encryption.get_algorithm(SETUP))
-                specificity['ext'] = '.crypt'
-
             self.write_data(privkey, **specificity)
             return privkey
         finally:
             shutil.rmtree(os.path.dirname(filename))
     # pylint: enable=W0221
-
-    def Index(self):
-        StructFile.Index(self)
-        if HAS_CRYPTO:
-            for el in self.xdata.xpath("//*[@encrypted]"):
-                try:
-                    el.text = self._decrypt(el).encode('ascii',
-                                                       'xmlcharrefreplace')
-                except UnicodeDecodeError:
-                    self.logger.info("Cfg: Decrypted %s to gibberish, skipping"
-                                     % el.tag)
-                except Bcfg2.Encryption.EVPError:
-                    default_strict = SETUP.cfp.get(
-                        Bcfg2.Encryption.CFG_SECTION, "decrypt",
-                        default="strict")
-                    strict = self.xdata.get("decrypt",
-                                            default_strict) == "strict"
-                    msg = "Cfg: Failed to decrypt %s element in %s" % \
-                        (el.tag, self.name)
-                    if strict:
-                        raise PluginExecutionError(msg)
-                    else:
-                        self.logger.debug(msg)
-
-    def _decrypt(self, element):
-        """ Decrypt a single encrypted element """
-        if not element.text or not element.text.strip():
-            return
-        passes = Bcfg2.Encryption.get_passphrases(SETUP)
-        try:
-            passphrase = passes[element.get("encrypted")]
-            try:
-                return Bcfg2.Encryption.ssl_decrypt(
-                    element.text,
-                    passphrase,
-                    algorithm=Bcfg2.Encryption.get_algorithm(SETUP))
-            except Bcfg2.Encryption.EVPError:
-                # error is raised below
-                pass
-        except KeyError:
-            # bruteforce_decrypt raises an EVPError with a sensible
-            # error message, so we just let it propagate up the stack
-            return Bcfg2.Encryption.bruteforce_decrypt(
-                element.text,
-                passphrases=passes.values(),
-                algorithm=Bcfg2.Encryption.get_algorithm(SETUP))
-        raise Bcfg2.Encryption.EVPError("Failed to decrypt")

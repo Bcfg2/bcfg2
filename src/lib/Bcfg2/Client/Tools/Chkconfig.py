@@ -3,7 +3,6 @@
 """This is chkconfig support."""
 
 import os
-
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
 
@@ -96,15 +95,15 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
                 bootcmd = '/sbin/chkconfig %s %s' % (entry.get('name'),
                                                      bootstatus)
             bootcmdrv = self.cmd.run(bootcmd).success
-            if self.setup['servicemode'] == 'disabled':
+            if Bcfg2.Options.setup.servicemode == 'disabled':
                 # 'disabled' means we don't attempt to modify running svcs
                 return bootcmdrv
-            buildmode = self.setup['servicemode'] == 'build'
-            if (entry.get('status') == 'on' and not buildmode) and \
-               entry.get('current_status') == 'off':
+            buildmode = Bcfg2.Options.setup.servicemode == 'build'
+            if ((entry.get('status') == 'on' and not buildmode) and
+                    entry.get('current_status') == 'off'):
                 svccmdrv = self.start_service(entry)
-            elif (entry.get('status') == 'off' or buildmode) and \
-                    entry.get('current_status') == 'on':
+            elif ((entry.get('status') == 'off' or buildmode) and
+                  entry.get('current_status') == 'on'):
                 svccmdrv = self.stop_service(entry)
             else:
                 svccmdrv = True  # ignore status attribute

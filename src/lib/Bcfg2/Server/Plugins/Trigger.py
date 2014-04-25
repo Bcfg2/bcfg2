@@ -3,17 +3,13 @@
 import os
 import pipes
 import Bcfg2.Server.Plugin
-from subprocess import Popen, PIPE
+from Bcfg2.Utils import Executor
 
 
 class TriggerFile(Bcfg2.Server.Plugin.FileBacked):
     """ Representation of a trigger script file """
-
     def HandleEvent(self, event=None):
         return
-
-    def __str__(self):
-        return "%s: %s" % (self.__class__.__name__, self.name)
 
 
 class Trigger(Bcfg2.Server.Plugin.Plugin,
@@ -22,11 +18,11 @@ class Trigger(Bcfg2.Server.Plugin.Plugin,
     """Trigger is a plugin that calls external scripts (on the server)."""
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
-        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data,
-                                                     self.core.fam)
+        Bcfg2.Server.Plugin.DirectoryBacked.__init__(self, self.data)
+        self.cmd = Executor()
 
     def async_run(self, args):
         """ Run the trigger script asynchronously in a forked process
@@ -39,14 +35,12 @@ class Trigger(Bcfg2.Server.Plugin.Plugin,
             if not dpid:
                 self.debug_log("Running %s" % " ".join(pipes.quote(a)
                                                        for a in args))
-                proc = Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE)
-                err = proc.communicate()[1]
-                rv = proc.wait()
-                if rv != 0:
-                    self.logger.error("Trigger: Error running %s (%s): %s" %
-                                      (args[0], rv, err))
-                elif err:
-                    self.debug_log("Trigger: Error: %s" % err)
+                result = self.cmd.run(args)
+                if not result.success:
+                    self.logger.error("Trigger: Error running %s: %s" %
+                                      (args[0], result.error))
+                elif result.stderr:
+                    self.debug_log("Trigger: Error: %s" % result.stderr)
             os._exit(0)  # pylint: disable=W0212
 
     def end_client_run(self, metadata):

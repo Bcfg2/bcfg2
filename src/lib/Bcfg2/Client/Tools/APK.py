@@ -12,11 +12,6 @@ class APK(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'apk'
     pkgtool = ("/sbin/apk add %s", ("%s", ["name"]))
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
-        self.installed = {}
-        self.RefreshPackages()
-
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
         names = self.cmd.run("/sbin/apk info").stdout.splitlines()
@@ -38,8 +33,6 @@ class APK(Bcfg2.Client.Tools.PkgTool):
         if entry.attrib['name'] in self.installed:
             if entry.attrib['version'] in \
                     ['auto', self.installed[entry.attrib['name']]]:
-                # if (not self.setup['quick'] and
-                #     entry.get('verify', 'true') == 'true'):
                 # FIXME: Does APK have any sort of verification mechanism?
                 return True
             else:

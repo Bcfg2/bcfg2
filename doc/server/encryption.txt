@@ -24,7 +24,7 @@ feature requires M2Crypto 0.18 or newer.
     single Bcfg2 repository with multiple admins who should not
     necessarily have access to each other's sensitive data.
 
-Two types of data can be encrypted:
+Two basic types of data can be encrypted:
 
 * :ref:`server-plugins-generators-cfg` files can be encrypted
   as whole files. See :ref:`server-plugins-generators-cfg-encryption`
@@ -50,6 +50,13 @@ In general, Properties encryption is preferred for a few reasons:
   elements.  If you are using different passphrases to segregate data
   amongst different teams, this lets teams collaborate more closely on
   files and other data.
+
+Other types of data that can be encrypted are:
+
+* Text content of Path tags in
+  :ref:`server-plugins-structures-bundler-index`
+* Passphrases in XML description files for generated
+  :ref:`server-plugins-generators-cfg-sshkeys`
 
 .. _bcfg2-crypt:
 
@@ -203,6 +210,8 @@ get a list of valid algorithms, you can run::
     openssl list-cipher-algorithms | grep -v ' => ' | \
         tr 'A-Z-' 'a-z_' | sort -u
 
+.. _server-encryption-lax-strict:
+
 Lax vs. Strict decryption
 -------------------------
 
@@ -223,7 +232,10 @@ This can be overridden by individual XML files by setting
 ``decrypt="strict"`` on the top-level tag (or, vice-versa; if strict
 is the default an XML file can specify ``decrypt="lax"``.
 
+Note that you could, for instance, set lax decryption by default, and
+then set strict decryption on individual files.
+
 Encryption API
 ==============
 
-.. automodule:: Bcfg2.Encryption
+.. automodule:: Bcfg2.Server.Encryption

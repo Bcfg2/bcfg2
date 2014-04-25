@@ -1,0 +1,235 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-misc-acl:
+
+===
+ACL
+===
+
+The ACL plugin lets you set client communication ACLs to prevent
+clients from accessing the full range of exposed XML-RPC methods.
+
+You can get a list of all exposed methods by running::
+
+    bcfg2-admin xcmd listMethods
+
+Note that this will only list methods that are available to the client
+this is run from; that is, if the ACL plugin is in place,
+``listMethods`` will reflect the ACLs.
+
+ACLs can be set in two different ways:
+
+* IP-based ACLs allow you to set ACLs based on client IP address or
+  CIDR range.
+* Metadata-based ACLs allow you to set ACLs based on client hostname,
+  group membership, or complex combinations thereof.
+
+IP-based ACLs are much faster, but metadata-based ACLs are often
+easier and better.
+
+If you are not going to use any ACLs, it is recommended that you
+disable this plugin because using it can incur a slight performance
+hit.  If you are using IP-based ACLs but *not* metadata-based ACLs, it
+is similarly recommended that you ensure that your IP-based ACL file
+ends with an explicit Deny for all clients; this will ensure that
+metadata-based ACLs are never checked.  If you are using
+metadata-based ACLs, :ref:`server-caching` can alleviate most of the
+performance penalty.
+
+Enabling the ACL plugin
+=======================
+
+First, create ``/var/lib/bcfg2/ACL/``.  Then, add ``ACL`` to your
+``plugins`` list in ``bcfg2.conf``::
+
+    plugins = Bundler, Cfg, ..., Packages, ACL
+
+Finally, create ``/var/lib/bcfg2/ACL/ip.xml`` (for `IP-based ACLs`_),
+``/var/lib/bcfg2/ACL/metadata.xml`` (for `Metadata-based ACLs`_), or
+both.
+
+IP-based ACLs
+=============
+
+IP-based ACLs allow you to set ACLs based on client IP address or CIDR
+range.  IP-based ACLs are very fast.  If you are using IP-based ACLs
+but *not* metadata-based ACLs, it is recommended that you ensure that
+your IP-based ACL file ends with an explicit Deny for all clients;
+this will ensure that metadata-based ACLs are never checked.
+
+IP-based ACLs are defined in ``ACL/ip.xml``.  The file is parsed
+sequentially; the first matching rule applies.  Each rule is either
+Allow (to allow the client access), Deny (to deny the client access),
+or Defer (to defer to `Metadata-based ACLs`_).  The last rule in
+``ip.xml`` is an implicit default allow for 127.0.0.1, and an implicit
+default defer for all other machines.
+
+If no ``ip.xml`` file exists, then ACL checking will be deferred to
+metadata-based ACLs.
+
+Example
+-------
+
+.. code-block:: xml
+
+    <ACL>
+      <Allow address="192.168.1.10" method="*.*"/>
+      <Deny address="192.168.2.0" netmask="255.255.255.0"
+            method="AssertProfile"/>
+      <Allow address="192.168.1.12" method="Git.Update"/>
+      <Allow method="*"/>
+    </ACL>
+
+In this example:
+
+* The machine at 192.168.1.10 (perhaps the Bcfg2 server) can call all
+  plugin XML-RPC methods;
+* Machines in the 192.168.2.0/24 network cannot assert their own
+  profiles;
+* The machine at 192.168.1.12 (perhaps the Git server) can call the
+  Git.Update method;
+* All machines can call core methods (except 192.168.2.0/24, which can
+  call all core methods except AssertProfile).
+
+Implicitly, all machines (except localhost) except 192.168.1.10 are
+disallowed access to the plugin methods.
+
+You can also provide a minimal configuration to try to weed out some
+obvious bad requests before doing the more expensive `Metadata-based
+ACLs`_.  For instance:
+
+.. code-block:: xml
+
+    <ACL>
+      <Allow method="*"/>
+      <Defer address="192.168.1.0" netmask="24" method="*.*"/>
+      <Deny method="*.*"/>
+    </ACL>
+
+In this example:
+
+* All machines can call all core methods without checking metadata
+  ACLs;
+* Plugin method calls from machines in 192.168.1.0/24 are deferred to
+  metadata ACLs; and
+* All other plugin method calls are denied.
+
+The only time metadata ACLs would be checked in this example would be
+plugin method calls by machines in 192.168.1.0/24.
+
+Reference
+---------
+
+.. xml:type: IPACLContainerType
+
+Metadata-based ACLs
+===================
+
+Metadata-based ACLs let you set ACLs based on client hostname or group
+membership, which is much more flexible and maintainable than
+`IP-based ACLs`_.  The downside is that it is slower, because it
+requires generating client metadata for each machine that tries to
+authenticate.  Without :ref:`server-caching`, using metadata-based
+ACLs will double the number of client metadata builds per client run,
+which could be a sizeable performance penalty.
+
+In order to limit the performance penalty, it's highly recommended
+to:
+
+* Enable :ref:`server-caching` in ``cautious`` or ``aggressive`` mode;
+  and
+* Deny as many clients as possible with `IP-based ACLs`_.
+
+Metadata-based ACLs are defined in ``ACL/metadata.xml``.  Only Allow
+and Deny rules are supported, not Defer rules.  The file is parsed
+sequentially; the first matching rule applies.  The last rule in
+``metadata.xml`` is an implicit default allow for machines called
+``localhost`` or ``localhost.localdomain``, and an implicit default
+deny for all other machines.
+
+If no ``metadata.xml`` file exists, then all requests are implicitly
+allowed.
+
+Example
+-------
+
+This example is functionally identical to the `IP-based ACLs` example
+above, but more maintainable in several ways:
+
+.. code-block:: xml
+
+    <ACL>
+      <Group name="bcfg2-server">
+        <Allow method="*.*"/>
+      </Group>
+      <Group name="user-workstations">
+        <Deny method="AssertProfile"/>
+      </Group>
+      <Group name="git-server">
+        <Allow method="Git.Update"/>
+      </Group>
+      <Allow method="*"/>
+    </ACL>
+
+In this case, if you add a Bcfg2 server or Git server, or one of those
+servers changes IP address, you don't need to rewrite your ACLs.
+Similarly, you could add a new subnet of user workstations.
+
+Reference
+---------
+
+.. xml:type: MetadataACLContainerType
+
+.. _server-plugins-misc-acl-wildcards:
+
+Wildcards
+=========
+
+The ACL descriptions allow you to use '*' as a wildcard for any number
+of characters *other than* ``.``.  That is:
+
+* ``*`` would match ``DeclareVersion`` and ``GetProbes``, but would
+  *not* match ``Git.Update``.
+* ``*.*`` would match ``Git.Update``, but not ``DeclareVersion`` or
+  ``GetProbes``.
+
+Since all plugin methods are scoped to their plugin (i.e., they are
+all ``<plugin name>.<method name>``), and all core methods have no
+scope, this lets you easily allow or deny core or plugin methods.  You
+could also do something like ``*.toggle_debug`` to allow a host to
+enable or disable debugging for all plugins.
+
+No other bash globbing is supported.
+
+Examples
+========
+
+The :ref:`default ACL list <server-access-control>` can be described
+in ``ip.xml`` fairly simply:
+
+.. code-block:: xml
+
+    <ACL>
+      <Allow address="127.0.0.1" method="*.*"/>
+      <Allow address="127.0.0.1" method="*"/>
+      <Deny method="*.*"/>
+      <Deny method="*_debug"/>
+      <Deny method="get_statistics"/>
+      <Allow method="*"/>
+    </ACL>
+
+A basic configuration that is still very secure but perhaps more
+functional could be given in ``metadata.xml``:
+
+.. code-block:: xml
+
+    <ACL>
+      <Group name="bcfg2-server">
+        <Allow method="*.*"/>
+        <Allow method="*"/>
+      </Group>
+      <Deny method="*.*"/>
+      <Deny method="*_debug"/>
+      <Deny method="get_statistics"/>
+      <Allow method="*"/>
+    </ACL>

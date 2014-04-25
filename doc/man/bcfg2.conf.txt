@@ -43,7 +43,6 @@ filemonitor
 
         inotify
 	gamin
-	fam
 	pseudo
 
 fam_blocking
@@ -76,24 +75,22 @@ plugins
     A comma-delimited list of enabled server plugins. Currently
     available plugins are::
 
-        Account
-	Base
+        ACL
 	Bundler
 	Bzr
 	Cfg
 	Cvs
 	Darcs
-	DBStats
 	Decisions
+        Defaults
 	Deps
-	Editor
 	FileProbes
 	Fossil
 	Git
+        GroupLogic
 	GroupPatterns
 	Guppy
 	Hg
-	Hostbase
 	Ldap
 	Metadata
 	NagiosGen
@@ -108,14 +105,9 @@ plugins
 	Rules
 	SEModules
 	ServiceCompat
-	Snapshots
 	SSHbase
-	SSLCA
-	Statistics
 	Svn
-	TCheetah
 	TemplateHelper
-	TGenshi
 	Trigger
 
     Descriptions of each plugin can be found in their respective
@@ -158,25 +150,10 @@ Server Plugins
 This section has a listing of all the plugins currently provided with
 Bcfg2.
 
-Account Plugin
-++++++++++++++
+ACL Plugin
+++++++++++
 
-The account plugin manages authentication data, including the following.
-
-* ``/etc/passwd``
-* ``/etc/group``
-* ``/etc/security/limits.conf``
-* ``/etc/sudoers``
-* ``/root/.ssh/authorized_keys``
-
-Base Plugin
-+++++++++++
-
-The Base plugin is a structure plugin that provides the ability
-to add lists of unrelated entries into client configuration entry
-inventories. Base works much like Bundler in its file format. This
-structure plugin is good for the pile of independent configs needed for
-most actual systems.
+The ACL plugin controls which hosts can make which XML-RPC calls.
 
 Bundler Plugin
 ++++++++++++++
@@ -203,24 +180,19 @@ contents for clients. In its simplest form, the Cfg repository is just a
 directory tree modeled off of the directory tree on your client
 machines.
 
-Cvs Plugin (experimental)
-+++++++++++++++++++++++++
+Cvs Plugin
+++++++++++
 
 The Cvs plugin allows you to track changes to your Bcfg2 repository
 using a Concurrent version control backend. Currently, it enables you to
 get revision information out of your repository for reporting purposes.
 
-Darcs Plugin (experimental)
-+++++++++++++++++++++++++++
+Darcs Plugin
+++++++++++++
 
 The Darcs plugin allows you to track changes to your Bcfg2 repository
 using a Darcs version control backend. Currently, it enables you to get
 revision information out of your repository for reporting purposes.
-
-DBStats Plugin
-++++++++++++++
-
-Direct to database statistics plugin.
 
 Decisions Plugin
 ++++++++++++++++
@@ -245,13 +217,6 @@ Deps Plugin
 The Deps plugin allows you to make a series of assertions like "Package
 X requires Package Y (and optionally also Package Z etc.)"
 
-Editor Plugin
-+++++++++++++
-
-The Editor plugin attempts to allow you to partially manage
-configuration for a file. Its use is not recommended and not well
-documented.
-
 FileProbes Plugin
 +++++++++++++++++
 
@@ -274,6 +239,12 @@ The Git plugin allows you to track changes to your Bcfg2 repository
 using a Git version control backend. Currently, it enables you to get
 revision information out of your repository for reporting purposes.
 
+GroupLogic Plugin
++++++++++++++++++
+
+The GroupLogic plugin lets you flexibly assign group membership with a
+Genshi template.
+
 GroupPatterns Plugin
 ++++++++++++++++++++
 
@@ -286,17 +257,12 @@ Guppy Plugin
 The Guppy plugin is used to trace memory leaks within the bcfg2-server
 process using Guppy.
 
-Hg Plugin (experimental)
-++++++++++++++++++++++++
+Hg Plugin
++++++++++
 
 The Hg plugin allows you to track changes to your Bcfg2 repository using
 a Mercurial version control backend. Currently, it enables you to get
 revision information out of your repository for reporting purposes.
-
-Hostbase Plugin
-+++++++++++++++
-
-The Hostbase plugin is an IP management system built on top of Bcfg2.
 
 Ldap Plugin
 +++++++++++
@@ -316,8 +282,8 @@ NagiosGen Plugin
 The NagiosGen plugin dynamically generates Nagios configuration files
 based on Bcfg2 data.
 
-Ohai Plugin (experimental)
-++++++++++++++++++++++++++
+Ohai Plugin
++++++++++++
 
 The Ohai plugin is used to detect information about the client operating
 system. The data is reported back to the server using JSON.
@@ -373,10 +339,10 @@ dynamic reporting system.
 Rules Plugin
 ++++++++++++
 
-The Rules plugin provides literal configuration entries that resolve the
-abstract configuration entries normally found in the Bundler and Base
-plugins. The literal entries in Rules are suitable for consumption by
-the appropriate client drivers.
+The Rules plugin provides literal configuration entries that resolve
+the abstract configuration entries normally found in Bundler. The
+literal entries in Rules are suitable for consumption by the
+appropriate client drivers.
 
 SEModules Plugin
 ++++++++++++++++
@@ -389,12 +355,6 @@ ServiceCompat Plugin
 
 The ServiceCompat plugin converts service entries for older clients.
 
-Snapshots Plugin
-++++++++++++++++
-
-The Snapshots plugin stores various aspects of a client’s state when the
-client checks in to the server.
-
 SSHbase Plugin
 ++++++++++++++
 
@@ -402,37 +362,12 @@ The SSHbase generator plugin manages ssh host keys (both v1 and v2) for
 hosts. It also manages the ssh_known_hosts file. It can integrate host
 keys from other management domains and similarly export its keys.
 
-SSLCA Plugin
-++++++++++++
-
-The SSLCA plugin is designed to handle creation of SSL privatekeys and
-certificates on request.
-
-Statistics
-++++++++++
-
-The Statistics plugin is deprecated (see Reporting).
-
 Svn Plugin
 ++++++++++
 
 The Svn plugin allows you to track changes to your Bcfg2 repository
 using a Subversion backend. Currently, it enables you to get revision
 information out of your repository for reporting purposes.
-
-TCheetah Plugin
-+++++++++++++++
-
-The TCheetah plugin allows you to use the cheetah templating system to
-create files. It also allows you to include the results of probes
-executed on the client in the created files.
-
-TGenshi Plugin
-++++++++++++++
-
-The TGenshi plugin allows you to use the Genshi templating system to
-create files. It also allows you to include the results of probes
-executed on the client in the created files.
 
 Trigger Plugin
 ++++++++++++++
@@ -667,25 +602,12 @@ the configuration file.
         running in paranoid mode. Only the most recent versions of these
         copies will be kept.
 
-Snapshots options
------------------
+SSL CA options
+--------------
 
-Specified in the **[snapshots]** section. These options control the
-server snapshots functionality.
-
-    driver
-        sqlite
-
-    database
-        The name of the database to use for statistics data.
-
-        e.g.: ``$REPOSITORY_DIR/etc/bcfg2.sqlite``
-
-SSLCA options
--------------
-
-These options are necessary to configure the SSLCA plugin and can be
-found in the **[sslca_default]** section of the configuration file.
+These options are necessary to configure the SSL CA feature of the Cfg
+plugin and can be found in the **[sslca_default]** section of the
+configuration file.
 
     config
         Specifies the location of the openssl configuration file for
@@ -710,7 +632,7 @@ Server-only, specified in the **[database]** section. These options
 control the database connection of the server.
 
     engine
-        The database engine used by the statistics module. One of the
+        The database engine used by server plugins. One of the
         following::
 
             postgresql
@@ -719,9 +641,9 @@ control the database connection of the server.
             ado_mssql
 
     name
-        The name of the database to use for statistics data. If
+        The name of the database to use for server data. If
         'database_engine' is set to 'sqlite3' this is a file path to
-        the sqlite file and defaults to ``$REPOSITORY_DIR/etc/brpt.sqlite``.
+        the sqlite file and defaults to ``$REPOSITORY_DIR/etc/bcfg2.sqlite``.
 
     user
         User for database connections. Not used for sqlite3.
@@ -738,6 +660,41 @@ control the database connection of the server.
     options
         Various options for the database connection. The value is
         expected as multiple key=value pairs, separated with commas.
+        The concrete value depends on the database engine.
+
+    reporting_engine
+        The database engine used by the Reporting plugin. One of the
+        following::
+
+            postgresql
+            mysql
+            sqlite3
+            ado_mssql
+
+         If reporting_engine is not specified, the Reporting plugin uses
+         the same database as the other server plugins.
+
+    reporting_name
+        The name of the database to use for reporting data. If
+        'database_engine' is set to 'sqlite3' this is a file path to
+        the sqlite file and defaults to 
+        ``$REPOSITORY_DIR/etc/reporting.sqlite``.
+
+    reporting_user
+        User for reporting database connections. Not used for sqlite3.
+
+    reporting_password
+        Password for reporting database connections. Not used for sqlite3.
+
+    reporting_host
+        Host for reporting database connections. Not used for sqlite3.
+
+    reporting_port
+        Port for reporting database connections. Not used for sqlite3.
+
+    reporting_options
+        Various options for the reporting database connection. The value 
+        is expected as multiple key=value pairs, separated with commas.
         The concrete value depends on the database engine.
 
 Reporting options

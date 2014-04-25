@@ -1,5 +1,4 @@
-import Bcfg2.settings
-
+import Bcfg2.DBSettings
 from django.db import connection
 import django.core.management
 import sys
@@ -16,9 +15,9 @@ def _merge_database_table_entries():
     find_cursor = connection.cursor()
     cursor.execute("""
     Select name, kind from reports_bad
-    union 
+    union
     select name, kind from reports_modified
-    union 
+    union
     select name, kind from reports_extra
     """)
     # this fetch could be better done
@@ -43,20 +42,26 @@ def _merge_database_table_entries():
         if entries_map.get(key, None):
             entry_id = entries_map[key]
         else:
-            find_cursor.execute("Select id from reports_entries where name=%s and kind=%s", key)
+            find_cursor.execute("Select id from reports_entries where "
+                                "name=%s and kind=%s", key)
             rowe = find_cursor.fetchone()
             entry_id = rowe[0]
-        insert_cursor.execute("insert into reports_entries_interactions \
-            (entry_id, interaction_id, reason_id, type) values (%s, %s, %s, %s)", (entry_id, row[3], row[2], row[4]))
+        insert_cursor.execute("insert into reports_entries_interactions "
+                              "(entry_id, interaction_id, reason_id, type) "
+                              "values (%s, %s, %s, %s)",
+                              (entry_id, row[3], row[2], row[4]))
 
 
 def _interactions_constraint_or_idx():
     '''sqlite doesn't support alter tables.. or constraints'''
     cursor = connection.cursor()
     try:
-        cursor.execute('alter table reports_interaction add constraint reports_interaction_20100601 unique (client_id,timestamp)')
+        cursor.execute('alter table reports_interaction '
+                       'add constraint reports_interaction_20100601 '
+                       'unique (client_id,timestamp)')
     except:
-        cursor.execute('create unique index reports_interaction_20100601 on reports_interaction (client_id,timestamp)')
+        cursor.execute('create unique index reports_interaction_20100601 '
+                       'on reports_interaction (client_id,timestamp)')
 
 
 def _populate_interaction_entry_counts():
@@ -67,13 +72,16 @@ def _populate_interaction_entry_counts():
                    3: 'extra_entries'}
 
     for type in list(count_field.keys()):
-        cursor.execute("select count(type), interaction_id " +
-                "from reports_entries_interactions where type = %s group by interaction_id" % type)
+        cursor.execute("select count(type), interaction_id "
+                       "from reports_entries_interactions "
+                       "where type = %s group by interaction_id" % type)
         updates = []
         for row in cursor.fetchall():
             updates.append(row)
         try:
-            cursor.executemany("update reports_interaction set " + count_field[type] + "=%s where id = %s", updates)
+            cursor.executemany("update reports_interaction set " +
+                               count_field[type] +
+                               "=%s where id = %s", updates)
         except Exception:
             e = sys.exc_info()[1]
             print(e)
@@ -106,9 +114,8 @@ _fixes = [_merge_database_table_entries,
           _interactions_constraint_or_idx,
           'alter table reports_reason add is_binary bool NOT NULL default False;',
           'alter table reports_reason add is_sensitive bool NOT NULL default False;',
-          update_noop, #_remove_table_column('reports_interaction', 'client_version'),
-          "alter table reports_reason add unpruned varchar(1280) not null default 'N/A';",
-]
+          update_noop,  # _remove_table_column('reports_interaction', 'client_version'),
+          "alter table reports_reason add unpruned varchar(1280) not null default 'N/A';"]
 
 # this will calculate the last possible version of the database
 lastversion = len(_fixes)
@@ -127,8 +134,10 @@ def rollupdate(current_version):
                 else:
                     _fixes[i]()
             except:
-                logger.error("Failed to perform db update %s" % (_fixes[i]), exc_info=1)
-            # since array start at 0 but version start at 1 we add 1 to the normal count
+                logger.error("Failed to perform db update %s" % (_fixes[i]),
+                             exc_info=1)
+            # since array start at 0 but version start at 1
+            # we add 1 to the normal count
             ret = InternalDatabaseVersion.objects.create(version=i + 1)
         return ret
     else:

@@ -1,0 +1,14 @@
+This directory contains scripts to help with upgrading from Bcfg2 1.3
+to 1.4.
+
+migrate_decisions.py
+    - Convert old group- and host-specific whitelist and blacklist
+      files into structured XML
+
+convert_bundles.py
+    - Remove deprecated explicit bundle names, rename .genshi bundles
+      to .xml
+
+migrate_sslca.py
+    - Migrate from the standalone SSLCA plugin to the built-in SSL
+      certificate generation abilities of the Cfg plugin

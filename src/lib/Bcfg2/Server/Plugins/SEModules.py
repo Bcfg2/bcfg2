@@ -43,9 +43,6 @@ class SEModules(Bcfg2.Server.Plugin.GroupSpool):
     #: SEModules manages ``SEModule`` entries
     entry_type = 'SEModule'
 
-    #: The SEModules plugin is experimental
-    experimental = True
-
     def _get_module_filename(self, entry):
         """ GroupSpool stores entries as /foo.pp, but we want people
         to be able to specify module entries as name='foo' or

@@ -2,15 +2,12 @@
 The base for the original DjangoORM (DBStats)
 """
 
-import os
-import traceback
 from lxml import etree
 from datetime import datetime
+import traceback
 from time import strptime
-
-os.environ['DJANGO_SETTINGS_MODULE'] = 'Bcfg2.settings'
-from Bcfg2 import settings
-
+import Bcfg2.Options
+import Bcfg2.DBSettings
 from Bcfg2.Compat import md5
 from Bcfg2.Reporting.Storage.base import StorageBase, StorageError
 from Bcfg2.Server.Plugin.exceptions import PluginExecutionError
@@ -28,9 +25,13 @@ from Bcfg2.Reporting.Compat import transaction
 
 
 class DjangoORM(StorageBase):
-    def __init__(self, setup):
-        super(DjangoORM, self).__init__(setup)
-        self.size_limit = setup.get('reporting_file_limit')
+    options = StorageBase.options + [
+        Bcfg2.Options.Common.repository,
+        Bcfg2.Options.Option(
+            cf=('reporting', 'file_limit'),
+            type=Bcfg2.Options.Types.size,
+            help='Reporting file size limit',
+            default=1024 * 1024)]
 
     def _import_default(self, entry, state, entrytype=None, defaults=None,
                         mapping=None, boolean=None, xforms=None):
@@ -185,7 +186,7 @@ class DjangoORM(StorageBase):
                 act_dict['detail_type'] = PathEntry.DETAIL_DIFF
                 cdata = entry.get('current_bdiff')
             if cdata:
-                if len(cdata) > self.size_limit:
+                if len(cdata) > Bcfg2.Options.setup.file_limit:
                     act_dict['detail_type'] = PathEntry.DETAIL_SIZE_LIMIT
                     act_dict['details'] = md5(cdata).hexdigest()
                 else:
@@ -365,7 +366,6 @@ class DjangoORM(StorageBase):
 
     def import_interaction(self, interaction):
         """Import the data into the backend"""
-
         try:
             self._import_interaction(interaction)
         except:
@@ -379,23 +379,21 @@ class DjangoORM(StorageBase):
 
     def validate(self):
         """Validate backend storage.  Should be called once when loaded"""
-
-        settings.read_config(repo=self.setup['repo'])
-
         # verify our database schema
         try:
-            if self.setup['debug']:
+            if Bcfg2.Options.setup.debug:
                 vrb = 2
-            elif self.setup['verbose']:
+            elif Bcfg2.Options.setup.verbose:
                 vrb = 1
             else:
                 vrb = 0
-            management.call_command("syncdb", verbosity=vrb, interactive=False)
-            management.call_command("migrate", verbosity=vrb, interactive=False)
+            Bcfg2.DBSettings.sync_databases(verbosity=vrb, interactive=False)
+            Bcfg2.DBSettings.migrate_databases(verbosity=vrb,
+                                               interactive=False)
         except:
-            self.logger.error("Failed to update database schema: %s" % \
-                traceback.format_exc().splitlines()[-1])
-            raise StorageError
+            msg = "Failed to update database schema: %s" % sys.exc_info()[1]
+            self.logger.error(msg)
+            raise StorageError(msg)
 
     def GetExtra(self, client):
         """Fetch extra entries for a client"""

@@ -13,7 +13,7 @@ from django.http import \
 from django.shortcuts import render_to_response, get_object_or_404
 from django.core.urlresolvers import \
         resolve, reverse, Resolver404, NoReverseMatch
-from django.db import connection, DatabaseError
+from django.db import DatabaseError
 from django.db.models import Q, Count
 
 from Bcfg2.Reporting.models import *

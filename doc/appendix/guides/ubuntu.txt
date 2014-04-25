@@ -496,7 +496,7 @@ like this:
 
 .. code-block:: xml
 
-    <Bundle name='base-saucy'>
+    <Bundle>
             <!-- packages -->
             <Package name='bcfg2-server'/>
                     <!-- or dependencies -->

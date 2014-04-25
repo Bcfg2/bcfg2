@@ -8,7 +8,7 @@ import tempfile
 import lxml.etree
 from Bcfg2.Utils import Executor
 from Bcfg2.Server.Plugin import StructFile, PluginExecutionError
-from Bcfg2.Server.Plugins.Cfg import CfgCreator, CfgCreationError, CFG
+from Bcfg2.Server.Plugins.Cfg import CfgCreator, CfgCreationError, get_cfg
 
 
 class CfgPublicKeyCreator(CfgCreator, StructFile):
@@ -21,17 +21,20 @@ class CfgPublicKeyCreator(CfgCreator, StructFile):
     creation of a keypair when a public key is created. """
 
     #: Different configurations for different clients/groups can be
-    #: handled with Client and Group tags within privkey.xml
+    #: handled with Client and Group tags within pubkey.xml
     __specific__ = False
 
     #: Handle XML specifications of private keys
     __basenames__ = ['pubkey.xml']
 
+    #: No text content on any tags, so encryption support disabled
+    encryption = False
+
     def __init__(self, fname):
         CfgCreator.__init__(self, fname)
         StructFile.__init__(self, fname)
-        self.cfg = CFG
-        self.core = CFG.core
+        self.cfg = get_cfg()
+        self.core = self.cfg.core
         self.cmd = Executor()
 
     def create_data(self, entry, metadata):

@@ -49,7 +49,6 @@ class TestPOSIX(TestTool):
         mock_canVerify.assert_called_with(posix, entry)
 
         # next, test fully_specified failure
-        posix.logger.error.reset_mock()
         mock_canVerify.reset_mock()
         mock_canVerify.return_value = True
         mock_fully_spec = Mock()
@@ -59,17 +58,14 @@ class TestPOSIX(TestTool):
         self.assertFalse(posix.canVerify(entry))
         mock_canVerify.assert_called_with(posix, entry)
         mock_fully_spec.assert_called_with(entry)
-        self.assertTrue(posix.logger.error.called)
 
         # finally, test success
-        posix.logger.error.reset_mock()
         mock_canVerify.reset_mock()
         mock_fully_spec.reset_mock()
         mock_fully_spec.return_value = True
         self.assertTrue(posix.canVerify(entry))
         mock_canVerify.assert_called_with(posix, entry)
         mock_fully_spec.assert_called_with(entry)
-        self.assertFalse(posix.logger.error.called)
 
     @patch("Bcfg2.Client.Tools.Tool.canInstall")
     def test_canInstall(self, mock_canInstall):
@@ -82,7 +78,6 @@ class TestPOSIX(TestTool):
         mock_canInstall.assert_called_with(posix, entry)
 
         # next, test fully_specified failure
-        posix.logger.error.reset_mock()
         mock_canInstall.reset_mock()
         mock_canInstall.return_value = True
         mock_fully_spec = Mock()
@@ -92,17 +87,14 @@ class TestPOSIX(TestTool):
         self.assertFalse(posix.canInstall(entry))
         mock_canInstall.assert_called_with(posix, entry)
         mock_fully_spec.assert_called_with(entry)
-        self.assertTrue(posix.logger.error.called)
 
         # finally, test success
-        posix.logger.error.reset_mock()
         mock_canInstall.reset_mock()
         mock_fully_spec.reset_mock()
         mock_fully_spec.return_value = True
         self.assertTrue(posix.canInstall(entry))
         mock_canInstall.assert_called_with(posix, entry)
         mock_fully_spec.assert_called_with(entry)
-        self.assertFalse(posix.logger.error.called)
 
     def test_InstallPath(self):
         posix = self.get_obj()
@@ -127,15 +119,17 @@ class TestPOSIX(TestTool):
 
         mock_verify.reset_mock()
         mock_verify.return_value = False
-        posix.setup.__getitem__.return_value = True
+        Bcfg2.Options.setup.interactive = True
         self.assertFalse(posix.VerifyPath(entry, modlist))
         self.assertIsNotNone(entry.get('qtext'))
 
     @patch('os.remove')
     def test_prune_old_backups(self, mock_remove):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
-        setup = dict(ppath='/', max_copies=5, paranoid=True)
-        posix = self.get_obj(setup=setup)
+        Bcfg2.Options.setup.paranoid_path = '/'
+        Bcfg2.Options.setup.paranoid_copies = 5
+        Bcfg2.Options.setup.paranoid = True
+        posix = self.get_obj()
 
         remove = ["_etc_foo_2012-07-20T04:13:22.364989",
                   "_etc_foo_2012-07-31T04:13:23.894958",
@@ -152,9 +146,8 @@ class TestPOSIX(TestTool):
         def inner(mock_listdir):
             mock_listdir.side_effect = OSError
             posix._prune_old_backups(entry)
-            self.assertTrue(posix.logger.error.called)
             self.assertFalse(mock_remove.called)
-            mock_listdir.assert_called_with(setup['ppath'])
+            mock_listdir.assert_called_with(Bcfg2.Options.setup.paranoid_path)
 
             mock_listdir.reset_mock()
             mock_remove.reset_mock()
@@ -162,23 +155,23 @@ class TestPOSIX(TestTool):
             mock_listdir.return_value = keep + remove
 
             posix._prune_old_backups(entry)
-            mock_listdir.assert_called_with(setup['ppath'])
+            mock_listdir.assert_called_with(Bcfg2.Options.setup.paranoid_path)
             self.assertItemsEqual(mock_remove.call_args_list,
-                                  [call(os.path.join(setup['ppath'], p))
+                                  [call(os.path.join(Bcfg2.Options.setup.paranoid_path,
+                                                     p))
                                    for p in remove])
 
             mock_listdir.reset_mock()
             mock_remove.reset_mock()
             mock_remove.side_effect = OSError
-            posix.logger.error.reset_mock()
             # test to ensure that we call os.remove() for all files that
             # need to be removed even if we get an error
             posix._prune_old_backups(entry)
-            mock_listdir.assert_called_with(setup['ppath'])
+            mock_listdir.assert_called_with(Bcfg2.Options.setup.paranoid_path)
             self.assertItemsEqual(mock_remove.call_args_list,
-                                  [call(os.path.join(setup['ppath'], p))
+                                  [call(os.path.join(Bcfg2.Options.setup.paranoid_path,
+                                                     p))
                                    for p in remove])
-            self.assertTrue(posix.logger.error.called)
 
         inner()
 
@@ -186,8 +179,10 @@ class TestPOSIX(TestTool):
     @patch("os.path.isdir")
     def test_paranoid_backup(self, mock_isdir, mock_copy):
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
-        setup = dict(ppath='/', max_copies=5, paranoid=False)
-        posix = self.get_obj(setup=setup)
+        Bcfg2.Options.setup.paranoid_path = '/'
+        Bcfg2.Options.setup.paranoid_copies = 5
+        Bcfg2.Options.setup.paranoid = False
+        posix = self.get_obj()
         posix._prune_old_backups = Mock()
 
         # paranoid false globally
@@ -196,9 +191,7 @@ class TestPOSIX(TestTool):
         self.assertFalse(mock_copy.called)
 
         # paranoid false on the entry
-        setup['paranoid'] = True
-        posix = self.get_obj(setup=setup)
-        posix._prune_old_backups = Mock()
+        Bcfg2.Options.setup.paranoid = True
 
         def reset():
             mock_isdir.reset_mock()
@@ -238,6 +231,6 @@ class TestPOSIX(TestTool):
         # just test it good enough
         self.assertEqual(mock_copy.call_args[0][0],
                          entry.get("name"))
-        bkupnam = os.path.join(setup['ppath'],
+        bkupnam = os.path.join(Bcfg2.Options.setup.paranoid_path,
                                entry.get('name').replace('/', '_')) + '_'
         self.assertEqual(bkupnam, mock_copy.call_args[0][1][:len(bkupnam)])

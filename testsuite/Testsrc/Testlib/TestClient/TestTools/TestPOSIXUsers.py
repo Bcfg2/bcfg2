@@ -24,18 +24,16 @@ from TestTools.Test_init import TestTool
 class TestPOSIXUsers(TestTool):
     test_obj = POSIXUsers
 
-    def get_obj(self, logger=None, setup=None, config=None):
-        if setup is None:
-            setup = MagicMock()
-            def getitem(key):
-                if key == 'encoding':
-                    return 'UTF-8'
-                else:
-                    return []
+    def setUp(self):
+        TestTool.setUp(self)
+        set_setup_default('uid_whitelist', [])
+        set_setup_default('uid_blacklist', [])
+        set_setup_default('gid_whitelist', [])
+        set_setup_default('gid_blacklist', [])
+        set_setup_default('encoding', 'UTF-8')
 
-            setup.__getitem__.side_effect = getitem
-
-        return TestTool.get_obj(self, logger, setup, config)
+    def get_obj(self, config=None):
+        return TestTool.get_obj(self, config)
 
     @patch("pwd.getpwall")
     @patch("grp.getgrall")
@@ -141,10 +139,9 @@ class TestPOSIXUsers(TestTool):
         users.set_defaults['POSIXUser'] = Mock()
         users.set_defaults['POSIXUser'].side_effect = lambda e: e
 
-        states = dict()
-        self.assertEqual(users.Inventory(states),
+        self.assertEqual(users.Inventory(),
                          mock_Inventory.return_value)
-        mock_Inventory.assert_called_with(users, states, config.getchildren())
+        mock_Inventory.assert_called_with(users, config.getchildren())
         lxml.etree.SubElement(orig_bundle, "POSIXGroup", name="test")
         self.assertXMLEqual(orig_bundle, bundle)
 
@@ -306,9 +303,8 @@ class TestPOSIXUsers(TestTool):
         entries = [lxml.etree.Element("POSIXUser", name="test"),
                    lxml.etree.Element("POSIXGroup", name="test"),
                    lxml.etree.Element("POSIXUser", name="test2")]
-        states = dict()
 
-        users.Install(entries, states)
+        states = users.Install(entries)
         self.assertItemsEqual(entries, states.keys())
         for state in states.values():
             self.assertEqual(state, users._install.return_value)

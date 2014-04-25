@@ -3,7 +3,6 @@ import logging
 import sys
 import time
 import traceback
-import Bcfg2.Options
 import Bcfg2.Server.Plugin
 
 logger = logging.getLogger('Bcfg2.Plugins.Ldap')
@@ -44,10 +43,10 @@ class ConfigFile(Bcfg2.Server.Plugin.FileBacked):
     The approach implemented here is having the user call a registering
     decorator that updates a global variable in this module.
     """
-    def __init__(self, filename, fam):
+    def __init__(self, filename):
         self.filename = filename
         Bcfg2.Server.Plugin.FileBacked.__init__(self, self.filename)
-        fam.AddMonitor(self.filename, self)
+        self.fam.AddMonitor(self.filename, self)
 
     def Index(self):
         """
@@ -69,12 +68,12 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
     experimental = True
     debug_flag = False
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Connector.__init__(self)
-        self.config = ConfigFile(self.data + "/config.py", core.fam)
+        self.config = ConfigFile(self.data + "/config.py")
 
-    def debug_log(self, message, flag = None):
+    def debug_log(self, message, flag=None):
         if (flag is None) and self.debug_flag or flag:
             self.logger.error(message)
 
@@ -83,37 +82,39 @@ class Ldap(Bcfg2.Server.Plugin.Plugin, Bcfg2.Server.Plugin.Connector):
         try:
             data = {}
             self.debug_log("LdapPlugin debug: found queries " +
-                                              str(LDAP_QUERIES))
+                           str(LDAP_QUERIES))
             for QueryClass in LDAP_QUERIES:
                 query = QueryClass()
                 if query.is_applicable(metadata):
                     self.debug_log("LdapPlugin debug: processing query '" +
-                                                           query.name + "'")
+                                   query.name + "'")
                     data[query.name] = query.get_result(metadata)
                 else:
                     self.debug_log("LdapPlugin debug: query '" + query.name +
-                        "' not applicable to host '" + metadata.hostname + "'")
+                                   "' not applicable to host '" +
+                                   metadata.hostname + "'")
             return data
         except Exception:
             if hasattr(query, "name"):
                 logger.error("LdapPlugin error: " +
-                       "Exception during processing of query named '" +
-                                                      str(query.name) +
-                                     "', query results will be empty" +
-                                       " and may cause bind failures")
+                             "Exception during processing of query named '" +
+                             str(query.name) +
+                             "', query results will be empty" +
+                             " and may cause bind failures")
             for line in traceback.format_exception(sys.exc_info()[0],
                                                    sys.exc_info()[1],
                                                    sys.exc_info()[2]):
                 logger.error("LdapPlugin error: " +
-                                                 line.replace("\n", ""))
+                             line.replace("\n", ""))
             return {}
+
 
 class LdapConnection(object):
     """
     Connection to an LDAP server.
     """
-    def __init__(self, host = "localhost", port = 389,
-                       binddn = None, bindpw = None):
+    def __init__(self, host="localhost", port=389,
+                 binddn=None, bindpw=None):
         self.host = host
         self.port = port
         self.binddn = binddn
@@ -134,8 +135,8 @@ class LdapConnection(object):
         for attempt in range(RETRY_COUNT + 1):
             if attempt >= 1:
                 logger.error("LdapPlugin error: " +
-                    "LDAP server down (retry " + str(attempt) + "/" +
-                    str(RETRY_COUNT) + ")")
+                             "LDAP server down (retry " + str(attempt) + "/" +
+                             str(RETRY_COUNT) + ")")
             try:
                 if not self.conn:
                     self.init_conn()
@@ -154,6 +155,7 @@ class LdapConnection(object):
     @property
     def url(self):
         return "ldap://" + self.host + ":" + str(self.port)
+
 
 class LdapQuery(object):
     """
@@ -211,8 +213,9 @@ class LdapQuery(object):
             return self.result
         else:
             logger.error("LdapPlugin error: " +
-              "No valid connection defined for query " + str(self))
+                         "No valid connection defined for query " + str(self))
             return None
+
 
 class LdapSubQuery(LdapQuery):
     """
@@ -244,5 +247,5 @@ class LdapSubQuery(LdapQuery):
             return self.process_result(metadata, **kwargs)
         else:
             logger.error("LdapPlugin error: " +
-              "No valid connection defined for query " + str(self))
+                         "No valid connection defined for query " + str(self))
             return None

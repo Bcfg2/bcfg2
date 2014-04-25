@@ -27,14 +27,14 @@ class GaminEvent(Event):
 
 class Gamin(FileMonitor):
     """ File monitor backend with `Gamin
-    <http://people.gnome.org/~veillard/gamin/>`_ support. """
+    <http://people.gnome.org/~veillard/gamin/>`_ support. **Deprecated.** """
 
-    #: The Gamin backend is fairly decent, particularly newer
-    #: releases, so it has a fairly high priority.
-    __priority__ = 90
+    #: The Gamin backend is deprecated, but better than pseudo, so it
+    #: has a medium priority.
+    __priority__ = 50
 
-    def __init__(self, ignore=None, debug=False):
-        FileMonitor.__init__(self, ignore=ignore, debug=debug)
+    def __init__(self):
+        FileMonitor.__init__(self)
 
         #: The :class:`Gamin.WatchMonitor` object for this monitor.
         self.mon = None
@@ -46,6 +46,9 @@ class Gamin(FileMonitor):
         #: The queue used to record monitors that are added before
         #: :func:`start` has been called and :attr:`mon` is created.
         self.add_q = []
+
+        self.logger.warning("The Gamin file monitor backend is deprecated. "
+                            "Please switch to a supported file monitor.")
     __init__.__doc__ = FileMonitor.__init__.__doc__
 
     def start(self):

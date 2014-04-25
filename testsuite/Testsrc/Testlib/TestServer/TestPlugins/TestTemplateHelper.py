@@ -25,7 +25,7 @@ class TestHelperModule(Bcfg2TestCase):
     def get_obj(self, path=None):
         if path is None:
             path = self.path
-        return self.test_obj(path, fam=Mock())
+        return self.test_obj(path)
 
     def test__init(self):
         hm = self.get_obj()

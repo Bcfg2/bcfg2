@@ -190,12 +190,12 @@ class POSIXAugeas(POSIXTool):
     :ref:`client-tools-augeas`. """
     __req__ = ['name', 'mode', 'owner', 'group']
 
-    def __init__(self, logger, setup, config):
-        POSIXTool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        POSIXTool.__init__(self, config)
         self._augeas = dict()
         # file tool for setting initial values of files that don't
         # exist
-        self.filetool = POSIXFile(logger, setup, config)
+        self.filetool = POSIXFile(config)
 
     def get_augeas(self, entry):
         """ Get an augeas object for the given entry. """

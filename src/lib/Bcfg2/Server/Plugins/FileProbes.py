@@ -8,9 +8,9 @@ import os
 import sys
 import errno
 import lxml.etree
-import Bcfg2.Options
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
+import Bcfg2.Server.FileMonitor
 from Bcfg2.Compat import b64decode
 
 #: The probe we send to clients to get the file data.  Returns an XML
@@ -64,13 +64,12 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
     the client """
     __author__ = 'chris.a.st.pierre@gmail.com'
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Probing.__init__(self)
         self.config = \
             Bcfg2.Server.Plugin.StructFile(os.path.join(self.data,
                                                         'config.xml'),
-                                           fam=core.fam,
                                            should_monitor=True,
                                            create=self.name)
         self.entries = dict()
@@ -88,7 +87,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
                 # for which update is false; we can't possibly do
                 # anything with the data we get from such a probe
                 if (entry.get('update', 'false').lower() == "false" and
-                    not cfg.has_generator(entry, metadata)):
+                        not cfg.has_generator(entry, metadata)):
                     continue
                 self.entries[metadata.hostname][path] = entry
                 probe = lxml.etree.Element('probe', name=path,
@@ -148,7 +147,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             self.write_file(fileloc, contents)
             self.verify_file(filename, contents, metadata)
             infoxml = os.path.join(cfg.data, filename.lstrip("/"), "info.xml")
-            self.write_infoxml(infoxml, entry, data)
+            self.write_infoxml(infoxml, data)
         elif entrydata == contents:
             self.debug_log("Existing %s contents match probed contents" %
                            filename)
@@ -198,7 +197,7 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
             if tries >= 10:
                 self.logger.error("%s still not registered" % filename)
                 return
-            self.core.fam.handle_events_in_interval(1)
+            Bcfg2.Server.FileMonitor.get_fam().handle_events_in_interval(1)
             try:
                 cfg.entries[filename].bind_entry(entry, metadata)
             except Bcfg2.Server.Plugin.PluginExecutionError:
@@ -214,18 +213,18 @@ class FileProbes(Bcfg2.Server.Plugin.Plugin,
                 updated = True
             tries += 1
 
-    def write_infoxml(self, infoxml, entry, data):
+    def write_infoxml(self, infoxml, data):
         """ write an info.xml for the file """
         if os.path.exists(infoxml):
             return
 
         self.logger.info("Writing %s for %s" % (infoxml, data.get("name")))
+        default_mdata = Bcfg2.Server.Plugin.default_path_metadata()
         info = lxml.etree.Element(
             "Info",
-            owner=data.get("owner", Bcfg2.Options.MDATA_OWNER.value),
-            group=data.get("group", Bcfg2.Options.MDATA_GROUP.value),
-            mode=data.get("mode", Bcfg2.Options.MDATA_MODE.value),
-            encoding=entry.get("encoding", Bcfg2.Options.ENCODING.value))
+            owner=data.get("owner", default_mdata['owner']),
+            group=data.get("group", default_mdata['group']),
+            mode=data.get("mode", default_mdata['mode']))
 
         root = lxml.etree.Element("FileInfo")
         root.append(info)

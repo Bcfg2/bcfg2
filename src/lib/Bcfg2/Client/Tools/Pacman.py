@@ -13,11 +13,6 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
     pkgtype = 'pacman'
     pkgtool = ("/usr/bin/pacman --needed --noconfirm --noprogressbar")
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
-        self.installed = {}
-        self.RefreshPackages()
-
     def RefreshPackages(self):
         '''Refresh memory hashes of packages'''
         self.installed = {}
@@ -42,8 +37,6 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
                 return True
             elif self.installed[entry.attrib['name']] == \
                     entry.attrib['version']:
-                # if (not self.setup['quick'] and
-                #     entry.get('verify', 'true') == 'true'):
                 # FIXME: need to figure out if pacman
                 #        allows you to verify packages
                 return True
@@ -65,7 +58,7 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
         self.RefreshPackages()
         self.extra = self.FindExtra()
 
-    def Install(self, packages, states):
+    def Install(self, packages):
         '''
         Pacman Install
         '''

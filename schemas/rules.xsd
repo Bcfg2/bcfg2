@@ -13,10 +13,6 @@
   <xsd:import namespace="http://genshi.edgewall.org/"
               schemaLocation="genshi.xsd"/>
 
-  <xsd:complexType name='PostInstallType'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
-  </xsd:complexType>
-
   <xsd:group name="rulesElements">
     <xsd:choice>
       <xsd:group ref="py:genshiElements"/>
@@ -126,15 +122,6 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
-      <xsd:element name='PostInstall' type='PostInstallType'>
-        <xsd:annotation>
-          <xsd:documentation>
-            PostInstall entries are deprecated in favor of Action
-            entries. Actions can do everything PostInstall entries can
-            do and more.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
       <xsd:element name='Group' type='RContainerType'>
         <xsd:annotation>
           <xsd:documentation>
@@ -208,6 +195,14 @@
             Sets the priority for rules in this file for
             :ref:`server-plugins-generators-rules`.  The higher value
             wins.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:attribute>
+      <xsd:attribute name="lax_decryption" type="xsd:boolean">
+        <xsd:annotation>
+          <xsd:documentation>
+            Override the global lax_decryption setting in
+            ``bcfg2.conf``.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:attribute>

@@ -4,10 +4,11 @@ import sys
 import time
 import socket
 import daemon
-import Bcfg2.Statistics
-from Bcfg2.Server.Core import BaseCore, NoExposedMethod
+import Bcfg2.Options
+import Bcfg2.Server.Statistics
+from Bcfg2.Server.Core import NetworkCore, NoExposedMethod
 from Bcfg2.Compat import xmlrpclib, urlparse
-from Bcfg2.SSLServer import XMLRPCServer
+from Bcfg2.Server.SSLServer import XMLRPCServer
 
 from lockfile import LockFailed, LockTimeout
 # pylint: disable=E0611
@@ -18,29 +19,29 @@ except ImportError:
 # pylint: enable=E0611
 
 
-class Core(BaseCore):
+class BuiltinCore(NetworkCore):
     """ The built-in server core """
     name = 'bcfg2-server'
 
-    def __init__(self, setup):
-        BaseCore.__init__(self, setup)
+    def __init__(self):
+        NetworkCore.__init__(self)
 
-        #: The :class:`Bcfg2.SSLServer.XMLRPCServer` instance powering
-        #: this server core
+        #: The :class:`Bcfg2.Server.SSLServer.XMLRPCServer` instance
+        #: powering this server core
         self.server = None
 
-        daemon_args = dict(uid=self.setup['daemon_uid'],
-                           gid=self.setup['daemon_gid'],
-                           umask=int(self.setup['umask'], 8),
+        daemon_args = dict(uid=Bcfg2.Options.setup.daemon_uid,
+                           gid=Bcfg2.Options.setup.daemon_gid,
+                           umask=int(Bcfg2.Options.setup.umask, 8),
                            detach_process=True)
-        if self.setup['daemon']:
-            daemon_args['pidfile'] = TimeoutPIDLockFile(self.setup['daemon'],
-                                                        acquire_timeout=5)
+        if Bcfg2.Options.setup.daemon:
+            daemon_args['pidfile'] = TimeoutPIDLockFile(
+                Bcfg2.Options.setup.daemon, acquire_timeout=5)
         #: The :class:`daemon.DaemonContext` used to drop
         #: privileges, write the PID file (with :class:`PidFile`),
         #: and daemonize this core.
         self.context = daemon.DaemonContext(**daemon_args)
-    __init__.__doc__ = BaseCore.__init__.__doc__.split('.. -----')[0]
+    __init__.__doc__ = NetworkCore.__init__.__doc__.split('.. -----')[0]
 
     def _dispatch(self, method, args, dispatch_dict):
         """ Dispatch XML-RPC method calls
@@ -70,8 +71,9 @@ class Core(BaseCore):
             try:
                 return method_func(*args)
             finally:
-                Bcfg2.Statistics.stats.add_value(method,
-                                                 time.time() - method_start)
+                Bcfg2.Server.Statistics.stats.add_value(
+                    method,
+                    time.time() - method_start)
         except xmlrpclib.Fault:
             raise
         except Exception:
@@ -94,24 +96,24 @@ class Core(BaseCore):
         except LockTimeout:
             err = sys.exc_info()[1]
             self.logger.error("Failed to daemonize %s: Failed to acquire lock "
-                              "on %s" % (self.name, self.setup['daemon']))
+                              "on %s" % (self.name,
+                                         Bcfg2.Options.setup.daemon))
             return False
 
     def _run(self):
         """ Create :attr:`server` to start the server listening. """
-        hostname, port = urlparse(self.setup['location'])[1].split(':')
+        hostname, port = urlparse(Bcfg2.Options.setup.server)[1].split(':')
         server_address = socket.getaddrinfo(hostname,
                                             port,
                                             socket.AF_UNSPEC,
                                             socket.SOCK_STREAM)[0][4]
         try:
-            self.server = XMLRPCServer(self.setup['listen_all'],
+            self.server = XMLRPCServer(Bcfg2.Options.setup.listen_all,
                                        server_address,
-                                       keyfile=self.setup['key'],
-                                       certfile=self.setup['cert'],
+                                       keyfile=Bcfg2.Options.setup.key,
+                                       certfile=Bcfg2.Options.setup.cert,
                                        register=False,
-                                       ca=self.setup['ca'],
-                                       protocol=self.setup['protocol'])
+                                       ca=Bcfg2.Options.setup.ca)
         except:  # pylint: disable=W0702
             err = sys.exc_info()[1]
             self.logger.error("Server startup failed: %s" % err)

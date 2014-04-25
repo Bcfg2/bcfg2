@@ -10,10 +10,10 @@ The Pkgmgr plugin resolves the Abstract Configuration Entity "Package"
 to a package specification that the client can use to detect, verify
 and install the specified package.
 
-For a package specification to be included in the Literal configuration
-the name attribute from an Abstract Package Tag (from Base or Bundler)
-must match the name attribute of a Package tag in Pkgmgr, along with
-the appropriate group associations of course.
+For a package specification to be included in the Literal
+configuration the name attribute from an abstract Package tag (from
+Bundler) must match the name attribute of a Package tag in Pkgmgr,
+along with the appropriate group associations of course.
 
 Each file in the Pkgmgr directory has a priority. This allows the
 same package to be served by multiple files. The priorities can be

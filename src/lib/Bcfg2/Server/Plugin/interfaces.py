@@ -6,10 +6,16 @@ import copy
 import threading
 import lxml.etree
 import Bcfg2.Server
+import Bcfg2.Options
 from Bcfg2.Compat import Queue, Empty, Full, cPickle
 from Bcfg2.Server.Plugin.base import Plugin
 from Bcfg2.Server.Plugin.exceptions import PluginInitError, \
     MetadataRuntimeError, MetadataConsistencyError
+
+# Since this file basically just contains abstract interface
+# descriptions, just about every function declaration has unused
+# arguments.  Disable this pylint warning for the whole file.
+# pylint: disable=W0613
 
 
 class Generator(object):
@@ -26,13 +32,12 @@ class Generator(object):
        generate the content.  The callable will receive two arguments:
        the abstract entry (as an lxml.etree._Element object), and the
        client metadata object the entry is being generated for.
-
     #. If the entry is not listed in ``Entries``, the Bcfg2 core calls
        :func:`HandlesEntry`; if that returns True, then it calls
        :func:`HandleEntry`.
     """
 
-    def HandlesEntry(self, entry, metadata):  # pylint: disable=W0613
+    def HandlesEntry(self, entry, metadata):
         """ HandlesEntry is the slow path method for routing
         configuration binding requests.  It is called if the
         ``Entries`` dict does not contain a method for binding the
@@ -47,7 +52,7 @@ class Generator(object):
         """
         return False
 
-    def HandleEntry(self, entry, metadata):  # pylint: disable=W0613
+    def HandleEntry(self, entry, metadata):
         """ HandleEntry is the slow path method for binding
         configuration binding requests.  It is called if the
         ``Entries`` dict does not contain a method for binding the
@@ -137,7 +142,6 @@ class Metadata(object):
         """
         pass
 
-    # pylint: disable=W0613
     def resolve_client(self, address, cleanup_cache=False):
         """ Resolve the canonical name of this client.  If this method
         is not implemented, the hostname claimed by the client is
@@ -155,7 +159,6 @@ class Metadata(object):
                  :class:`Bcfg2.Server.Plugin.exceptions.MetadataConsistencyError`
         """
         return address[1]
-    # pylint: enable=W0613
 
     def AuthenticateConnection(self, cert, user, password, address):
         """ Authenticate the given client.
@@ -222,7 +225,7 @@ class Connector(object):
     """ Connector plugins augment client metadata instances with
     additional data, additional groups, or both. """
 
-    def get_additional_groups(self, metadata):  # pylint: disable=W0613
+    def get_additional_groups(self, metadata):
         """ Return a list of additional groups for the given client.
         Each group can be either the name of a group (a string), or a
         :class:`Bcfg2.Server.Plugins.Metadata.MetadataGroup` object
@@ -253,7 +256,7 @@ class Connector(object):
         """
         return list()
 
-    def get_additional_data(self, metadata):  # pylint: disable=W0613
+    def get_additional_data(self, metadata):
         """ Return arbitrary additional data for the given
         ClientMetadata object.  By convention this is usually a dict
         object, but doesn't need to be.
@@ -346,14 +349,14 @@ class ThreadedStatistics(Statistics, Threaded, threading.Thread):
     """ ThreadedStatistics plugins process client statistics in a
     separate thread. """
 
-    def __init__(self, core, datastore):
-        Statistics.__init__(self, core, datastore)
+    def __init__(self, core):
+        Statistics.__init__(self, core)
         Threaded.__init__(self)
         threading.Thread.__init__(self)
         # Event from the core signaling an exit
         self.terminate = core.terminate
         self.work_queue = Queue(100000)
-        self.pending_file = os.path.join(datastore, "etc",
+        self.pending_file = os.path.join(Bcfg2.Options.setup.repository, "etc",
                                          "%s.pending" % self.name)
         self.daemon = False
 
@@ -476,7 +479,7 @@ class ThreadedStatistics(Statistics, Threaded, threading.Thread):
 # Someone who understands these interfaces better needs to write docs
 # for PullSource and PullTarget
 class PullSource(object):
-    def GetExtra(self, client):  # pylint: disable=W0613
+    def GetExtra(self, client):
         return []
 
     def GetCurrentEntry(self, client, e_type, e_name):
@@ -556,20 +559,23 @@ class Version(Plugin):
 
     create = False
 
+    options = Plugin.options + [
+        Bcfg2.Options.PathOption(cf=('server', 'vcs_root'),
+                                 default='<repository>',
+                                 help='Server VCS repository root')]
+
     #: The path to the VCS metadata file or directory, relative to the
     #: base of the Bcfg2 repository.  E.g., for Subversion this would
     #: be ".svn"
     __vcs_metadata_path__ = None
 
-    def __init__(self, core, datastore):
-        Plugin.__init__(self, core, datastore)
+    __rmi__ = Plugin.__rmi__ + ['get_revision']
 
-        if core.setup['vcs_root']:
-            self.vcs_root = core.setup['vcs_root']
-        else:
-            self.vcs_root = datastore
+    def __init__(self, core):
+        Plugin.__init__(self, core)
+
         if self.__vcs_metadata_path__:
-            self.vcs_path = os.path.join(self.vcs_root,
+            self.vcs_path = os.path.join(Bcfg2.Options.setup.vcs_root,
                                          self.__vcs_metadata_path__)
 
             if not os.path.exists(self.vcs_path):
@@ -626,20 +632,46 @@ class ClientRunHooks(object):
         pass
 
 
-class Caching(object):
-    """ A plugin that caches more than just the data received from the
-    FAM.  This presents a unified interface to clear the cache. """
+class ClientACLs(object):
+    """ ClientACLs are used to grant or deny access to different
+    XML-RPC calls based on client IP or metadata. """
 
-    def expire_cache(self, key=None):
-        """ Expire the cache associated with the given key.
+    def check_acl_ip(self, address, rmi):
+        """ Check if the given IP address is authorized to make the
+        named XML-RPC call.
 
-        :param key: The key to expire the cache for.  Because cache
-                    implementations vary tremendously between plugins,
-                    this could be any number of things, but generally
-                    a hostname.  It also may or may not be possible to
-                    expire the cache for a single host; this interface
-                    does not require any guarantee about that.
-        :type key: varies
-        :returns: None
+        :param address: The address pair of the client to check ACLs for
+        :type address: tuple of (<ip address>, <port>)
+        :param rmi: The fully-qualified name of the RPC call
+        :param rmi: string
+        :returns: bool or None - True to allow, False to deny, None to
+                  defer to metadata ACLs
         """
-        raise NotImplementedError
+        return True
+
+    def check_acl_metadata(self, metadata, rmi):
+        """ Check if the given client is authorized to make the named
+        XML-RPC call.
+
+        :param metadata: The client metadata
+        :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
+        :param rmi: The fully-qualified name of the RPC call
+        :param rmi: string
+        :returns: bool
+        """
+        return True
+
+
+class TemplateDataProvider(object):
+    """ TemplateDataProvider plugins provide variables to templates
+    for use in rendering. """
+
+    def get_template_data(self, entry, metadata, template):
+        """ Get a dict of variables that will be supplied to a Cfg
+        template for rendering """
+        return dict()
+
+    def get_xml_template_data(self, structfile, metadata):
+        """ Get a dict of variables that will be supplied to an XML
+        template (e.g., a bundle) for rendering """
+        return dict()

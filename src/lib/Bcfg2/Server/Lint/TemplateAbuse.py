@@ -4,7 +4,7 @@ import os
 import stat
 import Bcfg2.Server.Lint
 from Bcfg2.Compat import any  # pylint: disable=W0622
-from Bcfg2.Server.Plugin import DEFAULT_FILE_METADATA
+from Bcfg2.Server.Plugin import default_path_metadata
 from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
 from Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator import CfgCheetahGenerator
@@ -60,8 +60,9 @@ class TemplateAbuse(Bcfg2.Server.Lint.ServerPlugin):
             if isinstance(entry, CfgInfoXML):
                 for pinfo in entry.infoxml.pnode.data.xpath("//FileInfo"):
                     try:
-                        mode = int(pinfo.get("mode",
-                                             DEFAULT_FILE_METADATA['mode']), 8)
+                        mode = int(
+                            pinfo.get("mode",
+                                      default_path_metadata()['mode']), 8)
                     except ValueError:
                         # LintError will be produced by RequiredAttrs plugin
                         self.logger.warning("Non-octal mode: %s" % mode)

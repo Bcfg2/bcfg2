@@ -6,13 +6,20 @@ import sys
 import glob
 import fnmatch
 import lxml.etree
-from subprocess import Popen, PIPE, STDOUT
+import Bcfg2.Options
 import Bcfg2.Server.Lint
+from Bcfg2.Utils import Executor
 
 
 class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
     """ Ensure that all XML files in the Bcfg2 repository validate
     according to their respective schemas. """
+
+    options = Bcfg2.Server.Lint.ServerlessPlugin.options + [
+        Bcfg2.Options.PathOption(
+            "--schema", cf=("Validate", "schema"),
+            default="/usr/share/bcfg2/schema",
+            help="The full path to the XML schema files")]
 
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerlessPlugin.__init__(self, *args, **kwargs)
@@ -32,14 +39,14 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
              "Cfg/**/pubkey.xml": "pubkey.xsd",
              "Cfg/**/authorizedkeys.xml": "authorizedkeys.xsd",
              "Cfg/**/authorized_keys.xml": "authorizedkeys.xsd",
+             "Cfg/**/sslcert.xml": "sslca-cert.xsd",
+             "Cfg/**/sslkey.xml": "sslca-key.xsd",
              "SSHbase/**/info.xml": "info.xsd",
-             "SSLCA/**/info.xml": "info.xsd",
              "TGenshi/**/info.xml": "info.xsd",
              "TCheetah/**/info.xml": "info.xsd",
              "Bundler/*.xml": "bundle.xsd",
              "Bundler/*.genshi": "bundle.xsd",
              "Pkgmgr/*.xml": "pkglist.xsd",
-             "Base/*.xml": "base.xsd",
              "Rules/*.xml": "rules.xsd",
              "Defaults/*.xml": "defaults.xsd",
              "etc/report-configuration.xml": "report-configuration.xsd",
@@ -50,16 +57,14 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
              "AWSTags/config.xml": "awstags.xsd",
              "NagiosGen/config.xml": "nagiosgen.xsd",
              "FileProbes/config.xml": "fileprobes.xsd",
-             "SSLCA/**/cert.xml": "sslca-cert.xsd",
-             "SSLCA/**/key.xml": "sslca-key.xsd",
              "GroupLogic/groups.xml": "grouplogic.xsd"
              }
 
         self.filelists = {}
         self.get_filelists()
+        self.cmd = Executor()
 
     def Run(self):
-        schemadir = self.config['schema']
 
         for path, schemaname in self.filesets.items():
             try:
@@ -69,7 +74,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
 
             if filelist:
                 # avoid loading schemas for empty file lists
-                schemafile = os.path.join(schemadir, schemaname)
+                schemafile = os.path.join(Bcfg2.Options.setup.schema,
+                                          schemaname)
                 schema = self._load_schema(schemafile)
                 if schema:
                     for filename in filelist:
@@ -118,11 +124,10 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             if self.files is None:
                 cmd.append("--xinclude")
             cmd.append(filename)
-            lint = Popen(cmd, stdout=PIPE, stderr=STDOUT)
+            result = self.cmd.run(cmd)
             self.LintError("xml-failed-to-parse",
-                           "%s fails to parse:\n%s" % (filename,
-                                                       lint.communicate()[0]))
-            lint.wait()
+                           "%s fails to parse:\n%s" %
+                           (filename, result.stdout + result.stderr))
             return False
         except IOError:
             self.LintError("xml-failed-to-read",
@@ -184,14 +189,11 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             if self.files is None:
                 cmd.append("--xinclude")
             cmd.extend(["--noout", "--schema", schemafile, filename])
-            lint = Popen(cmd, stdout=PIPE, stderr=STDOUT)
-            output = lint.communicate()[0]
-            # py3k fix
-            if not isinstance(output, str):
-                output = output.decode('utf-8')
-            if lint.wait():
+            result = self.cmd.run(cmd)
+            if not result.success:
                 self.LintError("xml-failed-to-verify",
-                               "%s fails to verify:\n%s" % (filename, output))
+                               "%s fails to verify:\n%s" %
+                               (filename, result.stdout + result.stderr))
                 return False
         return True
 
@@ -208,8 +210,8 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
             listfiles = lambda p: fnmatch.filter(self.files,
                                                  os.path.join('*', p))
         else:
-            listfiles = lambda p: glob.glob(os.path.join(self.config['repo'],
-                                                         p))
+            listfiles = lambda p: \
+                glob.glob(os.path.join(Bcfg2.Options.setup.repository, p))
 
         for path in self.filesets.keys():
             if '/**/' in path:
@@ -218,9 +220,9 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                 else:  # self.files is None
                     fpath, fname = path.split('/**/')
                     self.filelists[path] = []
-                    for root, _, files in \
-                            os.walk(os.path.join(self.config['repo'],
-                                                 fpath)):
+                    for root, _, files in os.walk(
+                            os.path.join(Bcfg2.Options.setup.repository,
+                                         fpath)):
                         self.filelists[path].extend([os.path.join(root, f)
                                                      for f in files
                                                      if f == fname])

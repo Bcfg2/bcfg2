@@ -4,7 +4,6 @@ import os
 import Bcfg2.Options
 import Bcfg2.Server.Lint
 from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
-from Bcfg2.Server.Plugins.Cfg.CfgLegacyInfo import CfgLegacyInfo
 
 
 class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
@@ -16,6 +15,15 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
     * Paranoid mode disabled in an ``info.xml`` file;
     * Required attributes missing from ``info.xml``
     """
+
+    options = Bcfg2.Server.Lint.ServerPlugin.options + [
+        Bcfg2.Options.Common.default_paranoid,
+        Bcfg2.Options.Option(
+            cf=("InfoXML", "required_attrs"),
+            type=Bcfg2.Options.Types.comma_list,
+            default=["owner", "group", "mode"],
+            help="Attributes to require on <Info> tags")]
+
     def Run(self):
         if 'Cfg' not in self.core.plugins:
             return
@@ -27,25 +35,15 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
                 for entry in entryset.entries.values():
                     if isinstance(entry, CfgInfoXML):
                         self.check_infoxml(infoxml_fname,
-                                           entry.infoxml.pnode.data)
+                                           entry.infoxml.xdata)
                         found = True
                 if not found:
                     self.LintError("no-infoxml",
                                    "No info.xml found for %s" % filename)
 
-            for entry in entryset.entries.values():
-                if isinstance(entry, CfgLegacyInfo):
-                    if not self.HandlesFile(entry.path):
-                        continue
-                    self.LintError("deprecated-info-file",
-                                   "Deprecated %s file found at %s" %
-                                   (os.path.basename(entry.name),
-                                    entry.path))
-
     @classmethod
     def Errors(cls):
         return {"no-infoxml": "warning",
-                "deprecated-info-file": "warning",
                 "paranoid-false": "warning",
                 "required-infoxml-attrs-missing": "error"}
 
@@ -53,8 +51,7 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
         """ Verify that info.xml contains everything it should. """
         for info in xdata.getroottree().findall("//Info"):
             required = []
-            if "required_attrs" in self.config:
-                required = self.config["required_attrs"].split(",")
+            required = Bcfg2.Options.setup.required_attrs
 
             missing = [attr for attr in required if info.get(attr) is None]
             if missing:
@@ -63,10 +60,10 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
                                (",".join(missing), fname,
                                 self.RenderXML(info)))
 
-            if ((Bcfg2.Options.MDATA_PARANOID.value and
+            if ((Bcfg2.Options.setup.default_paranoid == "true" and
                  info.get("paranoid") is not None and
                  info.get("paranoid").lower() == "false") or
-                (not Bcfg2.Options.MDATA_PARANOID.value and
+                (Bcfg2.Options.setup.default_paranoid == "false" and
                  (info.get("paranoid") is None or
                   info.get("paranoid").lower() != "true"))):
                 self.LintError("paranoid-false",

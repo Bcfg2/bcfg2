@@ -10,7 +10,7 @@ configuration file.
 
 .. code-block:: xml
 
-    <Bundle name="snmpd" version="3.0">
+    <Bundle>
             <Package name="snmpd"/>
             <Service name="snmpd"/>
             <Path name="/etc/snmp/snmpd.conf"/>

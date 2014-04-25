@@ -27,7 +27,6 @@ in your ``Source`` subclass:
 
 * :func:`Source.urls`
 * :func:`Source.read_files`
-* :attr:`Source.basegroups`
 
 Additionally, you may want to consider overriding the following
 methods and attributes:
@@ -50,10 +49,11 @@ in your ``Source`` subclass.  For an example of this kind of
 import os
 import re
 import sys
-import Bcfg2.Server.Plugin
+from Bcfg2.Logger import Debuggable
 from Bcfg2.Compat import HTTPError, HTTPBasicAuthHandler, \
     HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, urlopen, \
     cPickle, md5
+from Bcfg2.Server.Statistics import track_statistics
 
 
 def fetch_url(url):
@@ -92,7 +92,7 @@ class SourceInitError(Exception):
 REPO_RE = re.compile(r'(?:pulp/repos/|/RPMS\.|/)([^/]+)/?$')
 
 
-class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
+class Source(Debuggable):  # pylint: disable=R0902
     """ ``Source`` objects represent a single <Source> tag in
     ``sources.xml``.  Note that a single Source tag can itself
     describe multiple repositories (if it uses the "url" attribute
@@ -106,28 +106,21 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
     those features.
     """
 
-    #: The list of
-    #: :ref:`server-plugins-generators-packages-magic-groups` that
-    #: make sources of this type available to clients.
-    basegroups = []
-
     #: The Package type handled by this Source class.  The ``type``
     #: attribute of Package entries will be set to the value ``ptype``
     #: when they are handled by :mod:`Bcfg2.Server.Plugins.Packages`.
     ptype = None
 
-    def __init__(self, basepath, xsource, setup):  # pylint: disable=R0912
+    def __init__(self, basepath, xsource):  # pylint: disable=R0912
         """
         :param basepath: The base filesystem path under which cache
                          data for this source should be stored
         :type basepath: string
         :param xsource: The XML tag that describes this source
         :type source: lxml.etree._Element
-        :param setup: A Bcfg2 options dict
-        :type setup: dict
         :raises: :class:`Bcfg2.Server.Plugins.Packages.Source.SourceInitError`
         """
-        Bcfg2.Server.Plugin.Debuggable.__init__(self)
+        Debuggable.__init__(self)
 
         #: The base filesystem path under which cache data for this
         #: source should be stored
@@ -135,9 +128,6 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
 
         #: The XML tag that describes this source
         self.xsource = xsource
-
-        #: A Bcfg2 options dict
-        self.setup = setup
 
         #: A set of package names that are deemed "essential" by this
         #: source
@@ -256,6 +246,10 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
         self.provides = dict()
 
+        #: A dict of ``<package name>`` -> ``<list of recommended
+        #: symbols>``.  This will not necessarily be populated.
+        self.recommends = dict()
+
         #: The file (or directory) used for this source's cache data
         self.cachefile = os.path.join(self.basepath,
                                       "cache-%s" % self.cachekey)
@@ -308,8 +302,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         :return: list of strings - group names
         """
         return sorted(list(set([g for g in metadata.groups
-                                if (g in self.basegroups or
-                                    g in self.groups or
+                                if (g in self.groups or
                                     g in self.arches)])))
 
     def load_state(self):
@@ -321,7 +314,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         :raises: cPickle.UnpicklingError - If the saved data is corrupt """
         data = open(self.cachefile, 'rb')
         (self.pkgnames, self.deps, self.provides,
-         self.essentialpkgs) = cPickle.load(data)
+         self.essentialpkgs, self.recommends) = cPickle.load(data)
 
     def save_state(self):
         """ Save state to :attr:`cachefile`.  If caching and
@@ -329,10 +322,10 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         does not need to be implemented. """
         cache = open(self.cachefile, 'wb')
         cPickle.dump((self.pkgnames, self.deps, self.provides,
-                      self.essentialpkgs), cache, 2)
+                      self.essentialpkgs, self.recommends), cache, 2)
         cache.close()
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def setup_data(self, force_update=False):
         """ Perform all data fetching and setup tasks.  For most
         backends, this involves downloading all metadata from the
@@ -524,13 +517,13 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         as its final step."""
         pass
 
-    def process_files(self, dependencies, provides):
+    def process_files(self, dependencies, provides, recommends=dict()):
         """ Given dicts of depends and provides generated by
         :func:`read_files`, this generates :attr:`deps` and
         :attr:`provides` and calls :func:`save_state` to save the
         cached data to disk.
 
-        Both arguments are dicts of dicts of lists.  Keys are the
+        All arguments are dicts of dicts of lists.  Keys are the
         arches of packages contained in this source; values are dicts
         whose keys are package names and values are lists of either
         dependencies for each package the symbols provided by each
@@ -542,14 +535,20 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         :param provides: A dict of symbols provided by packages in
                         this repository.
         :type provides: dict; see above.
+        :param recommends: A dict of recommended dependencies
+                           found for this source.
+        :type recommends: dict; see above.
         """
         self.deps['global'] = dict()
+        self.recommends['global'] = dict()
         self.provides['global'] = dict()
         for barch in dependencies:
             self.deps[barch] = dict()
+            self.recommends[barch] = dict()
             self.provides[barch] = dict()
         for pkgname in self.pkgnames:
             pset = set()
+            rset = set()
             for barch in dependencies:
                 if pkgname not in dependencies[barch]:
                     dependencies[barch][pkgname] = []
@@ -559,6 +558,17 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
             else:
                 for barch in dependencies:
                     self.deps[barch][pkgname] = dependencies[barch][pkgname]
+
+            for barch in recommends:
+                if pkgname not in recommends[barch]:
+                    recommends[barch][pkgname] = []
+                rset.add(tuple(recommends[barch][pkgname]))
+            if len(rset) == 1:
+                self.recommends['global'][pkgname] = rset.pop()
+            else:
+                for barch in recommends:
+                    self.recommends[barch][pkgname] = recommends[barch][pkgname]
+
         provided = set()
         for bprovided in list(provides.values()):
             provided.update(set(bprovided))
@@ -636,16 +646,15 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
 
     def applies(self, metadata):
         """ Return true if this source applies to the given client,
-        i.e., the client is in all necessary groups and
-        :ref:`server-plugins-generators-packages-magic-groups`.
+        i.e., the client is in all necessary groups.
 
         :param metadata: The client metadata to check to see if this
                          source applies
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
         :returns: bool
         """
-        # check base groups
-        if not self.magic_groups_match(metadata):
+        # check arch groups
+        if not self.arch_groups_match(metadata):
             return False
 
         # check Group/Client tags from sources.xml
@@ -667,17 +676,24 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         """
         return ['global'] + [a for a in self.arches if a in metadata.groups]
 
-    def get_deps(self, metadata, package):
+    def get_deps(self, metadata, package, recommended=None):
         """ Get a list of the dependencies of the given package.
 
         :param package: The name of the symbol
         :type package: string
         :returns: list of strings
         """
+        recs = []
+        if ((recommended is None and self.recommended) or
+            (recommended and recommended.lower() == 'true')):
+            for arch in self.get_arches(metadata):
+                if package in self.recommends[arch]:
+                    recs.extend(self.recommends[arch][package])
+
         for arch in self.get_arches(metadata):
             if package in self.deps[arch]:
-                return self.deps[arch][package]
-        return []
+                recs.extend(self.deps[arch][package])
+        return recs
 
     def get_provides(self, metadata, package):
         """ Get a list of all symbols provided by the given package.
@@ -716,29 +732,13 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         """
         return []
 
-    def magic_groups_match(self, metadata):
-        """ Returns True if the client's
-        :ref:`server-plugins-generators-packages-magic-groups` match
-        the magic groups this source.  Also returns True if magic
-        groups are off in the configuration and the client's
-        architecture matches (i.e., architecture groups are *always*
-        checked).
+    def arch_groups_match(self, metadata):
+        """ Returns True if the client is in an arch group that
+        matches the arch of this source.
 
         :returns: bool
         """
-        found_arch = False
         for arch in self.arches:
             if arch in metadata.groups:
-                found_arch = True
-                break
-        if not found_arch:
-            return False
-
-        if not self.setup.cfp.getboolean("packages", "magic_groups",
-                                         default=False):
-            return True
-        else:
-            for group in self.basegroups:
-                if group in metadata.groups:
-                    return True
-            return False
+                return True
+        return False

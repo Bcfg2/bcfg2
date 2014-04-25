@@ -5,26 +5,24 @@ import os
 import sys
 import socket
 import shutil
-import logging
 import tempfile
-from itertools import chain
-from subprocess import Popen, PIPE
+import lxml.etree
+import Bcfg2.Options
 import Bcfg2.Server.Plugin
+from itertools import chain
+from Bcfg2.Utils import Executor
 from Bcfg2.Server.Plugin import PluginExecutionError
 from Bcfg2.Compat import any, u_str, b64encode  # pylint: disable=W0622
-
-LOGGER = logging.getLogger(__name__)
+try:
+    from Bcfg2.Server.Encryption import ssl_encrypt, bruteforce_decrypt, \
+        EVPError
+    HAS_CRYPTO = True
+except ImportError:
+    HAS_CRYPTO = False
 
 
 class KeyData(Bcfg2.Server.Plugin.SpecificData):
     """ class to handle key data for HostKeyEntrySet """
-
-    def __init__(self, name, specific, encoding):
-        Bcfg2.Server.Plugin.SpecificData.__init__(self,
-                                                  name,
-                                                  specific,
-                                                  encoding)
-        self.encoding = encoding
 
     def __lt__(self, other):
         return self.name < other.name
@@ -42,49 +40,62 @@ class KeyData(Bcfg2.Server.Plugin.SpecificData):
             entry.text = b64encode(self.data)
         else:
             try:
-                entry.text = u_str(self.data, self.encoding)
+                entry.text = u_str(self.data, Bcfg2.Options.setup.encoding)
             except UnicodeDecodeError:
                 msg = "Failed to decode %s: %s" % (entry.get('name'),
                                                    sys.exc_info()[1])
-                LOGGER.error(msg)
-                LOGGER.error("Please verify you are using the proper encoding")
+                self.logger.error(msg)
+                self.logger.error("Please verify you are using the proper "
+                                  "encoding")
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
             except ValueError:
                 msg = "Error in specification for %s: %s" % (entry.get('name'),
                                                              sys.exc_info()[1])
-                LOGGER.error(msg)
-                LOGGER.error("You need to specify base64 encoding for %s" %
-                             entry.get('name'))
+                self.logger.error(msg)
+                self.logger.error("You need to specify base64 encoding for %s"
+                                  % entry.get('name'))
                 raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
         if entry.text in ['', None]:
             entry.set('empty', 'true')
+
+    def handle_event(self, event):
+        Bcfg2.Server.Plugin.SpecificData.handle_event(self, event)
+        if event.filename.endswith(".crypt"):
+            if self.data is None:
+                return
+            # todo: let the user specify a passphrase by name
+            try:
+                self.data = bruteforce_decrypt(self.data)
+            except EVPError:
+                raise PluginExecutionError("Failed to decrypt %s" % self.name)
 
 
 class HostKeyEntrySet(Bcfg2.Server.Plugin.EntrySet):
     """ EntrySet to handle all kinds of host keys """
     def __init__(self, basename, path):
-        if basename.startswith("ssh_host_key"):
-            encoding = "base64"
-        else:
-            encoding = None
-        Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, KeyData,
-                                              encoding)
+        Bcfg2.Server.Plugin.EntrySet.__init__(self, basename, path, KeyData)
         self.metadata = {'owner': 'root',
                          'group': 'root',
                          'type': 'file'}
-        if encoding is not None:
-            self.metadata['encoding'] = encoding
+        if basename.startswith("ssh_host_key"):
+            self.metadata['encoding'] = "base64"
         if basename.endswith('.pub'):
             self.metadata['mode'] = '0644'
         else:
             self.metadata['mode'] = '0600'
+
+    def specificity_from_filename(self, fname, specific=None):
+        if fname.endswith(".crypt"):
+            fname = fname[0:-6]
+        return Bcfg2.Server.Plugin.EntrySet.specificity_from_filename(
+            self, fname, specific=specific)
 
 
 class KnownHostsEntrySet(Bcfg2.Server.Plugin.EntrySet):
     """ EntrySet to handle the ssh_known_hosts file """
     def __init__(self, path):
         Bcfg2.Server.Plugin.EntrySet.__init__(self, "ssh_known_hosts", path,
-                                              KeyData, None)
+                                              KeyData)
         self.metadata = {'owner': 'root',
                          'group': 'root',
                          'type': 'file',
@@ -92,7 +103,6 @@ class KnownHostsEntrySet(Bcfg2.Server.Plugin.EntrySet):
 
 
 class SSHbase(Bcfg2.Server.Plugin.Plugin,
-              Bcfg2.Server.Plugin.Caching,
               Bcfg2.Server.Plugin.Generator,
               Bcfg2.Server.Plugin.PullTarget):
     """
@@ -124,9 +134,13 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                    "ssh_host_rsa_key.pub",
                    "ssh_host_key.pub"]
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        Bcfg2.Server.Plugin.Caching.__init__(self)
+    options = [
+        Bcfg2.Options.Option(
+            cf=("sshbase", "passphrase"), dest="sshbase_passphrase",
+            help="Passphrase used to encrypt generated private SSH host keys")]
+
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Generator.__init__(self)
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
         self.ipcache = {}
@@ -137,7 +151,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         # do so once
         self.badnames = dict()
 
-        core.fam.AddMonitor(self.data, self)
+        self.fam = Bcfg2.Server.FileMonitor.get_fam()
+        self.fam.AddMonitor(self.data, self)
 
         self.static = dict()
         self.entries = dict()
@@ -150,9 +165,15 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             self.entries["/etc/ssh/" + keypattern] = \
                 HostKeyEntrySet(keypattern, self.data)
             self.Entries['Path']["/etc/ssh/" + keypattern] = self.build_hk
+        self.cmd = Executor()
 
-    def expire_cache(self, key=None):
-        self.__skn = False
+    @property
+    def passphrase(self):
+        """ The passphrase used to encrypt private keys """
+        if HAS_CRYPTO and Bcfg2.Options.setup.sshbase_passphrase:
+            return Bcfg2.Options.setup.passphrases[
+                Bcfg2.Options.setup.sshbase_passphrase]
+        return None
 
     def get_skn(self):
         """Build memory cache of the ssh known hosts file."""
@@ -252,7 +273,11 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             return
 
         for entry in list(self.entries.values()):
-            if entry.specific.match(event.filename):
+            if event.filename.endswith(".crypt"):
+                fname = event.filename[0:-6]
+            else:
+                fname = event.filename
+            if entry.specific.match(fname):
                 entry.handle_event(event)
                 if any(event.filename.startswith(kp)
                        for kp in self.keypatterns
@@ -262,7 +287,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     self.skn = False
                 return
 
-        if event.filename in ['info', 'info.xml', ':info']:
+        if event.filename == 'info.xml':
             for entry in list(self.entries.values()):
                 entry.handle_event(event)
             return
@@ -284,12 +309,13 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                          (event.filename, action))
 
     def get_ipcache_entry(self, client):
-        """Build a cache of dns results."""
+        """ Build a cache of dns results. """
         if client in self.ipcache:
             if self.ipcache[client]:
                 return self.ipcache[client]
             else:
-                raise socket.gaierror
+                raise PluginExecutionError("No cached IP address for %s" %
+                                           client)
         else:
             # need to add entry
             try:
@@ -298,14 +324,17 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 self.ipcache[client] = (ipaddr, client)
                 return (ipaddr, client)
             except socket.gaierror:
-                ipaddr = Popen(["getent", "hosts", client],
-                               stdout=PIPE).stdout.read().strip().split()
-                if ipaddr:
-                    self.ipcache[client] = (ipaddr, client)
-                    return (ipaddr, client)
+                result = self.cmd.run(["getent", "hosts", client])
+                if result.success:
+                    ipaddr = result.stdout.strip().split()
+                    if ipaddr:
+                        self.ipcache[client] = (ipaddr, client)
+                        return (ipaddr, client)
                 self.ipcache[client] = False
-                self.logger.error("Failed to find IP address for %s" % client)
-                raise socket.gaierror
+                msg = "Failed to find IP address for %s: %s" % (client,
+                                                                result.error)
+                self.logger(msg)
+                raise PluginExecutionError(msg)
 
     def get_namecache_entry(self, cip):
         """Build a cache of name lookups from client IP addresses."""
@@ -375,13 +404,15 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     msg = "%s still not registered" % filename
                     self.logger.error(msg)
                     raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-                self.core.fam.handle_events_in_interval(1)
+                self.fam.handle_events_in_interval(1)
                 tries += 1
                 try:
                     self.entries[entry.get('name')].bind_entry(entry, metadata)
                     is_bound = True
                 except Bcfg2.Server.Plugin.PluginExecutionError:
-                    pass
+                    print("Failed to bind %s: %s") % (
+                        lxml.etree.tostring(entry),
+                        sys.exc_info()[1])
 
     def GenerateHostKeyPair(self, client, filename):
         """Generate new host key pair for client."""
@@ -404,19 +435,34 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
         cmd = ["ssh-keygen", "-q", "-f", temploc, "-N", "",
                "-t", keytype, "-C", "root@%s" % client]
         self.debug_log("SSHbase: Running: %s" % " ".join(cmd))
-        proc = Popen(cmd, stdout=PIPE, stdin=PIPE)
-        err = proc.communicate()[1]
-        if proc.wait():
+        result = self.cmd.run(cmd)
+        if not result.success:
             raise PluginExecutionError("SSHbase: Error running ssh-keygen: %s"
-                                       % err)
+                                       % result.error)
+
+        if self.passphrase:
+            self.debug_log("SSHbase: Encrypting private key for %s" % fileloc)
+            try:
+                data = ssl_encrypt(open(temploc).read(), self.passphrase)
+            except IOError:
+                raise PluginExecutionError("Unable to read temporary SSH key: "
+                                           "%s" % sys.exc_info()[1])
+            except EVPError:
+                raise PluginExecutionError("Unable to encrypt SSH key: %s" %
+                                           sys.exc_info()[1])
+            try:
+                open("%s.crypt" % fileloc, "wb").write(data)
+            except IOError:
+                raise PluginExecutionError("Unable to write encrypted SSH "
+                                           "key: %s" % sys.exc_info()[1])
 
         try:
-            shutil.copy(temploc, fileloc)
+            if not self.passphrase:
+                shutil.copy(temploc, fileloc)
             shutil.copy("%s.pub" % temploc, publoc)
         except IOError:
-            err = sys.exc_info()[1]
-            raise PluginExecutionError("Temporary SSH keys not found: %s" %
-                                       err)
+            raise PluginExecutionError("Unable to copy temporary SSH key: %s" %
+                                       sys.exc_info()[1])
 
         try:
             os.unlink(temploc)

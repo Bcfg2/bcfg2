@@ -25,8 +25,8 @@ class TestCfgPublicKeyCreator(TestCfgCreator, TestStructFile):
     test_obj = CfgPublicKeyCreator
     should_monitor = False
 
+    @patch("Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator.get_cfg", Mock())
     def get_obj(self, name=None, fam=None):
-        Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator.CFG = Mock()
         return TestCfgCreator.get_obj(self, name=name)
 
     @patch("Bcfg2.Server.Plugins.Cfg.CfgCreator.handle_event")

@@ -5,28 +5,25 @@ import re
 import sys
 import glob
 import socket
-import Bcfg2.Server
-import Bcfg2.Server.Plugin
+from Bcfg2.Server.Plugin import Plugin, Generator, StructFile, \
+    PluginExecutionError
 
 
-class NagiosGen(Bcfg2.Server.Plugin.Plugin,
-                Bcfg2.Server.Plugin.Generator):
+class NagiosGen(Plugin, Generator):
     """ NagiosGen is a Bcfg2 plugin that dynamically generates Nagios
     configuration file based on Bcfg2 data. """
     __author__ = 'bcfg-dev@mcs.anl.gov'
     line_fmt = '\t%-32s %s'
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        Bcfg2.Server.Plugin.Generator.__init__(self)
+    def __init__(self, core):
+        Plugin.__init__(self, core)
+        Generator.__init__(self)
         self.config = \
-            Bcfg2.Server.Plugin.StructFile(os.path.join(self.data,
-                                                        'config.xml'),
-                                           core.fam, should_monitor=True,
-                                           create=self.name)
+            StructFile(os.path.join(self.data, 'config.xml'),
+                       should_monitor=True, create=self.name)
         self.Entries = {
             'Path': {'/etc/nagiosgen.status': self.createhostconfig,
-                     '/etc/nagios/nagiosgen.cfg': self.createserverconfig}}
+                     '/etc/nagios/conf.d/bcfg2.cfg': self.createserverconfig}}
 
         self.client_attrib = {'encoding': 'ascii',
                               'owner': 'root',
@@ -42,11 +39,11 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
     def createhostconfig(self, entry, metadata):
         """Build host specific configuration file."""
         try:
-            host_address = socket.gethostbyname(metadata.hostname)
-        except socket.gaierror:
-            self.logger.error("Failed to find IP address for %s" %
-                              metadata.hostname)
-            raise Bcfg2.Server.Plugin.PluginExecutionError
+            host_address = socket.getaddrinfo(metadata.hostname, None)[0][4][0]
+        except socket.error:
+            self.logger.error()
+            raise PluginExecutionError("Failed to find IP address for %s" %
+                                       metadata.hostname)
         host_groups = [grp for grp in metadata.groups
                        if os.path.isfile('%s/%s-group.cfg' % (self.data, grp))]
         host_config = ['define host {',
@@ -56,7 +53,7 @@ class NagiosGen(Bcfg2.Server.Plugin.Plugin,
 
         if host_groups:
             host_config.append(self.line_fmt % ("hostgroups",
-                                                ",".join(host_groups)))
+                                                ",".join(sorted(host_groups))))
 
         # read the config
         xtra = dict()

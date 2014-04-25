@@ -3,7 +3,7 @@ import sys
 import errno
 import lxml.etree
 import Bcfg2.Options
-from Bcfg2.Compat import walk_packages
+from Bcfg2.Compat import walk_packages, ConfigParser
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugins.Cfg import *
 from Bcfg2.Server.Plugin import PluginExecutionError, Specificity
@@ -19,7 +19,7 @@ while path != "/":
     path = os.path.dirname(path)
 from common import *
 from TestPlugin import TestSpecificData, TestEntrySet, TestGroupSpool, \
-    TestPullTarget
+    TestPullTarget, TestStructFile
 
 
 class TestCfgBaseFileMatcher(TestSpecificData):
@@ -152,27 +152,12 @@ class TestCfgInfo(TestCfgBaseFileMatcher):
     @patch("Bcfg2.Server.Plugins.Cfg.CfgBaseFileMatcher.__init__")
     def test__init(self, mock__init):
         ci = self.get_obj("test.txt")
-        mock__init.assert_called_with(ci, "test.txt", None, None)
+        mock__init.assert_called_with(ci, "test.txt", None)
 
     def test_bind_info_to_entry(self):
         ci = self.get_obj()
         self.assertRaises(NotImplementedError,
                           ci.bind_info_to_entry, Mock(), Mock())
-
-    def test__set_info(self):
-        ci = self.get_obj()
-        entry = Mock()
-        entry.attrib = dict()
-
-        info = {"foo": "foo",
-                "_bar": "bar",
-                "bar:baz=quux": "quux",
-                "baz__": "baz",
-                "__quux": "quux"}
-        ci._set_info(entry, info)
-        self.assertItemsEqual(entry.attrib,
-                              dict([(k, v) for k, v in info.items()
-                                    if not k.startswith("__")]))
 
 
 class TestCfgVerifier(TestCfgBaseFileMatcher):
@@ -187,6 +172,12 @@ class TestCfgVerifier(TestCfgBaseFileMatcher):
 class TestCfgCreator(TestCfgBaseFileMatcher):
     test_obj = CfgCreator
     path = "/foo/bar/test.txt"
+    should_monitor = False
+
+    def setUp(self):
+        TestCfgBaseFileMatcher.setUp(self)
+        set_setup_default("filemonitor", MagicMock())
+        set_setup_default("cfg_passphrase", None)
 
     def get_obj(self, name=None):
         if name is None:
@@ -256,62 +247,122 @@ class TestCfgCreator(TestCfgBaseFileMatcher):
         self.assertRaises(CfgCreationError, cc.write_data, data)
 
 
+class TestXMLCfgCreator(TestCfgCreator, TestStructFile):
+    test_obj = XMLCfgCreator
+
+    def setUp(self):
+        TestCfgCreator.setUp(self)
+        TestStructFile.setUp(self)
+
+    @patch("Bcfg2.Server.Plugins.Cfg.CfgCreator.handle_event")
+    @patch("Bcfg2.Server.Plugin.helpers.StructFile.HandleEvent")
+    def test_handle_event(self, mock_HandleEvent, mock_handle_event):
+        cc = self.get_obj()
+        evt = Mock()
+        cc.handle_event(evt)
+        mock_HandleEvent.assert_called_with(cc, evt)
+        mock_handle_event.assert_called_with(cc, evt)
+
+    def test_get_specificity(self):
+        cc = self.get_obj()
+        metadata = Mock()
+
+        def reset():
+            metadata.group_in_category.reset_mock()
+
+        category = "%s.%s.category" % (self.test_obj.__module__,
+                                       self.test_obj.__name__)
+        @patch(category, None)
+        def inner():
+            cc.xdata = lxml.etree.Element("PrivateKey")
+            self.assertItemsEqual(cc.get_specificity(metadata),
+                                  dict(host=metadata.hostname))
+        inner()
+
+        @patch(category, "foo")
+        def inner2():
+            cc.xdata = lxml.etree.Element("PrivateKey")
+            self.assertItemsEqual(cc.get_specificity(metadata),
+                                  dict(group=metadata.group_in_category.return_value,
+                                       prio=50))
+            metadata.group_in_category.assert_called_with("foo")
+
+            reset()
+            cc.xdata = lxml.etree.Element("PrivateKey", perhost="true")
+            self.assertItemsEqual(cc.get_specificity(metadata),
+                                  dict(host=metadata.hostname))
+
+            reset()
+            cc.xdata = lxml.etree.Element("PrivateKey", category="bar")
+            self.assertItemsEqual(cc.get_specificity(metadata),
+                                  dict(group=metadata.group_in_category.return_value,
+                                       prio=50))
+            metadata.group_in_category.assert_called_with("bar")
+
+            reset()
+            cc.xdata = lxml.etree.Element("PrivateKey", prio="10")
+            self.assertItemsEqual(cc.get_specificity(metadata),
+                                  dict(group=metadata.group_in_category.return_value,
+                                       prio=10))
+            metadata.group_in_category.assert_called_with("foo")
+
+            reset()
+            cc.xdata = lxml.etree.Element("PrivateKey")
+            metadata.group_in_category.return_value = ''
+            self.assertItemsEqual(cc.get_specificity(metadata),
+                                  dict(host=metadata.hostname))
+            metadata.group_in_category.assert_called_with("foo")
+
+        inner2()
+
+
 class TestCfgDefaultInfo(TestCfgInfo):
     test_obj = CfgDefaultInfo
 
-    def get_obj(self, defaults=None):
-        if defaults is None:
-            defaults = dict()
-        return self.test_obj(defaults)
+    def get_obj(self, *_):
+        return self.test_obj()
 
-    @patch("Bcfg2.Server.Plugins.Cfg.CfgInfo.__init__")
-    def test__init(self, mock__init):
-        defaults = Mock()
-        cdi = self.get_obj(defaults=defaults)
-        mock__init.assert_called_with(cdi, '')
-        self.assertEqual(defaults, cdi.defaults)
+    def test__init(self):
+        pass
 
     def test_handle_event(self):
         # this CfgInfo handler doesn't handle any events -- it's not
         # file-driven, but based on the built-in defaults
         pass
 
-    def test_bind_info_to_entry(self):
+    @patch("Bcfg2.Server.Plugin.default_path_metadata")
+    def test_bind_info_to_entry(self, mock_default_path_metadata):
         cdi = self.get_obj()
-        cdi._set_info = Mock()
-        entry = Mock()
+        entry = lxml.etree.Element("Test", name="test")
+        mock_default_path_metadata.return_value = \
+            dict(owner="root", mode="0600")
         cdi.bind_info_to_entry(entry, Mock())
-        cdi._set_info.assert_called_with(entry, cdi.defaults)
+        self.assertItemsEqual(entry.attrib,
+                              dict(owner="root", mode="0600", name="test"))
 
 
 class TestCfgEntrySet(TestEntrySet):
     test_obj = CfgEntrySet
 
+    def setUp(self):
+        TestEntrySet.setUp(self)
+        set_setup_default("cfg_validation", False)
+        set_setup_default("cfg_handlers", [])
+
     def test__init(self):
         pass
 
-    def test_handlers(self):
-        # this is really really difficult to mock out, so we just get
-        # a list of handlers and make sure that it roughly matches
-        # what's on the filesystem
-        expected = []
-        for submodule in walk_packages(path=Bcfg2.Server.Plugins.Cfg.__path__,
-                                       prefix="Bcfg2.Server.Plugins.Cfg."):
-            expected.append(submodule[1].rsplit('.', 1)[-1])
-        self.assertItemsEqual(expected, [h.__name__ for h in handlers()])
-
-    @patch("Bcfg2.Server.Plugins.Cfg.handlers")
-    def test_handle_event(self, mock_handlers):
+    def test_handle_event(self):
         eset = self.get_obj()
         eset.entry_init = Mock()
-        mock_handlers.return_value = [Mock(), Mock(), Mock()]
-        for hdlr in mock_handlers.return_value:
+        Bcfg2.Options.setup.cfg_handlers = [Mock(), Mock(), Mock()]
+        for hdlr in Bcfg2.Options.setup.cfg_handlers:
             hdlr.__name__ = "handler"
         eset.entries = dict()
 
         def reset():
             eset.entry_init.reset_mock()
-            for hdlr in mock_handlers.return_value:
+            for hdlr in Bcfg2.Options.setup.cfg_handlers:
                 hdlr.reset_mock()
 
         # test that a bogus deleted event is discarded
@@ -321,18 +372,19 @@ class TestCfgEntrySet(TestEntrySet):
         eset.handle_event(evt)
         self.assertFalse(eset.entry_init.called)
         self.assertItemsEqual(eset.entries, dict())
-        for hdlr in mock_handlers.return_value:
+        for hdlr in Bcfg2.Options.setup.cfg_handlers:
             self.assertFalse(hdlr.handles.called)
             self.assertFalse(hdlr.ignore.called)
 
         # test creation of a new file
         for action in ["exists", "created", "changed"]:
+            print("Testing handling of %s events" % action)
             evt = Mock()
             evt.code2str.return_value = action
             evt.filename = os.path.join(datastore, "test.txt")
 
             # test with no handler that handles
-            for hdlr in mock_handlers.return_value:
+            for hdlr in Bcfg2.Options.setup.cfg_handlers:
                 hdlr.handles.return_value = False
                 hdlr.ignore.return_value = False
 
@@ -340,16 +392,16 @@ class TestCfgEntrySet(TestEntrySet):
             eset.handle_event(evt)
             self.assertFalse(eset.entry_init.called)
             self.assertItemsEqual(eset.entries, dict())
-            for hdlr in mock_handlers.return_value:
+            for hdlr in Bcfg2.Options.setup.cfg_handlers:
                 hdlr.handles.assert_called_with(evt, basename=eset.path)
                 hdlr.ignore.assert_called_with(evt, basename=eset.path)
 
             # test with a handler that handles the entry
             reset()
-            mock_handlers.return_value[-1].handles.return_value = True
+            Bcfg2.Options.setup.cfg_handlers[-1].handles.return_value = True
             eset.handle_event(evt)
-            eset.entry_init.assert_called_with(evt, mock_handlers.return_value[-1])
-            for hdlr in mock_handlers.return_value:
+            eset.entry_init.assert_called_with(evt, Bcfg2.Options.setup.cfg_handlers[-1])
+            for hdlr in Bcfg2.Options.setup.cfg_handlers:
                 hdlr.handles.assert_called_with(evt, basename=eset.path)
                 if not hdlr.return_value:
                     hdlr.ignore.assert_called_with(evt, basename=eset.path)
@@ -357,14 +409,14 @@ class TestCfgEntrySet(TestEntrySet):
             # test with a handler that ignores the entry before one
             # that handles it
             reset()
-            mock_handlers.return_value[0].ignore.return_value = True
+            Bcfg2.Options.setup.cfg_handlers[0].ignore.return_value = True
             eset.handle_event(evt)
             self.assertFalse(eset.entry_init.called)
-            mock_handlers.return_value[0].handles.assert_called_with(evt,
-                                                        basename=eset.path)
-            mock_handlers.return_value[0].ignore.assert_called_with(evt,
-                                                       basename=eset.path)
-            for hdlr in mock_handlers.return_value[1:]:
+            Bcfg2.Options.setup.cfg_handlers[0].handles.assert_called_with(
+                evt, basename=eset.path)
+            Bcfg2.Options.setup.cfg_handlers[0].ignore.assert_called_with(
+                evt, basename=eset.path)
+            for hdlr in Bcfg2.Options.setup.cfg_handlers[1:]:
                 self.assertFalse(hdlr.handles.called)
                 self.assertFalse(hdlr.ignore.called)
 
@@ -376,7 +428,7 @@ class TestCfgEntrySet(TestEntrySet):
         eset.entries[evt.filename] = Mock()
         eset.handle_event(evt)
         self.assertFalse(eset.entry_init.called)
-        for hdlr in mock_handlers.return_value:
+        for hdlr in Bcfg2.Options.setup.cfg_handlers:
             self.assertFalse(hdlr.handles.called)
             self.assertFalse(hdlr.ignore.called)
         eset.entries[evt.filename].handle_event.assert_called_with(evt)
@@ -386,7 +438,7 @@ class TestCfgEntrySet(TestEntrySet):
         evt.code2str.return_value = "deleted"
         eset.handle_event(evt)
         self.assertFalse(eset.entry_init.called)
-        for hdlr in mock_handlers.return_value:
+        for hdlr in Bcfg2.Options.setup.cfg_handlers:
             self.assertFalse(hdlr.handles.called)
             self.assertFalse(hdlr.ignore.called)
         self.assertItemsEqual(eset.entries, dict())
@@ -438,15 +490,15 @@ class TestCfgEntrySet(TestEntrySet):
     @patch("Bcfg2.Server.Plugins.Cfg.u_str")
     @patch("Bcfg2.Server.Plugins.Cfg.b64encode")
     def test_bind_entry(self, mock_b64encode, mock_u_str):
-        Bcfg2.Server.Plugins.Cfg.SETUP = dict(validate=False)
-
         mock_u_str.side_effect = lambda x: x
 
+        Bcfg2.Options.setup.cfg_validation = False
         eset = self.get_obj()
         eset.bind_info_to_entry = Mock()
         eset._generate_data = Mock()
         eset.get_handlers = Mock()
         eset._validate_data = Mock()
+        eset.setup = dict(validate=False)
 
         def reset():
             mock_b64encode.reset_mock()
@@ -524,7 +576,7 @@ class TestCfgEntrySet(TestEntrySet):
 
         # test successful validation
         entry = reset()
-        Bcfg2.Server.Plugins.Cfg.SETUP['validate'] = True
+        Bcfg2.Options.setup.cfg_validation = True
         bound = eset.bind_entry(entry, metadata)
         eset.bind_info_to_entry.assert_called_with(entry, metadata)
         eset._generate_data.assert_called_with(entry, metadata)
@@ -546,16 +598,16 @@ class TestCfgEntrySet(TestEntrySet):
     def test_get_handlers(self):
         eset = self.get_obj()
         eset.entries['test1.txt'] = CfgInfo("test1.txt")
-        eset.entries['test2.txt'] = CfgGenerator("test2.txt", Mock(), None)
+        eset.entries['test2.txt'] = CfgGenerator("test2.txt", Mock())
         eset.entries['test2.txt'].specific.matches.return_value = True
         eset.entries['test3.txt'] = CfgInfo("test3.txt")
-        eset.entries['test4.txt'] = CfgGenerator("test4.txt", Mock(), None)
+        eset.entries['test4.txt'] = CfgGenerator("test4.txt", Mock())
         eset.entries['test4.txt'].specific.matches.return_value = False
-        eset.entries['test5.txt'] = CfgGenerator("test5.txt", Mock(), None)
+        eset.entries['test5.txt'] = CfgGenerator("test5.txt", Mock())
         eset.entries['test5.txt'].specific.matches.return_value = True
-        eset.entries['test6.txt'] = CfgVerifier("test6.txt", Mock(), None)
+        eset.entries['test6.txt'] = CfgVerifier("test6.txt", Mock())
         eset.entries['test6.txt'].specific.matches.return_value = True
-        eset.entries['test7.txt'] = CfgFilter("test7.txt", Mock(), None)
+        eset.entries['test7.txt'] = CfgFilter("test7.txt", Mock())
         eset.entries['test7.txt'].specific.matches.return_value = False
 
         def reset():
@@ -603,24 +655,24 @@ class TestCfgEntrySet(TestEntrySet):
             if hasattr(entry.specific.matches, "called"):
                 self.assertFalse(entry.specific.matches.called)
 
-    def test_bind_info_to_entry(self):
-        default_info = Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO
+    @patch("Bcfg2.Server.Plugins.Cfg.CfgDefaultInfo")
+    def test_bind_info_to_entry(self, mock_DefaultInfo):
         eset = self.get_obj()
         eset.get_handlers = Mock()
         eset.get_handlers.return_value = []
-        Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO = Mock()
         metadata = Mock()
 
         def reset():
             eset.get_handlers.reset_mock()
-            Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO.reset_mock()
+            mock_DefaultInfo.reset_mock()
             return lxml.etree.Element("Path", name="/test.txt")
 
         # test with no info handlers
         entry = reset()
         eset.bind_info_to_entry(entry, metadata)
         eset.get_handlers.assert_called_with(metadata, CfgInfo)
-        Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO.bind_info_to_entry.assert_called_with(entry, metadata)
+        mock_DefaultInfo.return_value.bind_info_to_entry.assert_called_with(
+            entry, metadata)
         self.assertEqual(entry.get("type"), "file")
 
         # test with one info handler
@@ -629,7 +681,8 @@ class TestCfgEntrySet(TestEntrySet):
         eset.get_handlers.return_value = [handler]
         eset.bind_info_to_entry(entry, metadata)
         eset.get_handlers.assert_called_with(metadata, CfgInfo)
-        Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO.bind_info_to_entry.assert_called_with(entry, metadata)
+        mock_DefaultInfo.return_value.bind_info_to_entry.assert_called_with(
+            entry, metadata)
         handler.bind_info_to_entry.assert_called_with(entry, metadata)
         self.assertEqual(entry.get("type"), "file")
 
@@ -639,7 +692,8 @@ class TestCfgEntrySet(TestEntrySet):
         eset.get_handlers.return_value = handlers
         eset.bind_info_to_entry(entry, metadata)
         eset.get_handlers.assert_called_with(metadata, CfgInfo)
-        Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO.bind_info_to_entry.assert_called_with(entry, metadata)
+        mock_DefaultInfo.return_value.bind_info_to_entry.assert_called_with(
+            entry, metadata)
         # we don't care which handler gets called as long as exactly
         # one of them does
         called = 0
@@ -649,8 +703,6 @@ class TestCfgEntrySet(TestEntrySet):
                 called += 1
         self.assertEqual(called, 1)
         self.assertEqual(entry.get("type"), "file")
-
-        Bcfg2.Server.Plugins.Cfg.DEFAULT_INFO = default_info
 
     def test_create_data(self):
         eset = self.get_obj()
@@ -753,34 +805,15 @@ class TestCfgEntrySet(TestEntrySet):
 class TestCfg(TestGroupSpool, TestPullTarget):
     test_obj = Cfg
 
+    def setUp(self):
+        TestGroupSpool.setUp(self)
+        TestPullTarget.setUp(self)
+        set_setup_default("cfg_handlers", [])
+
     def get_obj(self, core=None):
         if core is None:
             core = Mock()
-        core.setup = MagicMock()
         return TestGroupSpool.get_obj(self, core=core)
-
-    @patch("Bcfg2.Server.Plugin.GroupSpool.__init__")
-    @patch("Bcfg2.Server.Plugin.PullTarget.__init__")
-    def test__init(self, mock_pulltarget_init, mock_groupspool_init):
-        core = Mock()
-        core.setup = MagicMock()
-        cfg = self.test_obj(core, datastore)
-        mock_pulltarget_init.assert_called_with(cfg)
-        mock_groupspool_init.assert_called_with(cfg, core, datastore)
-        core.setup.add_option.assert_called_with("validate",
-                                                 Bcfg2.Options.CFG_VALIDATION)
-        core.setup.reparse.assert_called_with()
-
-        core.reset_mock()
-        core.setup.reset_mock()
-        mock_pulltarget_init.reset_mock()
-        mock_groupspool_init.reset_mock()
-        core.setup.__contains__.return_value = True
-        cfg = self.test_obj(core, datastore)
-        mock_pulltarget_init.assert_called_with(cfg)
-        mock_groupspool_init.assert_called_with(cfg, core, datastore)
-        self.assertFalse(core.setup.add_option.called)
-        self.assertFalse(core.setup.reparse.called)
 
     def test_has_generator(self):
         cfg = self.get_obj()

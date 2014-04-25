@@ -1,9 +1,14 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
   <xsd:annotation>
     <xsd:documentation>
-      Schema for :ref:`server-plugins-generators-sslca` ``key.xml``
+      Schema for :ref:`server-plugins-generators-cfg-ssl-certificates`
+      ``sslkey.xml``
     </xsd:documentation>
   </xsd:annotation>
+
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
 
   <xsd:complexType name="SSLCAKeyGroupType">
     <xsd:annotation>
@@ -17,9 +22,11 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
       <xsd:element name="Key" type="KeyType"/>
       <xsd:element name="Group" type="SSLCAKeyGroupType"/>
       <xsd:element name="Client" type="SSLCAKeyGroupType"/>
+      <xsd:element name="KeyInfo" type="KeyInfoType"/>
     </xsd:choice>
     <xsd:attribute name='name' type='xsd:string'>
       <xsd:annotation>
@@ -39,6 +46,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:simpleType name="KeyTypeEnum">
@@ -68,20 +76,46 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
-  <xsd:element name="KeyInfo">
+  <xsd:complexType name="KeyInfoType">
     <xsd:annotation>
       <xsd:documentation>
         Top-level tag for describing an SSLCA generated key.
       </xsd:documentation>
     </xsd:annotation>
-    <xsd:complexType>
-      <xsd:choice minOccurs="1" maxOccurs="unbounded">
-        <xsd:element name="Key" type="KeyType"/>
-        <xsd:element name="Group" type="SSLCAKeyGroupType"/>
-        <xsd:element name="Client" type="SSLCAKeyGroupType"/>
-      </xsd:choice>
-    </xsd:complexType>
-  </xsd:element>
+    <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
+      <xsd:element name="Key" type="KeyType"/>
+      <xsd:element name="Group" type="SSLCAKeyGroupType"/>
+      <xsd:element name="Client" type="SSLCAKeyGroupType"/>
+      <xsd:element name="KeyInfo" type="KeyInfoType"/>
+    </xsd:choice>
+    <xsd:attribute name="perhost" type="xsd:boolean">
+      <xsd:annotation>
+        <xsd:documentation>
+          Create keys on a per-host basis (rather than on a per-group
+          basis).
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="category" type="xsd:string">
+      <xsd:annotation>
+        <xsd:documentation>
+          Create keys specific to the given category, instead of
+          specific to the category given in ``bcfg2.conf``.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="priority" type="xsd:positiveInteger" default="50">
+      <xsd:annotation>
+        <xsd:documentation>
+          Create group-specific keys with the given priority.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+  </xsd:complexType>
+
+  <xsd:element name="KeyInfo" type="KeyInfoType"/>
 </xsd:schema>

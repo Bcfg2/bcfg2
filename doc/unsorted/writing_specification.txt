@@ -26,12 +26,12 @@ that a client needs the Bcfg2 package with
 
 .. code-block:: xml
 
-    <Package name=bcfg2/>
+    <Package name="bcfg2"/>
 
 but this does not explicitly identify that an RPM package version
 0.9.2 should be loaded from http://rpm.repo.server/bcfg2-0.9.2-0.1.rpm.
-The abstract configuration is defined in the xml configuration files
-for the Base and Bundles plugins.
+The abstract configuration is defined in the XML configuration files
+for the Bundler plugin.
 
 A combination of a clients metadata (group memberships) and abstract
 configuration is then used to generate the clients literal configuration.
@@ -57,34 +57,12 @@ Abstract Configuration (Structures)
 ===================================
 
 A clients Abstract Configuration is the inventory of configuration
-entities that should be installed on a client. Two plugins provide the
-basis for the abstract configuration, the Bundler and Base.
+entities that should be installed on a client. The Bundler plugin
+usually provides the abstract configuration.
 
 The plugin Bundler builds descriptions of interrelated configuration
 entities. These are typically used for the representation of services,
 or other complex groups of entities.
-
-The Base provides a laundry list of configuration entities that need to
-be installed on hosts. These entities are independent from one another,
-and can be installed individually without worrying about the impact on
-other entities.
-
-Usage of Groups in Base and Bundles
------------------------------------
-
-Groups are used by the Base and Bundles plugins for selecting
-Configuration Entity Types for inclusion in a clients abstract
-configuration.  They can be thought of as::
-
-    if client is a member of group1 then
-        assign to abstract config
-
-Nested groups are conjunctive (logical and).::
-
-    if client is a member of group1 and group2 then
-        assign to abstract config
-
-Group membership maybe negated.  See "Writing Bundles" for an example.
 
 Configuration Entity Types
 --------------------------
@@ -121,9 +99,8 @@ consist of
 If any of these pieces are installed or updated, all should be rechecked
 and any associated services should be restarted.
 
-All files in the Bundles/ subdirectory of the repository are processed.
-Each bundle must be defined in its own file and the filename must be the
-same as the bundle name with a .xml suffix.::
+All files in the Bundles/ subdirectory of the repository are
+processed.  Each bundle must be defined in its own file::
 
     # ls Bundler
     Glide3.xml
@@ -144,17 +121,6 @@ same as the bundle name with a .xml suffix.::
     atftp.xml
     ....
 
-Groups can be used inside of bundles to differentiate which entries
-particular clients will receive. This is useful for the case where
-entries are named differently across systems; for example, one linux
-distro may have a package called openssh while another uses the name ssh.
-Configuration entries nested inside of Group elements only apply to
-clients who are a member of those groups; multiply nested groups must
-all apply.
-
-Also, groups may be negated; entries included in such groups will only
-apply to clients who are not a member of said group.
-
 When packages in a bundle are verified by the client toolset, the Paths
 included in the same bundle are taken into consideration.  That is,
 a package will not fail verification from a Bcfg2 perspective if the
@@ -165,16 +131,8 @@ The following is an annotated copy of a bundle:
 
 .. code-block:: xml
 
-    <Bundle name='ssh' version='2.0'>
-      <Path name='/etc/ssh/ssh_host_dsa_key'/>
-      <Path name='/etc/ssh/ssh_host_rsa_key'/>
-      <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>
-      <Path name='/etc/ssh/ssh_host_rsa_key.pub'/>
-      <Path name='/etc/ssh/ssh_host_key'/>
-      <Path name='/etc/ssh/ssh_host_key.pub'/>
-      <Path name='/etc/ssh/sshd_config'/>
-      <Path name='/etc/ssh/ssh_config'/>
-      <Path name='/etc/ssh/ssh_known_hosts'/>
+    <Bundle>
+      <Path glob='/etc/ssh/*'/>
       <Group name='rpm'>
         <Package name='openssh'/>
         <Package name='openssh-askpass'/>
@@ -205,23 +163,7 @@ can be used in bundles)
 +----------------+-------------------------------+
 | Group          | Entry                         |
 +================+===============================+
-| all            | /etc/ssh/ssh_host_dsa_key     |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_host_rsa_key     |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_host_dsa_key.pub |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_host_rsa_key.pub |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_host_key         |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_host_key.pub     |
-+----------------+-------------------------------+
-| all            | /etc/ssh/sshd_config          |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_config           |
-+----------------+-------------------------------+
-| all            | /etc/ssh/ssh_known_hosts      |
+| all            | /etc/ssh/*                    |
 +----------------+-------------------------------+
 | rpm            | Package openssh               |
 +----------------+-------------------------------+
@@ -268,26 +210,3 @@ A Generator can take care of a particular configuration element. Any time
 this element is requested by the client, the server dynamically generates
 it either by crunching data and creating new information or by reading
 a file off of disk and passes it down to the client for installation.
-
-Usage of Groups in Generators
------------------------------
-
-Similar to Abstract Configuration plugins, groups are used by generator
-plugins for selecting Configuration Entities for inclusion in a clients
-literal configuration.  They can be thought of as::
-
-    if client is a member of group1 then
-        assign to abstract config
-
-Nested groups are conjunctive (logical and).::
-
-    if client is a member of group1 and group2 then
-        assign to abstract config
-
-How the groups are configured is specific to the plugin, but here are
-two common methods:
-
-* xml configuration file (Pkgmgr, Rules)
-* file name encoding (Cfg, SSHBase)
-
-Details are included on each plugin's page.

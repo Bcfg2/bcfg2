@@ -19,96 +19,97 @@ will receive.
 Group and Client tags can be used inside of bundles to differentiate
 which entries particular clients will recieve; this is useful for the
 case where entries are named differently across systems; for example,
-one linux distro may have a package called openssh while another uses
-the name ssh. Configuration entries nested inside of Group elements
-only apply to clients who are a member of those groups; multiple
-nested groups must all apply. Also, groups may be negated; entries
-included in such groups will only apply to clients who are not a
-member of said group.  The same applies to Client elements.
+one Linux distro may have a package called ``openssh`` while another
+uses the name ``ssh``. See :ref:`xml-group-client-tags` for details
+and a longer example.
 
-The following is an annotated copy of a bundle:
+A brief example:
 
 .. code-block:: xml
 
-    <Bundle name='ssh' version='2.0'>
-      <Path name='/etc/ssh/ssh_host_dsa_key'/>
-      <Path name='/etc/ssh/ssh_host_rsa_key'/>
-      <Path name='/etc/ssh/ssh_host_dsa_key.pub'/>
-      <Path name='/etc/ssh/ssh_host_rsa_key.pub'/>
-      <Path name='/etc/ssh/ssh_host_key'/>
-      <Path name='/etc/ssh/ssh_host_key.pub'/>
-      <Path name='/etc/ssh/sshd_config'/>
+    <Bundle>
       <Path name='/etc/ssh/ssh_config'/>
-      <Path name='/etc/ssh/ssh_known_hosts'/>
       <Group name='rpm'>
-        <Package name='openssh'/>
-        <Package name='openssh-askpass'/>
         <Service name='sshd'/>
-        <Group name='fedora' >
-           <Group name='fc14' negate='true'>
-             <Package name='openssh-clients'/>
-           </Group>
-           <Package name='openssh-server'/>
-        </Group>
+        <Package name='openssh-server'/>
       </Group>
       <Group name='deb'>
         <Package name='ssh'/>
         <Service name='ssh'/>
       </Group>
-      <Client name='trust.example.com'>
-          <Path name='/etc/ssh/shosts.equiv'/>
-      </Client>
     </Bundle>
 
-In this bundle, most of the entries are common to all systems. Clients
-in group **deb** get one extra package and service, while clients in
-group **rpm** get two extra packages and an extra service. In
-addition, clients in group **fedora** *and* group **rpm** get one
-extra package entries, unless they are not in the **fc14** group, in
-which case, they get an extra package. The client
-**trust.example.com** gets one extra file that is not distributed to
-any other clients.  Notice that this file doesn't describe which
-versions of these entries that clients should get, only that they
-should get them. (Admittedly, this example is slightly contrived, but
-demonstrates how group entries can be used in bundles)
+Note that we do not specify *how* a given entry should be managed,
+only that it should be.  The concrete specification of each entry will
+be provided by a different plugin such as
+:ref:`server-plugins-generators-cfg`,
+:ref:`server-plugins-generators-rules`, or
+:ref:`server-plugins-generators-packages`.
 
-+----------------------------+-------------------------------+
-| Group/Hostname             | Entry                         |
-+============================+===============================+
-| all                        | /etc/ssh/ssh_host_dsa_key     |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_host_rsa_key     |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_host_dsa_key.pub |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_host_rsa_key.pub |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_host_key         |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_host_key.pub     |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/sshd_config          |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_config           |
-+----------------------------+-------------------------------+
-| all                        | /etc/ssh/ssh_known_hosts      |
-+----------------------------+-------------------------------+
-| rpm                        | Package openssh               |
-+----------------------------+-------------------------------+
-| rpm                        | Package openssh-askpass       |
-+----------------------------+-------------------------------+
-| rpm                        | Service sshd                  |
-+----------------------------+-------------------------------+
-| rpm and fedora             | Package openssh-server        |
-+----------------------------+-------------------------------+
-| rpm and fedora and not fc4 | Package openssh-clients       |
-+----------------------------+-------------------------------+
-| deb                        | Package ssh                   |
-+----------------------------+-------------------------------+
-| deb                        | Service ssh                   |
-+----------------------------+-------------------------------+
-| trust.example.com          | /etc/ssh/shosts.equiv         |
-+----------------------------+-------------------------------+
+Alternatively, you can use fully-bound entries in Bundler, which has
+various uses.  For instance:
+
+.. code-block:: xml
+
+    <Bundle>
+      <Path name='/etc/ssh/ssh_config'/>
+      <Group name='rpm'>
+        <BoundService name='sshd' type="chkconfig" status="on"/>
+        <BoundPackage name='openssh-server' version='5.8p2' type="yum" />
+      </Group>
+      <Group name='deb'>
+        <Package name='ssh'/>
+        <BoundService name='ssh' type="chkconfig" status="on"/>
+      </Group>
+    </Bundle>
+
+In this example, both Service tags and one Package tag are fully bound
+-- i.e., all information required by the client to manage those
+entries is provided in the bundle itself.
+
+.. _server-plugins-structures-bundler-magic:
+
+Bundle "Magic"
+==============
+
+Bundles are collections of *related* entries.  That point is very,
+very important, because a bundle performs certain "magic" actions when
+one or more entries in it are modified:
+
+* :xml:type:`Service <ServiceType>` entries whose ``restart``
+  attribute is ``true`` (the default) will be restarted.
+* :xml:type:`Action <ActionType>` entries whose ``when`` attribute is
+  ``modified`` will be run.
+
+Because of these two magic actions, it's extremely important to
+structure your bundles around Service and Action entries, rather than
+around some loose idea of which entries are related.  For instance, in
+order to manage a Bcfg2 server, a number of packages, paths, services,
+etc. must be managed.  But not all of these entries would require
+``bcfg2-server`` to be restarted, so to limit restarts it's wise to
+split these entries into two bundles.  See
+:ref:`server-plugins-structures-bundler-bcfg2-server` for an example
+of this.
+
+Disabling Magic
+---------------
+
+Disabling magic bundler actions can be done in one of two ways:
+
+* On a per-entry basis.  Set ``restart="false"`` on a Service to
+  prevent it from being restarted when the bundle is modified.  Set
+  ``when="always"`` on an Action to cause it to run every time,
+  regardless of whether or not the bundle was modified.
+* On a per-bundle basis.  Set ``independent="true"`` on the top-level
+  ``Bundle`` tag to signify that the bundle is a collection of
+  independent (i.e., unrelated) entries, and to prevent any magic
+  actions from being performed.  (This is similar to the ``Base``
+  plugin in older versions of Bcfg2.)  This was added in Bcfg2 1.4.
+
+Service entries in independent bundles are never restarted, and Action
+entries in independent bundles are only executed if ``when="always"``.
+(I.e., an Action entry in an independent bundle with
+``when="modified"`` is useless.)
 
 Genshi templates
 ================
@@ -118,43 +119,12 @@ Genshi XML templates allow you to use the `Genshi
 generate a bundle.  Genshi templates can be specified one of two ways:
 
 1. Add an XML-style genshi template to the Bundler directory with a
-   ``.genshi`` and the associated namespace attribute.
-2. Simply add the appropriate namespace attribute to your existing XML
+   ``.genshi`` and the associated namespace attribute.  *This is
+   deprecated as of Bcfg2 1.4.*
+2. Add the Genshi namespace to your existing XML
    bundle.
 
-The top-level Bundle tag should look like the following::
-
-    <Bundle name="foo" xmlns:py="http://genshi.edgewall.org/">
-
-Several variables are pre-defined inside templates:
-
-+-------------+--------------------------------------------------------+
-| Name        | Description                                            |
-+=============+========================================================+
-| metadata    | :ref:`Client metadata                                  |
-|             | <server-plugins-grouping-metadata-clientmetadata>`     |
-+-------------+--------------------------------------------------------+
-| repo        | The path to the Bcfg2 repository on the filesystem     |
-+-------------+--------------------------------------------------------+
-
-.. note::
-
-    ``<Group>`` and ``<Client>`` tags are allowed inside of Genshi
-    templates as of Bcfg2 1.2.  However, they do not behave the same
-    as using a Genshi conditional, e.g.::
-
-        <py:if test="'groupname' in metadata.groups">
-	</py:if>
-
-    The conditional is evaluated when the template is rendered, so
-    code inside the conditional is not executed if the conditional
-    fails.  A ``<Group>`` tag is evaluated *after* the template is
-    rendered, so code inside the tag is always executed.  This is an
-    important distinction: if you have code that will fail on some
-    groups, you *must* use a Genshi conditional, not a ``<Group>``
-    tag.  The same caveats apply to ``<Client>`` tags.
-
-See also the :ref:`xml-genshi-reference`.
+See :ref:`xml-genshi-templating` for details.
 
 Troubleshooting
 ---------------
@@ -167,6 +137,55 @@ This will render the template; it will not fully bind all of the
 entries in the bundle.
 
 See :ref:`bcfg2-info <server-bcfg2-info>` for more details.
+
+Dependencies
+============
+
+Dependencies on other bundles can be specified by adding an empty
+bundle tag that adds another bundle by name, e.g.:
+
+.. code-block:: xml
+
+    <Bundle>
+      <Bundle name="nfs-client"/>
+      ...
+    </Bundle>
+
+The dependent bundle is added to the list of bundles sent to the
+client, *not* to the parent bundle itself.  In other words, if an
+entry in the dependent bundle changes, Services are restarted and
+Actions are run in the dependent bundle *only*.  An example:
+
+``nfs-client.xml``:
+
+.. code-block:: xml
+
+    <Bundle>
+      <Package name="nfs-utils"/>
+      <Service name="nfslock"/>
+      <Service name="rpcbind"/>
+      <Service name="nfs"/>
+    </Bundle>
+
+``automount.xml``:
+
+.. code-block:: xml
+
+    <Bundle>
+      <Bundle name="nfs-client"/>
+
+      <Path name="/mnt/home"/>
+      <Path name="/etc/auto.master"/>
+      <Path name="/etc/auto.misc"/>
+      <Service name="autofs"/>
+      <Package name="automount"/>
+    </Bundle>
+
+If a new ``nfs-utils`` package was installed, the ``nfslock``,
+``rpcbind``, and ``nfs`` services would be restarted, but *not* the
+``autofs`` service.  Similarly, if a new ``/etc/auto.misc`` file was
+sent out, the ``autofs`` service would be restarted, but the
+``nfslock``, ``rpcbind``, and ``nfs`` services would not be restarted.
 
 Altsrc
 ======
@@ -184,8 +203,8 @@ in their name. The following template produces such a config file entry.
 
 .. code-block:: xml
 
-    <Bundle name='foo'  xmlns:py="http://genshi.edgewall.org/">
-        <Path name='/etc/package-${metadata.hostname}'/>
+    <Bundle xmlns:py="http://genshi.edgewall.org/">
+      <Path name='/etc/package-${metadata.hostname}'/>
     </Bundle>
 
 Depending on the circumstance, these configuration files can either be
@@ -199,7 +218,7 @@ and returns them in a newline delimited string.
 
 .. code-block:: xml
 
-    <Bundle name="networkinterfaces" xmlns:py="http://genshi.edgewall.org/">
+    <Bundle xmlns:py="http://genshi.edgewall.org/">
         <?python
           files = metadata.Probes["getmacs"].split("\n")
         ?>
@@ -219,7 +238,7 @@ if declaration.
 
 .. code-block:: xml
 
-    <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
+    <Bundle xmlns:py="http://genshi.edgewall.org/">
          <Path name="/etc/bacula/bconsole.conf"/>
          <Path name="/etc/bacula/bacula-fd.conf"/>
          <Path name="/etc/bacula/bacula-sd.conf"/>
@@ -231,7 +250,7 @@ or alternately
 
 .. code-block:: xml
 
-    <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
+    <Bundle xmlns:py="http://genshi.edgewall.org/">
          <Path name="/etc/bacula/bconsole.conf"/>
          <Path name="/etc/bacula/bacula-fd.conf"/>
          <Path name="/etc/bacula/bacula-sd.conf"/>
@@ -244,7 +263,7 @@ or yet another way
 
 .. code-block:: xml
 
-    <Bundle name='bacula' xmlns:py="http://genshi.edgewall.org/">
+    <Bundle xmlns:py="http://genshi.edgewall.org/">
         <Path name="/etc/bacula/bconsole.conf"/>
         <Path name="/etc/bacula/bacula-fd.conf"/>
         <Path name="/etc/bacula/bacula-sd.conf"/>
@@ -274,6 +293,7 @@ more complex example Bundles.
 .. toctree::
    :maxdepth: 1
 
+   bcfg2
    kernel
    moab
    nagios

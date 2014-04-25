@@ -102,7 +102,7 @@ Run bcfg2 to be sure you are able to communicate with the server::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action Chkconfig POSIX YUMng
+     Action Chkconfig POSIX YUM
 
     Phase: initial
     Correct entries: 0
@@ -147,7 +147,7 @@ Now if you run the client, no more warning::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action Chkconfig POSIX YUMng
+     Action Chkconfig POSIX YUM
 
     Phase: initial
     Correct entries: 0
@@ -176,7 +176,7 @@ First, replace **Pkgmgr** with **Packages** in the plugins
 line of ``bcfg2.conf``. Then create Packages layout (as per
 :ref:`packages-exampleusage`) in ``/var/lib/bcfg2``
 
-.. note:: I am using the RawURL syntax here since we are using `mrepo`_
+.. note:: I am using the rawurl syntax here since we are using `mrepo`_
           to manage our yum mirrors.
 
 .. _mrepo: http://dag.wieers.com/home-made/mrepo/
@@ -184,37 +184,36 @@ line of ``bcfg2.conf``. Then create Packages layout (as per
 .. code-block:: xml
 
     <Sources>
-            <!-- CentOS (5.4) sources -->
-            <Source type="yum" rawurl="http://mrepo/centos5-x86_64/RPMS.os">
-                    <Arch>x86_64</Arch>
+        <Group name="centos5">
+            <!-- CentOS 5 sources -->
+            <Source type="yum"
+                    rawurl="http://mrepo/centos5-x86_64/RPMS.os">
+                <Arch>x86_64</Arch>
             </Source>
-            <Source type="yum" rawurl="http://mrepo/centos5-x86_64/RPMS.updates">
-                    <Arch>x86_64</Arch>
+            <Source type="yum"
+                    rawurl="http://mrepo/centos5-x86_64/RPMS.updates">
+                <Arch>x86_64</Arch>
             </Source>
-            <Source type="yum" rawurl="http://mrepo/centos5-x86_64/RPMS.extras">
-                    <Arch>x86_64</Arch>
+            <Source type="yum"
+                    rawurl="http://mrepo/centos5-x86_64/RPMS.extras">
+                <Arch>x86_64</Arch>
             </Source>
+        </Group>
     </Sources>
 
-Due to the :ref:`server-plugins-generators-packages-magic-groups`,
-we need to modify our Metadata. Let's add a **centos5.4** group which
-inherits a **centos** group (this should replace the existing **redhat**
-group) present in ``/var/lib/bcfg2/Metadata/groups.xml``. The resulting
-file should look something like this
-
-.. note::
-
-    The reason we are creating a release-specific group in this case is
-    that the YUMSource above is specific to the 5.4 release of centos.
-    That is, it should not apply to other releases (5.1, 5.3, etc).
+To make these sources apply to our centos 5 clients, we need to modify
+our Metadata. Let's add a **centos5** group which inherits a
+**centos** group (this should replace the existing **redhat** group)
+present in ``/var/lib/bcfg2/Metadata/groups.xml``. The resulting file
+should look something like this
 
 .. code-block:: xml
 
     <Groups version='3.0'>
        <Group profile='true' public='true' default='true' name='basic'>
-          <Group name='centos-5.4'/>
+          <Group name='centos-5'/>
        </Group>
-       <Group name='centos-5.4'>
+       <Group name='centos-5'>
           <Group name='centos'/>
        </Group>
        <Group name='ubuntu'/>
@@ -238,7 +237,7 @@ plugin. Add Probes to your plugins line in ``bcfg2.conf`` and create
 the Probe.::
 
     [root@centos ~]# grep plugins /etc/bcfg2.conf
-    plugins = Base,Bundler,Cfg,...,Probes
+    plugins = Bundler,Cfg,...,Probes
     [root@centos ~]# mkdir /var/lib/bcfg2/Probes
     [root@centos ~]# cat /var/lib/bcfg2/Probes/groups
     #!/bin/sh
@@ -260,9 +259,8 @@ it with the *yum* package.
 
 .. code-block:: xml
 
-    [root@centos ~]# cat /var/lib/bcfg2/Bundler/base-packages.xml
-    <Bundle name='base-packages'>
-            <Package name='yum'/>
+    <Bundle>
+      <Package name='yum'/>
     </Bundle>
 
 You need to reference the bundle from your Metadata. The resulting
@@ -272,7 +270,7 @@ profile group might look something like this
 
     <Group profile='true' public='true' default='true' name='basic'>
        <Bundle name='base-packages'/>
-       <Group name='centos5.4'/>
+       <Group name='centos5'/>
     </Group>
 
 Now if we run the client, we can see what this has done for us.::
@@ -286,7 +284,7 @@ Now if we run the client, we can see what this has done for us.::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action Chkconfig POSIX YUMng
+     Action Chkconfig POSIX YUM
             Package pam failed verification.
 
     Phase: initial
@@ -331,7 +329,7 @@ entries?::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action Chkconfig POSIX YUMng
+     Action Chkconfig POSIX YUM
     Extra Package openssh-clients 4.3p2-36.el5_4.4.x86_64.
     Extra Package libuser 0.54.7-2.1el5_4.1.x86_64.
     ...
@@ -359,22 +357,22 @@ looks like this
 
 .. code-block:: xml
 
-    <Bundle name='base-packages'>
-            <Package name='bcfg2-server'/>
-            <Package name='exim'/>
-            <Package name='grub'/>
-            <Package name='kernel'/>
-            <Package name='krb5-workstation'/>
-            <Package name='m2crypto'/>
-            <Package name='openssh-clients'/>
-            <Package name='openssh-server'/>
-            <Package name='prelink'/>
-            <Package name='redhat-lsb'/>
-            <Package name='rpm-build'/>
-            <Package name='rsync'/>
-            <Package name='sysklogd'/>
-            <Package name='vim-enhanced'/>
-            <Package name='yum'/>
+    <Bundle>
+      <Package name='bcfg2-server'/>
+      <Package name='exim'/>
+      <Package name='grub'/>
+      <Package name='kernel'/>
+      <Package name='krb5-workstation'/>
+      <Package name='m2crypto'/>
+      <Package name='openssh-clients'/>
+      <Package name='openssh-server'/>
+      <Package name='prelink'/>
+      <Package name='redhat-lsb'/>
+      <Package name='rpm-build'/>
+      <Package name='rsync'/>
+      <Package name='sysklogd'/>
+      <Package name='vim-enhanced'/>
+      <Package name='yum'/>
     </Bundle>
 
 Now when I run the client, you can see I have only one unmanaged
@@ -389,9 +387,7 @@ package::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action Chkconfig POSIX YUMng
-    Extra Package gpg-pubkey e8562897-459f07a4.None.
-    Extra Package gpg-pubkey 217521f6-45e8a532.None.
+     Action Chkconfig POSIX YUM
 
     Phase: initial
     Correct entries: 187
@@ -405,95 +401,10 @@ package::
     Incorrect entries: 0
     Total managed entries: 187
     Unmanaged entries: 16
-     Package:gpg-pubkey
      Service:atd
      Service:avahi-daemon
      Service:bcfg2-server
      ...
-
-The gpg-pubkey packages are special in that they are not really
-packages. Currently, the way to manage them is using :ref:`BoundEntries
-<boundentries>`. So, after adding them, our Bundle now looks like this
-
-.. note:: This does not actually control the contents of the files,
-          you will need to do this part separately (see below).
-
-.. code-block:: xml
-
-    <Bundle name='base-packages'>
-            <BoundPackage name="gpg-pubkey" type="rpm" version="foo">
-                            <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5" version="e8562897" release="459f07a4"/>
-                            <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL" version="217521f6" release="45e8a532"/>
-            </BoundPackage>
-            <Package name='bcfg2-server'/>
-            <Package name='exim'/>
-            <Package name='grub'/>
-            <Package name='kernel'/>
-            <Package name='krb5-workstation'/>
-            <Package name='m2crypto'/>
-            <Package name='openssh-clients'/>
-            <Package name='openssh-server'/>
-            <Package name='prelink'/>
-            <Package name='redhat-lsb'/>
-            <Package name='rpm-build'/>
-            <Package name='rsync'/>
-            <Package name='sysklogd'/>
-            <Package name='vim-enhanced'/>
-            <Package name='yum'/>
-    </Bundle>
-
-.. note::
-
-    version="foo" is just a dummy attribute for the gpg-pubkey Package
-
-To actually push the gpg keys out via Bcfg2, you will need to manage the
-files as well. This can be done by adding Path entries for each of the
-gpg keys you want to manage
-
-.. code-block:: xml
-
-    <Bundle name='base-packages'>
-            <Path name='/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5'/>
-            <Path name='/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL'/>
-            <BoundPackage name="gpg-pubkey" type="rpm" version="foo">
-                            <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5" version="e8562897" release="459f07a4"/>
-                            <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL" version="217521f6" release="45e8a532"/>
-            </BoundPackage>
-            <Package name='bcfg2-server'/>
-            <Package name='exim'/>
-            <Package name='grub'/>
-            <Package name='kernel'/>
-            <Package name='krb5-workstation'/>
-            <Package name='m2crypto'/>
-            <Package name='openssh-clients'/>
-            <Package name='openssh-server'/>
-            <Package name='prelink'/>
-            <Package name='redhat-lsb'/>
-            <Package name='rpm-build'/>
-            <Package name='rsync'/>
-            <Package name='sysklogd'/>
-            <Package name='vim-enhanced'/>
-            <Package name='yum'/>
-    </Bundle>
-
-Then add the files to Cfg::
-
-    mkdir -p Cfg/etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5
-    cp /etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-5 !$/RPM-GPG-KEY-CentOS-5
-    mkdir -p Cfg/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL
-    cp /etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL !$/RPM-GPG-KEY-EPEL
-
-You will also want to add an *important* attribute to these files so
-that they are installed on the client prior to any attempts to install
-the **gpg-pubkey** rpm packages. This is especially important during the
-bootstrapping phase and can be accomplished using an :ref:`server-info`
-file that looks like the following:
-
-.. code-block:: xml
-
-    <FileInfo>
-        <Info owner='root' group='root' mode='0644' important='true'/>
-    </FileInfo>
 
 Now, running the client shows only unmanaged Service entries. Woohoo!
 
@@ -528,22 +439,22 @@ entries to our bundle.
 
     [root@centos ~]# cat /var/lib/bcfg2/Rules/services.xml
     <Rules priority='1'>
-            <!-- basic services -->
-            <Service type='chkconfig' status='on' name='atd'/>
-            <Service type='chkconfig' status='on' name='avahi-daemon'/>
-            <Service type='chkconfig' status='on' name='bcfg2-server'/>
-            <Service type='chkconfig' status='on' name='crond'/>
-            <Service type='chkconfig' status='on' name='cups'/>
-            <Service type='chkconfig' status='on' name='gpm'/>
-            <Service type='chkconfig' status='on' name='lvm2-monitor'/>
-            <Service type='chkconfig' status='on' name='mcstrans'/>
-            <Service type='chkconfig' status='on' name='messagebus'/>
-            <Service type='chkconfig' status='on' name='netfs'/>
-            <Service type='chkconfig' status='on' name='network'/>
-            <Service type='chkconfig' status='on' name='postfix'/>
-            <Service type='chkconfig' status='on' name='rawdevices'/>
-            <Service type='chkconfig' status='on' name='sshd'/>
-            <Service type='chkconfig' status='on' name='syslog'/>
+      <!-- basic services -->
+      <Service type='chkconfig' status='on' name='atd'/>
+      <Service type='chkconfig' status='on' name='avahi-daemon'/>
+      <Service type='chkconfig' status='on' name='bcfg2-server'/>
+      <Service type='chkconfig' status='on' name='crond'/>
+      <Service type='chkconfig' status='on' name='cups'/>
+      <Service type='chkconfig' status='on' name='gpm'/>
+      <Service type='chkconfig' status='on' name='lvm2-monitor'/>
+      <Service type='chkconfig' status='on' name='mcstrans'/>
+      <Service type='chkconfig' status='on' name='messagebus'/>
+      <Service type='chkconfig' status='on' name='netfs'/>
+      <Service type='chkconfig' status='on' name='network'/>
+      <Service type='chkconfig' status='on' name='postfix'/>
+      <Service type='chkconfig' status='on' name='rawdevices'/>
+      <Service type='chkconfig' status='on' name='sshd'/>
+      <Service type='chkconfig' status='on' name='syslog'/>
     </Rules>
 
 Now we run the client and see there are no more unmanaged entries!::
@@ -557,7 +468,7 @@ Now we run the client and see there are no more unmanaged entries!::
     Excluding Packages in global exclude list
     Finished
     Loaded tool drivers:
-     Action Chkconfig POSIX YUMng
+     Action Chkconfig POSIX YUM
 
     Phase: initial
     Correct entries: 205

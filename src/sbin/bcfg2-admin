@@ -2,97 +2,11 @@
 """ bcfg2-admin is a script that helps to administer a Bcfg2
 deployment. """
 
-import re
 import sys
-import logging
-import Bcfg2.Logger
-import Bcfg2.Options
-import Bcfg2.Server.Admin
-from Bcfg2.Compat import StringIO
-
-
-def mode_import(modename):
-    """Load Bcfg2.Server.Admin.<mode>."""
-    modname = modename.capitalize()
-    mod = getattr(__import__("Bcfg2.Server.Admin.%s" %
-                             (modname)).Server.Admin, modname)
-    return getattr(mod, modname)
-
-
-def get_modes():
-    """Get all available modes, except for the base mode."""
-    return [x.lower() for x in Bcfg2.Server.Admin.__all__ if x != 'mode']
-
-
-def create_description():
-    """Create the description string from the list of modes."""
-    modes = get_modes()
-    description = StringIO()
-    description.write("Available modes are:\n\n")
-    for mode in modes:
-        try:
-            doc = re.sub(r'\s{2,}', ' ', mode_import(mode).__doc__.strip())
-        except (ImportError, SystemExit):
-            continue
-        description.write(("   %-15s   %s\n" % (mode, doc)))
-    return description.getvalue()
-
-
-def main():
-    optinfo = dict()
-    optinfo.update(Bcfg2.Options.CLI_COMMON_OPTIONS)
-    optinfo.update(Bcfg2.Options.SERVER_COMMON_OPTIONS)
-    setup = Bcfg2.Options.OptionParser(optinfo)
-    # override default help message to include description of all modes
-    setup.hm = "Usage:\n\n%s\n%s" % (setup.buildHelpMessage(),
-                                     create_description())
-    setup.parse(sys.argv[1:])
-
-    if setup['debug']:
-        level = logging.DEBUG
-    elif setup['verbose']:
-        level = logging.INFO
-    else:
-        level = logging.WARNING
-    Bcfg2.Logger.setup_logging('bcfg2-admin', to_syslog=setup['syslog'],
-                               level=level)
-
-    log = logging.getLogger('bcfg2-admin')
-
-    # Provide help if requested or no args were specified
-    if (not setup['args'] or len(setup['args']) < 1 or
-        setup['args'][0] == 'help' or setup['help']):
-        if len(setup['args']) > 1:
-            # Get help for a specific mode by passing it the help argument
-            setup['args'] = [setup['args'][1], setup['args'][0]]
-        else:
-            # Print short help for all modes
-            print(setup.hm)
-            raise SystemExit(0)
-
-    if setup['args'][0] in get_modes():
-        modname = setup['args'][0].capitalize()
-        if len(setup['args']) > 1 and setup['args'][1] == 'help':
-            mode_cls = mode_import(modname)
-            mode_cls.usage(rv=0)
-        try:
-            mode_cls = mode_import(modname)
-        except ImportError:
-            err = sys.exc_info()[1]
-            log.error("Failed to load admin mode %s: %s" % (modname, err))
-            raise SystemExit(1)
-        mode = mode_cls(setup)
-        try:
-            return mode(setup['args'][1:])
-        finally:
-            mode.shutdown()
-    else:
-        log.error("Error: Unknown mode '%s'\n" % setup['args'][0])
-        print(create_description())
-        raise SystemExit(1)
+from Bcfg2.Server.Admin import CLI
 
 if __name__ == '__main__':
     try:
-        sys.exit(main())
+        sys.exit(CLI().run())
     except KeyboardInterrupt:
         raise SystemExit(1)

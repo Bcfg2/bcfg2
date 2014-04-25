@@ -54,6 +54,15 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute name="recommended" type="xsd:boolean">
+      <xsd:annotation>
+        <xsd:documentation>
+          Whether also th recommended packages should be installed.
+          This is currently only used with the :ref:`APT
+          &lt;client-tools-apt&gt;` driver.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
@@ -146,38 +155,33 @@
               </xsd:documentation>
             </xsd:annotation>
           </xsd:attribute>
-          <xsd:attribute name="installed_action" type="xsd:string"
-                         default="install">
+          <xsd:attribute name="install_missing" type="xsd:boolean"
+                         default="true">
             <xsd:annotation>
               <xsd:documentation>
-                If this is set to any value other than "install",
-                package installation will be suppressed with the
-                :ref:`YUM24 and RPM &lt;client-tools-yum&gt;` drivers.
+                Whether or not to install missing packages. This is
+                only honored by the the :ref:`RPM
+                &lt;client-tools-yum&gt;` driver.
               </xsd:documentation>
             </xsd:annotation>
           </xsd:attribute>
-          <xsd:attribute name="version_fail_action" type="xsd:string"
-                         default="upgrade">
+          <xsd:attribute name="fix_version" type="xsd:boolean" default="true">
             <xsd:annotation>
               <xsd:documentation>
-                If this is set to any value other than "upgrade", a
-                package that has the incorrect version installed will
-                not be fixed with the :ref:`YUM24 and RPM
-                &lt;client-tools-yum&gt;` drivers.  Note that
-                "upgrade" is misleading; if a package is installed
-                that is newer than the desired version, it will not be
-                downgraded if this attribute is set to anything other
-                than "upgrade".
+                Whether or not to upgrade or downgrade packages that
+                are installed, but have the wrong version. This is
+                only honored by the :ref:`RPM
+                &lt;client-tools-yum&gt;` driver.
               </xsd:documentation>
             </xsd:annotation>
           </xsd:attribute>
-          <xsd:attribute name="verify_fail_action" type="xsd:string">
+          <xsd:attribute name="reinstall_broken" type="xsd:boolean"
+                         default="true">
             <xsd:annotation>
               <xsd:documentation>
-                If this is set to any value other than "reinstall", a
-                package that fails package verification will not be
-                reinstalled with the :ref:`YUM24 and RPM
-                &lt;client-tools-yum&gt;` drivers.
+                Whether or not to reinstall packages that fail
+                verification. This is only honored by the :ref:`RPM
+                &lt;client-tools-yum&gt;` driver.
               </xsd:documentation>
             </xsd:annotation>
           </xsd:attribute>

@@ -69,13 +69,13 @@ included with the source distribution and all packages.
 If the bcfg2 server is not reflecting recent changes, try restarting the bcfg2-server process
 =============================================================================================
 
-If this fixes the problem, it is either a bug in the
-underlying file monitoring system (fam or gamin) or a bug in
-Bcfg2's file monitoring code. In either case, file a `ticket
+If this fixes the problem, it is either a bug in the underlying file
+monitoring system (inotify or gamin) or a bug in Bcfg2's file
+monitoring code. In either case, file a `ticket
 <https://trac.mcs.anl.gov/projects/bcfg2/newticket>`_ in the tracking
 system. In the ticket, include:
 
-* filesystem monitoring system (fam or gamin)
+* filesystem monitoring system (inotify or gamin)
 * kernel version (if on linux)
 * if any messages of the form "Handled N events in M
   seconds" appeared between the modification event and the client
@@ -259,8 +259,7 @@ Server Errors
          :ref:`server-info` file for this entry.
 .. [s11] Verify that you have the proper prefix set in bcfg2.conf.
 .. [s12] Ensure that the client is a member of all the appropriate
-	 :ref:`server-plugins-generators-packages-magic-groups` as
-	 well as any additional groups you may have defined in your
+	 groups you may have defined in your
 	 :ref:`server-plugins-generators-packages` configuration.
 
 FAQs

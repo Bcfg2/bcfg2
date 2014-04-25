@@ -4,13 +4,14 @@ import lxml.etree
 import os
 import sys
 from fnmatch import fnmatch
-from Bcfg2.Compat import any
+from Bcfg2.Compat import any  # pylint: disable=W0622
+from Bcfg2.Server.FileMonitor import FileMonitor
 import Bcfg2.Options
 
 
 def setmodeattr(elem):
     """Set the mode attribute for a given element."""
-    if elem.attrib.has_key('perms'):
+    if 'perms' in elem.attrib:
         elem.set('mode', elem.get('perms'))
         del elem.attrib['perms']
         return True
@@ -54,33 +55,34 @@ def convertstructure(structfile):
         writefile(structfile, xdata)
 
 
-def skip_path(path, setup):
+def skip_path(path):
     return any(fnmatch(path, p) or fnmatch(os.path.basename(path), p)
-               for p in setup['ignore'])
+               for p in Bcfg2.Options.setup.ignore_files)
 
 
 def main():
-    opts = dict(repo=Bcfg2.Options.SERVER_REPOSITORY,
-                configfile=Bcfg2.Options.CFILE,
-                ignore=Bcfg2.Options.SERVER_FAM_IGNORE,
-                plugins=Bcfg2.Options.SERVER_PLUGINS)
-    setup = Bcfg2.Options.OptionParser(opts)
-    setup.parse(sys.argv[1:])
-    repo = setup['repo']
+    parser = Bcfg2.Options.get_parser(
+        description="Migrate from Bcfg2 1.2 'perms' attribute to 1.3 'mode' "
+        "attribute",
+        components=FileMonitor)
+    parser.add_options([Bcfg2.Options.Common.repository,
+                        Bcfg2.Options.Common.plugins])
+    parser.parse()
+    repo = Bcfg2.Options.setup.repository
 
-    for plugin in setup['plugins']:
+    for plugin in Bcfg2.Options.setup.plugins:
         if plugin in ['Base', 'Bundler', 'Rules']:
-            for root, dirs, files in os.walk(os.path.join(repo, plugin)):
-                if skip_path(root, setup):
+            for root, _, files in os.walk(os.path.join(repo, plugin)):
+                if skip_path(root):
                     continue
                 for fname in files:
-                    if skip_path(fname, setup):
+                    if skip_path(fname):
                         continue
                     convertstructure(os.path.join(root, fname))
         if plugin not in ['Cfg', 'TGenshi', 'TCheetah', 'SSHbase', 'SSLCA']:
             continue
         for root, dirs, files in os.walk(os.path.join(repo, plugin)):
-            if skip_path(root, setup):
+            if skip_path(root):
                 continue
             for fname in files:
                 if fname == 'info.xml':

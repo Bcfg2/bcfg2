@@ -128,13 +128,15 @@ The two attributes you need to know about are:
   of the caching mode.  See :ref:`server-caching` for a description of
   each mode.
 * :attr:`Bcfg2.Server.Core.metadata_cache`: A dict-like
-  :class:`Bcfg2.Cache.Cache` object that stores the cached data.
+  :class:`Bcfg2.Server.Cache.Cache` object that stores the cached
+  data.
 
 :class:`Bcfg2.Server.Plugin.base.Plugin` objects have access to the
 :class:`Bcfg2.Server.Core` object as ``self.core``.  In general,
-you'll be interested in the :func:`Bcfg2.Cache.Cache.expire` method;
-if called with no arguments, it expires all cached data; if called
-with one string argument, it expires cached data for the named client.
+you'll be interested in the :func:`Bcfg2.Server.Cache.Cache.expire`
+method; if called with no arguments, it expires all cached data; if
+called with one string argument, it expires cached data for the named
+client.
 
 It's important, therefore, that your Connector plugin can either track
 when changes are made to the group membership it reports, and expire
@@ -163,7 +165,7 @@ Tracking Execution Time
 .. versionadded:: 1.3.0
 
 Statistics can and should track execution time statistics using
-:mod:`Bcfg2.Statistics`.  This module tracks execution time for the
+:mod:`Bcfg2.Server.Statistics`.  This module tracks execution time for the
 server core and for plugins, and exposes that data via ``bcfg2-admin
 perf``.  This data can be invaluable for locating bottlenecks or other
 performance issues.
@@ -184,13 +186,13 @@ This will track the execution time of ``do_something``.
 
 More granular usage is possible by using :func:`time.time` to manually
 determine the execution time of a given event and calling
-:func:`Bcfg2.Statistics.Statistics.add_value` with an appropriate
+:func:`Bcfg2.Server.Statistics.Statistics.add_value` with an appropriate
 statistic name.
 
-Bcfg2.Statistics
-^^^^^^^^^^^^^^^^
+Bcfg2.Server.Statistics
+^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automodule:: Bcfg2.Statistics
+.. automodule:: Bcfg2.Server.Statistics
 
 Plugin Helper Classes
 ---------------------

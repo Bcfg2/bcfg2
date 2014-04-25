@@ -6,7 +6,6 @@ import socket
 import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Plugin
-from Bcfg2.Server.Plugins.Metadata import *
 from mock import Mock, MagicMock, patch
 
 # add all parent testsuite directories to sys.path to allow (most)
@@ -19,8 +18,12 @@ while path != "/":
         break
     path = os.path.dirname(path)
 from common import *
+from Bcfg2.Server.Plugins.Metadata import load_django_models
 from TestPlugin import TestXMLFileBacked, TestMetadata as _TestMetadata, \
     TestClientRunHooks, TestDatabaseBacked
+
+load_django_models()
+from Bcfg2.Server.Plugins.Metadata import *
 
 
 def get_clients_test_tree():
@@ -88,18 +91,18 @@ def get_groups_test_tree():
 </Groups>''').getroottree()
 
 
-def get_metadata_object(core=None, watch_clients=False, use_db=False):
+def get_metadata_object(core=None):
     if core is None:
         core = Mock()
-        core.setup = MagicMock()
         core.metadata_cache = MagicMock()
-    core.setup.cfp.getboolean = Mock(return_value=use_db)
 
+    set_setup_default("password")
     @patchIf(not isinstance(os.makedirs, Mock), "os.makedirs", Mock())
     @patchIf(not isinstance(lxml.etree.Element, Mock),
              "lxml.etree.Element", Mock())
+
     def inner():
-        return Metadata(core, datastore, watch_clients=watch_clients)
+        return Metadata(core)
     return inner()
 
 
@@ -108,117 +111,117 @@ class TestMetadataDB(DBModelTestCase):
         models = [MetadataClientModel]
 
 
-if HAS_DJANGO or can_skip:
-    class TestClientVersions(TestDatabaseBacked):
-        test_clients = dict(client1="1.2.0",
-                            client2="1.2.2",
-                            client3="1.3.0pre1",
-                            client4="1.1.0",
-                            client5=None,
-                            client6=None)
+class TestClientVersions(TestDatabaseBacked):
+    test_clients = dict(client1="1.2.0",
+                        client2="1.2.2",
+                        client3="1.3.0pre1",
+                        client4="1.1.0",
+                        client5=None,
+                        client6=None)
 
-        @skipUnless(HAS_DJANGO, "Django not found")
-        def setUp(self):
-            self.test_obj = ClientVersions
-            syncdb(TestMetadataDB)
-            for client, version in self.test_clients.items():
-                MetadataClientModel(hostname=client, version=version).save()
+    @skipUnless(HAS_DJANGO, "Django not found")
+    def setUp(self):
+        TestDatabaseBacked.setUp(self)
+        self.test_obj = ClientVersions
+        syncdb(TestMetadataDB)
+        for client, version in self.test_clients.items():
+            MetadataClientModel(hostname=client, version=version).save()
 
-        def test__contains(self):
-            v = self.get_obj()
-            self.assertIn("client1", v)
-            self.assertIn("client5", v)
-            self.assertNotIn("client__contains", v)
+    def test__contains(self):
+        v = self.get_obj()
+        self.assertIn("client1", v)
+        self.assertIn("client5", v)
+        self.assertNotIn("client__contains", v)
 
-        def test_keys(self):
-            v = self.get_obj()
-            self.assertItemsEqual(self.test_clients.keys(), v.keys())
+    def test_keys(self):
+        v = self.get_obj()
+        self.assertItemsEqual(self.test_clients.keys(), v.keys())
 
-        def test__setitem(self):
-            v = self.get_obj()
+    def test__setitem(self):
+        v = self.get_obj()
 
-            # test setting version of existing client
-            v["client1"] = "1.2.3"
-            self.assertIn("client1", v)
-            self.assertEqual(v['client1'], "1.2.3")
-            client = MetadataClientModel.objects.get(hostname="client1")
-            self.assertEqual(client.version, "1.2.3")
+        # test setting version of existing client
+        v["client1"] = "1.2.3"
+        self.assertIn("client1", v)
+        self.assertEqual(v['client1'], "1.2.3")
+        client = MetadataClientModel.objects.get(hostname="client1")
+        self.assertEqual(client.version, "1.2.3")
 
-            # test adding new client
-            new = "client__setitem"
-            v[new] = "1.3.0"
-            self.assertIn(new, v)
-            self.assertEqual(v[new], "1.3.0")
-            client = MetadataClientModel.objects.get(hostname=new)
-            self.assertEqual(client.version, "1.3.0")
+        # test adding new client
+        new = "client__setitem"
+        v[new] = "1.3.0"
+        self.assertIn(new, v)
+        self.assertEqual(v[new], "1.3.0")
+        client = MetadataClientModel.objects.get(hostname=new)
+        self.assertEqual(client.version, "1.3.0")
 
-            # test adding new client with no version
-            new2 = "client__setitem_2"
-            v[new2] = None
-            self.assertIn(new2, v)
-            self.assertEqual(v[new2], None)
-            client = MetadataClientModel.objects.get(hostname=new2)
-            self.assertEqual(client.version, None)
+        # test adding new client with no version
+        new2 = "client__setitem_2"
+        v[new2] = None
+        self.assertIn(new2, v)
+        self.assertEqual(v[new2], None)
+        client = MetadataClientModel.objects.get(hostname=new2)
+        self.assertEqual(client.version, None)
 
-        def test__getitem(self):
-            v = self.get_obj()
+    def test__getitem(self):
+        v = self.get_obj()
 
-            # test getting existing client
-            self.assertEqual(v['client2'], "1.2.2")
-            self.assertIsNone(v['client5'])
+        # test getting existing client
+        self.assertEqual(v['client2'], "1.2.2")
+        self.assertIsNone(v['client5'])
 
-            # test exception on nonexistent client
-            expected = KeyError
-            try:
-                v['clients__getitem']
-            except expected:
-                pass
-            except:
-                err = sys.exc_info()[1]
-                self.assertFalse(True, "%s raised instead of %s" %
-                                 (err.__class__.__name__,
-                                  expected.__class__.__name__))
-            else:
-                self.assertFalse(True,
-                                 "%s not raised" % expected.__class__.__name__)
+        # test exception on nonexistent client
+        expected = KeyError
+        try:
+            v['clients__getitem']
+        except expected:
+            pass
+        except:
+            err = sys.exc_info()[1]
+            self.assertFalse(True, "%s raised instead of %s" %
+                             (err.__class__.__name__,
+                              expected.__class__.__name__))
+        else:
+            self.assertFalse(True,
+                             "%s not raised" % expected.__class__.__name__)
 
-        def test__len(self):
-            v = self.get_obj()
-            self.assertEqual(len(v), MetadataClientModel.objects.count())
+    def test__len(self):
+        v = self.get_obj()
+        self.assertEqual(len(v), MetadataClientModel.objects.count())
 
-        def test__iter(self):
-            v = self.get_obj()
-            self.assertItemsEqual([h for h in iter(v)], v.keys())
+    def test__iter(self):
+        v = self.get_obj()
+        self.assertItemsEqual([h for h in iter(v)], v.keys())
 
-        def test__delitem(self):
-            v = self.get_obj()
+    def test__delitem(self):
+        v = self.get_obj()
 
-            # test adding new client
-            new = "client__delitem"
-            v[new] = "1.3.0"
+        # test adding new client
+        new = "client__delitem"
+        v[new] = "1.3.0"
 
-            del v[new]
-            self.assertIn(new, v)
-            self.assertIsNone(v[new])
+        del v[new]
+        self.assertIn(new, v)
+        self.assertIsNone(v[new])
 
 
 class TestXMLMetadataConfig(TestXMLFileBacked):
     test_obj = XMLMetadataConfig
     path = os.path.join(datastore, 'Metadata', 'clients.xml')
 
-    def get_obj(self, basefile="clients.xml", core=None, watch_clients=False):
-        self.metadata = get_metadata_object(core=core,
-                                            watch_clients=watch_clients)
+    def get_obj(self, basefile="clients.xml", core=None):
+        self.metadata = get_metadata_object(core=core)
         @patchIf(not isinstance(lxml.etree.Element, Mock),
                  "lxml.etree.Element", Mock())
         def inner():
-            return XMLMetadataConfig(self.metadata, watch_clients, basefile)
+            return XMLMetadataConfig(self.metadata, basefile)
         return inner()
 
+    @patch("Bcfg2.Server.FileMonitor.get_fam", Mock())
     def test__init(self):
         xmc = self.get_obj()
-        self.assertEqual(self.metadata.core.fam, xmc.fam)
-        self.assertFalse(xmc.fam.AddMonitor.called)
+        self.assertNotIn(call(xmc.basefile),
+                         xmc.fam.AddMonitor.call_args_list)
 
     def test_xdata(self):
         config = self.get_obj()
@@ -262,20 +265,15 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
         self.assertEqual(config.base_xdata, "<test/>")
 
     def test_add_monitor(self):
-        core = MagicMock()
-        config = self.get_obj(core=core)
+        config = self.get_obj()
+        config.fam = Mock()
 
         fname = "test.xml"
         fpath = os.path.join(self.metadata.data, fname)
 
         config.extras = []
         config.add_monitor(fpath)
-        self.assertFalse(core.fam.AddMonitor.called)
-        self.assertEqual(config.extras, [fpath])
-
-        config = self.get_obj(core=core, watch_clients=True)
-        config.add_monitor(fpath)
-        core.fam.AddMonitor.assert_called_with(fpath, config.metadata)
+        config.fam.AddMonitor.assert_called_with(fpath, config.metadata)
         self.assertItemsEqual(config.extras, [fpath])
 
     def test_Index(self):
@@ -480,11 +478,16 @@ class TestClientMetadata(Bcfg2TestCase):
 
 class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     test_obj = Metadata
-    use_db = False
 
-    def get_obj(self, core=None, watch_clients=False):
-        return get_metadata_object(core=core, watch_clients=watch_clients,
-                                   use_db=self.use_db)
+    def setUp(self):
+        _TestMetadata.setUp(self)
+        TestClientRunHooks.setUp(self)
+        TestDatabaseBacked.setUp(self)
+        Bcfg2.Options.setup.metadata_db = False
+        Bcfg2.Options.setup.authentication = "cert+password"
+
+    def get_obj(self, core=None):
+        return get_metadata_object(core=core)
 
     @skipUnless(HAS_DJANGO, "Django not found")
     def test__use_db(self):
@@ -504,33 +507,24 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
             client_name = "%s%s" % (prefix, i)
         return client_name
 
-    def test__init(self):
-        # test with watch_clients=False
+    @patch("Bcfg2.Server.FileMonitor.get_fam")
+    def test__init(self, mock_get_fam):
         core = MagicMock()
         metadata = self.get_obj(core=core)
-        self.assertIsInstance(metadata, Bcfg2.Server.Plugin.Plugin)
-        self.assertIsInstance(metadata, Bcfg2.Server.Plugin.Metadata)
-        self.assertIsInstance(metadata, Bcfg2.Server.Plugin.ClientRunHooks)
-        self.assertIsInstance(metadata.clients_xml, XMLMetadataConfig)
-        self.assertIsInstance(metadata.groups_xml, XMLMetadataConfig)
-        self.assertIsInstance(metadata.query, MetadataQuery)
-        self.assertEqual(metadata.states, dict())
-
-        # test with watch_clients=True
-        core.fam = MagicMock()
-        metadata = self.get_obj(core=core, watch_clients=True)
         self.assertEqual(len(metadata.states), 2)
-        core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
-                                                         "groups.xml"),
-                                            metadata)
-        core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
-                                                         "clients.xml"),
-                                            metadata)
+        mock_get_fam.return_value.AddMonitor.assert_any_call(
+            os.path.join(metadata.data, "groups.xml"),
+            metadata)
+        mock_get_fam.return_value.AddMonitor.assert_any_call(
+            os.path.join(metadata.data, "clients.xml"),
+            metadata)
 
-        core.fam.reset_mock()
-        core.fam.AddMonitor = Mock(side_effect=IOError)
+        mock_get_fam.reset_mock()
+        fam = Mock()
+        fam.AddMonitor = Mock(side_effect=IOError)
+        mock_get_fam.return_value = fam
         self.assertRaises(Bcfg2.Server.Plugin.PluginInitError,
-                          self.get_obj, core=core, watch_clients=True)
+                          self.get_obj, core=core)
 
     @patch('os.makedirs', Mock())
     @patch('%s.open' % builtins)
@@ -591,6 +585,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_add_group(self):
         metadata = self.get_obj()
         metadata.groups_xml.write = Mock()
+        metadata.groups_xml.load_xml = Mock()
         metadata.groups_xml.data = lxml.etree.XML('<Groups/>').getroottree()
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
@@ -623,6 +618,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_update_group(self):
         metadata = self.get_obj()
         metadata.groups_xml.write_xml = Mock()
+        metadata.groups_xml.load_xml = Mock()
         metadata.groups_xml.data = copy.deepcopy(get_groups_test_tree())
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
@@ -640,6 +636,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_remove_group(self):
         metadata = self.get_obj()
         metadata.groups_xml.write_xml = Mock()
+        metadata.groups_xml.load_xml = Mock()
         metadata.groups_xml.data = copy.deepcopy(get_groups_test_tree())
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
@@ -655,6 +652,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_add_bundle(self):
         metadata = self.get_obj()
         metadata.groups_xml.write = Mock()
+        metadata.groups_xml.load_xml = Mock()
         metadata.groups_xml.data = lxml.etree.XML('<Groups/>').getroottree()
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
@@ -678,6 +676,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_remove_bundle(self):
         metadata = self.get_obj()
         metadata.groups_xml.write_xml = Mock()
+        metadata.groups_xml.load_xml = Mock()
         metadata.groups_xml.data = copy.deepcopy(get_groups_test_tree())
         metadata.groups_xml.basedata = copy.copy(metadata.groups_xml.data)
 
@@ -693,6 +692,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_add_client(self):
         metadata = self.get_obj()
         metadata.clients_xml.write = Mock()
+        metadata.clients_xml.load_xml = Mock()
         metadata.clients_xml.data = lxml.etree.XML('<Clients/>').getroottree()
         metadata.clients_xml.basedata = copy.copy(metadata.clients_xml.data)
 
@@ -727,6 +727,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
     def test_update_client(self):
         metadata = self.get_obj()
         metadata.clients_xml.write_xml = Mock()
+        metadata.clients_xml.load_xml = Mock()
         metadata.clients_xml.data = copy.deepcopy(get_clients_test_tree())
         metadata.clients_xml.basedata = copy.copy(metadata.clients_xml.data)
 
@@ -762,7 +763,7 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
         metadata.clients_xml.xdata = copy.deepcopy(get_clients_test_tree())
         metadata._handle_clients_xml_event(Mock())
 
-        if not self.use_db:
+        if not Bcfg2.Options.setup.metadata_db:
             self.assertItemsEqual(metadata.clients,
                                   dict([(c.get("name"), c.get("profile"))
                                         for c in get_clients_test_tree().findall("//Client")]))
@@ -1251,10 +1252,13 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
 class TestMetadataBase(TestMetadata):
     """ base test object for testing Metadata with database enabled """
     __test__ = False
-    use_db = True
 
     @skipUnless(HAS_DJANGO, "Django not found")
     def setUp(self):
+        _TestMetadata.setUp(self)
+        TestClientRunHooks.setUp(self)
+        TestDatabaseBacked.setUp(self)
+        Bcfg2.Options.setup.metadata_db = True
         syncdb(TestMetadataDB)
 
     def load_clients_data(self, metadata=None, xdata=None):
@@ -1274,25 +1278,24 @@ class TestMetadataBase(TestMetadata):
         return client_name
 
     @patch('os.path.exists')
-    def test__init(self, mock_exists):
-        core = MagicMock()
-        core.fam = Mock()
+    @patch('Bcfg2.Server.FileMonitor.get_fam')
+    def test__init(self, mock_get_fam, mock_exists):
         mock_exists.return_value = False
-        metadata = self.get_obj(core=core, watch_clients=True)
+        metadata = self.get_obj()
         self.assertIsInstance(metadata, Bcfg2.Server.Plugin.DatabaseBacked)
-        core.fam.AddMonitor.assert_called_once_with(os.path.join(metadata.data,
-                                                                 "groups.xml"),
-                                                    metadata)
+        mock_get_fam.return_value.AddMonitor.assert_called_with(
+            os.path.join(metadata.data, "groups.xml"),
+            metadata)
 
         mock_exists.return_value = True
-        core.fam.reset_mock()
-        metadata = self.get_obj(core=core, watch_clients=True)
-        core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
-                                                         "groups.xml"),
-                                            metadata)
-        core.fam.AddMonitor.assert_any_call(os.path.join(metadata.data,
-                                                         "clients.xml"),
-                                            metadata)
+        mock_get_fam.reset_mock()
+        metadata = self.get_obj()
+        mock_get_fam.return_value.AddMonitor.assert_any_call(
+            os.path.join(metadata.data, "groups.xml"),
+            metadata)
+        mock_get_fam.return_value.AddMonitor.assert_any_call(
+            os.path.join(metadata.data, "clients.xml"),
+            metadata)
 
     def test_add_group(self):
         pass
@@ -1356,12 +1359,7 @@ class TestMetadataBase(TestMetadata):
 class TestMetadata_NoClientsXML(TestMetadataBase):
     """ test Metadata without a clients.xml. we have to disable or
     override tests that rely on client options """
-    # only run these tests if it's possible to skip tests or if we
-    # have django.  otherwise they'll all get run because our fake
-    # skipping decorators for python < 2.7 won't work when they
-    # decorate setUp()
-    if can_skip or HAS_DJANGO:
-        __test__ = True
+    __test__ = True
 
     def load_groups_data(self, metadata=None, xdata=None):
         if metadata is None:
@@ -1525,17 +1523,13 @@ class TestMetadata_NoClientsXML(TestMetadataBase):
 
 class TestMetadata_ClientsXML(TestMetadataBase):
     """ test Metadata with a clients.xml.  """
-    # only run these tests if it's possible to skip tests or if we
-    # have django.  otherwise they'll all get run because our fake
-    # skipping decorators for python < 2.7 won't work when they
-    # decorate setUp()
-    if can_skip or HAS_DJANGO:
-        __test__ = True
+    __test__ = True
 
     def load_clients_data(self, metadata=None, xdata=None):
         if metadata is None:
             metadata = self.get_obj()
-        metadata.core.fam = Mock()
+        fam = Bcfg2.Server.FileMonitor._FAM
+        Bcfg2.Server.FileMonitor._FAM = MagicMock()
         @patchIf(not isinstance(lxml.etree.Element, Mock),
                  "lxml.etree.Element", Mock())
         def inner():
@@ -1543,5 +1537,7 @@ class TestMetadata_ClientsXML(TestMetadataBase):
         inner()
         metadata = TestMetadata.load_clients_data(self, metadata=metadata,
                                                   xdata=xdata)
-        return TestMetadataBase.load_clients_data(self, metadata=metadata,
-                                                    xdata=xdata)
+        rv = TestMetadataBase.load_clients_data(self, metadata=metadata,
+                                                xdata=xdata)
+        Bcfg2.Server.FileMonitor._FAM = fam
+        return rv

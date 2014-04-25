@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _development-setup:
 
@@ -11,6 +12,11 @@ Checking Out a Copy of the Code
 * Check out a copy of the code::
 
       git clone https://github.com/Bcfg2/bcfg2.git
+
+.. note::
+
+    The URL above is read-only. If you are planning on submitting patches
+    upstream, please see :ref:`development-submitting-patches`.
 
 * Add :file:`bcfg2/src/sbin` to your :envvar:`PATH` environment variable
 * Add :file:`bcfg2/src/lib` to your :envvar:`PYTHONPATH` environment variable

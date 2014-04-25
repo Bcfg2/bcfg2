@@ -7,6 +7,7 @@ import copy
 import glob
 import struct
 import socket
+import logging
 import selinux
 import seobject
 import Bcfg2.Client.XML
@@ -77,14 +78,13 @@ class SELinux(Bcfg2.Client.Tools.Tool):
                    SEPort=['name', 'selinuxtype'],
                    SEUser=['name', 'roles', 'prefix'])
 
-    def __init__(self, logger, setup, config):
-        Bcfg2.Client.Tools.Tool.__init__(self, logger, setup, config)
+    def __init__(self, config):
+        Bcfg2.Client.Tools.Tool.__init__(self, config)
         self.handlers = {}
         for handler in self.__handles__:
             etype = handler[0]
             self.handlers[etype] = \
-                globals()["SELinux%sHandler" % etype.title()](self, logger,
-                                                              setup, config)
+                globals()["SELinux%sHandler" % etype.title()](self, config)
         self.txn = False
         self.post_txn_queue = []
 
@@ -99,10 +99,6 @@ class SELinux(Bcfg2.Client.Tools.Tool):
         # a "normal" attribute of this object.  See
         # http://docs.python.org/2/reference/datamodel.html#object.__getattr__
         # for details
-
-    def BundleUpdated(self, _, states):
-        for handler in self.handlers.values():
-            handler.BundleUpdated(states)
 
     def FindExtra(self):
         extra = []
@@ -119,7 +115,7 @@ class SELinux(Bcfg2.Client.Tools.Tool):
         in the specification """
         return self.handlers[entry.tag].primarykey(entry)
 
-    def Install(self, entries, states):
+    def Install(self, entries):
         # start a transaction
         semanage = seobject.semanageRecords("")
         if hasattr(semanage, "start"):
@@ -129,13 +125,14 @@ class SELinux(Bcfg2.Client.Tools.Tool):
         else:
             self.logger.debug("SELinux transactions not supported; this may "
                               "slow things down considerably")
-        Bcfg2.Client.Tools.Tool.Install(self, entries, states)
+        states = Bcfg2.Client.Tools.Tool.Install(self, entries)
         if hasattr(semanage, "finish"):
             self.logger.debug("Committing SELinux transaction")
             semanage.finish()
             self.txn = False
             for func, arg, kwargs in self.post_txn_queue:
                 states[arg] = func(*arg, **kwargs)
+        return states
 
     def GenericSEInstall(self, entry):
         """Dispatch install to the proper method according to entry tag"""
@@ -144,7 +141,7 @@ class SELinux(Bcfg2.Client.Tools.Tool):
     def GenericSEVerify(self, entry, _):
         """Dispatch verify to the proper method according to entry tag"""
         rv = self.handlers[entry.tag].Verify(entry)
-        if entry.get('qtext') and self.setup['interactive']:
+        if entry.get('qtext') and Bcfg2.Options.setup.interactive:
             entry.set('qtext',
                       '%s\nInstall %s: (y/N) ' %
                       (entry.get('qtext'),
@@ -174,10 +171,9 @@ class SELinuxEntryHandler(object):
     custom_re = re.compile(r' (?P<name>\S+)$')
     custom_format = None
 
-    def __init__(self, tool, logger, setup, config):
+    def __init__(self, tool, config):
         self.tool = tool
-        self.logger = logger
-        self.setup = setup
+        self.logger = logging.getLogger(self.__class__.__name__)
         self.config = config
         self._records = None
         self._all = None
@@ -229,7 +225,7 @@ class SELinuxEntryHandler(object):
             match = self.custom_re.search(cmd)
             if match:
                 if (len(self.custom_format) == 1 and
-                    self.custom_format[0] == "name"):
+                        self.custom_format[0] == "name"):
                     keys.append(match.group("name"))
                 else:
                     keys.append(tuple([match.group(k)
@@ -378,11 +374,6 @@ class SELinuxEntryHandler(object):
         return [self.key2entry(key)
                 for key in records.keys()
                 if key not in specified]
-
-    def BundleUpdated(self, states):
-        """ perform any additional magic tasks that need to be run
-        when a bundle is updated """
-        pass
 
 
 class SELinuxSebooleanHandler(SELinuxEntryHandler):
@@ -631,8 +622,8 @@ class SELinuxSeuserHandler(SELinuxEntryHandler):
     etype = "user"
     value_format = ("prefix", None, None, "roles")
 
-    def __init__(self, tool, logger, setup, config):
-        SELinuxEntryHandler.__init__(self, tool, logger, setup, config)
+    def __init__(self, tool, config):
+        SELinuxEntryHandler.__init__(self, tool, config)
         self.needs_prefix = False
 
     @property
@@ -725,9 +716,9 @@ class SELinuxSemoduleHandler(SELinuxEntryHandler):
     etype = "module"
     value_format = (None, "disabled")
 
-    def __init__(self, tool, logger, setup, config):
-        SELinuxEntryHandler.__init__(self, tool, logger, setup, config)
-        self.filetool = POSIXFile(logger, setup, config)
+    def __init__(self, tool, config):
+        SELinuxEntryHandler.__init__(self, tool, config)
+        self.filetool = POSIXFile(config)
         try:
             self.setype = selinux.selinux_getpolicytype()[1]
         except IndexError:

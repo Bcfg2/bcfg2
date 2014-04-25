@@ -1,0 +1,87 @@
+.. -*- mode: rst -*-
+
+.. _server-plugins-structures-bundler-bcfg2-server:
+
+Bcfg2 Server
+============
+
+These two bundles split out the entries that do require a restart of
+``bcfg2-server`` from those that don't.
+
+These bundles also demonstrate use of bound entries to avoid splitting
+entries between Bundler and Rules.
+
+``Bundler/bcfg2-server.xml``:
+
+.. code-block:: xml
+
+  <Bundle>
+    <Bundle name="bcfg2-server-base.xml"/>
+
+    <Path name="/etc/pki/tls/private/bcfg2.key"/>
+    <Path name="/etc/sysconfig/bcfg2-server"/>
+    <Path name="/etc/bcfg2.conf"/>
+
+    <BoundPath name="/var/lib/bcfg2/Packages/cache" type="directory"
+               owner="bcfg2" group="bcfg2" mode="0755"/>
+    <BoundPath name="/var/lib/bcfg2" type="symlink"
+               to="/var/lib/bcfg2-vcs/bcfg2/public"/>
+    <BoundPath name="/var/lib/bcfg2/etc/bcfg2.sqlite" type="permissions"
+               owner="bcfg2" group="apache" mode="0660"/>
+
+    <BoundService name="bcfg2-server" type="chkconfig" status="on"/>
+
+    <Package name="bcfg2-server"/>
+    <Package name="python-genshi"/>
+    <Package name="python-inotify"/>
+    <Package name="Django"/>
+    <Package name="Django-south"/>
+    <Package name="m2crypto"/>
+    <Package name="GitPython"/>
+  </Bundle>
+
+``Bundler/bcfg2-server-base.xml``:
+
+.. code-block:: xml
+
+  <Bundle>
+    <Path name="/etc/bcfg2-web.conf"/>
+    <Path name="/etc/cron.daily/bcfg2_cleanup_db"/>
+
+    <BoundPOSIXGroup name='bcfg2'/>
+    <BoundPOSIXUser name='bcfg2' shell='/sbin/nologin' gecos='Bcfg2 User'/>
+    <Path name="/home/bcfg2/.ssh/id_rsa"/>
+
+    <!-- SSL CA setup -->
+    <BoundPath name="/etc/pki/CA" type="directory" important="true"
+               owner="bcfg2" group="bcfg2" mode="755"/>
+    <BoundPath name="/etc/pki/CA/crl" type="directory" owner="bcfg2"
+               group="bcfg2" mode="755"/>
+    <BoundPath name="/etc/pki/CA/certs" type="directory" owner="bcfg2"
+               group="bcfg2" mode="755"/>
+    <BoundPath name="/etc/pki/CA/newcerts" type="directory" owner="bcfg2"
+               group="bcfg2" mode="755"/>
+    <BoundPath name="/etc/pki/CA/private" type="directory" owner="bcfg2"
+               group="bcfg2" mode="755"/>
+    <Path name="/etc/pki/CA/openssl.cnf" altsrc="/etc/pki/CA/openssl.cnf"/>
+    <Path name="/etc/pki/CA/index.txt.attr"/>
+    <Path name="/etc/pki/CA/CA.crt"/>
+    <Path name="/etc/pki/CA/CA.key"/>
+    <Path name="/etc/pki/CA/CA.pem"/>
+    <Path name="/etc/pki/tls/certs/server-chain.crt"/>
+    <BoundPath name="/etc/pki/CA/serial" type="permissions" owner="bcfg2"
+               group="bcfg2" mode="0600"/>
+    <BoundPath name="/etc/pki/CA/index.txt" type="permissions" owner="bcfg2"
+               group="bcfg2" mode="0600"/>
+    <BoundPath name="/etc/pki/CA/crlnumber" type="permissions" owner="bcfg2"
+               group="bcfg2" mode="0644"/>
+    <BoundAction
+        name="create-CA-serial" timing="post" when="always" status="check"
+        command="[ -e /etc/pki/CA/serial ] || echo '01' > /etc/pki/CA/serial"/>
+    <BoundAction
+        name="create-CA-index" timing="post" when="always" status="check"
+        command="[ -e /etc/pki/CA/index.txt ] || touch /etc/pki/CA/index.txt"/>
+    <BoundAction
+        name="create-CA-crlnumber" timing="post" when="always" status="check"
+        command="[ -e /etc/pki/CA/crlnumber ] || touch /etc/pki/CA/crlnumber"/>
+  </Bundle>

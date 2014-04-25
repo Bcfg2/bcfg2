@@ -24,7 +24,8 @@ Unmanaged entries
 
         sudo yum remove PACKAGE
 
- #. Otherwise, add ``<Package name="PACKAGE" />`` to the Base or Bundler configuration.
+ #. Otherwise, add ``<Package name="PACKAGE" />`` to the Bundler
+    configuration.
 
 * Package (dependency)
 
@@ -38,7 +39,7 @@ Unmanaged entries
 
 * Service
 
- #. Add ``<Service name="SERVICE" />`` to the Base or Bundler configuration.
+ #. Add ``<Service name="SERVICE" />`` to the Bundler configuration.
  #. Add ``<Service name="SERVICE" status="on" type="chkconfig" />`` to
     ``/var/lib/bcfg2/Rules/services.xml``.
 
@@ -57,8 +58,8 @@ For a "Package"
   * For example, ``/etc/motd`` to ``/var/lib/bcfg2/Cfg/etc/motd/motd``.
     Yes, there is an extra directory level named after the file.
 
- #. Specify configuration files as ``<Path name='PATH' />`` in the Base
-    or Bundler configuration.
+ #. Specify configuration files as ``<Path name='PATH' />`` in the
+    Bundler configuration.
  #. Add directories to ``/var/lib/bcfg2/Rules/directories.xml``. For
     example:
 
@@ -73,13 +74,13 @@ For a "Package"
 
  * Option A: Explicitly list the instances
 
-  #. Drop the ``<Package />`` from the Base or Bundler configuration.
+  #. Drop the ``<Package />`` from the Bundler configuration.
   #. Add an explicit ``<BoundPackage>`` and ``<Instance />`` configuration
      to a new Bundle, like the following:
 
      .. code-block:: xml
 
-         <Bundle name='keys'>
+         <Bundle>
            <!-- GPG keys -->
            <BoundPackage name="gpg-pubkey" type="rpm" version="foo">
              <Instance simplefile="/etc/pki/rpm-gpg/RPM-GPG-KEY-EPEL" version="217521f6" release="45e8a532"/>

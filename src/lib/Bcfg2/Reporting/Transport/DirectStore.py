@@ -5,18 +5,20 @@ import os
 import sys
 import time
 import threading
+import Bcfg2.Options
 from Bcfg2.Reporting.Transport.base import TransportBase, TransportError
-from Bcfg2.Reporting.Storage import load_storage_from_config
 from Bcfg2.Compat import Queue, Full, Empty, cPickle
 
 
 class DirectStore(TransportBase, threading.Thread):
-    def __init__(self, setup):
-        TransportBase.__init__(self, setup)
+    options = TransportBase.options + [Bcfg2.Options.Common.reporting_storage]
+
+    def __init__(self):
+        TransportBase.__init__(self)
         threading.Thread.__init__(self)
         self.save_file = os.path.join(self.data, ".saved")
 
-        self.storage = load_storage_from_config(setup)
+        self.storage = Bcfg2.Options.setup.reporting_storage()
         self.storage.validate()
 
         self.queue = Queue(100000)
@@ -30,10 +32,9 @@ class DirectStore(TransportBase, threading.Thread):
 
     def store(self, hostname, metadata, stats):
         try:
-            self.queue.put_nowait(dict(
-                    hostname=hostname,
-                    metadata=metadata,
-                    stats=stats))
+            self.queue.put_nowait(dict(hostname=hostname,
+                                       metadata=metadata,
+                                       stats=stats))
         except Full:
             self.logger.warning("Reporting: Queue is full, "
                                 "dropping statistics")

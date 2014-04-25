@@ -5,8 +5,7 @@ PREFLIGHT = preflight
 POSTFLIGHT = postflight
 PKGROOT = bcfg2pkg
 PKGTMP = bcfg2tmp
-FILTERS = --filter Hostbase \
---filter Reports \
+FILTERS = --filter Reports \
 --filter Server \
 --filter xsd \
 --filter xsl \

@@ -73,17 +73,17 @@ The Collection Module
 ---------------------
 """
 
-import sys
 import copy
-import logging
 import lxml.etree
+import Bcfg2.Options
 import Bcfg2.Server.Plugin
+from Bcfg2.Logger import Debuggable
 from Bcfg2.Compat import any, md5  # pylint: disable=W0622
+from Bcfg2.Server.FileMonitor import get_fam
+from Bcfg2.Server.Statistics import track_statistics
 
-LOGGER = logging.getLogger(__name__)
 
-
-class Collection(list, Bcfg2.Server.Plugin.Debuggable):
+class Collection(list, Debuggable):
     """ ``Collection`` objects represent the set of
     :class:`Bcfg2.Server.Plugins.Packages.Source` objects that apply
     to a given client, and can be used to query all software
@@ -93,8 +93,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
     #: Whether or not this Packages backend supports package groups
     __package_groups__ = False
 
-    def __init__(self, metadata, sources, cachepath, basepath, fam,
-                 debug=False):
+    def __init__(self, metadata, sources, cachepath, basepath, debug=False):
         """
         :param metadata: The client metadata for this collection
         :type metadata: Bcfg2.Server.Plugins.Metadata.ClientMetadata
@@ -111,29 +110,24 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
                          directory, where more permanent data can be
                          stored
         :type basepath: string
-        :param fam: A file monitor object to use if this Collection
-                    needs to monitor for file activity
-        :type fam: Bcfg2.Server.FileMonitor.FileMonitor
         :param debug: Enable debugging output
         :type debug: bool
 
         .. -----
         .. autoattribute:: __package_groups__
         """
-        Bcfg2.Server.Plugin.Debuggable.__init__(self)
+        Debuggable.__init__(self)
         list.__init__(self, sources)
-        self.debug_flag = debug
+        self.debug_flag = self.debug_flag or debug
         self.metadata = metadata
         self.basepath = basepath
         self.cachepath = cachepath
         self.virt_pkgs = dict()
-        self.fam = fam
+        self.fam = get_fam()
 
         try:
-            self.setup = sources[0].setup
             self.ptype = sources[0].ptype
         except IndexError:
-            self.setup = None
             self.ptype = "unknown"
 
     @property
@@ -204,19 +198,6 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         return sorted(list(set(groups)))
 
     @property
-    def basegroups(self):
-        """ Get a list of group names used by this Collection type in
-        resolution of
-        :ref:`server-plugins-generators-packages-magic-groups`.
-
-        The base implementation simply aggregates the results of
-        :attr:`Bcfg2.Server.Plugins.Packages.Source.Source.basegroups`."""
-        groups = set()
-        for source in self:
-            groups.update(source.basegroups)
-        return list(groups)
-
-    @property
     def cachefiles(self):
         """ A list of the full path to all cachefiles used by this
         collection.
@@ -229,7 +210,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
             cachefiles.add(source.cachefile)
         return list(cachefiles)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def get_groups(self, grouplist):
         """ Given a list of package group names, return a dict of
         ``<group name>: <list of packages>``.  This method is provided
@@ -250,7 +231,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
             rv[group] = self.get_group(group, ptype)
         return rv
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def get_group(self, group, ptype=None):
         """ Get the list of packages of the given type in a package
         group.
@@ -308,7 +289,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         return any(source.is_virtual_package(self.metadata, package)
                    for source in self)
 
-    def get_deps(self, package):
+    def get_deps(self, package, recs=None):
         """ Get a list of the dependencies of the given package.
 
         The base implementation simply aggregates the results of
@@ -318,9 +299,14 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         :type package: string
         :returns: list of strings, but see :ref:`pkg-objects`
         """
+        recommended = None
+        if recs and package in recs:
+            recommended = recs[package]
+
         for source in self:
             if source.is_package(self.metadata, package):
-                return source.get_deps(self.metadata, package)
+                return source.get_deps(self.metadata, package, recommended)
+
         return []
 
     def get_essential(self):
@@ -385,20 +371,6 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         """
         for source in self:
             source.filter_unknown(unknown)
-
-    def magic_groups_match(self):
-        """ Returns True if the client's
-        :ref:`server-plugins-generators-packages-magic-groups` match
-        the magic groups for any of the sources contained in this
-        Collection.
-
-        The base implementation returns True if any source
-        :func:`Bcfg2.Server.Plugins.Packages.Source.Source.magic_groups_match`
-        returns True.
-
-        :returns: bool
-        """
-        return any(s.magic_groups_match(self.metadata) for s in self)
 
     def build_extra_structures(self, independent):
         """ Add additional entries to the ``<Independent/>`` section
@@ -476,9 +448,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         """
         for pkg in pkglist:
             lxml.etree.SubElement(entry, 'BoundPackage', name=pkg,
-                                  version=self.setup.cfp.get("packages",
-                                                             "version",
-                                                             default="auto"),
+                                  version=Bcfg2.Options.setup.packages_version,
                                   type=self.ptype, origin='Packages')
 
     def get_new_packages(self, initial, complete):
@@ -499,8 +469,8 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
         """
         return list(complete.difference(initial))
 
-    @Bcfg2.Server.Plugin.track_statistics()
-    def complete(self, packagelist):  # pylint: disable=R0912,R0914
+    @track_statistics()
+    def complete(self, packagelist, recommended=None):  # pylint: disable=R0912,R0914
         """ Build a complete list of all packages and their dependencies.
 
         :param packagelist: Set of initial packages computed from the
@@ -564,7 +534,7 @@ class Collection(list, Bcfg2.Server.Plugin.Debuggable):
                 self.debug_log("Packages: handling package requirement %s" %
                                (current,))
                 packages.add(current)
-                deps = self.get_deps(current)
+                deps = self.get_deps(current, recommended)
                 newdeps = set(deps).difference(examined)
                 if newdeps:
                     self.debug_log("Packages: Package %s added requirements %s"
@@ -630,22 +600,8 @@ def get_collection_class(source_type):
     :type source_type: string
     :returns: type - the Collection subclass that should be used to
               instantiate an object to contain sources of the given type. """
-    modname = "Bcfg2.Server.Plugins.Packages.%s" % source_type.title()
-    try:
-        module = sys.modules[modname]
-    except KeyError:
-        try:
-            module = __import__(modname).Server.Plugins.Packages
-        except ImportError:
-            msg = "Packages: Unknown source type %s" % source_type
-            LOGGER.error(msg)
-            raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-
-    try:
-        cclass = getattr(module, source_type.title() + "Collection")
-    except AttributeError:
-        msg = "Packages: No collection class found for %s sources" % \
-            source_type
-        LOGGER.error(msg)
-        raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-    return cclass
+    for mod in Bcfg2.Options.setup.packages_backends:
+        if mod.__name__.endswith(".%s" % source_type.title()):
+            return getattr(mod, "%sCollection" % source_type.title())
+    raise Bcfg2.Server.Plugin.PluginExecutionError(
+        "Packages: No collection class found for %s sources" % source_type)

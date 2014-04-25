@@ -357,3 +357,20 @@ class TestVersion(TestPlugin):
 class TestClientRunHooks(Bcfg2TestCase):
     """ placeholder for future tests """
     pass
+
+
+class TestClientACLs(Bcfg2TestCase):
+    test_obj = ClientACLs
+
+    def get_obj(self):
+        return self.test_obj()
+
+    def test_check_acl_ip(self):
+        ca = self.get_obj()
+        self.assertIn(ca.check_acl_ip(Mock(), Mock()),
+                      [True, False, None])
+
+    def test_check_acl_metadata(self):
+        ca = self.get_obj()
+        self.assertIn(ca.check_acl_metadata(Mock(), Mock()),
+                      [True, False])

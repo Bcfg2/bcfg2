@@ -120,6 +120,8 @@ in ``bcfg2.conf``::
     [properties]
     writes_enabled = false
 
+.. _server-plugins-connectors-properties-xml:
+
 XML Property Files
 ------------------
 
@@ -266,47 +268,13 @@ Encrypted Properties data
 .. versionadded:: 1.3.0
 
 You can encrypt selected data in XML Properties files to protect that
-data from other people who need access to the repository.  See
-:ref:`server-encryption-configuration` for details on configuring
-encryption passphrases.  The data is decrypted transparently
-on-the-fly by the server; you never need to decrypt the data in your
-templates.  Encryption is only supported on XML properties files.
+data from other people who need access to the repository.  The
+data is decrypted transparently on-the-fly by the server; you never
+need to decrypt the data in your templates.  Encryption is only
+supported on XML properties files.
 
-.. note::
-
-    This feature is *not* intended to secure the files against a
-    malicious attacker who has gained access to your Bcfg2 server, as
-    the encryption passphrases are held in plaintext in
-    ``bcfg2.conf``.  This is only intended to make it easier to use a
-    single Bcfg2 repository with multiple admins who should not
-    necessarily have access to each other's sensitive data.
-
-Properties files are encrypted on a per-element basis; that is, rather
-than encrypting the whole file, only the character content of
-individual elements is encrypted.  This makes it easier to track
-changes to the file in a VCS, and also lets unprivileged users work
-with the other data in the file.  Only character content of an element
-can be encrypted; attribute content and XML elements themselves cannot
-be encrypted.
-
-By default, decryption is *strict*; that is, if any element cannot be
-decrypted, parsing of the file is aborted.  If you wish for parsing to
-continue, with unencryptable elements simply skipped, then you can set
-decryption to *lax* in one of two ways:
-
-* Set ``decrypt=lax`` in the ``[encryption]`` section of
-  ``bcfg2.conf`` to set lax decryption on all files by default; or
-* Set the ``decrypt="lax"`` attribute on the top-level ``Properties``
-  tag of a Properties file to set lax decryption for a single file.
-
-Note that you could, for instance, set lax decryption by default, and
-then set strict decryption on individual files.
-
-To encrypt or decrypt a file, use :ref:`bcfg2-crypt`.
-
-See :ref:`server-encryption` for more details on encryption in Bcfg2
-in general.
-
+See :ref:`server-encryption` for details on encryption in general, and
+:ref:`xml-encryption` for details on encryption in XML files.
 
 Accessing Properties contents from Genshi Templates
 ===================================================

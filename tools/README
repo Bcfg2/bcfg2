@@ -3,9 +3,6 @@ This directory contains repository maintenance tools.
 basebuilder.py <image directory>
     - builds v2 base.xml from bcfg1 repo
 
-batchadd.py <filename>
-    - Add records to Hostbase
-
 bcfg2-completion.bash
     - Bash tab completion for bcfg2-admin
 
@@ -19,9 +16,6 @@ bcfg2-import-config
 bcfg2_local.py
     - Perform a full Bcfg2 run against a local repository instead of
       against a remote server
-
-bcfg2-profile-templates.py [<template>]
-    - Benchmark template rendering times
 
 bcfg2_svnlog.py
     - Send intelligent log messages about changes made to your Bcfg2
@@ -60,15 +54,6 @@ generate-manpages.bash
 
 git_commit.py
     - Trigger script to commit local changes back to a git repository
-
-hostbasepush.py
-    - Call the Hostbase.rebuildState XML-RPC method
-
-hostbase.py {-l|-c} <hostname>
-    - Display or create host information for Hostbase
-
-hostinfo.py {-q <query>|--showfields}
-    - Query the hostbase databse
 
 pkgmgr_gen.py
     - Generate Pkgmgr XML files from a list of directories that

@@ -3,8 +3,9 @@ based on an XML specification of which SSH keypairs should granted
 access. """
 
 import lxml.etree
+import Bcfg2.Options
 from Bcfg2.Server.Plugin import StructFile, PluginExecutionError
-from Bcfg2.Server.Plugins.Cfg import CfgGenerator, SETUP, CFG
+from Bcfg2.Server.Plugins.Cfg import CfgGenerator, get_cfg
 from Bcfg2.Server.Plugins.Metadata import ClientMetadata
 
 
@@ -20,25 +21,12 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
     #: Handle authorized keys XML files
     __basenames__ = ['authorizedkeys.xml', 'authorized_keys.xml']
 
-    #: This handler is experimental, in part because it depends upon
-    #: the (experimental) CfgPrivateKeyCreator handler
-    experimental = True
-
     def __init__(self, fname):
-        CfgGenerator.__init__(self, fname, None, None)
+        CfgGenerator.__init__(self, fname, None)
         StructFile.__init__(self, fname)
         self.cache = dict()
-        self.core = CFG.core
+        self.core = get_cfg().core
     __init__.__doc__ = CfgGenerator.__init__.__doc__
-
-    @property
-    def category(self):
-        """ The name of the metadata category that generated keys are
-        specific to """
-        if (SETUP.cfp.has_section("sshkeys") and
-            SETUP.cfp.has_option("sshkeys", "category")):
-            return SETUP.cfp.get("sshkeys", "category")
-        return None
 
     def handle_event(self, event):
         CfgGenerator.handle_event(self, event)
@@ -51,12 +39,6 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
         rv = []
         for allow in spec.findall("Allow"):
             options = []
-            if allow.find("Params") is not None:
-                self.logger.warning("Use of <Params> in authorized_keys.xml "
-                                    "is deprecated; use <Option> instead")
-                options.extend("=".join(p)
-                               for p in allow.find("Params").attrib.items())
-
             for opt in allow.findall("Option"):
                 if opt.get("value"):
                     options.append("%s=%s" % (opt.get("name"),
@@ -68,7 +50,8 @@ class CfgAuthorizedKeysGenerator(CfgGenerator, StructFile):
             if pubkey_name:
                 host = allow.get("host")
                 group = allow.get("group")
-                category = allow.get("category", self.category)
+                category = allow.get("category",
+                                     Bcfg2.Options.setup.sshkeys_category)
                 if host:
                     key_md = self.core.build_metadata(host)
                 elif group:

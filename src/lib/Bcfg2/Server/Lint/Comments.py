@@ -2,6 +2,7 @@
 
 import os
 import lxml.etree
+import Bcfg2.Options
 import Bcfg2.Server.Lint
 from Bcfg2.Server import XI_NAMESPACE
 from Bcfg2.Server.Plugins.Cfg.CfgPlaintextGenerator \
@@ -16,6 +17,81 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
     give information about the files.  For instance, you can require
     SVN keywords in a comment, or require the name of the maintainer
     of a Genshi template, and so on. """
+
+    options = Bcfg2.Server.Lint.ServerPlugin.options + [
+        Bcfg2.Options.Option(
+            cf=("Comments", "global_keywords"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required keywords for all file types"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "global_comments"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required comments for all file types"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "bundler_keywords"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required keywords for non-templated bundles"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "bundler_comments"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required comments for non-templated bundles"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "genshibundler_keywords"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required keywords for templated bundles"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "genshibundler_comments"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required comments for templated bundles"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "properties_keywords"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required keywords for Properties files"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "properties_comments"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required comments for Properties files"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "cfg_keywords"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required keywords for non-templated Cfg files"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "cfg_comments"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required comments for non-templated Cfg files"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "genshi_keywords"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required keywords for Genshi-templated Cfg files"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "genshi_comments"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required comments for Genshi-templated Cfg files"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "cheetah_keywords"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required keywords for Cheetah-templated Cfg files"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "cheetah_comments"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required comments for Cheetah-templated Cfg files"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "infoxml_keywords"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required keywords for info.xml files"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "infoxml_comments"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required comments for info.xml files"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "probe_keywords"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required keywords for probes"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "probe_comments"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required comments for probes")]
+
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerPlugin.__init__(self, *args, **kwargs)
         self.config_cache = {}
@@ -73,17 +149,14 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
 
         if rtype not in self.config_cache[itype]:
             rv = []
-            global_item = "global_%ss" % itype
-            if global_item in self.config:
-                rv.extend(self.config[global_item].split(","))
-
-            item = "%s_%ss" % (rtype.lower(), itype)
-            if item in self.config:
-                if self.config[item]:
-                    rv.extend(self.config[item].split(","))
-                else:
-                    # config explicitly specifies nothing
-                    rv = []
+            rv.extend(getattr(Bcfg2.Options.setup, "global_%ss" % itype))
+            local_reqs = getattr(Bcfg2.Options.setup,
+                                 "%s_%ss" % (rtype.lower(), itype))
+            if local_reqs == ['']:
+                # explicitly specified as empty
+                rv = []
+            else:
+                rv.extend(local_reqs)
             self.config_cache[itype][rtype] = rv
         return self.config_cache[itype][rtype]
 

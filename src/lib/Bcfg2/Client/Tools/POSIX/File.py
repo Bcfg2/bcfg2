@@ -6,6 +6,7 @@ import stat
 import time
 import difflib
 import tempfile
+import Bcfg2.Options
 from Bcfg2.Client.Tools.POSIX.base import POSIXTool
 from Bcfg2.Compat import unicode, b64encode, b64decode  # pylint: disable=W0622
 
@@ -43,7 +44,7 @@ class POSIXFile(POSIXTool):
             tempdata = entry.text
             if isinstance(tempdata, unicode) and unicode != str:
                 try:
-                    tempdata = tempdata.encode(self.setup['encoding'])
+                    tempdata = tempdata.encode(Bcfg2.Options.setup.encoding)
                 except UnicodeEncodeError:
                     err = sys.exc_info()[1]
                     self.logger.error("POSIX: Error encoding file %s: %s" %
@@ -56,7 +57,7 @@ class POSIXFile(POSIXTool):
         if isinstance(tempdata, str) and str != unicode:
             tempdatasize = len(tempdata)
         else:
-            tempdatasize = len(tempdata.encode(self.setup['encoding']))
+            tempdatasize = len(tempdata.encode(Bcfg2.Options.setup.encoding))
 
         different = False
         content = None
@@ -78,7 +79,7 @@ class POSIXFile(POSIXTool):
                 content = open(entry.get('name')).read()
             except UnicodeDecodeError:
                 content = open(entry.get('name'),
-                               encoding=self.setup['encoding']).read()
+                               encoding=Bcfg2.Options.setup.encoding).read()
             except IOError:
                 self.logger.error("POSIX: Failed to read %s: %s" %
                                   (entry.get("name"), sys.exc_info()[1]))
@@ -89,7 +90,7 @@ class POSIXFile(POSIXTool):
             self.logger.debug("POSIX: %s has incorrect contents" %
                               entry.get("name"))
             self._get_diffs(
-                entry, interactive=self.setup['interactive'],
+                entry, interactive=Bcfg2.Options.setup.interactive,
                 sensitive=entry.get('sensitive', 'false').lower() == 'true',
                 is_binary=is_binary, content=content)
         return POSIXTool.verify(self, entry, modlist) and not different
@@ -116,7 +117,7 @@ class POSIXFile(POSIXTool):
                 os.fdopen(newfd, 'w').write(filedata)
             else:
                 os.fdopen(newfd, 'wb').write(
-                    filedata.encode(self.setup['encoding']))
+                    filedata.encode(Bcfg2.Options.setup.encoding))
         except (OSError, IOError):
             err = sys.exc_info()[1]
             self.logger.error("POSIX: Failed to open temp file %s for writing "
@@ -181,7 +182,8 @@ class POSIXFile(POSIXTool):
                                   (entry.get("name"), sys.exc_info()[1]))
                 return False
         if not is_binary:
-            is_binary |= not self._is_string(content, self.setup['encoding'])
+            is_binary |= not self._is_string(content,
+                                             Bcfg2.Options.setup.encoding)
         if is_binary:
             # don't compute diffs if the file is binary
             prompt.append('Binary file, no printable diff')
@@ -194,7 +196,7 @@ class POSIXFile(POSIXTool):
                 if diff:
                     udiff = '\n'.join(l.rstrip('\n') for l in diff)
                     if hasattr(udiff, "decode"):
-                        udiff = udiff.decode(self.setup['encoding'])
+                        udiff = udiff.decode(Bcfg2.Options.setup.encoding)
                     try:
                         prompt.append(udiff)
                     except UnicodeEncodeError:

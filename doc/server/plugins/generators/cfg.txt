@@ -102,9 +102,8 @@ Genshi Templates
 ----------------
 
 Genshi templates allow you to use the `Genshi
-<http://genshi.edgewall.org>`_ templating system.  This is similar to
-the deprecated :ref:`server-plugins-generators-tgenshi-index` plugin.
-Genshi templates should be named with a ``.genshi`` extension, e.g.::
+<http://genshi.edgewall.org>`_ templating system.  Genshi templates
+should be named with a ``.genshi`` extension, e.g.::
 
     % ls Cfg/etc/motd
     info.xml  motd.genshi
@@ -214,9 +213,8 @@ Cheetah Templates
 -----------------
 
 Cheetah templates allow you to use the `cheetah templating system
-<http://www.cheetahtemplate.org/>`_.  This is similar to
-the deprecated :ref:`server-plugins-generators-tcheetah` plugin.
-Cheetah templates should be named with a ``.cheetah`` extension, e.g.::
+<http://www.cheetahtemplate.org/>`_.  Cheetah templates should be
+named with a ``.cheetah`` extension, e.g.::
 
     % ls Cfg/etc/motd
     info.xml  motd.cheetah
@@ -415,7 +413,7 @@ See :ref:`server-encryption` for more details on encryption in Bcfg2
 in general.
 
 ``pubkey.xml``
-~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~
 
 ``pubkey.xml`` only ever contains a single line:
 
@@ -563,110 +561,162 @@ Example
     Hopefully, the performance concerns can be resolved in a future
     release and these features can be added.
 
+.. _server-plugins-generators-cfg-ssl-certificates:
+
+SSL Keys and Certificates
+=========================
+
+Cfg can also create SSL keys and certs on the fly, and store the
+generated data in the repo so that subsequent requests do not result
+in repeated key/cert recreation.  In the event that a new key or cert
+is needed, the old file can simply be removed from the
+repository, and the next time that host checks in, a new file will be
+created.  If that file happens to be the key, any dependent
+certificates will also be regenerated.
+
+See also :ref:`appendix-guides-sslca_howto` for a detailed example
+that uses the SSL key management feature to automate Bcfg2 certificate
+authentication.
+
+Getting started
+---------------
+
+In order to use the SSL certificate generation feature, you must first
+have at least one CA configured on your system.  For details on
+setting up your own OpenSSL based CA, please see
+http://www.openssl.org/docs/apps/ca.html for details of the suggested
+directory layout and configuration directives.
+
+For SSL cert generation to work, the openssl.cnf (or other
+configuration file) for that CA must contain full (not relative)
+paths.
+
+#. Add a section to your ``/etc/bcfg2.conf`` called ``sslca_foo``,
+   replacing foo with the name you wish to give your CA so you can
+   reference it in certificate definitions.  (If you only have one CA,
+   you can name it ``sslca_default``, and it will be the default CA
+   for all other operations.)
+
+#. Under that section, add a ``config`` option that gives the location
+   of the ``openssl.cnf`` file for your CA.
+
+#. If necessary, add a ``passphrase`` option containing the passphrase
+   for the CA's private key.  If no passphrase is entry exists, it is
+   assumed that the private key is stored unencrypted.
+
+#. Optionally, add a ``chaincert`` option that points to the location
+   of your ssl chaining certificate.  This is used when preexisting
+   certificate hostfiles are found, so that they can be validated and
+   only regenerated if they no longer meet the specification. If
+   you're using a self signing CA this would be the CA cert that you
+   generated.  If the chain cert is a root CA cert (e.g., if it is a
+   self-signing CA), also add an entry ``root_ca = true``.  If
+   ``chaincert`` is omitted, certificate verification will not be
+   performed.
+
+#. Once all this is done, you should have a section in your
+   ``/etc/bcfg2.conf`` that looks similar to the following::
+
+       [sslca_default]
+       config = /etc/pki/CA/openssl.cnf
+       passphrase = youReallyThinkIdShareThis?
+       chaincert = /etc/pki/CA/chaincert.crt
+       root_ca = true
+
+#. You are now ready to create key and certificate definitions.  For
+   this example we'll assume you've added Path entries for the key,
+   ``/etc/pki/tls/private/localhost.key``, and the certificate,
+   ``/etc/pki/tls/certs/localhost.crt`` to a bundle.
+
+#. Within the ``Cfg/etc/pki/tls/private/localhost.key`` directory,
+   create a `sslkey.xml`_ file containing the following:
+
+   .. code-block:: xml
+
+       <KeyInfo/>
+
+#. This will cause the generation of an SSL key when a client requests
+   that Path.  (By default, it will be a 2048-bit RSA key; see
+   `sslkey.xml`_ for details on how to change the key type and size.)
+
+#. Similarly, create `sslcert.xml`_ in
+   ``Cfg/etc/pki/tls/certs/localhost.cfg/``, containing the following:
+
+   .. code-block:: xml
+
+       <CertInfo>
+         <Cert key="/etc/pki/tls/private/localhost.key" ca="foo"/>
+       </CertInfo>
+
+#. When a client requests the cert path, a certificate will be
+   generated using the key hostfile at the specified key location,
+   using the CA matching the ``ca`` attribute. ie. ``ca="foo"`` will
+   match ``[sslca_default]`` in your ``/etc/bcfg2.conf``
+
+The :ref:`Bcfg2 bundle example
+<server-plugins-structures-bundler-bcfg2-server>` contains entries to
+automate the process of setting up a CA.
+
 Configuration
 -------------
 
-In addition to ``privkey.xml`` and ``authorized_keys.xml``, described
-above, the behavior of the SSH key generation feature can be
-influenced by several options in the ``[sshkeys]`` section of
-``bcfg2.conf``:
+``bcfg2.conf``
+~~~~~~~~~~~~~~
 
-+----------------+---------------------------------------------------------+-----------------------+------------+
-| Option         | Description                                             | Values                | Default    |
-+================+=========================================================+=======================+============+
-| ``passphrase`` | Use the named passphrase to encrypt private keys on the | String                | None       |
-|                | filesystem. The passphrase must be defined in the       |                       |            |
-|                | ``[encryption]`` section. See :ref:`server-encryption`  |                       |            |
-|                | for more details on encryption in Bcfg2 in general.     |                       |            |
-+----------------+---------------------------------------------------------+-----------------------+------------+
-| ``category``   | Generate keys specific to groups in the given category. | String                | None       |
-|                | It is best to pick a category that all clients have a   |                       |            |
-|                | group from.                                             |                       |            |
-+----------------+---------------------------------------------------------+-----------------------+------------+
+In ``bcfg2.conf``, you must declare your CA(s) in ``[sslca_<name>]``
+sections.  At least one is required.  Valid options are detailed
+below, in `Cfg Configuration`_.
 
-Deltas
-======
+Only the ``config`` option is required; i.e., the simplest possible CA
+section is::
 
-.. note::
+    [sslca_default]
+    config = /etc/pki/CA/openssl.cnf
 
-    In Bcfg2 1.3 and newer, deltas are deprecated.  It is recommended
-    that you use templates instead.  The
-    :ref:`TemplateHelper plugin
-    <server-plugins-connectors-templatehelper>` comes with an example
-    helper that can be used to include other files easily, a subset of
-    cat file functionality.  ``bcfg2-lint`` checks for deltas and
-    warns about them.
+``sslcert.xml``
+~~~~~~~~~~~~~~~
 
-.. warning::
+.. xml:schema:: sslca-cert.xsd
+   :linktotype:
+   :inlinetypes: CertType
 
-    In Bcfg2 1.3, deltas **do not** work with `SSH key or
-    authorized_keys generation <SSH Keys>`_.
+Example
+^^^^^^^
 
-Bcfg2 has finer grained control over how to deliver configuration
-files to a host. Let's say we have a Group named file-server. Members
-of this group need the exact same ``/etc/motd`` as all other hosts except
-they need one line added. We could copy motd to ``motd.G01_file-server``,
-add the one line to the Group specific version and be done with it,
-but we're duplicating data in both files. What happens if we need to
-update the motd? We'll need to remember to update both files then. Here's
-where deltas come in. A delta is a small change to the base file. There
-are two types of deltas: cats and diffs. The cat delta simply adds or
-removes lines from the base file. The diff delta is more powerful since
-it can take a unified diff and apply it to the base configuration file
-to create the specialized file. Diff deltas should be used very sparingly.
+.. code-block:: xml
 
-Cat Files
----------
+    <CertInfo>
+      <subjectAltName>test.example.com</subjectAltName>
+      <Group name="apache">
+        <Cert key="/etc/pki/tls/private/foo.key" days="730"/>
+      </Group>
+      <Group name="nginx">
+        <Cert key="/etc/pki/tls/private/foo.key" days="730"
+              append_chain="true"/>
+      </Group>
+    </CertInfo>
 
-Continuing our example for cat files, we would first create a file named
-``motd.G01_file-server.cat``. The .cat suffix designates that the file is
-a diff. We would then edit that file and add the following line::
+``sslkey.xml``
+~~~~~~~~~~~~~~
 
-    +This is a file server
+.. xml:schema:: sslca-key.xsd
+   :linktotype:
+   :inlinetypes: KeyType
 
-The **+** at the begining of the file tells Bcfg2 that the line should be
-appended to end of the file. You can also start a line with **-** to tell
-Bcfg2 to remove that exact line wherever it might be in the file. How do
-we know what base file Bcfg2 will choose to use to apply a delta? The
-same rules apply as before: Bcfg2 will choose the highest priority,
-most specific file as the base and then apply deltas in the order of
-most specific and then increasing in priority. What does this mean in
-real life. Let's say our machine is a web server, mail server, and file
-server and we have the following configuration files::
+Example
+^^^^^^^
 
-    motd
-    motd.G01_web-server
-    motd.G01_mail-server.cat
-    motd.G02_file-server.cat
-    motd.H_bar.example.com
-    motd.H_foo.example.com.cat
+.. code-block:: xml
 
-If our machine isn't *foo.example.com* or *bar.example.com*, but
-is a web server, then Bcfg2 would choose ``motd.G01_web-server`` as
-the base file. It is the most specific base file for this host. Bcfg2
-would apply the ``motd.G01_mail-server.cat`` delta to the
-``motd.G01_web-server`` base file. It is the least specific
-delta. Bcfg2 would then apply the ``motd.G02_file-server.cat`` delta
-to the result of the delta before it.
+    <KeyInfo>
+      <Group name="fast">
+        <Key type="rsa" bits="1024"/>
+      </Group>
+      <Group name="secure">
+        <Key type="rsa" bits="4096"/>
+      </Group>
+    </KeyInfo>
 
-If our machine is *foo.example.com* and a web server, then Bcfg2 would
-choose ``motd.G01_web-server`` as the base file. It is the most
-specific base file for this host. Bcfg2 would apply the
-``motd.H_foo.example.com.cat`` delta to the ``motd.G01_web-server``
-base file. The reason the other deltas aren't applied to
-*foo.example.com* is because a **.H_** delta is more specific than a
-**.G##_** delta. Bcfg2 applies all the deltas at the most specific
-level.
-
-If our machine is *bar.example.com*, then Bcfg2 would chose
-``motd.H_foo.example.com`` as the base file because it is the most
-specific base file for this host.  Regardless of the groups
-*bar.example.com* is a member of, **no cat files** would be applied,
-because only cat files as specific or more specific than the base file
-are applied.  (In other words, if a group-specific base file is
-selected, only group- or host-specific cat files can be applied; if a
-host-specific base file is selected, only host-specific cat files can
-be applied.)
 
 .. _server-plugins-generators-cfg-validation:
 
@@ -721,3 +771,56 @@ File permissions
 File permissions for entries handled by Cfg are controlled via the use
 of :ref:`server-info` files. Note that you **cannot** use both a
 Permissions entry and a Path entry to handle the same file.
+
+.. _server-plugins-generators-cfg-configuration:
+
+Cfg Configuration
+=================
+
+The behavior of many bits of the Cfg plugin can be configured in
+``bcfg2.conf`` with the following options.
+
+In addition to ``privkey.xml`` and ``authorized_keys.xml``, described
+above, the behavior of the SSH key generation feature can be
+influenced by several options in the ``[sshkeys]`` section of
+``bcfg2.conf``:
+
++-------------+----------------+---------------------------------------------------------+-----------------------+------------+
+| Section     | Option         | Description                                             | Values                | Default    |
++=============+================+=========================================================+=======================+============+
+| ``cfg``     | ``passphrase`` | Use the named passphrase to encrypt created data on the | String                | None       |
+|             |                | filesystem. (E.g., SSH and SSL keys.) The passphrase    |                       |            |
+|             |                | must be defined in the ``[encryption]`` section.        |                       |            |
++-------------+----------------+---------------------------------------------------------+-----------------------+------------+
+| ``cfg``     | ``category``   | Generate data (e.g., SSH keys, SSL keys and certs)      | String                | None       |
+|             |                | specific to groups in the given category. It is best to |                       |            |
+|             |                | pick a category that all clients have a group from.     |                       |            |
++-------------+----------------+---------------------------------------------------------+-----------------------+------------+
+| ``cfg``     | ``validation`` | Whether or not to perform `Content Validation`_         | Boolean               | True       |
+|             |                | specific to groups in the given category. It is best to |                       |            |
+|             |                | pick a category that all clients have a group from.     |                       |            |
++-------------+----------------+---------------------------------------------------------+-----------------------+------------+
+| ``sshkeys`` | ``passphrase`` | Override the global Cfg passphrase with a specific      | String                | None       |
+|             |                | passphrase for encrypting created SSH private keys.     |                       |            |
++-------------+----------------+---------------------------------------------------------+-----------------------+------------+
+| ``sshkeys`` | ``category``   | Override the global Cfg category with a specific        | String                | None       |
+|             |                | category for created SSH keys.                          |                       |            |
++-------------+----------------+---------------------------------------------------------+-----------------------+------------+
+| ``sslca``   | ``passphrase`` | Override the global Cfg passphrase with a specific      | String                | None       |
+|             |                | passphrase for encrypting created SSL keys.             |                       |            |
++-------------+----------------+---------------------------------------------------------+-----------------------+------------+
+| ``sslca``   | ``category``   | Override the global Cfg category with a specific        | String                | None       |
+|             |                | category for created SSL keys and certs.                |                       |            |
++-------------+----------------+---------------------------------------------------------+-----------------------+------------+
+| ``sslca_*`` | ``config``     | Path to the openssl config for the CA                   | String                | None       |
++-------------+----------------+---------------------------------------------------------+-----------------------+------------+
+| ``sslca_*`` | ``passphrase`` | Passphrase for the CA private key                       | String                | None       |
++-------------+----------------+---------------------------------------------------------+-----------------------+------------+
+| ``sslca_*`` | ``chaincert``  | Path to the SSL chaining certificate for verification   | String                | None       |
++-------------+----------------+---------------------------------------------------------+-----------------------+------------+
+| ``sslca_*`` | ``root_ca``    | Whether or not ``<chaincert>`` is a root CA (as         | Boolean               | False      |
+|             |                | opposed to an intermediate cert)                        |                       |            |
++-------------+----------------+---------------------------------------------------------+-----------------------+------------+
+
+See :ref:`server-encryption` for more details on encryption in Bcfg2
+in general.

@@ -19,12 +19,6 @@ from TestPlugin import TestStructFile, TestFileBacked, TestConnector, \
     TestPlugin, TestDirectoryBacked
 
 try:
-    from Bcfg2.Encryption import EVPError
-    HAS_CRYPTO = True
-except:
-    HAS_CRYPTO = False
-
-try:
     import json
     JSON = "json"
 except ImportError:
@@ -36,12 +30,12 @@ class TestPropertyFile(Bcfg2TestCase):
     path = os.path.join(datastore, "test")
 
     def get_obj(self, path=None):
+        set_setup_default("writes_enabled", False)
         if path is None:
             path = self.path
         return self.test_obj(path)
 
     def test_write(self):
-        Bcfg2.Server.Plugins.Properties.SETUP = MagicMock()
         pf = self.get_obj()
         pf.validate_data = Mock()
         pf._write = Mock()
@@ -52,20 +46,16 @@ class TestPropertyFile(Bcfg2TestCase):
         def reset():
             pf.validate_data.reset_mock()
             pf._write.reset_mock()
-            Bcfg2.Server.Plugins.Properties.SETUP.reset_mock()
 
         # test writes disabled
-        Bcfg2.Server.Plugins.Properties.SETUP.cfp.getboolean.return_value = False
+        Bcfg2.Options.setup.writes_enabled = False
         self.assertRaises(PluginExecutionError, pf.write)
         self.assertFalse(pf.validate_data.called)
         self.assertFalse(pf._write.called)
-        Bcfg2.Server.Plugins.Properties.SETUP.cfp.getboolean.assert_called_with("properties",
-                                                "writes_enabled",
-                                                default=True)
 
         # test successful write
         reset()
-        Bcfg2.Server.Plugins.Properties.SETUP.cfp.getboolean.return_value = True
+        Bcfg2.Options.setup.writes_enabled = True
         self.assertEqual(pf.write(), pf._write.return_value)
         pf.validate_data.assert_called_with()
         pf._write.assert_called_with()
@@ -99,95 +89,94 @@ class TestPropertyFile(Bcfg2TestCase):
         mock_copy.assert_called_with(pf)
 
 
-if can_skip or HAS_JSON:
-    class TestJSONPropertyFile(TestFileBacked, TestPropertyFile):
-        test_obj = JSONPropertyFile
+class TestJSONPropertyFile(TestFileBacked, TestPropertyFile):
+    test_obj = JSONPropertyFile
 
-        def get_obj(self, *args, **kwargs):
-            return TestFileBacked.get_obj(self, *args, **kwargs)
+    @skipUnless(HAS_JSON, "JSON libraries not found, skipping")
+    def setUp(self):
+        TestFileBacked.setUp(self)
+        TestPropertyFile.setUp(self)
 
-        @skipUnless(HAS_JSON, "JSON libraries not found, skipping")
-        def setUp(self):
-            pass
+    @patch("%s.loads" % JSON)
+    def test_Index(self, mock_loads):
+        pf = self.get_obj()
+        pf.Index()
+        mock_loads.assert_called_with(pf.data)
+        self.assertEqual(pf.json, mock_loads.return_value)
 
-        @patch("%s.loads" % JSON)
-        def test_Index(self, mock_loads):
-            pf = self.get_obj()
-            pf.Index()
-            mock_loads.assert_called_with(pf.data)
-            self.assertEqual(pf.json, mock_loads.return_value)
+        mock_loads.reset_mock()
+        mock_loads.side_effect = ValueError
+        self.assertRaises(PluginExecutionError, pf.Index)
+        mock_loads.assert_called_with(pf.data)
 
-            mock_loads.reset_mock()
-            mock_loads.side_effect = ValueError
-            self.assertRaises(PluginExecutionError, pf.Index)
-            mock_loads.assert_called_with(pf.data)
+    @patch("%s.dump" % JSON)
+    @patch("%s.open" % builtins)
+    def test__write(self, mock_open, mock_dump):
+        pf = self.get_obj()
+        self.assertTrue(pf._write())
+        mock_open.assert_called_with(pf.name, 'wb')
+        mock_dump.assert_called_with(pf.json, mock_open.return_value)
 
-        @patch("%s.dump" % JSON)
-        @patch("%s.open" % builtins)
-        def test__write(self, mock_open, mock_dump):
-            pf = self.get_obj()
-            self.assertTrue(pf._write())
-            mock_open.assert_called_with(pf.name, 'wb')
-            mock_dump.assert_called_with(pf.json, mock_open.return_value)
+    @patch("%s.dumps" % JSON)
+    def test_validate_data(self, mock_dumps):
+        pf = self.get_obj()
+        pf.validate_data()
+        mock_dumps.assert_called_with(pf.json)
 
-        @patch("%s.dumps" % JSON)
-        def test_validate_data(self, mock_dumps):
-            pf = self.get_obj()
-            pf.validate_data()
-            mock_dumps.assert_called_with(pf.json)
-
-            mock_dumps.reset_mock()
-            mock_dumps.side_effect = ValueError
-            self.assertRaises(PluginExecutionError, pf.validate_data)
-            mock_dumps.assert_called_with(pf.json)
+        mock_dumps.reset_mock()
+        mock_dumps.side_effect = ValueError
+        self.assertRaises(PluginExecutionError, pf.validate_data)
+        mock_dumps.assert_called_with(pf.json)
 
 
-if can_skip or HAS_YAML:
-    class TestYAMLPropertyFile(TestFileBacked, TestPropertyFile):
-        test_obj = YAMLPropertyFile
+class TestYAMLPropertyFile(TestFileBacked, TestPropertyFile):
+    test_obj = YAMLPropertyFile
 
-        def get_obj(self, *args, **kwargs):
-            return TestFileBacked.get_obj(self, *args, **kwargs)
+    @skipUnless(HAS_YAML, "YAML libraries not found, skipping")
+    def setUp(self):
+        TestFileBacked.setUp(self)
+        TestPropertyFile.setUp(self)
 
-        @skipUnless(HAS_YAML, "YAML libraries not found, skipping")
-        def setUp(self):
-            pass
+    @patch("yaml.load")
+    def test_Index(self, mock_load):
+        pf = self.get_obj()
+        pf.Index()
+        mock_load.assert_called_with(pf.data)
+        self.assertEqual(pf.yaml, mock_load.return_value)
 
-        @patch("yaml.load")
-        def test_Index(self, mock_load):
-            pf = self.get_obj()
-            pf.Index()
-            mock_load.assert_called_with(pf.data)
-            self.assertEqual(pf.yaml, mock_load.return_value)
+        mock_load.reset_mock()
+        mock_load.side_effect = yaml.YAMLError
+        self.assertRaises(PluginExecutionError, pf.Index)
+        mock_load.assert_called_with(pf.data)
 
-            mock_load.reset_mock()
-            mock_load.side_effect = yaml.YAMLError
-            self.assertRaises(PluginExecutionError, pf.Index)
-            mock_load.assert_called_with(pf.data)
+    @patch("yaml.dump")
+    @patch("%s.open" % builtins)
+    def test__write(self, mock_open, mock_dump):
+        pf = self.get_obj()
+        self.assertTrue(pf._write())
+        mock_open.assert_called_with(pf.name, 'wb')
+        mock_dump.assert_called_with(pf.yaml, mock_open.return_value)
 
-        @patch("yaml.dump")
-        @patch("%s.open" % builtins)
-        def test__write(self, mock_open, mock_dump):
-            pf = self.get_obj()
-            self.assertTrue(pf._write())
-            mock_open.assert_called_with(pf.name, 'wb')
-            mock_dump.assert_called_with(pf.yaml, mock_open.return_value)
+    @patch("yaml.dump")
+    def test_validate_data(self, mock_dump):
+        pf = self.get_obj()
+        pf.validate_data()
+        mock_dump.assert_called_with(pf.yaml)
 
-        @patch("yaml.dump")
-        def test_validate_data(self, mock_dump):
-            pf = self.get_obj()
-            pf.validate_data()
-            mock_dump.assert_called_with(pf.yaml)
-
-            mock_dump.reset_mock()
-            mock_dump.side_effect = yaml.YAMLError
-            self.assertRaises(PluginExecutionError, pf.validate_data)
-            mock_dump.assert_called_with(pf.yaml)
+        mock_dump.reset_mock()
+        mock_dump.side_effect = yaml.YAMLError
+        self.assertRaises(PluginExecutionError, pf.validate_data)
+        mock_dump.assert_called_with(pf.yaml)
 
 
 class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
     test_obj = XMLPropertyFile
     path = TestStructFile.path
+
+    def setUp(self):
+        TestPropertyFile.setUp(self)
+        TestStructFile.setUp(self)
+        set_setup_default("automatch", False)
 
     def get_obj(self, *args, **kwargs):
         return TestStructFile.get_obj(self, *args, **kwargs)
@@ -243,150 +232,47 @@ class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
         mock_exists.assert_called_with(schemafile)
         mock_XMLSchema.assert_called_with(file=schemafile)
 
-    def test_Index(self):
-        TestStructFile.test_Index(self)
-
-        pf = self.get_obj()
-        pf.xdata = lxml.etree.Element("Properties")
-        lxml.etree.SubElement(pf.xdata, "Crypted", encrypted="foo")
-        pf.data = lxml.etree.tostring(pf.xdata)
-
-    @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
-    def test_Index_crypto(self):
-        pf = self.get_obj()
-        pf._decrypt = Mock()
-        pf._decrypt.return_value = 'plaintext'
-        pf.data = '''
-<Properties decrypt="strict">
-  <Crypted encrypted="foo">
-    crypted
-    <Plain foo="bar">plain</Plain>
-  </Crypted>
-  <Crypted encrypted="bar">crypted</Crypted>
-  <Plain bar="baz">plain</Plain>
-  <Plain>
-    <Crypted encrypted="foo">crypted</Crypted>
-  </Plain>
-</Properties>'''
-
-        # test successful decryption
-        pf.Index()
-        self.assertItemsEqual(pf._decrypt.call_args_list,
-                              [call(el) for el in pf.xdata.xpath("//Crypted")])
-        for el in pf.xdata.xpath("//Crypted"):
-            self.assertEqual(el.text, pf._decrypt.return_value)
-
-        # test failed decryption, strict
-        pf._decrypt.reset_mock()
-        pf._decrypt.side_effect = EVPError
-        self.assertRaises(PluginExecutionError, pf.Index)
-
-        # test failed decryption, lax
-        pf.data = pf.data.replace("strict", "lax")
-        pf._decrypt.reset_mock()
-        pf.Index()
-        self.assertItemsEqual(pf._decrypt.call_args_list,
-                              [call(el) for el in pf.xdata.xpath("//Crypted")])
-
-    @skipUnless(HAS_CRYPTO, "No crypto libraries found, skipping")
-    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.ssl_decrypt")
-    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.get_algorithm")
-    @patchIf(HAS_CRYPTO, "Bcfg2.Encryption.get_passphrases")
-    def test_decrypt(self, mock_get_passphrases,
-                     mock_get_algorithm, mock_ssl):
-        pf = self.get_obj()
-        Bcfg2.Server.Plugins.Properties.SETUP = MagicMock()
-
-        def reset():
-            mock_get_algorithm.reset_mock()
-            mock_get_passphrases.reset_mock()
-            mock_ssl.reset_mock()
-
-        # test element without text contents
-        self.assertIsNone(pf._decrypt(lxml.etree.Element("Test")))
-        self.assertFalse(mock_get_passphrases.called)
-        self.assertFalse(mock_ssl.called)
-
-        # test element with a passphrase in the config file
-        reset()
-        el = lxml.etree.Element("Test", encrypted="foo")
-        el.text = "crypted"
-        mock_get_passphrases.return_value = dict(foo="foopass",
-                                                 bar="barpass")
-        mock_get_algorithm.return_value = "bf_cbc"
-        mock_ssl.return_value = "decrypted with ssl"
-        self.assertEqual(pf._decrypt(el), mock_ssl.return_value)
-        mock_get_passphrases.assert_called_with(
-            Bcfg2.Server.Plugins.Properties.SETUP)
-        mock_get_algorithm.assert_called_with(
-            Bcfg2.Server.Plugins.Properties.SETUP)
-        mock_ssl.assert_called_with(el.text, "foopass",
-                                    algorithm="bf_cbc")
-
-        # test failure to decrypt element with a passphrase in the config
-        reset()
-        mock_ssl.side_effect = EVPError
-        self.assertRaises(EVPError, pf._decrypt, el)
-        mock_get_passphrases.assert_called_with(
-            Bcfg2.Server.Plugins.Properties.SETUP)
-        mock_get_algorithm.assert_called_with(
-            Bcfg2.Server.Plugins.Properties.SETUP)
-        mock_ssl.assert_called_with(el.text, "foopass",
-                                    algorithm="bf_cbc")
-
-        # test element without valid passphrase
-        reset()
-        el.set("encrypted", "true")
-        self.assertRaises(EVPError, pf._decrypt, el)
-        self.assertFalse(mock_ssl.called)
-
     @patch("copy.copy")
     def test_get_additional_data(self, mock_copy):
-        Bcfg2.Server.Plugins.Properties.SETUP = Mock()
         pf = self.get_obj()
+        pf.setup = Mock()
         pf.XMLMatch = Mock()
         metadata = Mock()
 
         def reset():
             mock_copy.reset_mock()
             pf.XMLMatch.reset_mock()
-            Bcfg2.Server.Plugins.Properties.SETUP.reset_mock()
+            pf.setup.reset_mock()
 
         pf.xdata = lxml.etree.Element("Properties", automatch="true")
-        for automatch in [True, False]:
+        for Bcfg2.Options.setup.automatch in [True, False]:
             reset()
-            Bcfg2.Server.Plugins.Properties.SETUP.cfp.getboolean.return_value = automatch
             self.assertEqual(pf.get_additional_data(metadata),
                              pf.XMLMatch.return_value)
             pf.XMLMatch.assert_called_with(metadata)
-            Bcfg2.Server.Plugins.Properties.SETUP.cfp.getboolean.assert_called_with("properties", "automatch", default=False)
             self.assertFalse(mock_copy.called)
 
         pf.xdata = lxml.etree.Element("Properties", automatch="false")
-        for automatch in [True, False]:
+        for Bcfg2.Options.setup.automatch in [True, False]:
             reset()
-            Bcfg2.Server.Plugins.Properties.SETUP.cfp.getboolean.return_value = automatch
             self.assertEqual(pf.get_additional_data(metadata),
                              mock_copy.return_value)
             mock_copy.assert_called_with(pf)
             self.assertFalse(pf.XMLMatch.called)
-            Bcfg2.Server.Plugins.Properties.SETUP.cfp.getboolean.assert_called_with("properties", "automatch", default=False)
 
         pf.xdata = lxml.etree.Element("Properties")
         reset()
-        Bcfg2.Server.Plugins.Properties.SETUP.cfp.getboolean.return_value = False
+        Bcfg2.Options.setup.automatch = False
         self.assertEqual(pf.get_additional_data(metadata),
                          mock_copy.return_value)
         mock_copy.assert_called_with(pf)
         self.assertFalse(pf.XMLMatch.called)
-        Bcfg2.Server.Plugins.Properties.SETUP.cfp.getboolean.assert_called_with("properties", "automatch", default=False)
 
         reset()
-        Bcfg2.Server.Plugins.Properties.SETUP.cfp.getboolean.return_value = True
+        Bcfg2.Options.setup.automatch = True
         self.assertEqual(pf.get_additional_data(metadata),
                          pf.XMLMatch.return_value)
         pf.XMLMatch.assert_called_with(metadata)
-        Bcfg2.Server.Plugins.Properties.SETUP.cfp.getboolean.assert_called_with("properties", "automatch", default=False)
         self.assertFalse(mock_copy.called)
 
 

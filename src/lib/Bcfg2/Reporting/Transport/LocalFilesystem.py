@@ -9,6 +9,7 @@ import os
 import select
 import time
 import traceback
+import Bcfg2.Options
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Reporting.Collector import ReportingCollector, ReportingError
 from Bcfg2.Reporting.Transport.base import TransportBase, TransportError
@@ -16,8 +17,10 @@ from Bcfg2.Compat import cPickle
 
 
 class LocalFilesystem(TransportBase):
-    def __init__(self, setup):
-        super(LocalFilesystem, self).__init__(setup)
+    options = TransportBase.options + [Bcfg2.Options.Common.filemonitor]
+
+    def __init__(self):
+        super(LocalFilesystem, self).__init__()
 
         self.work_path = "%s/work" % self.data
         self.debug_log("LocalFilesystem: work path %s" % self.work_path)
@@ -42,24 +45,16 @@ class LocalFilesystem(TransportBase):
 
     def start_monitor(self, collector):
         """Start the file monitor.  Most of this comes from BaseCore"""
-        setup = self.setup
         try:
-            fmon = Bcfg2.Server.FileMonitor.available[setup['filemonitor']]
-        except KeyError:
-            self.logger.error("File monitor driver %s not available; "
-                              "forcing to default" % setup['filemonitor'])
-            fmon = Bcfg2.Server.FileMonitor.available['default']
-        if self.debug_flag:
-            self.fmon.set_debug(self.debug_flag)
-        try:
-            self.fmon = fmon(debug=self.debug_flag)
-            self.logger.info("Using the %s file monitor" %
-                             self.fmon.__class__.__name__)
+            self.fmon = Bcfg2.Server.FileMonitor.get_fam()
         except IOError:
-            msg = "Failed to instantiate file monitor %s" % \
-                setup['filemonitor']
+            msg = "Failed to instantiate fam driver %s" % \
+                Bcfg2.Options.setup.filemonitor
             self.logger.error(msg, exc_info=1)
             raise TransportError(msg)
+
+        if self.debug_flag:
+            self.fmon.set_debug(self.debug_flag)
         self.fmon.start()
         self.fmon.AddMonitor(self.work_path, self)
 
@@ -154,7 +149,7 @@ class LocalFilesystem(TransportBase):
         """
         try:
             if not self._phony_collector:
-                self._phony_collector = ReportingCollector(self.setup)
+                self._phony_collector = ReportingCollector()
         except ReportingError:
             raise TransportError
         except:
@@ -176,4 +171,3 @@ class LocalFilesystem(TransportBase):
             self.logger.error("RPC method %s failed: %s" %
                 (method, traceback.format_exc().splitlines()[-1]))
             raise TransportError
-

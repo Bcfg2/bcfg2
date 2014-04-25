@@ -14,20 +14,13 @@ while path != "/":
     path = os.path.dirname(path)
 from common import *
 
-try:
-    from TestServer.TestPlugins.TestCfg.TestCfgGenshiGenerator import \
-        TestCfgGenshiGenerator
-    HAS_GENSHI = True
-except ImportError:
-    TestCfgGenshiGenerator = object
-    HAS_GENSHI = False
+from TestServer.TestPlugins.TestCfg.TestCfgGenshiGenerator import \
+    TestCfgGenshiGenerator
 
 
-if can_skip or (HAS_CRYPTO and HAS_GENSHI):
-    class TestCfgEncryptedGenshiGenerator(TestCfgGenshiGenerator):
-        test_obj = CfgEncryptedGenshiGenerator
+class TestCfgEncryptedGenshiGenerator(TestCfgGenshiGenerator):
+    test_obj = CfgEncryptedGenshiGenerator
 
-        @skipUnless(HAS_CRYPTO, "Encryption libraries not found, skipping")
-        @skipUnless(HAS_GENSHI, "Genshi libraries not found, skipping")
-        def setUp(self):
-            pass
+    @skipUnless(HAS_CRYPTO, "Encryption libraries not found, skipping")
+    def setUp(self):
+        TestCfgGenshiGenerator.setUp(self)

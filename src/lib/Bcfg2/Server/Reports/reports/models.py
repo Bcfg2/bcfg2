@@ -53,7 +53,7 @@ class ClientManager(models.Manager):
         yet been expired as of optional timestmamp argument. Timestamp
         should be a datetime object."""
 
-        if timestamp == None:
+        if timestamp is None:
             timestamp = datetime.now()
         elif not isinstance(timestamp, datetime):
             raise ValueError('Expected a datetime object')
@@ -64,8 +64,9 @@ class ClientManager(models.Manager):
             except ValueError:
                 return self.none()
 
-        return self.filter(Q(expiration__gt=timestamp) | Q(expiration__isnull=True),
-                           creation__lt=timestamp)
+        return self.filter(
+            Q(expiration__gt=timestamp) | Q(expiration__isnull=True),
+            creation__lt=timestamp)
 
 
 class Client(models.Model):
@@ -101,7 +102,8 @@ class InteractiveManager(models.Manager):
 
         if maxdate and not isinstance(maxdate, datetime):
             raise ValueError('Expected a datetime object')
-        return self.filter(id__in=self.get_interaction_per_client_ids(maxdate, active_only))
+        return self.filter(
+            id__in=self.get_interaction_per_client_ids(maxdate, active_only))
 
     def get_interaction_per_client_ids(self, maxdate=None, active_only=True):
         """
@@ -116,15 +118,17 @@ class InteractiveManager(models.Manager):
         cursor = connection.cursor()
         cfilter = "expiration is null"
 
-        sql = 'select reports_interaction.id, x.client_id from (select client_id, MAX(timestamp) ' + \
-                    'as timer from reports_interaction'
+        sql = 'select reports_interaction.id, x.client_id ' + \
+              'from (select client_id, MAX(timestamp) ' + \
+              'as timer from reports_interaction'
         if maxdate:
             if not isinstance(maxdate, datetime):
                 raise ValueError('Expected a datetime object')
             sql = sql + " where timestamp <= '%s' " % maxdate
             cfilter = "(expiration is null or expiration > '%s') and creation <= '%s'" % (maxdate, maxdate)
         sql = sql + ' GROUP BY client_id) x, reports_interaction where ' + \
-                    'reports_interaction.client_id = x.client_id AND reports_interaction.timestamp = x.timer'
+                    'reports_interaction.client_id = x.client_id AND ' + \
+                    'reports_interaction.timestamp = x.timer'
         if active_only:
             sql = sql + " and x.client_id in (select id from reports_client where %s)" % \
                 cfilter
@@ -138,14 +142,16 @@ class InteractiveManager(models.Manager):
 
 
 class Interaction(models.Model):
-    """Models each reconfiguration operation interaction between client and server."""
+    """Models each reconfiguration operation
+    interaction between client and server."""
     client = models.ForeignKey(Client, related_name="interactions")
-    timestamp = models.DateTimeField(db_index=True)  # Timestamp for this record
+    timestamp = models.DateTimeField(db_index=True)  # record timestamp
     state = models.CharField(max_length=32)  # good/bad/modified/etc
-    repo_rev_code = models.CharField(max_length=64)  # repo revision at time of interaction
+    # repository revision at the time of the latest interaction
+    repo_rev_code = models.CharField(max_length=64)
     goodcount = models.IntegerField()  # of good config-items
     totalcount = models.IntegerField()  # of total config-items
-    server = models.CharField(max_length=256)  # Name of the server used for the interaction
+    server = models.CharField(max_length=256)  # server used for interaction
     bad_entries = models.IntegerField(default=-1)
     modified_entries = models.IntegerField(default=-1)
     extra_entries = models.IntegerField(default=-1)
@@ -391,5 +397,3 @@ class InteractionMetadata(models.Model):
     profile = models.ForeignKey(Group, related_name="+")
     groups = models.ManyToManyField(Group)
     bundles = models.ManyToManyField(Bundle)
-
-

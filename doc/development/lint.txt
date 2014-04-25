@@ -10,14 +10,14 @@
 lets you easily write your own plugins to verify various parts of your
 Bcfg2 specification.
 
-Plugins are loaded in one of two ways:
+Plugins are included in a module of the same name as the plugin class
+in :mod:`Bcfg2.Server.Lint`, e.g., :mod:`Bcfg2.Server.Lint.Validate`.
 
-* They may be included in a module of the same name as the plugin
-  class in :mod:`Bcfg2.Server.Lint`, e.g.,
-  :mod:`Bcfg2.Server.Lint.Validate`.
-* They may be included directly in a Bcfg2 server plugin, called
-  "<plugin>Lint", e.g.,
-  :class:`Bcfg2.Server.Plugins.Metadata.MetadataLint`.
+.. note::
+
+    It is no longer possible to include lint plugins directly in a
+    Bcfg2 server plugin, e.g.,
+    :class:`Bcfg2.Server.Plugins.Metadata.MetadataLint`.
 
 Plugin Types
 ============
@@ -106,15 +106,15 @@ Basics
 Existing ``bcfg2-lint`` Plugins
 ===============================
 
-AWSTagsLint
------------
+AWSTags
+-------
 
-.. autoclass:: Bcfg2.Server.Plugins.AWSTags.AWSTagsLint
+.. automodule:: Bcfg2.Server.Lint.AWSTags
 
-BundlerLint
------------
+Bundler
+-------
 
-.. autoclass:: Bcfg2.Server.Plugins.Bundler.BundlerLint
+.. automodule:: Bcfg2.Server.Lint.Bundler
 
 Comments
 --------
@@ -131,10 +131,10 @@ GroupNames
 
 .. automodule:: Bcfg2.Server.Lint.GroupNames
 
-GroupPatternsLint
------------------
+GroupPatterns
+-------------
 
-.. autoclass:: Bcfg2.Server.Plugins.GroupPatterns.GroupPatternsLint
+.. automodule:: Bcfg2.Server.Lint.GroupPatterns
 
 InfoXML
 -------
@@ -146,25 +146,25 @@ MergeFiles
 
 .. automodule:: Bcfg2.Server.Lint.MergeFiles
 
-MetadataLint
-------------
+Metadata
+--------
 
-.. autoclass:: Bcfg2.Server.Plugins.Metadata.MetadataLint
+.. automodule:: Bcfg2.Server.Lint.Metadata
 
-PkgmgrLint
-----------
+Pkgmgr
+------
 
-.. autoclass:: Bcfg2.Server.Plugins.Pkgmgr.PkgmgrLint
+.. automodule:: Bcfg2.Server.Lint.Pkgmgr
 
 RequiredAttrs
 -------------
 
 .. automodule:: Bcfg2.Server.Lint.RequiredAttrs
 
-TemplateHelperLint
-------------------
+TemplateHelper
+--------------
 
-.. autoclass:: Bcfg2.Server.Plugins.TemplateHelper.TemplateHelperLint
+.. automodule:: Bcfg2.Server.Lint.TemplateHelper
 
 Validate
 --------

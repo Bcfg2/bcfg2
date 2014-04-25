@@ -1,201 +1,132 @@
 """This provides bundle clauses with translation functionality."""
 
-import copy
-import logging
-import lxml.etree
 import os
-import os.path
 import re
 import sys
-import Bcfg2.Server
-import Bcfg2.Server.Plugin
-import Bcfg2.Server.Lint
-
-try:
-    import genshi.template.base
-    from Bcfg2.Server.Plugins.TGenshi import removecomment, TemplateFile
-    HAS_GENSHI = True
-except ImportError:
-    HAS_GENSHI = False
+import copy
+import fnmatch
+import lxml.etree
+from Bcfg2.Server.Plugin import StructFile, Plugin, Structure, \
+    StructureValidator, XMLDirectoryBacked, Generator
+from genshi.template import TemplateError
 
 
-SETUP = None
-
-
-class BundleFile(Bcfg2.Server.Plugin.StructFile):
+class BundleFile(StructFile):
     """ Representation of a bundle XML file """
-    def get_xml_value(self, metadata):
-        """ get the XML data that applies to the given client """
-        bundlename = os.path.splitext(os.path.basename(self.name))[0]
-        bundle = lxml.etree.Element('Bundle', name=bundlename)
-        for item in self.Match(metadata):
-            bundle.append(copy.copy(item))
-        return bundle
+    bundle_name_re = re.compile(r'^(?P<name>.*)\.(xml|genshi)$')
+
+    def __init__(self, filename, should_monitor=False):
+        StructFile.__init__(self, filename, should_monitor=should_monitor)
+        if self.name.endswith(".genshi"):
+            self.logger.warning("Bundler: %s: Bundle filenames ending with "
+                                ".genshi are deprecated; add the Genshi XML "
+                                "namespace to a .xml bundle instead" %
+                                self.name)
+
+    def Index(self):
+        StructFile.Index(self)
+        if self.xdata.get("name"):
+            self.logger.warning("Bundler: %s: Explicitly specifying bundle "
+                                "names is deprecated" % self.name)
+
+    @property
+    def bundle_name(self):
+        """ The name of the bundle, as determined from the filename """
+        return self.bundle_name_re.match(
+            os.path.basename(self.name)).group("name")
 
 
-if HAS_GENSHI:
-    class BundleTemplateFile(TemplateFile,
-                             Bcfg2.Server.Plugin.StructFile):
-        """ Representation of a Genshi-templated bundle XML file """
-
-        def __init__(self, name, specific, encoding, fam=None):
-            TemplateFile.__init__(self, name, specific, encoding)
-            Bcfg2.Server.Plugin.StructFile.__init__(self, name, fam=fam)
-            self.logger = logging.getLogger(name)
-
-        def get_xml_value(self, metadata):
-            """ get the rendered XML data that applies to the given
-            client """
-            if not hasattr(self, 'template'):
-                msg = "No parsed template information for %s" % self.name
-                self.logger.error(msg)
-                raise Bcfg2.Server.Plugin.PluginExecutionError(msg)
-            stream = self.template.generate(
-                metadata=metadata,
-                repo=SETUP['repo']).filter(removecomment)
-            data = lxml.etree.XML(
-                stream.render('xml', strip_whitespace=False).encode(),
-                parser=Bcfg2.Server.XMLParser)
-            bundlename = os.path.splitext(os.path.basename(self.name))[0]
-            bundle = lxml.etree.Element('Bundle', name=bundlename)
-            for item in self.Match(metadata, data):
-                bundle.append(copy.deepcopy(item))
-            return bundle
-
-        def Match(self, metadata, xdata):  # pylint: disable=W0221
-            """Return matching fragments of parsed template."""
-            rv = []
-            for child in xdata.getchildren():
-                rv.extend(self._match(child, metadata))
-            self.logger.debug("File %s got %d match(es)" % (self.name,
-                                                            len(rv)))
-            return rv
-
-    class SGenshiTemplateFile(BundleTemplateFile):
-        """ provided for backwards compat with the deprecated SGenshi
-        plugin """
-        pass
-
-
-class Bundler(Bcfg2.Server.Plugin.Plugin,
-              Bcfg2.Server.Plugin.Structure,
-              Bcfg2.Server.Plugin.XMLDirectoryBacked):
+class Bundler(Plugin,
+              Structure,
+              StructureValidator,
+              XMLDirectoryBacked):
     """ The bundler creates dependent clauses based on the
     bundle/translation scheme from Bcfg1. """
     __author__ = 'bcfg-dev@mcs.anl.gov'
-    patterns = re.compile(r'^(?P<name>.*)\.(xml|genshi)$')
+    __child__ = BundleFile
+    patterns = re.compile(r'^.*\.(?:xml|genshi)$')
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        Bcfg2.Server.Plugin.Structure.__init__(self)
-        self.encoding = core.setup['encoding']
-        self.__child__ = self.template_dispatch
-        Bcfg2.Server.Plugin.XMLDirectoryBacked.__init__(self, self.data,
-                                                        self.core.fam)
-        global SETUP
-        SETUP = core.setup
+    def __init__(self, core):
+        Plugin.__init__(self, core)
+        Structure.__init__(self)
+        StructureValidator.__init__(self)
+        XMLDirectoryBacked.__init__(self, self.data)
+        #: Bundles by bundle name, rather than filename
+        self.bundles = dict()
 
-    def template_dispatch(self, name, _):
-        """ Add the correct child entry type to Bundler depending on
-        whether the XML file in question is a plain XML file or a
-        templated bundle """
-        bundle = lxml.etree.parse(name, parser=Bcfg2.Server.XMLParser)
-        nsmap = bundle.getroot().nsmap
-        if (name.endswith('.genshi') or
-            ('py' in nsmap and
-             nsmap['py'] == 'http://genshi.edgewall.org/')):
-            if HAS_GENSHI:
-                spec = Bcfg2.Server.Plugin.Specificity()
-                return BundleTemplateFile(name, spec, self.encoding,
-                                          fam=self.core.fam)
-            else:
-                raise Bcfg2.Server.Plugin.PluginExecutionError("Genshi not "
-                                                               "available: %s"
-                                                               % name)
-        else:
-            return BundleFile(name, fam=self.fam)
+    def HandleEvent(self, event):
+        XMLDirectoryBacked.HandleEvent(self, event)
+        self.bundles = dict([(b.bundle_name, b)
+                             for b in self.entries.values()])
+
+    def validate_structures(self, metadata, structures):
+        """ Translate <Path glob='...'/> entries into <Path name='...'/>
+        entries """
+        for struct in structures:
+            for pathglob in struct.xpath("//Path[@glob]"):
+                for plugin in self.core.plugins_by_type(Generator):
+                    for match in fnmatch.filter(plugin.Entries['Path'].keys(),
+                                                pathglob.get("glob")):
+                        lxml.etree.SubElement(pathglob.getparent(),
+                                              "Path", name=match)
+                pathglob.getparent().remove(pathglob)
 
     def BuildStructures(self, metadata):
-        """Build all structures for client (metadata)."""
         bundleset = []
-
-        bundle_entries = {}
-        for key, item in self.entries.items():
-            bundle_entries.setdefault(
-                self.patterns.match(os.path.basename(key)).group('name'),
-                []).append(item)
-
-        for bundlename in metadata.bundles:
+        bundles = copy.copy(metadata.bundles)
+        bundles_added = set(bundles)
+        while bundles:
+            bundlename = bundles.pop()
             try:
-                entries = bundle_entries[bundlename]
+                bundle = self.bundles[bundlename]
             except KeyError:
                 self.logger.error("Bundler: Bundle %s does not exist" %
                                   bundlename)
                 continue
+
             try:
-                bundleset.append(entries[0].get_xml_value(metadata))
-            except genshi.template.base.TemplateError:
+                data = bundle.XMLMatch(metadata)
+            except TemplateError:
                 err = sys.exc_info()[1]
                 self.logger.error("Bundler: Failed to render templated bundle "
                                   "%s: %s" % (bundlename, err))
+                continue
             except:
                 self.logger.error("Bundler: Unexpected bundler error for %s" %
                                   bundlename, exc_info=1)
+                continue
+
+            if data.get("independent", "false").lower() == "true":
+                data.tag = "Independent"
+                del data.attrib['independent']
+
+            data.set("name", bundlename)
+
+            for child in data.findall("Bundle"):
+                if child.getchildren():
+                    # XInclude'd bundle -- "flatten" it so there
+                    # aren't extra Bundle tags, since other bits in
+                    # Bcfg2 only handle the direct children of the
+                    # top-level Bundle tag
+                    if data.get("name"):
+                        self.logger.warning("Bundler: In file XIncluded from "
+                                            "%s: Explicitly specifying "
+                                            "bundle names is deprecated" %
+                                            self.name)
+                    for el in child.getchildren():
+                        data.append(el)
+                    data.remove(child)
+                elif child.get("name"):
+                    # dependent bundle -- add it to the list of
+                    # bundles for this client
+                    if child.get("name") not in bundles_added:
+                        bundles.append(child.get("name"))
+                        bundles_added.add(child.get("name"))
+                    data.remove(child)
+                else:
+                    # neither name or children -- wat
+                    self.logger.warning("Bundler: Useless empty Bundle tag "
+                                        "in %s" % self.name)
+                    data.remove(child)
+            bundleset.append(data)
         return bundleset
-
-
-class BundlerLint(Bcfg2.Server.Lint.ServerPlugin):
-    """ Perform various :ref:`Bundler
-    <server-plugins-structures-bundler-index>` checks. """
-
-    def Run(self):
-        self.missing_bundles()
-        for bundle in self.core.plugins['Bundler'].entries.values():
-            if (self.HandlesFile(bundle.name) and
-                (not HAS_GENSHI or
-                 not isinstance(bundle, BundleTemplateFile))):
-                self.bundle_names(bundle)
-
-    @classmethod
-    def Errors(cls):
-        return {"bundle-not-found": "error",
-                "inconsistent-bundle-name": "warning"}
-
-    def missing_bundles(self):
-        """ Find bundles listed in Metadata but not implemented in
-        Bundler. """
-        if self.files is None:
-            # when given a list of files on stdin, this check is
-            # useless, so skip it
-            groupdata = self.metadata.groups_xml.xdata
-            ref_bundles = set([b.get("name")
-                               for b in groupdata.findall("//Bundle")])
-
-            allbundles = self.core.plugins['Bundler'].entries.keys()
-            for bundle in ref_bundles:
-                xmlbundle = "%s.xml" % bundle
-                genshibundle = "%s.genshi" % bundle
-                if (xmlbundle not in allbundles and
-                    genshibundle not in allbundles):
-                    self.LintError("bundle-not-found",
-                                   "Bundle %s referenced, but does not exist" %
-                                   bundle)
-
-    def bundle_names(self, bundle):
-        """ Verify bundle name attribute matches filename.
-
-        :param bundle: The bundle to verify
-        :type bundle: Bcfg2.Server.Plugins.Bundler.BundleFile
-        """
-        try:
-            xdata = lxml.etree.XML(bundle.data)
-        except AttributeError:
-            # genshi template
-            xdata = lxml.etree.parse(bundle.template.filepath).getroot()
-
-        fname = os.path.splitext(os.path.basename(bundle.name))[0]
-        bname = xdata.get('name')
-        if fname != bname:
-            self.LintError("inconsistent-bundle-name",
-                           "Inconsistent bundle name: filename is %s, "
-                           "bundle name is %s" % (fname, bname))

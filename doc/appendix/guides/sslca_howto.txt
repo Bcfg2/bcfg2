@@ -1,0 +1,183 @@
+.. -*- mode: rst -*-
+
+.. _appendix-guides-sslca_howto:
+
+====================================
+ Automated Bcfg2 SSL Authentication
+====================================
+
+This how-to describes one possible scenario for automating SSL
+certificate generation and distribution for bcfg2 client/server
+communication using the :ref:`SSL CA feature
+<server-plugins-generators-cfg-ssl-certificates>` of
+:ref:`server-plugins-generators-cfg`. The process involves configuring
+a certificate authority (CA), generating the CA cert and key pair,
+configuring the Cfg SSL CA feature and a Bundle to use the generated
+certs to authenticate the Bcfg2 client and server.
+
+OpenSSL CA
+==========
+
+If you already have a SSL CA available you can skip this section,
+otherwise you can easily build one on the server using openssl. The
+paths should be adjusted to suite your preferences.
+
+#. Prepare the directories and files::
+
+    mkdir -p /etc/pki/CA/newcerts
+    mkdir /etc/pki/CA/crl
+    echo '01' > /etc/pki/CA/serial
+    touch /etc/pki/CA/index.txt
+    touch /etc/pki/CA/crlnumber
+
+#. Edit the ``openssl.cnf`` config file, and in the **[ CA_default ]**
+   section adjust the following parameters::
+
+    dir         = /etc/pki          # Where everything is kept
+    certs       = /etc/pki/CA/certs     # Where the issued certs are kept
+    database    = /etc/pki/CA/index.txt # database index file.
+    new_certs_dir   = /etc/pki/CA/newcerts      # default place for new certs.
+    certificate = /etc/pki/CA/certs/bcfg2ca.crt     # The CA certificate
+    serial      = /etc/pki/CA/serial        # The current serial number
+    crl_dir     = /etc/pki/CA/crl           # Where the issued crl are kept
+    crlnumber   = /etc/pki/CA/crlnumber # the current crl number
+    crl     = /etc/pki/CA/crl.pem       # The current CRL
+    private_key = /etc/pki/CA/private/bcfg2ca.key # The private key
+
+#. Create the CA root certificate and key pair. You'll be asked to
+   supply a passphrase, and some organizational info. The most
+   important bit is **Common Name** which you should set to be the
+   hostname of your bcfg2 server that your clients will see when doing
+   a reverse DNS query on it's ip address.::
+
+    openssl req -new -x509 -extensions v3_ca -keyout bcfg2ca.key \
+        -out bcfg2ca.crt -days 3650
+
+#. Move the generated cert and key to the locations specified in
+   ``openssl.cnf``::
+
+    mv bcfg2ca.key /etc/pki/CA/private/
+    mv bcfg2ca.crt /etc/pki/CA/certs/
+
+Your self-signing CA is now ready to use.
+
+Bcfg2
+=====
+
+SSL CA Feature
+--------------
+
+The SSL CA feature of Cfg was not designed specifically to manage
+Bcfg2 client/server communication, though it is certainly able to
+provide certificate generation and management services for that
+purpose. You'll need to configure Cfg as described in
+:ref:`server-plugins-generators-cfg-ssl-certificates`, including:
+
+* Configuring a ``[sslca_default]`` section in ``bcfg2.conf`` that
+  describes the CA you created above;
+* Creating ``Cfg/etc/pki/tls/certs/bcfg2client.crt/sslcert.xml`` and
+  ``Cfg/etc/pki/tls/private/bcfg2client.key/sslkey.xml`` to describe
+  the key and cert you want generated.
+
+In general, the defaults in ``sslcert.xml`` and ``sslkey.xml`` should
+be fine, so those files can look like this:
+
+``Cfg/etc/pki/tls/certs/bcfg2client.crt/sslcert.xml``:
+
+.. code-block:: xml
+
+    <CertInfo>
+      <Cert key="/etc/pki/tls/private/bcfg2client.key"/>
+    </CertInfo>
+
+``Cfg/etc/pki/tls/private/bcfg2client.key/sslkey.xml``:
+
+.. code-block:: xml
+
+    <KeyInfo/>
+
+Client Bundle
+-------------
+
+To automate the process of generating and distributing certs to the
+clients we need define at least the cert and key paths created by Cfg,
+as well as the CA certificate path in a Bundle. For example:
+
+.. code-block:: xml
+
+    <Path name='/etc/pki/tls/certs/bcfg2ca.crt'/>
+    <Path name='/etc/pki/tls/bcfg2client.crt'/>
+    <Path name='/etc/pki/tls/private/bcfg2client.key'/>
+
+Here's a more complete example bcfg2-client bundle:
+
+.. code-block:: xml
+
+    <Bundle>
+      <Path name='/etc/bcfg2.conf'/>
+      <Path name='/etc/cron.d/bcfg2-client'/>
+      <Package name='bcfg2'/>
+      <Service name='bcfg2'/>
+      <Group name='rpm'>
+        <Path name='/etc/sysconfig/bcfg2'/>
+        <Path name='/etc/pki/tls/certs/bcfg2ca.crt'/>
+        <Path name='/etc/pki/tls/certs/bcfg2client.crt'/>
+        <Path name='/etc/pki/tls/private/bcfg2client.key'/>
+      </Group>
+      <Group name='deb'>
+        <Path name='/etc/default/bcfg2' altsrc='/etc/sysconfig/bcfg2'/>
+        <Path name='/etc/ssl/certs/bcfg2ca.crt' altsrc='/etc/pki/tls/certs/bcfg2ca.crt'/>
+        <Path name='/etc/ssl/certs/bcfg2client.crt' altsrc='/etc/pki/tls/certs/bcfg2client.crt'/>
+        <Path name='/etc/ssl/private/bcfg2client.key' altsrc='/etc/pki/tls/private/bcfg2client.key'/>
+      </Group>
+    </Bundle>
+
+The ``bcfg2.conf`` client config needs at least 5 parameters set for
+SSL auth.
+
+#. ``key`` : This is the host specific key that Cfg will create.
+#. ``certificate`` : This is the host specific cert that Cfg will
+   create.
+#. ``ca`` : This is a copy of your CA certificate. Not generated by
+   Cfg.
+#. ``password`` : Set to arbitrary string when using certificate
+   auth. This also *shouldn't* be required. See:
+   http://trac.mcs.anl.gov/projects/bcfg2/ticket/1019
+
+Here's what a functional **[communication]** section in a
+``bcfg2.conf`` genshi template for clients might look like.::
+
+   [communication]
+   protocol = xmlrpc/ssl
+   {% if metadata.uuid != None %}\
+   user = ${metadata.uuid}
+   {% end %}\
+   password = DUMMYPASSWORDFORCERTAUTH
+   {% choose %}\
+   {% when 'rpm' in metadata.groups %}\
+   certificate = /etc/pki/tls/certs/bcfg2client.crt
+   key = /etc/pki/tls/private/bcfg2client.key
+   ca = /etc/pki/tls/certs/bcfg2ca.crt
+   {% end %}\
+   {% when 'deb' in metadata.groups %}\
+   certificate = /etc/ssl/certs/bcfg2client.crt
+   key = /etc/ssl/private/bcfg2client.key
+   ca = /etc/ssl/certs/bcfg2ca.crt
+   {% end %}\
+   {% end %}\
+
+As a client will not be able to authenticate with certificates it does
+not yet posses we need to overcome the chicken and egg scenario the
+first time we try to connect such a client to the server. We can do so
+using password based auth to bootstrap the client manually specifying
+all the relevant auth parameters like so::
+
+    bcfg2 -qv -S https://fqdn.of.bcfg2-server:6789 -u fqdn.of.client \
+        -x SUPER_SECRET_PASSWORD
+
+If all goes well the client should recieve a freshly generated key and
+cert and you should be able to run ``bcfg2`` again without specifying
+the connection parameters.
+
+If you do run into problems you may want to review
+:ref:`appendix-guides-authentication`.

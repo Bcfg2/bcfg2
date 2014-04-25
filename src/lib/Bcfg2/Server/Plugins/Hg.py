@@ -12,15 +12,15 @@ class Hg(Bcfg2.Server.Plugin.Version):
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __vcs_metadata_path__ = ".hg"
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Version.__init__(self, core, datastore)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Version.__init__(self, core)
         self.logger.debug("Initialized hg plugin with hg directory %s" %
                           self.vcs_path)
 
     def get_revision(self):
         """Read hg revision information for the Bcfg2 repository."""
         try:
-            repo_path = self.vcs_root + "/"
+            repo_path = Bcfg2.Options.setup.vcs_root + "/"
             repo = hg.repository(ui.ui(), repo_path)
             tip = repo.changelog.tip()
             return repo.changelog.rev(tip)

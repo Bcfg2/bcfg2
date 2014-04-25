@@ -3,10 +3,9 @@
 import os
 import re
 import sys
-import Bcfg2.Server.Lint
 import Bcfg2.Server.Plugin
 from boto import connect_ec2
-from Bcfg2.Cache import Cache
+from Bcfg2.Server.Cache import Cache
 from Bcfg2.Compat import ConfigParser
 
 
@@ -66,11 +65,7 @@ class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
     create = 'AWSTags'
 
     def __init__(self, filename, core=None):
-        try:
-            fam = core.fam
-        except AttributeError:
-            fam = None
-        Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, filename, fam=fam,
+        Bcfg2.Server.Plugin.XMLFileBacked.__init__(self, filename,
                                                    should_monitor=True)
         self.core = core
         self.tags = []
@@ -107,15 +102,13 @@ class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
 
 
 class AWSTags(Bcfg2.Server.Plugin.Plugin,
-              Bcfg2.Server.Plugin.Caching,
               Bcfg2.Server.Plugin.ClientRunHooks,
               Bcfg2.Server.Plugin.Connector):
     """ Query tags from AWS via boto, optionally setting group membership """
     __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['expire_cache']
 
-    def __init__(self, core, datastore):
-        Bcfg2.Server.Plugin.Plugin.__init__(self, core, datastore)
-        Bcfg2.Server.Plugin.Caching.__init__(self)
+    def __init__(self, core):
+        Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.ClientRunHooks.__init__(self)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         try:
@@ -178,6 +171,8 @@ class AWSTags(Bcfg2.Server.Plugin.Plugin,
         return self._tagcache[metadata.hostname]
 
     def expire_cache(self, key=None):
+        """ Expire the cache for one host, or for all hosts.  This is
+        exposed as an XML-RPC RMI. """
         self._tagcache.expire(key=key)
 
     def start_client_run(self, metadata):
@@ -189,29 +184,3 @@ class AWSTags(Bcfg2.Server.Plugin.Plugin,
     def get_additional_groups(self, metadata):
         return self.config.get_groups(metadata.hostname,
                                       self.get_tags(metadata))
-
-
-class AWSTagsLint(Bcfg2.Server.Lint.ServerPlugin):
-    """ ``bcfg2-lint`` plugin to check all given :ref:`AWSTags
-    <server-plugins-connectors-awstags>` patterns for validity. """
-
-    def Run(self):
-        cfg = self.core.plugins['AWSTags'].config
-        for entry in cfg.xdata.xpath('//Tag'):
-            self.check(entry, "name")
-            if entry.get("value"):
-                self.check(entry, "value")
-
-    @classmethod
-    def Errors(cls):
-        return {"pattern-fails-to-initialize": "error"}
-
-    def check(self, entry, attr):
-        """ Check a single attribute (``name`` or ``value``) of a
-        single entry for validity. """
-        try:
-            re.compile(entry.get(attr))
-        except re.error:
-            self.LintError("pattern-fails-to-initialize",
-                           "'%s' regex could not be compiled: %s\n    %s" %
-                           (attr, sys.exc_info()[1], entry.get("name")))

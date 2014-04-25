@@ -52,8 +52,8 @@ class ValidateJSON(Bcfg2.Server.Lint.ServerlessPlugin):
             listfiles = lambda p: fnmatch.filter(self.files,
                                                  os.path.join('*', p))
         else:
-            listfiles = lambda p: glob.glob(os.path.join(self.config['repo'],
-                                                         p))
+            listfiles = lambda p: glob.glob(
+                os.path.join(Bcfg2.Options.setup.repository, p))
 
         rv = []
         for path in self.globs:
@@ -62,9 +62,9 @@ class ValidateJSON(Bcfg2.Server.Lint.ServerlessPlugin):
                     rv.extend(listfiles(path))
                 else:  # self.files is None
                     fpath, fname = path.split('/**/')
-                    for root, _, files in \
-                            os.walk(os.path.join(self.config['repo'],
-                                                 fpath)):
+                    for root, _, files in os.walk(
+                            os.path.join(Bcfg2.Options.setup.repository,
+                                         fpath)):
                         rv.extend([os.path.join(root, f)
                                    for f in files if f == fname])
             else:

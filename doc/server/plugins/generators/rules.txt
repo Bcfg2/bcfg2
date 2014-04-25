@@ -20,32 +20,14 @@ The Rules plugin resolves the following Abstract Configuration Entities:
 to literal configuration entries suitable for the client drivers to
 consume.
 
-For an entity specification to be included in the Literal configuration
-the name attribute from an Abstract Entity Tag (from Base or Bundler)
-must match the name attribute of an Entity tag in Rules, along with the
-appropriate group associations of course.
+For an entity specification to be included in the Literal
+configuration the name attribute from an abstract entity tag (from
+Bundler) must match the name attribute of an entity tag in Rules,
+along with the appropriate group associations of course.
 
 Each file in the Rules directory has a priority. This allows the same
 Entities to be served by multiple files. The priorities can be used to
-break ties in the case that multiple files serve data for the same Entity.
-
-
-Usage of Groups in Rules
-========================
-
-Groups are used by the Rules plugin, along with host metadata, for
-selecting the Configuration Entity entries to include in the clients
-literal configuration. They can be thought of as::
-
-    if client is a member of group1 then
-        assign to literal config
-
-Nested groups are conjunctive (logical and).::
-
-    if client is a member of group1 and group2 then
-        assign to literal config
-
-Group membership may be negated.
+break ties in the case that multiple files serve data for the same entity.
 
 Tag Attributes in Rules
 =======================
@@ -515,8 +497,8 @@ If you wish, you can configure the Rules plugin to support regular
 expressions.  This entails a small performance and memory usage
 penalty.  To do so, add the following setting to ``bcfg2.conf``::
 
-  [rules]
-  regex = yes
+    [rules]
+    regex = yes
 
 With regular expressions enabled, you can use a regex in the ``name``
 attribute to match multiple abstract configuration entries.

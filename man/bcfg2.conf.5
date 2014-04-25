@@ -1,4 +1,4 @@
-.TH "BCFG2.CONF" "5" "July 19, 2013" "1.3" "Bcfg2"
+.TH "BCFG2.CONF" "5" "April 06, 2014" "1.3" "Bcfg2"
 .SH NAME
 bcfg2.conf \- Configuration parameters for Bcfg2
 .
@@ -69,7 +69,6 @@ valid:
 .ft C
 inotify
 gamin
-fam
 pseudo
 .ft P
 .fi
@@ -77,7 +76,6 @@ pseudo
 .UNINDENT
 .TP
 .B fam_blocking
-.
 Whether the server should block at startup until the file monitor
 backend has processed all events. This can cause a slower startup,
 but ensure that all files are recognized before the first client
@@ -119,24 +117,22 @@ available plugins are:
 .sp
 .nf
 .ft C
-Account
-Base
+ACL
 Bundler
 Bzr
 Cfg
 Cvs
 Darcs
-DBStats
 Decisions
+Defaults
 Deps
-Editor
 FileProbes
 Fossil
 Git
+GroupLogic
 GroupPatterns
 Guppy
 Hg
-Hostbase
 Ldap
 Metadata
 NagiosGen
@@ -151,14 +147,9 @@ Reporting
 Rules
 SEModules
 ServiceCompat
-Snapshots
 SSHbase
-SSLCA
-Statistics
 Svn
-TCheetah
 TemplateHelper
-TGenshi
 Trigger
 .ft P
 .fi
@@ -211,28 +202,9 @@ The umask to set for the server.  Default is \fI0077\fP.
 .sp
 This section has a listing of all the plugins currently provided with
 Bcfg2.
-.SS Account Plugin
+.SS ACL Plugin
 .sp
-The account plugin manages authentication data, including the following.
-.INDENT 0.0
-.IP \(bu 2
-\fB/etc/passwd\fP
-.IP \(bu 2
-\fB/etc/group\fP
-.IP \(bu 2
-\fB/etc/security/limits.conf\fP
-.IP \(bu 2
-\fB/etc/sudoers\fP
-.IP \(bu 2
-\fB/root/.ssh/authorized_keys\fP
-.UNINDENT
-.SS Base Plugin
-.sp
-The Base plugin is a structure plugin that provides the ability
-to add lists of unrelated entries into client configuration entry
-inventories. Base works much like Bundler in its file format. This
-structure plugin is good for the pile of independent configs needed for
-most actual systems.
+The ACL plugin controls which hosts can make which XML\-RPC calls.
 .SS Bundler Plugin
 .sp
 The Bundler plugin is used to describe groups of inter\-dependent
@@ -252,19 +224,16 @@ The Cfg plugin provides a repository to describe configuration file
 contents for clients. In its simplest form, the Cfg repository is just a
 directory tree modeled off of the directory tree on your client
 machines.
-.SS Cvs Plugin (experimental)
+.SS Cvs Plugin
 .sp
 The Cvs plugin allows you to track changes to your Bcfg2 repository
 using a Concurrent version control backend. Currently, it enables you to
 get revision information out of your repository for reporting purposes.
-.SS Darcs Plugin (experimental)
+.SS Darcs Plugin
 .sp
 The Darcs plugin allows you to track changes to your Bcfg2 repository
 using a Darcs version control backend. Currently, it enables you to get
 revision information out of your repository for reporting purposes.
-.SS DBStats Plugin
-.sp
-Direct to database statistics plugin.
 .SS Decisions Plugin
 .sp
 The Decisions plugin has support for a centralized set of per\-entry
@@ -282,11 +251,6 @@ and only populate attributes that are not yet set.
 .sp
 The Deps plugin allows you to make a series of assertions like "Package
 X requires Package Y (and optionally also Package Z etc.)"
-.SS Editor Plugin
-.sp
-The Editor plugin attempts to allow you to partially manage
-configuration for a file. Its use is not recommended and not well
-documented.
 .SS FileProbes Plugin
 .sp
 The FileProbes plugin allows you to probe a client for a file, which is
@@ -303,6 +267,10 @@ get revision information out of your repository for reporting purposes.
 The Git plugin allows you to track changes to your Bcfg2 repository
 using a Git version control backend. Currently, it enables you to get
 revision information out of your repository for reporting purposes.
+.SS GroupLogic Plugin
+.sp
+The GroupLogic plugin lets you flexibly assign group membership with a
+Genshi template.
 .SS GroupPatterns Plugin
 .sp
 The GroupPatterns plugin is a connector that can assign clients group
@@ -311,14 +279,11 @@ membership based on patterns in client hostnames.
 .sp
 The Guppy plugin is used to trace memory leaks within the bcfg2\-server
 process using Guppy.
-.SS Hg Plugin (experimental)
+.SS Hg Plugin
 .sp
 The Hg plugin allows you to track changes to your Bcfg2 repository using
 a Mercurial version control backend. Currently, it enables you to get
 revision information out of your repository for reporting purposes.
-.SS Hostbase Plugin
-.sp
-The Hostbase plugin is an IP management system built on top of Bcfg2.
 .SS Ldap Plugin
 .sp
 The Ldap plugin makes it possible to fetch data from an LDAP directory,
@@ -331,7 +296,7 @@ metadata.
 .sp
 The NagiosGen plugin dynamically generates Nagios configuration files
 based on Bcfg2 data.
-.SS Ohai Plugin (experimental)
+.SS Ohai Plugin
 .sp
 The Ohai plugin is used to detect information about the client operating
 system. The data is reported back to the server using JSON.
@@ -371,10 +336,10 @@ The Reporting plugin enables the collection of data for use with Bcfg2\(aqs
 dynamic reporting system.
 .SS Rules Plugin
 .sp
-The Rules plugin provides literal configuration entries that resolve the
-abstract configuration entries normally found in the Bundler and Base
-plugins. The literal entries in Rules are suitable for consumption by
-the appropriate client drivers.
+The Rules plugin provides literal configuration entries that resolve
+the abstract configuration entries normally found in Bundler. The
+literal entries in Rules are suitable for consumption by the
+appropriate client drivers.
 .SS SEModules Plugin
 .sp
 The SEModules plugin provides a way to distribute SELinux modules via
@@ -382,37 +347,16 @@ Bcfg2.
 .SS ServiceCompat Plugin
 .sp
 The ServiceCompat plugin converts service entries for older clients.
-.SS Snapshots Plugin
-.sp
-The Snapshots plugin stores various aspects of a client’s state when the
-client checks in to the server.
 .SS SSHbase Plugin
 .sp
 The SSHbase generator plugin manages ssh host keys (both v1 and v2) for
 hosts. It also manages the ssh_known_hosts file. It can integrate host
 keys from other management domains and similarly export its keys.
-.SS SSLCA Plugin
-.sp
-The SSLCA plugin is designed to handle creation of SSL privatekeys and
-certificates on request.
-.SS Statistics
-.sp
-The Statistics plugin is deprecated (see Reporting).
 .SS Svn Plugin
 .sp
 The Svn plugin allows you to track changes to your Bcfg2 repository
 using a Subversion backend. Currently, it enables you to get revision
 information out of your repository for reporting purposes.
-.SS TCheetah Plugin
-.sp
-The TCheetah plugin allows you to use the cheetah templating system to
-create files. It also allows you to include the results of probes
-executed on the client in the created files.
-.SS TGenshi Plugin
-.sp
-The TGenshi plugin allows you to use the Genshi templating system to
-create files. It also allows you to include the results of probes
-executed on the client in the created files.
 .SS Trigger Plugin
 .sp
 The Trigger plugin provides a method for calling external scripts when
@@ -693,28 +637,11 @@ copies will be kept.
 .UNINDENT
 .UNINDENT
 .UNINDENT
-.SH SNAPSHOTS OPTIONS
+.SH SSL CA OPTIONS
 .sp
-Specified in the \fB[snapshots]\fP section. These options control the
-server snapshots functionality.
-.INDENT 0.0
-.INDENT 3.5
-.INDENT 0.0
-.TP
-.B driver
-sqlite
-.TP
-.B database
-The name of the database to use for statistics data.
-.sp
-e.g.: \fB$REPOSITORY_DIR/etc/bcfg2.sqlite\fP
-.UNINDENT
-.UNINDENT
-.UNINDENT
-.SH SSLCA OPTIONS
-.sp
-These options are necessary to configure the SSLCA plugin and can be
-found in the \fB[sslca_default]\fP section of the configuration file.
+These options are necessary to configure the SSL CA feature of the Cfg
+plugin and can be found in the \fB[sslca_default]\fP section of the
+configuration file.
 .INDENT 0.0
 .INDENT 3.5
 .INDENT 0.0
@@ -746,7 +673,7 @@ control the database connection of the server.
 .INDENT 0.0
 .TP
 .B engine
-The database engine used by the statistics module. One of the
+The database engine used by server plugins. One of the
 following:
 .INDENT 7.0
 .INDENT 3.5
@@ -763,9 +690,9 @@ ado_mssql
 .UNINDENT
 .TP
 .B name
-The name of the database to use for statistics data. If
+The name of the database to use for server data. If
 \(aqdatabase_engine\(aq is set to \(aqsqlite3\(aq this is a file path to
-the sqlite file and defaults to \fB$REPOSITORY_DIR/etc/brpt.sqlite\fP.
+the sqlite file and defaults to \fB$REPOSITORY_DIR/etc/bcfg2.sqlite\fP.
 .TP
 .B user
 User for database connections. Not used for sqlite3.
@@ -782,6 +709,49 @@ Port for database connections. Not used for sqlite3.
 .B options
 Various options for the database connection. The value is
 expected as multiple key=value pairs, separated with commas.
+The concrete value depends on the database engine.
+.TP
+.B reporting_engine
+The database engine used by the Reporting plugin. One of the
+following:
+.INDENT 7.0
+.INDENT 3.5
+.sp
+.nf
+.ft C
+   postgresql
+   mysql
+   sqlite3
+   ado_mssql
+
+If reporting_engine is not specified, the Reporting plugin uses
+the same database as the other server plugins.
+.ft P
+.fi
+.UNINDENT
+.UNINDENT
+.TP
+.B reporting_name
+The name of the database to use for reporting data. If
+\(aqdatabase_engine\(aq is set to \(aqsqlite3\(aq this is a file path to
+the sqlite file and defaults to
+\fB$REPOSITORY_DIR/etc/reporting.sqlite\fP.
+.TP
+.B reporting_user
+User for reporting database connections. Not used for sqlite3.
+.TP
+.B reporting_password
+Password for reporting database connections. Not used for sqlite3.
+.TP
+.B reporting_host
+Host for reporting database connections. Not used for sqlite3.
+.TP
+.B reporting_port
+Port for reporting database connections. Not used for sqlite3.
+.TP
+.B reporting_options
+Various options for the reporting database connection. The value
+is expected as multiple key=value pairs, separated with commas.
 The concrete value depends on the database engine.
 .UNINDENT
 .UNINDENT

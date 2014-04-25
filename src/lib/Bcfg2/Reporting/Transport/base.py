@@ -4,7 +4,8 @@ The base for all server -> collector Transports
 
 import os
 import sys
-from Bcfg2.Server.Plugin import Debuggable
+import Bcfg2.Options
+from Bcfg2.Logger import Debuggable
 
 
 class TransportError(Exception):
@@ -12,20 +13,18 @@ class TransportError(Exception):
     pass
 
 
-class TransportImportError(TransportError):
-    """Raised when a transport fails to import"""
-    pass
-
-
 class TransportBase(Debuggable):
     """The base for all transports"""
 
-    def __init__(self, setup):
+    options = Debuggable.options
+
+    def __init__(self):
         """Do something here"""
         clsname = self.__class__.__name__
         Debuggable.__init__(self, name=clsname)
         self.debug_log("Loading %s transport" % clsname)
-        self.data = os.path.join(setup['repo'], 'Reporting', clsname)
+        self.data = os.path.join(Bcfg2.Options.setup.repository, 'Reporting',
+                                 clsname)
         if not os.path.exists(self.data):
             self.logger.info("%s does not exist, creating" % self.data)
             try:
@@ -34,7 +33,6 @@ class TransportBase(Debuggable):
                 self.logger.warning("Could not create %s: %s" %
                                     (self.data, sys.exc_info()[1]))
                 self.logger.warning("The transport may not function properly")
-        self.setup = setup
         self.timeout = 2
 
     def start_monitor(self, collector):

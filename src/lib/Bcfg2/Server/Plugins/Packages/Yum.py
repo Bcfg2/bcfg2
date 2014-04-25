@@ -60,8 +60,10 @@ import socket
 import logging
 import lxml.etree
 import Bcfg2.Server.Plugin
+import Bcfg2.Server.FileMonitor
 from lockfile import FileLock
 from Bcfg2.Utils import Executor
+from distutils.spawn import find_executable  # pylint: disable=E0611
 # pylint: disable=W0622
 from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
     ConfigParser, any
@@ -69,6 +71,7 @@ from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
     fetch_url
+from Bcfg2.Server.Statistics import track_statistics
 
 LOGGER = logging.getLogger(__name__)
 
@@ -107,13 +110,36 @@ PULPSERVER = None
 PULPCONFIG = None
 
 
-def _setup_pulp(setup):
+options = [  # pylint: disable=C0103
+    Bcfg2.Options.Common.client_timeout,
+    Bcfg2.Options.PathOption(
+        cf=("packages:yum", "helper"), dest="yum_helper",
+        help="Path to the bcfg2-yum-helper executable"),
+    Bcfg2.Options.BooleanOption(
+        cf=("packages:yum", "use_yum_libraries"),
+        help="Use Python yum libraries"),
+    Bcfg2.Options.PathOption(
+        cf=("packages:yum", "gpg_keypath"), default="/etc/pki/rpm-gpg",
+        help="GPG key path on the client"),
+    Bcfg2.Options.Option(
+        cf=("packages:yum", "*"), dest="yum_options",
+        help="Other yum options to include in generated yum configs")]
+if HAS_PULP:
+    options.append(
+        Bcfg2.Options.Option(
+            cf=("packages:pulp", "username"), dest="pulp_username",
+            help="Username for Pulp authentication"))
+    options.append(
+        Bcfg2.Options.Option(
+            cf=("packages:pulp", "password"), dest="pulp_password",
+            help="Password for Pulp authentication"))
+
+
+def _setup_pulp():
     """ Connect to a Pulp server and pass authentication credentials.
     This only needs to be called once, but multiple calls won't hurt
     anything.
 
-    :param setup: A Bcfg2 options dict
-    :type setup: dict
     :returns: :class:`pulp.client.api.server.PulpServer`
     """
     global PULPSERVER, PULPCONFIG
@@ -124,19 +150,6 @@ def _setup_pulp(setup):
         raise Bcfg2.Server.Plugin.PluginInitError(msg)
 
     if PULPSERVER is None:
-        try:
-            username = setup.cfp.get("packages:pulp", "username")
-            password = setup.cfp.get("packages:pulp", "password")
-        except ConfigParser.NoSectionError:
-            msg = "Packages: No [pulp] section found in bcfg2.conf"
-            LOGGER.error(msg)
-            raise Bcfg2.Server.Plugin.PluginInitError(msg)
-        except ConfigParser.NoOptionError:
-            msg = "Packages: Required option not found in bcfg2.conf: %s" % \
-                sys.exc_info()[1]
-            LOGGER.error(msg)
-            raise Bcfg2.Server.Plugin.PluginInitError(msg)
-
         PULPCONFIG = ConsumerConfig()
         serveropts = PULPCONFIG.server
 
@@ -144,7 +157,9 @@ def _setup_pulp(setup):
                                        int(serveropts['port']),
                                        serveropts['scheme'],
                                        serveropts['path'])
-        PULPSERVER.set_basic_auth_credentials(username, password)
+        PULPSERVER.set_basic_auth_credentials(
+            Bcfg2.Options.setup.pulp_username,
+            Bcfg2.Options.setup.pulp_password)
         server.set_active_server(PULPSERVER)
     return PULPSERVER
 
@@ -175,7 +190,7 @@ class PulpCertificateSet(Bcfg2.Server.Plugin.EntrySet):
     #: The path to certificates on consumer machines
     certpath = "/etc/pki/consumer/cert.pem"
 
-    def __init__(self, path, fam):
+    def __init__(self, path):
         """
         :param path: The path to the directory where Pulp consumer
                      certificates will be stored
@@ -193,7 +208,7 @@ class PulpCertificateSet(Bcfg2.Server.Plugin.EntrySet):
                              important='true',
                              sensitive='true',
                              paranoid=self.metadata['paranoid'])
-        self.fam = fam
+        self.fam = Bcfg2.Server.FileMonitor.get_fam()
         self.fam.AddMonitor(path, self)
 
     def HandleEvent(self, event):
@@ -274,9 +289,8 @@ class YumCollection(Collection):
     #: :class:`PulpCertificateSet` object used to handle Pulp certs
     pulp_cert_set = None
 
-    def __init__(self, metadata, sources, cachepath, basepath, fam,
-                 debug=False):
-        Collection.__init__(self, metadata, sources, cachepath, basepath, fam,
+    def __init__(self, metadata, sources, cachepath, basepath, debug=False):
+        Collection.__init__(self, metadata, sources, cachepath, basepath,
                             debug=debug)
         self.keypath = os.path.join(self.cachepath, "keys")
 
@@ -297,13 +311,15 @@ class YumCollection(Collection):
             if not os.path.exists(self.cachefile):
                 self.debug_log("Creating common cache %s" % self.cachefile)
                 os.mkdir(self.cachefile)
-                if not self.disableMetaData:
+                if Bcfg2.Options.setup.packages_metadata:
                     self.setup_data()
+            self.cmd = Executor()
         else:
             self.cachefile = None
+            self.cmd = None
 
         if HAS_PULP and self.has_pulp_sources:
-            _setup_pulp(self.setup)
+            _setup_pulp()
             if self.pulp_cert_set is None:
                 certdir = os.path.join(
                     self.basepath,
@@ -319,28 +335,7 @@ class YumCollection(Collection):
                         self.logger.error("Could not create Pulp consumer "
                                           "cert directory at %s: %s" %
                                           (certdir, err))
-                self.__class__.pulp_cert_set = PulpCertificateSet(certdir,
-                                                                  self.fam)
-
-    @property
-    def disableMetaData(self):  # pylint: disable=C0103
-        """ Report whether or not metadata processing is enabled.
-        This duplicates code in Packages/__init__.py, and can probably
-        be removed in Bcfg2 1.4 when we have a module-level setup
-        object. """
-        if self.setup is None:
-            return True
-        try:
-            return not self.setup.cfp.getboolean("packages", "resolver")
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
-            return False
-        except ValueError:
-            # for historical reasons we also accept "enabled" and
-            # "disabled"
-            return self.setup.cfp.get(
-                "packages",
-                "metadata",
-                default="enabled").lower() == "disabled"
+                self.__class__.pulp_cert_set = PulpCertificateSet(certdir)
 
     @property
     def __package_groups__(self):
@@ -348,24 +343,18 @@ class YumCollection(Collection):
 
     @property
     def helper(self):
-        """ The full path to :file:`bcfg2-yum-helper`.  First, we
-        check in the config file to see if it has been explicitly
-        specified; next we see if it's in $PATH (which we do by making
-        a call to it; I wish there was a way to do this without
-        forking, but apparently not); finally we check in /usr/sbin,
-        the default location. """
+        """The full path to :file:`bcfg2-yum-helper`.  First, we check in the
+        config file to see if it has been explicitly specified; next
+        we see if it's in $PATH; finally we default to /usr/sbin, the
+        default location. """
         # pylint: disable=W0212
-        if not self.__class__._helper:
-            try:
-                self.__class__._helper = self.setup.cfp.get("packages:yum",
-                                                            "helper")
-            except (ConfigParser.NoOptionError, ConfigParser.NoSectionError):
+        if not self._helper:
+            self.__class__._helper = Bcfg2.Options.setup.yum_helper
+            if not self.__class__._helper:
                 # first see if bcfg2-yum-helper is in PATH
-                try:
-                    self.debug_log("Checking for bcfg2-yum-helper in $PATH")
-                    self.cmd.run(['bcfg2-yum-helper'])
-                    self.__class__._helper = 'bcfg2-yum-helper'
-                except OSError:
+                self.debug_log("Checking for bcfg2-yum-helper in $PATH")
+                self.__class__._helper = find_executable('bcfg2-yum-helper')
+                if not self.__class__._helper:
                     self.__class__._helper = "/usr/sbin/bcfg2-yum-helper"
         return self.__class__._helper
         # pylint: enable=W0212
@@ -374,9 +363,7 @@ class YumCollection(Collection):
     def use_yum(self):
         """ True if we should use the yum Python libraries, False
         otherwise """
-        return HAS_YUM and self.setup.cfp.getboolean("packages:yum",
-                                                     "use_yum_libraries",
-                                                     default=False)
+        return HAS_YUM and Bcfg2.Options.setup.use_yum_libraries
 
     @property
     def has_pulp_sources(self):
@@ -393,7 +380,7 @@ class YumCollection(Collection):
             cachefiles.add(self.cachefile)
         return list(cachefiles)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def write_config(self):
         """ Write the server-side config file to :attr:`cfgfile` based
         on the data from :func:`get_config`"""
@@ -412,15 +399,15 @@ class YumCollection(Collection):
                             debuglevel="0",
                             sslverify="0",
                             reposdir="/dev/null")
-            if self.setup['debug']:
+            if Bcfg2.Options.setup.debug:
                 mainopts['debuglevel'] = "5"
-            elif self.setup['verbose']:
+            elif Bcfg2.Options.setup.verbose:
                 mainopts['debuglevel'] = "2"
 
             try:
-                for opt in self.setup.cfp.options("packages:yum"):
+                for opt, val in Bcfg2.Options.setup.yum_options.items():
                     if opt not in self.option_blacklist:
-                        mainopts[opt] = self.setup.cfp.get("packages:yum", opt)
+                        mainopts[opt] = val
             except ConfigParser.NoSectionError:
                 pass
 
@@ -515,7 +502,7 @@ class YumCollection(Collection):
             return "# This config was generated automatically by the Bcfg2 " \
                    "Packages plugin\n\n" + buf.getvalue()
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def build_extra_structures(self, independent):
         """ Add additional entries to the ``<Independent/>`` section
         of the final configuration.  This adds several kinds of
@@ -561,8 +548,7 @@ class YumCollection(Collection):
 
             for key in needkeys:
                 # figure out the path of the key on the client
-                keydir = self.setup.cfp.get("global", "gpg_keypath",
-                                            default="/etc/pki/rpm-gpg")
+                keydir = Bcfg2.Options.setup.gpg_keypath
                 remotekey = os.path.join(keydir, os.path.basename(key))
                 localkey = os.path.join(self.keypath, os.path.basename(key))
                 kdata = open(localkey).read()
@@ -607,7 +593,7 @@ class YumCollection(Collection):
                 # each pulp source can only have one arch, so we don't
                 # have to check the arch in url_map
                 if (source.pulp_id and
-                    source.pulp_id not in consumer['repoids']):
+                        source.pulp_id not in consumer['repoids']):
                     try:
                         consumerapi.bind(self.metadata.hostname,
                                          source.pulp_id)
@@ -622,7 +608,7 @@ class YumCollection(Collection):
                                         name=self.pulp_cert_set.certpath)
             self.pulp_cert_set.bind_entry(crt, self.metadata)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def _get_pulp_consumer(self, consumerapi=None):
         """ Get a Pulp consumer object for the client.
 
@@ -651,7 +637,7 @@ class YumCollection(Collection):
                               "%s" % err)
         return consumer
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def _add_gpg_instances(self, keyentry, localkey, remotekey, keydata=None):
         """ Add GPG keys instances to a ``Package`` entry.  This is
         called from :func:`build_extra_structures` to add GPG keys to
@@ -694,7 +680,7 @@ class YumCollection(Collection):
             self.logger.error("Packages: Could not read GPG key %s: %s" %
                               (localkey, err))
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def get_groups(self, grouplist):
         """ If using the yum libraries, given a list of package group
         names, return a dict of ``<group name>: <list of packages>``.
@@ -781,8 +767,7 @@ class YumCollection(Collection):
         """ Given a package tuple, return a dict of attributes
         suitable for applying to either a Package or an Instance
         tag """
-        attrs = dict(version=self.setup.cfp.get("packages", "version",
-                                                default="auto"))
+        attrs = dict(version=Bcfg2.Options.setup.packages_version)
         if attrs['version'] == 'any' or not isinstance(pkgtup, tuple):
             return attrs
 
@@ -871,8 +856,8 @@ class YumCollection(Collection):
                 new.append(pkg)
         return new
 
-    @Bcfg2.Server.Plugin.track_statistics()
-    def complete(self, packagelist):
+    @track_statistics()
+    def complete(self, packagelist, recommended=None):
         """ Build a complete list of all packages and their dependencies.
 
         When using the Python yum libraries, this defers to the
@@ -890,7 +875,7 @@ class YumCollection(Collection):
                   resolved.
         """
         if not self.use_yum:
-            return Collection.complete(self, packagelist)
+            return Collection.complete(self, packagelist, recommended)
 
         lock = FileLock(os.path.join(self.cachefile, "lock"))
         slept = 0
@@ -925,7 +910,7 @@ class YumCollection(Collection):
         else:
             return set(), set()
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def call_helper(self, command, inputdata=None):
         """ Make a call to :ref:`bcfg2-yum-helper`.  The yum libs have
         horrific memory leaks, so apparently the right way to get
@@ -943,22 +928,20 @@ class YumCollection(Collection):
                   ``bcfg2-yum-helper`` command.
         """
         cmd = [self.helper, "-c", self.cfgfile]
-        if self.setup['verbose']:
+        if Bcfg2.Options.setup.verbose:
             cmd.append("-v")
         if self.debug_flag:
-            if not self.setup['verbose']:
-                # ensure that running in debug gets -vv, even if
-                # verbose is not enabled
-                cmd.append("-v")
-            cmd.append("-v")
+            cmd.append("-d")
         cmd.append(command)
         self.debug_log("Packages: running %s" % " ".join(cmd))
 
         if inputdata:
-            result = self.cmd.run(cmd, timeout=self.setup['client_timeout'],
+            result = self.cmd.run(cmd,
+                                  timeout=Bcfg2.Options.setup.client_timeout,
                                   inputdata=json.dumps(inputdata))
         else:
-            result = self.cmd.run(cmd, timeout=self.setup['client_timeout'])
+            result = self.cmd.run(cmd,
+                                  timeout=Bcfg2.Options.setup.client_timeout)
         if not result.success:
             self.logger.error("Packages: error running bcfg2-yum-helper: %s" %
                               result.error)
@@ -1021,20 +1004,16 @@ class YumCollection(Collection):
 class YumSource(Source):
     """ Handle yum sources """
 
-    #: :ref:`server-plugins-generators-packages-magic-groups` for
-    #: ``YumSource`` are "yum", "redhat", "centos", and "fedora"
-    basegroups = ['yum', 'redhat', 'centos', 'fedora']
-
     #: YumSource sets the ``type`` on Package entries to "yum"
     ptype = 'yum'
 
-    def __init__(self, basepath, xsource, setup):
-        Source.__init__(self, basepath, xsource, setup)
+    def __init__(self, basepath, xsource):
+        Source.__init__(self, basepath, xsource)
         self.pulp_id = None
         if HAS_PULP and xsource.get("pulp_id"):
             self.pulp_id = xsource.get("pulp_id")
 
-            _setup_pulp(self.setup)
+            _setup_pulp()
             repoapi = RepositoryAPI()
             try:
                 self.repo = repoapi.repository(self.pulp_id)
@@ -1077,9 +1056,7 @@ class YumSource(Source):
     def use_yum(self):
         """ True if we should use the yum Python libraries, False
         otherwise """
-        return HAS_YUM and self.setup.cfp.getboolean("packages:yum",
-                                                     "use_yum_libraries",
-                                                     default=False)
+        return HAS_YUM and Bcfg2.Options.setup.use_yum_libraries
 
     def save_state(self):
         """ If using the builtin yum parser, save state to
@@ -1161,7 +1138,7 @@ class YumSource(Source):
                 self.file_to_arch[self.escape_url(fullurl)] = arch
         return urls
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def read_files(self):
         """ When using the builtin yum parser, read and parse locally
         downloaded metadata files.  This diverges from the stock
@@ -1209,7 +1186,7 @@ class YumSource(Source):
                 self.packages[key].difference(self.packages['global'])
         self.save_state()
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def parse_filelist(self, data, arch):
         """ parse filelists.xml.gz data """
         if arch not in self.filemap:
@@ -1223,7 +1200,7 @@ class YumSource(Source):
                         self.filemap[arch][fentry.text] = \
                             set([pkg.get('name')])
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def parse_primary(self, data, arch):
         """ parse primary.xml.gz data """
         if arch not in self.packages:

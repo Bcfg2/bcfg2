@@ -88,8 +88,10 @@ class VCS(Bcfg2.Client.Tools.Tool):
             return False
 
         try:
-            client, path = dulwich.client.get_transport_and_path(entry.get('sourceurl'))
-            remote_refs = client.fetch_pack(path, (lambda x: None), None, None, None)
+            client, path = dulwich.client.get_transport_and_path(
+                entry.get('sourceurl'))
+            remote_refs = client.fetch_pack(path,
+                                            (lambda x: None), None, None, None)
             if expected_rev in remote_refs:
                 expected_rev = remote_refs[expected_rev]
         except:
@@ -119,10 +121,12 @@ class VCS(Bcfg2.Client.Tools.Tool):
 
         dulwich.file.ensure_dir_exists(destname)
         destr = dulwich.repo.Repo.init(destname)
-        cl, host_path = dulwich.client.get_transport_and_path(entry.get('sourceurl'))
+        determine_wants = destr.object_store.determine_wants_all
+        cl, host_path = dulwich.client.get_transport_and_path(
+            entry.get('sourceurl'))
         remote_refs = cl.fetch(host_path,
                                destr,
-                               determine_wants=destr.object_store.determine_wants_all,
+                               determine_wants=determine_wants,
                                progress=sys.stdout.write)
 
         if entry.get('revision') in remote_refs:

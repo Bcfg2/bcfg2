@@ -2,14 +2,28 @@
 <http://www.cheetahtemplate.org/>`_ templating system to generate
 :ref:`server-plugins-generators-cfg` files. """
 
-from Bcfg2.Server.Plugin import PluginExecutionError
-from Bcfg2.Server.Plugins.Cfg import CfgGenerator, SETUP
+import Bcfg2.Options
+from Bcfg2.Server.Plugin import PluginExecutionError, \
+    DefaultTemplateDataProvider, get_template_data
+from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 
 try:
     from Cheetah.Template import Template
     HAS_CHEETAH = True
 except ImportError:
     HAS_CHEETAH = False
+
+
+class DefaultCheetahDataProvider(DefaultTemplateDataProvider):
+    """ Template data provider for Cheetah templates. Cheetah and
+    Genshi currently differ over the value of the ``path`` variable,
+    which is why this is necessary. """
+
+    def get_template_data(self, entry, metadata, template):
+        rv = DefaultTemplateDataProvider.get_template_data(self, entry,
+                                                           metadata, template)
+        rv['path'] = rv['name']
+        return rv
 
 
 class CfgCheetahGenerator(CfgGenerator):
@@ -27,19 +41,18 @@ class CfgCheetahGenerator(CfgGenerator):
     #: :class:`Cheetah.Template.Template` compiler settings
     settings = dict(useStackFrames=False)
 
-    def __init__(self, fname, spec, encoding):
-        CfgGenerator.__init__(self, fname, spec, encoding)
+    def __init__(self, fname, spec):
+        CfgGenerator.__init__(self, fname, spec)
         if not HAS_CHEETAH:
             raise PluginExecutionError("Cheetah is not available")
     __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def get_data(self, entry, metadata):
-        template = Template(self.data.decode(self.encoding),
+        template = Template(self.data.decode(Bcfg2.Options.setup.encoding),
                             compilerSettings=self.settings)
-        template.metadata = metadata
-        template.name = entry.get('realname', entry.get('name'))
-        template.path = entry.get('realname', entry.get('name'))
-        template.source_path = self.name
-        template.repo = SETUP['repo']
+        for key, val in get_template_data(
+            entry, metadata, self.name,
+            default=DefaultCheetahDataProvider()).items():
+            setattr(template, key, val)
         return template.respond()
     get_data.__doc__ = CfgGenerator.get_data.__doc__

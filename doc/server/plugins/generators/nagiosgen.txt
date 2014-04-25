@@ -12,7 +12,7 @@ This page describes the installation and use of the `NagiosGen`_ plugin.
 
 Update ``/etc/bcfg2.conf``, adding NagiosGen to plugins::
 
-    plugins = Base,Bundler,Cfg,...,NagiosGen
+    plugins = Bundler,Cfg,...,NagiosGen
 
 Create the NagiosGen directory::
 
@@ -124,21 +124,21 @@ Create a nagios Bcfg2 bundle ``/var/lib/bcfg2/Bundler/nagios.xml``
 
 .. code-block:: xml
 
-    <Bundle name='nagios' version='2.0'>
+    <Bundle>
       <Path name='/etc/nagiosgen.status'/>
-      <Group name='rh'>
+      <Group name='redhat'>
         <Group name='nagios-server'>
-          <Path name='/etc/nagios/nagiosgen.cfg'/>
+          <Path name='/etc/nagios/conf.d/bcfg2.cfg'/>
           <Package name='libtool-libs'/>
           <Package name='nagios'/>
           <Package name='nagios-www'/>
           <Service name='nagios'/>
         </Group>
       </Group>
-      <Group name='debian-lenny'>
+      <Group name='debian-wheezy'>
         <Group name='nagios-server'>
-          <Path name='/etc/nagios3/nagiosgen.cfg'
-                      altsrc='/etc/nagios/nagiosgen.cfg'/>
+          <Path name='/etc/nagios3/conf.d/bcfg2.cfg'
+                      altsrc='/etc/nagios/conf.d/bcfg2.cfg'/>
           <Package name='nagios3'/>
           <Package name='nagios3-common'/>
           <Package name='nagios3-doc'/>
@@ -160,10 +160,6 @@ Assign clients to nagios groups in
     <Group name='nagios-server'>
       <Bundle name='nagios'/>
     </Group>
-
-Update nagios configuration file to use ``nagiosgen.cfg``::
-
-    cfg_file=/etc/nagios/nagiosgen.cfg
 
 Note that some of these files are built on demand, each time a client
 in group "nagios-server" checks in with the Bcfg2 server. Local nagios

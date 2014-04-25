@@ -14,9 +14,9 @@ class OpenCSW(Bcfg2.Client.Tools.SYSV.SYSV):
     __handles__ = [('Package', 'opencsw')]
     __req__ = {'Package': ['name', 'version', 'bname']}
 
-    def __init__(self, logger, setup, config):
+    def __init__(self, config):
         # dont use the sysv constructor
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, setup, config)
+        Bcfg2.Client.Tools.PkgTool.__init__(self, config)
         noaskfile = tempfile.NamedTemporaryFile()
         self.noaskname = noaskfile.name
         try:

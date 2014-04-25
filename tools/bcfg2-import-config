@@ -11,7 +11,6 @@
 usage() {
   echo "$0: tool to import files in to bcfg2-server repository"
   echo "	-s		Copy SSH Key files"
-  echo "	-p		Create :info files with current file permissions"
   echo "	-n		No suffix. Generate global files"
   echo "	--debian	Run debsums to detect changed configuration files"
   echo "			** debsums is only able to detect part of changes!"
@@ -28,7 +27,6 @@ eval set -- "$TEMP"
 
 ## Start Defaults
 NEEDSSH=0
-NEEDPERM=0
 DEBSUMS=0
 NOSUFFIX=0
 # End Defaults
@@ -37,7 +35,6 @@ NOSUFFIX=0
 while true ; do
   case "$1" in
     -s) NEEDSSH=1; shift ;;
-    -p) NEEDPERM=1; shift ;;
     --debian) DEBSUMS=1; shift ;;
     -n) NOSUFFIX=1; shift ;;
     -h|--help)
@@ -102,11 +99,6 @@ get_files() {
 	FILE=$(basename $i)
 	mkdir -p $CFGREPO/$i
 	cp $i $CFGREPO/$i/${FILE}${SUFFIX}
-	if [ $NEEDPERM -ne 0 ]; then
-	  # Get permissions for the file
-	  echo -n "(permissions) "
-	  find $i -printf "owner:%u\ngroup:%g\nperms:%#m\n" > "$CFGREPO/$i/:info"
-	fi
 	echo "OK"
       else
 	echo "$i: Not a file"
@@ -126,7 +118,7 @@ get_debsums() {
 }
 ## End Functions
 
-if [ $(($NEEDPERM + $NEEDSSH + $DEBSUMS)) -eq 0 -a -z "$FILES" ]; then usage ; exit 0; fi
+if [ $(($NEEDSSH + $DEBSUMS)) -eq 0 -a -z "$FILES" ]; then usage ; exit 0; fi
 
 init_temp_repo
 get_debsums

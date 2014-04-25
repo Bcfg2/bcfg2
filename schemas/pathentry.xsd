@@ -12,7 +12,34 @@
               schemaLocation="genshi.xsd"/>
 
   <xsd:complexType name='PathEntry'>
-    <xsd:attribute type='xsd:string' name='name' use='required'/>
+    <xsd:annotation>
+      <xsd:documentation>
+        Abstract description of a path to be installed.  This can
+        either be a single explicit path (e.g., ``&lt;Path
+        name="/etc/foo.conf"/&gt;``) or a glob that matches a set of
+        paths (e.g., ``&lt;Path glob="/etc/foo/*"/&gt;``).  Path
+        globbing may not work for some dynamically handled Path
+        entries, for instance :ref:`Packages client configs
+        &lt;generating-client-configs&gt;`.
+      </xsd:documentation>
+    </xsd:annotation>
+    <xsd:attribute type='xsd:string' name='name'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Install the single named path. Either ``name`` or
+          :xml:attribute:`PathEntry:glob` must be specified.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="glob">
+      <xsd:annotation>
+        <xsd:documentation>
+          Install all Cfg entries matching the given glob. Either
+          ``glob`` or :xml:attribute:`PathEntry:name` must be
+          specified.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute type='xsd:string' name='altsrc' use='optional'/>
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>

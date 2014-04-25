@@ -2,12 +2,16 @@
 used by both client and server.  Stuff that doesn't fit anywhere
 else. """
 
-import shlex
 import fcntl
 import logging
-import threading
+import os
+import re
+import select
+import shlex
+import sys
 import subprocess
-from Bcfg2.Compat import any  # pylint: disable=W0622
+import threading
+from Bcfg2.Compat import input, any  # pylint: disable=W0622
 
 
 class ClassName(object):
@@ -196,9 +200,10 @@ class Executor(object):
             except OSError:
                 pass
 
-    def run(self, command, inputdata=None, shell=False, timeout=None):
+    def run(self, command, inputdata=None, timeout=None, **kwargs):
         """ Run a command, given as a list, optionally giving it the
-        specified input data.
+        specified input data.  All additional keyword arguments are
+        passed through to :class:`subprocess.Popen`.
 
         :param command: The command to run, as a list (preferred) or
                         as a string.  See :class:`subprocess.Popen` for
@@ -206,31 +211,27 @@ class Executor(object):
         :type command: list or string
         :param inputdata: Data to pass to the command on stdin
         :type inputdata: string
-        :param shell: Run the given command in a shell (not recommended)
-        :type shell: bool
         :param timeout: Kill the command if it runs longer than this
                         many seconds.  Set to 0 or -1 to explicitly
                         override a default timeout.
         :type timeout: float
         :returns: :class:`Bcfg2.Utils.ExecutorResult`
         """
+        shell = False
+        if 'shell' in kwargs:
+            shell = kwargs['shell']
         if isinstance(command, str):
             cmdstr = command
-
             if not shell:
                 command = shlex.split(cmdstr)
         else:
             cmdstr = " ".join(command)
         self.logger.debug("Running: %s" % cmdstr)
-        try:
-            proc = subprocess.Popen(command, shell=shell, bufsize=16384,
-                                    close_fds=True,
-                                    stdin=subprocess.PIPE,
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE)
-        except OSError:
-            return ExecutorResult('', 'No such command: %s' % cmdstr,
-                                  127)
+        args = dict(shell=shell, bufsize=16384, close_fds=True)
+        args.update(kwargs)
+        args.update(stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE)
+        proc = subprocess.Popen(command, **args)
         if timeout is None:
             timeout = self.timeout
         if timeout is not None:
@@ -252,7 +253,80 @@ class Executor(object):
                 self.logger.debug('< %s' % line)
             for line in stderr.splitlines():  # pylint: disable=E1103
                 self.logger.info(line)
-            return ExecutorResult(stdout, stderr, proc.wait())
+            return ExecutorResult(stdout, stderr,
+                                  proc.wait())  # pylint: disable=E1101
         finally:
             if timeout is not None:
                 timer.cancel()
+
+
+def list2range(lst):
+    ''' convert a list of integers to a set of human-readable ranges.  e.g.:
+
+    [1, 2, 3, 6, 9, 10, 11] -> "[1-3,6,9-11]" '''
+    ilst = sorted(int(i) for i in lst)
+    ranges = []
+    start = None
+    last = None
+    for i in ilst:
+        if not last or i != last + 1:
+            if start:
+                if start == last:
+                    ranges.append(str(start))
+                else:
+                    ranges.append("%d-%d" % (start, last))
+            start = i
+        last = i
+    if start:
+        if start == last:
+            ranges.append(str(start))
+        else:
+            ranges.append("%d-%d" % (start, last))
+    if not ranges:
+        return ""
+    elif len(ranges) > 1 or "-" in ranges[0]:
+        return "[%s]" % ",".join(ranges)
+    else:
+        # only one range consisting of only a single number
+        return ranges[0]
+
+
+def hostnames2ranges(hostnames):
+    ''' convert a list of hostnames to a set of human-readable ranges.  e.g.:
+
+    ["foo1.example.com", "foo2.example.com", "foo3.example.com",
+        "foo6.example.com"] -> ["foo[1-3,6].example.com"]'''
+    hosts = {}
+    hostre = re.compile(r'(\w+?)(\d+)(\..*)$')
+    for host in hostnames:
+        match = hostre.match(host)
+        if match:
+            key = (match.group(1), match.group(3))
+            try:
+                hosts[key].append(match.group(2))
+            except KeyError:
+                hosts[key] = [match.group(2)]
+
+    ranges = []
+    for name, nums in hosts.items():
+        ranges.append(name[0] + list2range(nums) + name[1])
+    return ranges
+
+
+def safe_input(msg):
+    """ input() that flushes the input buffer before accepting input """
+    # flush input buffer
+    while len(select.select([sys.stdin.fileno()], [], [], 0.0)[0]) > 0:
+        os.read(sys.stdin.fileno(), 4096)
+    return input(msg)
+
+
+class classproperty(object):  # pylint: disable=C0103
+    """ Decorator that can be used to create read-only class
+    properties. """
+
+    def __init__(self, getter):
+        self.getter = getter
+
+    def __get__(self, instance, owner):
+        return self.getter(owner)

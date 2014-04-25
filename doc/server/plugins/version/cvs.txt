@@ -21,4 +21,4 @@ How to enable the CVS plugin
 Simply add "Cvs" to your plugins line in ``/etc/bcfg2.conf``::
 
     [server]
-    plugins = Base,Bundler,Cfg,...,Cvs
+    plugins = Bundler,Cfg,...,Cvs

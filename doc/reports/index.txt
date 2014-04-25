@@ -24,5 +24,4 @@ uses django and a database backend.
 .. toctree::
    :maxdepth: 2
 
-   static
    dynamic

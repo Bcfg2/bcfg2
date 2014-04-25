@@ -26,11 +26,11 @@ clients.
    admin/index
    configurationentries
    info
-   snapshots/index
    bcfg2-info
    selinux
    configuration
    database
    caching
    encryption
-   genshi-xml
+   xml-common
+   acl

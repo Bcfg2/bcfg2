@@ -35,10 +35,7 @@
         <xsd:annotation>
           <xsd:documentation>
             Abstract implementation of a Path entry.  The entry will
-            either be handled by Cfg, TGenshi, or another
-            Generator plugin; or handled by Rules, in which case
-            the full specification of this entry will be included in
-            Rules.
+            be handled by a Generator plugin, like Cfg or Rules.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
@@ -69,15 +66,6 @@
         <xsd:annotation>
           <xsd:documentation>
             Abstract description of a POSIXGroup entry.
-          </xsd:documentation>
-        </xsd:annotation>
-      </xsd:element>
-      <xsd:element name='PostInstall' type='StructureEntry'>
-        <xsd:annotation>
-          <xsd:documentation>
-            PostInstall entries are deprecated in favor of Action
-            entries. Actions can do everything PostInstall entries can
-            do and more.
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
@@ -323,11 +311,22 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute type='xsd:string' name='name' use='required'>
+    <xsd:attribute type='xsd:boolean' name='independent'>
       <xsd:annotation>
         <xsd:documentation>
-          The name of the bundle.  This must match the bundle
-          filename, minus the extension.
+          If set to ``true``, indicates that the bundle is a
+          collection of independent entries, and that service restarts
+          and modified actions should not be performed.  See
+          :ref:`server-plugins-structures-bundler-magic` for more.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:string' name='name'>
+      <xsd:annotation>
+        <xsd:documentation>
+          **Deprecated.** The name of the bundle.  If present, this
+          must match the bundle filename, minus the extension.
+          Specifying the name explicitly is deprecated.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
@@ -349,6 +348,14 @@
       <xsd:annotation>
         <xsd:documentation>
           Master version control revision.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute name="lax_decryption" type="xsd:boolean">
+      <xsd:annotation>
+        <xsd:documentation>
+          Override the global lax_decryption setting in
+          ``bcfg2.conf``.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

@@ -1,4 +1,5 @@
-<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema" xml:lang="en">
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            xmlns:py="http://genshi.edgewall.org/" xml:lang="en">
   <xsd:annotation>
     <xsd:documentation>
       packages config schema for bcfg2
@@ -8,6 +9,8 @@
 
   <xsd:import namespace="http://www.w3.org/XML/1998/namespace"
               schemaLocation="xml.xsd"/>
+  <xsd:import namespace="http://genshi.edgewall.org/"
+              schemaLocation="genshi.xsd"/>
 
   <xsd:simpleType name="SourceTypeEnum">
     <xsd:restriction base="xsd:string">
@@ -40,6 +43,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
     <xsd:anyAttribute processContents="lax">
       <xsd:annotation>
         <xsd:documentation>
@@ -58,6 +62,7 @@
       </xsd:documentation>
     </xsd:annotation>
     <xsd:choice minOccurs="0" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
       <xsd:element name="Component" type="xsd:string">
         <xsd:annotation>
           <xsd:documentation>
@@ -211,10 +216,12 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:complexType name="PackagesGroupType">
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
       <xsd:element name="Group" type="PackagesGroupType"/>
       <xsd:element name="Client" type="PackagesGroupType"/>
       <xsd:element name="Sources" type="SourcesType"/>
@@ -222,16 +229,27 @@
     </xsd:choice>
     <xsd:attribute type="xsd:string" name="name" use="required"/>
     <xsd:attribute type="xsd:boolean" name="negate"/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:complexType name="SourcesType">
     <xsd:choice minOccurs="1" maxOccurs="unbounded">
+      <xsd:group ref="py:genshiElements"/>
       <xsd:element name="Group" type="PackagesGroupType"/>
       <xsd:element name="Client" type="PackagesGroupType"/>
       <xsd:element name="Source" type="SourceType"/>
       <xsd:element name="Sources" type="SourcesType"/>
     </xsd:choice>
+    <xsd:attribute name="lax_decryption" type="xsd:boolean">
+      <xsd:annotation>
+        <xsd:documentation>
+          Override the global lax_decryption setting in
+          ``bcfg2.conf``.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute ref="xml:base"/>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
   <xsd:element name="Sources" type="SourcesType"/>

@@ -5,9 +5,13 @@ import Bcfg2.Client.Tools
 
 
 class Portage(Bcfg2.Client.Tools.PkgTool):
-    """The Gentoo toolset implements package and service operations and
-    inherits the rest from Toolset.Toolset."""
-    name = 'Portage'
+    """The Gentoo toolset implements package and service operations
+    and inherits the rest from Tools.Tool."""
+
+    options = Bcfg2.Client.Tools.PkgTool.options + [
+        Bcfg2.Options.BooleanOption(
+            cf=('Portage', 'binpkgonly'), help='Portage binary packages only')]
+
     __execs__ = ['/usr/bin/emerge', '/usr/bin/equery']
     __handles__ = [('Package', 'ebuild')]
     __req__ = {'Package': ['name', 'version']}
@@ -17,17 +21,15 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
                                                             'version']))
     pkgtool = ('emerge %s', ('=%s-%s', ['name', 'version']))
 
-    def __init__(self, logger, cfg, setup):
+    def __init__(self, config):
         self._initialised = False
-        Bcfg2.Client.Tools.PkgTool.__init__(self, logger, cfg, setup)
+        Bcfg2.Client.Tools.PkgTool.__init__(self, config)
         self._initialised = True
         self.__important__ = self.__important__ + ['/etc/make.conf']
         self._pkg_pattern = re.compile(r'(.*)-(\d.*)')
         self._ebuild_pattern = re.compile('(ebuild|binary)')
-        self.cfg = cfg
         self.installed = {}
-        self._binpkgonly = self.setup.get('portage_binpkgonly', False)
-        if self._binpkgonly:
+        if Bcfg2.Options.setup.binpkgonly:
             self.pkgtool = self._binpkgtool
         self.RefreshPackages()
 
@@ -62,9 +64,9 @@ class Portage(Bcfg2.Client.Tools.PkgTool):
         version = self.installed[entry.get('name')]
         entry.set('current_version', version)
 
-        if not self.setup['quick']:
+        if not Bcfg2.Options.setup.quick:
             if ('verify' not in entry.attrib or
-                entry.get('verify').lower() == 'true'):
+                    entry.get('verify').lower() == 'true'):
 
                 # Check the package if:
                 # - Not running in quick mode

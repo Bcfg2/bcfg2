@@ -105,13 +105,6 @@
     </xsd:restriction>
   </xsd:simpleType>
 
-  <xsd:simpleType name="EncryptStrictnessEnum">
-    <xsd:restriction base="xsd:string">
-      <xsd:enumeration value="strict"/>
-      <xsd:enumeration value="lax"/>
-    </xsd:restriction>
-  </xsd:simpleType>
-
   <xsd:complexType name='ActionType'>
     <xsd:annotation>
       <xsd:documentation>
@@ -399,6 +392,14 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="encrypted">
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the encryption passphrase that the text content
+          of this tag is encrypted with.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
     <xsd:attribute type="xsd:token" name="lens">
       <xsd:annotation>
         <xsd:documentation>
@@ -438,6 +439,16 @@
     </xsd:simpleContent>
   </xsd:complexType>
 
+   <xsd:complexType name="MemberOfContainerType">
+    <xsd:choice maxOccurs="unbounded">
+      <xsd:element name="MemberOf" type="MemberOfType"/>
+      <xsd:element name="Client" type="MemberOfContainerType"/>
+      <xsd:element name="Group" type="MemberOfContainerType"/>
+    </xsd:choice>
+    <xsd:attribute name="name" type="xsd:string" use="required"/>
+    <xsd:attribute name="negate" type="xsd:boolean"/>
+  </xsd:complexType>
+
   <xsd:complexType name="POSIXUserType">
     <xsd:annotation>
       <xsd:documentation>
@@ -446,6 +457,8 @@
     </xsd:annotation>
     <xsd:choice minOccurs='0' maxOccurs='unbounded'>
       <xsd:element name='MemberOf' type='MemberOfType'/>
+      <xsd:element name='Group' type='MemberOfContainerType'/>
+      <xsd:element name='Client' type='MemberOfContainerType'/>
     </xsd:choice>
     <xsd:attribute type="xsd:token" name="name" use="required">
       <xsd:annotation>

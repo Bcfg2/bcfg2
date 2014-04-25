@@ -98,10 +98,10 @@ class RcUpdate(Bcfg2.Client.Tools.SvcTool):
                 # make sure service is disabled on boot
                 bootcmd = '/sbin/rc-update del %s default'
             bootcmdrv = self.cmd.run(bootcmd % entry.get('name')).success
-            if self.setup['servicemode'] == 'disabled':
+            if Bcfg2.Options.setup.service_mode == 'disabled':
                 # 'disabled' means we don't attempt to modify running svcs
                 return bootcmdrv
-            buildmode = self.setup['servicemode'] == 'build'
+            buildmode = Bcfg2.Options.setup.service_mode == 'build'
             if (entry.get('status') == 'on' and not buildmode) and \
                entry.get('current_status') == 'off':
                 svccmdrv = self.start_service(entry)

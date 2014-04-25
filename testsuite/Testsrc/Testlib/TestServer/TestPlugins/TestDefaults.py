@@ -1,5 +1,6 @@
 import os
 import sys
+import copy
 import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugins.Defaults import *
@@ -62,3 +63,31 @@ class TestDefaults(TestRules, TestGoalValidator):
     def test__regex_enabled(self):
         r = self.get_obj()
         self.assertTrue(r._regex_enabled)
+
+    def _do_test(self, name, groups=None):
+        if groups is None:
+            groups = []
+        d = self.get_obj()
+        metadata = Mock(groups=groups)
+        config = lxml.etree.Element("Configuration")
+        struct = lxml.etree.SubElement(config, "Bundle", name=name)
+        entry = copy.deepcopy(self.abstract[name])
+        struct.append(entry)
+        d.validate_goals(metadata, config)
+        self.assertXMLEqual(entry, self.concrete[name])
+
+    def _do_test_failure(self, name, groups=None, handles=None):
+        if groups is None:
+            groups = []
+        d = self.get_obj()
+        metadata = Mock(groups=groups)
+        config = lxml.etree.Element("Configuration")
+        struct = lxml.etree.SubElement(config, "Bundle", name=name)
+        orig = copy.deepcopy(self.abstract[name])
+        entry = copy.deepcopy(self.abstract[name])
+        struct.append(entry)
+        d.validate_goals(metadata, config)
+        self.assertXMLEqual(entry, orig)
+
+    def test_regex(self):
+        self._do_test('regex')

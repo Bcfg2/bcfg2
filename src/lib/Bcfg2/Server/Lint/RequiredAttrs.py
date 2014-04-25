@@ -3,16 +3,10 @@ verified with an XML schema alone. """
 
 import os
 import re
-import lxml.etree
 import Bcfg2.Server.Lint
 import Bcfg2.Client.Tools.VCS
 from Bcfg2.Server.Plugins.Packages import Apt, Yum
 from Bcfg2.Client.Tools.POSIX.base import device_map
-try:
-    from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
-    HAS_GENSHI = True
-except ImportError:
-    HAS_GENSHI = False
 
 
 # format verifying functions.  TODO: These should be moved into XML
@@ -162,7 +156,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         for source in self.core.plugins['Packages'].sources:
             if isinstance(source, Yum.YumSource):
                 if (not source.pulp_id and not source.url and
-                    not source.rawurl):
+                        not source.rawurl):
                     self.LintError(
                         "required-attrs-missing",
                         "A %s source must have either a url, rawurl, or "
@@ -176,7 +170,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                     (source.ptype, self.RenderXML(source.xsource)))
 
             if (not isinstance(source, Apt.AptSource) and
-                source.recommended):
+                    source.recommended):
                 self.LintError(
                     "extra-attrs",
                     "The recommended attribute is not supported on %s sources:"
@@ -191,32 +185,34 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         for rules in self.core.plugins['Rules'].entries.values():
             xdata = rules.pnode.data
             for path in xdata.xpath("//Path"):
-                self.check_entry(path, os.path.join(self.config['repo'],
-                                                    rules.name))
+                self.check_entry(path,
+                                 os.path.join(Bcfg2.Options.setup.repository,
+                                              rules.name))
 
     def check_bundles(self):
-        """ Check bundles for BoundPath entries with missing
+        """ Check bundles for BoundPath and BoundPackage entries with missing
         attrs. """
         if 'Bundler' not in self.core.plugins:
             return
 
         for bundle in self.core.plugins['Bundler'].entries.values():
-            if (self.HandlesFile(bundle.name) and
-                (not HAS_GENSHI or
-                 not isinstance(bundle, BundleTemplateFile))):
-                try:
-                    xdata = lxml.etree.XML(bundle.data)
-                except (lxml.etree.XMLSyntaxError, AttributeError):
-                    xdata = \
-                        lxml.etree.parse(bundle.template.filepath).getroot()
-
-                for path in \
-                        xdata.xpath("//*[substring(name(), 1, 5) = 'Bound']"):
+            if self.HandlesFile(bundle.name) and bundle.template is None:
+                for path in bundle.xdata.xpath(
+                        "//*[substring(name(), 1, 5) = 'Bound']"):
                     self.check_entry(path, bundle.name)
 
+                # ensure that abstract Path tags have either name
+                # or glob specified
+                for path in bundle.xdata.xpath("//Path"):
+                    if ('name' not in path.attrib and
+                        'glob' not in path.attrib):
+                        self.LintError(
+                            "required-attrs-missing",
+                            "Path tags require either a 'name' or 'glob' "
+                            "attribute: \n%s" % self.RenderXML(path))
                 # ensure that abstract Package tags have either name
                 # or group specified
-                for package in xdata.xpath("//Package"):
+                for package in bundle.xdata.xpath("//Package"):
                     if ('name' not in package.attrib and
                         'group' not in package.attrib):
                         self.LintError(
@@ -272,7 +268,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 fmt = required_attrs['__text__']
                 del required_attrs['__text__']
                 if (not entry.text and
-                    not entry.get('empty', 'false').lower() == 'true'):
+                        not entry.get('empty', 'false').lower() == 'true'):
                     self.LintError("required-attrs-missing",
                                    "Text missing for %s %s in %s: %s" %
                                    (tag, name, filename,

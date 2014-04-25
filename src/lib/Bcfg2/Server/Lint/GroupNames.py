@@ -3,11 +3,6 @@
 import os
 import re
 import Bcfg2.Server.Lint
-try:
-    from Bcfg2.Server.Plugins.Bundler import BundleTemplateFile
-    HAS_GENSHI = True
-except ImportError:
-    HAS_GENSHI = False
 
 
 class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
@@ -44,14 +39,13 @@ class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
                 continue
             xdata = rules.pnode.data
             self.check_entries(xdata.xpath("//Group"),
-                               os.path.join(self.config['repo'], rules.name))
+                               os.path.join(Bcfg2.Options.setup.repository,
+                                            rules.name))
 
     def check_bundles(self):
         """ Check groups used in the Bundler plugin for validity. """
         for bundle in self.core.plugins['Bundler'].entries.values():
-            if (self.HandlesFile(bundle.name) and
-                (not HAS_GENSHI or
-                 not isinstance(bundle, BundleTemplateFile))):
+            if self.HandlesFile(bundle.name) and bundle.template is None:
                 self.check_entries(bundle.xdata.xpath("//Group"),
                                    bundle.name)
 
@@ -59,7 +53,7 @@ class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
         """ Check groups used or declared in the Metadata plugin for
         validity. """
         self.check_entries(self.metadata.groups_xml.xdata.xpath("//Group"),
-                           os.path.join(self.config['repo'],
+                           os.path.join(Bcfg2.Options.setup.repository,
                                         self.metadata.groups_xml.name))
 
     def check_grouppatterns(self):
