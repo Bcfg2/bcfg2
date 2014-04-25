@@ -22,6 +22,10 @@ from TestServer.TestPlugins.TestCfg.Test_init import TestCfgGenerator
 class TestCfgEncryptedGenerator(TestCfgGenerator):
     test_obj = CfgEncryptedGenerator
 
+    @skipUnless(HAS_CRYPTO, "M2Crypto is not available")
+    def setUp(self):
+        TestCfgGenerator.setUp(self)
+
     @patchIf(HAS_CRYPTO,
              "Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.bruteforce_decrypt")
     def test_handle_event(self, mock_decrypt):

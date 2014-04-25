@@ -403,7 +403,7 @@ class Client(object):
             self.config = newconfig
 
         if not Bcfg2.Options.setup.no_lock:
-            #check lock here
+            # check lock here
             try:
                 lockfile = open(Bcfg2.Options.setup.lockfile, 'w')
                 if locked(lockfile.fileno()):
