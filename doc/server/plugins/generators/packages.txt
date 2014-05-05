@@ -347,8 +347,84 @@ This is done automatically any time `sources.xml`_ is updated.
 Availability
 ============
 
-Support for clients using yum and apt is currently available. Support for
+Support for the following clients is currently available. Support for
 other package managers (Portage, Zypper, IPS, etc) remain to be added.
+
+apt
+---
+
+All dpkg based clients (for example Debian, Ubuntu or Nexenta) could be
+handled with the apt module:
+
+.. code-block:: xml
+
+    <Source type="apt"
+            url="http://us.archive.ubuntu.com/ubuntu"
+            version="intrepid">
+      <Component>main</Component>
+      <Component>universe</Component>
+      <Arch>i386</Arch>
+      <Arch>amd64</Arch>
+    </Source>
+
+
+pac
+---
+
+For Arch Linux or Parabola GNU/Linux-libre you could use the pac module
+for packages. You do not need to supply a version attribute as the mirrors
+are rolling release and does not supply different versions.
+
+.. code-block:: xml
+
+    <Source type="pac"
+            url="http://mirrors.kernel.org/archlinux/">
+      <Component>core</Component>
+      <Component>extra</Component>
+      <Component>community</Component>
+      <Arch>i686</Arch>
+      <Arch>x86_64</Arch>
+    </Source>
+
+
+pkgng
+-----
+
+The support for the Next Generation package management tool for FreeBSD
+is called pkgng. It downloads the packagesite file from the mirror
+and parses the dependencies out of it. It currently does not use the
+DNS SRV record lookup mechanism to get the correct mirror and does
+not verify the signature inside the packagesite file.
+
+.. code-block:: xml
+
+    <Source type="pkgng"
+            url="http://pkg.freebsd.org/"
+            version="10">
+      <Component>latest</Component>
+      <Arch>x86:64</Arch>
+      <Arch>x86:32</Arch>
+    </Source>
+
+
+yum
+---
+
+Rpm based clients (for example RedHat, CentOS or Fedora) could be handled
+with the yum module:
+
+.. code-block:: xml
+
+    <Source type="yum"
+            url="http://mirror.centos.org/centos/"
+            version="5.2">
+      <Component>os</Component>
+      <Component>updates</Component>
+      <Component>extras</Component>
+      <Arch>i386</Arch>
+      <Arch>x86_64</Arch>
+    </Source>
+
 
 Package Checking and Verification
 =================================

@@ -17,6 +17,7 @@
       <xsd:enumeration value="yum"/>
       <xsd:enumeration value="apt"/>
       <xsd:enumeration value="pac"/>
+      <xsd:enumeration value="pkgng"/>
     </xsd:restriction>
   </xsd:simpleType>
 
