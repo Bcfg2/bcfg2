@@ -45,7 +45,11 @@ class Pkgng(Bcfg2.Client.Tools.Tool):
                             and entry.get('type') == 'nonexistent']
         self.actions = {}
         self.pkg_cache = {}
-        self._load_pkg_cache()
+
+        try:
+            self._load_pkg_cache()
+        except OSError:
+            raise Bcfg2.Client.Tools.ToolInstantiationError
 
     def _load_pkg_cache(self):
         """Cache the version of all currently installed packages."""
