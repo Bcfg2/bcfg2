@@ -212,7 +212,7 @@ class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
                 except UnicodeDecodeError:
                     self.logger.info("Properties: Decrypted %s to gibberish, "
                                      "skipping" % el.tag)
-                except Bcfg2.Encryption.EVPError:
+                except (TypeError, Bcfg2.Encryption.EVPError):
                     strict = self.xdata.get(
                         "decrypt",
                         SETUP.cfp.get(Bcfg2.Encryption.CFG_SECTION, "decrypt",
