@@ -137,7 +137,7 @@ class Pkgng(Bcfg2.Client.Tools.Tool):
         if candidate_versions is not None:
             candidate_version = candidate_versions[0]
         else:
-            self.logger.error("Package %s is installed but no candidate" +
+            self.logger.error("Package %s is installed but no candidate"
                               "version was found." % (entry.get('name')))
             return False
 
