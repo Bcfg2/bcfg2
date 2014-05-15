@@ -581,7 +581,13 @@ class XMLFileBacked(FileBacked):
                 if el.findall('./%sfallback' % Bcfg2.Server.XI_NAMESPACE):
                     self.logger.debug(msg)
                 else:
-                    self.logger.warning(msg)
+                    self.logger.error(msg)
+                # add a FAM monitor for this path.  this isn't perfect
+                # -- if there's an xinclude of "*.xml", we'll watch
+                # the literal filename "*.xml".  but for non-globbing
+                # filenames, it works fine.
+                if fpath not in self.extra_monitors:
+                    self.add_monitor(fpath)
 
             parent = el.getparent()
             parent.remove(el)
