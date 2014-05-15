@@ -787,6 +787,11 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def _handle_clients_xml_event(self, _):  # pylint: disable=R0912
         """ handle all events for clients.xml and files xincluded from
         clients.xml """
+        # disable metadata builds during parsing.  this prevents
+        # clients from getting bogus metadata during the brief time it
+        # takes to rebuild the clients.xml data
+        self.states['clients.xml'] = False
+
         xdata = self.clients_xml.xdata
         self.clients = []
         self.clientgroups = {}
@@ -848,8 +853,9 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 self.clientgroups[clname].append(profile)
             except KeyError:
                 self.clientgroups[clname] = [profile]
-        self.states['clients.xml'] = True
         self.update_client_list()
+        self.expire_cache()
+        self.states['clients.xml'] = True
 
     def _get_condition(self, element):
         """ Return a predicate that returns True if a client meets
@@ -877,7 +883,15 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
     def _handle_groups_xml_event(self, _):  # pylint: disable=R0912
         """ re-read groups.xml on any event on it """
+        # disable metadata builds during parsing.  this prevents
+        # clients from getting bogus metadata during the brief time it
+        # takes to rebuild the groups.xml data
+        self.states['groups.xml'] = False
+
         self.groups = {}
+        self.group_membership = dict()
+        self.negated_groups = dict()
+        self.ordered_groups = []
 
         # first, we get a list of all of the groups declared in the
         # file.  we do this in two stages because the old way of
@@ -901,10 +915,6 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                               is_public=grp.get("public", "false") == "true")
             if grp.get('default', 'false') == 'true':
                 self.default = grp.get('name')
-
-        self.group_membership = dict()
-        self.negated_groups = dict()
-        self.ordered_groups = []
 
         # confusing loop condition; the XPath query asks for all
         # elements under a Group tag under a Groups tag; that is
@@ -938,6 +948,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 self.group_membership.setdefault(gname, [])
                 self.group_membership[gname].append(
                     self._aggregate_conditions(conditions))
+        self.expire_cache()
         self.states['groups.xml'] = True
 
     def expire_cache(self, key=None):
@@ -1448,6 +1459,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             self.logger.debug("Metadata: Re-reading client list from database")
             old = set(self.clients)
             self.clients = self.list_clients()
+
+            # we could do this with set.symmetric_difference(), but we
+            # want detailed numbers of added/removed clients for
+            # logging
             new = set(self.clients)
             added = new - old
             removed = old - new
@@ -1455,9 +1470,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                               (len(added), added))
             self.logger.debug("Metadata: Removed %s clients: %s" %
                               (len(removed), removed))
-            # we could do this with set.symmetric_difference(), but we
-            # want detailed numbers of added/removed clients for
-            # logging
+
             for client in added.union(removed):
                 self.expire_cache(client)
 
