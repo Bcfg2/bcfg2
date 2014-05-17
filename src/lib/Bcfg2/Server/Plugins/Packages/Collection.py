@@ -470,7 +470,8 @@ class Collection(list, Debuggable):
         return list(complete.difference(initial))
 
     @track_statistics()
-    def complete(self, packagelist, recommended=None):  # pylint: disable=R0912,R0914
+    def complete(self, packagelist,  # pylint: disable=R0912,R0914
+                 recommended=None):
         """ Build a complete list of all packages and their dependencies.
 
         :param packagelist: Set of initial packages computed from the

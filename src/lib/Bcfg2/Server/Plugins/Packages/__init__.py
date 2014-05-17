@@ -319,8 +319,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         structures.append(indep)
 
     @track_statistics()
-    def _build_packages(self, metadata, independent, structures,
-                        collection=None):
+    def _build_packages(self, metadata, independent,  # pylint: disable=R0914
+                        structures, collection=None):
         """ Perform dependency resolution and build the complete list
         of packages that need to be included in the specification by
         :func:`validate_structures`, based on the initial list of

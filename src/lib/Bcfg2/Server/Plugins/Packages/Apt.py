@@ -69,7 +69,7 @@ class AptSource(Source):
         else:
             return ["%sPackages.gz" % self.rawurl]
 
-    def read_files(self):
+    def read_files(self):  # pylint: disable=R0912
         bdeps = dict()
         brecs = dict()
         bprov = dict()
