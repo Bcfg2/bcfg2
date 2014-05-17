@@ -289,7 +289,7 @@ class Collection(list, Debuggable):
         return any(source.is_virtual_package(self.metadata, package)
                    for source in self)
 
-    def get_deps(self, package):
+    def get_deps(self, package, recs=None):
         """ Get a list of the dependencies of the given package.
 
         The base implementation simply aggregates the results of
@@ -299,9 +299,14 @@ class Collection(list, Debuggable):
         :type package: string
         :returns: list of strings, but see :ref:`pkg-objects`
         """
+        recommended = None
+        if recs and package in recs:
+            recommended = recs[package]
+
         for source in self:
             if source.is_package(self.metadata, package):
-                return source.get_deps(self.metadata, package)
+                return source.get_deps(self.metadata, package, recommended)
+
         return []
 
     def get_essential(self):
@@ -465,7 +470,7 @@ class Collection(list, Debuggable):
         return list(complete.difference(initial))
 
     @track_statistics()
-    def complete(self, packagelist):  # pylint: disable=R0912,R0914
+    def complete(self, packagelist, recommended=None):  # pylint: disable=R0912,R0914
         """ Build a complete list of all packages and their dependencies.
 
         :param packagelist: Set of initial packages computed from the
@@ -529,7 +534,7 @@ class Collection(list, Debuggable):
                 self.debug_log("Packages: handling package requirement %s" %
                                (current,))
                 packages.add(current)
-                deps = self.get_deps(current)
+                deps = self.get_deps(current, recommended)
                 newdeps = set(deps).difference(examined)
                 if newdeps:
                     self.debug_log("Packages: Package %s added requirements %s"
