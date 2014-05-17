@@ -71,11 +71,9 @@ class AptSource(Source):
 
     def read_files(self):
         bdeps = dict()
+        brecs = dict()
         bprov = dict()
         self.essentialpkgs = set()
-        depfnames = ['Depends', 'Pre-Depends']
-        if self.recommended:
-            depfnames.append('Recommends')
         for fname in self.files:
             if not self.rawurl:
                 barch = [x
@@ -87,6 +85,7 @@ class AptSource(Source):
                 barch = self.arches[0]
             if barch not in bdeps:
                 bdeps[barch] = dict()
+                brecs[barch] = dict()
                 bprov[barch] = dict()
             try:
                 reader = gzip.GzipFile(fname)
@@ -101,9 +100,10 @@ class AptSource(Source):
                     pkgname = words[1].strip().rstrip()
                     self.pkgnames.add(pkgname)
                     bdeps[barch][pkgname] = []
+                    brecs[barch][pkgname] = []
                 elif words[0] == 'Essential' and self.essential:
                     self.essentialpkgs.add(pkgname)
-                elif words[0] in depfnames:
+                elif words[0] in ['Depends', 'Pre-Depends', 'Recommends']:
                     vindex = 0
                     for dep in words[1].split(','):
                         if '|' in dep:
@@ -114,17 +114,24 @@ class AptSource(Source):
                                                              barch,
                                                              vindex)
                             vindex += 1
-                            bdeps[barch][pkgname].append(dyn_dname)
+
+                            if words[0] == 'Recommends':
+                                brecs[barch][pkgname].append(dyn_dname)
+                            else:
+                                bdeps[barch][pkgname].append(dyn_dname)
                             bprov[barch][dyn_dname] = set(cdeps)
                         else:
                             raw_dep = re.sub(r'\(.*\)', '', dep)
                             raw_dep = raw_dep.rstrip().strip()
-                            bdeps[barch][pkgname].append(raw_dep)
+                            if words[0] == 'Recommends':
+                                brecs[barch][pkgname].append(raw_dep)
+                            else:
+                                bdeps[barch][pkgname].append(raw_dep)
                 elif words[0] == 'Provides':
                     for pkg in words[1].split(','):
                         dname = pkg.rstrip().strip()
                         if dname not in bprov[barch]:
                             bprov[barch][dname] = set()
                         bprov[barch][dname].add(pkgname)
-        self.process_files(bdeps, bprov)
+        self.process_files(bdeps, bprov, brecs)
     read_files.__doc__ = Source.read_files.__doc__

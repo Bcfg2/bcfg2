@@ -357,10 +357,15 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         initial = set()
         to_remove = []
         groups = []
+        recommended = dict()
+
         for struct in structures:
             for pkg in struct.xpath('//Package | //BoundPackage'):
                 if pkg.get("name"):
                     initial.update(collection.packages_from_entry(pkg))
+
+                    if pkg.get("recommended"):
+                        recommended[pkg.get("name")] = pkg.get("recommended")
                 elif pkg.get("group"):
                     groups.append((pkg.get("group"),
                                    pkg.get("type")))
@@ -399,7 +404,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         pcache = Bcfg2.Server.Cache.Cache("Packages", "pkg_sets",
                                           collection.cachekey)
         if pkey not in pcache:
-            pcache[pkey] = collection.complete(base)
+            pcache[pkey] = collection.complete(base, recommended)
         packages, unknown = pcache[pkey]
         if unknown:
             self.logger.info("Packages: Got %d unknown entries" % len(unknown))
