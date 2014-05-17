@@ -113,7 +113,7 @@ def create_key(hostname, keypath, certpath, country, state, location):
                                                                 hostname,
                                                                 keypath))
     subprocess.call((kcstr), shell=True)
-    ccstr = ("openssl req -batch -new  -subj '/C=%s/ST=%s/L=%s/CN=%s' -key %s "
+    ccstr = ("openssl req -batch -new -subj '/C=%s/ST=%s/L=%s/CN=%s' -key %s "
              "| openssl x509 -req -days 1000 -signkey %s -out %s" % (country,
                                                                      state,
                                                                      location,
