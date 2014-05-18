@@ -159,6 +159,9 @@ ul.menu-level2 {
 .modified-lineitem {
 	background: #FFEC8B;
 }
+.stale-lineitem {
+	background: #CCCCCC;
+}
 
 table.grid-view {
 	border: solid 1px #98DBCC;

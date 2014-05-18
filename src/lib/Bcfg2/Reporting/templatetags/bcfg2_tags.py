@@ -318,7 +318,11 @@ def determine_client_state(entry):
     dirty. If the client is reporting dirty, this will figure out just
     _how_ dirty and adjust the color accordingly.
     """
+    if isstale(entry.timestamp):
+        return "stale-lineitem"
     if entry.state == 'clean':
+        if entry.extra_count > 0:
+            return "extra-lineitem"
         return "clean-lineitem"
 
     bad_percentage = 100 * (float(entry.bad_count) / entry.total_count)
