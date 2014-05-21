@@ -43,6 +43,8 @@ def print_fields(fields, client, fmt, extra=None):
             fdata.append(client.current_interaction.extra_count)
         elif field == 'bad':
             fdata.append((client.current_interaction.bad_count))
+        elif field == 'stale':
+            fdata.append(client.current_interaction.isstale())
         else:
             try:
                 fdata.append(getattr(client, field))
