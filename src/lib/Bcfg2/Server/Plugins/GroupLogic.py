@@ -66,7 +66,7 @@ class GroupLogic(Bcfg2.Server.Plugin.Plugin,
             return []
         self._local.building.add(metadata.hostname)
         rv = []
-        for el in self.config.get_xml_value(metadata).findall("Group"):
+        for el in self.config.get_xml_value(metadata).xpath("//Group"):
             if el.get("category"):
                 rv.append(MetadataGroup(el.get("name"),
                                         category=el.get("category")))
