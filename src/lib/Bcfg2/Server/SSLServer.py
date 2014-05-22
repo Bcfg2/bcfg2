@@ -273,7 +273,6 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 raise
         else:
             # got a valid XML RPC response
-            client_address = self.request.getpeername()
             try:
                 self.send_response(200)
                 self.send_header("Content-type", "text/xml")
