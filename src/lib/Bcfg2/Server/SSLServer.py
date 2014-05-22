@@ -237,6 +237,11 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         return True
 
     def do_POST(self):
+        # Allow for reverse proxies
+        client_address = self.client_address
+        if 'X-Forwarded-For' in self.headers:
+            client_address = (self.headers['X-Forwarded-For'].split(',')[0],
+                              self.client_address[1])
         try:
             max_chunk_size = 10 * 1024 * 1024
             size_remaining = int(self.headers["content-length"])
@@ -252,8 +257,7 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             if data is None:
                 return  # response has been sent
 
-            response = self.server._marshaled_dispatch(self.client_address,
-                                                       data)
+            response = self.server._marshaled_dispatch(client_address, data)
             if sys.hexversion >= 0x03000000:
                 response = response.encode('utf-8')
         except XMLRPCACLCheckException:
@@ -261,7 +265,7 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.end_headers()
         except:  # pylint: disable=W0702
             self.logger.error("Unexpected dispatch error for %s: %s" %
-                              (self.client_address, sys.exc_info()[1]))
+                              (client_address, sys.exc_info()[1]))
             try:
                 self.send_response(500)
                 self.send_header("Content-length", "0")
