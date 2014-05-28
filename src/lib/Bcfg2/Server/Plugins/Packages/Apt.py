@@ -107,7 +107,8 @@ class AptSource(Source):
                     self.pkgnames.add(pkgname)
                     bdeps[barch][pkgname] = []
                 elif words[0] == 'Essential' and self.essential:
-                    self.essentialpkgs.add(pkgname)
+                    if words[1].strip() == 'yes':
+                        self.essentialpkgs.add(pkgname)
                 elif words[0] in depfnames:
                     vindex = 0
                     for dep in words[1].split(','):
