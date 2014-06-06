@@ -1,0 +1,122 @@
+.. -*- mode: rst -*-
+.. vim: ft=rst
+
+.. _releases-1.4.0pre1:
+
+1.4.0pre1
+=========
+
+We are happy to announce the release of Bcfg2 1.3.4. It is available for
+download at:
+
+ ftp://ftp.mcs.anl.gov/pub/bcfg
+
+This is primarily a bugfix release.
+
+* Removed deprecated plugins
+
+  * PostInstall
+  * FAM filemonitor
+  * TGenshi
+  * TCheetah
+  * Account
+  * Hostbase
+  * Snapshots
+  * Statistics
+  * Editor
+
+* Removed deprecated client tools
+
+  * RPMng
+  * YUM24
+  * YUMng
+
+* Removed mode="inherit" support
+* Removed support for .cat/.diff files
+* Removed support for info/:info files
+* Removed "magic" groups
+* Added genshi requirement for the server
+
+* Bundler
+
+  * Deprecated use of an explicit name attribute
+  * Deprecated .genshi bundles
+  * Added path globbing
+
+* Switch Decisions plugin to use StructFile instead of host- or
+  group-specific XML files (this allows a single e.g. whitelist.xml file
+  with <Group> tags)
+
+  You can convert your existing decisions using
+  tools/upgrade/1.4/migrate_decisions.py.
+
+* Added inter-bundle dependencies
+* Added support for independent bundles (replaces the functionality of
+  Base)
+* Added new ACL plugin
+  (http://docs.bcfg2.org/dev/server/plugins/misc/acl.html)
+* Added support for wildcard XIncludes
+
+* Metadata
+
+  * Allow setting global default authentication type
+
+* Packages
+
+  * Add yum group support to internal resolver
+  * Change location of plugin-generated APT sources
+  * Add new Pkgng plugin
+  * Add ability for per-package recommended flag override
+
+* Reporting
+
+  * Add support for POSIX user/group entries
+  * Add support for Django > 1.4
+  * Add support for separate reporting database
+
+* Added option to periodically dump performance stats to logs
+* Added option to force server to wait until all FAM events are
+  processed
+
+* SSHbase
+
+  * Add support for IPv6 addresses in known_hosts file
+  * Add support for encryption of generated ssh keys
+
+* APT
+
+  * Allow specification of deb-src lines (resolves
+    http://trac.mcs.anl.gov/projects/bcfg2/ticket/1148)
+
+* Add Solaris 11 IPS Package support
+* Add bcfg2-report-collector init script to debian package
+* Git VCS plugin enhancements
+
+* SSLCA
+
+  * Rewrote SSLCA as Cfg handler
+
+    Existing SSLCA installations will need to migrate to the new format
+    using tools/upgrade/1.4/migrate_sslca.py.
+
+* NagiosGen
+
+  * Migrate configuration to conf.d
+
+* Probes
+
+  * Add probes.allowed_groups option to restrict group assignments
+    (http://docs.bcfg2.org/dev/server/plugins/probes/index.html#dynamic-group-assignment)
+
+
+Special thanks to the following contributors for this release:
+
+ * Alexander Sulfrain
+ * Chris Brinker
+ * Duncan Hutty
+ * Jason Kincl
+ * John Morris
+ * Matt Schwager
+ * Michael Fenn
+ * Stéphane Graber
+ * Tim Laszlo
