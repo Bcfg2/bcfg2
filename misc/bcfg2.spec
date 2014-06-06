@@ -258,10 +258,8 @@ Group:            System Environment/Daemons
 Requires:         bcfg2 = %{version}-%{release}
 Requires:         bcfg2-server = %{version}-%{release}
 
-# cherrypy 3.3 actually doesn't exist yet, but 3.2 has bugs that
-# prevent it from working:
-# https://bitbucket.org/cherrypy/cherrypy/issue/1154/assertionerror-in-recv-when-ssl-is-enabled
-Requires:         python-cherrypy > 3.3
+# https://bitbucket.org/cherrypy/cherrypy/issue/1068/file-upload-crashes-when-using-https
+Requires:         python-cherrypy >= 3.2.6
 
 %description server-cherrypy
 Bcfg2 helps system administrators produce a consistent, reproducible,
