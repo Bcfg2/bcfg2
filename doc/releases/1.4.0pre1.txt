@@ -6,51 +6,35 @@
 1.4.0pre1
 =========
 
-We are happy to announce the release of Bcfg2 1.3.4. It is available for
-download at:
+The first prerelease for Bcfg2 1.4.0 is now available at:
 
  ftp://ftp.mcs.anl.gov/pub/bcfg
 
-This is primarily a bugfix release.
+Bcfg2 1.4.0pre1 is a prerelease, and contains many new features,
+including some that are backwards-incompatible with Bcfg2 1.3.x and
+earlier. Please read the release notes thoroughly. This is a prerelease
+and as such is not likely suitable for general production deployment.
+That said, please help us test the release in non- and preproduction
+environments.
 
-* Removed mode="inherit" support
-* Removed support for .cat/.diff files
-* Removed support for info/:info files
-* Removed "magic" groups
-* Added genshi requirement for the server
-* Added inter-bundle dependencies
-* Added support for independent bundles (replaces the functionality of
-  Base)
+backwards-incompatible user-facing changes
+------------------------------------------
+
+* Completely rewrote option parser
+
+  Many single character options now have long equivalents.  Some
+  subcommand interfaces (``bcfg2-info``, ``bcfg2-admin``) have been
+  reorganized to some degree. ``bcfg2-reports`` syntax is completely
+  different.
+
 * Added new ACL plugin
   (http://docs.bcfg2.org/dev/server/plugins/misc/acl.html)
-* Added support for wildcard XIncludes
-* Add Solaris 11 IPS Package support
-* Add bcfg2-report-collector init script to debian package
-* Git VCS plugin enhancements
 
-* Removed deprecated plugins
+  Default ACLs only allow clients to perform bcfg2 client runs, and only
+  permit `bcfg2-admin xcmd` calls from localhost.  If you want to change
+  this, you must enable the ACL plugin and configure your own ACLs.
 
-  * PostInstall
-  * FAM filemonitor
-  * TGenshi
-  * TCheetah
-  * Account
-  * Hostbase
-  * Snapshots
-  * Statistics
-  * Editor
-
-* Removed deprecated client tools
-
-  * RPMng
-  * YUM24
-  * YUMng
-
-* Bundler
-
-  * Deprecated use of an explicit name attribute
-  * Deprecated .genshi bundles
-  * Added path globbing
+* Added genshi requirement for the server
 
 * Decisions
 
@@ -59,6 +43,76 @@ This is primarily a bugfix release.
 
     You can convert your existing decisions using
     ``tools/upgrade/1.4/migrate_decisions.py``.
+
+
+deprecated features (will be removed in a future release, likely 1.5)
+---------------------------------------------------------------------
+
+* Bundler
+
+  * Deprecated use of an explicit name attribute
+  * Deprecated .genshi bundles (use .xml bundles and specify the genshi
+    namespace instead)
+
+    http://docs.bcfg2.org/dev/server/plugins/structures/bundler/index.html#genshi-templates
+
+* SSLCA
+
+  * Deprecated plugin
+  * SSLCA functionality has been added to the Cfg plugin.
+    http://docs.bcfg2.org/dev/server/plugins/generators/cfg.html#ssl-keys-and-certificates
+
+deprecated plugins and features which have been removed
+-------------------------------------------------------
+
+Plugins
+^^^^^^^
+
+* PostInstall
+* TGenshi
+* TCheetah
+* Account
+* Hostbase
+* Snapshots
+* Statistics
+* Editor
+* Base
+
+Client tools
+^^^^^^^^^^^^
+
+* RPMng
+* YUM24
+* YUMng
+
+Other features
+^^^^^^^^^^^^^^
+
+* FAM filemonitor
+* Removed mode="inherit" support
+* Removed support for .cat/.diff files
+* Removed support for info/:info files
+* Removed "magic" groups (for the Packages plugin)
+
+other fixes and new features
+----------------------------
+
+* Added inter-bundle dependencies:
+  http://docs.bcfg2.org/dev/server/plugins/structures/bundler/index.html#dependencies
+* Added support for independent bundles (replaces the functionality of
+  Base):
+  http://docs.bcfg2.org/dev/server/plugins/structures/bundler/index.html#disabling-magic
+* Added support for wildcard XIncludes
+* Add Solaris 11 IPS Package support
+* Add bcfg2-report-collector init script to debian package
+* Git VCS plugin enhancements
+* Removed deprecated plugins
+
+* Bundler
+
+  * Deprecated use of an explicit name attribute
+  * Deprecated .genshi bundles
+  * Added path globbing
 
 * Metadata
 
@@ -84,7 +138,8 @@ This is primarily a bugfix release.
 * SSHbase
 
   * Add support for IPv6 addresses in known_hosts file
-  * Add support for encryption of generated ssh keys
+  * Add support for encryption of generated ssh keys:
+    http://docs.bcfg2.org/dev/server/plugins/generators/sshbase.html#encryption
 
 * APT
 
@@ -104,11 +159,15 @@ This is primarily a bugfix release.
 
 * Probes
 
+  * Rewritten to improve caching
   * Add probes.allowed_groups option to restrict group assignments
     (http://docs.bcfg2.org/dev/server/plugins/probes/index.html#dynamic-group-assignment)
 
 
-Special thanks to the following contributors for this release:
+Thanks
+------
+
+Special thanks to the following contributors for this release
 
  * Alexander Sulfrain
  * Chris Brinker
