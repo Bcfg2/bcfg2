@@ -13,6 +13,21 @@ download at:
 
 This is primarily a bugfix release.
 
+* Removed mode="inherit" support
+* Removed support for .cat/.diff files
+* Removed support for info/:info files
+* Removed "magic" groups
+* Added genshi requirement for the server
+* Added inter-bundle dependencies
+* Added support for independent bundles (replaces the functionality of
+  Base)
+* Added new ACL plugin
+  (http://docs.bcfg2.org/dev/server/plugins/misc/acl.html)
+* Added support for wildcard XIncludes
+* Add Solaris 11 IPS Package support
+* Add bcfg2-report-collector init script to debian package
+* Git VCS plugin enhancements
+
 * Removed deprecated plugins
 
   * PostInstall
@@ -31,31 +46,19 @@ This is primarily a bugfix release.
   * YUM24
   * YUMng
 
-* Removed mode="inherit" support
-* Removed support for .cat/.diff files
-* Removed support for info/:info files
-* Removed "magic" groups
-* Added genshi requirement for the server
-
 * Bundler
 
   * Deprecated use of an explicit name attribute
   * Deprecated .genshi bundles
   * Added path globbing
 
-* Switch Decisions plugin to use StructFile instead of host- or
-  group-specific XML files (this allows a single e.g. whitelist.xml file
-  with <Group> tags)
+* Decisions
 
-  You can convert your existing decisions using
-  tools/upgrade/1.4/migrate_decisions.py.
+  * Switch plugin to use StructFile instead of host- or group-specific XML
+    files (this allows a single e.g. whitelist.xml file with <Group> tags)
 
-* Added inter-bundle dependencies
-* Added support for independent bundles (replaces the functionality of
-  Base)
-* Added new ACL plugin
-  (http://docs.bcfg2.org/dev/server/plugins/misc/acl.html)
-* Added support for wildcard XIncludes
+    You can convert your existing decisions using
+    ``tools/upgrade/1.4/migrate_decisions.py``.
 
 * Metadata
 
@@ -88,16 +91,12 @@ This is primarily a bugfix release.
   * Allow specification of deb-src lines (resolves
     http://trac.mcs.anl.gov/projects/bcfg2/ticket/1148)
 
-* Add Solaris 11 IPS Package support
-* Add bcfg2-report-collector init script to debian package
-* Git VCS plugin enhancements
-
 * SSLCA
 
   * Rewrote SSLCA as Cfg handler
 
     Existing SSLCA installations will need to migrate to the new format
-    using tools/upgrade/1.4/migrate_sslca.py.
+    using ``tools/upgrade/1.4/migrate_sslca.py``.
 
 * NagiosGen
 
