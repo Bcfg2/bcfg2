@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _server-plugins-structures-bundler-index:
 
@@ -114,12 +115,12 @@ Genshi templates
 ================
 
 Genshi XML templates allow you to use the `Genshi
-<http://genshi.edgewall.org>`_ templating system to dynamically
-generate a bundle.  Genshi templates can be specified one of two ways:
+<http://genshi.edgewall.org>`_ templating system to dynamically generate
+a bundle.  Genshi templates can be specified **one** of two ways:
 
-1. Add an XML-style genshi template to the Bundler directory with a
+* Add an XML-style genshi template to the Bundler directory with a
    ``.genshi`` and the associated namespace attribute.
-2. Simply add the appropriate namespace attribute to your existing XML
+* Simply add the appropriate namespace attribute to your existing XML
    bundle.
 
 The top-level Bundle tag should look like the following::
