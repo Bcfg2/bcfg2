@@ -57,7 +57,7 @@ class Reporting(Statistics, Threaded, PullSource, Debuggable):
             self.logger.error(msg)
             raise PluginInitError(msg)
 
-    def start_threads(self):
+        # This must be loaded here for bcfg2-admin
         try:
             self.transport = load_transport_from_config(self.core.setup)
         except TransportError:
@@ -67,6 +67,9 @@ class Reporting(Statistics, Threaded, PullSource, Debuggable):
             raise PluginInitError(msg)
         if self.debug_flag:
             self.transport.set_debug(self.debug_flag)
+
+    def start_threads(self):
+        pass
 
     def set_debug(self, debug):
         rv = Debuggable.set_debug(self, debug)
