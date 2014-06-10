@@ -201,6 +201,7 @@ Requires:         python-daemon
 Requires:         /usr/sbin/sendmail
 Requires:         /usr/bin/openssl
 Requires:         graphviz
+Requires:         python-nose
 
 %if %{_vendor} == redhat
 %if 0%{?fedora} >= 16
