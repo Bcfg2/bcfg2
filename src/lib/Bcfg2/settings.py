@@ -125,7 +125,7 @@ def read_config(cfile=DEFAULT_CONFIG, repo=None, quiet=False):
 # set up basic defaults.  this lets manage.py work in all cases
 read_config(quiet=True)
 
-ADMINS = (('Root', 'root'))
+ADMINS = (('Root', 'root'),)
 MANAGERS = ADMINS
 
 # Language code for this installation. All choices can be found here:
