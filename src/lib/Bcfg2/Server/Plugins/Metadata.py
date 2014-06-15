@@ -872,7 +872,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             except KeyError:
                 self.clientgroups[clname] = [profile]
         self.update_client_list()
-        self.expire_cache()
+        self.cache.expire()
         self.states['clients.xml'] = True
 
     def _get_condition(self, element):
@@ -966,7 +966,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 self.group_membership.setdefault(gname, [])
                 self.group_membership[gname].append(
                     self._aggregate_conditions(conditions))
-        self.expire_cache()
+        self.cache.expire()
         self.states['groups.xml'] = True
 
     def HandleEvent(self, event):
