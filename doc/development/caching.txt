@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _development-cache:
 
@@ -44,10 +45,10 @@ Currently known caches are:
 | Metadata    | Hostname                              | :class:`ClientMetadata                          | The :ref:`Metadata cache <server-caching>`           |
 |             |                                       | <Bcfg2.Server.Plugins.Metadata.ClientMetadata>` |                                                      |
 +-------------+---------------------------------------+-------------------------------------------------+------------------------------------------------------+
-| Probes,     | Hostname                              | ``list`` of group names                         | Groups set by :ref:`server-plugins-probes-index`     |
+| Probes,     | Hostname                              | ``list`` of group names                         | Groups set by :ref:`server-plugins-probes`           |
 | probegroups |                                       |                                                 |                                                      |
 +-------------+---------------------------------------+-------------------------------------------------+------------------------------------------------------+
-| Probes,     | Hostname                              | ``dict`` of ``<probe name>``:                   | Other data set by :ref:`server-plugins-probes-index` |
+| Probes,     | Hostname                              | ``dict`` of ``<probe name>``:                   | Other data set by :ref:`server-plugins-probes`       |
 | probedata   |                                       | :class:`ProbeData                               |                                                      |
 |             |                                       | <Bcfg2.Server.Plugins.Probes.ProbeData>`        |                                                      |
 +-------------+---------------------------------------+-------------------------------------------------+------------------------------------------------------+

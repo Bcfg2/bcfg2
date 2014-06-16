@@ -162,6 +162,9 @@ in order to permit :ref:`pulling with bcfg2-admin
 <server-admin-pull>`.  You should almost certainly set ``sensitive``
 to "true" in ``info.xml``.
 
+
+.. _server-plugins-generators-sshbase-encryption:
+
 Encryption
 ==========
 

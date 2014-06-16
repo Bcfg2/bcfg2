@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _server-plugins-index:
 
@@ -13,7 +14,7 @@ perform one of several tasks:
 #. Generating configuration entry contents for clients
 #. Probing client-side state (like hardware inventory, etc)
    -- the generic client probing mechanism is described at
-   :ref:`server-plugins-probes-index`.
+   :ref:`server-plugins-probes`.
 #. Automating administrative tasks
    (e.g. :ref:`server-plugins-generators-sshbase` which automates ssh
    key management)

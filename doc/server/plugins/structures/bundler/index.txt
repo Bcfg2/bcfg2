@@ -1,7 +1,7 @@
 .. -*- mode: rst -*-
 .. vim: ft=rst
 
-.. _server-plugins-structures-bundler-index:
+.. _server-plugins-structures-bundler:
 
 =======
 Bundler
@@ -92,6 +92,9 @@ split these entries into two bundles.  See
 :ref:`server-plugins-structures-bundler-bcfg2-server` for an example
 of this.
 
+
+.. _server-plugins-structures-bundler-index-disabling-magic:
+
 Disabling Magic
 ---------------
 
@@ -111,6 +114,9 @@ Service entries in independent bundles are never restarted, and Action
 entries in independent bundles are only executed if ``when="always"``.
 (I.e., an Action entry in an independent bundle with
 ``when="modified"`` is useless.)
+
+
+.. _server-plugins-structures-bundler-index-genshi-templates:
 
 Genshi templates
 ================
@@ -138,6 +144,9 @@ This will render the template; it will not fully bind all of the
 entries in the bundle.
 
 See :ref:`bcfg2-info <server-bcfg2-info>` for more details.
+
+
+.. _server-plugins-structures-bundler-index-dependencies:
 
 Dependencies
 ============

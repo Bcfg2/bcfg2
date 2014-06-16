@@ -784,7 +784,7 @@ class XMLDomain(Domain):
     def clear_doc(self, docname):
         to_del = []
         for dtype in self.types.keys():
-            for key, (doc, _) in self.data[dtype].iteritems():
+            for key, (doc, _) in self.data[dtype].items():
                 if doc == docname:
                     to_del.append((dtype, key))
         for dtype, key in to_del:
@@ -803,7 +803,7 @@ class XMLDomain(Domain):
 
     def get_objects(self):
         for dtype in self.types.keys():
-            for name, (docname, tgtid) in self.data[dtype].iteritems():
+            for name, (docname, tgtid) in self.data[dtype].items():
                 yield (name, name, dtype, docname, tgtid,
                        self.object_types[dtype].attrs['searchprio'])
 

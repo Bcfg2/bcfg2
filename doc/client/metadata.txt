@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _client-metadata:
 
@@ -24,12 +25,12 @@ interaction:
 This construction process spans several server plugins. The
 :ref:`server-plugins-grouping-metadata` is responsible for
 initial instance creation, including the client hostname,
-profile, and basic group memberships. After this initial creation,
-Connector plugins (such as :ref:`server-plugins-probes-index` or
-:ref:`server-plugins-connectors-properties`) can add additional group
-memberships for clients. These memberships are merged into the instance;
-that is, the new group memberships are treated as if they were included
-in groups.xml. If any of these groups are defined in groups.xml,
+profile, and basic group memberships. After this initial
+creation, Connector plugins (such as :ref:`server-plugins-probes`
+or :ref:`server-plugins-connectors-properties`) can add additional
+group memberships for clients. These memberships are merged into the
+instance; that is, the new group memberships are treated as if they were
+included in groups.xml. If any of these groups are defined in groups.xml,
 then groups included there are included in the ClientMetadata instance
 group list. At the end of this process, the ClientMetadata instance has
 its complete set of group memberships. At this point, each connector

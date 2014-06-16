@@ -1,6 +1,7 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
-.. _server-plugins-probes-index:
+.. _server-plugins-probes:
 
 ======
 Probes

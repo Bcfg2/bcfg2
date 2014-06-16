@@ -1,12 +1,12 @@
 """ ``bcfg2-lint`` plugin for :ref:`Bundler
-<server-plugins-structures-bundler-index>` """
+<server-plugins-structures-bundler>` """
 
 from Bcfg2.Server.Lint import ServerPlugin
 
 
 class Bundler(ServerPlugin):
     """ Perform various :ref:`Bundler
-    <server-plugins-structures-bundler-index>` checks. """
+    <server-plugins-structures-bundler>` checks. """
 
     def Run(self):
         self.missing_bundles()

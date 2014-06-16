@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _development-plugins:
 
@@ -147,9 +148,8 @@ For examples, see:
 
 * :func:`Bcfg2.Server.Plugins.Probes.ReceiveData` takes a copy of the
   groups that have been assigned to a client by
-  :ref:`server-plugins-probes-index`, and if that data changes when
-  new probe data is received, it invalidates the cache for that
-  client.
+  :ref:`server-plugins-probes`, and if that data changes when new probe
+  data is received, it invalidates the cache for that client.
 * :func:`Bcfg2.Server.Plugins.GroupPatterns.Index` expires the entire
   cache whenever a FAM event is received for the
   :ref:`server-plugins-grouping-grouppatterns` config file.

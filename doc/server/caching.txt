@@ -1,4 +1,5 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
 .. _server-caching:
 
@@ -42,15 +43,15 @@ descending order of reliability.  That is, odds are higher that
 biggest speed boost.  ``off`` will never result in stale data, but it
 gives no speed boost.
 
-In addition to the :ref:`server-plugins-grouping-metadata` plugin,
-Bcfg2 includes three plugins that can set additional groups, and thus
-may affect the caching behavior.  They are
-:ref:`server-plugins-grouping-grouppatterns`,
-:ref:`server-plugins-probes-index`, and
+In addition to the :ref:`server-plugins-grouping-metadata`
+plugin, Bcfg2 includes three plugins that can set additional
+groups, and thus may affect the caching behavior.  They
+are :ref:`server-plugins-grouping-grouppatterns`,
+:ref:`server-plugins-probes`, and
 :ref:`server-plugins-connectors-puppetenc`.  All of those plugins
-**except** for PuppetENC fully support all caching levels.  PuppetENC
-is incompatible with ``aggressive``, and may result in some stale data
-with ``cautious``.
+**except** for PuppetENC fully support all caching levels.  PuppetENC is
+incompatible with ``aggressive``, and may result in some stale data with
+``cautious``.
 
 If you are not using the PuppetENC plugin, and do not have any custom
 plugins that provide additional groups, then all four modes should be

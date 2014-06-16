@@ -27,8 +27,7 @@ backwards-incompatible user-facing changes
   reorganized to some degree. ``bcfg2-reports`` syntax is completely
   different.
 
-* Added new ACL plugin
-  (http://docs.bcfg2.org/dev/server/plugins/misc/acl.html)
+* Added new :ref:`server-plugins-misc-acl` plugin
 
   Default ACLs only allow clients to perform bcfg2 client runs, and only
   permit `bcfg2-admin xcmd` calls from localhost.  If you want to change
@@ -36,7 +35,7 @@ backwards-incompatible user-facing changes
 
 * Added genshi requirement for the server
 
-* Decisions
+* :ref:`server-plugins-generators-decisions`
 
   * Switch plugin to use StructFile instead of host- or group-specific XML
     files (this allows a single e.g. whitelist.xml file with <Group> tags)
@@ -48,19 +47,18 @@ backwards-incompatible user-facing changes
 deprecated features (will be removed in a future release, likely 1.5)
 ---------------------------------------------------------------------
 
-* Bundler
+* :ref:`server-plugins-structures-bundler`
 
   * Deprecated use of an explicit name attribute
-  * Deprecated .genshi bundles (use .xml bundles and specify the genshi
-    namespace instead)
-
-    http://docs.bcfg2.org/dev/server/plugins/structures/bundler/index.html#genshi-templates
+  * Deprecated :ref:`.genshi bundles
+    <server-plugins-structures-bundler-index-genshi-templates>` (use
+    .xml bundles and specify the genshi namespace instead)
 
 * SSLCA
 
   * Deprecated plugin
-  * SSLCA functionality has been added to the Cfg plugin.
-    http://docs.bcfg2.org/dev/server/plugins/generators/cfg.html#ssl-keys-and-certificates
+  * SSLCA functionality has been added to the Cfg plugin:
+    see :ref:`server-plugins-generators-cfg-ssl-certificates`
 
 deprecated plugins and features which have been removed
 -------------------------------------------------------
@@ -97,35 +95,35 @@ Other features
 other fixes and new features
 ----------------------------
 
-* Added inter-bundle dependencies:
-  http://docs.bcfg2.org/dev/server/plugins/structures/bundler/index.html#dependencies
-* Added support for independent bundles (replaces the functionality of
-  Base):
-  http://docs.bcfg2.org/dev/server/plugins/structures/bundler/index.html#disabling-magic
+* Added :ref:`inter-bundle dependencies
+  <server-plugins-structures-bundler-index-dependencies>`
+* Added support for :ref:`independent bundles
+  <server-plugins-structures-bundler-index-disabling-magic>` (replaces
+  the functionality of Base):
 * Added support for wildcard XIncludes
 * Add Solaris 11 IPS Package support
 * Add bcfg2-report-collector init script to debian package
 * Git VCS plugin enhancements
 * Removed deprecated plugins
 
-* Bundler
+* :ref:`server-plugins-structures-bundler`
 
   * Deprecated use of an explicit name attribute
   * Deprecated .genshi bundles
   * Added path globbing
 
-* Metadata
+* :ref:`server-plugins-grouping-metadata`
 
   * Allow setting global default authentication type
 
-* Packages
+* :ref:`server-plugins-generators-packages`
 
   * Add yum group support to internal resolver
   * Change location of plugin-generated APT sources
   * Add new Pkgng plugin
   * Add ability for per-package recommended flag override
 
-* Reporting
+* :ref:`server-plugins-statistics-reporting`
 
   * Add support for POSIX user/group entries
   * Add support for Django > 1.4
@@ -135,11 +133,11 @@ other fixes and new features
 * Added option to force server to wait until all FAM events are
   processed
 
-* SSHbase
+* :ref:`server-plugins-generators-sshbase`
 
   * Add support for IPv6 addresses in known_hosts file
-  * Add support for encryption of generated ssh keys:
-    http://docs.bcfg2.org/dev/server/plugins/generators/sshbase.html#encryption
+  * Add support for :ref:`encryption of generated ssh keys
+    <server-plugins-generators-sshbase-encryption>`
 
 * APT
 
@@ -153,15 +151,15 @@ other fixes and new features
     Existing SSLCA installations will need to migrate to the new format
     using ``tools/upgrade/1.4/migrate_sslca.py``.
 
-* NagiosGen
+* :ref:`server-plugins-generators-nagiosgen`
 
   * Migrate configuration to conf.d
 
-* Probes
+* :ref:`server-plugins-probes`
 
   * Rewritten to improve caching
-  * Add probes.allowed_groups option to restrict group assignments
-    (http://docs.bcfg2.org/dev/server/plugins/probes/index.html#dynamic-group-assignment)
+  * Add probes.allowed_groups option to restrict group assignments:
+    see :ref:`server-plugins-probes-dynamic-groups`
 
 
 Thanks

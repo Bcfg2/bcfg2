@@ -223,7 +223,7 @@ you will find that we now have a correct entry::
 
 Done! Now we just have 242 (or more) entries to take care of!
 
-:ref:`server-plugins-structures-bundler-index` is a
+:ref:`server-plugins-structures-bundler` is a
 relatively easy directory to populate. You can find many
 samples of Bundles in the :ref:`Bundler Example Repository
 <server-plugins-structures-bundler-index-examples>`, many of which can
