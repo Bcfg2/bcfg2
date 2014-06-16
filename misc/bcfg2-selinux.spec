@@ -12,11 +12,11 @@
 #
 # Don't forget to change the Release: tag below to something like 0.1
 #%%global _rc 1
-#%%global _pre 2
+%global _pre pre1
 %global _pre_rc %{?_pre:.pre%{_pre}}%{?_rc:.rc%{_rc}}
 
 Name:             bcfg2-selinux
-Version:          1.3.4
+Version:          1.4.0
 Release:          1%{?_pre_rc}%{?dist}
 Summary:          Bcfg2 Client and Server SELinux policy
 
@@ -33,7 +33,7 @@ Conflicts:        selinux-policy = 3.11.1
 License:          BSD
 URL:              http://bcfg2.org
 Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}%{?_pre_rc}.tar.gz
-BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildRoot:        %{_tmppath}/%{name}-%{version}%{?_pre_rc}-%{release}-root-%(%{__id_u} -n)
 BuildArch:        noarch
 
 BuildRequires:    checkpolicy, selinux-policy-devel, hardlink

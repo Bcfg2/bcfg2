@@ -19,7 +19,7 @@
 #
 # Don't forget to change the Release: tag below to something like 0.1
 #%%global _rc 1
-#%%global _pre 2
+%global _pre pre1
 %global _nightly 1
 %global _date %(date +%Y%m%d)
 %global _pre_rc %{?_pre:pre%{_pre}}%{?_rc:rc%{_rc}}
@@ -48,7 +48,7 @@ Source0:          ftp://ftp.mcs.anl.gov/pub/bcfg/%{name}-%{version}%{?_pre_rc}.t
 Source1:          http://www.w3.org/2001/XMLSchema.xsd
 %if %{?rhel}%{!?rhel:10} <= 5 || 0%{?suse_version}
 # EL5 and OpenSUSE require the BuildRoot tag
-BuildRoot:        %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+BuildRoot:        %{_tmppath}/%{name}-%{version}%{?_pre_rc}-%{release}-root-%(%{__id_u} -n)
 %endif
 BuildArch:        noarch
 

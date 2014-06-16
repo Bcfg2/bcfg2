@@ -257,13 +257,11 @@ E.G. 1.2.0pre1 is a valid version.
                      startswith=True,
                      dryrun=options.dryrun)
     find_and_replace('misc/bcfg2.spec', 'BuildRoot',
-                     'BuildRoot:        %%{_tmppath}/%%{name}-%%{version}%s-%%{release}-root-%%(%%{__id_u} -n)\n' %
-                     version_info['build'],
+                     'BuildRoot:        %{_tmppath}/%{name}-%{version}%{?_pre_rc}-%{release}-root-%(%{__id_u} -n)\n',
                      startswith=True,
                      dryrun=options.dryrun)
     find_and_replace('misc/bcfg2-selinux.spec', 'BuildRoot',
-                     'BuildRoot:        %%{_tmppath}/%%{name}-%%{version}%s-%%{release}-root-%%(%%{__id_u} -n)\n' %
-                     version_info['build'],
+                     'BuildRoot:        %{_tmppath}/%{name}-%{version}%{?_pre_rc}-%{release}-root-%(%{__id_u} -n)\n',
                      startswith=True,
                      dryrun=options.dryrun)
     # fix pre problem noted in
