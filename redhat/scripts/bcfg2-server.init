@@ -27,7 +27,7 @@ PATH=/sbin:/bin:/usr/bin:/usr/sbin
 test -f /etc/sysconfig/$prog && . /etc/sysconfig/$prog
 
 if [ "$BCFG2_SERVER_ENABLED" -eq 0 ] ; then
-     failure $"bcfg2-server is disabled - see /etc/sysconfig/bcfg2-server"
+     failure $"bcfg2-server is disabled - see /etc/sysconfig/$prog"
      echo
      exit 0
 fi
