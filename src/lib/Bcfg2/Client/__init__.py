@@ -69,8 +69,8 @@ def prompt(msg):
     except UnicodeEncodeError:
         ans = input(msg.encode('utf-8'))
         return ans in ['y', 'Y']
-    except EOFError:
-        # handle ^C on rhel-based platforms
+    except (EOFError, KeyboardInterrupt):
+        # handle ^C
         raise SystemExit(1)
     except:
         print("Error while reading input: %s" % sys.exc_info()[1])
