@@ -243,6 +243,13 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
 
         # check for allowed reverse proxies
         allowed_proxies = Bcfg2.Options.setup.daemon_allowed_proxies
+
+        if not allowed_proxies and "X-Forwarded-For" in self.headers:
+            msg = "X-Forwarded-For header specified but proxying not allowed"
+            self.logger.error(msg)
+            self.send_error(400, msg)
+            return
+
         if allowed_proxies and "X-Forwarded-For" in self.headers:
             x_forwarded_for = self.headers["X-Forwarded-For"].split(",")[0]
             for proxy in allowed_proxies:
