@@ -8,8 +8,10 @@ import os
 import re
 import select
 import shlex
-import sys
+import socket
+import struct
 import subprocess
+import sys
 import threading
 from Bcfg2.Compat import input, any  # pylint: disable=W0622
 
@@ -330,3 +332,26 @@ class classproperty(object):  # pylint: disable=C0103
 
     def __get__(self, instance, owner):
         return self.getter(owner)
+
+def ip2int(ip):
+    """ convert a dotted-quad IP address into an integer
+    representation of the same """
+    return struct.unpack('>L', socket.inet_pton(socket.AF_INET, ip))[0]
+
+def ip_matches(ip, entry):
+    """ Return True if the given IP matches the IP or IP and netmask
+    in the given ACL entry; False otherwise """
+    if entry.get("netmask"):
+        try:
+            mask = int("1" * int(entry.get("netmask")) +
+                       "0" * (32 - int(entry.get("netmask"))), 2)
+        except ValueError:
+            mask = ip2int(entry.get("netmask"))
+        return ip2int(ip) & mask == ip2int(entry.get("address")) & mask
+    elif entry.get("address") is None:
+        # no address, no netmask -- match all
+        return True
+    elif ip == entry.get("address"):
+        # just a plain ip address
+        return True
+    return False

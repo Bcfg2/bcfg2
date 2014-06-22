@@ -13,7 +13,7 @@ import time
 import Bcfg2.Options
 from Bcfg2.Compat import xmlrpclib, SimpleXMLRPCServer, SocketServer, \
     b64decode
-from Bcfg2.Server.Plugins.ACL import ip_matches
+from Bcfg2.Utils import ip_matches
 
 
 class XMLRPCACLCheckException(Exception):
