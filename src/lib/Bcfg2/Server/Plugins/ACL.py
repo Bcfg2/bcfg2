@@ -118,4 +118,3 @@ class ACL(Bcfg2.Server.Plugin.Plugin,
         self.metadata_acls.set_debug(debug)
         return rv
     set_debug.__doc__ = Bcfg2.Server.Plugin.Plugin.set_debug.__doc__
-
