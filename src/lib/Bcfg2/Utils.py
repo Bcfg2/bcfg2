@@ -333,10 +333,12 @@ class classproperty(object):  # pylint: disable=C0103
     def __get__(self, instance, owner):
         return self.getter(owner)
 
+
 def ip2int(ip):
     """ convert a dotted-quad IP address into an integer
     representation of the same """
     return struct.unpack('>L', socket.inet_pton(socket.AF_INET, ip))[0]
+
 
 def ip_matches(ip, entry):
     """ Return True if the given IP matches the IP or IP and netmask

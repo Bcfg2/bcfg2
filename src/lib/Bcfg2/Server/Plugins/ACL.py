@@ -4,6 +4,7 @@ import os
 import Bcfg2.Server.Plugin
 from Bcfg2.Utils import ip_matches
 
+
 def rmi_names_equal(first, second):
     """ Compare two XML-RPC method names and see if they match.
     Resolves some limited wildcards; see
@@ -31,6 +32,7 @@ def rmi_names_equal(first, second):
                 second_parts[i] != '*'):
             return False
     return True
+
 
 class IPACLFile(Bcfg2.Server.Plugin.XMLFileBacked):
     """ representation of ACL ip.xml, for IP-based ACLs """
@@ -116,3 +118,4 @@ class ACL(Bcfg2.Server.Plugin.Plugin,
         self.metadata_acls.set_debug(debug)
         return rv
     set_debug.__doc__ = Bcfg2.Server.Plugin.Plugin.set_debug.__doc__
+
