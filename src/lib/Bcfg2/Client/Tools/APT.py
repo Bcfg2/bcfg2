@@ -91,7 +91,7 @@ class APT(Bcfg2.Client.Tools.Tool):
     def VerifyDebsums(self, entry, modlist):
         output = \
             self.cmd.run("%s -as %s" %
-                         (self.debsums, entry.get('name'))).stdout.splitlines()
+                         (self.debsums, entry.get('name'))).stderr.splitlines()
         if len(output) == 1 and "no md5sums for" in output[0]:
             self.logger.info("Package %s has no md5sums. Cannot verify" % \
                              entry.get('name'))
