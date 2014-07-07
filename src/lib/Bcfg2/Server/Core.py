@@ -131,7 +131,7 @@ class Core(object):
         Bcfg2.Options.Common.repository,
         Bcfg2.Options.Common.filemonitor,
         Bcfg2.Options.BooleanOption(
-            cf=('server', 'fam_blocking'), default=False,
+            cf=('server', 'fam_blocking'), default=True,
             help='FAM blocks on startup until all events are processed'),
         Bcfg2.Options.BooleanOption(
             cf=('logging', 'performance'), dest="perflog",
