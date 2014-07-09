@@ -600,7 +600,7 @@ Deltas
 .. warning::
 
     In Bcfg2 1.3, deltas **do not** work with `SSH key or
-    authorized_keys generation <SSH Keys>`_.
+    authorized_keys generation <server-plugins-generators-cfg-sshkeys>`_.
 
 Bcfg2 has finer grained control over how to deliver configuration
 files to a host. Let's say we have a Group named file-server. Members
