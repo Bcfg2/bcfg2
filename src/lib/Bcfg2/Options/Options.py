@@ -306,6 +306,26 @@ class PathOption(Option):
         Option.__init__(self, *args, **kwargs)
 
 
+class _BooleanOptionAction(argparse.Action):
+    """ BooleanOptionAction sets a boolean value in the following ways:
+    - if None is passed, store the default
+    - if the option_string is not None, then the option was passed on the
+      command line, thus store the opposite of the default (this is the
+      argparse store_true and store_false behavior)
+    - if a boolean value is passed, use that
+
+    Defined here instead of :mod:`Bcfg2.Options.Actions` because otherwise
+    there is a circular import Options -> Actions -> Parser -> Options """
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        if values is None:
+            setattr(namespace, self.dest, self.default)
+        elif option_string is not None:
+            setattr(namespace, self.dest, not self.default)
+        else:
+            setattr(namespace, self.dest, bool(values))
+
+
 class BooleanOption(Option):
     """ Shortcut for boolean options.  The default is False, but this
     can easily be overridden:
@@ -317,11 +337,12 @@ class BooleanOption(Option):
                 "--dwim", default=True, help="Do What I Mean")]
     """
     def __init__(self, *args, **kwargs):
-        if 'default' in kwargs and kwargs['default']:
-            kwargs.setdefault('action', 'store_false')
-        else:
-            kwargs.setdefault('action', 'store_true')
+        kwargs.setdefault('action', _BooleanOptionAction)
+        kwargs.setdefault('nargs', 0)
+
+        if 'default' not in kwargs:
             kwargs.setdefault('default', False)
+
         Option.__init__(self, *args, **kwargs)
 
 
