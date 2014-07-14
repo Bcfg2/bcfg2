@@ -4,8 +4,8 @@ import tempfile
 from Bcfg2.Compat import any  # pylint: disable=W0622
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
-import urllib
 import copy
+from Bcfg2.Compat import urlretrieve
 
 
 # pylint: disable=C0103
@@ -62,7 +62,7 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
             self.tmpfiles.append(tmpfile)
             self.logger.debug("URL: %s/%s" %
                               (pkg.get('url'), pkg.get('simplename')))
-            urllib.urlretrieve("%s/%s" %
+            urlretrieve("%s/%s" %
                                (pkg.get('url'), pkg.get('simplename')),
                                tmpfile.name)
             newpkg = copy.copy(pkg)

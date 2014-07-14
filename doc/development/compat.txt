@@ -60,6 +60,8 @@ behavior (e.g., :func:`input`) do not cause unexpected side-effects.
 +---------------------------------+--------------------------------------------------+---------------------------------------------------------+
 | urlparse                        | :func:`urlparse.urlparse`                        | :func:`urllib.parse.urlparse`                           |
 +---------------------------------+--------------------------------------------------+---------------------------------------------------------+
+| urlretrieve                     | :func:`urllib.urlretrieve`                       | :func:`urllib.request.urlretrieve`                      |
++---------------------------------+--------------------------------------------------+---------------------------------------------------------+
 | HTTPBasicAuthHandler            | :class:`urllib2.HTTPBasicAuthHandler`            | :class:`urllib.request.HTTPBasicAuthHandler`            |
 +---------------------------------+--------------------------------------------------+---------------------------------------------------------+
 | HTTPPasswordMgrWithDefaultRealm | :class:`urllib2.HTTPPasswordMgrWithDefaultRealm` | :class:`urllib.request.HTTPPasswordMgrWithDefaultRealm` |
