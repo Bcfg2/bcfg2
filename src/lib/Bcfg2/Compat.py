@@ -29,7 +29,7 @@ except ImportError:
     from urllib.parse import urljoin, urlparse, quote_plus
     from urllib.request import HTTPBasicAuthHandler, \
         HTTPPasswordMgrWithDefaultRealm, build_opener, install_opener, \
-            urlopen, urlretrieve
+        urlopen, urlretrieve
     from urllib.error import HTTPError, URLError
 
 try:
