@@ -4,6 +4,9 @@ import tempfile
 from Bcfg2.Compat import any  # pylint: disable=W0622
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
+import urllib
+import copy
+
 
 # pylint: disable=C0103
 noask = '''
@@ -37,6 +40,8 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
         # noaskfile needs to live beyond __init__ otherwise file is removed
         self.noaskfile = tempfile.NamedTemporaryFile()
         self.noaskname = self.noaskfile.name
+        # for any pkg files downloaded
+        self.tmpfiles = []
         try:
             self.noaskfile.write(noask)
             # flush admin file contents to disk
@@ -45,6 +50,45 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
                             self.pkgtool[1])
         except:  # pylint: disable=W0702
             self.pkgtool = (self.pkgtool[0] % "", self.pkgtool[1])
+
+    def pkgmogrify(self, pkg):
+        """ Take a pkg object, check for a 'simplename' attribute. If found,
+            return a modified pkg object that points to to a temporary file
+        """
+        if pkg.get('simplename'):
+            self.logger.debug("Pkgmogrifying %s because simplename %s found" %
+                              (pkg.get('name'), pkg.get('simplename')))
+            tmpfile = tempfile.NamedTemporaryFile()
+            self.tmpfiles.append(tmpfile)
+            self.logger.debug("URL: %s/%s" %
+                              (pkg.get('url'), pkg.get('simplename')))
+            urllib.urlretrieve("%s/%s" %
+                               (pkg.get('url'), pkg.get('simplename')),
+                               tmpfile.name)
+            newpkg = copy.copy(pkg)
+            newpkg.set('url', tmpfile.name)
+            return newpkg
+        return pkg
+
+    def Install(self, packages, states):
+        for pkg in packages:
+            pkg = self.pkgmogrify(pkg)
+            if self.VerifyPackage(pkg, []):
+                self.logger.info("Forcing state to true for pkg %s" %
+                                 (pkg.get('name')))
+                states[pkg] = True
+            else:
+                self.logger.info("Installing pkg %s version %s" %
+                                 (pkg.get('name'), pkg.get('version')))
+
+                if self.cmd.run(self._get_package_command([pkg])):
+                    states[pkg] = True
+                else:
+                    self.logger.error("Failed to install package %s" %
+                                      pkg.get('name'))
+
+            self.RefreshPackages()
+        self.modified.extend(entry for entry in packages if states[entry])
 
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
@@ -80,8 +124,8 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
                 self.logger.debug("Package %s not installed" %
                                   entry.get("name"))
         else:
-            if (self.setup['quick'] or
-                entry.attrib.get('verify', 'true') == 'false'):
+            if self.setup['quick'] or \
+               entry.attrib.get('verify', 'true') == 'false':
                 return True
             rv = self.cmd.run("/usr/sbin/pkgchk -n %s" % entry.get('name'))
             if rv.success:
