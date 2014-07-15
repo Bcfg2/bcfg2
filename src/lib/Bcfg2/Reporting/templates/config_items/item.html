@@ -107,7 +107,7 @@ div.entry_list h3 {
           {{ item.details|syntaxhilight }}
         </div>
       {% else %}
-        {{ item.details }}
+        {{ item.details|linebreaks }}
       {% endif %}
     </div>
   {% endif %}

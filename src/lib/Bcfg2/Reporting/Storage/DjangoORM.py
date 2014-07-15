@@ -167,7 +167,7 @@ class DjangoORM(StorageBase):
         # TODO - vcs output
         act_dict['detail_type'] = PathEntry.DETAIL_UNUSED
         if path_type == 'directory' and entry.get('prune', 'false') == 'true':
-            unpruned_elist = [e.get('path') for e in entry.findall('Prune')]
+            unpruned_elist = [e.get('name') for e in entry.findall('Prune')]
             if unpruned_elist:
                 act_dict['detail_type'] = PathEntry.DETAIL_PRUNED
                 act_dict['details'] = "\n".join(unpruned_elist)
