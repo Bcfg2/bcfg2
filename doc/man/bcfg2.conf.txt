@@ -49,7 +49,7 @@ fam_blocking
     Whether the server should block at startup until the file monitor
     backend has processed all events. This can cause a slower startup,
     but ensure that all files are recognized before the first client
-    is handled.
+    is handled. Defaults to True.
 
 ignore_files
     A comma-separated list of globs that should be ignored by the file

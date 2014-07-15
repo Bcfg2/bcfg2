@@ -11,7 +11,7 @@ Synopsis
 
 **bcfg2-server** [-d] [-v] [-C *configfile*] [-D *pidfile*] [-E
 *encoding*] [-Q *repo path*] [-S *server url*] [-o *logfile*] [-x
-*password*] [--ssl-key=\ *ssl key*]
+*password*] [--ssl-key=\ *ssl key*] [--no-fam-blocking]
 
 Description
 -----------
@@ -33,8 +33,9 @@ Options
 -v                Run in verbose mode.
 -h                Print usage information.
 --ssl-key=key     Specify the path to the SSL key.
+--no-fam-blocking Synonym for fam_blocking = False in bcfg2.conf
 
 See Also
 --------
 
-:manpage:`bcfg2(1)`, :manpage:`bcfg2-lint(8)`
+:manpage:`bcfg2(1)`, :manpage:`bcfg2-lint(8)`, :manpage:`bcfg2.conf(5)`
