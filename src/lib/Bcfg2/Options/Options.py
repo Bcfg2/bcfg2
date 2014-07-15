@@ -339,9 +339,7 @@ class BooleanOption(Option):
     def __init__(self, *args, **kwargs):
         kwargs.setdefault('action', _BooleanOptionAction)
         kwargs.setdefault('nargs', 0)
-
-        if 'default' not in kwargs:
-            kwargs.setdefault('default', False)
+        kwargs.setdefault('default', False)
 
         Option.__init__(self, *args, **kwargs)
 
