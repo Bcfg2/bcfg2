@@ -1,6 +1,7 @@
 debian/tmp/usr/bin/bcfg2	usr/sbin
 debian/tmp/usr/lib/python*/*-packages/Bcfg2/*.py
 debian/tmp/usr/lib/python*/*-packages/Bcfg2/Client/*
+debian/tmp/usr/lib/python*/*-packages/Bcfg2/Options/*
 debian/tmp/usr/share/man/man1/*
 debian/tmp/usr/share/man/man5/*
 examples/bcfg2.conf		usr/share/bcfg2
