@@ -4,7 +4,6 @@ import tempfile
 from Bcfg2.Compat import any  # pylint: disable=W0622
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
-import copy
 from Bcfg2.Compat import urlretrieve
 
 
