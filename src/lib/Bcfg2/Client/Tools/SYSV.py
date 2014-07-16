@@ -67,12 +67,14 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
     def _get_package_command(self, packages):
         """Override the default _get_package_command, replacing the attribute
            'url' if '_sysv_pkg_path' if necessary in the returned command
-           string"""
-        if len(packages) == 1 and '_sysv_pkg_path' in packages[0].keys():
-            self.pkgtool = (self.pkgtool[0], ('%s %s',
-                                              ['_sysv_pkg_path', 'name']))
-        else:
-            self.pkgtool = self.origpkgtool
+           string
+        """
+        if hasattr(self, 'origpkgtool'):
+            if len(packages) == 1 and '_sysv_pkg_path' in packages[0].keys():
+                self.pkgtool = (self.pkgtool[0], ('%s %s',
+                                                  ['_sysv_pkg_path', 'name']))
+            else:
+                self.pkgtool = self.origpkgtool
 
         pkgcmd = super(SYSV, self)._get_package_command(packages)
         self.logger.debug("Calling install command: %s" % pkgcmd)
