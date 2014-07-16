@@ -165,9 +165,7 @@ Handles `System V Packaging <http://docs.oracle.com/cd/E19683-01/806-7008/index.
   .. code-block:: xml
 
      <PackageList url='http://install/packages' type='sysv' priority='0'>
-       <Group name='solaris10'>
          <Package name='SCbcfg2' version='1.3.4' simplename='bcfg-1.3.4-1' />
-       </Group>
      </PackageList>
 
   File system format over NFS or local path:
@@ -175,9 +173,7 @@ Handles `System V Packaging <http://docs.oracle.com/cd/E19683-01/806-7008/index.
   .. code-block:: xml
 
      <PackageList url='/mnt/install/packages' type='sysv' priority='0'>
-       <Group name='solaris10'>
          <Package name='SCbcfg2' version='1.3.4' />
-       </Group>
      </PackageList>
 
 
