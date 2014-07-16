@@ -50,44 +50,38 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
                             self.pkgtool[1])
         except:  # pylint: disable=W0702
             self.pkgtool = (self.pkgtool[0] % "", self.pkgtool[1])
+        self.origpkgtool = self.pkgtool
 
-    def pkgmogrify(self, pkg):
-        """ Take a pkg object, check for a 'simplename' attribute. If found,
-            return a modified pkg object that points to to a temporary file
+    def pkgmogrify(self, packages):
+        """ Take a list of pkg objects, check for a 'simplename' attribute.
+            If present, insert a _sysv_pkg_path attribute to the package and
+            download the datastream format SYSV package to a temporary file.
         """
-        if pkg.get('simplename'):
-            self.logger.debug("Pkgmogrifying %s because simplename %s found" %
-                              (pkg.get('name'), pkg.get('simplename')))
-            tmpfile = tempfile.NamedTemporaryFile()
-            self.tmpfiles.append(tmpfile)
-            self.logger.debug("URL: %s/%s" % (pkg.get('url'),
-                                              pkg.get('simplename')))
-            urlretrieve("%s/%s" % (pkg.get('url'), pkg.get('simplename')),
-                        tmpfile.name)
-            newpkg = copy.copy(pkg)
-            newpkg.set('url', tmpfile.name)
-            return newpkg
-        return pkg
+        for pkg in packages:
+            if pkg.get('simplename'):
+                tmpfile = tempfile.NamedTemporaryFile()
+                self.tmpfiles.append(tmpfile)
+                urlretrieve("%s/%s" % (pkg.get('url'), pkg.get('simplename')),
+                            tmpfile.name)
+                pkg.set('_sysv_pkg_path', tmpfile.name)
+
+    def _get_package_command(self, packages):
+        """Override the default _get_package_command, replacing the attribute
+           'url' if '_sysv_pkg_path' if necessary in the returned command
+           string"""
+        if len(packages) == 1 and '_sysv_pkg_path' in packages[0].keys():
+            self.pkgtool = (self.pkgtool[0], ('%s %s',
+                                              ['_sysv_pkg_path', 'name']))
+        else:
+            self.pkgtool = self.origpkgtool
+
+        pkgcmd = super(SYSV, self)._get_package_command(packages)
+        self.logger.debug("Calling install command: %s" % pkgcmd)
+        return pkgcmd
 
     def Install(self, packages, states):
-        for pkg in packages:
-            pkg = self.pkgmogrify(pkg)
-            if self.VerifyPackage(pkg, []):
-                self.logger.info("Forcing state to true for pkg %s" %
-                                 (pkg.get('name')))
-                states[pkg] = True
-            else:
-                self.logger.info("Installing pkg %s version %s" %
-                                 (pkg.get('name'), pkg.get('version')))
-
-                if self.cmd.run(self._get_package_command([pkg])):
-                    states[pkg] = True
-                else:
-                    self.logger.error("Failed to install package %s" %
-                                      pkg.get('name'))
-
-            self.RefreshPackages()
-        self.modified.extend(entry for entry in packages if states[entry])
+        self.pkgmogrify(packages)
+        super(SYSV, self).Install(packages, states)
 
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
