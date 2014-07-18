@@ -146,7 +146,7 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
         """ Get a list of supplmentary groups that the user in the
         given entry is a member of """
         return [g for g in self.existing['POSIXGroup'].values()
-                if entry.get("name") in g[3] and g[0] != entry.get("group")
+                if entry.get("name") in g[3]
                 and self._in_managed_range('POSIXGroup', g[2])]
 
     def VerifyPOSIXUser(self, entry, _):
