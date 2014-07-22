@@ -340,7 +340,7 @@ Here's what a functional **[communication]** section in a
    {% end %}\
 
 As a client will not be able to authenticate with certificates it does
-not yet posses we need to overcome the chicken and egg scenario the
+not yet possess we need to overcome the chicken and egg scenario the
 first time we try to connect such a client to the server. We can do so
 using password based auth to boot strap the client manually specifying
 all the relevant auth parameters like so::
