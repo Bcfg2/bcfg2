@@ -58,7 +58,7 @@ class Mode(object):
 
     def errExit(self, emsg):
         """ exit with an error """
-        print(emsg)
+        sys.stderr.write('%s\n' % emsg)
         raise SystemExit(1)
 
     def load_stats(self, client):
