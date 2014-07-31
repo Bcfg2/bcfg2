@@ -94,7 +94,7 @@ class Common(object):
 
     #: Log to syslog
     syslog = BooleanOption(
-        cf=('logging', 'syslog'), help="Log to syslog")
+        cf=('logging', 'syslog'), help="Log to syslog", default=True)
 
     #: Server location
     location = Option(
