@@ -113,10 +113,10 @@ class Client(object):
                 help='Force removal of additional configuration items')),
         Bcfg2.Options.ExclusiveOptionGroup(
             Bcfg2.Options.PathOption(
-                '-f', '--file', type=argparse.FileType('r'),
+                '-f', '--file', type=argparse.FileType('rb'),
                 help='Configure from a file rather than querying the server'),
             Bcfg2.Options.PathOption(
-                '-c', '--cache', type=argparse.FileType('w'),
+                '-c', '--cache', type=argparse.FileType('wb'),
                 help='Store the configuration in a file')),
         Bcfg2.Options.BooleanOption(
             '--exit-on-probe-failure', default=True,
