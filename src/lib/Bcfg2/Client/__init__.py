@@ -144,7 +144,10 @@ class Client(object):
         Bcfg2.Options.BooleanOption(
             "-e", "--show-extra", help='Enable extra entry output'),
         Bcfg2.Options.BooleanOption(
-            "-k", "--kevlar", help='Run in bulletproof mode')]
+            "-k", "--kevlar", help='Run in bulletproof mode'),
+        Bcfg2.Options.BooleanOption(
+            "-i", "--only-important",
+            help='Only configure the important entries')]
 
     def __init__(self):
         self.config = None
@@ -845,11 +848,13 @@ class Client(object):
         self.times['inventory'] = time.time()
         self.CondDisplayState('initial')
         self.InstallImportant()
-        self.Decide()
-        self.Install()
-        self.times['install'] = time.time()
-        self.Remove()
-        self.times['remove'] = time.time()
+        if not Bcfg2.Options.setup.only_important:
+            self.Decide()
+            self.Install()
+            self.times['install'] = time.time()
+            self.Remove()
+            self.times['remove'] = time.time()
+
         if self.modified:
             self.ReInventory()
             self.times['reinventory'] = time.time()
