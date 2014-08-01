@@ -562,8 +562,8 @@ class Client(object):
         if not Bcfg2.Options.setup.dry_run:
             for parent in self.config.findall(".//Path/.."):
                 name = parent.get("name")
-                if (name and (name in Bcfg2.Options.setup.only_bundles or
-                              name not in Bcfg2.Options.setup.except_bundles)):
+                if not name or (name in Bcfg2.Options.setup.except_bundles and
+                                name not in Bcfg2.Options.setup.only_bundles):
                     continue
                 for cfile in parent.findall("./Path"):
                     if (cfile.get('name') not in self.__important__ or
