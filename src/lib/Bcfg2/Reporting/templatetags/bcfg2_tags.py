@@ -189,19 +189,6 @@ def build_metric_list(mdict):
 
 
 @register.filter
-def isstale(timestamp, entry_max=None):
-    """
-    Check for a stale timestamp
-
-    Compares two timestamps and returns True if the
-    difference is greater then 24 hours.
-    """
-    if not entry_max:
-        entry_max = datetime.now()
-    return entry_max - timestamp > timedelta(hours=24)
-
-
-@register.filter
 def sort_interactions_by_name(value):
     """
     Sort an interaction list by client name
@@ -318,7 +305,7 @@ def determine_client_state(entry):
     dirty. If the client is reporting dirty, this will figure out just
     _how_ dirty and adjust the color accordingly.
     """
-    if isstale(entry.timestamp):
+    if entry.isstale():
         return "stale-lineitem"
     if entry.state == 'clean':
         if entry.extra_count > 0:
