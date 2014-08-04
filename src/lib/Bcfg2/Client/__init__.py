@@ -144,7 +144,10 @@ class Client(object):
         Bcfg2.Options.BooleanOption(
             "-e", "--show-extra", help='Enable extra entry output'),
         Bcfg2.Options.BooleanOption(
-            "-k", "--kevlar", help='Run in bulletproof mode')]
+            "-k", "--kevlar", help='Run in bulletproof mode'),
+        Bcfg2.Options.BooleanOption(
+            "-i", "--only-important",
+            help='Only configure the important entries')]
 
     def __init__(self):
         self.config = None
@@ -559,7 +562,9 @@ class Client(object):
                                       if x not in b_to_rem]
 
         # take care of important entries first
-        if not Bcfg2.Options.setup.dry_run:
+        if (not Bcfg2.Options.setup.dry_run or
+                Bcfg2.Options.setup.only_important):
+            important_installs = set()
             for parent in self.config.findall(".//Path/.."):
                 name = parent.get("name")
                 if not name or (name in Bcfg2.Options.setup.except_bundles and
@@ -573,6 +578,9 @@ class Client(object):
                     tools = [t for t in self.tools
                              if t.handlesEntry(cfile) and t.canVerify(cfile)]
                     if not tools:
+                        continue
+                    if Bcfg2.Options.setup.dry_run:
+                        important_installs.add(cfile)
                         continue
                     if (Bcfg2.Options.setup.interactive and not
                             self.promptFilter("Install %s: %s? (y/N):",
@@ -589,6 +597,11 @@ class Client(object):
                     cfile.set('qtext', '')
                     if tools[0].VerifyPath(cfile, []):
                         self.whitelist.remove(cfile)
+            if Bcfg2.Options.setup.dry_run and len(important_installs) > 0:
+                self.logger.info("In dryrun mode: "
+                                 "suppressing entry installation for:")
+                self.logger.info(["%s:%s" % (e.tag, e.get('name'))
+                                  for e in important_installs])
 
     def Inventory(self):
         """
@@ -845,11 +858,13 @@ class Client(object):
         self.times['inventory'] = time.time()
         self.CondDisplayState('initial')
         self.InstallImportant()
-        self.Decide()
-        self.Install()
-        self.times['install'] = time.time()
-        self.Remove()
-        self.times['remove'] = time.time()
+        if not Bcfg2.Options.setup.only_important:
+            self.Decide()
+            self.Install()
+            self.times['install'] = time.time()
+            self.Remove()
+            self.times['remove'] = time.time()
+
         if self.modified:
             self.ReInventory()
             self.times['reinventory'] = time.time()
