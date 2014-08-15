@@ -270,7 +270,6 @@ class TestPOSIXFile(TestPOSIXTool):
         mock_open.assert_called_with(entry.get("name"))
         mock_open.return_value.read.assert_any_call()
         ptool._diff.assert_called_with(ondisk, entry.text,
-                                       difflib.unified_diff,
                                        filename=entry.get("name"))
         self.assertIsNotNone(entry.get("qtext"))
         del entry.attrib['qtext']
@@ -280,8 +279,8 @@ class TestPOSIXFile(TestPOSIXTool):
         entry = reset()
         ptool._get_diffs(entry, content=ondisk)
         self.assertFalse(mock_open.called)
-        ptool._diff.assert_called_with(ondisk, entry.text, difflib.ndiff,
-                                     filename=entry.get("name"))
+        ptool._diff.assert_called_with(ondisk, entry.text,
+                                       filename=entry.get("name"))
         self.assertIsNone(entry.get("qtext"))
         self.assertEqual(entry.get("current_bdiff"),
                          b64encode("\n".join(ptool._diff.return_value)))
@@ -296,9 +295,7 @@ class TestPOSIXFile(TestPOSIXTool):
         mock_open.assert_called_with(entry.get("name"))
         mock_open.return_value.read.assert_any_call()
         self.assertItemsEqual(ptool._diff.call_args_list,
-                              [call(ondisk, entry.text, difflib.unified_diff,
-                                    filename=entry.get("name")),
-                               call(ondisk, entry.text, difflib.ndiff,
+                              [call(ondisk, entry.text,
                                     filename=entry.get("name"))])
         self.assertIsNotNone(entry.get("qtext"))
         self.assertTrue(entry.get("qtext").startswith("test\n"))
@@ -318,9 +315,7 @@ class TestPOSIXFile(TestPOSIXTool):
         mock_open.assert_called_with(entry.get("name"))
         mock_open.return_value.read.assert_any_call()
         self.assertItemsEqual(ptool._diff.call_args_list,
-                              [call(ondisk, encoded, difflib.unified_diff,
-                                    filename=entry.get("name")),
-                               call(ondisk, encoded, difflib.ndiff,
+                              [call(ondisk, encoded,
                                     filename=entry.get("name"))])
         self.assertIsNotNone(entry.get("qtext"))
         self.assertEqual(entry.get("current_bdiff"),
@@ -415,35 +410,23 @@ class TestPOSIXFile(TestPOSIXTool):
         ptool._rename_tmpfile.assert_called_with(newfile, entry)
         mock_install.assert_called_with(ptool, entry)
 
-    @patch("time.time")
-    def test_diff(self, mock_time):
+    @patch("difflib.unified_diff")
+    def test_diff(self, mock_diff):
         ptool = self.get_obj()
+        filename = "/test"
         content1 = "line1\nline2"
         content2 = "line3"
 
-        self.now = 1345640723
-
-        def time_rv():
-            self.now += 1
-            return self.now
-        mock_time.side_effect = time_rv
-
         rv = ["line1", "line2", "line3"]
-        func = Mock()
-        func.return_value = rv
-        self.assertItemsEqual(ptool._diff(content1, content2, func), rv)
-        func.assert_called_with(["line1", "line2"], ["line3"])
+        mock_diff.return_value = rv
+        self.assertItemsEqual(ptool._diff(content1, content2), rv)
+        mock_diff.assert_called_with(["line1", "line2"], ["line3"],
+                                     fromfile='', tofile='')
 
-        func.reset_mock()
-        mock_time.reset_mock()
-        def time_rv():
-            self.now += 5
-            return self.now
-        mock_time.side_effect = time_rv
-
-        def slow_diff(content1, content2):
-            for i in range(1, 10):
-                yield "line%s" % i
-        func.side_effect = slow_diff
-        self.assertFalse(ptool._diff(content1, content2, func), rv)
-        func.assert_called_with(["line1", "line2"], ["line3"])
+        mock_diff.reset_mock()
+        self.assertItemsEqual(ptool._diff(content1, content2,
+                                          filename=filename),
+                              rv)
+        mock_diff.assert_called_with(["line1", "line2"], ["line3"],
+                                     fromfile='/test (on disk)',
+                                     tofile='/test (from bcfg2)')
