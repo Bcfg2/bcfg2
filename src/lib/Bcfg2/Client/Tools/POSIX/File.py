@@ -190,9 +190,9 @@ class POSIXFile(POSIXTool):
         else:
             diff = self._diff(content, self._get_data(entry)[0],
                               filename=entry.get("name"))
-            udiff = '\n'.join(l.rstrip('\n') for l in diff)
             if interactive:
-                if udiff:
+                if diff:
+                    udiff = '\n'.join(l for l in diff)
                     if hasattr(udiff, "decode"):
                         udiff = udiff.decode(Bcfg2.Options.setup.encoding)
                     try:
@@ -207,8 +207,8 @@ class POSIXFile(POSIXTool):
                     prompt.append("Diff took too long to compute, no "
                                   "printable diff")
             if not sensitive:
-                if udiff:
-                    attrs["current_bdiff"] = b64encode(udiff)
+                if diff:
+                    attrs["current_bdiff"] = b64encode("\n".join(diff))
                 else:
                     attrs['current_bfile'] = b64encode(content)
         if interactive:
