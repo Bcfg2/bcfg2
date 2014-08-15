@@ -3,7 +3,6 @@
 import os
 import sys
 import stat
-import time
 import difflib
 import tempfile
 import Bcfg2.Options
@@ -189,12 +188,11 @@ class POSIXFile(POSIXTool):
             prompt.append('Binary file, no printable diff')
             attrs['current_bfile'] = b64encode(content)
         else:
+            diff = self._diff(content, self._get_data(entry)[0],
+                              filename=entry.get("name"))
+            udiff = '\n'.join(l.rstrip('\n') for l in diff)
             if interactive:
-                diff = self._diff(content, self._get_data(entry)[0],
-                                  difflib.unified_diff,
-                                  filename=entry.get("name"))
-                if diff:
-                    udiff = '\n'.join(l.rstrip('\n') for l in diff)
+                if udiff:
                     if hasattr(udiff, "decode"):
                         udiff = udiff.decode(Bcfg2.Options.setup.encoding)
                     try:
@@ -209,10 +207,8 @@ class POSIXFile(POSIXTool):
                     prompt.append("Diff took too long to compute, no "
                                   "printable diff")
             if not sensitive:
-                diff = self._diff(content, self._get_data(entry)[0],
-                                  difflib.ndiff, filename=entry.get("name"))
-                if diff:
-                    attrs["current_bdiff"] = b64encode("\n".join(diff))
+                if udiff:
+                    attrs["current_bdiff"] = b64encode(udiff)
                 else:
                     attrs['current_bfile'] = b64encode(content)
         if interactive:
@@ -221,28 +217,12 @@ class POSIXFile(POSIXTool):
             for attr, val in attrs.items():
                 entry.set(attr, val)
 
-    def _diff(self, content1, content2, difffunc, filename=None):
-        """ Return a diff of the two strings, as produced by difffunc.
-        warns after 5 seconds and times out after 30 seconds. """
-        rv = []
-        start = time.time()
-        longtime = False
-        for diffline in difffunc(content1.split('\n'),
-                                 content2.split('\n')):
-            now = time.time()
-            rv.append(diffline)
-            if now - start > 5 and not longtime:
-                if filename:
-                    self.logger.info("POSIX: Diff of %s taking a long time" %
-                                     filename)
-                else:
-                    self.logger.info("POSIX: Diff taking a long time")
-                longtime = True
-            elif now - start > 30:
-                if filename:
-                    self.logger.error("POSIX: Diff of %s took too long; "
-                                      "giving up" % filename)
-                else:
-                    self.logger.error("POSIX: Diff took too long; giving up")
-                return False
-        return rv
+    def _diff(self, content1, content2, filename=None):
+        """ Return a unified diff of the two strings """
+
+        fromfile = "%s (on disk)" % filename  if filename else ""
+        tofile = "%s (from bcfg2)" % filename if filename else ""
+        return difflib.unified_diff(content1.split('\n'),
+                                    content2.split('\n'),
+                                    fromfile=fromfile,
+                                    tofile=tofile)
