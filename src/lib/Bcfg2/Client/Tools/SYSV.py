@@ -60,6 +60,8 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
             if pkg.get('simplename'):
                 tmpfile = tempfile.NamedTemporaryFile()
                 self.tmpfiles.append(tmpfile)
+                self.logger.info("Downloading %s%s to %s" % (pkg.get('url'),
+                                 pkg.get('simplename'), tmpfile.name))
                 urlretrieve("%s/%s" % (pkg.get('url'), pkg.get('simplename')),
                             tmpfile.name)
                 pkg.set('_sysv_pkg_path', tmpfile.name)
