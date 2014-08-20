@@ -192,7 +192,7 @@ class POSIXFile(POSIXTool):
                               filename=entry.get("name"))
             if interactive:
                 if diff:
-                    udiff = '\n'.join(l for l in diff)
+                    udiff = '\n'.join(diff)
                     if hasattr(udiff, "decode"):
                         udiff = udiff.decode(Bcfg2.Options.setup.encoding)
                     try:
