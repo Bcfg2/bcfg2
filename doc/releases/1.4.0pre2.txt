@@ -43,6 +43,11 @@ backwards-incompatible user-facing changes
     You can convert your existing decisions using
     ``tools/upgrade/1.4/migrate_decisions.py``.
 
+* Diff output from files sent to the Reports plugin from the client will now be
+  in a unified diff format rather than the previous n-diff format.
+
+  This fixes potentially long client runs when comparing files that have
+  diverged significantly.
 
 deprecated features (will be removed in a future release, likely 1.5)
 ---------------------------------------------------------------------
