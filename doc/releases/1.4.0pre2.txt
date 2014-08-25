@@ -181,3 +181,4 @@ Special thanks to the following contributors for this release
  * Michael Fenn
  * Stéphane Graber
  * Tim Laszlo
+ * Matt Kemp
