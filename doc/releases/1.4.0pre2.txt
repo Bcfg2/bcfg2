@@ -1,16 +1,16 @@
 .. -*- mode: rst -*-
 .. vim: ft=rst
 
-.. _releases-1.4.0pre1:
+.. _releases-1.4.0pre2:
 
-1.4.0pre1
+1.4.0pre2
 =========
 
-The first prerelease for Bcfg2 1.4.0 is now available at:
+The second prerelease for Bcfg2 1.4.0 is now available at:
 
  ftp://ftp.mcs.anl.gov/pub/bcfg
 
-Bcfg2 1.4.0pre1 is a prerelease, and contains many new features,
+Bcfg2 1.4.0pre2 is a prerelease, and contains many new features,
 including some that are backwards-incompatible with Bcfg2 1.3.x and
 earlier. Please read the release notes thoroughly. This is a prerelease
 and as such is not likely suitable for general production deployment.
