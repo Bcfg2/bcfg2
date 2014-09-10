@@ -78,7 +78,7 @@ def close_db_connection(func):
         if self._database_available:  # pylint: disable=W0212
             from django import db
             self.logger.debug("%s: Closing database connection" %
-                              threading.current_thread().name)
+                              threading.current_thread().getName())
             db.close_connection()
         return rv
 
