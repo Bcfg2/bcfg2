@@ -367,10 +367,11 @@ class DjangoORM(StorageBase):
         """Import the data into the backend"""
 
         try:
-            self._import_interaction(interaction)
-        except:
-            self.logger.error("Failed to import interaction: %s" %
-                    traceback.format_exc().splitlines()[-1])
+            try:
+                self._import_interaction(interaction)
+            except:
+                self.logger.error("Failed to import interaction: %s" %
+                        traceback.format_exc().splitlines()[-1])
         finally:
             self.logger.debug("%s: Closing database connection" %
                               self.__class__.__name__)
