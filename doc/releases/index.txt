@@ -7,4 +7,5 @@
 Release Announcements
 =====================
 
+.. include:: 1.3.5.txt
 .. include:: 1.3.4.txt
