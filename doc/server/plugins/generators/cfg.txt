@@ -287,7 +287,7 @@ Several variables are pre-defined inside templates:
 |             | ``source_path``.  In Cheetah templates and Jinja2      |
 |             | templates, it's a synonym for ``name``.  For this      |
 |             | reason, use of ``path`` is discouraged, and it may be  |
-|             | deprecated in a future release.                                               |
+|             | deprecated in a future release.                        |
 +-------------+--------------------------------------------------------+
 
 To access these variables in a Genshi template, you can simply use the
