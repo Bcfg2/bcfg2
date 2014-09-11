@@ -9,6 +9,7 @@ from Bcfg2.Server.Plugins.Cfg.CfgPlaintextGenerator \
     import CfgPlaintextGenerator
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
 from Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator import CfgCheetahGenerator
+from Bcfg2.Server.Plugins.Cfg.CfgJinja2Generator import CfgJinja2Generator
 from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
 
 
@@ -75,6 +76,14 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
             cf=("Comments", "cheetah_comments"),
             type=Bcfg2.Options.Types.comma_list, default=[],
             help="Required comments for Cheetah-templated Cfg files"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "jinja2_keywords"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required keywords for Jinja2-templated Cfg files"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "jinja2_comments"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required comments for Jinja2-templated Cfg files"),
         Bcfg2.Options.Option(
             cf=("Comments", "infoxml_keywords"),
             type=Bcfg2.Options.Types.comma_list, default=[],
@@ -235,6 +244,8 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                         rtype = "cfg"
                     elif isinstance(entry, CfgCheetahGenerator):
                         rtype = "cheetah"
+                    elif isinstance(entry, CfgJinja2Generator):
+                        rtype = "jinja2"
                     elif isinstance(entry, CfgInfoXML):
                         self.check_xml(entry.infoxml.name,
                                        entry.infoxml.pnode.data,

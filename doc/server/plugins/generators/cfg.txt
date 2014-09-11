@@ -30,8 +30,8 @@ in ``Cfg/etc/passwd/passwd``, while the ssh pam module config file,
 ``/etc/pam.d/sshd``, goes in ``Cfg/etc/pam.d/sshd/sshd``. The reason for
 the like-name directory is to allow multiple versions of each file to
 exist, as described below. Note that these files are exact copies of what
-will appear on the client machine (except when using Genshi or Cheetah
-templating -- see below).
+will appear on the client machine (except when using templates -- see 
+below).
 
 Group-Specific Files
 ====================
@@ -242,6 +242,27 @@ comment to appear in the final config file.::
     # This is a comment in my template which will be stripped when it's processed through Cheetah
     \# This comment will appear in the generated config file.
 
+.. _server-plugins-generators-cfg-jinja2:
+
+Jinja2 Templates
+-----------------
+
+Jinja2 templates allow you to use the `jinja2 templating system
+<http://jinja.pocoo.org/>`_.  Jinja2 templates should be
+named with a ``.jinja2`` extension, e.g.::
+
+    % ls Cfg/etc/motd
+    info.xml  motd.jinja2
+
+Examples
+~~~~~~~~
+
+.. toctree::
+   :glob:
+   :maxdepth: 1
+
+   examples/jinja2/*
+
 Inside Templates
 ----------------
 
@@ -263,16 +284,20 @@ Several variables are pre-defined inside templates:
 | repo        | The path to the Bcfg2 repository on the filesystem     |
 +-------------+--------------------------------------------------------+
 | path        | In Genshi templates, ``path`` is a synonym for         |
-|             | ``source_path``.  In Cheetah templates, it's a synonym |
-|             | for ``name``.  For this reason, use of ``path`` is     |
-|             | discouraged, and it may be deprecated in a future      |
-|             | release.                                               |
+|             | ``source_path``.  In Cheetah templates and Jinja2      |
+|             | templates, it's a synonym for ``name``.  For this      |
+|             | reason, use of ``path`` is discouraged, and it may be  |
+|             | deprecated in a future release.                                               |
 +-------------+--------------------------------------------------------+
 
 To access these variables in a Genshi template, you can simply use the
 name, e.g.::
 
     Path to this file: ${name}
+
+Similarly, in a Jinja2 template::
+
+	Path to this file: {{ name }}
 
 In a Cheetah template, the variables are properties of ``self``,
 e.g.::
@@ -283,15 +308,15 @@ Notes on Using Templates
 ------------------------
 
 Templates can be host and group specific as well.  Deltas will not be
-processed for any Genshi or Cheetah base file.
+processed for any Genshi, Cheetah, or Jinja2 base file.
 
 .. note::
 
     If you are using templating in combination with host-specific
     or group-specific files, you will need to ensure that the ``.genshi``
-    or ``.cheetah`` extension is at the **end** of the filename. Using the
-    examples from above for *host.example.com* and group *server* you would
-    have the following::
+    ``.cheetah`` or ``.jinja2`` extension is at the **end** of the filename. 
+    Using the examples from above for *host.example.com* and group *server*
+    you would have the following::
 
         Cfg/etc/fstab/fstab.H_host.example.com.genshi
         Cfg/etc/fstab/fstab.G50_server.cheetah
@@ -345,7 +370,7 @@ An encrypted file should end with ``.crypt``, e.g.::
     Cfg/etc/foo.conf/foo.conf.crypt
     Cfg/etc/foo.conf/foo.conf.G10_foo.crypt
 
-Encrypted Genshi or Cheetah templates can have the extensions in
+Encrypted Genshi, Cheetah, and Jinja2 templates can have the extensions in
 either order, e.g.::
 
     Cfg/etc/foo.conf/foo.conf.crypt.genshi

@@ -1,0 +1,53 @@
+.. -*- mode: rst -*-
+
+=========================
+ Basic Jinja2 Templates
+=========================
+
+This simple example demonstrates basic usage of Jinja2 templates.
+
+``/var/lib/bcfg2/Cfg/foo/foo.jinja2``
+
+.. code-block:: none
+
+    Hostname is {{ metadata.hostname }}
+    Filename is {{ path }}
+    Template is {{ source_path }}
+    Groups:
+    {% for group in metadata.groups -%}
+     * {{ group }}
+    {% endfor %}
+    Categories:
+    {% for category in metadata.categories -%}
+     * {{ category }} -- {{ metadata.categories[category] }}
+    {% endfor %}
+
+    Probes:
+    {% for probe in metadata.Probes -%}
+     * {{ probe }} -- {{ metadata.Probes[probe] }}
+    {% endfor %}
+
+Output
+======
+
+.. code-block:: xml
+
+    <Path type="file" name="/foo" owner="root" mode="0644" group="root">
+    Hostname is topaz.mcs.anl.gov
+    Filename is /foo
+    Template is /var/lib/bcfg2/Cfg/foo/foo.jinja2
+    Groups:
+     * desktop
+     * mcs-base
+     * ypbound
+     * workstation
+     * xserver
+     * debian-sarge
+     * debian
+     * a
+    Categories:
+     * test -- a
+
+    Probes:
+     * os -- debian
+    </Path>

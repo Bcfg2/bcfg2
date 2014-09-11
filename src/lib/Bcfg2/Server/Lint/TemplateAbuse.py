@@ -8,16 +8,20 @@ from Bcfg2.Server.Plugin import default_path_metadata
 from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
 from Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator import CfgCheetahGenerator
+from Bcfg2.Server.Plugins.Cfg.CfgJinja2Generator import CfgJinja2Generator
 from Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenshiGenerator import \
     CfgEncryptedGenshiGenerator
 from Bcfg2.Server.Plugins.Cfg.CfgEncryptedCheetahGenerator import \
     CfgEncryptedCheetahGenerator
+from Bcfg2.Server.Plugins.Cfg.CfgEncryptedJinja2Generator import \
+    CfgEncryptedJinja2Generator
 
 
 class TemplateAbuse(Bcfg2.Server.Lint.ServerPlugin):
     """ Check for templated scripts or executables. """
-    templates = [CfgGenshiGenerator, CfgCheetahGenerator,
-                 CfgEncryptedGenshiGenerator, CfgEncryptedCheetahGenerator]
+    templates = [CfgGenshiGenerator, CfgCheetahGenerator, CfgJinja2Generator,
+                 CfgEncryptedGenshiGenerator, CfgEncryptedCheetahGenerator,
+                 CfgEncryptedJinja2Generator]
     extensions = [".pl", ".py", ".sh", ".rb"]
 
     def Run(self):

@@ -64,9 +64,11 @@ Generators
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgPlaintextGenerator.CfgPlaintextGenerator
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator.CfgGenshiGenerator
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator.CfgCheetahGenerator
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgJinja2Generator.CfgJinja2Generator
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenerator.CfgEncryptedGenerator
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEncryptedGenshiGenerator.CfgEncryptedGenshiGenerator
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEncryptedCheetahGenerator.CfgEncryptedCheetahGenerator
+.. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgEncryptedJinja2Generator.CfgEncryptedJinja2Generator
 .. autoclass:: Bcfg2.Server.Plugins.Cfg.CfgAuthorizedKeysGenerator.CfgAuthorizedKeysGenerator
 
 Creators

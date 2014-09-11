@@ -38,6 +38,7 @@ contingent_checks = {
     ("yum",): {"lib/Bcfg2/Client/Tools": ["YUM.py"]},
     ("genshi",): {"lib/Bcfg2/Server/Plugins/Cfg": ["CfgGenshiGenerator.py"]},
     ("Cheetah",): {"lib/Bcfg2/Server/Plugins/Cfg": ["CfgCheetahGenerator.py"]},
+    ("jinja2",): {"lib/Bcfg2/Server/Plugins/Cfg": ["CfgJinja2Generator.py"]},
     ("M2Crypto",): {"lib/Bcfg2": ["Encryption.py"],
                     "lib/Bcfg2/Server/Plugins/Cfg":
                         ["CfgEncryptedGenerator.py"]},
@@ -45,6 +46,8 @@ contingent_checks = {
                                  ["CfgEncryptedGenshiGenerator.py"]},
     ("M2Crypto", "Cheetah"): {"lib/Bcfg2/Server/Plugins/Cfg":
                                   ["CfgEncryptedCheetahGenerator.py"]},
+    ("M2Crypto", "jinja2"): {"lib/Bcfg2/Server/Plugins/Cfg":
+                                  ["CfgEncryptedJinja2Generator.py"]},
     }
 
 # perform only error checking on the listed files

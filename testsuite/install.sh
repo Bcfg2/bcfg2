@@ -11,7 +11,7 @@ if [[ ${PYVER:0:1} == "2" && $PYVER != "2.7" ]]; then
 fi
 
 if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
-    pip install --use-mirrors PyYAML pyinotify boto pylibacl 'django<1.5'
+    pip install --use-mirrors PyYAML pyinotify boto pylibacl 'django<1.5' Jinja2
     easy_install https://fedorahosted.org/released/python-augeas/python-augeas-0.4.1.tar.gz
     if [[ ${PYVER:0:1} == "2" ]]; then
         # django supports py3k, but South doesn't, and the django bits
