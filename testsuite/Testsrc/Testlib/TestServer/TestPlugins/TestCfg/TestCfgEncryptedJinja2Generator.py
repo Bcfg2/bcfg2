@@ -30,18 +30,17 @@ except ImportError:
     HAS_CRYPTO = False
 
 
-if can_skip or (HAS_CRYPTO and HAS_JINJA2):
-    class TestCfgEncryptedJinja2Generator(TestCfgJinja2Generator,
-                                           TestCfgEncryptedGenerator):
-        test_obj = CfgEncryptedJinja2Generator
+class TestCfgEncryptedJinja2Generator(TestCfgJinja2Generator,
+                                       TestCfgEncryptedGenerator):
+    test_obj = CfgEncryptedJinja2Generator
 
-        @skipUnless(HAS_CRYPTO, "Encryption libraries not found, skipping")
-        @skipUnless(HAS_JINJA2, "Jinja2 libraries not found, skipping")
-        def setUp(self):
-            pass
+    @skipUnless(HAS_CRYPTO, "Encryption libraries not found, skipping")
+    @skipUnless(HAS_JINJA2, "Jinja2 libraries not found, skipping")
+    def setUp(self):
+        pass
 
-        def test_handle_event(self):
-            TestCfgEncryptedGenerator.test_handle_event(self)
+    def test_handle_event(self):
+        TestCfgEncryptedGenerator.test_handle_event(self)
 
-        def test_get_data(self):
-            TestCfgJinja2Generator.test_get_data(self)
+    def test_get_data(self):
+        TestCfgJinja2Generator.test_get_data(self)
