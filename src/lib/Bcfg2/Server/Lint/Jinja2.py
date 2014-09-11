@@ -29,7 +29,7 @@ class Jinja2(Bcfg2.Server.Lint.ServerPlugin):
         except:
             err = sys.exc_info()[1]
             self.LintError("unknown-jinja2-error",
-                           "Unknown Jinja2 error in %s: %s" % (entry.name, 
+                           "Unknown Jinja2 error in %s: %s" % (entry.name,
                                                                err))
 
     def check_cfg(self):
