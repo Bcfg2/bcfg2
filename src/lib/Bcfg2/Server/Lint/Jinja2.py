@@ -19,7 +19,7 @@ class Jinja2(Bcfg2.Server.Lint.ServerPlugin):
                 "unknown-jinja2-error": "error"}
 
     def check_template(self, entry):
-        """ Generic check for all jinja2 templates (XML and text) """
+        """ Generic check for all jinja2 templates """
         try:
             Template(entry.data.decode(entry.encoding))
         except TemplateSyntaxError:
