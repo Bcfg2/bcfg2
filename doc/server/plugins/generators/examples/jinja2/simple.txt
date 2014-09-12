@@ -11,7 +11,7 @@ This simple example demonstrates basic usage of Jinja2 templates.
 .. code-block:: none
 
     Hostname is {{ metadata.hostname }}
-    Filename is {{ path }}
+    Filename is {{ name }}
     Template is {{ source_path }}
     Groups:
     {% for group in metadata.groups -%}
