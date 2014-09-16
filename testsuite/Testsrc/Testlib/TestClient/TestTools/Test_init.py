@@ -21,6 +21,7 @@ from common import *
 class TestTool(Bcfg2TestCase):
     test_obj = Tool
 
+    # try to find true
     if os.path.exists("/bin/true"):
         true = "/bin/true"
     elif os.path.exists("/usr/bin/true"):
