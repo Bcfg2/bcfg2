@@ -38,9 +38,11 @@ def comma_dict(value):
         for item in items:
             if '=' in item:
                 key, value = item.split(r'=', 1)
-                try:
-                    result[key] = bool(value)
-                except ValueError:
+                if value in ["true", "yes", "on"]:
+                    result[key] = True
+                elif value in ["false", "no", "off"]:
+                    result[key] = False
+                else:
                     try:
                         result[key] = int(value)
                     except ValueError:
@@ -107,8 +109,6 @@ def size(value):
     """ Given a number of bytes in a human-readable format (e.g.,
     '512m', '2g'), get the absolute number of bytes as an integer.
     """
-    if value == -1:
-        return value
     mat = _bytes_re.match(value)
     if not mat:
         raise ValueError("Not a valid size", value)

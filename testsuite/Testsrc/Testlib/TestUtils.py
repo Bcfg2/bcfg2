@@ -1,9 +1,5 @@
 import os
 import sys
-import copy
-import lxml.etree
-import subprocess
-from mock import Mock, MagicMock, patch
 from Bcfg2.Utils import *
 
 # add all parent testsuite directories to sys.path to allow (most)

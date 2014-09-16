@@ -10,7 +10,7 @@ __all__ = ["OptionGroup", "ExclusiveOptionGroup", "Subparser",
            "WildcardSectionGroup"]
 
 
-class OptionContainer(list):
+class _OptionContainer(list):
     """ Parent class of all option groups """
 
     def list_options(self):
@@ -29,7 +29,7 @@ class OptionContainer(list):
             opt.add_to_parser(parser)
 
 
-class OptionGroup(OptionContainer):
+class OptionGroup(_OptionContainer):
     """ Generic option group that is used only to organize options.
     This uses :meth:`argparse.ArgumentParser.add_argument_group`
     behind the scenes. """
@@ -43,16 +43,16 @@ class OptionGroup(OptionContainer):
         :param description: A longer description of the option group
         :param description: string
         """
-        OptionContainer.__init__(self, items)
+        _OptionContainer.__init__(self, items)
         self.title = kwargs.pop('title')
         self.description = kwargs.pop('description', None)
 
     def add_to_parser(self, parser):
         group = parser.add_argument_group(self.title, self.description)
-        OptionContainer.add_to_parser(self, group)
+        _OptionContainer.add_to_parser(self, group)
 
 
-class ExclusiveOptionGroup(OptionContainer):
+class ExclusiveOptionGroup(_OptionContainer):
     """ Option group that ensures that only one argument in the group
     is present.  This uses
     :meth:`argparse.ArgumentParser.add_mutually_exclusive_group`
@@ -66,15 +66,15 @@ class ExclusiveOptionGroup(OptionContainer):
                          specified.
         :type required: boolean
         """
-        OptionContainer.__init__(self, items)
+        _OptionContainer.__init__(self, items)
         self.required = kwargs.pop('required', False)
 
     def add_to_parser(self, parser):
         group = parser.add_mutually_exclusive_group(required=self.required)
-        OptionContainer.add_to_parser(self, group)
+        _OptionContainer.add_to_parser(self, group)
 
 
-class Subparser(OptionContainer):
+class Subparser(_OptionContainer):
     """ Option group that adds options in it to a subparser.  This
     uses a lot of functionality tied to `argparse Sub-commands
     <http://docs.python.org/dev/library/argparse.html#sub-commands>`_.
@@ -99,7 +99,7 @@ class Subparser(OptionContainer):
         """
         self.name = kwargs.pop('name')
         self.help = kwargs.pop('help', None)
-        OptionContainer.__init__(self, items)
+        _OptionContainer.__init__(self, items)
 
     def __repr__(self):
         return "%s %s(%s)" % (self.__class__.__name__,
@@ -111,11 +111,11 @@ class Subparser(OptionContainer):
             self._subparsers[parser] = parser.add_subparsers(dest='subcommand')
         subparser = self._subparsers[parser].add_parser(self.name,
                                                         help=self.help)
-        OptionContainer.add_to_parser(self, subparser)
+        _OptionContainer.add_to_parser(self, subparser)
 
 
-class WildcardSectionGroup(OptionContainer, Option):
-    """ WildcardSectionGroups contain options that may exist in
+class WildcardSectionGroup(_OptionContainer, Option):
+    """WildcardSectionGroups contain options that may exist in
     several different sections of the config that match a glob.  It
     works by creating options on the fly to match the sections
     described in the glob.  For example, consider:
@@ -134,7 +134,7 @@ class WildcardSectionGroup(OptionContainer, Option):
     .. code-block:: python
 
         >>> Bcfg2.Options.setup
-        Namespace(myplugin_bar_description='Bar description', myplugin_bar_number=2, myplugin_foo_description='Foo description', myplugin_foo_number=1, myplugin_sections=['myplugin:foo', 'myplugin:bar'])
+        Namespace(myplugin_bar_description='Bar description', myplugin_myplugin_bar_number=2, myplugin_myplugin_foo_description='Foo description', myplugin_myplugin_foo_number=1, myplugin_sections=['myplugin:foo', 'myplugin:bar'])
 
     All options must have the same section glob.
 
@@ -146,10 +146,10 @@ class WildcardSectionGroup(OptionContainer, Option):
     ``<destination>`` is the original `dest
     <http://docs.python.org/dev/library/argparse.html#dest>`_ of the
     option. ``<section>`` is the section that it's found in.
-    ``<prefix>`` is automatically generated from the section glob by
-    replacing all consecutive characters disallowed in Python variable
-    names into underscores.  (This can be overridden with the
-    constructor.)
+    ``<prefix>`` is automatically generated from the section glob.
+    (This can be overridden with the constructor.)  Both ``<section>``
+    and ``<prefix>`` have had all consecutive characters disallowed in
+    Python variable names replaced with underscores.
 
     This group stores an additional option, the sections themselves,
     in an option given by ``<prefix>sections``.
@@ -171,17 +171,17 @@ class WildcardSectionGroup(OptionContainer, Option):
                      that match the glob.
         :param dest: string
         """
-        OptionContainer.__init__(self, [])
+        _OptionContainer.__init__(self, [])
         self._section_glob = items[0].cf[0]
         # get a default destination
         self._prefix = kwargs.get("prefix",
                                   self._dest_re.sub('_', self._section_glob))
         Option.__init__(self, dest=kwargs.get('dest',
                                               self._prefix + "sections"))
-        self._options = items
+        self.option_templates = items
 
     def list_options(self):
-        return [self] + OptionContainer.list_options(self)
+        return [self] + _OptionContainer.list_options(self)
 
     def from_config(self, cfp):
         sections = []
@@ -189,10 +189,12 @@ class WildcardSectionGroup(OptionContainer, Option):
             if fnmatch.fnmatch(section, self._section_glob):
                 sections.append(section)
                 newopts = []
-                for opt_tmpl in self._options:
+                for opt_tmpl in self.option_templates:
                     option = copy.deepcopy(opt_tmpl)
                     option.cf = (section, option.cf[1])
-                    option.dest = self._prefix + section + "_" + option.dest
+                    option.dest = "%s%s_%s" % (self._prefix,
+                                               self._dest_re.sub('_', section),
+                                               option.dest)
                     newopts.append(option)
                 self.extend(newopts)
                 for parser in self.parsers:
@@ -201,4 +203,17 @@ class WildcardSectionGroup(OptionContainer, Option):
 
     def add_to_parser(self, parser):
         Option.add_to_parser(self, parser)
-        OptionContainer.add_to_parser(self, parser)
+        _OptionContainer.add_to_parser(self, parser)
+
+    def __eq__(self, other):
+        return (_OptionContainer.__eq__(self, other) and
+                self.option_templates == getattr(other, "option_templates",
+                                                 None))
+
+    def __repr__(self):
+        if len(self) == 0:
+            return "%s(%s)" % (self.__class__.__name__,
+                               ", ".join(".".join(o.cf)
+                                         for o in self.option_templates))
+        else:
+            return _OptionContainer.__repr__(self)
