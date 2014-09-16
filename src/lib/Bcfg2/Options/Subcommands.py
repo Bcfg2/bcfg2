@@ -7,12 +7,13 @@ import sys
 import copy
 import shlex
 import logging
+
 from Bcfg2.Compat import StringIO
-from Bcfg2.Options import PositionalArgument
+from Bcfg2.Options import PositionalArgument, _debug
 from Bcfg2.Options.OptionGroups import Subparser
 from Bcfg2.Options.Parser import Parser, setup as master_setup
 
-__all__ = ["Subcommand", "HelpCommand", "CommandRegistry", "register_commands"]
+__all__ = ["Subcommand", "CommandRegistry"]
 
 
 class Subcommand(object):
@@ -96,8 +97,8 @@ class Subcommand(object):
             sio = StringIO()
             self.parser.print_usage(file=sio)
             usage = self._ws_re.sub(' ', sio.getvalue()).strip()[7:]
-            doc = self._ws_re.sub(' ', getattr(self, "__doc__")).strip()
-            if doc is None:
+            doc = self._ws_re.sub(' ', getattr(self, "__doc__") or "").strip()
+            if not doc:
                 self._usage = usage
             else:
                 self._usage = "%s - %s" % (usage, doc)
@@ -119,120 +120,130 @@ class Subcommand(object):
                       command from the interactive shell.
         :type setup: argparse.Namespace
         """
-        raise NotImplementedError
+        raise NotImplementedError  # pragma: nocover
 
     def shutdown(self):
-        """ Perform any necessary shtudown tasks for this command This
+        """ Perform any necessary shutdown tasks for this command This
         is called to when the program exits (*not* when this command
         is finished executing). """
-        pass
+        pass  # pragma: nocover
 
 
-class HelpCommand(Subcommand):
-    """ Get help on a specific subcommand.  This must be subclassed to
-    create the actual help command by overriding
-    :func:`Bcfg2.Options.HelpCommand.command_registry` and giving the
-    command access to a :class:`Bcfg2.Options.CommandRegistry`. """
+class Help(Subcommand):
+    """List subcommands and usage, or get help on a specific subcommand."""
     options = [PositionalArgument("command", nargs='?')]
 
     # the interactive shell has its own help
     interactive = False
 
-    def command_registry(self):
-        """ Return a :class:`Bcfg2.Options.CommandRegistry` class.
-        All commands registered with the class will be included in the
-        help message. """
-        raise NotImplementedError
+    def __init__(self, registry):
+        Subcommand.__init__(self)
+        self._registry = registry
 
     def run(self, setup):
-        commands = self.command_registry()
+        commands = self._registry.commands
         if setup.command:
             try:
                 commands[setup.command].parser.print_help()
                 return 0
             except KeyError:
                 print("No such command: %s" % setup.command)
+                return 1
         for command in sorted(commands.keys()):
             print(commands[command].usage())
 
 
 class CommandRegistry(object):
-    """ A ``CommandRegistry`` is used to register subcommands and
-    provides a single interface to run them.  It's also used by
-    :class:`Bcfg2.Options.HelpCommand` to produce help messages for
-    all available commands. """
+    """A ``CommandRegistry`` is used to register subcommands and provides
+    a single interface to run them.  It's also used by
+    :class:`Bcfg2.Options.Subcommands.Help` to produce help messages
+    for all available commands.
+    """
 
-    #: A dict of registered commands.  Keys are the class names,
-    #: lowercased (i.e., the command names), and values are instances
-    #: of the command objects.
-    commands = dict()
+    def __init__(self):
+        #: A dict of registered commands.  Keys are the class names,
+        #: lowercased (i.e., the command names), and values are instances
+        #: of the command objects.
+        self.commands = dict()
 
-    options = []
+        #: A list of options that should be added to the option parser
+        #: in order to handle registered subcommands.
+        self.subcommand_options = []
+
+        #: the help command
+        self.help = Help(self)
+        self.register_command(self.help)
 
     def runcommand(self):
         """ Run the single command named in
         ``Bcfg2.Options.setup.subcommand``, which is where
         :class:`Bcfg2.Options.Subparser` groups store the
         subcommand. """
+        _debug("Running subcommand %s" % master_setup.subcommand)
         try:
             return self.commands[master_setup.subcommand].run(master_setup)
         finally:
             self.shutdown()
 
     def shutdown(self):
-        """ Perform shutdown tasks.  This calls the ``shutdown``
-        method of all registered subcommands. """
+        """Perform shutdown tasks.
+
+        This calls the ``shutdown`` method of the subcommand that was
+        run.
+        """
+        _debug("Shutting down subcommand %s" % master_setup.subcommand)
         self.commands[master_setup.subcommand].shutdown()
 
-    @classmethod
-    def register_command(cls, cmdcls):
+    def register_command(self, cls_or_obj):
         """ Register a single command.
 
-        :param cmdcls: The command class to register
-        :type cmdcls: type
+        :param cls_or_obj: The command class or object to register
+        :type cls_or_obj: type or Subcommand
         :returns: An instance of ``cmdcls``
         """
-        cmd_obj = cmdcls()
+        if isinstance(cls_or_obj, type):
+            cmdcls = cls_or_obj
+            cmd_obj = cmdcls()
+        else:
+            cmd_obj = cls_or_obj
+            cmdcls = cmd_obj.__class__
         name = cmdcls.__name__.lower()
-        cls.commands[name] = cmd_obj
+        self.commands[name] = cmd_obj
         # py2.5 can't mix *magic and non-magical keyword args, thus
         # the **dict(...)
-        cls.options.append(
+        self.subcommand_options.append(
             Subparser(*cmdcls.options, **dict(name=name, help=cmdcls.__doc__)))
-        if issubclass(cls, cmd.Cmd) and cmdcls.interactive:
-            setattr(cls, "do_%s" % name, cmd_obj)
-            setattr(cls, "help_%s" % name, cmd_obj.parser.print_help)
+        if issubclass(self.__class__, cmd.Cmd) and cmdcls.interactive:
+            setattr(self, "do_%s" % name, cmd_obj)
+            setattr(self, "help_%s" % name, cmd_obj.parser.print_help)
         return cmd_obj
 
+    def register_commands(self, candidates, parent=Subcommand):
+        """ Register all subcommands in ``candidates`` against the
+        :class:`Bcfg2.Options.CommandRegistry` subclass given in
+        ``registry``.  A command is registered if and only if:
 
-def register_commands(registry, candidates, parent=Subcommand):
-    """ Register all subcommands in ``candidates`` against the
-    :class:`Bcfg2.Options.CommandRegistry` subclass given in
-    ``registry``.  A command is registered if and only if:
+        * It is a subclass of the given ``parent`` (by default,
+          :class:`Bcfg2.Options.Subcommand`);
+        * It is not the parent class itself; and
+        * Its name does not start with an underscore.
 
-    * It is a subclass of the given ``parent`` (by default,
-      :class:`Bcfg2.Options.Subcommand`);
-    * It is not the parent class itself; and
-    * Its name does not start with an underscore.
-
-    :param registry: The :class:`Bcfg2.Options.CommandRegistry`
-                     subclass against which commands will be
-                     registered.
-    :type registry: Bcfg2.Options.CommandRegistry
-    :param candidates: A list of objects that will be considered for
-                       registration.  Only objects that meet the
-                       criteria listed above will be registered.
-    :type candidates: list
-    :param parent: Specify a parent class other than
-                   :class:`Bcfg2.Options.Subcommand` that all
-                   registered commands must subclass.
-    :type parent: type
-    """
-    for attr in candidates:
-        try:
-            if (issubclass(attr, parent) and
-                attr != parent and
-                not attr.__name__.startswith("_")):
-                registry.register_command(attr)
-        except TypeError:
-            pass
+        :param registry: The :class:`Bcfg2.Options.CommandRegistry`
+                         subclass against which commands will be
+                         registered.
+        :type registry: Bcfg2.Options.CommandRegistry
+        :param candidates: A list of objects that will be considered for
+                           registration.  Only objects that meet the
+                           criteria listed above will be registered.
+        :type candidates: list
+        :param parent: Specify a parent class other than
+                       :class:`Bcfg2.Options.Subcommand` that all
+                       registered commands must subclass.
+        :type parent: type
+        """
+        for attr in candidates:
+            if (isinstance(attr, type) and
+                    issubclass(attr, parent) and
+                    attr != parent and
+                    not attr.__name__.startswith("_")):
+                self.register_command(attr)

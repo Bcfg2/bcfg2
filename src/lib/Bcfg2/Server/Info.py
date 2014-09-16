@@ -123,15 +123,6 @@ class InfoCmd(Bcfg2.Options.Subcommand):  # pylint: disable=W0223
                                   list(self.core.metadata.groups.keys()))
 
 
-class Help(InfoCmd, Bcfg2.Options.HelpCommand):
-    """ Get help on a specific subcommand """
-    def command_registry(self):
-        return self.core.commands
-
-    def run(self, setup):
-        Bcfg2.Options.HelpCommand.run(self, setup)
-
-
 class Debug(InfoCmd):
     """ Shell out to a Python interpreter """
     interpreters, default_interpreter = load_interpreters()
@@ -805,15 +796,12 @@ if HAS_PROFILE:
             display_trace(prof)
 
 
-class InfoCore(cmd.Cmd,
-               Bcfg2.Server.Core.Core,
-               Bcfg2.Options.CommandRegistry):
+class InfoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
     """Main class for bcfg2-info."""
 
     def __init__(self):
         cmd.Cmd.__init__(self)
         Bcfg2.Server.Core.Core.__init__(self)
-        Bcfg2.Options.CommandRegistry.__init__(self)
         self.prompt = 'bcfg2-info> '
 
     def get_locals(self):
@@ -853,16 +841,17 @@ class InfoCore(cmd.Cmd,
         Bcfg2.Server.Core.Core.shutdown(self)
 
 
-class CLI(object):
+class CLI(Bcfg2.Options.CommandRegistry):
     """ The bcfg2-info CLI """
     options = [Bcfg2.Options.BooleanOption("-p", "--profile", help="Profile")]
 
     def __init__(self):
-        Bcfg2.Options.register_commands(InfoCore, globals().values(),
-                                        parent=InfoCmd)
+        Bcfg2.Options.CommandRegistry.__init__(self)
+        self.register_commands(globals().values(), parent=InfoCmd)
         parser = Bcfg2.Options.get_parser(
             description="Inspect a running Bcfg2 server",
             components=[self, InfoCore])
+        parser.add_options(self.subcommand_options)
         parser.parse()
 
         if Bcfg2.Options.setup.profile and HAS_PROFILE:
@@ -874,11 +863,11 @@ class CLI(object):
                 print("Profiling functionality not available.")
             self.core = InfoCore()
 
-        for command in self.core.commands.values():
+        for command in self.commands.values():
             command.core = self.core
 
     def run(self):
         """ Run bcfg2-info """
         if Bcfg2.Options.setup.subcommand != 'help':
             self.core.run()
-        return self.core.runcommand()
+        return self.runcommand()

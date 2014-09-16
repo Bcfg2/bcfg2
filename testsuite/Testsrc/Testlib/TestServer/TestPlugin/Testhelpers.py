@@ -55,6 +55,7 @@ class TestDatabaseBacked(TestPlugin):
     def setUp(self):
         TestPlugin.setUp(self)
         set_setup_default("%s_db" % self.test_obj.__name__.lower(), False)
+        set_setup_default("db_engine", None)
 
     @skipUnless(HAS_DJANGO, "Django not found")
     def test__use_db(self):

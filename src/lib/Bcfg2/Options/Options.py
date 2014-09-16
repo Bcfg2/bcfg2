@@ -1,11 +1,15 @@
-""" The base :class:`Bcfg2.Options.Option` object represents an
-option.  Unlike options in :mod:`argparse`, an Option object does not
-need to be associated with an option parser; it exists on its own."""
+"""Base :class:`Bcfg2.Options.Option` object to represent an option.
 
-import os
+Unlike options in :mod:`argparse`, an Option object does not need to
+be associated with an option parser; it exists on its own.
+"""
+
+import argparse
 import copy
 import fnmatch
-import argparse
+import os
+import sys
+
 from Bcfg2.Options import Types
 from Bcfg2.Compat import ConfigParser
 
@@ -19,8 +23,9 @@ def _debug(msg):
     they're options, after all -- so option parsing verbosity is
     enabled by changing this to True. The verbosity here is primarily
     of use to developers. """
-    if os.environ.get('BCFG2_OPTIONS_DEBUG', '0') == '1':
-        print(msg)
+    if os.environ.get('BCFG2_OPTIONS_DEBUG', '0').lower() in ["true", "yes",
+                                                              "on", "1"]:
+        sys.stderr.write("%s\n" % msg)
 
 
 #: A dict that records a mapping of argparse action name (e.g.,
@@ -133,10 +138,11 @@ class Option(object):
             self._dest = None
             if 'dest' in self._kwargs:
                 self._dest = self._kwargs.pop('dest')
-            elif self.cf is not None:
-                self._dest = self.cf[1]
             elif self.env is not None:
                 self._dest = self.env
+            elif self.cf is not None:
+                self._dest = self.cf[1]
+            self._dest = self._dest.lower().replace("-", "_")
             kwargs = copy.copy(self._kwargs)
             kwargs.pop("action", None)
             self.actions[None] = action_cls(self._dest, self._dest, **kwargs)
@@ -175,6 +181,17 @@ class Option(object):
                     _debug("Finalizing %s" % self)
                 action.finalize(parser, namespace)
 
+    @property
+    def _type_func(self):
+        """get a function for converting a value to the option type.
+
+        this always returns a callable, even when ``type`` is None.
+        """
+        if self.type:
+            return self.type
+        else:
+            return lambda x: x
+
     def from_config(self, cfp):
         """ Get the value of this option from the given
         :class:`ConfigParser.ConfigParser`.  If it is not found in the
@@ -201,20 +218,32 @@ class Option(object):
                                                    self.cf[1])
                            if o not in exclude])
             else:
-                rv = dict()
+                rv = {}
         else:
-            if self.type:
-                rtype = self.type
-            else:
-                rtype = lambda x: x
             try:
-                rv = rtype(cfp.getboolean(*self.cf))
-            except ValueError:
-                rv = rtype(cfp.get(*self.cf))
+                rv = self._type_func(self.get_config_value(cfp))
             except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
                 rv = None
         _debug("Setting %s from config file(s): %s" % (self, rv))
         return rv
+
+    def get_config_value(self, cfp):
+        """fetch a value from the config file.
+
+        This is passed the config parser. Its result is passed to the
+        type function for this option. It can be overridden to, e.g.,
+        handle boolean options.
+        """
+        return cfp.get(*self.cf)
+
+    def get_environ_value(self, value):
+        """fetch a value from the environment.
+
+        This is passed the raw value from the environment variable,
+        and its result is passed to the type function for this
+        option. It can be overridden to, e.g., handle boolean options.
+        """
+        return value
 
     def default_from_config(self, cfp):
         """ Set the default value of this option from the config file
@@ -224,7 +253,8 @@ class Option(object):
         :type cfp: ConfigParser.ConfigParser
         """
         if self.env and self.env in os.environ:
-            self.default = os.environ[self.env]
+            self.default = self._type_func(
+                self.get_environ_value(os.environ[self.env]))
             _debug("Setting the default of %s from environment: %s" %
                    (self, self.default))
         else:
@@ -256,6 +286,13 @@ class Option(object):
         self._dest = value
         for action in self.actions.values():
             action.dest = value
+
+    def early_parsing_hook(self, early_opts):  # pylint: disable=C0111
+        """Hook called at the end of early option parsing.
+
+        This can be used to save option values for macro fixup.
+        """
+        pass
 
     #: The namespace destination of this option (see `dest
     #: <http://docs.python.org/dev/library/argparse.html#dest>`_)
@@ -289,8 +326,8 @@ class PathOption(Option):
     :meth:`Bcfg2.Options.Types.path` to transform the argument into a
     canonical path.
 
-    The type of a path option can also be overridden to return an
-    option file-like object.  For example:
+    The type of a path option can also be overridden to return a
+    file-like object. For example:
 
     .. code-block:: python
 
@@ -301,27 +338,52 @@ class PathOption(Option):
     """
 
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault('type', Types.path)
+        self._original_type = kwargs.pop('type', lambda x: x)
+        kwargs['type'] = self._type
         kwargs.setdefault('metavar', '<path>')
         Option.__init__(self, *args, **kwargs)
+        self.repository = None
+
+    def early_parsing_hook(self, early_opts):
+        self.repository = early_opts.repository
+
+    def _type(self, value):
+        """Type function that fixes up <repository> macros."""
+        if self.repository is None:
+            rv = value
+        else:
+            rv = value.replace("<repository>", self.repository)
+        return self._original_type(Types.path(rv))
 
 
 class _BooleanOptionAction(argparse.Action):
-    """ BooleanOptionAction sets a boolean value in the following ways:
+    """BooleanOptionAction sets a boolean value.
+
     - if None is passed, store the default
     - if the option_string is not None, then the option was passed on the
       command line, thus store the opposite of the default (this is the
       argparse store_true and store_false behavior)
     - if a boolean value is passed, use that
 
+    Makes a copy of the initial default, because otherwise the default
+    can be changed by config file settings or environment
+    variables. For instance, if a boolean option that defaults to True
+    was set to False in the config file, specifying the option on the
+    CLI would then set it back to True.
+
     Defined here instead of :mod:`Bcfg2.Options.Actions` because otherwise
-    there is a circular import Options -> Actions -> Parser -> Options """
+    there is a circular import Options -> Actions -> Parser -> Options.
+    """
+
+    def __init__(self, *args, **kwargs):
+        argparse.Action.__init__(self, *args, **kwargs)
+        self.original = self.default
 
     def __call__(self, parser, namespace, values, option_string=None):
         if values is None:
             setattr(namespace, self.dest, self.default)
         elif option_string is not None:
-            setattr(namespace, self.dest, not self.default)
+            setattr(namespace, self.dest, not self.original)
         else:
             setattr(namespace, self.dest, bool(values))
 
@@ -340,8 +402,24 @@ class BooleanOption(Option):
         kwargs.setdefault('action', _BooleanOptionAction)
         kwargs.setdefault('nargs', 0)
         kwargs.setdefault('default', False)
-
         Option.__init__(self, *args, **kwargs)
+
+    def get_environ_value(self, value):
+        if value.lower() in ["false", "no", "off", "0"]:
+            return False
+        elif value.lower() in ["true", "yes", "on", "1"]:
+            return True
+        else:
+            raise ValueError("Invalid boolean value %s" % value)
+
+    def get_config_value(self, cfp):
+        """fetch a value from the config file.
+
+        This is passed the config parser. Its result is passed to the
+        type function for this option. It can be overridden to, e.g.,
+        handle boolean options.
+        """
+        return cfp.getboolean(*self.cf)
 
 
 class PositionalArgument(Option):

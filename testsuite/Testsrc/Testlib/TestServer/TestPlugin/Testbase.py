@@ -22,6 +22,7 @@ class TestPlugin(TestDebuggable):
     def setUp(self):
         TestDebuggable.setUp(self)
         set_setup_default("filemonitor", MagicMock())
+        set_setup_default("repository", datastore)
 
     def get_obj(self, core=None):
         if core is None:

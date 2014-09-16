@@ -267,10 +267,11 @@ class CLI(Bcfg2.Options.CommandRegistry):
 
     def __init__(self):
         Bcfg2.Options.CommandRegistry.__init__(self)
-        Bcfg2.Options.register_commands(self.__class__, globals().values())
+        self.register_commands(globals().values())
         parser = Bcfg2.Options.get_parser(
             description="Query the Bcfg2 reporting subsystem",
             components=[self])
+        parser.add_options(self.subcommand_options)
         parser.parse()
 
     def run(self):

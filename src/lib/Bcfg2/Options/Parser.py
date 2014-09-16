@@ -1,13 +1,15 @@
-""" The option parser """
+"""The option parser."""
 
+import argparse
 import os
 import sys
-import argparse
+
 from Bcfg2.version import __version__
 from Bcfg2.Compat import ConfigParser
 from Bcfg2.Options import Option, PathOption, BooleanOption, _debug
 
-__all__ = ["setup", "OptionParserException", "Parser", "get_parser"]
+__all__ = ["setup", "OptionParserException", "Parser", "get_parser",
+           "new_parser"]
 
 
 #: The repository option.  This is specified here (and imported into
@@ -108,13 +110,28 @@ class Parser(argparse.ArgumentParser):
             for component in components:
                 self.add_component(component)
 
+    def _check_duplicate_cf(self, option):
+        """Check for a duplicate config file option."""
+
     def add_options(self, options):
         """ Add an explicit list of options to the parser.  When
         possible, prefer :func:`Bcfg2.Options.Parser.add_component` to
         add a whole component instead."""
+        _debug("Adding options: %s" % options)
         self.parsed = False
         for option in options:
             if option not in self.option_list:
+                # check for duplicates
+                if (hasattr(option, "env") and option.env and
+                        option.env in [o.env for o in self.option_list]):
+                    raise OptionParserException(
+                        "Duplicate environment variable option: %s" %
+                        option.env)
+                if (hasattr(option, "cf") and option.cf and
+                        option.cf in [o.cf for o in self.option_list]):
+                    raise OptionParserException(
+                        "Duplicate config file option: %s" % (option.cf,))
+
                 self.option_list.extend(option.list_options())
                 option.add_to_parser(self)
 
@@ -169,8 +186,8 @@ class Parser(argparse.ArgumentParser):
         _debug("Resetting namespace")
         for attr in dir(self.namespace):
             if (not attr.startswith("_") and
-                attr not in ['uri', 'version', 'name'] and
-                attr not in self._config_files):
+                    attr not in ['uri', 'version', 'name'] and
+                    attr not in self._config_files):
                 _debug("Deleting %s" % attr)
                 delattr(self.namespace, attr)
 
@@ -210,7 +227,7 @@ class Parser(argparse.ArgumentParser):
         """
         _debug("Parsing options")
         if argv is None:
-            argv = sys.argv[1:]
+            argv = sys.argv[1:]  # pragma: nocover
         if self.parsed and self.argv == argv:
             _debug("Returning already parsed namespace")
             return self.namespace
@@ -231,8 +248,8 @@ class Parser(argparse.ArgumentParser):
 
         # phase 2: re-parse command line for early options; currently,
         # that's database options
-        _debug("Option parsing phase 2: Parse early options")
         if not self._early:
+            _debug("Option parsing phase 2: Parse early options")
             early_opts = argparse.Namespace()
             early_parser = Parser(add_help=False, namespace=early_opts,
                                   early=True)
@@ -250,6 +267,10 @@ class Parser(argparse.ArgumentParser):
                 if hasattr(component, "component_parsed_hook"):
                     _debug("Calling component_parsed_hook on %s" % component)
                     getattr(component, "component_parsed_hook")(early_opts)
+            for option in self.option_list:
+                option.early_parsing_hook(early_opts)
+        else:
+            _debug("Skipping parsing phase 2 in early mode")
 
         # phase 3: re-parse command line, loading additional
         # components, until all components have been loaded.  On each
@@ -275,29 +296,24 @@ class Parser(argparse.ArgumentParser):
         # namespace and _parse_config_options will never look at them again.
         self._set_defaults_from_config()
         self._parse_config_options()
+        remaining = []
         while not self.parsed:
             self.parsed = True
             self._set_defaults_from_config()
-            self.parse_known_args(args=self.argv, namespace=self.namespace)
+            _debug("Parsing known arguments")
+            try:
+                _, remaining = self.parse_known_args(args=self.argv,
+                                                     namespace=self.namespace)
+            except OptionParserException:
+                self.error(sys.exc_info()[1])
             self._parse_config_options()
             self._finalize()
+        if len(remaining) and not self._early:
+            self.error("Unknown options: %s" % " ".join(remaining))
 
-        # phase 4: fix up <repository> macros
-        _debug("Option parsing phase 4: Fix up macros")
-        repo = getattr(self.namespace, "repository", repository.default)
-        for attr in dir(self.namespace):
-            value = getattr(self.namespace, attr)
-            if (not attr.startswith("_") and
-                hasattr(value, "replace") and
-                "<repository>" in value):
-                setattr(self.namespace, attr,
-                        value.replace("<repository>", repo, 1))
-                _debug("Fixing up macros in %s: %s -> %s" %
-                       (attr, value, getattr(self.namespace, attr)))
-
-        # phase 5: call post-parsing hooks
-        _debug("Option parsing phase 5: Call hooks")
+        # phase 4: call post-parsing hooks
         if not self._early:
+            _debug("Option parsing phase 4: Call hooks")
             for component in self.components:
                 if hasattr(component, "options_parsed_hook"):
                     _debug("Calling post-parsing hook on %s" % component)
@@ -311,23 +327,23 @@ class Parser(argparse.ArgumentParser):
 _parser = Parser()  # pylint: disable=C0103
 
 
+def new_parser():
+    """Create a new :class:`Bcfg2.Options.Parser` object.
+
+    The new object can be retrieved with
+    :func:`Bcfg2.Options.get_parser`.  This is useful for unit
+    testing.
+    """
+    global _parser
+    _parser = Parser()
+
+
 def get_parser(description=None, components=None, namespace=None):
-    """ Get an existing :class:`Bcfg2.Options.Parser` object.  (One is
-    created at the module level when :mod:`Bcfg2.Options` is
-    imported.)  If no arguments are given, then the existing parser is
-    simply fetched.
+    """Get an existing :class:`Bcfg2.Options.Parser` object.
 
-    If arguments are given, then one of two things happens:
-
-    * If this is the first ``get_parser`` call with arguments, then
-      the values given are set accordingly in the parser, and it is
-      returned.
-    * If this is not the first such call, then
-      :class:`Bcfg2.Options.OptionParserException` is raised.
-
-    That is, a ``get_parser`` call with options is considered to
-    initialize the parser that already exists, and that can only
-    happen once.
+    A Parser is created at the module level when :mod:`Bcfg2.Options`
+    is imported. If any arguments are given, then the existing parser
+    is modified before being returned.
 
     :param description: Set the parser description
     :type description: string
