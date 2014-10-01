@@ -93,12 +93,13 @@ class Core(BaseCore):
         except LockTimeout:
             try:
                 os.kill(self.context.pidfile.read_pid(), 0)
-            except OSError: # No process with locked PID
+            except OSError:  # No process with locked PID
                 self.context.pidfile.break_lock()
             else:
                 err = sys.exc_info()[1]
-                self.logger.error("Failed to daemonize %s: Failed to acquire lock "
-                                "on %s" % (self.name, self.setup['daemon']))
+                self.logger.error("Failed to daemonize %s: Failed to acquire"
+                                  "lock on %s" % (self.name,
+                                                  self.setup['daemon']))
                 return False
 
         self.context.open()
