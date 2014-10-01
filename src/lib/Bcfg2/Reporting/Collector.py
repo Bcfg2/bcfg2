@@ -7,7 +7,7 @@ import traceback
 import threading
 
 # pylint: disable=E0611
-from lockfile import LockFailed, LockTimeout
+from lockfile import LockFailed, LockTimeout, AlreadyLocked
 try:
     from lockfile.pidlockfile import PIDLockFile
     from lockfile import Error as PIDFileError
@@ -118,25 +118,43 @@ class ReportingCollector(object):
 
         if self.setup['daemon']:
             self.logger.debug("Daemonizing")
+            self.context.pidfile = PIDLockFile(self.setup['daemon'])
             try:
-                self.context.pidfile = PIDLockFile(self.setup['daemon'])
-                self.context.open()
+                self.context.pidfile.acquire()
             except LockFailed:
                 self.logger.error("Failed to daemonize: %s" %
                                   sys.exc_info()[1])
                 self.shutdown()
                 return
+            except AlreadyLocked:
+                try: # attempt to break the lock
+                    os.kill(self.context.pidfile.read_pid(), 0)
+                except OSError: # No process with locked PID
+                    self.context.pidfile.break_lock()
+                else:
+                    self.logger.error("Failed to daemonize: "
+                                    "Failed to acquire lock on %s" %
+                                    self.setup['daemon'])
+                    self.shutdown()
+                    return
             except LockTimeout:
-                self.logger.error("Failed to daemonize: "
-                                  "Failed to acquire lock on %s" %
-                                  self.setup['daemon'])
-                self.shutdown()
-                return
+                try: # attempt to break the lock
+                    os.kill(self.context.pidfile.read_pid(), 0)
+                except OSError: # No process with locked PID
+                    self.context.pidfile.break_lock()
+                else:
+                    self.logger.error("Failed to daemonize: "
+                                    "Failed to acquire lock on %s" %
+                                    self.setup['daemon'])
+                    self.shutdown()
+                    return
             except PIDFileError:
                 self.logger.error("Error writing pid file: %s" %
                     traceback.format_exc().splitlines()[-1])
                 self.shutdown()
                 return
+
+            self.context.open()
             self.logger.info("Starting daemon")
 
         self.transport.start_monitor(self)
