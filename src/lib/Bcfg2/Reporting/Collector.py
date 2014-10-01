@@ -1,3 +1,4 @@
+import os
 import sys
 import atexit
 import daemon
@@ -6,13 +7,12 @@ import time
 import traceback
 import threading
 
+from lockfile import LockFailed, LockTimeout
 # pylint: disable=E0611
-from lockfile import LockFailed, LockTimeout, AlreadyLocked
 try:
-    from lockfile.pidlockfile import PIDLockFile
-    from lockfile import Error as PIDFileError
+    from daemon.pidfile import TimeoutPIDLockFile
 except ImportError:
-    from daemon.pidlockfile import PIDLockFile, PIDFileError
+    from daemon.pidlockfile import TimeoutPIDLockFile
 # pylint: enable=E0611
 
 import Bcfg2.Logger
@@ -118,7 +118,9 @@ class ReportingCollector(object):
 
         if self.setup['daemon']:
             self.logger.debug("Daemonizing")
-            self.context.pidfile = PIDLockFile(self.setup['daemon'])
+            self.context.pidfile = TimeoutPIDLockFile(self.setup['daemon'],
+                                                      acquire_timeout=5)
+            # Attempt to ensure lockfile is able to be created and not stale
             try:
                 self.context.pidfile.acquire()
             except LockFailed:
@@ -126,17 +128,6 @@ class ReportingCollector(object):
                                   sys.exc_info()[1])
                 self.shutdown()
                 return
-            except AlreadyLocked:
-                try: # attempt to break the lock
-                    os.kill(self.context.pidfile.read_pid(), 0)
-                except OSError: # No process with locked PID
-                    self.context.pidfile.break_lock()
-                else:
-                    self.logger.error("Failed to daemonize: "
-                                    "Failed to acquire lock on %s" %
-                                    self.setup['daemon'])
-                    self.shutdown()
-                    return
             except LockTimeout:
                 try: # attempt to break the lock
                     os.kill(self.context.pidfile.read_pid(), 0)
@@ -144,8 +135,8 @@ class ReportingCollector(object):
                     self.context.pidfile.break_lock()
                 else:
                     self.logger.error("Failed to daemonize: "
-                                    "Failed to acquire lock on %s" %
-                                    self.setup['daemon'])
+                                      "Failed to acquire lock on %s" %
+                                      self.setup['daemon'])
                     self.shutdown()
                     return
             except PIDFileError:
@@ -153,6 +144,8 @@ class ReportingCollector(object):
                     traceback.format_exc().splitlines()[-1])
                 self.shutdown()
                 return
+            else:
+                self.context.pidfile.release()
 
             self.context.open()
             self.logger.info("Starting daemon")

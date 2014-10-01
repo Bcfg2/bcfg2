@@ -84,6 +84,7 @@ class Core(BaseCore):
     def _daemonize(self):
         """ Open :attr:`context` to drop privileges, write the PID
         file, and daemonize the server core. """
+        # Attempt to ensure lockfile is able to be created and not stale
         try:
             self.context.pidfile.acquire()
         except LockFailed:
@@ -91,7 +92,7 @@ class Core(BaseCore):
             self.logger.error("Failed to daemonize %s: %s" % (self.name, err))
             return False
         except LockTimeout:
-            try:
+            try:  # attempt to break the lock
                 os.kill(self.context.pidfile.read_pid(), 0)
             except OSError:  # No process with locked PID
                 self.context.pidfile.break_lock()
@@ -101,6 +102,8 @@ class Core(BaseCore):
                                   "lock on %s" % (self.name,
                                                   self.setup['daemon']))
                 return False
+        else:
+            self.context.pidfile.release()
 
         self.context.open()
         self.logger.info("%s daemonized" % self.name)
