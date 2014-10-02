@@ -139,11 +139,6 @@ class ReportingCollector(object):
                                       self.setup['daemon'])
                     self.shutdown()
                     return
-            except PIDFileError:
-                self.logger.error("Error writing pid file: %s" %
-                    traceback.format_exc().splitlines()[-1])
-                self.shutdown()
-                return
             else:
                 self.context.pidfile.release()
 
