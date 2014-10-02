@@ -131,7 +131,7 @@ class ReportingCollector(object):
             except LockTimeout:
                 try: # attempt to break the lock
                     os.kill(self.context.pidfile.read_pid(), 0)
-                except OSError: # No process with locked PID
+                except (OSError, TypeError): # No process with locked PID
                     self.context.pidfile.break_lock()
                 else:
                     self.logger.error("Failed to daemonize: "

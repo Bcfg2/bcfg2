@@ -94,7 +94,7 @@ class Core(BaseCore):
         except LockTimeout:
             try:  # attempt to break the lock
                 os.kill(self.context.pidfile.read_pid(), 0)
-            except OSError:  # No process with locked PID
+            except (OSError, TypeError):  # No process with locked PID
                 self.context.pidfile.break_lock()
             else:
                 err = sys.exc_info()[1]
