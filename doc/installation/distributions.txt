@@ -36,9 +36,9 @@ Just use `pacman` to perform the installation ::
 Debian
 ======
 
-Packages of Bcfg2 are available for Debian Lenny, Debian Squeeze, and
-Debian Sid. The fastest way to get Bcfg2 onto your Debian system
-is to use ``apt-get`` or ``aptitude``. ::
+Packages of Bcfg2 are available for all current versions of Debian.
+The fastest way to get Bcfg2 onto your Debian system is to use ``apt-get``
+or ``aptitude``. ::
 
    sudo aptitude install bcfg2 bcfg2-server
 
