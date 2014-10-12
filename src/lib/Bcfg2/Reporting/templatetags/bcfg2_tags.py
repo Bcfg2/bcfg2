@@ -111,47 +111,58 @@ def filter_navigator(context):
     try:
         path = context['request'].META['PATH_INFO']
         view, args, kwargs = resolve(path)
+    except (Resolver404, KeyError):
+        return dict()
 
-        # Strip any page limits and numbers
-        if 'page_number' in kwargs:
-            del kwargs['page_number']
-        if 'page_limit' in kwargs:
-            del kwargs['page_limit']
+    # Strip any page limits and numbers
+    if 'page_number' in kwargs:
+        del kwargs['page_number']
+    if 'page_limit' in kwargs:
+        del kwargs['page_limit']
 
-        # get a query string
-        qs = context['request'].GET.urlencode()
-        if qs:
-            qs = '?' + qs
+    # get a query string
+    qs = context['request'].GET.urlencode()
+    if qs:
+        qs = '?' + qs
 
-        filters = []
-        for filter in filter_list:
-            if filter == 'group':
-                continue
-            if filter in kwargs:
-                myargs = kwargs.copy()
-                del myargs[filter]
+    filters = []
+    for filter in filter_list:
+        if filter == 'group':
+            continue
+        if filter in kwargs:
+            myargs = kwargs.copy()
+            del myargs[filter]
+            try:
                 filters.append((filter,
                                 reverse(view, args=args, kwargs=myargs) + qs))
-        filters.sort(key=lambda x: x[0])
+            except NoReverseMatch:
+                pass
+    filters.sort(key=lambda x: x[0])
 
-        myargs = kwargs.copy()
-        selected = True
-        if 'group' in myargs:
-            del myargs['group']
-            selected = False
-        groups = [('---',
-                   reverse(view, args=args, kwargs=myargs) + qs,
-                   selected)]
-        for group in Group.objects.values('name'):
+    myargs = kwargs.copy()
+    selected = True
+    if 'group' in myargs:
+        del myargs['group']
+        selected = False
+
+    groups = []
+    try:
+        groups.append(('---',
+                       reverse(view, args=args, kwargs=myargs) + qs,
+                       selected))
+    except NoReverseMatch:
+        pass
+
+    for group in Group.objects.values('name'):
+        try:
             myargs['group'] = group['name']
             groups.append((group['name'],
                            reverse(view, args=args, kwargs=myargs) + qs,
                            group['name'] == kwargs.get('group', '')))
+        except NoReverseMatch:
+            pass
 
-        return {'filters': filters, 'groups': groups}
-    except (Resolver404, NoReverseMatch, ValueError, KeyError):
-        pass
-    return dict()
+    return {'filters': filters, 'groups': groups}
 
 
 def _subtract_or_na(mdict, x, y):
