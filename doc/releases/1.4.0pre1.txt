@@ -50,6 +50,10 @@ deprecated features (will be removed in a future release, likely 1.5)
 * :ref:`server-plugins-structures-bundler`
 
   * Deprecated use of an explicit name attribute
+
+    You can convert your existing bundles using
+    ``tools/upgrade/1.4/convert_bundles.py``.
+
   * Deprecated :ref:`.genshi bundles
     <server-plugins-structures-bundler-index-genshi-templates>` (use
     .xml bundles and specify the genshi namespace instead)
