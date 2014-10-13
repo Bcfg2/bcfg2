@@ -537,6 +537,10 @@ Packages options
 
 The following options are specified in the **[packages]** section.
 
+    backends
+        Comma separated list of backends for the dependency resolution.
+        Default is "Yum,Apt,Pac,Pkgng".
+
     resolver
         Enable dependency resolution. Default is 1 (true).
 
