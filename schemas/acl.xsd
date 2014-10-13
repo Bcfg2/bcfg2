@@ -3,7 +3,7 @@
   <xsd:annotation>
     <xsd:documentation>
       acl config schema for bcfg2
-	  Matt Schwager
+      Matt Schwager
     </xsd:documentation>
   </xsd:annotation>
 

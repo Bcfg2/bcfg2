@@ -487,9 +487,9 @@
       <xsd:annotation>
         <xsd:documentation>
           This field is typically used to record general information
-	  about the account or its user(s) such as their real name
-	  and phone number. If this is not set, the GECOS will be
-	  the same as the username.
+          about the account or its user(s) such as their real name
+          and phone number. If this is not set, the GECOS will be
+          the same as the username.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
