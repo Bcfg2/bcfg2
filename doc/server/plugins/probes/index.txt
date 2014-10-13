@@ -15,7 +15,7 @@ generate an `/etc/auto.master` autofs config file for each type. Here
 we will look at how to do this.
 
 Probes also allow dynamic group assignment for clients, see
-:ref:`_server-plugins-probes-dynamic-groups`.
+:ref:`server-plugins-probes-dynamic-groups`.
 
 First, create a ``Probes`` directory in our toplevel repository
 location::
