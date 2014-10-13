@@ -255,6 +255,10 @@ Once you have the server setup, you may be interested in
 Platform-specific Quickstart Notes
 ==================================
 
-* :ref:`appendix-guides-centos`
-* :ref:`appendix-guides-ubuntu`
-* :ref:`getting_started-macosx-notes`
+.. toctree::
+    :maxdepth: 1
+
+    CentOS </appendix/guides/centos>
+    Ubuntu </appendix/guides/ubuntu>
+    Gentoo </appendix/guides/gentoo>
+    Mac OS X <macosx/notes>
