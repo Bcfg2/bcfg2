@@ -21,8 +21,7 @@ class PkgngCollection(Collection):
     overrides nothing, and defers all operations to :class:`PacSource`
     """
 
-    def __init__(self, metadata, sources, cachepath, basepath, fam,
-                 debug=False):
+    def __init__(self, metadata, sources, cachepath, basepath, debug=False):
         # we define an __init__ that just calls the parent __init__,
         # so that we can set the docstring on __init__ to something
         # different from the parent __init__ -- namely, the parent
@@ -30,7 +29,7 @@ class PkgngCollection(Collection):
         # which we use to delineate the actual docs from the
         # .. autoattribute hacks we have to do to get private
         # attributes included in sphinx 1.0 """
-        Collection.__init__(self, metadata, sources, cachepath, basepath, fam,
+        Collection.__init__(self, metadata, sources, cachepath, basepath,
                             debug=debug)
     __init__.__doc__ = Collection.__init__.__doc__.split(".. -----")[0]
 
