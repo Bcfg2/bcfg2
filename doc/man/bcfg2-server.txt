@@ -22,18 +22,18 @@ configurations to clients based on the data in its repository.
 Options
 -------
 
--C configfile     Specify alternate bcfg2.conf location.
--D pidfile        Daemonize, placing the program pid in *pidfile*.
--E encoding       Specify the encoding of config files.
--Q path           Specify the path to the server repository.
--S server         Manually specify the server location (as opposed to
-                  using the value in bcfg2.conf). This should be in
-                  the format "https://server:port"
--d                Enable debugging output.
--v                Run in verbose mode.
--h                Print usage information.
---ssl-key=key     Specify the path to the SSL key.
---no-fam-blocking Synonym for fam_blocking = False in bcfg2.conf
+-C configfile      Specify alternate bcfg2.conf location.
+-D pidfile         Daemonize, placing the program pid in *pidfile*.
+-E encoding        Specify the encoding of config files.
+-Q path            Specify the path to the server repository.
+-S server          Manually specify the server location (as opposed to
+                   using the value in bcfg2.conf). This should be in
+                   the format "https://server:port"
+-d                 Enable debugging output.
+-v                 Run in verbose mode.
+-h                 Print usage information.
+--ssl-key=key      Specify the path to the SSL key.
+--no-fam-blocking  Synonym for fam_blocking = False in bcfg2.conf
 
 See Also
 --------
