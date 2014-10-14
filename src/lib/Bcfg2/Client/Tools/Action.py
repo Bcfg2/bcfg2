@@ -36,7 +36,7 @@ class Action(Bcfg2.Client.Tools.Tool):
             shell = True
             shell_string = '(in shell) '
 
-        if not Bcfg2.Options.setup.dryrun:
+        if not Bcfg2.Options.setup.dry_run:
             if Bcfg2.Options.setup.interactive:
                 prompt = ('Run Action %s%s, %s: (y/N): ' %
                           (shell_string, entry.get('name'),
