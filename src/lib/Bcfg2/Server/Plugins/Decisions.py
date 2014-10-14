@@ -31,4 +31,4 @@ class Decisions(Bcfg2.Server.Plugin.Plugin,
         self.blacklist = DecisionFile(os.path.join(self.data, "blacklist.xml"))
 
     def GetDecisions(self, metadata, mode):
-        return getattr(self, mode).get_decision(metadata)
+        return getattr(self, mode).get_decisions(metadata)
