@@ -509,7 +509,7 @@ class CfgDefaultInfo(CfgInfo):
 
     def bind_info_to_entry(self, entry, _):
         for key, value in Bcfg2.Server.Plugin.default_path_metadata().items():
-            entry.attrib[key] = value
+            entry.attrib[key] = str(value)
     bind_info_to_entry.__doc__ = CfgInfo.bind_info_to_entry.__doc__
 
 
