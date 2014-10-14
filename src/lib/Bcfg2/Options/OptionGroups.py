@@ -70,8 +70,8 @@ class ExclusiveOptionGroup(_OptionContainer):
         self.required = kwargs.pop('required', False)
 
     def add_to_parser(self, parser):
-        group = parser.add_mutually_exclusive_group(required=self.required)
-        _OptionContainer.add_to_parser(self, group)
+        _OptionContainer.add_to_parser(
+            self, parser.add_mutually_exclusive_group(required=self.required))
 
 
 class Subparser(_OptionContainer):
