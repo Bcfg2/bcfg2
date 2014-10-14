@@ -947,7 +947,7 @@ class InfoXML(StructFile):
 
     _include_tests = copy.copy(StructFile._include_tests)
     _include_tests['Path'] = lambda el, md, entry, *args: \
-        entry.get("name") == el.get("name")
+        entry.get('realname', entry.get('name')) == el.get("name")
 
     def Match(self, metadata, entry):  # pylint: disable=W0221
         """ Implementation of
