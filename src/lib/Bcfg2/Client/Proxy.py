@@ -291,9 +291,14 @@ class ComponentProxy(xmlrpclib.ServerProxy):
     """Constructs proxies to components. """
 
     options = [
-        Bcfg2.Options.Common.location, Bcfg2.Options.Common.ssl_key,
-        Bcfg2.Options.Common.ssl_cert, Bcfg2.Options.Common.ssl_ca,
+        Bcfg2.Options.Common.location, Bcfg2.Options.Common.ssl_ca,
         Bcfg2.Options.Common.password, Bcfg2.Options.Common.client_timeout,
+        Bcfg2.Options.PathOption(
+            '--ssl-key', cf=('communication', 'key'), dest="key",
+            help='Path to SSL key'),
+        Bcfg2.Options.PathOption(
+            cf=('communication', 'certificate'), dest="cert",
+            help='Path to SSL certificate'),
         Bcfg2.Options.Option(
             "-u", "--user", default="root", cf=('communication', 'user'),
             help='The user to provide for authentication'),
