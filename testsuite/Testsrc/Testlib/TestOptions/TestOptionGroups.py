@@ -1,11 +1,12 @@
 """test reading multiple config files."""
 
 import argparse
+import sys
 
 from Bcfg2.Options import Option, BooleanOption, Parser, OptionGroup, \
     ExclusiveOptionGroup, WildcardSectionGroup, new_parser, get_parser
 
-from testsuite.common import Bcfg2TestCase
+from testsuite.common import Bcfg2TestCase, skipUnless
 from testsuite.Testsrc.Testlib.TestOptions import make_config, OptionTestCase
 
 
@@ -59,8 +60,10 @@ class TestOptionGroups(Bcfg2TestCase):
 
         self.assertRaises(SystemExit, self._test_options, [])
 
-    def test_option_group(self):
-        """nest option groups."""
+
+class TestNestedOptionGroups(TestOptionGroups):
+    def setUp(self):
+        TestOptionGroups.setUp(self)
         self.options = [
             OptionGroup(
                 BooleanOption("--foo"),
@@ -73,6 +76,9 @@ class TestOptionGroups(Bcfg2TestCase):
                         BooleanOption("--test2")),
                     title="inner"),
                 title="outer")]
+
+    def test_option_group(self):
+        """nest option groups."""
         result = self._test_options(["--foo", "--baz", "--test1"])
         self.assertTrue(result.foo)
         self.assertFalse(result.bar)
@@ -81,6 +87,10 @@ class TestOptionGroups(Bcfg2TestCase):
         self.assertTrue(result.test1)
         self.assertFalse(result.test2)
 
+    @skipUnless(sys.version_info >= (2, 7),
+                "Nested exclusive option groups do not work in Python 2.6")
+    def test_nested_exclusive_option_groups(self):
+        """nest exclusive option groups."""
         self.assertRaises(SystemExit,
                           self._test_options, ["--test1", "--test2"])
 
