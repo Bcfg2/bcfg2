@@ -38,9 +38,11 @@ def comma_dict(value):
         for item in items:
             if '=' in item:
                 key, value = item.split(r'=', 1)
-                try:
-                    result[key] = bool(value)
-                except ValueError:
+                if value == 'False':
+                    result[key] = False
+                elif value == 'True':
+                    result[key] = False
+                else:
                     try:
                         result[key] = int(value)
                     except ValueError:
