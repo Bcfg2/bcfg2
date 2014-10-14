@@ -52,9 +52,9 @@ class TestDecisions(TestPlugin, TestDecision):
         metadata = Mock()
 
         self.assertEqual(d.GetDecisions(metadata, "whitelist"),
-                         d.whitelist.get_decision.return_value)
-        d.whitelist.get_decision.assert_called_with(metadata)
+                         d.whitelist.get_decisions.return_value)
+        d.whitelist.get_decisions.assert_called_with(metadata)
 
         self.assertEqual(d.GetDecisions(metadata, "blacklist"),
-                         d.blacklist.get_decision.return_value)
-        d.blacklist.get_decision.assert_called_with(metadata)
+                         d.blacklist.get_decisions.return_value)
+        d.blacklist.get_decisions.assert_called_with(metadata)
