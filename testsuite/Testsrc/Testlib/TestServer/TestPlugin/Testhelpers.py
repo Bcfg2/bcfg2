@@ -1121,6 +1121,25 @@ class TestInfoXML(TestStructFile):
         self.assertTrue(inc("Path", name="/etc/bar.conf", negate="true"))
         self.assertTrue(inc("Path", name="/etc/bar.conf", negate="tRUe"))
 
+    def test_include_element_altsrc(self):
+        ix = self.get_obj()
+        metadata = Mock()
+        entry = lxml.etree.Element("Path", name="/etc/bar.conf",
+                                   realname="/etc/foo.conf")
+        inc = lambda tag, **attrs: \
+            ix._include_element(lxml.etree.Element(tag, **attrs),
+                                metadata, entry)
+
+        self.assertFalse(inc("Path", name="/etc/bar.conf"))
+        self.assertFalse(inc("Path", name="/etc/foo.conf", negate="true"))
+        self.assertFalse(inc("Path", name="/etc/foo.conf", negate="tRuE"))
+        self.assertTrue(inc("Path", name="/etc/foo.conf"))
+        self.assertTrue(inc("Path", name="/etc/foo.conf", negate="false"))
+        self.assertTrue(inc("Path", name="/etc/foo.conf", negate="faLSe"))
+        self.assertTrue(inc("Path", name="/etc/bar.conf", negate="true"))
+        self.assertTrue(inc("Path", name="/etc/bar.conf", negate="tRUe"))
+
+
     def test_BindEntry(self):
         ix = self.get_obj()
         entry = lxml.etree.Element("Path", name=self.path)
