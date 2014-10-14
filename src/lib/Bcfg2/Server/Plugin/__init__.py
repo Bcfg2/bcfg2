@@ -31,10 +31,10 @@ class _OptionContainer(object):
         Bcfg2.Options.Common.default_paranoid,
         Bcfg2.Options.Option(
             cf=('mdata', 'owner'), dest="default_owner", default='root',
-            help='Default Path owner'),
+            help='Default Path owner', type=Bcfg2.Options.Types.username),
         Bcfg2.Options.Option(
             cf=('mdata', 'group'), dest="default_group", default='root',
-            help='Default Path group'),
+            help='Default Path group', type=Bcfg2.Options.Types.groupname),
         Bcfg2.Options.Option(
             cf=('mdata', 'important'), dest="default_important",
             default='false', choices=['true', 'false'],
