@@ -107,16 +107,6 @@ class Common(object):
         '-x', '--password', cf=('communication', 'password'),
         metavar='<password>', help="Communication Password")
 
-    #: Path to SSL key
-    ssl_key = PathOption(
-        '--ssl-key', cf=('communication', 'key'), dest="key",
-        help='Path to SSL key', default="/etc/pki/tls/private/bcfg2.key")
-
-    #: Path to SSL certificate
-    ssl_cert = PathOption(
-        cf=('communication', 'certificate'), dest="cert",
-        help='Path to SSL certificate', default="/etc/pki/tls/certs/bcfg2.crt")
-
     #: Path to SSL CA certificate
     ssl_ca = PathOption(
         cf=('communication', 'ca'), help='Path to SSL CA Cert')

@@ -1370,8 +1370,15 @@ class NetworkCore(Core):
     daemonized, etc."""
     options = Core.options + [
         Bcfg2.Options.Common.daemon, Bcfg2.Options.Common.syslog,
-        Bcfg2.Options.Common.location, Bcfg2.Options.Common.ssl_key,
-        Bcfg2.Options.Common.ssl_cert, Bcfg2.Options.Common.ssl_ca,
+        Bcfg2.Options.Common.location, Bcfg2.Options.Common.ssl_ca,
+        Bcfg2.Options.PathOption(
+            '--ssl-key', cf=('communication', 'key'), dest="key",
+            help='Path to SSL key',
+            default="/etc/pki/tls/private/bcfg2.key"),
+        Bcfg2.Options.PathOption(
+            cf=('communication', 'certificate'), dest="cert",
+            help='Path to SSL certificate',
+            default="/etc/pki/tls/certs/bcfg2.crt"),
         Bcfg2.Options.BooleanOption(
             '--listen-all', cf=('server', 'listen_all'), default=False,
             help="Listen on all interfaces"),
