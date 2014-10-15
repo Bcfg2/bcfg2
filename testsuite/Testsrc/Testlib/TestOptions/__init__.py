@@ -73,7 +73,9 @@ class OptionTestCase(Bcfg2TestCase):
     def setUpClass(cls):
         # ensure that the option parser actually reads config files
         Parser.unit_test = False
+        Bcfg2TestCase.setUpClass()
 
     @classmethod
     def tearDownClass(cls):
         Parser.unit_test = True
+        Bcfg2TestCase.tearDownClass()

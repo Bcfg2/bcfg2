@@ -119,6 +119,19 @@ class Bcfg2TestCase(TestCase):
     :func:`assertXMLEqual`, a useful assertion method given all the
     XML used by Bcfg2.
     """
+    capture_stderr = True
+
+    @classmethod
+    def setUpClass(cls):
+        cls._stderr = sys.stderr
+        if cls.capture_stderr:
+            sys.stderr = sys.stdout
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.capture_stderr:
+            sys.stderr = cls._stderr
+
     def assertXMLEqual(self, el1, el2, msg=None):
         """ Test that the two XML trees given are equal. """
         if msg is None:
