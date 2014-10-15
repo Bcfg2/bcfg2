@@ -172,7 +172,6 @@ Replace Pkgmgr with Packages in the plugins line of ``bcfg2.conf``::
     transport = LocalFilesystem
 
     [communication]
-    protocol = xmlrpc/ssl
     password = secret
     certificate = /etc/ssl/bcfg2.crt
     key = /etc/ssl/bcfg2.key

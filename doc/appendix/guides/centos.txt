@@ -132,7 +132,6 @@ upon connection::
 
 
     [communication]
-    protocol = xmlrpc/ssl
     password = N41lMNeW
     ca = /etc/bcfg2.crt
 

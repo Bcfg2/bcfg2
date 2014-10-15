@@ -37,7 +37,6 @@ This is a :ref:`Cheetah template
 per-client bcfg2.conf from the per-client metadata::
 
     [communication]
-    protocol = xmlrpc/ssl
     #if $self.metadata.uuid != None
     user = $self.metadata.uuid
     #end if

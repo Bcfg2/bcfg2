@@ -148,7 +148,6 @@ Here's what a functional **[communication]** section in a
 ``bcfg2.conf`` genshi template for clients might look like.::
 
    [communication]
-   protocol = xmlrpc/ssl
    {% if metadata.uuid != None %}\
    user = ${metadata.uuid}
    {% end %}\
