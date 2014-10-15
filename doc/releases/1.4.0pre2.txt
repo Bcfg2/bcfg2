@@ -1,0 +1,37 @@
+.. -*- mode: rst -*-
+.. vim: ft=rst
+
+.. _releases-1.4.0pre2:
+
+1.4.0pre2
+=========
+
+The second prerelease for Bcfg2 1.4.0 is now available at:
+
+ ftp://ftp.mcs.anl.gov/pub/bcfg
+
+Bcfg2 1.4.0pre2 is a prerelease, and contains many new features,
+including some that are backwards-incompatible with Bcfg2 1.3.x and
+earlier. Please read the release notes thoroughly. This is a prerelease
+and as such is not likely suitable for general production deployment.
+That said, please help us test the release in non- and preproduction
+environments.
+
+backwards-incompatible user-facing changes
+------------------------------------------
+
+* Changed default communication protocol to xmlrpc/tlsv1
+
+* Diff output from files sent to the Reports plugin from the client will now be
+  in a unified diff format rather than the previous n-diff format.
+
+  This fixes potentially long client runs when comparing files that have
+  diverged significantly.
+
+Thanks
+------
+
+Special thanks to the following contributors for this release
+
+ * Alexander Sulfrain
+ * Matt Kemp
