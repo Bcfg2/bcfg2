@@ -1371,6 +1371,7 @@ class NetworkCore(Core):
     options = Core.options + [
         Bcfg2.Options.Common.daemon, Bcfg2.Options.Common.syslog,
         Bcfg2.Options.Common.location, Bcfg2.Options.Common.ssl_ca,
+        Bcfg2.Options.Common.protocol,
         Bcfg2.Options.PathOption(
             '--ssl-key', cf=('communication', 'key'), dest="key",
             help='Path to SSL key',

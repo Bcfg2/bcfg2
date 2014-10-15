@@ -113,7 +113,8 @@ class BuiltinCore(NetworkCore):
                                        keyfile=Bcfg2.Options.setup.key,
                                        certfile=Bcfg2.Options.setup.cert,
                                        register=False,
-                                       ca=Bcfg2.Options.setup.ca)
+                                       ca=Bcfg2.Options.setup.ca,
+                                       protocol=Bcfg2.Options.setup.protocol)
         except:  # pylint: disable=W0702
             err = sys.exc_info()[1]
             self.logger.error("Server startup failed: %s" % err)

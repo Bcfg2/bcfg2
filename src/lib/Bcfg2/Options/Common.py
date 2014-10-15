@@ -111,6 +111,12 @@ class Common(object):
     ssl_ca = PathOption(
         cf=('communication', 'ca'), help='Path to SSL CA Cert')
 
+    #: Communication protocol
+    protocol = Option(
+        cf=('communication', 'protocol'), default='xmlrpc/ssl',
+        choices=['xmlrpc/ssl', 'xmlrpc/tlsv1'],
+        help='Communication protocol to use.')
+
     #: Default Path paranoid setting
     default_paranoid = Option(
         cf=('mdata', 'paranoid'), dest="default_paranoid", default='true',

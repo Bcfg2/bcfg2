@@ -232,7 +232,8 @@ class SSLHTTPConnection(httplib.HTTPConnection):
 
 class XMLRPCTransport(xmlrpclib.Transport):
     def __init__(self, key=None, cert=None, ca=None,
-                 scns=None, use_datetime=0, timeout=90):
+                 scns=None, use_datetime=0, timeout=90,
+                 protocol='xmlrpc/ssl'):
         if hasattr(xmlrpclib.Transport, '__init__'):
             xmlrpclib.Transport.__init__(self, use_datetime)
         self.key = key
@@ -240,6 +241,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
         self.ca = ca
         self.scns = scns
         self.timeout = timeout
+        self.protocol = protocol
 
     def make_connection(self, host):
         host, self._extra_headers = self.get_host_info(host)[0:2]
@@ -248,7 +250,8 @@ class XMLRPCTransport(xmlrpclib.Transport):
                                  cert=self.cert,
                                  ca=self.ca,
                                  scns=self.scns,
-                                 timeout=self.timeout)
+                                 timeout=self.timeout,
+                                 protocol=self.protocol)
 
     def request(self, host, handler, request_body, verbose=0):
         """Send request to server and return response."""
@@ -293,6 +296,7 @@ class ComponentProxy(xmlrpclib.ServerProxy):
     options = [
         Bcfg2.Options.Common.location, Bcfg2.Options.Common.ssl_ca,
         Bcfg2.Options.Common.password, Bcfg2.Options.Common.client_timeout,
+        Bcfg2.Options.Common.protocol,
         Bcfg2.Options.PathOption(
             '--ssl-key', cf=('communication', 'key'), dest="key",
             help='Path to SSL key'),
@@ -332,6 +336,7 @@ class ComponentProxy(xmlrpclib.ServerProxy):
                                     Bcfg2.Options.setup.cert,
                                     Bcfg2.Options.setup.ca,
                                     Bcfg2.Options.setup.ssl_cns,
-                                    Bcfg2.Options.setup.client_timeout)
+                                    Bcfg2.Options.setup.client_timeout,
+                                    Bcfg2.Options.setup.protocol)
         xmlrpclib.ServerProxy.__init__(self, url,
                                        allow_none=True, transport=ssl_trans)
