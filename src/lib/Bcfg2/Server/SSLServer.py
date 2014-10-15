@@ -72,7 +72,7 @@ class SSLServer(SocketServer.TCPServer, object):
 
     def __init__(self, listen_all, server_address, RequestHandlerClass,
                  keyfile=None, certfile=None, reqCert=False, ca=None,
-                 timeout=None, protocol='xmlrpc/ssl'):
+                 timeout=None, protocol='xmlrpc/tlsv1'):
         """
         :param listen_all: Listen on all interfaces
         :type listen_all: bool
@@ -333,7 +333,7 @@ class XMLRPCServer(SocketServer.ThreadingMixIn, SSLServer,
     """ Component XMLRPCServer. """
 
     def __init__(self, listen_all, server_address, RequestHandlerClass=None,
-                 keyfile=None, certfile=None, ca=None, protocol='xmlrpc/ssl',
+                 keyfile=None, certfile=None, ca=None, protocol='xmlrpc/tlsv1',
                  timeout=10, logRequests=False,
                  register=True, allow_none=True, encoding=None):
         """

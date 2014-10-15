@@ -119,7 +119,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
     """
 
     def __init__(self, host, port=None, strict=None, timeout=90, key=None,
-                 cert=None, ca=None, scns=None, protocol='xmlrpc/ssl'):
+                 cert=None, ca=None, scns=None, protocol='xmlrpc/tlsv1'):
         """Initializes the `httplib.HTTPConnection` object and stores security
         parameters
 
@@ -144,15 +144,15 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             specify the same file as `cert` if using a file that
             contains both.  See
             http://docs.python.org/library/ssl.html#ssl-certificates
-            for details.  Required if using xmlrpc/ssl with client
-            certificate authentication.
+            for details.  Required if using client certificate
+            authentication.
         cert : string, optional
             The file system path to the local endpoint's SSL
             certificate.  May specify the same file as `cert` if using
             a file that contains both.  See
             http://docs.python.org/library/ssl.html#ssl-certificates
-            for details.  Required if using xmlrpc/ssl with client
-            certificate authentication.
+            for details.  Required if using client certificate
+            authentication.
         ca : string, optional
             The file system path to a set of concatenated certificate
             authority certs, which are used to validate certificates
@@ -233,7 +233,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
 class XMLRPCTransport(xmlrpclib.Transport):
     def __init__(self, key=None, cert=None, ca=None,
                  scns=None, use_datetime=0, timeout=90,
-                 protocol='xmlrpc/ssl'):
+                 protocol='xmlrpc/tlsv1'):
         if hasattr(xmlrpclib.Transport, '__init__'):
             xmlrpclib.Transport.__init__(self, use_datetime)
         self.key = key

@@ -447,7 +447,7 @@ settings used for client-server communication.
         sets the password to use to connect to the server.
 
     protocol
-        Communication protocol to use. Defaults to xmlrpc/ssl.
+        Communication protocol to use. Defaults to xmlrpc/tlsv1.
 
     retries
         A client-only option. Number of times to retry network

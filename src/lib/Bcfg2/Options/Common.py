@@ -113,7 +113,7 @@ class Common(object):
 
     #: Communication protocol
     protocol = Option(
-        cf=('communication', 'protocol'), default='xmlrpc/ssl',
+        cf=('communication', 'protocol'), default='xmlrpc/tlsv1',
         choices=['xmlrpc/ssl', 'xmlrpc/tlsv1'],
         help='Communication protocol to use.')
 
