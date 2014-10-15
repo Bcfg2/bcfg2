@@ -77,9 +77,3 @@ class OptionTestCase(Bcfg2TestCase):
     @classmethod
     def tearDownClass(cls):
         Parser.unit_test = True
-
-
-
-# TODO:
-# * subcommands
-# * common options

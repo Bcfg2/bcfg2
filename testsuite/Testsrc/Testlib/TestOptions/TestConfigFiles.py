@@ -2,9 +2,10 @@
 
 import argparse
 
+import mock
+
 from Bcfg2.Options import Option, PathOption, ConfigFileAction, get_parser, \
     new_parser
-
 from testsuite.Testsrc.Testlib.TestOptions import make_config, OptionTestCase
 
 
@@ -43,6 +44,7 @@ class TestConfigFiles(OptionTestCase):
 
         inner1()
 
+    @mock.patch("os.path.exists", mock.Mock(return_value=False))
     def test_no_config_file(self):
         """fail to read config file."""
         self.assertRaises(SystemExit, self.parser.parse, [])
