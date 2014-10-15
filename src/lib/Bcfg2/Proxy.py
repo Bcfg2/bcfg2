@@ -286,7 +286,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
 
 
 class XMLRPCTransport(xmlrpclib.Transport):
-    def __init__(self, key=None, cert=None, ca=None,
+    def __init__(self, key=None, cert=None, ca=None, protocol=None,
                  scns=None, use_datetime=0, timeout=90):
         if hasattr(xmlrpclib.Transport, '__init__'):
             xmlrpclib.Transport.__init__(self, use_datetime)
@@ -295,6 +295,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
         self.ca = ca
         self.scns = scns
         self.timeout = timeout
+        self.protocol = protocol
 
     def make_connection(self, host):
         host, self._extra_headers = self.get_host_info(host)[0:2]
@@ -303,7 +304,8 @@ class XMLRPCTransport(xmlrpclib.Transport):
                                  cert=self.cert,
                                  ca=self.ca,
                                  scns=self.scns,
-                                 timeout=self.timeout)
+                                 timeout=self.timeout,
+                                 protocol=self.protocol)
 
     def request(self, host, handler, request_body, verbose=0):
         """Send request to server and return response."""
@@ -343,7 +345,8 @@ class XMLRPCTransport(xmlrpclib.Transport):
 
 
 def ComponentProxy(url, user=None, password=None, key=None, cert=None, ca=None,
-                   allowedServerCNs=None, timeout=90, retries=3, delay=1):
+                   allowedServerCNs=None, timeout=90, retries=3, delay=1,
+                   protocol=None):
 
     """Constructs proxies to components.
 
@@ -362,6 +365,6 @@ def ComponentProxy(url, user=None, password=None, key=None, cert=None, ca=None,
                                     quote_plus(password, ''), path)
     else:
         newurl = url
-    ssl_trans = XMLRPCTransport(key, cert, ca,
+    ssl_trans = XMLRPCTransport(key, cert, ca, protocol,
                                 allowedServerCNs, timeout=float(timeout))
     return xmlrpclib.ServerProxy(newurl, allow_none=True, transport=ssl_trans)

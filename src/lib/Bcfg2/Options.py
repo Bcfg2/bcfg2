@@ -1292,6 +1292,7 @@ CLIENT_COMMON_OPTIONS = \
          drivers=CLIENT_DRIVERS,
          dryrun=CLIENT_DRYRUN,
          paranoid=CLIENT_PARANOID,
+         protocol=SERVER_PROTOCOL,
          ppath=PARANOID_PATH,
          max_copies=PARANOID_MAX_COPIES,
          bundle=CLIENT_BUNDLE,
