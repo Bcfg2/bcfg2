@@ -191,6 +191,10 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         self.logger.debug("Yum: Reinstall on verify fail: %s" % self.do_reinst)
         self.logger.debug("Yum: installonlypkgs: %s" % self.installonlypkgs)
         self.logger.debug("Yum: verify_flags: %s" % self.verify_flags)
+        self.logger.debug("Yum: disabled_plugins: %s" % 
+                          self.setup["yum_disabled_plugins"])
+        self.logger.debug("Yum: enabled_plugins: %s" % 
+                          self.setup["yum_enabled_plugins"])
 
     def _loadYumBase(self, setup=None, logger=None):
         ''' this may be called before PkgTool.__init__() is called on
@@ -215,6 +219,12 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             debuglevel = 2
         else:
             debuglevel = 0
+
+        if setup['yum_disabled_plugins']:
+            rv.preconf.disabled_plugins = setup['yum_disabled_plugins']
+
+        if setup['yum_enabled_plugins']:
+            rv.preconf.enabled_plugins = setup['yum_enabled_plugins']
 
         # pylint: disable=E1121,W0212
         try:
