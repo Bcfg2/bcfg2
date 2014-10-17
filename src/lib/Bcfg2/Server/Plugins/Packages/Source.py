@@ -209,6 +209,9 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         #: The "version" attribute from :attr:`xsource`
         self.version = xsource.get('version', '')
 
+        #: The "name" attribute from :attr:`xsource`
+        self.name = xsource.get('name', None)
+
         #: A list of predicates that are used to determine if this
         #: source applies to a given
         #: :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata`
@@ -395,8 +398,10 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         doing other operations that require repository names.  This
         function tries several approaches:
 
-        #. First, if the map contains a ``component`` key, use that as
-           the name.
+        #. First, if the source element containts a ``name`` attribute,
+           use that as the name.
+        #. If the map contains a ``component`` key, use that as the
+           name.
         #. If not, then try to match the repository URL against
            :attr:`Bcfg2.Server.Plugins.Packages.Source.REPO_RE`.  If
            that succeeds, use the first matched group; additionally,
@@ -426,6 +431,9 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         :type url_map: dict
         :returns: string - the name of the repository.
         """
+        if self.name:
+            return self.name
+
         if url_map['component']:
             rname = url_map['component']
         else:

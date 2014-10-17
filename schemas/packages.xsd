@@ -211,6 +211,14 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="name">
+      <xsd:annotation>
+        <xsd:documentation>
+          Specifiy an explicit name for the source and do not generate
+          it automatically.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
   </xsd:complexType>
 
   <xsd:complexType name="PackagesGroupType">
