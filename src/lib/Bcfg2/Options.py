@@ -1099,6 +1099,16 @@ CLIENT_YUM_VERIFY_FLAGS = \
            cf=('YUM', 'verify_flags'),
            deprecated_cf=('YUMng', 'verify_flags'),
            cook=list_split)
+CLIENT_YUM_DISABLED_PLUGINS = \
+    Option("YUM disabled plugins",
+           default=[],
+           cf=('YUM', 'disabled_plugins'),
+           cook=list_split)
+CLIENT_YUM_ENABLED_PLUGINS = \
+    Option("YUM enabled plugins",
+           default=[],
+           cf=('YUM', 'enabled_plugins'),
+           cook=list_split)
 CLIENT_POSIX_UID_WHITELIST = \
     Option("UID ranges the POSIXUsers tool will manage",
            default=[],
@@ -1280,6 +1290,8 @@ DRIVER_OPTIONS = \
          yum_version_fail_action=CLIENT_YUM_VERSION_FAIL_ACTION,
          yum_verify_fail_action=CLIENT_YUM_VERIFY_FAIL_ACTION,
          yum_verify_flags=CLIENT_YUM_VERIFY_FLAGS,
+         yum_disabled_plugins=CLIENT_YUM_DISABLED_PLUGINS,
+         yum_enabled_plugins=CLIENT_YUM_ENABLED_PLUGINS,
          posix_uid_whitelist=CLIENT_POSIX_UID_WHITELIST,
          posix_gid_whitelist=CLIENT_POSIX_GID_WHITELIST,
          posix_uid_blacklist=CLIENT_POSIX_UID_BLACKLIST,
