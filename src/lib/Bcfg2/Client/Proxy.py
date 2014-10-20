@@ -332,11 +332,12 @@ class ComponentProxy(xmlrpclib.ServerProxy):
                 path)
         else:
             url = Bcfg2.Options.setup.server
-        ssl_trans = XMLRPCTransport(Bcfg2.Options.setup.key,
-                                    Bcfg2.Options.setup.cert,
-                                    Bcfg2.Options.setup.ca,
-                                    Bcfg2.Options.setup.ssl_cns,
-                                    Bcfg2.Options.setup.client_timeout,
-                                    Bcfg2.Options.setup.protocol)
+        ssl_trans = XMLRPCTransport(
+            key=Bcfg2.Options.setup.key,
+            cert=Bcfg2.Options.setup.cert,
+            ca=Bcfg2.Options.setup.ca,
+            scns=Bcfg2.Options.setup.ssl_cns,
+            timeout=Bcfg2.Options.setup.client_timeout,
+            protocol=Bcfg2.Options.setup.protocol)
         xmlrpclib.ServerProxy.__init__(self, url,
                                        allow_none=True, transport=ssl_trans)
