@@ -1120,7 +1120,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             help="Install missing packages"),
         Bcfg2.Options.Option(
             cf=('RPM', 'erase_flags'), default=["allmatches"],
-            dest="rpm_erase_flags",
+            dest="rpm_erase_flags", type=Bcfg2.Options.Types.comma_list,
             help="RPM erase flags"),
         Bcfg2.Options.BooleanOption(
             cf=('RPM', 'fix_version'), default=True,
@@ -1131,7 +1131,8 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
             dest="rpm_reinstall_broken",
             help="Reinstall packages that fail to verify"),
         Bcfg2.Options.Option(
-            cf=('RPM', 'verify_flags'), default=[], dest="rpm_verify_flags",
+            cf=('RPM', 'verify_flags'), default=[],
+            dest="rpm_verify_flags", type=Bcfg2.Options.Types.comma_list,
             help="RPM verify flags")]
 
     __execs__ = ['/bin/rpm', '/var/lib/rpm']

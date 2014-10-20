@@ -133,7 +133,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             help="Install missing packages"),
         Bcfg2.Options.Option(
             cf=('YUM', 'erase_flags'), default=["allmatches"],
-            dest="yum_erase_flags",
+            dest="yum_erase_flags", type=Bcfg2.Options.Types.comma_list,
             help="YUM erase flags"),
         Bcfg2.Options.BooleanOption(
             cf=('YUM', 'fix_version'), default=True,
@@ -144,7 +144,8 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             dest="yum_reinstall_broken",
             help="Reinstall packages that fail to verify"),
         Bcfg2.Options.Option(
-            cf=('YUM', 'verify_flags'), default=[], dest="yum_verify_flags",
+            cf=('YUM', 'verify_flags'), default=[],
+            dest="yum_verify_flags", type=Bcfg2.Options.Types.comma_list,
             help="YUM verify flags")]
         Bcfg2.Options.Option(
             cf=('YUM', 'disabled_plugins'), default=[], 
