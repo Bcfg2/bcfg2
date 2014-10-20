@@ -220,8 +220,8 @@ class POSIXFile(POSIXTool):
     def _diff(self, content1, content2, filename=None):
         """ Return a unified diff of the two strings """
 
-        fromfile = "%s (on disk)" % filename if filename else ""
-        tofile = "%s (from bcfg2)" % filename if filename else ""
+        fromfile = "%s (on disk)" % (filename or "")
+        tofile = "%s (from bcfg2)" % (filename or "")
         return difflib.unified_diff(content1.split('\n'),
                                     content2.split('\n'),
                                     fromfile=fromfile,
