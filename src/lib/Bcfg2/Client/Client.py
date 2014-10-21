@@ -139,7 +139,8 @@ class Client(object):
                 allowedServerCNs=self.setup['serverCN'],
                 timeout=self.setup['timeout'],
                 retries=int(self.setup['retries']),
-                delay=int(self.setup['retry_delay']))
+                delay=int(self.setup['retry_delay']),
+                protocol=self.setup['protocol'])
         return self._proxy
 
     def run_probes(self, times=None):
