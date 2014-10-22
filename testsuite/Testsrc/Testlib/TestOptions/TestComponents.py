@@ -3,8 +3,8 @@
 import argparse
 import os
 
-from Bcfg2.Options import Option, BooleanOption, ComponentAction, get_parser, \
-    new_parser, Types, ConfigFileAction
+from Bcfg2.Options import Option, BooleanOption, PathOption, ComponentAction, \
+    get_parser, new_parser, Types, ConfigFileAction, Common
 
 from testsuite.Testsrc.Testlib.TestOptions import make_config, One, Two, \
     OptionTestCase
@@ -51,18 +51,27 @@ class ConfigFileComponent(object):
                       default="bar")]
 
 
+class PathComponent(object):
+    """fake component for testing <repository> macros in child components."""
+    options = [PathOption(cf=("test", "test_path")),
+               PathOption(cf=("test", "test_path_default"),
+                          default="<repository>/test/default")]
+
+
 class ParentComponentAction(ComponentAction):
     """parent component loader action."""
     mapping = {"one": ComponentOne,
                "two": ComponentTwo,
                "three": ComponentThree,
-               "config": ConfigFileComponent}
+               "config": ConfigFileComponent,
+               "path": PathComponent}
 
 
 class TestComponentOptions(OptionTestCase):
     """test cases for component loading."""
 
     def setUp(self):
+        OptionTestCase.setUp(self)
         self.options = [
             Option("--parent", type=Types.comma_list,
                    default=["one", "two"], action=ParentComponentAction)]
@@ -146,6 +155,16 @@ class TestComponentOptions(OptionTestCase):
         """load component with missing alternative config file."""
         self.parser.parse(["-C", config_file, "--parent", "config"])
         self.assertEqual(self.result.config2, None)
+
+    @make_config({"test": {"test_path": "<repository>/test"}})
+    def test_macros_in_component_options(self, config_file):
+        """fix up <repository> macros in component options."""
+        self.parser.add_options([Common.repository])
+        self.parser.parse(["-C", config_file, "-Q", "/foo/bar",
+                           "--parent", "path"])
+        self.assertEqual(self.result.test_path, "/foo/bar/test")
+        self.assertEqual(self.result.test_path_default,
+                         "/foo/bar/test/default")
 
 
 class ImportComponentAction(ComponentAction):

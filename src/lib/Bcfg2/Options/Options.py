@@ -17,7 +17,7 @@ from Bcfg2.Compat import ConfigParser
 __all__ = ["Option", "BooleanOption", "PathOption", "PositionalArgument",
            "_debug"]
 
-unit_test = False
+unit_test = False  # pylint: disable=C0103
 
 
 def _debug(msg):
@@ -46,7 +46,7 @@ def _get_action_class(action_name):
     on.  So we just instantiate a dummy parser, add a dummy argument,
     and determine the class that way. """
     if (isinstance(action_name, type) and
-        issubclass(action_name, argparse.Action)):
+            issubclass(action_name, argparse.Action)):
         return action_name
     if action_name not in _action_map:
         action = argparse.ArgumentParser().add_argument(action_name,
@@ -159,9 +159,10 @@ class Option(object):
             sources.append("%s.%s" % self.cf)
         if self.env:
             sources.append("$" + self.env)
-        spec = ["sources=%s" % sources, "default=%s" % self.default]
-        spec.append("%d parsers" % (len(self.parsers)))
-        return 'Option(%s: %s)' % (self.dest, ", ".join(spec))
+        spec = ["sources=%s" % sources, "default=%s" % self.default,
+                "%d parsers" % len(self.parsers)]
+        return '%s(%s: %s)' % (self.__class__.__name__,
+                               self.dest, ", ".join(spec))
 
     def list_options(self):
         """ List options contained in this option.  This exists to
@@ -228,7 +229,7 @@ class Option(object):
                 rv = self._type_func(self.get_config_value(cfp))
             except (ConfigParser.NoSectionError, ConfigParser.NoOptionError):
                 rv = None
-        _debug("Setting %s from config file(s): %s" % (self, rv))
+        _debug("Getting value of %s from config file(s): %s" % (self, rv))
         return rv
 
     def get_config_value(self, cfp):
@@ -326,12 +327,11 @@ class Option(object):
 
 
 class PathOption(Option):
-    """ Shortcut for options that expect a path argument. Uses
-    :meth:`Bcfg2.Options.Types.path` to transform the argument into a
-    canonical path.
+    """Shortcut for options that expect a path argument.
 
-    The type of a path option can also be overridden to return a
-    file-like object. For example:
+    Uses :meth:`Bcfg2.Options.Types.path` to transform the argument
+    into a canonical path. The type of a path option can also be
+    overridden to return a file-like object. For example:
 
     .. code-block:: python
 
@@ -339,25 +339,50 @@ class PathOption(Option):
             Bcfg2.Options.PathOption(
                 "--input", type=argparse.FileType('r'),
                 help="The input file")]
+
+    PathOptions also do translation of ``<repository>`` macros on the
+    fly. It's done this way instead of just fixing up all values at
+    the end of parsing because macro expansion needs to be done before
+    path canonicalization and other stuff.
     """
+    repository = None
 
     def __init__(self, *args, **kwargs):
         self._original_type = kwargs.pop('type', lambda x: x)
         kwargs['type'] = self._type
         kwargs.setdefault('metavar', '<path>')
         Option.__init__(self, *args, **kwargs)
-        self.repository = None
 
     def early_parsing_hook(self, early_opts):
-        self.repository = early_opts.repository
+        if hasattr(early_opts, "repository"):
+            if self.__class__.repository is None:
+                _debug("Setting repository to %s for PathOptions" %
+                       early_opts.repository)
+                self.__class__.repository = early_opts.repository
+            else:
+                _debug("Repository is already set for %s" % self.__class__)
+
+    def _get_default(self):
+        """ Getter for the ``default`` property """
+        if self.__class__.repository is None or self._default is None:
+            return self._default
+        else:
+            return self._default.replace("<repository>",
+                                         self.__class__.repository)
+
+    default = property(_get_default, Option._set_default)
 
     def _type(self, value):
         """Type function that fixes up <repository> macros."""
-        if self.repository is None:
-            rv = value
+        if self.__class__.repository is None:
+            _debug("Cannot fix up <repository> macros yet for %s" % self)
+            return value
         else:
-            rv = value.replace("<repository>", self.repository)
-        return self._original_type(Types.path(rv))
+            rv = self._original_type(Types.path(
+                value.replace("<repository>", self.__class__.repository)))
+            _debug("Fixing up <repository> macros in %s: %s -> %s" %
+                   (self, value, rv))
+            return rv
 
 
 class _BooleanOptionAction(argparse.Action):

@@ -4,7 +4,7 @@ import os
 import tempfile
 
 from Bcfg2.Compat import wraps, ConfigParser
-from Bcfg2.Options import Parser
+from Bcfg2.Options import Parser, PathOption
 from testsuite.common import Bcfg2TestCase
 
 
@@ -75,7 +75,10 @@ class OptionTestCase(Bcfg2TestCase):
         Parser.unit_test = False
         Bcfg2TestCase.setUpClass()
 
+    def setUp(self):
+        Bcfg2TestCase.setUp(self)
+        PathOption.repository = None
+
     @classmethod
     def tearDownClass(cls):
         Parser.unit_test = True
-        Bcfg2TestCase.tearDownClass()

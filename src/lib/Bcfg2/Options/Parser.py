@@ -168,6 +168,8 @@ class Parser(argparse.ArgumentParser):
                                (opt, value))
                         action(self, self.namespace, value)
                 else:
+                    _debug("Setting config file-only option %s to %s" %
+                           (opt, value))
                     setattr(self.namespace, opt.dest, value)
 
     def _finalize(self):
@@ -191,6 +193,53 @@ class Parser(argparse.ArgumentParser):
                 _debug("Deleting %s" % attr)
                 delattr(self.namespace, attr)
 
+    def _parse_early_options(self):
+        """Parse early options.
+
+        Early options are options that need to be parsed before other
+        options for some reason. These fall into two basic cases:
+
+        1. Database options, which need to be parsed so that Django
+           modules can be imported, since Django configuration is all
+           done at import-time;
+        2. The repository (``-Q``) option, so that ``<repository>``
+           macros in other options can be resolved.
+        """
+        _debug("Option parsing phase 2: Parse early options")
+        early_opts = argparse.Namespace()
+        early_parser = Parser(add_help=False, namespace=early_opts,
+                              early=True)
+
+        # add the repo option so we can resolve <repository>
+        # macros
+        early_parser.add_options([repository])
+
+        early_components = []
+        for component in self.components:
+            if getattr(component, "parse_first", False):
+                early_components.append(component)
+                early_parser.add_component(component)
+        early_parser.parse(self.argv)
+
+        _debug("Fixing up <repository> macros in early options")
+        for attr_name in dir(early_opts):
+            if not attr_name.startswith("_"):
+                attr = getattr(early_opts, attr_name)
+                if hasattr(attr, "replace"):
+                    setattr(early_opts, attr_name,
+                            attr.replace("<repository>",
+                                         early_opts.repository))
+
+        _debug("Early parsing complete, calling hooks")
+        for component in early_components:
+            if hasattr(component, "component_parsed_hook"):
+                _debug("Calling component_parsed_hook on %s" % component)
+                getattr(component, "component_parsed_hook")(early_opts)
+        _debug("Calling early parsing hooks; early options: %s" %
+               early_opts)
+        for option in self.option_list:
+            option.early_parsing_hook(early_opts)
+
     def add_config_file(self, dest, cfile, reparse=True):
         """ Add a config file, which triggers a full reparse of all
         options. """
@@ -207,10 +256,11 @@ class Parser(argparse.ArgumentParser):
     def reparse(self, argv=None):
         """ Reparse options after they have already been parsed.
 
-        :param argv: The argument list to parse.  By default,
+        :param argv: The argument list to parse. By default,
                      :attr:`Bcfg2.Options.Parser.argv` is reused.
                      (I.e., the argument list that was initially
-                     parsed.)  :type argv: list
+                     parsed.)
+        :type argv: list
         """
         _debug("Reparsing all options")
         self._reset_namespace()
@@ -249,26 +299,7 @@ class Parser(argparse.ArgumentParser):
         # phase 2: re-parse command line for early options; currently,
         # that's database options
         if not self._early:
-            _debug("Option parsing phase 2: Parse early options")
-            early_opts = argparse.Namespace()
-            early_parser = Parser(add_help=False, namespace=early_opts,
-                                  early=True)
-            # add the repo option so we can resolve <repository>
-            # macros
-            early_parser.add_options([repository])
-            early_components = []
-            for component in self.components:
-                if getattr(component, "parse_first", False):
-                    early_components.append(component)
-                    early_parser.add_component(component)
-            early_parser.parse(self.argv)
-            _debug("Early parsing complete, calling hooks")
-            for component in early_components:
-                if hasattr(component, "component_parsed_hook"):
-                    _debug("Calling component_parsed_hook on %s" % component)
-                    getattr(component, "component_parsed_hook")(early_opts)
-            for option in self.option_list:
-                option.early_parsing_hook(early_opts)
+            self._parse_early_options()
         else:
             _debug("Skipping parsing phase 2 in early mode")
 
@@ -299,13 +330,13 @@ class Parser(argparse.ArgumentParser):
         remaining = []
         while not self.parsed:
             self.parsed = True
-            self._set_defaults_from_config()
             _debug("Parsing known arguments")
             try:
                 _, remaining = self.parse_known_args(args=self.argv,
                                                      namespace=self.namespace)
             except OptionParserException:
                 self.error(sys.exc_info()[1])
+            self._set_defaults_from_config()
             self._parse_config_options()
             self._finalize()
         if len(remaining) and not self._early:

@@ -20,6 +20,7 @@ class TestBasicOptions(OptionTestCase):
         # that's probably bad -- and it's definitely bad if we ever
         # want to do real on-the-fly config changes -- but it's easier
         # to leave it as is and set the options on each test.
+        OptionTestCase.setUp(self)
         self.options = [
             BooleanOption("--test-true-boolean", env="TEST_TRUE_BOOLEAN",
                           cf=("test", "true_boolean"), default=True),
@@ -367,13 +368,16 @@ class TestBasicOptions(OptionTestCase):
             parser.add_options,
             [Option(cf=("test", "option"))])
 
-    @make_config()
+    @make_config({"test": {"test_path": "<repository>/test"}})
     def test_repository_macro(self, config_file):
         """fix up <repository> macros."""
         result = argparse.Namespace()
         parser = Parser(namespace=result)
         parser.add_options([PathOption("--test1"),
                             PathOption("--test2"),
+                            PathOption(cf=("test", "test_path")),
+                            PathOption(cf=("test", "test_path_default"),
+                                       default="<repository>/test/default"),
                             Common.repository])
         parser.parse(["-C", config_file, "-Q", "/foo/bar",
                       "--test1", "<repository>/test1",
@@ -381,6 +385,8 @@ class TestBasicOptions(OptionTestCase):
         self.assertEqual(result.repository, "/foo/bar")
         self.assertEqual(result.test1, "/foo/bar/test1")
         self.assertEqual(result.test2, "/foo/bar/foo/bar")
+        self.assertEqual(result.test_path, "/foo/bar/test")
+        self.assertEqual(result.test_path_default, "/foo/bar/test/default")
 
     @make_config()
     def test_file_like_path_option(self, config_file):
