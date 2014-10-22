@@ -38,7 +38,13 @@ def set_setup_default(option, value=None):
     if not hasattr(Bcfg2.Options.setup, option):
         setattr(Bcfg2.Options.setup, option, value)
 
+# these two variables do slightly different things for unit tests; the
+# former skips config file reading, while the latter sends option
+# debug logging to stdout so it can be captured. These are separate
+# because we want to enable config file reading in order to test
+# option parsing.
 Bcfg2.Options.Parser.unit_test = True
+Bcfg2.Options.Options.unit_test = True
 
 try:
     import django.conf

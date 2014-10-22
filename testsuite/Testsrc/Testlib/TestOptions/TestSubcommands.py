@@ -86,15 +86,21 @@ class TestSubcommands(OptionTestCase):
         self.assertEqual(self.one().usage().strip(),
                          "localone [--test-one TEST_ONE]")
 
+    def _get_subcommand_output(self, args):
+        self.parser.parse(args)
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        rv = self.registry.runcommand()
+        output = [l for l in sys.stdout.getvalue().splitlines()
+                  if not l.startswith("DEBUG: ")]
+        sys.stdout = old_stdout
+        return (rv, output)
+
     @make_config()
     def test_help(self, config_file):
         """sane help message from subcommand registry."""
-        self.parser.parse(["-C", config_file, "help"])
-        old_stdout = sys.stdout
-        sys.stdout = StringIO()
-        self.assertIn(self.registry.runcommand(), [0, None])
-        help_message = sys.stdout.getvalue().splitlines()
-        sys.stdout = old_stdout
+        rv, output = self._get_subcommand_output(["-C", config_file, "help"])
+        self.assertIn(rv, [0, None])
 
         # the help message will look like:
         #
@@ -106,7 +112,7 @@ class TestSubcommands(OptionTestCase):
             "help": self.registry.help.usage(),
             "localone": self.one().usage(),
             "localtwo": self.two().usage()}
-        for line in help_message:
+        for line in output:
             command = line.split()[0]
             commands.append(command)
             if command not in command_help:
@@ -118,24 +124,16 @@ class TestSubcommands(OptionTestCase):
     @make_config()
     def test_subcommand_help(self, config_file):
         """get help message on a single command."""
-        self.parser.parse(["-C", config_file, "help", "localone"])
-        old_stdout = sys.stdout
-        sys.stdout = StringIO()
-        self.assertIn(self.registry.runcommand(), [0, None])
-        help_message = sys.stdout.getvalue().splitlines()
-        sys.stdout = old_stdout
-
-        self.assertEqual(help_message[0].strip(),
+        rv, output = self._get_subcommand_output(
+            ["-C", config_file, "help", "localone"])
+        self.assertIn(rv, [0, None])
+        self.assertEqual(output[0].strip(),
                          "usage: %s" % self.one().usage().strip())
 
     @make_config()
     def test_nonexistent_subcommand_help(self, config_file):
         """get help message on a nonexistent command."""
-        self.parser.parse(["-C", config_file, "help", "blargle"])
-        old_stdout = sys.stdout
-        sys.stdout = StringIO()
-        self.assertNotEqual(self.registry.runcommand(), 0)
-        help_message = sys.stdout.getvalue().splitlines()
-        sys.stdout = old_stdout
-
-        self.assertIn("No such command", help_message[0])
+        rv, output = self._get_subcommand_output(
+            ["-C", config_file, "help", "blargle"])
+        self.assertNotEqual(rv, 0)
+        self.assertIn("No such command", output[0])

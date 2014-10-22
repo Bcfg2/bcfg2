@@ -17,14 +17,18 @@ from Bcfg2.Compat import ConfigParser
 __all__ = ["Option", "BooleanOption", "PathOption", "PositionalArgument",
            "_debug"]
 
+unit_test = False
+
 
 def _debug(msg):
     """ Option parsing happens before verbose/debug have been set --
     they're options, after all -- so option parsing verbosity is
     enabled by changing this to True. The verbosity here is primarily
     of use to developers. """
-    if os.environ.get('BCFG2_OPTIONS_DEBUG', '0').lower() in ["true", "yes",
-                                                              "on", "1"]:
+    if unit_test:
+        print("DEBUG: %s" % msg)
+    elif os.environ.get('BCFG2_OPTIONS_DEBUG', '0').lower() in ["true", "yes",
+                                                                "on", "1"]:
         sys.stderr.write("%s\n" % msg)
 
 
