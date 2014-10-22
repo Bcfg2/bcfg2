@@ -837,7 +837,6 @@ class InfoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         pass
 
     def shutdown(self):
-        Bcfg2.Options.CommandRegistry.shutdown(self)
         Bcfg2.Server.Core.Core.shutdown(self)
 
 
@@ -868,6 +867,9 @@ class CLI(Bcfg2.Options.CommandRegistry):
 
     def run(self):
         """ Run bcfg2-info """
-        if Bcfg2.Options.setup.subcommand != 'help':
-            self.core.run()
-        return self.runcommand()
+        try:
+            if Bcfg2.Options.setup.subcommand != 'help':
+                self.core.run()
+            return self.runcommand()
+        finally:
+            self.shutdown()
