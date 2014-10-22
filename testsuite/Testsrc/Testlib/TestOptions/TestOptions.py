@@ -75,6 +75,20 @@ class TestBasicOptions(OptionTestCase):
         self.assertEqual(options.test_path_option,
                          os.path.abspath("./test"))
 
+    @make_config()
+    def test_default_path_canonicalization(self, config_file):
+        """canonicalize default PathOption values."""
+        testdir = os.path.expanduser("~/test")
+        result = argparse.Namespace()
+        parser = Parser(namespace=result)
+        parser.add_options([PathOption("--test1", default="~/test"),
+                            PathOption(cf=("test", "test2"),
+                                       default="~/test"),
+                            Common.repository])
+        parser.parse(["-C", config_file])
+        self.assertEqual(result.test1, testdir)
+        self.assertEqual(result.test2, testdir)
+
     def test_default_bool(self):
         """use the default value of boolean options."""
         options = self._test_options()

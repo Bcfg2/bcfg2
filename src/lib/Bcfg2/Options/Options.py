@@ -364,25 +364,20 @@ class PathOption(Option):
 
     def _get_default(self):
         """ Getter for the ``default`` property """
-        if self.__class__.repository is None or self._default is None:
+        if not hasattr(self._default, "replace"):
             return self._default
         else:
-            return self._default.replace("<repository>",
-                                         self.__class__.repository)
+            return self._type(self._default)
 
     default = property(_get_default, Option._set_default)
 
     def _type(self, value):
         """Type function that fixes up <repository> macros."""
         if self.__class__.repository is None:
-            _debug("Cannot fix up <repository> macros yet for %s" % self)
             return value
         else:
-            rv = self._original_type(Types.path(
+            return self._original_type(Types.path(
                 value.replace("<repository>", self.__class__.repository)))
-            _debug("Fixing up <repository> macros in %s: %s -> %s" %
-                   (self, value, rv))
-            return rv
 
 
 class _BooleanOptionAction(argparse.Action):
