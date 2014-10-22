@@ -113,9 +113,12 @@ class ComponentAction(FinalizableAction):
         try:
             return getattr(__import__(module, fromlist=[name]), name)
         except (AttributeError, ImportError):
+            msg = "Failed to load %s from %s: %s" % (name, module,
+                                                     sys.exc_info()[1])
             if not self.fail_silently:
-                print("Failed to load %s from %s: %s" %
-                      (name, module, sys.exc_info()[1]))
+                print(msg)
+            else:
+                _debug(msg)
             return None
 
     def _load_component(self, name):
@@ -181,3 +184,4 @@ class PluginsAction(ComponentAction):
     """ :class:`Bcfg2.Options.ComponentAction` subclass for loading
     Bcfg2 server plugins. """
     bases = ['Bcfg2.Server.Plugins']
+    fail_silently = True
