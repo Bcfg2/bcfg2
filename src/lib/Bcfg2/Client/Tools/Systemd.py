@@ -14,6 +14,7 @@ class Systemd(Bcfg2.Client.Tools.SvcTool):
     __req__ = {'Service': ['name', 'status']}
 
     def get_svc_name(self, service):
+        """Append .service to name if name doesn't specify a unit type."""
         svc = service.get('name')
         if svc.endswith(('.service', '.socket', '.target')):
             return svc
