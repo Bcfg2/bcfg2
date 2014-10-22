@@ -400,9 +400,12 @@ class TestBasicOptions(OptionTestCase):
         fh.write("test")
         fh.close()
 
-        parser.parse(["-C", config_file, "--test", name])
-        self.assertEqual(result.test.name, name)
-        self.assertEqual(result.test.read(), "test")
+        try:
+            parser.parse(["-C", config_file, "--test", name])
+            self.assertEqual(result.test.name, name)
+            self.assertEqual(result.test.read(), "test")
+        finally:
+            os.unlink(name)
 
     @clean_environment
     @make_config()

@@ -32,8 +32,10 @@ class make_config(object):  # pylint: disable=invalid-name
             config_file.close()
 
             args = list(args) + [name]
-            rv = func(*args, **kwargs)
-            os.unlink(name)
+            try:
+                rv = func(*args, **kwargs)
+            finally:
+                os.unlink(name)
             return rv
 
         return inner
