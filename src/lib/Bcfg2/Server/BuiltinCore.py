@@ -1,5 +1,6 @@
 """ The core of the builtin Bcfg2 server. """
 
+import os
 import sys
 import time
 import socket
@@ -83,19 +84,30 @@ class Core(BaseCore):
     def _daemonize(self):
         """ Open :attr:`context` to drop privileges, write the PID
         file, and daemonize the server core. """
+        # Attempt to ensure lockfile is able to be created and not stale
         try:
-            self.context.open()
-            self.logger.info("%s daemonized" % self.name)
-            return True
+            self.context.pidfile.acquire()
         except LockFailed:
             err = sys.exc_info()[1]
             self.logger.error("Failed to daemonize %s: %s" % (self.name, err))
             return False
         except LockTimeout:
-            err = sys.exc_info()[1]
-            self.logger.error("Failed to daemonize %s: Failed to acquire lock "
-                              "on %s" % (self.name, self.setup['daemon']))
-            return False
+            try:  # attempt to break the lock
+                os.kill(self.context.pidfile.read_pid(), 0)
+            except (OSError, TypeError):  # No process with locked PID
+                self.context.pidfile.break_lock()
+            else:
+                err = sys.exc_info()[1]
+                self.logger.error("Failed to daemonize %s: Failed to acquire"
+                                  "lock on %s" % (self.name,
+                                                  self.setup['daemon']))
+                return False
+        else:
+            self.context.pidfile.release()
+
+        self.context.open()
+        self.logger.info("%s daemonized" % self.name)
+        return True
 
     def _run(self):
         """ Create :attr:`server` to start the server listening. """
