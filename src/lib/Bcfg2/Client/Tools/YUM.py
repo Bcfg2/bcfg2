@@ -148,12 +148,12 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             dest="yum_verify_flags", type=Bcfg2.Options.Types.comma_list,
             help="YUM verify flags"),
         Bcfg2.Options.Option(
-            cf=('YUM', 'disabled_plugins'), default=[], 
-            type=Bcfg2.Options.Types.comma_list, dest="yum_disabled_plugins", 
+            cf=('YUM', 'disabled_plugins'), default=[],
+            type=Bcfg2.Options.Types.comma_list, dest="yum_disabled_plugins",
             help="YUM disabled plugins"),
         Bcfg2.Options.Option(
-            cf=('YUM', 'enabled_plugins'), default=[], 
-            type=Bcfg2.Options.Types.comma_list, dest="yum_enabled_plugins", 
+            cf=('YUM', 'enabled_plugins'), default=[],
+            type=Bcfg2.Options.Types.comma_list, dest="yum_enabled_plugins",
             help="YUM enabled plugins")]
 
     pkgtype = 'yum'
