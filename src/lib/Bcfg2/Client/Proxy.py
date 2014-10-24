@@ -242,6 +242,7 @@ class XMLRPCTransport(xmlrpclib.Transport):
         self.scns = scns
         self.timeout = timeout
         self.protocol = protocol
+        self.cookie = None
 
     def make_connection(self, host):
         host, self._extra_headers = self.get_host_info(host)[0:2]
@@ -258,6 +259,8 @@ class XMLRPCTransport(xmlrpclib.Transport):
         try:
             conn = self.send_request(host, handler, request_body, False)
             response = conn.getresponse()
+            if not self.cookie:
+               self.cookie = response.getheader('Set-Cookie')
             errcode = response.status
             errmsg = response.reason
             headers = response.msg
@@ -285,6 +288,8 @@ class XMLRPCTransport(xmlrpclib.Transport):
             xmlrpclib.Transport.send_request(self, conn, handler, request_body)
             self.send_host(conn, host)
             self.send_user_agent(conn)
+            if self.cookie:
+                conn.putheader('Cookie', self.cookie)
             self.send_content(conn, request_body)
             return conn
         # pylint: enable=E1101
