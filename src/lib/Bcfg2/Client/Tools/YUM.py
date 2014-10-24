@@ -254,12 +254,10 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             debuglevel = 0
 
         if len(Bcfg2.Options.setup.yum_disabled_plugins) > 0:
-            rv.preconf.disabled_plugins=
-            Bcfg2.Options.setup.yum_disabled_plugins
+            rv.preconf.disabled_plugins=Bcfg2.Options.setup.yum_disabled_plugins
 
         if len(Bcfg2.Options.setup.yum_enabled_plugins) > 0:
-            rv.preconf.enabled_plugins=
-            Bcfg2.Options.setup.yum_enabled_plugins
+            rv.preconf.enabled_plugins=Bcfg2.Options.setup.yum_enabled_plugins
 
         # pylint: disable=E1121,W0212
         try:
