@@ -716,6 +716,10 @@ Reporting options
     web_debug
         Turn on Django debugging.
 
+    max_children
+        Maximum number of children for the reporting collector. Use 0 to
+        disable the limit. (default is 0)
+
 See Also
 --------
 

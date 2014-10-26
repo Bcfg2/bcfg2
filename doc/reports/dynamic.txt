@@ -270,6 +270,9 @@ reporting
 * web_prefix: Prefix to be added to Django's MEDIA_URL
 * file_limit: The maximum size of a diff or binary data to
   store in the database.
+* max_children: Maximum number of children for the reporting
+  collector. Use 0 to disable the limit and spawn a thread
+  as soon as a working file is available.
 
 
 .. _dynamic_transports:
