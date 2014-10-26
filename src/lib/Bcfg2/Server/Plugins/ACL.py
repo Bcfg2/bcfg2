@@ -62,6 +62,7 @@ def ip_matches(ip, entry):
 
 class IPACLFile(Bcfg2.Server.Plugin.XMLFileBacked):
     """ representation of ACL ip.xml, for IP-based ACLs """
+    __identifier__ = None
     actions = dict(Allow=True,
                    Deny=False,
                    Defer=None)
