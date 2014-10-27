@@ -364,7 +364,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
             if os.path.exists(self.cachefile):
                 try:
                     self.load_state()
-                except:
+                except (OSError, cPickle.UnpicklingError):
                     err = sys.exc_info()[1]
                     self.logger.error("Packages: Cachefile %s load failed: %s"
                                       % (self.cachefile, err))
