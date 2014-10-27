@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import sys
-from Bcfg2.Compat import b64decode
+from Bcfg2.Compat import b64decode, b64encode
 from mock import Mock, MagicMock, patch
 
 # add all parent testsuite directories to sys.path to allow (most)
@@ -125,10 +125,28 @@ baz
                                                          passwd,
                                                          "also bogus"]))
 
-        # test with no good passphrase given nor in config
+        # test with no good passphrase given nor in config. we use
+        # something that isn't a valid ciphertext here since a
+        # ciphertext encrypted with one key may be technically
+        # decryptable with a different key, although it will decrypt
+        # to gibberish. nonetheless, it doesn't raise the requisite
+        # EVPError, so the test fails.
         self.assertRaises(EVPError,
                           bruteforce_decrypt,
-                          crypted, passphrases=["bogus", "also bogus"])
+                          b64encode("not an actual ciphertext!"),
+                          passphrases=["bogus", "also bogus"])
+
+        # test with no good passphrase given nor in config. this
+        # version of the test uses a valid ciphertext, and looks for
+        # *either* EVPError or a failed decrypt.
+        try:
+            plaintext = bruteforce_decrypt(crypted,
+                                           passphrases=["bogus", "also bogus"])
+            if plaintext == passwd:
+                self.fail("Successfully decrypted ciphertext with wrong key")
+        except EVPError:
+            # success!
+            pass
 
         # test with good passphrase in config file
         Bcfg2.Options.setup.passphrases = dict(bogus="bogus",
