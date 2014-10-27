@@ -873,15 +873,21 @@ class Client(object):
 
     def GenerateStats(self):
         """Generate XML summary of execution statistics."""
+        states = {}
+        for (item, val) in list(self.states.items()):
+            if not Bcfg2.Options.setup.only_important or \
+               item.get('important', 'false').lower() == 'true':
+                states[item] = val
+
         feedback = XML.Element("upload-statistics")
         stats = XML.SubElement(feedback,
-                               'Statistics', total=str(len(self.states)),
+                               'Statistics', total=str(len(states)),
                                version='2.0',
                                revision=self.config.get('revision', '-1'))
-        good_entries = [key for key, val in list(self.states.items()) if val]
+        good_entries = [key for key, val in list(states.items()) if val]
         good = len(good_entries)
         stats.set('good', str(good))
-        if any(not val for val in list(self.states.values())):
+        if any(not val for val in list(states.values())):
             stats.set('state', 'dirty')
         else:
             stats.set('state', 'clean')
@@ -890,8 +896,8 @@ class Client(object):
         for (data, ename) in [(self.modified, 'Modified'),
                               (self.extra, "Extra"),
                               (good_entries, "Good"),
-                              ([entry for entry in self.states
-                                if not self.states[entry]], "Bad")]:
+                              ([entry for entry in states
+                                if not states[entry]], "Bad")]:
             container = XML.SubElement(stats, ename)
             for item in data:
                 item.set('qtext', '')
