@@ -8,6 +8,7 @@ import Bcfg2.Options
 
 try:
     import django
+    import django.core.management
     import django.conf
     HAS_DJANGO = True
 except ImportError:
