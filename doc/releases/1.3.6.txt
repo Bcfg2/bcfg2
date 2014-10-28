@@ -1,0 +1,26 @@
+.. -*- mode: rst -*-
+.. vim: ft=rst
+
+.. _releases-1.3.6:
+
+1.3.6
+=====
+
+We are happy to announce the release of Bcfg2 1.3.6. It is available for
+download at:
+
+ ftp://ftp.mcs.anl.gov/pub/bcfg
+
+This is primarily a bugfix release.
+
+* Fix python 2.4 compatibility
+* Fix stale lockfile detection and behavior
+* Reporting: fix filter urls
+* Fix client protocol option handling
+* YUM: Add options to enable and disable Yum plugins
+* Packages: add name to sources
+* Reporting: better exception handling
+* Various interrupt handling fixes
+
+Special thanks to the following contributors for this release: Michael
+Fenn, Matt Kemp, Alexander Sulfrian, Jonathan Billings.
