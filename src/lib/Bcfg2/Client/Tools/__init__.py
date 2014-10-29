@@ -1,10 +1,12 @@
 """This contains all Bcfg2 Tool modules"""
 
 import os
-import sys
 import stat
+import sys
+
 import Bcfg2.Client
 import Bcfg2.Client.XML
+from Bcfg2.Client.Frame import matches_white_list, passes_black_list
 from Bcfg2.Utils import Executor, ClassName
 from Bcfg2.Compat import walk_packages  # pylint: disable=W0622
 
@@ -140,6 +142,21 @@ class Tool(object):
             if not mode & stat.S_IEXEC:
                 raise ToolInstantiationError("%s: %s not executable" %
                                              (self.name, filename))
+
+    def _install_allowed(self, entry):
+        """ Return true if the given entry is allowed to be installed by
+        the whitelist or blacklist """
+        if self.setup['decision'] == 'whitelist' and \
+           not matches_white_list(entry, self.setup['decision_list']):
+            self.logger.info("In whitelist mode: suppressing %s: %s" %
+                             (entry.tag, entry.get('name')))
+            return False
+        if self.setup['decision'] == 'blacklist' and \
+           not passes_black_list(entry, self.setup['decision_list']):
+            self.logger.info("In blacklist mode: suppressing %s: %s" %
+                             (entry.tag, entry.get('name')))
+            return False
+        return True
 
     def BundleUpdated(self, bundle, states):  # pylint: disable=W0613
         """ Callback that is invoked when a bundle has been updated.
@@ -591,7 +608,8 @@ class SvcTool(Tool):
             return
 
         for entry in bundle:
-            if not self.handlesEntry(entry):
+            if (not self.handlesEntry(entry)
+                or not self._install_allowed(entry)):
                 continue
 
             estatus = entry.get('status')
