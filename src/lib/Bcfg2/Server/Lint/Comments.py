@@ -248,7 +248,7 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                         rtype = "jinja2"
                     elif isinstance(entry, CfgInfoXML):
                         self.check_xml(entry.infoxml.name,
-                                       entry.infoxml.pnode.data,
+                                       entry.infoxml.xdata,
                                        "infoxml")
                         continue
                     if rtype:
