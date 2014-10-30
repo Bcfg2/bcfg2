@@ -93,11 +93,11 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
             type=Bcfg2.Options.Types.comma_list, default=[],
             help="Required comments for info.xml files"),
         Bcfg2.Options.Option(
-            cf=("Comments", "probe_keywords"),
+            cf=("Comments", "probes_keywords"),
             type=Bcfg2.Options.Types.comma_list, default=[],
             help="Required keywords for probes"),
         Bcfg2.Options.Option(
-            cf=("Comments", "probe_comments"),
+            cf=("Comments", "probes_comments"),
             type=Bcfg2.Options.Types.comma_list, default=[],
             help="Required comments for probes")]
 
