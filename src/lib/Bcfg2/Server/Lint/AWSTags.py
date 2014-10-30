@@ -9,6 +9,7 @@ import Bcfg2.Server.Lint
 class AWSTags(Bcfg2.Server.Lint.ServerPlugin):
     """ ``bcfg2-lint`` plugin to check all given :ref:`AWSTags
     <server-plugins-connectors-awstags>` patterns for validity. """
+    __serverplugin__ = 'AWSTags'
 
     def Run(self):
         cfg = self.core.plugins['AWSTags'].config

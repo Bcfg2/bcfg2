@@ -10,6 +10,7 @@ from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 
 class Cfg(ServerPlugin):
     """ warn about Cfg issues """
+    __serverplugin__ = 'Cfg'
 
     def Run(self):
         for basename, entry in list(self.core.plugins['Cfg'].entries.items()):

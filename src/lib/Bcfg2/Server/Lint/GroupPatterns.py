@@ -13,6 +13,7 @@ class GroupPatterns(ServerPlugin):
     :class:`Bcfg2.Server.Plugins.GroupPatterns.PatternMap` object for
     each pattern, and catching exceptions and presenting them as
     ``bcfg2-lint`` errors."""
+    __serverplugin__ = 'GroupPatterns'
 
     def Run(self):
         cfg = self.core.plugins['GroupPatterns'].config

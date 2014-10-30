@@ -20,6 +20,7 @@ class TemplateHelper(ServerPlugin):
     * Bogus symbols listed in ``__export__``, including symbols that
       don't exist, that are reserved, or that start with underscores.
     """
+    __serverplugin__ = 'TemplateHelper'
 
     def __init__(self, *args, **kwargs):
         ServerPlugin.__init__(self, *args, **kwargs)

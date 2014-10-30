@@ -12,6 +12,7 @@ class Pkgmgr(ServerlessPlugin):
     """ Find duplicate :ref:`Pkgmgr
     <server-plugins-generators-pkgmgr>` entries with the same
     priority. """
+    __serverplugin__ = 'Pkgmgr'
 
     def Run(self):
         pset = set()
