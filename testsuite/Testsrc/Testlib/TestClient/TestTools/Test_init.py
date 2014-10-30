@@ -36,6 +36,8 @@ class TestTool(Bcfg2TestCase):
             setup = MagicMock()
         if 'command_timeout' not in setup:
             setup['command_timeout'] = None
+        if 'decision' not in setup:
+            setup['decision'] = None
         execs = self.test_obj.__execs__
         self.test_obj.__execs__ = []
         rv = self.test_obj(logger, setup, config)
