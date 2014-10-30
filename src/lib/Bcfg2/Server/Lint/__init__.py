@@ -428,9 +428,9 @@ class CLI(object):
     def run_server_plugins(self):
         """ run plugins that require a running server to run """
         core = Bcfg2.Server.Core.Core()
-        core.load_plugins()
-        core.block_for_fam_events(handle_events=True)
         try:
+            core.load_plugins()
+            core.block_for_fam_events(handle_events=True)
             self.logger.debug("Running server plugins: %s" %
                               [p.__name__ for p in self.serverplugins])
             for plugin in self.serverplugins:
