@@ -21,6 +21,7 @@ This is primarily a bugfix release.
 * Packages: add name to sources
 * Reporting: better exception handling
 * Various interrupt handling fixes
+* Fix client decision whitelist/blacklist handling
 
 Special thanks to the following contributors for this release: Michael
 Fenn, Matt Kemp, Alexander Sulfrian, Jonathan Billings.
