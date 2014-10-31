@@ -93,13 +93,21 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
             type=Bcfg2.Options.Types.comma_list, default=[],
             help="Required comments for info.xml files"),
         Bcfg2.Options.Option(
-            cf=("Comments", "probe_keywords"),
+            cf=("Comments", "probes_keywords"),
             type=Bcfg2.Options.Types.comma_list, default=[],
             help="Required keywords for probes"),
         Bcfg2.Options.Option(
-            cf=("Comments", "probe_comments"),
+            cf=("Comments", "probes_comments"),
             type=Bcfg2.Options.Types.comma_list, default=[],
-            help="Required comments for probes")]
+            help="Required comments for probes"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "metadata_keywords"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required keywords for metadata files"),
+        Bcfg2.Options.Option(
+            cf=("Comments", "metadata_comments"),
+            type=Bcfg2.Options.Types.comma_list, default=[],
+            help="Required comments for metadata files")]
 
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerPlugin.__init__(self, *args, **kwargs)
@@ -248,7 +256,7 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
                         rtype = "jinja2"
                     elif isinstance(entry, CfgInfoXML):
                         self.check_xml(entry.infoxml.name,
-                                       entry.infoxml.pnode.data,
+                                       entry.infoxml.xdata,
                                        "infoxml")
                         continue
                     if rtype:

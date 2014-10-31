@@ -7,6 +7,7 @@ from Bcfg2.Server.Lint import ServerPlugin
 class Bundler(ServerPlugin):
     """ Perform various :ref:`Bundler
     <server-plugins-structures-bundler>` checks. """
+    __serverplugin__ = 'Bundler'
 
     def Run(self):
         self.missing_bundles()

@@ -18,7 +18,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
     options = Bcfg2.Server.Lint.ServerlessPlugin.options + [
         Bcfg2.Options.PathOption(
             "--schema", cf=("Validate", "schema"),
-            default="/usr/share/bcfg2/schema",
+            default="/usr/share/bcfg2/schemas",
             help="The full path to the XML schema files")]
 
     def __init__(self, *args, **kwargs):

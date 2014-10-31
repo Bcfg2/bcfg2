@@ -15,6 +15,7 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
     * Paranoid mode disabled in an ``info.xml`` file;
     * Required attributes missing from ``info.xml``
     """
+    __serverplugin__ = 'Cfg'
 
     options = Bcfg2.Server.Lint.ServerPlugin.options + [
         Bcfg2.Options.Common.default_paranoid,

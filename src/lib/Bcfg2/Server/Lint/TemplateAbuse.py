@@ -62,7 +62,7 @@ class TemplateAbuse(Bcfg2.Server.Lint.ServerPlugin):
         # finally, check for executable permissions in info.xml
         for entry in entryset.entries.values():
             if isinstance(entry, CfgInfoXML):
-                for pinfo in entry.infoxml.pnode.data.xpath("//FileInfo"):
+                for pinfo in entry.infoxml.xdata.xpath("//FileInfo/Info"):
                     try:
                         mode = int(
                             pinfo.get("mode",

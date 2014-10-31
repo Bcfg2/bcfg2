@@ -14,6 +14,7 @@ import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Plugins
 from Bcfg2.Compat import walk_packages
+from Bcfg2.Options import _debug
 
 
 def _ioctl_GWINSZ(fd):  # pylint: disable=C0103
@@ -47,6 +48,11 @@ def get_termsize():
 
 class Plugin(object):
     """ Base class for all bcfg2-lint plugins """
+
+    #: Name of the matching server plugin or None if there is no
+    #: matching one. If this is None the lint plugin will only loaded
+    #: by default if the matching server plugin is enabled, too.
+    __serverplugin__ = None
 
     options = [Bcfg2.Options.Common.repository]
 
@@ -291,19 +297,41 @@ class ServerPlugin(Plugin):  # pylint: disable=W0223
 
 
 class LintPluginAction(Bcfg2.Options.ComponentAction):
-    """ We want to load all lint plugins that pertain to server
-    plugins.  In order to do this, we hijack the __call__() method of
-    this action and add all of the server plugins on the fly """
-
+    """ Option parser action to load lint plugins """
     bases = ['Bcfg2.Server.Lint']
 
-    def __call__(self, parser, namespace, values, option_string=None):
-        plugins = getattr(Bcfg2.Options.setup, "plugins", [])
-        for lint_plugin in walk_packages(path=__path__):
-            if lint_plugin[1] in plugins:
-                values.append(lint_plugin[1])
-        Bcfg2.Options.ComponentAction.__call__(self, parser, namespace, values,
-                                               option_string)
+
+class LintPluginOption(Bcfg2.Options.Option):
+    """ Option class for the lint_plugins """
+
+    def early_parsing_hook(self, namespace):
+        """
+        We want a usefull default for the enabled lint plugins.
+        Therfore we use all importable plugins, that either pertain
+        with enabled server plugins or that has no matching plugin.
+        """
+
+        plugins = [p.__name__ for p in namespace.plugins]
+        for loader, name, _is_pkg in walk_packages(path=__path__):
+            try:
+                module = loader.find_module(name).load_module(name)
+                plugin = getattr(module, name)
+                if plugin.__serverplugin__ is None or \
+                   plugin.__serverplugin__ in plugins:
+                    _debug("Automatically adding lint plugin %s" %
+                           plugin.__name__)
+                    self.default.append(plugin.__name__)
+            except ImportError:
+                pass
+
+
+class _EarlyOptions(object):
+    """ We need the server.plugins options in an early parsing hook
+    for determining the default value for the lint_plugins. So we
+    create a component that is parsed before the other options. """
+
+    parse_first = True
+    options = [Bcfg2.Options.Common.plugins]
 
 
 class CLI(object):
@@ -313,7 +341,7 @@ class CLI(object):
             '--lint-config', default='/etc/bcfg2-lint.conf',
             action=Bcfg2.Options.ConfigFileAction,
             help='Specify bcfg2-lint configuration file'),
-        Bcfg2.Options.Option(
+        LintPluginOption(
             "--lint-plugins", cf=('lint', 'plugins'), default=[],
             type=Bcfg2.Options.Types.comma_list, action=LintPluginAction,
             help='bcfg2-lint plugin list'),
@@ -328,27 +356,10 @@ class CLI(object):
     def __init__(self):
         parser = Bcfg2.Options.get_parser(
             description="Manage a running Bcfg2 server",
-            components=[self])
+            components=[self, _EarlyOptions])
         parser.parse()
 
         self.logger = logging.getLogger(parser.prog)
-
-        # automatically add Lint plugins for loaded server plugins
-        for plugin in Bcfg2.Options.setup.plugins:
-            try:
-                Bcfg2.Options.setup.lint_plugins.append(
-                    getattr(
-                        __import__("Bcfg2.Server.Lint.%s" % plugin.__name__,
-                                   fromlist=[plugin.__name__]),
-                        plugin.__name__))
-                self.logger.debug("Automatically adding lint plugin %s" %
-                                  plugin.__name__)
-            except ImportError:
-                # no lint plugin for this server plugin
-                self.logger.debug("No lint plugin for %s" % plugin.__name__)
-            except AttributeError:
-                self.logger.error("Failed to load plugin %s: %s" %
-                                  (plugin.__name__, sys.exc_info()[1]))
 
         self.logger.debug("Running lint with plugins: %s" %
                           [p.__name__
@@ -428,9 +439,9 @@ class CLI(object):
     def run_server_plugins(self):
         """ run plugins that require a running server to run """
         core = Bcfg2.Server.Core.Core()
-        core.load_plugins()
-        core.block_for_fam_events(handle_events=True)
         try:
+            core.load_plugins()
+            core.block_for_fam_events(handle_events=True)
             self.logger.debug("Running server plugins: %s" %
                               [p.__name__ for p in self.serverplugins])
             for plugin in self.serverplugins:

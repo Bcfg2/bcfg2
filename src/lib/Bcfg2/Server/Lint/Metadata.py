@@ -15,6 +15,7 @@ class Metadata(ServerPlugin):
     * Multiple default groups or a default group that isn't a profile
       group.
     """
+    __serverplugin__ = 'Metadata'
 
     def Run(self):
         self.nested_clients()
