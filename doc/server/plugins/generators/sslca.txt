@@ -35,7 +35,7 @@ For SSLCA to work, the openssl.cnf (or other configuration file) for
 that CA must contain full (not relative) paths.
 
 #. Add SSLCA to the **plugins** line in ``/etc/bcfg2.conf`` and
-   restart the server -- This enabled the SSLCA plugin on the Bcfg2
+   restart the server -- This enables the SSLCA plugin on the Bcfg2
    server.
 
 #. Add a section to your ``/etc/bcfg2.conf`` called ``sslca_foo``,
@@ -48,12 +48,12 @@ that CA must contain full (not relative) paths.
 #. If necessary, add an entry for ``passphrase`` containing the
    passphrase for the CA's private key.  We store this in
    ``/etc/bcfg2.conf`` as the permissions on that file should have it
-   only readable by the bcfg2 user.  If no passphrase is entry exists,
+   only readable by the bcfg2 user.  If no passphrase entry exists,
    it is assumed that the private key is stored unencrypted.
 
 #. Optionally, Add an entry ``chaincert`` that points to the location
    of your ssl chaining certificate.  This is used when preexisting
-   certifcate hostfiles are found, so that they can be validated and
+   certificate hostfiles are found, so that they can be validated and
    only regenerated if they no longer meet the specification. If
    you're using a self signing CA this would be the CA cert that you
    generated.  If the chain cert is a root CA cert (e.g., if it is a
@@ -118,11 +118,11 @@ Configuration
 bcfg2.conf
 ----------
 
-``bcfg2.conf`` contains miscellaneous configuration options for the
-SSLCA plugin. These are described in some detail above in
-`getting-started`, but are also enumerated here as a reference.  Any
-booleans in the config file accept the values "1", "yes", "true", and
-"on" for True, and "0", "no", "false", and "off" for False.
+``bcfg2.conf`` contains miscellaneous configuration options for the SSLCA
+plugin. These are described in some detail above in `getting-started`_,
+but are also enumerated here as a reference.  Any booleans in the config
+file accept the values "1", "yes", "true", and "on" for True, and "0",
+"no", "false", and "off" for False.
 
 Each directive below should appear at most once in each
 ``[sslca_<name>]`` section.  The following directives are understood:
