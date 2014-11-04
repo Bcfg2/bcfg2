@@ -1,14 +1,16 @@
 """Option parsing library for utilities."""
 
+import ast
 import copy
 import getopt
+import grp
 import inspect
 import os
+import pwd
 import re
 import shlex
 import sys
-import grp
-import pwd
+
 import Bcfg2.Client.Tools
 from Bcfg2.Compat import ConfigParser
 from Bcfg2.version import __version__
@@ -329,25 +331,9 @@ def colon_split(c_string):
 
 
 def dict_split(c_string):
-    """ split an option string on commas, optionally surrounded by
-    whitespace and split the resulting items again on equals signs,
-    returning a dict """
-    result = dict()
-    if c_string:
-        items = re.split(r'\s*,\s*', c_string)
-        for item in items:
-            if r'=' in item:
-                key, value = item.split(r'=', 1)
-                try:
-                    result[key] = get_bool(value)
-                except ValueError:
-                    try:
-                        result[key] = get_int(value)
-                    except ValueError:
-                        result[key] = value
-            else:
-                result[item] = True
-    return result
+    """ literally evaluate the option in order to allow for arbitrarily nested
+    dictionaries """
+    return ast.literal_eval(c_string)
 
 
 def get_bool(val):
