@@ -1287,10 +1287,13 @@ class YumSource(Source):
         arch = [a for a in self.arches if a in metadata.groups]
         if not arch:
             return False
-        return ((package in self.packages['global'] or
-                 package in self.packages[arch[0]]) and
-                package not in self.blacklist and
-                (len(self.whitelist) == 0 or package in self.whitelist))
+        try:
+            return ((package in self.packages['global'] or
+                     package in self.packages[arch[0]]) and
+                    package not in self.blacklist and
+                    (len(self.whitelist) == 0 or package in self.whitelist))
+        except KeyError:
+            return False
     is_package.__doc__ = Source.is_package.__doc__
 
     def get_vpkgs(self, metadata):
