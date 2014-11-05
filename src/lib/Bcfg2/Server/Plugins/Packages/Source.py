@@ -283,11 +283,11 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         for arch in self.arches:
             if self.url:
                 usettings = [dict(version=self.version, component=comp,
-                                  arch=arch)
+                                  arch=arch, debsrc=self.debsrc)
                              for comp in self.components]
             else:  # rawurl given
                 usettings = [dict(version=self.version, component=None,
-                                  arch=arch)]
+                                  arch=arch, debsrc=self.debsrc)]
 
             for setting in usettings:
                 if not self.rawurl:
