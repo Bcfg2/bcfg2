@@ -167,7 +167,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute type="xsd:boolean" name="debsrc">
+    <xsd:attribute type="xsd:boolean" name="debsrc" default="false">
       <xsd:annotation>
         <xsd:documentation>
           Include ``deb-src`` lines in the generated APT
