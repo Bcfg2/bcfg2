@@ -158,14 +158,14 @@ Handles `System V Packaging <http://docs.oracle.com/cd/E19683-01/806-7008/index.
 
 .. note::
 
-  If the Packages specified in the PackageList are datastream format packages distributed via HTTP, you must specify a simplename attribute.   Such packages will be downloaded and installed from a local path.
+  If the Packages specified in the PackageList are datastream format packages distributed via HTTP, you must specify a simplefile attribute.   Such packages will be downloaded and installed from a local path.
 
   datastream format over HTTP:
 
   .. code-block:: xml
 
      <PackageList url='http://install/packages' type='sysv' priority='0'>
-         <Package name='SCbcfg2' version='1.3.4' simplename='bcfg-1.3.4-1' />
+         <Package name='SCbcfg2' version='1.3.4' simplefile='bcfg-1.3.4-1' />
      </PackageList>
 
   File system format over NFS or local path:

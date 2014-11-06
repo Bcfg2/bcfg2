@@ -52,18 +52,17 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
         self.origpkgtool = self.pkgtool
 
     def pkgmogrify(self, packages):
-        """ Take a list of pkg objects, check for a 'simplename' attribute.
+        """ Take a list of pkg objects, check for a 'simplefile' attribute.
             If present, insert a _sysv_pkg_path attribute to the package and
             download the datastream format SYSV package to a temporary file.
         """
         for pkg in packages:
-            if pkg.get('simplename'):
+            if pkg.get('simplefile'):
                 tmpfile = tempfile.NamedTemporaryFile()
                 self.tmpfiles.append(tmpfile)
-                self.logger.info("Downloading %s%s to %s" % (pkg.get('url'),
-                                 pkg.get('simplename'), tmpfile.name))
-                urlretrieve("%s/%s" % (pkg.get('url'), pkg.get('simplename')),
-                            tmpfile.name)
+                self.logger.info("Downloading %s to %s" % (pkg.get('url'),
+                                 tmpfile.name))
+                urlretrieve(pkg.get('url'), tmpfile.name)
                 pkg.set('_sysv_pkg_path', tmpfile.name)
 
     def _get_package_command(self, packages):
