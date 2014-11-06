@@ -25,23 +25,48 @@ class TestCfgJinja2Generator(TestCfgGenerator):
         TestCfgGenerator.setUp(self)
         set_setup_default("repository", datastore)
 
-    @patch("Bcfg2.Server.Plugins.Cfg.CfgJinja2Generator.Template")
+    def test__init(self):
+        TestCfgGenerator.test__init(self)
+        cgg = self.get_obj()
+        self.assertIsInstance(cgg.loader, cgg.__loader_cls__)
+        self.assertIsInstance(cgg.environment, cgg.__environment_cls__)
+
+    @patch("Bcfg2.Server.Plugins.Cfg.CfgJinja2Generator.Environment")
     @patch("Bcfg2.Server.Plugins.Cfg.CfgJinja2Generator.get_template_data")
-    def test_get_data(self, mock_get_template_data, mock_Template):
-        ccg = self.get_obj()
-        ccg.data = "data"
+    def test_get_data(self, mock_get_template_data, mock_Environment):
+        cgg = self.get_obj()
         entry = lxml.etree.Element("Path", name="/test.txt")
         metadata = Mock()
 
+        # self.template is currently None
+        self.assertRaises(PluginExecutionError,
+                          cgg.get_data, entry, metadata)
+
+        cgg.template = mock_Environment.return_value.get_template.return_value
+
         template_vars = dict(name=entry.get("name"),
                              metadata=metadata,
-                             path=ccg.name,
-                             source_path=ccg.name,
+                             path=cgg.name,
+                             source_path=cgg.name,
                              repo=datastore)
         mock_get_template_data.return_value = template_vars
 
-        self.assertEqual(ccg.get_data(entry, metadata),
-                         mock_Template.return_value.render.return_value)
-        mock_Template.assert_called_with("data".decode(Bcfg2.Options.setup.encoding))
-        tmpl = mock_Template.return_value
+        tmpl = mock_Environment.return_value.get_template.return_value
+        self.assertEqual(cgg.get_data(entry, metadata),
+                         tmpl.render.return_value)
         tmpl.render.assert_called_with(template_vars)
+
+    def test_handle_event(self):
+        cgg = self.get_obj()
+        cgg.environment = Mock()
+        event = Mock()
+        cgg.handle_event(event)
+        cgg.environment.get_template.assert_called_with(
+            cgg.name)
+
+        cgg.environment.reset_mock()
+        cgg.environment.get_template.side_effect = OSError
+        self.assertRaises(PluginExecutionError,
+                          cgg.handle_event, event)
+        cgg.environment.get_template.assert_called_with(
+            cgg.name)
