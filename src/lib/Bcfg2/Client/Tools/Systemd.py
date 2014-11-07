@@ -13,15 +13,25 @@ class Systemd(Bcfg2.Client.Tools.SvcTool):
     __handles__ = [('Service', 'systemd')]
     __req__ = {'Service': ['name', 'status']}
 
+    def get_svc_name(self, service):
+        """Append .service to name if name doesn't specify a unit type."""
+        svc = service.get('name')
+        if svc.endswith(('.service', '.socket', '.device', '.mount',
+                         '.automount', '.swap', '.target', '.path',
+                         '.timer', '.snapshot', '.slice', '.scope')):
+            return svc
+        else:
+            return '%s.service' % svc
+
     def get_svc_command(self, service, action):
-        return "/bin/systemctl %s %s.service" % (action, service.get('name'))
+        return "/bin/systemctl %s %s" % (action, self.get_svc_name(service))
 
     def VerifyService(self, entry, _):
         """Verify Service status for entry."""
         if entry.get('status') == 'ignore':
             return True
 
-        cmd = "/bin/systemctl status %s.service " % (entry.get('name'))
+        cmd = "/bin/systemctl status %s" % (self.get_svc_name(entry))
         rv = self.cmd.run(cmd)
 
         if 'Loaded: error' in rv.stdout:
