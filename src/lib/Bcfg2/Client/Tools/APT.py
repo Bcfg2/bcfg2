@@ -70,7 +70,7 @@ class APT(Bcfg2.Client.Tools.Tool):
                 raise Bcfg2.Client.Tools.ToolInstantiationError
             try:
                 self.pkg_cache.update()
-            except FetchFailedException:
+            except apt.cache.FetchFailedException:
                 e = sys.exc_info()[1]
                 self.logger.info("Failed to update APT cache: %s" % e)
         self.pkg_cache = apt.cache.Cache()
