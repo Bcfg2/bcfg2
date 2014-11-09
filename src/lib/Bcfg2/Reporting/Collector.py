@@ -30,7 +30,7 @@ class ReportingError(Exception):
 class ReportingStoreThread(threading.Thread):
     """Thread for calling the storage backend"""
     def __init__(self, interaction, storage, group=None, target=None,
-                 name=None, args=(), kwargs=None):
+                 name=None, semaphore=None, args=(), kwargs=None):
         """Initialize the thread with a reference to the interaction
         as well as the storage engine to use"""
         threading.Thread.__init__(self, group, target, name, args,
@@ -38,26 +38,37 @@ class ReportingStoreThread(threading.Thread):
         self.interaction = interaction
         self.storage = storage
         self.logger = logging.getLogger('bcfg2-report-collector')
+        self.semaphore = semaphore
 
     def run(self):
         """Call the database storage procedure (aka import)"""
         try:
-            start = time.time()
-            self.storage.import_interaction(self.interaction)
-            self.logger.info("Imported interaction for %s in %ss" %
-                             (self.interaction.get('hostname', '<unknown>'),
-                              time.time() - start))
-        except:
-            #TODO requeue?
-            self.logger.error("Unhandled exception in import thread %s" %
-                              sys.exc_info()[1])
+            try:
+                start = time.time()
+                self.storage.import_interaction(self.interaction)
+                self.logger.info("Imported interaction for %s in %ss" %
+                                 (self.interaction.get('hostname',
+                                                       '<unknown>'),
+                                  time.time() - start))
+            except:
+                #TODO requeue?
+                self.logger.error("Unhandled exception in import thread %s" %
+                                  sys.exc_info()[1])
+        finally:
+            if self.semaphore:
+                self.semaphore.release()
 
 
 class ReportingCollector(object):
     """The collecting process for reports"""
     options = [Bcfg2.Options.Common.reporting_storage,
                Bcfg2.Options.Common.reporting_transport,
-               Bcfg2.Options.Common.daemon]
+               Bcfg2.Options.Common.daemon,
+               Bcfg2.Options.Option(
+                   '--max-children', dest="children",
+                   cf=('reporting', 'max_children'), type=int,
+                   default=0,
+                   help='Maximum number of children for the reporting collector')]
 
     def __init__(self):
         """Setup the collector.  This may be called by the daemon or though
@@ -66,6 +77,10 @@ class ReportingCollector(object):
         self.context = None
         self.children = []
         self.cleanup_threshold = 25
+
+        if Bcfg2.Options.setup.children > 0:
+            self.semaphore = threading.Semaphore(
+                value=Bcfg2.Options.setup.children)
 
         if Bcfg2.Options.setup.debug:
             level = logging.DEBUG
@@ -141,7 +156,10 @@ class ReportingCollector(object):
                 interaction = self.transport.fetch()
                 if not interaction:
                     continue
-                store_thread = ReportingStoreThread(interaction, self.storage)
+                if Bcfg2.Options.setup.children > 0:
+                    self.semaphore.acquire()
+                store_thread = ReportingStoreThread(interaction, self.storage,
+                                                    semaphore=self.semaphore)
                 store_thread.start()
                 self.children.append(store_thread)
 
