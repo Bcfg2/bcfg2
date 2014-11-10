@@ -6,11 +6,13 @@ warnings.filterwarnings("ignore", "apt API not stable yet",
                         FutureWarning)
 import apt.cache
 import os
+import sys
 import Bcfg2.Client.Tools
 
+
 class APT(Bcfg2.Client.Tools.Tool):
-    """The Debian toolset implements package and service operations and inherits
-    the rest from Toolset.Toolset.
+    """The Debian toolset implements package and service operations and
+    inherits the rest from Toolset.Toolset.
 
     """
     name = 'APT'
@@ -41,21 +43,24 @@ class APT(Bcfg2.Client.Tools.Tool):
         if not self.setup['debug']:
             self.pkgcmd += '-q=2 '
         self.pkgcmd += '-y install %s'
-        self.ignores = [entry.get('name') for struct in config \
-                        for entry in struct \
-                        if entry.tag == 'Path' and \
+        self.ignores = [entry.get('name') for struct in config
+                        for entry in struct
+                        if entry.tag == 'Path' and
                         entry.get('type') == 'ignore']
         self.__important__ = self.__important__ + \
-                             ["%s/cache/debconf/config.dat" % self.var_path,
-                              "%s/cache/debconf/templates.dat" % self.var_path,
-                              '/etc/passwd', '/etc/group',
-                              '%s/apt/apt.conf' % self.etc_path,
-                              '%s/dpkg/dpkg.cfg' % self.etc_path] + \
-                             [entry.get('name') for struct in config for entry in struct \
-                              if entry.tag == 'Path' and \
-                              entry.get('name').startswith('%s/apt/sources.list' % self.etc_path)]
-        self.nonexistent = [entry.get('name') for struct in config for entry in struct \
-                              if entry.tag == 'Path' and entry.get('type') == 'nonexistent']
+            ["%s/cache/debconf/config.dat" % self.var_path,
+             "%s/cache/debconf/templates.dat" % self.var_path,
+             '/etc/passwd', '/etc/group',
+             '%s/apt/apt.conf' % self.etc_path,
+             '%s/dpkg/dpkg.cfg' % self.etc_path] + \
+            [entry.get('name') for struct in config for entry in struct
+             if entry.tag == 'Path' and
+             entry.get('name').startswith(
+                 '%s/apt/sources.list' % self.etc_path)]
+        self.nonexistent = [entry.get('name') for struct in config
+                            for entry in struct
+                            if entry.tag == 'Path' and
+                            entry.get('type') == 'nonexistent']
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
         if self.setup['kevlar'] and not self.setup['dryrun']:
@@ -65,14 +70,14 @@ class APT(Bcfg2.Client.Tools.Tool):
             try:
                 self.pkg_cache = apt.cache.Cache()
             except SystemError:
-                e = sys.exc_info()[1]
-                self.logger.info("Failed to initialize APT cache: %s" % e)
+                err = sys.exc_info()[1]
+                self.logger.info("Failed to initialize APT cache: %s" % err)
                 raise Bcfg2.Client.Tools.ToolInstantiationError
             try:
                 self.pkg_cache.update()
             except apt.cache.FetchFailedException:
-                e = sys.exc_info()[1]
-                self.logger.info("Failed to update APT cache: %s" % e)
+                err = sys.exc_info()[1]
+                self.logger.info("Failed to update APT cache: %s" % err)
         self.pkg_cache = apt.cache.Cache()
         if 'req_reinstall_pkgs' in dir(self.pkg_cache):
             self._newapi = True
@@ -88,16 +93,17 @@ class APT(Bcfg2.Client.Tools.Tool):
         else:
             extras = [(p.name, p.installedVersion) for p in self.pkg_cache
                       if p.isInstalled and p.name not in packages]
-        return [Bcfg2.Client.XML.Element('Package', name=name, \
-                                         type='deb', version=version) \
-                                         for (name, version) in extras]
+        return [Bcfg2.Client.XML.Element('Package', name=name,
+                                         type='deb', version=version)
+                for (name, version) in extras]
 
     def VerifyDebsums(self, entry, modlist):
+        """Verify the package contents with debsum information."""
         output = \
             self.cmd.run("%s -as %s" %
                          (self.debsums, entry.get('name'))).stderr.splitlines()
         if len(output) == 1 and "no md5sums for" in output[0]:
-            self.logger.info("Package %s has no md5sums. Cannot verify" % \
+            self.logger.info("Package %s has no md5sums. Cannot verify" %
                              entry.get('name'))
             entry.set('qtext',
                       "Reinstall Package %s-%s to setup md5sums? (y/N) " %
@@ -117,10 +123,10 @@ class APT(Bcfg2.Client.Tools.Tool):
                 # these files should not exist
                 continue
             elif "is not installed" in item or "missing file" in item:
-                self.logger.error("Package %s is not fully installed" \
+                self.logger.error("Package %s is not fully installed"
                                   % entry.get('name'))
             else:
-                self.logger.error("Got Unsupported pattern %s from debsums" \
+                self.logger.error("Got Unsupported pattern %s from debsums"
                                   % item)
                 files.append(item)
         files = list(set(files) - set(self.ignores))
@@ -131,31 +137,32 @@ class APT(Bcfg2.Client.Tools.Tool):
             modlist = [os.path.realpath(filename) for filename in modlist]
             bad = [filename for filename in files if filename not in modlist]
             if bad:
-                self.logger.debug("It is suggested that you either manage these "
-                                  "files, revert the changes, or ignore false "
-                                  "failures:")
-                self.logger.info("Package %s failed validation. Bad files are:" % \
-                                 entry.get('name'))
+                self.logger.debug("It is suggested that you either manage "
+                                  "these files, revert the changes, or "
+                                  "ignore false failures:")
+                self.logger.info("Package %s failed validation. Bad files are:"
+                                 % entry.get('name'))
                 self.logger.info(bad)
-                entry.set('qtext',
-                          "Reinstall Package %s-%s to fix failing files? (y/N) " % \
-                          (entry.get('name'), entry.get('version')))
+                entry.set(
+                    'qtext',
+                    "Reinstall Package %s-%s to fix failing files? (y/N) "
+                    % (entry.get('name'), entry.get('version')))
                 return False
         return True
 
     def VerifyPackage(self, entry, modlist, checksums=True):
         """Verify package for entry."""
-        if not 'version' in entry.attrib:
+        if 'version' not in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
                              (entry.attrib['name']))
             return False
         pkgname = entry.get('name')
-        if self.pkg_cache.has_key(pkgname):
+        if self.pkg_cache.has_key(pkgname):  # noqa
             if self._newapi:
                 is_installed = self.pkg_cache[pkgname].is_installed
             else:
                 is_installed = self.pkg_cache[pkgname].isInstalled
-        if not self.pkg_cache.has_key(pkgname) or not is_installed:
+        if not self.pkg_cache.has_key(pkgname) or not is_installed:  # noqa
             self.logger.info("Package %s not installed" % (entry.get('name')))
             entry.set('current_exists', 'false')
             return False
@@ -168,28 +175,33 @@ class APT(Bcfg2.Client.Tools.Tool):
             installed_version = pkg.installedVersion
             candidate_version = pkg.candidateVersion
         if entry.get('version') == 'auto':
+            # pylint: disable=W0212
             if self._newapi:
-                is_upgradable = self.pkg_cache._depcache.is_upgradable(pkg._pkg)
+                is_upgradable = self.pkg_cache._depcache.is_upgradable(
+                    pkg._pkg)
             else:
-                is_upgradable = self.pkg_cache._depcache.IsUpgradable(pkg._pkg)
+                is_upgradable = self.pkg_cache._depcache.IsUpgradable(
+                    pkg._pkg)
+            # pylint: enable=W0212
             if is_upgradable:
-                desiredVersion = candidate_version
+                desired_version = candidate_version
             else:
-                desiredVersion = installed_version
+                desired_version = installed_version
         elif entry.get('version') == 'any':
-            desiredVersion = installed_version
+            desired_version = installed_version
         else:
-            desiredVersion = entry.get('version')
-        if desiredVersion != installed_version:
+            desired_version = entry.get('version')
+        if desired_version != installed_version:
             entry.set('current_version', installed_version)
-            entry.set('qtext', "Modify Package %s (%s -> %s)? (y/N) " % \
+            entry.set('qtext', "Modify Package %s (%s -> %s)? (y/N) " %
                       (entry.get('name'), entry.get('current_version'),
-                       desiredVersion))
+                       desired_version))
             return False
         else:
             # version matches
-            if not self.setup['quick'] and entry.get('verify', 'true') == 'true' \
-                   and checksums:
+            if not self.setup['quick'] \
+               and entry.get('verify', 'true') == 'true' \
+               and checksums:
                 pkgsums = self.VerifyDebsums(entry, modlist)
                 return pkgsums
             return True
@@ -207,7 +219,7 @@ class APT(Bcfg2.Client.Tools.Tool):
                         self.pkg_cache[pkg].mark_delete(purge=True)
                     else:
                         self.pkg_cache[pkg].markDelete(purge=True)
-                except:
+                except:  # pylint: disable=W0702
                     if self._newapi:
                         self.pkg_cache[pkg].mark_delete()
                     else:
@@ -227,33 +239,40 @@ class APT(Bcfg2.Client.Tools.Tool):
         ipkgs = []
         bad_pkgs = []
         for pkg in packages:
-            if not self.pkg_cache.has_key(pkg.get('name')):
-                self.logger.error("APT has no information about package %s" % (pkg.get('name')))
+            if not self.pkg_cache.has_key(pkg.get('name')):  # noqa
+                self.logger.error("APT has no information about package %s"
+                                  % (pkg.get('name')))
                 continue
             if pkg.get('version') in ['auto', 'any']:
                 if self._newapi:
                     try:
-                        ipkgs.append("%s=%s" % (pkg.get('name'),
-                                                self.pkg_cache[pkg.get('name')].candidate.version))
+                        ipkgs.append("%s=%s" % (
+                            pkg.get('name'),
+                            self.pkg_cache[pkg.get('name')].candidate.version))
                     except AttributeError:
-                        self.logger.error("Failed to find %s in apt package cache" %
-                                          pkg.get('name'))
+                        self.logger.error("Failed to find %s in apt package "
+                                          "cache" % pkg.get('name'))
                         continue
                 else:
-                    ipkgs.append("%s=%s" % (pkg.get('name'),
-                                            self.pkg_cache[pkg.get('name')].candidateVersion))
+                    ipkgs.append("%s=%s" % (
+                        pkg.get('name'),
+                        self.pkg_cache[pkg.get('name')].candidateVersion))
                 continue
+            # pylint: disable=W0212
             if self._newapi:
-                avail_vers = [x.ver_str for x in \
-                              self.pkg_cache[pkg.get('name')]._pkg.version_list]
+                avail_vers = [
+                    x.ver_str for x in
+                    self.pkg_cache[pkg.get('name')]._pkg.version_list]
             else:
-                avail_vers = [x.VerStr for x in \
-                              self.pkg_cache[pkg.get('name')]._pkg.VersionList]
+                avail_vers = [
+                    x.VerStr for x in
+                    self.pkg_cache[pkg.get('name')]._pkg.VersionList]
+            # pylint: enable=W0212
             if pkg.get('version') in avail_vers:
                 ipkgs.append("%s=%s" % (pkg.get('name'), pkg.get('version')))
                 continue
             else:
-                self.logger.error("Package %s: desired version %s not in %s" \
+                self.logger.error("Package %s: desired version %s not in %s"
                                   % (pkg.get('name'), pkg.get('version'),
                                      avail_vers))
             bad_pkgs.append(pkg.get('name'))
@@ -271,6 +290,6 @@ class APT(Bcfg2.Client.Tools.Tool):
             if states[package]:
                 self.modified.append(package)
 
-    def VerifyPath(self, entry, _):
+    def VerifyPath(self, entry, _):  # pylint: disable=W0613
         """Do nothing here since we only verify Path type=ignore."""
         return True
