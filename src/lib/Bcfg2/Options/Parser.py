@@ -325,8 +325,16 @@ class Parser(argparse.ArgumentParser):
         # _parse_config_options is called, all config file options will get set
         # to their hardcoded defaults.  This process defines the options in the
         # namespace and _parse_config_options will never look at them again.
-        self._set_defaults_from_config()
-        self._parse_config_options()
+        #
+        # we have to do the parsing in two loops: first, we squeeze as
+        # much data out of the config file as we can to ensure that
+        # all config file settings are read before we use any default
+        # values. then we can start looking at the command line.
+        while not self.parsed:
+            self.parsed = True
+            self._set_defaults_from_config()
+            self._parse_config_options()
+        self.parsed = False
         remaining = []
         while not self.parsed:
             self.parsed = True
