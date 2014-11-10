@@ -51,8 +51,8 @@ of ``/etc/bcfg2.conf``.
 +-------------+------------------------------------------------------------+-------------------------------+
 | options     | Extra parameters to use when connecting to the database.   | None                          |
 |             | Available parameters vary depending on your database       |                               |
-|             | backend. The parameters are supplied as comma separated    |                               |
-|             | key=value pairs.                                           |                               |
+|             | backend. The parameters are supplied as the value of the   |                               |
+|             | django OPTIONS setting.                                    |                               |
 +-------------+------------------------------------------------------------+-------------------------------+
 
 

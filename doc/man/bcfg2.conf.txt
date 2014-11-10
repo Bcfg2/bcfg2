@@ -736,9 +736,8 @@ control the database connection of the server.
         Port for database connections. Not used for sqlite3.
 
     options
-        Various options for the database connection. The value is
-        expected as multiple key=value pairs, separated with commas.
-        The concrete value depends on the database engine.
+        Various options for the database connection. The value expected
+        is the literal value of the django OPTIONS setting.
 
 Reporting options
 -----------------

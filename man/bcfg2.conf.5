@@ -1,4 +1,6 @@
-.TH "BCFG2.CONF" "5" "July 19, 2013" "1.3" "Bcfg2"
+.\" Man page generated from reStructuredText.
+.
+.TH "BCFG2.CONF" "5" "November 04, 2014" "1.3" "Bcfg2"
 .SH NAME
 bcfg2.conf \- Configuration parameters for Bcfg2
 .
@@ -28,8 +30,6 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .\" new: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .in \\n[rst2man-indent\\n[rst2man-indent-level]]u
 ..
-.\" Man page generated from reStructuredText.
-.
 .SH DESCRIPTION
 .sp
 bcfg2.conf includes configuration parameters for the Bcfg2 server and
@@ -77,7 +77,6 @@ pseudo
 .UNINDENT
 .TP
 .B fam_blocking
-.
 Whether the server should block at startup until the file monitor
 backend has processed all events. This can cause a slower startup,
 but ensure that all files are recognized before the first client
@@ -109,7 +108,7 @@ SCCS
 .B listen_all
 This setting tells the server to listen on all available interfaces.
 The default is to only listen on those interfaces specified by the
-bcfg2 setting in the components section of \fBbcfg2.conf\fP.
+bcfg2 setting in the components section of \fBbcfg2.conf\fP\&.
 .TP
 .B plugins
 A comma\-delimited list of enabled server plugins. Currently
@@ -188,24 +187,24 @@ best
 .UNINDENT
 .UNINDENT
 .sp
-The default is \fIbest\fP, which is currently an alias for \fIbuiltin\fP.
+The default is \fIbest\fP, which is currently an alias for \fIbuiltin\fP\&.
 More details on the backends can be found in the official
 documentation.
 .TP
 .B user
-The username or UID to run the daemon as. Default is \fI0\fP.
+The username or UID to run the daemon as. Default is \fI0\fP\&.
 .TP
 .B group
-The group name or GID to run the daemon as. Default is \fI0\fP.
+The group name or GID to run the daemon as. Default is \fI0\fP\&.
 .TP
 .B vcs_root
 Specifies the path to the root of the VCS working copy that holds
-your Bcfg2 specification, if it is different from \fIrepository\fP.
+your Bcfg2 specification, if it is different from \fIrepository\fP\&.
 E.g., if the VCS repository does not hold the bcfg2 data at the top
 level, you may need to set this option.
 .TP
 .B umask
-The umask to set for the server.  Default is \fI0077\fP.
+The umask to set for the server.  Default is \fI0077\fP\&.
 .UNINDENT
 .SH SERVER PLUGINS
 .sp
@@ -625,7 +624,7 @@ The path at which to generate APT configs. No default.
 .TP
 .B gpg_keypath
 The path on the client where RPM GPG keys will be copied before
-they are imported on the client. Default is \fB/etc/pki/rpm\-gpg\fP.
+they are imported on the client. Default is \fB/etc/pki/rpm\-gpg\fP\&.
 .TP
 .B version
 Set the version attribute used when binding Packages. Default is
@@ -684,7 +683,7 @@ the configuration file.
 .TP
 .B path
 Custom path for backups created in paranoid mode. The default is
-in \fB/var/cache/bcfg2\fP.
+in \fB/var/cache/bcfg2\fP\&.
 .TP
 .B max_copies
 Specify a maximum number of copies for the server to keep when
@@ -765,7 +764,7 @@ ado_mssql
 .B name
 The name of the database to use for statistics data. If
 \(aqdatabase_engine\(aq is set to \(aqsqlite3\(aq this is a file path to
-the sqlite file and defaults to \fB$REPOSITORY_DIR/etc/brpt.sqlite\fP.
+the sqlite file and defaults to \fB$REPOSITORY_DIR/etc/brpt.sqlite\fP\&.
 .TP
 .B user
 User for database connections. Not used for sqlite3.
@@ -780,9 +779,8 @@ Host for database connections. Not used for sqlite3.
 Port for database connections. Not used for sqlite3.
 .TP
 .B options
-Various options for the database connection. The value is
-expected as multiple key=value pairs, separated with commas.
-The concrete value depends on the database engine.
+Various options for the database connection. The value expected
+is the literal value of the django OPTIONS setting.
 .UNINDENT
 .UNINDENT
 .UNINDENT
