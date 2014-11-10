@@ -179,8 +179,9 @@ The normal implementation pattern is this:
    collect its options and adds it as a
    :class:`Bcfg2.Options.Subparser` option group to the main option
    parser.
-#. Register your commands with
-   :func:`Bcfg2.Options.register_commands`.
+#. Register your commands with the
+   :func:`Bcfg2.Options.CommandRegistry.register_commands` method of
+   your ``CommandRegistry`` object.
 #. Add options from the
    :attr:`Bcfg2.Options.CommandRegistry.command_options`
    attribute to the option parser.
@@ -211,9 +212,7 @@ At a minimum, the :func:`Bcfg2.Options.Subcommand.run` method must be
 overridden, and a docstring written.
 
 .. autoclass:: Subcommand
-.. autoclass:: HelpCommand
 .. autoclass:: CommandRegistry
-.. autofunction:: register_commands
 
 Actions
 -------

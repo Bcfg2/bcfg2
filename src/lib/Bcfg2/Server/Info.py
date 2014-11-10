@@ -873,3 +873,7 @@ class CLI(Bcfg2.Options.CommandRegistry):
             return self.runcommand()
         finally:
             self.shutdown()
+
+    def shutdown(self):
+        Bcfg2.Options.CommandRegistry.shutdown(self)
+        self.core.shutdown()
