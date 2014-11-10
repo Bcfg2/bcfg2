@@ -7,8 +7,9 @@ import tempfile
 import mock
 
 from Bcfg2.Compat import ConfigParser
-from Bcfg2.Options import Option, PathOption, BooleanOption, Parser, \
-    PositionalArgument, OptionParserException, Common, new_parser, get_parser
+from Bcfg2.Options import Option, PathOption, RepositoryMacroOption, \
+    BooleanOption, Parser, PositionalArgument, OptionParserException, \
+    Common, new_parser, get_parser
 from testsuite.Testsrc.Testlib.TestOptions import OptionTestCase, \
     make_config, clean_environment
 
@@ -382,16 +383,21 @@ class TestBasicOptions(OptionTestCase):
             parser.add_options,
             [Option(cf=("test", "option"))])
 
-    @make_config({"test": {"test_path": "<repository>/test"}})
+    @make_config({"test": {"test_path": "<repository>/test",
+                           "test_macro": "<repository>"}})
     def test_repository_macro(self, config_file):
         """fix up <repository> macros."""
         result = argparse.Namespace()
         parser = Parser(namespace=result)
         parser.add_options([PathOption("--test1"),
-                            PathOption("--test2"),
+                            RepositoryMacroOption("--test2"),
                             PathOption(cf=("test", "test_path")),
                             PathOption(cf=("test", "test_path_default"),
                                        default="<repository>/test/default"),
+                            RepositoryMacroOption(cf=("test", "test_macro")),
+                            RepositoryMacroOption(
+                                cf=("test", "test_macro_default"),
+                                default="<repository>"),
                             Common.repository])
         parser.parse(["-C", config_file, "-Q", "/foo/bar",
                       "--test1", "<repository>/test1",
@@ -399,6 +405,8 @@ class TestBasicOptions(OptionTestCase):
         self.assertEqual(result.repository, "/foo/bar")
         self.assertEqual(result.test1, "/foo/bar/test1")
         self.assertEqual(result.test2, "/foo/bar/foo/bar")
+        self.assertEqual(result.test_macro, "/foo/bar")
+        self.assertEqual(result.test_macro_default, "/foo/bar")
         self.assertEqual(result.test_path, "/foo/bar/test")
         self.assertEqual(result.test_path_default, "/foo/bar/test/default")
 

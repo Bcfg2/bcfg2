@@ -212,7 +212,7 @@ class _OptionContainer(object):
         Bcfg2.Options.Option(
             cf=('database', 'engine'), default='sqlite3',
             help='Database engine', dest='db_engine'),
-        Bcfg2.Options.PathOption(
+        Bcfg2.Options.RepositoryMacroOption(
             cf=('database', 'name'), default='<repository>/etc/bcfg2.sqlite',
             help="Database name", dest="db_name"),
         Bcfg2.Options.Option(

@@ -14,8 +14,8 @@ from Bcfg2.Options import Types
 from Bcfg2.Compat import ConfigParser
 
 
-__all__ = ["Option", "BooleanOption", "PathOption", "PositionalArgument",
-           "_debug"]
+__all__ = ["Option", "BooleanOption", "RepositoryMacroOption", "PathOption",
+           "PositionalArgument", "_debug"]
 
 unit_test = False  # pylint: disable=C0103
 
@@ -326,24 +326,13 @@ class Option(object):
                    (self, parser))
 
 
-class PathOption(Option):
-    """Shortcut for options that expect a path argument.
+class RepositoryMacroOption(Option):
+    """Option that does translation of ``<repository>`` macros.
 
-    Uses :meth:`Bcfg2.Options.Types.path` to transform the argument
-    into a canonical path. The type of a path option can also be
-    overridden to return a file-like object. For example:
-
-    .. code-block:: python
-
-        options = [
-            Bcfg2.Options.PathOption(
-                "--input", type=argparse.FileType('r'),
-                help="The input file")]
-
-    PathOptions also do translation of ``<repository>`` macros on the
-    fly. It's done this way instead of just fixing up all values at
-    the end of parsing because macro expansion needs to be done before
-    path canonicalization and other stuff.
+    Macro translation is done on the fly instead of just fixing up all
+    values at the end of parsing because macro expansion needs to be
+    done before path canonicalization for
+    :class:`Bcfg2.Options.Options.PathOption`.
     """
     repository = None
 
@@ -356,8 +345,8 @@ class PathOption(Option):
     def early_parsing_hook(self, early_opts):
         if hasattr(early_opts, "repository"):
             if self.__class__.repository is None:
-                _debug("Setting repository to %s for PathOptions" %
-                       early_opts.repository)
+                _debug("Setting repository to %s for %s" %
+                       (early_opts.repository, self.__class__.__name__))
                 self.__class__.repository = early_opts.repository
             else:
                 _debug("Repository is already set for %s" % self.__class__)
@@ -371,13 +360,43 @@ class PathOption(Option):
 
     default = property(_get_default, Option._set_default)
 
+    def transform_value(self, value):
+        """transform the value after macro expansion.
+
+         this can be overridden to further transform the value set by
+        the user *after* macros are expanded, but before the user's
+        ``type`` function is applied. principally exists for
+        PathOption to canonicalize the path.
+        """
+        return value
+
     def _type(self, value):
         """Type function that fixes up <repository> macros."""
         if self.__class__.repository is None:
             return value
         else:
-            return self._original_type(Types.path(
+            return self._original_type(self.transform_value(
                 value.replace("<repository>", self.__class__.repository)))
+
+
+class PathOption(RepositoryMacroOption):
+    """Shortcut for options that expect a path argument.
+
+    Uses :meth:`Bcfg2.Options.Types.path` to transform the argument
+    into a canonical path. The type of a path option can also be
+    overridden to return a file-like object. For example:
+
+    .. code-block:: python
+
+        options = [
+            Bcfg2.Options.PathOption(
+                "--input", type=argparse.FileType('r'),
+                help="The input file")]
+
+    PathOptions also do translation of ``<repository>`` macros.
+    """
+    def transform_value(self, value):
+        return Types.path(value)
 
 
 class _BooleanOptionAction(argparse.Action):
