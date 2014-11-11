@@ -32,11 +32,11 @@ class TestTool(Bcfg2TestCase):
     def setUp(self):
         set_setup_default('command_timeout')
         set_setup_default('interactive', False)
+        set_setup_default('decision')
 
     def get_obj(self, config=None):
         if config is None:
             config = lxml.etree.Element("Configuration")
-
         execs = self.test_obj.__execs__
         self.test_obj.__execs__ = []
         rv = self.test_obj(config)

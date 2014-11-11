@@ -96,12 +96,12 @@ def filteredUrls(pattern, view, kwargs=None, name=None):
         tail = mtail.group(1)
     pattern = pattern[:len(pattern) - len(tail)]
     for filter in ('/state/(?P<state>\w+)',
-                   '/group/(?P<group>[\w\-\.]+)',
-                   '/group/(?P<group>[\w\-\.]+)/(?P<state>[A-Za-z]+)',
-                   '/server/(?P<server>[\w\-\.]+)',
-                   '/server/(?P<server>[\w\-\.]+)/(?P<state>[A-Za-z]+)',
-                   '/server/(?P<server>[\w\-\.]+)/group/(?P<group>[\w\-\.]+)',
-                   '/server/(?P<server>[\w\-\.]+)/group/(?P<group>[\w\-\.]+)/(?P<state>[A-Za-z]+)'):
+                   '/group/(?P<group>[^/]+)',
+                   '/group/(?P<group>[^/]+)/(?P<state>[A-Za-z]+)',
+                   '/server/(?P<server>[^/]+)',
+                   '/server/(?P<server>[^/]+)/(?P<state>[A-Za-z]+)',
+                   '/server/(?P<server>[^/]+)/group/(?P<group>[^/]+)',
+                   '/server/(?P<server>[^/]+)/group/(?P<group>[^/]+)/(?P<state>[A-Za-z]+)'):
         results += [(pattern + filter + tail, view, kwargs)]
     return results
 

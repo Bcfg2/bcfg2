@@ -9,7 +9,7 @@ default: clean package
 package:
 	-mkdir  tmp tmp/bcfg2-server tmp/bcfg2
 	-mkdir -p build/lib/$(PYVERSION)/site-packages
-	-cd ../ && PYTHONPATH=$(PYTHONPATH):$(PWD)/build/lib/python2.6/site-packages/ $(PYTHON) setup.py install --single-version-externally-managed --record=/dev/null --prefix=$(PWD)/build
+	-cd ../ && PYTHONPATH=$(PYTHONPATH):$(PWD)/build/lib/python$(PYVERSION)/site-packages/ $(PYTHON) setup.py install --single-version-externally-managed --record=/dev/null --prefix=$(PWD)/build
 	#setuptools appears to use a restictive umask
 	-chmod -R o+r build/
 	-cat build/bin/bcfg2 | sed -e 's!/usr/bin/python!$(PYTHON)!' > build/bin/bcfg2.new && mv build/bin/bcfg2.new build/bin/bcfg2

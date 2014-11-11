@@ -199,6 +199,9 @@ class Source(Debuggable):  # pylint: disable=R0902
         #: The "version" attribute from :attr:`xsource`
         self.version = xsource.get('version', '')
 
+        #: The "name" attribute from :attr:`xsource`
+        self.name = xsource.get('name', None)
+
         #: A list of predicates that are used to determine if this
         #: source applies to a given
         #: :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata`
@@ -274,11 +277,11 @@ class Source(Debuggable):  # pylint: disable=R0902
         for arch in self.arches:
             if self.url:
                 usettings = [dict(version=self.version, component=comp,
-                                  arch=arch)
+                                  arch=arch, debsrc=self.debsrc)
                              for comp in self.components]
             else:  # rawurl given
                 usettings = [dict(version=self.version, component=None,
-                                  arch=arch)]
+                                  arch=arch, debsrc=self.debsrc)]
 
             for setting in usettings:
                 if not self.rawurl:
@@ -286,6 +289,7 @@ class Source(Debuggable):  # pylint: disable=R0902
                 else:
                     setting['baseurl'] = self.rawurl
                 setting['url'] = baseurl % setting
+                setting['name'] = self.get_repo_name(setting)
             self.url_map.extend(usettings)
 
     @property
@@ -353,7 +357,7 @@ class Source(Debuggable):  # pylint: disable=R0902
             if os.path.exists(self.cachefile):
                 try:
                     self.load_state()
-                except:
+                except (OSError, cPickle.UnpicklingError):
                     err = sys.exc_info()[1]
                     self.logger.error("Packages: Cachefile %s load failed: %s"
                                       % (self.cachefile, err))
@@ -388,8 +392,10 @@ class Source(Debuggable):  # pylint: disable=R0902
         doing other operations that require repository names.  This
         function tries several approaches:
 
-        #. First, if the map contains a ``component`` key, use that as
-           the name.
+        #. First, if the source element containts a ``name`` attribute,
+           use that as the name.
+        #. If the map contains a ``component`` key, use that as the
+           name.
         #. If not, then try to match the repository URL against
            :attr:`Bcfg2.Server.Plugins.Packages.Source.REPO_RE`.  If
            that succeeds, use the first matched group; additionally,
@@ -419,6 +425,9 @@ class Source(Debuggable):  # pylint: disable=R0902
         :type url_map: dict
         :returns: string - the name of the repository.
         """
+        if self.name:
+            return self.name
+
         if url_map['component']:
             rname = url_map['component']
         else:

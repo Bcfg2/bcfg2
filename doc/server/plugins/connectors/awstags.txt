@@ -7,8 +7,8 @@
 =========
 
 The AWSTags plugin is a connector that retrieves tags from instances
-in EC2, and can assign optionally assign
-group membership pased on patterns in the tags.  See `Using Tags
+in EC2, and can optionally assign group membership based on patterns 
+in the tags.  See `Using Tags
 <http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html>`_
 for details on using tags in EC2.
 

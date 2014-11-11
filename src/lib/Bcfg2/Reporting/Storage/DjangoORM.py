@@ -168,7 +168,7 @@ class DjangoORM(StorageBase):
         # TODO - vcs output
         act_dict['detail_type'] = PathEntry.DETAIL_UNUSED
         if path_type == 'directory' and entry.get('prune', 'false') == 'true':
-            unpruned_elist = [e.get('path') for e in entry.findall('Prune')]
+            unpruned_elist = [e.get('name') for e in entry.findall('Prune')]
             if unpruned_elist:
                 act_dict['detail_type'] = PathEntry.DETAIL_PRUNED
                 act_dict['details'] = "\n".join(unpruned_elist)
@@ -367,10 +367,11 @@ class DjangoORM(StorageBase):
     def import_interaction(self, interaction):
         """Import the data into the backend"""
         try:
-            self._import_interaction(interaction)
-        except:
-            self.logger.error("Failed to import interaction: %s" %
-                    traceback.format_exc().splitlines()[-1])
+            try:
+                self._import_interaction(interaction)
+            except:
+                self.logger.error("Failed to import interaction: %s" %
+                        traceback.format_exc().splitlines()[-1])
         finally:
             self.logger.debug("%s: Closing database connection" %
                               self.__class__.__name__)

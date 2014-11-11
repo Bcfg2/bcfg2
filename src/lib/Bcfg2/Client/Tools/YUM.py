@@ -977,8 +977,8 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                             nevra2string(build_yname(pkg.get('name'), inst)))
                         continue
                     status = self.instance_status[inst]
-                    if (not status.get('installed', False) and
-                        Bcfg2.Options.setup.yum_install_missing):
+                    if not status.get('installed', False) and \
+                       Bcfg2.Options.setup.yum_install_missing:
                         queue_pkg(pkg, inst, install_pkgs)
                     elif (status.get('version_fail', False) and
                           Bcfg2.Options.setup.yum_fix_version):

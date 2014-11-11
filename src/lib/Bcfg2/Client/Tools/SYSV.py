@@ -4,6 +4,8 @@ import tempfile
 from Bcfg2.Compat import any  # pylint: disable=W0622
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
+from Bcfg2.Compat import urlretrieve
+
 
 # pylint: disable=C0103
 noask = '''
@@ -37,6 +39,8 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
         # noaskfile needs to live beyond __init__ otherwise file is removed
         self.noaskfile = tempfile.NamedTemporaryFile()
         self.noaskname = self.noaskfile.name
+        # for any pkg files downloaded
+        self.tmpfiles = []
         try:
             self.noaskfile.write(noask)
             # flush admin file contents to disk
@@ -45,6 +49,41 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
                             self.pkgtool[1])
         except:  # pylint: disable=W0702
             self.pkgtool = (self.pkgtool[0] % "", self.pkgtool[1])
+        self.origpkgtool = self.pkgtool
+
+    def pkgmogrify(self, packages):
+        """ Take a list of pkg objects, check for a 'simplefile' attribute.
+            If present, insert a _sysv_pkg_path attribute to the package and
+            download the datastream format SYSV package to a temporary file.
+        """
+        for pkg in packages:
+            if pkg.get('simplefile'):
+                tmpfile = tempfile.NamedTemporaryFile()
+                self.tmpfiles.append(tmpfile)
+                self.logger.info("Downloading %s to %s" % (pkg.get('url'),
+                                 tmpfile.name))
+                urlretrieve(pkg.get('url'), tmpfile.name)
+                pkg.set('_sysv_pkg_path', tmpfile.name)
+
+    def _get_package_command(self, packages):
+        """Override the default _get_package_command, replacing the attribute
+           'url' if '_sysv_pkg_path' if necessary in the returned command
+           string
+        """
+        if hasattr(self, 'origpkgtool'):
+            if len(packages) == 1 and '_sysv_pkg_path' in packages[0].keys():
+                self.pkgtool = (self.pkgtool[0], ('%s %s',
+                                                  ['_sysv_pkg_path', 'name']))
+            else:
+                self.pkgtool = self.origpkgtool
+
+        pkgcmd = super(SYSV, self)._get_package_command(packages)
+        self.logger.debug("Calling install command: %s" % pkgcmd)
+        return pkgcmd
+
+    def Install(self, packages):
+        self.pkgmogrify(packages)
+        super(SYSV, self).Install(packages)
 
     def RefreshPackages(self):
         """Refresh memory hashes of packages."""
@@ -80,8 +119,8 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
                 self.logger.debug("Package %s not installed" %
                                   entry.get("name"))
         else:
-            if (Bcfg2.Options.setup.quick or
-                    entry.attrib.get('verify', 'true') == 'false'):
+            if Bcfg2.Options.setup.quick or \
+               entry.attrib.get('verify', 'true') == 'false':
                 return True
             rv = self.cmd.run("/usr/sbin/pkgchk -n %s" % entry.get('name'))
             if rv.success:

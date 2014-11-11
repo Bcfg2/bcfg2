@@ -33,8 +33,8 @@ BCFG2_SERVER_ENABLED=0
 test -f "/etc/default/bcfg2-server" && . /etc/default/bcfg2-server
 
 if [ "$BCFG2_SERVER_ENABLED" -eq 0 ] ; then
-     log_failure_msg "bcfg2-server is disabled - see /etc/default/bcfg2-server"
-     exit 0
+    log_failure_msg "bcfg2-server is disabled - see /etc/default/bcfg2-server"
+    exit 0
 fi
 
 # Exit if $DAEMON doesn't exist and is not executable
@@ -63,10 +63,11 @@ stop () {
     killproc -p $PIDFILE ${BINARY}
     STATUS=$?
     if [ "$STATUS" = 0 ]; then
-      log_success_msg "bcfg2-server"
-      test -d /var/lock/subsys && touch /var/lock/subsys/bcfg2-server
+        [ -e $PIDFILE ] && rm -f $PIDFILE
+        log_success_msg "bcfg2-server"
+        test -d /var/lock/subsys && touch /var/lock/subsys/bcfg2-server
     else
-      log_failure_msg "bcfg2-server"
+        log_failure_msg "bcfg2-server"
     fi
     return $STATUS
 }
@@ -75,15 +76,15 @@ status () {
     # Inspired by redhat /etc/init.d/functions status() call
     PID=$(pidof -x $BINARY -o %PPID)
     if [ -n "$PID" ]; then
-      echo "$BINARY (pid $PID) is running..."
-      return 0
+        echo "$BINARY (pid $PID) is running..."
+        return 0
     fi
 
     if [ -f $PIDFILE ]; then
-      if [ -n "$PID" ]; then
-        log_failure_msg "$BINARY dead but pid file exists..."
-        return 1
-      fi
+        if [ -n "$PID" ]; then
+            log_failure_msg "$BINARY dead but pid file exists..."
+            return 1
+        fi
     fi
 
     log_failure_msg "$BINARY is not running"

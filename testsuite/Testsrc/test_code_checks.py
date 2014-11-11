@@ -35,6 +35,7 @@ contingent_checks = {
                   "lib/Bcfg2/Server/Admin": ["Reports.py", "Syncdb.py"],
                   "sbin": ["bcfg2-reports"]},
     ("pyinotify",): {"lib/Bcfg2/Server/FileMonitor": ["Inotify.py"]},
+    ("apt",): {"lib/Bcfg2/Client/Tools": ["APT.py"]},
     ("yum",): {"lib/Bcfg2/Client/Tools": ["YUM.py"]},
     ("genshi",): {"lib/Bcfg2/Server/Plugins/Cfg": ["CfgGenshiGenerator.py"]},
     ("Cheetah",): {"lib/Bcfg2/Server/Plugins/Cfg": ["CfgCheetahGenerator.py"]},
@@ -68,7 +69,8 @@ error_checks = {
 
 # perform no checks at all on the listed files
 no_checks = {
-    "lib/Bcfg2/Client/Tools": ["APT.py", "RPM.py", "rpmtools.py"],
+    "lib/Bcfg2/Client/Tools": ["RPM.py", "rpmtools.py"],
+    "lib/Bcfg2/Server": ["Snapshots", "Hostbase"],
     "lib/Bcfg2": ["manage.py"],
     "lib/Bcfg2/Server/Reports": ["manage.py"],
     "lib/Bcfg2/Server/Plugins": ["Base.py"],

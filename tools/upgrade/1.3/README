@@ -24,3 +24,7 @@ migrate_probe_groups_to_db.py
     - Migrate Probe host and group data from XML to DB backend for Metadata 
       and Probe plugins. Does not migrate individual probe return data. Assumes 
       migration to BOTH Metadata and Probe to database backends. 
+
+migrate_sysv_simplename.py
+    - Migrate any Pkgmgr entries which may have been using the simplename 
+      attribute introduced in 1.3.5 to the simplefile attribute 

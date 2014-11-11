@@ -129,6 +129,23 @@ class Tool(object):
                 raise ToolInstantiationError("%s: %s not executable" %
                                              (self.name, filename))
 
+    def _install_allowed(self, entry):
+        """ Return true if the given entry is allowed to be installed by
+        the whitelist or blacklist """
+        if (Bcfg2.Options.setup.decision == 'whitelist' and
+                not Bcfg2.Client.matches_white_list(
+                    entry, Bcfg2.Options.setup.decision_list)):
+            self.logger.info("In whitelist mode: suppressing Action: %s" %
+                             entry.get('name'))
+            return False
+        if (Bcfg2.Options.setup.decision == 'blacklist' and
+                not Bcfg2.Client.passes_black_list(
+                    entry, Bcfg2.Options.setup.decision_list)):
+            self.logger.info("In blacklist mode: suppressing Action: %s" %
+                             entry.get('name'))
+            return False
+        return True
+
     def BundleUpdated(self, bundle):  # pylint: disable=W0613
         """ Callback that is invoked when a bundle has been updated.
 
@@ -587,7 +604,8 @@ class SvcTool(Tool):
             return
 
         for entry in bundle:
-            if not self.handlesEntry(entry):
+            if (not self.handlesEntry(entry)
+                or not self._install_allowed(entry)):
                 continue
 
             estatus = entry.get('status')

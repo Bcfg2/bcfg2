@@ -321,15 +321,6 @@ processed for any Genshi, Cheetah, or Jinja2 base file.
         Cfg/etc/fstab/fstab.H_host.example.com.genshi
         Cfg/etc/fstab/fstab.G50_server.cheetah
 
-Genshi templates take precence over cheetah templates.  For example, if
-two files exist named::
-
-    Cfg/etc/fstab/fstab.genshi
-    Cfg/etc/fstab/fstab.cheetah
-
-The Cheetah template is ignored.  Exploiting this fact is probably a
-pretty bad idea in practice.
-
 You can mix Genshi and Cheetah when using different host-specific or
 group-specific files.  For example::
 

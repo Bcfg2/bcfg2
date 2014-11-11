@@ -69,8 +69,8 @@ of ``/etc/bcfg2.conf``.
 +--------------------+------------------------------------------------------------+---------------------------------------+
 | options            | Extra parameters to use when connecting to the database.   | None                                  |
 |                    | Available parameters vary depending on your database       |                                       |
-|                    | backend. The parameters are supplied as comma separated    |                                       |
-|                    | key=value pairs.                                           |                                       |
+|                    | backend. The parameters are supplied as the value of the   |                                       |
+|                    | django OPTIONS setting.                                    |                                       |
 +--------------------+------------------------------------------------------------+---------------------------------------+
 | reporting_engine   | The name of the Django database backend to use for the     | None                                  |
 |                    | reporting database. Takes the same values as ``engine``.   |                                       |
@@ -86,9 +86,9 @@ of ``/etc/bcfg2.conf``.
 | reporting_port     | The port to connect to for the reporting database          | None                                  |
 +--------------------+------------------------------------------------------------+---------------------------------------+
 | reporting_options  | Extra parameters to use when connecting to the reporting   | None                                  |
-|                    | database.  Available parameters vary depending on your     |                                       |
-|                    | database backend. The parameters are supplied as comma     |                                       |
-|                    | separated key=value pairs.                                 |                                       |
+|                    | database. Available parameters vary depending on your      |                                       |
+|                    | database backend. The parameters are supplied as the       |                                       |
+|                    | value of the django OPTIONS setting.                       |                                       |
 +--------------------+------------------------------------------------------------+---------------------------------------+
 
 

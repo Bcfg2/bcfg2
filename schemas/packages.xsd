@@ -173,7 +173,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute type="xsd:boolean" name="debsrc">
+    <xsd:attribute type="xsd:boolean" name="debsrc" default="false">
       <xsd:annotation>
         <xsd:documentation>
           Include ``deb-src`` lines in the generated APT
@@ -214,6 +214,14 @@
           The OS version this source applies to.  This is used to
           generate URLs if the :xml:attribute:`SourceType:url`
           attribute is given, and ignored otherwise.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type="xsd:string" name="name">
+      <xsd:annotation>
+        <xsd:documentation>
+          Specifiy an explicit name for the source and do not generate
+          it automatically.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

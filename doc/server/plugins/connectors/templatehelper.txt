@@ -56,7 +56,7 @@ Usage
 
 Specific helpers can be referred to in
 templates as ``metadata.TemplateHelper[<modulename>]``. That accesses
-a HelperModule object will has, as attributes, all symbols listed in
+a HelperModule object will have, as attributes, all symbols listed in
 ``__export__``.  For example, consider this helper module::
 
   __export__ = ["hello"]

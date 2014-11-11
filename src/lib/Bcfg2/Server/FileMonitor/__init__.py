@@ -238,6 +238,8 @@ class FileMonitor(Debuggable):
                         self.handles[event.requestID]))
         try:
             self.handles[event.requestID].HandleEvent(event)
+        except KeyboardInterrupt:
+            raise
         except:  # pylint: disable=W0702
             err = sys.exc_info()[1]
             self.logger.error("Error in handling of event %s for %s: %s" %

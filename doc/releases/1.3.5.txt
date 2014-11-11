@@ -1,0 +1,33 @@
+.. -*- mode: rst -*-
+.. vim: ft=rst
+
+.. _releases-1.3.5:
+
+1.3.5
+=====
+
+We are happy to announce the release of Bcfg2 1.3.5. It is available for
+download at:
+
+ ftp://ftp.mcs.anl.gov/pub/bcfg
+
+This is primarily a bugfix release.
+
+* Properly close db connections
+* Improved error messages
+* Fix yum upgrade/downgrade
+* Enable bcfg2-yum-helper to depsolve for arches incompatible with
+  server
+* Spec file fixes
+* bcfg2-crypet: Default to only (En|De)crypt vars that need it
+* Fix email reporting bug
+* Fix debsums parsing
+* Fix solaris makefile
+* SYSV: Implement downloading and installing SYSV packages from HTTP:
+  http://docs.bcfg2.org/client/tools.html#sysv
+* Fix debian bcfg2-server init script
+
+
+Special thanks to the following contributors for this release: John
+Morris, Jonathan Billings, Chris Brinker, Tim Laszlo, Matt Kemp, Michael
+Fenn, Pavel Labushev, Nathan Olla, Alexander Sulfrian.

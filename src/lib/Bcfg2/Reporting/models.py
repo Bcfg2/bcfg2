@@ -717,9 +717,6 @@ class PathEntry(SuccessEntry):
     def has_detail(self):
         return self.detail_type != PathEntry.DETAIL_UNUSED
 
-    def is_sensitive(self):
-        return self.detail_type == PathEntry.DETAIL_SENSITIVE
-
     def is_diff(self):
         return self.detail_type == PathEntry.DETAIL_DIFF
 
