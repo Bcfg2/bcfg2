@@ -78,6 +78,7 @@ class ReportingCollector(object):
         self.children = []
         self.cleanup_threshold = 25
 
+        self.semaphore = None
         if Bcfg2.Options.setup.children > 0:
             self.semaphore = threading.Semaphore(
                 value=Bcfg2.Options.setup.children)
@@ -156,7 +157,7 @@ class ReportingCollector(object):
                 interaction = self.transport.fetch()
                 if not interaction:
                     continue
-                if Bcfg2.Options.setup.children > 0:
+                if self.semaphore:
                     self.semaphore.acquire()
                 store_thread = ReportingStoreThread(interaction, self.storage,
                                                     semaphore=self.semaphore)
