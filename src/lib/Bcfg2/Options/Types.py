@@ -19,12 +19,16 @@ def path(value):
 def comma_list(value):
     """ Split a comma-delimited list, with optional whitespace around
     the commas."""
+    if value == '':
+        return []
     return _COMMA_SPLIT_RE.split(value)
 
 
 def colon_list(value):
     """ Split a colon-delimited list.  Whitespace is not allowed
     around the colons. """
+    if value == '':
+        return []
     return value.split(':')
 
 
