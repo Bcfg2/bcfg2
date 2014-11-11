@@ -439,15 +439,6 @@ class Compare(AdminCmd):
                 print("")
 
 
-class Help(AdminCmd, Bcfg2.Options.HelpCommand):
-    """ Get help on a specific subcommand """
-    def command_registry(self):
-        return CLI.commands
-
-    def run(self, setup):
-        Bcfg2.Options.HelpCommand.run(self, setup)
-
-
 class Init(AdminCmd):
     """Interactively initialize a new repository."""
 
@@ -1194,16 +1185,20 @@ class Xcmd(_ProxyAdminCmd):
 
 class CLI(Bcfg2.Options.CommandRegistry):
     """ CLI class for bcfg2-admin """
+
     def __init__(self):
         Bcfg2.Options.CommandRegistry.__init__(self)
-        Bcfg2.Options.register_commands(self.__class__, globals().values(),
-                                        parent=AdminCmd)
+        self.register_commands(globals().values(), parent=AdminCmd)
         parser = Bcfg2.Options.get_parser(
             description="Manage a running Bcfg2 server",
             components=[self])
+        parser.add_options(self.subcommand_options)
         parser.parse()
 
     def run(self):
         """ Run bcfg2-admin """
-        self.commands[Bcfg2.Options.setup.subcommand].setup()
-        return self.runcommand()
+        try:
+            self.commands[Bcfg2.Options.setup.subcommand].setup()
+            return self.runcommand()
+        finally:
+            self.shutdown()

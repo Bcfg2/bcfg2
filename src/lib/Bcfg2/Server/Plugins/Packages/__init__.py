@@ -33,6 +33,7 @@ class PackagesBackendAction(Bcfg2.Options.ComponentAction):
     """ ComponentAction to load Packages backends """
     bases = ['Bcfg2.Server.Plugins.Packages']
     module = True
+    fail_silently = True
 
 
 class OnDemandDict(MutableMapping):

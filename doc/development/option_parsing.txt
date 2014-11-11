@@ -174,28 +174,32 @@ The normal implementation pattern is this:
 
 #. Define all of your subcommands as children of
    :class:`Bcfg2.Options.Subcommand`.
-#. Define a :class:`Bcfg2.Options.CommandRegistry` object that will be
+#. Create a :class:`Bcfg2.Options.CommandRegistry` object that will be
    used to register all of the commands.  Registering a command
    collect its options and adds it as a
    :class:`Bcfg2.Options.Subparser` option group to the main option
    parser.
-#. Register your commands with
-   :func:`Bcfg2.Options.register_commands`, parse options, and run.
+#. Register your commands with the
+   :func:`Bcfg2.Options.CommandRegistry.register_commands` method of
+   your ``CommandRegistry`` object.
+#. Add options from the
+   :attr:`Bcfg2.Options.CommandRegistry.command_options`
+   attribute to the option parser.
+#. Parse options, and run.
 
 :mod:`Bcfg2.Server.Admin` provides a fairly simple implementation,
-where the CLI class is itself the command registry:
+where the CLI class subclasses the command registry:
 
 .. code-block:: python
 
     class CLI(Bcfg2.Options.CommandRegistry):
         def __init__(self):
             Bcfg2.Options.CommandRegistry.__init__(self)
-            Bcfg2.Options.register_commands(self.__class__,
-                                            globals().values(),
-                                            parent=AdminCmd)
+            self.register_commands(globals().values(), parent=AdminCmd)
             parser = Bcfg2.Options.get_parser(
                 description="Manage a running Bcfg2 server",
                 components=[self])
+            parser.add_options(self.subcommand_options)
             parser.parse()
 
 In this case, commands are collected from amongst all global variables
@@ -208,9 +212,7 @@ At a minimum, the :func:`Bcfg2.Options.Subcommand.run` method must be
 overridden, and a docstring written.
 
 .. autoclass:: Subcommand
-.. autoclass:: HelpCommand
 .. autoclass:: CommandRegistry
-.. autofunction:: register_commands
 
 Actions
 -------

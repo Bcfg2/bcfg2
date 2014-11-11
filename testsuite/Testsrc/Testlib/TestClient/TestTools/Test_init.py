@@ -17,17 +17,17 @@ while path != "/":
     path = os.path.dirname(path)
 from common import *
 
-# try to find true
-if os.path.exists("/bin/true"):
-    TRUE = "/bin/true"
-elif os.path.exists("/usr/bin/true"):
-    TRUE = "/usr/bin/true"
-else:
-    TRUE = None
-
 
 class TestTool(Bcfg2TestCase):
     test_obj = Tool
+
+    # try to find true
+    if os.path.exists("/bin/true"):
+        true = "/bin/true"
+    elif os.path.exists("/usr/bin/true"):
+        true = "/usr/bin/true"
+    else:
+        true = None
 
     def setUp(self):
         set_setup_default('command_timeout')
@@ -77,11 +77,11 @@ class TestTool(Bcfg2TestCase):
                               ["/test"] + [e.get("name") for e in important])
         t.getSupportedEntries.assert_called_with()
 
-    @skipIf(TRUE is None, "/bin/true or equivalent not found")
+    @skipIf(true is None, "/bin/true or equivalent not found")
     def test__check_execs(self):
         t = self.get_obj()
         if t.__execs__ == []:
-            t.__execs__.append(TRUE)
+            t.__execs__.append(self.true)
 
         @patch("os.stat")
         def inner(mock_stat):

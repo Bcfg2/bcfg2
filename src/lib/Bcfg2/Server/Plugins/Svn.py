@@ -18,18 +18,24 @@ class Svn(Bcfg2.Server.Plugin.Version):
     """Svn is a version plugin for dealing with Bcfg2 repos."""
     options = Bcfg2.Server.Plugin.Version.options + [
         Bcfg2.Options.Option(
-            cf=("svn", "conflict_resolution"), dest="svn_conflict_resolution",
-            type=lambda v: v.replace("-", "_"),
-            choices=dir(pysvn.wc_conflict_choice),  # pylint: disable=E1101
-            default=pysvn.wc_conflict_choice.postpone,  # pylint: disable=E1101
-            help="SVN conflict resolution method"),
-        Bcfg2.Options.Option(
             cf=("svn", "user"), dest="svn_user", help="SVN username"),
         Bcfg2.Options.Option(
             cf=("svn", "password"), dest="svn_password", help="SVN password"),
         Bcfg2.Options.BooleanOption(
             cf=("svn", "always_trust"), dest="svn_trust_ssl",
             help="Always trust SSL certs from SVN server")]
+
+    if HAS_SVN:
+        options.append(
+            Bcfg2.Options.Option(
+                cf=("svn", "conflict_resolution"),
+                dest="svn_conflict_resolution",
+                type=lambda v: v.replace("-", "_"),
+                # pylint: disable=E1101
+                choices=dir(pysvn.wc_conflict_choice),
+                default=pysvn.wc_conflict_choice.postpone,
+                # pylint: enable=E1101
+                help="SVN conflict resolution method"))
 
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __vcs_metadata_path__ = ".svn"

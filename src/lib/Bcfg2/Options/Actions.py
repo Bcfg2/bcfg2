@@ -2,7 +2,8 @@
 
 import sys
 import argparse
-from Bcfg2.Options.Parser import get_parser
+from Bcfg2.Options.Parser import get_parser, OptionParserException
+from Bcfg2.Options.Options import _debug
 
 __all__ = ["ConfigFileAction", "ComponentAction", "PluginsAction"]
 
@@ -101,7 +102,7 @@ class ComponentAction(FinalizableAction):
     fail_silently = False
 
     def __init__(self, *args, **kwargs):
-        if self.mapping:
+        if self.mapping and not self.islist:
             if 'choices' not in kwargs:
                 kwargs['choices'] = self.mapping.keys()
         FinalizableAction.__init__(self, *args, **kwargs)
@@ -112,9 +113,12 @@ class ComponentAction(FinalizableAction):
         try:
             return getattr(__import__(module, fromlist=[name]), name)
         except (AttributeError, ImportError):
+            msg = "Failed to load %s from %s: %s" % (name, module,
+                                                     sys.exc_info()[1])
             if not self.fail_silently:
-                print("Failed to load %s from %s: %s" %
-                      (name, module, sys.exc_info()[1]))
+                print(msg)
+            else:
+                _debug(msg)
             return None
 
     def _load_component(self, name):
@@ -143,7 +147,7 @@ class ComponentAction(FinalizableAction):
         if cls:
             get_parser().add_component(cls)
         elif not self.fail_silently:
-            print("Could not load component %s" % name)
+            raise OptionParserException("Could not load component %s" % name)
         return cls
 
     def __call__(self, parser, namespace, values, option_string=None):
@@ -168,7 +172,10 @@ class ConfigFileAction(FinalizableAction):
     ``bcfg2-lint.conf``). """
 
     def __call__(self, parser, namespace, values, option_string=None):
-        parser.add_config_file(self.dest, values, reparse=False)
+        if values:
+            parser.add_config_file(self.dest, values, reparse=False)
+        else:
+            _debug("No config file passed for %s" % self)
         FinalizableAction.__call__(self, parser, namespace, values,
                                    option_string=option_string)
 
@@ -177,3 +184,4 @@ class PluginsAction(ComponentAction):
     """ :class:`Bcfg2.Options.ComponentAction` subclass for loading
     Bcfg2 server plugins. """
     bases = ['Bcfg2.Server.Plugins']
+    fail_silently = True

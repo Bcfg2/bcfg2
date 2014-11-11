@@ -38,7 +38,13 @@ def set_setup_default(option, value=None):
     if not hasattr(Bcfg2.Options.setup, option):
         setattr(Bcfg2.Options.setup, option, value)
 
+# these two variables do slightly different things for unit tests; the
+# former skips config file reading, while the latter sends option
+# debug logging to stdout so it can be captured. These are separate
+# because we want to enable config file reading in order to test
+# option parsing.
 Bcfg2.Options.Parser.unit_test = True
+Bcfg2.Options.Options.unit_test = True
 
 try:
     import django.conf
@@ -119,6 +125,19 @@ class Bcfg2TestCase(TestCase):
     :func:`assertXMLEqual`, a useful assertion method given all the
     XML used by Bcfg2.
     """
+    capture_stderr = True
+
+    @classmethod
+    def setUpClass(cls):
+        cls._stderr = sys.stderr
+        if cls.capture_stderr:
+            sys.stderr = sys.stdout
+
+    @classmethod
+    def tearDownClass(cls):
+        if cls.capture_stderr:
+            sys.stderr = cls._stderr
+
     def assertXMLEqual(self, el1, el2, msg=None):
         """ Test that the two XML trees given are equal. """
         if msg is None:
