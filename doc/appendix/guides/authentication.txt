@@ -146,7 +146,7 @@ Allowed values are:
 +-------------------+------------------------------------------+
 
 ``cert+password`` is the default.  This can be changed by setting the
-``authentication`` parameter in the ``[communcation]`` section of
+``authentication`` parameter in the ``[communication]`` section of
 ``bcfg2.conf``.  For instance, to set ``bootstrap`` mode as the global
 default, you would add the following to ``bcfg2.conf``::
 
