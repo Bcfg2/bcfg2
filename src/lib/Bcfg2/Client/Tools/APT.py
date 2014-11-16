@@ -159,9 +159,9 @@ class APT(Bcfg2.Client.Tools.Tool):
                              (entry.attrib['name']))
             return False
         pkgname = entry.get('name')
-        if self.pkg_cache.has_key(pkgname):  # noqa
+        if pkgname in self.pkg_cache:
             is_installed = self.pkg_cache[pkgname].is_installed
-        if not self.pkg_cache.has_key(pkgname) or not is_installed:  # noqa
+        if pkgname not in self.pkg_cache or not is_installed:
             self.logger.info("Package %s not installed" % (entry.get('name')))
             entry.set('current_exists', 'false')
             return False
@@ -216,7 +216,7 @@ class APT(Bcfg2.Client.Tools.Tool):
         ipkgs = []
         bad_pkgs = []
         for pkg in packages:
-            if not self.pkg_cache.has_key(pkg.get('name')):  # noqa
+            if pkg.get('name') not in self.pkg_cache:
                 self.logger.error("APT has no information about package %s"
                                   % (pkg.get('name')))
                 continue
