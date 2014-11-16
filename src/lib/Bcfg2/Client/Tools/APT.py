@@ -170,10 +170,7 @@ class APT(Bcfg2.Client.Tools.Tool):
         installed_version = pkg.installed.version
         candidate_version = pkg.candidate.version
         if entry.get('version') == 'auto':
-            # pylint: disable=W0212
-            is_upgradable = self.pkg_cache._depcache.is_upgradable(pkg._pkg)
-            # pylint: enable=W0212
-            if is_upgradable:
+            if pkg.is_upgradable:
                 desired_version = candidate_version
             else:
                 desired_version = installed_version
@@ -229,11 +226,7 @@ class APT(Bcfg2.Client.Tools.Tool):
                     self.logger.error("Failed to find %s in apt package "
                                       "cache" % pkg.get('name'))
                     continue
-            # pylint: disable=W0212
-            avail_vers = [
-                x.ver_str for x in
-                self.pkg_cache[pkg.get('name')]._pkg.version_list]
-            # pylint: enable=W0212
+            avail_vers = self.pkg_cache[pkg.get('name')].versions.keys()
             if pkg.get('version') in avail_vers:
                 ipkgs.append("%s=%s" % (pkg.get('name'), pkg.get('version')))
                 continue
