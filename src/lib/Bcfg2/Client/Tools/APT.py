@@ -89,20 +89,12 @@ class APT(Bcfg2.Client.Tools.Tool):
                 err = sys.exc_info()[1]
                 self.logger.info("Failed to update APT cache: %s" % err)
         self.pkg_cache = apt.cache.Cache()
-        if 'req_reinstall_pkgs' in dir(self.pkg_cache):
-            self._newapi = True
-        else:
-            self._newapi = False
 
     def FindExtra(self):
         """Find extra packages."""
         packages = [entry.get('name') for entry in self.getSupportedEntries()]
-        if self._newapi:
-            extras = [(p.name, p.installed.version) for p in self.pkg_cache
-                      if p.is_installed and p.name not in packages]
-        else:
-            extras = [(p.name, p.installedVersion) for p in self.pkg_cache
-                      if p.isInstalled and p.name not in packages]
+        extras = [(p.name, p.installed.version) for p in self.pkg_cache
+                  if p.is_installed and p.name not in packages]
         return [Bcfg2.Client.XML.Element('Package', name=name,
                                          type='deb', version=version)
                 for (name, version) in extras]
@@ -168,30 +160,18 @@ class APT(Bcfg2.Client.Tools.Tool):
             return False
         pkgname = entry.get('name')
         if self.pkg_cache.has_key(pkgname):  # noqa
-            if self._newapi:
-                is_installed = self.pkg_cache[pkgname].is_installed
-            else:
-                is_installed = self.pkg_cache[pkgname].isInstalled
+            is_installed = self.pkg_cache[pkgname].is_installed
         if not self.pkg_cache.has_key(pkgname) or not is_installed:  # noqa
             self.logger.info("Package %s not installed" % (entry.get('name')))
             entry.set('current_exists', 'false')
             return False
 
         pkg = self.pkg_cache[pkgname]
-        if self._newapi:
-            installed_version = pkg.installed.version
-            candidate_version = pkg.candidate.version
-        else:
-            installed_version = pkg.installedVersion
-            candidate_version = pkg.candidateVersion
+        installed_version = pkg.installed.version
+        candidate_version = pkg.candidate.version
         if entry.get('version') == 'auto':
             # pylint: disable=W0212
-            if self._newapi:
-                is_upgradable = self.pkg_cache._depcache.is_upgradable(
-                    pkg._pkg)
-            else:
-                is_upgradable = self.pkg_cache._depcache.IsUpgradable(
-                    pkg._pkg)
+            is_upgradable = self.pkg_cache._depcache.is_upgradable(pkg._pkg)
             # pylint: enable=W0212
             if is_upgradable:
                 desired_version = candidate_version
@@ -225,15 +205,9 @@ class APT(Bcfg2.Client.Tools.Tool):
             self.logger.info(pkgnames)
             for pkg in pkgnames.split(" "):
                 try:
-                    if self._newapi:
-                        self.pkg_cache[pkg].mark_delete(purge=True)
-                    else:
-                        self.pkg_cache[pkg].markDelete(purge=True)
+                    self.pkg_cache[pkg].mark_delete(purge=True)
                 except:  # pylint: disable=W0702
-                    if self._newapi:
-                        self.pkg_cache[pkg].mark_delete()
-                    else:
-                        self.pkg_cache[pkg].markDelete()
+                    self.pkg_cache[pkg].mark_delete()
             try:
                 self.pkg_cache.commit()
             except SystemExit:
@@ -254,29 +228,18 @@ class APT(Bcfg2.Client.Tools.Tool):
                                   % (pkg.get('name')))
                 continue
             if pkg.get('version') in ['auto', 'any']:
-                if self._newapi:
-                    try:
-                        ipkgs.append("%s=%s" % (
-                            pkg.get('name'),
-                            self.pkg_cache[pkg.get('name')].candidate.version))
-                    except AttributeError:
-                        self.logger.error("Failed to find %s in apt package "
-                                          "cache" % pkg.get('name'))
-                        continue
-                else:
+                try:
                     ipkgs.append("%s=%s" % (
                         pkg.get('name'),
-                        self.pkg_cache[pkg.get('name')].candidateVersion))
-                continue
+                        self.pkg_cache[pkg.get('name')].candidate.version))
+                except AttributeError:
+                    self.logger.error("Failed to find %s in apt package "
+                                      "cache" % pkg.get('name'))
+                    continue
             # pylint: disable=W0212
-            if self._newapi:
-                avail_vers = [
-                    x.ver_str for x in
-                    self.pkg_cache[pkg.get('name')]._pkg.version_list]
-            else:
-                avail_vers = [
-                    x.VerStr for x in
-                    self.pkg_cache[pkg.get('name')]._pkg.VersionList]
+            avail_vers = [
+                x.ver_str for x in
+                self.pkg_cache[pkg.get('name')]._pkg.version_list]
             # pylint: enable=W0212
             if pkg.get('version') in avail_vers:
                 ipkgs.append("%s=%s" % (pkg.get('name'), pkg.get('version')))
