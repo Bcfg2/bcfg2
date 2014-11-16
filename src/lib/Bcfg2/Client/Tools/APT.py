@@ -159,19 +159,17 @@ class APT(Bcfg2.Client.Tools.Tool):
                              (entry.attrib['name']))
             return False
         pkgname = entry.get('name')
-        if pkgname in self.pkg_cache:
-            is_installed = self.pkg_cache[pkgname].is_installed
-        if pkgname not in self.pkg_cache or not is_installed:
+        if pkgname not in self.pkg_cache or \
+           not self.pkg_cache[pkgname].is_installed:
             self.logger.info("Package %s not installed" % (entry.get('name')))
             entry.set('current_exists', 'false')
             return False
 
         pkg = self.pkg_cache[pkgname]
         installed_version = pkg.installed.version
-        candidate_version = pkg.candidate.version
         if entry.get('version') == 'auto':
             if pkg.is_upgradable:
-                desired_version = candidate_version
+                desired_version = pkg.candidate.version
             else:
                 desired_version = installed_version
         elif entry.get('version') == 'any':
@@ -213,28 +211,28 @@ class APT(Bcfg2.Client.Tools.Tool):
         ipkgs = []
         bad_pkgs = []
         for pkg in packages:
-            if pkg.get('name') not in self.pkg_cache:
+            pkgname = pkg.get('name')
+            if pkgname not in self.pkg_cache:
                 self.logger.error("APT has no information about package %s"
-                                  % (pkg.get('name')))
+                                  % pkgname)
                 continue
             if pkg.get('version') in ['auto', 'any']:
                 try:
                     ipkgs.append("%s=%s" % (
-                        pkg.get('name'),
-                        self.pkg_cache[pkg.get('name')].candidate.version))
+                        pkgname,
+                        self.pkg_cache[pkgname].candidate.version))
                 except AttributeError:
                     self.logger.error("Failed to find %s in apt package "
-                                      "cache" % pkg.get('name'))
+                                      "cache" % pkgname)
                     continue
-            avail_vers = self.pkg_cache[pkg.get('name')].versions.keys()
+            avail_vers = self.pkg_cache[pkgname].versions.keys()
             if pkg.get('version') in avail_vers:
-                ipkgs.append("%s=%s" % (pkg.get('name'), pkg.get('version')))
+                ipkgs.append("%s=%s" % (pkgname, pkg.get('version')))
                 continue
             else:
                 self.logger.error("Package %s: desired version %s not in %s"
-                                  % (pkg.get('name'), pkg.get('version'),
-                                     avail_vers))
-            bad_pkgs.append(pkg.get('name'))
+                                  % (pkgname, pkg.get('version'), avail_vers))
+            bad_pkgs.append(pkgname)
         if bad_pkgs:
             self.logger.error("Cannot find correct versions of packages:")
             self.logger.error(bad_pkgs)
