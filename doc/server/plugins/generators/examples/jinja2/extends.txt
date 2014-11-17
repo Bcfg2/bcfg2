@@ -1,0 +1,61 @@
+.. -*- mode: rst -*-
+
+=========================
+ Extending Jinja2 Templates
+=========================
+
+Jinja2 templates can use the {% extends %} directive to inherit file 
+fragments which might be common to many configuration files.
+
+Use the "jinja2_include" suffix for file fragments you will extend.
+
+``/var/lib/bcfg2/Cfg/foo/common.jinja2_include``
+
+.. code-block:: none
+
+    [global]
+    setting1 = true
+    setting2 = false
+    {% block setting3 %}setting3 = "default value"{% endblock %}
+
+    {% block section1 -%}
+    [section1]
+    setting4 = true
+    setting5 = false
+    {%- endblock %}
+
+    {% block section2 -%}
+    [section2]
+    setting6 = true
+    setting7 = false
+    {%- endblock %}
+
+``/var/lib/bcfg2/Cfg/foo/foo.H_hostname.jinja2``
+
+.. code-block:: none
+
+    {% extends "common.jinja2_include" %}
+    {% block setting3 %}setting3 = "new value"{% endblock %}
+    {% block section1 -%}
+    [section1]
+    setting4 = false
+    setting5 = false
+    {%- endblock %}
+
+Output
+======
+
+.. code-block:: none
+
+    [global]
+    setting1 = true
+    setting2 = false
+    setting3 = "new value"
+
+    [section1]
+    setting4 = false
+    setting5 = false
+
+    [section2]
+    setting6 = true
+    setting7 = false

@@ -1,0 +1,54 @@
+.. -*- mode: rst -*-
+
+=========================
+ Including Jinja2 Templates
+=========================
+
+Jinja2 templates can use the {% include %} directive to include file 
+fragments which might be common to many configuration files.
+
+Use the "jinja2_include" suffix for file fragments you will include.
+
+``/var/lib/bcfg2/Cfg/foo/foo.jinja2``
+
+.. code-block:: none
+
+    [global]
+    setting1 = true
+    setting2 = false
+    
+    {% for x in metadata.groups %}{% include x + '.jinja2_include' ignore missing %}
+    {% endfor %}
+
+``/var/lib/bcfg2/Cfg/foo/group1.jinja2_include``
+
+.. code-block:: none
+
+    [group1]
+    setting3 = true
+    setting4 = false
+
+``/var/lib/bcfg2/Cfg/foo/group3.jinja2_include``
+
+.. code-block:: none
+
+    [group3]
+    setting7 = true
+    setting8 = false
+
+Output
+======
+
+.. code-block:: none
+
+    [global]
+    setting1 = true
+    setting2 = false
+    
+    [group1]
+    setting3 = true
+    setting4 = false
+
+    [group3]
+    setting7 = true
+    setting8 = false
