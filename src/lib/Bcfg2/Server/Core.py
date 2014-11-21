@@ -560,7 +560,8 @@ class Core(object):
         structures = list(
             chain(*[struct.BuildStructures(metadata)
                     for struct in self.plugins_by_type(Structure)]))
-        sbundles = [b.get('name') for b in structures if b.tag == 'Bundle']
+        sbundles = [b.get('name') for b in structures
+                    if b.tag == 'Bundle' or b.tag == 'Independent']
         missing = [b for b in metadata.bundles if b not in sbundles]
         if missing:
             self.logger.error("Client %s configuration missing bundles: %s" %
