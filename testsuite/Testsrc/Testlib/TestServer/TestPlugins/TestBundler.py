@@ -74,7 +74,7 @@ class TestBundler(TestPlugin, TestStructure, TestXMLDirectoryBacked):
         lxml.etree.SubElement(expected['xinclude'], "Path", name="/test")
 
         has_dep = lxml.etree.Element("Bundle")
-        lxml.etree.SubElement(has_dep, "Bundle", name="is_dep")
+        lxml.etree.SubElement(has_dep, "RequiredBundle", name="is_dep")
         lxml.etree.SubElement(has_dep, "Package", name="foo")
         b.bundles['has_dep'].XMLMatch.return_value = has_dep
         expected['has_dep'] = lxml.etree.Element("Bundle", name="has_dep")

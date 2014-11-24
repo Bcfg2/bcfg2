@@ -768,27 +768,27 @@ class Client(object):
                 if not Bcfg2.Options.setup.interactive:
                     self.DispatchInstallCalls(clobbered)
 
-        for bundle in self.config.findall('.//Bundle'):
+        all_bundles = self.config.findall('./Bundle')
+        mbundles.extend(self._get_all_modified_bundles(mbundles, all_bundles))
+
+        for bundle in all_bundles:
             if (Bcfg2.Options.setup.only_bundles and
                     bundle.get('name') not in
                     Bcfg2.Options.setup.only_bundles):
                 # prune out unspecified bundles when running with -b
                 continue
             if bundle in mbundles:
-                self.logger.debug("Bundle %s was modified" %
-                                  bundle.get('name'))
-                func = "BundleUpdated"
-            else:
-                self.logger.debug("Bundle %s was not modified" %
-                                  bundle.get('name'))
-                func = "BundleNotUpdated"
+                continue
+
+            self.logger.debug("Bundle %s was not modified" %
+                              bundle.get('name'))
             for tool in self.tools:
                 try:
-                    self.states.update(getattr(tool, func)(bundle))
+                    self.states.update(tool.BundleNotUpdated(bundle))
                 except:  # pylint: disable=W0702
-                    self.logger.error("%s.%s(%s:%s) call failed:" %
-                                      (tool.name, func, bundle.tag,
-                                       bundle.get("name")), exc_info=1)
+                    self.logger.error('%s.BundleNotUpdated(%s:%s) call failed:'
+                                      % (tool.name, bundle.tag,
+                                         bundle.get('name')), exc_info=1)
 
         for indep in self.config.findall('.//Independent'):
             for tool in self.tools:
@@ -798,6 +798,41 @@ class Client(object):
                     self.logger.error("%s.BundleNotUpdated(%s:%s) call failed:"
                                       % (tool.name, indep.tag,
                                          indep.get("name")), exc_info=1)
+
+    def _get_all_modified_bundles(self, mbundles, all_bundles):
+        """This gets all modified bundles by calling BundleUpdated until no
+        new bundles get added to the modification list."""
+        new_mbundles = mbundles
+        add_mbundles = []
+
+        while new_mbundles:
+            for bundle in self.config.findall('./Bundle'):
+                if (Bcfg2.Options.setup.only_bundles and
+                        bundle.get('name') not in
+                        Bcfg2.Options.setup.only_bundles):
+                    # prune out unspecified bundles when running with -b
+                    continue
+                if bundle not in new_mbundles:
+                    continue
+
+                self.logger.debug('Bundle %s was modified' %
+                                  bundle.get('name'))
+                for tool in self.tools:
+                    try:
+                        self.states.update(tool.BundleUpdated(bundle))
+                    except:  # pylint: disable=W0702
+                        self.logger.error('%s.BundleUpdated(%s:%s) call '
+                                          'failed:' % (tool.name, bundle.tag,
+                                                       bundle.get("name")),
+                                          exc_info=1)
+
+            mods = self.modified
+            new_mbundles = [struct for struct in all_bundles
+                            if any(True for mod in mods if mod in struct)
+                            and struct not in mbundles + add_mbundles]
+            add_mbundles.extend(new_mbundles)
+
+        return add_mbundles
 
     def Remove(self):
         """Remove extra entries."""

@@ -151,20 +151,20 @@ See :ref:`bcfg2-info <server-bcfg2-info>` for more details.
 Dependencies
 ============
 
-Dependencies on other bundles can be specified by adding an empty
-bundle tag that adds another bundle by name, e.g.:
+Dependencies on other bundles can be specified by adding an
+RequiredBundle tag that adds another bundle by name, e.g.:
 
 .. code-block:: xml
 
     <Bundle>
-      <Bundle name="nfs-client"/>
+      <RequiredBundle name="nfs-client"/>
       ...
     </Bundle>
 
 The dependent bundle is added to the list of bundles sent to the
-client, *not* to the parent bundle itself.  In other words, if an
-entry in the dependent bundle changes, Services are restarted and
-Actions are run in the dependent bundle *only*.  An example:
+client, *not* to the parent bundle itself. If you want to propagate
+the modification flag from the required bundle, you can add
+``modification="inherit"`` to the RequiredBundle tag. An example:
 
 ``nfs-client.xml``:
 
@@ -182,7 +182,7 @@ Actions are run in the dependent bundle *only*.  An example:
 .. code-block:: xml
 
     <Bundle>
-      <Bundle name="nfs-client"/>
+      <RequiredBundle name="nfs-client"/>
 
       <Path name="/mnt/home"/>
       <Path name="/etc/auto.master"/>
@@ -193,9 +193,13 @@ Actions are run in the dependent bundle *only*.  An example:
 
 If a new ``nfs-utils`` package was installed, the ``nfslock``,
 ``rpcbind``, and ``nfs`` services would be restarted, but *not* the
-``autofs`` service.  Similarly, if a new ``/etc/auto.misc`` file was
-sent out, the ``autofs`` service would be restarted, but the
-``nfslock``, ``rpcbind``, and ``nfs`` services would not be restarted.
+``autofs`` service. If you would add ``modification="inherit`` to
+the RequiredBundle tag, you would ensure the propagation of the
+modification flag and the ``autofs`` service would be restarted,
+too. But if a new ``/etc/auto.misc`` file was sent out, *only* the
+``autofs`` service would be restarted, but the ``nfslock``,
+``rpcbind``, and ``nfs`` services would not be restarted
+(independent of the ``modification`` flag).
 
 Altsrc
 ======
