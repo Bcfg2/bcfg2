@@ -164,7 +164,8 @@ RequiredBundle tag that adds another bundle by name, e.g.:
 The dependent bundle is added to the list of bundles sent to the
 client, *not* to the parent bundle itself. If you want to propagate
 the modification flag from the required bundle, you can add
-``modification="inherit"`` to the RequiredBundle tag. An example:
+``inherit_modification="true"`` to the RequiredBundle tag.
+An example:
 
 ``nfs-client.xml``:
 
@@ -193,13 +194,13 @@ the modification flag from the required bundle, you can add
 
 If a new ``nfs-utils`` package was installed, the ``nfslock``,
 ``rpcbind``, and ``nfs`` services would be restarted, but *not* the
-``autofs`` service. If you would add ``modification="inherit`` to
-the RequiredBundle tag, you would ensure the propagation of the
+``autofs`` service. If you would add ``inherit_modification="true"``
+to the RequiredBundle tag, you would ensure the propagation of the
 modification flag and the ``autofs`` service would be restarted,
 too. But if a new ``/etc/auto.misc`` file was sent out, *only* the
 ``autofs`` service would be restarted, but the ``nfslock``,
 ``rpcbind``, and ``nfs`` services would not be restarted
-(independent of the ``modification`` flag).
+(independent of the ``inherit_modification`` flag).
 
 Altsrc
 ======

@@ -77,7 +77,7 @@ class TestBundler(TestPlugin, TestStructure, TestXMLDirectoryBacked):
         has_dep = lxml.etree.Element("Bundle")
         lxml.etree.SubElement(has_dep, "RequiredBundle", name="is_dep")
         lxml.etree.SubElement(has_dep, "RequiredBundle", name="is_mod_dep",
-                              modification="inherit")
+                              inherit_modification="true")
         lxml.etree.SubElement(has_dep, "Package", name="foo")
         b.bundles['has_dep'].XMLMatch.return_value = has_dep
         expected['has_dep'] = lxml.etree.Element("Bundle", name="has_dep")
@@ -124,7 +124,7 @@ class TestBundler(TestPlugin, TestStructure, TestXMLDirectoryBacked):
         has_dep = lxml.etree.Element("Bundle")
         lxml.etree.SubElement(has_dep, "RequiredBundle", name="is_dep")
         lxml.etree.SubElement(has_dep, "RequiredBundle", name="is_mod_dep",
-                              modification="inherit")
+                              inherit_modification="true")
         lxml.etree.SubElement(has_dep, "Package", name="foo")
         b.bundles['has_dep'].XMLMatch.return_value = has_dep
         expected['has_dep'] = lxml.etree.Element("Bundle", name="has_dep")

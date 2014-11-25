@@ -130,15 +130,16 @@ class Bundler(Plugin,
                     if child.get("name") not in bundles_added:
                         bundles.append(child.get("name"))
                         bundles_added.add(child.get("name"))
-                    if child.get('modification', 'ignore') == 'inherit':
+                    if child.get('inherit_modification', 'false') == 'true':
                         if metadata.version_info >= \
                            Bcfg2VersionInfo('1.4.0pre2'):
                             lxml.etree.SubElement(data, 'Bundle',
                                                   name=child.get('name'))
                         else:
                             self.logger.warning(
-                                'Bundler: modification="inherit" is only '
-                                'supported for clients starting 1.4.0pre2')
+                                'Bundler: inherit_modification="true" is '
+                                'only supported for clients starting '
+                                '1.4.0pre2')
                     data.remove(child)
                 else:
                     # no name -- wat

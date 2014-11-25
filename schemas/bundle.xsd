@@ -307,13 +307,6 @@
     <xsd:attributeGroup ref="py:genshiAttrs"/>
   </xsd:complexType>
 
-  <xsd:simpleType name='ModificationTypeEnum'>
-    <xsd:restriction base="xsd:string">
-      <xsd:enumeration value="ignore"/>
-      <xsd:enumeration value="inherit"/>
-    </xsd:restriction>
-  </xsd:simpleType>
-
   <xsd:complexType name='RequiredBundleType'>
     <xsd:attribute type='xsd:string' name='name' use='required'>
       <xsd:annotation>
@@ -322,7 +315,7 @@
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
-    <xsd:attribute type='ModificationTypeEnum' name='modification'>
+    <xsd:attribute type='xsd:boolean' name='inherit_modification'>
       <xsd:annotation>
         <xsd:documentation>
           Specify how to handle modifications in the required
