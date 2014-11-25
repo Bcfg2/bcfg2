@@ -3,6 +3,7 @@ import sys
 import lxml.etree
 from mock import Mock, MagicMock, patch
 from Bcfg2.Server.Plugins.Bundler import *
+from Bcfg2.version import Bcfg2VersionInfo
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4
@@ -75,10 +76,14 @@ class TestBundler(TestPlugin, TestStructure, TestXMLDirectoryBacked):
 
         has_dep = lxml.etree.Element("Bundle")
         lxml.etree.SubElement(has_dep, "RequiredBundle", name="is_dep")
+        lxml.etree.SubElement(has_dep, "RequiredBundle", name="is_mod_dep",
+                              modification="inherit")
         lxml.etree.SubElement(has_dep, "Package", name="foo")
         b.bundles['has_dep'].XMLMatch.return_value = has_dep
         expected['has_dep'] = lxml.etree.Element("Bundle", name="has_dep")
         lxml.etree.SubElement(expected['has_dep'], "Package", name="foo")
+        lxml.etree.SubElement(expected['has_dep'], "Bundle",
+                              name="is_mod_dep")
 
         is_dep = lxml.etree.Element("Bundle")
         lxml.etree.SubElement(is_dep, "Package", name="bar")
@@ -94,6 +99,7 @@ class TestBundler(TestPlugin, TestStructure, TestXMLDirectoryBacked):
 
         metadata = Mock()
         metadata.bundles = ["error", "xinclude", "has_dep", "indep"]
+        metadata.version_info = Bcfg2VersionInfo('1.4.0')
 
         rv = b.BuildStructures(metadata)
         self.assertEqual(len(rv), 4)
@@ -109,3 +115,33 @@ class TestBundler(TestPlugin, TestStructure, TestXMLDirectoryBacked):
 
         b.bundles['error'].XMLMatch.assert_called_with(metadata)
         self.assertFalse(b.bundles['skip'].XMLMatch.called)
+
+    def test_BuildStructuresOldClient(self):
+        b = self.get_obj()
+        b.bundles = dict(has_dep=Mock())
+        expected = dict()
+
+        has_dep = lxml.etree.Element("Bundle")
+        lxml.etree.SubElement(has_dep, "RequiredBundle", name="is_dep")
+        lxml.etree.SubElement(has_dep, "RequiredBundle", name="is_mod_dep",
+                              modification="inherit")
+        lxml.etree.SubElement(has_dep, "Package", name="foo")
+        b.bundles['has_dep'].XMLMatch.return_value = has_dep
+        expected['has_dep'] = lxml.etree.Element("Bundle", name="has_dep")
+        lxml.etree.SubElement(expected['has_dep'], "Package", name="foo")
+
+        metadata = Mock()
+        metadata.bundles = ["has_dep"]
+        metadata.version_info = Bcfg2VersionInfo('1.3.0')
+
+        rv = b.BuildStructures(metadata)
+        self.assertEqual(len(rv), len(metadata.bundles))
+        for bundle in rv:
+            name = bundle.get("name")
+            self.assertIsNotNone(name,
+                                "Bundle %s was not built" % name)
+            self.assertIn(name, expected,
+                          "Unexpected bundle %s was built" % name)
+            self.assertXMLEqual(bundle, expected[name],
+                                "Bundle %s was not built correctly" % name)
+            b.bundles[name].XMLMatch.assert_called_with(metadata)
