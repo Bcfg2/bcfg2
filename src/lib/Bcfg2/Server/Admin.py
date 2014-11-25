@@ -1198,7 +1198,9 @@ class CLI(Bcfg2.Options.CommandRegistry):
     def run(self):
         """ Run bcfg2-admin """
         try:
-            self.commands[Bcfg2.Options.setup.subcommand].setup()
+            cmd = self.commands[Bcfg2.Options.setup.subcommand]
+            if hasattr(cmd, 'setup'):
+                cmd.setup()
             return self.runcommand()
         finally:
             self.shutdown()
