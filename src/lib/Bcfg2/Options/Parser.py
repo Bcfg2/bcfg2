@@ -6,7 +6,7 @@ import sys
 
 from Bcfg2.version import __version__
 from Bcfg2.Compat import ConfigParser
-from Bcfg2.Options import Option, PathOption, BooleanOption, _debug
+from Bcfg2.Options import Option, PathOption, _debug
 
 __all__ = ["setup", "OptionParserException", "Parser", "get_parser",
            "new_parser"]
@@ -43,9 +43,16 @@ class Parser(argparse.ArgumentParser):
                             help="Path to configuration file",
                             default="/etc/bcfg2.conf")
 
+    #: Verbose version string that is printed if executed with --version
+    _version_string = "%s %s on Python %s" % (
+        os.path.basename(sys.argv[0]),
+        __version__,
+        ".".join(str(v) for v in sys.version_info[0:3]))
+
     #: Builtin options that apply to all commands
     options = [configfile,
-               BooleanOption('--version', help="Print the version and exit"),
+               Option('--version', help="Print the version and exit",
+                      action="version", version=_version_string),
                Option('-E', '--encoding', metavar='<encoding>',
                       default='UTF-8', help="Encoding of config files",
                       cf=('components', 'encoding'))]

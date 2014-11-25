@@ -185,6 +185,13 @@ class TestBasicOptions(OptionTestCase):
         options = self._test_options(env={"TEST_PATH_OPTION": "/foo"})
         self.assertEqual(options.test_path_option, "/foo")
 
+    def test_version(self):
+        """print version and exit on --version"""
+        self.assertRaises(
+            SystemExit,
+            self._test_options,
+            options=['--version'])
+
     def test_set_boolean_in_cli(self):
         """set boolean options in CLI options."""
         # passing the option yields the reverse of the default, no
