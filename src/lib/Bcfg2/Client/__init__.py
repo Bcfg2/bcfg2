@@ -617,6 +617,8 @@ class Client(object):
         for tool in self.tools:
             try:
                 self.states.update(tool.Inventory())
+            except KeyboardInterrupt:
+                raise
             except:  # pylint: disable=W0702
                 self.logger.error("%s.Inventory() call failed:" % tool.name,
                                   exc_info=1)
@@ -734,6 +736,8 @@ class Client(object):
                 continue
             try:
                 self.states.update(tool.Install(handled))
+            except KeyboardInterrupt:
+                raise
             except:  # pylint: disable=W0702
                 self.logger.error("%s.Install() call failed:" % tool.name,
                                   exc_info=1)
@@ -754,6 +758,8 @@ class Client(object):
             for tool, bundle in tbm:
                 try:
                     self.states.update(tool.Inventory(structures=[bundle]))
+                except KeyboardInterrupt:
+                    raise
                 except:  # pylint: disable=W0702
                     self.logger.error("%s.Inventory() call failed:" %
                                       tool.name,
@@ -785,6 +791,8 @@ class Client(object):
             for tool in self.tools:
                 try:
                     self.states.update(getattr(tool, func)(bundle))
+                except KeyboardInterrupt:
+                    raise
                 except:  # pylint: disable=W0702
                     self.logger.error("%s.%s(%s:%s) call failed:" %
                                       (tool.name, func, bundle.tag,
@@ -794,6 +802,8 @@ class Client(object):
             for tool in self.tools:
                 try:
                     self.states.update(tool.BundleNotUpdated(indep))
+                except KeyboardInterrupt:
+                    raise
                 except:  # pylint: disable=W0702
                     self.logger.error("%s.BundleNotUpdated(%s:%s) call failed:"
                                       % (tool.name, indep.tag,
