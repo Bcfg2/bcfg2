@@ -46,6 +46,11 @@ class NagiosGen(Plugin, Generator):
                                        metadata.hostname)
         host_groups = [grp for grp in metadata.groups
                        if os.path.isfile('%s/%s-group.cfg' % (self.data, grp))]
+                       if os.path.isfile('%s/%s-group.cfg' %
+                                         (self.data, grp))] + \
+                      [bundle for bundle in metadata.bundles
+                       if os.path.isfile('%s/%s-bundle.cfg' %
+                                         (self.data, bundle))]
         host_config = ['define host {',
                        self.line_fmt % ('host_name', metadata.hostname),
                        self.line_fmt % ('alias', metadata.hostname),
@@ -81,7 +86,8 @@ class NagiosGen(Plugin, Generator):
     def createserverconfig(self, entry, _):
         """Build monolithic server configuration file."""
         host_configs = glob.glob(os.path.join(self.data, '*-host.cfg'))
-        group_configs = glob.glob(os.path.join(self.data, '*-group.cfg'))
+        group_configs = glob.glob(os.path.join(self.data, '*-group.cfg')) + \
+            glob.glob(os.path.join(self.data, '*-bundle.cfg'))
         host_data = []
         group_data = []
         for host in host_configs:
