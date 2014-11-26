@@ -45,7 +45,6 @@ class NagiosGen(Plugin, Generator):
             raise PluginExecutionError("Failed to find IP address for %s" %
                                        metadata.hostname)
         host_groups = [grp for grp in metadata.groups
-                       if os.path.isfile('%s/%s-group.cfg' % (self.data, grp))]
                        if os.path.isfile('%s/%s-group.cfg' %
                                          (self.data, grp))] + \
                       [bundle for bundle in metadata.bundles
