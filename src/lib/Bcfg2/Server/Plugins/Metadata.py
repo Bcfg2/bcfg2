@@ -502,7 +502,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     """This class contains data for bcfg2 server metadata."""
     __author__ = 'bcfg-dev@mcs.anl.gov'
     sort_order = 500
-    __rmi__ = Bcfg2.Server.Plugin.DatabaseBacked.__rmi__ + ['list_clients']
+    __rmi__ = Bcfg2.Server.Plugin.DatabaseBacked.__rmi__ + ['list_clients',
+                                                            'remove_client']
 
     options = Bcfg2.Server.Plugin.DatabaseBacked.options + [
         Bcfg2.Options.Common.password,
