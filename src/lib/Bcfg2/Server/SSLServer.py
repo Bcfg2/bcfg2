@@ -43,7 +43,7 @@ class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
                 params = (address, ) + params
             response = self.instance._dispatch(method, params, self.funcs)
             # py3k compatibility
-            if type(response) not in [bool, str, list, dict, set]:
+            if type(response) not in [bool, str, list, dict, set, type(None)]:
                 response = (response.decode('utf-8'), )
             elif type(response) == set:
                 response = (list(response), )
