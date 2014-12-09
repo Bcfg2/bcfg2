@@ -4,7 +4,8 @@
 import sys
 
 from Bcfg2.Server.Lint import ServerPlugin
-from Bcfg2.Server.Plugins.GroupPatterns import PatternMap
+from Bcfg2.Server.Plugins.GroupPatterns import PatternMap, \
+    PatternInitializationError
 
 
 class GroupPatterns(ServerPlugin):
@@ -36,7 +37,7 @@ class GroupPatterns(ServerPlugin):
                     PatternMap(pat, None, groups)
                 else:
                     PatternMap(None, pat, groups)
-            except:  # pylint: disable=W0702
+            except PatternInitializationError:
                 err = sys.exc_info()[1]
                 self.LintError("pattern-fails-to-initialize",
                                "Failed to initialize %s %s for %s: %s" %

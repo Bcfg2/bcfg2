@@ -47,7 +47,7 @@ class CfgPrivateKeyCreator(XMLCfgCreator):
                      the given client metadata, and may be obtained by
                      doing ``self.XMLMatch(metadata)``
         :type spec: lxml.etree._Element
-        :returns: string - The filename of the private key
+        :returns: tuple - (private key data, public key data)
         """
         if spec is None:
             spec = self.XMLMatch(metadata)
@@ -91,10 +91,9 @@ class CfgPrivateKeyCreator(XMLCfgCreator):
                                     "with errors: %s" % (filename,
                                                          metadata.hostname,
                                                          result.stderr))
-            return filename
-        except:
+            return (open(filename).read(), open(filename + ".pub").read())
+        finally:
             shutil.rmtree(tempdir)
-            raise
 
     # pylint: disable=W0221
     def create_data(self, entry, metadata):
@@ -109,21 +108,17 @@ class CfgPrivateKeyCreator(XMLCfgCreator):
         """
         spec = self.XMLMatch(metadata)
         specificity = self.get_specificity(metadata)
-        filename = self._gen_keypair(metadata, spec)
+        privkey, pubkey = self._gen_keypair(metadata, spec)
 
-        try:
-            # write the public key, stripping the comment and
-            # replacing it with a comment that specifies the filename.
-            kdata = open(filename + ".pub").read().split()[:2]
-            kdata.append(self.pubkey_creator.get_filename(**specificity))
-            pubkey = " ".join(kdata) + "\n"
-            self.pubkey_creator.write_data(pubkey, **specificity)
+        # write the public key, stripping the comment and
+        # replacing it with a comment that specifies the filename.
+        kdata = pubkey.split()[:2]
+        kdata.append(self.pubkey_creator.get_filename(**specificity))
+        pubkey = " ".join(kdata) + "\n"
+        self.pubkey_creator.write_data(pubkey, **specificity)
 
-            # encrypt the private key, write to the proper place, and
-            # return it
-            privkey = open(filename).read()
-            self.write_data(privkey, **specificity)
-            return privkey
-        finally:
-            shutil.rmtree(os.path.dirname(filename))
+        # encrypt the private key, write to the proper place, and
+        # return it
+        self.write_data(privkey, **specificity)
+        return privkey
     # pylint: enable=W0221

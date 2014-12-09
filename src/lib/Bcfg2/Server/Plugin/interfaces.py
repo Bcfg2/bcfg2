@@ -445,8 +445,14 @@ class ThreadedStatistics(Statistics, Threaded, threading.Thread):
             except Empty:
                 continue
             except:
-                err = sys.exc_info()[1]
-                self.logger.error("ThreadedStatistics: %s" % err)
+                # we want to catch all exceptions here so that a stray
+                # error doesn't kill the entire statistics thread. For
+                # instance, if a bad value gets pushed onto the queue
+                # and the assignment above raises TypeError, we want
+                # to report the error, ignore the bad value, and
+                # continue processing statistics.
+                self.logger.error("Unknown error processing statistics: %s" %
+                                  sys.exc_info()[1])
                 continue
             self.handle_statistic(client, xdata)
         if self.work_queue is not None and not self.work_queue.empty():

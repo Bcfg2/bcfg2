@@ -631,10 +631,6 @@ class YumCollection(Collection):
             err = sys.exc_info()[1]
             self.logger.error("Packages: Could not contact Pulp server: %s" %
                               err)
-        except:
-            err = sys.exc_info()[1]
-            self.logger.error("Packages: Unknown error querying Pulp server: "
-                              "%s" % err)
         return consumer
 
     @track_statistics()
@@ -1034,10 +1030,6 @@ class YumSource(Source):
                 err = sys.exc_info()[1]
                 raise SourceInitError("Could not contact Pulp server: %s" %
                                       err)
-            except:
-                err = sys.exc_info()[1]
-                raise SourceInitError("Unknown error querying Pulp server: %s"
-                                      % err)
             self.rawurl = "%s/%s" % (PULPCONFIG.cds['baseurl'],
                                      self.repo['relative_path'])
             self.arches = [self.repo['arch']]

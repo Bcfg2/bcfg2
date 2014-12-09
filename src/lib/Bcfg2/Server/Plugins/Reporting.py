@@ -3,7 +3,6 @@
 import sys
 import time
 import platform
-import traceback
 import lxml.etree
 import Bcfg2.Options
 from Bcfg2.Reporting.Transport.base import TransportError
@@ -102,11 +101,11 @@ class Reporting(Statistics, Threaded, PullSource):
             except TransportError:
                 continue
             except:
-                self.logger.error("%s: Attempt %s: Failed to add statistic %s"
+                self.logger.error("%s: Attempt %s: Failed to add statistic: %s"
                                   % (self.__class__.__name__, i,
-                                     traceback.format_exc().splitlines()[-1]))
-        self.logger.error("%s: Retry limit reached for %s" %
-                          (self.__class__.__name__, client.hostname))
+                                     sys.exc_info()[1]))
+        raise PluginExecutionError("%s: Retry limit reached for %s" %
+                                   (self.__class__.__name__, client.hostname))
 
     def shutdown(self):
         super(Reporting, self).shutdown()

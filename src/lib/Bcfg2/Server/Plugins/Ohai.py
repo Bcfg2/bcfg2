@@ -51,7 +51,7 @@ class OhaiCache(object):
         if item not in self.cache:
             try:
                 data = open(self.hostpath(item)).read()
-            except:
+            except IOError:
                 raise KeyError(item)
             self.cache[item] = json.loads(data)
         return self.cache[item]
@@ -61,7 +61,7 @@ class OhaiCache(object):
             del self.cache[item]
         try:
             os.unlink(self.hostpath(item))
-        except:
+        except OSError:
             raise IndexError("Could not unlink %s: %s" % (self.hostpath(item),
                                                           sys.exc_info()[1]))
 

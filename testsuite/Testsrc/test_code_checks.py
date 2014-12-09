@@ -49,7 +49,10 @@ contingent_checks = {
                                   ["CfgEncryptedCheetahGenerator.py"]},
     ("M2Crypto", "jinja2"): {"lib/Bcfg2/Server/Plugins/Cfg":
                                   ["CfgEncryptedJinja2Generator.py"]},
-    }
+    ("mercurial",): {"lib/Bcfg2/Server/Plugins": ["Hg.py"]},
+    ("guppy",): {"lib/Bcfg2/Server/Plugins": ["Guppy.py"]},
+    ("boto",): {"lib/Bcfg2/Server/Plugins": ["AWSTags.py"]},
+}
 
 # perform only error checking on the listed files
 error_checks = {

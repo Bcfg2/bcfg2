@@ -26,7 +26,7 @@ def _ioctl_GWINSZ(fd):  # pylint: disable=C0103
     from the given file descriptor """
     try:
         return struct.unpack('hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
-    except:  # pylint: disable=W0702
+    except (IOError, struct.error):
         return None
 
 
@@ -40,7 +40,7 @@ def get_termsize():
             fd = os.open(os.ctermid(), os.O_RDONLY)
             dims = _ioctl_GWINSZ(fd)
             os.close(fd)
-        except:  # pylint: disable=W0702
+        except IOError:
             pass
     if not dims:
         try:

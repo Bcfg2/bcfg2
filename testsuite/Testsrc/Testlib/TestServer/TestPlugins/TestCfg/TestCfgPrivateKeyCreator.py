@@ -2,6 +2,7 @@ import os
 import sys
 import lxml.etree
 from mock import Mock, MagicMock, patch
+from Bcfg2.Compat import StringIO
 from Bcfg2.Server.Plugins.Cfg import CfgCreationError
 from Bcfg2.Server.Plugins.Cfg.CfgPrivateKeyCreator import *
 from Bcfg2.Server.Plugin import PluginExecutionError
@@ -29,24 +30,25 @@ class TestCfgPrivateKeyCreator(TestXMLCfgCreator):
     test_obj = CfgPrivateKeyCreator
     should_monitor = False
 
+    def setUp(self):
+        TestXMLCfgCreator.setUp(self)
+        set_setup_default("cfg_category", "category")
+
     @patch("Bcfg2.Server.Plugins.Cfg.CfgPublicKeyCreator.get_cfg", Mock())
     def get_obj(self, name=None, fam=None):
         return TestXMLCfgCreator.get_obj(self, name=name)
 
     @patch("shutil.rmtree")
-    @patch("tempfile.mkdtemp")
-    def test__gen_keypair(self, mock_mkdtemp, mock_rmtree):
+    def _gen_keypair(self, mock_mkdtemp, mock_rmtree):
         pkc = self.get_obj()
         pkc.cmd = Mock()
         pkc.XMLMatch = Mock()
-        mock_mkdtemp.return_value = datastore
         metadata = Mock()
 
         exc = Mock()
         exc.success = True
         pkc.cmd.run.return_value = exc
 
-        spec = lxml.etree.Element("PrivateKey")
         pkc.XMLMatch.return_value = spec
 
         def reset():
@@ -82,52 +84,62 @@ class TestCfgPrivateKeyCreator(TestXMLCfgCreator):
         mock_rmtree.assert_called_with(datastore)
 
     @patch("shutil.rmtree")
+    @patch("tempfile.mkdtemp")
     @patch("%s.open" % builtins)
-    def test_create_data(self, mock_open, mock_rmtree):
-        pkc = self.get_obj()
-        pkc.XMLMatch = Mock()
-        pkc.get_specificity = Mock()
-        # in order to make ** magic work in older versions of python,
-        # get_specificity() must return an actual dict, not just a
-        # Mock object that works like a dict.  in order to test that
-        # the get_specificity() return value is being used
-        # appropriately, we put some dummy data in it and test for
-        # that data
-        pkc.get_specificity.side_effect = lambda m: dict(group="foo")
-        pkc._gen_keypair = Mock()
-        privkey = os.path.join(datastore, "privkey")
-        pkc._gen_keypair.return_value = privkey
-        pkc.pubkey_creator = Mock()
-        pkc.pubkey_creator.get_filename.return_value = "pubkey.filename"
+    def _create_private_key(self, expected, mock_open, mock_mkdtemp,
+                            mock_rmtree, spec=None):
+        pkc = self.get_obj(name="/home/foo/.ssh/id_rsa/privkey.xml")
+        pkc.cmd = MockExecutor()
+        pkc.pubkey_creator.write_data = Mock()
         pkc.write_data = Mock()
+        mock_mkdtemp.return_value = datastore
+
+        if spec is None:
+            pkc.xdata = lxml.etree.Element("PrivateKey")
+        else:
+            pkc.xdata = spec
+
+        privkey_filename = os.path.join(datastore, "privkey")
+        pubkey_filename = os.path.join(datastore, "privkey.pub")
 
         entry = lxml.etree.Element("Path", name="/home/foo/.ssh/id_rsa")
         metadata = Mock()
+        metadata.group_in_category.return_value = "foo"
 
-        def open_read_rv():
-            mock_open.return_value.read.side_effect = lambda: "privatekey"
-            return "ssh-rsa publickey foo@bar.com"
+        def open_key(fname):
+            if fname == privkey_filename:
+                return StringIO("privatekey")
+            elif fname == pubkey_filename:
+                return StringIO("ssh-rsa publickey foo@bar.com")
+            else:
+                self.fail("Unexpected open call: %s" % fname)
 
-        def reset():
-            mock_open.reset_mock()
-            mock_rmtree.reset_mock()
-            pkc.XMLMatch.reset_mock()
-            pkc.get_specificity.reset_mock()
-            pkc._gen_keypair.reset_mock()
-            pkc.pubkey_creator.reset_mock()
-            pkc.write_data.reset_mock()
-            mock_open.return_value.read.side_effect = open_read_rv
+        mock_open.side_effect = open_key
 
-        reset()
         self.assertEqual(pkc.create_data(entry, metadata), "privatekey")
-        pkc.XMLMatch.assert_called_with(metadata)
-        pkc.get_specificity.assert_called_with(metadata)
-        pkc._gen_keypair.assert_called_with(metadata,
-                                            pkc.XMLMatch.return_value)
         self.assertItemsEqual(mock_open.call_args_list,
-                              [call(privkey + ".pub"), call(privkey)])
-        pkc.pubkey_creator.get_filename.assert_called_with(group="foo")
+                              [call(pubkey_filename), call(privkey_filename)])
+        self.assertItemsEqual(
+            pkc.cmd.calls[0]['command'],
+            ['ssh-keygen', '-f', privkey_filename] + expected)
+        metadata.group_in_category.assert_called_with("category")
         pkc.pubkey_creator.write_data.assert_called_with(
-            "ssh-rsa publickey pubkey.filename\n", group="foo")
-        pkc.write_data.assert_called_with("privatekey", group="foo")
+            "ssh-rsa publickey /home/foo/.ssh/id_rsa.pub/id_rsa.pub.G50_foo\n",
+            group="foo", prio=50)
+        pkc.write_data.assert_called_with("privatekey", group="foo", prio=50)
         mock_rmtree.assert_called_with(datastore)
+
+    def test_create_data(self):
+        pass
+
+    def test_create_private_key_defaults(self):
+        self._create_private_key(['-t', 'rsa', '-N', ''])
+
+    def test_create_private_key_spec(self):
+        spec = lxml.etree.Element("PrivateKey")
+        lxml.etree.SubElement(spec, "Params", bits="768", type="dsa")
+        passphrase = lxml.etree.SubElement(spec, "Passphrase")
+        passphrase.text = "foo"
+
+        self._create_private_key(['-t', 'dsa', '-b', '768', '-N', 'foo'],
+                                 spec=spec)

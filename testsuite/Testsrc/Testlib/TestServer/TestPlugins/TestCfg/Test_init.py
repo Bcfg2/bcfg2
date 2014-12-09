@@ -726,7 +726,7 @@ class TestCfgEntrySet(TestEntrySet):
 
         # test failure to create data
         reset()
-        creator.create_data.side_effect = OSError
+        creator.create_data.side_effect = CfgCreationError
         self.assertRaises(PluginExecutionError,
                           eset._create_data, entry, metadata)
 

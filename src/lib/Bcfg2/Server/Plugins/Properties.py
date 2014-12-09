@@ -79,13 +79,12 @@ class PropertyFile(object):
 
 
 class JSONPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
-    """ Handle JSON Properties files. """
+    """Handle JSON Properties files."""
 
     def __init__(self, name):
         Bcfg2.Server.Plugin.FileBacked.__init__(self, name)
         PropertyFile.__init__(self, name)
         self.json = None
-    __init__.__doc__ = Bcfg2.Server.Plugin.FileBacked.__init__.__doc__
 
     def Index(self):
         try:
@@ -94,21 +93,18 @@ class JSONPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
             err = sys.exc_info()[1]
             raise PluginExecutionError("Could not load JSON data from %s: %s" %
                                        (self.name, err))
-    Index.__doc__ = Bcfg2.Server.Plugin.FileBacked.Index.__doc__
 
     def _write(self):
         json.dump(self.json, open(self.name, 'wb'))
         return True
-    _write.__doc__ = PropertyFile._write.__doc__
 
     def validate_data(self):
         try:
             json.dumps(self.json)
-        except:
+        except TypeError:
             err = sys.exc_info()[1]
             raise PluginExecutionError("Data for %s cannot be dumped to JSON: "
                                        "%s" % (self.name, err))
-    validate_data.__doc__ = PropertyFile.validate_data.__doc__
 
     def __str__(self):
         return str(self.json)

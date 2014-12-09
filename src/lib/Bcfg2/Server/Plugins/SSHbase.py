@@ -199,20 +199,19 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     newnames.add(name.split('.')[0])
                     try:
                         newips.update(self.get_ipcache_entry(name)[0])
-                    except:  # pylint: disable=W0702
+                    except PluginExecutionError:
                         continue
                 names[cmeta.hostname].update(newnames)
                 names[cmeta.hostname].update(cmeta.addresses)
                 names[cmeta.hostname].update(newips)
                 # TODO: Only perform reverse lookups on IPs if an
                 # option is set.
-                if True:
-                    for ip in newips:
-                        try:
-                            names[cmeta.hostname].update(
-                                self.get_namecache_entry(ip))
-                        except:  # pylint: disable=W0702
-                            continue
+                for ip in newips:
+                    try:
+                        names[cmeta.hostname].update(
+                            self.get_namecache_entry(ip))
+                    except socket.gaierror:
+                        continue
                 names[cmeta.hostname] = sorted(names[cmeta.hostname])
 
             pubkeys = [pubk for pubk in list(self.entries.keys())
@@ -309,7 +308,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                          (event.filename, action))
 
     def get_ipcache_entry(self, client):
-        """ Build a cache of dns results. """
+        """Build a cache of dns results."""
         if client in self.ipcache:
             if self.ipcache[client]:
                 return self.ipcache[client]

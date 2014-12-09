@@ -1,9 +1,9 @@
-"""
-This plugin is used to trace memory leaks within the bcfg2-server
-process using Guppy.  By default the remote debugger is started
-when this plugin is enabled.  The debugger can be shutoff in a running
-process using "bcfg2-admin xcmd Guppy.Disable" and reenabled using
-"bcfg2-admin xcmd Guppy.Enable".
+"""Debugging plugin to trace memory leaks within the bcfg2-server process.
+
+By default the remote debugger is started when this plugin is enabled.
+The debugger can be shutoff in a running process using "bcfg2-admin
+xcmd Guppy.Disable" and reenabled using "bcfg2-admin xcmd
+Guppy.Enable".
 
 To attach the console run:
 
@@ -23,36 +23,27 @@ Remote connection 1. To return to Monitor, type <Ctrl-C> or .<RETURN>
 Remote interactive console. To return to Annex, type '-'.
 >>> hp.heap()
 ...
-
-
 """
 import Bcfg2.Server.Plugin
 from guppy.heapy import Remote
 
 
 class Guppy(Bcfg2.Server.Plugin.Plugin):
-    """Guppy is a debugging plugin to help trace memory leaks"""
+    """Guppy is a debugging plugin to help trace memory leaks."""
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['Enable', 'Disable']
     __child_rmi__ = __rmi__[:]
 
     def __init__(self, core):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core)
-
         self.Enable()
 
-    def Enable(self):
-        """Enable remote debugging"""
-        try:
-            Remote.on()
-        except:
-            self.logger.error("Failed to create Heapy context")
-            raise Bcfg2.Server.Plugin.PluginInitError
+    @staticmethod
+    def Enable():
+        """Enable remote debugging."""
+        Remote.on()
 
-    def Disable(self):
-        """Disable remote debugging"""
-        try:
-            Remote.off()
-        except:
-            self.logger.error("Failed to disable Heapy")
-            raise Bcfg2.Server.Plugin.PluginInitError
+    @staticmethod
+    def Disable():
+        """Disable remote debugging."""
+        Remote.off()

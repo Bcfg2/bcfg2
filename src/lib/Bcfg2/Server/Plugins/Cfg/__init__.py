@@ -553,12 +553,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                                             % (action, event.filename))
                     self.debug_log("%s handling %s event on %s" %
                                    (hdlr.__name__, action, event.filename))
-                    try:
-                        self.entry_init(event, hdlr)
-                    except:  # pylint: disable=W0702
-                        err = sys.exc_info()[1]
-                        self.logger.error("Cfg: Failed to parse %s: %s" %
-                                          (event.filename, err))
+                    self.entry_init(event, hdlr)
                     return
                 elif hdlr.ignore(event, basename=self.path):
                     return
@@ -732,7 +727,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
 
         try:
             return creator.create_data(entry, metadata)
-        except:
+        except CfgCreationError:
             raise PluginExecutionError("Cfg: Error creating data for %s: %s" %
                                        (entry.get("name"), sys.exc_info()[1]))
 
@@ -760,6 +755,9 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         try:
             return (generator.get_data(entry, metadata), generator)
         except:
+            # TODO: the exceptions raised by ``get_data`` are not
+            # constrained in any way, so for now this needs to be a
+            # blanket except.
             msg = "Cfg: Error rendering %s: %s" % (entry.get("name"),
                                                    sys.exc_info()[1])
             self.logger.error(msg)
@@ -803,7 +801,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         try:
             best = self.best_matching(metadata, generators)
             rv.append(best.specific)
-        except:  # pylint: disable=W0702
+        except PluginExecutionError:
             pass
 
         if not rv or not rv[0].hostname:
@@ -835,7 +833,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 raise PluginExecutionError(msg)
             try:
                 etext = new_entry['text'].encode(Bcfg2.Options.setup.encoding)
-            except:
+            except UnicodeDecodeError:
                 msg = "Cfg: Cannot encode content of %s as %s" % \
                     (name, Bcfg2.Options.setup.encoding)
                 self.logger.error(msg)

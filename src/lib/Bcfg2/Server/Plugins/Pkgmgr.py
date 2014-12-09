@@ -35,7 +35,7 @@ class FuzzyDict(dict):
     def get(self, key, default=None):
         try:
             return self.__getitem__(key)
-        except:
+        except KeyError:
             if default:
                 return default
             raise
@@ -182,11 +182,7 @@ class PNode(object):
         """Return a dictionary of package mappings."""
         if self.predicate(metadata, entry):
             for key in self.contents:
-                try:
-                    data[key].update(self.contents[key])
-                except:  # pylint: disable=W0702
-                    data[key] = FuzzyDict()
-                    data[key].update(self.contents[key])
+                data.setdefault(key, FuzzyDict).update(self.contents[key])
             for child in self.children:
                 child.Match(metadata, data)
 

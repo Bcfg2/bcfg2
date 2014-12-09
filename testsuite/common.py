@@ -14,6 +14,7 @@ import sys
 import codecs
 import lxml.etree
 import Bcfg2.Options
+import Bcfg2.Utils
 from mock import patch, MagicMock, _patch, DEFAULT
 try:
     from unittest2 import skip, skipIf, skipUnless, TestCase
@@ -119,6 +120,29 @@ else:
         return codecs.unicode_escape_decode(s)[0]
 
 
+class MockExecutor(object):
+    """mock object for :class:`Bcfg2.Utils.Executor` objects."""
+    def __init__(self, timeout=None):
+        self.timeout = timeout
+
+        # variables that can be set to control the result returned
+        self.stdout = ''
+        self.stderr = ''
+        self.retval = 0
+
+        # variables that record how run() was called
+        self.calls = []
+
+    def run(self, command, inputdata=None, timeout=None, **kwargs):
+        self.calls.append({"command": command,
+                           "inputdata": inputdata,
+                           "timeout": timeout or self.timeout,
+                           "kwargs": kwargs})
+
+        return Bcfg2.Utils.ExecutorResult(self.stdout, self.stderr,
+                                          self.retval)
+
+
 class Bcfg2TestCase(TestCase):
     """ Base TestCase class that inherits from
     :class:`unittest.TestCase`.  This class adds
@@ -137,6 +161,9 @@ class Bcfg2TestCase(TestCase):
     def tearDownClass(cls):
         if cls.capture_stderr:
             sys.stderr = cls._stderr
+
+    if hasattr(TestCase, "assertCountEqual"):
+        assertItemsEqual = assertCountEqual
 
     def assertXMLEqual(self, el1, el2, msg=None):
         """ Test that the two XML trees given are equal. """

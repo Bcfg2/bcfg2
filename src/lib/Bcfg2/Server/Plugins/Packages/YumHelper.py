@@ -285,8 +285,8 @@ class HelperSubcommand(Bcfg2.Options.Subcommand):
     def run(self, setup):
         try:
             data = json.loads(sys.stdin.read())
-        except:  # pylint: disable=W0702
-            self.logger.error("Unexpected error decoding JSON input: %s" %
+        except ValueError:
+            self.logger.error("Error decoding JSON input: %s" %
                               sys.exc_info()[1])
             print(json.dumps(self.fallback))
             return 2

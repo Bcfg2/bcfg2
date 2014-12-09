@@ -266,7 +266,7 @@ class FileBacked(Debuggable):
         self.fam = Bcfg2.Server.FileMonitor.get_fam()
 
     def HandleEvent(self, event=None):
-        """ HandleEvent is called whenever the FAM registers an event.
+        """HandleEvent is called whenever the FAM registers an event.
 
         :param event: The event object
         :type event: Bcfg2.Server.FileMonitor.Event
@@ -276,13 +276,11 @@ class FileBacked(Debuggable):
             return
         try:
             self.data = open(self.name).read()
-            self.Index()
         except IOError:
             err = sys.exc_info()[1]
             self.logger.error("Failed to read file %s: %s" % (self.name, err))
-        except:
-            err = sys.exc_info()[1]
-            self.logger.error("Failed to parse file %s: %s" % (self.name, err))
+
+        self.Index()
 
     def Index(self):
         """ Index() is called by :func:`HandleEvent` every time the
@@ -1196,7 +1194,7 @@ class SpecificData(Debuggable):
             self.data = open(self.name).read()
         except UnicodeDecodeError:
             self.data = open(self.name, mode='rb').read()
-        except:  # pylint: disable=W0201
+        except IOError:
             self.logger.error("Failed to read file %s" % self.name)
 
 

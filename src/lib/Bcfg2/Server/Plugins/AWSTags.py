@@ -1,4 +1,4 @@
-""" Query tags from AWS via boto, optionally setting group membership """
+"""Query tags from AWS via boto, optionally setting group membership."""
 
 import os
 import re
@@ -82,22 +82,17 @@ class PatternFile(Bcfg2.Server.Plugin.XMLFileBacked):
                 self.tags.append(AWSTagPattern(entry.get("name"),
                                                entry.get("value"),
                                                groups))
-            except:  # pylint: disable=W0702
+            except re.error:
                 self.logger.error("AWSTags: Failed to initialize pattern %s: "
                                   "%s" % (entry.get("name"),
                                           sys.exc_info()[1]))
 
-    def get_groups(self, hostname, tags):
+    def get_groups(self, tags):
         """ return a list of groups that should be added to the given
-        client based on patterns that match the hostname """
+        client based on patterns that match the tags """
         ret = []
         for pattern in self.tags:
-            try:
-                ret.extend(pattern.get_groups(tags))
-            except:  # pylint: disable=W0702
-                self.logger.error("AWSTags: Failed to process pattern %s for "
-                                  "%s" % (pattern, hostname),
-                                  exc_info=1)
+            ret.extend(pattern.get_groups(tags))
         return ret
 
 
@@ -182,5 +177,4 @@ class AWSTags(Bcfg2.Server.Plugin.Plugin,
         return self.get_tags(metadata)
 
     def get_additional_groups(self, metadata):
-        return self.config.get_groups(metadata.hostname,
-                                      self.get_tags(metadata))
+        return self.config.get_groups(self.get_tags(metadata))

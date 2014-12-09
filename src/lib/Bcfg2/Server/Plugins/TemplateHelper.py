@@ -55,6 +55,10 @@ class HelperModule(Debuggable):
             module = imp.load_source(safe_module_name(self._module_name),
                                      self.name)
         except:  # pylint: disable=W0702
+            # this needs to be a blanket except because the
+            # imp.load_source() call can raise literally any error,
+            # since it imports the module and just passes through any
+            # exceptions raised.
             err = sys.exc_info()[1]
             self.logger.error("TemplateHelper: Failed to import %s: %s" %
                               (self.name, err))
