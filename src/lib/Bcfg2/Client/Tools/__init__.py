@@ -205,6 +205,8 @@ class Tool(object):
                         continue
                     try:
                         states[entry] = func(entry, mods)
+                    except KeyboardInterrupt:
+                        raise
                     except:  # pylint: disable=W0702
                         self.logger.error("%s: Unexpected failure verifying %s"
                                           % (self.name,
