@@ -22,6 +22,7 @@ from Bcfg2.Server.Cache import Cache
 from Bcfg2.Compat import xmlrpclib, wraps  # pylint: disable=W0622
 from Bcfg2.Server.Plugin.exceptions import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin.interfaces import *  # pylint: disable=W0401,W0614
+from Bcfg2.Server.Plugin.helpers import handle_rmi_list_argument
 from Bcfg2.Server.Plugin import track_statistics
 
 try:
@@ -1035,7 +1036,8 @@ class Core(object):
         rmi = dict()
         for pname, pinst in self._get_rmi_objects().items():
             for mname in pinst.__rmi__:
-                rmi["%s.%s" % (pname, mname)] = getattr(pinst, mname)
+                func = getattr(pinst, mname)
+                rmi["%s.%s" % (pname, mname)] = handle_rmi_list_argument(func)
         return rmi
 
     def _resolve_exposed_method(self, method_name):

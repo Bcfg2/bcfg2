@@ -70,6 +70,30 @@ class track_statistics(object):  # pylint: disable=C0103
         return inner
 
 
+def rmi_list_argument(func):
+    """ Decorater to mark methods that need one list argument.
+    A RMI call will translate a list of arguments to an argument
+    of one list. """
+    func.list_argument = True
+    return func
+
+
+def handle_rmi_list_argument(func):
+    """ Automatically handle list arguments. For calls that are marked
+    with `rmi_list_argument` the arguments get converted. All other calls
+    are simply passed throught. """
+
+    @wraps(func)
+    def inner(*args):
+        """ Convert a list of arguments to one list argument. """
+        return func(list(args))
+
+    if getattr(func, 'list_argument', False):
+        return inner
+    else:
+        return func
+
+
 def removecomment(stream):
     """ A Genshi filter that removes comments from the stream.  This
     function is a generator.

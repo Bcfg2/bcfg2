@@ -502,8 +502,10 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     """This class contains data for bcfg2 server metadata."""
     __author__ = 'bcfg-dev@mcs.anl.gov'
     sort_order = 500
-    __rmi__ = Bcfg2.Server.Plugin.DatabaseBacked.__rmi__ + ['list_clients',
-                                                            'remove_client']
+    __rmi__ = Bcfg2.Server.Plugin.DatabaseBacked.__rmi__ + \
+        ['list_clients', 'remove_client', 'get_all_group_names',
+         'get_all_groups_in_category', 'get_client_names_by_profiles',
+         'get_client_names_by_groups', 'get_client_names_by_bundles']
 
     options = Bcfg2.Server.Plugin.DatabaseBacked.options + [
         Bcfg2.Options.Common.password,
@@ -1315,6 +1317,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         return set([g.name for g in self.groups.values()
                     if g.category == category])
 
+    @Bcfg2.Server.Plugin.rmi_list_argument
     def get_client_names_by_profiles(self, profiles):
         """ return a list of names of clients in the given profile groups """
         rv = []
@@ -1324,6 +1327,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 rv.append(client)
         return rv
 
+    @Bcfg2.Server.Plugin.rmi_list_argument
     def get_client_names_by_groups(self, groups):
         """ return a list of names of clients in the given groups """
         rv = []
@@ -1333,6 +1337,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                 rv.append(client)
         return rv
 
+    @Bcfg2.Server.Plugin.rmi_list_argument
     def get_client_names_by_bundles(self, bundles):
         """ given a list of bundles, return a list of names of clients
         that use those bundles """
