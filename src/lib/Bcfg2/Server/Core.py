@@ -22,7 +22,7 @@ from Bcfg2.Server.Cache import Cache
 from Bcfg2.Compat import xmlrpclib, wraps  # pylint: disable=W0622
 from Bcfg2.Server.Plugin.exceptions import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin.interfaces import *  # pylint: disable=W0401,W0614
-from Bcfg2.Server.Plugin import track_statistics
+from Bcfg2.Server.Statistics import track_statistics
 
 try:
     from django.core.exceptions import ImproperlyConfigured
@@ -495,7 +495,7 @@ class Core(object):
                 (self.__class__.__name__, hook),
                 time.time() - start)
 
-    @Bcfg2.Server.Statistics.track_statistics()
+    @track_statistics()
     def validate_structures(self, metadata, data):
         """ Checks the data structures by calling the
         :func:`Bcfg2.Server.Plugin.interfaces.StructureValidator.validate_structures`
@@ -522,7 +522,7 @@ class Core(object):
                 self.logger.error("Plugin %s: unexpected structure validation "
                                   "failure" % plugin.name, exc_info=1)
 
-    @Bcfg2.Server.Statistics.track_statistics()
+    @track_statistics()
     def validate_goals(self, metadata, data):
         """ Checks that the config matches the goals enforced by
         :class:`Bcfg2.Server.Plugin.interfaces.GoalValidator` plugins
@@ -548,7 +548,7 @@ class Core(object):
                 self.logger.error("Plugin %s: unexpected goal validation "
                                   "failure" % plugin.name, exc_info=1)
 
-    @Bcfg2.Server.Statistics.track_statistics()
+    @track_statistics()
     def GetStructures(self, metadata):
         """ Get all structures (i.e., bundles) for the given client
 
@@ -568,7 +568,7 @@ class Core(object):
                               (metadata.hostname, ':'.join(missing)))
         return structures
 
-    @Bcfg2.Server.Statistics.track_statistics()
+    @track_statistics()
     def BindStructures(self, structures, metadata, config):
         """ Given a list of structures (i.e. bundles), bind all the
         entries in them and add the structures to the config.
@@ -589,7 +589,7 @@ class Core(object):
             except:
                 self.logger.error("error in BindStructure", exc_info=1)
 
-    @Bcfg2.Server.Statistics.track_statistics()
+    @track_statistics()
     def BindStructure(self, structure, metadata):
         """ Bind all elements in a single structure (i.e., bundle).
 
@@ -822,7 +822,7 @@ class Core(object):
                                   % plugin.name, exc_info=1)
         return result
 
-    @Bcfg2.Server.Statistics.track_statistics()
+    @track_statistics()
     def check_acls(self, address, rmi):
         """ Check client IP address and metadata object against all
         :class:`Bcfg2.Server.Plugin.interfaces.ClientACLs` plugins.
@@ -877,7 +877,7 @@ class Core(object):
                               "%s" % (client, rmi, sys.exc_info()[1]))
             return False  # failsafe
 
-    @Bcfg2.Server.Statistics.track_statistics()
+    @track_statistics()
     def build_metadata(self, client_name):
         """ Build initial client metadata for a client
 

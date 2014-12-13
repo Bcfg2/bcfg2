@@ -3,7 +3,6 @@
 import os
 import re
 import sys
-import time
 import copy
 import glob
 import logging
@@ -33,41 +32,6 @@ except ImportError:
     HAS_DJANGO = False
 
 LOGGER = logging.getLogger(__name__)
-
-
-class track_statistics(object):  # pylint: disable=C0103
-    """ Decorator that tracks execution time for the given
-    :class:`Plugin` method with :mod:`Bcfg2.Statistics` for reporting
-    via ``bcfg2-admin perf`` """
-
-    def __init__(self, name=None):
-        """
-        :param name: The name under which statistics for this function
-                     will be tracked.  By default, the name will be
-                     the name of the function concatenated with the
-                     name of the class the function is a member of.
-        :type name: string
-        """
-        # if this is None, it will be set later during __call_
-        self.name = name
-
-    def __call__(self, func):
-        if self.name is None:
-            self.name = func.__name__
-
-        @wraps(func)
-        def inner(obj, *args, **kwargs):
-            """ The decorated function """
-            name = "%s:%s" % (obj.__class__.__name__, self.name)
-
-            start = time.time()
-            try:
-                return func(obj, *args, **kwargs)
-            finally:
-                Bcfg2.Server.Statistics.stats.add_value(name,
-                                                        time.time() - start)
-
-        return inner
 
 
 def removecomment(stream):

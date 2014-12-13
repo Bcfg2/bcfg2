@@ -171,12 +171,12 @@ perf``.  This data can be invaluable for locating bottlenecks or other
 performance issues.
 
 The simplest way to track statistics is to use the
-:func:`Bcfg2.Server.Plugin.helpers.track_statistics` decorator to
+:func:`Bcfg2.Server.Statistics.track_statistics` decorator to
 decorate functions that you would like to track execution times for:
 
 .. code-block:: python
 
-    from Bcfg2.Server.Plugin import track_statistics
+    from Bcfg2.Server.Statistics import track_statistics
 
     @track_statistics()
     def do_something(self, ...):

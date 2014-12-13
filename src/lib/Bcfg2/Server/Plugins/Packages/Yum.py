@@ -1231,7 +1231,7 @@ class YumSource(Source):
                         self.provides[arch][prov] = list()
                     self.provides[arch][prov].append(pkgname)
 
-    @Bcfg2.Server.Plugin.track_statistics()
+    @track_statistics()
     def parse_group(self, data):
         """ parse comps.xml.gz data """
         for group in data.getchildren():
