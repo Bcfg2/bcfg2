@@ -16,9 +16,9 @@ import lxml.etree
 import Bcfg2.Options
 from mock import patch, MagicMock, _patch, DEFAULT
 try:
-    from unittest import skip, skipIf, skipUnless, TestCase
-except ImportError:
     from unittest2 import skip, skipIf, skipUnless, TestCase
+except ImportError:
+    from unittest import skip, skipIf, skipUnless, TestCase
 
 #: The XInclude namespace name
 XI_NAMESPACE = "http://www.w3.org/2001/XInclude"
