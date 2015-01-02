@@ -1,8 +1,9 @@
 .. -*- mode: rst -*-
+.. vim: ft=rst
 
-=========================
+===========================
  Including Jinja2 Templates
-=========================
+===========================
 
 Jinja2 templates can use the {% include %} directive to include file 
 fragments which might be common to many configuration files.
