@@ -151,7 +151,7 @@ See :ref:`bcfg2-info <server-bcfg2-info>` for more details.
 Dependencies
 ============
 
-Dependencies on other bundles can be specified by adding an
+Dependencies on other bundles can be specified by adding a
 RequiredBundle tag that adds another bundle by name, e.g.:
 
 .. code-block:: xml
