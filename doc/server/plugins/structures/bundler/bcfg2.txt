@@ -16,7 +16,7 @@ entries between Bundler and Rules.
 .. code-block:: xml
 
   <Bundle>
-    <Bundle name="bcfg2-server-base.xml"/>
+    <RequiredBundle name="bcfg2-server-base.xml"/>
 
     <Path name="/etc/pki/tls/private/bcfg2.key"/>
     <Path name="/etc/sysconfig/bcfg2-server"/>

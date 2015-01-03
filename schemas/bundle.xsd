@@ -263,6 +263,13 @@
           </xsd:documentation>
         </xsd:annotation>
       </xsd:element>
+      <xsd:element name='RequiredBundle' type='RequiredBundleType'>
+        <xsd:annotation>
+          <xsd:documentation>
+            Nesting Bundle tags to specify dependencies to other bundles.
+          </xsd:documentation>
+        </xsd:annotation>
+      </xsd:element>
     </xsd:choice>
   </xsd:group>
 
@@ -294,6 +301,28 @@
           within this tag are only used on clients that are not
           members of the group, or that have hostnames that do not
           match.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attributeGroup ref="py:genshiAttrs"/>
+  </xsd:complexType>
+
+  <xsd:complexType name='RequiredBundleType'>
+    <xsd:attribute type='xsd:string' name='name' use='required'>
+      <xsd:annotation>
+        <xsd:documentation>
+          The name of the required bundle.
+        </xsd:documentation>
+      </xsd:annotation>
+    </xsd:attribute>
+    <xsd:attribute type='xsd:boolean' name='inherit_modification'>
+      <xsd:annotation>
+        <xsd:documentation>
+          Specify how to handle modifications in the required
+          bundle. You can either ignore the modifications (this
+          is the default) or you can inherit the modifications
+          so that Services in the current Bundle are restarted
+          if the required Bundle is modified.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>

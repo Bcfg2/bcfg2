@@ -8,6 +8,7 @@ import fnmatch
 import lxml.etree
 from Bcfg2.Server.Plugin import StructFile, Plugin, Structure, \
     StructureValidator, XMLDirectoryBacked, Generator
+from Bcfg2.version import Bcfg2VersionInfo
 from genshi.template import TemplateError
 
 
@@ -116,17 +117,36 @@ class Bundler(Plugin,
                     for el in child.getchildren():
                         data.append(el)
                     data.remove(child)
-                elif child.get("name"):
+                else:
+                    # no children -- wat
+                    self.logger.warning("Bundler: Useless empty Bundle tag "
+                                        "in %s" % self.name)
+                    data.remove(child)
+
+            for child in data.findall('RequiredBundle'):
+                if child.get("name"):
                     # dependent bundle -- add it to the list of
                     # bundles for this client
                     if child.get("name") not in bundles_added:
                         bundles.append(child.get("name"))
                         bundles_added.add(child.get("name"))
+                    if child.get('inherit_modification', 'false') == 'true':
+                        if metadata.version_info >= \
+                           Bcfg2VersionInfo('1.4.0pre2'):
+                            lxml.etree.SubElement(data, 'Bundle',
+                                                  name=child.get('name'))
+                        else:
+                            self.logger.warning(
+                                'Bundler: inherit_modification="true" is '
+                                'only supported for clients starting '
+                                '1.4.0pre2')
                     data.remove(child)
                 else:
-                    # neither name or children -- wat
-                    self.logger.warning("Bundler: Useless empty Bundle tag "
-                                        "in %s" % self.name)
+                    # no name -- wat
+                    self.logger.warning('Bundler: Missing required name in '
+                                        'RequiredBundle tag in %s' %
+                                        self.name)
                     data.remove(child)
+
             bundleset.append(data)
         return bundleset
