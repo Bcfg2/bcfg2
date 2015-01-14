@@ -143,6 +143,83 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         #: source
         self.essentialpkgs = set()
 
+        self._init_attributes(basepath, xsource, setup)
+
+        #: A set of all package names in this source.  This will not
+        #: necessarily be populated, particularly by backends that
+        #: reimplement large portions of
+        #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
+        self.pkgnames = set()
+
+        #: A dict of ``<package name>`` -> ``<list of dependencies>``.
+        #: This will not necessarily be populated, particularly by
+        #: backends that reimplement large portions of
+        #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
+        self.deps = dict()
+
+        #: A dict of ``<package name>`` -> ``<list of provided
+        #: symbols>``.  This will not necessarily be populated,
+        #: particularly by backends that reimplement large portions of
+        #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
+        self.provides = dict()
+
+        #: The file (or directory) used for this source's cache data
+        self.cachefile = os.path.join(self.basepath,
+                                      "cache-%s" % self.cachekey)
+        if not self.rawurl:
+            baseurl = self.url + "%(version)s/%(component)s/%(arch)s/"
+        else:
+            baseurl = self.rawurl
+
+        #: A list of dicts, each of which describes the URL to one
+        #: repository contained in this source.  Each dict contains
+        #: the following keys:
+        #:
+        #: * ``version``: The version of the repo (``None`` for
+        #:   ``rawurl`` repos)
+        #: * ``component``: The component use to form this URL
+        #:   (``None`` for ``rawurl`` repos)
+        #: * ``arch``: The architecture of this repo
+        #: * ``baseurl``: Either the ``rawurl`` attribute, or the
+        #:   format string built from the ``url`` attribute
+        #: * ``url``: The actual URL to the repository
+        self.url_map = []
+        for arch in self.arches:
+            if self.url:
+                usettings = [dict(version=self.version, component=comp,
+                                  arch=arch, debsrc=self.debsrc)
+                             for comp in self.components]
+            else:  # rawurl given
+                usettings = [dict(version=self.version, component=None,
+                                  arch=arch, debsrc=self.debsrc)]
+
+            for setting in usettings:
+                if not self.rawurl:
+                    setting['baseurl'] = self.url
+                else:
+                    setting['baseurl'] = self.rawurl
+                setting['url'] = baseurl % setting
+                setting['name'] = self.get_repo_name(setting)
+            self.url_map.extend(usettings)
+
+    def _init_attributes(self, basepath, xsource, setup):
+        """
+        This functions evaluates the Source tag and parses all
+        attributes. Override this function in a sub class to
+        parse specific attributes. Do not use ``__init__`` because
+        ``Source.__init__`` may call other functions that already
+        need this specific fields. This functions is called before
+        any other function.
+
+        :param basepath: The base filesystem path under which cache
+                         data for this source should be stored
+        :type basepath: string
+        :param xsource: The XML tag that describes this source
+        :type source: lxml.etree._Element
+        :param setup: A Bcfg2 options dict
+        :type setup: dict
+        """
+
         #: A list of the text of all 'Component' attributes of this
         #: source from XML
         self.components = [item.text for item in xsource.findall('Component')]
@@ -240,63 +317,6 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
                 else:
                     self.conditions.append(lambda m, el=el:
                                            el.get("name") == m.hostname)
-
-        #: A set of all package names in this source.  This will not
-        #: necessarily be populated, particularly by backends that
-        #: reimplement large portions of
-        #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
-        self.pkgnames = set()
-
-        #: A dict of ``<package name>`` -> ``<list of dependencies>``.
-        #: This will not necessarily be populated, particularly by
-        #: backends that reimplement large portions of
-        #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
-        self.deps = dict()
-
-        #: A dict of ``<package name>`` -> ``<list of provided
-        #: symbols>``.  This will not necessarily be populated,
-        #: particularly by backends that reimplement large portions of
-        #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
-        self.provides = dict()
-
-        #: The file (or directory) used for this source's cache data
-        self.cachefile = os.path.join(self.basepath,
-                                      "cache-%s" % self.cachekey)
-        if not self.rawurl:
-            baseurl = self.url + "%(version)s/%(component)s/%(arch)s/"
-        else:
-            baseurl = self.rawurl
-
-        #: A list of dicts, each of which describes the URL to one
-        #: repository contained in this source.  Each dict contains
-        #: the following keys:
-        #:
-        #: * ``version``: The version of the repo (``None`` for
-        #:   ``rawurl`` repos)
-        #: * ``component``: The component use to form this URL
-        #:   (``None`` for ``rawurl`` repos)
-        #: * ``arch``: The architecture of this repo
-        #: * ``baseurl``: Either the ``rawurl`` attribute, or the
-        #:   format string built from the ``url`` attribute
-        #: * ``url``: The actual URL to the repository
-        self.url_map = []
-        for arch in self.arches:
-            if self.url:
-                usettings = [dict(version=self.version, component=comp,
-                                  arch=arch, debsrc=self.debsrc)
-                             for comp in self.components]
-            else:  # rawurl given
-                usettings = [dict(version=self.version, component=None,
-                                  arch=arch, debsrc=self.debsrc)]
-
-            for setting in usettings:
-                if not self.rawurl:
-                    setting['baseurl'] = self.url
-                else:
-                    setting['baseurl'] = self.rawurl
-                setting['url'] = baseurl % setting
-                setting['name'] = self.get_repo_name(setting)
-            self.url_map.extend(usettings)
 
     @property
     def cachekey(self):
