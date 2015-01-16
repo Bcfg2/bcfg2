@@ -726,6 +726,8 @@ Bcfg2 client itself.""")
 
     def run(self, args):  # pylint: disable=W0221
         try:
+            if os.getuid() == 0:
+                self._drop_privileges()
             self.load_plugins()
             self.block_for_fam_events(handle_events=True)
             if args:

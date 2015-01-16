@@ -1348,7 +1348,9 @@ TEST_COMMON_OPTIONS = dict(noseopts=TEST_NOSEOPTS,
                            validate=CFG_VALIDATION)
 
 INFO_COMMON_OPTIONS = dict(ppath=PARANOID_PATH,
-                           max_copies=PARANOID_MAX_COPIES)
+                           max_copies=PARANOID_MAX_COPIES,
+                           daemon_uid=SERVER_DAEMON_USER,
+                           daemon_gid=SERVER_DAEMON_GROUP)
 INFO_COMMON_OPTIONS.update(CLI_COMMON_OPTIONS)
 INFO_COMMON_OPTIONS.update(SERVER_COMMON_OPTIONS)
 
