@@ -4,4 +4,4 @@ mock
 sphinx
 pylint<1.0
 pep8
-python-daemon
+python-daemon<2.0.0
