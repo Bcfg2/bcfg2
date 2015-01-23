@@ -212,7 +212,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         #: compat with older code that relies on this.
         self.groups = []
 
-        self._init_attributes(basepath, xsource, setup)
+        self._init_attributes(xsource)
 
         #: A set of all package names in this source.  This will not
         #: necessarily be populated, particularly by backends that
@@ -271,7 +271,7 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
                 setting['name'] = self.get_repo_name(setting)
             self.url_map.extend(usettings)
 
-    def _init_attributes(self, basepath, xsource, setup):
+    def _init_attributes(self, xsource):
         """
         This functions evaluates the Source tag and parses all
         attributes. Override this function in a sub class to
@@ -280,13 +280,8 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         need this specific fields. This functions is called before
         any other function.
 
-        :param basepath: The base filesystem path under which cache
-                         data for this source should be stored
-        :type basepath: string
         :param xsource: The XML tag that describes this source
         :type source: lxml.etree._Element
-        :param setup: A Bcfg2 options dict
-        :type setup: dict
         """
 
         self.components = [item.text for item in xsource.findall('Component')]

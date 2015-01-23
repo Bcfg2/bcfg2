@@ -1040,8 +1040,8 @@ class YumSource(Source):
         Source.__init__(self, basepath, xsource, setup)
     __init__.__doc__ = Source.__init__.__doc__
 
-    def _init_attributes(self, basepath, xsource, setup):
-        Source._init_attributes(self, basepath, xsource, setup)
+    def _init_attributes(self, xsource):
+        Source._init_attributes(self, xsource)
 
         if HAS_PULP and xsource.get("pulp_id"):
             self.pulp_id = xsource.get("pulp_id")
