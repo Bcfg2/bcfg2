@@ -1028,10 +1028,21 @@ class YumSource(Source):
     #: YumSource sets the ``type`` on Package entries to "yum"
     ptype = 'yum'
 
+    def __init__(self, basepath, xsource, setup):
+        self.filemap = dict()
+        self.file_to_arch = dict()
+        self.needed_paths = set()
+        self.packages = dict()
+        self.yumgroups = dict()
+        self.pulp_id = None
+        self.repo = None
+
+        Source.__init__(self, basepath, xsource, setup)
+    __init__.__doc__ = Source.__init__.__doc__
+
     def _init_attributes(self, basepath, xsource, setup):
         Source._init_attributes(self, basepath, xsource, setup)
 
-        self.pulp_id = None
         if HAS_PULP and xsource.get("pulp_id"):
             self.pulp_id = xsource.get("pulp_id")
 
@@ -1064,14 +1075,10 @@ class YumSource(Source):
                                      self.repo['relative_path'])
             self.arches = [self.repo['arch']]
 
-        self.packages = dict()
         self.deps = dict([('global', dict())])
         self.provides = dict([('global', dict())])
         self.filemap = dict([(x, dict())
                              for x in ['global'] + self.arches])
-        self.needed_paths = set()
-        self.file_to_arch = dict()
-        self.yumgroups = dict()
     _init_attributes.__doc__ = Source._init_attributes.__doc__
 
     @property

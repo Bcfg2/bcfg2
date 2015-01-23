@@ -143,6 +143,75 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         #: source
         self.essentialpkgs = set()
 
+        #: A list of the text of all 'Component' attributes of this
+        #: source from XML
+        self.components = []
+
+        #: A list of the arches supported by this source
+        self.arches = []
+
+        #: A list of the the names of packages that are blacklisted
+        #: from this source
+        self.blacklist = []
+
+        #: A list of the the names of packages that are whitelisted in
+        #: this source
+        self.whitelist = []
+
+        #: Whether or not to include deb-src lines in the generated APT
+        #: configuration
+        self.debsrc = False
+
+        #: A dict of repository options that will be included in the
+        #: configuration generated on the server side (if such is
+        #: applicable; most backends do not generate any sort of
+        #: repository configuration on the Bcfg2 server)
+        self.server_options = dict()
+
+        #: A dict of repository options that will be included in the
+        #: configuration generated for the client (if that is
+        #: supported by the backend)
+        self.client_options = dict()
+
+        #: A list of URLs to GPG keys that apply to this source
+        self.gpgkeys = []
+
+        #: Whether or not to include essential packages from this source
+        self.essential = True
+
+        #: Whether or not to include recommended packages from this source
+        self.recommended = False
+
+        #: The "rawurl" attribute from :attr:`xsource`, if applicable.
+        #: A trailing slash is automatically appended to this if there
+        #: wasn't one already present.
+        self.rawurl = None
+
+        #: The "url" attribute from :attr:`xsource`, if applicable.  A
+        #: trailing slash is automatically appended to this if there
+        #: wasn't one already present.
+        self.url = None
+
+        #: The "version" attribute from :attr:`xsource`
+        self.version = None
+
+        #: The "name" attribute from :attr:`xsource`
+        self.name = None
+
+        #: A list of predicates that are used to determine if this
+        #: source applies to a given
+        #: :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata`
+        #: object.
+        self.conditions = []
+
+        #: Formerly, :ref:`server-plugins-generators-packages` only
+        #: supported applying package sources to groups; that is, they
+        #: could not be assigned by more complicated logic like
+        #: per-client repositories and group or client negation.  This
+        #: attribute attempts to provide for some limited backwards
+        #: compat with older code that relies on this.
+        self.groups = []
+
         self._init_attributes(basepath, xsource, setup)
 
         #: A set of all package names in this source.  This will not
@@ -220,35 +289,12 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         :type setup: dict
         """
 
-        #: A list of the text of all 'Component' attributes of this
-        #: source from XML
         self.components = [item.text for item in xsource.findall('Component')]
-
-        #: A list of the arches supported by this source
         self.arches = [item.text for item in xsource.findall('Arch')]
-
-        #: A list of the the names of packages that are blacklisted
-        #: from this source
         self.blacklist = [item.text for item in xsource.findall('Blacklist')]
-
-        #: A list of the the names of packages that are whitelisted in
-        #: this source
         self.whitelist = [item.text for item in xsource.findall('Whitelist')]
-
-        #: Whether or not to include deb-src lines in the generated APT
-        #: configuration
         self.debsrc = xsource.get('debsrc', 'false') == 'true'
 
-        #: A dict of repository options that will be included in the
-        #: configuration generated on the server side (if such is
-        #: applicable; most backends do not generate any sort of
-        #: repository configuration on the Bcfg2 server)
-        self.server_options = dict()
-
-        #: A dict of repository options that will be included in the
-        #: configuration generated for the client (if that is
-        #: supported by the backend)
-        self.client_options = dict()
         opts = xsource.findall("Options")
         for el in opts:
             repoopts = dict([(k, v)
@@ -259,48 +305,23 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
             if el.get("serveronly", "false").lower() == "false":
                 self.client_options.update(repoopts)
 
-        #: A list of URLs to GPG keys that apply to this source
         self.gpgkeys = [el.text for el in xsource.findall("GPGKey")]
 
-        #: Whether or not to include essential packages from this source
         self.essential = xsource.get('essential', 'true').lower() == 'true'
-
-        #: Whether or not to include recommended packages from this source
         self.recommended = xsource.get('recommended',
                                        'false').lower() == 'true'
 
-        #: The "rawurl" attribute from :attr:`xsource`, if applicable.
-        #: A trailing slash is automatically appended to this if there
-        #: wasn't one already present.
         self.rawurl = xsource.get('rawurl', '')
         if self.rawurl and not self.rawurl.endswith("/"):
             self.rawurl += "/"
 
-        #: The "url" attribute from :attr:`xsource`, if applicable.  A
-        #: trailing slash is automatically appended to this if there
-        #: wasn't one already present.
         self.url = xsource.get('url', '')
         if self.url and not self.url.endswith("/"):
             self.url += "/"
 
-        #: The "version" attribute from :attr:`xsource`
         self.version = xsource.get('version', '')
-
-        #: The "name" attribute from :attr:`xsource`
         self.name = xsource.get('name', None)
 
-        #: A list of predicates that are used to determine if this
-        #: source applies to a given
-        #: :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata`
-        #: object.
-        self.conditions = []
-        #: Formerly, :ref:`server-plugins-generators-packages` only
-        #: supported applying package sources to groups; that is, they
-        #: could not be assigned by more complicated logic like
-        #: per-client repositories and group or client negation.  This
-        #: attribute attempts to provide for some limited backwards
-        #: compat with older code that relies on this.
-        self.groups = []
         for el in xsource.iterancestors():
             if el.tag == "Group":
                 if el.get("negate", "false").lower() == "true":
