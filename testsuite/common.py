@@ -64,6 +64,7 @@ try:
     set_setup_default("time_zone")
     set_setup_default("web_debug", False)
     set_setup_default("web_prefix")
+    set_setup_default("django_settings")
 
     import Bcfg2.DBSettings
     Bcfg2.DBSettings.finalize_django_config()
