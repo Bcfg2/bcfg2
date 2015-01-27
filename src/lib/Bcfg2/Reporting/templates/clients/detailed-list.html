@@ -32,7 +32,9 @@ This is needed for Django versions less than 1.5
     <td class='right_column_narrow'>{{ entry.bad_count }}</td>
     <td class='right_column_narrow'>{{ entry.modified_count }}</td>
     <td class='right_column_narrow'>{{ entry.extra_count }}</td>
-    <td class='right_column'><span {% if entry.isstale %}class='dirty-lineitem'{% endif %}>{{ entry.timestamp|date:"Y-m-d\&\n\b\s\p\;H:i"|safe }}</span></td>
+    <td class='right_column'><span {% if entry.isstale %}class='dirty-lineitem'{% endif %} style="white-space: nowrap;">
+      {{ entry.timestamp|date:"SHORT_DATETIME_FORMAT"|safe }}
+    </span></td>
     <td class='right_column_wide'>
        {% if entry.server %}
          <a href='{% add_url_filter server=entry.server %}'>{{ entry.server }}</a>

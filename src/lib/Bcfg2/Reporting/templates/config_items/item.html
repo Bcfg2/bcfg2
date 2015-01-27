@@ -130,7 +130,7 @@ div.entry_list h3 {
 
   <div class='entry_list'>
     <div class='entry_list_head'>
-      <h3>Occurences on {{ timestamp|date:"Y-m-d" }}</h3>
+      <h3>Occurences on {{ timestamp|date:"SHORT_DATE_FORMAT" }}</h3>
     </div>
     {% if associated_list %}
       <table class="entry_list" cellpadding="3">
