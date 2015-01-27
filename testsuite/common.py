@@ -60,7 +60,7 @@ try:
     set_setup_default("db_port")
     set_setup_default("db_opts", dict())
     set_setup_default("db_schema")
-    set_setup_default("timezone")
+    set_setup_default("time_zone")
     set_setup_default("web_debug", False)
     set_setup_default("web_prefix")
 
