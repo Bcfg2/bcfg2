@@ -109,7 +109,7 @@ def finalize_django_config(opts=None, silent=False):
             OPTIONS=opts.reporting_db_opts,
             SCHEMA=opts.reporting_db_schema)
 
-    settings['TIME_ZONE'] = opts.timezone
+    settings['TIME_ZONE'] = opts.time_zone
 
     settings['TEMPLATE_DEBUG'] = settings['DEBUG'] = \
         opts.web_debug
@@ -261,7 +261,7 @@ class _OptionContainer(object):
             type=Bcfg2.Options.Types.comma_dict, default=dict()),
         # Django options
         Bcfg2.Options.Option(
-            cf=('reporting', 'timezone'), help='Django timezone'),
+            cf=('reporting', 'time_zone'), help='Django timezone'),
         Bcfg2.Options.BooleanOption(
             cf=('reporting', 'web_debug'), help='Django debug'),
         Bcfg2.Options.Option(
