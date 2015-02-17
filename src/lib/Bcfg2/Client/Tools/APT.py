@@ -2,11 +2,6 @@
 
 import os
 import sys
-import warnings
-
-# suppress apt API warnings
-warnings.filterwarnings("ignore", "apt API not stable yet", FutureWarning)
-# pylint: disable=E402
 
 import apt.cache
 
