@@ -18,7 +18,10 @@ try:
     HAS_MULTIPROC = True
 except ImportError:
     HAS_MULTIPROC = False
-    active_children = lambda: []  # pylint: disable=C0103
+
+    def active_children():
+        """active_children() when multiprocessing lib is missing."""
+        return []
 
 
 def get_sigint_handler(core):

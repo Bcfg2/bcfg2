@@ -41,8 +41,9 @@ class Pkgng(Bcfg2.Client.Tools.Tool):
              if (entry.tag == 'Path' and
                  entry.get('name').startswith('/etc/pkg/'))]
         self.nonexistent = [entry.get('name') for struct in config
-                            for entry in struct if entry.tag == 'Path'
-                            and entry.get('type') == 'nonexistent']
+                            for entry in struct
+                            if entry.tag == 'Path' and
+                            entry.get('type') == 'nonexistent']
         self.actions = {}
         self.pkg_cache = {}
 
@@ -159,8 +160,8 @@ class Pkgng(Bcfg2.Client.Tools.Tool):
         else:
             # version matches
             if (not Bcfg2.Options.setup.quick and
-                    entry.get('verify', 'true') == 'true'
-                    and checksums):
+                    entry.get('verify', 'true') == 'true' and
+                    checksums):
                 pkgsums = self.VerifyChecksums(entry, modlist)
                 return pkgsums
             return True

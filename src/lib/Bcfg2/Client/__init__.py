@@ -874,7 +874,7 @@ class Client(object):
                     else:
                         self.logger.info("%s:%s" % (entry.tag,
                                                     entry.get('name')))
-        self.logger.info('Total managed entries:  %d' %
+        self.logger.info('Total managed entries: %d' %
                          len(list(self.states.values())))
         self.logger.info('Unmanaged entries:      %d' % len(self.extra))
         if phase == 'final' and Bcfg2.Options.setup.show_extra:

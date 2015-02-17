@@ -1,15 +1,19 @@
 """ Base classes for Lint plugins and error handling """
 
-import os
-import sys
-import time
 import copy
 import fcntl
-import struct
-import termios
+import fnmatch
+import glob
 import logging
+import os
+import struct
+import sys
+import termios
 import textwrap
+import time
+
 import lxml.etree
+
 import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Plugins
@@ -144,6 +148,14 @@ class Plugin(object):
                 element,
                 xml_declaration=False).decode("UTF-8").strip()
         return "   line %s: %s" % (element.sourceline, xml)
+
+    def list_matching_files(self, path):
+        """list all files matching the path in self.files or the bcfg2 repo."""
+        if self.files is not None:
+            return fnmatch.filter(self.files, os.path.join('*', path))
+        else:
+            return glob.glob(os.path.join(Bcfg2.Options.setup.repository,
+                                          path))
 
 
 class ErrorHandler(object):

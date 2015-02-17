@@ -1,11 +1,15 @@
-""" Ensure that all XML files in the Bcfg2 repository validate
-according to their respective schemas. """
+"""Validate XML files.
 
+Ensure that all XML files in the Bcfg2 repository validate according
+to their respective schemas.
+"""
+
+import glob
 import os
 import sys
-import glob
-import fnmatch
+
 import lxml.etree
+
 import Bcfg2.Options
 import Bcfg2.Server.Lint
 from Bcfg2.Utils import Executor
@@ -206,17 +210,10 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         values are lists of the full paths to all files in the Bcfg2
         repository (or given with ``bcfg2-lint --stdin``) that match
         the glob."""
-        if self.files is not None:
-            listfiles = lambda p: fnmatch.filter(self.files,
-                                                 os.path.join('*', p))
-        else:
-            listfiles = lambda p: \
-                glob.glob(os.path.join(Bcfg2.Options.setup.repository, p))
-
         for path in self.filesets.keys():
             if '/**/' in path:
                 if self.files is not None:
-                    self.filelists[path] = listfiles(path)
+                    self.filelists[path] = self.list_matching_files(path)
                 else:  # self.files is None
                     fpath, fname = path.split('/**/')
                     self.filelists[path] = []
@@ -227,9 +224,9 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
                                                      for f in files
                                                      if f == fname])
             else:
-                self.filelists[path] = listfiles(path)
+                self.filelists[path] = self.list_matching_files(path)
 
-        self.filelists['props'] = listfiles("Properties/*.xml")
+        self.filelists['props'] = self.list_matching_files("Properties/*.xml")
 
     def _load_schema(self, filename):
         """ Load an XML schema document, returning the Schema object
