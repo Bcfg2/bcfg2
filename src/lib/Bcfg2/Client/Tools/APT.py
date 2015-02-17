@@ -1,12 +1,15 @@
 """This is the Bcfg2 support for apt-get."""
 
-# suppress apt API warnings
-import warnings
-warnings.filterwarnings("ignore", "apt API not stable yet",
-                        FutureWarning)
 import os
 import sys
+import warnings
+
+# suppress apt API warnings
+warnings.filterwarnings("ignore", "apt API not stable yet", FutureWarning)
+# pylint: disable=E402
+
 import apt.cache
+
 import Bcfg2.Options
 import Bcfg2.Client.Tools
 
@@ -69,8 +72,9 @@ class APT(Bcfg2.Client.Tools.Tool):
                      '%s/apt/sources.list' %
                      Bcfg2.Options.setup.apt_etc_path))]
         self.nonexistent = [entry.get('name') for struct in config
-                            for entry in struct if entry.tag == 'Path'
-                            and entry.get('type') == 'nonexistent']
+                            for entry in struct
+                            if entry.tag == 'Path' and
+                            entry.get('type') == 'nonexistent']
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
         if Bcfg2.Options.setup.kevlar and not Bcfg2.Options.setup.dry_run:
