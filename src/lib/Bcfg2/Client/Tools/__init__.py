@@ -573,7 +573,7 @@ class SvcTool(Tool):
         return self.cmd.run(self.get_svc_command(service, 'stop'))
 
     def restart_service(self, service):
-        """ Restart a service.
+        """Restart a service.
 
         :param service: The service entry to modify
         :type service: lxml.etree._Element
@@ -606,15 +606,15 @@ class SvcTool(Tool):
             return
 
         for entry in bundle:
-            if (not self.handlesEntry(entry)
-                or not self._install_allowed(entry)):
+            if (not self.handlesEntry(entry) or
+                    not self._install_allowed(entry)):
                 continue
 
             estatus = entry.get('status')
             restart = entry.get("restart", "true").lower()
             if (restart == "false" or estatus == 'ignore' or
-                (restart == "interactive" and
-                 not Bcfg2.Options.setup.interactive)):
+                    (restart == "interactive" and
+                     not Bcfg2.Options.setup.interactive)):
                 continue
 
             success = False

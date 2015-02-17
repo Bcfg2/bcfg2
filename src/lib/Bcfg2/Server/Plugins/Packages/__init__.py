@@ -127,8 +127,8 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Options.PathOption(
             cf=("packages", "apt_config"),
             help="The default path for generated apt configs",
-            default=
-            "/etc/apt/sources.list.d/bcfg2-packages-generated-sources.list")]
+            default="/etc/apt/sources.list.d/"
+            "bcfg2-packages-generated-sources.list")]
 
     #: Packages is an alternative to
     #: :mod:`Bcfg2.Server.Plugins.Pkgmgr` and conflicts with it.

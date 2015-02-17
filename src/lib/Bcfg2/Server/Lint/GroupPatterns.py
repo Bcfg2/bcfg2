@@ -2,6 +2,7 @@
 <server-plugins-grouping-grouppatterns>` """
 
 import sys
+
 from Bcfg2.Server.Lint import ServerPlugin
 from Bcfg2.Server.Plugins.GroupPatterns import PatternMap
 
@@ -28,15 +29,13 @@ class GroupPatterns(ServerPlugin):
 
     def check(self, entry, groups, ptype="NamePattern"):
         """ Check a single pattern for validity """
-        if ptype == "NamePattern":
-            pmap = lambda p: PatternMap(p, None, groups)
-        else:
-            pmap = lambda p: PatternMap(None, p, groups)
-
         for el in entry.findall(ptype):
             pat = el.text
             try:
-                pmap(pat)
+                if ptype == "NamePattern":
+                    PatternMap(pat, None, groups)
+                else:
+                    PatternMap(None, pat, groups)
             except:  # pylint: disable=W0702
                 err = sys.exc_info()[1]
                 self.LintError("pattern-fails-to-initialize",
