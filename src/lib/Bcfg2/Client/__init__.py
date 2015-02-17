@@ -838,8 +838,8 @@ class Client(object):
 
             mods = self.modified
             new_mbundles = [struct for struct in all_bundles
-                            if any(True for mod in mods if mod in struct)
-                            and struct not in mbundles + add_mbundles]
+                            if any(True for mod in mods if mod in struct) and
+                            struct not in mbundles + add_mbundles]
             add_mbundles.extend(new_mbundles)
 
         return add_mbundles
