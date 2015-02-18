@@ -17,7 +17,8 @@ class Pseudo(FileMonitor):
     def AddMonitor(self, path, obj, handleID=None):
         if handleID is None:
             handleID = len(list(self.handles.keys()))
-        self.events.append(Event(handleID, path, 'exists'))
+        if os.path.exists(path):
+            self.events.append(Event(handleID, path, 'exists'))
         if os.path.isdir(path):
             dirlist = os.listdir(path)
             for fname in dirlist:
