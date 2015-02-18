@@ -331,10 +331,11 @@ class Source(Debuggable):  # pylint: disable=R0902
 
     @track_statistics()
     def setup_data(self, force_update=False):
-        """ Perform all data fetching and setup tasks.  For most
-        backends, this involves downloading all metadata from the
-        repository, parsing it, and caching the parsed data locally.
-        The order of operations is:
+        """Perform all data fetching and setup tasks.
+
+        For most backends, this involves downloading all metadata from
+        the repository, parsing it, and caching the parsed data
+        locally.  The order of operations is:
 
         #. Call :func:`load_state` to try to load data from the local
            cache.
@@ -352,6 +353,15 @@ class Source(Debuggable):  # pylint: disable=R0902
                              upstream repository.
         :type force_update: bool
         """
+        # there are a bunch of wildcard except statements here,
+        # because the various functions called herein (``load_state``,
+        # ``read_files``, ``update``) are defined entirely by the
+        # Packages plugins that implement them.
+        #
+        # TODO: we should define an exception subclass that each of
+        # these functions can raise when an *expected* error condition
+        # is encountered.
+        #
         # pylint: disable=W0702
         if not force_update:
             if os.path.exists(self.cachefile):

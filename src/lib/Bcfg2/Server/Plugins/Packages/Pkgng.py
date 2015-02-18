@@ -71,7 +71,7 @@ class PkgngSource(Source):
             try:
                 tar = tarfile.open(fileobj=lzma.LZMAFile(fname))
                 reader = tar.extractfile('packagesite.yaml')
-            except:
+            except (IOError, tarfile.TarError):
                 self.logger.error("Packages: Failed to read file %s" % fname)
                 raise
             for line in reader.readlines():

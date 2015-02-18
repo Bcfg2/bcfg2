@@ -519,13 +519,6 @@ class TestMetadata(_TestMetadata, TestClientRunHooks, TestDatabaseBacked):
             os.path.join(metadata.data, "clients.xml"),
             metadata)
 
-        mock_get_fam.reset_mock()
-        fam = Mock()
-        fam.AddMonitor = Mock(side_effect=IOError)
-        mock_get_fam.return_value = fam
-        self.assertRaises(Bcfg2.Server.Plugin.PluginInitError,
-                          self.get_obj, core=core)
-
     @patch('os.makedirs', Mock())
     @patch('%s.open' % builtins)
     def test_init_repo(self, mock_open):

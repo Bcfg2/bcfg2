@@ -124,7 +124,7 @@ class TestJSONPropertyFile(TestFileBacked, TestPropertyFile):
         mock_dumps.assert_called_with(pf.json)
 
         mock_dumps.reset_mock()
-        mock_dumps.side_effect = ValueError
+        mock_dumps.side_effect = TypeError
         self.assertRaises(PluginExecutionError, pf.validate_data)
         mock_dumps.assert_called_with(pf.json)
 

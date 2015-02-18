@@ -7,7 +7,6 @@ import sys
 import time
 import copy
 import errno
-import fcntl
 import socket
 import logging
 import lxml.etree
@@ -201,15 +200,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
 
         while locked(fd):
             pass
-        try:
-            datafile.write(newcontents)
-        except:
-            fcntl.lockf(fd, fcntl.LOCK_UN)
-            msg = "Metadata: Failed to write new xml data to %s: %s" % \
-                (tmpfile, sys.exc_info()[1])
-            self.logger.error(msg, exc_info=1)
-            os.unlink(tmpfile)
-            raise Bcfg2.Server.Plugin.MetadataRuntimeError(msg)
+        datafile.write(newcontents)
         datafile.close()
         # check if clients.xml is a symlink
         if os.path.islink(fname):
@@ -217,10 +208,10 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
 
         try:
             os.rename(tmpfile, fname)
-        except:  # pylint: disable=W0702
+        except OSError:
             try:
                 os.unlink(tmpfile)
-            except:  # pylint: disable=W0702
+            except OSError:
                 pass
             msg = "Metadata: Failed to rename %s: %s" % (tmpfile,
                                                          sys.exc_info()[1])
@@ -594,14 +585,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
     def _handle_file(self, fname):
         """ set up the necessary magic for handling a metadata file
         (clients.xml or groups.xml, e.g.) """
-        try:
-            Bcfg2.Server.FileMonitor.get_fam().AddMonitor(
-                os.path.join(self.data, fname), self)
-        except:
-            err = sys.exc_info()[1]
-            msg = "Unable to add file monitor for %s: %s" % (fname, err)
-            self.logger.error(msg)
-            raise Bcfg2.Server.Plugin.PluginInitError(msg)
+        Bcfg2.Server.FileMonitor.get_fam().AddMonitor(
+            os.path.join(self.data, fname), self)
         self.states[fname] = False
         xmlcfg = XMLMetadataConfig(self, fname)
         aname = re.sub(r'[^A-z0-9_]', '_', os.path.basename(fname))

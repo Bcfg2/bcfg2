@@ -41,22 +41,17 @@ class Git(Version):
 
     def get_revision(self):
         """Read git revision information for the Bcfg2 repository."""
-        try:
-            if HAS_GITPYTHON:
-                return self.repo.head.commit.hexsha
-            else:
-                cmd = ["git", "--git-dir", self.vcs_path,
-                       "--work-tree", Bcfg2.Options.setup.vcs_root,
-                       "rev-parse", "HEAD"]
-                self.debug_log("Git: Running %s" % cmd)
-                result = self.cmd.run(cmd)
-                if not result.success:
-                    raise Exception(result.stderr)
-                return result.stdout
-        except:
-            raise PluginExecutionError("Git: Error getting revision from %s: "
-                                       "%s" % (Bcfg2.Options.setup.vcs_root,
-                                               sys.exc_info()[1]))
+        if HAS_GITPYTHON:
+            return self.repo.head.commit.hexsha
+        else:
+            cmd = ["git", "--git-dir", self.vcs_path,
+                   "--work-tree", Bcfg2.Options.setup.vcs_root,
+                   "rev-parse", "HEAD"]
+            self.debug_log("Git: Running %s" % cmd)
+            result = self.cmd.run(cmd)
+            if not result.success:
+                raise PluginExecutionError(result.stderr)
+            return result.stdout
 
     def Update(self, ref=None):
         """ Git.Update() => True|False

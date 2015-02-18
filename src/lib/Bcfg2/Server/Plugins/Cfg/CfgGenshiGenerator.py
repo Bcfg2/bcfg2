@@ -10,6 +10,7 @@ from Bcfg2.Server.Plugin import PluginExecutionError, removecomment, \
     DefaultTemplateDataProvider, get_template_data
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 from genshi.template import TemplateLoader, NewTextTemplate
+from genshi.template.base import TemplateError
 from genshi.template.eval import UndefinedError, Suite
 
 
@@ -117,6 +118,8 @@ class CfgGenshiGenerator(CfgGenerator):
                                                 quad[2]))
             raise
         except:
+            # this needs to be a blanket except, since it can catch
+            # any error raised by the genshi template.
             self._handle_genshi_exception(sys.exc_info())
     get_data.__doc__ = CfgGenerator.get_data.__doc__
 
@@ -184,10 +187,10 @@ class CfgGenshiGenerator(CfgGenerator):
     def handle_event(self, event):
         CfgGenerator.handle_event(self, event)
         try:
-            self.template = \
-                self.loader.load(self.name, cls=NewTextTemplate,
-                                 encoding=Bcfg2.Options.setup.encoding)
-        except:
+            self.template = self.loader.load(
+                self.name, cls=NewTextTemplate,
+                encoding=Bcfg2.Options.setup.encoding)
+        except TemplateError:
             raise PluginExecutionError("Failed to load template: %s" %
                                        sys.exc_info()[1])
     handle_event.__doc__ = CfgGenerator.handle_event.__doc__

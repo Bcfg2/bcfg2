@@ -89,7 +89,7 @@ class AptSource(Source):
                 bprov[barch] = dict()
             try:
                 reader = gzip.GzipFile(fname)
-            except:
+            except IOError:
                 self.logger.error("Packages: Failed to read file %s" % fname)
                 raise
             for line in reader.readlines():

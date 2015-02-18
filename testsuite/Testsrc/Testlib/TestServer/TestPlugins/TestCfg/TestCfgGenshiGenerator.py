@@ -129,7 +129,7 @@ class TestCfgGenshiGenerator(TestCfgGenerator):
             encoding=Bcfg2.Options.setup.encoding)
 
         cgg.loader.reset_mock()
-        cgg.loader.load.side_effect = OSError
+        cgg.loader.load.side_effect = TemplateError("test")
         self.assertRaises(PluginExecutionError,
                           cgg.handle_event, event)
         cgg.loader.load.assert_called_with(

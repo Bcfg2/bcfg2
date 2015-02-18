@@ -67,7 +67,7 @@ class PacSource(Source):
             try:
                 self.debug_log("Packages: try to read %s" % fname)
                 tar = tarfile.open(fname, "r")
-            except:
+            except (IOError, tarfile.TarError):
                 self.logger.error("Packages: Failed to read file %s" % fname)
                 raise
 

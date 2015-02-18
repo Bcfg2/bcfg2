@@ -405,7 +405,7 @@ class ProbeSet(Bcfg2.Server.Plugin.EntrySet):
             else:
                 try:
                     probe.text = entry.data
-                except:  # pylint: disable=W0702
+                except ValueError:
                     self.logger.error("Client unable to handle unicode "
                                       "probes. Skipping %s" %
                                       probe.get('name'))
@@ -447,12 +447,7 @@ class Probes(Bcfg2.Server.Plugin.Probing,
         Bcfg2.Server.Plugin.Connector.__init__(self)
         Bcfg2.Server.Plugin.DatabaseBacked.__init__(self, core)
 
-        try:
-            self.probes = ProbeSet(self.data, self.name)
-        except:
-            err = sys.exc_info()[1]
-            raise Bcfg2.Server.Plugin.PluginInitError(err)
-
+        self.probes = ProbeSet(self.data, self.name)
         if self._use_db:
             self.probestore = DBProbeStore(core, self.data)
         else:

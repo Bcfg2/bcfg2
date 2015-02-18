@@ -1,5 +1,5 @@
-""" The Hg plugin provides a revision interface for Bcfg2 repos using
-mercurial. """
+"""Revision interface for Bcfg2 repos using mercurial.
+"""
 
 import sys
 from mercurial import ui, hg
@@ -7,8 +7,9 @@ import Bcfg2.Server.Plugin
 
 
 class Hg(Bcfg2.Server.Plugin.Version):
-    """ The Hg plugin provides a revision interface for Bcfg2 repos
-    using mercurial. """
+    """Revision interface for Bcfg2 repos using mercurial.
+    """
+
     __author__ = 'bcfg-dev@mcs.anl.gov'
     __vcs_metadata_path__ = ".hg"
 
@@ -24,7 +25,7 @@ class Hg(Bcfg2.Server.Plugin.Version):
             repo = hg.repository(ui.ui(), repo_path)
             tip = repo.changelog.tip()
             return repo.changelog.rev(tip)
-        except:
+        except hg.error.RepoError:
             err = sys.exc_info()[1]
             msg = "Failed to read hg repository: %s" % err
             self.logger.error(msg)

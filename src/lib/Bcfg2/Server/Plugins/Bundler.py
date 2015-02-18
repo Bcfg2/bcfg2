@@ -92,10 +92,6 @@ class Bundler(Plugin,
                 self.logger.error("Bundler: Failed to render templated bundle "
                                   "%s: %s" % (bundlename, err))
                 continue
-            except:
-                self.logger.error("Bundler: Unexpected bundler error for %s" %
-                                  bundlename, exc_info=1)
-                continue
 
             if data.get("independent", "false").lower() == "true":
                 data.tag = "Independent"
