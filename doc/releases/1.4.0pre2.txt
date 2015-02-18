@@ -18,6 +18,7 @@ That said, please help us test the release in non- and preproduction
 environments.
 
 * NagiosGen: Add bundles to configuration
+* HomeBrew: Initial add of plugin
 
 backwards-incompatible user-facing changes
 ------------------------------------------
