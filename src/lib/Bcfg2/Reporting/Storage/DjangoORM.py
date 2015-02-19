@@ -109,8 +109,8 @@ class DjangoORM(StorageBase):
         # extra entries are a bit different.  They can have Instance
         # objects
         if not act_dict['target_version']:
-            for instance in entry.findall("Instance"):
-                # FIXME - this probably only works for rpms
+            instance = entry.find("Instance")
+            if instance:
                 release = instance.get('release', '')
                 arch = instance.get('arch', '')
                 act_dict['current_version'] = instance.get('version')
@@ -118,9 +118,8 @@ class DjangoORM(StorageBase):
                     act_dict['current_version'] += "-" + release
                 if arch:
                     act_dict['current_version'] += "." + arch
-                self.logger.debug("Adding package %s %s" %
-                                  (name, act_dict['current_version']))
-                return PackageEntry.entry_get_or_create(act_dict)
+            self.logger.debug("Adding extra package %s %s" %
+                              (name, act_dict['current_version']))
         else:
             self.logger.debug("Adding package %s %s" %
                               (name, act_dict['target_version']))
@@ -128,7 +127,7 @@ class DjangoORM(StorageBase):
             # not implemented yet
             act_dict['verification_details'] = \
                 entry.get('verification_details', '')
-            return PackageEntry.entry_get_or_create(act_dict)
+        return PackageEntry.entry_get_or_create(act_dict)
 
     def _import_Path(self, entry, state):
         name = entry.get('name')
