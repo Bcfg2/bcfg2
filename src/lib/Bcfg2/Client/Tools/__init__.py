@@ -503,7 +503,8 @@ class PkgTool(Tool):
         extras = [data for data in list(self.installed.items())
                   if data[0] not in packages]
         return [Bcfg2.Client.XML.Element('Package', name=name,
-                                         type=self.pkgtype, version=version)
+                                         type=self.pkgtype,
+                                         current_version=version)
                 for (name, version) in extras]
     FindExtra.__doc__ = Tool.FindExtra.__doc__
 

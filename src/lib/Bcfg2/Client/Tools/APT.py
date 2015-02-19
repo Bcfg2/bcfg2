@@ -94,8 +94,8 @@ class APT(Bcfg2.Client.Tools.Tool):
         packages = [entry.get('name') for entry in self.getSupportedEntries()]
         extras = [(p.name, p.installed.version) for p in self.pkg_cache
                   if p.is_installed and p.name not in packages]
-        return [Bcfg2.Client.XML.Element('Package', name=name,
-                                         type='deb', version=version)
+        return [Bcfg2.Client.XML.Element('Package', name=name, type='deb',
+                                         current_version=version)
                 for (name, version) in extras]
 
     def VerifyDebsums(self, entry, modlist):
