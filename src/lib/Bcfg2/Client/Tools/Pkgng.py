@@ -109,7 +109,7 @@ class Pkgng(Bcfg2.Client.Tools.Tool):
         Get versions of the specified package name available for
         installation from the configured remote repositories.
         """
-        output = self.cmd.run([self.pkg, 'search', '-Qversion', '-q',
+        output = self.cmd.run([self.pkg, 'search', '-U', '-Qversion', '-q',
                                '-Sname', '-e', name]).stdout.splitlines()
         versions = []
         for line in output:
