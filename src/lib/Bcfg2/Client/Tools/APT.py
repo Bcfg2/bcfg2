@@ -223,7 +223,7 @@ class APT(Bcfg2.Client.Tools.Tool):
                 except AttributeError:
                     self.logger.error("Failed to find %s in apt package "
                                       "cache" % pkgname)
-                    continue
+                continue
             avail_vers = self.pkg_cache[pkgname].versions.keys()
             if pkg.get('version') in avail_vers:
                 ipkgs.append("%s=%s" % (pkgname, pkg.get('version')))
