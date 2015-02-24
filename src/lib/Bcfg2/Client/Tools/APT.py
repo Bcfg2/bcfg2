@@ -1,12 +1,10 @@
 """This is the Bcfg2 support for apt-get."""
 
-# suppress apt API warnings
-import warnings
-warnings.filterwarnings("ignore", "apt API not stable yet",
-                        FutureWarning)
-import apt.cache
 import os
 import sys
+
+import apt.cache
+
 import Bcfg2.Client.Tools
 
 
@@ -47,20 +45,20 @@ class APT(Bcfg2.Client.Tools.Tool):
                         for entry in struct
                         if entry.tag == 'Path' and
                         entry.get('type') == 'ignore']
-        self.__important__ = self.__important__ + \
-            ["%s/cache/debconf/config.dat" % self.var_path,
-             "%s/cache/debconf/templates.dat" % self.var_path,
-             '/etc/passwd', '/etc/group',
-             '%s/apt/apt.conf' % self.etc_path,
-             '%s/dpkg/dpkg.cfg' % self.etc_path] + \
+        self.__important__ = self.__important__ + [
+            "%s/cache/debconf/config.dat" % self.var_path,
+            "%s/cache/debconf/templates.dat" % self.var_path,
+            '/etc/passwd', '/etc/group',
+            '%s/apt/apt.conf' % self.etc_path,
+            '%s/dpkg/dpkg.cfg' % self.etc_path] + \
             [entry.get('name') for struct in config for entry in struct
-             if entry.tag == 'Path' and
-             entry.get('name').startswith(
-                 '%s/apt/sources.list' % self.etc_path)]
+             if (entry.tag == 'Path' and
+                 entry.get('name').startswith(
+                     '%s/apt/sources.list' % self.etc_path)]
         self.nonexistent = [entry.get('name') for struct in config
                             for entry in struct
-                            if entry.tag == 'Path' and
-                            entry.get('type') == 'nonexistent']
+                            if (entry.tag == 'Path' and
+                                entry.get('type') == 'nonexistent')]
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
         if self.setup['kevlar'] and not self.setup['dryrun']:

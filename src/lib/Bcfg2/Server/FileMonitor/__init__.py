@@ -336,8 +336,11 @@ class FileMonitor(Debuggable):
 available = dict()  # pylint: disable=C0103
 
 # TODO: loading the monitor drivers should be automatic
-from Bcfg2.Server.FileMonitor.Pseudo import Pseudo
-available['pseudo'] = Pseudo
+try:
+    from Bcfg2.Server.FileMonitor.Pseudo import Pseudo
+    available['pseudo'] = Pseudo
+except ImportError:
+    pass
 
 try:
     from Bcfg2.Server.FileMonitor.Fam import Fam

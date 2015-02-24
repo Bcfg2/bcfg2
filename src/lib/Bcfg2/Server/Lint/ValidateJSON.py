@@ -1,11 +1,13 @@
-"""Ensure that all JSON files in the Bcfg2 repository are
+"""Validate JSON files.
+
+Ensure that all JSON files in the Bcfg2 repository are
 valid. Currently, the only plugins that uses JSON are Ohai and
-Properties."""
+Properties.
+"""
 
 import os
 import sys
-import glob
-import fnmatch
+
 import Bcfg2.Server.Lint
 
 try:
@@ -48,18 +50,11 @@ class ValidateJSON(Bcfg2.Server.Lint.ServerlessPlugin):
     def get_files(self):
         """Return a list of all JSON files to validate, based on
         :attr:`Bcfg2.Server.Lint.ValidateJSON.ValidateJSON.globs`. """
-        if self.files is not None:
-            listfiles = lambda p: fnmatch.filter(self.files,
-                                                 os.path.join('*', p))
-        else:
-            listfiles = lambda p: glob.glob(os.path.join(self.config['repo'],
-                                                         p))
-
         rv = []
         for path in self.globs:
             if '/**/' in path:
                 if self.files is not None:
-                    rv.extend(listfiles(path))
+                    rv.extend(self.list_matching_files(path))
                 else:  # self.files is None
                     fpath, fname = path.split('/**/')
                     for root, _, files in \
@@ -68,5 +63,5 @@ class ValidateJSON(Bcfg2.Server.Lint.ServerlessPlugin):
                         rv.extend([os.path.join(root, f)
                                    for f in files if f == fname])
             else:
-                rv.extend(listfiles(path))
+                rv.extend(self.list_matching_files(path))
         return rv

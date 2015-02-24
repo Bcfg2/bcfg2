@@ -150,15 +150,13 @@ class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
             if passphrase:
                 cmd.extend(["-passin", "pass:%s" % passphrase])
 
-                def _scrub_pass(arg):
-                    """ helper to scrub the passphrase from the
-                    argument list """
-                    if arg.startswith("pass:"):
-                        return "pass:******"
-                    else:
-                        return arg
-            else:
-                _scrub_pass = lambda a: a
+            def _scrub_pass(arg):
+                """ helper to scrub the passphrase from the
+                argument list for debugging. """
+                if arg.startswith("pass:"):
+                    return "pass:******"
+                else:
+                    return arg
 
             self.debug_log("SSLCA: Generating new certificate: %s" %
                            " ".join(_scrub_pass(a) for a in cmd))
@@ -362,9 +360,12 @@ class SSLCA(Bcfg2.Server.Plugin.GroupSpool):
     """ The SSLCA generator handles the creation and management of ssl
     certificates and their keys. """
     __author__ = 'g.hagger@gmail.com'
-    # python 2.5 doesn't support mixing *magic and keyword arguments
-    es_cls = lambda self, *args: SSLCAEntrySet(*args, **dict(parent=self))
     es_child_cls = SSLCADataFile
+
+    def es_cls(self, *args):
+        """Fake entry set 'class' that sets this as the parent."""
+        # python 2.5 doesn't support mixing *magic and keyword arguments
+        return SSLCAEntrySet(*args, **dict(parent=self))
 
     def get_ca(self, name):
         """ get a dict describing a CA from the config file """

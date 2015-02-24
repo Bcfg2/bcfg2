@@ -590,8 +590,8 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                                         "an RPM release")
                     continue
                 pkg_objs = [p for p in all_pkg_objs
-                            if (p.version == nevra['version']
-                                and p.release == nevra['release'])]
+                            if (p.version == nevra['version'] and
+                                p.release == nevra['release'])]
             else:
                 pkg_objs = self.yumbase.rpmdb.searchNevra(**short_yname(nevra))
             if len(pkg_objs) == 0:
