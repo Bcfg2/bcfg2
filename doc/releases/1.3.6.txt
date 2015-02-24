@@ -30,5 +30,7 @@ This is primarily a bugfix release.
 
   https://docs.djangoproject.com/en/1.7/ref/settings/#std:setting-OPTIONS
 
+* Authentication: Reject passwd auth, if authentication is set to "cert"
+
 Special thanks to the following contributors for this release: Michael
 Fenn, Matt Kemp, Alexander Sulfrian, Jonathan Billings.
