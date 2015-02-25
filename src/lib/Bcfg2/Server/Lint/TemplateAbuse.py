@@ -3,7 +3,7 @@
 import os
 import stat
 import Bcfg2.Server.Lint
-from Bcfg2.Compat import any  # pylint: disable=W0622
+from Bcfg2.Compat import any  # pylint: disable=redefined-builtin
 from Bcfg2.Server.Plugin import default_path_metadata
 from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator
@@ -29,7 +29,7 @@ class TemplateAbuse(Bcfg2.Server.Lint.ServerPlugin):
             for entryset in self.core.plugins['Cfg'].entries.values():
                 for entry in entryset.entries.values():
                     if (self.HandlesFile(entry.name) and
-                        any(isinstance(entry, t) for t in self.templates)):
+                            any(isinstance(entry, t) for t in self.templates)):
                         self.check_template(entryset, entry)
 
     @classmethod

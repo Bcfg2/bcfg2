@@ -26,7 +26,7 @@ except ImportError:
     HAS_CRYPTO = False
 
 try:
-    import django  # pylint: disable=W0611
+    import django  # pylint: disable=unused-import
     HAS_DJANGO = True
 except ImportError:
     HAS_DJANGO = False
@@ -113,7 +113,7 @@ class DefaultTemplateDataProvider(TemplateDataProvider):
         return dict(metadata=metadata,
                     repo=Bcfg2.Options.setup.repository)
 
-_sentinel = object()  # pylint: disable=C0103
+_sentinel = object()  # pylint: disable=invalid-name
 
 
 def _get_template_data(func_name, args, default=_sentinel):
@@ -221,7 +221,7 @@ class DatabaseBacked(Plugin):
         @wraps(func)
         def _acquire_and_run(self, *args, **kwargs):
             """ The decorated function """
-            if self._must_lock:  # pylint: disable=W0212
+            if self._must_lock:  # pylint: disable=protected-access
                 try:
                     self.core.db_write_lock.acquire()
                     rv = func(self, *args, **kwargs)
@@ -239,7 +239,7 @@ class PluginDatabaseModel(object):
     inherit from.  This is just a mixin; models must also inherit from
     django.db.models.Model to be valid Django models."""
 
-    class Meta(object):  # pylint: disable=W0232
+    class Meta(object):  # pylint: disable=no-init
         """ Model metadata options """
         app_label = "Server"
 
@@ -401,7 +401,7 @@ class DirectoryBacked(Debuggable):
                                                              relative))
         self.entries[relative].HandleEvent(event)
 
-    def HandleEvent(self, event):  # pylint: disable=R0912
+    def HandleEvent(self, event):
         """ Handle FAM events.
 
         This method is invoked by the FAM when it detects a change to
@@ -703,8 +703,8 @@ class StructFile(XMLFileBacked):
     def Index(self):
         XMLFileBacked.Index(self)
         if (self.name.endswith('.genshi') or
-            ('py' in self.xdata.nsmap and
-             self.xdata.nsmap['py'] == 'http://genshi.edgewall.org/')):
+                ('py' in self.xdata.nsmap and
+                 self.xdata.nsmap['py'] == 'http://genshi.edgewall.org/')):
             try:
                 loader = genshi.template.TemplateLoader()
                 self.template = \
@@ -772,7 +772,7 @@ class StructFile(XMLFileBacked):
         the base StructFile implementation, there are no additional
         arguments; in classes that inherit from StructFile, see the
         :func:`Match` and :func:`XMLMatch` method signatures."""
-        if isinstance(item, lxml.etree._Comment):  # pylint: disable=W0212
+        if isinstance(item, lxml.etree._Comment):  # pylint: disable=protected-access
             return False
         if item.tag in self._include_tests:
             negate = item.get('negate', 'false').lower() == 'true'
@@ -911,14 +911,14 @@ class InfoXML(StructFile):
     _include_tests['Path'] = lambda el, md, entry, *args: \
         entry.get('realname', entry.get('name')) == el.get("name")
 
-    def Match(self, metadata, entry):  # pylint: disable=W0221
+    def Match(self, metadata, entry):  # pylint: disable=arguments-differ
         """ Implementation of
         :func:`Bcfg2.Server.Plugin.helpers.StructFile.Match` that
         considers Path tags to allow ``info.xml`` files to set
         different file metadata for different file paths. """
         return self._do_match(metadata, entry)
 
-    def XMLMatch(self, metadata, entry):  # pylint: disable=W0221
+    def XMLMatch(self, metadata, entry):  # pylint: disable=arguments-differ
         """ Implementation of
         :func:`Bcfg2.Server.Plugin.helpers.StructFile.XMLMatch` that
         considers Path tags to allow ``info.xml`` files to set
@@ -1008,9 +1008,9 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
                 if child.tag not in self.Entries:
                     self.Entries[child.tag] = dict()
                 self.Entries[child.tag][child.get("name")] = self.BindEntry
-    HandleEvent.__doc__ = XMLDirectoryBacked.HandleEvent.__doc__
 
-    def _matches(self, entry, metadata, candidate):  # pylint: disable=W0613
+    # pylint: disable=unused-argument
+    def _matches(self, entry, metadata, candidate):
         """ Whether or not a given candidate matches the abstract
         entry given.  By default this does strict matching (i.e., the
         entry name matches the candidate name), but this can be
@@ -1026,6 +1026,7 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
         """
         return (entry.tag == candidate.tag and
                 entry.get('name') == candidate.get('name'))
+    # pylint: enable=unused-argument
 
     def BindEntry(self, entry, metadata):
         """ Bind the attributes that apply to an entry to it.  The
@@ -1084,7 +1085,7 @@ class Specificity(CmpMixin):
     apply to a single client are the most specific.  Objects that
     apply to groups are sorted by priority. """
 
-    def __init__(self, all=False, group=False,  # pylint: disable=W0622
+    def __init__(self, all=False, group=False,  # pylint: disable=redefined-builtin
                  hostname=False, prio=0, delta=False):
         """
         :param all: The object applies to all clients.
@@ -1124,7 +1125,7 @@ class Specificity(CmpMixin):
                 self.hostname == metadata.hostname or
                 self.group in metadata.groups)
 
-    def __cmp__(self, other):  # pylint: disable=R0911
+    def __cmp__(self, other):  # pylint: disable=too-many-return-statements
         """Sort most to least specific."""
         if self.all:
             if other.all:
@@ -1163,7 +1164,7 @@ class SpecificData(Debuggable):
     """ A file that is specific to certain clients, groups, or all
     clients. """
 
-    def __init__(self, name, specific):  # pylint: disable=W0613
+    def __init__(self, name, specific):
         """
         :param name: The full path to the file
         :type name: string

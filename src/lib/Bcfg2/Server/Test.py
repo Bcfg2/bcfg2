@@ -28,11 +28,11 @@ def get_sigint_handler(core):
     """ Get a function that handles SIGINT/Ctrl-C by shutting down the
     core and exiting properly."""
 
-    def hdlr(sig, frame):  # pylint: disable=W0613
+    def hdlr(*_):
         """ Handle SIGINT/Ctrl-C by shutting down the core and exiting
         properly. """
         core.shutdown()
-        os._exit(1)  # pylint: disable=W0212
+        os._exit(1)  # pylint: disable=protected-access
 
     return hdlr
 
@@ -40,7 +40,7 @@ def get_sigint_handler(core):
 class CapturingLogger(object):
     """ Fake logger that captures logging output so that errors are
     only displayed for clients that fail tests """
-    def __init__(self, *args, **kwargs):  # pylint: disable=W0613
+    def __init__(self, *args, **kwargs):  # pylint: disable=unused-argument
         self.output = []
 
     def error(self, msg):
@@ -229,7 +229,7 @@ class CLI(object):
                 queue.put((client, None))
             except AssertionError:
                 queue.put((client, str(sys.exc_info()[1])))
-            except:
+            except:  # pylint: disable=bare-except
                 queue.put((client, sys.exc_info()[1]))
 
         core.shutdown()
@@ -262,7 +262,7 @@ class CLI(object):
                 for client in clients[start:]:
                     yield ClientTest(core, client, ignore)
 
-                for i in range(start):  # pylint: disable=W0612
+                for _ in range(start):
                     yield ClientTestFromQueue(*queue.get())
         else:
             def generate_tests():
@@ -282,6 +282,6 @@ class CLI(object):
 
         core.shutdown()
         if result.success:
-            os._exit(0)  # pylint: disable=W0212
+            os._exit(0)  # pylint: disable=protected-access
         else:
-            os._exit(1)  # pylint: disable=W0212
+            os._exit(1)  # pylint: disable=protected-access

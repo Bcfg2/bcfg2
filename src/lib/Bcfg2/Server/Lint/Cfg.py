@@ -89,11 +89,11 @@ class Cfg(ServerPlugin):
                 # check against the handler ignore patterns and the
                 # global FAM ignore list
                 if (not any(fname.endswith("." + i) for i in ignore) and
-                    not any(fnmatch(fpath, p)
-                            for p in Bcfg2.Options.setup.ignore_files) and
-                    not any(fnmatch(c, p)
-                            for p in Bcfg2.Options.setup.ignore_files
-                            for c in self._list_path_components(fpath))):
+                        not any(fnmatch(fpath, p)
+                                for p in Bcfg2.Options.setup.ignore_files) and
+                        not any(fnmatch(c, p)
+                                for p in Bcfg2.Options.setup.ignore_files
+                                for c in self._list_path_components(fpath))):
                     all_files.add(fpath)
 
         # next, get a list of all files known to Cfg

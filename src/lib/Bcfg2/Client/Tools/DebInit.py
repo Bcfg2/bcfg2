@@ -22,8 +22,9 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
     def get_svc_command(self, service, action):
         return '/usr/sbin/invoke-rc.d %s %s' % (service.get('name'), action)
 
-    def verify_bootstatus(self, entry, bootstatus):
+    def verify_bootstatus(self, entry):
         """Verify bootstatus for entry."""
+        bootstatus = self.get_bootstatus(entry)
         rawfiles = glob.glob("/etc/rc*.d/[SK]*%s" % (entry.get('name')))
         files = []
 
@@ -32,6 +33,7 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
         except IOError:
             deb_version = 'unknown'
 
+        start_sequence = None
         if entry.get('sequence'):
             if (deb_version in DEBIAN_OLD_STYLE_BOOT_SEQUENCE or
                     deb_version.startswith('5') or
@@ -39,12 +41,9 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                 start_sequence = int(entry.get('sequence'))
                 kill_sequence = 100 - start_sequence
             else:
-                start_sequence = None
                 self.logger.warning("Your debian version boot sequence is "
                                     "dependency based \"sequence\" attribute "
                                     "will be ignored.")
-        else:
-            start_sequence = None
 
         for filename in rawfiles:
             match = self.svcre.match(filename)
@@ -66,8 +65,8 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                     file_sequence = int(match.group('sequence'))
                     if ((match.group('action') == 'S' and
                          file_sequence != start_sequence) or
-                        (match.group('action') == 'K' and
-                         file_sequence != kill_sequence)):
+                            (match.group('action') == 'K' and
+                             file_sequence != kill_sequence)):
                         return False
             return True
         else:
@@ -77,10 +76,9 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
     def VerifyService(self, entry, _):
         """Verify Service status for entry."""
         entry.set('target_status', entry.get('status'))  # for reporting
-        bootstatus = self.get_bootstatus(entry)
-        if bootstatus is None:
+        if self.get_bootstatus(entry) is None:
             return True
-        current_bootstatus = self.verify_bootstatus(entry, bootstatus)
+        current_bootstatus = self.verify_bootstatus(entry)
 
         if entry.get('status') == 'ignore':
             # 'ignore' should verify

@@ -5,7 +5,7 @@ import sys
 import stat
 import logging
 import Bcfg2.Options
-import Bcfg2.Client
+from Bcfg2.Client.base import matches_white_list, passes_black_list, prompt
 import Bcfg2.Client.XML
 from Bcfg2.Utils import Executor, ClassName
 
@@ -133,20 +133,20 @@ class Tool(object):
         """ Return true if the given entry is allowed to be installed by
         the whitelist or blacklist """
         if (Bcfg2.Options.setup.decision == 'whitelist' and
-                not Bcfg2.Client.matches_white_list(
-                    entry, Bcfg2.Options.setup.decision_list)):
+                not matches_white_list(entry,
+                                       Bcfg2.Options.setup.decision_list)):
             self.logger.info("In whitelist mode: suppressing Action: %s" %
                              entry.get('name'))
             return False
         if (Bcfg2.Options.setup.decision == 'blacklist' and
-                not Bcfg2.Client.passes_black_list(
-                    entry, Bcfg2.Options.setup.decision_list)):
+                not passes_black_list(entry,
+                                      Bcfg2.Options.setup.decision_list)):
             self.logger.info("In blacklist mode: suppressing Action: %s" %
                              entry.get('name'))
             return False
         return True
 
-    def BundleUpdated(self, bundle):  # pylint: disable=W0613
+    def BundleUpdated(self, bundle):  # pylint: disable=unused-argument
         """ Callback that is invoked when a bundle has been updated.
 
         :param bundle: The bundle that has been updated
@@ -156,7 +156,7 @@ class Tool(object):
         """
         return dict()
 
-    def BundleNotUpdated(self, bundle):  # pylint: disable=W0613
+    def BundleNotUpdated(self, bundle):  # pylint: disable=unused-argument
         """ Callback that is invoked when a bundle has been updated.
 
         :param bundle: The bundle that has been updated
@@ -207,7 +207,7 @@ class Tool(object):
                         states[entry] = func(entry, mods)
                     except KeyboardInterrupt:
                         raise
-                    except:  # pylint: disable=W0702
+                    except:  # pylint: disable=bare-except
                         self.logger.error("%s: Unexpected failure verifying %s"
                                           % (self.name,
                                              self.primarykey(entry)),
@@ -242,7 +242,7 @@ class Tool(object):
                 states[entry] = func(entry)
                 if states[entry]:
                     self.modified.append(entry)
-            except:  # pylint: disable=W0702
+            except:  # pylint: disable=bare-except
                 self.logger.error("%s: Unexpected failure installing %s" %
                                   (self.name, self.primarykey(entry)),
                                   exc_info=1)
@@ -623,8 +623,8 @@ class SvcTool(Tool):
                     success = self.stop_service(entry)
                 elif entry.get('name') not in self.restarted:
                     if Bcfg2.Options.setup.interactive:
-                        if not Bcfg2.Client.prompt('Restart service %s? (y/N) '
-                                                   % entry.get('name')):
+                        if not prompt('Restart service %s? (y/N) ' %
+                                      entry.get('name')):
                             continue
                     success = self.restart_service(entry)
                     if success:

@@ -3,7 +3,7 @@ That is, it only produces "exists" and "endExist" events and does not
 monitor for ongoing changes. """
 
 import os
-from Bcfg2.Server.FileMonitor import FileMonitor, Event
+from Bcfg2.Server.FileMonitor.base import FileMonitor, Event
 
 
 class Pseudo(FileMonitor):

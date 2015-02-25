@@ -78,7 +78,7 @@ import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
 from Bcfg2.Logger import Debuggable
-from Bcfg2.Compat import any, md5  # pylint: disable=W0622
+from Bcfg2.Compat import any, md5  # pylint: disable=redefined-builtin
 from Bcfg2.Server.FileMonitor import get_fam
 from Bcfg2.Server.Statistics import track_statistics
 
@@ -470,7 +470,7 @@ class Collection(list, Debuggable):
         return list(complete.difference(initial))
 
     @track_statistics()
-    def complete(self, packagelist,  # pylint: disable=R0912,R0914
+    def complete(self, packagelist,  # pylint: disable=too-many-locals
                  recommended=None):
         """ Build a complete list of all packages and their dependencies.
 

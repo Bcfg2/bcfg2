@@ -35,34 +35,34 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         #: forward slashes.  The schema files are relative to the
         #: schema directory, which can be controlled by the
         #: ``bcfg2-lint --schema`` option.
-        self.filesets = \
-            {"Metadata/groups.xml": "metadata.xsd",
-             "Metadata/clients.xml": "clients.xsd",
-             "Cfg/**/info.xml": "info.xsd",
-             "Cfg/**/privkey.xml": "privkey.xsd",
-             "Cfg/**/pubkey.xml": "pubkey.xsd",
-             "Cfg/**/authorizedkeys.xml": "authorizedkeys.xsd",
-             "Cfg/**/authorized_keys.xml": "authorizedkeys.xsd",
-             "Cfg/**/sslcert.xml": "sslca-cert.xsd",
-             "Cfg/**/sslkey.xml": "sslca-key.xsd",
-             "SSHbase/**/info.xml": "info.xsd",
-             "TGenshi/**/info.xml": "info.xsd",
-             "TCheetah/**/info.xml": "info.xsd",
-             "Bundler/*.xml": "bundle.xsd",
-             "Bundler/*.genshi": "bundle.xsd",
-             "Pkgmgr/*.xml": "pkglist.xsd",
-             "Rules/*.xml": "rules.xsd",
-             "Defaults/*.xml": "defaults.xsd",
-             "etc/report-configuration.xml": "report-configuration.xsd",
-             "Deps/*.xml": "deps.xsd",
-             "Decisions/*.xml": "decisions.xsd",
-             "Packages/sources.xml": "packages.xsd",
-             "GroupPatterns/config.xml": "grouppatterns.xsd",
-             "AWSTags/config.xml": "awstags.xsd",
-             "NagiosGen/config.xml": "nagiosgen.xsd",
-             "FileProbes/config.xml": "fileprobes.xsd",
-             "GroupLogic/groups.xml": "grouplogic.xsd"
-             }
+        self.filesets = {
+            "Metadata/groups.xml": "metadata.xsd",
+            "Metadata/clients.xml": "clients.xsd",
+            "Cfg/**/info.xml": "info.xsd",
+            "Cfg/**/privkey.xml": "privkey.xsd",
+            "Cfg/**/pubkey.xml": "pubkey.xsd",
+            "Cfg/**/authorizedkeys.xml": "authorizedkeys.xsd",
+            "Cfg/**/authorized_keys.xml": "authorizedkeys.xsd",
+            "Cfg/**/sslcert.xml": "sslca-cert.xsd",
+            "Cfg/**/sslkey.xml": "sslca-key.xsd",
+            "SSHbase/**/info.xml": "info.xsd",
+            "TGenshi/**/info.xml": "info.xsd",
+            "TCheetah/**/info.xml": "info.xsd",
+            "Bundler/*.xml": "bundle.xsd",
+            "Bundler/*.genshi": "bundle.xsd",
+            "Pkgmgr/*.xml": "pkglist.xsd",
+            "Rules/*.xml": "rules.xsd",
+            "Defaults/*.xml": "defaults.xsd",
+            "etc/report-configuration.xml": "report-configuration.xsd",
+            "Deps/*.xml": "deps.xsd",
+            "Decisions/*.xml": "decisions.xsd",
+            "Packages/sources.xml": "packages.xsd",
+            "GroupPatterns/config.xml": "grouppatterns.xsd",
+            "AWSTags/config.xml": "awstags.xsd",
+            "NagiosGen/config.xml": "nagiosgen.xsd",
+            "FileProbes/config.xml": "fileprobes.xsd",
+            "GroupLogic/groups.xml": "grouplogic.xsd"
+        }
 
         self.filelists = {}
         self.get_filelists()

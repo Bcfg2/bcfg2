@@ -5,7 +5,7 @@ from django.utils.safestring import mark_safe
 
 register = template.Library()
 
-# pylint: disable=E0611
+# pylint: disable=no-name-in-module
 try:
     from pygments import highlight
     from pygments.lexers import get_lexer_by_name
@@ -13,7 +13,7 @@ try:
     colorize = True
 except:
     colorize = False
-# pylint: enable=E0611
+# pylint: enable=no-name-in-module
 
 
 @register.filter
@@ -25,7 +25,7 @@ def syntaxhilight(value, arg="diff", autoescape=None):
 
     if autoescape:
         # Seems to cause a double escape
-        #value = conditional_escape(value)
+        # value = conditional_escape(value)
         arg = conditional_escape(arg)
 
     if colorize:

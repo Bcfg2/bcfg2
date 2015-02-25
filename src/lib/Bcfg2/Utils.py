@@ -11,7 +11,7 @@ import shlex
 import sys
 import subprocess
 import threading
-from Bcfg2.Compat import input, any  # pylint: disable=W0622
+from Bcfg2.Compat import input, any  # pylint: disable=redefined-builtin
 
 
 class ClassName(object):
@@ -27,7 +27,7 @@ class ClassName(object):
         return owner.__name__
 
 
-class PackedDigitRange(object):  # pylint: disable=E0012,R0924
+class PackedDigitRange(object):
     """ Representation of a set of integer ranges. A range is
     described by a comma-delimited string of integers and ranges,
     e.g.::
@@ -245,16 +245,15 @@ class Executor(object):
 
             # py3k fixes
             if not isinstance(stdout, str):
-                stdout = stdout.decode('utf-8')  # pylint: disable=E1103
+                stdout = stdout.decode('utf-8')
             if not isinstance(stderr, str):
-                stderr = stderr.decode('utf-8')  # pylint: disable=E1103
+                stderr = stderr.decode('utf-8')
 
-            for line in stdout.splitlines():  # pylint: disable=E1103
+            for line in stdout.splitlines():
                 self.logger.debug('< %s' % line)
-            for line in stderr.splitlines():  # pylint: disable=E1103
+            for line in stderr.splitlines():
                 self.logger.info(line)
-            return ExecutorResult(stdout, stderr,
-                                  proc.wait())  # pylint: disable=E1101
+            return ExecutorResult(stdout, stderr, proc.wait())
         finally:
             if timeout is not None:
                 timer.cancel()
@@ -321,7 +320,7 @@ def safe_input(msg):
     return input(msg)
 
 
-class classproperty(object):  # pylint: disable=C0103
+class classproperty(object):  # pylint: disable=invalid-name
     """ Decorator that can be used to create read-only class
     properties. """
 

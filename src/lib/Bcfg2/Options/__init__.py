@@ -1,6 +1,6 @@
 """ Bcfg2 options parsing. """
 
-# pylint: disable=W0611,W0401
+# pylint: disable=unused-import,wildcard-import
 from Bcfg2.Options import Types
 from Bcfg2.Options.Options import *
 from Bcfg2.Options.Common import *

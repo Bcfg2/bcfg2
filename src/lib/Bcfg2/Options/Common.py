@@ -45,7 +45,7 @@ class Common(object):
     @classproperty
     def filemonitor(cls):
         """ Load a single Bcfg2 file monitor (from
-        :attr:`Bcfg2.Server.FileMonitor.available`) """
+        :meth:`Bcfg2.Server.FileMonitor.get_available`) """
         if cls._filemonitor is None:
             import Bcfg2.Server.FileMonitor
 
@@ -53,7 +53,7 @@ class Common(object):
                 """ ComponentAction for loading a single FAM backend
                 class """
                 islist = False
-                mapping = Bcfg2.Server.FileMonitor.available
+                mapping = Bcfg2.Server.FileMonitor.get_available()
 
             cls._filemonitor = Option(
                 cf=('server', 'filemonitor'), action=FileMonitorAction,

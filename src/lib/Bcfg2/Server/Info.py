@@ -18,7 +18,7 @@ import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Plugin
 import Bcfg2.Client.Tools.POSIX
-from Bcfg2.Compat import any  # pylint: disable=W0622
+from Bcfg2.Compat import any  # pylint: disable=redefined-builtin
 
 try:
     try:
@@ -67,8 +67,8 @@ def load_interpreters():
         # up for debate, but this is the behavior that existed
         # before --interpreter was added, so we call IPython
         # better
+        # pylint: disable=no-member
         import IPython
-        # pylint: disable=E1101
         if hasattr(IPython, "Shell"):
             interpreters["ipython"] = lambda v: \
                 IPython.Shell.IPShell(argv=[], user_ns=v).mainloop()
@@ -78,14 +78,14 @@ def load_interpreters():
             default = "ipython"
         else:
             print("Unknown IPython API version")
-        # pylint: enable=E1101
+        # pylint: enable=no-member
     except ImportError:
         pass
 
     return (interpreters, default)
 
 
-class InfoCmd(Bcfg2.Options.Subcommand):  # pylint: disable=W0223
+class InfoCmd(Bcfg2.Options.Subcommand):  # pylint: disable=abstract-method
     """ Base class for bcfg2-info subcommands """
 
     def _expand_globs(self, globs, candidates):
@@ -228,7 +228,7 @@ class Buildfile(InfoCmd):
             entry.set("altsrc", setup.altsrc)
         try:
             self.core.Bind(entry, self.core.build_metadata(setup.hostname))
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             print("Failed to build entry %s for host %s" % (setup.filename,
                                                             setup.hostname))
             raise
@@ -272,7 +272,7 @@ class BuildAllMixin(object):
         for client in clients:
             csetup = self._get_setup(client, copy.copy(setup))
             csetup.hostname = client
-            self._parent.run(self, csetup)  # pylint: disable=E1101
+            self._parent.run(self, csetup)
 
     def _get_setup(self, client, setup):
         """ This can be overridden by children to populate individual
@@ -332,7 +332,7 @@ class Buildbundle(InfoCmd):
             print(lxml.etree.tostring(bundle.XMLMatch(metadata),
                                       xml_declaration=False,
                                       pretty_print=True).decode('UTF-8'))
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             print("Failed to render bundle %s for host %s: %s" %
                   (setup.bundle, setup.hostname, sys.exc_info()[1]))
             raise
@@ -615,8 +615,7 @@ class PackageResolve(InfoCmd):
         else:
             structures = self.core.GetStructures(metadata)
 
-        pkgs._build_packages(metadata, indep,  # pylint: disable=W0212
-                             structures)
+        pkgs.build_packages(metadata, indep, structures)
         print("%d new packages added" % len(indep.getchildren()))
         if len(indep.getchildren()):
             print("    %s" % "\n    ".join(lxml.etree.tostring(p)
@@ -701,12 +700,12 @@ class ProfileTemplates(InfoCmd):
     def profile_entry(self, entry, metadata, runs=5):
         """ Profile a single entry """
         times = []
-        for i in range(runs):  # pylint: disable=W0612
+        for _ in range(runs):
             start = time.time()
             try:
                 self.core.Bind(entry, metadata)
                 times.append(time.time() - start)
-            except:  # pylint: disable=W0702
+            except:  # pylint: disable=bare-except
                 break
         if times:
             avg = sum(times) / len(times)

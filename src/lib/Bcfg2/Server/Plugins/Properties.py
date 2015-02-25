@@ -12,16 +12,10 @@ import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugin import PluginExecutionError
 
 try:
-    import json
-    # py2.4 json library is structured differently
-    json.loads  # pylint: disable=W0104
+    from Bcfg2.Compat import json
     HAS_JSON = True
-except (ImportError, AttributeError):
-    try:
-        import simplejson as json
-        HAS_JSON = True
-    except ImportError:
-        HAS_JSON = False
+except ImportError:
+    HAS_JSON = False
 
 try:
     import yaml
@@ -73,7 +67,7 @@ class PropertyFile(object):
         """ Verify that the data in this file is valid. """
         raise NotImplementedError
 
-    def get_additional_data(self, metadata):  # pylint: disable=W0613
+    def get_additional_data(self, metadata):  # pylint: disable=unused-argument
         """ Get file data for inclusion in client metadata. """
         return copy.copy(self)
 

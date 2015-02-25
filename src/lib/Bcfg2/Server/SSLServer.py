@@ -157,7 +157,7 @@ class SSLServer(SocketServer.TCPServer, object):
 
     def get_request(self):
         (sock, sockinfo) = self.socket.accept()
-        sock.settimeout(self.timeout)  # pylint: disable=E1101
+        sock.settimeout(self.timeout)  # pylint: disable=no-member
         sslsock = ssl.wrap_socket(sock,
                                   server_side=True,
                                   certfile=self.certfile,
@@ -208,10 +208,8 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             try:
                 username, password = auth_content.split(":")
             except TypeError:
-                # pylint: disable=E0602
                 username, pw = auth_content.split(bytes(":", encoding='utf-8'))
                 password = pw.decode('utf-8')
-                # pylint: enable=E0602
         except ValueError:
             username = auth_content
             password = ""
@@ -232,7 +230,7 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 self.logger.error("Authentication Failure")
                 self.send_error(401, self.responses[401][0])
                 return False
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             self.logger.error("Unexpected Authentication Failure", exc_info=1)
             self.send_error(401, self.responses[401][0])
             return False
@@ -261,7 +259,7 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         except XMLRPCACLCheckException:
             self.send_error(401, self.responses[401][0])
             self.end_headers()
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             self.logger.error("Unexpected dispatch error for %s: %s" %
                               (self.client_address, sys.exc_info()[1]))
             try:
@@ -361,11 +359,11 @@ class XMLRPCServer(SocketServer.ThreadingMixIn, SSLServer,
         XMLRPCDispatcher.__init__(self, allow_none, encoding)
 
         if not RequestHandlerClass:
-            # pylint: disable=E0102
+            # pylint: disable=function-redefined
             class RequestHandlerClass(XMLRPCRequestHandler):
                 """A subclassed request handler to prevent
                 class-attribute conflicts."""
-            # pylint: enable=E0102
+            # pylint: enable=function-redefined
 
         SSLServer.__init__(self,
                            listen_all,

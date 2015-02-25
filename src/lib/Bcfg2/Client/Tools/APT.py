@@ -248,6 +248,6 @@ class APT(Bcfg2.Client.Tools.Tool):
                 self.modified.append(package)
         return states
 
-    def VerifyPath(self, entry, _):  # pylint: disable=W0613
+    def VerifyPath(self, *_):
         """Do nothing here since we only verify Path type=ignore."""
         return True

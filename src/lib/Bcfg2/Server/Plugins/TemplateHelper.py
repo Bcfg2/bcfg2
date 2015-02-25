@@ -28,7 +28,7 @@ class HelperModule(Debuggable):
 
         #: The name of the module as used by get_additional_data().
         #: the name of the file with .py stripped off.
-        self._module_name = MODULE_RE.search(self.name).group('module')
+        self.module_name = MODULE_RE.search(self.name).group('module')
 
         #: The attributes exported by this module
         self._attrs = []
@@ -52,9 +52,9 @@ class HelperModule(Debuggable):
             return
 
         try:
-            module = imp.load_source(safe_module_name(self._module_name),
+            module = imp.load_source(safe_module_name(self.module_name),
                                      self.name)
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             # this needs to be a blanket except because the
             # imp.load_source() call can raise literally any error,
             # since it imports the module and just passes through any
@@ -116,7 +116,7 @@ class TemplateHelper(Plugin, Connector, DirectoryBacked, TemplateDataProvider):
         TemplateDataProvider.__init__(self)
 
     def get_additional_data(self, _):
-        return dict([(h._module_name, h)  # pylint: disable=W0212
+        return dict([(h.module_name, h)
                      for h in self.entries.values()])
 
     def get_template_data(self, *_):

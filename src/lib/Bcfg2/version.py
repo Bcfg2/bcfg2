@@ -5,7 +5,7 @@ import re
 __version__ = "1.4.0pre1"
 
 
-class Bcfg2VersionInfo(tuple):  # pylint: disable=E0012,R0924
+class Bcfg2VersionInfo(tuple):
     """ object to make granular version operations (particularly
     comparisons) easier """
 
@@ -23,7 +23,7 @@ class Bcfg2VersionInfo(tuple):  # pylint: disable=E0012,R0924
         return tuple.__new__(cls, [int(major), int(minor), int(micro),
                                    releaselevel, int(serial)])
 
-    def __init__(self, vstr):  # pylint: disable=W0613
+    def __init__(self, vstr):  # pylint: disable=unused-argument
         tuple.__init__(self)
         self.major, self.minor, self.micro, self.releaselevel, self.serial = \
             tuple(self)
@@ -32,7 +32,9 @@ class Bcfg2VersionInfo(tuple):  # pylint: disable=E0012,R0924
         return "%s(major=%s, minor=%s, micro=%s, releaselevel=%s, serial=%s)" \
             % ((self.__class__.__name__,) + tuple(self))
 
-    def _release_cmp(self, rel1, rel2):  # pylint: disable=R0911
+    # pylint: disable=too-many-return-statements
+    @staticmethod
+    def _release_cmp(rel1, rel2):
         """ compare two release numbers """
         if rel1 == rel2:
             return 0
@@ -52,6 +54,7 @@ class Bcfg2VersionInfo(tuple):  # pylint: disable=E0012,R0924
         else:
             # wtf?
             return 0
+    # pylint: enable=too-many-return-statements
 
     def __gt__(self, version):
         if version is None:

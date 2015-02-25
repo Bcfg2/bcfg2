@@ -16,12 +16,12 @@ except ImportError:
 
 # required for reporting
 try:
-    import south  # pylint: disable=W0611
+    import south  # pylint: disable=unused-import
     HAS_SOUTH = True
 except ImportError:
     HAS_SOUTH = False
 
-settings = dict(  # pylint: disable=C0103
+settings = dict(  # pylint: disable=invalid-name
     TIME_ZONE=None,
     TEMPLATE_DEBUG=False,
     DEBUG=False,
@@ -173,7 +173,7 @@ class PerApplicationRouter(object):
     def _db_per_app(self, model, **_):
         """ If a database with the same name as the application exists, use it.
         Otherwise use the default """
-        return get_db_label(model._meta.app_label)  # pylint: disable=W0212
+        return get_db_label(model._meta.app_label)  # pylint: disable=protected-access
 
     def db_for_read(self, model, **hints):
         """ Called when Django wants to find out what database to read from """
@@ -186,9 +186,9 @@ class PerApplicationRouter(object):
     def allow_relation(self, obj1, obj2, **_):
         """ Called when Django wants to determine what relations to allow. Only
         allow relations within an app """
-        # pylint: disable=W0212
+        # pylint: disable=protected-access
         return obj1._meta.app_label == obj2._meta.app_label
-        # pylint: enable=W0212
+        # pylint: enable=protected-access
 
     def allow_syncdb(self, *_):
         """ Called when Django wants to determine which models to sync to a

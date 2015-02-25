@@ -10,23 +10,23 @@ import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Cache
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import unicode, any  # pylint: disable=W0622
+from Bcfg2.Compat import unicode, any  # pylint: disable=redefined-builtin
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Logger import Debuggable
 from Bcfg2.Server.Statistics import track_statistics
 
 HAS_DJANGO = False
-# pylint: disable=C0103
+# pylint: disable=invalid-name
 ProbesDataModel = None
 ProbesGroupsModel = None
-# pylint: enable=C0103
+# pylint: enable=invalid-name
 
 
 def load_django_models():
     """ Load models for Django after option parsing has completed """
-    # pylint: disable=W0602
+    # pylint: disable=global-variable-not-assigned,invalid-name
     global ProbesDataModel, ProbesGroupsModel, HAS_DJANGO
-    # pylint: enable=W0602
+    # pylint: enable=global-variable-not-assigned,invalid-name
     try:
         from django.db import models
         HAS_DJANGO = True
@@ -34,7 +34,8 @@ def load_django_models():
         HAS_DJANGO = False
         return
 
-    class ProbesDataModel(models.Model,  # pylint: disable=W0621,W0612
+    # pylint: disable=redefined-outer-name,unused-variable
+    class ProbesDataModel(models.Model,
                           Bcfg2.Server.Plugin.PluginDatabaseModel):
         """ The database model for storing probe data """
         hostname = models.CharField(max_length=255)
@@ -42,24 +43,19 @@ def load_django_models():
         timestamp = models.DateTimeField(auto_now=True)
         data = models.TextField(null=True)
 
-    class ProbesGroupsModel(models.Model,  # pylint: disable=W0621,W0612
+    class ProbesGroupsModel(models.Model,
                             Bcfg2.Server.Plugin.PluginDatabaseModel):
         """ The database model for storing probe groups """
         hostname = models.CharField(max_length=255)
         group = models.CharField(max_length=255)
+    # pylint: enable=redefined-outer-name,unused-variable
 
 
 try:
-    import json
-    # py2.4 json library is structured differently
-    json.loads  # pylint: disable=W0104
+    from Bcfg2.Compat import json
     HAS_JSON = True
-except (ImportError, AttributeError):
-    try:
-        import simplejson as json
-        HAS_JSON = True
-    except ImportError:
-        HAS_JSON = False
+except ImportError:
+    HAS_JSON = False
 
 try:
     import yaml
@@ -72,7 +68,7 @@ class ProbeStore(Debuggable):
     """ Caching abstraction layer between persistent probe data
     storage and the Probes plugin."""
 
-    def __init__(self, core, datadir):  # pylint: disable=W0613
+    def __init__(self, core, datadir):  # pylint: disable=unused-argument
         Debuggable.__init__(self)
         self._groupcache = Bcfg2.Server.Cache.Cache("Probes", "probegroups")
         self._datacache = Bcfg2.Server.Cache.Cache("Probes", "probedata")
@@ -299,7 +295,7 @@ class ClientProbeDataSet(dict):
         dict.__init__(self, *args, **kwargs)
 
 
-class ProbeData(str):  # pylint: disable=E0012,R0924
+class ProbeData(str):
     """ a ProbeData object emulates a str object, but also has .xdata,
     .json, and .yaml properties to provide convenient ways to use
     ProbeData objects as XML, JSON, or YAML data """
@@ -309,7 +305,7 @@ class ProbeData(str):  # pylint: disable=E0012,R0924
         else:
             return str.__new__(cls, data)
 
-    def __init__(self, data):  # pylint: disable=W0613
+    def __init__(self, data):  # pylint: disable=unused-argument
         str.__init__(self)
         self._xdata = None
         self._json = None

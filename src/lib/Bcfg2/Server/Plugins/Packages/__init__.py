@@ -87,15 +87,16 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
                Bcfg2.Server.Plugin.Generator,
                Bcfg2.Server.Plugin.Connector,
                Bcfg2.Server.Plugin.ClientRunHooks):
-    """ Packages resolves Package entries on the Bcfg2 server in order
-    to present a complete list of Package entries to the client in
-    order to determine the completeness of the client configuration.
-    It does so by delegating control of package version information to
-    a number of backends, which may parse repository metadata directly
+    """Resolve Package entries.
+
+    Packages resolves Package entries on the Bcfg2 server in order to
+    present a complete list of Package entries to the client in order
+    to determine the completeness of the client configuration.  It
+    does so by delegating control of package version information to a
+    number of backends, which may parse repository metadata directly
     or defer to package manager libraries for truly dynamic
     resolution.
-
-    .. private-include: _build_packages"""
+    """
 
     options = [
         Bcfg2.Options.Option(
@@ -156,7 +157,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             # create key directory if needed
             os.makedirs(self.keypath)
 
-        # pylint: disable=C0301
+        # pylint: disable=line-too-long
         #: The
         #: :class:`Bcfg2.Server.Plugins.Packages.PackagesSources.PackagesSources`
         #: object used to generate
@@ -184,6 +185,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         #: a unique key identifying the collection by its *config*,
         #: which could be shared among multiple clients.
         self.collections = Bcfg2.Server.Cache.Cache("Packages", "collections")
+        # pylint: enable=line-too-long
 
         #: clients is a cache mapping of hostname ->
         #: :attr:`Bcfg2.Server.Plugins.Packages.Collection.Collection.cachekey`
@@ -192,9 +194,6 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         #: object when one is requested, so each entry is very
         #: short-lived -- it's purged at the end of each client run.
         self.clients = Bcfg2.Server.Cache.Cache("Packages", "cache")
-
-        # pylint: enable=C0301
-    __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
 
     def set_debug(self, debug):
         rv = Bcfg2.Server.Plugin.Plugin.set_debug(self, debug)
@@ -291,7 +290,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
         #. Given the full list of all packages that apply to this
            client from the specification, calls
-           :func:`_build_packages` to resolve dependencies, determine
+           :func:`build_packages` to resolve dependencies, determine
            unknown packages (i.e., those that are not in any
            repository that applies to this client), and build a
            complete package list.
@@ -315,14 +314,13 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
         """
         collection = self.get_collection(metadata)
         indep = lxml.etree.Element('Independent', name=self.__class__.__name__)
-        self._build_packages(metadata, indep, structures,
-                             collection=collection)
+        self.build_packages(metadata, indep, structures, collection=collection)
         collection.build_extra_structures(indep)
         structures.append(indep)
 
     @track_statistics()
-    def _build_packages(self, metadata, independent,  # pylint: disable=R0914
-                        structures, collection=None):
+    def build_packages(self, metadata, independent,  # pylint: disable=too-many-locals
+                       structures, collection=None):
         """ Perform dependency resolution and build the complete list
         of packages that need to be included in the specification by
         :func:`validate_structures`, based on the initial list of

@@ -222,6 +222,6 @@ class Pkgng(Bcfg2.Client.Tools.Tool):
             self.cmd.run([self.pkg, 'set', '-A1', '-y'] + mark)
         return states
 
-    def VerifyPath(self, _entry, _):
+    def VerifyPath(self, *_):
         """Do nothing here since we only verify Path type=ignore."""
         return True

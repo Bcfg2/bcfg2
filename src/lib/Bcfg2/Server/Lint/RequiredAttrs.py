@@ -205,7 +205,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 # or glob specified
                 for path in bundle.xdata.xpath("//Path"):
                     if ('name' not in path.attrib and
-                        'glob' not in path.attrib):
+                            'glob' not in path.attrib):
                         self.LintError(
                             "required-attrs-missing",
                             "Path tags require either a 'name' or 'glob' "
@@ -214,7 +214,7 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 # or group specified
                 for package in bundle.xdata.xpath("//Package"):
                     if ('name' not in package.attrib and
-                        'group' not in package.attrib):
+                            'group' not in package.attrib):
                         self.LintError(
                             "required-attrs-missing",
                             "Package tags require either a 'name' or 'group' "

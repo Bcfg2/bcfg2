@@ -65,7 +65,7 @@ class LocalFilesystem(TransportBase):
             payload = cPickle.dumps(dict(hostname=hostname,
                                          metadata=metadata,
                                          stats=stats))
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             msg = "%s: Failed to build interaction object: %s" % \
                 (self.__class__.__name__,
                  traceback.format_exc().splitlines()[-1])

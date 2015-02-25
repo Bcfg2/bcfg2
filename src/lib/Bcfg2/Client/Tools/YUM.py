@@ -78,6 +78,7 @@ class RPMDisplay(yum.rpmtrans.RPMBaseCallback):
         self.state = None
         self.package = None
 
+    # pylint: disable=unused-argument
     def event(self, package, action, te_current, te_total,
               ts_current, ts_total):
         """
@@ -93,9 +94,12 @@ class RPMDisplay(yum.rpmtrans.RPMBaseCallback):
         """
 
         if self.package != str(package) or action != self.state:
-            self.bcfg2_logger.info("%s: %s" % (self.action[action], package))
+            self.bcfg2_logger.info(
+                "%s: %s" %
+                (self.action[action], package))  # pylint: disable=no-member
             self.state = action
             self.package = str(package)
+    # pylint: enable=unused-argument
 
     def scriptout(self, package, msgs):
         """Handle output from package scripts."""
@@ -240,7 +244,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         YumBase object already exist), or after __init__() has
         completed, when we reload the yum config before installing
         packages. '''
-        rv = yum.YumBase()  # pylint: disable=C0103
+        rv = yum.YumBase()  # pylint: disable=invalid-name
 
         if hasattr(self, "logger"):
             logger = self.logger
@@ -262,14 +266,14 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             rv.preconf.enabled_plugins = \
                 Bcfg2.Options.setup.yum_enabled_plugins
 
-        # pylint: disable=E1121,W0212
+        # pylint: disable=protected-access
         try:
             rv.preconf.debuglevel = debuglevel
             rv._getConfig()
         except AttributeError:
             rv._getConfig(self.yumbase.conf.config_file_path,
                           debuglevel=debuglevel)
-        # pylint: enable=E1121,W0212
+        # pylint: enable=protected-access
 
         try:
             rv.doConfigSetup()
@@ -440,7 +444,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                     pattrs[i] = getattr(pkg, i)
             self.installed.setdefault(pkg.name, []).append(pattrs)
 
-    # pylint: disable=R0914,R0912,R0915
+    # pylint: disable=too-many-locals,too-many-branches,too-many-statements
     def VerifyPackage(self, entry, modlist):
         """ Verify Package status for entry.
         Performs the following:
@@ -524,7 +528,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
                         instance.attrib['version'] = newest['version']
                         instance.attrib['epoch'] = newest['epoch']
                         instance.attrib['release'] = newest['release']
-                    except:  # pylint: disable=W0702
+                    except:  # pylint: disable=bare-except
                         self.logger.info("Error finding newest package "
                                          "for %s" %
                                          pkg)
@@ -689,7 +693,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
 
             try:
                 vrfy_result = self._verifyHelper(pkg_objs[0])
-            except:  # pylint: disable=W0702
+            except:  # pylint: disable=bare-except
                 err = sys.exc_info()[1]
                 # Unknown Yum exception
                 self.logger.warning("  Verify Exception: %s" % err)
@@ -758,7 +762,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
             package_fail = True
 
         return not package_fail
-    # pylint: enable=R0914,R0912,R0915
+    # pylint: enable=too-many-locals,too-many-branches,too-many-statements
 
     def FindExtraInstances(self, entry, all_pkg_objs):
         """ Check for installed instances that are not in the
@@ -916,7 +920,8 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
 
         cleanup()
 
-    def Install(self, packages):  # pylint: disable=R0912,R0914,R0915
+    # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+    def Install(self, packages):
         """ Try and fix everything that Yum.VerifyPackages() found
         wrong for each Package Entry.  This can result in individual
         RPMs being installed (for the first time), deleted, downgraded
@@ -1086,6 +1091,7 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
 
         self.modified.extend(ent for ent in packages if states[ent])
         return states
+    # pylint: enable=too-many-branches,too-many-locals,too-many-statements
 
     def Remove(self, packages):
         """
@@ -1111,6 +1117,6 @@ class YUM(Bcfg2.Client.Tools.PkgTool):
         self._runYumTransaction()
         self.extra = self.FindExtra()
 
-    def VerifyPath(self, entry, _):  # pylint: disable=W0613
+    def VerifyPath(self, *_):
         """Do nothing here since we only verify Path type=ignore"""
         return True

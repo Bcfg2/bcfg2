@@ -4,7 +4,7 @@ import os
 import Bcfg2.Client.Tools
 
 
-class launchd(Bcfg2.Client.Tools.Tool):  # pylint: disable=C0103
+class launchd(Bcfg2.Client.Tools.Tool):  # pylint: disable=invalid-name
     """Support for Mac OS X launchd services.  Currently requires the
     path to the plist to load/unload, and Name is acually a
     reverse-fqdn (or the label)."""

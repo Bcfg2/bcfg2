@@ -29,16 +29,15 @@ class HomeBrew(Bcfg2.Client.Tools.PkgTool):
 
         if entry.attrib['name'] in self.installed:
             if (self.installed[entry.attrib['name']] ==
-                entry.attrib['version'] or
-                entry.attrib['version'] == 'any'):
+                    entry.attrib['version'] or
+                    entry.attrib['version'] == 'any'):
                 return True
             else:
                 self.logger.info("  %s: Wrong version installed.  "
                                  "Want %s, but have %s" %
                                  (entry.get("name"),
                                   entry.get("version"),
-                                  self.installed[entry.get("name")],
-                                  ))
+                                  self.installed[entry.get("name")]))
 
                 entry.set('current_version', self.installed[entry.get('name')])
                 return False

@@ -129,6 +129,8 @@ below, since some of these implementations may be feature-incomplete.
 +----------------+--------------------------------+--------------------------------------------+
 | MutableMapping | :class:`UserDict.DictMixin`    | :class:`collections.MutableMapping` (2.6+) |
 +----------------+--------------------------------+--------------------------------------------+
+| json           | :mod:`simplejson`              | :class:`json` or :class:`simplejson`       |
++----------------+--------------------------------+--------------------------------------------+
 
 walk_packages
 ~~~~~~~~~~~~~
@@ -171,6 +173,16 @@ mind.
 :class:`collections.MutableMapping` is available in Python 2.6+, and
 will be used if available.
 
+json
+~~~~
+
+`json` is an optional dependency, so this symbol may or may not exist;
+if it doesn't exist, that indicates that no usable JSON library was
+found on the system. The :mod:`json` library in Python 2.4 is
+structured oddly, and is not suitable for use, so :mod:`simplejson` is
+used instead. On newer Python, either the :mod:`json` or
+:mod:`simplejson` libraries, in that order, may be used.
+
 Other Symbols
 -------------
 
@@ -208,4 +220,3 @@ oct_mode
 ~~~~~~~~
 
 .. autofunction:: Bcfg2.Compat.oct_mode
-

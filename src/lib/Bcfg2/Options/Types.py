@@ -98,7 +98,7 @@ def timeout(value):
     return rv
 
 
-# pylint: disable=C0103
+# pylint: disable=invalid-name
 _bytes_multipliers = dict(k=1,
                           m=2,
                           g=3,
@@ -106,7 +106,7 @@ _bytes_multipliers = dict(k=1,
 _suffixes = "".join(_bytes_multipliers.keys()).lower()
 _suffixes += _suffixes.upper()
 _bytes_re = re.compile(r'(?P<value>\d+)(?P<multiplier>[%s])?' % _suffixes)
-# pylint: enable=C0103
+# pylint: enable=invalid-name
 
 
 def size(value):

@@ -7,12 +7,12 @@ import time
 import threading
 
 from lockfile import LockFailed, LockTimeout
-# pylint: disable=E0611
+# pylint: disable=no-name-in-module
 try:
     from daemon.pidfile import TimeoutPIDLockFile
 except ImportError:
     from daemon.pidlockfile import TimeoutPIDLockFile
-# pylint: enable=E0611
+# pylint: enable=no-name-in-module
 
 import Bcfg2.Logger
 import Bcfg2.Options

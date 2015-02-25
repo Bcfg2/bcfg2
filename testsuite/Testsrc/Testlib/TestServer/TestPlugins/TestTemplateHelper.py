@@ -29,7 +29,7 @@ class TestHelperModule(Bcfg2TestCase):
 
     def test__init(self):
         hm = self.get_obj()
-        self.assertEqual(hm._module_name, "test")
+        self.assertEqual(hm.module_name, "test")
         self.assertEqual(hm._attrs, [])
 
     @patch("imp.load_source")
@@ -39,7 +39,7 @@ class TestHelperModule(Bcfg2TestCase):
         mock_load_source.side_effect = ImportError
         attrs = dir(hm)
         hm.HandleEvent()
-        mock_load_source.assert_called_with(safe_module_name(hm._module_name),
+        mock_load_source.assert_called_with(safe_module_name(hm.module_name),
                                             hm.name)
         self.assertEqual(attrs, dir(hm))
         self.assertEqual(hm._attrs, [])
@@ -51,7 +51,7 @@ class TestHelperModule(Bcfg2TestCase):
         mock_load_source.return_value = Mock()
         attrs = dir(hm)
         hm.HandleEvent()
-        mock_load_source.assert_called_with(safe_module_name(hm._module_name),
+        mock_load_source.assert_called_with(safe_module_name(hm.module_name),
                                             hm.name)
         self.assertEqual(attrs, dir(hm))
         self.assertEqual(hm._attrs, [])
@@ -63,7 +63,7 @@ class TestHelperModule(Bcfg2TestCase):
         mock_load_source.return_value = module
         attrs = dir(hm)
         hm.HandleEvent()
-        mock_load_source.assert_called_with(safe_module_name(hm._module_name),
+        mock_load_source.assert_called_with(safe_module_name(hm.module_name),
                                             hm.name)
         self.assertEqual(attrs, dir(hm))
         self.assertEqual(hm._attrs, [])
@@ -74,7 +74,7 @@ class TestHelperModule(Bcfg2TestCase):
         mock_load_source.reset()
         mock_load_source.return_value = module
         hm.HandleEvent()
-        mock_load_source.assert_called_with(safe_module_name(hm._module_name),
+        mock_load_source.assert_called_with(safe_module_name(hm.module_name),
                                             hm.name)
         self.assertTrue(hasattr(hm, "foo"))
         self.assertTrue(hasattr(hm, "bar"))
@@ -87,7 +87,7 @@ class TestHelperModule(Bcfg2TestCase):
         mock_load_source.reset()
         mock_load_source.return_value = module
         hm.HandleEvent()
-        mock_load_source.assert_called_with(safe_module_name(hm._module_name),
+        mock_load_source.assert_called_with(safe_module_name(hm.module_name),
                                             hm.name)
         self.assertTrue(hasattr(hm, "foo"))
         self.assertTrue(hasattr(hm, "bar"))
@@ -123,7 +123,7 @@ class TestTemplateHelper(TestPlugin, TestConnector, TestDirectoryBacked):
         rv = dict()
         for mname in modules:
             module = Mock()
-            module._module_name = mname
+            module.module_name = mname
             rv[mname] = module
             th.entries['%s.py' % mname] = module
         actual = th.get_additional_data(Mock())

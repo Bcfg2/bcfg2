@@ -8,7 +8,6 @@ from Bcfg2.Server.Statistics import track_statistics
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError
 
 
-# pylint: disable=E0012,R0924
 class PackagesSources(Bcfg2.Server.Plugin.StructFile):
     """ PackagesSources handles parsing of the
     :mod:`Bcfg2.Server.Plugins.Packages` ``sources.xml`` file, and the

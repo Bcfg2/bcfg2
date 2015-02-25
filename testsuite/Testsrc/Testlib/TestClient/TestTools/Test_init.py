@@ -548,7 +548,7 @@ class TestSvcTool(TestTool):
         for entry in services:
             self.assertEqual(entry.get("status"), "off")
 
-    @patch("Bcfg2.Client.prompt")
+    @patch("Bcfg2.Client.Tools.prompt")
     def test_BundleUpdated(self, mock_prompt):
         Bcfg2.Options.setup.service_mode = 'default'
         Bcfg2.Options.setup.interactive = False

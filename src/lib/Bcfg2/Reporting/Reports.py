@@ -60,7 +60,7 @@ def print_entries(interaction, etype):
         print("%-70s %s" % (item.entry_type + ":" + item.name, etype))
 
 
-class _SingleHostCmd(Bcfg2.Options.Subcommand):  # pylint: disable=W0223
+class _SingleHostCmd(Bcfg2.Options.Subcommand):  # pylint: disable=abstract-method
     """ Base class for bcfg2-reports modes that take a single host as
     a positional argument """
     options = [Bcfg2.Options.PositionalArgument("host")]

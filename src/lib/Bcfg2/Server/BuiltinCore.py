@@ -12,12 +12,12 @@ from Bcfg2.Compat import xmlrpclib, urlparse
 from Bcfg2.Server.SSLServer import XMLRPCServer
 
 from lockfile import LockFailed, LockTimeout
-# pylint: disable=E0611
+# pylint: disable=no-name-in-module
 try:
     from daemon.pidfile import TimeoutPIDLockFile
 except ImportError:
     from daemon.pidlockfile import TimeoutPIDLockFile
-# pylint: enable=E0611
+# pylint: enable=no-name-in-module
 
 
 class BuiltinCore(NetworkCore):
@@ -126,7 +126,7 @@ class BuiltinCore(NetworkCore):
                                        register=False,
                                        ca=Bcfg2.Options.setup.ca,
                                        protocol=Bcfg2.Options.setup.protocol)
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             err = sys.exc_info()[1]
             self.logger.error("Server startup failed: %s" % err)
             self.context.close()

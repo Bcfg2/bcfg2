@@ -42,7 +42,6 @@ class FreeBSDInit(Bcfg2.Client.Tools.SvcTool):
         self.logger.debug('Stopping service %s' % service.get('name'))
         return self.cmd.run(self.get_svc_command(service, 'onestop'))
 
-
     def VerifyService(self, entry, _):
         """Verify Service status for entry."""
         entry.set('target_status', entry.get('status'))  # for reporting
@@ -88,12 +87,12 @@ class FreeBSDInit(Bcfg2.Client.Tools.SvcTool):
             return False
 
         # get rcvar for service
-        vars = set()
+        rcvars = set()
         rcvar_cmd = self.get_svc_command(entry, 'rcvar')
         for line in self.cmd.run(rcvar_cmd).stdout.splitlines():
             match = self.rcvar_re.match(line)
             if match:
-                vars.add(match.group('var'))
+                rcvars.add(match.group('var'))
 
         if bootstatus is not None:
             bootcmdrv = True
@@ -103,8 +102,9 @@ class FreeBSDInit(Bcfg2.Client.Tools.SvcTool):
             elif bootstatus == 'off':
                 sysrcstatus = 'NO'
             if sysrcstatus is not None:
-                for var in vars:
-                    if not self.cmd.run('/usr/sbin/sysrc %s="%s"' % (var, sysrcstatus)):
+                for var in rcvars:
+                    if not self.cmd.run('/usr/sbin/sysrc %s="%s"' %
+                                        (var, sysrcstatus)):
                         bootcmdrv = False
                         break
 

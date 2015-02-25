@@ -14,7 +14,7 @@ documentation it's not necessary to use the submodules.  E.g., you can
 
 import Bcfg2.Options
 
-# pylint: disable=W0401
+# pylint: disable=wildcard-import
 from Bcfg2.Server.Plugin.base import *
 from Bcfg2.Server.Plugin.interfaces import *
 from Bcfg2.Server.Plugin.helpers import *

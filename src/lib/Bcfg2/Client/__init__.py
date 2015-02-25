@@ -15,66 +15,12 @@ import Bcfg2.Options
 from Bcfg2.Client import XML
 from Bcfg2.Client import Proxy
 from Bcfg2.Client import Tools
-from Bcfg2.Utils import locked, Executor, safe_input
+from Bcfg2.Client.base import prompt, matches_white_list, passes_black_list
+from Bcfg2.Utils import locked, Executor
 from Bcfg2.version import __version__
-# pylint: disable=W0622
-from Bcfg2.Compat import xmlrpclib, walk_packages, any, all, cmp
-# pylint: enable=W0622
-
-
-def cmpent(ent1, ent2):
-    """Sort entries."""
-    if ent1.tag != ent2.tag:
-        return cmp(ent1.tag, ent2.tag)
-    else:
-        return cmp(ent1.get('name'), ent2.get('name'))
-
-
-def matches_entry(entryspec, entry):
-    """ Determine if the Decisions-style entry specification matches
-    the entry.  Both are tuples of (tag, name).  The entryspec can
-    handle the wildcard * in either position. """
-    if entryspec == entry:
-        return True
-    return all(fnmatch.fnmatch(entry[i], entryspec[i]) for i in [0, 1])
-
-
-def matches_white_list(entry, whitelist):
-    """ Return True if (<entry tag>, <entry name>) is in the given
-    whitelist. """
-    return any(matches_entry(we, (entry.tag, entry.get('name')))
-               for we in whitelist)
-
-
-def passes_black_list(entry, blacklist):
-    """ Return True if (<entry tag>, <entry name>) is not in the given
-    blacklist. """
-    return not any(matches_entry(be, (entry.tag, entry.get('name')))
-                   for be in blacklist)
-
-
-def prompt(msg):
-    """ Helper to give a yes/no prompt to the user.  Flushes input
-    buffers, handles exceptions, etc.  Returns True if the user
-    answers in the affirmative, False otherwise.
-
-    :param msg: The message to show to the user.  The message is not
-                altered in any way for display; i.e., it should
-                contain "[y/N]" if desired, etc.
-    :type msg: string
-    :returns: bool - True if yes, False if no """
-    try:
-        ans = safe_input(msg)
-        return ans in ['y', 'Y']
-    except UnicodeEncodeError:
-        ans = input(msg.encode('utf-8'))
-        return ans in ['y', 'Y']
-    except (EOFError, KeyboardInterrupt):
-        # handle ^C
-        raise SystemExit(1)
-    except:
-        print("Error while reading input: %s" % sys.exc_info()[1])
-        return False
+# pylint: disable=redefined-builtin
+from Bcfg2.Compat import xmlrpclib, walk_packages, any, all
+# pylint: enable=redefined-builtin
 
 
 class ClientDriverAction(Bcfg2.Options.ComponentAction):
@@ -229,7 +175,7 @@ class Client(object):
                 os.unlink(scriptname)
         except SystemExit:
             raise
-        except:
+        except:  # pylint: disable=bare-except
             self._probe_failure(name, sys.exc_info()[1])
         return ret
 
@@ -415,7 +361,7 @@ class Client(object):
                                      "with the -O/--no-lock option")
             except SystemExit:
                 raise
-            except:
+            except:  # pylint: disable=bare-except
                 lockfile = None
                 self.logger.error("Failed to open lockfile %s: %s" %
                                   (Bcfg2.Options.setup.lockfile,
@@ -458,7 +404,7 @@ class Client(object):
                 self.tools.append(tool(self.config))
             except Tools.ToolInstantiationError:
                 continue
-            except:
+            except:  # pylint: disable=bare-except
                 self.logger.error("Failed to instantiate tool %s" % tool,
                                   exc_info=1)
 
@@ -591,7 +537,7 @@ class Client(object):
                         self.states[cfile] = tools[0].InstallPath(cfile)
                         if self.states[cfile]:
                             tools[0].modified.append(cfile)
-                    except:  # pylint: disable=W0702
+                    except:  # pylint: disable=bare-except
                         self.logger.error("Unexpected tool failure",
                                           exc_info=1)
                     cfile.set('qtext', '')
@@ -619,11 +565,11 @@ class Client(object):
                 self.states.update(tool.Inventory())
             except KeyboardInterrupt:
                 raise
-            except:  # pylint: disable=W0702
+            except:  # pylint: disable=bare-except
                 self.logger.error("%s.Inventory() call failed:" % tool.name,
                                   exc_info=1)
 
-    def Decide(self):  # pylint: disable=R0912
+    def Decide(self):  # pylint: disable=too-many-branches
         """Set self.whitelist based on user interaction."""
         iprompt = "Install %s: %s? (y/N): "
         rprompt = "Remove %s: %s? (y/N): "
@@ -738,7 +684,7 @@ class Client(object):
                 self.states.update(tool.Install(handled))
             except KeyboardInterrupt:
                 raise
-            except:  # pylint: disable=W0702
+            except:  # pylint: disable=bare-except
                 self.logger.error("%s.Install() call failed:" % tool.name,
                                   exc_info=1)
 
@@ -760,7 +706,7 @@ class Client(object):
                     self.states.update(tool.Inventory(structures=[bundle]))
                 except KeyboardInterrupt:
                     raise
-                except:  # pylint: disable=W0702
+                except:  # pylint: disable=bare-except
                     self.logger.error("%s.Inventory() call failed:" %
                                       tool.name,
                                       exc_info=1)
@@ -793,7 +739,7 @@ class Client(object):
                     self.states.update(tool.BundleNotUpdated(bundle))
                 except KeyboardInterrupt:
                     raise
-                except:  # pylint: disable=W0702
+                except:  # pylint: disable=bare-except
                     self.logger.error('%s.BundleNotUpdated(%s:%s) call failed:'
                                       % (tool.name, bundle.tag,
                                          bundle.get('name')), exc_info=1)
@@ -804,7 +750,7 @@ class Client(object):
                     self.states.update(tool.BundleNotUpdated(indep))
                 except KeyboardInterrupt:
                     raise
-                except:  # pylint: disable=W0702
+                except:  # pylint: disable=bare-except
                     self.logger.error("%s.BundleNotUpdated(%s:%s) call failed:"
                                       % (tool.name, indep.tag,
                                          indep.get("name")), exc_info=1)
@@ -830,7 +776,7 @@ class Client(object):
                 for tool in self.tools:
                     try:
                         self.states.update(tool.BundleUpdated(bundle))
-                    except:  # pylint: disable=W0702
+                    except:  # pylint: disable=bare-except
                         self.logger.error('%s.BundleUpdated(%s:%s) call '
                                           'failed:' % (tool.name, bundle.tag,
                                                        bundle.get("name")),
@@ -852,7 +798,7 @@ class Client(object):
             if extras:
                 try:
                     tool.Remove(extras)
-                except:  # pylint: disable=W0702
+                except:  # pylint: disable=bare-except
                     self.logger.error("%s.Remove() failed" % tool.name,
                                       exc_info=1)
 

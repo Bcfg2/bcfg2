@@ -77,7 +77,7 @@ class DirectStore(TransportBase, threading.Thread):
     def rpc(self, method, *args, **kwargs):
         try:
             return getattr(self.storage, method)(*args, **kwargs)
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             msg = "Reporting: RPC method %s failed: %s" % (method,
                                                            sys.exc_info()[1])
             self.logger.error(msg)

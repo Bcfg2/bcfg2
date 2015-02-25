@@ -130,11 +130,9 @@ def ssl_decrypt(data, passwd, algorithm=None):
     # base64-decode the data
     data = b64decode(data)
     salt = data[8:16]
-    # pylint: disable=E1101,E1121
     hashes = [md5(passwd + salt).digest()]
     for i in range(1, 3):
         hashes.append(md5(hashes[i - 1] + passwd + salt).digest())
-    # pylint: enable=E1101,E1121
     key = hashes[0] + hashes[1]
     iv = hashes[2]
 
@@ -160,11 +158,9 @@ def ssl_encrypt(plaintext, passwd, algorithm=None, salt=None):
     if salt is None:
         salt = Rand.rand_bytes(8)
 
-    # pylint: disable=E1101,E1121
     hashes = [md5(passwd + salt).digest()]
     for i in range(1, 3):
         hashes.append(md5(hashes[i - 1] + passwd + salt).digest())
-    # pylint: enable=E1101,E1121
     key = hashes[0] + hashes[1]
     iv = hashes[2]
 
@@ -180,7 +176,7 @@ def is_encrypted(val):
     will not have false negatives. """
     try:
         return b64decode(val).startswith("Salted__")
-    except:  # pylint: disable=W0702
+    except:  # pylint: disable=bare-except
         return False
 
 
@@ -561,7 +557,7 @@ class CLI(object):
         else:
             return False
 
-    def run(self):  # pylint: disable=R0912,R0915
+    def run(self):  # pylint: disable=too-many-branches,too-many-statements
         """ Run bcfg2-crypt """
         for fname in Bcfg2.Options.setup.files:
             if not os.path.exists(fname):

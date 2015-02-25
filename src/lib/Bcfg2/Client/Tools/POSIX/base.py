@@ -30,19 +30,19 @@ except ImportError:
     ACL_MAP = dict(r=4, w=2, x=1)
 
 # map between dev_type attribute and stat constants
-device_map = dict(block=stat.S_IFBLK,  # pylint: disable=C0103
+device_map = dict(block=stat.S_IFBLK,  # pylint: disable=invalid-name
                   char=stat.S_IFCHR,
                   fifo=stat.S_IFIFO)
 
 
 class POSIXTool(Bcfg2.Client.Tools.Tool):
     """ Base class for tools that handle POSIX (Path) entries """
-    def fully_specified(self, entry):  # pylint: disable=W0613
+    def fully_specified(self, entry):  # pylint: disable=unused-argument
         """ return True if the entry is fully specified """
         # checking is done by __req__
         return True
 
-    def verify(self, entry, modlist):  # pylint: disable=W0613
+    def verify(self, entry, modlist):  # pylint: disable=unused-argument
         """ return True if the entry is correct on disk """
         if not self._verify_metadata(entry):
             return False
@@ -58,8 +58,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
 
     def install(self, entry):
         """ Install the given entry.  Return True on success. """
-        rv = True
-        rv &= self._set_perms(entry)
+        rv = self._set_perms(entry)
         if entry.get('recursive', 'false').lower() == 'true':
             # set metadata recursively
             for root, dirs, files in os.walk(entry.get('name')):
@@ -181,7 +180,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                 self.logger.warning("  " + line)
             return False
 
-    def _set_acls(self, entry, path=None):  # pylint: disable=R0912
+    def _set_acls(self, entry, path=None):  # pylint: disable=too-many-branches
         """ set POSIX ACLs on the file on disk according to the config """
         if not HAS_ACLS:
             if entry.findall("ACL"):
@@ -471,7 +470,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             acls = None
         return (ondisk, owner, group, mode, secontext, acls)
 
-    def _verify_metadata(self, entry, path=None):  # pylint: disable=R0912
+    def _verify_metadata(self, entry, path=None):
         """ generic method to verify mode, owner, group, secontext, acls,
         and mtime """
         # allow setting an alternate path for recursive permissions checking
@@ -586,11 +585,9 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                 self.logger.error("POSIX: No permissions set for ACL: %s" %
                                   Bcfg2.Client.XML.tostring(acl))
                 continue
-            qual = acl.get(acl.get("scope"))
-            if not qual:
-                qual = ''
-            wanted[(acl.get("type"), scope, qual)] = \
-                self._norm_acl_perms(acl.get('perms'))
+            qual = acl.get(acl.get("scope")) or ''
+            wanted[(acl.get("type"), scope, qual)] = self._norm_acl_perms(
+                acl.get('perms'))
         return wanted
 
     def _list_file_acls(self, path):
@@ -638,7 +635,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                 _process_acl(acl, "default")
         return existing
 
-    def _verify_acls(self, entry, path=None):  # pylint: disable=R0912
+    def _verify_acls(self, entry, path=None):
         """ verify POSIX ACLs on the given entry.  return True if all
         ACLS are correct, false otherwise """
         def _verify_acl(aclkey, perms):
@@ -653,11 +650,9 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                 atype, scope, qual = aclkey
                 aclentry = Bcfg2.Client.XML.Element("ACL", type=atype,
                                                     perms=str(perms))
-                if (scope == posix1e.ACL_USER or
-                    scope == posix1e.ACL_USER_OBJ):
+                if scope in [posix1e.ACL_USER, posix1e.ACL_USER_OBJ]:
                     aclentry.set("scope", "user")
-                elif (scope == posix1e.ACL_GROUP or
-                      scope == posix1e.ACL_GROUP_OBJ):
+                elif scope in [posix1e.ACL_GROUP, posix1e.ACL_GROUP_OBJ]:
                     aclentry.set("scope", "group")
                 elif scope == posix1e.ACL_OTHER:
                     aclentry.set("scope", "other")

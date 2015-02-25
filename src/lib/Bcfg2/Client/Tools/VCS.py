@@ -3,7 +3,7 @@
 # TODO:
 #   * add svn support
 #   * integrate properly with reports
-missing = []
+MISSING = []
 
 import errno
 import os
@@ -17,12 +17,12 @@ try:
     import dulwich.index
     from dulwich.errors import NotGitRepository
 except ImportError:
-    missing.append('git')
+    MISSING.append('git')
 # subversion import
 try:
     import pysvn
 except ImportError:
-    missing.append('svn')
+    MISSING.append('svn')
 
 import Bcfg2.Client.Tools
 
@@ -84,7 +84,7 @@ class VCS(Bcfg2.Client.Tools.Tool):
         try:
             expected_rev = entry.get('revision')
             cur_rev = repo.head()
-        except:
+        except:  # pylint: disable=bare-except
             return False
 
         try:
@@ -94,7 +94,7 @@ class VCS(Bcfg2.Client.Tools.Tool):
                                             (lambda x: None), None, None, None)
             if expected_rev in remote_refs:
                 expected_rev = remote_refs[expected_rev]
-        except:
+        except:  # pylint: disable=bare-except
             pass
 
         if cur_rev != expected_rev:
@@ -122,12 +122,12 @@ class VCS(Bcfg2.Client.Tools.Tool):
         dulwich.file.ensure_dir_exists(destname)
         destr = dulwich.repo.Repo.init(destname)
         determine_wants = destr.object_store.determine_wants_all
-        cl, host_path = dulwich.client.get_transport_and_path(
+        client, host_path = dulwich.client.get_transport_and_path(
             entry.get('sourceurl'))
-        remote_refs = cl.fetch(host_path,
-                               destr,
-                               determine_wants=determine_wants,
-                               progress=sys.stdout.write)
+        remote_refs = client.fetch(host_path,
+                                   destr,
+                                   determine_wants=determine_wants,
+                                   progress=sys.stdout.write)
 
         if entry.get('revision') in remote_refs:
             destr.refs['HEAD'] = remote_refs[entry.get('revision')]
@@ -145,29 +145,24 @@ class VCS(Bcfg2.Client.Tools.Tool):
                 try:
                     os.symlink(src_path, full_path)
                 except OSError:
-                    e = sys.exc_info()[1]
-                    if e.errno == errno.EEXIST:
+                    err = sys.exc_info()[1]
+                    if err.errno == errno.EEXIST:
                         os.unlink(full_path)
                         os.symlink(src_path, full_path)
                     else:
                         raise
             else:
-                file = open(full_path, 'wb')
-                file.write(destr[sha].as_raw_string())
-                file.close()
+                open(full_path, 'wb').write(destr[sha].as_raw_string())
                 os.chmod(full_path, mode)
 
-            st = os.lstat(full_path)
-            index[fname] = index_entry_from_stat(st, sha, 0)
+            index[fname] = index_entry_from_stat(os.lstat(full_path), sha, 0)
 
         index.write()
         return True
 
     def Verifysvn(self, entry, _):
         """Verify svn repositories"""
-        # pylint: disable=E1101
         headrev = pysvn.Revision(pysvn.opt_revision_kind.head)
-        # pylint: enable=E1101
         client = pysvn.Client()
         try:
             cur_rev = str(client.info(entry.get('name')).revision.number)
@@ -175,7 +170,7 @@ class VCS(Bcfg2.Client.Tools.Tool):
                                   recurse=False)
             if server:
                 server_rev = str(server[0][1].rev.number)
-        except:
+        except:  # pylint: disable=bare-except
             self.logger.info("Repository %s does not exist" %
                              entry.get('name'))
             return False
@@ -192,7 +187,6 @@ class VCS(Bcfg2.Client.Tools.Tool):
 
     def Installsvn(self, entry):
         """Checkout contents from a svn repository"""
-        # pylint: disable=E1101
         client = pysvn.Client()
         try:
             client.update(entry.get('name'), recurse=True)
@@ -200,11 +194,11 @@ class VCS(Bcfg2.Client.Tools.Tool):
             self.logger.error("Failed to update repository", exc_info=1)
             return False
         return True
-        # pylint: enable=E1101
 
     def VerifyPath(self, entry, _):
+        """Verify a VCS Path entry."""
         vcs = entry.get('vcstype')
-        if vcs in missing:
+        if vcs in MISSING:
             self.logger.error("Missing %s python libraries. Cannot verify" %
                               vcs)
             return False
@@ -212,8 +206,9 @@ class VCS(Bcfg2.Client.Tools.Tool):
         return ret(entry, _)
 
     def InstallPath(self, entry):
+        """Install a VCS Path entry."""
         vcs = entry.get('vcstype')
-        if vcs in missing:
+        if vcs in MISSING:
             self.logger.error("Missing %s python libraries. "
                               "Unable to install" % vcs)
             return False

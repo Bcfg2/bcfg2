@@ -74,8 +74,8 @@ class GroupNames(Bcfg2.Server.Lint.ServerPlugin):
             for fname in files:
                 basename = os.path.basename(root)
                 if (re.search(r'^%s\.G\d\d_' % basename, fname) and
-                    not re.search(r'^%s\.G\d\d_' % basename + self.pattern,
-                                  fname)):
+                        not re.search(r'^%s\.G\d\d_' % basename + self.pattern,
+                                      fname)):
                     self.LintError("invalid-group-name",
                                    "Invalid group name referenced in %s" %
                                    os.path.join(root, fname))

@@ -5,7 +5,7 @@ import os
 import stat
 from gamin import WatchMonitor, GAMCreated, GAMExists, GAMEndExist, \
     GAMChanged, GAMDeleted
-from Bcfg2.Server.FileMonitor import Event, FileMonitor
+from Bcfg2.Server.FileMonitor.base import Event, FileMonitor
 
 
 class GaminEvent(Event):

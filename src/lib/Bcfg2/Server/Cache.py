@@ -138,11 +138,11 @@ class _CacheRegistry(dict):
                 yield key
 
 
-_cache = _CacheRegistry()  # pylint: disable=C0103
-_hooks = []  # pylint: disable=C0103
+_cache = _CacheRegistry()  # pylint: disable=invalid-name
+_hooks = []  # pylint: disable=invalid-name
 
 
-def Cache(*tags):  # pylint: disable=C0103
+def Cache(*tags):  # pylint: disable=invalid-name
     """ A dict interface to the cache data tagged with the given
     tags. """
     return _Cache(_cache, frozenset(tags))

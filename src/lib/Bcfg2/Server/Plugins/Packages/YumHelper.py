@@ -10,12 +10,8 @@ import yum
 import logging
 import Bcfg2.Options
 import Bcfg2.Logger
-from Bcfg2.Compat import wraps
+from Bcfg2.Compat import wraps, json
 from lockfile import FileLock, LockTimeout
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 
 def pkg_to_tuple(package):
@@ -49,14 +45,14 @@ class YumHelper(object):
     def __init__(self, cfgfile, verbose=1):
         self.cfgfile = cfgfile
         self.yumbase = yum.YumBase()
-        # pylint: disable=E1121,W0212
+        # pylint: disable=protected-access
         try:
             self.yumbase.preconf.debuglevel = verbose
             self.yumbase.preconf.fn = cfgfile
             self.yumbase._getConfig()
         except AttributeError:
             self.yumbase._getConfig(cfgfile, debuglevel=verbose)
-        # pylint: enable=E1121,W0212
+        # pylint: enable=protected-access
         self.logger = logging.getLogger(self.__class__.__name__)
 
 
@@ -253,7 +249,7 @@ class CacheManager(YumHelper):
         self.yumbase.repos.doSetup()
         for repo in self.yumbase.repos.listEnabled():
             # this populates the cache as a side effect
-            repo.repoXML  # pylint: disable=W0104
+            repo.repoXML  # pylint: disable=pointless-statement
             try:
                 repo.getGroups()
             except yum.Errors.RepoMDError:
@@ -262,7 +258,7 @@ class CacheManager(YumHelper):
         self.yumbase.repos.populateSack(mdtype='filelists', cacheonly=1)
         self.yumbase.repos.populateSack(mdtype='otherdata', cacheonly=1)
         # this does something with the groups cache as a side effect
-        self.yumbase.comps  # pylint: disable=W0104
+        self.yumbase.comps  # pylint: disable=pointless-statement
 
 
 class HelperSubcommand(Bcfg2.Options.Subcommand):
@@ -293,7 +289,7 @@ class HelperSubcommand(Bcfg2.Options.Subcommand):
 
         try:
             print(json.dumps(self._run(setup, data)))
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             self.logger.error("Unexpected error running %s: %s" %
                               self.__class__.__name__.lower(),
                               sys.exc_info()[1], exc_info=1)
@@ -306,7 +302,7 @@ class HelperSubcommand(Bcfg2.Options.Subcommand):
         raise NotImplementedError
 
 
-class DepSolverSubcommand(HelperSubcommand):  # pylint: disable=W0223
+class DepSolverSubcommand(HelperSubcommand):  # pylint: disable=abstract-method
     """ Base class for helper commands that use the depsolver (i.e.,
     only resolve dependencies, don't modify the cache) """
 
@@ -316,7 +312,7 @@ class DepSolverSubcommand(HelperSubcommand):  # pylint: disable=W0223
                                    self.verbosity)
 
 
-class CacheManagerSubcommand(HelperSubcommand):  # pylint: disable=W0223
+class CacheManagerSubcommand(HelperSubcommand):  # pylint: disable=abstract-method
     """ Base class for helper commands that use the cachemanager
     (i.e., modify the cache) """
     fallback = False
@@ -330,14 +326,14 @@ class CacheManagerSubcommand(HelperSubcommand):  # pylint: disable=W0223
 
 class Clean(CacheManagerSubcommand):
     """ Clean the cache """
-    def _run(self, setup, data):  # pylint: disable=W0613
+    def _run(self, *_):
         self.cachemgr.clean_cache()
         return True
 
 
 class MakeCache(CacheManagerSubcommand):
     """ Update the on-disk cache """
-    def _run(self, setup, data):  # pylint: disable=W0613
+    def _run(self, *_):
         self.cachemgr.populate_cache()
         return True
 
@@ -369,7 +365,7 @@ class GetGroups(DepSolverSubcommand):
         return rv
 
 
-Get_Groups = GetGroups  # pylint: disable=C0103
+Get_Groups = GetGroups  # pylint: disable=invalid-name
 
 
 class CLI(Bcfg2.Options.CommandRegistry):

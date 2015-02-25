@@ -9,9 +9,9 @@ import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugin import PluginExecutionError
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 from Bcfg2.Compat import u_str, unicode, b64encode, any, walk_packages
-# pylint: enable=W0622
+# pylint: enable=redefined-builtin
 
 try:
     import Bcfg2.Server.Encryption
@@ -19,7 +19,7 @@ try:
 except ImportError:
     HAS_CRYPTO = False
 
-_handlers = [m[1]  # pylint: disable=C0103
+_handlers = [m[1]  # pylint: disable=invalid-name
              for m in walk_packages(path=__path__)]
 
 _CFG = None
@@ -142,7 +142,7 @@ class CfgBaseFileMatcher(Bcfg2.Server.Plugin.SpecificData):
         return bool(cls.get_regex(basenames).match(event.filename))
 
     @classmethod
-    def ignore(cls, event, basename=None):  # pylint: disable=W0613
+    def ignore(cls, event, basename=None):  # pylint: disable=unused-argument
         """ Return True if this handler ignores the file described by
         ``event``.  See
         :attr:`CfgBaseFileMatcher.__ignore__`
@@ -184,7 +184,7 @@ class CfgGenerator(CfgBaseFileMatcher):
         CfgBaseFileMatcher.__init__(self, name, specific)
     __init__.__doc__ = CfgBaseFileMatcher.__init__.__doc__.split(".. -----")[0]
 
-    def get_data(self, entry, metadata):  # pylint: disable=W0613
+    def get_data(self, entry, metadata):  # pylint: disable=unused-argument
         """ get_data() returns the initial data of a file.
 
         :param entry: The entry to generate data for. ``entry`` should
@@ -396,7 +396,7 @@ class CfgCreator(CfgBaseFileMatcher):
             raise CfgCreationError("Could not write %s: %s" % (fileloc, err))
 
 
-class XMLCfgCreator(CfgCreator,  # pylint: disable=W0223
+class XMLCfgCreator(CfgCreator,  # pylint: disable=abstract-method
                     Bcfg2.Server.Plugin.StructFile):
     """ A CfgCreator that uses XML to describe how data should be
     generated. """
@@ -573,7 +573,7 @@ class CfgEntrySet(Bcfg2.Server.Plugin.EntrySet):
         return self.get_handlers(metadata, CfgGenerator)
     get_matching.__doc__ = Bcfg2.Server.Plugin.EntrySet.get_matching.__doc__
 
-    def entry_init(self, event, hdlr):  # pylint: disable=W0221
+    def entry_init(self, event, hdlr):  # pylint: disable=arguments-differ
         """ Handle the creation of a file on the filesystem and the
         creation of a Cfg handler object in this CfgEntrySet to track
         it.
@@ -893,7 +893,7 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
             default=_handlers)]
 
     def __init__(self, core):
-        global _CFG  # pylint: disable=W0603
+        global _CFG  # pylint: disable=global-statement
         Bcfg2.Server.Plugin.GroupSpool.__init__(self, core)
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
         Bcfg2.Options.setup.cfg_handlers.sort(

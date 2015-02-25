@@ -134,7 +134,11 @@ class WildcardSectionGroup(_OptionContainer, Option):
     .. code-block:: python
 
         >>> Bcfg2.Options.setup
-        Namespace(myplugin_bar_description='Bar description', myplugin_myplugin_bar_number=2, myplugin_myplugin_foo_description='Foo description', myplugin_myplugin_foo_number=1, myplugin_sections=['myplugin:foo', 'myplugin:bar'])
+        Namespace(myplugin_bar_description='Bar description',
+                  myplugin_myplugin_bar_number=2,
+                  myplugin_myplugin_foo_description='Foo description',
+                  myplugin_myplugin_foo_number=1,
+                  myplugin_sections=['myplugin:foo', 'myplugin:bar'])
 
     All options must have the same section glob.
 

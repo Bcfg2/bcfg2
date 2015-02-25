@@ -30,7 +30,7 @@ class TermiosFormatter(logging.Formatter):
                                                        "\000" * 8))[1]
                 if self.width == 0:
                     self.width = 80
-            except:  # pylint: disable=W0702
+            except:  # pylint: disable=bare-except
                 self.width = 80
         else:
             # output to a pipe
@@ -112,7 +112,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                     encoded = msg
                 self.socket.send(encoded)
             except socket.error:
-                for i in range(10):  # pylint: disable=W0612
+                for _ in range(10):
                     try:
                         if isinstance(self.address, tuple):
                             self.socket = socket.socket(socket.AF_INET,
@@ -131,7 +131,7 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                                                           logging.WARNING),
                                       self.format(reconn)))
                     self.socket.send(msg)
-                except:  # pylint: disable=W0702
+                except:  # pylint: disable=bare-except
                     # If we still fail then drop it.  Running
                     # bcfg2-server as non-root can trigger permission
                     # denied exceptions.
@@ -145,9 +145,11 @@ def add_console_handler(level=logging.DEBUG):
     # tell the handler to use this format
     console.setFormatter(TermiosFormatter())
     try:
-        console.set_name("console")  # pylint: disable=E1101
+        console.set_name("console")  # pylint: disable=no-member
     except AttributeError:
-        console.name = "console"  # pylint: disable=W0201
+        # pylint: disable=attribute-defined-outside-init
+        console.name = "console"
+        # pylint: enable=attribute-defined-outside-init
     logging.root.addHandler(console)
 
 
@@ -166,16 +168,18 @@ def add_syslog_handler(procname=None, syslog_facility='daemon',
                                               ('localhost', 514),
                                               syslog_facility)
         try:
-            syslog.set_name("syslog")  # pylint: disable=E1101
+            syslog.set_name("syslog")  # pylint: disable=no-member
         except AttributeError:
-            syslog.name = "syslog"  # pylint: disable=W0201
+            # pylint: disable=attribute-defined-outside-init
+            syslog.name = "syslog"
+            # pylint: enable=attribute-defined-outside-init
         syslog.setLevel(level)
         syslog.setFormatter(
             logging.Formatter('%(name)s[%(process)d]: %(message)s'))
         logging.root.addHandler(syslog)
     except socket.error:
         logging.root.error("Failed to activate syslogging")
-    except:
+    except:  # pylint: disable=bare-except
         print("Failed to activate syslogging")
 
 
@@ -183,9 +187,9 @@ def add_file_handler(level=logging.DEBUG):
     """Add a logging handler that logs to a file."""
     filelog = logging.FileHandler(Bcfg2.Options.setup.logfile)
     try:
-        filelog.set_name("file")  # pylint: disable=E1101
+        filelog.set_name("file")  # pylint: disable=no-member
     except AttributeError:
-        filelog.name = "file"  # pylint: disable=W0201
+        filelog.name = "file"  # pylint: disable=attribute-defined-outside-init
     filelog.setLevel(level)
     filelog.setFormatter(
         logging.Formatter('%(asctime)s %(name)s[%(process)d]: %(message)s'))

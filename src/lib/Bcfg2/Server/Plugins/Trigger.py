@@ -41,7 +41,7 @@ class Trigger(Bcfg2.Server.Plugin.Plugin,
                                       (args[0], result.error))
                 elif result.stderr:
                     self.debug_log("Trigger: Error: %s" % result.stderr)
-            os._exit(0)  # pylint: disable=W0212
+            os._exit(0)  # pylint: disable=protected-access
 
     def end_client_run(self, metadata):
         args = [metadata.hostname, '-p', metadata.profile, '-g',

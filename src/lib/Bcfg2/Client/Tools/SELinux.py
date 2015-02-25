@@ -13,7 +13,7 @@ import seobject
 import Bcfg2.Client.XML
 import Bcfg2.Client.Tools
 from Bcfg2.Client.Tools.POSIX.File import POSIXFile
-from Bcfg2.Compat import long  # pylint: disable=W0622
+from Bcfg2.Compat import long  # pylint: disable=redefined-builtin
 
 
 def pack128(int_val):
@@ -24,7 +24,7 @@ def pack128(int_val):
         return struct.pack('>L', int_val)
 
     words = []
-    for i in range(4):  # pylint: disable=W0612
+    for _ in range(4):
         word = int_val & max_word_size
         words.append(int(word))
         int_val >>= 32
@@ -279,7 +279,7 @@ class SELinuxEntryHandler(object):
             return getattr(self, "_%sargs" % method)(entry)
         elif hasattr(self, "_defaultargs"):
             # default args
-            return self._defaultargs(entry)  # pylint: disable=E1101
+            return self._defaultargs(entry)  # pylint: disable=no-member
         else:
             raise NotImplementedError
 

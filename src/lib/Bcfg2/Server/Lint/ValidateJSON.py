@@ -8,14 +8,8 @@ Properties.
 import os
 import sys
 
+from Bcfg2.Compat import json
 import Bcfg2.Server.Lint
-
-try:
-    import json
-    # py2.4 json library is structured differently
-    json.loads  # pylint: disable=W0104
-except (ImportError, AttributeError):
-    import simplejson as json
 
 
 class ValidateJSON(Bcfg2.Server.Lint.ServerlessPlugin):

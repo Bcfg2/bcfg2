@@ -15,7 +15,7 @@ from Bcfg2.Server.Plugin.exceptions import PluginInitError, \
 # Since this file basically just contains abstract interface
 # descriptions, just about every function declaration has unused
 # arguments.  Disable this pylint warning for the whole file.
-# pylint: disable=W0613
+# pylint: disable=unused-argument
 
 
 class Generator(object):
@@ -126,7 +126,7 @@ class Metadata(object):
         """
         pass
 
-    def set_profile(self, client, profile, address):
+    def set_profile(self, client, profile, address, require_public=True):
         """ Set the profile for the named client to the named profile
         group.
 
@@ -136,6 +136,8 @@ class Metadata(object):
         :type profile: string
         :param address: Address pair of ``(<ip address>, <hostname>)``
         :type address: tuple
+        :param require_public: Require that the profile group is public.
+        :type require_public: bool
         :return: None
         :raises: :class:`Bcfg2.Server.Plugin.exceptions.MetadataRuntimeError`,
                  :class:`Bcfg2.Server.Plugin.exceptions.MetadataConsistencyError`
@@ -444,7 +446,7 @@ class ThreadedStatistics(Statistics, Threaded, threading.Thread):
                 (client, xdata) = self.work_queue.get(block=True, timeout=2)
             except Empty:
                 continue
-            except:
+            except:  # pylint: disable=bare-except
                 # we want to catch all exceptions here so that a stray
                 # error doesn't kill the entire statistics thread. For
                 # instance, if a bad value gets pushed onto the queue
@@ -481,7 +483,7 @@ class ThreadedStatistics(Statistics, Threaded, threading.Thread):
         raise NotImplementedError
 
 
-# pylint: disable=C0111
+# pylint: disable=missing-docstring
 # Someone who understands these interfaces better needs to write docs
 # for PullSource and PullTarget
 class PullSource(object):
@@ -498,7 +500,7 @@ class PullTarget(object):
 
     def AcceptPullData(self, specific, new_entry, verbose):
         raise NotImplementedError
-# pylint: enable=C0111
+# pylint: enable=missing-docstring
 
 
 class Decision(object):

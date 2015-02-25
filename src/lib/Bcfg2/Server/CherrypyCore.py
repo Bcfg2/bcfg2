@@ -12,7 +12,7 @@ from cherrypy._cptools import ErrorTool
 from cherrypy.process.plugins import Daemonizer, DropPrivileges, PIDFile
 
 
-def on_error(*args, **kwargs):  # pylint: disable=W0613
+def on_error(*args, **kwargs):  # pylint: disable=unused-argument
     """ CherryPy error handler that handles :class:`xmlrpclib.Fault`
     objects and so allows for the possibility of returning proper
     error codes. This obviates the need to use
@@ -22,7 +22,7 @@ def on_error(*args, **kwargs):  # pylint: disable=W0613
     err = sys.exc_info()[1]
     if not isinstance(err, xmlrpclib.Fault):
         err = xmlrpclib.Fault(xmlrpclib.INTERNAL_ERROR, str(err))
-    xmlrpcutil._set_response(xmlrpclib.dumps(err))  # pylint: disable=W0212
+    xmlrpcutil._set_response(xmlrpclib.dumps(err))  # pylint: disable=protected-access
 
 cherrypy.tools.xmlrpc_error = ErrorTool(on_error)
 
@@ -76,7 +76,7 @@ class CherrypyCore(NetworkCore):
             raise cherrypy.HTTPError(401)
 
     @cherrypy.expose
-    def default(self, *args, **params):  # pylint: disable=W0613
+    def default(self, *_, **params):
         """ Handle all XML-RPC calls.  It was necessary to make enough
         changes to the stock CherryPy
         :class:`cherrypy._cptools.XMLRPCController` to support plugin

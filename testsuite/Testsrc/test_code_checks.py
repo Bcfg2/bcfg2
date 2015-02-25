@@ -5,6 +5,8 @@ import glob
 import copy
 from subprocess import Popen, PIPE, STDOUT
 
+from Bcfg2.Compat import any
+
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4
 _path = os.path.dirname(__file__)
@@ -81,16 +83,6 @@ no_checks = {
 if sys.version_info < (2, 6):
     # multiprocessing core requires py2.6
     no_checks['lib/Bcfg2/Server'] = ['MultiprocessingCore.py']
-
-try:
-    any
-except NameError:
-    def any(iterable):
-        """ implementation of builtin any() for python 2.4 """
-        for element in iterable:
-            if element:
-                return True
-        return False
 
 
 def expand_path_dict(pathdict):
@@ -299,7 +291,7 @@ class TestPylint(CodeTestCase):
                os.path.join(srcpath, "lib")]
 
     sbin_args = ["--module-rgx", "[a-z_-][a-z0-9_-]*$"]
-    error_args = ["-f", "parseable", "-d", "R0801,E1103"]
+    error_args = ["-f", "parseable", "-d", "E1103"]
 
     # regex to find errors and fatal errors
     error_re = re.compile(r':\d+:\s+\[[EF]\d{4}')
@@ -314,7 +306,7 @@ class TestPylint(CodeTestCase):
                 self.blacklist += expand_path_dict(filedict)
 
     def _test_errors(self, files, extra_args=None):
-        """ test all files for fatals and errors """
+    """ test all files for fatals and errors """
         if not len(files):
             return
         if extra_args is None:

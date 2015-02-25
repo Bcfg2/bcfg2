@@ -87,10 +87,10 @@ class Statistics(object):
 
 #: A module-level :class:`Statistics` objects used to track all
 #: execution time metrics for the server.
-stats = Statistics()  # pylint: disable=C0103
+stats = Statistics()  # pylint: disable=invalid-name
 
 
-class track_statistics(object):  # pylint: disable=C0103
+class track_statistics(object):  # pylint: disable=invalid-name
     """ Decorator that tracks execution time for the given method with
     :mod:`Bcfg2.Server.Statistics` for reporting via ``bcfg2-admin
     perf`` """

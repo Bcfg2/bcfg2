@@ -117,10 +117,10 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
             # perform progressively more expensive comparisons
             if seqmatch.real_quick_ratio() == 1.0:
                 identical.add(cname)
-            elif (
-                seqmatch.real_quick_ratio() > Bcfg2.Options.setup.threshold and
-                seqmatch.quick_ratio() > Bcfg2.Options.setup.threshold and
-                seqmatch.ratio() > Bcfg2.Options.setup.threshold):
+            elif (seqmatch.real_quick_ratio() >
+                  Bcfg2.Options.setup.threshold and
+                  seqmatch.quick_ratio() > Bcfg2.Options.setup.threshold and
+                  seqmatch.ratio() > Bcfg2.Options.setup.threshold):
                 similar.add(cname)
         if similar:
             similar.add(fname)

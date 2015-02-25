@@ -30,7 +30,7 @@ try:
 
     HAS_DJANGO = True
     try:
-        import south  # pylint: disable=W0611
+        import south  # pylint: disable=unused-import
         HAS_REPORTS = True
     except ImportError:
         HAS_REPORTS = False
@@ -39,14 +39,14 @@ except ImportError:
     HAS_REPORTS = False
 
 
-class ccolors:  # pylint: disable=C0103,W0232
+class ccolors(object):  # pylint: disable=invalid-name
     """ ANSI color escapes to make colorizing text easier """
-    # pylint: disable=W1401
+    # pylint: disable=anomalous-backslash-in-string
     ADDED = '\033[92m'
     CHANGED = '\033[93m'
     REMOVED = '\033[91m'
     ENDC = '\033[0m'
-    # pylint: enable=W1401
+    # pylint: enable=anomalous-backslash-in-string
 
     @classmethod
     def disable(cls):
@@ -95,7 +95,7 @@ def print_table(rows, justify='left', hdr=True, vdelim=" ", padding=1):
             hdr = False
 
 
-class AdminCmd(Bcfg2.Options.Subcommand):  # pylint: disable=W0223
+class AdminCmd(Bcfg2.Options.Subcommand):  # pylint: disable=abstract-method
     """ Base class for all bcfg2-admin modes """
     def setup(self):
         """ Perform post-init (post-options parsing), pre-run setup
@@ -108,7 +108,7 @@ class AdminCmd(Bcfg2.Options.Subcommand):  # pylint: disable=W0223
         raise SystemExit(1)
 
 
-class _ServerAdminCmd(AdminCmd):  # pylint: disable=W0223
+class _ServerAdminCmd(AdminCmd):  # pylint: disable=abstract-method
     """ Base class for admin modes that run a Bcfg2 server. """
     __plugin_whitelist__ = None
     __plugin_blacklist__ = None
@@ -142,7 +142,7 @@ class _ServerAdminCmd(AdminCmd):  # pylint: disable=W0223
         self.core.shutdown()
 
 
-class _ProxyAdminCmd(AdminCmd):  # pylint: disable=W0223
+class _ProxyAdminCmd(AdminCmd):  # pylint: disable=abstract-method
     """ Base class for admin modes that proxy to a running Bcfg2 server """
 
     options = AdminCmd.options + Bcfg2.Client.Proxy.ComponentProxy.options
@@ -342,7 +342,8 @@ class Compare(AdminCmd):
             self.errExit("Cannot diff a file and a directory")
         return files
 
-    def run(self, setup):  # pylint: disable=R0912,R0914,R0915
+    # pylint: disable=too-many-branches,too-many-locals,too-many-statements
+    def run(self, setup):
         if not sys.stdout.isatty() and not setup.color:
             ccolors.disable()
 
@@ -437,6 +438,7 @@ class Compare(AdminCmd):
             print(change)
             if len(files) > 1 and len(hlist):
                 print("")
+    # pylint: enable=too-many-branches,too-many-locals,too-many-statements
 
 
 class Init(AdminCmd):
@@ -619,7 +621,7 @@ bcfg2 = %s
             open(self.data['configfile'], "w").write(confdata)
             os.chmod(self.data['configfile'],
                      stat.S_IRUSR | stat.S_IWUSR)  # 0600
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             self.errExit("Error trying to write configuration file '%s': %s" %
                          (self.data['configfile'], sys.exc_info()[1]))
 
@@ -687,7 +689,7 @@ class Minestruct(_ServerAdminCmd):
             for source in self.core.plugins_by_type(PullSource):
                 for item in source.GetExtra(setup.hostname):
                     extra.add(item)
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             self.errExit("Failed to find extra entry info for client %s: %s" %
                          (setup.hostname, sys.exc_info()[1]))
         root = lxml.etree.Element("Base")
@@ -736,9 +738,9 @@ class Pull(_ServerAdminCmd):
 
     def setup(self):
         if (not Bcfg2.Options.setup.stdin and
-            not (Bcfg2.Options.setup.hostname and
-                 Bcfg2.Options.setup.entrytype and
-                 Bcfg2.Options.setup.entryname)):
+                not (Bcfg2.Options.setup.hostname and
+                     Bcfg2.Options.setup.entrytype and
+                     Bcfg2.Options.setup.entryname)):
             print("You must specify either --stdin or a hostname, entry type, "
                   "and entry name on the command line.")
             self.errExit(self.usage())
@@ -752,7 +754,7 @@ class Pull(_ServerAdminCmd):
                     self.PullEntry(*line.split(None, 3))
                 except SystemExit:
                     print("  for %s" % line)
-                except:
+                except:  # pylint: disable=bare-except
                     print("Bad entry: %s" % line.strip())
         else:
             self.PullEntry(setup.hostname, setup.entrytype, setup.entryname)
@@ -842,7 +844,7 @@ class Pull(_ServerAdminCmd):
                 vcsplugin.commit_data([files], comment)
 
 
-class _ReportsCmd(AdminCmd):  # pylint: disable=W0223
+class _ReportsCmd(AdminCmd):  # pylint: disable=abstract-method
     """ Base command for all admin modes dealing with the reporting
     subsystem """
     def __init__(self):
@@ -856,7 +858,7 @@ class _ReportsCmd(AdminCmd):  # pylint: disable=W0223
         # means that if we import this before Bcfg2.DBSettings has
         # been populated, Django gets a null configuration, and
         # subsequent updates to Bcfg2.DBSettings won't help.
-        import Bcfg2.Reporting.models  # pylint: disable=W0621
+        import Bcfg2.Reporting.models  # pylint: disable=redefined-outer-name
         self.reports_entries = (Bcfg2.Reporting.models.Group,
                                 Bcfg2.Reporting.models.Bundle,
                                 Bcfg2.Reporting.models.FailureEntry,
@@ -934,7 +936,7 @@ if HAS_REPORTS:
             from Bcfg2.Reporting.Compat import transaction
             self.run = transaction.atomic(self.run)
 
-        def run(self, _):  # pylint: disable=E0202
+        def run(self, _):  # pylint: disable=method-hidden
             # Cleanup unused entries
             for cls in self.reports_entries:
                 try:
@@ -943,7 +945,7 @@ if HAS_REPORTS:
                     self.logger.info("Pruned %d %s records" %
                                      (start_count - cls.objects.count(),
                                       cls.__name__))
-                except:  # pylint: disable=W0702
+                except:  # pylint: disable=bare-except
                     print("Failed to prune %s: %s" %
                           (cls.__name__, sys.exc_info()[1]))
 
@@ -956,7 +958,7 @@ if HAS_REPORTS:
                                                 verbosity=verbose)
                 Bcfg2.DBSettings.migrate_databases(interactive=False,
                                                    verbosity=verbose)
-            except:  # pylint: disable=W0702
+            except:  # pylint: disable=bare-except
                 self.errExit("%s failed: %s" %
                              (self.__class__.__name__.title(),
                               sys.exc_info()[1]))
@@ -1050,7 +1052,7 @@ if HAS_REPORTS:
                         id__in=[x['id'] for x in grp]).delete()
                     rnum += len(grp)
                     self.logger.debug("Deleted %s of %s" % (rnum, count))
-            except:  # pylint: disable=W0702
+            except:  # pylint: disable=bare-except
                 self.logger.error("Failed to remove interactions: %s" %
                                   sys.exc_info()[1])
 
@@ -1065,7 +1067,7 @@ if HAS_REPORTS:
                 try:
                     self.logger.debug("Purging client %s" % client)
                     cobj.delete()
-                except:  # pylint: disable=W0702
+                except:  # pylint: disable=bare-except
                     self.logger.error("Failed to delete client %s: %s" %
                                       (client, sys.exc_info()[1]))
 

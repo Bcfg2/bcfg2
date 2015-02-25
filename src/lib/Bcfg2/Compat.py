@@ -10,7 +10,8 @@ Python 2.4 and such-like """
 
 import sys
 
-# pylint: disable=E0601,E0602,E0611,W0611,W0622,C0103
+# pylint: disable=no-name-in-module,unused-import,redefined-builtin
+# pylint: disable=invalid-name
 
 try:
     from email.Utils import formatdate
@@ -91,7 +92,7 @@ def u_str(string, encoding=None):
 try:
     from functools import wraps
 except ImportError:
-    def wraps(wrapped):  # pylint: disable=W0613
+    def wraps(_):
         """ implementation of functools.wraps() for python 2.4 """
         return lambda f: f
 
@@ -101,14 +102,16 @@ if sys.hexversion >= 0x03000000:
     from base64 import b64encode as _b64encode, b64decode as _b64decode
 
     @wraps(_b64encode)
-    def b64encode(val, **kwargs):  # pylint: disable=C0111
+    def b64encode(val, **kwargs):
+        """py3k-compatible b64encode that works on bytes or strings."""
         try:
             return _b64encode(val, **kwargs)
         except TypeError:
             return _b64encode(val.encode('UTF-8'), **kwargs).decode('UTF-8')
 
     @wraps(_b64decode)
-    def b64decode(val, **kwargs):  # pylint: disable=C0111
+    def b64decode(val, **kwargs):
+        """py3k-compatible b64decode that works on bytes or strings."""
         return _b64decode(val.encode('UTF-8'), **kwargs).decode('UTF-8')
 else:
     from base64 import b64encode, b64decode
@@ -162,13 +165,15 @@ except ImportError:
 
         def walk_packages(path=None, prefix='', onerror=None):
             """ Implementation of walk_packages for python 2.5 """
-            def seen(path, seenpaths={}):  # pylint: disable=W0102
+            # pylint: disable=dangerous-default-value
+            def seen(path, seenpaths={}):
                 """ detect if a path has been 'seen' (i.e., considered
                 for inclusion in the generator).  tracks what has been
                 seen through the magic of python default arguments """
                 if path in seenpaths:
                     return True
                 seenpaths[path] = True
+            # pylint: enable=dangerous-default-value
 
             for importer, name, ispkg in iter_modules(path, prefix):
                 yield importer, name, ispkg
@@ -179,7 +184,7 @@ except ImportError:
                     except ImportError:
                         if onerror is not None:
                             onerror(name)
-                    except Exception:
+                    except:  # pylint: disable=bare-except
                         if onerror is not None:
                             onerror(name)
                         else:
@@ -211,7 +216,7 @@ except ImportError:
                 for fname in os.listdir(mpath):
                     fpath = os.path.join(mpath, fname)
                     if (os.path.isfile(fpath) and fname.endswith(".py") and
-                        fname != '__init__.py'):
+                            fname != '__init__.py'):
                         yield None, prefix + fname[:-3], False
                     elif os.path.isdir(fpath):
                         mname = prefix + fname
@@ -222,7 +227,7 @@ except ImportError:
                         except ImportError:
                             if onerror is not None:
                                 onerror(mname)
-                        except Exception:
+                        except:  # pylint: disable=bare-except
                             if onerror is not None:
                                 onerror(mname)
                             else:
@@ -286,3 +291,16 @@ except NameError:
     def cmp(a, b):
         """ Py3k implementation of cmp() """
         return (a > b) - (a < b)
+
+
+# try to find a working JSON library, but don't fail if we can't find
+# one; JSON is only an optional dependency
+try:
+    import json
+    # py2.4 json library is structured differently
+    json.loads  # pylint: disable=pointless-statement
+except (ImportError, AttributeError):
+    try:
+        import simplejson as json
+    except ImportError:
+        pass

@@ -2,18 +2,14 @@
 operating system using ohai
 (http://wiki.opscode.com/display/chef/Ohai) """
 
+import glob
 import os
 import sys
-import glob
-import lxml.etree
-import Bcfg2.Server.Plugin
 
-try:
-    import json
-    # py2.4 json library is structured differently
-    json.loads  # pylint: disable=W0104
-except (ImportError, AttributeError):
-    import simplejson as json
+import lxml.etree
+
+from Bcfg2.Compat import json
+import Bcfg2.Server.Plugin
 
 PROBECODE = """#!/bin/sh
 

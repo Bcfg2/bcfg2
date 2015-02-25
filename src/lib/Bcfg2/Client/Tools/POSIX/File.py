@@ -7,7 +7,7 @@ import difflib
 import tempfile
 import Bcfg2.Options
 from Bcfg2.Client.Tools.POSIX.base import POSIXTool
-from Bcfg2.Compat import unicode, b64encode, b64decode  # pylint: disable=W0622
+from Bcfg2.Compat import unicode, b64encode, b64decode  # pylint: disable=redefined-builtin
 
 
 class POSIXFile(POSIXTool):
@@ -29,7 +29,7 @@ class POSIXFile(POSIXTool):
         try:
             strng.decode(encoding)
             return True
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             return False
 
     def _get_data(self, entry):
@@ -157,7 +157,7 @@ class POSIXFile(POSIXTool):
 
         return POSIXTool.install(self, entry) and rv
 
-    def _get_diffs(self, entry, interactive=False,  # pylint: disable=R0912
+    def _get_diffs(self, entry, interactive=False,
                    sensitive=False, is_binary=False, content=None):
         """ generate the necessary diffs for entry """
         if not interactive and sensitive:

@@ -114,7 +114,7 @@ def main():
     logger.info("%s: Using Git repo at %s" % (progname, gitroot))
     try:
         repo = git.Repo(gitroot)
-    except:  # pylint: disable=W0702
+    except:  # pylint: disable=bare-except
         logger.error("%s: Error setting up Git repo at %s: %s" %
                      (progname, gitroot, sys.exc_info()[1]))
         return 1

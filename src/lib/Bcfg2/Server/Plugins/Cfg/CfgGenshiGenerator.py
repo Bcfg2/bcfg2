@@ -117,7 +117,7 @@ class CfgGenshiGenerator(CfgGenerator):
                                                (err.__class__.__name__, err,
                                                 quad[2]))
             raise
-        except:
+        except:  # pylint: disable=bare-except
             # this needs to be a blanket except, since it can catch
             # any error raised by the genshi template.
             self._handle_genshi_exception(sys.exc_info())

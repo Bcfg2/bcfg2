@@ -257,7 +257,7 @@ class POSIXAugeas(POSIXTool):
                     cmd.command.set("verified", "false")
                 else:
                     cmd.command.set("verified", "true")
-            except:  # pylint: disable=W0702
+            except:  # pylint: disable=bare-except
                 err = "Augeas: Unexpected error verifying %s: %s: %s" % \
                       (entry.get("name"), cmd, sys.exc_info()[1])
                 self.logger.error(err)
@@ -282,14 +282,14 @@ class POSIXAugeas(POSIXTool):
         for cmd in self.get_commands(entry):
             try:
                 cmd.install()
-            except:  # pylint: disable=W0702
+            except:  # pylint: disable=bare-except
                 self.logger.error(
                     "Failure running Augeas command on %s: %s: %s" %
                     (entry.get("name"), cmd, sys.exc_info()[1]))
                 rv = False
         try:
             self.get_augeas(entry).save()
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             self.logger.error("Failure saving Augeas changes to %s: %s" %
                               (entry.get("name"), sys.exc_info()[1]))
             rv = False

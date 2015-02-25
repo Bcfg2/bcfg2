@@ -21,7 +21,7 @@ from Bcfg2.Compat import walk_packages
 from Bcfg2.Options import _debug
 
 
-def _ioctl_GWINSZ(fd):  # pylint: disable=C0103
+def _ioctl_GWINSZ(fd):  # pylint: disable=invalid-name
     """ get a tuple of (height, width) giving the size of the window
     from the given file descriptor """
     try:
@@ -274,14 +274,14 @@ class ErrorHandler(object):
                     logfunc(line)
 
 
-class ServerlessPlugin(Plugin):  # pylint: disable=W0223
+class ServerlessPlugin(Plugin):  # pylint: disable=abstract-method
     """ Base class for bcfg2-lint plugins that are run before the
     server starts up (i.e., plugins that check things that may prevent
     the server from starting up). """
     pass
 
 
-class ServerPlugin(Plugin):  # pylint: disable=W0223
+class ServerPlugin(Plugin):  # pylint: disable=abstract-method
     """ Base class for bcfg2-lint plugins that check things that
     require the running Bcfg2 server. """
 
@@ -324,7 +324,7 @@ class LintPluginOption(Bcfg2.Options.Option):
         """
 
         plugins = [p.__name__ for p in namespace.plugins]
-        for loader, name, _is_pkg in walk_packages(path=__path__):
+        for loader, name, _ in walk_packages(path=__path__):
             try:
                 module = loader.find_module(name).load_module(name)
                 plugin = getattr(module, name)
@@ -332,7 +332,9 @@ class LintPluginOption(Bcfg2.Options.Option):
                    plugin.__serverplugin__ in plugins:
                     _debug("Automatically adding lint plugin %s" %
                            plugin.__name__)
+                    # pylint: disable=no-member
                     self.default.append(plugin.__name__)
+                    # pylint: enable=no-member
             except ImportError:
                 pass
 

@@ -48,8 +48,7 @@ class MacPorts(Bcfg2.Client.Tools.PkgTool):
                                  "Want %s, but have %s" %
                                  (entry.get("name"),
                                   entry.get("version"),
-                                  self.installed[entry.get("name")],
-                                  ))
+                                  self.installed[entry.get("name")]))
 
                 entry.set('current_version', self.installed[entry.get('name')])
                 return False

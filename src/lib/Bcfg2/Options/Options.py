@@ -17,7 +17,7 @@ from Bcfg2.Compat import ConfigParser
 __all__ = ["Option", "BooleanOption", "RepositoryMacroOption", "PathOption",
            "PositionalArgument", "_debug"]
 
-unit_test = False  # pylint: disable=C0103
+unit_test = False  # pylint: disable=invalid-name
 
 
 def _debug(msg):
@@ -35,7 +35,7 @@ def _debug(msg):
 #: A dict that records a mapping of argparse action name (e.g.,
 #: "store_true") to the argparse Action class for it.  See
 #: :func:`_get_action_class`
-_action_map = dict()  # pylint: disable=C0103
+_action_map = dict()  # pylint: disable=invalid-name
 
 
 def _get_action_class(action_name):
@@ -102,7 +102,7 @@ class Option(object):
 
         #: The tuple giving the section and option name for this
         #: option in the config file
-        self.cf = None  # pylint: disable=C0103
+        self.cf = None  # pylint: disable=invalid-name
 
         #: The environment variable that this option can take its
         #: value from
@@ -292,7 +292,7 @@ class Option(object):
         for action in self.actions.values():
             action.dest = value
 
-    def early_parsing_hook(self, early_opts):  # pylint: disable=C0111
+    def early_parsing_hook(self, early_opts):
         """Hook called at the end of early option parsing.
 
         This can be used to save option values for macro fixup.

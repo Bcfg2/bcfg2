@@ -64,9 +64,9 @@ class InfoXML(Bcfg2.Server.Lint.ServerPlugin):
             if ((Bcfg2.Options.setup.default_paranoid == "true" and
                  info.get("paranoid") is not None and
                  info.get("paranoid").lower() == "false") or
-                (Bcfg2.Options.setup.default_paranoid == "false" and
-                 (info.get("paranoid") is None or
-                  info.get("paranoid").lower() != "true"))):
+                    (Bcfg2.Options.setup.default_paranoid == "false" and
+                     (info.get("paranoid") is None or
+                      info.get("paranoid").lower() != "true"))):
                 self.LintError("paranoid-false",
                                "Paranoid must be true in %s:%s" %
                                (fname, self.RenderXML(info)))

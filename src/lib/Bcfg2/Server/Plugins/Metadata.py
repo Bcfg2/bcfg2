@@ -13,26 +13,26 @@ import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
-import Bcfg2.Server.FileMonitor
+from Bcfg2.Server.FileMonitor import Pseudo
 from Bcfg2.Utils import locked
 from Bcfg2.Server.Cache import Cache
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 from Bcfg2.Compat import MutableMapping, all, any, wraps
-# pylint: enable=W0622
+# pylint: enable=redefined-builtin
 from Bcfg2.version import Bcfg2VersionInfo
 
-# pylint: disable=C0103
+# pylint: disable=invalid-name
 ClientVersions = None
 MetadataClientModel = None
-# pylint: enable=C0103
+# pylint: enable=invalid-name
 HAS_DJANGO = False
 
 
 def load_django_models():
     """ Load models for Django after option parsing has completed """
-    # pylint: disable=W0602
+    # pylint: disable=global-variable-not-assigned,invalid-name
     global MetadataClientModel, ClientVersions, HAS_DJANGO
-    # pylint: enable=W0602
+    # pylint: enable=global-variable-not-assigned,invalid-name
 
     try:
         from django.db import models
@@ -41,13 +41,14 @@ def load_django_models():
         HAS_DJANGO = False
         return
 
-    class MetadataClientModel(models.Model,  # pylint: disable=W0621
+    # pylint: disable=redefined-outer-name,unused-variable
+    class MetadataClientModel(models.Model,
                               Bcfg2.Server.Plugin.PluginDatabaseModel):
         """ django model for storing clients in the database """
         hostname = models.CharField(max_length=255, primary_key=True)
         version = models.CharField(max_length=31, null=True)
 
-    class ClientVersions(MutableMapping,  # pylint: disable=W0621,W0612
+    class ClientVersions(MutableMapping,
                          Bcfg2.Server.Plugin.DatabaseBacked):
         """ dict-like object to make it easier to access client bcfg2
         versions from the database """
@@ -98,6 +99,7 @@ def load_django_models():
                 return True
             except MetadataClientModel.DoesNotExist:
                 return False
+    # pylint: enable=redefined-outer-name,unused-variable
 
 
 class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
@@ -116,7 +118,7 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
         self.basedir = metadata.data
         self.logger = metadata.logger
         self.pseudo_monitor = isinstance(Bcfg2.Server.FileMonitor.get_fam(),
-                                         Bcfg2.Server.FileMonitor.Pseudo)
+                                         Pseudo.Pseudo)
 
     def _get_xdata(self):
         """ getter for xdata property """
@@ -264,9 +266,10 @@ class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
 
 class ClientMetadata(object):
     """This object contains client metadata."""
-    # pylint: disable=R0913
-    def __init__(self, client, profile, groups, bundles, aliases, addresses,
-                 categories, uuid, password, version, query):
+
+    def __init__(self, client, profile,  # pylint: disable=too-many-arguments
+                 groups, bundles, aliases, addresses, categories, uuid,
+                 password, version, query):
         #: The client hostname (as a string)
         self.hostname = client
 
@@ -311,7 +314,6 @@ class ClientMetadata(object):
         #: A :class:`Bcfg2.Server.Plugins.Metadata.MetadataQuery`
         #: object for this client.
         self.query = query
-    # pylint: enable=R0913
 
     def inGroup(self, group):
         """Test to see if client is a member of group.
@@ -396,18 +398,17 @@ class MetadataQuery(object):
     def _warn_string(self, func):
         """ decorator to warn that a MetadataQuery function that
         expects a list has been called with a single string argument
-        instead.  this is a common mistake in templates, and it
+        instead. This is a common mistake in templates, and it
         doesn't cause errors because strings are iterables """
 
-        # pylint: disable=C0111
         @wraps(func)
         def inner(arg):
+            """Decorated function."""
             if isinstance(arg, str):
                 self.logger.warning("%s: %s takes a list as argument, not a "
                                     "string" % (self.__class__.__name__,
                                                 func.__name__))
             return func(arg)
-        # pylint: enable=C0111
 
         return inner
 
@@ -450,16 +451,16 @@ class MetadataQuery(object):
         return [self.by_name(name) for name in self.all_clients()]
 
 
-class MetadataGroup(tuple):  # pylint: disable=E0012,R0924
+class MetadataGroup(tuple):
     """ representation of a metadata group.  basically just a named tuple """
 
-    # pylint: disable=R0913,W0613
-    def __new__(cls, name, bundles=None, category=None, is_profile=False,
-                is_public=False):
+    # pylint: disable=unused-argument
+    def __new__(cls, name, bundles=None, category=None,
+                is_profile=False, is_public=False):
         if bundles is None:
             bundles = set()
         return tuple.__new__(cls, (bundles, category))
-    # pylint: enable=W0613
+    # pylint: enable=unused-argument
 
     def __init__(self, name, bundles=None, category=None, is_profile=False,
                  is_public=False):
@@ -473,7 +474,6 @@ class MetadataGroup(tuple):  # pylint: disable=E0012,R0924
         self.is_public = is_public
         # record which clients we've warned about category suppression
         self.warned = []
-    # pylint: enable=R0913
 
     def __str__(self):
         return repr(self)
@@ -548,7 +548,9 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         self.ordered_groups = []
         # mapping of hostname -> version string
         if self._use_db:
-            self.versions = ClientVersions(core)  # pylint: disable=E1102
+            # pylint: disable=not-callable
+            self.versions = ClientVersions(core)
+            # pylint: enable=not-callable
         else:
             self.versions = dict()
 
@@ -669,9 +671,9 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             try:
                 client = MetadataClientModel.objects.get(hostname=client_name)
             except MetadataClientModel.DoesNotExist:
-                # pylint: disable=E1102
+                # pylint: disable=not-callable
                 client = MetadataClientModel(hostname=client_name)
-                # pylint: enable=E1102
+                # pylint: enable=not-callable
                 client.save()
             self.update_client_list()
             return client
@@ -789,7 +791,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         else:
             return self._remove_xdata(self.clients_xml, "Client", client_name)
 
-    def _handle_clients_xml_event(self, _):  # pylint: disable=R0912
+    def _handle_clients_xml_event(self, _):
         """ handle all events for clients.xml and files xincluded from
         clients.xml """
         # disable metadata builds during parsing.  this prevents
@@ -886,7 +888,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         return lambda client, groups, cats: \
             all(cond(client, groups, cats) for cond in conditions)
 
-    def _handle_groups_xml_event(self, _):  # pylint: disable=R0912
+    def _handle_groups_xml_event(self, _):
         """ re-read groups.xml on any event on it """
         # disable metadata builds during parsing.  this prevents
         # clients from getting bogus metadata during the brief time it
@@ -981,8 +983,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
                         self.debug_log("Client %s set as nonexistent group %s"
                                        % (client, group))
 
-    def set_profile(self, client, profile,  # pylint: disable=W0221
-                    addresspair, require_public=True):
+    def set_profile(self, client, profile, addresspair, require_public=True):
         """Set group parameter for provided client."""
         self.logger.info("Asserting client %s profile to %s" % (client,
                                                                 profile))
@@ -1178,7 +1179,8 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             return True
         return rv
 
-    def get_initial_metadata(self, client):  # pylint: disable=R0914,R0912
+    # pylint: disable=too-many-locals,too-many-branches
+    def get_initial_metadata(self, client):
         """Return the metadata for a given client."""
         if False in list(self.states.values()):
             raise Bcfg2.Server.Plugin.MetadataRuntimeError("Metadata has not "
@@ -1284,6 +1286,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
         if self.core.metadata_cache_mode == 'initial':
             self.cache[client] = rv
         return rv
+    # pylint: disable=too-many-locals,too-many-branches
 
     def get_all_group_names(self):
         """ return a list of all group names """
@@ -1383,7 +1386,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             self.logger.error("Resolved to %s" % resolved)
             return False
 
-    # pylint: disable=R0911,R0912
+    # pylint: disable=too-many-return-statements
     def AuthenticateConnection(self, cert, user, password, address):
         """This function checks auth creds."""
         if not isinstance(user, str):
@@ -1455,7 +1458,7 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             self.session_cache[address] = (time.time(), client)
         self.logger.debug("Client %s authenticated successfully" % client)
         return True
-    # pylint: enable=R0911,R0912
+    # pylint: enable=too-many-return-statements
 
     def update_client_list(self):
         """ Re-read the client list from the database (if the database is in

@@ -31,10 +31,8 @@ class Svn(Bcfg2.Server.Plugin.Version):
                 cf=("svn", "conflict_resolution"),
                 dest="svn_conflict_resolution",
                 type=lambda v: v.replace("-", "_"),
-                # pylint: disable=E1101
                 choices=dir(pysvn.wc_conflict_choice),
                 default=pysvn.wc_conflict_choice.postpone,
-                # pylint: enable=E1101
                 help="SVN conflict resolution method"))
 
     __author__ = 'bcfg-dev@mcs.anl.gov'
@@ -72,7 +70,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
         self.logger.debug("Svn: Initialized svn plugin with SVN directory %s" %
                           self.vcs_path)
 
-    def get_login(self, realm, username, may_save):  # pylint: disable=W0613
+    def get_login(self, *_):
         """ PySvn callback to get credentials for HTTP basic authentication """
         self.logger.debug("Svn: Logging in with username: %s" %
                           Bcfg2.Options.setup.svn_user)
@@ -106,7 +104,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
                 self.revision = info.revision
                 self.svn_root = info.url
                 return str(self.revision.number)
-            except pysvn.ClientError:  # pylint: disable=E1101
+            except pysvn.ClientError:
                 msg = "Svn: Failed to get revision: %s" % sys.exc_info()[1]
         else:
             result = self.cmd.run(["env LC_ALL=C", "svn", "info",
@@ -128,7 +126,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
             old_revision = self.revision.number
             self.revision = self.client.update(Bcfg2.Options.setup.vcs_root,
                                                recurse=True)[0]
-        except pysvn.ClientError:  # pylint: disable=E1101
+        except pysvn.ClientError:
             err = sys.exc_info()[1]
             # try to be smart about the error we got back
             details = None
@@ -170,7 +168,7 @@ class Svn(Bcfg2.Server.Plugin.Version):
             self.logger.info("Svn: Commited changes. At %s" %
                              self.revision.number)
             return True
-        except pysvn.ClientError:  # pylint: disable=E1101
+        except pysvn.ClientError:
             err = sys.exc_info()[1]
             # try to be smart about the error we got back
             details = None

@@ -45,7 +45,7 @@ class TemplateHelper(ServerPlugin):
 
         try:
             module = imp.load_source(safe_module_name(module_name), helper)
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             err = sys.exc_info()[1]
             self.LintError("templatehelper-import-error",
                            "Failed to import %s: %s" %

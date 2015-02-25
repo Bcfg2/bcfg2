@@ -1,28 +1,29 @@
 """ Bcfg2.Server.Core provides the base core object that server core
 implementations inherit from. """
 
+import atexit
+import inspect
+import itertools
+import logging
 import os
 import pwd
-import atexit
-import logging
 import select
 import sys
 import threading
 import time
-import inspect
+
 import lxml.etree
-import Bcfg2.Server
+
+from Bcfg2.Compat import xmlrpclib, wraps  # pylint: disable=redefined-builtin
+import Bcfg2.DBSettings
 import Bcfg2.Logger
 import Bcfg2.Options
-import Bcfg2.DBSettings
-import Bcfg2.Server.Statistics
-import Bcfg2.Server.FileMonitor
-from itertools import chain
+import Bcfg2.Server
 from Bcfg2.Server.Cache import Cache
-from Bcfg2.Compat import xmlrpclib, wraps  # pylint: disable=W0622
-from Bcfg2.Server.Plugin.exceptions import *  # pylint: disable=W0401,W0614
-from Bcfg2.Server.Plugin.interfaces import *  # pylint: disable=W0401,W0614
-from Bcfg2.Server.Statistics import track_statistics
+import Bcfg2.Server.FileMonitor
+from Bcfg2.Server.Plugin import exceptions
+from Bcfg2.Server.Plugin import interfaces
+from Bcfg2.Server import Statistics
 
 try:
     from django.core.exceptions import ImproperlyConfigured
@@ -81,7 +82,7 @@ def close_db_connection(func):
     def inner(self, *args, **kwargs):
         """ The decorated function """
         rv = func(self, *args, **kwargs)
-        if self._database_available:  # pylint: disable=W0212
+        if self._database_available:  # pylint: disable=protected-access
             from django import db
             self.logger.debug("%s: Closing database connection" %
                               threading.current_thread().getName())
@@ -96,12 +97,12 @@ class CoreInitError(Exception):
     pass
 
 
-class NoExposedMethod (Exception):
+class NoExposedMethod(Exception):
     """ Raised when an XML-RPC method is called, but there is no
     method exposed with the given name. """
 
 
-class DefaultACL(Plugin, ClientACLs):
+class DefaultACL(interfaces.Plugin, interfaces.ClientACLs):
     """ Default ACL 'plugin' that provides security by default. This
     is only loaded if no other ClientACLs plugin is enabled. """
     create = False
@@ -118,7 +119,7 @@ class DefaultACL(Plugin, ClientACLs):
 
 # in core we frequently want to catch all exceptions, regardless of
 # type, so disable the pylint rule that catches that.
-# pylint: disable=W0702
+# pylint: disable=bare-except
 
 
 class Core(object):
@@ -150,7 +151,7 @@ class Core(object):
     #: implementations to provide a more specific name.
     name = "Core"
 
-    def __init__(self):  # pylint: disable=R0912,R0915
+    def __init__(self):
         """
         .. automethod:: _run
         .. automethod:: _block
@@ -337,11 +338,11 @@ class Core(object):
                                   sys.exc_info()[1])
         self.logger.info("File monitor thread terminated")
 
-    @track_statistics()
+    @Statistics.track_statistics()
     def _update_vcs_revision(self):
         """ Update the revision of the current configuration on-disk
         from the VCS plugin """
-        for plugin in self.plugins_by_type(Version):
+        for plugin in self.plugins_by_type(interfaces.Version):
             try:
                 newrev = plugin.get_revision()
                 if newrev != self.revision:
@@ -388,7 +389,7 @@ class Core(object):
                              (" ".join([x.name for x in depr])))
 
         # Find the metadata plugin and set self.metadata
-        mlist = self.plugins_by_type(Metadata)
+        mlist = self.plugins_by_type(interfaces.Metadata)
         if len(mlist) >= 1:
             self.metadata = mlist[0]
             if len(mlist) > 1:
@@ -418,7 +419,7 @@ class Core(object):
         self.plugin_blacklist[plugin.name] = cplugs
         try:
             self.plugins[plugin.name] = plugin(self)
-        except PluginInitError:
+        except exceptions.PluginInitError:
             self.logger.error("Failed to instantiate plugin %s" % plugin,
                               exc_info=1)
         except OSError:
@@ -478,7 +479,7 @@ class Core(object):
                                                        metadata.hostname))
         start = time.time()
         try:
-            for plugin in self.plugins_by_type(ClientRunHooks):
+            for plugin in self.plugins_by_type(interfaces.ClientRunHooks):
                 try:
                     getattr(plugin, hook)(metadata)
                 except AttributeError:
@@ -490,12 +491,11 @@ class Core(object):
                     self.logger.error("%s: Error invoking hook %s: %s" %
                                       (plugin, hook, err))
         finally:
-            Bcfg2.Server.Statistics.stats.add_value(
-                "%s:client_run_hook:%s" %
-                (self.__class__.__name__, hook),
-                time.time() - start)
+            Statistics.stats.add_value("%s:client_run_hook:%s" %
+                                       (self.__class__.__name__, hook),
+                                       time.time() - start)
 
-    @track_statistics()
+    @Statistics.track_statistics()
     def validate_structures(self, metadata, data):
         """ Checks the data structures by calling the
         :func:`Bcfg2.Server.Plugin.interfaces.StructureValidator.validate_structures`
@@ -510,10 +510,10 @@ class Core(object):
         :type data: list of lxml.etree._Element objects
         """
         self.logger.debug("Validating structures for %s" % metadata.hostname)
-        for plugin in self.plugins_by_type(StructureValidator):
+        for plugin in self.plugins_by_type(interfaces.StructureValidator):
             try:
                 plugin.validate_structures(metadata, data)
-            except ValidationError:
+            except exceptions.ValidationError:
                 err = sys.exc_info()[1]
                 self.logger.error("Plugin %s structure validation failed: %s" %
                                   (plugin.name, err))
@@ -522,7 +522,7 @@ class Core(object):
                 self.logger.error("Plugin %s: unexpected structure validation "
                                   "failure" % plugin.name, exc_info=1)
 
-    @track_statistics()
+    @Statistics.track_statistics()
     def validate_goals(self, metadata, data):
         """ Checks that the config matches the goals enforced by
         :class:`Bcfg2.Server.Plugin.interfaces.GoalValidator` plugins
@@ -536,10 +536,10 @@ class Core(object):
         :type data: list of lxml.etree._Element objects
         """
         self.logger.debug("Validating goals for %s" % metadata.hostname)
-        for plugin in self.plugins_by_type(GoalValidator):
+        for plugin in self.plugins_by_type(interfaces.GoalValidator):
             try:
                 plugin.validate_goals(metadata, data)
-            except ValidationError:
+            except exceptions.ValidationError:
                 err = sys.exc_info()[1]
                 self.logger.error("Plugin %s goal validation failed: %s" %
                                   (plugin.name, err.message))
@@ -548,7 +548,7 @@ class Core(object):
                 self.logger.error("Plugin %s: unexpected goal validation "
                                   "failure" % plugin.name, exc_info=1)
 
-    @track_statistics()
+    @Statistics.track_statistics()
     def GetStructures(self, metadata):
         """ Get all structures (i.e., bundles) for the given client
 
@@ -558,8 +558,9 @@ class Core(object):
         """
         self.logger.debug("Getting structures for %s" % metadata.hostname)
         structures = list(
-            chain(*[struct.BuildStructures(metadata)
-                    for struct in self.plugins_by_type(Structure)]))
+            itertools.chain(
+                *[struct.BuildStructures(metadata)
+                  for struct in self.plugins_by_type(interfaces.Structure)]))
         sbundles = [b.get('name') for b in structures
                     if b.tag == 'Bundle' or b.tag == 'Independent']
         missing = [b for b in metadata.bundles if b not in sbundles]
@@ -568,7 +569,7 @@ class Core(object):
                               (metadata.hostname, ':'.join(missing)))
         return structures
 
-    @track_statistics()
+    @Statistics.track_statistics()
     def BindStructures(self, structures, metadata, config):
         """ Given a list of structures (i.e. bundles), bind all the
         entries in them and add the structures to the config.
@@ -589,7 +590,7 @@ class Core(object):
             except:
                 self.logger.error("error in BindStructure", exc_info=1)
 
-    @track_statistics()
+    @Statistics.track_statistics()
     def BindStructure(self, structure, metadata):
         """ Bind all elements in a single structure (i.e., bundle).
 
@@ -611,7 +612,7 @@ class Core(object):
                 exc = sys.exc_info()[1]
                 if 'failure' not in entry.attrib:
                     entry.set('failure', 'bind error: %s' % exc)
-                if isinstance(exc, PluginExecutionError):
+                if isinstance(exc, exceptions.PluginExecutionError):
                     msg = "Failed to bind entry"
                 else:
                     msg = "Unexpected failure binding entry"
@@ -646,7 +647,7 @@ class Core(object):
                 self.logger.error("Falling back to %s:%s" %
                                   (entry.tag, entry.get('name')))
 
-        generators = self.plugins_by_type(Generator)
+        generators = self.plugins_by_type(interfaces.Generator)
         glist = [gen for gen in generators
                  if entry.get('name') in gen.Entries.get(entry.tag, {})]
         if len(glist) == 1:
@@ -662,13 +663,13 @@ class Core(object):
             if len(g2list) == 1:
                 return g2list[0].HandleEntry(entry, metadata)
             entry.set('failure', 'no matching generator')
-            raise PluginExecutionError("No matching generator: %s:%s" %
-                                       (entry.tag, entry.get('name')))
+            raise exceptions.PluginExecutionError(
+                "No matching generator: %s:%s" % (entry.tag,
+                                                  entry.get('name')))
         finally:
-            Bcfg2.Server.Statistics.stats.add_value("%s:Bind:%s" %
-                                                    (self.__class__.__name__,
-                                                     entry.tag),
-                                                    time.time() - start)
+            Statistics.stats.add_value("%s:Bind:%s" %
+                                       (self.__class__.__name__, entry.tag),
+                                       time.time() - start)
 
     def BuildConfiguration(self, client):
         """ Build the complete configuration for a client.
@@ -684,7 +685,7 @@ class Core(object):
                                     revision=self.revision)
         try:
             meta = self.build_metadata(client)
-        except MetadataConsistencyError:
+        except exceptions.MetadataConsistencyError:
             self.logger.error("Metadata consistency error for client %s" %
                               client)
             return lxml.etree.Element("error", type='metadata error')
@@ -782,7 +783,7 @@ class Core(object):
             if self.perflog_thread is not None:
                 self.perflog_thread.start()
 
-            for plug in self.plugins_by_type(Threaded):
+            for plug in self.plugins_by_type(interfaces.Threaded):
                 plug.start_threads()
 
             self.block_for_fam_events()
@@ -814,7 +815,7 @@ class Core(object):
         """
         self.logger.debug("Getting decision list for %s" % metadata.hostname)
         result = []
-        for plugin in self.plugins_by_type(Decision):
+        for plugin in self.plugins_by_type(interfaces.Decision):
             try:
                 result.extend(plugin.GetDecisions(metadata, mode))
             except:
@@ -822,7 +823,7 @@ class Core(object):
                                   % plugin.name, exc_info=1)
         return result
 
-    @track_statistics()
+    @Statistics.track_statistics()
     def check_acls(self, address, rmi):
         """ Check client IP address and metadata object against all
         :class:`Bcfg2.Server.Plugin.interfaces.ClientACLs` plugins.
@@ -877,7 +878,7 @@ class Core(object):
                               "%s" % (client, rmi, sys.exc_info()[1]))
             return False  # failsafe
 
-    @track_statistics()
+    @Statistics.track_statistics()
     def build_metadata(self, client_name):
         """ Build initial client metadata for a client
 
@@ -888,7 +889,7 @@ class Core(object):
         """
         if not hasattr(self, 'metadata'):
             # some threads start before metadata is even loaded
-            raise MetadataRuntimeError("Metadata not loaded yet")
+            raise exceptions.MetadataRuntimeError("Metadata not loaded yet")
         if self.metadata_cache_mode == 'initial':
             # the Metadata plugin handles loading the cached data if
             # we're only caching the initial metadata object
@@ -899,11 +900,11 @@ class Core(object):
             self.logger.debug("Building metadata for %s" % client_name)
             try:
                 imd = self.metadata.get_initial_metadata(client_name)
-            except MetadataConsistencyError:
+            except exceptions.MetadataConsistencyError:
                 self.critical_error(
                     "Client metadata resolution error for %s: %s" %
                     (client_name, sys.exc_info()[1]))
-            connectors = self.plugins_by_type(Connector)
+            connectors = self.plugins_by_type(interfaces.Connector)
             for conn in connectors:
                 groups = conn.get_additional_groups(imd)
                 groupnames = []
@@ -958,7 +959,7 @@ class Core(object):
         meta = self.build_metadata(client_name)
         state = statistics.find(".//Statistics")
         if state.get('version') >= '2.0':
-            for plugin in self.plugins_by_type(Statistics):
+            for plugin in self.plugins_by_type(interfaces.Statistics):
                 try:
                     plugin.process_statistics(meta, statistics)
                 except:
@@ -970,7 +971,7 @@ class Core(object):
                                                           state.get('state')))
         self.client_run_hook("end_statistics", meta)
 
-    @track_statistics()
+    @Statistics.track_statistics()
     def resolve_client(self, address, cleanup_cache=False, metadata=True):
         """ Given a client address, get the client hostname and
         optionally metadata.
@@ -1001,11 +1002,11 @@ class Core(object):
                 meta = self.build_metadata(client)
             else:
                 meta = None
-        except MetadataConsistencyError:
+        except exceptions.MetadataConsistencyError:
             err = sys.exc_info()[1]
             self.critical_error("Client metadata resolution error for %s: %s" %
                                 (address[0], err))
-        except MetadataRuntimeError:
+        except exceptions.MetadataRuntimeError:
             err = sys.exc_info()[1]
             self.critical_error('Metadata system runtime failure for %s: %s' %
                                 (address[0], err))
@@ -1057,7 +1058,7 @@ class Core(object):
     # XMLRPC handlers start here
 
     @exposed
-    def listMethods(self, address):  # pylint: disable=W0613
+    def listMethods(self, address):
         """ List all exposed methods, including plugin RMI.
 
         :param address: Client (address, port) pair
@@ -1073,11 +1074,9 @@ class Core(object):
         return methods
 
     @exposed
-    def methodHelp(self, address, method_name):  # pylint: disable=W0613
+    def methodHelp(self, _, method_name):
         """ Get help from the docstring of an exposed method
 
-        :param address: Client (address, port) pair
-        :type address: tuple
         :param method_name: The name of the method to get help on
         :type method_name: string
         :returns: string - The help message from the method's docstring
@@ -1089,7 +1088,7 @@ class Core(object):
         return func.__doc__
 
     @exposed
-    @track_statistics()
+    @Statistics.track_statistics()
     @close_db_connection
     def DeclareVersion(self, address, version):
         """ Declare the client version.
@@ -1106,7 +1105,8 @@ class Core(object):
                                                                      version))
         try:
             self.metadata.set_version(client, version)
-        except (MetadataConsistencyError, MetadataRuntimeError):
+        except (exceptions.MetadataConsistencyError,
+                exceptions.MetadataRuntimeError):
             err = sys.exc_info()[1]
             self.critical_error("Unable to set version for %s: %s" %
                                 (client, err))
@@ -1127,7 +1127,7 @@ class Core(object):
         client, metadata = self.resolve_client(address, cleanup_cache=True)
         self.logger.debug("Getting probes for %s" % client)
         try:
-            for plugin in self.plugins_by_type(Probing):
+            for plugin in self.plugins_by_type(interfaces.Probing):
                 for probe in plugin.GetProbes(metadata):
                     resp.append(probe)
             self.logger.debug("Sending probe list to %s" % client)
@@ -1200,7 +1200,8 @@ class Core(object):
         self.logger.debug("%s sets its profile to %s" % (client, profile))
         try:
             self.metadata.set_profile(client, profile, address)
-        except (MetadataConsistencyError, MetadataRuntimeError):
+        except (exceptions.MetadataConsistencyError,
+                exceptions.MetadataRuntimeError):
             err = sys.exc_info()[1]
             self.critical_error("Unable to assert profile for %s: %s" %
                                 (client, err))
@@ -1223,7 +1224,7 @@ class Core(object):
             config = self.BuildConfiguration(client)
             return lxml.etree.tostring(config,
                                        xml_declaration=False).decode('UTF-8')
-        except MetadataConsistencyError:
+        except exceptions.MetadataConsistencyError:
             self.critical_error("Metadata consistency failure for %s" % client)
 
     @exposed
@@ -1268,7 +1269,7 @@ class Core(object):
 
         :returns: dict - The statistics data as returned by
                   :func:`Bcfg2.Server.Statistics.Statistics.display` """
-        return Bcfg2.Server.Statistics.stats.display()
+        return Statistics.stats.display()
 
     @exposed
     def toggle_debug(self, address):

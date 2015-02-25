@@ -65,6 +65,7 @@ def load_models(plugins=None):
             return "version %d updated %s" % (self.version,
                                               self.updated.isoformat())
 
-        class Meta:  # pylint: disable=C0111,W0232
+        class Meta:  # pylint: disable=no-init
+            """Database version model metadata."""
             app_label = "reports"
             get_latest_by = "version"

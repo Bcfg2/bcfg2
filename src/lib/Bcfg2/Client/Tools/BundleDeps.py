@@ -16,7 +16,7 @@ class BundleDeps(Bcfg2.Client.Tools.Tool):
         """Simple no-op because we only need the BundleUpdated hook."""
         return dict()
 
-    def VerifyBundle(self, entry, _):  # pylint: disable=W0613
+    def VerifyBundle(self, *_):
         """Simple no-op because we only need the BundleUpdated hook."""
         return True
 

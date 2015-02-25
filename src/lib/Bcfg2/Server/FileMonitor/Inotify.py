@@ -4,8 +4,8 @@ support. """
 import os
 import errno
 import pyinotify
-from Bcfg2.Compat import reduce  # pylint: disable=W0622
-from Bcfg2.Server.FileMonitor import Event
+from Bcfg2.Compat import reduce  # pylint: disable=redefined-builtin
+from Bcfg2.Server.FileMonitor.base import Event
 from Bcfg2.Server.FileMonitor.Pseudo import Pseudo
 
 
@@ -19,16 +19,16 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
     #: priority
     __priority__ = 99
 
-    # pylint: disable=E1101
+    # pylint: disable=no-member
     #: Map pyinotify event constants to FAM :ref:`event codes
-    #: <development-fam-event-codes>`.  The mapping is not
+    #: <development-fam-event-codes>`. The mapping is not
     #: terrifically exact.
     action_map = {pyinotify.IN_CREATE: 'created',
                   pyinotify.IN_DELETE: 'deleted',
                   pyinotify.IN_MODIFY: 'changed',
                   pyinotify.IN_MOVED_FROM: 'deleted',
                   pyinotify.IN_MOVED_TO: 'created'}
-    # pylint: enable=E1101
+    # pylint: enable=no-member
 
     #: The pyinotify event mask.  We only ask for events that are
     #: listed in :attr:`action_map`

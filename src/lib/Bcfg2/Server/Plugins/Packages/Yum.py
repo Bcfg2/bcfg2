@@ -63,19 +63,17 @@ import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
 from lockfile import FileLock
 from Bcfg2.Utils import Executor
-from distutils.spawn import find_executable  # pylint: disable=E0611
-# pylint: disable=W0622
+# pylint: disable=redefined-builtin
 from Bcfg2.Compat import StringIO, cPickle, HTTPError, URLError, \
     ConfigParser, any
-# pylint: enable=W0622
+# pylint: enable=redefined-builtin
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import SourceInitError, Source, \
     fetch_url
 from Bcfg2.Server.Statistics import track_statistics
 
-LOGGER = logging.getLogger(__name__)
-
-# pylint: disable=E0611
+# pylint: disable=no-name-in-module
+from distutils.spawn import find_executable
 try:
     from pulp.client.consumer.config import ConsumerConfig
     from pulp.client.api.repository import RepositoryAPI
@@ -84,17 +82,13 @@ try:
     HAS_PULP = True
 except ImportError:
     HAS_PULP = False
-# pylint: enable=E0611
+# pylint: enable=no-name-in-module
+
+LOGGER = logging.getLogger(__name__)
 
 try:
     import yum
-    try:
-        import json
-        # py2.4 json library is structured differently
-        json.loads  # pylint: disable=W0104
-    except (ImportError, AttributeError):
-        import simplejson as json
-    HAS_YUM = True
+    from Bcfg2.Compat import json
 except ImportError:
     HAS_YUM = False
     LOGGER.info("Packages: No yum libraries found; forcing use of internal "
@@ -110,7 +104,7 @@ PULPSERVER = None
 PULPCONFIG = None
 
 
-options = [  # pylint: disable=C0103
+options = [  # pylint: disable=invalid-name
     Bcfg2.Options.Common.client_timeout,
     Bcfg2.Options.PathOption(
         cf=("packages:yum", "helper"), dest="yum_helper",
@@ -347,7 +341,7 @@ class YumCollection(Collection):
         config file to see if it has been explicitly specified; next
         we see if it's in $PATH; finally we default to /usr/sbin, the
         default location. """
-        # pylint: disable=W0212
+        # pylint: disable=protected-access
         if not self._helper:
             self.__class__._helper = Bcfg2.Options.setup.yum_helper
             if not self.__class__._helper:
@@ -357,7 +351,7 @@ class YumCollection(Collection):
                 if not self.__class__._helper:
                     self.__class__._helper = "/usr/sbin/bcfg2-yum-helper"
         return self.__class__._helper
-        # pylint: enable=W0212
+        # pylint: enable=protected-access
 
     @property
     def use_yum(self):
@@ -435,7 +429,7 @@ class YumCollection(Collection):
         else:
             return None
 
-    def get_config(self, raw=False):  # pylint: disable=W0221
+    def get_config(self, raw=False):  # pylint: disable=arguments-differ
         """ Get the yum configuration for this collection.
 
         :param raw: Return a :class:`ConfigParser.SafeConfigParser`
@@ -1332,7 +1326,7 @@ class YumSource(Source):
         else:
             return Source.get_repo_name(self, url_map)
 
-    def get_group(self, metadata, group, ptype=None):  # pylint: disable=W0613
+    def get_group(self, _, group, ptype=None):
         """ Get the list of packages of the given type in a package
         group.
 

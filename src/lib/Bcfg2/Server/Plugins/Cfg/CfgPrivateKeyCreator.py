@@ -95,7 +95,7 @@ class CfgPrivateKeyCreator(XMLCfgCreator):
         finally:
             shutil.rmtree(tempdir)
 
-    # pylint: disable=W0221
+    # pylint: disable=arguments-differ
     def create_data(self, entry, metadata):
         """ Create data for the given entry on the given client
 
@@ -121,4 +121,4 @@ class CfgPrivateKeyCreator(XMLCfgCreator):
         # return it
         self.write_data(privkey, **specificity)
         return privkey
-    # pylint: enable=W0221
+    # pylint: enable=arguments-differ

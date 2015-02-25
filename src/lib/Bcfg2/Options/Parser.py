@@ -15,14 +15,14 @@ __all__ = ["setup", "OptionParserException", "Parser", "get_parser",
 #: The repository option.  This is specified here (and imported into
 #: :module:`Bcfg2.Options.Common`) rather than vice-versa due to
 #: circular imports.
-repository = PathOption(  # pylint: disable=C0103
+repository = PathOption(  # pylint: disable=invalid-name
     '-Q', '--repository', cf=('server', 'repository'),
     default='var/lib/bcfg2', help="Server repository path")
 
 
 #: A module-level :class:`argparse.Namespace` object that stores all
 #: configuration for Bcfg2.
-setup = argparse.Namespace(version=__version__,  # pylint: disable=C0103
+setup = argparse.Namespace(version=__version__,  # pylint: disable=invalid-name
                            name="Bcfg2",
                            uri='http://trac.mcs.anl.gov/projects/bcfg2')
 
@@ -370,7 +370,7 @@ class Parser(argparse.ArgumentParser):
 
 #: A module-level :class:`Bcfg2.Options.Parser` object that is used
 #: for all parsing
-_parser = Parser()  # pylint: disable=C0103
+_parser = Parser()  # pylint: disable=invalid-name
 
 
 def new_parser():
@@ -380,7 +380,7 @@ def new_parser():
     :func:`Bcfg2.Options.get_parser`.  This is useful for unit
     testing.
     """
-    global _parser
+    global _parser  # pylint: disable=invalid-name
     _parser = Parser()
 
 
@@ -403,7 +403,7 @@ def get_parser(description=None, components=None, namespace=None):
     if Parser.unit_test:
         return Parser(description=description, components=components,
                       namespace=namespace)
-    elif (description or components or namespace):
+    elif description or components or namespace:
         if description:
             _parser.description = description
         if components is not None:

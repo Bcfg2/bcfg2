@@ -4,7 +4,7 @@ import lxml.etree
 import os
 import sys
 from fnmatch import fnmatch
-from Bcfg2.Compat import any  # pylint: disable=W0622
+from Bcfg2.Compat import any  # pylint: disable=redefined-builtin
 from Bcfg2.Server.FileMonitor import FileMonitor
 import Bcfg2.Options
 

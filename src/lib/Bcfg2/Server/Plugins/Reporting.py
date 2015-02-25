@@ -11,7 +11,7 @@ from Bcfg2.Server.Plugin import Statistics, PullSource, Threaded, \
 
 # required for reporting
 try:
-    import south  # pylint: disable=W0611
+    import south  # pylint: disable=unused-import
     HAS_SOUTH = True
 except ImportError:
     HAS_SOUTH = False
@@ -30,7 +30,7 @@ def _rpc_call(method):
     return _real_rpc_call
 
 
-# pylint: disable=W0223
+# pylint: disable=abstract-method
 class Reporting(Statistics, Threaded, PullSource):
     """ Unified statistics and reporting plugin """
     __rmi__ = Statistics.__rmi__ + ['Ping', 'GetExtra', 'GetCurrentEntry']
@@ -100,7 +100,7 @@ class Reporting(Statistics, Threaded, PullSource):
                 return
             except TransportError:
                 continue
-            except:
+            except:  # pylint: disable=bare-except
                 self.logger.error("%s: Attempt %s: Failed to add statistic: %s"
                                   % (self.__class__.__name__, i,
                                      sys.exc_info()[1]))

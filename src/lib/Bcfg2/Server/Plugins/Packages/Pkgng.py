@@ -3,13 +3,7 @@
 import lzma
 import tarfile
 
-try:
-    import json
-    # py2.4 json library is structured differently
-    json.loads  # pylint: disable=W0104
-except (ImportError, AttributeError):
-    import simplejson as json
-
+from Bcfg2.Compat import json
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
 

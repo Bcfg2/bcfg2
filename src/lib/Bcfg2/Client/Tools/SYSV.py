@@ -1,13 +1,13 @@
 """This provides bcfg2 support for Solaris SYSV packages."""
 
 import tempfile
-from Bcfg2.Compat import any  # pylint: disable=W0622
+from Bcfg2.Compat import any  # pylint: disable=redefined-builtin
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
 from Bcfg2.Compat import urlretrieve
 
 
-# pylint: disable=C0103
+# pylint: disable=invalid-name
 noask = '''
 mail=
 instance=overwrite
@@ -21,7 +21,7 @@ conflict=nocheck
 action=nocheck
 basedir=default
 '''
-# pylint: enable=C0103
+# pylint: enable=invalid-name
 
 
 class SYSV(Bcfg2.Client.Tools.PkgTool):
@@ -47,7 +47,7 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
             self.noaskfile.flush()
             self.pkgtool = (self.pkgtool[0] % ("-a %s" % (self.noaskname)),
                             self.pkgtool[1])
-        except:  # pylint: disable=W0702
+        except:  # pylint: disable=bare-except
             self.pkgtool = (self.pkgtool[0] % "", self.pkgtool[1])
         self.origpkgtool = self.pkgtool
 
@@ -61,7 +61,7 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
                 tmpfile = tempfile.NamedTemporaryFile()
                 self.tmpfiles.append(tmpfile)
                 self.logger.info("Downloading %s to %s" % (pkg.get('url'),
-                                 tmpfile.name))
+                                                           tmpfile.name))
                 urlretrieve(pkg.get('url'), tmpfile.name)
                 pkg.set('_sysv_pkg_path', tmpfile.name)
 

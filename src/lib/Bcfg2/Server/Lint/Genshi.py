@@ -29,7 +29,7 @@ class Genshi(Bcfg2.Server.Lint.ServerPlugin):
             err = sys.exc_info()[1]
             self.LintError("genshi-syntax-error",
                            "Genshi syntax error in %s: %s" % (fname, err))
-        except:
+        except:  # pylint: disable=bare-except
             err = sys.exc_info()[1]
             self.LintError("unknown-genshi-error",
                            "Unknown Genshi error in %s: %s" % (fname, err))

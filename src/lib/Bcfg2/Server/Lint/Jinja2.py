@@ -26,7 +26,7 @@ class Jinja2(Bcfg2.Server.Lint.ServerPlugin):
             err = sys.exc_info()[1]
             self.LintError("jinja2-syntax-error",
                            "Jinja2 syntax error in %s: %s" % (entry.name, err))
-        except:
+        except:  # pylint: disable=bare-except
             err = sys.exc_info()[1]
             self.LintError("unknown-jinja2-error",
                            "Unknown Jinja2 error in %s: %s" % (entry.name,
