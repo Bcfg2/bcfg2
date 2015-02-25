@@ -145,22 +145,22 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
 
         #: A list of the text of all 'Component' attributes of this
         #: source from XML
-        self.components = [item.text for item in xsource.findall('Component')]
+        self.components = []
 
         #: A list of the arches supported by this source
-        self.arches = [item.text for item in xsource.findall('Arch')]
+        self.arches = []
 
         #: A list of the the names of packages that are blacklisted
         #: from this source
-        self.blacklist = [item.text for item in xsource.findall('Blacklist')]
+        self.blacklist = []
 
         #: A list of the the names of packages that are whitelisted in
         #: this source
-        self.whitelist = [item.text for item in xsource.findall('Whitelist')]
+        self.whitelist = []
 
         #: Whether or not to include deb-src lines in the generated APT
         #: configuration
-        self.debsrc = xsource.get('debsrc', 'false') == 'true'
+        self.debsrc = False
 
         #: A dict of repository options that will be included in the
         #: configuration generated on the server side (if such is
@@ -172,51 +172,38 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         #: configuration generated for the client (if that is
         #: supported by the backend)
         self.client_options = dict()
-        opts = xsource.findall("Options")
-        for el in opts:
-            repoopts = dict([(k, v)
-                             for k, v in el.attrib.items()
-                             if k != "clientonly" and k != "serveronly"])
-            if el.get("clientonly", "false").lower() == "false":
-                self.server_options.update(repoopts)
-            if el.get("serveronly", "false").lower() == "false":
-                self.client_options.update(repoopts)
 
         #: A list of URLs to GPG keys that apply to this source
-        self.gpgkeys = [el.text for el in xsource.findall("GPGKey")]
+        self.gpgkeys = []
 
         #: Whether or not to include essential packages from this source
-        self.essential = xsource.get('essential', 'true').lower() == 'true'
+        self.essential = True
 
         #: Whether or not to include recommended packages from this source
-        self.recommended = xsource.get('recommended',
-                                       'false').lower() == 'true'
+        self.recommended = False
 
         #: The "rawurl" attribute from :attr:`xsource`, if applicable.
         #: A trailing slash is automatically appended to this if there
         #: wasn't one already present.
-        self.rawurl = xsource.get('rawurl', '')
-        if self.rawurl and not self.rawurl.endswith("/"):
-            self.rawurl += "/"
+        self.rawurl = None
 
         #: The "url" attribute from :attr:`xsource`, if applicable.  A
         #: trailing slash is automatically appended to this if there
         #: wasn't one already present.
-        self.url = xsource.get('url', '')
-        if self.url and not self.url.endswith("/"):
-            self.url += "/"
+        self.url = None
 
         #: The "version" attribute from :attr:`xsource`
-        self.version = xsource.get('version', '')
+        self.version = None
 
         #: The "name" attribute from :attr:`xsource`
-        self.name = xsource.get('name', None)
+        self.name = None
 
         #: A list of predicates that are used to determine if this
         #: source applies to a given
         #: :class:`Bcfg2.Server.Plugins.Metadata.ClientMetadata`
         #: object.
         self.conditions = []
+
         #: Formerly, :ref:`server-plugins-generators-packages` only
         #: supported applying package sources to groups; that is, they
         #: could not be assigned by more complicated logic like
@@ -224,22 +211,8 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         #: attribute attempts to provide for some limited backwards
         #: compat with older code that relies on this.
         self.groups = []
-        for el in xsource.iterancestors():
-            if el.tag == "Group":
-                if el.get("negate", "false").lower() == "true":
-                    self.conditions.append(lambda m, el=el:
-                                           el.get("name") not in m.groups)
-                else:
-                    self.groups.append(el.get("name"))
-                    self.conditions.append(lambda m, el=el:
-                                           el.get("name") in m.groups)
-            elif el.tag == "Client":
-                if el.get("negate", "false").lower() == "true":
-                    self.conditions.append(lambda m, el=el:
-                                           el.get("name") != m.hostname)
-                else:
-                    self.conditions.append(lambda m, el=el:
-                                           el.get("name") == m.hostname)
+
+        self._init_attributes(xsource)
 
         #: A set of all package names in this source.  This will not
         #: necessarily be populated, particularly by backends that
@@ -297,6 +270,69 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
                 setting['url'] = baseurl % setting
                 setting['name'] = self.get_repo_name(setting)
             self.url_map.extend(usettings)
+
+    def _init_attributes(self, xsource):
+        """
+        This functions evaluates the Source tag and parses all
+        attributes. Override this function in a sub class to
+        parse specific attributes. Do not use ``__init__`` because
+        ``Source.__init__`` may call other functions that already
+        need this specific fields. This functions is called before
+        any other function.
+
+        :param xsource: The XML tag that describes this source
+        :type source: lxml.etree._Element
+        """
+
+        self.components = [item.text for item in xsource.findall('Component')]
+        self.arches = [item.text for item in xsource.findall('Arch')]
+        self.blacklist = [item.text for item in xsource.findall('Blacklist')]
+        self.whitelist = [item.text for item in xsource.findall('Whitelist')]
+        self.debsrc = xsource.get('debsrc', 'false') == 'true'
+
+        opts = xsource.findall("Options")
+        for el in opts:
+            repoopts = dict([(k, v)
+                             for k, v in el.attrib.items()
+                             if k != "clientonly" and k != "serveronly"])
+            if el.get("clientonly", "false").lower() == "false":
+                self.server_options.update(repoopts)
+            if el.get("serveronly", "false").lower() == "false":
+                self.client_options.update(repoopts)
+
+        self.gpgkeys = [el.text for el in xsource.findall("GPGKey")]
+
+        self.essential = xsource.get('essential', 'true').lower() == 'true'
+        self.recommended = xsource.get('recommended',
+                                       'false').lower() == 'true'
+
+        self.rawurl = xsource.get('rawurl', '')
+        if self.rawurl and not self.rawurl.endswith("/"):
+            self.rawurl += "/"
+
+        self.url = xsource.get('url', '')
+        if self.url and not self.url.endswith("/"):
+            self.url += "/"
+
+        self.version = xsource.get('version', '')
+        self.name = xsource.get('name', None)
+
+        for el in xsource.iterancestors():
+            if el.tag == "Group":
+                if el.get("negate", "false").lower() == "true":
+                    self.conditions.append(lambda m, el=el:
+                                           el.get("name") not in m.groups)
+                else:
+                    self.groups.append(el.get("name"))
+                    self.conditions.append(lambda m, el=el:
+                                           el.get("name") in m.groups)
+            elif el.tag == "Client":
+                if el.get("negate", "false").lower() == "true":
+                    self.conditions.append(lambda m, el=el:
+                                           el.get("name") != m.hostname)
+                else:
+                    self.conditions.append(lambda m, el=el:
+                                           el.get("name") == m.hostname)
 
     @property
     def cachekey(self):
