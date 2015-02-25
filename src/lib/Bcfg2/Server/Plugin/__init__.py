@@ -11,11 +11,6 @@ documentation it's not necessary to use the submodules.  E.g., you can
 
     from Bcfg2.Server.Plugin.base import Plugin
 """
-
-import os
-import sys
-sys.path.append(os.path.dirname(__file__))
-
 # pylint: disable=W0401
 from Bcfg2.Server.Plugin.base import *
 from Bcfg2.Server.Plugin.interfaces import *

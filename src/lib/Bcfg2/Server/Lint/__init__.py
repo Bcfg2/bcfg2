@@ -1,14 +1,19 @@
 """ Base classes for Lint plugins and error handling """
 
 import os
+import fnmatch
+import glob
 import sys
 import logging
 from copy import copy
 import textwrap
+import time
+
 import lxml.etree
 import fcntl
 import termios
 import struct
+
 from Bcfg2.Compat import walk_packages
 
 plugins = [m[1] for m in walk_packages(path=__path__)]  # pylint: disable=C0103
@@ -138,6 +143,13 @@ class Plugin(object):
                 element,
                 xml_declaration=False).decode("UTF-8").strip()
         return "   line %s: %s" % (element.sourceline, xml)
+
+    def list_matching_files(self, path):
+        """list all files matching the path in self.files or the bcfg2 repo."""
+        if self.files is not None:
+            return fnmatch.filter(self.files, os.path.join('*', path))
+        else:
+            return glob.glob(os.path.join(self.config['repo'], path))
 
 
 class ErrorHandler(object):

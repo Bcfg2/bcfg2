@@ -471,9 +471,9 @@ class PkgTool(Tool):
             # set all package states to true and flush workqueues
             pkgnames = [pkg.get('name') for pkg in packages]
             for entry in list(states.keys()):
-                if (entry.tag == 'Package'
-                    and entry.get('type') == self.pkgtype
-                    and entry.get('name') in pkgnames):
+                if (entry.tag == 'Package' and
+                        entry.get('type') == self.pkgtype and
+                        entry.get('name') in pkgnames):
                     self.logger.debug('Setting state to true for pkg %s' %
                                       entry.get('name'))
                     states[entry] = True
@@ -575,7 +575,7 @@ class SvcTool(Tool):
         return self.cmd.run(self.get_svc_command(service, 'stop'))
 
     def restart_service(self, service):
-        """ Restart a service.
+        """Restart a service.
 
         :param service: The service entry to modify
         :type service: lxml.etree._Element
@@ -608,8 +608,8 @@ class SvcTool(Tool):
             return
 
         for entry in bundle:
-            if (not self.handlesEntry(entry)
-                or not self._install_allowed(entry)):
+            if (not self.handlesEntry(entry) or
+                    not self._install_allowed(entry)):
                 continue
 
             estatus = entry.get('status')
