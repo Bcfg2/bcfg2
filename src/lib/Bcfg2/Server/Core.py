@@ -11,6 +11,7 @@ import threading
 import time
 import inspect
 import lxml.etree
+import daemon
 import Bcfg2.settings
 import Bcfg2.Server
 import Bcfg2.Logger
@@ -112,6 +113,7 @@ class BaseCore(object):
         :type setup: Bcfg2.Options.OptionParser
 
         .. automethod:: _daemonize
+        .. automethod:: _drop_privileges
         .. automethod:: _run
         .. automethod:: _block
         .. -----
@@ -803,7 +805,8 @@ class BaseCore(object):
         self.logger.debug("Slept %s seconds while handling FAM events" % slept)
 
     def run(self):
-        """ Run the server core. This calls :func:`_daemonize`,
+        """ Run the server core. This calls :func:`_daemonize`
+        (or :func:`_drop_privileges` if not in daemon mode),
         :func:`_run`, starts the :attr:`fam_thread`, and calls
         :func:`_block`, but note that it is the responsibility of the
         server core implementation to call :func:`shutdown` under
@@ -830,6 +833,8 @@ class BaseCore(object):
             # dropped
             os.environ['HOME'] = pwd.getpwuid(self.setup['daemon_uid'])[5]
         else:
+            if os.getuid() == 0:
+                self._drop_privileges()
             os.umask(int(self.setup['umask'], 8))
 
         if not self._run():
@@ -860,6 +865,16 @@ class BaseCore(object):
         """ Daemonize the server and write the pidfile.  This must be
         overridden by a core implementation. """
         raise NotImplementedError
+
+    def _drop_privileges(self):
+        """ This is called if not daemonized and running as root to
+        drop the privileges to the configured daemon_uid and daemon_gid.
+        """
+        daemon.daemon.change_process_owner(
+            self.setup['daemon_uid'],
+            self.setup['daemon_gid'])
+        self.logger.debug("Dropped privileges to %s:%s." %
+                          (os.getuid(), os.getgid()))
 
     def _run(self):
         """ Start up the server; this method should return

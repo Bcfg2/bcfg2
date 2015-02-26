@@ -210,6 +210,9 @@ class ChildCore(BaseCore):
     def _daemonize(self):
         return True
 
+    def _drop_privileges(self):
+        pass
+
     def _dispatch(self, address, data):
         """ Method dispatcher used for commands received from
         the RPC queue. """
