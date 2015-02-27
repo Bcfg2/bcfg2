@@ -45,7 +45,8 @@ class Systemd(Bcfg2.Client.Tools.SvcTool):
 
         cmd = self.get_svc_command(entry, 'show') + ' -p ActiveState'
         rv = self.cmd.run(cmd)
-        if rv.stdout.strip() in ('ActiveState=active', 'ActiveState=activating',
+        if rv.stdout.strip() in ('ActiveState=active',
+                                 'ActiveState=activating',
                                  'ActiveState=reloading'):
             current_status = 'on'
         else:
