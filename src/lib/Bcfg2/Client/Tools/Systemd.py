@@ -28,29 +28,66 @@ class Systemd(Bcfg2.Client.Tools.SvcTool):
 
     def VerifyService(self, entry, _):
         """Verify Service status for entry."""
-        if entry.get('status') == 'ignore':
+        entry.set('target_status', entry.get('status'))  # for reporting
+
+        bootstatus = self.get_bootstatus(entry)
+        if bootstatus is None:
+            # bootstatus is unspecified and status is ignore
             return True
 
-        cmd = "/bin/systemctl status %s" % (self.get_svc_name(entry))
-        rv = self.cmd.run(cmd)
-
-        if 'Loaded: error' in rv.stdout:
-            entry.set('current_status', 'off')
-            return False
-        elif 'Active: active' in rv.stdout:
-            entry.set('current_status', 'on')
-            return entry.get('status') == 'on'
+        if self.cmd.run(self.get_svc_command(entry, 'is-enabled')):
+            current_bootstatus = 'on'
         else:
-            entry.set('current_status', 'off')
-            return entry.get('status') == 'off'
+            current_bootstatus = 'off'
+
+        if entry.get('status') == 'ignore':
+            return current_bootstatus == bootstatus
+
+        cmd = self.get_svc_command(entry, 'show') + ' -p ActiveState'
+        rv = self.cmd.run(cmd)
+        if rv.stdout.strip() in ('ActiveState=active',
+                                 'ActiveState=activating',
+                                 'ActiveState=reloading'):
+            current_status = 'on'
+        else:
+            current_status = 'off'
+        entry.set('current_status', current_status)
+        return (entry.get('status') == current_status and
+                bootstatus == current_bootstatus)
 
     def InstallService(self, entry):
         """Install Service entry."""
-        if entry.get('status') == 'on':
-            rv = self.cmd.run(self.get_svc_command(entry, 'enable')).success
-            rv &= self.cmd.run(self.get_svc_command(entry, 'start')).success
-        else:
-            rv = self.cmd.run(self.get_svc_command(entry, 'stop')).success
-            rv &= self.cmd.run(self.get_svc_command(entry, 'disable')).success
+        self.logger.info("Installing Service %s" % (entry.get('name')))
+        bootstatus = self.get_bootstatus(entry)
+        if bootstatus is None:
+            # bootstatus is unspecified and status is ignore
+            return True
 
-        return rv
+        # Enable or disable the service
+        if bootstatus == 'on':
+            cmd = self.get_svc_command(entry, 'enable')
+        else:
+            cmd = self.get_svc_command(entry, 'disable')
+        if not self.cmd.run(cmd).success:
+            # Return failure immediately and do not start/stop the service.
+            return False
+
+        # Start or stop the service, depending on the current servicemode
+        cmd = None
+        if Bcfg2.Options.setup.servicemode == 'disabled':
+            # 'disabled' means we don't attempt to modify running svcs
+            pass
+        elif Bcfg2.Options.setup.servicemode == 'build':
+            # 'build' means we attempt to stop all services started
+            if entry.get('current_status') == 'on':
+                cmd = self.get_svc_command(entry, 'stop')
+        else:
+            if entry.get('status') == 'on':
+                cmd = self.get_svc_command(entry, 'start')
+            else:
+                cmd = self.get_svc_command(entry, 'stop')
+
+        if cmd:
+            return self.cmd.run(cmd).success
+        else:
+            return True
