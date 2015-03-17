@@ -248,10 +248,13 @@ Manage symlinks.
    :onlyattrs: to
    :requiredattrs: to
 
+.. _server-plugins-generators-rules-vcs:
+
 vcs
 ^^^
 
-Check out the specified VCS repository to the given path.
+Check out the specified VCS repository to the given path.  See
+:ref:`client-tools-vcs` for more details.
 
 .. xml:type:: PathType
    :nochildren:

@@ -8,8 +8,34 @@ VCS Client Tool
 
 .. warning: This tool is currently under development.
 
-.. note: Currently, the only supported VCS is git.
+.. note: Currently, the only supported VCS is git and svn.
 
 The VCS tool allows you to checkout particular revisions from a VCS
 repository on the client to a specified path. The tool requires the
 appropriate python libraries for the VCS used to be installed.
+
+See :ref:`server-plugins-generators-rules-vcs` for possible options.
+
+Example usage:
+
+You may want to create a `Rules/paths.xml` with the following:
+
+.. code-block:: xml
+
+    <Rules priority="1">
+        <Path name="/srv/bcfg2" type="vcs"
+              sourceurl="https://github.com/Bcfg2/bcfg2.git"
+              vcstype="git"
+              revision="cf6dfd8ca28e941b1e638ff0fa7e7a0a1ebb6a6f"/>
+    </Rules>
+
+Once the rule is created a client can reference the path from a
+bundle, this path will then be populated from the repository. To
+continue the above example, a file `Bundle/bcfg2.xml` might contain
+this:
+
+.. code-block:: xml
+
+    <Bundle name="bcfg">
+        <Path name="/srv/bcfg2">
+    <Bundle/>
