@@ -628,7 +628,7 @@ class POSIXGroupEntry(SuccessEntry):
 class PackageEntry(SuccessEntry):
     """ The new model for package information """
 
-    # if this is an extra entry trget_version will be empty
+    # if this is an extra entry target_version will be empty
     target_version = models.CharField(max_length=1024, default='')
     current_version = models.CharField(max_length=1024)
     verification_details = models.TextField(default="")
