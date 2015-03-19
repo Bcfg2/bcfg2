@@ -54,7 +54,7 @@ class APT(Bcfg2.Client.Tools.Tool):
             [entry.get('name') for struct in config for entry in struct
              if (entry.tag == 'Path' and
                  entry.get('name').startswith(
-                     '%s/apt/sources.list' % self.etc_path)]
+                     '%s/apt/sources.list' % self.etc_path))]
         self.nonexistent = [entry.get('name') for struct in config
                             for entry in struct
                             if (entry.tag == 'Path' and
