@@ -1,6 +1,5 @@
 """Option parsing library for utilities."""
 
-import ast
 import copy
 import getopt
 import grp
@@ -13,6 +12,7 @@ import sys
 
 import Bcfg2.Client.Tools
 from Bcfg2.Compat import ConfigParser
+from Bcfg2.Compat import literal_eval
 from Bcfg2.version import __version__
 
 
@@ -333,7 +333,7 @@ def colon_split(c_string):
 def dict_split(c_string):
     """ literally evaluate the option in order to allow for arbitrarily nested
     dictionaries """
-    return ast.literal_eval(c_string)
+    return literal_eval(c_string)
 
 
 def get_bool(val):

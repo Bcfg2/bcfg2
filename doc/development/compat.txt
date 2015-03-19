@@ -129,6 +129,8 @@ below, since some of these implementations may be feature-incomplete.
 +----------------+--------------------------------+--------------------------------------------+
 | MutableMapping | :class:`UserDict.DictMixin`    | :class:`collections.MutableMapping` (2.6+) |
 +----------------+--------------------------------+--------------------------------------------+
+| literal_eval   | :func:`ast.literal_eval`       | :func:`eval`                               |
++----------------+--------------------------------+--------------------------------------------+
 
 walk_packages
 ~~~~~~~~~~~~~
@@ -170,6 +172,14 @@ mind.
 
 :class:`collections.MutableMapping` is available in Python 2.6+, and
 will be used if available.
+
+literal_eval
+~~~~~~~~~~~~
+
+:func:`ast.literal_eval` is a safe version of :func:`eval` that will only 
+allow delaration of literal strings, ints, list, dicts, etc.  This was 
+introduced in Python 2.6, and as such Python 2.4 uses the plain-old 
+:func:`eval`.
 
 Other Symbols
 -------------
