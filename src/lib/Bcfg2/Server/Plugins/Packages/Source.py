@@ -212,8 +212,6 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         #: compat with older code that relies on this.
         self.groups = []
 
-        self._init_attributes(xsource)
-
         #: A set of all package names in this source.  This will not
         #: necessarily be populated, particularly by backends that
         #: reimplement large portions of
@@ -231,6 +229,8 @@ class Source(Bcfg2.Server.Plugin.Debuggable):  # pylint: disable=R0902
         #: particularly by backends that reimplement large portions of
         #: :class:`Bcfg2.Server.Plugins.Packages.Collection.Collection`
         self.provides = dict()
+
+        self._init_attributes(xsource)
 
         #: The file (or directory) used for this source's cache data
         self.cachefile = os.path.join(self.basepath,
