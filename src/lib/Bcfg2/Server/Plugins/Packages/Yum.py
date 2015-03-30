@@ -1169,6 +1169,94 @@ class YumSource(Source):
                 self.file_to_arch[self.escape_url(fullurl)] = arch
         return urls
 
+    # pylint: disable=R0911,R0912
+    # disabling the pylint errors above because we are interesting in
+    # replicating the flow of the RPM code.
+    def _compare_rpm_versions(self, str1, str2):
+        """ Compare RPM versions.
+
+        This is an attempt to reimplement RPM's rpmvercmp method in python.
+
+        :param str1: package 1 version string
+        :param str2: package 2 version string
+        :return: 1 - str1 is newer than str2
+                 0 - str1 and str2 are the same version
+                -1 - str2 is newer than str1"""
+        if str1 == str2:
+            return 0
+
+        front_strip_re = re.compile('^[^A-Za-z0-9~]+')
+        risdigit = re.compile('(^[0-9]+)')
+        risalpha = re.compile('(^[A-Za-z])')
+        lzeroes = re.compile('^0+')
+
+        while len(str1) > 0 or len(str2) > 0:
+            str1 = front_strip_re.sub('', str1)
+            str2 = front_strip_re.sub('', str2)
+
+            if len(str1) == 0 or len(str2) == 0:
+                break
+
+            # handle the tilde separator
+            if str1[0] == '~' and str2[0] == '~':
+                str1 = str1[1:]
+                str2 = str2[1:]
+            elif str1[0] == '~':
+                return -1
+            elif str2[0] == '~':
+                return 1
+
+            # grab continuous segments from each string
+            isnum = False
+            if risdigit.match(str1):
+                segment1 = risdigit.split(str1)[1]
+                str1 = risdigit.split(str1)[2]
+                if risdigit.match(str2):
+                    segment2 = risdigit.split(str2)[1]
+                    str2 = risdigit.split(str2)[2]
+                else:
+                    segment2 = ''
+                isnum = True
+            else:
+                segment1 = risalpha.split(str1)[1]
+                str1 = risalpha.split(str1)[2]
+                if risalpha.match(str2):
+                    segment2 = risalpha.split(str2)[1]
+                    str2 = risalpha.split(str2)[2]
+                else:
+                    segment2 = ''
+
+            # numeric segments are always newer than alpha segments
+            if len(segment2) == 0:
+                if isnum:
+                    return 1
+                return -1
+
+            if isnum:
+                # discard leading zeroes
+                segment1 = lzeroes.sub('', segment1)
+                segment2 = lzeroes.sub('', segment2)
+                # higher number has more digits
+                if len(segment1) > len(segment2):
+                    return 1
+                elif len(segment2) > len(segment1):
+                    return -1
+            # do a simple string comparison
+            if segment1 > segment2:
+                return 1
+            elif segment2 > segment1:
+                return -1
+
+        # if one of the strings is empty, the version of the longer
+        # string is higher
+        if len(str1) > len(str2):
+            return 1
+        elif len(str2) > len(str1):
+            return -1
+        else:
+            return 0
+    # pylint: enable=R0911,R0912
+
     @Bcfg2.Server.Plugin.track_statistics()
     def read_files(self):
         """ When using the builtin yum parser, read and parse locally
@@ -1237,13 +1325,24 @@ class YumSource(Source):
         if arch not in self.packages:
             self.packages[arch] = set()
         if arch not in self.deps:
-            self.deps[arch] = dict()
+            self.deps[arch] = {}
         if arch not in self.provides:
-            self.provides[arch] = dict()
+            self.provides[arch] = {}
+        versionmap = {}
         for pkg in data.getchildren():
             if not pkg.tag.endswith('package'):
                 continue
             pkgname = pkg.find(XP + 'name').text
+            vtag = pkg.find(XP + 'version')
+            version = "%s%s-%s" % (vtag.get('epoch'), vtag.get('ver'),
+                                   vtag.get('rel'))
+            if pkgname in self.packages[arch]:
+                # skip if version older than a previous version
+                if self._compare_rpm_versions(version,
+                                              versionmap[pkgname]) < 0:
+                    continue
+
+            versionmap[pkgname] = version
             self.packages[arch].add(pkgname)
 
             pdata = pkg.find(XP + 'format')
