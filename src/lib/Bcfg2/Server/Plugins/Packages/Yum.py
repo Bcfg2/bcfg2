@@ -1334,15 +1334,24 @@ class YumSource(Source):
                 continue
             pkgname = pkg.find(XP + 'name').text
             vtag = pkg.find(XP + 'version')
-            version = "%s%s-%s" % (vtag.get('epoch'), vtag.get('ver'),
-                                   vtag.get('rel'))
+            epoch = vtag.get('epoch')
+            version = vtag.get('ver')
+            release = vtag.get('rel')
             if pkgname in self.packages[arch]:
                 # skip if version older than a previous version
-                if self._compare_rpm_versions(version,
-                                              versionmap[pkgname]) < 0:
+                if (self._compare_rpm_versions(
+                        epoch, versionmap[pkgname]['epoch']) < 0):
                     continue
-
-            versionmap[pkgname] = version
+                elif (self._compare_rpm_versions(
+                        version, versionmap[pkgname]['version']) < 0):
+                    continue
+                elif (self._compare_rpm_versions(
+                        release, versionmap[pkgname]['release']) < 0):
+                    continue
+            versionmap[pkgname] = {}
+            versionmap[pkgname]['epoch'] = epoch
+            versionmap[pkgname]['version'] = version
+            versionmap[pkgname]['release'] = release
             self.packages[arch].add(pkgname)
 
             pdata = pkg.find(XP + 'format')
