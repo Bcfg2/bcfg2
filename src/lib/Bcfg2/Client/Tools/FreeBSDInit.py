@@ -16,7 +16,7 @@ class FreeBSDInit(Bcfg2.Client.Tools.SvcTool):
     __req__ = {'Service': ['name', 'status']}
 
     def __init__(self, logger, cfg, setup):
-        Bcfg2.Client.Tools.Tool.__init__(self, logger, cfg, setup)
+        Bcfg2.Client.Tools.SvcTool.__init__(self, logger, cfg, setup)
         if os.uname()[0] != 'FreeBSD':
             raise Bcfg2.Client.Tools.ToolInstantiationError
 
