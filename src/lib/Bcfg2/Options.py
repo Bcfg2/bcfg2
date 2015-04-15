@@ -1115,6 +1115,18 @@ CLIENT_POSIX_GID_BLACKLIST = \
            default=[],
            cf=('POSIXUsers', 'gid_blacklist'),
            cook=list_split)
+CLIENT_POSIX_SECONTEXT_IGNORE = \
+    Option("secontext types to ignore labeling errors",
+           default=['anon_inodefs_t', 'bdev_t', 'binfmt_misc_fs_t',
+                    'capifs_t', 'configfs_t', 'cpusetfs_t', 'ecryptfs_t',
+                    'eventpollfs_t', 'futexfs_t', 'hugetlbfs_t', 'ibmasmfs_t',
+                    'inotifyfs_t', 'mvfs_t', 'nfsd_fs_t', 'oprofilefs_t',
+                    'ramfs_t', 'romfs_t', 'rpc_pipefs_t', 'spufs_t',
+                    'squash_t', 'vmblock_t', 'vxfs_t', 'xenfs_t', 'autofs_t',
+                    'cifs_t', 'dosfs_t', 'fusefs_t', 'iso9660_t',
+                    'removable_t', 'nfs_t'],
+           cf=('POSIX', 'secontext_ignore'),
+           cook=list_split)
 
 # Logging options
 LOGGING_FILE_PATH = \
@@ -1281,7 +1293,8 @@ DRIVER_OPTIONS = \
          posix_uid_whitelist=CLIENT_POSIX_UID_WHITELIST,
          posix_gid_whitelist=CLIENT_POSIX_GID_WHITELIST,
          posix_uid_blacklist=CLIENT_POSIX_UID_BLACKLIST,
-         posix_gid_blacklist=CLIENT_POSIX_GID_BLACKLIST)
+         posix_gid_blacklist=CLIENT_POSIX_GID_BLACKLIST,
+         posix_secontext_ignore=CLIENT_POSIX_SECONTEXT_IGNORE)
 
 CLIENT_COMMON_OPTIONS = \
     dict(extra=CLIENT_EXTRA_DISPLAY,
