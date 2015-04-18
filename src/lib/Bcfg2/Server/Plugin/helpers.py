@@ -456,7 +456,9 @@ class DirectoryBacked(Debuggable):
             # again without having to add a new monitor.
         elif os.path.isdir(abspath):
             # Deal with events for directories
-            if action in ['exists', 'created']:
+            if os.path.exists(os.path.join(abspath, '.bcfg2-ignore')):
+                self.logger.debug("Ignoring directory %s" % abspath)
+            elif action in ['exists', 'created']:
                 self.add_directory_monitor(relpath)
             elif action == 'changed':
                 if relpath in self.entries:

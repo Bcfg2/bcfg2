@@ -31,6 +31,9 @@ backwards-incompatible user-facing changes
   This fixes potentially long client runs when comparing files that have
   diverged significantly.
 
+* Ignore directories containing a .bcfg2-ignore file in various plugins
+  (Bundler, Defaults, Pkgmgr, Properties, PuppetENC, TemplateHelper, Trigger).
+
 Thanks
 ------
 
