@@ -6,6 +6,7 @@ import pwd
 import grp
 import stat
 import copy
+import errno
 import shutil
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
@@ -272,7 +273,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             rv &= self._apply_acl(defacl, path, posix1e.ACL_TYPE_DEFAULT)
         return rv
 
-    def _set_secontext(self, entry, path=None):
+    def _set_secontext(self, entry, path=None):  # pylint: disable=R0911
         """ set the SELinux context of the file on disk according to the
         config"""
         if not HAS_SELINUX:
@@ -284,25 +285,28 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         if not context:
             # no context listed
             return True
-
-        if context == '__default__':
-            try:
+        secontext = selinux.lgetfilecon(path)[1].split(":")[2]
+        if secontext in self.setup["posix_secontext_ignore"]:
+            return True
+        try:
+            if context == '__default__':
                 selinux.restorecon(path)
-                rv = True
-            except OSError:
-                err = sys.exc_info()[1]
-                self.logger.error("POSIX: Failed to restore SELinux context "
-                                  "for %s: %s" % (path, err))
-                rv = False
-        else:
-            try:
-                rv = selinux.lsetfilecon(path, context) == 0
-            except OSError:
-                err = sys.exc_info()[1]
-                self.logger.error("POSIX: Failed to restore SELinux context "
-                                  "for %s: %s" % (path, err))
-                rv = False
-        return rv
+                return True
+            else:
+                return selinux.lsetfilecon(path, context) == 0
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno == errno.EOPNOTSUPP:
+                # Operation not supported
+                if context != '__default__':
+                    self.logger.debug("POSIX: Failed to set SELinux context "
+                                      "for %s: %s" % (path, err))
+                    return False
+                return True
+            err = sys.exc_info()[1]
+            self.logger.error("POSIX: Failed to set or restore SELinux "
+                              "context for %s: %s" % (path, err))
+            return False
 
     def _norm_gid(self, gid):
         """ This takes a group name or gid and returns the
