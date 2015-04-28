@@ -1293,6 +1293,8 @@ class YumSource(Source):
                     package not in self.blacklist and
                     (len(self.whitelist) == 0 or package in self.whitelist))
         except KeyError:
+            self.logger.debug("Packages: Unable to find %s for arch %s" %
+                              (package, arch[0]))
             return False
     is_package.__doc__ = Source.is_package.__doc__
 
