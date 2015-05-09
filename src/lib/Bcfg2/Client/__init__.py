@@ -929,6 +929,11 @@ class Client(object):
                                'Statistics', total=str(len(states)),
                                version='2.0',
                                revision=self.config.get('revision', '-1'))
+        flags = XML.SubElement(stats, "Flags")
+        XML.SubElement(flags, "Flag", name="dry_run",
+                       value=str(Bcfg2.Options.setup.dry_run))
+        XML.SubElement(flags, "Flag", name="only_important",
+                       value=str(Bcfg2.Options.setup.only_important))
         good_entries = [key for key, val in list(states.items()) if val]
         good = len(good_entries)
         stats.set('good', str(good))

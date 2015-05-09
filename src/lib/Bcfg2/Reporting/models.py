@@ -144,6 +144,8 @@ class Interaction(models.Model):
     bad_count = models.IntegerField(default=0)
     modified_count = models.IntegerField(default=0)
     extra_count = models.IntegerField(default=0)
+    dry_run = models.BooleanField(default=False)
+    only_important = models.BooleanField(default=False)
 
     actions = models.ManyToManyField("ActionEntry")
     packages = models.ManyToManyField("PackageEntry")
