@@ -284,6 +284,14 @@ class DjangoORM(StorageBase):
                 Group.objects.get_or_create(name=metadata['profile'])
         else:
             profile = None
+
+        flags = {'dry_run': False, 'only_important': False}
+        for flag in stats.findall('./Flags/Flag'):
+            value = flag.get('value', default='false').lower() == 'true'
+            name = flag.get('name')
+            if name in flags:
+                flags[name] = value
+
         inter = Interaction(client=client,
                              timestamp=timestamp,
                              state=stats.get('state', default="unknown"),
@@ -292,7 +300,8 @@ class DjangoORM(StorageBase):
                              good_count=stats.get('good', default="0"),
                              total_count=stats.get('total', default="0"),
                              server=server,
-                             profile=profile)
+                             profile=profile,
+                             **flags)
         inter.save()
         self.logger.debug("Interaction for %s at %s with INSERTED in to db" %
                 (client.id, timestamp))
