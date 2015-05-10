@@ -332,7 +332,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 self.ipcache[client] = False
                 msg = "Failed to find IP address for %s: %s" % (client,
                                                                 result.error)
-                self.logger(msg)
+                self.logger.error(msg)
                 raise PluginExecutionError(msg)
 
     def get_namecache_entry(self, cip):
