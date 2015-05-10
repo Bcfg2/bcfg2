@@ -7,57 +7,38 @@ import datetime
 import Bcfg2.DBSettings
 
 
-def hosts_by_entry_type(clients, etype, entryspec):
-    result = []
-    for entry in entryspec:
-        for client in clients:
-            items = getattr(client.current_interaction, etype)()
-            for item in items:
-                if (item.entry_type == entry[0] and
-                    item.name == entry[1]):
-                    result.append(client)
-    return result
-
-
-def print_fields(fields, client, fmt, extra=None):
-    """ Prints the fields specified in fields of client, max_name
-    specifies the column width of the name column. """
-    fdata = []
-    if extra is None:
-        extra = dict()
-    for field in fields:
-        if field == 'time':
-            fdata.append(str(client.current_interaction.timestamp))
-        elif field == 'state':
-            if client.current_interaction.isclean():
-                fdata.append("clean")
-            else:
-                fdata.append("dirty")
-        elif field == 'total':
-            fdata.append(client.current_interaction.total_count)
-        elif field == 'good':
-            fdata.append(client.current_interaction.good_count)
-        elif field == 'modified':
-            fdata.append(client.current_interaction.modified_count)
-        elif field == 'extra':
-            fdata.append(client.current_interaction.extra_count)
-        elif field == 'bad':
-            fdata.append((client.current_interaction.bad_count))
-        elif field == 'stale':
-            fdata.append(client.current_interaction.isstale())
-        else:
-            try:
-                fdata.append(getattr(client, field))
-            except AttributeError:
-                fdata.append(extra.get(field, "N/A"))
-
-    print(fmt % tuple(fdata))
-
-
 def print_entries(interaction, etype):
     items = getattr(interaction, etype)()
     for item in items:
         print("%-70s %s" % (item.entry_type + ":" + item.name, etype))
+
+
+class _FlagsFilterMixin(object):
+    """ Mixin that allows to filter the interactions based on the
+    only_important and/or the dry_run flag """
+
+    options = [
+        Bcfg2.Options.BooleanOption(
+            "-n", "--no-dry-run",
+            help="Do not consider interactions created with the --dry-run "
+            "flag"),
+        Bcfg2.Options.BooleanOption(
+            "-i", "--no-only-important",
+            help="Do not consider interactions created with the "
+            "--only-important flag")]
+
+    def get_interaction(self, client, setup):
+        if not setup.no_dry_run and not setup.no_only_important:
+            return client.current_interaction
+
+        filter = {}
+        if setup.no_dry_run:
+            filter['dry_run'] = False
+        if setup.no_only_important:
+            filter['only_important'] = False
+
+        from Bcfg2.Reporting.models import Interaction
+        return Interaction.objects.filter(client=client, **filter).latest()
 
 
 class _SingleHostCmd(Bcfg2.Options.Subcommand):  # pylint: disable=W0223
@@ -74,10 +55,10 @@ class _SingleHostCmd(Bcfg2.Options.Subcommand):  # pylint: disable=W0223
             raise SystemExit(2)
 
 
-class Show(_SingleHostCmd):
+class Show(_SingleHostCmd, _FlagsFilterMixin):
     """ Show bad, extra, modified, or all entries from a given host """
 
-    options = _SingleHostCmd.options + [
+    options = _SingleHostCmd.options + _FlagsFilterMixin.options + [
         Bcfg2.Options.BooleanOption(
             "-b", "--bad", help="Show bad entries from HOST"),
         Bcfg2.Options.BooleanOption(
@@ -88,21 +69,25 @@ class Show(_SingleHostCmd):
     def run(self, setup):
         client = self.get_client(setup)
         show_all = not setup.bad and not setup.extra and not setup.modified
+        interaction = self.get_interaction(client, setup)
         if setup.bad or show_all:
-            print_entries(client.current_interaction, "bad")
+            print_entries(interaction, "bad")
         if setup.modified or show_all:
-            print_entries(client.current_interaction, "modified")
+            print_entries(interaction, "modified")
         if setup.extra or show_all:
-            print_entries(client.current_interaction, "extra")
+            print_entries(interaction, "extra")
 
 
-class Total(_SingleHostCmd):
+class Total(_SingleHostCmd, _FlagsFilterMixin):
     """ Show total number of managed and good entries from HOST """
+
+    options = _SingleHostCmd.options + _FlagsFilterMixin.options
 
     def run(self, setup):
         client = self.get_client(setup)
-        managed = client.current_interaction.total_count
-        good = client.current_interaction.good_count
+        interaction = self.get_interaction(client, setup)
+        managed = interaction.total_count
+        good = interaction.good_count
         print("Total managed entries: %d (good: %d)" % (managed, good))
 
 
@@ -120,9 +105,9 @@ class Expire(_SingleHostCmd):
         client.save()
 
 
-class _ClientSelectCmd(Bcfg2.Options.Subcommand):
+class _ClientSelectCmd(Bcfg2.Options.Subcommand, _FlagsFilterMixin):
     """ Base class for subcommands that display lists of clients """
-    options = [
+    options = _FlagsFilterMixin.options + [
         Bcfg2.Options.Option("--fields", metavar="FIELD,FIELD,...",
                              help="Only display the listed fields",
                              type=Bcfg2.Options.Types.comma_list,
@@ -132,7 +117,42 @@ class _ClientSelectCmd(Bcfg2.Options.Subcommand):
         from Bcfg2.Reporting.models import Client
         return Client.objects.exclude(current_interaction__isnull=True)
 
-    def display(self, result, fields, extra=None):
+    def _print_fields(self, setup, fields, client, fmt, extra=None):
+        """ Prints the fields specified in fields of client, max_name
+        specifies the column width of the name column. """
+        fdata = []
+        if extra is None:
+            extra = dict()
+        interaction = self.get_interaction(client, setup)
+        for field in fields:
+            if field == 'time':
+                fdata.append(str(interaction.timestamp))
+            elif field == 'state':
+                if interaction.isclean():
+                    fdata.append("clean")
+                else:
+                    fdata.append("dirty")
+            elif field == 'total':
+                fdata.append(interaction.total_count)
+            elif field == 'good':
+                fdata.append(interaction.good_count)
+            elif field == 'modified':
+                fdata.append(interaction.modified_count)
+            elif field == 'extra':
+                fdata.append(interaction.extra_count)
+            elif field == 'bad':
+                fdata.append(interaction.bad_count)
+            elif field == 'stale':
+                fdata.append(interaction.isstale())
+            else:
+                try:
+                    fdata.append(getattr(client, field))
+                except AttributeError:
+                    fdata.append(extra.get(field, "N/A"))
+
+        print(fmt % tuple(fdata))
+
+    def display(self, setup, result, fields, extra=None):
         if 'name' not in fields:
             fields.insert(0, "name")
         if not result:
@@ -153,8 +173,8 @@ class _ClientSelectCmd(Bcfg2.Options.Subcommand):
         print(fmt % tuple(f.title() for f in fields))
         for client in result:
             if not client.expiration:
-                print_fields(fields, client, fmt,
-                             extra=extra.get(client, None))
+                self._print_fields(setup, fields, client, fmt,
+                                   extra=extra.get(client, None))
 
 
 class Clients(_ClientSelectCmd):
@@ -172,14 +192,14 @@ class Clients(_ClientSelectCmd):
         result = []
         show_all = not setup.stale and not setup.clean and not setup.dirty
         for client in self.get_clients():
-            interaction = client.current_interaction
+            interaction = self.get_interaction(client, setup)
             if (show_all or
                 (setup.stale and interaction.isstale()) or
                 (setup.clean and interaction.isclean()) or
                 (setup.dirty and not interaction.isclean())):
                 result.append(client)
 
-        self.display(result, setup.fields)
+        self.display(setup, result, setup.fields)
 
 
 class Entries(_ClientSelectCmd):
@@ -201,6 +221,18 @@ class Entries(_ClientSelectCmd):
         Bcfg2.Options.PositionalArgument(
             "entries", metavar="TYPE:NAME", nargs="*")]
 
+    def _hosts_by_entry_type(self, setup, clients, etype, entryspec):
+        result = []
+        for entry in entryspec:
+            for client in clients:
+                interaction = self.get_interaction(client, setup)
+                items = getattr(interaction, etype)()
+                for item in items:
+                    if (item.entry_type == entry[0] and
+                        item.name == entry[1]):
+                        result.append(client)
+        return result
+
     def run(self, setup):
         result = []
         if setup.file:
@@ -216,13 +248,15 @@ class Entries(_ClientSelectCmd):
 
         clients = self.get_clients()
         if setup.badentry:
-            result = hosts_by_entry_type(clients, "bad", entries)
+            result = self._hosts_by_entry_type(setup, clients, "bad", entries)
         elif setup.modifiedentry:
-            result = hosts_by_entry_type(clients, "modified", entries)
+            result = self._hosts_by_entry_type(setup, clients, "modified",
+                                               entries)
         elif setup.extraentry:
-            result = hosts_by_entry_type(clients, "extra", entries)
+            result = self._hosts_by_entry_type(setup, clients, "extra",
+                                               entries)
 
-        self.display(result, setup.fields)
+        self.display(setup, result, setup.fields)
 
 
 class Entry(_ClientSelectCmd):
@@ -252,14 +286,14 @@ class Entry(_ClientSelectCmd):
         for client in self.get_clients():
             ents = entry_cls.objects.filter(
                 name=ename,
-                interaction=client.current_interaction)
+                interaction=self.get_interaction(client, setup))
             if len(ents) == 0:
                 continue
             extra[client] = {"entry state": ents[0].get_state_display(),
                              "reason": ents[0]}
             result.append(client)
 
-        self.display(result, fields, extra=extra)
+        self.display(setup, result, fields, extra=extra)
 
 
 class CLI(Bcfg2.Options.CommandRegistry):
