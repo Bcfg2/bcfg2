@@ -210,7 +210,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     try:
                         names[cmeta.hostname].update(
                             self.get_namecache_entry(ip))
-                    except socket.gaierror:
+                    except socket.herror:
                         continue
                 names[cmeta.hostname] = sorted(names[cmeta.hostname])
 
@@ -332,7 +332,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                 self.ipcache[client] = False
                 msg = "Failed to find IP address for %s: %s" % (client,
                                                                 result.error)
-                self.logger(msg)
+                self.logger.error(msg)
                 raise PluginExecutionError(msg)
 
     def get_namecache_entry(self, cip):
@@ -342,7 +342,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             if self.namecache[cip]:
                 return self.namecache[cip]
             else:
-                raise socket.gaierror
+                raise socket.herror
         else:
             # add an entry that has not been cached
             try:
@@ -353,7 +353,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     self.namecache[cip] = []
                 self.namecache[cip].extend(rvlookup[1])
                 return self.namecache[cip]
-            except socket.gaierror:
+            except socket.herror:
                 self.namecache[cip] = False
                 self.logger.error("Failed to find any names associated with "
                                   "IP address %s" % cip)
