@@ -25,15 +25,20 @@ import Bcfg2.Server.Plugins.Metadata
 try:
     from django.core.exceptions import ImproperlyConfigured
     from django.core import management
+    import django
     import django.conf
     import Bcfg2.Server.models
 
     HAS_DJANGO = True
-    try:
-        import south  # pylint: disable=W0611
+    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+        django.setup()
         HAS_REPORTS = True
-    except ImportError:
-        HAS_REPORTS = False
+    elif django.VERIONS[0] == 1 and django.VERSION[1] <= 6:
+        try:
+            import south # pylint: disable=W0611
+            HAS_REPORTS = True
+        except ImportError:
+            HAS_REPORTS = True
 except ImportError:
     HAS_DJANGO = False
     HAS_REPORTS = False
