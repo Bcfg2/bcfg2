@@ -8,6 +8,7 @@ import traceback
 from Bcfg2 import settings
 
 # Load django and reports stuff _after_ we know we can load settings
+import django
 from django.core import management
 from Bcfg2.Reporting.utils import *
 
@@ -71,11 +72,14 @@ class Reports(Bcfg2.Server.Admin.Mode):
 
     def __init__(self, setup):
         Bcfg2.Server.Admin.Mode.__init__(self, setup)
-        try:
-            import south
-        except ImportError:
-            print("Django south is required for Reporting")
-            raise SystemExit(-3)
+        if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+            django.setup()
+        elif django.VERIONS[0] == 1 and django.VERSION[1] <= 6:
+            try:
+                import south
+            except ImportError:
+                print("Django south is required for Reporting")
+                raise SystemExit(-3)
 
     def __call__(self, args):
         if len(args) == 0 or args[0] == '-h':

@@ -144,11 +144,16 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     'Bcfg2.Server',
 )
-if HAS_SOUTH:
+if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+    INSTALLED_APPS = INSTALLED_APPS + (
+        'Bcfg2.Reporting',
+    )
+elif HAS_SOUTH:
     INSTALLED_APPS = INSTALLED_APPS + (
         'south',
         'Bcfg2.Reporting',
     )
+    SOUTH_MIGRATION_MODULES = 'Bcfg2.Reporting.south_migrations'
 if 'BCFG2_LEGACY_MODELS' in os.environ:
     INSTALLED_APPS += ('Bcfg2.Server.Reports.reports',)
 
