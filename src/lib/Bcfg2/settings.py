@@ -153,7 +153,9 @@ elif HAS_SOUTH:
         'south',
         'Bcfg2.Reporting',
     )
-    SOUTH_MIGRATION_MODULES = 'Bcfg2.Reporting.south_migrations'
+    SOUTH_MIGRATION_MODULES = {
+        'Bcfg2.Reporting': 'Bcfg2.Reporting.south_migrations',
+    }
 if 'BCFG2_LEGACY_MODELS' in os.environ:
     INSTALLED_APPS += ('Bcfg2.Server.Reports.reports',)
 
