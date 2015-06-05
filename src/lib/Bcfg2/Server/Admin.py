@@ -1198,7 +1198,7 @@ class CLI(Bcfg2.Options.CommandRegistry):
             components=[self])
         parser.add_options(self.subcommand_options)
         parser.parse()
-        if django.VERSION[0] and django.VERSION[1]
+        if django.VERSION[0] and django.VERSION[1]:
             # this has been introduced in django 1.7, so pylint fails with
             # older django releases
             django.setup()  # pylint disable=E1101
