@@ -31,14 +31,13 @@ try:
 
     HAS_DJANGO = True
     if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
-        django.setup()
         HAS_REPORTS = True
-    elif django.VERIONS[0] == 1 and django.VERSION[1] <= 6:
+    elif django.VERSION[0] == 1 and django.VERSION[1] <= 6:
         try:
-            import south # pylint: disable=W0611
+            import south  # pylint: disable=W0611
             HAS_REPORTS = True
         except ImportError:
-            HAS_REPORTS = True
+            HAS_REPORTS = False
 except ImportError:
     HAS_DJANGO = False
     HAS_REPORTS = False
@@ -1199,6 +1198,10 @@ class CLI(Bcfg2.Options.CommandRegistry):
             components=[self])
         parser.add_options(self.subcommand_options)
         parser.parse()
+        if django.VERSION[0] and django.VERSION[1]
+            # this has been introduced in django 1.7, so pylint fails with
+            # older django releases
+            django.setup()  # pylint disable=E1101
 
     def run(self):
         """ Run bcfg2-admin """
