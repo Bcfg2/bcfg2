@@ -250,6 +250,9 @@ class BaseCore(object):
 
             from django.core.exceptions import ImproperlyConfigured
             from django.core import management
+            import django
+            if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+                django.setup()
             try:
                 management.call_command("syncdb", interactive=False,
                                         verbosity=0)
