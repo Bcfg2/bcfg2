@@ -252,7 +252,7 @@ class BaseCore(object):
             from django.core import management
             import django
             if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
-                django.setup()
+                django.setup()  # pylint: disable=E1101
             try:
                 management.call_command("syncdb", interactive=False,
                                         verbosity=0)

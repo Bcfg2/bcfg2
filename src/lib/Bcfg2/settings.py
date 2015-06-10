@@ -231,3 +231,5 @@ else:
         'django.core.context_processors.media',
         'django.core.context_processors.request'
     )
+
+TEST_RUNNER = 'django.test.simple.DjangoTestSuiteRunner'
