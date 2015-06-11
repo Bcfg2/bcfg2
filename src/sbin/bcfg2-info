@@ -4,5 +4,6 @@
 import sys
 from Bcfg2.Server.Info import CLI
 
+
 if __name__ == '__main__':
     sys.exit(CLI().run())

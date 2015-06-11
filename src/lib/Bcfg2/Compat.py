@@ -286,3 +286,9 @@ except NameError:
     def cmp(a, b):
         """ Py3k implementation of cmp() """
         return (a > b) - (a < b)
+
+# ast was introduced in python 2.6
+try:
+    from ast import literal_eval
+except ImportError:
+    literal_eval = eval

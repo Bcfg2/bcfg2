@@ -68,8 +68,8 @@ class APT(Bcfg2.Client.Tools.Tool):
                      Bcfg2.Options.setup.apt_etc_path))]
         self.nonexistent = [entry.get('name') for struct in config
                             for entry in struct
-                            if entry.tag == 'Path' and
-                            entry.get('type') == 'nonexistent']
+                            if (entry.tag == 'Path' and
+                                entry.get('type') == 'nonexistent')]
         os.environ["DEBIAN_FRONTEND"] = 'noninteractive'
         self.actions = {}
         if Bcfg2.Options.setup.kevlar and not Bcfg2.Options.setup.dry_run:

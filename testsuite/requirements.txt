@@ -4,6 +4,6 @@ mock
 sphinx
 pylint<0.29
 pep8
-python-daemon
+python-daemon<2.0.0
 genshi
 argparse

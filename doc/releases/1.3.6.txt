@@ -30,5 +30,14 @@ This is primarily a bugfix release.
 
   https://docs.djangoproject.com/en/1.7/ref/settings/#std:setting-OPTIONS
 
+* SYSV: change instances of simplename to simplefile
+
+  Previous configurations can be updated using the migration tool.
+
+* Authentication: Reject passwd auth, if authentication is set to "cert"
+* Server/Core: drop privileges even if not running as daemon
+* Packages/Yum.py: Fix dependency resolution logic
+* Handle filesystem secontexts properly for contextless filesystems
+
 Special thanks to the following contributors for this release: Michael
-Fenn, Matt Kemp, Alexander Sulfrian, Jonathan Billings.
+Fenn, Matt Kemp, Alexander Sulfrian, Jonathan Billings, Ross Smith.

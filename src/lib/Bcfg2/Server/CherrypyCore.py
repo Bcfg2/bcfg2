@@ -110,17 +110,21 @@ class CherrypyCore(NetworkCore):
         return cherrypy.serving.response.body
 
     def _daemonize(self):
-        """ Drop privileges with
-        :class:`cherrypy.process.plugins.DropPrivileges`, daemonize
-        with :class:`cherrypy.process.plugins.Daemonizer`, and write a
+        """ Drop privileges, daemonize
+        with :class:`cherrypy.process.plugins.Daemonizer` and write a
         PID file with :class:`cherrypy.process.plugins.PIDFile`. """
+        self._drop_privileges()
+        Daemonizer(cherrypy.engine).subscribe()
+        PIDFile(cherrypy.engine, Bcfg2.Options.setup.daemon).subscribe()
+        return True
+
+    def _drop_privileges(self):
+        """ Drop privileges with
+        :class:`cherrypy.process.plugins.DropPrivileges` """
         DropPrivileges(cherrypy.engine,
                        uid=Bcfg2.Options.setup.daemon_uid,
                        gid=Bcfg2.Options.setup.daemon_gid,
                        umask=int(Bcfg2.Options.setup.umask, 8)).subscribe()
-        Daemonizer(cherrypy.engine).subscribe()
-        PIDFile(cherrypy.engine, Bcfg2.Options.setup.daemon).subscribe()
-        return True
 
     def _run(self):
         """ Start the server listening. """

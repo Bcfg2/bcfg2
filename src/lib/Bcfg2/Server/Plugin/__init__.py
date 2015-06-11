@@ -11,7 +11,6 @@ documentation it's not necessary to use the submodules.  E.g., you can
 
     from Bcfg2.Server.Plugin.base import Plugin
 """
-
 import Bcfg2.Options
 
 # pylint: disable=W0401

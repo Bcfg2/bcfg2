@@ -1394,8 +1394,6 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
             # look at cert.cN
             client = certinfo['commonName']
             self.debug_log("Got cN %s; using as client name" % client)
-            auth_type = self.auth.get(client,
-                                      Bcfg2.Options.setup.authentication)
         elif user == 'root':
             id_method = 'address'
             try:
@@ -1416,6 +1414,13 @@ class Metadata(Bcfg2.Server.Plugin.Metadata,
 
         # we have the client name
         self.debug_log("Authenticating client %s" % client)
+
+        # validate id_method
+        auth_type = self.auth.get(client, Bcfg2.Options.setup.authentication)
+        if auth_type == 'cert' and id_method != 'cert':
+            self.logger.error("Client %s does not provide a cert, but only "
+                              "cert auth is allowed" % client)
+            return False
 
         # next we validate the address
         if (id_method != 'uuid' and

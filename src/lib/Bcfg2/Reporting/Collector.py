@@ -116,7 +116,7 @@ class ReportingCollector(object):
                               self.storage.__class__.__name__)
             self.storage.validate()
         except:
-            self.logger.error("Storage backed %s failed to validate: %s" %
+            self.logger.error("Storage backend %s failed to validate: %s" %
                               (self.storage.__class__.__name__,
                                sys.exc_info()[1]))
 

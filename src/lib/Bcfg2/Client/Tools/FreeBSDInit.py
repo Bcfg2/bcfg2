@@ -42,7 +42,6 @@ class FreeBSDInit(Bcfg2.Client.Tools.SvcTool):
         self.logger.debug('Stopping service %s' % service.get('name'))
         return self.cmd.run(self.get_svc_command(service, 'onestop'))
 
-
     def VerifyService(self, entry, _):
         """Verify Service status for entry."""
         entry.set('target_status', entry.get('status'))  # for reporting

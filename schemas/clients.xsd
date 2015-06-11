@@ -60,7 +60,7 @@
     <xsd:attribute type='xsd:string' name='profile' use='required'>
       <xsd:annotation>
         <xsd:documentation>
-          Profile group naem to associate this client with.
+          Profile group name to associate this client with.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
