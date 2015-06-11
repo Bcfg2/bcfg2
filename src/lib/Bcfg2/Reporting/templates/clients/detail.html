@@ -90,7 +90,7 @@ span.history_links a {
   <div class='entry_list'>
     <div class='entry_list_head' onclick='javascript:toggleMe("bundles_table");'>
       <h3>Bundle membership</h3>
-      <div class='entry_expand_tab' id='plusminus_bundless_table'>[+]</div>
+      <div class='entry_expand_tab' id='plusminus_bundles_table'>[+]</div>
     </div>
     <table id='bundles_table' class='entry_list' style='display: none'>
   {% endif %}
@@ -127,7 +127,7 @@ span.history_links a {
   <div class='entry_list'>
     <div class='entry_list_head failed-lineitem' onclick='javascript:toggleMe("failures_table");'>
       <h3>Failed Entries &#8212; {{ interaction.failures.all|length }}</h3>
-      <div class='entry_expand_tab' id='plusminus_failuress_table'>[+]</div>
+      <div class='entry_expand_tab' id='plusminus_failures_table'>[+]</div>
     </div>
     <table id='failures_table' class='entry_list' style='display: none'>
       {% for failure in interaction.failures.all %}
