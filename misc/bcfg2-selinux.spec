@@ -16,7 +16,7 @@
 %global _pre_rc %{?_pre:.pre%{_pre}}%{?_rc:.rc%{_rc}}
 
 Name:             bcfg2-selinux
-Version:          1.3.5
+Version:          1.3.6
 Release:          1%{?_pre_rc}%{?dist}
 Summary:          Bcfg2 Client and Server SELinux policy
 

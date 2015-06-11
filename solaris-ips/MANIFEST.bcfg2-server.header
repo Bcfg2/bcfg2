@@ -1,4 +1,4 @@
 license ../../LICENSE  license=simplified_bsd
 set name=description value="Configuration management server"
 set name=pkg.summary value="Configuration management server"
-set name=pkg.fmri value="pkg://bcfg2/bcfg2-server@1.3.5"
+set name=pkg.fmri value="pkg://bcfg2/bcfg2-server@1.3.6"

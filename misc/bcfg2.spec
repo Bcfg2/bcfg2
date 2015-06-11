@@ -29,7 +29,7 @@
 
 
 Name:             bcfg2
-Version:          1.3.5
+Version:          1.3.6
 Release:          1%{?_pre_rc}%{?dist}
 Summary:          A configuration management system
 
