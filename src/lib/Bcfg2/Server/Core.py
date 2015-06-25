@@ -254,6 +254,7 @@ class BaseCore(object):
                 management.call_command("syncdb", interactive=False,
                                         verbosity=0)
                 self._database_available = True
+                django.db.close_connection()
             except ImproperlyConfigured:
                 self.logger.error("Django configuration problem: %s" %
                                   sys.exc_info()[1])
