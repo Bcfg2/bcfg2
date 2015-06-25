@@ -19,7 +19,7 @@ This is primarily a bugfix release.
 * Enable bcfg2-yum-helper to depsolve for arches incompatible with
   server
 * Spec file fixes
-* bcfg2-crypet: Default to only (En|De)crypt vars that need it
+* bcfg2-crypt: Default to only (En|De)crypt vars that need it
 * Fix email reporting bug
 * Fix debsums parsing
 * Fix solaris makefile
