@@ -1,14 +1,21 @@
 #!/usr/bin/env python
-from django.core.management import execute_manager
-import imp
-try:
-    imp.find_module('settings') # Assumed to be in the same directory.
-except ImportError:
-    import sys
-    sys.stderr.write("Error: Can't find the file 'settings.py' in the directory containing %r. It appears you've customized things.\nYou'll have to run django-admin.py, passing it your settings module.\n" % __file__)
-    sys.exit(1)
+import os
+import sys
+import django
 
-import settings
+if django.VERSION[0] == 1 and django.VERSION[1] <= 6:
+    try:
+        imp.find_module('settings') # Assumed to be in the same directory.
+    except ImportError:
+        import sys
+        sys.stderr.write("Error: Can't find the file 'settings.py' in the directory containing %r. It appears you've customized things.\nYou'll have to run django-admin.py, passing it your settings module.\n" % __file__)
+        sys.exit(1)
 
 if __name__ == "__main__":
-    execute_manager(settings)
+    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+        os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'Bcfg2.settings')
+
+        from django.core.management import execute_from_command_line
+        execute_from_command_line(sys.argv)
+    else:
+        execute_manager(settings)

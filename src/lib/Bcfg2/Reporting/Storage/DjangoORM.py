@@ -19,6 +19,9 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import FieldDoesNotExist
 from django.core.cache import cache
 from django import db
+import django
+if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+    django.setup()  # pylint: disable=E1101
 
 #Used by GetCurrentEntry
 import difflib
