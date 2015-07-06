@@ -32,7 +32,7 @@ try:
     HAS_DJANGO = True
     if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
         HAS_REPORTS = True
-    elif django.VERSION[0] == 1 and django.VERSION[1] <= 6:
+    else:
         try:
             import south  # pylint: disable=W0611
             HAS_REPORTS = True
@@ -903,6 +903,9 @@ if HAS_DJANGO:
 
     class Syncdb(AdminCmd):
         """ Sync the Django ORM with the configured database """
+
+        if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+            django.setup()
 
         def run(self, setup):
             Bcfg2.Server.models.load_models()
