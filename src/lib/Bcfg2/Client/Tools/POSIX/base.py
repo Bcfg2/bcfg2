@@ -6,9 +6,11 @@ import pwd
 import grp
 import stat
 import copy
+import errno
 import shutil
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
+import Bcfg2.Options
 from Bcfg2.Compat import oct_mode
 
 try:
@@ -37,6 +39,22 @@ device_map = dict(block=stat.S_IFBLK,  # pylint: disable=C0103
 
 class POSIXTool(Bcfg2.Client.Tools.Tool):
     """ Base class for tools that handle POSIX (Path) entries """
+
+    options = [
+        Bcfg2.Options.Option(
+            cf=('POSIX', 'secontext_ignore'),
+            default=['anon_inodefs_t', 'bdev_t', 'binfmt_misc_fs_t',
+                     'capifs_t', 'configfs_t', 'cpusetfs_t', 'ecryptfs_t',
+                     'eventpollfs_t', 'futexfs_t', 'hugetlbfs_t', 'ibmasmfs_t',
+                     'inotifyfs_t', 'mvfs_t', 'nfsd_fs_t', 'oprofilefs_t',
+                     'ramfs_t', 'romfs_t', 'rpc_pipefs_t', 'spufs_t',
+                     'squash_t', 'vmblock_t', 'vxfs_t', 'xenfs_t', 'autofs_t',
+                     'cifs_t', 'dosfs_t', 'fusefs_t', 'iso9660_t',
+                     'removable_t', 'nfs_t'],
+            help='secontext types to ignore labeling errors',
+            type=Bcfg2.Options.Types.colon_list)
+    ]
+
     def fully_specified(self, entry):  # pylint: disable=W0613
         """ return True if the entry is fully specified """
         # checking is done by __req__
@@ -272,7 +290,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             rv &= self._apply_acl(defacl, path, posix1e.ACL_TYPE_DEFAULT)
         return rv
 
-    def _set_secontext(self, entry, path=None):
+    def _set_secontext(self, entry, path=None):  # pylint: disable=R0911
         """ set the SELinux context of the file on disk according to the
         config"""
         if not HAS_SELINUX:
@@ -284,25 +302,28 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
         if not context:
             # no context listed
             return True
-
-        if context == '__default__':
-            try:
+        secontext = selinux.lgetfilecon(path)[1].split(":")[2]
+        if secontext in Bcfg2.Options.setup.posix_secontext_ignore:
+            return True
+        try:
+            if context == '__default__':
                 selinux.restorecon(path)
-                rv = True
-            except OSError:
-                err = sys.exc_info()[1]
-                self.logger.error("POSIX: Failed to restore SELinux context "
-                                  "for %s: %s" % (path, err))
-                rv = False
-        else:
-            try:
-                rv = selinux.lsetfilecon(path, context) == 0
-            except OSError:
-                err = sys.exc_info()[1]
-                self.logger.error("POSIX: Failed to restore SELinux context "
-                                  "for %s: %s" % (path, err))
-                rv = False
-        return rv
+                return True
+            else:
+                return selinux.lsetfilecon(path, context) == 0
+        except OSError:
+            err = sys.exc_info()[1]
+            if err.errno == errno.EOPNOTSUPP:
+                # Operation not supported
+                if context != '__default__':
+                    self.logger.debug("POSIX: Failed to set SELinux context "
+                                      "for %s: %s" % (path, err))
+                    return False
+                return True
+            err = sys.exc_info()[1]
+            self.logger.error("POSIX: Failed to set or restore SELinux "
+                              "context for %s: %s" % (path, err))
+            return False
 
     def _norm_gid(self, gid):
         """ This takes a group name or gid and returns the

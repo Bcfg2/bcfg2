@@ -103,6 +103,7 @@ class KnownHostsEntrySet(Bcfg2.Server.Plugin.EntrySet):
 
 
 class SSHbase(Bcfg2.Server.Plugin.Plugin,
+              Bcfg2.Server.Plugin.Connector,
               Bcfg2.Server.Plugin.Generator,
               Bcfg2.Server.Plugin.PullTarget):
     """
@@ -141,6 +142,7 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
 
     def __init__(self, core):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core)
+        Bcfg2.Server.Plugin.Connector.__init__(self)
         Bcfg2.Server.Plugin.Generator.__init__(self)
         Bcfg2.Server.Plugin.PullTarget.__init__(self)
         self.ipcache = {}
@@ -489,3 +491,15 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
             self.logger.error("Failed to pull %s. This file does not "
                               "currently exist on the client" %
                               entry.get('name'))
+
+    def get_additional_data(self, metadata):
+        data = dict()
+        for key in self.keypatterns:
+            if key.endswith(".pub"):
+                try:
+                    keyfile = "/etc/ssh/" + key
+                    entry = self.entries[keyfile].best_matching(metadata)
+                    data[key] = entry.data
+                except Bcfg2.Server.Plugin.PluginExecutionError:
+                    pass
+        return data

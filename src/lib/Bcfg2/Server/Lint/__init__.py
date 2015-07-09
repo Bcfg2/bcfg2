@@ -14,6 +14,7 @@ import time
 
 import lxml.etree
 
+
 import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Plugins

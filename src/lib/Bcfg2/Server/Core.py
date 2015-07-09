@@ -11,6 +11,7 @@ import threading
 import time
 import inspect
 import lxml.etree
+import daemon
 import Bcfg2.Server
 import Bcfg2.Logger
 import Bcfg2.Options
@@ -1486,3 +1487,13 @@ class NetworkCore(Core):
         """ Daemonize the server and write the pidfile.  This must be
         overridden by a core implementation. """
         raise NotImplementedError
+
+    def _drop_privileges(self):
+        """ This is called if not daemonized and running as root to
+        drop the privileges to the configured daemon_uid and daemon_gid.
+        """
+        daemon.daemon.change_process_owner(
+            Bcfg2.Options.setup.daemon_uid,
+            Bcfg2.Options.setup.daemon_gid)
+        self.logger.debug("Dropped privileges to %s:%s." %
+                          (os.getuid(), os.getgid()))

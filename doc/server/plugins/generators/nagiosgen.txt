@@ -29,7 +29,6 @@ Create default host, and group specs in:
             check_period                    24x7
             contact_groups                  admins
             event_handler_enabled           1
-            failure_prediction_enabled      1
             flap_detection_enabled          1
             initial_state                   o
             max_check_attempts              10
