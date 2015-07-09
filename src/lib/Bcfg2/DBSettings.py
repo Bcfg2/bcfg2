@@ -151,6 +151,8 @@ def sync_databases(**kwargs):
     logger = logging.getLogger()
     for database in settings['DATABASES']:
         logger.debug("Syncing database %s" % (database))
+        if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+            django.setup()  # pylint: disable=E1101
         django.core.management.call_command("syncdb", database=database,
                                             **kwargs)
 
@@ -160,6 +162,8 @@ def migrate_databases(**kwargs):
     logger = logging.getLogger()
     for database in settings['DATABASES']:
         logger.debug("Migrating database %s" % (database))
+        if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+            django.setup()  # pylint: disable=E1101
         django.core.management.call_command("migrate", database=database,
                                             **kwargs)
 
