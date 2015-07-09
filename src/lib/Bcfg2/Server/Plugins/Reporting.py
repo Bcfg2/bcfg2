@@ -8,13 +8,17 @@ import Bcfg2.Options
 from Bcfg2.Reporting.Transport.base import TransportError
 from Bcfg2.Server.Plugin import Statistics, PullSource, Threaded, \
     PluginInitError, PluginExecutionError
+import django
 
 # required for reporting
-try:
-    import south  # pylint: disable=W0611
-    HAS_SOUTH = True
-except ImportError:
-    HAS_SOUTH = False
+if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+    HAS_REPORTING = True
+else:
+    try:
+        import south  # pylint: disable=W0611
+        HAS_REPORTING = True
+    except ImportError:
+        HAS_REPORTING = False
 
 
 def _rpc_call(method):
@@ -48,8 +52,8 @@ class Reporting(Statistics, Threaded, PullSource):
         self.whoami = platform.node()
         self.transport = None
 
-        if not HAS_SOUTH:
-            msg = "Django south is required for Reporting"
+        if not HAS_REPORTING:
+            msg = "Django 1.7+ or Django south is required for Reporting"
             self.logger.error(msg)
             raise PluginInitError(msg)
 
