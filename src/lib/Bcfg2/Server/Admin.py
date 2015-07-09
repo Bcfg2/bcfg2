@@ -905,7 +905,7 @@ if HAS_DJANGO:
         """ Sync the Django ORM with the configured database """
 
         if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] >= 7:
-            django.setup()
+            django.setup()  # pylint: disable=E1101
 
         def run(self, setup):
             Bcfg2.Server.models.load_models()
@@ -1204,7 +1204,7 @@ class CLI(Bcfg2.Options.CommandRegistry):
         if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
             # this has been introduced in django 1.7, so pylint fails with
             # older django releases
-            django.setup()  # pylint disable=E1101
+            django.setup()  # pylint: disable=E1101
 
     def run(self):
         """ Run bcfg2-admin """
