@@ -1395,7 +1395,11 @@ class NetworkCore(Core):
         Bcfg2.Options.Option(
             cf=('server', 'group'), default=0, dest='daemon_gid',
             type=Bcfg2.Options.Types.groupname,
-            help="Group to run the server daemon as")]
+            help="Group to run the server daemon as"),
+        Bcfg2.Options.Option(
+            cf=('server', 'allow_proxying_from'), default=[],
+            dest='daemon_allowed_proxies', type=Bcfg2.Options.Types.comma_list,
+            help="Hosts or CIDR ranges that are allowed as reverse proxies")]
 
     def __init__(self):
         Core.__init__(self)

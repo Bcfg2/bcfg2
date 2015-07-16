@@ -10,8 +10,10 @@ import logging
 import ssl
 import threading
 import time
+import Bcfg2.Options
 from Bcfg2.Compat import xmlrpclib, SimpleXMLRPCServer, SocketServer, \
     b64decode
+from Bcfg2.Utils import ip_matches
 
 
 class XMLRPCACLCheckException(Exception):
@@ -239,6 +241,28 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
         return True
 
     def do_POST(self):
+        client_address = self.client_address
+
+        # check for allowed reverse proxies
+        allowed_proxies = Bcfg2.Options.setup.daemon_allowed_proxies
+        if "X-Forwarded-For" in self.headers:
+            x_forwarded_for = self.headers["X-Forwarded-For"].split(",")[0]
+
+            if not allowed_proxies:
+                msg = "X-Forwarded-For header specified but proxying disallowed"
+                self.logger.error(msg)
+                self.send_error(400, msg)
+                return
+
+            for proxy in allowed_proxies:
+                try:
+                    address, mask = proxy.split("/", 1)
+                except ValueError:
+                    address, mask = (proxy, None)
+                entry = {"address": address, "netmask": mask}
+                if ip_matches(client_address[0], entry):
+                    client_address = (x_forwarded_for, client_address[1])
+                    break
         try:
             max_chunk_size = 10 * 1024 * 1024
             size_remaining = int(self.headers["content-length"])
@@ -254,8 +278,7 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             if data is None:
                 return  # response has been sent
 
-            response = self.server._marshaled_dispatch(self.client_address,
-                                                       data)
+            response = self.server._marshaled_dispatch(client_address, data)
             if sys.hexversion >= 0x03000000:
                 response = response.encode('utf-8')
         except XMLRPCACLCheckException:
@@ -263,7 +286,7 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
             self.end_headers()
         except:  # pylint: disable=W0702
             self.logger.error("Unexpected dispatch error for %s: %s" %
-                              (self.client_address, sys.exc_info()[1]))
+                              (client_address, sys.exc_info()[1]))
             try:
                 self.send_response(500)
                 self.send_header("Content-length", "0")
@@ -275,7 +298,6 @@ class XMLRPCRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
                 raise
         else:
             # got a valid XML RPC response
-            client_address = self.request.getpeername()
             try:
                 self.send_response(200)
                 self.send_header("Content-type", "text/xml")
