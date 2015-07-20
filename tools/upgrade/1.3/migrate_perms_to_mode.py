@@ -64,7 +64,7 @@ def main():
     parser = Bcfg2.Options.get_parser(
         description="Migrate from Bcfg2 1.2 'perms' attribute to 1.3 'mode' "
         "attribute",
-        components=FileMonitor)
+        components=[FileMonitor])
     parser.add_options([Bcfg2.Options.Common.repository,
                         Bcfg2.Options.Common.plugins])
     parser.parse()
