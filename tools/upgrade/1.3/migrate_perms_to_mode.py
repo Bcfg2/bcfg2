@@ -71,17 +71,19 @@ def main():
     repo = Bcfg2.Options.setup.repository
 
     for plugin in Bcfg2.Options.setup.plugins:
-        if plugin in ['Base', 'Bundler', 'Rules']:
-            for root, _, files in os.walk(os.path.join(repo, plugin)):
+        plugin_name = plugin.__name__
+        if plugin_name in ['Base', 'Bundler', 'Rules']:
+            for root, _, files in os.walk(os.path.join(repo, plugin_name)):
                 if skip_path(root):
                     continue
                 for fname in files:
                     if skip_path(fname):
                         continue
                     convertstructure(os.path.join(root, fname))
-        if plugin not in ['Cfg', 'TGenshi', 'TCheetah', 'SSHbase', 'SSLCA']:
+        if plugin_name not in ['Cfg', 'TGenshi', 'TCheetah', 'SSHbase',
+                               'SSLCA']:
             continue
-        for root, dirs, files in os.walk(os.path.join(repo, plugin)):
+        for root, dirs, files in os.walk(os.path.join(repo, plugin_name)):
             if skip_path(root):
                 continue
             for fname in files:

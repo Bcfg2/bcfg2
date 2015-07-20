@@ -48,9 +48,11 @@ def main():
     parser.parse()
 
     for plugin in Bcfg2.Options.setup.plugins:
-        if plugin not in ['SSLCA', 'Cfg', 'TGenshi', 'TCheetah', 'SSHbase']:
+        plugin_name = plugin.__name__
+        if plugin_name not in ['SSLCA', 'Cfg', 'TGenshi', 'TCheetah',
+                               'SSHbase']:
             continue
-        datastore = os.path.join(Bcfg2.Options.setup.repository, plugin)
+        datastore = os.path.join(Bcfg2.Options.setup.repository, plugin_name)
         for root, dirs, files in os.walk(datastore):
             for fname in files:
                 if fname in [":info", "info"]:
