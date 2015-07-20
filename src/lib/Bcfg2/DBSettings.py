@@ -278,7 +278,8 @@ class _OptionContainer(object):
     def component_parsed_hook(opts):
         """ Finalize the Django config after this component's options
         are parsed. """
-        finalize_django_config(opts=opts)
+        if HAS_DJANGO:
+            finalize_django_config(opts=opts)
 
     @staticmethod
     def options_parsed_hook():
@@ -287,6 +288,7 @@ class _OptionContainer(object):
         early enough in option parsing to be parsed in the 'early'
         phase.  Chances are good that things will break if that
         happens, but we do our best to be a good citizen. """
-        finalize_django_config(silent=True)
+        if HAS_DJANGO:
+            finalize_django_config(silent=True)
 
 Bcfg2.Options.get_parser().add_component(_OptionContainer)
