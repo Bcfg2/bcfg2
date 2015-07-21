@@ -1064,7 +1064,8 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
                     data = candidate
                     break
 
-        entry.text = data.text
+        if data.text is not None and data.text.strip() != '':
+            entry.text = data.text
         for item in data.getchildren():
             entry.append(copy.copy(item))
 
