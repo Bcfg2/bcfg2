@@ -246,9 +246,6 @@ group-specific"""
 class TestProbes(TestProbing, TestConnector, TestDatabaseBacked):
     test_obj = Probes
 
-    def get_obj(self, core=None):
-        return TestDatabaseBacked.get_obj(self, core=core)
-
     def get_test_probedata(self):
         test_xdata = lxml.etree.Element("test")
         lxml.etree.SubElement(test_xdata, "test", foo="foo")
@@ -277,7 +274,7 @@ text
                                     "group-with-dashes"],
                 "bar.example.com": []}
 
-    def get_probes_object(self, use_db=False, load_data=None):
+    def get_obj(self, core=None, use_db=False, load_data=None):
         core = MagicMock()
         core.setup.cfp.getboolean = Mock()
         core.setup.cfp.getboolean.return_value = use_db
@@ -285,16 +282,16 @@ text
             load_data = MagicMock()
         # we have to patch load_data() in a funny way because
         # different versions of Mock have different scopes for
-        # patching.  in some versions, a patch applied to
-        # get_probes_object() would only apply to that function, while
-        # in others it would also apply to the calling function (e.g.,
-        # test__init(), which relies on being able to check the calls
-        # of load_data(), and thus on load_data() being consistently
+        # patching.  in some versions, a patch applied to get_obj()
+        # would only apply to that function, while in others it would
+        # also apply to the calling function (e.g., test__init(),
+        # which relies on being able to check the calls of
+        # load_data(), and thus on load_data() being consistently
         # mocked)
         @patch("%s.%s.load_data" % (self.test_obj.__module__,
                                     self.test_obj.__name__), new=load_data)
         def inner():
-            return self.get_obj(core)
+            return TestDatabaseBacked.get_obj(self, core=core)
 
         rv = inner()
         rv.allowed_cgroups = [re.compile("^.*$")]
@@ -302,7 +299,7 @@ text
 
     def test__init(self):
         mock_load_data = Mock()
-        probes = self.get_probes_object(load_data=mock_load_data)
+        probes = self.get_obj(load_data=mock_load_data)
         probes.core.fam.AddMonitor.assert_called_with(os.path.join(datastore,
                                                                    probes.name),
                                                       probes.probes)
@@ -312,7 +309,7 @@ text
 
     @patch("Bcfg2.Server.Plugins.Probes.Probes.load_data", Mock())
     def test__use_db(self):
-        probes = self.get_probes_object()
+        probes = self.get_obj()
         self.assertFalse(probes._use_db)
         probes.core.setup.cfp.getboolean.assert_called_with("probes",
                                                             "use_database",
@@ -322,7 +319,7 @@ text
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_xml", Mock())
     def test_write_data_xml(self):
-        probes = self.get_probes_object(use_db=False)
+        probes = self.get_obj(use_db=False)
         probes.write_data("test")
         probes._write_data_xml.assert_called_with("test")
         self.assertFalse(probes._write_data_db.called)
@@ -331,13 +328,13 @@ text
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._write_data_xml", Mock())
     def test_write_data_db(self):
-        probes = self.get_probes_object(use_db=True)
+        probes = self.get_obj(use_db=True)
         probes.write_data("test")
         probes._write_data_db.assert_called_with("test")
         self.assertFalse(probes._write_data_xml.called)
 
     def test__write_data_xml(self):
-        probes = self.get_probes_object(use_db=False)
+        probes = self.get_obj(use_db=False)
         probes.probedata = self.get_test_probedata()
         probes.cgroups = self.get_test_cgroups()
 
@@ -405,7 +402,7 @@ text
     @skipUnless(HAS_DJANGO, "Django not found, skipping")
     def test__write_data_db(self):
         syncdb(TestProbesDB)
-        probes = self.get_probes_object(use_db=True)
+        probes = self.get_obj(use_db=True)
         probes.probedata = self.get_test_probedata()
         probes.cgroups = self.get_test_cgroups()
 
@@ -458,7 +455,7 @@ text
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_xml", Mock())
     def test_load_data_xml(self):
-        probes = self.get_probes_object(use_db=False)
+        probes = self.get_obj(use_db=False)
         probes.load_data()
         probes._load_data_xml.assert_any_call()
         self.assertFalse(probes._load_data_db.called)
@@ -467,14 +464,14 @@ text
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_db", Mock())
     @patch("Bcfg2.Server.Plugins.Probes.Probes._load_data_xml", Mock())
     def test_load_data_db(self):
-        probes = self.get_probes_object(use_db=True)
+        probes = self.get_obj(use_db=True)
         probes.load_data()
         probes._load_data_db.assert_any_call(client=None)
         self.assertFalse(probes._load_data_xml.called)
 
     @patch("lxml.etree.parse")
     def test__load_data_xml(self, mock_parse):
-        probes = self.get_probes_object(use_db=False)
+        probes = self.get_obj(use_db=False)
         probes.probedata = self.get_test_probedata()
         probes.cgroups = self.get_test_cgroups()
 
@@ -504,7 +501,7 @@ text
     @skipUnless(HAS_DJANGO, "Django not found, skipping")
     def test__load_data_db(self):
         syncdb(TestProbesDB)
-        probes = self.get_probes_object(use_db=True)
+        probes = self.get_obj(use_db=True)
         probes.probedata = self.get_test_probedata()
         probes.cgroups = self.get_test_cgroups()
         for cname in probes.probedata.keys():
@@ -529,7 +526,7 @@ text
 
     @patch("Bcfg2.Server.Plugins.Probes.ProbeSet.get_probe_data")
     def test_GetProbes(self, mock_get_probe_data):
-        probes = self.get_probes_object()
+        probes = self.get_obj()
         metadata = Mock()
         probes.GetProbes(metadata)
         mock_get_probe_data.assert_called_with(metadata)
@@ -541,7 +538,7 @@ text
         # easy to test
         datalist = ["a", "b", "c"]
 
-        probes = self.get_probes_object()
+        probes = self.get_obj()
         probes.core.metadata_cache_mode = 'off'
         client = Mock()
         client.hostname = "foo.example.com"
@@ -565,7 +562,7 @@ text
         probes.core.metadata_cache.expire.assert_called_with(client.hostname)
 
     def test_ReceiveDataItem(self):
-        probes = self.get_probes_object()
+        probes = self.get_obj()
         for cname, cdata in self.get_test_probedata().items():
             client = Mock()
             client.hostname = cname
@@ -628,7 +625,7 @@ text
     def test_get_additional_groups(self):
         TestConnector.test_get_additional_groups(self)
 
-        probes = self.get_probes_object()
+        probes = self.get_obj()
         test_cgroups = self.get_test_cgroups()
         probes.cgroups = self.get_test_cgroups()
         for cname in test_cgroups.keys():
@@ -645,7 +642,7 @@ text
     def test_get_additional_data(self):
         TestConnector.test_get_additional_data(self)
 
-        probes = self.get_probes_object()
+        probes = self.get_obj()
         test_probedata = self.get_test_probedata()
         probes.probedata = self.get_test_probedata()
         for cname in test_probedata.keys():
