@@ -2,7 +2,7 @@ import os
 import sys
 import lxml.etree
 from mock import Mock, MagicMock, patch
-from Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator import *
+from Bcfg2.Server.Plugins.Cfg import CfgCheetahGenerator
 
 # add all parent testsuite directories to sys.path to allow (most)
 # relative imports in python 2.4
@@ -17,11 +17,12 @@ from common import *
 from TestServer.TestPlugins.TestCfg.Test_init import TestCfgGenerator
 
 
-if HAS_CHEETAH or can_skip:
+if CfgCheetahGenerator.HAS_CHEETAH or can_skip:
     class TestCfgCheetahGenerator(TestCfgGenerator):
-        test_obj = CfgCheetahGenerator
+        test_obj = CfgCheetahGenerator.CfgCheetahGenerator
 
-        @skipUnless(HAS_CHEETAH, "Cheetah libraries not found, skipping")
+        @skipUnless(CfgCheetahGenerator.HAS_CHEETAH,
+                    "Cheetah libraries not found, skipping")
         def setUp(self):
             pass
 
@@ -31,11 +32,11 @@ if HAS_CHEETAH or can_skip:
             ccg.data = "data"
             entry = lxml.etree.Element("Path", name="/test.txt")
             metadata = Mock()
-            Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator.SETUP = MagicMock()
+            CfgCheetahGenerator.SETUP = MagicMock()
 
             self.assertEqual(ccg.get_data(entry, metadata),
                              mock_Template.return_value.respond.return_value)
-            Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator.SETUP.__getitem__.assert_called_with("repo")
+            CfgCheetahGenerator.SETUP.__getitem__.assert_called_with("repo")
             mock_Template.assert_called_with("data".decode(ccg.encoding),
                                              compilerSettings=ccg.settings)
             tmpl = mock_Template.return_value
@@ -44,5 +45,6 @@ if HAS_CHEETAH or can_skip:
             self.assertEqual(tmpl.name, entry.get("name"))
             self.assertEqual(tmpl.path, entry.get("name"))
             self.assertEqual(tmpl.source_path, ccg.name)
-            self.assertEqual(tmpl.repo,
-                             Bcfg2.Server.Plugins.Cfg.CfgCheetahGenerator.SETUP.__getitem__.return_value)
+            self.assertEqual(
+                tmpl.repo,
+                CfgCheetahGenerator.SETUP.__getitem__.return_value)
