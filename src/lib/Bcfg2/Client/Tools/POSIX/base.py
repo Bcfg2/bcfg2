@@ -287,6 +287,9 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             return True
         secontext = selinux.lgetfilecon(path)[1].split(":")[2]
         if secontext in self.setup["posix_secontext_ignore"]:
+            self.logger.debug("Ignoring SELinux context for %s; existing "
+                              "context %s is in secontext_ignore list" %
+                              (path, secontext))
             return True
         try:
             if context == '__default__':

@@ -458,10 +458,14 @@ class TestPOSIXTool(TestTool):
 
     @skipUnless(HAS_SELINUX, "SELinux not found, skipping")
     @patchIf(HAS_SELINUX, "selinux.restorecon")
+    @patchIf(HAS_SELINUX, "selinux.lgetfilecon")
     @patchIf(HAS_SELINUX, "selinux.lsetfilecon")
-    def test_set_secontext(self, mock_lsetfilecon, mock_restorecon):
-        ptool = self.get_obj()
+    def test_set_secontext(self, mock_lsetfilecon, mock_lgetfilecon,
+                           mock_restorecon):
+        ptool = self.get_obj(setup={"posix_secontext_ignore": ["dosfs_t"]})
         entry = lxml.etree.Element("Path", name="/etc/foo", type="file")
+
+        mock_lgetfilecon.return_value = (0, "system_u:object_r:foo_t")
 
         # disable selinux for the initial test
         Bcfg2.Client.Tools.POSIX.base.HAS_SELINUX = False
@@ -472,28 +476,45 @@ class TestPOSIXTool(TestTool):
         self.assertTrue(ptool._set_secontext(entry))
         self.assertFalse(mock_restorecon.called)
         self.assertFalse(mock_lsetfilecon.called)
+        self.assertFalse(mock_lgetfilecon.called)
 
         mock_restorecon.reset_mock()
         mock_lsetfilecon.reset_mock()
+        mock_lgetfilecon.reset_mock()
         entry.set("secontext", "__default__")
         self.assertTrue(ptool._set_secontext(entry))
         mock_restorecon.assert_called_with(entry.get("name"))
+        mock_lgetfilecon.assert_called_once_with(entry.get("name"))
         self.assertFalse(mock_lsetfilecon.called)
 
         mock_restorecon.reset_mock()
         mock_lsetfilecon.reset_mock()
+        mock_lgetfilecon.reset_mock()
         mock_lsetfilecon.return_value = 0
         entry.set("secontext", "foo_t")
         self.assertTrue(ptool._set_secontext(entry))
         self.assertFalse(mock_restorecon.called)
+        mock_lgetfilecon.assert_called_once_with(entry.get("name"))
         mock_lsetfilecon.assert_called_with(entry.get("name"), "foo_t")
 
         mock_restorecon.reset_mock()
         mock_lsetfilecon.reset_mock()
+        mock_lgetfilecon.reset_mock()
         mock_lsetfilecon.return_value = 1
         self.assertFalse(ptool._set_secontext(entry))
         self.assertFalse(mock_restorecon.called)
+        mock_lgetfilecon.assert_called_once_with(entry.get("name"))
         mock_lsetfilecon.assert_called_with(entry.get("name"), "foo_t")
+
+        # ignored filesystem
+        mock_restorecon.reset_mock()
+        mock_lsetfilecon.reset_mock()
+        mock_lgetfilecon.reset_mock()
+        mock_lgetfilecon.return_value = (0, "system_u:object_r:dosfs_t")
+        self.assertTrue(ptool._set_secontext(entry))
+        self.assertFalse(mock_restorecon.called)
+        self.assertFalse(mock_lsetfilecon.called)
+        mock_lgetfilecon.assert_called_once_with(entry.get("name"))
 
     @patch("grp.getgrnam")
     def test_norm_gid(self, mock_getgrnam):
