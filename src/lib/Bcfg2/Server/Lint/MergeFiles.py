@@ -17,6 +17,12 @@ def threshold(val):
     return rv
 
 
+def is_binary(data):
+    """ Check if a given string contains only text or binary data. """
+    text_chars = bytearray([7, 8, 9, 10, 12, 13, 27] + range(0x20, 0x100))
+    return bool(data.translate(None, text_chars))
+
+
 class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
     """ find Probes or Cfg files with multiple similar files that
     might be merged into one """
@@ -50,6 +56,7 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
         for filename, entryset in self.core.plugins['Cfg'].entries.items():
             candidates = dict([(f, e) for f, e in entryset.entries.items()
                                if (isinstance(e, CfgGenerator) and
+                                   not is_binary(e.data) and
                                    f not in ignore and
                                    not f.endswith(".crypt"))])
             similar, identical = self.get_similar(candidates)
