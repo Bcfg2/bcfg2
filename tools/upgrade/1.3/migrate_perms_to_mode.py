@@ -64,24 +64,26 @@ def main():
     parser = Bcfg2.Options.get_parser(
         description="Migrate from Bcfg2 1.2 'perms' attribute to 1.3 'mode' "
         "attribute",
-        components=FileMonitor)
+        components=[FileMonitor])
     parser.add_options([Bcfg2.Options.Common.repository,
                         Bcfg2.Options.Common.plugins])
     parser.parse()
     repo = Bcfg2.Options.setup.repository
 
     for plugin in Bcfg2.Options.setup.plugins:
-        if plugin in ['Base', 'Bundler', 'Rules']:
-            for root, _, files in os.walk(os.path.join(repo, plugin)):
+        plugin_name = plugin.__name__
+        if plugin_name in ['Base', 'Bundler', 'Rules']:
+            for root, _, files in os.walk(os.path.join(repo, plugin_name)):
                 if skip_path(root):
                     continue
                 for fname in files:
                     if skip_path(fname):
                         continue
                     convertstructure(os.path.join(root, fname))
-        if plugin not in ['Cfg', 'TGenshi', 'TCheetah', 'SSHbase', 'SSLCA']:
+        if plugin_name not in ['Cfg', 'TGenshi', 'TCheetah', 'SSHbase',
+                               'SSLCA']:
             continue
-        for root, dirs, files in os.walk(os.path.join(repo, plugin)):
+        for root, dirs, files in os.walk(os.path.join(repo, plugin_name)):
             if skip_path(root):
                 continue
             for fname in files:
