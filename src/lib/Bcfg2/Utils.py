@@ -330,3 +330,19 @@ class classproperty(object):  # pylint: disable=C0103
 
     def __get__(self, instance, owner):
         return self.getter(owner)
+
+
+def is_string(strng, encoding):
+    """ Returns true if the string contains no ASCII control
+    characters and can be decoded from the specified encoding. """
+    for char in strng:
+        if ord(char) < 9 or ord(char) > 13 and ord(char) < 32:
+            return False
+    if not hasattr(strng, "decode"):
+        # py3k
+        return True
+    try:
+        strng.decode(encoding)
+        return True
+    except:  # pylint: disable=W0702
+        return False

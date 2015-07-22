@@ -6,6 +6,7 @@ import copy
 from difflib import SequenceMatcher
 import Bcfg2.Server.Lint
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
+from Bcfg2.Utils import is_string
 
 
 def threshold(val):
@@ -15,12 +16,6 @@ def threshold(val):
     if rv > 1:
         rv /= 100
     return rv
-
-
-def is_binary(data):
-    """ Check if a given string contains only text or binary data. """
-    text_chars = bytearray([7, 8, 9, 10, 12, 13, 27] + range(0x20, 0x100))
-    return bool(data.translate(None, text_chars))
 
 
 class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
@@ -56,7 +51,8 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
         for filename, entryset in self.core.plugins['Cfg'].entries.items():
             candidates = dict([(f, e) for f, e in entryset.entries.items()
                                if (isinstance(e, CfgGenerator) and
-                                   not is_binary(e.data) and
+                                   is_string(e.data,
+                                             Bcfg2.Options.setup.encoding) and
                                    f not in ignore and
                                    not f.endswith(".crypt"))])
             similar, identical = self.get_similar(candidates)
