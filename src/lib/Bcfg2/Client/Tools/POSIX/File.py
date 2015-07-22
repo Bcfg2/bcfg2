@@ -8,6 +8,7 @@ import tempfile
 import Bcfg2.Options
 from Bcfg2.Client.Tools.POSIX.base import POSIXTool
 from Bcfg2.Compat import unicode, b64encode, b64decode  # pylint: disable=W0622
+import Bcfg2.Utils
 
 
 class POSIXFile(POSIXTool):
@@ -16,21 +17,6 @@ class POSIXFile(POSIXTool):
 
     def fully_specified(self, entry):
         return entry.text is not None or entry.get('empty', 'false') == 'true'
-
-    def _is_string(self, strng, encoding):
-        """ Returns true if the string contains no ASCII control
-        characters and can be decoded from the specified encoding. """
-        for char in strng:
-            if ord(char) < 9 or ord(char) > 13 and ord(char) < 32:
-                return False
-        if not hasattr(strng, "decode"):
-            # py3k
-            return True
-        try:
-            strng.decode(encoding)
-            return True
-        except:  # pylint: disable=W0702
-            return False
 
     def _get_data(self, entry):
         """ Get a tuple of (<file data>, <is binary>) for the given entry """
@@ -181,8 +167,8 @@ class POSIXFile(POSIXTool):
                                   (entry.get("name"), sys.exc_info()[1]))
                 return False
         if not is_binary:
-            is_binary |= not self._is_string(content,
-                                             Bcfg2.Options.setup.encoding)
+            is_binary |= not Bcfg2.Utils.is_string(
+                content, Bcfg2.Options.setup.encoding)
         if is_binary:
             # don't compute diffs if the file is binary
             prompt.append('Binary file, no printable diff')

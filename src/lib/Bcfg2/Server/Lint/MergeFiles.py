@@ -6,6 +6,7 @@ import copy
 from difflib import SequenceMatcher
 import Bcfg2.Server.Lint
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
+from Bcfg2.Utils import is_string
 
 
 def threshold(val):
@@ -50,6 +51,8 @@ class MergeFiles(Bcfg2.Server.Lint.ServerPlugin):
         for filename, entryset in self.core.plugins['Cfg'].entries.items():
             candidates = dict([(f, e) for f, e in entryset.entries.items()
                                if (isinstance(e, CfgGenerator) and
+                                   is_string(e.data,
+                                             Bcfg2.Options.setup.encoding) and
                                    f not in ignore and
                                    not f.endswith(".crypt"))])
             similar, identical = self.get_similar(candidates)

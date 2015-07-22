@@ -37,22 +37,6 @@ class TestPOSIXFile(TestPOSIXTool):
         entry.text = "text"
         self.assertTrue(ptool.fully_specified(entry))
 
-    def test_is_string(self):
-        ptool = self.get_obj()
-
-        for char in list(range(8)) + list(range(14, 32)):
-            self.assertFalse(ptool._is_string("foo" + chr(char) + "bar",
-                                              'UTF-8'))
-        for char in list(range(9, 14)) + list(range(33, 128)):
-            self.assertTrue(ptool._is_string("foo" + chr(char) + "bar",
-                                             'UTF-8'))
-        ustr = 'é'
-        self.assertTrue(ptool._is_string(ustr, 'UTF-8'))
-        if not inPy3k:
-            self.assertFalse(ptool._is_string("foo" + chr(128) + "bar",
-                                              'ascii'))
-            self.assertFalse(ptool._is_string(ustr, 'ascii'))
-
     def test_get_data(self):
         orig_entry = lxml.etree.Element("Path", name="/test", type="file")
         Bcfg2.Options.setup.encoding = "ascii"
@@ -216,7 +200,8 @@ class TestPOSIXFile(TestPOSIXTool):
         mock_unlink.assert_called_with(newfile)
 
     @patch("%s.open" % builtins)
-    def test__get_diffs(self, mock_open):
+    @patch("Bcfg2.Utils")
+    def test__get_diffs(self, mock_utils, mock_open):
         orig_entry = lxml.etree.Element("Path", name="/test", type="file",
                                         mode='0644', owner='root',
                                         group='root')
@@ -226,16 +211,15 @@ class TestPOSIXFile(TestPOSIXTool):
         ptool = self.get_obj()
         ptool._get_data = Mock()
         ptool._diff = Mock()
-        ptool._is_string = Mock()
 
         def reset():
-            ptool._is_string.reset_mock()
+            mock_utils.is_string.reset_mock()
             ptool._get_data.reset_mock()
             ptool._diff.reset_mock()
             mock_open.reset_mock()
             return copy.deepcopy(orig_entry)
 
-        ptool._is_string.return_value = True
+        mock_utils.is_string.return_value = True
         ptool._get_data.return_value = (orig_entry.text, False)
         mock_open.return_value.read.return_value = ondisk
         ptool._diff.return_value = ["-test2", "+test"]
@@ -250,7 +234,7 @@ class TestPOSIXFile(TestPOSIXTool):
 
         # binary data on disk
         entry = reset()
-        ptool._is_string.return_value = False
+        mock_utils.is_string.return_value = False
         ptool._get_diffs(entry, content=ondisk)
         self.assertFalse(mock_open.called)
         self.assertFalse(ptool._diff.called)
@@ -258,7 +242,7 @@ class TestPOSIXFile(TestPOSIXTool):
 
         # sensitive, non-interactive -- do nothing
         entry = reset()
-        ptool._is_string.return_value = True
+        mock_utils.is_string.return_value = True
         ptool._get_diffs(entry, sensitive=True, interactive=False)
         self.assertFalse(mock_open.called)
         self.assertFalse(ptool._diff.called)
