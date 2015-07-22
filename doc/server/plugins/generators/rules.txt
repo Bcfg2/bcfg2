@@ -512,3 +512,23 @@ you'd have to explicitly specify ``<Service name="bcfg2.*".../>``.
 
 Note that only one Rule can apply to any abstract entry, so you cannot
 specify multiple regexes to match the same rule.
+
+Replacing the name of the Entry in Attributes
+=============================================
+
+If you are using regular expressions to match the abstract configuration
+entries, you may need the concrete name of the entry in some attributes.
+To use this feature, you have to enable it. It is only useful, if used
+together with regex matching. ::
+
+    [rules]
+    regex = yes
+    replace_name = yes
+
+You now can write something like that in your xml file:
+
+.. code-block:: xml
+
+    <POSIXUser name='.*' home='/somewhere/%{name}'/>
+
+``%{name}`` will be correctly replaced with the username for each POSIXUser.

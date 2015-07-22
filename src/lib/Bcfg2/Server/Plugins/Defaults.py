@@ -1,5 +1,6 @@
 """This generator provides rule-based entry mappings."""
 
+import Bcfg2.Options
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.Plugins.Rules
 
@@ -9,7 +10,10 @@ class Defaults(Bcfg2.Server.Plugins.Rules.Rules,
     """Set default attributes on bound entries"""
     __author__ = 'bcfg-dev@mcs.anl.gov'
 
-    options = Bcfg2.Server.Plugin.PrioDir.options
+    options = Bcfg2.Server.Plugin.PrioDir.options + [
+        Bcfg2.Options.BooleanOption(
+            cf=("defaults", "replace_name"), dest="defaults_replace_name",
+            help="Replace %{name} in attributes with name of target entry")]
 
     # Rules is a Generator that happens to implement all of the
     # functionality we want, so we overload it, but Defaults should
@@ -41,3 +45,9 @@ class Defaults(Bcfg2.Server.Plugins.Rules.Rules,
     def _regex_enabled(self):
         """ Defaults depends on regex matching, so force it enabled """
         return True
+
+    @property
+    def _replace_name_enabled(self):
+        """ Return True if the replace_name feature is enabled,
+        False otherwise """
+        return Bcfg2.Options.setup.defaults_replace_name
