@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import sys
 from Bcfg2.Utils import *
@@ -42,3 +43,17 @@ class TestPackedDigitRange(Bcfg2TestCase):
             for test in exc:
                 self.assertNotIn(test, rng)
                 self.assertFalse(rng.includes(test))
+
+
+class TestIsString(Bcfg2TestCase):
+    def test_is_string(self):
+        for char in list(range(8)) + list(range(14, 32)):
+            self.assertFalse(is_string("foo" + chr(char) + "bar", 'UTF-8'))
+        for char in list(range(9, 14)) + list(range(33, 128)):
+            self.assertTrue(is_string("foo" + chr(char) + "bar", 'UTF-8'))
+
+        ustr = 'é'
+        self.assertTrue(is_string(ustr, 'UTF-8'))
+        if not inPy3k:
+            self.assertFalse(is_string("foo" + chr(128) + "bar", 'ascii'))
+            self.assertFalse(is_string(ustr, 'ascii'))
