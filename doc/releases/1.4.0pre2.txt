@@ -19,6 +19,7 @@ environments.
 
 * NagiosGen: Add bundles to configuration
 * HomeBrew: Initial add of plugin
+* Rules/Defaults: Add possibility to use name of entry in attributes
 
 backwards-incompatible user-facing changes
 ------------------------------------------

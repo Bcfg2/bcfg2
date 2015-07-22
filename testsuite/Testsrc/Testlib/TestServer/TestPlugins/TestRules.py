@@ -32,6 +32,7 @@ class TestRules(TestPrioDir):
         group=lxml.etree.Element("SEPort", name="6789/tcp"),
         children=lxml.etree.Element("Path", name="/etc/child-entries"),
         regex=lxml.etree.Element("Package", name="regex"),
+        replace_name=lxml.etree.Element("POSIXUser", name="regex"),
         slash=lxml.etree.Element("Path", name="/etc/trailing/slash"),
         no_slash=lxml.etree.Element("Path", name="/etc/no/trailing/slash/"))
 
@@ -53,6 +54,8 @@ class TestRules(TestPrioDir):
                                     group="root", mode="0775"),
         regex=lxml.etree.Element("Package", name="regex", type="yum",
                                  version="any"),
+        replace_name=lxml.etree.Element("POSIXUser", name="regex",
+                                        home="/foobar%{bar}/regex"),
         slash=lxml.etree.Element("Path", name="/etc/trailing/slash",
                                  type="directory", owner="root", group="root",
                                  mode="0600"),
@@ -70,6 +73,8 @@ class TestRules(TestPrioDir):
 
     in_file = copy.deepcopy(concrete)
     in_file['regex'].set("name", ".*")
+    in_file['replace_name'].set("home", "/foobar%{bar}/%{name}")
+    in_file['replace_name'].set("name", ".*")
     in_file['slash'].set("name", "/etc/trailing/slash/")
     in_file['no_slash'].set("name", "/etc/no/trailing/slash")
 
@@ -91,6 +96,7 @@ class TestRules(TestPrioDir):
     rules3 = lxml.etree.Element("Rules", priority="10")
     rules3.append(in_file['duplicate'])
     rules3.append(in_file['regex'])
+    rules3.append(in_file['replace_name'])
     rules3.append(in_file['slash'])
 
     rules = {"rules1.xml": rules1, "rules2.xml": rules2, "rules3.xml": rules3}
@@ -99,6 +105,7 @@ class TestRules(TestPrioDir):
         TestPrioDir.setUp(self)
         set_setup_default("lax_decryption", True)
         set_setup_default("rules_regex", False)
+        set_setup_default("rules_replace_name", False)
 
     def get_child(self, name):
         """ Turn one of the XML documents in `rules` into a child
@@ -168,6 +175,17 @@ class TestRules(TestPrioDir):
         Bcfg2.Options.setup.rules_regex = True
         self._do_test('regex')
         Bcfg2.Options.setup.rules_regex = False
+
+    def test_replace_name(self):
+        """ Test that Rules handles replaces name in attribues with regular expressions """
+        Bcfg2.Options.setup.rules_regex = False
+        Bcfg2.Options.setup.rules_replace_name = False
+        self._do_test_failure('replace_name', handles=False)
+        Bcfg2.Options.setup.rules_regex = True
+        Bcfg2.Options.setup.rules_replace_name = True
+        self._do_test('replace_name')
+        Bcfg2.Options.setup.rules_regex = False
+        Bcfg2.Options.setup.rules_replace_name = False
 
     def test_slash(self):
         """ Test that Rules handles trailing slashes on Path entries """
