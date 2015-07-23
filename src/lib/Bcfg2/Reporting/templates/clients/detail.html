@@ -39,7 +39,7 @@ span.history_links a {
     <select id="quick" name="quick" onchange="javascript:pageJump('quick');">
     <option value="" selected="selected">--- Time ---</option>
     {% for i in client.interactions.all|slice:":25" %}
-        <option value="{% url "reports_client_detail_pk" hostname=client.name pk=i.id %}">{{i.timestamp|date:"c"}}</option>
+        <option value="{% url "reports_client_detail_pk" hostname=client.name pk=i.id %}">{{i.timestamp|date:"DATETIME_FORMAT"}}</option>
     {% endfor %}
   </select></span>
   </div>

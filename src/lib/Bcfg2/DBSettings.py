@@ -123,6 +123,9 @@ def finalize_django_config(opts=None, silent=False):
             opts.web_prefix.rstrip('/') + \
             settings['MEDIA_URL']
 
+    if opts.django_settings:
+        settings.update(opts.django_settings)
+
     logger = logging.getLogger()
 
     logger.debug("Finalizing Django settings: %s" % settings)
@@ -229,7 +232,7 @@ class _OptionContainer(object):
             dest='db_schema', default='public'),
         Bcfg2.Options.Option(
             cf=('database', 'options'), help='Database options',
-            dest='db_opts', type=Bcfg2.Options.Types.comma_dict,
+            dest='db_opts', type=Bcfg2.Options.Types.literal_dict,
             default=dict()),
         # reporting database options
         Bcfg2.Options.Option(
@@ -258,14 +261,18 @@ class _OptionContainer(object):
         Bcfg2.Options.Option(
             cf=('database', 'reporting_options'),
             help='Reporting database options', dest='reporting_db_opts',
-            type=Bcfg2.Options.Types.comma_dict, default=dict()),
+            type=Bcfg2.Options.Types.literal_dict, default=dict()),
         # Django options
         Bcfg2.Options.Option(
             cf=('reporting', 'time_zone'), help='Django timezone'),
         Bcfg2.Options.BooleanOption(
             cf=('reporting', 'web_debug'), help='Django debug'),
         Bcfg2.Options.Option(
-            cf=('reporting', 'web_prefix'), help='Web prefix')]
+            cf=('reporting', 'web_prefix'), help='Web prefix'),
+        Bcfg2.Options.Option(
+            cf=('reporting', 'django_settings'),
+            help='Additional django settings',
+            type=Bcfg2.Options.Types.literal_dict, default=dict())]
 
     @staticmethod
     def component_parsed_hook(opts):

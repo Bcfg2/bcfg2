@@ -718,6 +718,11 @@ Reporting options
         Maximum number of children for the reporting collector. Use 0 to
         disable the limit. (default is 0)
 
+    django_settings
+        Arbitrary options for the Django installation. The value expected
+        is a literal python dictionary, that is merged with the already set
+        django settings.
+
 See Also
 --------
 

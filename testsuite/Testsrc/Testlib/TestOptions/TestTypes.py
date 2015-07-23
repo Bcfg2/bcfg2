@@ -46,21 +46,23 @@ class TestOptionTypes(Bcfg2TestCase):
         self.assertItemsEqual(self._test_options(["--test", "one:two three"]),
                               ["one", "two three"])
 
-    def test_comma_dict(self):
-        """parse comma-dict values."""
-        self.options = [Option("--test", type=Types.comma_dict)]
+    def test_literal_dict(self):
+        """parse literal-dict values."""
+        self.options = [Option("--test", type=Types.literal_dict)]
         expected = {
             "one": True,
             "two": 2,
             "three": "three",
-            "four": False}
+            "four": False,
+            "five": {
+                "a": 1,
+                "b": 2
+        }}
         self.assertDictEqual(
             self._test_options(["--test",
-                                "one=yes, two=2  , three=three,four=no"]),
-            expected)
-
-        self.assertDictEqual(
-            self._test_options(["--test", "one,two=2,three=three,four=off"]),
+                                '''{ "one": True, "two": 2,
+                                     "three": "three", "four": False,
+                                     "five": { "a": 1, "b": 2 }}''']),
             expected)
 
     def test_anchored_regex_list(self):

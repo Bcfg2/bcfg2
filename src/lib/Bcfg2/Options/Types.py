@@ -5,6 +5,7 @@ import os
 import re
 import pwd
 import grp
+from Bcfg2.Compat import literal_eval
 
 _COMMA_SPLIT_RE = re.compile(r'\s*,\s*')
 
@@ -32,28 +33,10 @@ def colon_list(value):
     return value.split(':')
 
 
-def comma_dict(value):
-    """ Split an option string on commas, optionally surrounded by
-    whitespace, and split the resulting items again on equals signs,
-    returning a dict """
-    result = dict()
-    if value:
-        items = comma_list(value)
-        for item in items:
-            if '=' in item:
-                key, value = item.split(r'=', 1)
-                if value in ["true", "yes", "on"]:
-                    result[key] = True
-                elif value in ["false", "no", "off"]:
-                    result[key] = False
-                else:
-                    try:
-                        result[key] = int(value)
-                    except ValueError:
-                        result[key] = value
-            else:
-                result[item] = True
-    return result
+def literal_dict(value):
+    """ literally evaluate the option in order to allow for arbitrarily nested
+    dictionaries """
+    return literal_eval(value)
 
 
 def anchored_regex_list(value):

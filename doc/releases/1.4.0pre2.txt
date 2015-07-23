@@ -31,6 +31,11 @@ backwards-incompatible user-facing changes
   This fixes potentially long client runs when comparing files that have
   diverged significantly.
 
+* The database options in the config (options and reporting_options in database
+  section) now have to be literal python dictionaries.
+
+  This allows to set arbitrary options with nested settings.
+
 Thanks
 ------
 
