@@ -229,7 +229,7 @@ class _OptionContainer(object):
             dest='db_schema', default='public'),
         Bcfg2.Options.Option(
             cf=('database', 'options'), help='Database options',
-            dest='db_opts', type=Bcfg2.Options.Types.comma_dict,
+            dest='db_opts', type=Bcfg2.Options.Types.literal_dict,
             default=dict()),
         # reporting database options
         Bcfg2.Options.Option(
@@ -258,7 +258,7 @@ class _OptionContainer(object):
         Bcfg2.Options.Option(
             cf=('database', 'reporting_options'),
             help='Reporting database options', dest='reporting_db_opts',
-            type=Bcfg2.Options.Types.comma_dict, default=dict()),
+            type=Bcfg2.Options.Types.literal_dict, default=dict()),
         # Django options
         Bcfg2.Options.Option(
             cf=('reporting', 'time_zone'), help='Django timezone'),
