@@ -1368,6 +1368,21 @@ class Core(object):
         return "This method is deprecated and will be removed in a future " + \
             "release\n%s" % self.fam.set_debug(debug)
 
+    @exposed
+    def expire_metadata_cache(self, _, hostnames=None):
+        """ Expire the metadata cache for one or all clients
+
+        :param hostnames: A list of hostnames to expire the metadata
+                          cache for or None. If None the cache of
+                          all clients will be expired.
+        :type hostnames: None or list of strings
+        """
+        if hostnames is not None:
+            for hostname in hostnames:
+                self.metadata_cache.expire(hostname)
+        else:
+            self.metadata_cache.expire()
+
 
 class NetworkCore(Core):
     """ A server core that actually listens on the network, can be
