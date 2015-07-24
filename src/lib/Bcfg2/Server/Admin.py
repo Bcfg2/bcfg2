@@ -439,6 +439,25 @@ class Compare(AdminCmd):
                 print("")
 
 
+class ExpireCache(_ProxyAdminCmd):
+    """ Expire the metadata cache """
+
+    options = _ProxyAdminCmd.options + [
+        Bcfg2.Options.PositionalArgument(
+            "hostname", nargs="*", default=[],
+            help="Expire cache for the given host(s)")]
+
+    def run(self, setup):
+        clients = None
+        if setup.hostname is not None and len(setup.hostname) > 0:
+            clients = setup.hostname
+
+        try:
+            self.proxy.expire_metadata_cache(clients)
+        except Bcfg2.Client.Proxy.ProxyError:
+            self.errExit("Proxy Error: %s" % sys.exc_info()[1])
+
+
 class Init(AdminCmd):
     """Interactively initialize a new repository."""
 
