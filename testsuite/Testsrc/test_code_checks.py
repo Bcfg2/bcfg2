@@ -66,7 +66,6 @@ error_checks = {
                                "VCS.py",
                                "YUM24.py"],
     "lib/Bcfg2/Server/Plugins": ["Deps.py",
-                                 "Ldap.py",
                                  "Pkgmgr.py"]
     }
 
