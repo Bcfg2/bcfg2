@@ -2,14 +2,15 @@ sudo: false
 language: python
 matrix:
   include:
+    - env: PYTHON=2.4
+    - env: PYTHON=2.5
     - python: "2.6"
-      env: WITH_OPTIONAL_DEPS=no TEST_SPHINX=no
-    - python: "2.6"
-      env: WITH_OPTIONAL_DEPS=yes TEST_SPHINX=no
-    - python: "2.7_with_system_site_packages"
-      env: WITH_OPTIONAL_DEPS=no TEST_SPHINX=no
+    - python: "2.7"
     - python: "2.7_with_system_site_packages"
       env: WITH_OPTIONAL_DEPS=yes TEST_SPHINX=yes
+before_install:
+  - testsuite/prepare-python.sh
+  - if test -d "$HOME/custom-virtualenv/"; then source "$HOME/custom-virtualenv/bin/activate"; fi
 install:
   - testsuite/install.sh
   - pip install -e .
@@ -29,7 +30,13 @@ notifications:
     use_notice: true
 addons:
   apt:
+    sources:
+      - deadsnakes
     packages:
+      - python2.4
+      - python2.4-dev
+      - python2.5
+      - python2.5-dev
       - swig
       - libxml2-utils
       - yum

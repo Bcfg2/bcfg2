@@ -1,0 +1,13 @@
+lxml<3.4
+lockfile<0.9
+python-daemon<1.4
+argparse
+ssl
+
+nose
+mock<1.1
+unittest2<0.6
+logilab-common==0.53.0
+logilab-astng==0.20.3
+pylint<0.22
+pep8<1.3
