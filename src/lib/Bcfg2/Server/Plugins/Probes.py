@@ -74,6 +74,7 @@ class ProbeStore(Debuggable):
 
     def __init__(self, core, datadir):  # pylint: disable=W0613
         Debuggable.__init__(self)
+        self.core = core
         self._groupcache = Bcfg2.Server.Cache.Cache("Probes", "probegroups")
         self._datacache = Bcfg2.Server.Cache.Cache("Probes", "probedata")
 
@@ -134,7 +135,7 @@ class DBProbeStore(ProbeStore, Bcfg2.Server.Plugin.DatabaseBacked):
         Bcfg2.Server.Cache.expire("Probes", "probegroups", hostname)
         groupdata = ProbesGroupsModel.objects.filter(hostname=hostname)
         self._groupcache[hostname] = list(set(r.group for r in groupdata))
-        Bcfg2.Server.Cache.expire("Metadata", hostname)
+        self.core.metadata_cache.expire(hostname)
 
     @Bcfg2.Server.Plugin.DatabaseBacked.get_db_lock
     def set_groups(self, hostname, groups):
@@ -155,7 +156,7 @@ class DBProbeStore(ProbeStore, Bcfg2.Server.Plugin.DatabaseBacked):
         ProbesGroupsModel.objects.filter(
             hostname=hostname).exclude(group__in=groups).delete()
         if olddata != groups:
-            Bcfg2.Server.Cache.expire("Metadata", hostname)
+            self.core.metadata_cache.expire(hostname)
 
     def _load_data(self, hostname):
         Bcfg2.Server.Cache.expire("Probes", "probegroups", hostname)
@@ -168,7 +169,7 @@ class DBProbeStore(ProbeStore, Bcfg2.Server.Plugin.DatabaseBacked):
                     time.mktime(pdata.timestamp.timetuple())
                 ts_set = True
             self._datacache[hostname][pdata.probe] = ProbeData(pdata.data)
-        Bcfg2.Server.Cache.expire("Metadata", hostname)
+        self.core.metadata_cache.expire(hostname)
 
     @Bcfg2.Server.Plugin.DatabaseBacked.get_db_lock
     def set_data(self, hostname, data):
@@ -198,7 +199,7 @@ class DBProbeStore(ProbeStore, Bcfg2.Server.Plugin.DatabaseBacked):
             qset.delete()
             expire_metadata = True
         if expire_metadata:
-            Bcfg2.Server.Cache.expire("Metadata", hostname)
+            self.core.metadata_cache.expire(hostname)
 
 
 class XMLProbeStore(ProbeStore):
@@ -234,7 +235,7 @@ class XMLProbeStore(ProbeStore):
                     self._groupcache[client.get('name')].append(
                         pdata.get('name'))
 
-        Bcfg2.Server.Cache.expire("Metadata")
+        self.core.metadata_cache.expire()
 
     def _load_groups(self, hostname):
         self._load_data(hostname)
@@ -274,7 +275,7 @@ class XMLProbeStore(ProbeStore):
         olddata = self._groupcache.get(hostname, [])
         self._groupcache[hostname] = groups
         if olddata != groups:
-            Bcfg2.Server.Cache.expire("Metadata", hostname)
+            self.core.metadata_cache.expire(hostname)
 
     def set_data(self, hostname, data):
         Bcfg2.Server.Cache.expire("Probes", "probedata", hostname)
@@ -285,7 +286,7 @@ class XMLProbeStore(ProbeStore):
             self._datacache[hostname][probe] = pdata
             expire_metadata |= olddata != data
         if expire_metadata:
-            Bcfg2.Server.Cache.expire("Metadata", hostname)
+            self.core.metadata_cache.expire(hostname)
 
 
 class ClientProbeDataSet(dict):
