@@ -36,6 +36,15 @@ backwards-incompatible user-facing changes
 
   This allows to set arbitrary options with nested settings.
 
+* The Ldap plugin changed significantly. The configuration interface was
+  simplified and new configuration options for the number of retries and the
+  delay in between were added.
+
+  You have to register your ldap queries in the global list, there is no
+  distinction between LdapQueries and LdapSubQueries anymore, the names of
+  your queries default to the class names and the Ldap plugin expires
+  the metadata caches if the config file changes.
+
 Thanks
 ------
 

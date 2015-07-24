@@ -267,7 +267,7 @@ revision information out of your repository for reporting purposes.
 Ldap Plugin
 +++++++++++
 
-The Ldap plugin makes it possible to fetch data from an LDAP directory,
+The Ldap plugin makes it possible to fetch data from a LDAP directory,
 process it and attach it to your metadata.
 
 Metadata Plugin
