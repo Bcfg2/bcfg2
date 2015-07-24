@@ -321,6 +321,15 @@ def safe_input(msg):
     return input(msg)
 
 
+def safe_module_name(prefix, module):
+    """ Munge the name of a module with prefix to avoid collisions
+    with other Python modules.  E.g., if you want to import user
+    defined helper modules and someone has a helper named 'ldap.py',
+    it should not be added to ``sys.modules`` as ``ldap``, but rather
+    as something more obscure. """
+    return '__%s_%s' % (prefix, module)
+
+
 class classproperty(object):  # pylint: disable=C0103
     """ Decorator that can be used to create read-only class
     properties. """

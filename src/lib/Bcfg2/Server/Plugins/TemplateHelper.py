@@ -7,16 +7,9 @@ import lxml.etree
 from Bcfg2.Server.Plugin import Plugin, Connector, DirectoryBacked, \
     TemplateDataProvider, DefaultTemplateDataProvider
 from Bcfg2.Logger import Debuggable
+from Bcfg2.Utils import safe_module_name
 
 MODULE_RE = re.compile(r'(?P<filename>(?P<module>[^\/]+)\.py)$')
-
-
-def safe_module_name(module):
-    """ Munge the name of a TemplateHelper module to avoid collisions
-    with other Python modules.  E.g., if someone has a helper named
-    'ldap.py', it should not be added to ``sys.modules`` as ``ldap``,
-    but rather as something more obscure. """
-    return '__TemplateHelper_%s' % module
 
 
 class HelperModule(Debuggable):
@@ -52,8 +45,9 @@ class HelperModule(Debuggable):
             return
 
         try:
-            module = imp.load_source(safe_module_name(self._module_name),
-                                     self.name)
+            module = imp.load_source(
+                safe_module_name('TemplateHelper', self._module_name),
+                self.name)
         except:  # pylint: disable=W0702
             # this needs to be a blanket except because the
             # imp.load_source() call can raise literally any error,

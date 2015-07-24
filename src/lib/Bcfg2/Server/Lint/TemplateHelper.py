@@ -4,8 +4,8 @@
 import sys
 import imp
 from Bcfg2.Server.Lint import ServerPlugin
-from Bcfg2.Server.Plugins.TemplateHelper import HelperModule, MODULE_RE, \
-    safe_module_name
+from Bcfg2.Server.Plugins.TemplateHelper import HelperModule, MODULE_RE
+from Bcfg2.Utils import safe_module_name
 
 
 class TemplateHelper(ServerPlugin):
@@ -44,7 +44,8 @@ class TemplateHelper(ServerPlugin):
         module_name = MODULE_RE.search(helper).group(1)
 
         try:
-            module = imp.load_source(safe_module_name(module_name), helper)
+            module = imp.load_source(
+                safe_module_name('TemplateHelper', module_name), helper)
         except:  # pylint: disable=W0702
             err = sys.exc_info()[1]
             self.LintError("templatehelper-import-error",
