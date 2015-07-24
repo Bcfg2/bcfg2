@@ -1,3 +1,4 @@
+sudo: false
 language: python
 matrix:
   include:
@@ -26,3 +27,15 @@ notifications:
     channels:
       - "irc.freenode.org#bcfg2"
     use_notice: true
+addons:
+  apt:
+    packages:
+      - swig
+      - libxml2-utils
+      - yum
+      - libaugeas0
+      - augeas-lenses
+      - libacl1-dev
+      - libssl-dev
+      - python-gamin
+      - python-selinux

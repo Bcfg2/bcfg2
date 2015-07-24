@@ -2,9 +2,6 @@
 
 # install script for Travis-CI
 
-sudo apt-get update -qq
-sudo apt-get install swig libxml2-utils
-
 pip install -r testsuite/requirements.txt
 
 PYVER=$(python -c 'import sys;print(".".join(str(v) for v in sys.version_info[0:2]))')
@@ -14,9 +11,6 @@ if [[ ${PYVER:0:1} == "2" && $PYVER != "2.7" ]]; then
 fi
 
 if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
-    sudo apt-get install -y yum libaugeas0 augeas-lenses libacl1-dev libssl-dev \
-        python-gamin python-selinux
-
     pip install PyYAML pyinotify boto pylibacl Jinja2 mercurial guppy cherrypy python-augeas
 
     if [[ ${PYVER:0:1} == "2" ]]; then
