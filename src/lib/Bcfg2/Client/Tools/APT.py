@@ -42,10 +42,10 @@ class APT(Bcfg2.Client.Tools.Tool):
             if reqdir not in path_entries:
                 os.environ['PATH'] = os.environ['PATH'] + ':' + reqdir
         self.pkgcmd = '%s ' % self.aptget + \
-                      '-o DPkg::Options::=--force-confold ' + \
-                      '-o DPkg::Options::=--force-confmiss ' + \
-                      '--reinstall ' + \
-                      '--force-yes '
+            '-o DPkg::Options::=--force-confold ' + \
+            '-o DPkg::Options::=--force-confmiss ' + \
+            '--reinstall ' + \
+            '--force-yes '
         if not Bcfg2.Options.setup.debug:
             self.pkgcmd += '-q=2 '
         self.pkgcmd += '-y install %s'
@@ -158,8 +158,8 @@ class APT(Bcfg2.Client.Tools.Tool):
                              (entry.attrib['name']))
             return False
         pkgname = entry.get('name')
-        if pkgname not in self.pkg_cache or \
-           not self.pkg_cache[pkgname].is_installed:
+        if (pkgname not in self.pkg_cache or
+                not self.pkg_cache[pkgname].is_installed):
             self.logger.info("Package %s not installed" % (entry.get('name')))
             entry.set('current_exists', 'false')
             return False
@@ -183,9 +183,9 @@ class APT(Bcfg2.Client.Tools.Tool):
             return False
         else:
             # version matches
-            if not Bcfg2.Options.setup.quick \
-               and entry.get('verify', 'true') == 'true' \
-               and checksums:
+            if (not Bcfg2.Options.setup.quick and
+                    entry.get('verify', 'true') == 'true' and
+                    checksums):
                 pkgsums = self.VerifyDebsums(entry, modlist)
                 return pkgsums
             return True

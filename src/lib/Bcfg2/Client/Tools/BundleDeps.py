@@ -28,7 +28,7 @@ class BundleDeps(Bcfg2.Client.Tools.Tool):
 
         bundle_name = entry.get('name')
         for bundle in self.config.findall('./Bundle/Bundle'):
-            if bundle.get('name') == bundle_name and \
-               bundle not in self.modified:
+            if (bundle.get('name') == bundle_name and
+                    bundle not in self.modified):
                 self.modified.append(bundle)
         return dict()

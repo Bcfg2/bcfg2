@@ -2,7 +2,7 @@
 
 # library will use lxml, then builtin xml.etree, then ElementTree
 
-# pylint: disable=E0611,W0611,W0613,C0103
+# pylint: disable=E0611,E1101,W0611,W0613,C0103
 
 try:
     from lxml.etree import Element, SubElement, tostring, XMLParser

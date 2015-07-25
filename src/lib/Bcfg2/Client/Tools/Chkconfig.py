@@ -88,8 +88,8 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
         if bootstatus is not None:
             if bootstatus == 'on':
                 # make sure service is enabled on boot
-                bootcmd = '/sbin/chkconfig %s %s' % \
-                          (entry.get('name'), bootstatus)
+                bootcmd = ('/sbin/chkconfig %s %s' %
+                           (entry.get('name'), bootstatus))
             elif bootstatus == 'off':
                 # make sure service is disabled on boot
                 bootcmd = '/sbin/chkconfig %s %s' % (entry.get('name'),

@@ -133,10 +133,11 @@ class FragmentingSysLogHandler(logging.handlers.SysLogHandler):
                                                           logging.WARNING),
                                       self.format(reconn)))
                     self.socket.send(msg)
+
+                # If we still fail then drop it.  Running
+                # bcfg2-server as non-root can trigger permission
+                # denied exceptions.
                 except:  # pylint: disable=W0702
-                    # If we still fail then drop it.  Running
-                    # bcfg2-server as non-root can trigger permission
-                    # denied exceptions.
                     pass
 
 

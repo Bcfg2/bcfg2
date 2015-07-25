@@ -21,7 +21,8 @@ try:
 except ImportError:
     HAS_SOUTH = False
 
-settings = dict(  # pylint: disable=C0103
+# pylint: disable=C0103
+settings = dict(
     TIME_ZONE=None,
     TEMPLATE_DEBUG=False,
     DEBUG=False,
@@ -106,8 +107,8 @@ def finalize_django_config(opts=None, silent=False):
             OPTIONS=opts.db_opts,
             SCHEMA=opts.db_schema))
 
-    if hasattr(opts, "reporting_db_engine") and \
-       opts.reporting_db_engine is not None:
+    if (hasattr(opts, "reporting_db_engine") and
+            opts.reporting_db_engine is not None):
         settings['DATABASES']['Reporting'] = dict(
             ENGINE="django.db.backends.%s" % opts.reporting_db_engine,
             NAME=opts.reporting_db_name,
@@ -180,9 +181,9 @@ def upgrade_to_django_migrations(database, logger):
         cursor.cursor.execute('SELECT migration FROM south_migrationhistory')
         applied_migrations = [name for (name,) in cursor.fetchall()]
         last_migration = sorted(applied_migrations).pop()
+    # django.db.DatabaseError is not working here, because we are
+    # using the low level api to interact directly with the database
     except:  # pylint: disable=W0702
-        # django.db.DatabaseError is not working here, because we are
-        # using the low level api to interact directly with the database
         logger.debug("No south migration detected for database: %s." %
                      database)
 
