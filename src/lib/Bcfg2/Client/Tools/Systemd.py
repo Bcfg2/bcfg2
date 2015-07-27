@@ -2,6 +2,8 @@
 
 """This is systemd support."""
 
+import glob
+import os
 import Bcfg2.Client.Tools
 import Bcfg2.Client.XML
 
@@ -91,3 +93,15 @@ class Systemd(Bcfg2.Client.Tools.SvcTool):
             return self.cmd.run(cmd).success
         else:
             return True
+
+    def FindExtra(self):
+        """Find Extra Systemd Service entries."""
+        specified = [self.get_svc_name(entry)
+                     for entry in self.getSupportedEntries()]
+        extra = set()
+        for fname in glob.glob("/etc/systemd/system/*.wants/*"):
+            name = os.path.basename(fname)
+            if name not in specified:
+                extra.add(name)
+        return [Bcfg2.Client.XML.Element('Service', name=name, type='systemd')
+                for name in list(extra)]
