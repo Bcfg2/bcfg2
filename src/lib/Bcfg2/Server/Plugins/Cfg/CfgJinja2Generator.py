@@ -12,14 +12,14 @@ from Bcfg2.Server.Plugins.Cfg import CfgGenerator
 try:
     from jinja2 import Environment, FileSystemLoader
     HAS_JINJA2 = True
+
+    class RelEnvironment(Environment):
+        """Override join_path() to enable relative template paths."""
+        def join_path(self, template, parent):
+            return os.path.join(os.path.dirname(parent), template)
+
 except ImportError:
     HAS_JINJA2 = False
-
-
-class RelEnvironment(Environment):
-    """Override join_path() to enable relative template paths."""
-    def join_path(self, template, parent):
-        return os.path.join(os.path.dirname(parent), template)
 
 
 class DefaultJinja2DataProvider(DefaultTemplateDataProvider):
@@ -42,15 +42,16 @@ class CfgJinja2Generator(CfgGenerator):
     #: Handle .jinja2 files
     __extensions__ = ['jinja2']
 
-    #: ``__loader_cls__`` is the class that will be instantiated to
-    #: load the template files.  It must implement one public function,
-    #: ``load()``, as :class:`genshi.template.TemplateLoader`.
-    __loader_cls__ = FileSystemLoader
+    if HAS_JINJA2:
+        #: ``__loader_cls__`` is the class that will be instantiated to
+        #: load the template files.  It must implement one public function,
+        #: ``load()``, as :class:`genshi.template.TemplateLoader`.
+        __loader_cls__ = FileSystemLoader
 
-    #: ``__environment_cls__`` is the class that will be instantiated to
-    #: store the jinja2 environment.  It must implement one public function,
-    #: ``get_template()``, as :class:`jinja2.Environment`.
-    __environment_cls__ = RelEnvironment
+        #: ``__environment_cls__`` is the class that will be instantiated to
+        #: store the jinja2 environment.  It must implement one public
+        #: function, ``get_template()``, as :class:`jinja2.Environment`.
+        __environment_cls__ = RelEnvironment
 
     #: Ignore ``.jinja2_include`` files so they can be used with the
     #: Jinja2 ``{% include ... %}`` directive without raising warnings.
