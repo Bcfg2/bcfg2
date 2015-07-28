@@ -141,6 +141,9 @@ class Parser(argparse.ArgumentParser):
 
                 self.option_list.extend(option.list_options())
                 option.add_to_parser(self)
+                for opt in option.list_options():
+                    opt.default_from_config(self._cfp)
+                    self._defaults_set.append(opt)
 
     def add_component(self, component):
         """ Add a component (and all of its options) to the

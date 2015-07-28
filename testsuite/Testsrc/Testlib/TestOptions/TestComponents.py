@@ -182,7 +182,8 @@ class TestImportComponentOptions(OptionTestCase):
     """test cases for component loading."""
 
     def setUp(self):
-        self.options = [Option("--cls", action=ImportComponentAction),
+        self.options = [Option("--cls", cf=("config", "cls"),
+                               action=ImportComponentAction),
                         Option("--module", action=ImportModuleAction)]
 
         self.result = argparse.Namespace()
@@ -227,3 +228,10 @@ class TestImportComponentOptions(OptionTestCase):
         self.assertRaises(SystemExit,
                           self.parser.parse,
                           ["-C", config_file, "--cls", "Bcfg2.No.Such.Thing"])
+
+    @make_config({"config": {"test": "foo", "cls": "Two"}})
+    def test_default_from_config_for_component_options(self, config_file):
+        """use default value from config file for options added by dynamic loaded component."""
+        self.parser.parse(["-C", config_file])
+        self.assertEqual(self.result.cls, Two.Two)
+        self.assertEqual(self.result.test, "foo")
