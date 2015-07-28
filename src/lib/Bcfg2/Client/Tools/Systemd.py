@@ -84,7 +84,7 @@ class Systemd(Bcfg2.Client.Tools.SvcTool):
         else:
             if entry.get('status') == 'on':
                 cmd = self.get_svc_command(entry, 'start')
-            else:
+            elif entry.get('status') == 'off':
                 cmd = self.get_svc_command(entry, 'stop')
 
         if cmd:
