@@ -1,5 +1,5 @@
 try:
-    from logilab.astng import MANAGER, scoped_nodes, node_classes
+    from logilab.astng import MANAGER, builder, scoped_nodes, node_classes
     PYLINT=0
 except ImportError:
     from astroid import MANAGER, scoped_nodes, node_classes
@@ -12,6 +12,14 @@ def ssl_transform(module):
 
 def register(linter):
     if PYLINT == 0:
-        MANAGER.register_transformer(ssl_transform)
+        if hasattr(MANAGER, 'register_transformer'):
+            MANAGER.register_transformer(ssl_transform)
+        else:
+            safe = builder.ASTNGBuilder.string_build
+            def _string_build(self, data, modname='', path=None):
+                if modname == 'ssl':
+                    data += '\n\nPROTOCOL_SSLv23 = 0\nPROTOCOL_TLSv1 = 0'
+                return safe(self, data, modname, path)
+            builder.ASTNGBuilder.string_build = _string_build
     else:
         MANAGER.register_transform(scoped_nodes.Module, ssl_transform)
