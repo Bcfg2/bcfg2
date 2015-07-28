@@ -34,7 +34,8 @@ class BuiltinCore(NetworkCore):
         daemon_args = dict(uid=Bcfg2.Options.setup.daemon_uid,
                            gid=Bcfg2.Options.setup.daemon_gid,
                            umask=int(Bcfg2.Options.setup.umask, 8),
-                           detach_process=True)
+                           detach_process=True,
+                           files_preserve=self._logfilehandles())
         if Bcfg2.Options.setup.daemon:
             daemon_args['pidfile'] = TimeoutPIDLockFile(
                 Bcfg2.Options.setup.daemon, acquire_timeout=5)
@@ -43,6 +44,24 @@ class BuiltinCore(NetworkCore):
         #: and daemonize this core.
         self.context = daemon.DaemonContext(**daemon_args)
     __init__.__doc__ = NetworkCore.__init__.__doc__.split('.. -----')[0]
+
+    def _logfilehandles(self, logger=None):
+        """ Get a list of all filehandles logger, that have to be handled
+        with DaemonContext.files_preserve to keep looging working.
+
+        :param logger: The logger to get the file handles of. By default,
+                       self.logger is used.
+        :type logger: logging.Logger
+        """
+        if logger is None:
+            logger = self.logger
+
+        handles = [handler.stream.fileno()
+                   for handler in logger.handlers
+                   if hasattr(handler, 'stream')]
+        if logger.parent:
+            handles += self._logfilehandles(logger.parent)
+        return handles
 
     def _dispatch(self, method, args, dispatch_dict):
         """ Dispatch XML-RPC method calls
