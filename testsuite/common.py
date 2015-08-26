@@ -171,21 +171,22 @@ class Bcfg2TestCase(TestCase):
             msg = "XML trees are not equal: %s"
         else:
             msg += ": %s"
-        fullmsg = msg + "\nFirst:  %s" % lxml.etree.tostring(el1) + \
+        msg += "\n%s"
+        fullmsg = "First:  %s" % lxml.etree.tostring(el1) + \
             "\nSecond: %s" % lxml.etree.tostring(el2)
 
-        self.assertEqual(el1.tag, el2.tag, msg=fullmsg % "Tags differ")
+        self.assertEqual(el1.tag, el2.tag, msg=msg % ("Tags differ", fullmsg))
         if el1.text is not None and el2.text is not None:
             self.assertEqual(el1.text.strip(), el2.text.strip(),
-                             msg=fullmsg % "Text content differs")
+                             msg=msg % ("Text content differs", fullmsg))
         else:
             self.assertEqual(el1.text, el2.text,
-                             msg=fullmsg % "Text content differs")
+                             msg=msg % ("Text content differs", fullmsg))
         self.assertItemsEqual(el1.attrib.items(), el2.attrib.items(),
-                              msg=fullmsg % "Attributes differ")
+                              msg=msg % ("Attributes differ", fullmsg))
         self.assertEqual(len(el1.getchildren()),
                          len(el2.getchildren()),
-                         msg=fullmsg % "Different numbers of children")
+                         msg=msg % ("Different numbers of children", fullmsg))
         matched = []
         for child1 in el1.getchildren():
             for child2 in el2.xpath(child1.tag):
@@ -199,10 +200,10 @@ class Bcfg2TestCase(TestCase):
                     continue
             else:
                 assert False, \
-                    fullmsg % ("Element %s is missing from second" %
-                               lxml.etree.tostring(child1))
+                    msg % ("Element %s is missing from second" %
+                               lxml.etree.tostring(child1), fullmsg)
         self.assertItemsEqual(el2.getchildren(), matched,
-                              msg=fullmsg % "Second has extra element(s)")
+                              msg=msg % ("Second has extra element(s)", fullmsg))
 
 
 class DBModelTestCase(Bcfg2TestCase):
