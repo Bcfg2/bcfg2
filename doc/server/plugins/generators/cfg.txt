@@ -275,9 +275,7 @@ Several variables are pre-defined inside templates:
 |             | <server-plugins-grouping-metadata-clientmetadata>`     |
 +-------------+--------------------------------------------------------+
 | name        | The value of the ``name`` attribute as specified in    |
-|             | the Path entry in Bcfg2.  If an :ref:`altsrc           |
-|             | <server-plugins-structures-altsrc>` attribute is used, |
-|             | then ``name`` will be the value of that attribute.     |
+|             | the Path entry in Bcfg2.                               |
 +-------------+--------------------------------------------------------+
 | source_path | The path to the template file on the filesystem        |
 +-------------+--------------------------------------------------------+
