@@ -29,3 +29,10 @@ on Fedora 15 and the ``chkconfig`` tool on Fedora 14, you could do::
 If you were to specify a ``type`` attribute for a Service entry in
 Rules (or a ``type`` attribute for a BoundService entry in Bundler),
 that would take precendence over the default.
+
+Like :ref:`server-plugins-generators-rules`, Defaults can also replace
+``%{name}`` in attributes with the real name of the entry. To enable this,
+add the following setting to ``bcfg2.conf``::
+
+    [defaults]
+    replace_name = yes

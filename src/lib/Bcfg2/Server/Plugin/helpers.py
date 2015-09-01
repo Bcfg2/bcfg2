@@ -1064,6 +1064,20 @@ class PrioDir(Plugin, Generator, XMLDirectoryBacked):
                     data = candidate
                     break
 
+        self._apply(entry, data)
+
+    def _apply(self, entry, data):
+        """ Apply all available values from data onto entry. This
+        sets the available attributes (for all attribues unset in
+        the entry), adds all children and copies the text from data
+        to entry.
+
+        :param entry: The entry to apply the changes
+        :type entry: lxml.etree._Element
+        :param data: The entry to get the data from
+        :type data: lxml.etree._Element
+        """
+
         if data.text is not None and data.text.strip() != '':
             entry.text = data.text
         for item in data.getchildren():

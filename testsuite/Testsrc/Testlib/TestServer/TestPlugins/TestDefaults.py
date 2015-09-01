@@ -22,6 +22,10 @@ from Testinterfaces import TestGoalValidator
 class TestDefaults(TestRules, TestGoalValidator):
     test_obj = Defaults
 
+    def setUp(self):
+        TestRules.setUp(self)
+        set_setup_default("defaults_replace_name", True)
+
     def get_obj(self, *args, **kwargs):
         return TestRules.get_obj(self, *args, **kwargs)
 
@@ -91,3 +95,8 @@ class TestDefaults(TestRules, TestGoalValidator):
 
     def test_regex(self):
         self._do_test('regex')
+
+    def test_replace_name(self):
+        Bcfg2.Options.setup.defaults_replace_name = True
+        self._do_test('replace_name')
+        Bcfg2.Options.setup.defaults_replace_name = False
