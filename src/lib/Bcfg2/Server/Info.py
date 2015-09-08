@@ -377,12 +377,11 @@ class ExpireCache(InfoCmd):
             help="Expire cache for the given host(s)")]
 
     def run(self, setup):
-        if setup.clients:
-            for client in self.get_client_list(setup.clients):
-                self.core.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata,
-                                                key=client)
+        if setup.hostname:
+            for client in self.get_client_list(setup.hostname):
+                self.core.metadata_cache.expire(client)
         else:
-            self.core.expire_caches_by_type(Bcfg2.Server.Plugin.Metadata)
+            self.core.metadata_cache.expire()
 
 
 class Bundles(InfoCmd):
