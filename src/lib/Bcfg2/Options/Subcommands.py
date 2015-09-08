@@ -82,6 +82,7 @@ class Subcommand(object):
         """
         if args is not None:
             self.parser.namespace = copy.copy(master_setup)
+            self.parser.parsed = False
             alist = shlex.split(args)
             try:
                 setup = self.parser.parse(alist)
