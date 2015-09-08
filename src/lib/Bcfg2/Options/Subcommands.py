@@ -48,6 +48,10 @@ class Subcommand(object):
     #: one, ``bcfg2-admin`` does not.)
     interactive = True
 
+    #: Whether or not to expose this command as command line parameter
+    #: or only in an interactive :class:`cmd.Cmd` shell.
+    only_interactive = False
+
     _ws_re = re.compile(r'\s+', flags=re.MULTILINE)
 
     def __init__(self):
@@ -142,7 +146,9 @@ class Help(Subcommand):
         self._registry = registry
 
     def run(self, setup):
-        commands = self._registry.commands
+        commands = dict((name, cmd)
+                        for (name, cmd) in self._registry.commands.items()
+                        if not cmd.only_interactive)
         if setup.command:
             try:
                 commands[setup.command].parser.print_help()
@@ -210,10 +216,13 @@ class CommandRegistry(object):
             cmdcls = cmd_obj.__class__
         name = cmdcls.__name__.lower()
         self.commands[name] = cmd_obj
-        # py2.5 can't mix *magic and non-magical keyword args, thus
-        # the **dict(...)
-        self.subcommand_options.append(
-            Subparser(*cmdcls.options, **dict(name=name, help=cmdcls.__doc__)))
+
+        if not cmdcls.only_interactive:
+            # py2.5 can't mix *magic and non-magical keyword args, thus
+            # the **dict(...)
+            self.subcommand_options.append(
+                Subparser(*cmdcls.options, **dict(name=name,
+                                                  help=cmdcls.__doc__)))
         if issubclass(self.__class__, cmd.Cmd) and cmdcls.interactive:
             setattr(self, "do_%s" % name, cmd_obj)
             setattr(self, "help_%s" % name, cmd_obj.parser.print_help)
