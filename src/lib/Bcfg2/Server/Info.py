@@ -370,6 +370,7 @@ class Automatch(InfoCmd):
 
 class ExpireCache(InfoCmd):
     """ Expire the metadata cache """
+    only_interactive = True
 
     options = [
         Bcfg2.Options.PositionalArgument(
