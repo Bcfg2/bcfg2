@@ -12,6 +12,7 @@ import fnmatch
 import argparse
 import operator
 import lxml.etree
+import traceback
 from code import InteractiveConsole
 import Bcfg2.Logger
 import Bcfg2.Options
@@ -678,8 +679,8 @@ class Shell(InfoCmd):
 
     def run(self, setup):
         try:
-            self.core.cmdloop('Welcome to bcfg2-info\n'
-                              'Type "help" for more information')
+            self.core.cli.cmdloop('Welcome to bcfg2-info\n'
+                                  'Type "help" for more information')
         except KeyboardInterrupt:
             print("\nCtrl-C pressed, exiting...")
 
@@ -796,35 +797,17 @@ if HAS_PROFILE:
             display_trace(prof)
 
 
-class InfoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
+class InfoCore(Bcfg2.Server.Core.Core):
     """Main class for bcfg2-info."""
 
-    def __init__(self):
-        cmd.Cmd.__init__(self)
+    def __init__(self, cli):
         Bcfg2.Server.Core.Core.__init__(self)
-        self.prompt = 'bcfg2-info> '
+        self.cli = cli
 
     def get_locals(self):
         """ Expose the local variables of the core to subcommands that
         need to reference them (i.e., the interactive interpreter) """
         return locals()
-
-    def do_quit(self, _):
-        """ quit|exit - Exit program """
-        raise SystemExit(0)
-
-    do_EOF = do_quit
-    do_exit = do_quit
-
-    def do_eventdebug(self, _):
-        """ eventdebug - Enable debugging output for FAM events """
-        self.fam.set_debug(True)
-
-    do_event_debug = do_eventdebug
-
-    def do_update(self, _):
-        """ update - Process pending filesystem events """
-        self.fam.handle_events_in_interval(0.1)
 
     def run(self):
         self.load_plugins()
@@ -840,12 +823,15 @@ class InfoCore(cmd.Cmd, Bcfg2.Server.Core.Core):
         Bcfg2.Server.Core.Core.shutdown(self)
 
 
-class CLI(Bcfg2.Options.CommandRegistry):
+class CLI(cmd.Cmd, Bcfg2.Options.CommandRegistry):
     """ The bcfg2-info CLI """
     options = [Bcfg2.Options.BooleanOption("-p", "--profile", help="Profile")]
 
     def __init__(self):
+        cmd.Cmd.__init__(self)
         Bcfg2.Options.CommandRegistry.__init__(self)
+        self.prompt = 'bcfg2-info> '
+
         self.register_commands(globals().values(), parent=InfoCmd)
         parser = Bcfg2.Options.get_parser(
             description="Inspect a running Bcfg2 server",
@@ -860,7 +846,7 @@ class CLI(Bcfg2.Options.CommandRegistry):
         else:
             if Bcfg2.Options.setup.profile:
                 print("Profiling functionality not available.")
-            self.core = InfoCore()
+            self.core = InfoCore(self)
 
         for command in self.commands.values():
             command.core = self.core
@@ -877,3 +863,39 @@ class CLI(Bcfg2.Options.CommandRegistry):
     def shutdown(self):
         Bcfg2.Options.CommandRegistry.shutdown(self)
         self.core.shutdown()
+
+    def get_names(self):
+        """ Overwrite cmd.Cmd.get_names to use the instance to get the
+        methods and not the class, because the CommandRegistry
+        dynamically adds methods for the registed subcommands. """
+        return dir(self)
+
+    def do_quit(self, _):
+        """ quit|exit - Exit program """
+        raise SystemExit(0)
+
+    do_EOF = do_quit
+    do_exit = do_quit
+
+    def do_eventdebug(self, _):
+        """ eventdebug - Enable debugging output for FAM events """
+        self.core.fam.set_debug(True)
+
+    do_event_debug = do_eventdebug
+
+    def do_update(self, _):
+        """ update - Process pending filesystem events """
+        self.core.fam.handle_events_in_interval(0.1)
+
+    def onecmd(self, line):
+        """ Overwrite cmd.Cmd.onecmd to catch all exceptions (except
+        SystemExit) print an error message and continue cmdloop. """
+        try:
+            cmd.Cmd.onecmd(self, line)
+        except SystemExit:
+            raise
+        except:  # pylint: disable=W0702
+            exc_type, exc_value, exc_traceback = sys.exc_info()
+            lines = traceback.format_exception(exc_type, exc_value,
+                                               exc_traceback)
+            self.stdout.write(''.join(lines))
