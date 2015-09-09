@@ -69,9 +69,15 @@ class CfgJinja2Generator(CfgGenerator):
         encoding = Bcfg2.Options.setup.encoding
         self.loader = self.__loader_cls__('/',
                                           encoding=encoding)
-        self.environment = \
-            self.__environment_cls__(loader=self.loader,
-                                     keep_trailing_newline=True)
+        try:
+            # keep_trailing_newline is new in Jinja2 2.7, and will
+            # fail with earlier versions
+            self.environment = \
+                self.__environment_cls__(loader=self.loader,
+                                         keep_trailing_newline=True)
+        except TypeError:
+            self.environment = \
+                self.__environment_cls__(loader=self.loader)
     __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def get_data(self, entry, metadata):
