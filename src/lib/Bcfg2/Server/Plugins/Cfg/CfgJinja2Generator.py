@@ -8,9 +8,11 @@ import Bcfg2.Options
 from Bcfg2.Server.Plugin import PluginExecutionError, \
     DefaultTemplateDataProvider, get_template_data
 from Bcfg2.Server.Plugins.Cfg import CfgGenerator
+from distutils.version import LooseVersion as V
 
 try:
     from jinja2 import Environment, FileSystemLoader
+    from jinja2 import __version__ as jinja2_version
     HAS_JINJA2 = True
 
     class RelEnvironment(Environment):
@@ -18,6 +20,9 @@ try:
         def join_path(self, template, parent):
             return os.path.join(os.path.dirname(parent), template)
 
+    has_keep_trailing_newline = False
+    if V(jinja2_version) >= V("2.7"):
+        has_keep_trailing_newline = True
 except ImportError:
     HAS_JINJA2 = False
 
@@ -69,7 +74,15 @@ class CfgJinja2Generator(CfgGenerator):
         encoding = Bcfg2.Options.setup.encoding
         self.loader = self.__loader_cls__('/',
                                           encoding=encoding)
-        self.environment = self.__environment_cls__(loader=self.loader)
+        if has_keep_trailing_newline:
+            # keep_trailing_newline is new in Jinja2 2.7, and will
+            # fail with earlier versions
+            self.environment = \
+                self.__environment_cls__(loader=self.loader,
+                                         keep_trailing_newline=True)
+        else:
+            self.environment = \
+                self.__environment_cls__(loader=self.loader)
     __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def get_data(self, entry, metadata):
