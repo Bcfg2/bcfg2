@@ -69,7 +69,9 @@ class CfgJinja2Generator(CfgGenerator):
         encoding = Bcfg2.Options.setup.encoding
         self.loader = self.__loader_cls__('/',
                                           encoding=encoding)
-        self.environment = self.__environment_cls__(loader=self.loader)
+        self.environment = \
+            self.__environment_cls__(loader=self.loader,
+                                     keep_trailing_newline=True)
     __init__.__doc__ = CfgGenerator.__init__.__doc__
 
     def get_data(self, entry, metadata):
