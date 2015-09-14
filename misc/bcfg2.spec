@@ -18,8 +18,8 @@
 # characters from the appropriate line below.
 #
 # Don't forget to change the Release: tag below to something like 0.1
-#%%global _rc 1
-%global _pre pre1
+%global _rc 1
+#%%global _pre 1
 %global _nightly 1
 %global _date %(date +%Y%m%d)
 %global _pre_rc %{?_pre:pre%{_pre}}%{?_rc:rc%{_rc}}
@@ -56,6 +56,8 @@ BuildRequires:    python
 BuildRequires:    python-devel
 BuildRequires:    python-lxml
 BuildRequires:    python-boto
+BuildRequires:    python-argparse
+BuildRequires:    python-jinja2
 %if 0%{?suse_version}
 BuildRequires:    python-M2Crypto
 BuildRequires:    python-Genshi
@@ -137,6 +139,8 @@ BuildRequires:    systemd-units
 Requires:         python-ssl
 %endif
 Requires:         libselinux-python
+Requires:         pylibacl
+Requires:         python-argparse
 
 %if 0%{?fedora} >= 16
 Requires(post):   systemd-units
@@ -192,6 +196,7 @@ Group:            System Environment/Daemons
 %endif
 Requires:         bcfg2 = %{version}-%{release}
 Requires:         python-lxml >= 1.2.1
+Requires:         python-genshi
 %if 0%{?suse_version}
 Requires:         python-pyinotify
 Requires:         python-python-daemon
@@ -714,7 +719,9 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 %{python_sitelib}/Bcfg2/Server
 %{python_sitelib}/Bcfg2/Reporting
 %{python_sitelib}/Bcfg2/manage.py*
+%if %{build_cherry_py}
 %exclude %{python_sitelib}/Bcfg2/Server/CherryPyCore.py*
+%endif
 
 %dir %{_datadir}/bcfg2
 %{_datadir}/bcfg2/schemas
