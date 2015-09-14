@@ -18,11 +18,11 @@
 # characters from the appropriate line below.
 #
 # Don't forget to change the Release: tag below to something like 0.1
-%global _rc 1
-#%%global _pre 1
+#%%global _rc rc1
+#%%global _pre pre1
 %global _nightly 1
 %global _date %(date +%Y%m%d)
-%global _pre_rc %{?_pre:pre%{_pre}}%{?_rc:rc%{_rc}}
+%global _pre_rc %{?_pre:%{_pre}}%{?_rc:%{_rc}}
 
 # cherrypy 3.3 actually doesn't exist yet, but 3.2 has bugs that
 # prevent it from working:
