@@ -682,7 +682,7 @@ class Core(object):
         self.logger.debug("Building configuration for %s" % client)
         start = time.time()
         config = lxml.etree.Element("Configuration", version='2.0',
-                                    revision=self.revision)
+                                    revision=str(self.revision))
         try:
             meta = self.build_metadata(client)
         except MetadataConsistencyError:
