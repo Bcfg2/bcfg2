@@ -8,17 +8,16 @@ import Bcfg2.Options
 from Bcfg2.Reporting.Transport.base import TransportError
 from Bcfg2.Server.Plugin import Statistics, PullSource, Threaded, \
     PluginInitError, PluginExecutionError
-import django
 
-# required for reporting
-if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
-    HAS_REPORTING = True
-else:
-    try:
+try:
+    import django
+    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+        HAS_REPORTING = True
+    else:
         import south  # pylint: disable=W0611
         HAS_REPORTING = True
-    except ImportError:
-        HAS_REPORTING = False
+except ImportError:
+    HAS_REPORTING = False
 
 
 def _rpc_call(method):
