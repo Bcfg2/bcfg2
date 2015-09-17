@@ -157,6 +157,42 @@ def sync_databases(**kwargs):
                                             **kwargs)
 
 
+def upgrade_to_django_migrations(database, logger):
+    """
+    Get the migration state from south and move django migrations to
+    the same state by fake applying the same migration.
+
+    Note: We cannot use south directly here, because this functions
+          runs on django-1.7 or higher, that is not supported by south.
+    """
+
+    last_migration = None
+    try:
+        # get latest south migration
+        cursor = django.db.connections[database].cursor()
+        cursor.cursor.execute('SELECT migration FROM south_migrationhistory')
+        applied_migrations = [name for (name,) in cursor.fetchall()]
+        last_migration = sorted(applied_migrations).pop()
+    except:  # pylint: disable=W0702
+        # django.db.DatabaseError is not working here, because we are
+        # using the low level api to interact directly with the database
+        logger.debug("No south migration detected for database: %s." %
+                     database)
+
+    if last_migration is not None:
+        # fake-apply matching django migrations
+        django.core.management.call_command(
+            "migrate", 'Reporting', last_migration,
+            database=database, fake=True)
+
+
+def initial_django_migration(database):
+    """ Check if we ever executed an initial django migration. """
+    from django.db.migrations import loader  # pylint: disable=E0611
+    loader = loader.MigrationLoader(django.db.connections[database])
+    return len(loader.applied_migrations) == 0
+
+
 def migrate_databases(**kwargs):
     """ Do South migrations on all databases that we know about.  """
     logger = logging.getLogger()
@@ -164,6 +200,13 @@ def migrate_databases(**kwargs):
         logger.debug("Migrating database %s" % (database))
         if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
             django.setup()  # pylint: disable=E1101
+            if initial_django_migration(database):
+                logger.warning(
+                    "No applied django migrations found for database %s. "
+                    "Trying to get the state from south migration in case "
+                    "you just upgraded your django version." % database)
+                upgrade_to_django_migrations(database, logger)
+
         django.core.management.call_command("migrate", database=database,
                                             **kwargs)
 
