@@ -5,6 +5,7 @@ import sys
 import argparse
 import datetime
 import Bcfg2.DBSettings
+from django.core.exceptions import ObjectDoesNotExist
 
 
 def print_entries(interaction, etype):
@@ -38,7 +39,10 @@ class _FlagsFilterMixin(object):
             filter['only_important'] = False
 
         from Bcfg2.Reporting.models import Interaction
-        return Interaction.objects.filter(client=client, **filter).latest()
+        try:
+            return Interaction.objects.filter(client=client, **filter).latest()
+        except ObjectDoesNotExist:
+            return None
 
 
 class _SingleHostCmd(Bcfg2.Options.Subcommand):  # pylint: disable=W0223
@@ -70,12 +74,15 @@ class Show(_SingleHostCmd, _FlagsFilterMixin):
         client = self.get_client(setup)
         show_all = not setup.bad and not setup.extra and not setup.modified
         interaction = self.get_interaction(client, setup)
-        if setup.bad or show_all:
-            print_entries(interaction, "bad")
-        if setup.modified or show_all:
-            print_entries(interaction, "modified")
-        if setup.extra or show_all:
-            print_entries(interaction, "extra")
+        if interaction is None:
+            print("No interactions found for host: %s" % client.name)
+        else:
+            if setup.bad or show_all:
+                print_entries(interaction, "bad")
+            if setup.modified or show_all:
+                print_entries(interaction, "modified")
+            if setup.extra or show_all:
+                print_entries(interaction, "extra")
 
 
 class Total(_SingleHostCmd, _FlagsFilterMixin):
@@ -86,9 +93,12 @@ class Total(_SingleHostCmd, _FlagsFilterMixin):
     def run(self, setup):
         client = self.get_client(setup)
         interaction = self.get_interaction(client, setup)
-        managed = interaction.total_count
-        good = interaction.good_count
-        print("Total managed entries: %d (good: %d)" % (managed, good))
+        if interaction is None:
+            print("No interactions found for host: %s" % client.name)
+        else:
+            managed = interaction.total_count
+            good = interaction.good_count
+            print("Total managed entries: %d (good: %d)" % (managed, good))
 
 
 class Expire(_SingleHostCmd):
@@ -193,6 +203,9 @@ class Clients(_ClientSelectCmd):
         show_all = not setup.stale and not setup.clean and not setup.dirty
         for client in self.get_clients():
             interaction = self.get_interaction(client, setup)
+            if interaction is None:
+                continue
+
             if (show_all or
                 (setup.stale and interaction.isstale()) or
                 (setup.clean and interaction.isclean()) or
@@ -226,6 +239,9 @@ class Entries(_ClientSelectCmd):
         for entry in entryspec:
             for client in clients:
                 interaction = self.get_interaction(client, setup)
+                if interaction is None:
+                    continue
+
                 items = getattr(interaction, etype)()
                 for item in items:
                     if (item.entry_type == entry[0] and
@@ -284,9 +300,12 @@ class Entry(_ClientSelectCmd):
         # TODO: batch fetch this.  sqlite could break
         extra = dict()
         for client in self.get_clients():
+            interaction = self.get_interaction(client, setup)
+            if interaction is None:
+                continue
+
             ents = entry_cls.objects.filter(
-                name=ename,
-                interaction=self.get_interaction(client, setup))
+                name=ename, interaction=interaction)
             if len(ents) == 0:
                 continue
             extra[client] = {"entry state": ents[0].get_state_display(),
