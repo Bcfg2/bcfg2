@@ -905,7 +905,6 @@ if HAS_DJANGO:
         """ Sync the Django ORM with the configured database """
 
         def run(self, setup):
-            Bcfg2.Server.models.load_models()
             try:
                 Bcfg2.DBSettings.sync_databases(
                     interactive=False,
