@@ -148,11 +148,13 @@ def finalize_django_config(opts=None, silent=False):
 
 def sync_databases(**kwargs):
     """ Synchronize all databases that we know about.  """
+    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+        # Nothing needed here, it's all handled with migrate
+        return
+
     logger = logging.getLogger()
     for database in settings['DATABASES']:
         logger.debug("Syncing database %s" % (database))
-        if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
-            django.setup()  # pylint: disable=E1101
         django.core.management.call_command("syncdb", database=database,
                                             **kwargs)
 
