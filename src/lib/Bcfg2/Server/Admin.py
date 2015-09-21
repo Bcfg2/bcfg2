@@ -904,9 +904,6 @@ if HAS_DJANGO:
     class Syncdb(AdminCmd):
         """ Sync the Django ORM with the configured database """
 
-        if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] >= 7:
-            django.setup()  # pylint: disable=E1101
-
         def run(self, setup):
             Bcfg2.Server.models.load_models()
             try:
