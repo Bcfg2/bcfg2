@@ -41,6 +41,8 @@ class TermiosFormatter(logging.Formatter):
         returns = []
         line_len = self.width
         if isinstance(record.msg, str):
+            if len(record.args) != 0:
+                record.msg = record.msg % record.args
             for line in record.msg.split('\n'):
                 if len(line) <= line_len:
                     returns.append(line)
