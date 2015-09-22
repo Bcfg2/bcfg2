@@ -430,6 +430,7 @@ class Core(object):
             self.logger.error("Unexpected instantiation failure for plugin %s"
                               % plugin, exc_info=1)
 
+    @close_db_connection
     def shutdown(self):
         """ Perform plugin and FAM shutdown tasks. """
         if not self._running:
@@ -444,10 +445,6 @@ class Core(object):
         for plugin in list(self.plugins.values()):
             plugin.shutdown()
         self.logger.info("%s: All plugins shut down" % self.name)
-        if self._database_available:
-            from django import db
-            self.logger.info("%s: Closing database connection" % self.name)
-            db.close_connection()
 
     @property
     def metadata_cache_mode(self):
