@@ -9,7 +9,8 @@ import time
 import Bcfg2.Logger
 import Bcfg2.Options
 from Bcfg2.DBSettings import get_db_label
-from django.db import transaction, backend, connections
+import django
+from django.db import transaction, connections
 from Bcfg2.Server.Admin import UpdateReports
 from Bcfg2.Reporting.utils import BatchFetch
 from Bcfg2.Reporting.Compat import transaction
@@ -28,11 +29,15 @@ def _quote(value):
     """
     global _our_backend
     if not _our_backend:
-        try:
-            _our_backend = backend.DatabaseOperations(
-                connections[get_db_label('Reporting')])
-        except TypeError:
-            _our_backend = backend.DatabaseOperations()
+        if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+            _our_backend = connections[get_db_label('Reporting')].ops
+        else:
+            from django.db import backend
+            try:
+                _our_backend = backend.DatabaseOperations(
+                    connections[get_db_label('Reporting')])
+            except TypeError:
+                _our_backend = backend.DatabaseOperations()
     return _our_backend.quote_name(value)
 
 
