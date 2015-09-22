@@ -27,6 +27,7 @@ from Bcfg2.Server.Statistics import track_statistics
 
 try:
     from django.core.exceptions import ImproperlyConfigured
+    import django
     import django.conf
     HAS_DJANGO = True
 except ImportError:
@@ -83,10 +84,14 @@ def close_db_connection(func):
         """ The decorated function """
         rv = func(self, *args, **kwargs)
         if self._database_available:  # pylint: disable=W0212
-            from django import db
             self.logger.debug("%s: Closing database connection" %
                               threading.current_thread().getName())
-            db.close_connection()
+
+            if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+                for connection in django.db.connections.all():
+                    connection.close()
+            else:
+                django.db.close_connection()
         return rv
 
     return inner

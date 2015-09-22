@@ -11,11 +11,11 @@ import Bcfg2.DBSettings
 from Bcfg2.Compat import md5
 from Bcfg2.Reporting.Storage.base import StorageBase, StorageError
 from Bcfg2.Server.Plugin.exceptions import PluginExecutionError
+import django
 from django.core import management
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import FieldDoesNotExist
 from django.core.cache import cache
-from django import db
 
 #Used by GetCurrentEntry
 import difflib
@@ -383,8 +383,12 @@ class DjangoORM(StorageBase):
         finally:
             self.logger.debug("%s: Closing database connection" %
                               self.__class__.__name__)
-            db.close_connection()
 
+            if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+                for connection in django.db.connections.all():
+                    connection.close()
+            else:
+                django.db.close_connection()
 
     def validate(self):
         """Validate backend storage.  Should be called once when loaded"""
