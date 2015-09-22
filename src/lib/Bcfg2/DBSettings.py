@@ -251,7 +251,14 @@ class PerApplicationRouter(object):
     def allow_syncdb(self, *_):
         """ Called when Django wants to determine which models to sync to a
         given database.  Take the cowards way out and sync all models to all
-        databases to allow for easy migrations. """
+        databases to allow for easy migrations. This method is replaced with
+        allow_migrate in django 1.7 and higher. """
+        return True
+
+    def allow_migrate(self, *_args, **_kwargs):
+        """ Called when Django wants to determine which migrations should
+        be run on a given database. Take the cowards way out and run all
+        migrations to all databases to allow for easy migrations. """
         return True
 
 
