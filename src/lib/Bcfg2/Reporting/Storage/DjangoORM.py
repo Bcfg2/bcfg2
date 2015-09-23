@@ -24,6 +24,16 @@ from Bcfg2.Reporting.models import *
 from Bcfg2.Reporting.Compat import transaction
 
 
+def get_all_field_names(model):
+    if django.VERSION[0] == 1 and django.VERSION[1] >= 8:
+        return [field.name
+                for field in model._meta.get_fields()
+                if field.auto_created == False and
+                    not (field.is_relation and field.related_model is None)]
+    else:
+        return model._meta.get_all_field_names()
+
+
 class DjangoORM(StorageBase):
     options = StorageBase.options + [
         Bcfg2.Options.Common.repository,
@@ -80,7 +90,7 @@ class DjangoORM(StorageBase):
         for attr in boolean + ["current_exists"]:
             xforms[attr] = boolean_xform
         act_dict = dict(state=state)
-        for fieldname in entrytype._meta.get_all_field_names():
+        for fieldname in get_all_field_names(entrytype):
             if fieldname in ['id', 'hash_key', 'state']:
                 continue
             try:
