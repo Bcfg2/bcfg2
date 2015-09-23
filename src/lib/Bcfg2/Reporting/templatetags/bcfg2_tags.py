@@ -1,11 +1,11 @@
 import sys
 from copy import copy
 
+import django
 from django import template
 from django.conf import settings
 from django.core.urlresolvers import resolve, reverse, \
                                      Resolver404, NoReverseMatch
-from django.template.loader import get_template_from_string
 from django.utils.encoding import smart_str
 from django.utils.safestring import mark_safe
 from datetime import datetime, timedelta
@@ -394,6 +394,13 @@ class SortLinkNode(template.Node):
         self.sort_key = template.Variable(sort_key)
         self.text = template.Variable(text)
 
+    def _render_template(self, context):
+        if django.VERSION[0] == 1 and django.VERSION[1] >= 8:
+            return context.template.engine.from_string(self.__TMPL__)
+        else:
+            from django.template.loader import get_template_from_string
+            return get_template_from_string(self.__TMPL__).render(context)
+
     def render(self, context):
         try:
             try:
@@ -419,7 +426,7 @@ class SortLinkNode(template.Node):
             context.push()
             context['key'] = sort_key
             context['text'] = mark_safe(text)
-            output = get_template_from_string(self.__TMPL__).render(context)
+            output = self._render_template(context)
             context.pop()
             return output
         except:
