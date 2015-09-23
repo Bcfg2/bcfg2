@@ -4,7 +4,7 @@ import django.core.management
 import sys
 import logging
 import traceback
-from Bcfg2.Server.models import InternalDatabaseVersion
+from Bcfg2.Server.models import internal_database_version
 logger = logging.getLogger('Bcfg2.Server.Reports.UpdateFix')
 
 
@@ -138,7 +138,7 @@ def rollupdate(current_version):
                              exc_info=1)
             # since array start at 0 but version start at 1
             # we add 1 to the normal count
-            ret = InternalDatabaseVersion.objects.create(version=i + 1)
+            ret = internal_database_version().create(version=i + 1)
         return ret
     else:
         return None
@@ -149,10 +149,10 @@ def update_database():
     try:
         logger.debug("Running upgrade of models to the new one")
         django.core.management.call_command("syncdb", interactive=False, verbosity=0)
-        know_version = InternalDatabaseVersion.objects.order_by('-version')
+        know_version = internal_database_version().order_by('-version')
         if not know_version:
             logger.debug("No version, creating initial version")
-            know_version = InternalDatabaseVersion.objects.create(version=lastversion)
+            know_version = internal_database_version().create(version=lastversion)
         else:
             know_version = know_version[0]
         logger.debug("Presently at %s" % know_version)
