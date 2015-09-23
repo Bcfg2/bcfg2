@@ -10,10 +10,8 @@ import Bcfg2.Logger
 import Bcfg2.Options
 from django.db import connection, transaction, backend
 from Bcfg2.Server.Admin import UpdateReports
-from Bcfg2.Reporting import models as new_models
 from Bcfg2.Reporting.utils import BatchFetch
 from Bcfg2.Reporting.Compat import transaction
-from Bcfg2.Server.Reports.reports import models as legacy_models
 
 logger = logging.getLogger(__name__)
 
@@ -283,6 +281,9 @@ if __name__ == '__main__':
         description="Migrate from Bcfg2 1.2 DBStats plugin to 1.3 Reporting "
         "subsystem",
         components=[UpdateReports])
+    parser.parse()
 
+    from Bcfg2.Reporting import models as new_models
+    from Bcfg2.Server.Reports.reports import models as legacy_models
     UpdateReports().run(Bcfg2.Options.setup)
     _restructure()
