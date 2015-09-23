@@ -50,8 +50,7 @@ settings = dict(  # pylint: disable=C0103
     MIDDLEWARE_CLASSES=(
         'django.middleware.common.CommonMiddleware',
         'django.contrib.sessions.middleware.SessionMiddleware',
-        'django.contrib.auth.middleware.AuthenticationMiddleware',
-        'django.middleware.doc.XViewMiddleware'),
+        'django.contrib.auth.middleware.AuthenticationMiddleware'),
     ROOT_URLCONF='Bcfg2.Reporting.urls',
     AUTHENTICATION_BACKENDS=('django.contrib.auth.backends.ModelBackend'),
     LOGIN_URL='/login',
@@ -67,6 +66,13 @@ settings = dict(  # pylint: disable=C0103
         'django.core.context_processors.request'),
     DATABASE_ROUTERS=['Bcfg2.DBSettings.PerApplicationRouter'],
     TEST_RUNNER='django.test.simple.DjangoTestSuiteRunner')
+
+if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] >= 6:
+    settings['MIDDLEWARE_CLASSES'] += \
+        ('django.contrib.admindocs.middleware.XViewMiddleware',)
+elif HAS_SOUTH:
+    settings['MIDDLEWARE_CLASSES'] += \
+        ('django.middleware.doc.XViewMiddleware',)
 
 if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] >= 7:
     settings['INSTALLED_APPS'] += ('Bcfg2.Reporting',)
