@@ -65,10 +65,16 @@ settings = dict(  # pylint: disable=C0103
         'django.core.context_processors.i18n',
         'django.core.context_processors.media',
         'django.core.context_processors.request'),
-    DATABASE_ROUTERS=['Bcfg2.DBSettings.PerApplicationRouter'])
+    DATABASE_ROUTERS=['Bcfg2.DBSettings.PerApplicationRouter'],
+    TEST_RUNNER='django.test.simple.DjangoTestSuiteRunner')
 
-if HAS_SOUTH:
+if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+    settings['INSTALLED_APPS'] += ('Bcfg2.Reporting',)
+elif HAS_SOUTH:
     settings['INSTALLED_APPS'] += ('south', 'Bcfg2.Reporting')
+    settings['SOUTH_MIGRATION_MODULES'] = {
+        'Bcfg2.Reporting': 'Bcfg2.Reporting.south_migrations'
+    }
 if 'BCFG2_LEGACY_MODELS' in os.environ:
     settings['INSTALLED_APPS'] += ('Bcfg2.Server.Reports.reports',)
 
@@ -145,6 +151,8 @@ def sync_databases(**kwargs):
     logger = logging.getLogger()
     for database in settings['DATABASES']:
         logger.debug("Syncing database %s" % (database))
+        if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+            django.setup()  # pylint: disable=E1101
         django.core.management.call_command("syncdb", database=database,
                                             **kwargs)
 
@@ -154,6 +162,8 @@ def migrate_databases(**kwargs):
     logger = logging.getLogger()
     for database in settings['DATABASES']:
         logger.debug("Migrating database %s" % (database))
+        if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+            django.setup()  # pylint: disable=E1101
         django.core.management.call_command("migrate", database=database,
                                             **kwargs)
 

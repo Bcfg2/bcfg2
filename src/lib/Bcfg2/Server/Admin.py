@@ -25,15 +25,19 @@ import Bcfg2.Server.Plugins.Metadata
 try:
     from django.core.exceptions import ImproperlyConfigured
     from django.core import management
+    import django
     import django.conf
     import Bcfg2.Server.models
 
     HAS_DJANGO = True
-    try:
-        import south  # pylint: disable=W0611
+    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
         HAS_REPORTS = True
-    except ImportError:
-        HAS_REPORTS = False
+    else:
+        try:
+            import south  # pylint: disable=W0611
+            HAS_REPORTS = True
+        except ImportError:
+            HAS_REPORTS = False
 except ImportError:
     HAS_DJANGO = False
     HAS_REPORTS = False
@@ -900,6 +904,9 @@ if HAS_DJANGO:
     class Syncdb(AdminCmd):
         """ Sync the Django ORM with the configured database """
 
+        if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+            django.setup()  # pylint: disable=E1101
+
         def run(self, setup):
             Bcfg2.Server.models.load_models()
             try:
@@ -1194,6 +1201,10 @@ class CLI(Bcfg2.Options.CommandRegistry):
             components=[self])
         parser.add_options(self.subcommand_options)
         parser.parse()
+        if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+            # this has been introduced in django 1.7, so pylint fails with
+            # older django releases
+            django.setup()  # pylint: disable=E1101
 
     def run(self):
         """ Run bcfg2-admin """
