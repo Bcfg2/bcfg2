@@ -79,13 +79,15 @@ def _migrate_transaction(inter, entries, fperms):
         modified_count=inter.modified_entries,
         extra_count=inter.extra_entries)
 
-    if inter.metadata:
-        newint.profile_id = inter.metadata.profile.id
-        groups = [grp.pk for grp in inter.metadata.groups.all()]
-        bundles = [bun.pk for bun in inter.metadata.bundles.all()]
-    else:
-        groups = []
-        bundles = []
+    groups = []
+    bundles = []
+    try:
+        if inter.metadata:
+            newint.profile_id = inter.metadata.profile.id
+            groups = [grp.pk for grp in inter.metadata.groups.all()]
+            bundles = [bun.pk for bun in inter.metadata.bundles.all()]
+    except ObjectDoesNotExist:
+        pass
     super(new_models.Interaction, newint).save()
     if bundles:
         newint.bundles.add(*bundles)
