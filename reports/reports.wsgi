@@ -1,7 +1,6 @@
 import os
 import Bcfg2.Options
 import Bcfg2.DBSettings
-import django
 
 config_parsed = False
 
@@ -16,9 +15,9 @@ def application(environ, start_response):
         Bcfg2.Options.get_parser().parse()
         config_parsed = True
 
-    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+    try:
         from django.core.wsgi import get_wsgi_application
         return get_wsgi_application()(environ, start_response)
-    else:
+    except ImportError:
         import django.core.handlers.wsgi
         return django.core.handlers.wsgi.WSGIHandler()(environ, start_response)
