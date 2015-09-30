@@ -128,7 +128,7 @@ class Bundler(Plugin,
                     # dependent bundle -- add it to the list of
                     # bundles for this client
                     if child.get("name") not in bundles_added:
-                        bundles.append(child.get("name"))
+                        bundles.add(child.get("name"))
                         bundles_added.add(child.get("name"))
                     if child.get('inherit_modification', 'false') == 'true':
                         if metadata.version_info >= \
