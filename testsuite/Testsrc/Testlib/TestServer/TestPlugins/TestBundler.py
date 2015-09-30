@@ -98,7 +98,7 @@ class TestBundler(TestPlugin, TestStructure, TestXMLDirectoryBacked):
         lxml.etree.SubElement(expected['indep'], "Service", name="baz")
 
         metadata = Mock()
-        metadata.bundles = ["error", "xinclude", "has_dep", "indep"]
+        metadata.bundles = set(["error", "xinclude", "has_dep", "indep"])
         metadata.version_info = Bcfg2VersionInfo('1.4.0')
 
         rv = b.BuildStructures(metadata)
@@ -131,7 +131,7 @@ class TestBundler(TestPlugin, TestStructure, TestXMLDirectoryBacked):
         lxml.etree.SubElement(expected['has_dep'], "Package", name="foo")
 
         metadata = Mock()
-        metadata.bundles = ["has_dep"]
+        metadata.bundles = set(["has_dep"])
         metadata.version_info = Bcfg2VersionInfo('1.3.0')
 
         rv = b.BuildStructures(metadata)
