@@ -214,6 +214,7 @@ class Inotify(Pseudo, pyinotify.ProcessEvent):
     def shutdown(self):
         if self.started and self.notifier:
             self.notifier.stop()
+        Pseudo.shutdown(self)
     shutdown.__doc__ = Pseudo.shutdown.__doc__
 
     def list_watches(self):
