@@ -877,6 +877,7 @@ if HAS_DJANGO:
         Django management system """
         command = None
         args = []
+        kwargs = {}
 
         def run(self, _):
             '''Call a django command'''
@@ -885,7 +886,7 @@ if HAS_DJANGO:
             else:
                 command = self.__class__.__name__.lower()
             args = [command] + self.args
-            management.call_command(*args)
+            management.call_command(*args, **self.kwargs)
 
     class DBShell(_DjangoProxyCmd):
         """ Call the Django 'dbshell' command on the database """
@@ -914,6 +915,17 @@ if HAS_DJANGO:
                 err = sys.exc_info()[1]
                 self.logger.error("Database update failed: %s" % err)
                 raise SystemExit(1)
+
+    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+        class Makemigrations(_DjangoProxyCmd):
+            """ Call the 'makemigrations' command on the database """
+            args = ['Reporting']
+
+    else:
+        class Schemamigration(_DjangoProxyCmd):
+            """ Call the South 'schemamigration' command on the database """
+            args = ['Bcfg2.Reporting']
+            kwargs = {'auto': True}
 
 
 if HAS_REPORTS:
