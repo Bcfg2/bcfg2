@@ -8,6 +8,7 @@ import Bcfg2.Server.Plugins
 LOGGER = logging.getLogger(__name__)
 
 MODELS = []
+INTERNAL_DATABASE_VERSION = None
 
 
 class _OptionContainer(object):
@@ -56,15 +57,23 @@ def load_models(plugins=None):
                 setattr(sys.modules[__name__], sym, obj)
                 MODELS.append(sym)
 
-    class InternalDatabaseVersion(models.Model):
-        """ Object that tell us to which version the database is """
-        version = models.IntegerField()
-        updated = models.DateTimeField(auto_now_add=True)
+def internal_database_version():
+    global INTERNAL_DATABASE_VERSION
 
-        def __str__(self):
-            return "version %d updated %s" % (self.version,
-                                              self.updated.isoformat())
+    if INTERNAL_DATABASE_VERSION is None:
+        from django.db import models
+        class InternalDatabaseVersion(models.Model):
+            """ Object that tell us to which version the database is """
+            version = models.IntegerField()
+            updated = models.DateTimeField(auto_now_add=True)
 
-        class Meta:  # pylint: disable=C0111,W0232
-            app_label = "reports"
-            get_latest_by = "version"
+            def __str__(self):
+                return "version %d updated %s" % (self.version,
+                                                  self.updated.isoformat())
+
+            class Meta:  # pylint: disable=C0111,W0232
+                app_label = "reports"
+                get_latest_by = "version"
+        INTERNAL_DATABASE_VERSION = InternalDatabaseVersion
+
+    return INTERNAL_DATABASE_VERSION.objects

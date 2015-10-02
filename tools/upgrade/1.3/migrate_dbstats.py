@@ -8,12 +8,12 @@ import logging
 import time
 import Bcfg2.Logger
 import Bcfg2.Options
-from django.db import connection, transaction, backend
+from Bcfg2.DBSettings import get_db_label
+import django
+from django.db import transaction, connections
 from Bcfg2.Server.Admin import UpdateReports
-from Bcfg2.Reporting import models as new_models
 from Bcfg2.Reporting.utils import BatchFetch
 from Bcfg2.Reporting.Compat import transaction
-from Bcfg2.Server.Reports.reports import models as legacy_models
 
 logger = logging.getLogger(__name__)
 
@@ -29,10 +29,15 @@ def _quote(value):
     """
     global _our_backend
     if not _our_backend:
-        try:
-            _our_backend = backend.DatabaseOperations(connection)
-        except TypeError:
-            _our_backend = backend.DatabaseOperations()
+        if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+            _our_backend = connections[get_db_label('Reporting')].ops
+        else:
+            from django.db import backend
+            try:
+                _our_backend = backend.DatabaseOperations(
+                    connections[get_db_label('Reporting')])
+            except TypeError:
+                _our_backend = backend.DatabaseOperations()
     return _our_backend.quote_name(value)
 
 
@@ -74,13 +79,15 @@ def _migrate_transaction(inter, entries, fperms):
         modified_count=inter.modified_entries,
         extra_count=inter.extra_entries)
 
-    if inter.metadata:
-        newint.profile_id = inter.metadata.profile.id
-        groups = [grp.pk for grp in inter.metadata.groups.all()]
-        bundles = [bun.pk for bun in inter.metadata.bundles.all()]
-    else:
-        groups = []
-        bundles = []
+    groups = []
+    bundles = []
+    try:
+        if inter.metadata:
+            newint.profile_id = inter.metadata.profile.id
+            groups = [grp.pk for grp in inter.metadata.groups.all()]
+            bundles = [bun.pk for bun in inter.metadata.bundles.all()]
+    except ObjectDoesNotExist:
+        pass
     super(new_models.Interaction, newint).save()
     if bundles:
         newint.bundles.add(*bundles)
@@ -180,7 +187,7 @@ def _shove(old_table, new_table, columns):
         cols,
         _quote(old_table))
 
-    cursor = connection.cursor()
+    cursor = connections[get_db_label('Reporting')].cursor()
     cursor.execute(sql)
     cursor.close()
 
@@ -283,6 +290,9 @@ if __name__ == '__main__':
         description="Migrate from Bcfg2 1.2 DBStats plugin to 1.3 Reporting "
         "subsystem",
         components=[UpdateReports])
+    parser.parse()
 
+    from Bcfg2.Reporting import models as new_models
+    from Bcfg2.Server.Reports.reports import models as legacy_models
     UpdateReports().run(Bcfg2.Options.setup)
     _restructure()

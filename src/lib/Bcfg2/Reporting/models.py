@@ -1,9 +1,10 @@
 """Django models for Bcfg2 reports."""
 import sys
 
+import django
 from django.core.exceptions import ImproperlyConfigured
 try:
-    from django.db import models, backend, connections
+    from django.db import models, connections
 except ImproperlyConfigured:
     e = sys.exc_info()[1]
     print("Reports: unable to import django models: %s" % e)
@@ -61,11 +62,15 @@ def _quote(value):
     """
     global _our_backend
     if not _our_backend:
-        try:
-            _our_backend = backend.DatabaseOperations(
-                connections[get_db_label('Reporting')])
-        except TypeError:
-            _our_backend = backend.DatabaseOperations()
+        if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+            _our_backend = connections[get_db_label('Reporting')].ops
+        else:
+            from django.db import backend
+            try:
+                _our_backend = backend.DatabaseOperations(
+                    connections[get_db_label('Reporting')])
+            except TypeError:
+                _our_backend = backend.DatabaseOperations()
     return _our_backend.quote_name(value)
 
 

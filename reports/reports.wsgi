@@ -4,9 +4,6 @@ import Bcfg2.DBSettings
 
 config_parsed = False
 
-import django.core.handlers.wsgi
-
-
 def application(environ, start_response):
     global config_parsed
 
@@ -18,4 +15,9 @@ def application(environ, start_response):
         Bcfg2.Options.get_parser().parse()
         config_parsed = True
 
-    return django.core.handlers.wsgi.WSGIHandler()(environ, start_response)
+    try:
+        from django.core.wsgi import get_wsgi_application
+        return get_wsgi_application()(environ, start_response)
+    except ImportError:
+        import django.core.handlers.wsgi
+        return django.core.handlers.wsgi.WSGIHandler()(environ, start_response)

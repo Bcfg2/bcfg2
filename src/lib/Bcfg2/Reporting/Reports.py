@@ -4,6 +4,7 @@
 import sys
 import argparse
 import datetime
+import django
 import Bcfg2.DBSettings
 
 
@@ -307,6 +308,8 @@ class CLI(Bcfg2.Options.CommandRegistry):
             components=[self])
         parser.add_options(self.subcommand_options)
         parser.parse()
+        if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+            django.setup()  # pylint: disable=E1101
 
     def run(self):
         """ Run bcfg2-reports """

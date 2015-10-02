@@ -11,17 +11,27 @@ import Bcfg2.DBSettings
 from Bcfg2.Compat import md5
 from Bcfg2.Reporting.Storage.base import StorageBase, StorageError
 from Bcfg2.Server.Plugin.exceptions import PluginExecutionError
+import django
 from django.core import management
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import FieldDoesNotExist
 from django.core.cache import cache
-from django import db
 
 #Used by GetCurrentEntry
 import difflib
 from Bcfg2.Compat import b64decode
 from Bcfg2.Reporting.models import *
 from Bcfg2.Reporting.Compat import transaction
+
+
+def get_all_field_names(model):
+    if django.VERSION[0] == 1 and django.VERSION[1] >= 8:
+        return [field.name
+                for field in model._meta.get_fields()
+                if field.auto_created == False and
+                    not (field.is_relation and field.related_model is None)]
+    else:
+        return model._meta.get_all_field_names()
 
 
 class DjangoORM(StorageBase):
@@ -80,7 +90,7 @@ class DjangoORM(StorageBase):
         for attr in boolean + ["current_exists"]:
             xforms[attr] = boolean_xform
         act_dict = dict(state=state)
-        for fieldname in entrytype._meta.get_all_field_names():
+        for fieldname in get_all_field_names(entrytype):
             if fieldname in ['id', 'hash_key', 'state']:
                 continue
             try:
@@ -383,8 +393,12 @@ class DjangoORM(StorageBase):
         finally:
             self.logger.debug("%s: Closing database connection" %
                               self.__class__.__name__)
-            db.close_connection()
 
+            if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+                for connection in django.db.connections.all():
+                    connection.close()
+            else:
+                django.db.close_connection()
 
     def validate(self):
         """Validate backend storage.  Should be called once when loaded"""
