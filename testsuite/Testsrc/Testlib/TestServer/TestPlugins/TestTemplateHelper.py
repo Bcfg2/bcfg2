@@ -23,10 +23,13 @@ class TestHelperModule(Bcfg2TestCase):
     test_obj = HelperModule
     path = os.path.join(datastore, "test.py")
 
-    def get_obj(self, path=None):
+    def get_obj(self, path=None, core=None):
         if path is None:
             path = self.path
-        return self.test_obj(path)
+        if core is None:
+            core = Mock()
+            core.metadata_cache_mode = 'none'
+        return self.test_obj(path, core)
 
     def test__init(self):
         hm = self.get_obj()

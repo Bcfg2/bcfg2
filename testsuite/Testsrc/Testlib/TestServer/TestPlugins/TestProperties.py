@@ -29,11 +29,14 @@ class TestPropertyFile(Bcfg2TestCase):
     test_obj = PropertyFile
     path = os.path.join(datastore, "test")
 
-    def get_obj(self, path=None):
+    def get_obj(self, path=None, core=None, *args, **kwargs):
         set_setup_default("writes_enabled", False)
         if path is None:
             path = self.path
-        return self.test_obj(path)
+        if core is None:
+            core = Mock()
+            core.metadata_cache_mode = 'none'
+        return self.test_obj(path, core, *args, **kwargs)
 
     def test_write(self):
         pf = self.get_obj()
@@ -97,6 +100,9 @@ class TestJSONPropertyFile(TestFileBacked, TestPropertyFile):
         TestFileBacked.setUp(self)
         TestPropertyFile.setUp(self)
 
+    def get_obj(self, *args, **kwargs):
+        return TestPropertyFile.get_obj(self, *args, **kwargs)
+
     @patch("%s.loads" % JSON)
     def test_Index(self, mock_loads):
         pf = self.get_obj()
@@ -136,6 +142,9 @@ class TestYAMLPropertyFile(TestFileBacked, TestPropertyFile):
     def setUp(self):
         TestFileBacked.setUp(self)
         TestPropertyFile.setUp(self)
+
+    def get_obj(self, *args, **kwargs):
+        return TestPropertyFile.get_obj(self, *args, **kwargs)
 
     @patch("yaml.load")
     def test_Index(self, mock_load):
@@ -179,7 +188,7 @@ class TestXMLPropertyFile(TestPropertyFile, TestStructFile):
         set_setup_default("automatch", False)
 
     def get_obj(self, *args, **kwargs):
-        return TestStructFile.get_obj(self, *args, **kwargs)
+        return TestPropertyFile.get_obj(self, *args, **kwargs)
 
     @patch("%s.open" % builtins)
     def test__write(self, mock_open):

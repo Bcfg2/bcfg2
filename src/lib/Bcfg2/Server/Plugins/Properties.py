@@ -35,13 +35,17 @@ LOGGER = logging.getLogger(__name__)
 class PropertyFile(object):
     """ Base Properties file handler """
 
-    def __init__(self, name):
+    def __init__(self, name, core):
         """
         :param name: The filename of this properties file.
+        :type name: string
+        :param core: The Bcfg2.Server.Core initializing the Properties plugin
+        :type core: Bcfg2.Server.Core
 
         .. automethod:: _write
         """
         self.name = name
+        self.core = core
 
     def write(self):
         """ Write the data in this data structure back to the property
@@ -69,6 +73,12 @@ class PropertyFile(object):
         file. """
         raise NotImplementedError
 
+    def _expire_metadata_cache(self):
+        """ Expires the metadata cache, if it is required by the caching
+        mode. """
+        if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
+            self.core.metadata_cache.expire()
+
     def validate_data(self):
         """ Verify that the data in this file is valid. """
         raise NotImplementedError
@@ -81,9 +91,9 @@ class PropertyFile(object):
 class JSONPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
     """Handle JSON Properties files."""
 
-    def __init__(self, name):
+    def __init__(self, name, core):
         Bcfg2.Server.Plugin.FileBacked.__init__(self, name)
-        PropertyFile.__init__(self, name)
+        PropertyFile.__init__(self, name, core)
         self.json = None
 
     def Index(self):
@@ -93,10 +103,13 @@ class JSONPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
             err = sys.exc_info()[1]
             raise PluginExecutionError("Could not load JSON data from %s: %s" %
                                        (self.name, err))
+        self._expire_metadata_cache()
+    Index.__doc__ = Bcfg2.Server.Plugin.FileBacked.Index.__doc__
 
     def _write(self):
         json.dump(self.json, open(self.name, 'wb'))
         return True
+    _write.__doc__ = PropertyFile._write.__doc__
 
     def validate_data(self):
         try:
@@ -105,6 +118,7 @@ class JSONPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
             err = sys.exc_info()[1]
             raise PluginExecutionError("Data for %s cannot be dumped to JSON: "
                                        "%s" % (self.name, err))
+    validate_data.__doc__ = PropertyFile.validate_data.__doc__
 
     def __str__(self):
         return str(self.json)
@@ -116,11 +130,10 @@ class JSONPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
 class YAMLPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
     """ Handle YAML Properties files. """
 
-    def __init__(self, name):
+    def __init__(self, name, core):
         Bcfg2.Server.Plugin.FileBacked.__init__(self, name)
-        PropertyFile.__init__(self, name)
+        PropertyFile.__init__(self, name, core)
         self.yaml = None
-    __init__.__doc__ = Bcfg2.Server.Plugin.FileBacked.__init__.__doc__
 
     def Index(self):
         try:
@@ -129,6 +142,7 @@ class YAMLPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
             err = sys.exc_info()[1]
             raise PluginExecutionError("Could not load YAML data from %s: %s" %
                                        (self.name, err))
+        self._expire_metadata_cache()
     Index.__doc__ = Bcfg2.Server.Plugin.FileBacked.Index.__doc__
 
     def _write(self):
@@ -155,10 +169,15 @@ class YAMLPropertyFile(Bcfg2.Server.Plugin.FileBacked, PropertyFile):
 class XMLPropertyFile(Bcfg2.Server.Plugin.StructFile, PropertyFile):
     """ Handle XML Properties files. """
 
-    def __init__(self, name, should_monitor=False):
+    def __init__(self, name, core, should_monitor=False):
         Bcfg2.Server.Plugin.StructFile.__init__(self, name,
                                                 should_monitor=should_monitor)
-        PropertyFile.__init__(self, name)
+        PropertyFile.__init__(self, name, core)
+
+    def Index(self):
+        Bcfg2.Server.Plugin.StructFile.Index(self)
+        self._expire_metadata_cache()
+    Index.__doc__ = Bcfg2.Server.Plugin.StructFile.Index.__doc__
 
     def _write(self):
         open(self.name, "wb").write(
@@ -258,11 +277,11 @@ class Properties(Bcfg2.Server.Plugin.Plugin,
                   :class:`PropertyFile`
         """
         if fname.endswith(".xml"):
-            return XMLPropertyFile(fname)
+            return XMLPropertyFile(fname, self.core)
         elif HAS_JSON and fname.endswith(".json"):
-            return JSONPropertyFile(fname)
+            return JSONPropertyFile(fname, self.core)
         elif HAS_YAML and (fname.endswith(".yaml") or fname.endswith(".yml")):
-            return YAMLPropertyFile(fname)
+            return YAMLPropertyFile(fname, self.core)
         else:
             raise Bcfg2.Server.Plugin.PluginExecutionError(
                 "Properties: Unknown extension %s" % fname)

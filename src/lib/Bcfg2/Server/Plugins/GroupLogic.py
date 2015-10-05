@@ -13,6 +13,17 @@ class GroupLogicConfig(Bcfg2.Server.Plugin.StructFile):
     create = lxml.etree.Element("GroupLogic",
                                 nsmap=dict(py="http://genshi.edgewall.org/"))
 
+    def __init__(self, filename, core):
+        Bcfg2.Server.Plugin.StructFile.__init__(self, filename,
+                                                should_monitor=True)
+        self.core = core
+
+    def Index(self):
+        Bcfg2.Server.Plugin.StructFile.Index(self)
+
+        if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
+            self.core.metadata_cache.expire()
+
     def _match(self, item, metadata, *args):
         if item.tag == 'Group' and not len(item.getchildren()):
             return [item]
@@ -39,7 +50,7 @@ class GroupLogic(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Server.Plugin.Plugin.__init__(self, core)
         Bcfg2.Server.Plugin.Connector.__init__(self)
         self.config = GroupLogicConfig(os.path.join(self.data, "groups.xml"),
-                                       should_monitor=True)
+                                       core=core)
         self._local = local()
 
     def get_additional_groups(self, metadata):

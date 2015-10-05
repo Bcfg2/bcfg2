@@ -15,9 +15,10 @@ MODULE_RE = re.compile(r'(?P<filename>(?P<module>[^\/]+)\.py)$')
 class HelperModule(Debuggable):
     """ Representation of a TemplateHelper module """
 
-    def __init__(self, name):
+    def __init__(self, name, core):
         Debuggable.__init__(self)
         self.name = name
+        self.core = core
 
         #: The name of the module as used by get_additional_data().
         #: the name of the file with .py stripped off.
@@ -43,6 +44,10 @@ class HelperModule(Debuggable):
         """
         if event and event.code2str() not in ['exists', 'changed', 'created']:
             return
+
+        # expire the metadata cache, because the module might have changed
+        if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
+            self.core.metadata_cache.expire()
 
         try:
             module = imp.load_source(
@@ -101,13 +106,16 @@ class TemplateHelper(Plugin, Connector, DirectoryBacked, TemplateDataProvider):
     __author__ = 'chris.a.st.pierre@gmail.com'
     ignore = re.compile(r'^(\.#.*|.*~|\..*\.(sw[px])|.*\.py[co])$')
     patterns = MODULE_RE
-    __child__ = HelperModule
 
     def __init__(self, core):
         Plugin.__init__(self, core)
         Connector.__init__(self)
         DirectoryBacked.__init__(self, self.data)
         TemplateDataProvider.__init__(self)
+
+        # The HelperModule needs access to the core, so we have to construct
+        # it manually and add the custom argument.
+        self.__child__ = lambda fname: HelperModule(fname, core)
 
     def get_additional_data(self, _):
         return dict([(h._module_name, h)  # pylint: disable=W0212

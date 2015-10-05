@@ -286,6 +286,10 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
                     self.debug_log("New public key %s; invalidating "
                                    "ssh_known_hosts cache" % event.filename)
                     self.skn = False
+
+                    if self.core.metadata_cache_mode in ['cautious',
+                                                         'aggressive']:
+                        self.core.metadata_cache.expire()
                 return
 
         if event.filename == 'info.xml':

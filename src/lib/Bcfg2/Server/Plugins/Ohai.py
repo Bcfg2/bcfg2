@@ -94,7 +94,12 @@ class Ohai(Bcfg2.Server.Plugin.Plugin,
         return [self.probe]
 
     def ReceiveData(self, meta, datalist):
-        self.cache[meta.hostname] = datalist[0].text
+        if meta.hostname not in self.cache or \
+           self.cache[meta.hostname] != datalist[0].text:
+            self.cache[meta.hostname] = datalist[0].text
+
+            if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
+                self.core.metadata_cache.expire(meta.hostname)
 
     def get_additional_data(self, meta):
         if meta.hostname in self.cache:

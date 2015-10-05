@@ -118,7 +118,9 @@ Invalidating Caches
 In Bcfg2 1.3.0, some limited :ref:`server-caching` was introduced.  If
 you are writing a :class:`Bcfg2.Server.Plugin.interfaces.Connector`
 plugin that implements
-:func:`Bcfg2.Server.Plugin.interfaces.Connector.get_additional_groups`,
+:func:`Bcfg2.Server.Plugin.interfaces.Connector.get_additional_groups`
+or
+:func:`Bcfg2.Server.Plugin.interfaces.Connector.get_additional_data`,
 then you need to be able to invalidate the server metadata cache in
 order to be compatible with the ``cautious`` or ``aggressive`` caching
 modes.
@@ -140,9 +142,9 @@ called with one string argument, it expires cached data for the named
 client.
 
 It's important, therefore, that your Connector plugin can either track
-when changes are made to the group membership it reports, and expire
-cached data appropriately when in ``cautious`` or ``aggressive`` mode;
-or prudently flag an incompatibility with those two modes.
+when changes are made to the data or group membership it reports, and
+expire cached data appropriately when in ``cautious`` or ``aggressive``
+mode; or prudently flag an incompatibility with those two modes.
 
 For examples, see:
 

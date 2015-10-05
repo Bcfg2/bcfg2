@@ -172,6 +172,11 @@ class AWSTags(Bcfg2.Server.Plugin.Plugin,
 
     def start_client_run(self, metadata):
         self.expire_cache(key=metadata.hostname)
+        if self.core.metadata_cache_mode == 'aggressive':
+            self.logger.warning("AWSTags is incompatible with aggressive "
+                                "client metadata caching, try 'cautious' "
+                                "or 'initial'")
+            self.core.metadata_cache.expire(metadata.hostname)
 
     def get_additional_data(self, metadata):
         return self.get_tags(metadata)
