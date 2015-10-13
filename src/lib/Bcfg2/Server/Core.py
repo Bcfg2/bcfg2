@@ -114,7 +114,8 @@ class DefaultACL(Plugin, ClientACLs):
     def check_acl_ip(self, address, rmi):
         return (("." not in rmi and
                  not rmi.endswith("_debug") and
-                 rmi != 'get_statistics') or
+                 rmi != 'get_statistics' and
+                 rmi != 'expire_metadata_cache') or
                 address[0] == "127.0.0.1")
 
 # in core we frequently want to catch all exceptions, regardless of
