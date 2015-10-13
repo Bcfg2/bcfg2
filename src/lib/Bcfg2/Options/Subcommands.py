@@ -52,6 +52,10 @@ class Subcommand(object):
     #: or only in an interactive :class:`cmd.Cmd` shell.
     only_interactive = False
 
+    #: Additional aliases for the command. The contents of the list gets
+    #: added to the default command name (the lowercased class name)
+    aliases = []
+
     _ws_re = re.compile(r'\s+', flags=re.MULTILINE)
 
     def __init__(self):
@@ -214,18 +218,22 @@ class CommandRegistry(object):
         else:
             cmd_obj = cls_or_obj
             cmdcls = cmd_obj.__class__
-        name = cmdcls.__name__.lower()
-        self.commands[name] = cmd_obj
+        names = [cmdcls.__name__.lower()]
+        if cmdcls.aliases:
+            names.extend(cmdcls.aliases)
 
-        if not cmdcls.only_interactive:
-            # py2.5 can't mix *magic and non-magical keyword args, thus
-            # the **dict(...)
-            self.subcommand_options.append(
-                Subparser(*cmdcls.options, **dict(name=name,
-                                                  help=cmdcls.__doc__)))
-        if issubclass(self.__class__, cmd.Cmd) and cmdcls.interactive:
-            setattr(self, "do_%s" % name, cmd_obj)
-            setattr(self, "help_%s" % name, cmd_obj.parser.print_help)
+        for name in names:
+            self.commands[name] = cmd_obj
+
+            if not cmdcls.only_interactive:
+                # py2.5 can't mix *magic and non-magical keyword args, thus
+                # the **dict(...)
+                self.subcommand_options.append(
+                    Subparser(*cmdcls.options, **dict(name=name,
+                                                      help=cmdcls.__doc__)))
+            if issubclass(self.__class__, cmd.Cmd) and cmdcls.interactive:
+                setattr(self, "do_%s" % name, cmd_obj)
+                setattr(self, "help_%s" % name, cmd_obj.parser.print_help)
         return cmd_obj
 
     def register_commands(self, candidates, parent=Subcommand):
