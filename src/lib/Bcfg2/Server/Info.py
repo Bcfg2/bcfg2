@@ -385,6 +385,15 @@ class ExpireCache(InfoCmd):
             self.core.metadata_cache.expire()
 
 
+class EventDebug(InfoCmd):
+    """ Enable debugging output for FAM events """
+    only_interactive = True
+    aliases = ['event_debug']
+
+    def run(self, _):
+        self.core.fam.set_debug(True)
+
+
 class Bundles(InfoCmd):
     """ Print out group/bundle info """
 
@@ -673,6 +682,15 @@ class Query(InfoCmd):
         print("\n".join(res))
 
 
+class Quit(InfoCmd):
+    """ Exit program """
+    only_interactive = True
+    aliases = ['exit', 'EOF']
+
+    def run(self, _):
+        raise SystemExit(0)
+
+
 class Shell(InfoCmd):
     """ Open an interactive shell to run multiple bcfg2-info commands """
     interactive = False
@@ -683,6 +701,14 @@ class Shell(InfoCmd):
                                   'Type "help" for more information')
         except KeyboardInterrupt:
             print("\nCtrl-C pressed, exiting...")
+
+
+class Update(InfoCmd):
+    """ Process pending filesystem events """
+    only_interactive = True
+
+    def run(self, _):
+        self.core.fam.handle_events_in_interval(0.1)
 
 
 class ProfileTemplates(InfoCmd):
@@ -869,23 +895,6 @@ class CLI(cmd.Cmd, Bcfg2.Options.CommandRegistry):
         methods and not the class, because the CommandRegistry
         dynamically adds methods for the registed subcommands. """
         return dir(self)
-
-    def do_quit(self, _):
-        """ quit|exit - Exit program """
-        raise SystemExit(0)
-
-    do_EOF = do_quit
-    do_exit = do_quit
-
-    def do_eventdebug(self, _):
-        """ eventdebug - Enable debugging output for FAM events """
-        self.core.fam.set_debug(True)
-
-    do_event_debug = do_eventdebug
-
-    def do_update(self, _):
-        """ update - Process pending filesystem events """
-        self.core.fam.handle_events_in_interval(0.1)
 
     def onecmd(self, line):
         """ Overwrite cmd.Cmd.onecmd to catch all exceptions (except
