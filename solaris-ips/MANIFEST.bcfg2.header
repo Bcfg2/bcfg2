@@ -1,5 +1,5 @@
 license ../../LICENSE  license=simplified_bsd
 set name=description value="Configuration management client"
 set name=pkg.summary value="Configuration management client"
-set name=pkg.fmri value="pkg://bcfg2/bcfg2@1.4.0pre1"
+set name=pkg.fmri value="pkg://bcfg2/bcfg2@1.4.0pre2"
 file usr/bin/bcfg2 group=bin mode=0755 owner=root path=usr/bin/bcfg2

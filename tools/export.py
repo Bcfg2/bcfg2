@@ -344,8 +344,8 @@ E.G. 1.2.0pre1 is a valid version.
         commando_orders = ["vcs_commit",
                            "vcs_tag",
                            "create_archive",
-                           "gpg_encrypt",
-                           "scp_archive"]
+                           "gpg_encrypt"]
+                           #"scp_archive"]
 
     if options.dryrun:
         for cmd in commando_orders:

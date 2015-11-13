@@ -12,7 +12,7 @@
 #
 # Don't forget to change the Release: tag below to something like 0.1
 #%%global _rc 1
-%global _pre pre1
+%global _pre pre2
 %global _pre_rc %{?_pre:.pre%{_pre}}%{?_rc:.rc%{_rc}}
 
 Name:             bcfg2-selinux

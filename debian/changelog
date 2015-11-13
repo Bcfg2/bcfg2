@@ -1,3 +1,9 @@
+bcfg2 (1.4.0pre2-0.0) unstable; urgency=low
+
+  * New upstream release
+
+ -- Sol Jerome <sol.jerome@gmail.com>  Fri, 13 Nov 2015 12:01:49 -0600
+
 bcfg2 (1.4.0pre1-0.0) unstable; urgency=low
 
   * New upstream release
