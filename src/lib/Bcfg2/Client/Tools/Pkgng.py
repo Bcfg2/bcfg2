@@ -205,7 +205,7 @@ class Pkgng(Bcfg2.Client.Tools.Tool):
             self.logger.error("Cannot find correct versions of packages:")
             self.logger.error(bad_pkgs)
         if not ipkgs:
-            return
+            return dict()
         if not self.cmd.run(self.pkgcmd % (" ".join(ipkgs))):
             self.logger.error("pkg command failed")
         self._load_pkg_cache()
