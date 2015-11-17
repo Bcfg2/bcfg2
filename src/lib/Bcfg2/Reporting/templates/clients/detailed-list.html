@@ -25,7 +25,7 @@ This is needed for Django versions less than 1.5
   </tr>
   {% for entry in entry_list %}
   <tr class='{% cycle listview,listview_alt %}'>
-    <td class='left_column'><a href='{% url "Bcfg2.Reporting.views.client_detail" hostname=entry.client.name pk=entry.id %}'>{{ entry.client.name }}</a></td>
+    <td class='left_column'><a href='{% url "reports_client_detail_pk" hostname=entry.client.name pk=entry.id %}'>{{ entry.client.name }}</a></td>
     <td class='right_column' style='width:75px'><a href='{% add_url_filter state=entry.state %}'
       class='{{entry|determine_client_state}}'>{{ entry.state }}</a></td>
     <td class='right_column_narrow'>{{ entry.good_count }}</td>
