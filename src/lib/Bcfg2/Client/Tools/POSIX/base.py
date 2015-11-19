@@ -563,7 +563,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                     errors.append("%s has no default SELinux context" %
                                   entry.get("name"))
             else:
-                wanted_secontext = entry.get("secontext")
+                wanted_secontext = entry.get("secontext").split(":")[2]
             if (wanted_secontext and
                     attrib['current_secontext'] != wanted_secontext):
                 errors.append("SELinux context for path %s is incorrect. "
