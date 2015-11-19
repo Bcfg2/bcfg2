@@ -14,7 +14,7 @@ from Bcfg2.Client.Tools.POSIX.base import POSIXTool
 class POSIX(Bcfg2.Client.Tools.Tool):
     """POSIX File support code."""
 
-    options = Bcfg2.Client.Tools.Tool.options + [
+    options = Bcfg2.Client.Tools.Tool.options + POSIXTool.options + [
         Bcfg2.Options.PathOption(
             cf=('paranoid', 'path'), default='/var/cache/bcfg2',
             dest='paranoid_path',
