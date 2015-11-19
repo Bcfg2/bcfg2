@@ -708,7 +708,7 @@ class TestPOSIXTool(TestTool):
         ptool._gather_data = Mock()
         entry = lxml.etree.Element("Path", name="/test", type="file",
                                    group="group", owner="user", mode="664",
-                                   secontext='etc_t')
+                                   secontext='unconfined_u:object_r:etc_t:s0')
         # _verify_metadata() mutates the entry, so we keep a backup so we
         # can start fresh every time
         orig_entry = copy.deepcopy(entry)
