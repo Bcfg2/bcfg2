@@ -15,7 +15,10 @@ import codecs
 import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Utils
-from mock import patch, MagicMock, _patch, DEFAULT
+try:
+    from mock.mock import patch, MagicMock, _patch, DEFAULT
+except ImportError:
+    from mock import patch, MagicMock, _patch, DEFAULT
 try:
     from unittest2 import skip, skipIf, skipUnless, TestCase
 except ImportError:
