@@ -303,7 +303,7 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
             # no context listed
             return True
         secontext = selinux.lgetfilecon(path)[1].split(":")[2]
-        if secontext in Bcfg2.Options.setup.posix_secontext_ignore:
+        if secontext in Bcfg2.Options.setup.secontext_ignore:
             return True
         try:
             if context == '__default__':
