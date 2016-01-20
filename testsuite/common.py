@@ -14,7 +14,10 @@ import sys
 import codecs
 import unittest
 import lxml.etree
-from mock import patch, MagicMock, _patch, DEFAULT
+try:
+    from mock.mock import patch, MagicMock, _patch, DEFAULT
+except ImportError:
+    from mock import patch, MagicMock, _patch, DEFAULT
 from Bcfg2.Compat import wraps
 
 #: The path to the Bcfg2 specification root for the tests.  Using the
