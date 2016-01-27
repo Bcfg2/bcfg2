@@ -1185,7 +1185,7 @@ class RPM(Bcfg2.Client.Tools.PkgTool):
         self.logger.debug('%s: pkg_verify = %s' %
                           (self.name, Bcfg2.Options.setup.rpm_pkg_verify))
         self.logger.debug('%s: install_missing = %s' %
-                          (self.name, Bcfg2.Options.setup.install_missing))
+                          (self.name, Bcfg2.Options.setup.rpm_install_missing))
         self.logger.debug('%s: fix_version = %s' %
                           (self.name, Bcfg2.Options.setup.rpm_fix_version))
         self.logger.debug('%s: reinstall_broken = %s' %
