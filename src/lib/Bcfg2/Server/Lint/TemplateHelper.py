@@ -26,7 +26,7 @@ class TemplateHelper(ServerPlugin):
         ServerPlugin.__init__(self, *args, **kwargs)
         # we instantiate a dummy helper to discover which keywords and
         # defaults are reserved
-        dummy = HelperModule("foo.py")
+        dummy = HelperModule("foo.py", None)
         self.reserved_keywords = dir(dummy)
         self.reserved_defaults = dummy.reserved_defaults
 
