@@ -103,26 +103,26 @@ class TestPOSIXUsers(TestTool):
         # test failure of inherited method
         entry = lxml.etree.Element("POSIXUser", name="test")
         self.assertFalse(users.canInstall(entry))
-        mock_canInstall.assertCalledWith(users, entry)
+        mock_canInstall.assert_called_with(users, entry)
 
         # test with no uid specified
         reset()
         mock_canInstall.return_value = True
         self.assertTrue(users.canInstall(entry))
-        mock_canInstall.assertCalledWith(users, entry)
+        mock_canInstall.assert_called_with(users, entry)
 
         # test with uid specified, not in managed range
         reset()
         entry.set("uid", "1000")
         self.assertFalse(users.canInstall(entry))
-        mock_canInstall.assertCalledWith(users, entry)
+        mock_canInstall.assert_called_with(users, entry)
         users._in_managed_range.assert_called_with(entry.tag, "1000")
 
         # test with uid specified, in managed range
         reset()
         users._in_managed_range.return_value = True
         self.assertTrue(users.canInstall(entry))
-        mock_canInstall.assertCalledWith(users, entry)
+        mock_canInstall.assert_called_with(users, entry)
         users._in_managed_range.assert_called_with(entry.tag, "1000")
 
     @patch("Bcfg2.Client.Tools.Tool.Inventory")
