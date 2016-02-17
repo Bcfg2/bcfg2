@@ -95,10 +95,10 @@ class Chkconfig(Bcfg2.Client.Tools.SvcTool):
                 bootcmd = '/sbin/chkconfig %s %s' % (entry.get('name'),
                                                      bootstatus)
             bootcmdrv = self.cmd.run(bootcmd).success
-            if Bcfg2.Options.setup.servicemode == 'disabled':
+            if Bcfg2.Options.setup.service_mode == 'disabled':
                 # 'disabled' means we don't attempt to modify running svcs
                 return bootcmdrv
-            buildmode = Bcfg2.Options.setup.servicemode == 'build'
+            buildmode = Bcfg2.Options.setup.service_mode == 'build'
             if ((entry.get('status') == 'on' and not buildmode) and
                     entry.get('current_status') == 'off'):
                 svccmdrv = self.start_service(entry)

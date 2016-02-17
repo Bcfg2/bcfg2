@@ -72,12 +72,12 @@ class Systemd(Bcfg2.Client.Tools.SvcTool):
             # Return failure immediately and do not start/stop the service.
             return False
 
-        # Start or stop the service, depending on the current servicemode
+        # Start or stop the service, depending on the current service_mode
         cmd = None
-        if Bcfg2.Options.setup.servicemode == 'disabled':
+        if Bcfg2.Options.setup.service_mode == 'disabled':
             # 'disabled' means we don't attempt to modify running svcs
             pass
-        elif Bcfg2.Options.setup.servicemode == 'build':
+        elif Bcfg2.Options.setup.service_mode == 'build':
             # 'build' means we attempt to stop all services started
             if entry.get('current_status') == 'on':
                 cmd = self.get_svc_command(entry, 'stop')
