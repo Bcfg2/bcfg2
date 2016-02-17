@@ -65,10 +65,12 @@ class Ldap(Bcfg2.Server.Plugin.Plugin,
     options = [
         Bcfg2.Options.Option(
             cf=('ldap', 'retries'), type=int, default=3,
+            dest='ldap_retries',
             help='The number of times to retry reaching the '
                  'LDAP server if a connection is broken'),
         Bcfg2.Options.Option(
             cf=('ldap', 'retry_delay'), type=float, default=5.0,
+            dest='ldap_retry_delay',
             help='The time in seconds betreen retries')]
 
     def __init__(self, core):
