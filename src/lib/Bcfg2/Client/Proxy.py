@@ -316,6 +316,7 @@ class ComponentProxy(xmlrpclib.ServerProxy):
             help='The time in seconds to wait between retries'),
         Bcfg2.Options.Option(
             '--ssl-cns', cf=('communication', 'serverCommonNames'),
+            dest="ssl_cns",
             type=Bcfg2.Options.Types.colon_list,
             help='List of server commonNames')]
 
