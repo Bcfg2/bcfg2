@@ -878,6 +878,7 @@ class Cfg(Bcfg2.Server.Plugin.GroupSpool,
     options = Bcfg2.Server.Plugin.GroupSpool.options + [
         Bcfg2.Options.BooleanOption(
             '--cfg-validation', cf=('cfg', 'validation'), default=True,
+            dest="cfg_validation",
             help='Run validation on Cfg files'),
         Bcfg2.Options.Option(
             cf=('cfg', 'category'), dest="cfg_category",

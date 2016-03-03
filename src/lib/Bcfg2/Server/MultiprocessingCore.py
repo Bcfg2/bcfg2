@@ -334,9 +334,9 @@ class MultiprocessingCore(BuiltinCore):
         self.children = None
 
     def __str__(self):
-        if hasattr(Bcfg2.Options.setup, "location"):
+        if hasattr(Bcfg2.Options.setup, "server"):
             return "%s(%s; %s children)" % (self.__class__.__name__,
-                                            Bcfg2.Options.setup.location,
+                                            Bcfg2.Options.setup.server,
                                             len(self._all_children))
         else:
             return "%s(%s children)" % (self.__class__.__name__,

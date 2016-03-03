@@ -1443,9 +1443,9 @@ class NetworkCore(Core):
         "\n.. automethod:: _daemonize\n"
 
     def __str__(self):
-        if hasattr(Bcfg2.Options.setup, "location"):
+        if hasattr(Bcfg2.Options.setup, "server"):
             return "%s(%s)" % (self.__class__.__name__,
-                               Bcfg2.Options.setup.location)
+                               Bcfg2.Options.setup.server)
         else:
             return Core.__str__(self)
 
