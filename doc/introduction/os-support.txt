@@ -17,13 +17,13 @@ Bcfg2 is fairly portable. It has been successfully run on:
 .. _OpenSolaris: http://opensolaris.org/
 .. _Solaris: http://www.sun.com/software/solaris/
 
-* Many `GNU/Linux`_ distributions, including `Archlinux`_, `Blag`_, `CentOS`_,
+* Many `GNU/Linux`_ distributions, including `Arch Linux`_, `Blag`_, `CentOS`_,
   `Debian`_, `Fedora`_, `Gentoo`_, `gNewSense`_, `Mandriva`_,
   `OpenSUSE`_, `Red Hat/RHEL`_, `Scientific Linux`_, `SuSE/SLES`_, `Trisquel`_, 
   and `Ubuntu`_.
 
 .. _GNU/Linux: http://www.gnu.org/gnu/Linux-and-gnu.html
-.. _Archlinux: http://www.archlinux.org
+.. _Arch Linux: http://www.archlinux.org
 .. _Blag: http://www.blagblagblag.org/
 .. _CentOS: http://www.centos.org/
 .. _Debian: http://www.debian.org/

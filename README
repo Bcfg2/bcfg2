@@ -13,7 +13,7 @@ Computer Science Division of Argonne National Laboratory.
 Bcfg2 is fairly portable. It has been successfully run on:
 
 * AIX, FreeBSD, OpenBSD Mac OS X, OpenSolaris, Solaris
-* Many GNU/Linux distributions, including ArchLinux, Blag, CentOS,
+* Many GNU/Linux distributions, including Arch Linux, Blag, CentOS,
   Debian, Fedora, Gentoo, gNewSense, Mandriva, openSUSE, Red Hat/RHEL,
   SuSE/SLES, Trisquel, and Ubuntu.
 

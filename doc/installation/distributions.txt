@@ -22,16 +22,14 @@ Just use `apk` to perform the installation ::
 .. _Alpine Linux: http://www.alpinelinux.org/
 .. _testing: http://git.alpinelinux.org/cgit/aports/tree/testing/bcfg2
 
-ArchLinux
-=========
+Arch Linux
+==========
 
 Packages for `Arch Linux`_ are available in the Arch User Repository (AUR_).
-Just use `pacman` to perform the installation ::
-
-   pacman -S bcfg2 bcfg2-server
+The bcfg2 package includes bcfg2-server.
 
 .. _Arch Linux: http://www.archlinux.org/
-.. _AUR: http://aur.archlinux.org/packages.php?ID=20979
+.. _AUR: http://aur.archlinux.org/packages/bcfg2
 
 Debian
 ======

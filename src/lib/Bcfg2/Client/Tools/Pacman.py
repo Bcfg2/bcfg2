@@ -5,7 +5,7 @@ import Bcfg2.Client.Tools
 
 
 class Pacman(Bcfg2.Client.Tools.PkgTool):
-    '''Archlinux package support'''
+    '''Arch Linux package support'''
     name = 'Pacman'
     __execs__ = ["/usr/bin/pacman"]
     __handles__ = [('Package', 'pacman')]

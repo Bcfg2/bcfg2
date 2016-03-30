@@ -11,6 +11,6 @@ Finally, due to the rapid pace of updates on modern networks, client systems are
 Bcfg2 is fairly portable. It has been successfully run on:
 
     AIX, FreeBSD, OpenBSD, Mac OS X, OpenSolaris, Solaris
-    Many GNU/Linux distributions, including ArchLinux Blag, CentOS, Debian, Fedora, Gentoo, gNewSense, Mandriva, openSUSE, Red Hat/RHEL, SuSE/SLES, Trisquel, and Ubuntu. 
+    Many GNU/Linux distributions, including Arch Linux, Blag, CentOS, Debian, Fedora, Gentoo, gNewSense, Mandriva, openSUSE, Red Hat/RHEL, SuSE/SLES, Trisquel, and Ubuntu.
 
 Bcfg2 should run on any POSIX compatible operating system, however direct support for an operating system's package and service formats are limited by the currently available client tools (new client tools are pretty easy to add). There is also an incomplete but more exact list of platforms on which Bcfg2 works. 
