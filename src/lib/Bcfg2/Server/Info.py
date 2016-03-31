@@ -143,9 +143,7 @@ class Debug(InfoCmd):
         if setup.cmd_list:
             console = InteractiveConsole(locals())
             for command in setup.cmd_list.readlines():
-                command = command.strip()
-                if command:
-                    console.push(command)
+                console.push(command.rstrip())
         if not setup.non_interactive:
             print("Dropping to interpreter; press ^D to resume")
             self.interpreters[setup.interpreter](self.core.get_locals())
