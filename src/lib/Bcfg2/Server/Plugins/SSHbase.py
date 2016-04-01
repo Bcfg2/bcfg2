@@ -427,7 +427,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
 
     def GenerateHostKeyPair(self, client, filename):
         """Generate new host key pair for client."""
-        match = re.search(r'(ssh_host_(?:((?:ecd|d|r)sa|ed25519)_)?key)', filename)
+        match = re.search(r'(ssh_host_(?:((?:ecd|d|r)sa|ed25519)_)?key)',
+                          filename)
         if match:
             hostkey = "%s.H_%s" % (match.group(1), client)
             if match.group(2):
