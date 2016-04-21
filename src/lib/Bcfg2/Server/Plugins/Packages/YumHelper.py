@@ -283,13 +283,14 @@ class HelperSubcommand(Bcfg2.Options.Subcommand):
             self.verbosity = 1
 
     def run(self, setup):
-        try:
-            data = json.loads(sys.stdin.read())
-        except ValueError:
-            self.logger.error("Error decoding JSON input: %s" %
-                              sys.exc_info()[1])
-            print(json.dumps(self.fallback))
-            return 2
+        if accept_input:
+            try:
+                data = json.loads(sys.stdin.read())
+            except ValueError:
+                self.logger.error("Error decoding JSON input: %s" %
+                                  sys.exc_info()[1])
+                print(json.dumps(self.fallback))
+                return 2
 
         try:
             print(json.dumps(self._run(setup, data)))
