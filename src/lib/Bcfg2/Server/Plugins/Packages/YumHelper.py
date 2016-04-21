@@ -283,7 +283,8 @@ class HelperSubcommand(Bcfg2.Options.Subcommand):
         elif Bcfg2.Options.setup.verbose:
             self.verbosity = 1
 
-        if accept_input:
+        data = None
+        if self.accept_input:
             try:
                 data = json.loads(sys.stdin.read())
             except ValueError:
