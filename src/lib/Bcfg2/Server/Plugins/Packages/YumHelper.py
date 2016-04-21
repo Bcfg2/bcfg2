@@ -274,15 +274,27 @@ class HelperSubcommand(Bcfg2.Options.Subcommand):
     # whether or not this command accepts input on stdin
     accept_input = True
 
-    def __init__(self):
-        Bcfg2.Options.Subcommand.__init__(self)
+    def run(self, setup):
         self.verbosity = 0
         if Bcfg2.Options.setup.debug:
             self.verbosity = 5
         elif Bcfg2.Options.setup.verbose:
             self.verbosity = 1
 
+    def _run(self, setup, data):
+        """ Actually run the command """
+        raise NotImplementedError
+
+
+class DepSolverSubcommand(HelperSubcommand):  # pylint: disable=W0223
+    """ Base class for helper commands that use the depsolver (i.e.,
+    only resolve dependencies, don't modify the cache) """
+
     def run(self, setup):
+        HelperSubcommand.run(self, setup)
+        self.depsolver = DepSolver(Bcfg2.Options.setup.yum_config,
+                                   self.verbosity)
+
         try:
             data = json.loads(sys.stdin.read())
         except ValueError:
@@ -295,25 +307,11 @@ class HelperSubcommand(Bcfg2.Options.Subcommand):
             print(json.dumps(self._run(setup, data)))
         except:  # pylint: disable=W0702
             self.logger.error("Unexpected error running %s: %s" %
-                              self.__class__.__name__.lower(),
-                              sys.exc_info()[1], exc_info=1)
+                              (self.__class__.__name__.lower(),
+                               sys.exc_info()[1]), exc_info=1)
             print(json.dumps(self.fallback))
             return 2
         return 0
-
-    def _run(self, setup, data):
-        """ Actually run the command """
-        raise NotImplementedError
-
-
-class DepSolverSubcommand(HelperSubcommand):  # pylint: disable=W0223
-    """ Base class for helper commands that use the depsolver (i.e.,
-    only resolve dependencies, don't modify the cache) """
-
-    def __init__(self):
-        HelperSubcommand.__init__(self)
-        self.depsolver = DepSolver(Bcfg2.Options.setup.yum_config,
-                                   self.verbosity)
 
 
 class CacheManagerSubcommand(HelperSubcommand):  # pylint: disable=W0223
@@ -322,10 +320,20 @@ class CacheManagerSubcommand(HelperSubcommand):  # pylint: disable=W0223
     fallback = False
     accept_input = False
 
-    def __init__(self):
-        HelperSubcommand.__init__(self)
+    def run(self, setup):
+        HelperSubcommand.run(self, setup)
         self.cachemgr = CacheManager(Bcfg2.Options.setup.yum_config,
                                      self.verbosity)
+
+        try:
+            print(json.dumps(self._run(setup, None)))
+        except:  # pylint: disable=W0702
+            self.logger.error("Unexpected error running %s: %s" %
+                              (self.__class__.__name__.lower(),
+                               sys.exc_info()[1]), exc_info=1)
+            print(json.dumps(self.fallback))
+            return 2
+        return 0
 
 
 class Clean(CacheManagerSubcommand):
@@ -376,10 +384,7 @@ class CLI(Bcfg2.Options.CommandRegistry):
     """ The bcfg2-yum-helper CLI """
     options = [
         Bcfg2.Options.PathOption(
-            "-c", "--yum-config", help="Yum config file"),
-        Bcfg2.Options.PositionalArgument(
-            "command", help="Yum helper command",
-            choices=['clean', 'complete', 'get_groups'])]
+            "-c", "--yum-config", help="Yum config file")]
 
     def __init__(self):
         Bcfg2.Options.CommandRegistry.__init__(self)

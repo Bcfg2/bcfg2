@@ -456,16 +456,13 @@ class YumCollection(Collection):
                 reponame = basereponame
 
                 added = False
+                rid = 1
                 while not added:
                     try:
                         config.add_section(reponame)
                         added = True
                     except ConfigParser.DuplicateSectionError:
-                        match = re.search(r'-(\d+)', reponame)
-                        if match:
-                            rid = int(match.group(1)) + 1
-                        else:
-                            rid = 1
+                        rid += 1
                         reponame = "%s-%d" % (basereponame, rid)
 
                 config.set(reponame, "name", reponame)
