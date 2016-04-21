@@ -376,10 +376,7 @@ class CLI(Bcfg2.Options.CommandRegistry):
     """ The bcfg2-yum-helper CLI """
     options = [
         Bcfg2.Options.PathOption(
-            "-c", "--yum-config", help="Yum config file"),
-        Bcfg2.Options.PositionalArgument(
-            "command", help="Yum helper command",
-            choices=['clean', 'complete', 'get_groups'])]
+            "-c", "--yum-config", help="Yum config file")]
 
     def __init__(self):
         Bcfg2.Options.CommandRegistry.__init__(self)
