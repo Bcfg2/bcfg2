@@ -295,8 +295,8 @@ class HelperSubcommand(Bcfg2.Options.Subcommand):
             print(json.dumps(self._run(setup, data)))
         except:  # pylint: disable=W0702
             self.logger.error("Unexpected error running %s: %s" %
-                              self.__class__.__name__.lower(),
-                              sys.exc_info()[1], exc_info=1)
+                              (self.__class__.__name__.lower(),
+                               sys.exc_info()[1]), exc_info=1)
             print(json.dumps(self.fallback))
             return 2
         return 0
