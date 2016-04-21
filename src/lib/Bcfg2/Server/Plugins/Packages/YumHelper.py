@@ -274,15 +274,13 @@ class HelperSubcommand(Bcfg2.Options.Subcommand):
     # whether or not this command accepts input on stdin
     accept_input = True
 
-    def __init__(self):
-        Bcfg2.Options.Subcommand.__init__(self)
+    def run(self, setup):
         self.verbosity = 0
         if Bcfg2.Options.setup.debug:
             self.verbosity = 5
         elif Bcfg2.Options.setup.verbose:
             self.verbosity = 1
 
-    def run(self, setup):
         try:
             data = json.loads(sys.stdin.read())
         except ValueError:
@@ -310,8 +308,8 @@ class DepSolverSubcommand(HelperSubcommand):  # pylint: disable=W0223
     """ Base class for helper commands that use the depsolver (i.e.,
     only resolve dependencies, don't modify the cache) """
 
-    def __init__(self):
-        HelperSubcommand.__init__(self)
+    def run(self):
+        HelperSubcommand.run(self)
         self.depsolver = DepSolver(Bcfg2.Options.setup.yum_config,
                                    self.verbosity)
 
@@ -322,8 +320,8 @@ class CacheManagerSubcommand(HelperSubcommand):  # pylint: disable=W0223
     fallback = False
     accept_input = False
 
-    def __init__(self):
-        HelperSubcommand.__init__(self)
+    def run(self):
+        HelperSubcommand.run(self)
         self.cachemgr = CacheManager(Bcfg2.Options.setup.yum_config,
                                      self.verbosity)
 
