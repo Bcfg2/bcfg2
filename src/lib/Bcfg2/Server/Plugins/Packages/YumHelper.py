@@ -377,7 +377,7 @@ class CLI(Bcfg2.Options.CommandRegistry):
             "-c", "--yum-config", help="Yum config file"),
         Bcfg2.Options.PositionalArgument(
             "command", help="Yum helper command",
-            choices=['clean', 'complete', 'get_groups'])]
+            choices=['clean', 'makecache', 'complete', 'get_groups'])]
 
     def __init__(self):
         Bcfg2.Options.CommandRegistry.__init__(self)
