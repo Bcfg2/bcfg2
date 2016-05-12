@@ -121,6 +121,10 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
          private key for (hostname)
        ssh_host_(ec)(dr)sa_key.pub.H_(hostname) -> the v2 ssh host
          public key for (hostname)
+       ssh_host_ed25519_key.H_(hostname) -> the v2 ssh host
+         private key for (hostname)
+       ssh_host_ed25519_key.pub.H_(hostname) -> the v2 ssh host
+         public key for (hostname)
        ssh_known_hosts -> the current known hosts file. this
          is regenerated each time a new key is generated.
 
@@ -128,10 +132,12 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
     __author__ = 'bcfg-dev@mcs.anl.gov'
     keypatterns = ["ssh_host_dsa_key",
                    "ssh_host_ecdsa_key",
+                   "ssh_host_ed25519_key",
                    "ssh_host_rsa_key",
                    "ssh_host_key",
                    "ssh_host_dsa_key.pub",
                    "ssh_host_ecdsa_key.pub",
+                   "ssh_host_ed25519_key.pub",
                    "ssh_host_rsa_key.pub",
                    "ssh_host_key.pub"]
 
@@ -421,7 +427,8 @@ class SSHbase(Bcfg2.Server.Plugin.Plugin,
 
     def GenerateHostKeyPair(self, client, filename):
         """Generate new host key pair for client."""
-        match = re.search(r'(ssh_host_(?:((?:ecd|d|r)sa)_)?key)', filename)
+        match = re.search(r'(ssh_host_(?:((?:ecd|d|r)sa|ed25519)_)?key)',
+                          filename)
         if match:
             hostkey = "%s.H_%s" % (match.group(1), client)
             if match.group(2):
