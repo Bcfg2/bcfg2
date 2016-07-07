@@ -67,7 +67,7 @@ def prompt(msg):
         ans = safe_input(msg)
         return ans in ['y', 'Y']
     except UnicodeEncodeError:
-        ans = input(msg.encode('utf-8'))
+        ans = safe_input(msg.encode('utf-8'))
         return ans in ['y', 'Y']
     except (EOFError, KeyboardInterrupt):
         # handle ^C
