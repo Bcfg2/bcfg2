@@ -5,6 +5,8 @@ import os
 import sys
 import time
 import traceback
+from functools import partial
+
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
 from Bcfg2.Logger import Debuggable
@@ -84,20 +86,10 @@ class Ldap(Bcfg2.Server.Plugin.Plugin,
 
         self.config = ConfigFile(os.path.join(self.data, 'config.py'))
 
-    def get_additional_data(self, metadata):
-        query = None
+    def _execute_query(self, query, metadata):
         try:
-            data = {}
-            self.debug_log("Found queries %s" % self.config.queries)
-            for query_class in self.config.queries:
-                query = query_class()
-                if query.is_applicable(metadata):
-                    self.debug_log("Processing query '%s'" % query.name)
-                    data[query.name] = query.get_result(metadata)
-                else:
-                    self.debug_log("query '%s' not applicable to host '%s'" %
-                                   (query.name, metadata.hostname))
-            return data
+            self.debug_log("Processing query '%s'" % query.name)
+            return query.get_result(metadata)
         except:  # pylint: disable=W0702
             if hasattr(query, "name"):
                 self.logger.error(
@@ -106,7 +98,29 @@ class Ldap(Bcfg2.Server.Plugin.Plugin,
                     query.name)
             for line in traceback.format_exc().split('\n'):
                 self.logger.error(line)
-            return {}
+        return None
+
+    def get_additional_data(self, metadata):
+        data = {}
+        self.debug_log("Found queries %s" % self.config.queries)
+        for query_class in self.config.queries:
+            try:
+                query = query_class()
+                if query.is_applicable(metadata):
+                    self.debug_log("Processing query '%s'" % query.name)
+                    data[query.name] = partial(
+                        self._execute_query, query, metadata)
+                else:
+                    self.debug_log("query '%s' not applicable to host '%s'" %
+                                   (query.name, metadata.hostname))
+            except:
+                self.logger.error(
+                    "Exception during preparation of query named '%s'. "
+                    "Query will be ignored." % query_class.__name__)
+                for line in traceback.format_exc().split('\n'):
+                    self.logger.error(line)
+
+        return Bcfg2.Server.Plugin.CallableDict(**data)
 
     def start_client_run(self, metadata):
         if self.core.metadata_cache_mode == 'aggressive':
