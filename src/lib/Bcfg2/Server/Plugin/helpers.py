@@ -13,7 +13,7 @@ import Bcfg2.Server
 import Bcfg2.Options
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Logger import Debuggable
-from Bcfg2.Compat import CmpMixin, wraps
+from Bcfg2.Compat import CmpMixin, MutableMapping, wraps
 from Bcfg2.Server.Plugin.base import Plugin
 from Bcfg2.Server.Plugin.interfaces import Generator, TemplateDataProvider
 from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
@@ -1698,3 +1698,49 @@ class GroupSpool(Plugin, Generator):
                 return
             reqid = self.fam.AddMonitor(name, self)
             self.handles[reqid] = relative
+
+
+class OnDemandDict(MutableMapping):
+    """ This maps a set of keys to a set of value-getting functions;
+    the values are populated on-the-fly by the functions as the values
+    are needed (and not before).  This is for example used by
+    :func:`Bcfg2.Server.Plugins.Packages.Packages.get_additional_data`;
+    see the docstring for that function for details on why.
+
+    Unlike a dict, you should not specify values for the righthand
+    side of this mapping, but functions that get values.  E.g.:
+
+    .. code-block:: python
+
+        d = OnDemandDict(foo=load_foo,
+                         bar=lambda: "bar");
+    """
+
+    def __init__(self, **getters):
+        self._values = dict()
+        self._getters = dict(**getters)
+
+    def __getitem__(self, key):
+        if key not in self._values:
+            self._values[key] = self._getters[key]()
+        return self._values[key]
+
+    def __setitem__(self, key, getter):
+        self._getters[key] = getter
+
+    def __delitem__(self, key):
+        del self._values[key]
+        del self._getters[key]
+
+    def __len__(self):
+        return len(self._getters)
+
+    def __iter__(self):
+        return iter(self._getters.keys())
+
+    def __repr__(self):
+        rv = dict(self._values)
+        for key in self._getters.keys():
+            if key not in rv:
+                rv[key] = 'unknown'
+        return str(rv)

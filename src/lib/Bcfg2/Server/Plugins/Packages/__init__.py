@@ -10,7 +10,7 @@ import lxml.etree
 import Bcfg2.Options
 import Bcfg2.Server.Cache
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import urlopen, HTTPError, URLError, MutableMapping
+from Bcfg2.Compat import urlopen, HTTPError, URLError
 from Bcfg2.Server.Plugins.Packages.Collection import Collection, \
     get_collection_class
 from Bcfg2.Server.Plugins.Packages.PackagesSources import PackagesSources
@@ -34,52 +34,6 @@ class PackagesBackendAction(Bcfg2.Options.ComponentAction):
     bases = ['Bcfg2.Server.Plugins.Packages']
     module = True
     fail_silently = True
-
-
-class OnDemandDict(MutableMapping):
-    """ This maps a set of keys to a set of value-getting functions;
-    the values are populated on-the-fly by the functions as the values
-    are needed (and not before).  This is used by
-    :func:`Bcfg2.Server.Plugins.Packages.Packages.get_additional_data`;
-    see the docstring for that function for details on why.
-
-    Unlike a dict, you should not specify values for for the righthand
-    side of this mapping, but functions that get values.  E.g.:
-
-    .. code-block:: python
-
-        d = OnDemandDict(foo=load_foo,
-                         bar=lambda: "bar");
-    """
-
-    def __init__(self, **getters):
-        self._values = dict()
-        self._getters = dict(**getters)
-
-    def __getitem__(self, key):
-        if key not in self._values:
-            self._values[key] = self._getters[key]()
-        return self._values[key]
-
-    def __setitem__(self, key, getter):
-        self._getters[key] = getter
-
-    def __delitem__(self, key):
-        del self._values[key]
-        del self._getters[key]
-
-    def __len__(self):
-        return len(self._getters)
-
-    def __iter__(self):
-        return iter(self._getters.keys())
-
-    def __repr__(self):
-        rv = dict(self._values)
-        for key in self._getters.keys():
-            if key not in rv:
-                rv[key] = 'unknown'
-        return str(rv)
 
 
 class Packages(Bcfg2.Server.Plugin.Plugin,
@@ -578,7 +532,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
 
     def get_additional_data(self, metadata):
         """ Return additional data for the given client.  This will be
-        an :class:`Bcfg2.Server.Plugins.Packages.OnDemandDict`
+        an :class:`Bcfg2.Server.Plugin.OnDemandDict`
         containing two keys:
 
         * ``sources``, whose value is a list of data returned from
@@ -610,7 +564,7 @@ class Packages(Bcfg2.Server.Plugin.Plugin,
             get_collection() until it's absolutely necessary. """
             return self.get_collection(metadata).get_additional_data()
 
-        return OnDemandDict(
+        return Bcfg2.Server.Plugin.OnDemandDict(
             sources=get_sources,
             get_config=lambda: self.get_config)
 
