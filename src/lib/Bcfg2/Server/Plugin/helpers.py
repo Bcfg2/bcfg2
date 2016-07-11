@@ -1707,13 +1707,14 @@ class OnDemandDict(MutableMapping):
     :func:`Bcfg2.Server.Plugins.Packages.Packages.get_additional_data`;
     see the docstring for that function for details on why.
 
-    Unlike a dict, you should not specify values for the righthand
-    side of this mapping, but functions that get values.  E.g.:
+    Unlike a dict, you can specify values or functions for the
+    righthand side of this mapping. If you specify a function, it will
+    be evaluated, when you access the value for the first time. E.g.:
 
     .. code-block:: python
 
         d = OnDemandDict(foo=load_foo,
-                         bar=lambda: "bar");
+                         bar="bar")
     """
 
     def __init__(self, **getters):
@@ -1722,7 +1723,11 @@ class OnDemandDict(MutableMapping):
 
     def __getitem__(self, key):
         if key not in self._values:
-            self._values[key] = self._getters[key]()
+            if callable(self._getters[key]):
+                self._values[key] = self._getters[key]()
+            else:
+                self._values[key] = self._getters[key]
+
         return self._values[key]
 
     def __setitem__(self, key, getter):
