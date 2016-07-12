@@ -96,15 +96,19 @@ class _Cache(MutableMapping):
         return len(list(iter(self)))
 
     def expire(self, key=None):
-        """ expire all items, or a specific item, from the cache """
+        """ expire all items, or a specific item, from the cache
+
+        :returns: number of expired entries
+        """
+
         if key is None:
-            expire(*self._tags)
+            return expire(*self._tags)
         else:
             tags = self._tags | set([key])
             # py 2.5 doesn't support mixing *args and explicit keyword
             # args
             kwargs = dict(exact=True)
-            expire(*tags, **kwargs)
+            return expire(*tags, **kwargs)
 
     def __repr__(self):
         return repr(dict(self))
@@ -152,7 +156,10 @@ def expire(*tags, **kwargs):
     """ Expire all items, a set of items, or one specific item from
     the cache.  If ``exact`` is set to True, then if the given tag set
     doesn't match exactly one item in the cache, nothing will be
-    expired. """
+    expired.
+
+    :returns: number of expired entries
+    """
     exact = kwargs.pop("exact", False)
     count = 0
     if not tags:
@@ -169,6 +176,8 @@ def expire(*tags, **kwargs):
 
     for hook in _hooks:
         hook(tags, exact, count)
+
+    return count
 
 
 def add_expire_hook(func):
