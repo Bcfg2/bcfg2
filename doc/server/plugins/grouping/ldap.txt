@@ -196,7 +196,7 @@ LdapQuery
 
 .. method:: LdapQuery.get_result(self, metadata, \**kwargs)
 
-   This executes the query. First it will call ``prepare_query() for you, then it will try
+   This executes the query. First it will call ``prepare_query()`` for you, then it will try
    to execute the query with the specified connection and last it will call ``process_result()``
    and return that return value.
 
