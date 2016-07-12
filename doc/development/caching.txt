@@ -67,6 +67,9 @@ Currently known caches are:
 | pkg_sets    | <Collection.cachekey>`,               |                                                 | for clients                                          |
 |             | hash of the initial package selection |                                                 |                                                      |
 +-------------+---------------------------------------+-------------------------------------------------+------------------------------------------------------+
+| Ldap,       | Hostname, ``<query name>``            | :func:`processed result of the query            | Cached results from the Ldap queries                 |
+| results,    |                                       | <Bcfg2.Server.Plugins.LdapQuery.process_result>`|                                                      |
++-------------+---------------------------------------+-------------------------------------------------+------------------------------------------------------+
 
 These are enumerated so that they can be expired as needed by other
 plugins or other code points.

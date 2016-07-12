@@ -87,6 +87,26 @@ If you wish, you could customize these values in your ``bcfg2.conf``::
     retries = 3
     retry_delay = 3.0
 
+Caching
++++++++
+
+This module could not know, if a value changed on the LDAP server. So it does not cache
+the results of the LDAP queries by default.
+
+You could enable the cache of the results in your ``bcfg2.conf``:
+
+    [ldap]
+    cache = on
+
+If you enable the caching, you have to expire it manually. This module provides a XML-RPC
+method for this purpose: :func:`Ldap.expire_cache
+<Bcfg2.Server.Plugins.Ldap.expire_cache>`.
+
+Even without enabling caching, the results of the LDAP queries are cached, but are
+discarded before each client run. If you access the Ldap results of different client, you
+may get cached results of the last run of this client. If you do not want this behaviour,
+you can disable the caching completely by setting it to ``off``.
+
 Class reference
 ---------------
 
@@ -251,9 +271,3 @@ Known Issues
 ------------
 
 * At this point there is no support for SSL/TLS.
-* This module could not know, if a value changed on the LDAP server. So it could not
-  expire the client metadata cache sanely.
-  If you are using aggressive caching mode, this plugin will expire the metadata cache
-  for a single client at the start of a client run. If you are using LDAP data from
-  another client in a template, you will probably get the cached values from the last
-  client run of that other client.

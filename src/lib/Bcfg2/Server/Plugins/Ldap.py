@@ -8,6 +8,7 @@ import traceback
 from functools import partial
 
 import Bcfg2.Options
+import Bcfg2.Server.Cache
 import Bcfg2.Server.Plugin
 from Bcfg2.Logger import Debuggable
 from Bcfg2.Utils import ClassName, safe_module_name
@@ -22,9 +23,10 @@ except ImportError:
 class ConfigFile(Bcfg2.Server.Plugin.FileBacked):
     """ Config file for the Ldap plugin  """
 
-    def __init__(self, name, core):
+    def __init__(self, name, core, plugin):
         Bcfg2.Server.Plugin.FileBacked.__init__(self, name)
         self.core = core
+        self.plugin = plugin
         self.queries = list()
         self.fam.AddMonitor(name, self)
 
@@ -55,12 +57,15 @@ class ConfigFile(Bcfg2.Server.Plugin.FileBacked):
         if self.core.metadata_cache_mode in ['cautious', 'aggressive']:
             self.core.metadata_cache.expire()
 
+        self.plugin.expire_cache()
+
 
 class Ldap(Bcfg2.Server.Plugin.Plugin,
            Bcfg2.Server.Plugin.ClientRunHooks,
            Bcfg2.Server.Plugin.Connector):
     """ The Ldap plugin allows adding data from an LDAP server
     to your metadata. """
+    __rmi__ = Bcfg2.Server.Plugin.Plugin.__rmi__ + ['expire_cache']
 
     experimental = True
 
@@ -73,7 +78,11 @@ class Ldap(Bcfg2.Server.Plugin.Plugin,
         Bcfg2.Options.Option(
             cf=('ldap', 'retry_delay'), type=float, default=5.0,
             dest='ldap_retry_delay',
-            help='The time in seconds betreen retries')]
+            help='The time in seconds betreen retries'),
+        Bcfg2.Options.BooleanOption(
+            cf=('ldap', 'cache'), default=None, dest='ldap_cache',
+            help='Cache the results of the LDAP Queries until they '
+                 'are expired using the XML-RPC RMI')]
 
     def __init__(self, core):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core)
@@ -85,21 +94,37 @@ class Ldap(Bcfg2.Server.Plugin.Plugin,
             raise Bcfg2.Server.Plugin.PluginInitError(msg)
 
         self.config = ConfigFile(os.path.join(self.data, 'config.py'),
-                                 core)
+                                 core, self)
+        self._hosts = dict()
+
+    def _cache(self, query_name):
+        """ Return the :class:`Cache <Bcfg2.Server.Cache>` for the
+        given query name. """
+        return Bcfg2.Server.Cache.Cache('Ldap', 'results', query_name)
 
     def _execute_query(self, query, metadata):
-        try:
-            self.debug_log("Processing query '%s'" % query.name)
-            return query.get_result(metadata)
-        except:  # pylint: disable=W0702
-            if hasattr(query, "name"):
+        """ Return the cached result of the given query for this host or
+        execute the given query and cache the result. """
+        result = None
+
+        if Bcfg2.Options.setup.ldap_cache is not False:
+            cache = self._cache(query.name)
+            result = cache.get(metadata.hostname, None)
+
+        if result is None:
+            try:
+                self.debug_log("Processing query '%s'" % query.name)
+                result = query.get_result(metadata)
+                if Bcfg2.Options.setup.ldap_cache is not False:
+                    cache[metadata.hostname] = result
+            except:  # pylint: disable=W0702
                 self.logger.error(
                     "Exception during processing of query named '%s', query "
                     "results will be empty and may cause bind failures" %
                     query.name)
-            for line in traceback.format_exc().split('\n'):
-                self.logger.error(line)
-        return None
+                for line in traceback.format_exc().split('\n'):
+                    self.logger.error(line)
+        return result
 
     def get_additional_data(self, metadata):
         data = {}
@@ -114,7 +139,7 @@ class Ldap(Bcfg2.Server.Plugin.Plugin,
                 else:
                     self.debug_log("query '%s' not applicable to host '%s'" %
                                    (query.name, metadata.hostname))
-            except:
+            except:  # pylint: disable=W0702
                 self.logger.error(
                     "Exception during preparation of query named '%s'. "
                     "Query will be ignored." % query_class.__name__)
@@ -124,11 +149,21 @@ class Ldap(Bcfg2.Server.Plugin.Plugin,
         return Bcfg2.Server.Plugin.CallableDict(**data)
 
     def start_client_run(self, metadata):
-        if self.core.metadata_cache_mode == 'aggressive':
-            self.logger.warning("Ldap is incompatible with aggressive "
-                                "client metadata caching, try 'cautious' "
-                                "or 'initial'")
-        self.core.metadata_cache.expire(metadata.hostname)
+        if Bcfg2.Options.setup.ldap_cache is None:
+            self.expire_cache(hostname=metadata.hostname)
+
+    def expire_cache(self, query=None, hostname=None):
+        """ Expire the cache. You can select the items to purge
+        per query and/or per host, or you can purge all cached
+        data. This is exposed as an XML-RPC RMI. """
+
+        tags = ['Ldap', 'results']
+        if query:
+            tags.append(query)
+        if hostname:
+            tags.append(hostname)
+
+        return Bcfg2.Server.Cache.expire(*tags)
 
 
 class LdapConnection(Debuggable):
