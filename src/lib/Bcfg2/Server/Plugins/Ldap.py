@@ -84,7 +84,8 @@ class Ldap(Bcfg2.Server.Plugin.Plugin,
             self.logger.error(msg)
             raise Bcfg2.Server.Plugin.PluginInitError(msg)
 
-        self.config = ConfigFile(os.path.join(self.data, 'config.py'))
+        self.config = ConfigFile(os.path.join(self.data, 'config.py'),
+                                 core)
 
     def _execute_query(self, query, metadata):
         try:
