@@ -225,16 +225,17 @@ be able to decrypt everything.)  In this case, you want to enable lax
 decryption in the ``[encryption]`` section of ``bcfg2.conf``::
 
     [encryption]
-    decrypt = lax
+    lax_decryption = true
 
 This causes a failed decrypt to produce a warning only, not an error.
 
 This can be overridden by individual XML files by setting
-``decrypt="strict"`` on the top-level tag (or, vice-versa; if strict
-is the default an XML file can specify ``decrypt="lax"``.
+``lax_decryption="false"`` on the top-level tag (or, vice-versa; if
+strict is the default an XML file can specify
+``lax_decryption="true"``.
 
 Note that you could, for instance, set lax decryption by default, and
-then set strict decryption on individual files.
+then disable it on individual files.
 
 Encryption API
 ==============

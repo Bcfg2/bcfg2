@@ -92,9 +92,9 @@ generate the tedious config:
 .. code-block:: xml
 
     <GroupLogic xmlns:py="http://genshi.edgewall.org/">
-      <py:for each="component in metadata.query.all_groups_in_category("webapp-component")>
+      <py:for each="component in metadata.query.all_groups_in_category('webapp-component')">
         <Group name="${component}">
-          <py:for each="env in metadata.query.all_groups_in_category("environment")>
+          <py:for each="env in metadata.query.all_groups_in_category('environment')">
             <Group name="${env}">
               <Group name="${component}-${env}"/>
             </Group>

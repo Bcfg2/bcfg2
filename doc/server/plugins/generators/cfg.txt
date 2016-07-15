@@ -488,7 +488,7 @@ complex:
 
 .. code-block:: xml
 
-    <PrivateKey category="environment"/>
+    <PrivateKey category="environment">
       <Params bits="1024" type="dsa"/>
       <Group name="secure">
         <Passphrase encrypted="secure">U2FsdGVkX19xACol83uyPELP94s4CmngD12oU6PLLuE=</Passphrase>
