@@ -140,6 +140,17 @@ LdapConnection
    LDAP URI of the LDAP server to connect to. This is prefered over
    :attr:`LdapConnection.host` and :attr:`LdapConnection.port`.
 
+   .. note::
+
+      If you are using ldaps you may have to specify additional options
+      for enabling the certificate validation or setting the path for
+      the trusted certificates with :attr:`LdapConnection.options`.
+
+.. attribute:: LdapConnection.options
+
+   Arbitrary options for the LDAP connection. You should specify it
+   as a dict and use the ``OPT_*`` constants from ``python-ldap``.
+
 You may pass any of these attributes as keyword arguments when creating the connection object.
 
 LdapQuery
