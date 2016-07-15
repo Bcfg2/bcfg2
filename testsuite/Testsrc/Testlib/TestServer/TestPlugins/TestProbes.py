@@ -46,7 +46,7 @@ class FakeElement(lxml.etree._Element):
 
 
 class StoringElement(object):
-    OriginalElement = copy.copy(lxml.etree.Element)
+    OriginalElement = staticmethod(copy.copy(lxml.etree.Element))
 
     def __init__(self):
         self.element = None
@@ -59,7 +59,7 @@ class StoringElement(object):
 
 
 class StoringSubElement(object):
-    OriginalSubElement = copy.copy(lxml.etree.SubElement)
+    OriginalSubElement = staticmethod(copy.copy(lxml.etree.SubElement))
 
     def __call__(self, parent, tag, **kwargs):
         try:
