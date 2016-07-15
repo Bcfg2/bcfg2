@@ -169,7 +169,7 @@ class Ldap(Bcfg2.Server.Plugin.Plugin,
 class LdapConnection(Debuggable):
     """ Connection to an LDAP server. """
 
-    def __init__(self, host="localhost", port=389, binddn=None,
+    def __init__(self, host="localhost", port=389, uri=None, binddn=None,
                  bindpw=None):
         Debuggable.__init__(self)
 
@@ -180,6 +180,7 @@ class LdapConnection(Debuggable):
 
         self.host = host
         self.port = port
+        self.uri = uri
         self.binddn = binddn
         self.bindpw = bindpw
         self.conn = None
@@ -204,7 +205,8 @@ class LdapConnection(Debuggable):
         """ Open a connection to the configured LDAP server, and do a simple
         bind ff both binddn and bindpw are set. """
         self.disconnect()
-        self.conn = ldap.initialize(self.url)
+        self.conn = ldap.initialize(self.get_uri())
+
         if self.binddn is not None and self.bindpw is not None:
             self.conn.simple_bind_s(self.binddn, self.bindpw)
 
@@ -228,16 +230,20 @@ class LdapConnection(Debuggable):
                 self.conn = None
                 self.logger.error(
                     "LdapConnection: Server %s down. Retry %d/%d in %.2fs." %
-                    (self.url, attempt + 1, Bcfg2.Options.setup.ldap_retries,
+                    (self.get_uri(), attempt + 1,
+                     Bcfg2.Options.setup.ldap_retries,
                      Bcfg2.Options.setup.ldap_retry_delay))
                 time.sleep(Bcfg2.Options.setup.ldap_retry_delay)
 
         return None
 
-    @property
-    def url(self):
+    def get_uri(self):
         """ The URL of the LDAP server. """
-        return "ldap://%s:%d" % (self.host, self.port)
+        if self.uri is None:
+            if self.port == 636:
+                return "ldaps://%s" % self.host
+            return "ldap://%s:%d" % (self.host, self.port)
+        return self.uri
 
 
 class LdapQuery(object):

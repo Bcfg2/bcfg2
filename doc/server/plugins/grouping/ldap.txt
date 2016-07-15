@@ -7,7 +7,7 @@ Ldap
 ====
 
 .. warning::
-    This plugin is considered experimental and has known issues (see below).
+    This plugin is considered experimental.
 
 Purpose
 -------
@@ -115,8 +115,8 @@ LdapConnection
 
 .. class:: LdapConnection
 
-   This class represents an LDAP connection. Every query must be associated with exactly
-   one connection.
+   This class represents an LDAP connection. Every query must be associated
+   with exactly one connection.
 
 .. attribute:: LdapConnection.binddn
 
@@ -132,7 +132,13 @@ LdapConnection
 
 .. attribute:: LdapConnection.port
 
-   Port where LDAP server is listening (defaults to 389).
+   Port where LDAP server is listening (defaults to 389). If you use
+   port 636 this module will use ldaps to connect to the server.
+
+.. attribute:: LdapConnection.uri
+
+   LDAP URI of the LDAP server to connect to. This is prefered over
+   :attr:`LdapConnection.host` and :attr:`LdapConnection.port`.
 
 You may pass any of these attributes as keyword arguments when creating the connection object.
 
@@ -266,8 +272,3 @@ search below that DN.
 You do not need to add all LdapQueries to the ``__queries__`` list. Only add those to
 that list, that should be called automatically and whose results should be added to the
 client metadata.
-
-Known Issues
-------------
-
-* At this point there is no support for SSL/TLS.
