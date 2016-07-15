@@ -1700,7 +1700,7 @@ class GroupSpool(Plugin, Generator):
             self.handles[reqid] = relative
 
 
-class OnDemandDict(MutableMapping):
+class CallableDict(MutableMapping):
     """ This maps a set of keys to a set of value-getting functions;
     the values are populated on-the-fly by the functions as the values
     are needed (and not before).  This is for example used by
@@ -1709,32 +1709,27 @@ class OnDemandDict(MutableMapping):
 
     Unlike a dict, you can specify values or functions for the
     righthand side of this mapping. If you specify a function, it will
-    be evaluated, when you access the value for the first time. E.g.:
+    be evaluated everytime you access the value. E.g.:
 
     .. code-block:: python
 
-        d = OnDemandDict(foo=load_foo,
+        d = CallableDict(foo=load_foo,
                          bar="bar")
     """
 
     def __init__(self, **getters):
-        self._values = dict()
         self._getters = dict(**getters)
 
     def __getitem__(self, key):
-        if key not in self._values:
-            if callable(self._getters[key]):
-                self._values[key] = self._getters[key]()
-            else:
-                self._values[key] = self._getters[key]
-
-        return self._values[key]
+        if callable(self._getters[key]):
+            return self._getters[key]()
+        else:
+            return self._getters[key]
 
     def __setitem__(self, key, getter):
         self._getters[key] = getter
 
     def __delitem__(self, key):
-        del self._values[key]
         del self._getters[key]
 
     def __len__(self):
@@ -1743,9 +1738,44 @@ class OnDemandDict(MutableMapping):
     def __iter__(self):
         return iter(self._getters.keys())
 
-    def __repr__(self):
-        rv = dict(self._values)
+    def _current_data(self):
+        """ Return a dict with the current available static data
+        and ``unknown`` for all callable values.
+        """
+        rv = dict()
         for key in self._getters.keys():
-            if key not in rv:
+            if callable(self._getters[key]):
                 rv[key] = 'unknown'
-        return str(rv)
+            else:
+                rv[key] = self._getters[key]
+        return rv
+
+    def __repr__(self):
+        return str(self._current_data())
+
+
+class OnDemandDict(CallableDict):
+    """ This is like a :class:`CallableDict` but it will cache
+    the results of the callable getters, so that it is only evaluated
+    once when you first access it.
+    """
+
+    def __init__(self, **getters):
+        CallableDict.__init__(self, **getters)
+        self._values = dict()
+
+    def __getitem__(self, key):
+        if key not in self._values:
+            self._values[key] = super(OnDemandDict, self).__getitem__(key)
+        return self._values[key]
+
+    def __delitem__(self, key):
+        super(OnDemandDict, self).__delitem__(key)
+        del self._values[key]
+
+    def _current_data(self):
+        rv = super(OnDemandDict, self)._current_data()
+        for (key, value) in rv.items():
+            if key in self._values:
+                rv[key] = value
+        return rv
