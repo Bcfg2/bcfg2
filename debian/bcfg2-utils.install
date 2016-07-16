@@ -20,5 +20,3 @@ tools/hostinfo.py	                usr/share/bcfg2
 tools/posixusers_baseline.py	    usr/share/bcfg2
 tools/selinux_baseline.py	        usr/share/bcfg2
 tools/upgrade	                    usr/share/bcfg2
-
-tools/bcfg2-completion.bash         etc/bash_completion.d/bcfg2
