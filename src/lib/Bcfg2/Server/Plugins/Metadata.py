@@ -35,6 +35,7 @@ def load_django_models():
     # pylint: enable=W0602
 
     try:
+        import django
         from django.db import models
         HAS_DJANGO = True
     except ImportError:
@@ -98,6 +99,9 @@ def load_django_models():
                 return True
             except MetadataClientModel.DoesNotExist:
                 return False
+
+    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+        django.setup()  # pylint: disable=E1101
 
 
 class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):

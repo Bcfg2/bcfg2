@@ -15,7 +15,7 @@
   </tr>
   {% for entry in entry_list %}
   <tr class='{% cycle listview,listview_alt %}'>
-    <td class='left_column'><a href='{% url reports_client_detail_pk hostname=entry.client.name, pk=entry.id %}' class="white-space: nowrap;">
+    <td class='left_column'><a href='{% url "reports_client_detail_pk" hostname=entry.client.name pk=entry.id %}' class="white-space: nowrap;">
       {{ entry.timestamp|date:"SHORT_DATETIME_FORMAT"|safe }}
     </a></td>
     {% if not client %}
