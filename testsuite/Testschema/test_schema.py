@@ -34,13 +34,18 @@ NSMAP = dict(xs=XS)
 
 class TestSchemas(Bcfg2TestCase):
     schema_url = "http://www.w3.org/2001/XMLSchema.xsd"
+    catalog_file = os.path.expanduser("~/.cache/xml/catalog.xml")
 
     @skipUnless(HAS_XMLLINT, "xmllint not installed")
     def test_valid(self):
+        env = os.environ.copy()
+        if os.path.exists(self.catalog_file):
+            print('Using cached schema files.')
+            env["SGML_CATALOG_FILES"] = self.catalog_file
         schemas = [s for s in glob.glob(os.path.join(srcpath, '*.xsd'))]
-        xmllint = Popen(['xmllint', '--xinclude', '--noout', '--schema',
-                         self.schema_url] + schemas,
-                        stdout=PIPE, stderr=STDOUT)
+        xmllint = Popen(['xmllint', '--xinclude', '--noout', '--catalogs',
+                         '--schema', self.schema_url] + schemas,
+                        stdout=PIPE, stderr=STDOUT, env=env)
         print(xmllint.communicate()[0].decode())
         self.assertEqual(xmllint.wait(), 0)
 

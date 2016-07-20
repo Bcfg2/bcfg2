@@ -42,5 +42,7 @@ addons:
 cache:
   directories:
     - $HOME/.cache/pip
+    - $HOME/.cache/xml
 before_cache:
   - rm -f $HOME/.cache/pip/log/debug.log
+  - rm -f $HOME/.cache/xml/catalog.xml

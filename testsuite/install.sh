@@ -23,3 +23,23 @@ if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
         fi
     fi
 fi
+
+# Setup the local xml schema cache
+download_schema() {
+    if [[ ! -e "$1" ]]; then
+        wget -O "$1" "$2"
+    fi
+}
+
+mkdir -p "$HOME/.cache/xml/"
+download_schema "$HOME/.cache/xml/XMLSchema.xsd" "http://www.w3.org/2001/XMLSchema.xsd"
+download_schema "$HOME/.cache/xml/xml.xsd" "http://www.w3.org/2001/xml.xsd"
+
+cat > "$HOME/.cache/xml/catalog.xml" <<EOF
+<?xml version="1.0"?>
+<catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+  <system systemId="http://www.w3.org/2001/XMLSchema.xsd" uri="$HOME/.cache/xml/XMLSchema.xsd" />
+  <system systemId="http://www.w3.org/2001/xml.xsd" uri="$HOME/.cache/xml/xml.xsd" />
+  <nextCatalog catalog="/etc/xml/catalog.xml" />
+</catalog>
+EOF
