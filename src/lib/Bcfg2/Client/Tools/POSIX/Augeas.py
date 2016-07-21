@@ -5,6 +5,7 @@ import Bcfg2.Client.XML
 from augeas import Augeas
 from Bcfg2.Client.Tools.POSIX.base import POSIXTool
 from Bcfg2.Client.Tools.POSIX.File import POSIXFile
+from Bcfg2.Compat import all  # pylint: disable=W0622
 
 
 class AugeasCommand(object):
