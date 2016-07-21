@@ -35,10 +35,15 @@ class ExceptionMessageChecker(BaseChecker):
     priority = -1
 
     def visit_raise(self, node):
-        if node.exc is None:
+        exc = None
+        try:
+            exc = node.exc
+        except AttributeError:
+            exc = node.type
+        if exc is None:
             return
-        if isinstance(node.exc, ast.Name):
-            raised = safe_infer(node.exc)
+        if isinstance(exc, ast.Name):
+            raised = safe_infer(exc)
             if (isinstance(raised, ast.Class) and
                 raised.name not in self.config.exceptions_without_args):
                 self.add_message('R9901', node=node.exc)
