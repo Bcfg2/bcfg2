@@ -175,6 +175,9 @@ groups:
         <Group name="selinux-enabled" negate="true"/>
       </Client>
 
+Negated groups can also be used to declare other Group assignments,
+but not to declare Bundle assignments.
+
 .. note::
 
     Nested Group conditionals, Client tags, and negated Group tags are
