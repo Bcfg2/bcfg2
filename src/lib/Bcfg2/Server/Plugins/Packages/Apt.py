@@ -34,8 +34,12 @@ class AptCollection(Collection):
 
         for source in self:
             if source.rawurl:
-                self.logger.info("Packages: Skipping rawurl %s" %
-                                 source.rawurl)
+                if source.rawurl[-1] != '/':
+                    source.rawurl = source.rawurl + "/"
+                index = source.rawurl.rfind("/", 0, -1)
+                lines.append("deb %s %s" %
+                             (source.rawurl[:index],
+                              source.rawurl[index + 1:]))
             else:
                 lines.append("deb %s %s %s" % (source.url, source.version,
                                                " ".join(source.components)))
@@ -44,7 +48,7 @@ class AptCollection(Collection):
                                  (source.url,
                                   source.version,
                                   " ".join(source.components)))
-                lines.append("")
+            lines.append("")
 
         return "\n".join(lines)
 
