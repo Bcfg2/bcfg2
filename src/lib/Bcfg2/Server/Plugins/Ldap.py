@@ -119,21 +119,26 @@ class Ldap(Bcfg2.Server.Plugin.Plugin,
 class LdapConnection(Debuggable):
     """ Connection to an LDAP server. """
 
-    __scopes__ = {
-        'base': ldap.SCOPE_BASE,
-        'one': ldap.SCOPE_ONELEVEL,
-        'sub': ldap.SCOPE_SUBTREE,
-    }
-
     def __init__(self, host="localhost", port=389, binddn=None,
                  bindpw=None):
         Debuggable.__init__(self)
+
+        if HAS_LDAP:
+            msg = "Python ldap module is required for Ldap plugin"
+            self.logger.error(msg)
+            raise Bcfg2.Server.Plugin.PluginInitError(msg)
 
         self.host = host
         self.port = port
         self.binddn = binddn
         self.bindpw = bindpw
         self.conn = None
+
+        self.__scopes__ = {
+            'base': ldap.SCOPE_BASE,
+            'one': ldap.SCOPE_ONELEVEL,
+            'sub': ldap.SCOPE_SUBTREE,
+        }
 
     def __del__(self):
         """ Disconnection if the instance is destroyed. """
