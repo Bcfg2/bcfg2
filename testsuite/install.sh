@@ -25,7 +25,7 @@ if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
         if [[ $PYVER != "2.7" ]]; then
             pip install 'django<1.7' 'South<0.8'
         else
-            pip install django
+            pip install 'django<1.10'
         fi
     fi
 fi
