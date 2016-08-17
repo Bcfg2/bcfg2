@@ -27,12 +27,17 @@ def load_django_models():
     # pylint: disable=W0602
     global ProbesDataModel, ProbesGroupsModel, HAS_DJANGO
     # pylint: enable=W0602
+
     try:
+        import django
         from django.db import models
         HAS_DJANGO = True
     except ImportError:
         HAS_DJANGO = False
         return
+
+    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+        django.setup()  # pylint: disable=E1101
 
     class ProbesDataModel(models.Model,  # pylint: disable=W0621,W0612
                           Bcfg2.Server.Plugin.PluginDatabaseModel):
