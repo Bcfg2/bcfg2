@@ -23,7 +23,7 @@ if django.VERSION[0] == 1 and django.VERSION[1] <= 6:
         sys.exit(1)
 
 if __name__ == "__main__":
-    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+    if django.VERSION[0] == 1 and django.VERSION[1] >= 6:
         from django.core.management import execute_from_command_line
         execute_from_command_line(sys.argv[:1] + Bcfg2.Options.setup.django_command)
     else:
