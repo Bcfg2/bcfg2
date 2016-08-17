@@ -5,6 +5,11 @@ import django
 import Bcfg2.Options
 import Bcfg2.DBSettings
 
+try:
+    import Bcfg2.Server.models
+except ImportError:
+    pass
+
 parser = Bcfg2.Options.get_parser()
 parser.add_options([Bcfg2.Options.PositionalArgument('django_command', nargs='*')])
 parser.parse()
