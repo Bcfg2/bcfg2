@@ -13,7 +13,7 @@ that allow quick composition of bundles and base files.
 #. Install it using the install instructions (unzip snipMate.zip -d ~/.vim or equivalent, e.g. $HOME\vimfiles on Windows)
 #. Add the following to ``~/.vim/snippets/xml.snippets``
 
-   .. code-block:: cl
+   .. code-block:: none
 
         # Bundle
         snippet <Bundle
