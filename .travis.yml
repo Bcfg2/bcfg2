@@ -9,7 +9,7 @@ before_install:
   - testsuite/before_install.sh
 install:
   - testsuite/install.sh
-  - pip install --use-mirrors -e .
+  - pip install -e .
 script:
   - nosetests testsuite
 branches:
