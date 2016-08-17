@@ -221,10 +221,14 @@ class DBModelTestCase(Bcfg2TestCase):
         if self.models:
             import django
             import django.core.management
+            from django.core.exceptions import ImproperlyConfigured
 
             if django.VERSION[0] == 1 and django.VERSION[1] < 7:
-                django.core.management.call_command('syncdb', interactive=False,
-                                                    verbosity=0)
+                try:
+                    django.core.management.call_command('syncdb', interactive=False,
+                                                        verbosity=0)
+                except ImproperlyConfigured:
+                    pass
 
             django.core.management.call_command('migrate', interactive=False,
                                                 verbosity=0)
