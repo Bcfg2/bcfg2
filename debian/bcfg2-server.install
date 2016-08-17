@@ -5,3 +5,4 @@ debian/tmp/usr/lib/python*/*-packages/Bcfg2/Reporting/*
 debian/tmp/usr/share/bcfg2/schemas/*
 debian/tmp/usr/share/bcfg2/xsl-transforms/*
 debian/tmp/usr/share/man/man8/*
+debian/tmp/etc/bash_completion.d/*

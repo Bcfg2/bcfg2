@@ -1,3 +1,9 @@
+bcfg2 (1.4.0pre2-0.1) UNRELEASED; urgency=low
+
+  * Helper scripts packed in bcfg2-utils
+
+ -- Holger Mueller <zarath@gmx.de>  Wed, 07 Aug 2013 21:41:10 +0200
+
 bcfg2 (1.4.0pre2-0.0) unstable; urgency=low
 
   * New upstream release
