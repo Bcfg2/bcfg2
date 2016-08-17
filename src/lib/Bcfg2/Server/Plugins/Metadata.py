@@ -42,6 +42,9 @@ def load_django_models():
         HAS_DJANGO = False
         return
 
+    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+        django.setup()  # pylint: disable=E1101
+
     class MetadataClientModel(models.Model,  # pylint: disable=W0621
                               Bcfg2.Server.Plugin.PluginDatabaseModel):
         """ django model for storing clients in the database """
@@ -99,9 +102,6 @@ def load_django_models():
                 return True
             except MetadataClientModel.DoesNotExist:
                 return False
-
-    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
-        django.setup()  # pylint: disable=E1101
 
 
 class XMLMetadataConfig(Bcfg2.Server.Plugin.XMLFileBacked):
