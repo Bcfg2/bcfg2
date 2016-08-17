@@ -7,7 +7,7 @@ env:
   - WITH_OPTIONAL_DEPS=no
 install:
   - testsuite/install.sh
-  - pip install --use-mirrors -e .
+  - pip install -e .
 script:
   - nosetests testsuite
 after_failure:
