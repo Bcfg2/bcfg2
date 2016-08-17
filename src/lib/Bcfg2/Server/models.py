@@ -17,6 +17,10 @@ def _get_all_plugins():
     for submodule in walk_packages(path=Bcfg2.Server.Plugins.__path__,
                                    prefix="Bcfg2.Server.Plugins."):
         module = submodule[1].rsplit('.', 1)[-1]
+        if module == 'Reporting':
+            # Exclude Reporting plugin. The reporting database
+            # is handled separately in Bcfg2.Reporting.
+            continue
         if submodule[1] == "Bcfg2.Server.Plugins.%s" % module:
             # we only include direct children of
             # Bcfg2.Server.Plugins -- e.g., all_plugins should
