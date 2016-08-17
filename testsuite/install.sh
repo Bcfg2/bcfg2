@@ -16,13 +16,16 @@ fi
 if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
     sudo apt-get install -y yum libaugeas0 augeas-lenses libacl1-dev libssl-dev
 
-    pip install PyYAML pyinotify boto pylibacl django Jinja2 mercurial guppy
+    pip install PyYAML pyinotify boto pylibacl Jinja2 mercurial guppy
     easy_install https://fedorahosted.org/released/python-augeas/python-augeas-0.4.1.tar.gz
 
     if [[ ${PYVER:0:1} == "2" ]]; then
-        # django supports py3k, but South doesn't, and the django bits
-        # in bcfg2 require South
-        pip install cheetah 'South<0.8'
-        pip install m2crypto
+        pip install cheetah m2crypto
+
+        if [[ $PYVER != "2.7" ]]; then
+            pip install 'django<1.7' 'South<0.8'
+        else
+            pip install django
+        fi
     fi
 fi
