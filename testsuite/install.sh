@@ -16,9 +16,9 @@ fi
 if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
     sudo apt-get install -y yum libaugeas0 augeas-lenses libacl1-dev libssl-dev
 
-    pip install PyYAML pyinotify boto pylibacl 'django<1.5' \
-        Jinja2 mercurial guppy
+    pip install PyYAML pyinotify boto pylibacl django Jinja2 mercurial guppy
     easy_install https://fedorahosted.org/released/python-augeas/python-augeas-0.4.1.tar.gz
+
     if [[ ${PYVER:0:1} == "2" ]]; then
         # django supports py3k, but South doesn't, and the django bits
         # in bcfg2 require South
