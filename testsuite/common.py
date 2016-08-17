@@ -219,12 +219,14 @@ class DBModelTestCase(Bcfg2TestCase):
     def test_syncdb(self):
         """ Create the test database and sync the schema """
         if self.models:
-            import django.core.management
             import django
-            if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
-                django.setup()
+            import django.core.management
 
-            django.core.management.call_command("syncdb", interactive=False,
+            if django.VERSION[0] == 1 and django.VERSION[1] < 7:
+                django.core.management.call_command('syncdb', interactive=False,
+                                                    verbosity=0)
+
+            django.core.management.call_command('migrate', interactive=False,
                                                 verbosity=0)
             self.assertTrue(
                 os.path.exists(
