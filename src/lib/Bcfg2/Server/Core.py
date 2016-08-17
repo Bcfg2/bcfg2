@@ -91,7 +91,7 @@ def close_db_connection(func):
                 for connection in django.db.connections.all():
                     connection.close()
             else:
-                django.db.close_connection()
+                django.db.close_connection()  # pylint: disable=E1101
         return rv
 
     return inner
