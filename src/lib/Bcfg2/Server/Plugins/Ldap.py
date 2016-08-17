@@ -33,7 +33,8 @@ class ConfigFile(Bcfg2.Server.Plugin.FileBacked):
     def Index(self):
         """ Get the queries from the config file """
         try:
-            module = imp.load_source(safe_module_name('Ldap', self.name),
+            module_name = os.path.splitext(os.path.basename(self.name))[0]
+            module = imp.load_source(safe_module_name('Ldap', module_name),
                                      self.name)
         except:  # pylint: disable=W0702
             err = sys.exc_info()[1]
