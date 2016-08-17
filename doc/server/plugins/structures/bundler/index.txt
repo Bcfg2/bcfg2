@@ -269,7 +269,7 @@ or alternately
          <Path name="/etc/bacula/bconsole.conf"/>
          <Path name="/etc/bacula/bacula-fd.conf"/>
          <Path name="/etc/bacula/bacula-sd.conf"/>
-         <py:if="metadata.hostname == 'foo.bar.com'">
+         <py:if test="metadata.hostname == 'foo.bar.com'">
            <Path name="/etc/bacula/bacula-dir.conf"/>
          </py:if>
     </Bundle>
