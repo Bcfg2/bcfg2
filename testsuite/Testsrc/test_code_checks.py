@@ -76,6 +76,8 @@ no_checks = {
     "lib/Bcfg2": ["manage.py"],
     "lib/Bcfg2/Server/Reports": ["manage.py"],
     "lib/Bcfg2/Server/Plugins": ["Base.py"],
+    "lib/Bcfg2/Server/migrations": ["*.py"],
+    "lib/Bcfg2/Server/south_migrations": ["*.py"],
     }
 if sys.version_info < (2, 6):
     # multiprocessing core requires py2.6
