@@ -176,7 +176,7 @@ def ssl_encrypt(plaintext, passwd, algorithm=None, salt=None):
 def is_encrypted(val):
     """ Make a best guess if the value is encrypted or not.  This just
     checks to see if ``val`` is a base64-encoded string whose content
-    starts with "Salted__", so it may have (rare) false positives.  It
+    starts with "Salted\\_\\_", so it may have (rare) false positives.  It
     will not have false negatives. """
     try:
         return b64decode(val).startswith("Salted__")
