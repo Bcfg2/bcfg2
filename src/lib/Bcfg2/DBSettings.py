@@ -79,8 +79,8 @@ if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] >= 7:
 elif HAS_SOUTH:
     settings['INSTALLED_APPS'] += ('south', 'Bcfg2.Reporting')
     settings['SOUTH_MIGRATION_MODULES'] = {
-        'Bcfg2.Reporting': 'Bcfg2.Reporting.south_migrations',
-        'Bcfg2.Server': 'Bcfg2.Server.south_migrations',
+        'Reporting': 'Bcfg2.Reporting.south_migrations',
+        'Server': 'Bcfg2.Server.south_migrations',
     }
 if 'BCFG2_LEGACY_MODELS' in os.environ:
     settings['INSTALLED_APPS'] += ('Bcfg2.Server.Reports.reports',)
