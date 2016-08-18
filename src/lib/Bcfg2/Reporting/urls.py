@@ -48,16 +48,3 @@ urlpatterns += patterns('Bcfg2.Reporting',
         (r'^history/(?P<hostname>[^/|]+)/?$',
             'views.render_history_view', None, 'reports_client_history'),
 )))
-
-    # Uncomment this for admin:
-    #(r'^admin/', include('django.contrib.admin.urls')),
-
-
-## Uncomment this section if using authentication
-#urlpatterns += patterns('',
-#                        (r'^login/$', 'django.contrib.auth.views.login',
-#                         {'template_name': 'auth/login.html'}),
-#                        (r'^logout/$', 'django.contrib.auth.views.logout',
-#                         {'template_name': 'auth/logout.html'})
-#                        )
-
