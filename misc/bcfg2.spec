@@ -303,7 +303,7 @@ Requires:         bcfg2-server = %{version}-%{release}
 Requires:         httpd
 %if 0%{?suse_version}
 Group:            System/Management
-Requires:         python-django >= 1.2
+Requires:         python-django >= 1.3
 Requires:         python-django-south >= 0.7
 %else
 Group:            System Tools
