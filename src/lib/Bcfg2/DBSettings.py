@@ -65,7 +65,12 @@ settings = dict(  # pylint: disable=C0103
         'django.core.context_processors.media',
         'django.core.context_processors.request'),
     DATABASE_ROUTERS=['Bcfg2.DBSettings.PerApplicationRouter'],
-    TEST_RUNNER='django.test.simple.DjangoTestSuiteRunner')
+    TEST_RUNNER='django.test.simple.DjangoTestSuiteRunner',
+    CACHES={
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        }
+    })
 
 if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] >= 6:
     settings['MIDDLEWARE_CLASSES'] += \
@@ -84,15 +89,6 @@ elif HAS_SOUTH:
     }
 if 'BCFG2_LEGACY_MODELS' in os.environ:
     settings['INSTALLED_APPS'] += ('Bcfg2.Server.Reports.reports',)
-
-if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] < 3:
-    settings['CACHE_BACKEND'] = 'locmem:///'
-else:
-    settings['CACHES'] = {
-        'default': {
-            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
-        }
-    }
 
 
 def finalize_django_config(opts=None, silent=False):
