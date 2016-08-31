@@ -1,9 +1,6 @@
 {% extends "base-timeview.html" %}
 {% load bcfg2_tags %}
-{% comment %}
-This is needed for Django versions less than 1.5
-{% endcomment %}
-{% load url from future %}
+{% load url from bcfg2_compat %}
 
 {% block title %}Bcfg2 - Client Summary{% endblock %}
 {% block pagebanner %}Clients - Summary{% endblock %}
