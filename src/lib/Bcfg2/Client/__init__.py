@@ -10,6 +10,7 @@ import fnmatch
 import logging
 import argparse
 import tempfile
+import copy
 import Bcfg2.Logger
 import Bcfg2.Options
 from Bcfg2.Client import XML
@@ -950,9 +951,10 @@ class Client(object):
                                 if not states[entry]], "Bad")]:
             container = XML.SubElement(stats, ename)
             for item in data:
-                item.set('qtext', '')
-                container.append(item)
-                item.text = None
+                new_item = copy.deepcopy(item)
+                new_item.set('qtext', '')
+                container.append(new_item)
+                new_item.text = None
 
         timeinfo = XML.Element("OpStamps")
         feedback.append(stats)
