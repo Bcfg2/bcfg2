@@ -14,8 +14,8 @@ record for the current system.
 
 It has two functions:
 
-* Generating new ssh keys -- When a client requests a ecdsa, dsa, rsa,
-  or v1 key, and there is no existing key in the repository, one is
+* Generating new ssh keys -- When a client requests a key (v1, rsa,
+  ecdsa, etc.), and there is no existing key in the repository, one is
   generated.
 
 * Maintaining the ``ssh_known_hosts`` file -- all current known public
@@ -73,6 +73,7 @@ SSHbase currently supports the following key formats:
 * RSA2 (``ssh_host_rsa_key``, ``ssh_host_rsa_key.pub``)
 * DSA (``ssh_host_dsa_key``, ``ssh_host_dsa_key.pub``)
 * ECDSA (``ssh_host_ecdsa_key``, ``ssh_host_ecdsa_key.pub``)
+* Ed25519 (``ssh_host_ed25519_key``, ``ssh_host_ed25519_key.pub``)
 
 Group-specific keys
 ===================
@@ -143,19 +144,19 @@ control the permissions and other metadata for the keys and
 
 Default permissions are as follows:
 
-+----------------------------------+-------+-------+------+-----------+----------+----------+
-| File                             | owner | group | mode | sensitive | paranoid | encoding |
-+==================================+=======+=======+======+===========+==========+==========+
-| ssh_known_hosts                  | root  | root  | 0644 | false     | false    | None     |
-+----------------------------------+-------+-------+------+-----------+----------+----------+
-| ssh_host_key                     | root  | root  | 0600 | false     | false    | base64   |
-+----------------------------------+-------+-------+------+-----------+----------+----------+
-| ssh_host_key.pub                 | root  | root  | 0644 | false     | false    | base64   |
-+----------------------------------+-------+-------+------+-----------+----------+----------+
-| ssh_host_[rsa|dsa|ecdsa]_key     | root  | root  | 0600 | false     | false    | None     |
-+----------------------------------+-------+-------+------+-----------+----------+----------+
-| ssh_host_[rsa|dsa|ecdsa]_key.pub | root  | root  | 0644 | false     | false    | None     |
-+----------------------------------+-------+-------+------+-----------+----------+----------+
++------------------------------------------+-------+-------+------+-----------+----------+----------+
+| File                                     | owner | group | mode | sensitive | paranoid | encoding |
++==========================================+=======+=======+======+===========+==========+==========+
+| ssh_known_hosts                          | root  | root  | 0644 | false     | false    | None     |
++------------------------------------------+-------+-------+------+-----------+----------+----------+
+| ssh_host_key                             | root  | root  | 0600 | false     | false    | base64   |
++------------------------------------------+-------+-------+------+-----------+----------+----------+
+| ssh_host_key.pub                         | root  | root  | 0644 | false     | false    | base64   |
++------------------------------------------+-------+-------+------+-----------+----------+----------+
+| ssh_host_[rsa|dsa|ecdsa|ed25519]_key     | root  | root  | 0600 | false     | false    | None     |
++------------------------------------------+-------+-------+------+-----------+----------+----------+
+| ssh_host_[rsa|dsa|ecdsa|ed25519]_key.pub | root  | root  | 0644 | false     | false    | None     |
++------------------------------------------+-------+-------+------+-----------+----------+----------+
 
 Note that the ``sensitive`` attribute is false, even for private keys,
 in order to permit :ref:`pulling with bcfg2-admin
