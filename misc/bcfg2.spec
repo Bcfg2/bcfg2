@@ -85,9 +85,9 @@ BuildRequires:    mock
 BuildRequires:    m2crypto
 # EPEL uses the properly-named python-django starting with EPEL7
 %if 0%{?rhel} && 0%{?rhel} > 6
-BuildRequires:    python-django
+BuildRequires:    python-django >= 1.3
 %else
-BuildRequires:    Django
+BuildRequires:    Django >= 1.3
 %endif
 BuildRequires:    python-genshi
 BuildRequires:    python-cheetah
@@ -303,15 +303,15 @@ Requires:         bcfg2-server = %{version}-%{release}
 Requires:         httpd
 %if 0%{?suse_version}
 Group:            System/Management
-Requires:         python-django >= 1.2
+Requires:         python-django >= 1.3
 Requires:         python-django-south >= 0.7
 %else
 Group:            System Tools
 # EPEL uses the properly-named python-django starting with EPEL7
 %if 0%{?rhel} && 0%{?rhel} > 6
-Requires:         python-django
+Requires:         python-django > 1.3
 %else
-Requires:         Django >= 1.2
+Requires:         Django >= 1.3
 Requires:         Django-south >= 0.7
 %endif
 Requires:         bcfg2-server
