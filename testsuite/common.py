@@ -245,14 +245,6 @@ class DBModelTestCase(Bcfg2TestCase):
             self.assertItemsEqual(list(model.objects.all()), [])
 
 
-def syncdb(modeltest):
-    """ Given an instance of a :class:`DBModelTestCase` object, sync
-    and clean the database """
-    inst = modeltest(methodName='test_syncdb')
-    inst.test_syncdb()
-    inst.test_cleandb()
-
-
 # in order for patchIf() to decorate a function in the same way as
 # patch(), we override the default behavior of __enter__ and __exit__
 # on the _patch() object to basically be noops.

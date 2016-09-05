@@ -51,6 +51,7 @@ class TestFunctions(Bcfg2TestCase):
 
 class TestDatabaseBacked(TestPlugin):
     test_obj = DatabaseBacked
+    synced = False
 
     def setUp(self):
         TestPlugin.setUp(self)
@@ -75,6 +76,15 @@ class TestDatabaseBacked(TestPlugin):
 
         setattr(Bcfg2.Options.setup, attr, True)
         self.assertRaises(PluginInitError, self.get_obj, core)
+
+    def syncdb(self, modeltest):
+        """ Given an instance of a :class:`DBModelTestCase` object, sync
+        and clean the database """
+        inst = modeltest(methodName='test_syncdb')
+        if not self.__class__.synced:
+            inst.test_syncdb()
+            self.__class__.synced = True
+        inst.test_cleandb()
 
 
 class TestPluginDatabaseModel(Bcfg2TestCase):
