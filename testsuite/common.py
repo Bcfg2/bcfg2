@@ -240,9 +240,9 @@ class DBModelTestCase(Bcfg2TestCase):
             # Create new
             if django.VERSION[0] == 1 and django.VERSION[1] < 7:
                 django.core.management.call_command('syncdb', interactive=False,
-                                                    verbosity=0)
+                                                    verbosity=1)
             django.core.management.call_command('migrate', interactive=False,
-                                                verbosity=0)
+                                                verbosity=1)
 
             # Check if database exists now
             self.assertTrue(os.path.exists(dbfile))
