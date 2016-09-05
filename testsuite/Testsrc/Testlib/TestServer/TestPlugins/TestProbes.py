@@ -201,7 +201,7 @@ group-specific"""
                 assert False, "Strange probe found in get_probe_data() return"
 
 
-class TestProbes(TestPlugin):
+class TestProbes(TestDatabaseBacked):
     test_obj = Probes
 
     test_xdata = lxml.etree.Element("test")
@@ -241,7 +241,7 @@ group:      group:with:colons
             self.datastore = None
             Bcfg2.Options.setup.repository = datastore
 
-    def get_obj(self):
+    def get_obj(self, core=None):
         if not Bcfg2.Options.setup.probes_db:
             # actually use a real datastore so we can read and write
             # probed.xml
@@ -251,7 +251,7 @@ group:      group:with:colons
                 datadir = os.path.join(self.datastore, self.test_obj.name)
                 if not os.path.exists(datadir):
                     os.makedirs(datadir)
-        return TestPlugin.get_obj(self)
+        return TestPlugin.get_obj(self, core)
 
     def test__init(self):
         if Bcfg2.Options.setup.probes_db:
