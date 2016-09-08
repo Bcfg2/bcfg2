@@ -6,6 +6,15 @@ from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
 
 
+def strip_suffix(pkgname):
+    """ Remove the ':any' suffix from a dependency name if it is present.
+    """
+    if pkgname.endswith(':any'):
+        return pkgname[:-4]
+    else:
+        return pkgname
+
+
 class AptCollection(Collection):
     """ Handle collections of APT sources.  This is a no-op object
     that simply inherits from
@@ -115,6 +124,7 @@ class AptSource(Source):
                             cdeps = [re.sub(r'\s+', '',
                                             re.sub(r'\(.*\)', '', cdep))
                                      for cdep in dep.split('|')]
+                            cdeps = [strip_suffix(cdep) for cdep in cdeps]
                             dyn_dname = "choice-%s-%s-%s" % (pkgname,
                                                              barch,
                                                              vindex)
@@ -128,6 +138,7 @@ class AptSource(Source):
                         else:
                             raw_dep = re.sub(r'\(.*\)', '', dep)
                             raw_dep = raw_dep.rstrip().strip()
+                            raw_dep = strip_suffix(raw_dep)
                             if words[0] == 'Recommends':
                                 brecs[barch][pkgname].append(raw_dep)
                             else:
