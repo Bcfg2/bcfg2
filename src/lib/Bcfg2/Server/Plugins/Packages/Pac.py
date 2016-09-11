@@ -2,6 +2,7 @@
 
 import os
 import tarfile
+from Bcfg2.Compat import cPickle
 from Bcfg2.Server.Plugins.Packages.Collection import Collection
 from Bcfg2.Server.Plugins.Packages.Source import Source
 
@@ -75,12 +76,35 @@ class PacCollection(Collection):
                             debug=debug)
     __init__.__doc__ = Collection.__init__.__doc__.split(".. -----")[0]
 
+    @property
+    def __package_groups__(self):
+        return True
+
 
 class PacSource(Source):
     """ Handle Pacman sources """
 
     #: PacSource sets the ``type`` on Package entries to "pacman"
     ptype = 'pacman'
+
+    def __init__(self, basepath, xsource):
+        self.pacgroups = {}
+
+        Source.__init__(self, basepath, xsource)
+    __init__.__doc__ = Source.__init__.__doc__
+
+    def load_state(self):
+        data = open(self.cachefile, 'rb')
+        (self.pkgnames, self.deps, self.provides,
+         self.recommends, self.pacgroups) = cPickle.load(data)
+    load_state.__doc__ = Source.load_state.__doc__
+
+    def save_state(self):
+        cache = open(self.cachefile, 'wb')
+        cPickle.dump((self.pkgnames, self.deps, self.provides,
+                      self.recommends, self.pacgroups), cache, 2)
+        cache.close()
+    save_state.__doc__ = Source.save_state.__doc__
 
     @property
     def urls(self):
@@ -96,7 +120,7 @@ class PacSource(Source):
         else:
             raise Exception("PacSource : RAWUrl not supported (yet)")
 
-    def read_files(self):
+    def read_files(self):  # pylint: disable=R0912
         bdeps = {}
         brecs = {}
         bprov = {}
@@ -153,6 +177,19 @@ class PacSource(Source):
                             bprov[barch][dname] = set()
                         bprov[barch][dname].add(pkgname)
 
+                if '%GROUPS%' in pkg:
+                    for group in pkg['%GROUPS%']:
+                        if group not in self.pacgroups:
+                            self.pacgroups[group] = []
+                        self.pacgroups[group].append(pkgname)
+
             tar.close()
         self.process_files(bdeps, bprov, brecs)
     read_files.__doc__ = Source.read_files.__doc__
+
+    def get_group(self, metadata, group, ptype=None):
+        try:
+            return self.pacgroups[group]
+        except KeyError:
+            return []
+    get_group.__doc__ = Source.get_group.__doc__

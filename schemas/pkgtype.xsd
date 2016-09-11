@@ -31,10 +31,9 @@
       <xsd:annotation>
         <xsd:documentation>
           Install the named package group. Package groups are only
-          supported for Yum :xml:element:`Source` repositories, and
-          only if the :ref:`yum libraries
-          &lt;native-yum-libraries&gt;` are in use.  Either ``group``
-          or :xml:attribute:`PackageStructure:name` must be specified.
+          supported for Pac and Yum :xml:element:`Source`
+          repositories. Either ``group`` or
+          :xml:attribute:`PackageStructure:name` must be specified.
         </xsd:documentation>
       </xsd:annotation>
     </xsd:attribute>
