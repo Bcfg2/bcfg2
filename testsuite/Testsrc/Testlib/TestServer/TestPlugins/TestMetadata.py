@@ -123,7 +123,7 @@ class TestClientVersions(TestDatabaseBacked):
     def setUp(self):
         TestDatabaseBacked.setUp(self)
         self.test_obj = ClientVersions
-        syncdb(TestMetadataDB)
+        self.syncdb(TestMetadataDB)
         for client, version in self.test_clients.items():
             MetadataClientModel(hostname=client, version=version).save()
 
@@ -1252,7 +1252,7 @@ class TestMetadataBase(TestMetadata):
         TestClientRunHooks.setUp(self)
         TestDatabaseBacked.setUp(self)
         Bcfg2.Options.setup.metadata_db = True
-        syncdb(TestMetadataDB)
+        self.syncdb(TestMetadataDB)
 
     def load_clients_data(self, metadata=None, xdata=None):
         if metadata is None:

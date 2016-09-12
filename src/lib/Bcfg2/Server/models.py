@@ -4,44 +4,20 @@ import sys
 import logging
 import Bcfg2.Options
 import Bcfg2.Server.Plugins
-from Bcfg2.Compat import walk_packages
 
-LOGGER = logging.getLogger('Bcfg2.Server.models')
+LOGGER = logging.getLogger(__name__)
 
 MODELS = []
 INTERNAL_DATABASE_VERSION = None
 
 
-def _get_all_plugins():
-    rv = []
-    for submodule in walk_packages(path=Bcfg2.Server.Plugins.__path__,
-                                   prefix="Bcfg2.Server.Plugins."):
-        module = submodule[1].rsplit('.', 1)[-1]
-        if module == 'Reporting':
-            # Exclude Reporting plugin. The reporting database
-            # is handled separately in Bcfg2.Reporting.
-            continue
-        if submodule[1] == "Bcfg2.Server.Plugins.%s" % module:
-            # we only include direct children of
-            # Bcfg2.Server.Plugins -- e.g., all_plugins should
-            # include Bcfg2.Server.Plugins.Cfg, but not
-            # Bcfg2.Server.Plugins.Cfg.CfgInfoXML
-            rv.append(module)
-    return rv
-
-
-_ALL_PLUGINS = _get_all_plugins()
-
-
 class _OptionContainer(object):
+    """Options for Bcfg2 database models."""
+
     # we want to provide a different default plugin list --
     # namely, _all_ plugins, so that the database is guaranteed to
     # work, even if /etc/bcfg2.conf isn't set up properly
-    options = [
-        Bcfg2.Options.Option(
-            cf=('server', 'plugins'), type=Bcfg2.Options.Types.comma_list,
-            default=_ALL_PLUGINS, dest="models_plugins",
-            action=Bcfg2.Options.PluginsAction)]
+    options = [Bcfg2.Options.Common.plugins]
 
     @staticmethod
     def options_parsed_hook():
@@ -63,7 +39,7 @@ def load_models(plugins=None):
     global MODELS
 
     if not plugins:
-        plugins = Bcfg2.Options.setup.models_plugins
+        plugins = Bcfg2.Options.setup.plugins
 
     if MODELS:
         # load_models() has been called once, so first unload all of

@@ -223,18 +223,29 @@ class DBModelTestCase(Bcfg2TestCase):
             import django.core.management
             from django.core.exceptions import ImproperlyConfigured
 
-            if django.VERSION[0] == 1 and django.VERSION[1] < 7:
-                try:
-                    django.core.management.call_command('syncdb', interactive=False,
-                                                        verbosity=0)
-                except ImproperlyConfigured:
-                    pass
+            dbfile = django.conf.settings.DATABASES['default']['NAME']
 
+            # Close all connections to the old database
+            if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+                for connection in django.db.connections.all():
+                    connection.close()
+            else:
+                django.db.close_connection()
+            
+            # Remove old database
+            if os.path.exists(dbfile):
+                os.unlink(dbfile)
+            self.assertFalse(os.path.exists(dbfile))
+
+            # Create new
+            if django.VERSION[0] == 1 and django.VERSION[1] < 7:
+                django.core.management.call_command('syncdb', interactive=False,
+                                                    verbosity=1)
             django.core.management.call_command('migrate', interactive=False,
-                                                verbosity=0)
-            self.assertTrue(
-                os.path.exists(
-                    django.conf.settings.DATABASES['default']['NAME']))
+                                                verbosity=1)
+
+            # Check if database exists now
+            self.assertTrue(os.path.exists(dbfile))
 
     @skipUnless(has_django, "Django not found, skipping")
     def test_cleandb(self):
@@ -243,14 +254,6 @@ class DBModelTestCase(Bcfg2TestCase):
         for model in self.models:
             model.objects.all().delete()
             self.assertItemsEqual(list(model.objects.all()), [])
-
-
-def syncdb(modeltest):
-    """ Given an instance of a :class:`DBModelTestCase` object, sync
-    and clean the database """
-    inst = modeltest(methodName='test_syncdb')
-    inst.test_syncdb()
-    inst.test_cleandb()
 
 
 # in order for patchIf() to decorate a function in the same way as
