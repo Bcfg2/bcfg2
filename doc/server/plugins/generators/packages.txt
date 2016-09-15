@@ -483,6 +483,59 @@ See :ref:`configuration` for more details on these options.
 
 .. _native-yum-libraries:
 
+Package Groups
+==============
+
+Some packaging systems provide package groups. To include a package
+group, use the :xml:attribute:`PackageStructure:group` attribute of
+the :xml:element:`Package` tag.
+
+pac
+---
+
+.. versionadded:: 1.4.0
+
+Pacman `groups <https://www.archlinux.org/groups/>`_ are supported:
+
+.. code-block:: xml
+
+    <Package group="base"/>
+
+yum
+---
+
+Yum package groups are supported by both the native Yum libraries and
+Bcfg2's internal dependency resolver. You can use either the short
+group ID or the long group name:
+
+.. code-block:: xml
+
+    <Package group="SNMP Support"/>
+    <Package group="system-management-snmp"/>
+
+By default, only those packages considered the "default" packages in a
+group will be installed. You can change this behavior using the
+:xml:attribute:`PackageStructure:type` attribute:
+
+.. code-block:: xml
+
+    <Package group="development" type="optional"/>
+    <Package group="Administration Tools" type="mandatory"/>
+
+Valid values of "type" are:
+
+* ``mandatory``: Only install mandatory packages in the group.
+* ``default``: Install default packages from the group (the default).
+* ``optional`` or ``all``: Install all packages in the group,
+  including mandatory, default, and optional packages.
+
+See :xml:type:`PackageStructure` for details.
+
+You can view the packages in a group by category with the ``yum
+groupinfo`` command. More information about the different levels can
+be found at
+http://fedoraproject.org/wiki/How_to_use_and_edit_comps.xml_for_package_groups#Installation
+
 Using Native Yum Libraries
 ==========================
 
@@ -545,43 +598,6 @@ generally be overridden:
   doing.
 * ``reposdir`` is set to ``/dev/null`` to prevent the server's Yum
   configuration from being read; do not change this.
-
-Package Groups
---------------
-
-Yum package groups are supported by both the native Yum libraries and
-Bcfg2's internal dependency resolver. To include a package group, use
-the :xml:attribute:`PackageStructure:group` attribute of the
-:xml:element:`Package` tag. You can use either the short group ID or
-the long group name:
-
-.. code-block:: xml
-
-    <Package group="SNMP Support"/>
-    <Package group="system-management-snmp"/>
-
-By default, only those packages considered the "default" packages in a
-group will be installed. You can change this behavior using the
-:xml:attribute:`PackageStructure:type` attribute:
-
-.. code-block:: xml
-
-    <Package group="development" type="optional"/>
-    <Package group="Administration Tools" type="mandatory"/>
-
-Valid values of "type" are:
-
-* ``mandatory``: Only install mandatory packages in the group.
-* ``default``: Install default packages from the group (the default).
-* ``optional`` or ``all``: Install all packages in the group,
-  including mandatory, default, and optional packages.
-
-See :xml:type:`PackageStructure` for details.
-
-You can view the packages in a group by category with the ``yum
-groupinfo`` command. More information about the different levels can
-be found at
-http://fedoraproject.org/wiki/How_to_use_and_edit_comps.xml_for_package_groups#Installation
 
 Abstract Package Tags
 ---------------------

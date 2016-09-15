@@ -24,8 +24,8 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
     def VerifyPackage(self, entry, _):
         '''Verify Package status for entry'''
 
-        self.logger.info("VerifyPackage: %s : %s" % (entry.get('name'),
-                                                     entry.get('version')))
+        self.logger.debug("VerifyPackage: %s : %s" % (entry.get('name'),
+                                                      entry.get('version')))
 
         if 'version' not in entry.attrib:
             self.logger.info("Cannot verify unversioned package %s" %
@@ -42,11 +42,10 @@ class Pacman(Bcfg2.Client.Tools.PkgTool):
                 return True
             else:
                 entry.set('current_version', self.installed[entry.get('name')])
-                self.logger.info("attribname: %s" % (entry.attrib['name']))
-                self.logger.info("attribname: %s" % (entry.attrib['name']))
+                self.logger.debug("attribname: %s" % (entry.attrib['name']))
                 return False
         entry.set('current_exists', 'false')
-        self.logger.info("attribname: %s" % (entry.attrib['name']))
+        self.logger.debug("attribname: %s" % (entry.attrib['name']))
         return False
 
     def Remove(self, packages):
