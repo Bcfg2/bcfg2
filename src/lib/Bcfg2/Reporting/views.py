@@ -186,7 +186,7 @@ def config_item_list(request, item_state, timestamp=None, **kwargs):
     lists = []
     for etype in ENTRY_TYPES:
         ldata = etype.objects.filter(state=state, interaction__in=current_clients)\
-            .annotate(num_entries=Count('id')).select_related('linkentry', 'target_perms', 'current_perms')
+            .annotate(num_entries=Count('id')).select_related()
         if len(ldata) > 0:
             # Property doesn't render properly..
             lists.append((etype.ENTRY_TYPE, ldata))
