@@ -17,7 +17,7 @@ __all__ = ["setup", "OptionParserException", "Parser", "get_parser",
 #: circular imports.
 repository = PathOption(  # pylint: disable=C0103
     '-Q', '--repository', cf=('server', 'repository'),
-    default='var/lib/bcfg2', help="Server repository path")
+    default='/var/lib/bcfg2', help="Server repository path")
 
 
 #: A module-level :class:`argparse.Namespace` object that stores all
