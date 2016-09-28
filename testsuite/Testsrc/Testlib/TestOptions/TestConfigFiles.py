@@ -47,4 +47,7 @@ class TestConfigFiles(OptionTestCase):
     @mock.patch("os.path.exists", mock.Mock(return_value=False))
     def test_no_config_file(self):
         """fail to read config file."""
-        self.assertRaises(SystemExit, self.parser.parse, [])
+        try:
+            self.parser.parse()
+        except SystemExit:
+            self.fail('Missing config file should not raise SystemExit')
