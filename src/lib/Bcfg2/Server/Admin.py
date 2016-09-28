@@ -666,7 +666,7 @@ bcfg2 = %s
     def create_key(self):
         """Creates a bcfg2.key at the directory specifed by keypath."""
         cmd = Executor(timeout=120)
-        subject = "/C=%s/ST=%s/L=%s/CN=%s'" % (
+        subject = "/C=%s/ST=%s/L=%s/CN=%s" % (
             self.data['country'], self.data['state'], self.data['location'],
             self.data['shostname'])
         key = cmd.run(["openssl", "req", "-batch", "-x509", "-nodes",
