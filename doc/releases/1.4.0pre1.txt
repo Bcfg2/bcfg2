@@ -43,6 +43,9 @@ backwards-incompatible user-facing changes
     You can convert your existing decisions using
     ``tools/upgrade/1.4/migrate_decisions.py``.
 
+* The Probe plugin no longer strips probe output. You may need to adjust
+  your probe output if you want trailing whitespace to be removed.
+
 
 deprecated features (will be removed in a future release, likely 1.5)
 ---------------------------------------------------------------------
