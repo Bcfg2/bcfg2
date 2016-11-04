@@ -10,10 +10,10 @@ from Bcfg2.Client.Tools.POSIX.File import POSIXFile
 class AugeasCommand(object):
     """ Base class for all Augeas command objects """
 
-    def __init__(self, command, augeas_obj, logger):
+    def __init__(self, entry, command, augeas_obj, logger):
         self._augeas = augeas_obj
         self.command = command
-        self.entry = self.command.getparent()
+        self.entry = entry
         self.logger = logger
 
     def get_path(self, attr="path"):
@@ -115,8 +115,8 @@ class Remove(AugeasCommand):
 
 class Move(AugeasCommand):
     """ Augeas ``move`` command """
-    def __init__(self, command, augeas_obj, logger):
-        AugeasCommand.__init__(self, command, augeas_obj, logger)
+    def __init__(self, entry, command, augeas_obj, logger):
+        AugeasCommand.__init__(self, entry, command, augeas_obj, logger)
         self.source = self.get_path("source")
         self.dest = self.get_path("destination")
 
@@ -131,8 +131,8 @@ class Move(AugeasCommand):
 
 class Set(AugeasCommand):
     """ Augeas ``set`` command """
-    def __init__(self, command, augeas_obj, logger):
-        AugeasCommand.__init__(self, command, augeas_obj, logger)
+    def __init__(self, entry, command, augeas_obj, logger):
+        AugeasCommand.__init__(self, entry, command, augeas_obj, logger)
         self.value = self.command.get("value")
 
     def verify(self):
@@ -146,15 +146,15 @@ class Set(AugeasCommand):
 
 class Clear(Set):
     """ Augeas ``clear`` command """
-    def __init__(self, command, augeas_obj, logger):
-        Set.__init__(self, command, augeas_obj, logger)
+    def __init__(self, entry, command, augeas_obj, logger):
+        Set.__init__(self, entry, command, augeas_obj, logger)
         self.value = None
 
 
 class SetMulti(AugeasCommand):
     """ Augeas ``setm`` command """
-    def __init__(self, command, augeas_obj, logger):
-        AugeasCommand.__init__(self, command, augeas_obj, logger)
+    def __init__(self, entry, command, augeas_obj, logger):
+        AugeasCommand.__init__(self, entry, command, augeas_obj, logger)
         self.sub = self.command.get("sub")
         self.value = self.command.get("value")
         self.base = self.get_path("base")
@@ -170,8 +170,8 @@ class SetMulti(AugeasCommand):
 
 class Insert(AugeasCommand):
     """ Augeas ``ins`` command """
-    def __init__(self, command, augeas_obj, logger):
-        AugeasCommand.__init__(self, command, augeas_obj, logger)
+    def __init__(self, entry, command, augeas_obj, logger):
+        AugeasCommand.__init__(self, entry, command, augeas_obj, logger)
         self.label = self.command.get("label")
         self.where = self.command.get("where", "before")
         self.before = self.where == "before"
@@ -230,11 +230,12 @@ class POSIXAugeas(POSIXTool):
                   objects representing the commands.
         """
         rv = []
-        for cmd in entry.iterchildren():
+        for cmd in entry:
             if cmd.tag == "Initial":
                 continue
             if cmd.tag in globals():
-                rv.append(globals()[cmd.tag](cmd, self.get_augeas(entry),
+                rv.append(globals()[cmd.tag](entry, cmd,
+                                             self.get_augeas(entry),
                                              self.logger))
             else:
                 err = "Augeas: Unknown command %s in %s" % (cmd.tag,
