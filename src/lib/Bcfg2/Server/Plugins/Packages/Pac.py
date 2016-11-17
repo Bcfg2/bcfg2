@@ -124,7 +124,8 @@ class PacSource(Source):
         bdeps = {}
         brecs = {}
         bprov = {}
-
+        self.pkgnames = set()
+        self.pacgroups = {}
         for fname in self.files:
             if not self.rawurl:
                 barch = [x for x in fname.split('@') if x in self.arches][0]
