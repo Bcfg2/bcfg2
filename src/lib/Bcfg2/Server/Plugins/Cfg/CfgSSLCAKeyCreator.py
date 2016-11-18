@@ -19,8 +19,8 @@ class CfgSSLCAKeyCreator(XMLCfgCreator):
         self.logger.info("Cfg: Generating new SSL key for %s" % self.name)
         spec = self.XMLMatch(metadata)
         key = spec.find("Key")
-        if not key:
-            key = dict()
+        if key is None:
+            key = {}
         ktype = key.get('type', 'rsa')
         bits = key.get('bits', '2048')
         if ktype == 'rsa':
