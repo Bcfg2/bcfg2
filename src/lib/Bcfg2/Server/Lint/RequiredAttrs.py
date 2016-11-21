@@ -55,6 +55,8 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
         self.required_attrs = dict(
             Path={
                 '__any__': dict(name=is_filename),
+                'augeas': dict(owner=is_username, group=is_username,
+                               mode=is_octal_mode),
                 'device': dict(owner=is_username, group=is_username,
                                dev_type=lambda v: v in device_map),
                 'directory': dict(owner=is_username, group=is_username,
