@@ -1,4 +1,4 @@
-""" Handle <Path type='nonexistent' ...> entries """
+""" Handle <Path type='device' ...> entries """
 
 import os
 import sys
@@ -6,7 +6,7 @@ from Bcfg2.Client.Tools.POSIX.base import POSIXTool, device_map
 
 
 class POSIXDevice(POSIXTool):
-    """ Handle <Path type='nonexistent' ...> entries """
+    """ Handle <Path type='device' ...> entries """
     __req__ = ['name', 'dev_type', 'mode', 'owner', 'group']
 
     def fully_specified(self, entry):
