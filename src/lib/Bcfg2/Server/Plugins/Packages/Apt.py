@@ -86,6 +86,7 @@ class AptSource(Source):
         bdeps = dict()
         brecs = dict()
         bprov = dict()
+        self.pkgnames = set()
         self.essentialpkgs = set()
         for fname in self.files:
             if not self.rawurl:

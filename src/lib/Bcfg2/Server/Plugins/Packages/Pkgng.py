@@ -56,6 +56,7 @@ class PkgngSource(Source):
 
     def read_files(self):
         bdeps = dict()
+        self.pkgnames = set()
         for fname in self.files:
             if not self.rawurl:
                 abi = [x
