@@ -2,24 +2,23 @@
 The base for the original DjangoORM (DBStats)
 """
 
-from lxml import etree
-from datetime import datetime
+import difflib
 import traceback
+from datetime import datetime
 from time import strptime
-import Bcfg2.Options
-import Bcfg2.DBSettings
-from Bcfg2.Compat import md5
-from Bcfg2.Reporting.Storage.base import StorageBase, StorageError
-from Bcfg2.Server.Plugin.exceptions import PluginExecutionError
+from lxml import etree
+
 import django
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import FieldDoesNotExist
 from django.core.cache import cache
 
-#Used by GetCurrentEntry
-import difflib
-from Bcfg2.Compat import b64decode
+import Bcfg2.Options
+import Bcfg2.DBSettings
+from Bcfg2.Compat import b64decode, md5
 from Bcfg2.Reporting.Compat import transaction
+from Bcfg2.Reporting.Storage.base import StorageBase, StorageError
+from Bcfg2.Server.Plugin.exceptions import PluginExecutionError
 
 
 def load_django_models():
