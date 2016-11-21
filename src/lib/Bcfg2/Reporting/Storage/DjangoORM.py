@@ -12,7 +12,6 @@ from Bcfg2.Compat import md5
 from Bcfg2.Reporting.Storage.base import StorageBase, StorageError
 from Bcfg2.Server.Plugin.exceptions import PluginExecutionError
 import django
-from django.core import management
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import FieldDoesNotExist
 from django.core.cache import cache
