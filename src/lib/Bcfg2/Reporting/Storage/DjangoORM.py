@@ -20,11 +20,21 @@ from django.core.cache import cache
 #Used by GetCurrentEntry
 import difflib
 from Bcfg2.Compat import b64decode
-from Bcfg2.Reporting.models import \
-    Interaction, PackageEntry, FilePerms, PathEntry, LinkEntry, \
-    Group, Client, Bundle, TYPE_EXTRA, TYPE_BAD, TYPE_MODIFIED, \
-    FailureEntry, Performance, BaseEntry
 from Bcfg2.Reporting.Compat import transaction
+
+
+def load_django_models():
+    """ Load models for Django after option parsing has completed """
+    # pylint: disable=W0602
+    global Interaction, PackageEntry, FilePerms, PathEntry, LinkEntry, \
+        Group, Client, Bundle, TYPE_EXTRA, TYPE_BAD, TYPE_MODIFIED, \
+        FailureEntry, Performance, BaseEntry
+    # pylint: enable=W0602
+
+    from Bcfg2.Reporting.models import \
+        Interaction, PackageEntry, FilePerms, PathEntry, LinkEntry, \
+        Group, Client, Bundle, TYPE_EXTRA, TYPE_BAD, TYPE_MODIFIED, \
+        FailureEntry, Performance, BaseEntry
 
 
 def get_all_field_names(model):
@@ -45,6 +55,7 @@ class DjangoORM(StorageBase):
             type=Bcfg2.Options.Types.size,
             help='Reporting file size limit',
             default=1024 * 1024)]
+    options_parsed_hook = staticmethod(load_django_models)
 
     def _import_default(self, entry, state, entrytype=None, defaults=None,
                         mapping=None, boolean=None, xforms=None):
