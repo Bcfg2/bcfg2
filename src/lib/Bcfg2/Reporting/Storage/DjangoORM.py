@@ -20,7 +20,10 @@ from django.core.cache import cache
 #Used by GetCurrentEntry
 import difflib
 from Bcfg2.Compat import b64decode
-from Bcfg2.Reporting.models import *
+from Bcfg2.Reporting.models import \
+    Interaction, PackageEntry, FilePerms, PathEntry, LinkEntry, \
+    Group, Client, Bundle, TYPE_EXTRA, TYPE_BAD, TYPE_MODIFIED, \
+    FailureEntry, Performance, BaseEntry
 from Bcfg2.Reporting.Compat import transaction
 
 
