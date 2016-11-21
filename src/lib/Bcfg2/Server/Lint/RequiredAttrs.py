@@ -47,6 +47,13 @@ def is_device_mode(val):
     return re.match(r'^\d+$', val)
 
 
+def is_vcs_type(val):
+    """ Return True if val is a supported vcs type handled by the
+    current client tool """
+    return (val != 'Path' and
+            hasattr(Bcfg2.Client.Tools.VCS.VCS, 'Install%s' % val))
+
+
 class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
     """ Verify attributes for configuration entries that cannot be
     verified with an XML schema alone. """
@@ -71,10 +78,8 @@ class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
                 'nonexistent': dict(),
                 'permissions': dict(owner=is_username, group=is_username,
                                     mode=is_octal_mode),
-                'vcs': dict(vcstype=lambda v: (v != 'Path' and
-                                               hasattr(Bcfg2.Client.Tools.VCS.VCS,
-                                                       "Install%s" % v)),
-                            revision=None, sourceurl=None),
+                'vcs': dict(vcstype=is_vcs_type, revision=None,
+                            sourceurl=None),
             },
             Service={"__any__": dict(name=None),
                      "smf": dict(name=None, FMRI=None)},
