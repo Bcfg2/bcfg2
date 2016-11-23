@@ -5,8 +5,7 @@
 Ohai
 ====
 
-.. _Ohai: http://wiki.opscode.com/display/chef/Ohai
-.. _Ohai-Install: http://wiki.opscode.com/display/chef/Ohai+Installation+and+Use
+.. _Ohai: https://docs.chef.io/ohai.html
 
 The `Ohai`_ plugin is used to detect information about the client
 operating system. The data is reported back to the server using JSON.
@@ -14,8 +13,7 @@ operating system. The data is reported back to the server using JSON.
 Client prerequisites
 --------------------
 
-On the client, you need to install `Ohai`_. See `Ohai-Install`_ for more
-information.
+On the client, you need to install `Ohai`_.
 
 Server prerequisites
 --------------------
