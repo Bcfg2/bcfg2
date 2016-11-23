@@ -86,14 +86,9 @@ class BuiltinCore(NetworkCore):
                 raise xmlrpclib.Fault(xmlrpclib.METHOD_NOT_FOUND,
                                       "Unknown method %s" % method)
 
+        method_start = time.time()
         try:
-            method_start = time.time()
-            try:
-                return method_func(*args)
-            finally:
-                Bcfg2.Server.Statistics.stats.add_value(
-                    method,
-                    time.time() - method_start)
+            return method_func(*args)
         except xmlrpclib.Fault:
             raise
         except Exception:
@@ -101,6 +96,10 @@ class BuiltinCore(NetworkCore):
             if getattr(err, "log", True):
                 self.logger.error(err, exc_info=True)
             raise xmlrpclib.Fault(getattr(err, "fault_code", 1), str(err))
+        finally:
+            Bcfg2.Server.Statistics.stats.add_value(
+                method,
+                time.time() - method_start)
 
     def _daemonize(self):
         """ Open :attr:`context` to drop privileges, write the PID
