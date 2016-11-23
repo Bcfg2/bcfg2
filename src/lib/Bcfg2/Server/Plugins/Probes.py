@@ -10,7 +10,7 @@ import lxml.etree
 import Bcfg2.Server
 import Bcfg2.Server.Cache
 import Bcfg2.Server.Plugin
-from Bcfg2.Compat import unicode, any  # pylint: disable=W0622
+from Bcfg2.Compat import unicode  # pylint: disable=W0622
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Logger import Debuggable
 from Bcfg2.Server.Statistics import track_statistics

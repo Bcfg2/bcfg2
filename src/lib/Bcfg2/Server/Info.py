@@ -19,7 +19,7 @@ import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Plugin
 import Bcfg2.Client.Tools.POSIX
-from Bcfg2.Compat import any  # pylint: disable=W0622
+
 
 try:
     try:
