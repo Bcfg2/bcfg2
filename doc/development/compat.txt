@@ -17,7 +17,6 @@ tool), this documentation is *not* automatically generated.
 
 There are several basic types of symbols found in ``Bcfg2.Compat``:
 
-* Symbols whose names have changed, e.g., ``MutableMapping``.
 * Symbols whose modules have changed names, e.g., ``urljoin``/``urlparse``
 * Symbols that have been added or removed, e.g., ``any``/``all``, ``reduce``,
   ``walk_packages``
@@ -127,8 +126,6 @@ below, since some of these implementations may be feature-incomplete.
 +----------------+--------------------------------+--------------------------------------------+
 | md5            | :func:`md5.md5`                | :class:`hashlib.md5`                       |
 +----------------+--------------------------------+--------------------------------------------+
-| MutableMapping | :class:`UserDict.DictMixin`    | :class:`collections.MutableMapping` (2.6+) |
-+----------------+--------------------------------+--------------------------------------------+
 | literal_eval   | :func:`eval`                   | :func:`ast.literal_eval` (2.6+)            |
 +----------------+--------------------------------+--------------------------------------------+
 
@@ -160,18 +157,6 @@ something fancy with MD5 sums, you may need to determine which object
 is in use, since they are not equivalent.  For the majority of simple
 cases -- finding the MD5 sum of a string -- they are equivalent
 enough.
-
-MutableMapping
-~~~~~~~~~~~~~~
-
-:class:`collections.MutableMapping` provides a subset of the
-functionality of :class:`UserDict.DictMixin`; that is, any object that
-is written to work with ``MutableMapping`` will also work with
-``DictMixin``, so you should write classes with ``MutableMapping`` in
-mind.
-
-:class:`collections.MutableMapping` is available in Python 2.6+, and
-will be used if available.
 
 literal_eval
 ~~~~~~~~~~~~

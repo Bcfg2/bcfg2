@@ -123,11 +123,6 @@ try:
 except NameError:
     from functools import reduce
 
-try:
-    from collections import MutableMapping
-except ImportError:
-    from UserDict import DictMixin as MutableMapping
-
 
 class CmpMixin(object):
     """ In Py3K, :meth:`object.__cmp__` is no longer magical, so this

@@ -64,7 +64,7 @@ cache.  In this case, the latter call is equivalent to:
 
 """
 
-from Bcfg2.Compat import MutableMapping
+from collections import MutableMapping
 
 
 class _Cache(MutableMapping):
