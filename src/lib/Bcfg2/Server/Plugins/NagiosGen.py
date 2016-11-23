@@ -92,7 +92,7 @@ class NagiosGen(Plugin, Generator):
         for host in host_configs:
             host_data.append(open(host, 'r').read())
 
-        group_list = []
+        group_list = ['default']
         for line in "\n".join(host_data).splitlines():
             # only include those groups which are actually used
             if "hostgroup" in line:
