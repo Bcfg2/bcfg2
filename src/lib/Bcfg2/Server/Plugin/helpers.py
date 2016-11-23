@@ -10,12 +10,13 @@ import genshi
 import operator
 import lxml.etree
 from collections import MutableMapping
+from functools import wraps
 
 import Bcfg2.Server
 import Bcfg2.Options
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Logger import Debuggable
-from Bcfg2.Compat import CmpMixin, wraps
+from Bcfg2.Compat import CmpMixin
 from Bcfg2.Server.Plugin.base import Plugin
 from Bcfg2.Server.Plugin.interfaces import Generator, TemplateDataProvider
 from Bcfg2.Server.Plugin.exceptions import SpecificityError, \

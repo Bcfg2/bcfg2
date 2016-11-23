@@ -10,7 +10,7 @@ import yum
 import logging
 import Bcfg2.Options
 import Bcfg2.Logger
-from Bcfg2.Compat import wraps
+from functools import wraps
 from lockfile import FileLock, LockTimeout
 try:
     import json

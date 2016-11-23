@@ -18,8 +18,9 @@ import multiprocessing
 import Bcfg2.Options
 import Bcfg2.Server.Cache
 import Bcfg2.Server.Plugin
+from functools import wraps
 from itertools import cycle
-from Bcfg2.Compat import Queue, Empty, wraps
+from Bcfg2.Compat import Queue, Empty
 from Bcfg2.Server.Core import Core, exposed
 from Bcfg2.Server.BuiltinCore import BuiltinCore
 from multiprocessing.connection import Listener, Client

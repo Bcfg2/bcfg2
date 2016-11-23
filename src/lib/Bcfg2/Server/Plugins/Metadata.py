@@ -11,6 +11,7 @@ import socket
 import logging
 import lxml.etree
 from collections import MutableMapping
+from functools import wraps
 
 import Bcfg2.Server
 import Bcfg2.Options
@@ -18,7 +19,6 @@ import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Utils import locked
 from Bcfg2.Server.Cache import Cache
-from Bcfg2.Compat import wraps
 from Bcfg2.version import Bcfg2VersionInfo
 
 try:

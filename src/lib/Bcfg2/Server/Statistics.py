@@ -3,7 +3,7 @@ server core.  This data is exposed by
 :func:`Bcfg2.Server.Core.BaseCore.get_statistics`."""
 
 import time
-from Bcfg2.Compat import wraps
+from functools import wraps
 
 
 class Statistic(object):
