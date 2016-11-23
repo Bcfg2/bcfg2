@@ -18,9 +18,7 @@ import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Utils import locked
 from Bcfg2.Server.Cache import Cache
-# pylint: disable=W0622
-from Bcfg2.Compat import all, wraps
-# pylint: enable=W0622
+from Bcfg2.Compat import wraps
 from Bcfg2.version import Bcfg2VersionInfo
 
 try:
