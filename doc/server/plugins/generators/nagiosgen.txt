@@ -194,7 +194,4 @@ moderation.
 ``NagiosGen/config.xml`` replaces the files
 ``Properties/NagiosGen.xml`` and ``NagiosGen/parents.xml`` in older
 versions of Bcfg2; your old configs can be migrated using the
-``nagiosgen-convert.py`` tool.  The plugin does contain a
-backwards-compatibility layer for those older config files, but
-``NagiosGen/config.xml`` must exist (even if empty) for the plugin to
-function.
+``nagiosgen-convert.py`` tool.
