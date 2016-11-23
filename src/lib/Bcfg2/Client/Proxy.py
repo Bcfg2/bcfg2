@@ -1,3 +1,4 @@
+import os.path
 import re
 import sys
 import time
@@ -202,6 +203,8 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             raise Exception("unknown protocol %s" % self.protocol)
         if self.ca:
             other_side_required = ssl.CERT_REQUIRED
+            if not os.path.isfile(self.ca):
+                self.logger.error("CA specified but none found at %s" % self.ca)
         else:
             other_side_required = ssl.CERT_NONE
             self.logger.warning("No ca is specified. Cannot authenticate the "
