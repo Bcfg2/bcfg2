@@ -111,6 +111,9 @@ The following symbols are imported or defined to provide compatibility
 with Python 2.4 (and occasionally 2.5).  Be sure to read the notes
 below, since some of these implementations may be feature-incomplete.
 
+As we require Python 2.6 on the server side, you should only use these
+compat methods in common or client code.
+
 +----------------+--------------------------------+--------------------------------------------+
 | Name           | Python 2.4                     | Python 2.5+                                |
 +================+================================+============================================+
