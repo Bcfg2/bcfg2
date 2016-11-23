@@ -242,11 +242,6 @@ except NameError:
                 return True
         return False
 
-try:
-    from hashlib import md5
-except ImportError:
-    from md5 import md5
-
 
 def oct_mode(mode):
     """ Convert a decimal number describing a POSIX permissions mode

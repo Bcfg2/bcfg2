@@ -122,8 +122,6 @@ below, since some of these implementations may be feature-incomplete.
 +----------------+--------------------------------+--------------------------------------------+
 | wraps          | Not implemented                | :func:`functools.wraps`                    |
 +----------------+--------------------------------+--------------------------------------------+
-| md5            | :func:`md5.md5`                | :class:`hashlib.md5`                       |
-+----------------+--------------------------------+--------------------------------------------+
 | literal_eval   | :func:`eval`                   | :func:`ast.literal_eval` (2.6+)            |
 +----------------+--------------------------------+--------------------------------------------+
 
@@ -145,16 +143,6 @@ wraps
 The ``wraps`` implementation for Python 2.4 is a no-op.  It does not
 attempt to copy the docstring or other details from the original
 function to the wrapped function.
-
-md5
-~~~
-
-:mod:`hashlib` is available for Python 2.4, but it is not part of the
-standard base.  If it is installed, it will be used.  If you are doing
-something fancy with MD5 sums, you may need to determine which object
-is in use, since they are not equivalent.  For the majority of simple
-cases -- finding the MD5 sum of a string -- they are equivalent
-enough.
 
 literal_eval
 ~~~~~~~~~~~~

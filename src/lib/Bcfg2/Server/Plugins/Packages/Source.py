@@ -49,10 +49,12 @@ in your ``Source`` subclass.  For an example of this kind of
 import os
 import re
 import sys
+from hashlib import md5
+
 from Bcfg2.Logger import Debuggable
 from Bcfg2.Compat import HTTPError, HTTPBasicAuthHandler, \
     HTTPPasswordMgrWithDefaultRealm, install_opener, build_opener, urlopen, \
-    cPickle, md5
+    cPickle
 from Bcfg2.Server.Statistics import track_statistics
 
 
