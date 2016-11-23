@@ -1,7 +1,7 @@
 """ The multiprocessing server core is a reimplementation of the
 :mod:`Bcfg2.Server.BuiltinCore` that uses the Python
 :mod:`multiprocessing` library to offload work to multiple child
-processes.  As such, it requires Python 2.6+.
+processes.
 
 The parent communicates with the children over
 :class:`multiprocessing.Queue` objects via a

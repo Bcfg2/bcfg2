@@ -15,15 +15,6 @@ Client prerequisites
 
 On the client, you need to install `Ohai`_.
 
-Server prerequisites
---------------------
-
-If you have python 2.6 or later installed, you can continue on to
-:ref:`ohai-setup`. Otherwise, you will need to install the
-python-simplejson module found packaged in most distributions.
-
-.. _ohai-setup:
-
 Setup
 -----
 

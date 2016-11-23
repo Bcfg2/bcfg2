@@ -12,16 +12,7 @@ from math import ceil
 from nose.core import TestProgram
 from nose.suite import LazySuite
 from unittest import TestCase
-
-try:
-    from multiprocessing import Process, Queue, active_children
-    HAS_MULTIPROC = True
-except ImportError:
-    HAS_MULTIPROC = False
-
-    def active_children():
-        """active_children() when multiprocessing lib is missing."""
-        return []
+from multiprocessing import Process, Queue, active_children
 
 
 def get_sigint_handler(core):
@@ -184,7 +175,7 @@ class CLI(object):
             help='Ignore these entries if they fail to build'),
         Bcfg2.Options.Option(
             "--children", cf=('bcfg2_test', 'children'), default=0, type=int,
-            help='Spawn this number of children for bcfg2-test (python 2.6+)')]
+            help='Spawn this number of children for bcfg2-test')]
 
     def __init__(self):
         parser = Bcfg2.Options.get_parser(
@@ -192,11 +183,6 @@ class CLI(object):
             components=[Bcfg2.Server.Core.Core, self])
         parser.parse()
         self.logger = logging.getLogger(parser.prog)
-
-        if Bcfg2.Options.setup.children and not HAS_MULTIPROC:
-            self.logger.warning("Python multiprocessing library not found, "
-                                "running with no children")
-            Bcfg2.Options.setup.children = 0
 
     def get_core(self):
         """ Get a server core, with events handled """

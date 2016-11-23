@@ -39,7 +39,6 @@ Prerequisites
 -------------
 
 * sqlite3
-* pysqlite2 (if using python 2.4)
 * `Django <http://www.djangoproject.com>`_ >= 1.3
 * mod-wsgi
 

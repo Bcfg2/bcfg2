@@ -71,8 +71,6 @@ prepare: install
 	chmod 0770 "${PKGTMP}/scripts/${PREFLIGHT}"
 	chmod 0770 "${PKGTMP}/scripts/${POSTFLIGHT}"
 
-	# add in M2Crypto if python version is less than 2.6
-	if [[ ${PYMAJORVERSION} == 2 ]]; then if [[ ${PYMINORVERSION} -lt 6 ]]; then cp "M2Crypto-0.20.2-py2.5-macosx-10.5-ppc.egg" "${PKGROOT}/${SITELIBDIR}" && cp "easy-install.pth" "${PKGROOT}/${SITELIBDIR}"; fi ;  fi
 	# add default bcfg2.conf
 	mkdir -p "${PKGROOT}/etc"
 	cp "${CONF}" "${PKGROOT}/etc/${CONF}"

@@ -180,7 +180,6 @@ The builtin server:
 
 * Is very stable and mature;
 * Supports certificate authentication;
-* Works on Python 2.4;
 * Is slow with larger numbers of clients.
 
 The multiprocessing server:
@@ -190,7 +189,6 @@ The multiprocessing server:
 * Introduces concurrent processing to Bcfg2, which may break in
   various edge cases;
 * Supports certificate authentication;
-* Requires Python 2.6;
 * Is faster with large numbers of concurrent runs.
 
 The CherryPy server:
@@ -198,7 +196,7 @@ The CherryPy server:
 * Is very new and potentially buggy;
 * Does not support certificate authentication yet, only password
   authentication;
-* Requires CherryPy 3.3, which requires Python 2.5;
+* Requires CherryPy 3.3;
 * Is smarter about daemonization, particularly if you are
   :ref:`server-dropping-privs`;
 * Is faster with large numbers of clients.
