@@ -114,8 +114,6 @@ below, since some of these implementations may be feature-incomplete.
 +----------------+--------------------------------+--------------------------------------------+
 | Name           | Python 2.4                     | Python 2.5+                                |
 +================+================================+============================================+
-| formatdate     | :func:`email.Utils.formatdate` | :func:`email.utils.formatdate`             |
-+----------------+--------------------------------+--------------------------------------------+
 | walk_packages  | Not implemented                | :func:`pkgutil.walk_packages` (2.6+)       |
 +----------------+--------------------------------+--------------------------------------------+
 | any            | Not implemented                | :func:`any`                                |

@@ -12,11 +12,6 @@ import sys
 
 # pylint: disable=E0601,E0602,E0611,W0611,W0622,C0103
 
-try:
-    from email.Utils import formatdate
-except ImportError:
-    from email.utils import formatdate
-
 # urllib imports
 try:
     from urllib import quote_plus
