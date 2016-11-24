@@ -655,7 +655,7 @@ paths.
    `sslkey.xml`_ for details on how to change the key type and size.)
 
 #. Similarly, create `sslcert.xml`_ in
-   ``Cfg/etc/pki/tls/certs/localhost.cfg/``, containing the following:
+   ``Cfg/etc/pki/tls/certs/localhost.crt/``, containing the following:
 
    .. code-block:: xml
 
