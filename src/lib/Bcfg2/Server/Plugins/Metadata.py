@@ -21,29 +21,26 @@ from Bcfg2.Compat import MutableMapping, all, any, wraps
 # pylint: enable=W0622
 from Bcfg2.version import Bcfg2VersionInfo
 
+try:
+    from django.db import models
+    HAS_DJANGO = True
+except ImportError:
+    HAS_DJANGO = False
+
 # pylint: disable=C0103
 ClientVersions = None
 MetadataClientModel = None
 # pylint: enable=C0103
-HAS_DJANGO = False
 
 
 def load_django_models():
     """ Load models for Django after option parsing has completed """
     # pylint: disable=W0602
-    global MetadataClientModel, ClientVersions, HAS_DJANGO
+    global MetadataClientModel, ClientVersions
     # pylint: enable=W0602
 
-    try:
-        import django
-        from django.db import models
-        HAS_DJANGO = True
-    except ImportError:
-        HAS_DJANGO = False
+    if not HAS_DJANGO:
         return
-
-    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
-        django.setup()  # pylint: disable=E1101
 
     class MetadataClientModel(models.Model,  # pylint: disable=W0621
                               Bcfg2.Server.Plugin.PluginDatabaseModel):
