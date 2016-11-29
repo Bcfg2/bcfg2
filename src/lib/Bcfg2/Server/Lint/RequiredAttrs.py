@@ -47,70 +47,118 @@ def is_device_mode(val):
     return re.match(r'^\d+$', val)
 
 
+def is_vcs_type(val):
+    """ Return True if val is a supported vcs type handled by the
+    current client tool """
+    return (val != 'Path' and
+            hasattr(Bcfg2.Client.Tools.VCS.VCS, 'Install%s' % val))
+
+
 class RequiredAttrs(Bcfg2.Server.Lint.ServerPlugin):
     """ Verify attributes for configuration entries that cannot be
     verified with an XML schema alone. """
     def __init__(self, *args, **kwargs):
         Bcfg2.Server.Lint.ServerPlugin.__init__(self, *args, **kwargs)
-        self.required_attrs = dict(
-            Path=dict(
-                device=dict(name=is_filename,
-                            owner=is_username,
-                            group=is_username,
-                            dev_type=lambda v: v in device_map),
-                directory=dict(name=is_filename, owner=is_username,
-                               group=is_username, mode=is_octal_mode),
-                file=dict(name=is_filename, owner=is_username,
-                          group=is_username, mode=is_octal_mode,
-                          __text__=None),
-                hardlink=dict(name=is_filename, to=is_filename),
-                symlink=dict(name=is_filename),
-                ignore=dict(name=is_filename),
-                nonexistent=dict(name=is_filename),
-                permissions=dict(name=is_filename, owner=is_username,
-                                 group=is_username, mode=is_octal_mode),
-                vcs=dict(vcstype=lambda v: (v != 'Path' and
-                                            hasattr(Bcfg2.Client.Tools.VCS.VCS,
-                                                    "Install%s" % v)),
-                         revision=None, sourceurl=None)),
-            Service={"__any__": dict(name=None),
-                     "smf": dict(name=None, FMRI=None)},
-            Action={None: dict(name=None,
-                               timing=lambda v: v in ['pre', 'post', 'both'],
-                               when=lambda v: v in ['modified', 'always'],
-                               status=lambda v: v in ['ignore', 'check'],
-                               command=None)},
-            ACL=dict(
-                default=dict(scope=lambda v: v in ['user', 'group'],
-                             perms=lambda v: re.match(r'^([0-7]|[rwx\-]{0,3}',
-                                                      v)),
-                access=dict(scope=lambda v: v in ['user', 'group'],
-                            perms=lambda v: re.match(r'^([0-7]|[rwx\-]{0,3}',
-                                                     v)),
-                mask=dict(perms=lambda v: re.match(r'^([0-7]|[rwx\-]{0,3}',
-                                                   v))),
-            Package={"__any__": dict(name=None)},
-            SEBoolean={None: dict(name=None,
-                                  value=lambda v: v in ['on', 'off'])},
-            SEModule={None: dict(name=None, __text__=None)},
-            SEPort={
-                None: dict(name=lambda v: re.match(r'^\d+(-\d+)?/(tcp|udp)',
-                                                   v),
-                           selinuxtype=is_selinux_type)},
-            SEFcontext={None: dict(name=None, selinuxtype=is_selinux_type)},
-            SENode={None: dict(name=lambda v: "/" in v,
-                               selinuxtype=is_selinux_type,
-                               proto=lambda v: v in ['ipv6', 'ipv4'])},
-            SELogin={None: dict(name=is_username,
-                                selinuxuser=is_selinux_user)},
-            SEUser={None: dict(name=is_selinux_user,
-                               roles=lambda v: all(is_selinux_user(u)
-                                                   for u in " ".split(v)),
-                               prefix=None)},
-            SEInterface={None: dict(name=None, selinuxtype=is_selinux_type)},
-            SEPermissive={None: dict(name=is_selinux_type)},
-            POSIXGroup={None: dict(name=is_username)},
-            POSIXUser={None: dict(name=is_username)})
+        self.required_attrs = {
+            'Path': {
+                '__any__': {'name': is_filename},
+                'augeas': {'owner': is_username, 'group': is_username,
+                           'mode': is_octal_mode},
+                'device': {'owner': is_username, 'group': is_username,
+                           'mode': is_octal_mode,
+                           'dev_type': lambda v: v in device_map},
+                'directory': {'owner': is_username, 'group': is_username,
+                              'mode': is_octal_mode},
+                'file': {'owner': is_username, 'group': is_username,
+                         'mode': is_octal_mode, '__text__': None},
+                'hardlink': {'owner': is_username, 'group': is_username,
+                             'mode': is_octal_mode, 'to': is_filename},
+                'symlink': {},
+                'ignore': {},
+                'nonexistent': {},
+                'permissions': {'owner': is_username, 'group': is_username,
+                                'mode': is_octal_mode},
+                'vcs': {'vcstype': is_vcs_type, 'revision': None,
+                        'sourceurl': None},
+            },
+            'Service': {
+                '__any__': {'name': None},
+                'smf': {'name': None, 'FMRI': None}
+            },
+            'Action': {
+                None: {
+                    'name': None,
+                    'timing': lambda v: v in ['pre', 'post', 'both'],
+                    'when': lambda v: v in ['modified', 'always'],
+                    'status': lambda v: v in ['ignore', 'check'],
+                    'command': None,
+                },
+            },
+            'ACL': {
+                'default': {
+                    'scope': lambda v: v in ['user', 'group'],
+                    'perms': lambda v: re.match(r'^([0-7]|[rwx\-]{0,3}', v),
+                },
+                'access': {
+                    'scope': lambda v: v in ['user', 'group'],
+                    'perms': lambda v: re.match(r'^([0-7]|[rwx\-]{0,3}', v),
+                },
+                'mask': {
+                    'perms': lambda v: re.match(r'^([0-7]|[rwx\-]{0,3}', v),
+                },
+            },
+            'Package': {
+                '__any__': {'name': None},
+            },
+            'SEBoolean': {
+                None: {
+                    'name': None,
+                    'value': lambda v: v in ['on', 'off'],
+                },
+            },
+            'SEModule': {
+                None: {'name': None, '__text__': None},
+            },
+            'SEPort': {
+                None: {
+                    'name': lambda v: re.match(r'^\d+(-\d+)?/(tcp|udp)', v),
+                    'selinuxtype': is_selinux_type,
+                },
+            },
+            'SEFcontext': {
+                None: {'name': None, 'selinuxtype': is_selinux_type},
+            },
+            'SENode': {
+                None: {
+                    'name': lambda v: "/" in v,
+                    'selinuxtype': is_selinux_type,
+                    'proto': lambda v: v in ['ipv6', 'ipv4']
+                },
+            },
+            'SELogin': {
+                None: {'name': is_username, 'selinuxuser': is_selinux_user},
+            },
+            'SEUser': {
+                None: {
+                    'name': is_selinux_user,
+                    'roles': lambda v: all(is_selinux_user(u)
+                                           for u in " ".split(v)),
+                    'prefix': None,
+                },
+            },
+            'SEInterface': {
+                None: {'name': None, 'selinuxtype': is_selinux_type},
+            },
+            'SEPermissive': {
+                None: {'name': is_selinux_type},
+            },
+            'POSIXGroup': {
+                None: {'name': is_username},
+            },
+            'POSIXUser': {
+                None: {'name': is_username},
+            },
+        }
 
     def Run(self):
         self.check_packages()
