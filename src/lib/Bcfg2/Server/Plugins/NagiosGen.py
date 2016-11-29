@@ -92,17 +92,15 @@ class NagiosGen(Plugin, Generator):
         for host in host_configs:
             host_data.append(open(host, 'r').read())
 
-        group_list = []
+        used_groups = set(['default'])
         for line in "\n".join(host_data).splitlines():
             # only include those groups which are actually used
             if "hostgroup" in line:
-                group_list += line.split()[1].split(',')
-
-        group_list = list(set(group_list))
+                used_groups.update(line.split()[1].split(','))
 
         for group in group_configs:
             group_name = re.sub("(-group.cfg|.*/(?=[^/]+))", "", group)
-            if group_name in group_list:
+            if group_name in used_groups:
                 groupfile = open(group, 'r')
                 group_data.append(groupfile.read())
                 groupfile.close()
