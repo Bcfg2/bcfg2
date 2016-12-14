@@ -261,6 +261,8 @@ class POSIXUsers(Bcfg2.Client.Tools.Tool):
                           for e in entry.findall("MemberOf")]
                 if extras:
                     cmd.extend(['-G', ",".join(extras)])
+                else:
+                    cmd.extend(['-G', ''])
                 cmd.extend(['-d', entry.get('home')])
                 cmd.extend(['-s', entry.get('shell')])
                 cmd.extend(['-c', entry.get('gecos')])
