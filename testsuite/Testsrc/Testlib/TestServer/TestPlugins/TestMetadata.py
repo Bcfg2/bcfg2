@@ -304,8 +304,7 @@ class TestXMLMetadataConfig(TestXMLFileBacked):
         self.assertIsNotNone(config.basedata)
 
         reset()
-        mock_parse.side_effect = lxml.etree.XMLSyntaxError(None, None, None,
-                                                           None)
+        mock_parse.side_effect = lxml.etree.XMLSyntaxError(None, 0, 0, 0)
         config.load_xml()
         mock_parse.assert_called_with(os.path.join(config.basedir,
                                                    "clients.xml"),
