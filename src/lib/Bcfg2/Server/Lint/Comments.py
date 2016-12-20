@@ -188,7 +188,7 @@ class Comments(Bcfg2.Server.Lint.ServerPlugin):
         :type rtype: string
         """
         self.check_lines(filename,
-                         [str(el)
+                         [lxml.etree.tostring(el)
                           for el in xdata.getiterator(lxml.etree.Comment)],
                          rtype)
 
