@@ -1,7 +1,7 @@
 lxml
 nose
 mock
-sphinx
+sphinx<1.5
 pylint<0.29
 pep8
 python-daemon<2.0.0
