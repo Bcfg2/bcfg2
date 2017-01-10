@@ -7,6 +7,7 @@ import traceback
 from datetime import datetime
 from time import strptime
 from lxml import etree
+import sys
 
 import django
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
