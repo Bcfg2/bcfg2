@@ -13,4 +13,16 @@ try:
     from django.conf.urls.defaults import url, patterns
 except ImportError:
     # Django > 1.6
-    from django.conf.urls import url, patterns
+    from django.conf.urls import url
+
+    try:
+        from django.conf.urls import patterns
+    except:
+        # Django > 1.10
+        def patterns(_prefix, urls):
+            url_list = list()
+            for u in urls:
+                if isinstance(url_tuple, (list, tuple)):
+                    u = url(*u)
+                url_list.append(u)
+            return url_list
