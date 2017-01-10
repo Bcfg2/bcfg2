@@ -2,26 +2,37 @@
 The base for the original DjangoORM (DBStats)
 """
 
-from lxml import etree
-from datetime import datetime
+import difflib
 import traceback
+from datetime import datetime
 from time import strptime
-import Bcfg2.Options
-import Bcfg2.DBSettings
-from Bcfg2.Compat import md5
-from Bcfg2.Reporting.Storage.base import StorageBase, StorageError
-from Bcfg2.Server.Plugin.exceptions import PluginExecutionError
+from lxml import etree
+
 import django
-from django.core import management
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import FieldDoesNotExist
 from django.core.cache import cache
 
-#Used by GetCurrentEntry
-import difflib
-from Bcfg2.Compat import b64decode
-from Bcfg2.Reporting.models import *
+import Bcfg2.Options
+import Bcfg2.DBSettings
+from Bcfg2.Compat import b64decode, md5
 from Bcfg2.Reporting.Compat import transaction
+from Bcfg2.Reporting.Storage.base import StorageBase, StorageError
+from Bcfg2.Server.Plugin.exceptions import PluginExecutionError
+
+
+def load_django_models():
+    """ Load models for Django after option parsing has completed """
+    # pylint: disable=W0602
+    global Interaction, PackageEntry, FilePerms, PathEntry, LinkEntry, \
+        Group, Client, Bundle, TYPE_EXTRA, TYPE_BAD, TYPE_MODIFIED, \
+        FailureEntry, Performance, BaseEntry
+    # pylint: enable=W0602
+
+    from Bcfg2.Reporting.models import \
+        Interaction, PackageEntry, FilePerms, PathEntry, LinkEntry, \
+        Group, Client, Bundle, TYPE_EXTRA, TYPE_BAD, TYPE_MODIFIED, \
+        FailureEntry, Performance, BaseEntry
 
 
 def get_all_field_names(model):
@@ -42,6 +53,7 @@ class DjangoORM(StorageBase):
             type=Bcfg2.Options.Types.size,
             help='Reporting file size limit',
             default=1024 * 1024)]
+    options_parsed_hook = staticmethod(load_django_models)
 
     def _import_default(self, entry, state, entrytype=None, defaults=None,
                         mapping=None, boolean=None, xforms=None):

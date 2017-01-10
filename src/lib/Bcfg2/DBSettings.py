@@ -143,6 +143,8 @@ def finalize_django_config(opts=None, silent=False):
         setattr(module, name, value)
     try:
         django.conf.settings.configure(**settings)
+        if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
+            django.setup()  # pylint: disable=E1101
     except RuntimeError:
         if not silent:
             logger.warning("Failed to finalize Django settings: %s" %
@@ -204,7 +206,6 @@ def migrate_databases(**kwargs):
     for database in settings['DATABASES']:
         logger.debug("Migrating database %s" % (database))
         if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
-            django.setup()  # pylint: disable=E1101
             if initial_django_migration(database):
                 logger.warning(
                     "No applied django migrations found for database %s. "

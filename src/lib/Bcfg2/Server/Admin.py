@@ -1228,10 +1228,6 @@ class CLI(Bcfg2.Options.CommandRegistry):
             components=[self])
         parser.add_options(self.subcommand_options)
         parser.parse()
-        if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] >= 7:
-            # this has been introduced in django 1.7, so pylint fails with
-            # older django releases
-            django.setup()  # pylint: disable=E1101
 
     def run(self):
         """ Run bcfg2-admin """

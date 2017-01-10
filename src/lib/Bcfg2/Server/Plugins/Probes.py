@@ -15,6 +15,12 @@ import Bcfg2.Server.FileMonitor
 from Bcfg2.Logger import Debuggable
 from Bcfg2.Server.Statistics import track_statistics
 
+try:
+    from django.db import models
+    HAS_DJANGO = True
+except ImportError:
+    HAS_DJANGO = False
+
 HAS_DJANGO = False
 # pylint: disable=C0103
 ProbesDataModel = None
@@ -25,19 +31,11 @@ ProbesGroupsModel = None
 def load_django_models():
     """ Load models for Django after option parsing has completed """
     # pylint: disable=W0602
-    global ProbesDataModel, ProbesGroupsModel, HAS_DJANGO
+    global ProbesDataModel, ProbesGroupsModel
     # pylint: enable=W0602
 
-    try:
-        import django
-        from django.db import models
-        HAS_DJANGO = True
-    except ImportError:
-        HAS_DJANGO = False
+    if not HAS_DJANGO:
         return
-
-    if django.VERSION[0] == 1 and django.VERSION[1] >= 7:
-        django.setup()  # pylint: disable=E1101
 
     class ProbesDataModel(models.Model,  # pylint: disable=W0621,W0612
                           Bcfg2.Server.Plugin.PluginDatabaseModel):
