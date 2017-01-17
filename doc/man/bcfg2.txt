@@ -55,7 +55,7 @@ Options
 -b bundles        Run only the specified colon-delimited set of
                   bundles.
 -c cachefile      Cache a copy of the configuration in cachefile.
---ca-cert=cacert  Specifiy the path to the SSL CA certificate.
+--ca-cert=cacert  Specify the path to the SSL CA certificate.
 -d                Enable debugging output.
 -e                When in verbose mode, display extra entry
                   information.
