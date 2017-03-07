@@ -17,8 +17,7 @@ if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
     sudo apt-get install -y yum libaugeas0 augeas-lenses libacl1-dev libssl-dev \
         python-gamin python-selinux
 
-    pip install PyYAML pyinotify boto pylibacl Jinja2 mercurial guppy cherrypy
-    easy_install https://fedorahosted.org/released/python-augeas/python-augeas-0.4.1.tar.gz
+    pip install PyYAML pyinotify boto pylibacl Jinja2 mercurial guppy cherrypy python-augeas
 
     if [[ ${PYVER:0:1} == "2" ]]; then
         pip install cheetah m2crypto
