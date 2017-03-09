@@ -197,7 +197,8 @@ class SSLCAEntrySet(Bcfg2.Server.Plugin.EntrySet):
                 'distinguished_name': 'req_distinguished_name',
                 'req_extensions': 'v3_req',
                 'x509_extensions': 'v3_req',
-                'prompt': 'no'
+                'prompt': 'no',
+                'string_mask': 'utf8only'
             },
             'req_distinguished_name': {},
             'v3_req': {
