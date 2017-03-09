@@ -185,9 +185,8 @@ class InfoCore(cmd.Cmd, Bcfg2.Server.Core.BaseCore):
                 interactive = False
         if scriptmode:
             console = InteractiveConsole(locals())
-            for command in [c.strip() for c in open(spath).readlines()]:
-                if command:
-                    console.push(command)
+            for command in open(spath).readlines():
+                console.push(command.rstrip())
         if interactive:
             interpreters = load_interpreters()
             if self.setup['interpreter'] in interpreters:
