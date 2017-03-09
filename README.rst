@@ -1,5 +1,5 @@
 Bcfg2 - A Configuration Management System
------------------------------------------
+=========================================
 
 Bcfg2 (bee-config two) helps system administrators produce a
 consistent, reproducible, and verifiable description of their
