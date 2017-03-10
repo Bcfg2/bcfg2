@@ -667,7 +667,7 @@ sed "s@http://www.w3.org/2001/xml.xsd@file://$(pwd)/schemas/xml.xsd@" \
 # Required for EL5 and OpenSUSE
 %defattr(-,root,root,-)
 %endif
-%doc COPYRIGHT LICENSE README
+%doc COPYRIGHT LICENSE README.rst
 %{_mandir}/man1/bcfg2.1*
 %{_mandir}/man5/bcfg2.conf.5*
 %ghost %attr(600,root,root) %config(noreplace,missingok) %{_sysconfdir}/bcfg2.cert
