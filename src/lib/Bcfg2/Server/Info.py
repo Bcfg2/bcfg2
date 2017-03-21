@@ -1,5 +1,5 @@
-""" Subcommands and helpers for bcfg2-info """
 # -*- coding: utf-8 -*-
+""" Subcommands and helpers for bcfg2-info """
 
 import os
 import sys
