@@ -20,7 +20,7 @@ except ImportError:
     HAS_SPHINX = False
 
 
-TEST_SPHINX = bool(os.environ.get('TEST_SPHINX', 'yes') != 'no')
+TEST_SPHINX = bool(os.environ.get('TEST_SPHINX', 'no') != 'no')
 
 
 class DocTest(Bcfg2TestCase):
