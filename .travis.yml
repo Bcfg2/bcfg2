@@ -1,13 +1,42 @@
 sudo: false
 language: python
+
+packages: &build_deps_optional
+  - swig
+  - libxml2-utils
+  - yum
+  - libaugeas0
+  - augeas-lenses
+  - libacl1-dev
+  - libssl-dev
+
 matrix:
   include:
     - env: PYTHON=2.4 NOSE_EXCLUDE_DIRS=testsuite/Testsrc/Testlib/TestServer
+      addons:
+        apt:
+          sources: [deadsnakes]
+          packages: [python2.4, python2.4-dev]
     - env: PYTHON=2.5 NOSE_EXCLUDE_DIRS=testsuite/Testsrc/Testlib/TestServer
+      addons:
+        apt:
+          sources: [deadsnakes]
+          packages: [python2.5, python2.5-dev, libbluetooth-dev]
+
     - python: "2.6"
+    - python: "2.6"
+      env: WITH_OPTIONAL_DEPS=yes
+      addons:
+        apt:
+          packages: *build_deps_optional
+
     - python: "2.7"
     - python: "2.7_with_system_site_packages"
       env: WITH_OPTIONAL_DEPS=yes TEST_SPHINX=yes
+      addons:
+        apt:
+          packages: [*build_deps_optional, python-gamin, python-selinux]
+
 before_install:
   - testsuite/prepare-python.sh
   - if test -d "$HOME/custom-virtualenv/"; then source "$HOME/custom-virtualenv/bin/activate"; fi
@@ -18,39 +47,25 @@ script:
   - nosetests testsuite
 after_failure:
   - pip freeze
+
 branches:
   except:
     - maint-1.2
     - 1.1.0-stable
+
 notifications:
   email: chris.a.st.pierre@gmail.com
   irc:
     channels:
       - "irc.freenode.org#bcfg2"
     use_notice: true
-addons:
-  apt:
-    sources:
-      - deadsnakes
-    packages:
-      - python2.4
-      - python2.4-dev
-      - python2.5
-      - python2.5-dev
-      - swig
-      - libxml2-utils
-      - yum
-      - libaugeas0
-      - augeas-lenses
-      - libacl1-dev
-      - libssl-dev
-      - python-gamin
-      - python-selinux
+
 cache:
   directories:
     - $HOME/.cache/pip
     - $HOME/.cache/wheels
     - $HOME/.cache/xml
+
 before_cache:
   - rm -f $HOME/.cache/pip/log/debug.log
   - rm -f $HOME/.cache/xml/catalog.xml
