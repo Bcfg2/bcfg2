@@ -21,7 +21,6 @@ try:
 except ImportError:
     HAS_DJANGO = False
 
-HAS_DJANGO = False
 # pylint: disable=C0103
 ProbesDataModel = None
 ProbesGroupsModel = None
