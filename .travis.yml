@@ -29,6 +29,7 @@ matrix:
       addons:
         apt:
           packages: *build_deps_optional
+      script: nosetests --show-skipped testsuite
 
     - python: "2.7"
     - python: "2.7_with_system_site_packages"
@@ -36,6 +37,7 @@ matrix:
       addons:
         apt:
           packages: [*build_deps_optional, python-gamin, python-selinux]
+      script: nosetests --show-skipped testsuite
 
 before_install:
   - testsuite/prepare-python.sh

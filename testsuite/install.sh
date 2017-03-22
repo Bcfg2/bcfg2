@@ -20,8 +20,9 @@ else
     fi
 
     if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
-        pip_wheel PyYAML pyinotify boto pylibacl Jinja2 mercurial guppy cherrypy python-augeas
-    
+        pip_wheel PyYAML pyinotify boto pylibacl Jinja2 mercurial guppy \
+            cherrypy python-augeas nose-show-skipped
+
         if [[ ${PYVER:0:1} == "2" ]]; then
             pip_wheel cheetah m2crypto
     
