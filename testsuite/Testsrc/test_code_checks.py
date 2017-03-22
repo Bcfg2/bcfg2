@@ -79,9 +79,10 @@ no_checks = {
     "lib/Bcfg2/Server/migrations": ["*.py"],
     "lib/Bcfg2/Server/south_migrations": ["*.py"],
     }
+
 if sys.version_info < (2, 6):
-    # multiprocessing core requires py2.6
-    no_checks['lib/Bcfg2/Server'] = ['MultiprocessingCore.py']
+    # Server requires python 2.6
+    no_checks['lib/Bcfg2'] = ['Server']
 
 try:
     any

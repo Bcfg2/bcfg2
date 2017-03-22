@@ -2,8 +2,8 @@ sudo: false
 language: python
 matrix:
   include:
-    - env: PYTHON=2.4
-    - env: PYTHON=2.5
+    - env: PYTHON=2.4 NOSE_EXCLUDE_DIRS=testsuite/Testsrc/Testlib/TestServer
+    - env: PYTHON=2.5 NOSE_EXCLUDE_DIRS=testsuite/Testsrc/Testlib/TestServer
     - python: "2.6"
     - python: "2.7"
     - python: "2.7_with_system_site_packages"
