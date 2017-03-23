@@ -25,12 +25,12 @@ else
 
         if [[ ${PYVER:0:1} == "2" ]]; then
             pip_wheel cheetah m2crypto
-    
-            if [[ $PYVER != "2.7" ]]; then
-                pip_wheel 'django<1.7' 'South<0.8'
-            else
-                pip_wheel django
-            fi
+        fi
+
+        if [[ $PYVER == "2.6" ]]; then
+            pip_wheel 'django<1.7' 'South<0.8'
+        else
+            pip_wheel django
         fi
     fi
 fi
