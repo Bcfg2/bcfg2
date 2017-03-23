@@ -16,6 +16,7 @@ inst_reqs = [
     'lockfile',
     'lxml',
     'python-daemon',
+    'argparse'
 ]
 
 # Use the backported ssl module on < python2.6
