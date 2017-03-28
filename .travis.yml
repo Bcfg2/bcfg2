@@ -5,7 +5,7 @@ packages: &build_deps_optional
   - swig
   - libxml2-utils
   - yum
-  - libaugeas0
+  - libaugeas-dev
   - augeas-lenses
   - libacl1-dev
   - libssl-dev
