@@ -56,7 +56,6 @@ branches:
     - 1.1.0-stable
 
 notifications:
-  email: chris.a.st.pierre@gmail.com
   irc:
     channels:
       - "irc.freenode.org#bcfg2"
