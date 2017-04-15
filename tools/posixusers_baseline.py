@@ -66,8 +66,8 @@ def main():
                                (entry.get("name"), data[3]))
                 entry.set("group", str(data[3]))
             for group in users.user_supplementary_groups(entry):
-                memberof = lxml.etree.SubElement(entry, "MemberOf",
-                                                 group=group[0])
+                memberof = lxml.etree.SubElement(entry, "MemberOf")
+                memberof.text = group[0]
 
         entry.tag = "Bound" + entry.tag
         baseline.append(entry)
