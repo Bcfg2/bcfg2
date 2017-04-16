@@ -9,7 +9,7 @@ import Bcfg2.Server.FileMonitor
 class DecisionFile(Bcfg2.Server.Plugin.StructFile):
     """ Representation of a Decisions XML file """
 
-    def get_decisions(self, metadata):
+    def get_decision(self, metadata):
         """ Get a list of whitelist or blacklist tuples """
         if self.xdata is None:
             # no white/blacklist has been read yet, probably because
