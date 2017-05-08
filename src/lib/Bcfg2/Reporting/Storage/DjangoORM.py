@@ -27,13 +27,13 @@ def load_django_models():
     # pylint: disable=W0602
     global Interaction, PackageEntry, FilePerms, PathEntry, LinkEntry, \
         Group, Client, Bundle, TYPE_EXTRA, TYPE_BAD, TYPE_MODIFIED, \
-        FailureEntry, Performance, BaseEntry
+        FailureEntry, Performance, BaseEntry, ServiceEntry
     # pylint: enable=W0602
 
     from Bcfg2.Reporting.models import \
         Interaction, PackageEntry, FilePerms, PathEntry, LinkEntry, \
         Group, Client, Bundle, TYPE_EXTRA, TYPE_BAD, TYPE_MODIFIED, \
-        FailureEntry, Performance, BaseEntry
+        FailureEntry, Performance, BaseEntry, ServiceEntry
 
 
 def get_all_field_names(model):
