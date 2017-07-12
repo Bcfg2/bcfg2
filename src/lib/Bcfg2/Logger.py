@@ -1,14 +1,15 @@
 """Bcfg2 logging support"""
-
+import os
 import copy
-import fcntl
 import logging
 import logging.handlers
 import math
 import socket
 import struct
 import sys
-import termios
+if os.name != 'nt':
+    import fcntl
+    import termios
 import Bcfg2.Options
 
 logging.raiseExceptions = 0

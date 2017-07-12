@@ -1,8 +1,6 @@
 """ Miscellaneous useful utility functions, classes, etc., that are
 used by both client and server.  Stuff that doesn't fit anywhere
 else. """
-
-import fcntl
 import logging
 import os
 import re
@@ -11,6 +9,8 @@ import shlex
 import sys
 import subprocess
 import threading
+if os.name != 'nt':
+    import fcntl
 from Bcfg2.Compat import input, any  # pylint: disable=W0622
 
 
@@ -86,18 +86,29 @@ class PackedDigitRange(object):  # pylint: disable=E0012,R0924
         return "[%s]" % self.str
 
 
-def locked(fd):
+def locked(file):
     """ Acquire a lock on a file.
 
-    :param fd: The file descriptor to lock
-    :type fd: int
+    :param file: The path to the lockfile
+    :type fd: string
     :returns: bool - True if the file is already locked, False
               otherwise """
-    try:
-        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        return True
-    return False
+    if os.name == 'nt':
+        if (os.path.isfile(file)):
+            return True
+        try:
+            lockfile = open(file, 'w')
+            lockfile.write(str(os.getpid()))
+        except IOError:
+            return True
+        return False
+    else:
+        lockfile = open(file, 'w')
+        try:
+            fcntl.lockf(lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except IOError:
+            return True
+        return False
 
 
 class ExecutorResult(object):
