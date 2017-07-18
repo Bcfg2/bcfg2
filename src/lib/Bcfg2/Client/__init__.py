@@ -201,7 +201,8 @@ class Client(object):
         try:
             fileending = ''
             if os.name == 'nt':
-                (interpreter, fileending) = probe.attrib.get('interpreter').split('*')
+                (interpreter, fileending) = 
+                                    probe.attrib.get('interpreter').split('*')
             scripthandle, scriptname = tempfile.mkstemp(suffix = fileending)
             if sys.hexversion >= 0x03000000:
                 script = os.fdopen(scripthandle, 'w',

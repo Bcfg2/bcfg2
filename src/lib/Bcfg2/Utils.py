@@ -86,24 +86,24 @@ class PackedDigitRange(object):  # pylint: disable=E0012,R0924
         return "[%s]" % self.str
 
 
-def locked(file):
+def locked(file_path):
     """ Acquire a lock on a file.
 
-    :param file: The path to the lockfile
+    :param file_path: The path to the lockfile
     :type fd: string
     :returns: bool - True if the file is already locked, False
               otherwise """
     if os.name == 'nt':
-        if (os.path.isfile(file)):
+        if (os.path.isfile(file_path)):
             return True
         try:
-            lockfile = open(file, 'w')
+            lockfile = open(file_path, 'w')
             lockfile.write(str(os.getpid()))
         except IOError:
             return True
         return False
     else:
-        lockfile = open(file, 'w')
+        lockfile = open(file_path, 'w')
         try:
             fcntl.lockf(lockfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except IOError:

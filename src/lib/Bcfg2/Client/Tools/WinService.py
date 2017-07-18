@@ -1,7 +1,5 @@
 """WinService support for Bcfg2."""
 
-import glob
-import re
 import subprocess
 
 import Bcfg2.Client.Tools
@@ -18,16 +16,10 @@ class WinService(Bcfg2.Client.Tools.SvcTool):
         return "powershell.exe %s-Service %s" % (action, service.get('name'))
 
     def VerifyService(self, entry, _):
-        """Verify Service status for entry
-        """
+        """Verify Service status for entry"""
 
         if entry.get('status') == 'ignore':
             return True
-
-        if entry.get('parameters'):
-            params = entry.get('parameters')
-        else:
-            params = ''
 
         try:
             output = self.cmd.run('powershell.exe (Get-Service %s).Status' %
@@ -40,7 +32,6 @@ class WinService(Bcfg2.Client.Tools.SvcTool):
                               entry.get('name'))
             return False
 
-        
         if output is None:
             # service does not exist
             entry.set('current_status', 'off')
@@ -68,8 +59,11 @@ class WinService(Bcfg2.Client.Tools.SvcTool):
             cmd = "start"
         elif entry.get('status') == 'off':
             cmd = "stop"
-        return self.cmd.run(self.get_svc_command(entry, cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=False).success
-        
+        return self.cmd.run(self.get_svc_command(entry, cmd),
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE, 
+                            close_fds=False).success
+
     def restart_service(self, service):
         """Restart a service.
 
@@ -80,7 +74,10 @@ class WinService(Bcfg2.Client.Tools.SvcTool):
         """
         self.logger.debug('Restarting service %s' % service.get('name'))
         restart_target = service.get('target', 'restart')
-        return self.cmd.run(self.get_svc_command(service, restart_target), stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=False)
+        return self.cmd.run(self.get_svc_command(service, restart_target),
+                            stdout=subprocess.PIPE, 
+                            stderr=subprocess.PIPE, 
+                            close_fds=False)
 
     def FindExtra(self):
         """Locate extra Windows services."""
