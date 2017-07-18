@@ -5,7 +5,7 @@ import stat
 import tempfile
 import Bcfg2.Options
 import Bcfg2.Client.Tools
-
+from Bcfg2.Compat import unicode, b64encode, b64decode
 
 class WinFS(Bcfg2.Client.Tools.Tool):
     """Windows File support code."""
