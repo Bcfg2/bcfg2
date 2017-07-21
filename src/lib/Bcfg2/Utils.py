@@ -90,27 +90,30 @@ class Flock(object):
     '''Class to handle creating and removing (pid) lockfiles'''
 
     # custom exceptions
-    class FileLockAcquisitionError(Exception): pass
-    class FileLockReleaseError(Exception): pass
+    class FileLockAcquisitionError(Exception):
+        pass
+
+    class FileLockReleaseError(Exception):
+        pass
 
     # convenience callables for formatting
-    addr = lambda self: '%d' % (self.pid)
-    fddr = lambda self: '<%s %s>' % (self.path, self.addr())
-    pddr = lambda self, lock: '<%s %s>' % (self.path, lock['pid'])
+    def addr(self): return lambda self: '%d' % (self.pid)
+    def fddr(self): return lambda self: '<%s %s>' % (self.path, self.addr())
+    def pddr(self): return lambda self, lock: '<%s %s>' % (self.path, lock['pid'])
 
     def __init__(self, path, debug=None):
-        self.pid   = os.getpid()
-        self.path  = path
+        self.pid = os.getpid()
+        self.path = path
         self.debug = debug
 
     def acquire(self):
-        '''Acquire a lock, returning self if successful, False otherwise'''
+        """Acquire a lock, returning self if successful, False otherwise"""
         if self.islocked():
             if self.debug:
                 lock = self._readlock()
-            raise Exception ("Previous lock detected: %s" % self.pddr(lock))
+            raise Exception("Previous lock detected: %s" % self.pddr(lock))
         try:
-	    fh = open(self.path, 'w')
+            fh = open(self.path, 'w')
             fh.write(self.addr())
             fh.close()
             if self.debug:
@@ -121,10 +124,10 @@ class Flock(object):
                     os.unlink(self.path)
                 except:
                     pass
-            raise (self.FileLockAcquisitionError ("Error acquiring lock '%s': %s" % (self.fddr(), e)))
+            raise (self.FileLockAcquisitionError("Error acquiring lock '%s': %s" % (self.fddr(), e)))
 
     def release(self):
-        '''Release lock, returning self'''
+        """Release lock, returning self"""
         if self.ownlock():
             try:
                 os.unlink(self.path)
@@ -133,18 +136,17 @@ class Flock(object):
             except Exception as e:
                 raise (self.FileLockReleaseError ("Error releasing lock: '%s': %s" % (self.fddr(), e)))
 
-
     def _readlock(self):
-        '''Internal method to read lock info'''
+        """Internal method to read lock info"""
         lock = {}
-        fh   = open(self.path)
+        fh = open(self.path)
         data = fh.read().rstrip()
         fh.close()
         lock['pid'] = data
         return lock
 
     def islocked(self):
-        '''Check if we already have a lock'''
+        """Check if we already have a lock"""
         try:
             lock = self._readlock()
             return (self.fddr() != self.pddr(lock))
@@ -153,12 +155,12 @@ class Flock(object):
             return False
 
     def ownlock(self):
-        '''Check if we own the lock'''
+        """Check if we own the lock"""
         lock = self._readlock()
         return (self.fddr() == self.pddr(lock))
 
     def __del__(self):
-        '''Magic method to clean up lock when program exits'''
+        """Magic method to clean up lock when program exits"""
         self.release()
 
 
@@ -327,7 +329,7 @@ def locked(fd):
     :param fd: The file descriptor to lock
     :type fd: int
     :returns: bool - True if the file is already locked, False
-              otherwise """
+    otherwise """
     try:
         fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except IOError:

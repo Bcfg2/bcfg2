@@ -199,8 +199,8 @@ class Client(object):
             fileending = ''
             if os.name == 'nt':
                 (interpreter, fileending) = \
-                                    probe.attrib.get('interpreter').split('*')
-            scripthandle, scriptname = tempfile.mkstemp(suffix = fileending)
+                    probe.attrib.get('interpreter').split('*')
+            (scripthandle, scriptname) = tempfile.mkstemp(suffix = fileending)
             if sys.hexversion >= 0x03000000:
                 script = os.fdopen(scripthandle, 'w',
                                    encoding=Bcfg2.Options.setup.encoding)
@@ -216,9 +216,9 @@ class Client(object):
                 script.close()
                 if os.name == 'nt':
                     rv = self.cmd.run([interpreter, scriptname],
-                                         stdout=subprocess.PIPE,
-                                         stderr=subprocess.PIPE,
-                                         close_fds=False)
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        close_fds=False)
                 else:
                     os.chmod(scriptname,
                              stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |

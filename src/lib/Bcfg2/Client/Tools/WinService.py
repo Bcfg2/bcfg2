@@ -61,7 +61,7 @@ class WinService(Bcfg2.Client.Tools.SvcTool):
             cmd = "stop"
         return self.cmd.run(self.get_svc_command(entry, cmd),
                             stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE, 
+                            stderr=subprocess.PIPE,
                             close_fds=False).success
 
     def restart_service(self, service):
@@ -75,18 +75,18 @@ class WinService(Bcfg2.Client.Tools.SvcTool):
         self.logger.debug('Restarting service %s' % service.get('name'))
         restart_target = service.get('target', 'restart')
         return self.cmd.run(self.get_svc_command(service, restart_target),
-                            stdout=subprocess.PIPE, 
-                            stderr=subprocess.PIPE, 
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
                             close_fds=False)
 
     def FindExtra(self):
         """Locate extra Windows services."""
         list = self.cmd.run("powershell.exe "
-                        "\"Get-WMIObject win32_service -Filter "
-                        "\\\"StartMode = 'auto'\\\""
-                        " | Format-Table Name -HideTableHeaders\"",
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.PIPE, 
-                        close_fds=False).stdout.splitlines()
+            "\"Get-WMIObject win32_service -Filter "
+            "\\\"StartMode = 'auto'\\\""
+            " | Format-Table Name -HideTableHeaders\"",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            close_fds=False).stdout.splitlines()
         return [Bcfg2.Client.XML.Element('Service', name=name, type='windows')
                 for name in list]

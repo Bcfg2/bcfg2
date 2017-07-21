@@ -7,6 +7,7 @@ import Bcfg2.Options
 import Bcfg2.Client.Tools
 from Bcfg2.Compat import unicode, b64encode, b64decode
 
+
 class WinFS(Bcfg2.Client.Tools.Tool):
     """Windows File support code."""
     name = 'WinFS'
@@ -18,12 +19,12 @@ class WinFS(Bcfg2.Client.Tools.Tool):
         self.__req__['Path']['file'] = ['name', 'mode', 'owner', 'group']
 
     def _getFilePath(self, entry):
-    """Evaluates the enviroment Variables and returns the file path"""
+        """Evaluates the enviroment Variables and returns the file path"""
         file_path = os.path.expandvars(os.path.normpath(entry.get('name')[1:]))
-        if(not file_path[1] == ':'):
+        if not file_path[1] == ':':
             self.logger.info(
-            "Skipping \"%s\" because it doesnt look like a Windows Path" % 
-            file_path)
+                "Skipping \"%s\" because it doesnt look like a Windows Path" %
+                file_path)
             return False
         return file_path
 
@@ -114,7 +115,7 @@ class WinFS(Bcfg2.Client.Tools.Tool):
         except OSError:
             err = sys.exc_info()[1]
             self.logger.error(
-            "Windows: Failed to create temp file in %s: %s" % (file_path, err))
+                "Windows: Failed to create temp file in %s: %s" % (file_path, err))
             return False
         try:
             if isinstance(filedata, str) and str != unicode:
@@ -125,9 +126,9 @@ class WinFS(Bcfg2.Client.Tools.Tool):
         except (OSError, IOError):
             err = sys.exc_info()[1]
             self.logger.error(
-                        "Windows: Failed to open temp file %s for writing "
-                        "%s: %s" %
-                        (newfile, file_path, err))
+                "Windows: Failed to open temp file %s for writing "
+                "%s: %s" %
+                (newfile, file_path, err))
             return False
         return newfile
 
@@ -159,15 +160,15 @@ class WinFS(Bcfg2.Client.Tools.Tool):
         except OSError:
             err = sys.exc_info()[1]
             self.logger.error(
-                        "Windows: Failed to rename temp file %s to %s: %s"
-                        % (newfile, file_path, err))
+                "Windows: Failed to rename temp file %s to %s: %s"
+                % (newfile, file_path, err))
             try:
                 os.unlink(newfile)
             except OSError:
                 err = sys.exc_info()[1]
                 self.logger.error(
-                            "Windows: Could not remove temp file %s: %s" %
-                            (newfile, err))
+                    "Windows: Could not remove temp file %s: %s" %
+                    (newfile, err))
             return False
 
     def _exists(self, file_path):
