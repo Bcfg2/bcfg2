@@ -91,19 +91,24 @@ class Flock(object):
 
     # custom exceptions
     class FileLockAcquisitionError(Exception):
+        """Exception if we fail to acquire the lock"""
         pass
 
     class FileLockReleaseError(Exception):
+        """Exception if we fail to release the lock"""
         pass
 
     # convenience callables for formatting
     def addr(self):
+        """Lambda which returns the pid"""
         return lambda addr: '%d' % (self.pid)
 
     def fddr(self):
+        """Lambda which returns the path and the pid"""
         return lambda fddr: '<%s %s>' % (self.path, self.addr())
 
     def pddr(self, lock):
+        """Lambda which returns the path and the pid of a specific lock"""
         return lambda pddr: '<%s %s>' % (self.path, lock['pid'])
 
     def __init__(self, path, debug=None):
@@ -123,13 +128,15 @@ class Flock(object):
             file_handle.close()
             if self.debug:
                 print 'Acquired lock: %s' % self.fddr()
-        except Exception as e:
+        except Exception as exception:
             if os.path.isfile(self.path):
                 try:
                     os.unlink(self.path)
                 except:
                     pass
-            raise (self.FileLockAcquisitionError("Error acquiring lock '%s': %s" % (self.fddr(), e)))
+            raise (self.FileLockAcquisitionError(
+                        "Error acquiring lock '%s': %s" % (self.fddr(),
+                                                           exception)))
 
     def release(self):
         """Release lock, returning self"""
@@ -138,15 +145,17 @@ class Flock(object):
                 os.unlink(self.path)
                 if self.debug:
                     print 'Released lock: %s' % self.fddr()
-            except Exception as e:
-                raise(self.FileLockReleaseError ("Error releasing lock: '%s': %s" % (self.fddr(), e)))
+            except Exception as exception:
+                raise(self.FileLockReleaseError(
+                        "Error releasing lock: '%s': %s" % (self.fddr(),
+                                                            exception)))
 
     def _readlock(self):
         """Internal method to read lock info"""
         lock = {}
-        fh = open(self.path)
-        data = fh.read().rstrip()
-        fh.close()
+        file_handle = open(self.path)
+        data = file_handle.read().rstrip()
+        file_handle.close()
         lock['pid'] = data
         return lock
 

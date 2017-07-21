@@ -81,12 +81,12 @@ class WinService(Bcfg2.Client.Tools.SvcTool):
 
     def FindExtra(self):
         """Locate extra Windows services."""
-        list = self.cmd.run("powershell.exe "
-                "\"Get-WMIObject win32_service -Filter "
-                "\\\"StartMode = 'auto'\\\""
-                " | Format-Table Name -HideTableHeaders\"",
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                close_fds=False).stdout.splitlines()
+        services = self.cmd.run("powershell.exe "
+                            "\"Get-WMIObject win32_service -Filter "
+                            "\\\"StartMode = 'auto'\\\""
+                            " | Format-Table Name -HideTableHeaders\"",
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE,
+                            close_fds=False).stdout.splitlines()
         return [Bcfg2.Client.XML.Element('Service', name=name, type='windows')
-                for name in list]
+                for name in services]

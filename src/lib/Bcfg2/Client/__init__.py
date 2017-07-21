@@ -216,9 +216,9 @@ class Client(object):
                 script.close()
                 if os.name == 'nt':
                     rv = self.cmd.run([interpreter, scriptname],
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            close_fds=False)
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE,
+                                      close_fds=False)
                 else:
                     os.chmod(scriptname,
                              stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
