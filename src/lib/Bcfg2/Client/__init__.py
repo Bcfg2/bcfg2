@@ -12,14 +12,11 @@ import tempfile
 import copy
 import Bcfg2.Logger
 import Bcfg2.Options
-if os.name == 'posix':
-    import fcntl
-elif os.name == 'nt':
-    import subprocess
+import subprocess
 from Bcfg2.Client import XML
 from Bcfg2.Client import Proxy
 from Bcfg2.Client import Tools
-from Bcfg2.Utils import locked, Executor, safe_input
+from Bcfg2.Utils import Flock, Executor, safe_input
 from Bcfg2.version import __version__
 # pylint: disable=W0622
 from Bcfg2.Compat import xmlrpclib, walk_packages, any, all, cmp
@@ -161,7 +158,7 @@ class Client(object):
         self.tools = []
         self.times = dict()
         self.times['initialization'] = time.time()
-
+        self.lock = Flock(Bcfg2.Options.setup.lockfile)
         if Bcfg2.Options.setup.bundle_quick:
             if (not Bcfg2.Options.setup.only_bundles and
                     not Bcfg2.Options.setup.except_bundles):
@@ -201,7 +198,7 @@ class Client(object):
         try:
             fileending = ''
             if os.name == 'nt':
-                (interpreter, fileending) = 
+                (interpreter, fileending) = \
                                     probe.attrib.get('interpreter').split('*')
             scripthandle, scriptname = tempfile.mkstemp(suffix = fileending)
             if sys.hexversion >= 0x03000000:
@@ -422,10 +419,12 @@ class Client(object):
         if not Bcfg2.Options.setup.no_lock:
             # check lock here
             try:
-                if locked(Bcfg2.Options.setup.lockfile):
+                if self.lock.islocked() and not self.lock.ownlock():
                     self.fatal_error("Another instance of Bcfg2 is running. "
                                      "If you want to bypass the check, run "
                                      "with the -O/--no-lock option")
+                else:
+                    self.lock.acquire()
             except SystemExit:
                 raise
             except:
@@ -435,20 +434,6 @@ class Client(object):
 
         # execute the configuration
         self.Execute()
-
-        if not Bcfg2.Options.setup.no_lock:
-            # unlock here
-            if os.path.isfile(Bcfg2.Options.setup.lockfile):
-                try:
-                    if os.name == 'nt':
-                        os.unlink(Bcfg2.Options.setup.lockfile)
-                    else:
-                        lockfile = open(file, 'w')
-                        fcntl.lockf(lockfile.fileno(), fcntl.LOCK_UN)
-                        os.remove(Bcfg2.Options.setup.lockfile)
-                except OSError:
-                    self.logger.error("Failed to unlock lockfile %s" %
-                                      lockfile.name)
 
         if (not Bcfg2.Options.setup.file and
                 not Bcfg2.Options.setup.bundle_quick):
