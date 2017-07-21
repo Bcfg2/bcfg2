@@ -97,9 +97,14 @@ class Flock(object):
         pass
 
     # convenience callables for formatting
-    def addr(self): return lambda self: '%d' % (self.pid)
-    def fddr(self): return lambda self: '<%s %s>' % (self.path, self.addr())
-    def pddr(self): return lambda self, lock: '<%s %s>' % (self.path, lock['pid'])
+    def addr(self):
+        return lambda addr: '%d' % (self.pid)
+
+    def fddr(self):
+        return lambda fddr: '<%s %s>' % (self.path, self.addr())
+
+    def pddr(self, lock):
+        return lambda pddr: '<%s %s>' % (self.path, lock['pid'])
 
     def __init__(self, path, debug=None):
         self.pid = os.getpid()
@@ -113,9 +118,9 @@ class Flock(object):
                 lock = self._readlock()
             raise Exception("Previous lock detected: %s" % self.pddr(lock))
         try:
-            fh = open(self.path, 'w')
-            fh.write(self.addr())
-            fh.close()
+            file_handle = open(self.path, 'w')
+            file_handle.write(self.addr())
+            file_handle.close()
             if self.debug:
                 print 'Acquired lock: %s' % self.fddr()
         except Exception as e:
@@ -134,7 +139,7 @@ class Flock(object):
                 if self.debug:
                     print 'Released lock: %s' % self.fddr()
             except Exception as e:
-                raise (self.FileLockReleaseError ("Error releasing lock: '%s': %s" % (self.fddr(), e)))
+                raise(self.FileLockReleaseError ("Error releasing lock: '%s': %s" % (self.fddr(), e)))
 
     def _readlock(self):
         """Internal method to read lock info"""
@@ -149,9 +154,8 @@ class Flock(object):
         """Check if we already have a lock"""
         try:
             lock = self._readlock()
-            return (self.fddr() != self.pddr(lock))
-        except Exception as e:
-            print("Excepted {}".format(e))
+            return self.fddr() != self.pddr(lock)
+        except:
             return False
 
     def ownlock(self):
