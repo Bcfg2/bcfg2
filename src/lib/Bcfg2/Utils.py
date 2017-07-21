@@ -322,6 +322,19 @@ class Executor(object):
                 timer.cancel()
 
 
+def locked(fd):
+    """ Acquire a lock on a file.
+    :param fd: The file descriptor to lock
+    :type fd: int
+    :returns: bool - True if the file is already locked, False
+              otherwise """
+    try:
+        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        return True
+    return False
+
+
 def list2range(lst):
     ''' convert a list of integers to a set of human-readable ranges.  e.g.:
 
