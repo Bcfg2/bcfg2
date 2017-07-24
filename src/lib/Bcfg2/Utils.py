@@ -9,9 +9,7 @@ import shlex
 import sys
 import subprocess
 import threading
-if os.name != 'nt':
-    import fcntl
-from Bcfg2.Compat import input, any  # pylint: disable=W0622
+from Bcfg2.Compat import input, any, fcntl  # pylint: disable=W0622
 
 
 class ClassName(object):

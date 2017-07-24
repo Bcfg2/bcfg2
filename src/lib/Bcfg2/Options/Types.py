@@ -3,10 +3,7 @@ with the :class:`Bcfg2.Options.Option` constructor. """
 
 import os
 import re
-if os.name != 'nt':
-    import pwd
-    import grp
-from Bcfg2.Compat import literal_eval
+from Bcfg2.Compat import literal_eval, pwd, grp
 
 _COMMA_SPLIT_RE = re.compile(r'\s*,\s*')
 

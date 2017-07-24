@@ -7,9 +7,7 @@ import math
 import socket
 import struct
 import sys
-if os.name != 'nt':
-    import fcntl
-    import termios
+from Bcfg2.Compat import fcntl, termios
 import Bcfg2.Options
 
 logging.raiseExceptions = 0
