@@ -1,5 +1,4 @@
 """Bcfg2 logging support"""
-import os
 import copy
 import logging
 import logging.handlers

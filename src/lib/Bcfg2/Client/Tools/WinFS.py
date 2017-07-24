@@ -5,7 +5,7 @@ import stat
 import tempfile
 import Bcfg2.Options
 import Bcfg2.Client.Tools
-from Bcfg2.Compat import unicode, b64encode, b64decode
+from Bcfg2.Compat import b64decode
 
 
 class WinFS(Bcfg2.Client.Tools.Tool):
@@ -115,7 +115,8 @@ class WinFS(Bcfg2.Client.Tools.Tool):
         except OSError:
             err = sys.exc_info()[1]
             self.logger.error(
-                "Windows: Failed to create temp file in %s: %s" % (file_path, err))
+                "Windows: Failed to create temp file in %s: %s" %
+                (file_path, err))
             return False
         try:
             if isinstance(filedata, str) and str != unicode:
