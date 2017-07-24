@@ -100,16 +100,16 @@ class Flock(object):
 
     # convenience callables for formatting
     def addr(self):
-        """Lambda which returns the pid"""
-        return lambda addr: '%d' % (self.pid)
+        """Function which returns the pid"""
+        return '%d' % (self.pid)
 
     def fddr(self):
-        """Lambda which returns the path and the pid"""
-        return lambda fddr: '<%s %s>' % (self.path, self.addr())
+        """Function which returns the path and the pid"""
+        return '<%s %s>' % (self.path, self.addr())
 
     def pddr(self, lock):
-        """Lambda which returns the path and the pid of a specific lock"""
-        return lambda pddr: '<%s %s>' % (self.path, lock['pid'])
+        """Function which returns the path and the pid of a specific lock"""
+        return '<%s %s>' % (self.path, lock['pid'])
 
     def __init__(self, path, debug=None):
         self.pid = os.getpid()
