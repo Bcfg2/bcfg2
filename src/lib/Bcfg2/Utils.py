@@ -126,15 +126,15 @@ class Flock(object):
             file_handle.close()
             if self.debug:
                 print 'Acquired lock: %s' % self.fddr()
-        except Exception as exception:
+        except IOError as exception:
             if os.path.isfile(self.path):
                 try:
                     os.unlink(self.path)
                 except:
                     pass
             raise (self.FileLockAcquisitionError(
-                   "Error acquiring lock '%s': %s" % (self.fddr(),
-                                                      exception)))
+                        "Error acquiring lock '%s': %s" % (self.fddr(),
+                                                           exception)))
 
     def release(self):
         """Release lock, returning self"""
@@ -145,8 +145,8 @@ class Flock(object):
                     print 'Released lock: %s' % self.fddr()
             except Exception as exception:
                 raise(self.FileLockReleaseError(
-                      "Error releasing lock: '%s': %s" % (self.fddr(),
-                                                          exception)))
+                        "Error releasing lock: '%s': %s" % (self.fddr(),
+                                                            exception)))
 
     def _readlock(self):
         """Internal method to read lock info"""
@@ -162,7 +162,7 @@ class Flock(object):
         try:
             lock = self._readlock()
             return self.fddr() != self.pddr(lock)
-        except:
+        except IOError:
             return False
 
     def ownlock(self):
