@@ -134,7 +134,7 @@ class Flock(object):
                     pass
             raise (self.FileLockAcquisitionError(
                    "Error acquiring lock '%s': %s" % (self.fddr(),
-                   exception)))
+                                                      exception)))
 
     def release(self):
         """Release lock, returning self"""
@@ -146,7 +146,7 @@ class Flock(object):
             except Exception as exception:
                 raise(self.FileLockReleaseError(
                       "Error releasing lock: '%s': %s" % (self.fddr(),
-                      exception)))
+                                                          exception)))
 
     def _readlock(self):
         """Internal method to read lock info"""
