@@ -13,7 +13,7 @@ class WinAction(Bcfg2.Client.Tools.Tool):
 
     def RunAction(self, entry):
         """This method handles command execution and status return."""
-        shell = True
+        shell = False
         shell_string = ''
         if entry.get('shell', 'false') == 'true':
             shell = True
@@ -27,7 +27,7 @@ class WinAction(Bcfg2.Client.Tools.Tool):
                 ans = safe_input(prompt)
                 if ans not in ['y', 'Y']:
                     return False
-            if False:
+            if Bcfg2.Options.setup.service_mode == 'build':
                 if entry.get('build', 'true') == 'false':
                     self.logger.debug("Action: Deferring execution of %s due "
                                       "to build mode" % entry.get('command'))
