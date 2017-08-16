@@ -20,7 +20,7 @@ else
     fi
 
     if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
-        pip_wheel PyYAML pyinotify boto pylibacl Jinja2 mercurial guppy \
+        pip_wheel PyYAML pyinotify boto pylibacl Jinja2 guppy \
             cherrypy python-augeas nose-show-skipped
 
         if [[ ${PYVER:0:1} == "2" ]]; then
@@ -28,9 +28,9 @@ else
         fi
 
         if [[ $PYVER == "2.6" ]]; then
-            pip_wheel 'django<1.7' 'South<0.8'
+            pip_wheel 'django<1.7' 'South<0.8' 'mercurial<4.3'
         else
-            pip_wheel django
+            pip_wheel django mercurial
         fi
     fi
 fi
