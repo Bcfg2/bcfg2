@@ -13,10 +13,11 @@ else
         pip install --no-index --find-links="$HOME/.cache/wheels/" "$@"
     }
 
-    pip_wheel -r testsuite/requirements.txt
-
     if [[ $PYVER == "2.6" ]]; then
+        pip_wheel -r testsuite/requirements-26.txt
         pip_wheel unittest2
+    else
+        pip_wheel -r testsuite/requirements.txt
     fi
 
     if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
