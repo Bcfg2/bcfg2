@@ -2,6 +2,7 @@
 
 # install script for Travis-CI
 PYVER=$(python -c 'import sys;print(".".join(str(v) for v in sys.version_info[0:2]))')
+SITE_PACKAGES=$(python -c 'from distutils.sysconfig import get_python_lib; print(get_python_lib())')
 
 if [[ ${PYVER:0:1} == "2" && $PYVER != "2.7" && $PYVER != "2.6" ]]; then
     pip install -r testsuite/requirements-legacy.txt
@@ -44,6 +45,15 @@ else
             pip_wheel django mercurial cheetah3
         fi
     fi
+fi
+
+# Use system site-packages and pymodules
+if [[ "$WITH_SYSTEM_SITE_PACKAGES" == "yes" ]]; then
+     cat <<EOF > "$SITE_PACKAGES/system-packages.pth"
+/usr/lib/python$PYVER/site-packages/
+/usr/lib/python$PYVER/dist-packages/
+/usr/lib/pymodules/python$PYVER/
+EOF
 fi
 
 # Setup the local xml schema cache

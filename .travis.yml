@@ -32,8 +32,8 @@ matrix:
           packages: *build_deps_optional
 
     - python: "2.7"
-    - python: "2.7_with_system_site_packages"
-      env: WITH_OPTIONAL_DEPS=yes TEST_SPHINX=yes
+    - python: "2.7"
+      env: WITH_OPTIONAL_DEPS=yes WITH_SYSTEM_SITE_PACKAGES=yes TEST_SPHINX=yes
       addons:
         apt:
           packages: [*build_deps_optional, python-gamin, python-selinux]
