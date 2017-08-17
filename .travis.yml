@@ -39,6 +39,18 @@ matrix:
           packages: [*build_deps_optional, python-gamin, python-selinux]
       script: nosetests --show-skipped testsuite
 
+    - python: "3.5"
+      env: WITH_OPTIONAL_DEPS=yes
+      addons:
+        apt:
+          packages: *build_deps_optional
+      script: nosetests --show-skipped testsuite
+
+  allow_failures:
+    - python: "3.5"
+
+  fast_finish: true
+
 before_install:
   - testsuite/prepare-python.sh
   - if test -d "$HOME/custom-virtualenv/"; then source "$HOME/custom-virtualenv/bin/activate"; fi
