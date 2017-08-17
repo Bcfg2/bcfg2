@@ -8,7 +8,7 @@ except ImportError:
 def ssl_transform(module):
     if module.name == 'ssl':
         for proto in ('SSLv23', 'TLSv1'):
-            module.locals['PROTOCOL_%s' % proto] = [node_classes.Const()]
+            module.locals['PROTOCOL_%s' % proto] = [node_classes.Const(0)]
 
 def register(linter):
     if PYLINT == 0:

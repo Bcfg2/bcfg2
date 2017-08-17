@@ -1,5 +1,10 @@
 from pylint.__pkginfo__ import version as pylint_version
-from logilab.astng.__pkginfo__ import version as astng_version
+
+try:
+    from logilab.astng.__pkginfo__ import version as astng_version
+except ImportError:
+    from astroid.__pkginfo__ import version as astng_version
+
 
 def register(linter):
     if pylint_version < '0.24.0':
