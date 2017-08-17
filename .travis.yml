@@ -29,7 +29,6 @@ matrix:
       addons:
         apt:
           packages: *build_deps_optional
-      script: nosetests --show-skipped testsuite
 
     - python: "2.7"
     - python: "2.7_with_system_site_packages"
@@ -37,14 +36,12 @@ matrix:
       addons:
         apt:
           packages: [*build_deps_optional, python-gamin, python-selinux]
-      script: nosetests --show-skipped testsuite
 
     - python: "3.5"
       env: WITH_OPTIONAL_DEPS=yes
       addons:
         apt:
           packages: *build_deps_optional
-      script: nosetests --show-skipped testsuite
 
   allow_failures:
     - python: "3.5"
@@ -58,7 +55,7 @@ install:
   - testsuite/install.sh
   - pip install -e .
 script:
-  - nosetests testsuite
+  - testsuite/test.sh
 after_failure:
   - pip freeze
 
