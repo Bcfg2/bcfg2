@@ -24,13 +24,18 @@ else
         pip_wheel PyYAML pyinotify boto pylibacl Jinja2 \
             cherrypy python-augeas nose-show-skipped
 
-        if [[ ${PYVER:0:1} == "2" ]]; then
-            pip_wheel m2crypto guppy
-        fi
-
         if [[ $PYVER == "2.6" ]]; then
-            pip_wheel 'django<1.7' 'South<0.8' 'mercurial<4.3' cheetah
+            pip install \
+                --global-option='build_ext' \
+                --global-option='--include-dirs=/usr/include/x86_64-linux-gnu' \
+                m2crypto
+
+            pip_wheel 'django<1.7' 'South<0.8' 'mercurial<4.3' cheetah guppy
         else
+            if [[ $PYVER == "2.7" ]]; then
+                pip_wheel m2crypto guppy
+            fi
+
             pip_wheel django mercurial cheetah3
         fi
     fi
