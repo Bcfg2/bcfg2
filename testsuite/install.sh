@@ -25,13 +25,13 @@ else
             cherrypy python-augeas nose-show-skipped
 
         if [[ ${PYVER:0:1} == "2" ]]; then
-            pip_wheel cheetah m2crypto guppy
+            pip_wheel m2crypto guppy
         fi
 
         if [[ $PYVER == "2.6" ]]; then
-            pip_wheel 'django<1.7' 'South<0.8' 'mercurial<4.3'
+            pip_wheel 'django<1.7' 'South<0.8' 'mercurial<4.3' cheetah
         else
-            pip_wheel django mercurial
+            pip_wheel django mercurial cheetah3
         fi
     fi
 fi
