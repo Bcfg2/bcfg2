@@ -1,10 +1,9 @@
 lxml
-python-daemon
-genshi
+python-daemon<2.0.0
 argparse
+genshi
 
 nose
 mock
 pylint<0.29
 pep8
-sphinx

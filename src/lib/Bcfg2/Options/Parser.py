@@ -12,12 +12,14 @@ __all__ = ["setup", "OptionParserException", "Parser", "get_parser",
            "new_parser"]
 
 
+# pylint: disable=C0103
 #: The repository option.  This is specified here (and imported into
 #: :module:`Bcfg2.Options.Common`) rather than vice-versa due to
 #: circular imports.
-repository = PathOption(  # pylint: disable=C0103
+repository = PathOption(
     '-Q', '--repository', cf=('server', 'repository'),
     default='/var/lib/bcfg2', help="Server repository path")
+# pylint: enable=C0103
 
 
 #: A module-level :class:`argparse.Namespace` object that stores all

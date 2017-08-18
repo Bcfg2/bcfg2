@@ -16,11 +16,12 @@ inst_reqs = [
     'lockfile',
     'lxml',
     'python-daemon',
+    'argparse'
 ]
 
-# we only need m2crypto on < python2.6
+# Use the backported ssl module on < python2.6
 if sys.version_info[:2] < (2, 6):
-    inst_reqs.append('M2Crypto')
+    inst_reqs.append('ssl')
 
 setup(name="Bcfg2",
       version=__version__,  # Defined in src/lib/Bcfg2/version.py

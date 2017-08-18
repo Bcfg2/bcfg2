@@ -56,7 +56,8 @@ Bcfg2 Server
 +-------------------------------+----------+--------------------------------+
 | python-gamin or pyinotify     | Any      | gamin or inotify, python       |
 +-------------------------------+----------+--------------------------------+
-| python-ssl (note              | Any      | python, backported ssl module  |
+| python-ssl (this is included  | Any      |                                |
+| in Python2.6 and later)       |          |                                |
 +-------------------------------+----------+--------------------------------+
 | python-setuptools             | Any      |                                |
 +-------------------------------+----------+--------------------------------+

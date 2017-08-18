@@ -167,7 +167,7 @@ class Bcfg2TestCase(TestCase):
             sys.stderr = cls._stderr
 
     if hasattr(TestCase, "assertCountEqual"):
-        assertItemsEqual = assertCountEqual
+        assertItemsEqual = TestCase.assertCountEqual
 
     def assertXMLEqual(self, el1, el2, msg=None):
         """ Test that the two XML trees given are equal. """

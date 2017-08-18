@@ -142,8 +142,8 @@ class DebInit(Bcfg2.Client.Tools.SvcTool):
                 # 'disabled' means we don't attempt to modify running svcs
                 return bootcmdrv and seqcmdrv
             buildmode = Bcfg2.Options.setup.service_mode == 'build'
-            if (entry.get('status') == 'on' and not buildmode) and \
-               entry.get('current_status') == 'off':
+            if ((entry.get('status') == 'on' and not buildmode) and
+                    entry.get('current_status') == 'off'):
                 svccmdrv = self.start_service(entry)
             elif (entry.get('status') == 'off' or buildmode) and \
                     entry.get('current_status') == 'on':

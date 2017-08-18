@@ -5,6 +5,7 @@ import Bcfg2.Client.XML
 from augeas import Augeas
 from Bcfg2.Client.Tools.POSIX.base import POSIXTool
 from Bcfg2.Client.Tools.POSIX.File import POSIXFile
+from Bcfg2.Compat import all  # pylint: disable=W0622
 
 
 class AugeasCommand(object):
@@ -249,8 +250,8 @@ class POSIXAugeas(POSIXTool):
         for cmd in self.get_commands(entry):
             try:
                 if not cmd.verify():
-                    err = "Augeas: Command has not been applied to %s: %s" % \
-                          (entry.get("name"), cmd)
+                    err = ("Augeas: Command has not been applied to %s: %s" %
+                           (entry.get("name"), cmd))
                     self.logger.debug(err)
                     entry.set('qtext', "\n".join([entry.get('qtext', ''),
                                                   err]))
@@ -259,8 +260,8 @@ class POSIXAugeas(POSIXTool):
                 else:
                     cmd.command.set("verified", "true")
             except:  # pylint: disable=W0702
-                err = "Augeas: Unexpected error verifying %s: %s: %s" % \
-                      (entry.get("name"), cmd, sys.exc_info()[1])
+                err = ("Augeas: Unexpected error verifying %s: %s: %s" %
+                       (entry.get("name"), cmd, sys.exc_info()[1]))
                 self.logger.error(err)
                 entry.set('qtext', "\n".join([entry.get('qtext', ''), err]))
                 rv = False

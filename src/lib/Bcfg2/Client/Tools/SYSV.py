@@ -119,8 +119,8 @@ class SYSV(Bcfg2.Client.Tools.PkgTool):
                 self.logger.debug("Package %s not installed" %
                                   entry.get("name"))
         else:
-            if Bcfg2.Options.setup.quick or \
-               entry.attrib.get('verify', 'true') == 'false':
+            if (Bcfg2.Options.setup.quick or
+                    entry.attrib.get('verify', 'true') == 'false'):
                 return True
             rv = self.cmd.run("/usr/sbin/pkgchk -n %s" % entry.get('name'))
             if rv.success:

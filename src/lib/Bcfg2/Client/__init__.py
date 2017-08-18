@@ -921,8 +921,8 @@ class Client(object):
         """Generate XML summary of execution statistics."""
         states = {}
         for (item, val) in list(self.states.items()):
-            if not Bcfg2.Options.setup.only_important or \
-               item.get('important', 'false').lower() == 'true':
+            if (not Bcfg2.Options.setup.only_important or
+                    item.get('important', 'false').lower() == 'true'):
                 states[item] = val
 
         feedback = XML.Element("upload-statistics")

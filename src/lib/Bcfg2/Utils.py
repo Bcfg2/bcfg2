@@ -338,7 +338,7 @@ class classproperty(object):  # pylint: disable=C0103
         self.getter = getter
 
     def __get__(self, instance, owner):
-        return self.getter(owner)
+        return classmethod(self.getter).__get__(None, owner)()
 
 
 def is_string(strng, encoding):
