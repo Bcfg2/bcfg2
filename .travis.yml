@@ -44,9 +44,6 @@ matrix:
         apt:
           packages: *build_deps_optional
 
-  allow_failures:
-    - python: "3.5"
-
   fast_finish: true
 
 before_install:
