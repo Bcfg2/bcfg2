@@ -13,7 +13,7 @@ import Bcfg2.Server
 import Bcfg2.Options
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Logger import Debuggable
-from Bcfg2.Compat import CmpMixin, wraps
+from Bcfg2.Compat import CmpMixin, MutableMapping, wraps
 from Bcfg2.Server.Plugin.base import Plugin
 from Bcfg2.Server.Plugin.interfaces import Generator, TemplateDataProvider
 from Bcfg2.Server.Plugin.exceptions import SpecificityError, \
@@ -1698,3 +1698,84 @@ class GroupSpool(Plugin, Generator):
                 return
             reqid = self.fam.AddMonitor(name, self)
             self.handles[reqid] = relative
+
+
+class CallableDict(MutableMapping):
+    """ This maps a set of keys to a set of value-getting functions;
+    the values are populated on-the-fly by the functions as the values
+    are needed (and not before).  This is for example used by
+    :func:`Bcfg2.Server.Plugins.Packages.Packages.get_additional_data`;
+    see the docstring for that function for details on why.
+
+    Unlike a dict, you can specify values or functions for the
+    righthand side of this mapping. If you specify a function, it will
+    be evaluated everytime you access the value. E.g.:
+
+    .. code-block:: python
+
+        d = CallableDict(foo=load_foo,
+                         bar="bar")
+    """
+
+    def __init__(self, **getters):
+        self._getters = dict(**getters)
+
+    def __getitem__(self, key):
+        if callable(self._getters[key]):
+            return self._getters[key]()
+        else:
+            return self._getters[key]
+
+    def __setitem__(self, key, getter):
+        self._getters[key] = getter
+
+    def __delitem__(self, key):
+        del self._getters[key]
+
+    def __len__(self):
+        return len(self._getters)
+
+    def __iter__(self):
+        return iter(self._getters.keys())
+
+    def _current_data(self):
+        """ Return a dict with the current available static data
+        and ``unknown`` for all callable values.
+        """
+        rv = dict()
+        for key in self._getters.keys():
+            if callable(self._getters[key]):
+                rv[key] = 'unknown'
+            else:
+                rv[key] = self._getters[key]
+        return rv
+
+    def __repr__(self):
+        return str(self._current_data())
+
+
+class OnDemandDict(CallableDict):
+    """ This is like a :class:`CallableDict` but it will cache
+    the results of the callable getters, so that it is only evaluated
+    once when you first access it.
+    """
+
+    def __init__(self, **getters):
+        CallableDict.__init__(self, **getters)
+        self._values = dict()
+
+    def __getitem__(self, key):
+        if key not in self._values:
+            self._values[key] = super(OnDemandDict, self).__getitem__(key)
+        return self._values[key]
+
+    def __delitem__(self, key):
+        super(OnDemandDict, self).__delitem__(key)
+        del self._values[key]
+
+    def _current_data(self):
+        rv = super(OnDemandDict, self)._current_data()
+        for (key, value) in rv.items():
+            if key in self._values:
+                rv[key] = value
+        return rv

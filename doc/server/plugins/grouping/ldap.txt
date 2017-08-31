@@ -7,7 +7,7 @@ Ldap
 ====
 
 .. warning::
-    This plugin is considered experimental and has known issues (see below).
+    This plugin is considered experimental.
 
 Purpose
 -------
@@ -87,6 +87,26 @@ If you wish, you could customize these values in your ``bcfg2.conf``::
     retries = 3
     retry_delay = 3.0
 
+Caching
++++++++
+
+This module could not know, if a value changed on the LDAP server. So it does not cache
+the results of the LDAP queries by default.
+
+You could enable the cache of the results in your ``bcfg2.conf``:
+
+    [ldap]
+    cache = on
+
+If you enable the caching, you have to expire it manually. This module provides a XML-RPC
+method for this purpose: :func:`Ldap.expire_cache
+<Bcfg2.Server.Plugins.Ldap.expire_cache>`.
+
+Even without enabling caching, the results of the LDAP queries are cached, but are
+discarded before each client run. If you access the Ldap results of different client, you
+may get cached results of the last run of this client. If you do not want this behaviour,
+you can disable the caching completely by setting it to ``off``.
+
 Class reference
 ---------------
 
@@ -95,8 +115,8 @@ LdapConnection
 
 .. class:: LdapConnection
 
-   This class represents an LDAP connection. Every query must be associated with exactly
-   one connection.
+   This class represents an LDAP connection. Every query must be associated
+   with exactly one connection.
 
 .. attribute:: LdapConnection.binddn
 
@@ -112,7 +132,24 @@ LdapConnection
 
 .. attribute:: LdapConnection.port
 
-   Port where LDAP server is listening (defaults to 389).
+   Port where LDAP server is listening (defaults to 389). If you use
+   port 636 this module will use ldaps to connect to the server.
+
+.. attribute:: LdapConnection.uri
+
+   LDAP URI of the LDAP server to connect to. This is prefered over
+   :attr:`LdapConnection.host` and :attr:`LdapConnection.port`.
+
+   .. note::
+
+      If you are using ldaps you may have to specify additional options
+      for enabling the certificate validation or setting the path for
+      the trusted certificates with :attr:`LdapConnection.options`.
+
+.. attribute:: LdapConnection.options
+
+   Arbitrary options for the LDAP connection. You should specify it
+   as a dict and use the ``OPT_*`` constants from ``python-ldap``.
 
 You may pass any of these attributes as keyword arguments when creating the connection object.
 
@@ -246,14 +283,3 @@ search below that DN.
 You do not need to add all LdapQueries to the ``__queries__`` list. Only add those to
 that list, that should be called automatically and whose results should be added to the
 client metadata.
-
-Known Issues
-------------
-
-* At this point there is no support for SSL/TLS.
-* This module could not know, if a value changed on the LDAP server. So it could not
-  expire the client metadata cache sanely.
-  If you are using aggressive caching mode, this plugin will expire the metadata cache
-  for a single client at the start of a client run. If you are using LDAP data from
-  another client in a template, you will probably get the cached values from the last
-  client run of that other client.
