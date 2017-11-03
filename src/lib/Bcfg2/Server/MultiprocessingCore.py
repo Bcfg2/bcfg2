@@ -404,7 +404,7 @@ class MultiprocessingCore(BuiltinCore):
                     "%s.%s" % (pname, childname)
 
         rmi = BuiltinCore._get_rmi(self)
-        for method in rmi.keys():
+        for method in rmi:
             if method in child_rmi:
                 rmi[method] = self._child_rmi_wrapper(method,
                                                       rmi[method],

@@ -1072,7 +1072,7 @@ class Core(object):
                    for name, func in inspect.getmembers(self, callable)
                    if (getattr(func, "exposed", False) and
                        self.check_acls(address, name))]
-        methods.extend([m for m in self._get_rmi().keys()
+        methods.extend([m for m in self._get_rmi()
                         if self.check_acls(address, m)])
         return methods
 
