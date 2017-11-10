@@ -83,6 +83,7 @@ no_checks = {
 if sys.version_info < (2, 6):
     # Server requires python 2.6
     no_checks['lib/Bcfg2'] = ['Server']
+    no_checks['sbin'] = ['bcfg2-*']
 
 try:
     any
