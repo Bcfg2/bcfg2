@@ -42,7 +42,7 @@ else
                 pip_wheel m2crypto guppy
             fi
 
-            pip_wheel django mercurial cheetah3
+            pip_wheel 'django<2' mercurial cheetah3
         fi
     fi
 fi
