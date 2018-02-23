@@ -70,10 +70,9 @@ import lxml.etree
 from docutils import nodes
 from sphinx import addnodes, roles
 from docutils.statemachine import ViewList
-from docutils.parsers.rst import directives
+from docutils.parsers.rst import Directive, directives
 from sphinx.util.nodes import make_refnode, split_explicit_title, \
     nested_parse_with_titles
-from sphinx.util.compat import Directive
 from sphinx.domains import ObjType, Domain
 
 try:
