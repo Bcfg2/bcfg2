@@ -56,15 +56,6 @@ settings = dict(
     AUTHENTICATION_BACKENDS=('django.contrib.auth.backends.ModelBackend'),
     LOGIN_URL='/login',
     SESSION_EXPIRE_AT_BROWSER_CLOSE=True,
-    TEMPLATE_DIRS=(
-        '/usr/share/python-support/python-django/django/contrib/admin/'
-        'templates/'),
-    TEMPLATE_CONTEXT_PROCESSORS=(
-        'django.contrib.auth.context_processors.auth',
-        'django.core.context_processors.debug',
-        'django.core.context_processors.i18n',
-        'django.core.context_processors.media',
-        'django.core.context_processors.request'),
     DATABASE_ROUTERS=['Bcfg2.DBSettings.PerApplicationRouter'],
     TEST_RUNNER='django.test.simple.DjangoTestSuiteRunner',
     CACHES={
@@ -88,6 +79,35 @@ elif HAS_SOUTH:
         'Reporting': 'Bcfg2.Reporting.south_migrations',
         'Server': 'Bcfg2.Server.south_migrations',
     }
+if HAS_DJANGO and django.VERSION[0] == 1 and django.VERSION[1] >= 8:
+    settings['TEMPLATES'] = [{
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [
+            '/usr/share/python-support/python-django/' +
+            'django/contrib/admin/templates/'
+        ],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.contrib.auth.context_processors.auth',
+                'django.template.context_processors.debug',
+                'django.template.context_processors.i18n',
+                'django.template.context_processors.media',
+                'django.template.context_processors.request',
+            ],
+        },
+    }]
+else:
+    settings['TEMPLATE_DIRS'] = ('/usr/share/python-support/python-django/' +
+                                 'django/contrib/admin/templates/')
+    settings['TEMPLATE_CONTEXT_PROCESSORS'] = (
+        'django.contrib.auth.context_processors.auth',
+        'django.core.context_processors.debug',
+        'django.core.context_processors.i18n',
+        'django.core.context_processors.media',
+        'django.core.context_processors.request',
+    )
+
 if 'BCFG2_LEGACY_MODELS' in os.environ:
     settings['INSTALLED_APPS'] += ('Bcfg2.Server.Reports.reports',)
 
