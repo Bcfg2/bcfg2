@@ -21,7 +21,7 @@
       <td class='right_column_narrow'>Manage</td>
     </tr>
   {% for client in clients %}
-    <tr class='{% cycle listview,listview_alt %}'>
+    <tr class='{% cycle 'listview' 'listview_alt' %}'>
       <td><span id="{{ client.name }}"> </span>
           <span id="ttag-{{ client.name }}"> </span>
           <span id="s-ttag-{{ client.name }}"> </span>

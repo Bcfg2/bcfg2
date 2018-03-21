@@ -73,7 +73,7 @@ span.history_links a {
     </div>
     <table id='groups_table' class='entry_list' style='display: none'>
   {% endif %}
-        <tr class='{% cycle listview,listview_alt %}'>
+        <tr class='{% cycle 'listview' 'listview_alt' %}'>
           <td class='entry_list_type'>{{group}}</td>
         </tr>
   {% if forloop.last %}
@@ -91,7 +91,7 @@ span.history_links a {
     </div>
     <table id='bundles_table' class='entry_list' style='display: none'>
   {% endif %}
-        <tr class='{% cycle listview,listview_alt %}'>
+        <tr class='{% cycle 'listview' 'listview_alt' %}'>
           <td class='entry_list_type'>{{bundle}}</td>
         </tr>
   {% if forloop.last %}
@@ -109,7 +109,7 @@ span.history_links a {
     </div>
     <table id='{{entry_type}}_table' class='entry_list'>
       {% for entry in entry_list %}
-        <tr class='{% cycle listview,listview_alt %}'>
+        <tr class='{% cycle 'listview' 'listview_alt' %}'>
           <td class='entry_list_type'>{{entry.entry_type}}</td>
           <td><a href="{% url "reports_item" entry.class_name entry.pk interaction.pk %}">
               {{entry.name}}</a></td>
@@ -128,7 +128,7 @@ span.history_links a {
     </div>
     <table id='failures_table' class='entry_list' style='display: none'>
       {% for failure in interaction.failures.all %}
-        <tr class='{% cycle listview,listview_alt %}'>
+        <tr class='{% cycle 'listview' 'listview_alt' %}'>
           <td class='entry_list_type'>{{failure.entry_type}}</td>
           <td><a href="{% url "reports_item" failure.class_name failure.pk interaction.pk %}">
               {{failure.name}}</a></td>

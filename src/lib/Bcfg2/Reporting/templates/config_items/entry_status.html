@@ -17,7 +17,7 @@
           <tr style='text-align: left' ><th>Name</th><th>Timestamp</th><th>State</th><th>Reason</th></tr>
         {% for item, inters in items %}
           {% for inter in inters %}
-          <tr class='{% cycle listview,listview_alt %}'>
+          <tr class='{% cycle 'listview' 'listview_alt' %}'>
             <td><a href='{% url "reports_client_detail" hostname=inter.client.name %}'>{{inter.client.name}}</a></td>
             <td><a href='{% url "reports_client_detail_pk" hostname=inter.client.name pk=inter.pk %}' style="white-space: nowrap;">
               {{inter.timestamp|date:"SHORT_DATETIME_FORMAT"|safe}}

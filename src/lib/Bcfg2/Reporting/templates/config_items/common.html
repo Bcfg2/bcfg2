@@ -28,7 +28,7 @@
       <table id='table_{{ type_name }}' class='entry_list'>
       <tr style='text-align: left'><th>Type</th><th>Name</th><th>Count</th><th>Reason</th></tr>
       {% for item in type_list %}
-        <tr class='{% cycle listview,listview_alt %}'>
+        <tr class='{% cycle 'listview' 'listview_alt' %}'>
           <td>{{ item.ENTRY_TYPE }}</td>
           <td><a href='{% url "reports_entry" item.class_name  item.pk %}'>{{ item.name }}</a></td>
           <td>{{ item.num_entries }}</td>

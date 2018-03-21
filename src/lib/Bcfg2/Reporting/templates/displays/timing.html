@@ -23,7 +23,7 @@
               <td>Total</td>
           </tr>
           {% for metric in metrics|dictsort:"name" %}
-          <tr class='{% cycle listview,listview_alt %}'>
+          <tr class='{% cycle 'listview' 'listview_alt' %}'>
               <td><a style='font-size: 100%'
                    href='{% url "reports_client_detail" hostname=metric.name %}'>{{ metric.name }}</a></td>
               {% for mitem in metric|build_metric_list %}
