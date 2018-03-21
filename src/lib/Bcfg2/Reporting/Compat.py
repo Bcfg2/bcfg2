@@ -19,10 +19,10 @@ except ImportError:
         from django.conf.urls import patterns
     except:
         # Django > 1.10
-        def patterns(_prefix, urls):
+        def patterns(_prefix, *urls):
             url_list = list()
             for u in urls:
-                if isinstance(url_tuple, (list, tuple)):
+                if isinstance(u, (list, tuple)):
                     u = url(*u)
                 url_list.append(u)
             return url_list
