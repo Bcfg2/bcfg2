@@ -7,10 +7,10 @@ from datetime import datetime, timedelta
 import sys
 from time import strptime
 
-from django.template import Context, RequestContext
+from django.template import Context
 from django.http import \
         HttpResponse, HttpResponseRedirect, HttpResponseServerError, Http404
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.core.urlresolvers import \
         resolve, reverse, Resolver404, NoReverseMatch
 from django.db import DatabaseError
@@ -166,11 +166,10 @@ def config_item(request, pk, entry_type, interaction=None):
         template = 'config_items/item-failure.html'
     else:
         template = 'config_items/item.html'
-    return render_to_response(template,
-                              {'item': item,
-                               'associated_list': associated_list,
-                               'timestamp': timestamp},
-                              context_instance=RequestContext(request))
+    return render(request, template,
+                  {'item': item,
+                   'associated_list': associated_list,
+                   'timestamp': timestamp})
 
 
 @timeview
@@ -191,11 +190,10 @@ def config_item_list(request, item_state, timestamp=None, **kwargs):
             # Property doesn't render properly..
             lists.append((etype.ENTRY_TYPE, ldata))
 
-    return render_to_response('config_items/listing.html',
-                              {'item_list': lists,
-                               'item_state': item_state,
-                               'timestamp': timestamp},
-        context_instance=RequestContext(request))
+    return render(request, 'config_items/listing.html',
+                  {'item_list': lists,
+                   'item_state': item_state,
+                   'timestamp': timestamp})
 
 
 @timeview
@@ -219,12 +217,10 @@ def entry_status(request, entry_type, pk, timestamp=None, **kwargs):
             items.append((it, it.interaction_set.filter(pk__in=current_clients).order_by('client__name').select_related('client')))
             seen.append(it.pk)
 
-    return render_to_response('config_items/entry_status.html',
-                              {'entry': item,
-                               'items': items,
-                               'timestamp': timestamp},
-        context_instance=RequestContext(request))
-
+    return render(request, 'config_items/entry_status.html',
+                  {'entry': item,
+                   'items': items,
+                   'timestamp': timestamp})
 
 @timeview
 def common_problems(request, timestamp=None, threshold=None, group=None):
@@ -262,11 +258,10 @@ def common_problems(request, timestamp=None, threshold=None, group=None):
             # Property doesn't render properly..
             lists.append((etype.ENTRY_TYPE, ldata))
 
-    return render_to_response('config_items/common.html',
-                              {'lists': lists,
-                               'timestamp': timestamp,
-                               'threshold': threshold},
-        context_instance=RequestContext(request))
+    return render(request, 'config_items/common.html',
+                  {'lists': lists,
+                   'timestamp': timestamp,
+                   'threshold': threshold})
 
 
 @timeview
@@ -281,10 +276,9 @@ def client_index(request, timestamp=None, **kwargs):
     list = _handle_filters(Interaction.objects.recent(timestamp), **kwargs).\
            select_related('client').order_by("client__name").all()
 
-    return render_to_response('clients/index.html',
-                              {'inter_list': list,
-                               'timestamp': timestamp},
-                              context_instance=RequestContext(request))
+    return render(request, 'clients/index.html',
+                  {'inter_list': list,
+                   'timestamp': timestamp})
 
 
 @timeview
@@ -374,9 +368,9 @@ def client_manage(request):
                 client_name = "<none>"
             message = "Couldn't find client \"%s\"" % client_name
 
-    return render_to_response('clients/manage.html',
-        {'clients': Client.objects.order_by('name').all(), 'message': message},
-        context_instance=RequestContext(request))
+    return render(request, 'clients/manage.html',
+                  {'clients': Client.objects.order_by('name').all(),
+                   'message': message})
 
 
 @timeview
@@ -429,10 +423,10 @@ def display_summary(request, timestamp=None):
         summary_data.append(get_dict('stale',
                                      'nodes did not run within the last 24 hours.'))
 
-    return render_to_response('displays/summary.html',
-        {'summary_data': summary_data, 'node_count': node_count,
-         'timestamp': timestamp},
-        context_instance=RequestContext(request))
+    return render(request, 'displays/summary.html',
+                  {'summary_data': summary_data,
+                   'node_count': node_count,
+                   'timestamp': timestamp})
 
 
 @timeview
@@ -447,10 +441,9 @@ def display_timing(request, timestamp=None):
             mdict[client] = { 'name': client }
         mdict[client][perf.metric] = perf.value
 
-    return render_to_response('displays/timing.html',
-                              {'metrics': list(mdict.values()),
-                               'timestamp': timestamp},
-                              context_instance=RequestContext(request))
+    return render(request, 'displays/timing.html',
+                  {'metrics': list(mdict.values()),
+                   'timestamp': timestamp})
 
 
 def render_history_view(request, template='clients/history.html', **kwargs):
@@ -525,8 +518,7 @@ def render_history_view(request, template='clients/history.html', **kwargs):
     else:
         context['entry_list'] = iquery.all()
 
-    return render_to_response(template, context,
-                context_instance=RequestContext(request))
+    return render(request, template, context)
 
 
 def prepare_paginated_list(request, context, paged_list, page=1, max_results=25):
