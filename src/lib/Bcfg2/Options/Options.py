@@ -363,7 +363,7 @@ class RepositoryMacroOption(Option):
     def transform_value(self, value):
         """transform the value after macro expansion.
 
-         this can be overridden to further transform the value set by
+        this can be overridden to further transform the value set by
         the user *after* macros are expanded, but before the user's
         ``type`` function is applied. principally exists for
         PathOption to canonicalize the path.
