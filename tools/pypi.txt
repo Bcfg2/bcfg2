@@ -1,0 +1,14 @@
+.. -*- mode: rst -*-
+
+.. _repositorymaintenance:
+
+=============================
+HowTo Update Bcfg2 PyPi Entry
+=============================
+
+Enter your repository and checkout the version you want to upload:
+`git checkout v1.3.2`
+
+Run `python setup.py sdist upload`. This is assuming you have setup
+pypi on your `~/.pypirc` file correctly. See https://pypi.python.org/
+for instrucitons on how to configure.
