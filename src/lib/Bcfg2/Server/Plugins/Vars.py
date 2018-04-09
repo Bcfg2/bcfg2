@@ -1,34 +1,35 @@
 """ Support for client ACLs based on IP address and client metadata """
 
+import copy
 import os
 import sys
-import Bcfg2.Server.Plugin
+
 import lxml
-import copy
-from Bcfg2.Server.Plugin import PluginExecutionError
+
+import Bcfg2.Server.Plugin
 from Bcfg2.Server.Cache import Cache
+from Bcfg2.Server.Plugin import PluginExecutionError
 
 
 class VarsFile(Bcfg2.Server.Plugin.StructFile):
     """ representation of Vars vars.xml """
     def __init__(self, name, core, should_monitor=False):
-        """
-        :param name: The filename of this vars file.
-        :type name: string
-        :param core: The Bcfg2.Server.Core initializing the Vars plugin
-        :type core: Bcfg2.Server.Core
-        """
         Bcfg2.Server.Plugin.StructFile.__init__(self, name,
                                                 should_monitor=should_monitor)
         self.name = name
         self.core = core
         self.cache = Cache("Vars")
 
+    __init__.__doc__ = Bcfg2.Server.Plugin.StructFile.__init__.__doc__
+
     def Index(self):
         Bcfg2.Server.Plugin.StructFile.Index(self)
         self.cache.clear()
 
+    Index.__doc__ = Bcfg2.Server.Plugin.StructFile.Index.__doc__
+
     def get_vars(self, metadata):
+        """ gets all var tags from the vars.xml """
         if metadata.hostname in self.cache:
             self.debug_log("Vars: Found cached vars for %s." % metadata.hostname)
             return copy.copy(self.cache[metadata.hostname])
@@ -65,8 +66,9 @@ class VarsFile(Bcfg2.Server.Plugin.StructFile):
                                        "bcfg2-lint for more details" %
                                        self.name)
 
+
 class Vars(Bcfg2.Server.Plugin.Plugin,
-          Bcfg2.Server.Plugin.Connector):
+           Bcfg2.Server.Plugin.Connector):
     """ add additional info to the metadata object based on entries in the vars.xml """
 
     def __init__(self, core):
@@ -76,10 +78,14 @@ class Vars(Bcfg2.Server.Plugin.Plugin,
                                   core,
                                   should_monitor=True)
 
+    __init__.__doc__ = Bcfg2.Server.Plugin.Plugin.__init__.__doc__
+
     def get_additional_data(self, metadata):
-        """ """
         self.debug_log("Vars: Getting vars for %s" % metadata.hostname)
         return self.vars_file.get_vars(metadata)
+
+    get_additional_data.__doc__ = \
+        Bcfg2.Server.Plugin.Connector.get_additional_data.__doc__
 
     def set_debug(self, debug):
         rv = Bcfg2.Server.Plugin.Plugin.set_debug(self, debug)
