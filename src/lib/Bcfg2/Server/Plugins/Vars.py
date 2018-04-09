@@ -1,4 +1,4 @@
-""" Support for client ACLs based on IP address and client metadata """
+""" Support for metadata.Vars that can contain arbitrary strings for faster generation of templates """
 
 import copy
 import os
