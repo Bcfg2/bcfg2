@@ -1,4 +1,7 @@
-""" Support for metadata.Vars that can contain arbitrary strings for faster generation of templates """
+"""
+  Support for metadata.Vars
+  these contain arbitrary strings for faster generation of templates
+"""
 
 import copy
 import os
