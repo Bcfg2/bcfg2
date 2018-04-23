@@ -2,29 +2,32 @@
 import sys
 import os
 import stat
+import shutil
 import tempfile
 import Bcfg2.Options
 import Bcfg2.Client.Tools
-from Bcfg2.Compat import b64decode
+from Bcfg2.Compat import unicode, b64encode, b64decode
 
 
 class WinFS(Bcfg2.Client.Tools.Tool):
     """Windows File support code."""
     name = 'WinFS'
-    __handles__ = [('Path', 'file')]
+    __handles__ = [('Path', 'file'), ('Path', 'nonexistent')]
 
     def __init__(self, config):
         Bcfg2.Client.Tools.Tool.__init__(self, config)
         self.__req__ = dict(Path=dict())
         self.__req__['Path']['file'] = ['name', 'mode', 'owner', 'group']
+        self.__req__['Path']['nonexistent'] = ['name', 'recursive']
 
     def _getFilePath(self, entry):
         """Evaluates the enviroment Variables and returns the file path"""
         file_path = os.path.expandvars(os.path.normpath(entry.get('name')[1:]))
-        if not file_path[1] == ':':
+        if(not file_path[1] == ':'):
             self.logger.info(
-                "Skipping \"%s\" because it doesnt look like a Windows Path" %
-                file_path)
+                             "Skipping \"%s\" because it doesnt look like a "
+                             "Windows Path" %
+                             file_path)
             return False
         return file_path
 
@@ -33,6 +36,14 @@ class WinFS(Bcfg2.Client.Tools.Tool):
         file_path = self._getFilePath(entry)
         if(not file_path):
             return False
+
+        if entry.get('type') == 'nonexistent':
+            if os.path.exists(file_path):
+                self.logger.debug("WinFS: %s exists but should not" %
+                                  file_path)
+                return False
+            return True
+
         ondisk = self._exists(file_path)
         tempdata = self._get_data(entry)[0]
         if isinstance(tempdata, str) and str != unicode:
@@ -71,9 +82,33 @@ class WinFS(Bcfg2.Client.Tools.Tool):
     def InstallPath(self, entry):
         """Install device entries."""
         file_path = self._getFilePath(entry)
-
+        ename = entry.get('name')
+        print("Handeling %s" % file_path)
         if not file_path:
             return False
+        if entry.get('type') == "nonexistent":
+            recursive = entry.get('recursive', '').lower() == 'true'
+            if recursive:
+                # ensure that configuration spec is consistent first
+                for struct in self.config.getchildren():
+                    for el in struct.getchildren():
+                        if (el.tag == 'Path' and
+                                el.get('type') != 'nonexistent' and
+                                el.get('name').startswith(ename)):
+                            self.logger.error('POSIX: Not removing %s. One '
+                                              'or more files in this '
+                                              'directory are specified '
+                                              'in your configuration.' %
+                                              file_path)
+                            return False
+            try:
+                self._remove(file_path, recursive=recursive)
+                return True
+            except OSError:
+                err = sys.exec_info()[1]
+                self.logger.error('WinFS: Failed to renive %s: %s' %
+                                  (file_path, err))
+                return False
 
         self.logger.debug("Installing: " + file_path)
         if not os.path.exists(os.path.dirname(file_path)):
@@ -115,8 +150,8 @@ class WinFS(Bcfg2.Client.Tools.Tool):
         except OSError:
             err = sys.exc_info()[1]
             self.logger.error(
-                "Windows: Failed to create temp file in %s: %s" %
-                (file_path, err))
+                              "Windows: Failed to create "
+                              "temp file in %s: %s" % (file_path, err))
             return False
         try:
             if isinstance(filedata, str) and str != unicode:
@@ -127,9 +162,9 @@ class WinFS(Bcfg2.Client.Tools.Tool):
         except (OSError, IOError):
             err = sys.exc_info()[1]
             self.logger.error(
-                "Windows: Failed to open temp file %s for writing "
-                "%s: %s" %
-                (newfile, file_path, err))
+                        "Windows: Failed to open temp file %s for writing "
+                        "%s: %s" %
+                        (newfile, file_path, err))
             return False
         return newfile
 
@@ -161,15 +196,15 @@ class WinFS(Bcfg2.Client.Tools.Tool):
         except OSError:
             err = sys.exc_info()[1]
             self.logger.error(
-                "Windows: Failed to rename temp file %s to %s: %s"
-                % (newfile, file_path, err))
+                        "Windows: Failed to rename temp file %s to %s: %s"
+                        % (newfile, file_path, err))
             try:
                 os.unlink(newfile)
             except OSError:
                 err = sys.exc_info()[1]
                 self.logger.error(
-                    "Windows: Could not remove temp file %s: %s" %
-                    (newfile, err))
+                            "Windows: Could not remove temp file %s: %s" %
+                            (newfile, err))
             return False
 
     def _exists(self, file_path):
@@ -179,3 +214,16 @@ class WinFS(Bcfg2.Client.Tools.Tool):
             return os.lstat(file_path)
         except OSError:
             return None
+
+    def _remove(self, file_path, recursive=True):
+        """ Remove a Path entry, whatever that takes """
+        if os.path.islink(file_path):
+            os.unlink(file_path)
+        elif os.path.isdir(file_path):
+            if recursive:
+                shutil.rmtree(file_path)
+            else:
+                os.rmdir(file_path)
+        else:
+                os.unlink(file_path)
+
