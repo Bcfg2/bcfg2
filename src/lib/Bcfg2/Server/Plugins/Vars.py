@@ -22,7 +22,8 @@ except ImportError:
 
 
 class VarsFile(Bcfg2.Server.Plugin.StructFile):
-    """ representation of Vars vars.xml. Manages caching and handles file events. """
+    """ representation of Vars vars.xml.
+    Manages caching and handles file events. """
 
     def __init__(self, name, core, should_monitor=False):
         Bcfg2.Server.Plugin.StructFile.__init__(self, name,
