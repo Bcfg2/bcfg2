@@ -13,14 +13,24 @@ import Bcfg2.Server.Plugin
 from Bcfg2.Server.Cache import Cache
 from Bcfg2.Server.Plugin import PluginExecutionError
 
+has_json = False
+try:
+    import json
+
+    has_json = True
+except ImportError:
+    pass
+
 
 class VarsFile(Bcfg2.Server.Plugin.StructFile):
     """ representation of Vars vars.xml """
+
     def __init__(self, name, core, should_monitor=False):
         Bcfg2.Server.Plugin.StructFile.__init__(self, name,
                                                 should_monitor=should_monitor)
         self.name = name
         self.core = core
+        # even though we are a connector plugin, keep a local cache
         self.cache = Cache("Vars")
 
     __init__.__doc__ = Bcfg2.Server.Plugin.StructFile.__init__.__doc__
@@ -28,6 +38,7 @@ class VarsFile(Bcfg2.Server.Plugin.StructFile):
     def Index(self):
         Bcfg2.Server.Plugin.StructFile.Index(self)
         self.cache.clear()
+        self.core.metadata_cache.expire()
 
     Index.__doc__ = Bcfg2.Server.Plugin.StructFile.Index.__doc__
 
@@ -45,9 +56,14 @@ class VarsFile(Bcfg2.Server.Plugin.StructFile):
                     # if we have a correct schema, this should not happen
                     raise Bcfg2.Server.Plugin.PluginExecutionError(
                         "Vars: Invalid structure of vars.xml. Missing name attribute for variable.")
-                rv[el.get('name')] = el.text
+                if has_json and el.get('type') == "json":
+                    rv[el.get('name')] = json.loads(el.text)
+                else:
+                    rv[el.get('name')] = el.text
+
         self.cache[metadata.hostname] = copy.copy(rv)
         return rv
+
 
     def validate_data(self):
         """ ensure that the data in this object validates against the
@@ -94,4 +110,5 @@ class Vars(Bcfg2.Server.Plugin.Plugin,
         rv = Bcfg2.Server.Plugin.Plugin.set_debug(self, debug)
         self.vars_file.set_debug(debug)
         return rv
+
     set_debug.__doc__ = Bcfg2.Server.Plugin.Plugin.set_debug.__doc__
