@@ -13,17 +13,16 @@ import Bcfg2.Server.Plugin
 from Bcfg2.Server.Cache import Cache
 from Bcfg2.Server.Plugin import PluginExecutionError
 
-has_json = False
+HAS_JSON = False
 try:
     import json
-
-    has_json = True
+    HAS_JSON = True
 except ImportError:
     pass
 
 
 class VarsFile(Bcfg2.Server.Plugin.StructFile):
-    """ representation of Vars vars.xml """
+    """ representation of Vars vars.xml. Manages caching and handles file events. """
 
     def __init__(self, name, core, should_monitor=False):
         Bcfg2.Server.Plugin.StructFile.__init__(self, name,
@@ -45,7 +44,8 @@ class VarsFile(Bcfg2.Server.Plugin.StructFile):
     def get_vars(self, metadata):
         """ gets all var tags from the vars.xml """
         if metadata.hostname in self.cache:
-            self.debug_log("Vars: Found cached vars for %s." % metadata.hostname)
+            self.debug_log("Vars: Found cached vars for %s." %
+                           metadata.hostname)
             return copy.copy(self.cache[metadata.hostname])
         rv = dict()
         for el in self.Match(metadata):
@@ -55,15 +55,15 @@ class VarsFile(Bcfg2.Server.Plugin.StructFile):
                 if 'name' not in el.attrib:
                     # if we have a correct schema, this should not happen
                     raise Bcfg2.Server.Plugin.PluginExecutionError(
-                        "Vars: Invalid structure of vars.xml. Missing name attribute for variable.")
-                if has_json and el.get('type') == "json":
+                        "Vars: Invalid structure of vars.xml. "
+                        "Missing name attribute for variable.")
+                if HAS_JSON and el.get('type') == "json":
                     rv[el.get('name')] = json.loads(el.text)
                 else:
                     rv[el.get('name')] = el.text
 
         self.cache[metadata.hostname] = copy.copy(rv)
         return rv
-
 
     def validate_data(self):
         """ ensure that the data in this object validates against the
@@ -74,21 +74,25 @@ class VarsFile(Bcfg2.Server.Plugin.StructFile):
                 schema = lxml.etree.XMLSchema(file=schemafile)
             except lxml.etree.XMLSchemaParseError:
                 err = sys.exc_info()[1]
-                raise PluginExecutionError("Failed to process schema for %s: "
-                                           "%s" % (self.name, err))
+                raise PluginExecutionError(
+                    "Failed to process schema for %s: "
+                    "%s" % (self.name, err))
         else:
             # no schema exists
             return True
 
         if not schema.validate(self.xdata):
-            raise PluginExecutionError("Data for %s fails to validate; run "
-                                       "bcfg2-lint for more details" %
-                                       self.name)
+            raise PluginExecutionError(
+                "Data for %s fails to validate; run "
+                "bcfg2-lint for more details" % self.name)
 
 
 class Vars(Bcfg2.Server.Plugin.Plugin,
            Bcfg2.Server.Plugin.Connector):
-    """ add additional info to the metadata object based on entries in the vars.xml """
+    """ The vars plugins adds additional info to the metadata object
+    based on entries in the vars.xml. Data can even be serialized
+    with json if desired.
+    """
 
     def __init__(self, core):
         Bcfg2.Server.Plugin.Plugin.__init__(self, core)
