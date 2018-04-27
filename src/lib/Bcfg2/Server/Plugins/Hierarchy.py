@@ -5,14 +5,9 @@
 """
 
 import copy
-import os
-import sys
-
-import lxml
 
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Cache import Cache
-from Bcfg2.Server.Plugin import PluginExecutionError
 
 
 class Hierarchy(Bcfg2.Server.Plugin.Plugin,
@@ -87,10 +82,12 @@ class Hierarchy(Bcfg2.Server.Plugin.Plugin,
                     self._cache.expire(tags[0])
                     self.debug_log("Hierarchy: Expiring cache %s %s" %
                                    (str(tags), str(exact)))
-        except:
+        except Exception as e:
             self.logger.warn("Hierarchy: Error choosing if"
-                             " cache should be expired. Expiring anyway. %s"
-                             % (str(tags)))
+                             " cache should be expired. Expiring anyway. "
+                             "Tags %s, "
+                             "Error: %s"
+                             % (str(tags), e))
             self._cache.expire()
 
     def set_debug(self, debug):
