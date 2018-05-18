@@ -130,14 +130,14 @@ class POSIXTool(Bcfg2.Client.Tools.Tool):
                                       % (path,
                                          self._norm_entry_uid(entry),
                                          self._norm_entry_gid(entry)))
-                    os.chown(path, self._norm_entry_uid(entry),
-                             self._norm_entry_gid(entry))
+                    os.lchown(path, self._norm_entry_uid(entry),
+                              self._norm_entry_gid(entry))
                 except (OSError, KeyError):
                     self.logger.error('POSIX: Failed to change ownership of %s'
                                       % path)
                     rv = False
                     if sys.exc_info()[0] == KeyError:
-                        os.chown(path, 0, 0)
+                        os.lchown(path, 0, 0)
         else:
             self.logger.debug("POSIX: Run as non-root, not setting ownership")
 

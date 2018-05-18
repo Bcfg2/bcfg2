@@ -194,11 +194,11 @@ class TestPOSIXTool(TestTool):
         mock_lstat.assert_called_with(entry.get('name'))
         ptool._remove.assert_called_with(entry)
 
-    @patch("os.chown")
+    @patch("os.lchown")
     @patch("os.chmod")
     @patch("os.utime")
     @patch("os.geteuid")
-    def test_set_perms(self, mock_geteuid, mock_utime, mock_chmod, mock_chown):
+    def test_set_perms(self, mock_geteuid, mock_utime, mock_chmod, mock_lchown):
         ptool = self.get_obj()
         ptool._norm_entry_uid = Mock()
         ptool._norm_entry_gid = Mock()
@@ -210,7 +210,7 @@ class TestPOSIXTool(TestTool):
             ptool._norm_entry_gid.reset_mock()
             ptool._norm_entry_uid.reset_mock()
             mock_chmod.reset_mock()
-            mock_chown.reset_mock()
+            mock_lchown.reset_mock()
             mock_utime.reset_mock()
             mock_geteuid.reset_mock()
 
@@ -235,7 +235,7 @@ class TestPOSIXTool(TestTool):
         self.assertTrue(ptool._set_perms(entry))
         ptool._norm_entry_uid.assert_called_with(entry)
         ptool._norm_entry_gid.assert_called_with(entry)
-        mock_chown.assert_called_with(entry.get("name"), 10, 100)
+        mock_lchown.assert_called_with(entry.get("name"), 10, 100)
         mock_chmod.assert_called_with(entry.get("name"),
                                       int(entry.get("mode"), 8))
         self.assertFalse(mock_utime.called)
@@ -250,7 +250,7 @@ class TestPOSIXTool(TestTool):
         self.assertTrue(ptool._set_perms(entry))
         self.assertFalse(ptool._norm_entry_uid.called)
         self.assertFalse(ptool._norm_entry_gid.called)
-        self.assertFalse(mock_chown.called)
+        self.assertFalse(mock_lchown.called)
         mock_chmod.assert_called_with(entry.get("name"),
                                       int(entry.get("mode"), 8))
         self.assertFalse(mock_utime.called)
@@ -265,7 +265,7 @@ class TestPOSIXTool(TestTool):
         self.assertTrue(ptool._set_perms(entry))
         ptool._norm_entry_uid.assert_called_with(entry)
         ptool._norm_entry_gid.assert_called_with(entry)
-        mock_chown.assert_called_with(entry.get("name"), 10, 100)
+        mock_lchown.assert_called_with(entry.get("name"), 10, 100)
         mock_chmod.assert_called_with(entry.get("name"),
                                       int(entry.get("mode"), 8))
         mock_utime.assert_called_with(entry.get("name"), (mtime, mtime))
@@ -276,26 +276,26 @@ class TestPOSIXTool(TestTool):
         self.assertTrue(ptool._set_perms(entry, path='/etc/bar'))
         ptool._norm_entry_uid.assert_called_with(entry)
         ptool._norm_entry_gid.assert_called_with(entry)
-        mock_chown.assert_called_with('/etc/bar', 10, 100)
+        mock_lchown.assert_called_with('/etc/bar', 10, 100)
         mock_chmod.assert_called_with('/etc/bar', int(entry.get("mode"), 8))
         mock_utime.assert_called_with(entry.get("name"), (mtime, mtime))
         ptool._set_secontext.assert_called_with(entry, path='/etc/bar')
         ptool._set_acls.assert_called_with(entry, path='/etc/bar')
 
-        # test dev_type modification of perms, failure of chown
+        # test dev_type modification of perms, failure of lchown
         reset()
         def chown_rv(path, owner, group):
             if owner == 0 and group == 0:
                 return True
             else:
                 raise KeyError
-        os.chown.side_effect = chown_rv
+        os.lchown.side_effect = chown_rv
         entry.set("type", "device")
         entry.set("dev_type", list(device_map.keys())[0])
         self.assertFalse(ptool._set_perms(entry))
         ptool._norm_entry_uid.assert_called_with(entry)
         ptool._norm_entry_gid.assert_called_with(entry)
-        mock_chown.assert_called_with(entry.get("name"), 0, 0)
+        mock_lchown.assert_called_with(entry.get("name"), 0, 0)
         mock_chmod.assert_called_with(entry.get("name"),
                                       int(entry.get("mode"), 8) | list(device_map.values())[0])
         mock_utime.assert_called_with(entry.get("name"), (mtime, mtime))
@@ -304,14 +304,14 @@ class TestPOSIXTool(TestTool):
 
         # test failure of chmod
         reset()
-        os.chown.side_effect = None
+        os.lchown.side_effect = None
         os.chmod.side_effect = OSError
         entry.set("type", "file")
         del entry.attrib["dev_type"]
         self.assertFalse(ptool._set_perms(entry))
         ptool._norm_entry_uid.assert_called_with(entry)
         ptool._norm_entry_gid.assert_called_with(entry)
-        mock_chown.assert_called_with(entry.get("name"), 10, 100)
+        mock_lchown.assert_called_with(entry.get("name"), 10, 100)
         mock_chmod.assert_called_with(entry.get("name"),
                                       int(entry.get("mode"), 8))
         mock_utime.assert_called_with(entry.get("name"), (mtime, mtime))
@@ -322,14 +322,14 @@ class TestPOSIXTool(TestTool):
         # e.g., when chmod fails, we still try to apply acls, set
         # selinux context, etc.
         reset()
-        os.chown.side_effect = OSError
+        os.lchown.side_effect = OSError
         os.utime.side_effect = OSError
         ptool._set_acls.return_value = False
         ptool._set_secontext.return_value = False
         self.assertFalse(ptool._set_perms(entry))
         ptool._norm_entry_uid.assert_called_with(entry)
         ptool._norm_entry_gid.assert_called_with(entry)
-        mock_chown.assert_called_with(entry.get("name"), 10, 100)
+        mock_lchown.assert_called_with(entry.get("name"), 10, 100)
         mock_chmod.assert_called_with(entry.get("name"),
                                       int(entry.get("mode"), 8))
         mock_utime.assert_called_with(entry.get("name"), (mtime, mtime))
