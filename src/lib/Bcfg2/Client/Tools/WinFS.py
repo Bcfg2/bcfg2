@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import Bcfg2.Options
 import Bcfg2.Client.Tools
-from Bcfg2.Compat import unicode, b64encode, b64decode
+from Bcfg2.Compat import b64decode
 
 
 class WinFS(Bcfg2.Client.Tools.Tool):
@@ -103,12 +103,13 @@ class WinFS(Bcfg2.Client.Tools.Tool):
                             return False
             try:
                 self._remove(file_path, recursive=recursive)
-                return True
+                rv = True
             except OSError:
-                err = sys.exec_info()[1]
+                err = sys.exc_info()[1]
                 self.logger.error('WinFS: Failed to renive %s: %s' %
                                   (file_path, err))
-                return False
+                rv = False
+            return rv
 
         self.logger.debug("Installing: " + file_path)
         if not os.path.exists(os.path.dirname(file_path)):
@@ -119,7 +120,7 @@ class WinFS(Bcfg2.Client.Tools.Tool):
             return False
         rv = True
         if not self._rename_tmpfile(newfile, file_path):
-            return False
+            rv = False
 
         return rv
 
@@ -225,5 +226,5 @@ class WinFS(Bcfg2.Client.Tools.Tool):
             else:
                 os.rmdir(file_path)
         else:
-                os.unlink(file_path)
+            os.unlink(file_path)
 
