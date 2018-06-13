@@ -23,18 +23,18 @@ class WinFS(Bcfg2.Client.Tools.Tool):
     def _getFilePath(self, entry):
         """Evaluates the enviroment Variables and returns the file path"""
         file_path = os.path.expandvars(os.path.normpath(entry.get('name')[1:]))
-        if(not file_path[1] == ':'):
+        if not file_path[1] == ':':
             self.logger.info(
-                             "Skipping \"%s\" because it doesnt look like a "
-                             "Windows Path" %
-                             file_path)
+                "Skipping \"%s\" because it doesnt look like a "
+                "Windows Path" %
+                file_path)
             return False
         return file_path
 
     def VerifyPath(self, entry, _):
         """Path always verify true."""
         file_path = self._getFilePath(entry)
-        if(not file_path):
+        if not file_path:
             return False
 
         if entry.get('type') == 'nonexistent':
@@ -151,8 +151,8 @@ class WinFS(Bcfg2.Client.Tools.Tool):
         except OSError:
             err = sys.exc_info()[1]
             self.logger.error(
-                              "Windows: Failed to create "
-                              "temp file in %s: %s" % (file_path, err))
+                "Windows: Failed to create "
+                "temp file in %s: %s" % (file_path, err))
             return False
         try:
             if isinstance(filedata, str) and str != unicode:
@@ -163,9 +163,9 @@ class WinFS(Bcfg2.Client.Tools.Tool):
         except (OSError, IOError):
             err = sys.exc_info()[1]
             self.logger.error(
-                        "Windows: Failed to open temp file %s for writing "
-                        "%s: %s" %
-                        (newfile, file_path, err))
+                "Windows: Failed to open temp file %s for writing "
+                "%s: %s" %
+                (newfile, file_path, err))
             return False
         return newfile
 
@@ -190,22 +190,22 @@ class WinFS(Bcfg2.Client.Tools.Tool):
     def _rename_tmpfile(self, newfile, file_path):
         """ Rename the given file to the appropriate filename for entry """
         try:
-            if(os.path.isfile(file_path)):
+            if os.path.isfile(file_path):
                 os.unlink(file_path)
             os.rename(newfile, file_path)
             return True
         except OSError:
             err = sys.exc_info()[1]
             self.logger.error(
-                        "Windows: Failed to rename temp file %s to %s: %s"
-                        % (newfile, file_path, err))
+                "Windows: Failed to rename temp file %s to %s: %s"
+                % (newfile, file_path, err))
             try:
                 os.unlink(newfile)
             except OSError:
                 err = sys.exc_info()[1]
                 self.logger.error(
-                            "Windows: Could not remove temp file %s: %s" %
-                            (newfile, err))
+                    "Windows: Could not remove temp file %s: %s" %
+                    (newfile, err))
             return False
 
     def _exists(self, file_path):
@@ -227,4 +227,3 @@ class WinFS(Bcfg2.Client.Tools.Tool):
                 os.rmdir(file_path)
         else:
             os.unlink(file_path)
-
