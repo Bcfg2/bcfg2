@@ -335,7 +335,7 @@ class XMLRPCServer(SocketServer.ThreadingMixIn, SSLServer,
     """ Component XMLRPCServer. """
 
     def __init__(self, listen_all, server_address, RequestHandlerClass=None,
-                 keyfile=None, certfile=None, ca=None, protocol='xmlrpc/tlsv1',
+                 keyfile=None, certfile=None, ca=None, protocol='xmlrpc/ssl',
                  timeout=10, logRequests=False,
                  register=True, allow_none=True, encoding=None):
         """
