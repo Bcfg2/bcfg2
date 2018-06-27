@@ -3,8 +3,8 @@ Section: admin
 Priority: optional
 Maintainer: Arto Jantunen <viiru@debian.org>
 Uploaders: Sami Haahtinen <ressu@debian.org>
-Build-Depends: debhelper (>= 7.0.50~),
-	       python (>= 2.6),
+Build-Depends: debhelper (>= 9),
+           python-all (>= 2.6.6-3),
 	       python-setuptools,
 	       python-sphinx (>= 1.0.7+dfsg) | python3-sphinx,
 	       python-lxml,
@@ -18,9 +18,13 @@ Build-Depends: debhelper (>= 7.0.50~),
 	       python-doc,
 	       python-mock,
 	       python-mock-doc,
-	       dh-python
-Standards-Version: 3.8.0.0
+	       dh-apache2,
+	       dh-systemd
+Standards-Version: 3.9.8.0
 Homepage: http://bcfg2.org/
+X-Python-Version: >= 2.6
+Vcs-Browser: https://anonscm.debian.org/gitweb/?p=collab-maint/bcfg2.git
+Vcs-Git: https://anonscm.debian.org/git/collab-maint/bcfg2.git
 
 Package: bcfg2
 Architecture: all
@@ -45,7 +49,8 @@ Description: Configuration management server
 Package: bcfg2-web
 Architecture: all
 Depends: ${python:Depends}, ${misc:Depends}, bcfg2-server (= ${binary:Version}), python-django (>= 1.3)
-Suggests: python-mysqldb, python-psycopg2, python-sqlite, libapache2-mod-wsgi
+Recommends: libapache2-mod-wsgi, ${misc:Recommends}
+Suggests: python-mysqldb, python-psycopg2, python-sqlite
 Description: Configuration management web interface
  Bcfg2 is a configuration management system that generates configuration sets
  for clients bound by client profiles.
