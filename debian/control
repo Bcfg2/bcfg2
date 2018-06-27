@@ -4,7 +4,7 @@ Priority: optional
 Maintainer: Arto Jantunen <viiru@debian.org>
 Uploaders: Sami Haahtinen <ressu@debian.org>
 Build-Depends: debhelper (>= 9),
-           python-all (>= 2.6.6-3),
+	       python-all (>= 2.6.6-3),
 	       python-setuptools,
 	       python-sphinx (>= 1.0.7+dfsg) | python3-sphinx,
 	       python-lxml,
