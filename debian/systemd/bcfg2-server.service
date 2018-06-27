@@ -6,7 +6,7 @@ After=network.target
 Type=forking
 StandardOutput=syslog
 StandardError=syslog
-EnvironmentFile=-/etc/default/bcfg2
+EnvironmentFile=-/etc/default/bcfg2-server
 PIDFile=/run/bcfg2-server/bcfg2-server.pid
 ExecStart=/usr/sbin/bcfg2-server -D /run/bcfg2-server/bcfg2-server.pid $BCFG2_SERVER_OPTIONS
 
