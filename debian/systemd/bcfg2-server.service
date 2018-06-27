@@ -1,12 +1,12 @@
 [Unit]
 Description=Bcfg2 configuration daemon
-After=syslog.target network.target
+After=network.target
 
 [Service]
 Type=forking
 StandardOutput=syslog
 StandardError=syslog
-EnvironmentFile=-/etc/sysconfig/bcfg2-server
+EnvironmentFile=-/etc/default/bcfg2
 PIDFile=/run/bcfg2-server/bcfg2-server.pid
 ExecStart=/usr/sbin/bcfg2-server -D /run/bcfg2-server/bcfg2-server.pid $BCFG2_SERVER_OPTIONS
 

@@ -1,13 +1,13 @@
 [Unit]
 Description=Bcfg2 configuration client
-After=syslog.target network-online.target
+After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=oneshot
 StandardOutput=syslog
 StandardError=syslog
-EnvironmentFile=-/etc/sysconfig/bcfg2
+EnvironmentFile=-/etc/default/bcfg2
 ExecStart=/usr/sbin/bcfg2 $BCFG2_OPTIONS
 RemainAfterExit=yes
 
