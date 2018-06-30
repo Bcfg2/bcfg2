@@ -83,6 +83,7 @@ no_checks = {
 if sys.version_info < (2, 6):
     # Server requires python 2.6
     no_checks['lib/Bcfg2'] = ['Server']
+    no_checks['sbin'] = ['bcfg2-*']
 
 try:
     any
@@ -246,16 +247,19 @@ class CodeTestCase(Bcfg2TestCase):
         @skipUnless(self.has_exec(),
                     "%s not found, skipping" % self.command[0])
         def inner():
-            all_sbin = [os.path.join(srcpath, "sbin", f)
-                        for f in glob.glob(os.path.join(srcpath, "sbin", "*"))]
-            full_list = blacklist_filter([f for f in all_sbin
-                                          if not os.path.islink(f)],
-                                         self.full_blacklist)
+            all_sbin = [
+                os.path.join(srcpath, "sbin", f)
+                for f in glob.glob(os.path.join(srcpath, "sbin", "*"))
+                if not os.path.islink(os.path.join(srcpath, "sbin", f))
+            ]
+
+            full_list = blacklist_filter(all_sbin, self.full_blacklist)
             self._test_full(full_list, extra_args=self.sbin_args)
 
-            errors_list = blacklist_filter([f for f in all_sbin
-                                            if not os.path.islink(f)],
-                                           self.contingent_blacklist)
+            whitelist = expand_path_dict(error_checks)
+            errors_list = blacklist_filter(
+                whitelist_filter(all_sbin, whitelist),
+                self.contingent_blacklist)
             self._test_errors(errors_list, extra_args=self.sbin_args)
 
         inner()

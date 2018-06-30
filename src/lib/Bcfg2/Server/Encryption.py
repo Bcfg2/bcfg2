@@ -7,13 +7,15 @@ import sys
 import copy
 import logging
 import lxml.etree
+from hashlib import md5
+
 import Bcfg2.Logger
 import Bcfg2.Options
 from M2Crypto import Rand
 from M2Crypto.EVP import Cipher, EVPError
 from Bcfg2.Utils import safe_input
 from Bcfg2.Server import XMLParser
-from Bcfg2.Compat import md5, b64encode, b64decode, StringIO
+from Bcfg2.Compat import b64encode, b64decode, StringIO
 
 #: Constant representing the encryption operation for
 #: :class:`M2Crypto.EVP.Cipher`, which uses a simple integer.  This

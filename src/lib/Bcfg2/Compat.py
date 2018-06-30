@@ -12,11 +12,6 @@ import sys
 
 # pylint: disable=E0601,E0602,E0611,W0611,W0622,C0103
 
-try:
-    from email.Utils import formatdate
-except ImportError:
-    from email.utils import formatdate
-
 # urllib imports
 try:
     from urllib import quote_plus
@@ -122,11 +117,6 @@ try:
     reduce = reduce
 except NameError:
     from functools import reduce
-
-try:
-    from collections import MutableMapping
-except ImportError:
-    from UserDict import DictMixin as MutableMapping
 
 
 class CmpMixin(object):
@@ -251,11 +241,6 @@ except NameError:
             if element:
                 return True
         return False
-
-try:
-    from hashlib import md5
-except ImportError:
-    from md5 import md5
 
 
 def oct_mode(mode):

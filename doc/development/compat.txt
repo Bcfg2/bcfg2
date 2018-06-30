@@ -17,7 +17,6 @@ tool), this documentation is *not* automatically generated.
 
 There are several basic types of symbols found in ``Bcfg2.Compat``:
 
-* Symbols whose names have changed, e.g., ``MutableMapping``.
 * Symbols whose modules have changed names, e.g., ``urljoin``/``urlparse``
 * Symbols that have been added or removed, e.g., ``any``/``all``, ``reduce``,
   ``walk_packages``
@@ -112,11 +111,12 @@ The following symbols are imported or defined to provide compatibility
 with Python 2.4 (and occasionally 2.5).  Be sure to read the notes
 below, since some of these implementations may be feature-incomplete.
 
+As we require Python 2.6 on the server side, you should only use these
+compat methods in common or client code.
+
 +----------------+--------------------------------+--------------------------------------------+
 | Name           | Python 2.4                     | Python 2.5+                                |
 +================+================================+============================================+
-| formatdate     | :func:`email.Utils.formatdate` | :func:`email.utils.formatdate`             |
-+----------------+--------------------------------+--------------------------------------------+
 | walk_packages  | Not implemented                | :func:`pkgutil.walk_packages` (2.6+)       |
 +----------------+--------------------------------+--------------------------------------------+
 | any            | Not implemented                | :func:`any`                                |
@@ -124,10 +124,6 @@ below, since some of these implementations may be feature-incomplete.
 | all            | Not implemented                | :func:`all`                                |
 +----------------+--------------------------------+--------------------------------------------+
 | wraps          | Not implemented                | :func:`functools.wraps`                    |
-+----------------+--------------------------------+--------------------------------------------+
-| md5            | :func:`md5.md5`                | :class:`hashlib.md5`                       |
-+----------------+--------------------------------+--------------------------------------------+
-| MutableMapping | :class:`UserDict.DictMixin`    | :class:`collections.MutableMapping` (2.6+) |
 +----------------+--------------------------------+--------------------------------------------+
 | literal_eval   | :func:`eval`                   | :func:`ast.literal_eval` (2.6+)            |
 +----------------+--------------------------------+--------------------------------------------+
@@ -150,28 +146,6 @@ wraps
 The ``wraps`` implementation for Python 2.4 is a no-op.  It does not
 attempt to copy the docstring or other details from the original
 function to the wrapped function.
-
-md5
-~~~
-
-:mod:`hashlib` is available for Python 2.4, but it is not part of the
-standard base.  If it is installed, it will be used.  If you are doing
-something fancy with MD5 sums, you may need to determine which object
-is in use, since they are not equivalent.  For the majority of simple
-cases -- finding the MD5 sum of a string -- they are equivalent
-enough.
-
-MutableMapping
-~~~~~~~~~~~~~~
-
-:class:`collections.MutableMapping` provides a subset of the
-functionality of :class:`UserDict.DictMixin`; that is, any object that
-is written to work with ``MutableMapping`` will also work with
-``DictMixin``, so you should write classes with ``MutableMapping`` in
-mind.
-
-:class:`collections.MutableMapping` is available in Python 2.6+, and
-will be used if available.
 
 literal_eval
 ~~~~~~~~~~~~

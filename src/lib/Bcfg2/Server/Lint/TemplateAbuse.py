@@ -3,7 +3,6 @@
 import os
 import stat
 import Bcfg2.Server.Lint
-from Bcfg2.Compat import any  # pylint: disable=W0622
 from Bcfg2.Server.Plugin import default_path_metadata
 from Bcfg2.Server.Plugins.Cfg.CfgInfoXML import CfgInfoXML
 from Bcfg2.Server.Plugins.Cfg.CfgGenshiGenerator import CfgGenshiGenerator

@@ -46,6 +46,8 @@ backwards-incompatible user-facing changes
   your queries default to the class names and the Ldap plugin expires
   the metadata caches if the config file changes.
 
+* Droped support for Python 2.5 or below on the bcfg2 server.
+
 Thanks
 ------
 

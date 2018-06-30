@@ -43,17 +43,16 @@ class ReportingStoreThread(threading.Thread):
     def run(self):
         """Call the database storage procedure (aka import)"""
         try:
-            try:
-                start = time.time()
-                self.storage.import_interaction(self.interaction)
-                self.logger.info("Imported interaction for %s in %ss" %
-                                 (self.interaction.get('hostname',
-                                                       '<unknown>'),
-                                  time.time() - start))
-            except:
-                #TODO requeue?
-                self.logger.error("Unhandled exception in import thread %s" %
-                                  sys.exc_info()[1])
+            start = time.time()
+            self.storage.import_interaction(self.interaction)
+            self.logger.info("Imported interaction for %s in %ss" %
+                             (self.interaction.get('hostname',
+                                                   '<unknown>'),
+                              time.time() - start))
+        except:
+            #TODO requeue?
+            self.logger.error("Unhandled exception in import thread %s" %
+                              sys.exc_info()[1])
         finally:
             if self.semaphore:
                 self.semaphore.release()

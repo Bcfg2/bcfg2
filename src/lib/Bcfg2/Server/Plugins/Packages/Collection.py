@@ -75,10 +75,11 @@ The Collection Module
 
 import copy
 import lxml.etree
+from hashlib import md5
+
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
 from Bcfg2.Logger import Debuggable
-from Bcfg2.Compat import any, md5  # pylint: disable=W0622
 from Bcfg2.Server.FileMonitor import get_fam
 from Bcfg2.Server.Statistics import track_statistics
 

@@ -11,14 +11,12 @@ import sys
 import termios
 import textwrap
 import time
-
 import lxml.etree
-
+from pkgutil import walk_packages
 
 import Bcfg2.Options
 import Bcfg2.Server.Core
 import Bcfg2.Server.Plugins
-from Bcfg2.Compat import walk_packages
 from Bcfg2.Options import _debug
 
 

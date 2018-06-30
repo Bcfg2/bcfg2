@@ -18,9 +18,10 @@ import Bcfg2.Options
 import Bcfg2.DBSettings
 import Bcfg2.Server.Statistics
 import Bcfg2.Server.FileMonitor
+from functools import wraps
 from itertools import chain
 from Bcfg2.Server.Cache import Cache
-from Bcfg2.Compat import xmlrpclib, wraps  # pylint: disable=W0622
+from Bcfg2.Compat import xmlrpclib
 from Bcfg2.Server.Plugin.exceptions import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Plugin.interfaces import *  # pylint: disable=W0401,W0614
 from Bcfg2.Server.Statistics import track_statistics

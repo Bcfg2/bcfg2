@@ -12,7 +12,7 @@ import Bcfg2.Server.Plugin
 from itertools import chain
 from Bcfg2.Utils import Executor
 from Bcfg2.Server.Plugin import PluginExecutionError
-from Bcfg2.Compat import any, u_str, b64encode  # pylint: disable=W0622
+from Bcfg2.Compat import u_str, b64encode
 try:
     from Bcfg2.Server.Encryption import ssl_encrypt, bruteforce_decrypt, \
         EVPError

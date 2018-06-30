@@ -10,15 +10,15 @@ import errno
 import socket
 import logging
 import lxml.etree
+from collections import MutableMapping
+from functools import wraps
+
 import Bcfg2.Server
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
 import Bcfg2.Server.FileMonitor
 from Bcfg2.Utils import locked
 from Bcfg2.Server.Cache import Cache
-# pylint: disable=W0622
-from Bcfg2.Compat import MutableMapping, all, any, wraps
-# pylint: enable=W0622
 from Bcfg2.version import Bcfg2VersionInfo
 
 try:
@@ -71,10 +71,9 @@ def load_django_models():
 
         @Bcfg2.Server.Plugin.DatabaseBacked.get_db_lock
         def __delitem__(self, key):
-            # UserDict didn't require __delitem__, but MutableMapping
-            # does.  we don't want deleting a client version record to
-            # delete the client, so we just set the version to None,
-            # which is kinda like deleting it, but not really.
+            # We don't want deleting a client version record to delete the
+            # client, so we just set the version to None which is kinda like
+            # deleting it, but not really.
             try:
                 client = MetadataClientModel.objects.get(hostname=key)
             except MetadataClientModel.DoesNotExist:

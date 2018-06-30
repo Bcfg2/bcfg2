@@ -6,11 +6,13 @@ import sys
 import errno
 import operator
 import lxml.etree
+from pkgutil import walk_packages
+
 import Bcfg2.Options
 import Bcfg2.Server.Plugin
 from Bcfg2.Server.Plugin import PluginExecutionError
 # pylint: disable=W0622
-from Bcfg2.Compat import u_str, unicode, b64encode, any, walk_packages
+from Bcfg2.Compat import u_str, unicode, b64encode
 # pylint: enable=W0622
 
 try:

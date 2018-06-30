@@ -12,12 +12,11 @@ Bcfg2 1.3 added a pluggable server core system so that the server core
 itself can be easily swapped out to use different technologies.  It
 currently ships with several backends: a builtin core written from
 scratch using the various server tools in the Python standard library;
-a variant on the builtin core that uses Python 2.6's
-:mod:`multiprocessing` library to process requests in parallel; and an
-experimental `CherryPy <http://www.cherrypy.org/>`_ based core.  This
-page documents the server core interface so that other cores can be
-written to take advantage of other technologies, e.g., `Tornado
-<http://www.tornadoweb.org/>`_ or `Twisted
+a variant on the builtin core that uses the Python :mod:`multiprocessing`
+library to process requests in parallel; and an experimental `CherryPy
+<http://www.cherrypy.org/>`_ based core.  This page documents the server core
+interface so that other cores can be written to take advantage of other
+technologies, e.g., `Tornado <http://www.tornadoweb.org/>`_ or `Twisted
 <http://twistedmatrix.com/trac/>`_.
 
 A core implementation needs to:

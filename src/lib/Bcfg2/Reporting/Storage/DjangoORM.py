@@ -7,6 +7,7 @@ import traceback
 from datetime import datetime
 from time import strptime
 from lxml import etree
+from hashlib import md5
 import sys
 
 import django
@@ -16,7 +17,7 @@ from django.core.cache import cache
 
 import Bcfg2.Options
 import Bcfg2.DBSettings
-from Bcfg2.Compat import b64decode, md5
+from Bcfg2.Compat import b64decode
 from Bcfg2.Reporting.Compat import transaction
 from Bcfg2.Reporting.Storage.base import StorageBase, StorageError
 from Bcfg2.Server.Plugin.exceptions import PluginExecutionError
@@ -404,11 +405,10 @@ class DjangoORM(StorageBase):
     def import_interaction(self, interaction):
         """Import the data into the backend"""
         try:
-            try:
-                self._import_interaction(interaction)
-            except:
-                self.logger.error("Failed to import interaction: %s" %
-                        traceback.format_exc().splitlines()[-1])
+            self._import_interaction(interaction)
+        except:
+            self.logger.error("Failed to import interaction: %s" %
+                    traceback.format_exc().splitlines()[-1])
         finally:
             self.logger.debug("%s: Closing database connection" %
                               self.__class__.__name__)

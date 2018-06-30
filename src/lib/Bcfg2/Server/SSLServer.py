@@ -22,14 +22,8 @@ class XMLRPCDispatcher(SimpleXMLRPCServer.SimpleXMLRPCDispatcher):
     """ An XML-RPC dispatcher. """
 
     def __init__(self, allow_none, encoding):
-        try:
-            SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self,
-                                                               allow_none,
-                                                               encoding)
-        except:
-            # Python 2.4?
-            SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(self)
-
+        SimpleXMLRPCServer.SimpleXMLRPCDispatcher.__init__(
+            self, allow_none, encoding)
         self.logger = logging.getLogger(self.__class__.__name__)
         self.allow_none = allow_none
         self.encoding = encoding
