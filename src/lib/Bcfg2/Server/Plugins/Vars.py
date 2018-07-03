@@ -49,21 +49,18 @@ class VarsFile(Bcfg2.Server.Plugin.StructFile):
                            metadata.hostname)
             return copy.copy(self.cache[metadata.hostname])
         rv = dict()
-        for el in self.Match(metadata):
-            # only evaluate var tags, this is extensible in the future
-            if el.tag == "var":
-                self.debug_log(el)
-                if 'name' not in el.attrib:
-                    # if we have a correct schema, this should not happen
-                    raise Bcfg2.Server.Plugin.PluginExecutionError(
-                        "Vars: Invalid structure of vars.xml. "
-                        "Missing name attribute for variable.")
-                if HAS_JSON and el.get('type') == "json":
-                    rv[el.get('name')] = json.loads(el.text)
-                else:
-                    rv[el.get('name')] = el.text
-
+        for el in self.XMLMatch(metadata).xpath("//var"):
+            if 'name' not in el.attrib:
+                # if we have a correct schema, this should not happen
+                raise Bcfg2.Server.Plugin.PluginExecutionError(
+                    "Vars: Invalid structure of vars.xml. "
+                    "Missing name attribute for variable.")
+            if HAS_JSON and el.get('type') == "json":
+                rv[el.get('name')] = json.loads(el.text)
+            else:
+                rv[el.get('name')] = el.text
         self.cache[metadata.hostname] = copy.copy(rv)
+
         return rv
 
     def validate_data(self):
