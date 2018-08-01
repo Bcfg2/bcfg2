@@ -143,7 +143,7 @@ class Flock(object):
                 os.unlink(self.path)
                 if self.debug:
                     print 'Released lock: %s' % self.fddr()
-            except Exception as exception:
+            except Exception, exception:
                 raise(self.FileLockReleaseError(
                       "Error releasing lock: '%s': %s" % (self.fddr(),
                                                           exception)))
