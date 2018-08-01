@@ -126,7 +126,7 @@ class Flock(object):
             file_handle.close()
             if self.debug:
                 print 'Acquired lock: %s' % self.fddr()
-        except IOError as exception:
+        except IOError, exception:
             if os.path.isfile(self.path):
                 try:
                     os.unlink(self.path)
