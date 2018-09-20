@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import Bcfg2.Options
 import Bcfg2.Client.Tools
-from Bcfg2.Compat import b64decode
+from Bcfg2.Compat import unicode, b64decode
 
 
 class WinFS(Bcfg2.Client.Tools.Tool):
