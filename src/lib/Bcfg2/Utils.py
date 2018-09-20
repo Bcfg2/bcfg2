@@ -109,24 +109,22 @@ class Flock(object):
         """Function which returns the path and the pid of a specific lock"""
         return '<%s %s>' % (self.path, lock['pid'])
 
-    def __init__(self, path, debug=None):
+    def __init__(self, path, logger):
         self.pid = os.getpid()
         self.path = path
-        self.debug = debug
+        self.logger = logger
 
     def acquire(self):
         """Acquire a lock, returning self if successful, False otherwise"""
         if self.islocked():
-            if self.debug:
-                lock = self._readlock()
+            lock = self._readlock()
             raise Exception("Previous lock detected: %s" % self.pddr(lock))
         try:
             file_handle = open(self.path, 'w')
             file_handle.write(self.addr())
             file_handle.close()
-            if self.debug:
-                print 'Acquired lock: %s' % self.fddr()
-        except IOError, exception:
+            self.logger.debug('Acquired lock: %s' % self.fddr())
+        except (IOError, exception):
             if os.path.isfile(self.path):
                 try:
                     os.unlink(self.path)
@@ -141,9 +139,8 @@ class Flock(object):
         if self.ownlock():
             try:
                 os.unlink(self.path)
-                if self.debug:
-                    print 'Released lock: %s' % self.fddr()
-            except Exception, exception:
+                self.logger.debug('Released lock: %s' % self.fddr())
+            except (Exception, exception):
                 raise(self.FileLockReleaseError(
                       "Error releasing lock: '%s': %s" % (self.fddr(),
                                                           exception)))

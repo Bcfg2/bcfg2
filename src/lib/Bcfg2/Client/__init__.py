@@ -158,7 +158,7 @@ class Client(object):
         self.tools = []
         self.times = dict()
         self.times['initialization'] = time.time()
-        self.lock = Flock(Bcfg2.Options.setup.lockfile)
+        self.lock = Flock(Bcfg2.Options.setup.lockfile, self.logger)
         if Bcfg2.Options.setup.bundle_quick:
             if (not Bcfg2.Options.setup.only_bundles and
                     not Bcfg2.Options.setup.except_bundles):
