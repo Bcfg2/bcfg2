@@ -124,7 +124,7 @@ class Flock(object):
             file_handle.write(self.addr())
             file_handle.close()
             self.logger.debug('Acquired lock: %s' % self.fddr())
-        except (IOError, exception):
+        except IOError, (errno, exception):
             if os.path.isfile(self.path):
                 try:
                     os.unlink(self.path)
@@ -140,7 +140,7 @@ class Flock(object):
             try:
                 os.unlink(self.path)
                 self.logger.debug('Released lock: %s' % self.fddr())
-            except (Exception, exception):
+            except Exception, (errno, exception):
                 raise(self.FileLockReleaseError(
                       "Error releasing lock: '%s': %s" % (self.fddr(),
                                                           exception)))
