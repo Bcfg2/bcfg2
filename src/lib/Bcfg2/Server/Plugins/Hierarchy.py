@@ -4,10 +4,8 @@
   as anchor.
 """
 
-import copy
-
 import Bcfg2.Server.Plugin
-from Bcfg2.Server.Cache import Cache
+import Bcfg2.Server.Cache
 
 
 class Hierarchy(Bcfg2.Server.Plugin.Plugin,
@@ -82,12 +80,12 @@ class Hierarchy(Bcfg2.Server.Plugin.Plugin,
                     self._cache.expire(tags[0])
                     self.debug_log("Hierarchy: Expiring cache %s %s" %
                                    (str(tags), str(exact)))
-        except Exception as e:
+        except KeyError as error:
             self.logger.warn("Hierarchy: Error choosing if"
                              " cache should be expired. Expiring anyway. "
                              "Tags %s, "
                              "Error: %s"
-                             % (str(tags), e))
+                             % (str(tags), error))
             self._cache.expire()
 
     def set_debug(self, debug):
