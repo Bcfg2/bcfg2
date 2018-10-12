@@ -331,6 +331,10 @@ class Core(object):
                 select.select([famfd], [], [], 2)
             elif not self.fam.pending():
                 terminate.wait(15)
+
+            if self.terminate.isSet():
+                break
+
             if self.fam.pending():
                 try:
                     self._update_vcs_revision()
