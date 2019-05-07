@@ -327,7 +327,10 @@ class LintPluginOption(Bcfg2.Options.Option):
         plugins = [p.__name__ for p in namespace.plugins]
         for loader, name, _is_pkg in walk_packages(path=__path__):
             try:
-                module = loader.find_module(name).load_module(name)
+                module_name = 'Bcfg2.Server.Lint.%s' % name
+                module = loader \
+                    .find_module(module_name) \
+                    .load_module(module_name)
                 plugin = getattr(module, name)
                 if plugin.__serverplugin__ is None or \
                    plugin.__serverplugin__ in plugins:
