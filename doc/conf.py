@@ -344,10 +344,6 @@ def check_object_path(key, url, path):
 
 intersphinx_mapping = {}
 intersphinx_mapping.update(\
-    check_object_path('mock',
-                      'http://www.voidspace.org.uk/python/mock',
-                      '/usr/share/doc/python-mock-doc/html/objects.inv'))
-intersphinx_mapping.update(\
     check_object_path('cherrypy',
                       'http://docs.cherrypy.org/stable',
                       'intersphinx/cherrypy/objects.inv'))
