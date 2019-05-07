@@ -27,8 +27,7 @@ else
     fi
 
     if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
-        pip_wheel PyYAML pyinotify boto pylibacl Jinja2 \
-            cherrypy nose-show-skipped
+        pip_wheel pyinotify boto pylibacl Jinja2 cherrypy nose-show-skipped
 
         if [[ $PYVER == "2.6" ]]; then
             pip install \
@@ -36,13 +35,14 @@ else
                 --global-option='--include-dirs=/usr/include/x86_64-linux-gnu' \
                 m2crypto
 
-            pip_wheel 'django<1.7' 'South<0.8' 'mercurial<4.3' cheetah guppy 'pycparser<2.19' python-augeas
+            pip_wheel 'django<1.7' 'South<0.8' 'mercurial<4.3' cheetah guppy \
+                'pycparser<2.19' python-augeas 'PyYAML<5.1'
         else
             if [[ $PYVER == "2.7" ]]; then
                 pip_wheel m2crypto guppy
             fi
 
-            pip_wheel django mercurial cheetah3 python-augeas
+            pip_wheel django mercurial cheetah3 python-augeas PyYAML
         fi
     fi
 fi
