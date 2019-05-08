@@ -27,7 +27,8 @@ else
     fi
 
     if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
-        pip_wheel pyinotify boto pylibacl Jinja2 cherrypy nose-show-skipped
+        pip_wheel pyinotify boto pylibacl Jinja2 cherrypy nose-show-skipped \
+            google_compute_engine
 
         if [[ $PYVER == "2.6" ]]; then
             pip install \
