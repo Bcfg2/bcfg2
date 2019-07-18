@@ -307,7 +307,8 @@ class ProbeData(str):  # pylint: disable=E0012,R0924
     .json, and .yaml properties to provide convenient ways to use
     ProbeData objects as XML, JSON, or YAML data """
     def __new__(cls, data):
-        if isinstance(data, unicode):
+        # prevent double encoding utf-8 in python3
+        if isinstance(data, unicode) and not isinstance(data, str):
             return str.__new__(cls, data.encode('utf-8'))
         else:
             return str.__new__(cls, data)
