@@ -11,6 +11,7 @@ from django.utils.safestring import mark_safe
 from datetime import datetime, timedelta
 from Bcfg2.Reporting.utils import filter_list
 from Bcfg2.Reporting.models import Group
+from Bcfg2.Reporting.views import render_history_view
 
 register = template.Library()
 
@@ -213,7 +214,7 @@ class AddUrlFilter(template.Node):
     def __init__(self, filter_name, filter_value):
         self.filter_name = filter_name
         self.filter_value = filter_value
-        self.fallback_view = 'Bcfg2.Reporting.views.render_history_view'
+        self.fallback_view = render_history_view
 
     def render(self, context):
         link = '#'
