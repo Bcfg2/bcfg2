@@ -142,6 +142,8 @@ class DBProbeStore(ProbeStore, Bcfg2.Server.Plugin.DatabaseBacked):
     @Bcfg2.Server.Plugin.DatabaseBacked.get_db_lock
     def set_groups(self, hostname, groups):
         olddata = self._groupcache.get(hostname, [])
+        if olddata == groups:
+            return
         Bcfg2.Server.Cache.expire("Probes", "probegroups", hostname)
         self._groupcache[hostname] = groups
         for group in groups:
@@ -157,8 +159,7 @@ class DBProbeStore(ProbeStore, Bcfg2.Server.Plugin.DatabaseBacked):
                     group=group)
         ProbesGroupsModel.objects.filter(
             hostname=hostname).exclude(group__in=groups).delete()
-        if olddata != groups:
-            self.core.metadata_cache.expire(hostname)
+        self.core.metadata_cache.expire(hostname)
 
     def _load_data(self, hostname):
         Bcfg2.Server.Cache.expire("Probes", "probegroups", hostname)
