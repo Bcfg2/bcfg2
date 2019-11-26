@@ -21,6 +21,7 @@ except ImportError:
 version = sys.version_info[:2]
 has_py26 = version >= (2, 6)
 has_py32 = version >= (3, 2)
+has_py36 = version >= (3, 6)
 
 __all__ = ["ComponentProxy",
            "RetryMethod",
@@ -199,8 +200,13 @@ class SSLHTTPConnection(httplib.HTTPConnection):
         elif self.protocol == 'xmlrpc/tlsv1':
             ssl_protocol_ver = ssl.PROTOCOL_TLSv1
         elif self.protocol == 'xmlrpc/tls':
-            # needed for python 3.5+ support
-            ssl_protocol_ver = ssl.PROTOCOL_TLS
+            if has_py36:
+                ssl_protocol_ver = ssl.PROTOCOL_TLS
+            else:
+                self.logger.warning("Cannot use PROTOCOL_TLS, due to "
+                                    "python version. Switching to "
+                                    "PROTOCOL_TLSv1.")
+                ssl_protocol_ver = ssl.PROTOCOL_TLSv1
         else:
             self.logger.error("Unknown protocol %s" % (self.protocol))
             raise Exception("unknown protocol %s" % self.protocol)
