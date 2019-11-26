@@ -23,7 +23,7 @@ except ImportError:
 
 # pylint: disable=C0103
 settings = dict(
-    TIME_ZONE=None,
+    TIME_ZONE='UTC',
     TEMPLATE_DEBUG=False,
     DEBUG=False,
     ALLOWED_HOSTS=['*'],
