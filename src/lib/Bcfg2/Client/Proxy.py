@@ -198,6 +198,9 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             ssl_protocol_ver = ssl.PROTOCOL_SSLv23
         elif self.protocol == 'xmlrpc/tlsv1':
             ssl_protocol_ver = ssl.PROTOCOL_TLSv1
+        elif self.protocol == 'xmlrpc/tls':
+            # needed for python 3.5+ support
+            ssl_protocol_ver = ssl.PROTOCOL_TLS
         else:
             self.logger.error("Unknown protocol %s" % (self.protocol))
             raise Exception("unknown protocol %s" % self.protocol)
@@ -219,7 +222,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             self.key = None
 
         rawsock.settimeout(self.timeout)
-        self.sock = ssl.SSLSocket(rawsock, cert_reqs=other_side_required,
+        self.sock = ssl.wrap_socket(rawsock, cert_reqs=other_side_required,
                                   ca_certs=self.ca, suppress_ragged_eofs=True,
                                   keyfile=self.key, certfile=self.cert,
                                   ssl_version=ssl_protocol_ver)
