@@ -1,6 +1,6 @@
 #!/bin/bash -ex
 
-# install script for Travis-CI
+# Get python version
 PYVER=$(python -c 'import sys;print(".".join(str(v) for v in sys.version_info[0:2]))')
 SITE_PACKAGES=$(python -c 'from distutils.sysconfig import get_python_lib; print(get_python_lib())')
 
@@ -14,6 +14,7 @@ else
         pip install --no-index --find-links="$HOME/.cache/wheels/" "$@"
     }
 
+    sudo apt-get install -y libxml2-dev libxml2-utils
     if [[ $PYVER == "2.6" ]]; then
         pip_wheel -r testsuite/requirements-26.txt
         pip_wheel unittest2
@@ -26,35 +27,25 @@ else
         fi
     fi
 
+
     if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
-        pip_wheel pyinotify boto pylibacl Jinja2 cherrypy nose-show-skipped \
-            google_compute_engine
-
-        if [[ $PYVER == "2.6" ]]; then
-            pip install \
-                --global-option='build_ext' \
-                --global-option='--include-dirs=/usr/include/x86_64-linux-gnu' \
-                m2crypto
-
-            pip_wheel 'django<1.7' 'South<0.8' 'mercurial<4.3' cheetah guppy \
-                'pycparser<2.19' python-augeas 'PyYAML<5.1'
-        else
-            if [[ $PYVER == "2.7" ]]; then
-                pip_wheel m2crypto guppy
-            fi
-
-            pip_wheel django mercurial cheetah3 python-augeas PyYAML
-        fi
+        sudo apt-get install -y libaugeas-dev libacl1-dev libssl-dev swig
+        pip_wheel \
+            Jinja2 \
+            PyYAML \
+            boto \
+            cheetah3
+            cherrypy \
+            django \
+            google_compute_engine \
+            guppy \
+            m2crypto \
+            mercurial \
+            nose-show-skipped \
+            pyinotify \
+            pylibacl \
+            python-augeas \
     fi
-fi
-
-# Use system site-packages and pymodules
-if [[ "$WITH_SYSTEM_SITE_PACKAGES" == "yes" ]]; then
-     cat <<EOF > "$SITE_PACKAGES/system-packages.pth"
-/usr/lib/python$PYVER/site-packages/
-/usr/lib/python$PYVER/dist-packages/
-/usr/lib/pymodules/python$PYVER/
-EOF
 fi
 
 # Setup the local xml schema cache

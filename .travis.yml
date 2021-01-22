@@ -1,17 +1,9 @@
-sudo: false
-dist: trusty
+os: linux
+arch: amd64
+dist: bionic
 language: python
 
-packages: &build_deps_optional
-  - swig
-  - libxml2-utils
-  - yum
-  - libaugeas-dev
-  - augeas-lenses
-  - libacl1-dev
-  - libssl-dev
-
-matrix:
+jobs:
   include:
     - env: PYTHON=2.4 NOSE_EXCLUDE_DIRS=testsuite/Testsrc/Testlib/TestServer
       addons:
@@ -25,27 +17,23 @@ matrix:
           packages: [python2.5, python2.5-dev, libbluetooth-dev]
 
     - python: "2.6"
-    - python: "2.6"
       env: WITH_OPTIONAL_DEPS=yes
-      addons:
-        apt:
-          packages: *build_deps_optional
 
     - python: "2.7"
-    - python: "2.7"
-      env: WITH_OPTIONAL_DEPS=yes WITH_SYSTEM_SITE_PACKAGES=yes TEST_SPHINX=yes
-      addons:
-        apt:
-          packages: [*build_deps_optional, python-gamin, python-selinux]
 
-    - python: "3.5"
-      env: WITH_OPTIONAL_DEPS=yes
+    - python: "2.7"
+      env: WITH_OPTIONAL_DEPS=yes TEST_SPHINX=yes
+      virtualenv:
+        system_site_packages: true
       addons:
         apt:
-          packages: *build_deps_optional
+          packages: [yum, python-selinux]
+
+    - python: "3.6"
+      env: WITH_OPTIONAL_DEPS=yes
 
   allow_failures:
-    - python: "3.5"
+    - python: "3.6"
 
   fast_finish: true
 
@@ -60,15 +48,11 @@ script:
 after_failure:
   - pip freeze
 
-branches:
-  except:
-    - maint-1.2
-    - 1.1.0-stable
-
 notifications:
   irc:
+    if: branch = master
     channels:
-      - "irc.freenode.org#bcfg2"
+        - "irc.freenode.org#bcfg2"
     use_notice: true
 
 cache:
