@@ -1,5 +1,8 @@
 #!/bin/bash -ex
 
+# Update package sources
+sudo apt-get update
+
 # Get python version
 PYVER=$(python -c 'import sys;print(".".join(str(v) for v in sys.version_info[0:2]))')
 SITE_PACKAGES=$(python -c 'from distutils.sysconfig import get_python_lib; print(get_python_lib())')
