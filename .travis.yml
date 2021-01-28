@@ -16,8 +16,11 @@ jobs:
           sources: [deadsnakes]
           packages: [python2.5, python2.5-dev, libbluetooth-dev]
 
-    - python: "2.6"
-      env: WITH_OPTIONAL_DEPS=yes
+    - env: PYTHON=2.6 WITH_OPTIONAL_DEPS=yes
+      addons:
+        apt:
+          sources: [deadsnakes]
+          packages: [python2.6, python2.6-dev]
 
     - python: "2.7"
 
