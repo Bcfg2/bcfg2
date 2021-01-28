@@ -5,6 +5,7 @@ argparse
 
 nose
 mock
-pylint<0.29
+pylint<0.29 ; python_version<'3'
+pylint ; python_version>='3'
 pep8
 sphinx

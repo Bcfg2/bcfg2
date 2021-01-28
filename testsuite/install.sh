@@ -23,11 +23,6 @@ else
 
     pip_wheel -r testsuite/requirements.txt
 
-    if [[ ${PYVER:0:1} == "3" ]]; then
-        # TODO: Move to "requirements.txt" if all the new errors are fixed.
-        pip_wheel 'pylint>1.4'
-    fi
-
     if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
         sudo apt-get install -y libaugeas-dev libacl1-dev libssl-dev swig
         pip_wheel \
