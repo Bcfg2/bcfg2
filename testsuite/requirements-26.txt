@@ -1,9 +1,0 @@
-lxml<4.3.0
-python-daemon<2.0.0
-argparse
-genshi
-
-nose
-mock
-pylint<0.29
-pep8

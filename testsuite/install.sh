@@ -11,8 +11,7 @@ SITE_PACKAGES=$(python -c 'from distutils.sysconfig import get_python_lib; print
 if [[ ${PYVER:0:1} == "2" && $PYVER != "2.7" && $PYVER != "2.6" ]]; then
     pip install --index-url=https://pypi.org/simple -r testsuite/requirements-legacy.txt
 elif [[ "$PYVER" == "2.6" ]]; then
-    pip install --index-url=https://pypi.org/simple -r testsuite/requirements-26.txt
-    pip install --index-url=https://pypi.org/simple unittest2
+    pip install --index-url=https://pypi.org/simple -r testsuite/requirements.txt
 else
     if [[ "$PYVER" == "2.7" ]]; then
         pip install --upgrade 'pip<21'
