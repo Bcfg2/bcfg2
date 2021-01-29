@@ -14,7 +14,11 @@ elif [[ "$PYVER" == "2.6" ]]; then
     pip install --index-url=https://pypi.org/simple -r testsuite/requirements-26.txt
     pip install --index-url=https://pypi.org/simple unittest2
 else
-    pip install --upgrade pip
+    if [[ "$PYVER" == "2.7" ]]; then
+        pip install --upgrade 'pip<21'
+    else
+        pip install --upgrade pip
+    fi
 
     pip_wheel() {
         pip wheel --find-links="$HOME/.cache/wheels/" --wheel-dir="$HOME/.cache/wheels/" "$@"
