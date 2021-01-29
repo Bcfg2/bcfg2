@@ -29,21 +29,7 @@ else
 
     if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
         sudo apt-get install -y libaugeas-dev libacl1-dev libssl-dev swig
-        pip_wheel \
-            Jinja2 \
-            PyYAML \
-            boto \
-            cheetah3
-            cherrypy \
-            django \
-            google_compute_engine \
-            guppy \
-            m2crypto \
-            mercurial \
-            nose-show-skipped \
-            pyinotify \
-            pylibacl \
-            python-augeas \
+        pip_wheel -r testsuite/requirements-optional.txt
     fi
 fi
 
