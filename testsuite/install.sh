@@ -6,7 +6,6 @@ sudo apt-get install -y libxml2-dev libxml2-utils
 
 # Get python version
 PYVER=$(python -c 'import sys;print(".".join(str(v) for v in sys.version_info[0:2]))')
-SITE_PACKAGES=$(python -c 'from distutils.sysconfig import get_python_lib; print(get_python_lib())')
 
 if [[ ${PYVER:0:1} == "2" && $PYVER != "2.7" && $PYVER != "2.6" ]]; then
     pip install --index-url=https://pypi.org/simple -r testsuite/requirements-legacy.txt
