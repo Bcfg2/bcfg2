@@ -2,6 +2,7 @@
 
 # Update package sources
 sudo apt-get update
+sudo apt-get install -y libxml2-dev libxml2-utils
 
 # Get python version
 PYVER=$(python -c 'import sys;print(".".join(str(v) for v in sys.version_info[0:2]))')
@@ -9,6 +10,9 @@ SITE_PACKAGES=$(python -c 'from distutils.sysconfig import get_python_lib; print
 
 if [[ ${PYVER:0:1} == "2" && $PYVER != "2.7" && $PYVER != "2.6" ]]; then
     pip install --index-url=https://pypi.org/simple -r testsuite/requirements-legacy.txt
+elif [[ "$PYVER" == "2.6" ]]; then
+    pip install --index-url=https://pypi.org/simple -r testsuite/requirements-26.txt
+    pip install --index-url=https://pypi.org/simple unittest2
 else
     pip install --upgrade pip
 
@@ -17,19 +21,12 @@ else
         pip install --no-index --find-links="$HOME/.cache/wheels/" "$@"
     }
 
-    sudo apt-get install -y libxml2-dev libxml2-utils
-    if [[ $PYVER == "2.6" ]]; then
-        pip_wheel -r testsuite/requirements-26.txt
-        pip_wheel unittest2
-    else
-        pip_wheel -r testsuite/requirements.txt
+    pip_wheel -r testsuite/requirements.txt
 
-        if [[ ${PYVER:0:1} == "3" ]]; then
-            # TODO: Move to "requirements.txt" if all the new errors are fixed.
-            pip_wheel 'pylint>1.4'
-        fi
+    if [[ ${PYVER:0:1} == "3" ]]; then
+        # TODO: Move to "requirements.txt" if all the new errors are fixed.
+        pip_wheel 'pylint>1.4'
     fi
-
 
     if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
         sudo apt-get install -y libaugeas-dev libacl1-dev libssl-dev swig

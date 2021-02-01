@@ -15,8 +15,7 @@ jobs:
         apt:
           sources: [deadsnakes]
           packages: [python2.5, python2.5-dev, libbluetooth-dev]
-
-    - env: PYTHON=2.6 WITH_OPTIONAL_DEPS=yes
+    - env: PYTHON=2.6 NOSE_EXCLUDE_DIRS=testsuite/Testsrc/Testlib/TestServer
       addons:
         apt:
           sources: [deadsnakes]
