@@ -6,6 +6,7 @@ genshi
 argparse
 
 nose
+nose-exclude
 mock
 pylint<0.29 ; python_version<'3'
 pylint ; python_version>='3'
