@@ -26,7 +26,7 @@ else
     pip_wheel -r testsuite/requirements.txt
 
     if [[ "$WITH_OPTIONAL_DEPS" == "yes" ]]; then
-        sudo apt-get install -y libaugeas-dev libacl1-dev libssl-dev swig
+        sudo apt-get install -y libaugeas-dev libacl1-dev swig
         pip_wheel -r testsuite/requirements-optional.txt
     fi
 fi
