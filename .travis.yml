@@ -45,10 +45,10 @@ before_install:
 install:
   - testsuite/install.sh
   - pip install -e .
+before_script:
+  - pip freeze
 script:
   - testsuite/test.sh
-after_failure:
-  - pip freeze
 
 notifications:
   irc:
