@@ -29,7 +29,7 @@ jobs:
         system_site_packages: true
       addons:
         apt:
-          packages: [yum, python-selinux]
+          packages: [yum, python-selinux, python-gamin]
 
     - python: "3.6"
       env: WITH_OPTIONAL_DEPS=yes
