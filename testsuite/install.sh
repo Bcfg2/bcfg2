@@ -10,7 +10,9 @@ PYVER=$(python -c 'import sys;print(".".join(str(v) for v in sys.version_info[0:
 if [[ ${PYVER:0:1} == "2" && $PYVER != "2.7" && $PYVER != "2.6" ]]; then
     pip install --index-url=https://pypi.org/simple -r testsuite/requirements-legacy.txt
 elif [[ "$PYVER" == "2.6" ]]; then
-    pip install --index-url=https://pypi.org/simple -r testsuite/requirements.txt
+    pip install --index-url=https://pypi.org/simple pip==9.0.3
+    pip install setuptools==36.8.0 distribute==0.7.3
+    pip install -r testsuite/requirements.txt
 else
     if [[ "$PYVER" == "2.7" ]]; then
         pip install --upgrade 'pip<21'
