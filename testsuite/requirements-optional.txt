@@ -1,0 +1,15 @@
+Jinja2
+PyYAML
+boto
+cheetah3
+cherrypy
+django
+google_compute_engine
+guppy ; python_version<'3'
+guppy3 ; python_version>='3'
+m2crypto
+mercurial
+nose-show-skipped
+pyinotify
+pylibacl
+python-augeas
