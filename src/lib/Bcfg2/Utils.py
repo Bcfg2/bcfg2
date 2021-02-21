@@ -241,6 +241,11 @@ class Executor(object):
             if inputdata:
                 for line in inputdata.splitlines():
                     self.logger.debug('> %s' % line)
+
+                # py3k fixes
+                if sys.hexversion >= 0x03000000:
+                    inputdata = inputdata.encode('utf-8')
+
             (stdout, stderr) = proc.communicate(input=inputdata)
 
             # py3k fixes
