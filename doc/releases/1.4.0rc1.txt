@@ -1,0 +1,242 @@
+.. -*- mode: rst -*-
+.. vim: ft=rst
+
+.. _releases-1.4.0rc1:
+
+1.4.0rc1
+========
+
+The first release candidate for Bcfg2 1.4.0 is now available at:
+
+ http://bcfg2.org/download/
+
+Bcfg2 1.4.0rc1 is a release candidate, and should be representational of the
+final 1.4.0 release. The code is quite stable at this point, but this remains a
+release *candidate*, so please consider carefully whether or not it is suitable
+for production deployment at your site. Please help us test the release
+wherever you can, including production and non-production environments.
+
+Bcfg2 1.4.0 will contain many new features, including some that are
+backwards-incompatible with Bcfg2 1.3.x and earlier. Please read the release
+notes thoroughly.
+
+backwards-incompatible user-facing changes
+------------------------------------------
+
+* Completely rewrote option parser
+
+  Many single character options now have long equivalents.  Some
+  subcommand interfaces (``bcfg2-info``, ``bcfg2-admin``) have been
+  reorganized to some degree. ``bcfg2-reports`` syntax is completely
+  different.
+
+* Added new :ref:`server-plugins-misc-acl` plugin
+
+  Default ACLs only allow clients to perform bcfg2 client runs, and only
+  permit `bcfg2-admin xcmd` calls from localhost.  If you want to change
+  this, you must enable the ACL plugin and configure your own ACLs.
+
+* Added genshi requirement for the server
+
+* :ref:`server-plugins-generators-decisions`
+
+  * Switch plugin to use StructFile instead of host- or group-specific XML
+    files (this allows a single e.g. whitelist.xml file with <Group> tags)
+
+    You can convert your existing decisions using
+    ``tools/upgrade/1.4/migrate_decisions.py``.
+
+* Changed default communication protocol to xmlrpc/tlsv1
+
+* Diff output from files sent to the Reports plugin from the client will now be
+  in a unified diff format rather than the previous n-diff format.
+
+  This fixes potentially long client runs when comparing files that have
+  diverged significantly.
+
+* The database options in the config (options and reporting_options in database
+  section) now have to be literal python dictionaries.
+
+  This allows to set arbitrary options with nested settings.
+
+* The Ldap plugin changed significantly. The configuration interface was
+  simplified and new configuration options for the number of retries and the
+  delay in between were added.
+
+  You have to register your ldap queries in the global list, there is no
+  distinction between LdapQueries and LdapSubQueries anymore, the names of
+  your queries default to the class names and there is support for TLS
+  connections and addition and connection options.
+
+  Addtionally the caching of ldap results was enhanced and now allows to
+  disable the cache, to expire the ldap results for a client on start of the
+  client run or to disable the automatic expiration and manually clear the
+  cache using XML-RPC.
+
+* Drop support for Django before version 1.3 and add support for recent
+  versions upto 1.10.
+
+* The bcfg2-server now requires Python 2.6 or newer.
+
+
+deprecated features (will be removed in a future release, likely 1.5)
+---------------------------------------------------------------------
+
+* :ref:`server-plugins-structures-bundler`
+
+  * Deprecated use of an explicit name attribute
+
+    You can convert your existing bundles using
+    ``tools/upgrade/1.4/convert_bundles.py``.
+
+  * Deprecated :ref:`.genshi bundles
+    <server-plugins-structures-bundler-index-genshi-templates>` (use
+    .xml bundles and specify the genshi namespace instead)
+
+* SSLCA
+
+  * Deprecated plugin
+  * SSLCA functionality has been added to the Cfg plugin:
+    see :ref:`server-plugins-generators-cfg-ssl-certificates`
+
+deprecated plugins and features which have been removed
+-------------------------------------------------------
+
+Plugins
+^^^^^^^
+
+* PostInstall
+* TGenshi
+* TCheetah
+* Account
+* Hostbase
+* Snapshots
+* Statistics
+* Editor
+* Base
+
+Client tools
+^^^^^^^^^^^^
+
+* RPMng
+* YUM24
+* YUMng
+
+Other features
+^^^^^^^^^^^^^^
+
+* FAM filemonitor
+* Removed mode="inherit" support
+* Removed support for .cat/.diff files
+* Removed support for info/:info files
+* Removed "magic" groups (for the Packages plugin)
+
+other fixes and new features
+----------------------------
+
+* Added :ref:`inter-bundle dependencies
+  <server-plugins-structures-bundler-index-dependencies>`
+* Added support for :ref:`independent bundles
+  <server-plugins-structures-bundler-index-disabling-magic>` (replaces
+  the functionality of Base):
+* Added support for wildcard XIncludes
+* Add Solaris 11 IPS Package support
+* Add bcfg2-report-collector init script to debian package
+* Git VCS plugin enhancements
+* Removed deprecated plugins
+
+* :ref:`server-plugins-structures-bundler`
+
+  * Deprecated use of an explicit name attribute
+  * Deprecated .genshi bundles
+  * Added path globbing
+
+* :ref:`server-plugins-grouping-metadata`
+
+  * Allow setting global default authentication type
+
+* :ref:`server-plugins-generators-packages`
+
+  * Add yum group support to internal resolver
+  * Change location of plugin-generated APT sources
+  * Add new Pkgng plugin
+  * Add ability for per-package recommended flag override
+
+* :ref:`server-plugins-statistics-reporting`
+
+  * Add support for POSIX user/group entries
+  * Add support for Django > 1.4
+  * Add support for separate reporting database
+
+* Added option to periodically dump performance stats to logs
+* Added option to force server to wait until all FAM events are
+  processed
+
+* :ref:`server-plugins-generators-sshbase`
+
+  * Add support for IPv6 addresses in known_hosts file
+  * Add support for :ref:`encryption of generated ssh keys
+    <server-plugins-generators-sshbase-encryption>`
+
+* APT
+
+  * Allow specification of deb-src lines (resolves
+    http://trac.mcs.anl.gov/projects/bcfg2/ticket/1148)
+
+* SSLCA
+
+  * Rewrote SSLCA as Cfg handler
+
+    Existing SSLCA installations will need to migrate to the new format
+    using ``tools/upgrade/1.4/migrate_sslca.py``.
+
+* :ref:`server-plugins-generators-nagiosgen`
+
+  * Migrate configuration to conf.d
+
+* :ref:`server-plugins-probes`
+
+  * Rewritten to improve caching
+  * Add probes.allowed_groups option to restrict group assignments:
+    see :ref:`server-plugins-probes-dynamic-groups`
+
+* NagiosGen: Add bundles to configuration
+
+* HomeBrew: Initial add of plugin
+
+* Rules/Defaults: Add possibility to use name of entry in attributes
+
+changes since 1.4.0pre2
+-----------------------
+
+If you already tested the Bcfg2 1.4.0pre2 prerelease you already had most of
+the improvements listed above. Here is the list of changes since Bcfg2
+1.4.0pre2:
+
+* Rework of the Ldap plugin to allow TLS connections, additional options for
+  the ldap connection and new caching modes.
+
+* Drop support for Django before version 1.3 and add support for recent
+  versions upto 1.10.
+
+* The bcfg2-server now requires Python 2.6 or newer.
+
+Thanks
+------
+
+Special thanks to the following contributors for all the work for the Bcfg2
+1.4.0 release:
+
+* Alexander Sulfrain
+* Chris Brinker
+* Dmitri Iouchtchenko
+* Duncan Hutty
+* Gordon Messmer
+* Jason Kincl
+* Jeremie Banier
+* John Morris
+* Matt Kemp
+* Matt Schwager
+* Michael Fenn
+* Stéphane Graber
+* Tim Laszlo
