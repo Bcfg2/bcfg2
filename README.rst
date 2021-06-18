@@ -35,7 +35,7 @@ A lot of documentation is available in the Bcfg2 manual and the Bcfg2 wiki.
 * Documentation:   http://docs.bcfg2.org/
 * Wiki:            http://bcfg2.org/wiki/
 * FAQ:             http://bcfg2.org/wiki/FAQ
-* IRC:             #bcfg2 on chat.freenode.net
+* IRC:             #bcfg2 on irc.libera.chat
 * Mailing list:    https://lists.mcs.anl.gov/mailman/listinfo/bcfg-dev
 
 Want to help

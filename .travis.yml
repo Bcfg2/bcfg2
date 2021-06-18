@@ -68,7 +68,7 @@ branches:
 notifications:
   irc:
     channels:
-      - "irc.freenode.org#bcfg2"
+      - "irc.libera.chat#bcfg2"
     use_notice: true
 
 cache:
