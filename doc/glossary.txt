@@ -24,7 +24,7 @@ Glossary
         A "tag" assigned to a client through a probe or other plugin.
 
     irc channel
-        #bcfg2 on freenode
+        #bcfg2 on Libera.Chat
 
     probe
         A script that executes on a client machine and sets client

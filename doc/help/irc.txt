@@ -1,7 +1,7 @@
 .. -*- mode: rst -*-
 
-.. _Freenode: http://chat.freenode.net
-.. _#bcfg2: irc://chat.freenode.net/bcfg2
+.. _Libera.Chat: https://libera.chat
+.. _#bcfg2: irc://irc.libera.chat/bcfg2
 
 .. _help-irc:
 
@@ -9,7 +9,7 @@
 IRC Channel
 ===========
 
-The Bcfg2 IRC channel is `#bcfg2`_ on `Freenode`_. It is home to both
+The Bcfg2 IRC channel is `#bcfg2`_ on `Libera.Chat`_. It is home to both
 support and development discussions. If you have a question, suggestion,
 or just want to know about Bcfg2, please drop in and say hi.
 
