@@ -754,7 +754,7 @@ class SELinuxSemoduleHandler(SELinuxEntryHandler):
                             self._all[mod] = (version, 1)
 
                         # get other (disabled) modules from the filesystem
-                        for mod in self._all_records_from_filesystem().keys():
+                        for mod in self._all_records_from_filesystem():
                             if mod not in self._all:
                                 self._all[mod] = ('', 0)
                     else:
@@ -902,7 +902,7 @@ class SELinuxSemoduleHandler(SELinuxEntryHandler):
         specified = [self._key(e)
                      for e in self.tool.getSupportedEntries()]
         rv = []
-        for module in self._all_records_from_filesystem().keys():
+        for module in self._all_records_from_filesystem():
             if module not in specified:
                 rv.append(self.key2entry(module))
         return rv

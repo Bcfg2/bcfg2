@@ -38,14 +38,11 @@ matrix:
         apt:
           packages: [*build_deps_optional, python-gamin, python-selinux]
 
-    - python: "3.5"
+    - python: "3.9"
       env: WITH_OPTIONAL_DEPS=yes
       addons:
         apt:
           packages: *build_deps_optional
-
-  allow_failures:
-    - python: "3.5"
 
   fast_finish: true
 

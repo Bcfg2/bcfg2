@@ -1743,7 +1743,7 @@ class CallableDict(MutableMapping):
         and ``unknown`` for all callable values.
         """
         rv = dict()
-        for key in self._getters.keys():
+        for key in self._getters:
             if callable(self._getters[key]):
                 rv[key] = 'unknown'
             else:
