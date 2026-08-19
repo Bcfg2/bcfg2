@@ -210,7 +210,7 @@ class Validate(Bcfg2.Server.Lint.ServerlessPlugin):
         values are lists of the full paths to all files in the Bcfg2
         repository (or given with ``bcfg2-lint --stdin``) that match
         the glob."""
-        for path in self.filesets.keys():
+        for path in self.filesets:
             if '/**/' in path:
                 if self.files is not None:
                     self.filelists[path] = self.list_matching_files(path)

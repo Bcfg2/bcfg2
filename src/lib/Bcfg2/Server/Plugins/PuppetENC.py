@@ -41,7 +41,7 @@ class PuppetENC(Bcfg2.Server.Plugin.Plugin,
     def _run_encs(self, metadata):
         """ Run all Puppet ENCs """
         cache = dict(groups=[], params=dict())
-        for enc in self.entries.keys():
+        for enc in self.entries:
             epath = os.path.join(self.data, enc)
             self.debug_log("PuppetENC: Running ENC %s for %s" %
                            (enc, metadata.hostname))

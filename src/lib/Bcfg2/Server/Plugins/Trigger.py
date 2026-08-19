@@ -46,6 +46,6 @@ class Trigger(Bcfg2.Server.Plugin.Plugin,
     def end_client_run(self, metadata):
         args = [metadata.hostname, '-p', metadata.profile, '-g',
                 ':'.join([g for g in metadata.groups])]
-        for notifier in self.entries.keys():
+        for notifier in self.entries:
             npath = os.path.join(self.data, notifier)
             self.async_run([npath] + args)

@@ -31,9 +31,9 @@ class HelperModule(Debuggable):
         self.defaults = []
 
         default_prov = DefaultTemplateDataProvider()
-        self.reserved_defaults = default_prov.get_template_data(
+        self.reserved_defaults = list(default_prov.get_template_data(
             lxml.etree.Element("Path", name="/dummy"),
-            None, None).keys() + ["path"]
+            None, None)) + ["path"]
 
     def HandleEvent(self, event=None):
         """ HandleEvent is called whenever the FAM registers an event.
