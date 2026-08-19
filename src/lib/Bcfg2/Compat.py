@@ -73,6 +73,26 @@ except ImportError:
     import http.client as httplib
 
 try:
+    import fcntl
+except ImportError:
+    fcntl = None
+
+try:
+    import termios
+except ImportError:
+    termios = None
+
+try:
+    import pwd
+except ImportError:
+    pwd = None
+
+try:
+    import grp
+except ImportError:
+    grp = None
+
+try:
     unicode = unicode
 except NameError:
     unicode = str

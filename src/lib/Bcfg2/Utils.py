@@ -1,8 +1,6 @@
 """ Miscellaneous useful utility functions, classes, etc., that are
 used by both client and server.  Stuff that doesn't fit anywhere
 else. """
-
-import fcntl
 import logging
 import os
 import re
@@ -11,7 +9,7 @@ import shlex
 import sys
 import subprocess
 import threading
-from Bcfg2.Compat import input, any  # pylint: disable=W0622
+from Bcfg2.Compat import input, any, fcntl  # pylint: disable=W0622
 
 
 class ClassName(object):
@@ -86,18 +84,92 @@ class PackedDigitRange(object):  # pylint: disable=E0012,R0924
         return "[%s]" % self.str
 
 
-def locked(fd):
-    """ Acquire a lock on a file.
+class Flock(object):
+    '''Class to handle creating and removing (pid) lockfiles'''
 
-    :param fd: The file descriptor to lock
-    :type fd: int
-    :returns: bool - True if the file is already locked, False
-              otherwise """
-    try:
-        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    except IOError:
-        return True
-    return False
+    # custom exceptions
+    class FileLockAcquisitionError(Exception):
+        """Exception if we fail to acquire the lock"""
+        pass
+
+    class FileLockReleaseError(Exception):
+        """Exception if we fail to release the lock"""
+        pass
+
+    # convenience callables for formatting
+    def addr(self):
+        """Function which returns the pid"""
+        return '%d' % (self.pid)
+
+    def fddr(self):
+        """Function which returns the path and the pid"""
+        return '<%s %s>' % (self.path, self.addr())
+
+    def pddr(self, lock):
+        """Function which returns the path and the pid of a specific lock"""
+        return '<%s %s>' % (self.path, lock['pid'])
+
+    def __init__(self, path, logger):
+        self.pid = os.getpid()
+        self.path = path
+        self.logger = logger
+
+    def acquire(self):
+        """Acquire a lock, returning self if successful, False otherwise"""
+        if self.islocked():
+            lock = self._readlock()
+            raise Exception("Previous lock detected: %s" % self.pddr(lock))
+        try:
+            file_handle = open(self.path, 'w')
+            file_handle.write(self.addr())
+            file_handle.close()
+            self.logger.debug('Acquired lock: %s' % self.fddr())
+        except IOError, exception:
+            if os.path.isfile(self.path):
+                try:
+                    os.unlink(self.path)
+                except OSError:
+                    pass
+            raise (self.FileLockAcquisitionError(
+                   "Error acquiring lock '%s': %s" % (self.fddr(),
+                                                      exception)))
+
+    def release(self):
+        """Release lock, returning self"""
+        if self.ownlock():
+            try:
+                os.unlink(self.path)
+                self.logger.debug('Released lock: %s' % self.fddr())
+            except Exception, exception:
+                raise(self.FileLockReleaseError(
+                      "Error releasing lock: '%s': %s" % (self.fddr(),
+                                                          exception)))
+
+    def _readlock(self):
+        """Internal method to read lock info"""
+        lock = {}
+        file_handle = open(self.path)
+        data = file_handle.read().rstrip()
+        file_handle.close()
+        lock['pid'] = data
+        return lock
+
+    def islocked(self):
+        """Check if we already have a lock"""
+        try:
+            lock = self._readlock()
+            return self.fddr() != self.pddr(lock)
+        except IOError:
+            return False
+
+    def ownlock(self):
+        """Check if we own the lock"""
+        lock = self._readlock()
+        return (self.fddr() == self.pddr(lock))
+
+    def __del__(self):
+        """Magic method to clean up lock when program exits"""
+        self.release()
 
 
 class ExecutorResult(object):
@@ -258,6 +330,19 @@ class Executor(object):
         finally:
             if timeout is not None:
                 timer.cancel()
+
+
+def locked(fd):
+    """ Acquire a lock on a file.
+    :param fd: The file descriptor to lock
+    :type fd: int
+    :returns: bool - True if the file is already locked, False
+    otherwise """
+    try:
+        fcntl.lockf(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except IOError:
+        return True
+    return False
 
 
 def list2range(lst):

@@ -4,7 +4,6 @@ import os
 import sys
 import stat
 import time
-import fcntl
 import socket
 import fnmatch
 import logging
@@ -13,10 +12,11 @@ import tempfile
 import copy
 import Bcfg2.Logger
 import Bcfg2.Options
+import subprocess
 from Bcfg2.Client import XML
 from Bcfg2.Client import Proxy
 from Bcfg2.Client import Tools
-from Bcfg2.Utils import locked, Executor, safe_input
+from Bcfg2.Utils import Flock, Executor, safe_input
 from Bcfg2.version import __version__
 # pylint: disable=W0622
 from Bcfg2.Compat import xmlrpclib, walk_packages, any, all, cmp
@@ -158,7 +158,7 @@ class Client(object):
         self.tools = []
         self.times = dict()
         self.times['initialization'] = time.time()
-
+        self.lock = Flock(Bcfg2.Options.setup.lockfile, self.logger)
         if Bcfg2.Options.setup.bundle_quick:
             if (not Bcfg2.Options.setup.only_bundles and
                     not Bcfg2.Options.setup.except_bundles):
@@ -196,7 +196,11 @@ class Client(object):
         self.logger.info("Running probe %s" % name)
         ret = XML.Element("probe-data", name=name, source=probe.get('source'))
         try:
-            scripthandle, scriptname = tempfile.mkstemp()
+            fileending = ''
+            if os.name == 'nt':
+                (interpreter, fileending) = \
+                    probe.attrib.get('interpreter').split('*')
+            (scripthandle, scriptname) = tempfile.mkstemp(suffix=fileending)
             if sys.hexversion >= 0x03000000:
                 script = os.fdopen(scripthandle, 'w',
                                    encoding=Bcfg2.Options.setup.encoding)
@@ -210,11 +214,17 @@ class Client(object):
                 else:
                     script.write(probe.text.encode('utf-8'))
                 script.close()
-                os.chmod(scriptname,
-                         stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
-                         stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH |
-                         stat.S_IWUSR)  # 0755
-                rv = self.cmd.run(scriptname)
+                if os.name == 'nt':
+                    rv = self.cmd.run([interpreter, scriptname],
+                                      stdout=subprocess.PIPE,
+                                      stderr=subprocess.PIPE,
+                                      close_fds=False)
+                else:
+                    os.chmod(scriptname,
+                             stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH |
+                             stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH |
+                             stat.S_IWUSR)  # 0755
+                    rv = self.cmd.run(scriptname)
                 if rv.stderr:
                     self.logger.warning("Probe %s has error output: %s" %
                                         (name, rv.stderr))
@@ -409,31 +419,21 @@ class Client(object):
         if not Bcfg2.Options.setup.no_lock:
             # check lock here
             try:
-                lockfile = open(Bcfg2.Options.setup.lockfile, 'w')
-                if locked(lockfile.fileno()):
+                if self.lock.islocked() and not self.lock.ownlock():
                     self.fatal_error("Another instance of Bcfg2 is running. "
                                      "If you want to bypass the check, run "
                                      "with the -O/--no-lock option")
+                else:
+                    self.lock.acquire()
             except SystemExit:
                 raise
             except:
-                lockfile = None
                 self.logger.error("Failed to open lockfile %s: %s" %
                                   (Bcfg2.Options.setup.lockfile,
                                    sys.exc_info()[1]))
 
         # execute the configuration
         self.Execute()
-
-        if not Bcfg2.Options.setup.no_lock:
-            # unlock here
-            if lockfile:
-                try:
-                    fcntl.lockf(lockfile.fileno(), fcntl.LOCK_UN)
-                    os.remove(Bcfg2.Options.setup.lockfile)
-                except OSError:
-                    self.logger.error("Failed to unlock lockfile %s" %
-                                      lockfile.name)
 
         if (not Bcfg2.Options.setup.file and
                 not Bcfg2.Options.setup.bundle_quick):
