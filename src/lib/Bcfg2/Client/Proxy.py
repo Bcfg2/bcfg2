@@ -21,6 +21,7 @@ except ImportError:
 version = sys.version_info[:2]
 has_py26 = version >= (2, 6)
 has_py32 = version >= (3, 2)
+has_py36 = version >= (3, 6)
 
 __all__ = ["ComponentProxy",
            "RetryMethod",
@@ -198,6 +199,14 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             ssl_protocol_ver = ssl.PROTOCOL_SSLv23
         elif self.protocol == 'xmlrpc/tlsv1':
             ssl_protocol_ver = ssl.PROTOCOL_TLSv1
+        elif self.protocol == 'xmlrpc/tls':
+            if has_py36:
+                ssl_protocol_ver = ssl.PROTOCOL_TLS
+            else:
+                self.logger.warning("Cannot use PROTOCOL_TLS, due to "
+                                    "python version. Switching to "
+                                    "PROTOCOL_TLSv1.")
+                ssl_protocol_ver = ssl.PROTOCOL_TLSv1
         else:
             self.logger.error("Unknown protocol %s" % (self.protocol))
             raise Exception("unknown protocol %s" % self.protocol)
@@ -219,7 +228,7 @@ class SSLHTTPConnection(httplib.HTTPConnection):
             self.key = None
 
         rawsock.settimeout(self.timeout)
-        self.sock = ssl.SSLSocket(rawsock, cert_reqs=other_side_required,
+        self.sock = ssl.wrap_socket(rawsock, cert_reqs=other_side_required,
                                   ca_certs=self.ca, suppress_ragged_eofs=True,
                                   keyfile=self.key, certfile=self.cert,
                                   ssl_version=ssl_protocol_ver)
