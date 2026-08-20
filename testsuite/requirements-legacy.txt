@@ -8,7 +8,7 @@ nose
 nose-exclude<0.2
 mock<1.1
 unittest2<0.6
-logilab-common==0.53.0
+logilab-common==0.61.0
 logilab-astng==0.20.3
 pylint<0.22
 pep8<1.3
